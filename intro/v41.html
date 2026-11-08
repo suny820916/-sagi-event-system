@@ -506,7 +506,7 @@ const BROADCAST_MANUAL=[
 
 
 let matchdayState={homeScore:0,awayScore:0,scoreboardVisible:false,period:'1H',clockBase:0,clockRunning:false,clockStartedAt:0,lastEvent:null};
-function mdPeriodName(p){return({1H:'上半场',2H:'下半场',ET1:'加时上半场',ET2:'加时下半场',PEN:'点球大战'})[p]||p}
+function mdPeriodName(p){return({'1H':'上半场','2H':'下半场','ET1':'加时上半场','ET2':'加时下半场','PEN':'点球大战'})[p]||p}
 function mdNowSeconds(){return Math.max(0,matchdayState.clockBase+(matchdayState.clockRunning?((Date.now()-matchdayState.clockStartedAt)/1000):0))}
 function mdFormat(sec){sec=Math.max(0,Math.floor(Number(sec)||0));return String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0')}
 function mdParse(s){const m=String(s||'').trim().match(/^(\d{1,3})(?::(\d{1,2}))?$/);if(!m)return null;return Math.max(0,(+m[1])*60+(+(m[2]||0)))}
