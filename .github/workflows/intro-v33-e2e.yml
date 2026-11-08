@@ -190,8 +190,8 @@ jobs:
               await page.selectOption('#outputBg','tunnel');await page.waitForTimeout(100);
               add('切回TUNNEL后通道恢复',await page.locator('#tunnelScene').evaluate(el=>getComputedStyle(el).display!=='none'),await page.locator('#tunnelScene').evaluate(el=>getComputedStyle(el).display));
 
-              await page.click('#autoBtn');await page.waitForTimeout(180);
-              add('自动播放升级为7段',(await page.locator('#status').textContent()).includes('/ 7'),await page.locator('#status').textContent());
+              await page.click('#showPlayBtn');await page.waitForTimeout(120);
+              add('SHOW可再次启动',(await page.locator('#status').textContent()).includes('SHOW'),await page.locator('#status').textContent());
               await page.click('#stopBtn');
 
               const link=await page.evaluate(()=>new URL('./vmix-v33.html',location.href).toString());
