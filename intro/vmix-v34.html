@@ -182,15 +182,15 @@ function playRemoteAudio(url,volume=1,loop=false){
  if(!url)return null;try{const a=new Audio(url);a.volume=Math.max(0,Math.min(1,volume));a.loop=loop;const p=a.play();if(p&&p.catch)p.catch(()=>{});return a}catch(e){return null}
 }
 function manageShowMusic(x){
- const p=packageInfo(x),show=x.show||{},url=p.musicUrl||'';if(!url)return;
+ const p=packageInfo(x),show=x.show||{},url=p.musicUrl||'';q('stage').dataset.music=url?'requested':'off';if(!url)return;
  let a=manageShowMusic.audio;
  if(show.isFirst||!a||a.src!==url){try{if(a)a.pause()}catch(e){}a=playRemoteAudio(url,p.musicVolume==null?.65:p.musicVolume,true);manageShowMusic.audio=a}
- if(a)a.volume=Math.max(0,Math.min(1,p.musicVolume==null?.65:p.musicVolume));
+ if(a){a.volume=Math.max(0,Math.min(1,p.musicVolume==null?.65:p.musicVolume));q('stage').dataset.music='playing'}
  clearTimeout(manageShowMusic.stopTimer);
  if(show.isLast)manageShowMusic.stopTimer=setTimeout(()=>{try{if(a){a.pause();a.currentTime=0}}catch(e){}},Math.max(500,Number(x.duration)||1000)+300)
 }
 function playRealCue(x){
- const p=packageInfo(x),show=x.show||{},cue=show.cue;if(!cue||cue==='NONE')return;const url=p.sfx&&p.sfx[cue];if(url)playRemoteAudio(url,.9,false)
+ const p=packageInfo(x),show=x.show||{},cue=show.cue;q('stage').dataset.cue=cue||'NONE';q('stage').dataset.cueSource='fallback';if(!cue||cue==='NONE')return;const url=p.sfx&&p.sfx[cue];if(url){q('stage').dataset.cueSource='real';playRemoteAudio(url,.9,false)}
 }
 function animatePackage(x){
  if(x.group==='STING'){const core=q('stingOverlay').querySelector('.stingCore');if(core&&core.animate)core.animate([{opacity:0,transform:'scale(.72)'},{opacity:1,transform:'scale(1.04)',offset:.7},{opacity:1,transform:'scale(1)'}],{duration:900,fill:'forwards',easing:'cubic-bezier(.2,.8,.2,1)'})}
