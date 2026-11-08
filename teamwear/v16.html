@@ -988,13 +988,21 @@ function renderQuote(){
  q('quoteNote').textContent='报价包含比赛服主方案及球队套餐清单中的训练服 / 外套 / 配件。热升华比赛服默认包含印字印号；特殊工艺按最终确认方案执行。以上产品价格默认不含运费，运费另计。'+deadline+' 定金到账后进入排产；新增球员与赛季补单可基于本订单继续追加。';
  renderLogo()
 }
+
+function orderProductionMeta(o){
+ const pt=o&&o.productionTracker;if(!pt||!pt.active)return'';
+ const steps=pt.steps||{},done=PRODUCTION_STEPS.filter(s=>steps[s.key]&&steps[s.key].status==='done').length,total=PRODUCTION_STEPS.length,percent=Math.round(done/total*100),today=localDateOnly();
+ const overdue=PRODUCTION_STEPS.filter(s=>{const x=steps[s.key]||{};return x.status!=='done'&&x.plannedDate&&x.plannedDate<today}).length;
+ return ' · 生产 '+percent+'%'+(overdue?(' · ⚠ '+overdue+'项逾期'):'')
+}
+
 function renderOrders(){
  const search=q('orderSearch').value.trim().toLowerCase(),status=q('statusFilter').value,w=q('orderList');
  const list=state.orders.filter(o=>(!status||o.status===status)&&(!search||[o.projectName,o.teamName,o.contact,o.city].join(' ').toLowerCase().includes(search))).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
  if(!list.length){w.innerHTML='<div class="empty">暂无匹配订单。</div>';return}
  w.innerHTML='';
  list.forEach(o=>{const d=document.createElement('div');d.className='orderItem';d.innerHTML=
-  '<div><div class="orderName">'+escapeHtml(o.projectName||o.teamName||'未命名项目')+'</div><div class="orderMeta">'+escapeHtml([o.teamName,o.city,o.season].filter(Boolean).join(' · '))+'</div></div>'+
+  '<div><div class="orderName">'+escapeHtml(o.projectName||o.teamName||'未命名项目')+'</div><div class="orderMeta">'+escapeHtml([o.teamName,o.city,o.season].filter(Boolean).join(' · ')+orderProductionMeta(o))+'</div></div>'+
   '<div><span class="statusTag">'+escapeHtml(o.status||'线索')+'</span></div><div class="money">'+money(o.calc?.total||0)+'</div>'+
   '<div class="actions" style="margin:0"><button data-open type="button">打开</button><button data-reorder type="button">补单</button><button data-del class="danger" type="button">删</button></div>';
   d.querySelector('[data-open]').onclick=()=>{fill(o);location.hash='#customer';note('已打开 '+o.projectName)};
