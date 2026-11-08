@@ -1,0 +1,128 @@
+name: SAGI PLAYER INTRO V2.0 test
+
+on:
+  push:
+    paths:
+      - 'intro/v20.html'
+      - 'intro/vmix-v20.html'
+      - '.github/workflows/intro-v20-e2e.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  v20-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Prepare Chrome
+        run: |
+          npm install --no-save playwright@1.56.1
+          CHROME_BIN="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          echo "CHROME_BIN=$CHROME_BIN" >> "$GITHUB_ENV"
+          test -n "$CHROME_BIN"
+      - name: Run V2.0 lineup tests
+        shell: bash
+        run: |
+          python3 -m http.server 8080 --bind 127.0.0.1 >/tmp/intro-v20-http.log 2>&1 &
+          sleep 2
+          node <<'NODE'
+          const fs=require('fs');
+          const {chromium}=require('playwright');
+          (async()=>{
+            const out=[],errs=[];const add=(n,ok,d='')=>out.push({n,ok:!!ok,d});let browser;
+            try{
+              browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_BIN,args:['--no-sandbox','--disable-dev-shm-usage']});
+              const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
+              const page=await context.newPage();
+              page.on('pageerror',e=>errs.push('pageerror: '+e.message));
+              page.on('console',m=>{if(m.type()==='error'&&!m.text().includes('Failed to load resource'))errs.push('console: '+m.text())});
+              const r=await page.goto('http://127.0.0.1:8080/intro/v20.html',{waitUntil:'networkidle'});
+              add('页面HTTP 200',r&&r.status()===200,String(r&&r.status()));
+              add('标题V2.0',(await page.title())==='SAGI PLAYER INTRO V2.0',await page.title());
+              add('手机端无横向溢出',await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+4),await page.evaluate(()=>document.documentElement.scrollWidth+' / '+innerWidth));
+              add('默认载入11人示例',await page.locator('#roster .playerRow').count()===11,String(await page.locator('#roster .playerRow').count()));
+
+              const roles=await page.locator('#roster .pmeta').allTextContents();
+              add('4-3-3分组人数正确',roles.filter(x=>x.startsWith('GK')).length===1&&roles.filter(x=>x.startsWith('DF')).length===4&&roles.filter(x=>x.startsWith('MF')).length===3&&roles.filter(x=>x.startsWith('FW')).length===3,roles.join('|'));
+
+              await page.locator('#gkBtn').scrollIntoViewIfNeeded();await page.click('#gkBtn');await page.waitForTimeout(180);
+              add('门将单独出现',await page.locator('#playersArea .playerCard').count()===1,String(await page.locator('#playersArea .playerCard').count()));
+              add('门将阵型点高亮',await page.locator('#formationNodes .node.active').count()===1,String(await page.locator('#formationNodes .node.active').count()));
+
+              await page.click('#dfBtn');await page.waitForTimeout(160);
+              add('4名后卫组合出现',await page.locator('#playersArea .playerCard').count()===4,String(await page.locator('#playersArea .playerCard').count()));
+              add('4个后卫阵型点高亮',await page.locator('#formationNodes .node.active').count()===4,String(await page.locator('#formationNodes .node.active').count()));
+
+              await page.click('#mfBtn');await page.waitForTimeout(160);
+              add('3名中场组合出现',await page.locator('#playersArea .playerCard').count()===3,String(await page.locator('#playersArea .playerCard').count()));
+              add('3个中场点高亮',await page.locator('#formationNodes .node.active').count()===3,String(await page.locator('#formationNodes .node.active').count()));
+
+              await page.click('#fwBtn');await page.waitForTimeout(160);
+              add('3名前锋组合出现',await page.locator('#playersArea .playerCard').count()===3,String(await page.locator('#playersArea .playerCard').count()));
+              add('3个前锋点高亮',await page.locator('#formationNodes .node.active').count()===3,String(await page.locator('#formationNodes .node.active').count()));
+
+              await page.click('#fullBtn');await page.waitForTimeout(160);
+              add('完整首发显示11人',await page.locator('#fullList .fullRow').count()===11,String(await page.locator('#fullList .fullRow').count()));
+              add('完整阵型11点全部高亮',await page.locator('#formationNodes .node.active').count()===11,String(await page.locator('#formationNodes .node.active').count()));
+
+              await page.selectOption('#formation','4-4-2');await page.waitForTimeout(100);
+              add('阵型切换到4-4-2',(await page.locator('#formationText').textContent())==='4-4-2',await page.locator('#formationText').textContent());
+              await page.selectOption('#formation','4-3-3');
+
+              await page.locator('#dfBtn').scrollIntoViewIfNeeded();await page.click('#dfBtn');await page.waitForTimeout(160);
+              const geom=await page.evaluate(()=>{
+                const f=document.getElementById('frame').getBoundingClientRect(),cards=[...document.querySelectorAll('#playersArea .playerCard')].map(x=>x.getBoundingClientRect()),pitch=document.querySelector('.formationBox').getBoundingClientRect();
+                const hit=r=>r.right>f.left&&r.left<f.right&&r.bottom>f.top&&r.top<f.bottom;
+                return{frame:{x:f.x,y:f.y,w:f.width,h:f.height},cards:cards.map(x=>({x:x.x,y:x.y,w:x.width,h:x.height,hit:hit(x)})),pitch:{x:pitch.x,y:pitch.y,w:pitch.width,h:pitch.height,hit:hit(pitch)}};
+              });
+              add('后卫组合实际落在预览框内',geom.cards.length===4&&geom.cards.every(x=>x.hit),JSON.stringify(geom));
+              add('阵型图实际落在预览框内',geom.pitch.hit,JSON.stringify(geom));
+
+              await page.selectOption('#outputBg','transparent');await page.waitForTimeout(100);
+              add('透明输出模式可切换',(await page.locator('#stage').evaluate(el=>getComputedStyle(el).backgroundColor))==='rgba(0, 0, 0, 0)',await page.locator('#stage').evaluate(el=>getComputedStyle(el).backgroundColor));
+              await page.selectOption('#outputBg','stadium');
+              add('内置专业球场存在',await page.locator('.stadium').count()===1);
+
+              await page.click('#autoBtn');await page.waitForTimeout(180);
+              add('连续播放启动',(await page.locator('#status').textContent()).includes('自动播放'),await page.locator('#status').textContent());
+              await page.click('#stopBtn');
+
+              // vMix cloud mock
+              const state={commandId:'v20_test_1',group:'DF',team:'TARLAN FC',formation:'4-3-3',
+                players:[{name:'DIAS',number:'2',role:'DF',position:'RB',photo:''},{name:'NURLAN',number:'4',role:'DF',position:'CB',photo:''},{name:'ALMAS',number:'5',role:'DF',position:'CB',photo:''},{name:'ERLAN',number:'3',role:'DF',position:'LB',photo:''}],
+                allPlayers:[
+                  {name:'AZAMAT',number:'1',role:'GK',position:'GK'},
+                  {name:'DIAS',number:'2',role:'DF',position:'RB'},{name:'NURLAN',number:'4',role:'DF',position:'CB'},{name:'ALMAS',number:'5',role:'DF',position:'CB'},{name:'ERLAN',number:'3',role:'DF',position:'LB'},
+                  {name:'SULTAN',number:'6',role:'MF',position:'CM'},{name:'MARHULAN',number:'8',role:'MF',position:'CM'},{name:'ASLAN',number:'10',role:'MF',position:'AM'},
+                  {name:'DANIYAR',number:'7',role:'FW',position:'RW'},{name:'ARDAK',number:'9',role:'FW',position:'ST'},{name:'TIMUR',number:'11',role:'FW',position:'LW'}
+                ],crest:'',stadium:'',background:'stadium',duration:4000};
+              await context.route('**/rest/v1/rpc/sagi_get_event',async route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({slug:'tacheng-winter-2026',revision:1,payload:{lineupIntro:state}})}));
+              const vmix=await context.newPage();const vr=await vmix.goto('http://127.0.0.1:8080/intro/vmix-v20.html',{waitUntil:'domcontentloaded'});
+              add('V2 vMix页HTTP 200',vr&&vr.status()===200,String(vr&&vr.status()));await vmix.waitForTimeout(950);
+              add('vMix收到后卫组',await vmix.locator('#players .card').count()===4,String(await vmix.locator('#players .card').count()));
+              add('vMix阵型4个后卫点高亮',await vmix.locator('#nodes .node.active').count()===4,String(await vmix.locator('#nodes .node.active').count()));
+              add('vMix球队名同步',(await vmix.locator('#team').textContent())==='TARLAN FC',await vmix.locator('#team').textContent());
+              add('vMix阵型同步',(await vmix.locator('#formationText').textContent())==='4-3-3',await vmix.locator('#formationText').textContent());
+
+              await context.close();
+            }catch(e){errs.push('fatal: '+(e.stack||e.message||String(e)))}finally{if(browser)await browser.close()}
+            const failed=out.filter(x=>!x.ok),lines=['SAGI PLAYER INTRO V2.0 TEST','time='+new Date().toISOString(),'',
+              ...out.map(x=>(x.ok?'PASS':'FAIL')+' | '+x.n+(x.d?' | '+x.d:'')),'','Browser errors:',...(errs.length?errs:['none']),'',
+              'SUMMARY: '+(failed.length===0&&errs.length===0?'PASS':'FAIL')+' ('+(out.length-failed.length)+'/'+out.length+' checks passed)'];
+            fs.writeFileSync('intro-v20-test-result.txt',lines.join('\n'));console.log(lines.join('\n'));if(failed.length||errs.length)process.exitCode=1;
+          })();
+          NODE
+      - name: Commit result
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ -f intro-v20-test-result.txt ]; then
+            git add intro-v20-test-result.txt
+            git commit -m "Record SAGI PLAYER INTRO V2.0 test result" || exit 0
+            git push
+          fi
