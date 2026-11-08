@@ -342,16 +342,16 @@ function renderCatalogCart(){
  state.catalogItems.forEach((item,i)=>{
   const p=PRODUCT_CATALOG[item.productId];if(!p)return;const x=catalogItemCalc(item),row=productRow(p,item.age),d=document.createElement('div');d.className='catalogCartRow';
   const options=[['margin','目标毛利'],['bottom','团购底线'],['recommended','建议零售'],['brand','品牌价'],['custom','手动']].filter(([k])=>k==='margin'||k==='custom'||row[k]!=null);
-  d.innerHTML='<div><div class="catalogItemName">'+escapeHtml(p.name)+'</div><div class="catalogItemMeta">成本 '+money(x.costUnit)+' / '+escapeHtml(p.unit)+' · 起订 '+p.minQty+'</div></div>'+
+  d.innerHTML='<div><div class="catalogItemName">'+escapeHtml(p.name)+'</div><div class="catalogItemMeta">成本 '+money(x.costUnit)+' / '+escapeHtml(p.unit)+' · 起订 '+p.minQty+(x.qty>0&&x.qty<p.minQty?' · ⚠ 未达起订量':'')+'</div></div>'+
    '<select data-age><option value="adult"'+(item.age==='adult'?' selected':'')+'>成人</option><option value="child"'+(item.age==='child'?' selected':'')+'>儿童</option></select>'+
    '<input data-qty type="number" min="0" value="'+x.qty+'">'+
    '<select data-strategy>'+options.map(([k,nm])=>'<option value="'+k+'"'+(item.strategy===k?' selected':'')+'>'+nm+'</option>').join('')+'</select>'+
    '<input data-sale type="number" min="0" value="'+x.saleUnit+'" '+(item.strategy==='custom'?'':'readonly')+'>'+
    '<div class="money">'+money(x.cost)+'</div><button data-remove class="removeRow" type="button">×</button>';
   d.querySelector('[data-age]').onchange=e=>{item.age=e.target.value;renderCatalogCart();renderAll()};
-  d.querySelector('[data-qty]').oninput=e=>{item.qty=Math.max(0,Math.round(Number(e.target.value)||0));renderAll()};
+  d.querySelector('[data-qty]').onchange=e=>{item.qty=Math.max(0,Math.round(Number(e.target.value)||0));renderCatalogCart();renderAll()};
   d.querySelector('[data-strategy]').onchange=e=>{item.strategy=e.target.value;if(item.strategy==='custom')item.saleUnit=x.saleUnit;renderCatalogCart();renderAll()};
-  d.querySelector('[data-sale]').oninput=e=>{item.saleUnit=Math.max(0,Number(e.target.value)||0);renderAll()};
+  d.querySelector('[data-sale]').onchange=e=>{item.saleUnit=Math.max(0,Number(e.target.value)||0);renderCatalogCart();renderAll()};
   d.querySelector('[data-remove]').onclick=()=>{state.catalogItems.splice(i,1);renderCatalogCart();renderAll()};w.appendChild(d)
  });
  const t=catalogTotals();q('catalogQtyTotal').textContent=t.qty;q('catalogCostTotal').textContent=money(t.cost);q('catalogSalesTotal').textContent=money(t.sales);q('catalogGrossTotal').textContent=money(t.gross)
@@ -420,7 +420,7 @@ function fill(o){
 function blank(){
  state.currentId=null;state.teamLogo='';state.roster=[];state.catalogItems=[];
  const defaults={projectName:'',teamName:'',contact:'',contactInfo:'',city:'塔城',competition:'',season:'2026-2027',deadline:'',customerNotes:'',primaryColor:'塔城红',accentColor:'暖米白',salesUnitPrice:120,printFee:0,designFee:300,factoryShippingCost:0,shippingFee:0,discount:0,otherCraftCost:0,frontText:'',nameRule:'英文名',numberStyle:'SAGI 欧赛事字体',productNotes:'',extraQty:0,owner:'SAGI'};
- Object.entries(defaults).forEach(([k,v])=>{if(q(k))q(k).value=v});q('source').value='赛事合作';q('series').value='定制比赛服';q('supplierTier').value='CLUB';q('ageGroup').value='adult';q('productType').value='kit';q('priceStrategy').value='margin';q('targetMargin').value='.5';q('poloAddon').value='0';q('pocketAddon').value='0';q('longSleeveAddon').value='0';q('shippingZone').value='remote';q('depositRate').value='.5';q('orderStatus').value=STAGES[0];renderLogo();renderRoster();renderAll()
+ Object.entries(defaults).forEach(([k,v])=>{if(q(k))q(k).value=v});q('source').value='赛事合作';q('series').value='定制比赛服';q('supplierTier').value='CLUB';q('ageGroup').value='adult';q('productType').value='kit';q('priceStrategy').value='margin';q('targetMargin').value='.5';q('poloAddon').value='0';q('pocketAddon').value='0';q('longSleeveAddon').value='0';q('shippingZone').value='remote';q('depositRate').value='.5';q('orderStatus').value=STAGES[0];renderLogo();renderRoster();if(q('catalogCart'))renderCatalogCart();renderAll()
 }
 
 function renderLogo(){q('teamLogoPreview').innerHTML=state.teamLogo?'<img src="'+state.teamLogo+'">':'TEAM LOGO';q('quoteLogo').innerHTML=state.teamLogo?'<img src="'+state.teamLogo+'">':'LOGO'}
@@ -450,7 +450,7 @@ function renderQuote(){
  q('quoteTeamName').textContent=team;q('quoteTeamMeta').textContent=[city,comp,season].filter(Boolean).join(' · ')||'SAGI TEAMWEAR';
  q('qSeries').textContent=q('series').value+' · '+q('supplierTier').value;q('qType').textContent=q('productType').selectedOptions[0]?.textContent||q('productType').value;q('qQty').textContent=c.qty+' 套';q('qColors').textContent=[text('primaryColor'),text('accentColor')].filter(Boolean).join(' / ')||'—';
  q('qKit').textContent=money(c.kit);q('qSocks').textContent=money(c.socks);q('qPrint').textContent=money(c.print);renderQuoteCatalog();q('qDesign').textContent=money(c.design);q('qShipping').textContent=money(c.shipping);q('qDiscount').textContent='- '+money(c.discount);
- q('qUnit').textContent=money(c.unit);q('qTotal').textContent=money(c.total);q('qDeposit').textContent=money(c.deposit)+'（'+Math.round(c.rate*100)+'%）';q('qBalance').textContent=money(c.balance);q('profitFactoryTotal').textContent=money(c.factoryTotal);q('profitRevenue').textContent=money(c.total);q('profitGross').textContent=money(c.gross);q('profitMargin').textContent=(c.grossMargin*100).toFixed(1)+'%';q('profitMarginBar').style.width=Math.max(0,Math.min(100,c.grossMargin*100))+'%';const warn=[];if(c.unit<c.referenceBottom)warn.push('当前销售单价低于厂家团购底线参考 '+money(c.referenceBottom));if(c.gross<0)warn.push('当前订单预计亏损');if(q('shippingZone').value==='remote'&&c.factoryShipping<=0)warn.push('偏远/例外地区尚未填写厂家运费成本');q('profitWarning').className='costNote'+(warn.length?' warn':'');q('profitWarning').textContent=warn.length?warn.join('；'):'利润结构正常。内部成本不会出现在客户打印报价单中。';
+ q('qUnit').textContent=money(c.unit);q('qTotal').textContent=money(c.total);q('qDeposit').textContent=money(c.deposit)+'（'+Math.round(c.rate*100)+'%）';q('qBalance').textContent=money(c.balance);q('profitFactoryTotal').textContent=money(c.factoryTotal);q('profitRevenue').textContent=money(c.total);q('profitGross').textContent=money(c.gross);q('profitMargin').textContent=(c.grossMargin*100).toFixed(1)+'%';q('profitMarginBar').style.width=Math.max(0,Math.min(100,c.grossMargin*100))+'%';const warn=[];if(c.qty>0&&c.unit<c.referenceBottom)warn.push('当前销售单价低于厂家团购底线参考 '+money(c.referenceBottom));if(c.gross<0)warn.push('当前订单预计亏损');if(q('shippingZone').value==='remote'&&c.factoryShipping<=0)warn.push('偏远/例外地区尚未填写厂家运费成本');q('profitWarning').className='costNote'+(warn.length?' warn':'');q('profitWarning').textContent=warn.length?warn.join('；'):'利润结构正常。内部成本不会出现在客户打印报价单中。';
  const deadline=q('deadline').value?('计划交付：'+q('deadline').value+'。'):'交期以最终确认订单为准。';
  q('quoteNote').textContent='报价包含比赛服主方案及球队套餐清单中的训练服 / 外套 / 配件。热升华比赛服默认包含印字印号；特殊工艺按最终确认方案执行。'+deadline+' 定金到账后进入排产；新增球员与赛季补单可基于本订单继续追加。';
  renderLogo()
@@ -472,7 +472,10 @@ function renderOrders(){
 }
 function saveOrder(){
  const o=collect();if(!o.teamName){note('请先填写球队名称');q('teamName').focus();return}
- if(!o.roster.length){note('请先加入球员名单');return}
+ const activeCatalog=(o.catalogItems||[]).filter(x=>(Number(x.qty)||0)>0);
+ if(!o.roster.length&&!activeCatalog.length){note('请加入球员名单或至少一项产品');return}
+ const below=activeCatalog.find(x=>{const p=PRODUCT_CATALOG[x.productId];return p&&(Number(x.qty)||0)<(p.minQty||1)});
+ if(below){const p=PRODUCT_CATALOG[below.productId];note(p.name+' 起订量 '+p.minQty+' '+p.unit);return}
  const idx=state.orders.findIndex(x=>x.id===o.id);if(idx>=0)state.orders[idx]=o;else state.orders.unshift(o);state.currentId=o.id;persist();renderAll();note(idx>=0?'订单已更新':'订单已保存')
 }
 function createReorder(source){
