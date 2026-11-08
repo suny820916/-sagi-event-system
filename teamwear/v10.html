@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>SAGI TEAMWEAR SALES SYSTEM V1.0</title>
+<style>
+:root{--bg:#080a0d;--panel:#11151b;--panel2:#0d1116;--line:#29313a;--text:#f3f1eb;--muted:#8e98a5;--gold:#d7b55b;--green:#67c18d;--red:#e57373;--blue:#70a8e8;--shadow:0 18px 50px #0005}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(circle at 20% -10%,#242219 0,#0b0d11 28%,#07090c 64%);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",Arial,sans-serif}
+button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padding:18px 16px 80px}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px}.brand{font-size:25px;font-weight:1000;letter-spacing:.5px}.sub{font-size:11px;color:var(--muted);margin-top:5px;letter-spacing:1.4px}.ver{padding:8px 12px;border:1px solid #67572e;color:#e5ca78;border-radius:999px;background:#2b241370;font-size:11px;font-weight:1000;white-space:nowrap}
+.nav{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}.nav a{text-decoration:none;color:#a8b1bc;border:1px solid #2b333d;background:#0c1015;padding:8px 11px;border-radius:9px;font-size:10px;font-weight:900}.nav a:hover{color:#fff;border-color:#d7b55b66}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin-bottom:14px}.kpi{background:linear-gradient(180deg,#12171d,#0c1015);border:1px solid #29323b;border-radius:15px;padding:12px;box-shadow:var(--shadow)}.kpi span{display:block;color:#7f8994;font-size:9px;letter-spacing:1.5px}.kpi b{display:block;margin-top:6px;font-size:25px}.kpi small{color:#8d97a2;font-size:9px}
+.layout{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(380px,.65fr);gap:14px}.stack{display:grid;gap:12px}.card{background:linear-gradient(180deg,#11161c,#0d1116);border:1px solid var(--line);border-radius:17px;padding:13px;box-shadow:var(--shadow)}.card h2{font-size:14px;margin:0 0 10px;font-weight:1000;letter-spacing:.5px}.card h2 small{font-weight:700;color:#7f8994;font-size:9px;margin-left:6px}.sectionNo{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:7px;background:#d7b55b;color:#111;font-size:10px;font-weight:1000;margin-right:7px}
+.grid2,.grid3,.grid4{display:grid;gap:8px}.grid2{grid-template-columns:1fr 1fr}.grid3{grid-template-columns:repeat(3,1fr)}.grid4{grid-template-columns:repeat(4,1fr)}label{display:block;color:#7e8895;font-size:9px;font-weight:900;letter-spacing:.7px;margin-bottom:5px}input,select,textarea{width:100%;border:1px solid #303946;background:#080c10;color:#f2efe8;border-radius:9px;padding:9px 10px;outline:none}textarea{min-height:78px;resize:vertical}input:focus,select:focus,textarea:focus{border-color:#846e35;box-shadow:0 0 0 2px #d7b55b14}
+.actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}button{border:1px solid #34404b;background:#151b22;color:#e6e9ec;border-radius:9px;padding:9px 12px;font-weight:900;font-size:10px;cursor:pointer}button:hover{border-color:#7b6840}button.primary{background:linear-gradient(135deg,#8d712e,#d7b55b);color:#101216;border-color:#b89645}button.good{background:#193527;border-color:#35664d;color:#a9e4c0}button.danger{background:#351b1b;border-color:#643838;color:#edaaaa}button.blue{background:#172b43;border-color:#315980;color:#a9d1ff}
+.tiny{font-size:9px;color:#77818c;line-height:1.6}.pill{display:inline-flex;align-items:center;padding:5px 8px;border-radius:999px;border:1px solid #3a444e;color:#aab3bd;font-size:9px;font-weight:900}.pill.gold{border-color:#6e5e32;color:#e3c66f;background:#261f0f}.pill.green{border-color:#326148;color:#9fe0b8;background:#10251a}
+.logoRow{display:grid;grid-template-columns:90px 1fr;gap:10px;align-items:center}.logoBox{height:82px;border:1px dashed #424d59;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#65707c;background:#080b0f;overflow:hidden}.logoBox img{width:100%;height:100%;object-fit:contain}
+.pipeline{display:flex;gap:6px;overflow:auto;padding-bottom:4px}.stage{flex:0 0 auto;padding:7px 9px;border-radius:999px;border:1px solid #343e48;color:#75808b;background:#0a0e12;font-size:9px;font-weight:1000}.stage.on{background:#2a2413;border-color:#8a7132;color:#e5cb78}.stage.done{background:#10271b;border-color:#37654b;color:#9edab5}
+.rosterHead,.rosterRow{display:grid;grid-template-columns:34px 1.25fr .7fr .85fr .8fr 40px;gap:6px;align-items:center}.rosterHead{color:#727d88;font-size:8px;font-weight:1000;padding:0 4px 6px}.rosterRows{display:grid;gap:6px}.rosterRow{background:#0a0e13;border:1px solid #28313a;border-radius:10px;padding:6px}.rosterRow input,.rosterRow select{padding:7px 8px;font-size:10px}.rosterIndex{font-size:10px;color:#66717c;text-align:center;font-weight:1000}.removeRow{padding:7px 0;color:#e18e8e;border-color:#5b3434;background:#271313}
+.quote{position:sticky;top:12px}.quoteHeader{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;padding-bottom:12px;border-bottom:1px solid #2a333d}.quoteBrand{font-weight:1000;font-size:20px}.quoteBrand span{display:block;font-size:9px;color:#8b95a0;letter-spacing:2px;margin-top:3px}.quoteMeta{text-align:right;font-size:9px;color:#89939e}.quoteTeam{padding:14px 0 10px}.quoteTeam h3{font-size:22px;margin:0 0 4px}.quoteTeam p{margin:0;color:#8b95a0;font-size:10px}.quoteTable{width:100%;border-collapse:collapse}.quoteTable td{padding:8px 4px;border-bottom:1px solid #232b33;font-size:10px}.quoteTable td:last-child{text-align:right;font-weight:900}.quoteTotal{display:grid;gap:7px;margin-top:12px}.quoteLine{display:flex;justify-content:space-between;font-size:11px}.quoteLine.total{font-size:18px;font-weight:1000;color:#ead17e;padding-top:9px;border-top:1px solid #4b4025}.quoteLine.deposit{color:#9bd9b3;font-weight:1000}.quoteNote{margin-top:12px;padding:10px;border-radius:10px;background:#090d11;border:1px solid #2b333d;color:#78838e;font-size:9px;line-height:1.7}
+.orderList{display:grid;gap:8px}.orderItem{display:grid;grid-template-columns:1.5fr .8fr .8fr auto;gap:8px;align-items:center;background:#0a0e12;border:1px solid #29323c;border-radius:11px;padding:9px}.orderName{font-size:11px;font-weight:1000}.orderMeta{font-size:9px;color:#77828d;margin-top:3px}.money{font-size:13px;font-weight:1000;color:#e3c974}.statusTag{display:inline-flex;padding:5px 8px;border-radius:999px;background:#151b22;border:1px solid #35404b;font-size:8px;color:#aab3bc;font-weight:1000}
+.empty{padding:18px;border:1px dashed #3a444f;border-radius:10px;text-align:center;color:#66717c;font-size:10px}.notice{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#111821;border:1px solid #56616e;color:#fff;padding:10px 14px;border-radius:999px;font-size:10px;font-weight:900;display:none;z-index:50;box-shadow:0 15px 40px #0008}
+@media(max-width:1050px){.layout{grid-template-columns:1fr}.quote{position:static}.kpis{grid-template-columns:repeat(2,1fr)}}@media(max-width:720px){.grid2,.grid3,.grid4{grid-template-columns:1fr}.kpis{grid-template-columns:1fr 1fr}.top{align-items:center}.brand{font-size:18px}.rosterHead{display:none}.rosterRow{grid-template-columns:30px 1fr 1fr}.rosterRow>*:nth-child(5){grid-column:2/3}.rosterRow>*:nth-child(6){grid-column:3/4}.orderItem{grid-template-columns:1fr 1fr}.orderItem>div:first-child{grid-column:1/3}}
+@media print{body{background:#fff;color:#111}.top,.nav,.kpis,.layout>.stack:first-child,.ordersCard,.notice,.actions{display:none!important}.app{max-width:none;padding:0}.layout{display:block}.quote{position:static;border:0;box-shadow:none;background:#fff}.quoteHeader,.quoteTable td,.quoteLine.total{border-color:#ddd}.quoteMeta,.quoteTeam p,.quoteNote{color:#555}.quoteLine.total{color:#111}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div><div class="brand">SAGI TEAMWEAR SALES SYSTEM</div><div class="sub">球队建档 · 产品方案 · 球员名单 · 报价 · 订单 · 补单</div></div>
+    <div class="ver">V1.0 · SALES MVP</div>
+  </div>
+  <div class="nav">
+    <a href="#customer">球队建档</a><a href="#product">球服方案</a><a href="#rosterCard">球员名单</a><a href="#orders">订单管理</a><a href="#quoteCard">报价单</a>
+  </div>
+  <div class="kpis">
+    <div class="kpi"><span>客户 / 球队</span><b id="kpiTeams">0</b><small>已沉淀订单客户</small></div>
+    <div class="kpi"><span>销售项目</span><b id="kpiOrders">0</b><small>本机订单项目</small></div>
+    <div class="kpi"><span>进行中</span><b id="kpiActive">0</b><small>未完成订单</small></div>
+    <div class="kpi"><span>预计销售额</span><b id="kpiRevenue">¥0</b><small>全部项目合计</small></div>
+    <div class="kpi"><span>待收尾款</span><b id="kpiBalance">¥0</b><small>按定金比例估算</small></div>
+  </div>
+
+  <div class="layout">
+    <div class="stack">
+      <div id="customer" class="card">
+        <h2><span class="sectionNo">01</span>球队 / 客户建档 <small>CRM</small></h2>
+        <div class="grid3">
+          <div><label>销售项目名称</label><input id="projectName" placeholder="例如：塔尔兰 2027 主客场球衣"></div>
+          <div><label>球队名称</label><input id="teamName" placeholder="TARLAN FC"></div>
+          <div><label>客户来源</label><select id="source"><option>赛事合作</option><option>老客户复购</option><option>朋友介绍</option><option>抖音 / 短视频</option><option>微信</option><option>主动开发</option><option>其他</option></select></div>
+          <div><label>联系人</label><input id="contact" placeholder="姓名"></div>
+          <div><label>联系电话 / 微信</label><input id="contactInfo" placeholder="电话或微信"></div>
+          <div><label>城市 / 地区</label><input id="city" placeholder="塔城"></div>
+          <div><label>赛事 / 使用场景</label><input id="competition" placeholder="冬季联赛 / 校园联赛 / 青训"></div>
+          <div><label>赛季</label><input id="season" value="2026-2027"></div>
+          <div><label>希望交付日期</label><input id="deadline" type="date"></div>
+        </div>
+        <div class="logoRow" style="margin-top:10px">
+          <div id="teamLogoPreview" class="logoBox">TEAM LOGO</div>
+          <div><label>球队队徽</label><input id="teamLogoFile" type="file" accept="image/*"><div class="tiny" style="margin-top:6px">V1.0 将队徽保存在本机订单中，报价预览可直接显示。</div></div>
+        </div>
+        <div style="margin-top:9px"><label>客户需求 / 沟通备注</label><textarea id="customerNotes" placeholder="预算、喜欢的风格、参考球队、颜色、赞助商、交期等"></textarea></div>
+      </div>
+
+      <div id="product" class="card">
+        <h2><span class="sectionNo">02</span>球服方案 <small>PRODUCT CONFIG</small></h2>
+        <div class="grid4">
+          <div><label>SAGI 产品系列</label><select id="series"><option>定制比赛服</option><option>疆·艾系列</option><option>SAGI FLOW</option><option>ENGINEERED KNIT</option><option>青训比赛服</option><option>赛事官方服</option></select></div>
+          <div><label>套装类型</label><select id="productType"><option>比赛上衣</option><option selected>上衣 + 短裤</option><option>上衣 + 短裤 + 球袜</option><option>完整球队装备包</option></select></div>
+          <div><label>主色</label><input id="primaryColor" value="塔城红"></div>
+          <div><label>辅色</label><input id="accentColor" value="暖米白"></div>
+          <div><label>球衣单价</label><input id="jerseyPrice" type="number" min="0" value="129"></div>
+          <div><label>短裤单价</label><input id="shortsPrice" type="number" min="0" value="59"></div>
+          <div><label>球袜单价</label><input id="socksPrice" type="number" min="0" value="29"></div>
+          <div><label>姓名号码 / 人</label><input id="printFee" type="number" min="0" value="20"></div>
+          <div><label>设计服务费</label><input id="designFee" type="number" min="0" value="300"></div>
+          <div><label>运费</label><input id="shippingFee" type="number" min="0" value="0"></div>
+          <div><label>优惠金额</label><input id="discount" type="number" min="0" value="0"></div>
+          <div><label>定金比例</label><select id="depositRate"><option value=".3">30%</option><option value=".5" selected>50%</option><option value=".7">70%</option><option value="1">100%</option></select></div>
+        </div>
+        <div class="grid3" style="margin-top:9px">
+          <div><label>胸前文字 / 主赞助商</label><input id="frontText" placeholder="塔城 / Sponsor"></div>
+          <div><label>背后姓名规则</label><input id="nameRule" placeholder="英文名 / 中文 / 不印"></div>
+          <div><label>号码字体</label><input id="numberStyle" placeholder="SAGI 欧赛事字体"></div>
+        </div>
+        <div style="margin-top:9px"><label>产品方案备注</label><textarea id="productNotes" placeholder="面料、领型、暗纹、袖口、赞助商位置、特殊工艺等"></textarea></div>
+      </div>
+
+      <div id="rosterCard" class="card">
+        <h2><span class="sectionNo">03</span>球员名单 / 尺码 <small>ROSTER & SIZE</small></h2>
+        <div class="actions" style="margin-top:0;margin-bottom:10px">
+          <button id="addPlayerBtn" class="primary" type="button">＋ 添加球员</button>
+          <button id="demoRosterBtn" type="button">载入示例 12 人</button>
+          <button id="clearRosterBtn" class="danger" type="button">清空名单</button>
+        </div>
+        <div class="rosterHead"><div>#</div><div>姓名</div><div>号码</div><div>尺码</div><div>类型</div><div></div></div>
+        <div id="rosterRows" class="rosterRows"></div>
+        <div class="grid3" style="margin-top:10px">
+          <div><label>额外备货数量</label><input id="extraQty" type="number" min="0" value="0"></div>
+          <div><label>当前球员人数</label><input id="rosterCountView" readonly value="0"></div>
+          <div><label>总生产数量</label><input id="productionQtyView" readonly value="0"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2><span class="sectionNo">04</span>销售阶段 <small>PIPELINE</small></h2>
+        <div id="pipeline" class="pipeline"></div>
+        <div class="grid2" style="margin-top:10px">
+          <div><label>当前状态</label><select id="orderStatus"></select></div>
+          <div><label>内部负责人</label><input id="owner" value="SAGI"></div>
+        </div>
+        <div class="actions">
+          <button id="newOrderBtn" type="button">新建项目</button>
+          <button id="saveOrderBtn" class="primary" type="button">保存 / 更新订单</button>
+          <button id="printBtn" class="blue" type="button">打印报价单</button>
+        </div>
+      </div>
+
+      <div id="orders" class="card ordersCard">
+        <h2><span class="sectionNo">05</span>订单管理 <small>ORDER DATABASE</small></h2>
+        <div class="grid2">
+          <div><label>搜索</label><input id="orderSearch" placeholder="球队 / 项目 / 联系人"></div>
+          <div><label>筛选状态</label><select id="statusFilter"><option value="">全部状态</option></select></div>
+        </div>
+        <div id="orderList" class="orderList" style="margin-top:10px"></div>
+      </div>
+    </div>
+
+    <div id="quoteCard" class="card quote">
+      <div class="quoteHeader">
+        <div class="quoteBrand">SAGI SPORTS<span>TEAMWEAR QUOTATION</span></div>
+        <div class="quoteMeta"><div id="quoteNo">QUOTE —</div><div id="quoteDate"></div></div>
+      </div>
+      <div class="quoteTeam">
+        <div style="display:flex;gap:10px;align-items:center">
+          <div id="quoteLogo" class="logoBox" style="width:70px;height:70px;flex:0 0 70px">LOGO</div>
+          <div><h3 id="quoteTeamName">球队名称</h3><p id="quoteTeamMeta">城市 · 赛事 · 赛季</p></div>
+        </div>
+      </div>
+      <table class="quoteTable">
+        <tbody>
+          <tr><td>产品系列</td><td id="qSeries">—</td></tr>
+          <tr><td>套装类型</td><td id="qType">—</td></tr>
+          <tr><td>生产数量</td><td id="qQty">0 套</td></tr>
+          <tr><td>主色 / 辅色</td><td id="qColors">—</td></tr>
+          <tr><td>上衣</td><td id="qJersey">¥0</td></tr>
+          <tr><td>短裤</td><td id="qShorts">¥0</td></tr>
+          <tr><td>球袜</td><td id="qSocks">¥0</td></tr>
+          <tr><td>姓名号码</td><td id="qPrint">¥0</td></tr>
+          <tr><td>设计服务</td><td id="qDesign">¥0</td></tr>
+          <tr><td>运费</td><td id="qShipping">¥0</td></tr>
+          <tr><td>优惠</td><td id="qDiscount">- ¥0</td></tr>
+        </tbody>
+      </table>
+      <div class="quoteTotal">
+        <div class="quoteLine"><span>单套基础产品</span><b id="qUnit">¥0</b></div>
+        <div class="quoteLine total"><span>订单总额</span><b id="qTotal">¥0</b></div>
+        <div class="quoteLine deposit"><span>建议定金</span><b id="qDeposit">¥0</b></div>
+        <div class="quoteLine"><span>预计尾款</span><b id="qBalance">¥0</b></div>
+      </div>
+      <div id="quoteNote" class="quoteNote">报价说明将在这里生成。</div>
+      <div class="actions">
+        <button id="quoteSaveBtn" class="primary" type="button">保存当前订单</button>
+        <button id="quoteReorderBtn" type="button">基于当前项目创建补单</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="notice" class="notice"></div>
+<script>
+(()=>{'use strict';
+const q=id=>document.getElementById(id);
+const STORAGE_KEY='sagi_teamwear_sales_v10';
+const STAGES=['线索','设计沟通','已报价','已收定金','生产中','质检','已发货','已完成'];
+let state={orders:[],currentId:null,teamLogo:'',roster:[]};
+
+function uid(){return 'tw_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7)}
+function money(n){return '¥'+Math.round(Number(n)||0).toLocaleString('zh-CN')}
+function n(id){return Math.max(0,Number(q(id).value)||0)}
+function text(id){return q(id).value.trim()}
+function note(t){const el=q('notice');el.textContent=t;el.style.display='block';clearTimeout(note.t);note.t=setTimeout(()=>el.style.display='none',1600)}
+function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function persist(){localStorage.setItem(STORAGE_KEY,JSON.stringify({orders:state.orders}))}
+function loadState(){try{const x=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');if(x&&Array.isArray(x.orders))state.orders=x.orders}catch(e){}}
+
+function productFlags(){
+ const type=q('productType').value;
+ return {shorts:type!=='比赛上衣',socks:type==='上衣 + 短裤 + 球袜'||type==='完整球队装备包'};
+}
+function calc(){
+ const qty=state.roster.length+n('extraQty'),flags=productFlags();
+ const jersey=n('jerseyPrice')*qty,shorts=flags.shorts?n('shortsPrice')*qty:0,socks=flags.socks?n('socksPrice')*qty:0,print=n('printFee')*state.roster.length;
+ const design=n('designFee'),shipping=n('shippingFee'),discount=n('discount'),total=Math.max(0,jersey+shorts+socks+print+design+shipping-discount);
+ const rate=Number(q('depositRate').value)||.5,deposit=total*rate,balance=total-deposit,unit=n('jerseyPrice')+(flags.shorts?n('shortsPrice'):0)+(flags.socks?n('socksPrice'):0);
+ return{qty,jersey,shorts,socks,print,design,shipping,discount,total,rate,deposit,balance,unit};
+}
+function collect(){
+ const c=calc();return{
+  id:state.currentId||uid(),projectName:text('projectName')||((text('teamName')||'球队')+' 球服项目'),teamName:text('teamName'),source:q('source').value,contact:text('contact'),contactInfo:text('contactInfo'),city:text('city'),competition:text('competition'),season:text('season'),deadline:q('deadline').value,teamLogo:state.teamLogo,customerNotes:q('customerNotes').value.trim(),
+  series:q('series').value,productType:q('productType').value,primaryColor:text('primaryColor'),accentColor:text('accentColor'),jerseyPrice:n('jerseyPrice'),shortsPrice:n('shortsPrice'),socksPrice:n('socksPrice'),printFee:n('printFee'),designFee:n('designFee'),shippingFee:n('shippingFee'),discount:n('discount'),depositRate:Number(q('depositRate').value)||.5,frontText:text('frontText'),nameRule:text('nameRule'),numberStyle:text('numberStyle'),productNotes:q('productNotes').value.trim(),
+  roster:JSON.parse(JSON.stringify(state.roster)),extraQty:n('extraQty'),status:q('orderStatus').value,owner:text('owner')||'SAGI',calc:c,updatedAt:Date.now(),createdAt:state.currentId?(state.orders.find(x=>x.id===state.currentId)?.createdAt||Date.now()):Date.now()
+ }}
+function fill(o){
+ state.currentId=o.id||null;state.teamLogo=o.teamLogo||'';state.roster=Array.isArray(o.roster)?JSON.parse(JSON.stringify(o.roster)):[];
+ const set=(id,v)=>q(id).value=v??'';
+ set('projectName',o.projectName);set('teamName',o.teamName);set('source',o.source||'赛事合作');set('contact',o.contact);set('contactInfo',o.contactInfo);set('city',o.city);set('competition',o.competition);set('season',o.season||'2026-2027');set('deadline',o.deadline);set('customerNotes',o.customerNotes);
+ set('series',o.series||'定制比赛服');set('productType',o.productType||'上衣 + 短裤');set('primaryColor',o.primaryColor);set('accentColor',o.accentColor);set('jerseyPrice',o.jerseyPrice??129);set('shortsPrice',o.shortsPrice??59);set('socksPrice',o.socksPrice??29);set('printFee',o.printFee??20);set('designFee',o.designFee??300);set('shippingFee',o.shippingFee??0);set('discount',o.discount??0);set('depositRate',String(o.depositRate??.5));set('frontText',o.frontText);set('nameRule',o.nameRule);set('numberStyle',o.numberStyle);set('productNotes',o.productNotes);set('extraQty',o.extraQty??0);set('orderStatus',o.status||STAGES[0]);set('owner',o.owner||'SAGI');
+ renderLogo();renderRoster();renderAll()
+}
+function blank(){
+ state.currentId=null;state.teamLogo='';state.roster=[];
+ const defaults={projectName:'',teamName:'',contact:'',contactInfo:'',city:'塔城',competition:'',season:'2026-2027',deadline:'',customerNotes:'',primaryColor:'塔城红',accentColor:'暖米白',jerseyPrice:129,shortsPrice:59,socksPrice:29,printFee:20,designFee:300,shippingFee:0,discount:0,frontText:'',nameRule:'英文名',numberStyle:'SAGI 欧赛事字体',productNotes:'',extraQty:0,owner:'SAGI'};
+ Object.entries(defaults).forEach(([k,v])=>{if(q(k))q(k).value=v});q('source').value='赛事合作';q('series').value='定制比赛服';q('productType').value='上衣 + 短裤';q('depositRate').value='.5';q('orderStatus').value=STAGES[0];renderLogo();renderRoster();renderAll()
+}
+
+function renderLogo(){q('teamLogoPreview').innerHTML=state.teamLogo?'<img src="'+state.teamLogo+'">':'TEAM LOGO';q('quoteLogo').innerHTML=state.teamLogo?'<img src="'+state.teamLogo+'">':'LOGO'}
+function addPlayer(p={}){state.roster.push({id:p.id||uid(),name:p.name||'',number:p.number||'',size:p.size||'L',type:p.type||'球员'});renderRoster();renderAll()}
+function renderRoster(){
+ const w=q('rosterRows');w.innerHTML='';
+ if(!state.roster.length)w.innerHTML='<div class="empty">还没有球员。添加名单后，报价数量会自动跟随。</div>';
+ state.roster.forEach((p,i)=>{
+  const d=document.createElement('div');d.className='rosterRow';d.innerHTML=
+   '<div class="rosterIndex">'+(i+1)+'</div>'+
+   '<input data-k="name" value="'+escapeHtml(p.name)+'" placeholder="姓名">'+
+   '<input data-k="number" value="'+escapeHtml(p.number)+'" placeholder="号码">'+
+   '<select data-k="size">'+['130','140','150','160','XS','S','M','L','XL','2XL','3XL','4XL'].map(x=>'<option'+(x===p.size?' selected':'')+'>'+x+'</option>').join('')+'</select>'+
+   '<select data-k="type">'+['球员','门将','教练','工作人员'].map(x=>'<option'+(x===p.type?' selected':'')+'>'+x+'</option>').join('')+'</select>'+
+   '<button class="removeRow" type="button">×</button>';
+  d.querySelectorAll('[data-k]').forEach(el=>el.oninput=()=>{p[el.dataset.k]=el.value;renderAll()});
+  d.querySelector('.removeRow').onclick=()=>{state.roster.splice(i,1);renderRoster();renderAll()};w.appendChild(d)
+ });
+ q('rosterCountView').value=String(state.roster.length);q('productionQtyView').value=String(state.roster.length+n('extraQty'))
+}
+function renderPipeline(){
+ const cur=q('orderStatus').value,idx=STAGES.indexOf(cur),w=q('pipeline');w.innerHTML=STAGES.map((s,i)=>'<span class="stage '+(i<idx?'done':i===idx?'on':'')+'">'+(i+1)+' · '+s+'</span>').join('')
+}
+function renderQuote(){
+ const c=calc(),team=text('teamName')||'球队名称',city=text('city'),comp=text('competition'),season=text('season');
+ q('quoteNo').textContent='QUOTE '+(state.currentId?state.currentId.slice(-7).toUpperCase():'DRAFT');q('quoteDate').textContent=new Date().toLocaleDateString('zh-CN');
+ q('quoteTeamName').textContent=team;q('quoteTeamMeta').textContent=[city,comp,season].filter(Boolean).join(' · ')||'SAGI TEAMWEAR';
+ q('qSeries').textContent=q('series').value;q('qType').textContent=q('productType').value;q('qQty').textContent=c.qty+' 套';q('qColors').textContent=[text('primaryColor'),text('accentColor')].filter(Boolean).join(' / ')||'—';
+ q('qJersey').textContent=money(c.jersey);q('qShorts').textContent=money(c.shorts);q('qSocks').textContent=money(c.socks);q('qPrint').textContent=money(c.print);q('qDesign').textContent=money(c.design);q('qShipping').textContent=money(c.shipping);q('qDiscount').textContent='- '+money(c.discount);
+ q('qUnit').textContent=money(c.unit);q('qTotal').textContent=money(c.total);q('qDeposit').textContent=money(c.deposit)+'（'+Math.round(c.rate*100)+'%）';q('qBalance').textContent=money(c.balance);
+ const deadline=q('deadline').value?('计划交付：'+q('deadline').value+'。'):'交期以最终确认订单为准。';
+ q('quoteNote').textContent='报价包含当前选择的产品及名单个性化项目。'+deadline+' 定金到账后进入排产；新增球员与赛季补单可基于本订单继续追加。';
+ renderLogo()
+}
+function renderOrders(){
+ const search=q('orderSearch').value.trim().toLowerCase(),status=q('statusFilter').value,w=q('orderList');
+ const list=state.orders.filter(o=>(!status||o.status===status)&&(!search||[o.projectName,o.teamName,o.contact,o.city].join(' ').toLowerCase().includes(search))).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
+ if(!list.length){w.innerHTML='<div class="empty">暂无匹配订单。</div>';return}
+ w.innerHTML='';
+ list.forEach(o=>{const d=document.createElement('div');d.className='orderItem';d.innerHTML=
+  '<div><div class="orderName">'+escapeHtml(o.projectName||o.teamName||'未命名项目')+'</div><div class="orderMeta">'+escapeHtml([o.teamName,o.city,o.season].filter(Boolean).join(' · '))+'</div></div>'+
+  '<div><span class="statusTag">'+escapeHtml(o.status||'线索')+'</span></div><div class="money">'+money(o.calc?.total||0)+'</div>'+
+  '<div class="actions" style="margin:0"><button data-open type="button">打开</button><button data-reorder type="button">补单</button><button data-del class="danger" type="button">删</button></div>';
+  d.querySelector('[data-open]').onclick=()=>{fill(o);location.hash='#customer';note('已打开 '+o.projectName)};
+  d.querySelector('[data-reorder]').onclick=()=>createReorder(o);
+  d.querySelector('[data-del]').onclick=()=>{if(confirm('删除这个订单？')){state.orders=state.orders.filter(x=>x.id!==o.id);if(state.currentId===o.id)blank();persist();renderAll();note('订单已删除')}};
+  w.appendChild(d)
+ })
+}
+function saveOrder(){
+ const o=collect();if(!o.teamName){note('请先填写球队名称');q('teamName').focus();return}
+ if(!o.roster.length){note('请先加入球员名单');return}
+ const idx=state.orders.findIndex(x=>x.id===o.id);if(idx>=0)state.orders[idx]=o;else state.orders.unshift(o);state.currentId=o.id;persist();renderAll();note(idx>=0?'订单已更新':'订单已保存')
+}
+function createReorder(source){
+ const o=JSON.parse(JSON.stringify(source));o.id=uid();o.projectName=(source.teamName||'球队')+' · 补单 '+new Date().toLocaleDateString('zh-CN');o.status='线索';o.discount=0;o.extraQty=0;o.updatedAt=Date.now();o.createdAt=Date.now();o.roster=[];fill(o);note('已创建补单项目 · 添加需要补货的球员')
+}
+function renderKpis(){
+ const teams=new Set(state.orders.map(o=>o.teamName).filter(Boolean)).size,active=state.orders.filter(o=>o.status!=='已完成').length,revenue=state.orders.reduce((a,o)=>a+(o.calc?.total||0),0),balance=state.orders.reduce((a,o)=>a+(o.calc?.balance||0),0);
+ q('kpiTeams').textContent=teams;q('kpiOrders').textContent=state.orders.length;q('kpiActive').textContent=active;q('kpiRevenue').textContent=money(revenue);q('kpiBalance').textContent=money(balance)
+}
+function renderAll(){q('rosterCountView').value=String(state.roster.length);q('productionQtyView').value=String(state.roster.length+n('extraQty'));renderPipeline();renderQuote();renderOrders();renderKpis()}
+
+function initSelects(){
+ q('orderStatus').innerHTML=STAGES.map(x=>'<option>'+x+'</option>').join('');
+ q('statusFilter').innerHTML='<option value="">全部状态</option>'+STAGES.map(x=>'<option>'+x+'</option>').join('')
+}
+q('teamLogoFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{state.teamLogo=r.result;renderAll()};r.readAsDataURL(f)};
+q('addPlayerBtn').onclick=()=>addPlayer();q('demoRosterBtn').onclick=()=>{state.roster=[];[['AZAMAT','1','XL','门将'],['DIAS','2','L','球员'],['NURLAN','4','XL','球员'],['ALMAS','5','L','球员'],['ERLAN','3','M','球员'],['SULTAN','6','L','球员'],['MARHULAN','8','L','球员'],['ASLAN','10','M','球员'],['DANIYAR','7','L','球员'],['ARDAK','9','XL','球员'],['TIMUR','11','L','球员'],['BEK','12','XL','门将']].forEach(x=>addPlayer({name:x[0],number:x[1],size:x[2],type:x[3]}));note('已载入12人示例名单')};
+q('clearRosterBtn').onclick=()=>{state.roster=[];renderRoster();renderAll()};q('saveOrderBtn').onclick=saveOrder;q('quoteSaveBtn').onclick=saveOrder;q('newOrderBtn').onclick=()=>{blank();location.hash='#customer';note('已新建销售项目')};q('printBtn').onclick=()=>window.print();q('quoteReorderBtn').onclick=()=>{const src=state.orders.find(x=>x.id===state.currentId)||collect();createReorder(src)};
+q('orderSearch').oninput=renderOrders;q('statusFilter').onchange=renderOrders;q('orderStatus').onchange=renderAll;q('extraQty').oninput=renderAll;
+document.querySelectorAll('input,select,textarea').forEach(el=>{if(!['orderSearch','statusFilter','teamLogoFile'].includes(el.id))el.addEventListener('input',()=>{if(el.id==='orderStatus')return;renderAll()});if(el.tagName==='SELECT'&&!['statusFilter','orderStatus'].includes(el.id))el.addEventListener('change',renderAll)});
+initSelects();loadState();blank();renderAll();
+})();
+</script>
+</body>
+</html>
