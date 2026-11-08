@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#07090d">\n<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%2307090d%22/%3E%3Ctext x=%2232%22 y=%2243%22 text-anchor=%22middle%22 font-size=%2234%22 fill=%22%23d8b55b%22%3ES%3C/text%3E%3C/svg%3E">
-<title>SAGI PLAYER INTRO V1.0.3</title>
+<title>SAGI PLAYER INTRO V1.0.4</title>
 <style>
 :root{--bg:#07090d;--panel:#11151c;--line:#29303a;--text:#f5f2e9;--muted:#8d95a3;--gold:#d8b55b;--accent:#7ac7ff}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
@@ -14,7 +14,7 @@
 button,.fileBtn{border:0;border-radius:12px;background:#252b34;color:#fff;font-weight:850;min-height:42px;padding:9px 12px}.primary{background:linear-gradient(135deg,#bd9949,#e6ca76);color:#101216}.ok{background:#1d4935}.danger{background:#572626}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.fileBtn{display:flex;align-items:center;justify-content:center;cursor:pointer}.fileBtn input{display:none}
 .asset{display:grid;grid-template-columns:68px 1fr;gap:10px;align-items:center}.assetPreview{width:68px;height:68px;border:1px solid #343c48;border-radius:14px;background:#090c11;display:flex;align-items:center;justify-content:center;overflow:hidden;color:#69717c;font-size:10px}.assetPreview img{width:100%;height:100%;object-fit:cover}
 .roster{display:grid;gap:8px}.playerRow{display:grid;grid-template-columns:52px 1fr auto;gap:9px;align-items:center;background:#0a0e14;border:1px solid #27303c;border-radius:13px;padding:8px}.playerRow.on{border-color:#8f7637;background:#15130d}.thumb{width:52px;height:52px;border-radius:12px;overflow:hidden;background:#151a22;display:flex;align-items:center;justify-content:center;color:#6f7783;font-size:11px}.thumb img{width:100%;height:100%;object-fit:cover}.pname{font-weight:850}.pmeta{font-size:11px;color:#8e96a3;margin-top:2px}.num{font-size:21px;font-weight:950;color:var(--gold)}
-.stageCard{position:sticky;top:8px}.frame{position:relative;width:100%;aspect-ratio:16/9;background:#000;border:1px solid #2d3440;border-radius:18px;overflow:hidden;box-shadow:0 28px 50px #0008}.stageScale{position:absolute;inset:0}.stage{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;overflow:hidden;background:#05070a}
+.stageCard{position:sticky;top:8px}.frame{position:relative;width:100%;aspect-ratio:16/9;background:#000;border:1px solid #2d3440;border-radius:18px;overflow:hidden;box-shadow:0 28px 50px #0008}.stageScale{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0}.stage{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;overflow:hidden;background:#05070a}
 .bg{position:absolute;inset:0;background:radial-gradient(circle at 60% 35%,#203449 0,#0a0e15 35%,#05070a 72%);transition:.3s}.bg.chroma{background:#00b140}.bg.transparent{background:transparent}
 .gridFx{position:absolute;inset:-200px;background-image:linear-gradient(#ffffff08 1px,transparent 1px),linear-gradient(90deg,#ffffff08 1px,transparent 1px);background-size:80px 80px;transform:perspective(900px) rotateX(63deg) translateY(540px) scale(1.45);opacity:.45}
 .light{position:absolute;width:900px;height:900px;border-radius:50%;filter:blur(90px);opacity:.24}.l1{left:-250px;top:-350px;background:#4da6ff}.l2{right:-250px;bottom:-420px;background:#d2a541}
@@ -36,7 +36,7 @@ button,.fileBtn{border:0;border-radius:12px;background:#252b34;color:#fff;font-w
 </head>
 <body>
 <div class="app">
-  <div class="top"><div><div class="brand">SAGI PLAYER INTRO</div><div class="sub">球员赛前出场动画 · 16:9 · vMix Browser Input</div></div><div class="ver">V1.0.3</div></div>
+  <div class="top"><div><div class="brand">SAGI PLAYER INTRO</div><div class="sub">球员赛前出场动画 · 16:9 · vMix Browser Input</div></div><div class="ver">V1.0.4</div></div>
 
   <div class="layout">
     <div class="controls">
@@ -88,7 +88,7 @@ button,.fileBtn{border:0;border-radius:12px;background:#252b34;color:#fff;font-w
       <div class="card">
         <div id="frame" class="frame">
           <div id="stageScale" class="stageScale">
-            <div id="stage" class="stage theme-light">
+            <div id="stage" class="stage theme-light"><div id="stageProbe" style="position:absolute;left:18px;top:18px;z-index:9999;padding:8px 12px;border-radius:999px;background:#d8b55b;color:#111;font-size:20px;font-weight:900;opacity:.92">SAGI</div>
               <div id="bg" class="bg"></div><div class="gridFx"></div><div class="light l1"></div><div class="light l2"></div><div class="slash"></div><div class="wind"></div>
               <div id="safe" class="safe"></div>
               <div class="brandMark">SAGI SPORTS</div>
@@ -106,7 +106,7 @@ button,.fileBtn{border:0;border-radius:12px;background:#252b34;color:#fff;font-w
             </div>
           </div>
         </div>
-        <div class="controlsBar"><div id="status" class="status">V1.0.3 已就绪 · iPhone黑屏修复</div><div class="mini">1920 × 1080</div></div>
+        <div class="controlsBar"><div id="status" class="status">V1.0.4 已就绪 · 舞台缩放修复</div><div class="mini">1920 × 1080</div></div>
       </div>
     </div>
   </div>
@@ -221,7 +221,7 @@ async function publishIntro(p,index,total){
    return{ok:true,revision:current.revision}
  }catch(e){return{ok:false,reason:e.message||String(e)}}
 }
-function resize(){const f=q('frame'),scale=Math.min(f.clientWidth/1920,f.clientHeight/1080),left=(f.clientWidth-1920*scale)/2,top=(f.clientHeight-1080*scale)/2;q('stageScale').style.transform='translate('+left+'px,'+top+'px) scale('+scale+')';q('stageScale').style.width='1920px';q('stageScale').style.height='1080px'}
+function resize(){const f=q('frame'),scale=Math.min(f.clientWidth/1920,f.clientHeight/1080),left=(f.clientWidth-1920*scale)/2,top=(f.clientHeight-1080*scale)/2,wrap=q('stageScale');wrap.style.width='1920px';wrap.style.height='1080px';wrap.style.transformOrigin='0 0';wrap.style.transform='translate3d('+left+'px,'+top+'px,0) scale('+scale+')'}
 async function full(){try{await q('frame').requestFullscreen()}catch(e){note('请使用浏览器全屏功能')}}
 function vmixLink(){return new URL('./vmix.html',location.href).toString()}
 async function copyVmix(){try{await navigator.clipboard.writeText(vmixLink());note('vMix链接已复制')}catch(e){prompt('复制这个链接：',vmixLink())}}
