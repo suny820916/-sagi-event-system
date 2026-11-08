@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#07090d">\n<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%2307090d%22/%3E%3Ctext x=%2232%22 y=%2243%22 text-anchor=%22middle%22 font-size=%2234%22 fill=%22%23d8b55b%22%3ES%3C/text%3E%3C/svg%3E">
-<title>SAGI PLAYER INTRO V1.0.2</title>
+<title>SAGI PLAYER INTRO V1.0.3</title>
 <style>
 :root{--bg:#07090d;--panel:#11151c;--line:#29303a;--text:#f5f2e9;--muted:#8d95a3;--gold:#d8b55b;--accent:#7ac7ff}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
@@ -21,11 +21,11 @@ button,.fileBtn{border:0;border-radius:12px;background:#252b34;color:#fff;font-w
 .slash{position:absolute;width:1200px;height:120px;background:linear-gradient(90deg,transparent,#e4c670,transparent);transform:rotate(-18deg);filter:blur(4px);opacity:.25;left:-1200px;top:520px}
 .wind{position:absolute;inset:0;opacity:.18;background:repeating-linear-gradient(160deg,transparent 0 34px,#d8b55b 36px 39px,transparent 41px 86px);transform:translateX(-900px)}
 .safe{position:absolute;left:96px;top:54px;width:1728px;height:972px;border:2px dashed #ffffff30;pointer-events:none;display:none}
-.brandMark{position:absolute;left:110px;top:88px;font-size:30px;font-weight:950;letter-spacing:4px;color:#e0c375;opacity:0}
-.teamCrest{position:absolute;right:120px;top:90px;width:140px;height:140px;object-fit:contain;opacity:0;filter:drop-shadow(0 12px 20px #0008)}
-.photoWrap{position:absolute;left:850px;bottom:-40px;width:760px;height:980px;opacity:0;transform:translateX(150px) scale(.96)}.photoWrap:after{content:"";position:absolute;left:0;right:0;bottom:0;height:260px;background:linear-gradient(transparent,#05070a)}.playerPhoto{width:100%;height:100%;object-fit:contain;object-position:center bottom;filter:drop-shadow(0 24px 40px #000c)}
-.info{position:absolute;left:125px;top:285px;width:850px}.eyebrow{font-size:23px;letter-spacing:7px;color:#d8b55b;font-weight:850;opacity:0;transform:translateY(20px)}.numberBig{font-size:250px;line-height:.82;font-weight:1000;color:#ffffff10;position:absolute;left:-20px;top:85px;opacity:0;transform:translateX(-80px)}.name{font-size:105px;line-height:.94;font-weight:1000;letter-spacing:-4px;max-width:930px;text-transform:uppercase;opacity:0;transform:translateY(55px)}.team{font-size:34px;color:#cbd2db;margin-top:22px;font-weight:800;letter-spacing:2px;opacity:0;transform:translateY(24px)}.pos{display:inline-block;margin-top:24px;padding:10px 22px;border:1px solid #d8b55b66;border-radius:999px;color:#e5ce8a;font-size:23px;font-weight:850;opacity:0}.line{width:0;height:6px;background:linear-gradient(90deg,#d8b55b,#fff3b8);margin:22px 0 18px;border-radius:3px}
-.count{position:absolute;right:110px;bottom:80px;color:#ffffff60;font-size:19px;letter-spacing:3px;font-weight:800;opacity:0}
+.brandMark{position:absolute;left:110px;top:88px;font-size:30px;font-weight:950;letter-spacing:4px;color:#e0c375;opacity:1}
+.teamCrest{position:absolute;right:120px;top:90px;width:140px;height:140px;object-fit:contain;opacity:1;filter:drop-shadow(0 12px 20px #0008)}
+.photoWrap{position:absolute;left:850px;bottom:-40px;width:760px;height:980px;opacity:1;transform:translateX(0) scale(1)}.photoWrap:after{content:"";position:absolute;left:0;right:0;bottom:0;height:260px;background:linear-gradient(transparent,#05070a)}.playerPhoto{width:100%;height:100%;object-fit:contain;object-position:center bottom;filter:drop-shadow(0 24px 40px #000c)}
+.info{position:absolute;left:125px;top:285px;width:850px}.eyebrow{font-size:23px;letter-spacing:7px;color:#d8b55b;font-weight:850;opacity:1;transform:translateY(0)}.numberBig{font-size:250px;line-height:.82;font-weight:1000;color:#ffffff18;position:absolute;left:-20px;top:85px;opacity:1;transform:translateX(0)}.name{font-size:105px;line-height:.94;font-weight:1000;letter-spacing:-4px;max-width:930px;text-transform:uppercase;opacity:1;transform:translateY(0)}.team{font-size:34px;color:#cbd2db;margin-top:22px;font-weight:800;letter-spacing:2px;opacity:1;transform:translateY(0)}.pos{display:inline-block;margin-top:24px;padding:10px 22px;border:1px solid #d8b55b66;border-radius:999px;color:#e5ce8a;font-size:23px;font-weight:850;opacity:1}.line{width:380px;height:6px;background:linear-gradient(90deg,#d8b55b,#fff3b8);margin:22px 0 18px;border-radius:3px}
+.count{position:absolute;right:110px;bottom:80px;color:#ffffff60;font-size:19px;letter-spacing:3px;font-weight:800;opacity:1}
 .stage.playing .brandMark,.stage.playing .teamCrest,.stage.playing .eyebrow,.stage.playing .name,.stage.playing .team,.stage.playing .pos,.stage.playing .count{animation:fadeUp .55s cubic-bezier(.2,.8,.2,1) forwards}.stage.playing .teamCrest{animation-name:pop}.stage.playing .photoWrap{animation:photoIn .8s cubic-bezier(.18,.8,.18,1) .08s forwards}.stage.playing .numberBig{animation:numIn .7s ease-out .05s forwards}.stage.playing .line{animation:lineIn .65s ease-out .22s forwards}.stage.playing .eyebrow{animation-delay:.12s}.stage.playing .name{animation-delay:.2s}.stage.playing .team{animation-delay:.34s}.stage.playing .pos{animation-delay:.45s}.stage.playing .count{animation-delay:.5s}
 .stage.playing .slash{animation:slash 1.25s ease-out forwards}.stage.playing .wind{animation:wind 1.6s ease-out forwards}
 .stage.theme-light .bg{background:radial-gradient(circle at 64% 35%,#28465f 0,#0a1119 36%,#040609 75%)}.stage.theme-gold .bg{background:radial-gradient(circle at 65% 35%,#42341c 0,#100d09 38%,#050403 76%)}.stage.theme-gold .l1{background:#b48632}.stage.theme-gold .l2{background:#f0d27b}.stage.theme-wind .bg{background:radial-gradient(circle at 60% 38%,#263143 0,#0a0f17 36%,#040609 75%)}
@@ -36,7 +36,7 @@ button,.fileBtn{border:0;border-radius:12px;background:#252b34;color:#fff;font-w
 </head>
 <body>
 <div class="app">
-  <div class="top"><div><div class="brand">SAGI PLAYER INTRO</div><div class="sub">球员赛前出场动画 · 16:9 · vMix Browser Input</div></div><div class="ver">V1.0.2</div></div>
+  <div class="top"><div><div class="brand">SAGI PLAYER INTRO</div><div class="sub">球员赛前出场动画 · 16:9 · vMix Browser Input</div></div><div class="ver">V1.0.3</div></div>
 
   <div class="layout">
     <div class="controls">
@@ -93,7 +93,7 @@ button,.fileBtn{border:0;border-radius:12px;background:#252b34;color:#fff;font-w
               <div id="safe" class="safe"></div>
               <div class="brandMark">SAGI SPORTS</div>
               <img id="stageCrest" class="teamCrest" alt="">
-              <div class="photoWrap"><img id="stagePhoto" class="playerPhoto" alt=""></div>
+              <div class="photoWrap"><img id="stagePhoto" class="playerPhoto" alt=""><div id="photoFail" style="display:none;position:absolute;right:160px;top:420px;color:#fff;font-size:34px;font-weight:800">球员照片加载失败</div></div>
               <div class="info">
                 <div class="eyebrow">STARTING XI</div>
                 <div id="bigNumber" class="numberBig">88</div>
@@ -106,7 +106,7 @@ button,.fileBtn{border:0;border-radius:12px;background:#252b34;color:#fff;font-w
             </div>
           </div>
         </div>
-        <div class="controlsBar"><div id="status" class="status">V1.0.2 已就绪 · Safari兼容播放</div><div class="mini">1920 × 1080</div></div>
+        <div class="controlsBar"><div id="status" class="status">V1.0.3 已就绪 · iPhone黑屏修复</div><div class="mini">1920 × 1080</div></div>
       </div>
     </div>
   </div>
@@ -130,8 +130,13 @@ async function dbDel(k){try{const db=await openDB();await new Promise(res=>{cons
 function readForm(){return{id:(selected>=0&&roster[selected]&&roster[selected].id)||'',name:q('name').value.trim()||'PLAYER',number:q('number').value.trim()||'00',position:q('position').value.trim()||'PLAYER',team:q('team').value.trim()||'TEAM',photo:assets.photo||'',crest:assets.crest||''}}
 function writeForm(p){q('name').value=p.name||'';q('number').value=p.number||'';q('position').value=p.position||'';q('team').value=p.team||'';assets.photo=p.photo||'';assets.crest=p.crest||'';renderAssetPreviews();renderStage(p)}
 function renderAssetPreviews(){q('photoPreview').innerHTML=assets.photo?'<img src="'+assets.photo+'">':'球员';q('crestPreview').innerHTML=assets.crest?'<img src="'+assets.crest+'" style="object-fit:contain">':'队徽'}
+function forceVisibleFrame(){
+ const st=q('stage'), els=['.brandMark','.teamCrest','.photoWrap','.eyebrow','.numberBig','.name','.team','.pos','.count','.line'];
+ els.forEach(sel=>{const el=st.querySelector(sel);if(!el)return;el.style.opacity='1';if(sel!=='.line')el.style.transform='translateX(0) translateY(0) scale(1)';});
+ const line=st.querySelector('.line');if(line)line.style.width='380px';
+}
 function renderStage(p,index){
- p=p||readForm();q('stageName').textContent=p.name.toUpperCase();q('bigNumber').textContent=p.number;q('stageTeam').textContent=p.team.toUpperCase();q('stagePosition').textContent=p.position.toUpperCase();q('stagePhoto').src=p.photo||'';q('stageCrest').src=p.crest||'';q('stagePhoto').style.visibility=p.photo?'visible':'hidden';q('stageCrest').style.visibility=p.crest?'visible':'hidden';q('stageCount').textContent=((index==null?Math.max(selected,0):index)+1).toString().padStart(2,'0')+' / '+Math.max(roster.length,1).toString().padStart(2,'0')
+ p=p||readForm();q('stageName').textContent=p.name.toUpperCase();q('bigNumber').textContent=p.number;q('stageTeam').textContent=p.team.toUpperCase();q('stagePosition').textContent=p.position.toUpperCase();q('stagePhoto').onerror=()=>{q('photoFail').style.display='block'};q('stagePhoto').onload=()=>{q('photoFail').style.display='none'};q('stagePhoto').src=p.photo||'';q('stageCrest').src=p.crest||'';q('stagePhoto').style.visibility=p.photo?'visible':'hidden';q('stageCrest').style.visibility=p.crest?'visible':'hidden';q('stageCount').textContent=((index==null?Math.max(selected,0):index)+1).toString().padStart(2,'0')+' / '+Math.max(roster.length,1).toString().padStart(2,'0');forceVisibleFrame()
 }
 function applyTheme(){const st=q('stage');st.className='stage theme-'+q('theme').value;const bg=q('bg');bg.className='bg'+(q('background').value==='chroma'?' chroma':q('background').value==='transparent'?' transparent':'');q('safe').style.display=q('safeShow').value==='on'?'block':'none'}
 function clearPlayerAnimations(){
@@ -182,7 +187,7 @@ function focusStageAndRun(fn){
    requestAnimationFrame(()=>requestAnimationFrame(fn));
  }catch(e){fn()}
 }
-async function playCurrent(){const p=readForm(),idx=selected>=0?selected:0;playing=true;q('status').textContent='准备播放 #'+p.number+' '+p.name;focusStageAndRun(()=>{restartAnimation(p,idx);q('status').textContent='正在播放 #'+p.number+' '+p.name;publishIntro(p,idx,Math.max(roster.length,1)).then(r=>{if(!r.ok)q('status').textContent='正在播放 #'+p.number+' '+p.name+' · 本机预览'});clearTimeout(lineupTimer);lineupTimer=setTimeout(()=>{playing=false;q('status').textContent='播放完成 · 画面已保留'},+q('duration').value)})}
+async function playCurrent(){const p=readForm(),idx=selected>=0?selected:0;playing=true;q('status').textContent='准备播放 #'+p.number+' '+p.name;focusStageAndRun(()=>{restartAnimation(p,idx);q('status').textContent='正在播放 #'+p.number+' '+p.name;publishIntro(p,idx,Math.max(roster.length,1)).then(r=>{if(!r.ok)q('status').textContent='正在播放 #'+p.number+' '+p.name+' · 本机预览'});clearTimeout(lineupTimer);lineupTimer=setTimeout(()=>{playing=false;forceVisibleFrame();q('status').textContent='播放完成 · 画面已保留'},+q('duration').value)})}
 function playLineupAt(i){if(!playing||!roster.length)return;if(i>=roster.length){playing=false;q('status').textContent='首发出场播放完成';q('stage').classList.remove('playing');return}selected=i;renderRoster();writeForm(roster[i]);restartAnimation(roster[i],i);q('status').textContent='首发连续播放 '+(i+1)+' / '+roster.length;publishIntro(roster[i],i,roster.length).then(r=>{if(!r.ok)q('status').textContent='首发连续播放 '+(i+1)+' / '+roster.length+' · 本地模式'});clearTimeout(lineupTimer);lineupTimer=setTimeout(()=>playLineupAt(i+1),+q('duration').value)}
 function playLineup(){if(!roster.length){note('请先加入球员');return}playing=true;q('status').textContent='准备播放首发…';focusStageAndRun(()=>playLineupAt(0))}
 function stop(){playing=false;clearTimeout(lineupTimer);clearPlayerAnimations();q('status').textContent='已停止'}
