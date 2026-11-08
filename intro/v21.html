@@ -215,7 +215,7 @@ function demo(){roster=[];const data=[
 ['18','SAMAT','SUB','FW','ST',0,'GOALS','3'],
 ['20','AMAN','SUB','FW','RW',0,'APPS','5']
 ];data.forEach(a=>roster.push({id:uid(),number:a[0],name:a[1],squadType:a[2],role:a[3],position:a[4],captain:!!a[5],statLabel:a[6],statValue:a[7],photo:''}));q('formation').value='4-3-3';selected=0;writePlayer(roster[0]);renderRoster();renderStage('FULL');note('已载入V2.1示例：11首发 + 5替补')}
-function vmixLink(){return new URL('./vmix-v20.html',location.href).toString()}
+function vmixLink(){return new URL('./vmix-v21.html',location.href).toString()}
 async function copyVmix(){try{await navigator.clipboard.writeText(vmixLink());note('V2 vMix链接已复制')}catch(e){prompt('复制这个链接：',vmixLink())}}
 
 q('crestFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;assets.crest=await fileData(f,420,.84);renderPreviews();renderStage(currentGroup)};
