@@ -796,7 +796,7 @@ async function buildPublicQuotePayload(){
   deadline:q('deadline').value||'以最终确认订单为准',
   colors:[text('primaryColor'),text('accentColor')].filter(Boolean),
   frontText:text('frontText'),nameRule:text('nameRule'),numberStyle:text('numberStyle'),
-  items,total:c.total,deposit:c.deposit,balance:c.balance,showPayment:q('quoteShowPayment').value==='yes',
+  items,total:c.total,deposit:c.deposit,balance:c.balance,nonPackageCharges:c.print+c.design+c.shipping-c.discount,showPayment:q('quoteShowPayment').value==='yes',
   depositRate:Math.round(c.rate*100),shippingPolicy:'默认不包邮，运费另计',
   publicNote:q('publicQuoteNote').value.trim()||'热升华比赛服默认包含印字印号；特殊工艺按最终确认方案执行。产品价格默认不含运费，运费另计。',
   contact:q('publicContact').value.trim(),packages:publicPackagePlans()
