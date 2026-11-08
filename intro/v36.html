@@ -412,7 +412,7 @@ function renderSubs(){
  const subs=substitutes();list.innerHTML=subs.length?subs.map(p=>'<div class="subRow"><div class="subNo">#'+esc(p.number)+'</div><div><div class="subName">'+esc(p.name)+'</div><div class="subStat">'+esc(p.role)+' · '+esc(p.position)+'</div></div><div class="subStat">'+(p.statValue?esc(p.statLabel)+' '+esc(p.statValue):'SUB')+'</div></div>').join(''):'<div class="muted">暂无替补球员</div>';
 }
 function updateTunnelLabels(group){
- const team=q('teamName').value.trim()||'TEAM',left=q('ledLeft'),right=q('ledRight');
+ const team=currentTeamName(),left=q('ledLeft'),right=q('ledRight');
  const role={TEAM:'STARTING XI',GK:'GOALKEEPER',DF:'DEFENDERS',MF:'MIDFIELDERS',FW:'FORWARDS',FULL:'FORMATION',SUB:'SUBSTITUTES'}[group]||'STARTING XI';
  left.innerHTML=esc(team)+'<small>'+role+'</small>';
  right.innerHTML=(group==='TEAM'?'SAGI':(ROLE_NAMES[group]||group))+'<small>'+esc(q('formation').value)+'</small>';
@@ -427,7 +427,7 @@ function applyVisualGroup(group){
  const packageGroup=['STING','MATCH','COUNTDOWN'].includes(group);q('roleGlow').style.display=(group==='FULL'||group==='SUB'||packageGroup)?'none':'block';code.style.display=(group==='FULL'||group==='SUB'||packageGroup)?'none':'flex';
 }
 function renderStage(group){
- currentGroup=group||'TEAM';applyVisualGroup(currentGroup);syncMatchStage();['stingOverlay','matchOverlay','countdownOverlay'].forEach(id=>q(id).classList.remove('on'));q('stageTeam').textContent=q('teamName').value.trim()||'TEAM';q('stageCrest').src=assets.crest||'';q('stageCrest').style.visibility=assets.crest?'visible':'hidden';q('stadiumPhoto').src=assets.bg||'';q('stadiumPhoto').className='stadiumPhoto'+(assets.bg?' on':'');q('fullList').style.display='none';q('subList').style.display='none';q('playersArea').style.display='flex';
+ currentGroup=group||'TEAM';applyVisualGroup(currentGroup);syncMatchStage();['stingOverlay','matchOverlay','countdownOverlay'].forEach(id=>q(id).classList.remove('on'));q('stageTeam').textContent=currentTeamName();q('stageCrest').src=assets.crest||'';q('stageCrest').style.visibility=assets.crest?'visible':'hidden';q('stadiumPhoto').src=assets.bg||'';q('stadiumPhoto').className='stadiumPhoto'+(assets.bg?' on':'');q('fullList').style.display='none';q('subList').style.display='none';q('playersArea').style.display='flex';
  let title='STARTING XI',name='TEAM LINEUP',players=[];
  if(group==='STING'){title='MATCH SHOW';name='LOGO STING';q('playersArea').style.display='none';q('stingOverlay').classList.add('on')}
  else if(group==='MATCH'){title='MATCH SHOW';name='MATCH INFO';q('playersArea').style.display='none';q('matchOverlay').classList.add('on')}
