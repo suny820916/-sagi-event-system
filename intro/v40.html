@@ -191,10 +191,10 @@ button,.fileBtn{border:0;border-radius:12px;background:#262d37;color:#fff;font-w
       <button type="button" data-bc-group="COUNTDOWN" data-bc-label="COUNTDOWN">COUNTDOWN</button>
       <button type="button" data-bc-side="HOME" data-bc-group="TEAM" data-bc-label="HOME TEAM">HOME TEAM</button>
       <button type="button" data-bc-side="HOME" data-bc-group="FULL" data-bc-label="HOME XI">HOME XI</button>
-      <button type="button" data-bc-side="HOME" data-bc-group="SUB" data-bc-label="HOME SUBS">HOME SUBS</button>
+      <button type="button" data-bc-side="HOME" data-bc-group="SUB" data-bc-label="HOME SUBS">HOME 替补</button>
       <button type="button" data-bc-side="AWAY" data-bc-group="TEAM" data-bc-label="AWAY TEAM">AWAY TEAM</button>
       <button type="button" data-bc-side="AWAY" data-bc-group="FULL" data-bc-label="AWAY XI">AWAY XI</button>
-      <button type="button" data-bc-side="AWAY" data-bc-group="SUB" data-bc-label="AWAY SUBS">AWAY SUBS</button>
+      <button type="button" data-bc-side="AWAY" data-bc-group="SUB" data-bc-label="AWAY SUBS">AWAY 替补</button>
     </div>
     <div class="bcHint">SPACE = GO LIVE · H = HOLD/RESUME · ←/→ = PREV/NEXT · ESC = CLEAR ALL · 本机大画面始终作为 PREVIEW，vMix Browser 作为 PROGRAM。</div>
   </div>
@@ -375,12 +375,14 @@ const DEFAULT_SHOW=[
  {id:'home_mf',side:'HOME',group:'MF',label:'主队中场',duration:4000,transition:'SLIDE',cue:'WHOOSH',enabled:true},
  {id:'home_fw',side:'HOME',group:'FW',label:'主队前锋',duration:4000,transition:'FLASH',cue:'HIT',enabled:true},
  {id:'home_full',side:'HOME',group:'FULL',label:'主队完整首发',duration:6000,transition:'ZOOM',cue:'CROWD',enabled:true},
+ {id:'home_sub',side:'HOME',group:'SUB',label:'主队替补名单',duration:5000,transition:'SLIDE',cue:'WHOOSH',enabled:true},
  {id:'away_team',side:'AWAY',group:'TEAM',label:'客队开场',duration:2500,transition:'FADE',cue:'RISER',enabled:true},
  {id:'away_gk',side:'AWAY',group:'GK',label:'客队门将',duration:3000,transition:'ZOOM',cue:'HIT',enabled:true},
  {id:'away_df',side:'AWAY',group:'DF',label:'客队后卫',duration:4000,transition:'SLIDE',cue:'WHOOSH',enabled:true},
  {id:'away_mf',side:'AWAY',group:'MF',label:'客队中场',duration:4000,transition:'SLIDE',cue:'WHOOSH',enabled:true},
  {id:'away_fw',side:'AWAY',group:'FW',label:'客队前锋',duration:4000,transition:'FLASH',cue:'HIT',enabled:true},
- {id:'away_full',side:'AWAY',group:'FULL',label:'客队完整首发',duration:6000,transition:'ZOOM',cue:'CROWD',enabled:true}
+ {id:'away_full',side:'AWAY',group:'FULL',label:'客队完整首发',duration:6000,transition:'ZOOM',cue:'CROWD',enabled:true},
+ {id:'away_sub',side:'AWAY',group:'SUB',label:'客队替补名单',duration:5000,transition:'SLIDE',cue:'WHOOSH',enabled:true}
 ];
 let showSteps=DEFAULT_SHOW.map(x=>({...x})),showIndex=-1,showStartedAt=0,showSession='',showTimer=null;
 let broadcastHold=false,broadcastPreview={group:'TEAM',side:'HOME',label:'HOME TEAM',duration:2500},broadcastProgram=null,broadcastManualIndex=3;
@@ -567,6 +569,16 @@ async function publishGroup(group,duration,show=null){
 }
 function focusAndRun(fn){const mobile=matchMedia&&matchMedia('(max-width:940px)').matches;if(!mobile){fn();return}try{q('frame').scrollIntoView({behavior:'auto',block:'center'});requestAnimationFrame(()=>requestAnimationFrame(fn))}catch(e){fn()}}
 function escAttr(s){return String(s??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')}
+function normalizeShowSteps(list){
+ const src=Array.isArray(list)?list.map(s=>({...s})):[];
+ const homeSub=DEFAULT_SHOW.find(s=>s.id==='home_sub'),awaySub=DEFAULT_SHOW.find(s=>s.id==='away_sub');
+ if(!src.some(s=>s.id==='home_sub')){
+   const i=src.findIndex(s=>s.id==='away_team');
+   if(i>=0)src.splice(i,0,{...homeSub});else src.push({...homeSub});
+ }
+ if(!src.some(s=>s.id==='away_sub'))src.push({...awaySub});
+ return src.map(s=>({...s,duration:Math.max(500,Number(s.duration)||1000),enabled:s.enabled!==false}));
+}
 function showEnabled(){return showSteps.filter(s=>s.enabled)}
 function showTotalMs(){return showEnabled().reduce((a,s)=>a+(Number(s.duration)||0),0)}
 function showTransitionOptions(v){return ['CUT','FADE','SLIDE','ZOOM','FLASH'].map(x=>'<option'+(x===v?' selected':'')+'>'+x+'</option>').join('')}
@@ -594,7 +606,7 @@ function renderShowSummary(){
 function moveShowStep(i,dir){const j=i+dir;if(j<0||j>=showSteps.length)return;[showSteps[i],showSteps[j]]=[showSteps[j],showSteps[i]];if(showIndex===i)showIndex=j;else if(showIndex===j)showIndex=i;renderShowTimeline()}
 function resetShow(){stopShow(false);showSteps=DEFAULT_SHOW.map(x=>({...x}));showIndex=-1;renderShowTimeline();note('SHOW时间线已恢复默认')}
 function saveShow(){localStorage.setItem('sagi_show_director_v40',JSON.stringify(showSteps));note('SHOW时间线已保存')}
-function loadShow(){try{const x=JSON.parse(localStorage.getItem('sagi_show_director_v40')||'null');if(Array.isArray(x)&&x.length)showSteps=x.map(s=>({...s,duration:Math.max(500,Number(s.duration)||1000),enabled:s.enabled!==false}));}catch(e){}renderShowTimeline()}
+function loadShow(){try{let x=JSON.parse(localStorage.getItem('sagi_show_director_v40')||'null');if(!x){try{x=JSON.parse(localStorage.getItem('sagi_show_director_v36')||'null')}catch(_){}}if(Array.isArray(x)&&x.length)showSteps=normalizeShowSteps(x);else showSteps=normalizeShowSteps(DEFAULT_SHOW);}catch(e){showSteps=normalizeShowSteps(DEFAULT_SHOW)}renderShowTimeline()}
 function applyShowTransition(type){
  const l=q('transitionLayer');if(!l||!l.animate)return;l.className='transitionLayer';l.style.opacity='0';
  if(type==='CUT')return;
@@ -693,7 +705,7 @@ async function load(){
   teamStore.HOME={formation:x.teams?.HOME?.formation||'4-3-3',roster:await hydrateRoster(x.teams?.HOME?.roster||[]),crest:await dbGet('crest:HOME')||await dbGet('crest')||''};
   teamStore.AWAY={formation:x.teams?.AWAY?.formation||'4-3-3',roster:await hydrateRoster(x.teams?.AWAY?.roster||[]),crest:await dbGet('crest:AWAY')||''};
   assets.bg=await dbGet('stadium');assets.eventLogo=await dbGet('eventLogo');assets.musicBlob=await dbGet('showMusic');assets.musicObjectUrl=assets.musicBlob instanceof Blob?URL.createObjectURL(assets.musicBlob):'';
-  let storedShow=JSON.parse(localStorage.getItem('sagi_show_director_v40')||'null');if(!storedShow){try{storedShow=JSON.parse(localStorage.getItem('sagi_show_director_v36')||'null')}catch(_){}}if(Array.isArray(storedShow)&&storedShow.length)showSteps=storedShow.map(s=>({...s,duration:Math.max(500,Number(s.duration)||1000),enabled:s.enabled!==false}));
+  let storedShow=JSON.parse(localStorage.getItem('sagi_show_director_v40')||'null');if(!storedShow){try{storedShow=JSON.parse(localStorage.getItem('sagi_show_director_v36')||'null')}catch(_){}}if(Array.isArray(storedShow)&&storedShow.length)showSteps=normalizeShowSteps(storedShow);else showSteps=normalizeShowSteps(DEFAULT_SHOW);
   switchTeam(x.activeSide||'HOME',{silent:true,skipStash:true});renderPreviews();renderShowTimeline();syncMatchStage();note('V4.0 双队阵容、音频与SHOW已读取')
  }catch(e){note('读取失败')}
 }
