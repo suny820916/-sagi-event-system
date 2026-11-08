@@ -19,6 +19,9 @@
 .contact{margin-top:10px;text-align:center;color:#8f9aa5;font-size:9px}.footer{text-align:center;margin-top:18px;color:#56616c;font-size:8px;line-height:1.7}.error{max-width:600px;margin:15vh auto;padding:25px;border-radius:20px;border:1px solid #523838;background:#1a1010;color:#e2a1a1;text-align:center}.error h1{font-size:18px}.error p{font-size:10px;line-height:1.7}.hidden{display:none!important}
 @media(max-width:760px){.heroGrid{grid-template-columns:1fr}.quoteMeta{text-align:left}.amountStrip{grid-template-columns:1fr 1fr}.amountStrip .total{grid-column:1/3}.plans{grid-template-columns:1fr}.specs,.terms{grid-template-columns:1fr 1fr}.item{grid-template-columns:1.5fr .6fr .8fr}.item .unitCell{display:none}.confirmActions{grid-template-columns:1fr}}@media(max-width:480px){.page{padding:12px 10px 50px}.hero{padding:16px}.team h1{font-size:21px}.crest{width:64px;height:64px;flex-basis:64px}.amount b{font-size:17px}.specs,.terms{grid-template-columns:1fr}.item{grid-template-columns:1.45fr .55fr .75fr}}
 @media print{body{background:#fff;color:#111}.page{max-width:none;padding:0}.topbar,.confirmActions,.selectBtn{display:none!important}.hero,.section,.confirm{box-shadow:none;background:#fff;border-color:#ccc;break-inside:avoid}.amount,.item,.spec,.plan,.term,.confirmSelection,.note{background:#fff;border-color:#ddd}.brand small,.team p,.quoteMeta,.itemDetail,.itemCell,.spec span,.planItem,.term span,.confirm p,.footer,.contact{color:#555}.amount.total b,.planPrice b,.confirmSelection b{color:#111}}
+
+.confirmForm{display:grid;grid-template-columns:1fr;gap:8px;margin:11px 0}.confirmForm input,.confirmForm textarea{width:100%;border:1px solid #39434e;background:#090d11;color:#f2efe8;border-radius:10px;padding:10px;outline:none}.confirmForm textarea{min-height:78px;font-size:9px}.confirmAgree{display:flex;align-items:flex-start;gap:8px;padding:10px;border:1px solid #36413e;border-radius:10px;background:#0a100d;color:#94a39a;font-size:9px;line-height:1.55}.confirmAgree input{width:auto;margin-top:2px}.confirmCodeState{font-size:8px;color:#78c997;font-weight:1000;letter-spacing:1px}
+
 </style>
 </head>
 <body>
@@ -79,16 +82,22 @@
 
   <section class="confirm">
     <h2>确认合作意向</h2>
-    <p>如方案与价格确认无误，可复制确认信息发送给 SAGI。正式生产前仍需确认最终设计稿、尺码名单及订单细节。</p>
+    <p>确认方案与价格后，请填写确认人姓名并生成 SAGI CONFIRMATION CODE。正式生产仍需完成设计稿、尺码名单和定金确认。</p>
     <div class="confirmSelection"><span>当前意向</span><b id="selectedPlan">当前报价方案</b></div>
+    <div class="confirmForm">
+      <input id="confirmerName" placeholder="确认人姓名 / 球队负责人">
+      <label class="confirmAgree"><input id="confirmAgreement" type="checkbox"><span>我已确认当前选择的方案、产品数量与报价金额，并同意继续进入设计稿、尺码名单、定金及生产确认流程。</span></label>
+      <textarea id="confirmationCode" readonly placeholder="点击“生成确认码”后显示"></textarea>
+      <div id="confirmationCodeState" class="confirmCodeState"></div>
+    </div>
     <div class="confirmActions">
-      <button id="copyConfirm" class="primaryBtn" type="button">复制确认信息</button>
+      <button id="copyConfirm" class="primaryBtn" type="button">生成并复制确认码</button>
       <button id="printQuote" class="secondaryBtn" type="button">打印 / 保存 PDF</button>
     </div>
     <div id="contact" class="contact"></div>
   </section>
 
-  <div class="footer">SAGI SPORTS · 为球队建立属于自己的赛季视觉与装备系统<br>本页面为客户报价展示页，不包含内部成本与利润信息。</div>
+  <div class="footer">SAGI SPORTS · 为球队建立属于自己的赛季视觉与装备系统<br>本页面为客户报价与订单确认页，不包含内部成本与利润信息。</div>
 </div>
 
 <div id="error" class="error hidden">
@@ -123,7 +132,7 @@ function choosePackage(index){
  const p=data.packages[index];if(!p)return;selectedPackage=p;
  document.querySelectorAll('.plan').forEach((el,i)=>el.classList.toggle('selected',i===index));
  document.querySelectorAll('.selectBtn').forEach((el,i)=>{el.classList.toggle('active',i===index);el.textContent=i===index?'已选择此方案':'选择此方案'});
- q('selectedPlan').textContent=p.label+' · '+money(p.teamTotal)
+ q('selectedPlan').textContent=p.label+' · '+money(p.teamTotal);resetConfirmationCode()
 }
 function renderPlans(){
  const list=Array.isArray(data.packages)?data.packages:[],sec=q('plansSection'),w=q('plans');
@@ -132,16 +141,38 @@ function renderPlans(){
  w.querySelectorAll('.selectBtn').forEach(btn=>btn.onclick=()=>choosePackage(Number(btn.dataset.i)));
  const rec=list.findIndex(x=>x.kind==='recommended');if(rec>=0)choosePackage(rec)
 }
-function confirmationText(){
+
+function encodeConfirmation(obj){
+ const bytes=new TextEncoder().encode(JSON.stringify(obj));let bin='';bytes.forEach(b=>bin+=String.fromCharCode(b));return 'SAGI-CFM1.'+btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')
+}
+function confirmationPayload(){
+ const current=selectedPackage||null,amount=current?Number(current.teamTotal)||0:Number(data.total)||0;
+ return{
+  schema:'SAGI-CONFIRMATION-1',
+  orderRef:data.orderRef||'',
+  quoteNo:data.quoteNo||'',
+  teamName:data.teamName||'',
+  planId:current?(current.id||''):'CURRENT',
+  planLabel:current?(current.label||'套餐方案'):'当前报价方案',
+  confirmedAmount:amount,
+  confirmer:q('confirmerName').value.trim(),
+  confirmedAt:new Date().toLocaleString('zh-CN')
+ }
+}
+function resetConfirmationCode(){q('confirmationCode').value='';q('confirmationCodeState').textContent=''}
+
+function confirmationText(code=''){
  const plan=selectedPackage?(selectedPackage.label+'，球队总价 '+money(selectedPackage.teamTotal)):'当前报价方案，总价 '+money(data.total);
  return [
-  'SAGI TEAMWEAR 报价确认',
+  'SAGI TEAMWEAR 订单确认',
   '球队：'+(data.teamName||''),
+  '确认人：'+(q('confirmerName').value.trim()||'—'),
   '报价编号：'+(data.quoteNo||''),
   '确认方案：'+plan,
   '计划交付：'+(data.deadline||'待确认'),
-  '我方希望按以上方案继续确认设计稿、尺码名单及订单细节。'
- ].join('\n')
+  code?('确认码：'+code):'',
+  '我方已确认方案与报价，同意继续进入设计稿、尺码名单、定金及生产确认流程。'
+ ].filter(Boolean).join('\n')
 }
 async function copyText(t){
  try{await navigator.clipboard.writeText(t);return true}catch(e){const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();const ok=document.execCommand('copy');ta.remove();return ok}
@@ -156,8 +187,13 @@ function render(){
  renderItems();q('colors').textContent=(data.colors||[]).join(' / ')||'以确认稿为准';q('frontText').textContent=data.frontText||'以确认稿为准';q('nameRule').textContent=data.nameRule||'以确认稿为准';q('numberStyle').textContent=data.numberStyle||'SAGI TEAMWEAR';
  renderPlans();q('deadline').textContent=data.deadline||'以最终确认订单为准';q('shippingPolicy').textContent=data.shippingPolicy||'运费另计';q('paymentTerm').textContent=data.showPayment?('定金 '+(data.depositRate||50)+'% 后进入排产'):'付款方式与 SAGI 确认';
  q('publicNote').textContent=data.publicNote||'最终产品以确认稿和订单为准。';q('contact').textContent=data.contact?('联系：'+data.contact):'请与 SAGI SPORTS 确认订单';
- q('copyConfirm').onclick=async()=>{const ok=await copyText(confirmationText());q('copyConfirm').textContent=ok?'已复制 · 发送给 SAGI':'复制失败';setTimeout(()=>q('copyConfirm').textContent='复制确认信息',1600)};
- q('printQuote').onclick=()=>window.print()
+ q('copyConfirm').onclick=async()=>{
+  const name=q('confirmerName').value.trim();if(!name){q('confirmationCodeState').textContent='请先填写确认人姓名';q('confirmerName').focus();return}
+  if(!q('confirmAgreement').checked){q('confirmationCodeState').textContent='请先勾选确认声明';return}
+  const code=encodeConfirmation(confirmationPayload());q('confirmationCode').value=code;q('confirmationCodeState').textContent='CONFIRMATION CODE READY · 请发送给 SAGI';
+  const ok=await copyText(confirmationText(code));q('copyConfirm').textContent=ok?'已复制 · 发送给 SAGI':'确认码已生成';setTimeout(()=>q('copyConfirm').textContent='生成并复制确认码',1800)
+};
+ q('confirmerName').oninput=resetConfirmationCode;q('confirmAgreement').onchange=resetConfirmationCode;q('printQuote').onclick=()=>window.print()
 }
 render();
 })();
