@@ -568,7 +568,22 @@ function playGroup(group,duration){playing=true;focusAndRun(()=>{renderStage(gro
 function autoPlay(){startShow()}
 function stop(){stopShow()}
 function resize(){const f=q('frame'),scale=Math.min(f.clientWidth/1920,f.clientHeight/1080),left=(f.clientWidth-1920*scale)/2,top=(f.clientHeight-1080*scale)/2,w=q('stageScale');w.style.transformOrigin='0 0';w.style.transform='translate3d('+left+'px,'+top+'px,0) scale('+scale+')'}
-async function save(){for(const p of roster){p.id=p.id||uid();dbPut('photo:'+p.id,p.photo||'');if(p.mediaBlob)dbPut('media:'+p.id,p.mediaBlob);else dbDel('media:'+p.id)}await dbPut('crest',assets.crest||'');await dbPut('stadium',assets.bg||'');await dbPut('eventLogo',assets.eventLogo||'');if(assets.musicBlob)await dbPut('showMusic',assets.musicBlob);else dbDel('showMusic');localStorage.setItem('sagi_player_intro_v2',JSON.stringify({team:q('teamName').value,formation:q('formation').value,package:packageData(),roster:roster.map(p=>({id:p.id,name:p.name,number:p.number,squadType:p.squadType||'STARTER',role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',mediaUrl:p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'}))}));saveShow();note('V3.5 音频引擎、比赛包装与SHOW已保存')}
+async function save(){
+ for(const p of roster)p.id=p.id||uid();
+ const snapshot={
+  team:q('teamName').value,
+  formation:q('formation').value,
+  package:JSON.parse(JSON.stringify(packageData())),
+  roster:roster.map(p=>({id:p.id,name:p.name,number:p.number,squadType:p.squadType||'STARTER',role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',mediaUrl:p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'})),
+  show:showSteps.map(s=>({...s}))
+ };
+ for(const p of roster){await dbPut('photo:'+p.id,p.photo||'');if(p.mediaBlob)await dbPut('media:'+p.id,p.mediaBlob);else await dbDel('media:'+p.id)}
+ await dbPut('crest',assets.crest||'');await dbPut('stadium',assets.bg||'');await dbPut('eventLogo',assets.eventLogo||'');
+ if(assets.musicBlob)await dbPut('showMusic',assets.musicBlob);else await dbDel('showMusic');
+ localStorage.setItem('sagi_player_intro_v2',JSON.stringify({team:snapshot.team,formation:snapshot.formation,package:snapshot.package,roster:snapshot.roster}));
+ localStorage.setItem('sagi_show_director_v34',JSON.stringify(snapshot.show));
+ note('V3.5 音频引擎、比赛包装与SHOW已保存')
+}
 async function load(){try{const x=JSON.parse(localStorage.getItem('sagi_player_intro_v2')||'null');if(!x){note('还没有保存阵容');return}q('teamName').value=x.team||'';q('formation').value=x.formation||'4-3-3';writePackage(x.package||{});roster=[];for(const p of (x.roster||[])){p.photo=await dbGet('photo:'+p.id);p.mediaBlob=await dbGet('media:'+p.id);p.mediaObjectUrl=p.mediaBlob instanceof Blob?URL.createObjectURL(p.mediaBlob):'';p.mediaAction=p.mediaAction||'STANDARD';p.directorIn=Number(p.directorIn)||0;p.directorOut=Number(p.directorOut)||0;p.directorSpeed=Number(p.directorSpeed)||1;p.directorFreeze=!!p.directorFreeze;p.directorFreezeMs=Number(p.directorFreezeMs)||1000;p.directorCamera=p.directorCamera||'MEDIUM';roster.push(p)}assets.crest=await dbGet('crest');assets.bg=await dbGet('stadium');assets.eventLogo=await dbGet('eventLogo');assets.musicBlob=await dbGet('showMusic');assets.musicObjectUrl=assets.musicBlob instanceof Blob?URL.createObjectURL(assets.musicBlob):'';selected=roster.length?0:-1;if(selected>=0)writePlayer(roster[0]);renderPreviews();renderRoster();renderStage('TEAM');loadShow();syncMatchStage();note('V3.5 音频引擎、比赛包装与SHOW已读取')}catch(e){note('读取失败')}}
 function demo(){roster=[];const data=[
 ['1','AZAMAT','STARTER','GK','GK',0,'CLEAN SHEETS','6'],
