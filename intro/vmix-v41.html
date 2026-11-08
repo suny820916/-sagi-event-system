@@ -287,7 +287,7 @@ function animate(x){
  clearTimeout(hideTimer);hideTimer=setTimeout(()=>{},Math.max(1000,+x.duration||4000))
 }
 
-function gfxPeriodName(p){return({1H:'上半场',2H:'下半场',ET1:'加时上半场',ET2:'加时下半场',PEN:'点球'})[p]||p||''}
+function gfxPeriodName(p){return({'1H':'上半场','2H':'下半场','ET1':'加时上半场','ET2':'加时下半场','PEN':'点球'})[p]||p||''}
 function gfxSeconds(g){const c=g&&g.clock||{};let s=Number(c.baseSeconds)||0;if(c.running&&c.startedAt){const t=Date.parse(c.startedAt);if(Number.isFinite(t))s+=(Date.now()-t)/1000}return Math.max(0,s)}
 function gfxFormat(sec){sec=Math.max(0,Math.floor(Number(sec)||0));return String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0')}
 function updateScoreBug(){
