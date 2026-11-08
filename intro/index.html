@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#07090d">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%2307090d%22/%3E%3Ctext x=%2232%22 y=%2243%22 text-anchor=%22middle%22 font-size=%2234%22 fill=%22%23d8b55b%22%3ES%3C/text%3E%3C/svg%3E">
-<title>SAGI PLAYER INTRO V2.2</title>
+<title>SAGI PLAYER INTRO V3.0 · TUNNEL</title>
 <style>
 :root{--bg:#07090d;--panel:#11151c;--line:#2b3340;--text:#f4f0e8;--muted:#8f97a5;--gold:#d8b55b;--green:#72c79a}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
@@ -45,6 +45,33 @@ button,.fileBtn{border:0;border-radius:12px;background:#262d37;color:#fff;font-w
 .playerCard:before{content:"";position:absolute;left:12%;right:12%;bottom:72px;height:120px;border-radius:50%;background:radial-gradient(ellipse,#000b 0,transparent 70%);filter:blur(15px);z-index:-1}
 .playerCard .playerCut{z-index:1}.playerCard .playerLabel{z-index:3}
 
+.tunnelScene{position:absolute;inset:0;overflow:hidden;perspective:1200px;z-index:0}
+.tunnelScene .tunnelBack{position:absolute;left:50%;top:13%;width:480px;height:610px;transform:translateX(-50%);background:linear-gradient(#10151b,#05080b 62%);border:3px solid #ffffff18;box-shadow:0 0 120px #000 inset,0 0 80px #d8b55b18;clip-path:polygon(15% 0,85% 0,100% 100%,0 100%)}
+.tunnelScene .portal{position:absolute;left:50%;top:31%;width:270px;height:430px;transform:translateX(-50%);background:linear-gradient(#afc7da55,#193726 54%,#0f2618);box-shadow:0 0 90px #95d8ff33,0 0 120px #d8b55b1f inset;border:2px solid #ffffff1f;overflow:hidden}
+.tunnelScene .portal:before{content:"";position:absolute;left:-15%;right:-15%;bottom:-20px;height:220px;background:linear-gradient(#1d5b34,#0d2b19);clip-path:polygon(15% 0,85% 0,100% 100%,0 100%)}
+.tunnelScene .wall{position:absolute;top:0;bottom:0;width:46%;background:linear-gradient(90deg,#020305,#0b1016 60%,#151b22);filter:drop-shadow(0 0 26px #000);transform-style:preserve-3d}
+.tunnelScene .wall.left{left:-8%;clip-path:polygon(0 0,100% 14%,75% 100%,0 100%);background:linear-gradient(90deg,#020305 0,#090d12 68%,#1b222a)}
+.tunnelScene .wall.right{right:-8%;clip-path:polygon(0 14%,100% 0,100% 100%,25% 100%);background:linear-gradient(270deg,#020305 0,#090d12 68%,#1b222a)}
+.tunnelScene .ceiling{position:absolute;left:12%;right:12%;top:-6%;height:240px;background:linear-gradient(#06080b,#131922);clip-path:polygon(8% 0,92% 0,76% 100%,24% 100%);box-shadow:0 18px 40px #000}
+.tunnelScene .floor{position:absolute;left:8%;right:8%;bottom:-5%;height:390px;background:linear-gradient(#161b20,#050709 72%);clip-path:polygon(24% 0,76% 0,100% 100%,0 100%)}
+.tunnelScene .floor:before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 110px,#ffffff08 112px 114px,transparent 116px 220px),linear-gradient(90deg,transparent,#d8b55b0d,transparent);transform:perspective(800px) rotateX(56deg);transform-origin:bottom}
+.tunnelScene .led{position:absolute;top:185px;width:410px;height:470px;background:linear-gradient(#0a0d11,#111721);border:1px solid #d8b55b44;box-shadow:0 0 35px #d8b55b18 inset,0 0 22px #000;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.tunnelScene .led.left{left:95px;transform:skewY(7deg)}.tunnelScene .led.right{right:95px;transform:skewY(-7deg)}
+.tunnelScene .led:before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,#ffffff05 0 2px,transparent 2px 8px);mix-blend-mode:screen}
+.tunnelScene .ledText{position:relative;z-index:2;font-size:42px;font-weight:1000;letter-spacing:4px;color:#e7cf8a;text-align:center;max-width:330px;text-shadow:0 0 18px #d8b55b55;line-height:1.08}
+.tunnelScene .ledText small{display:block;margin-top:14px;font-size:16px;letter-spacing:6px;color:#ffffffaa}
+.tunnelScene .roofLights{position:absolute;left:460px;right:460px;top:115px;height:26px;background:repeating-linear-gradient(90deg,#ffffff0a 0 30px,#fff6c4 32px 42px,#ffffff0a 44px 82px);filter:blur(.4px);box-shadow:0 0 24px #fff6c455}
+.tunnelScene .fog{position:absolute;left:20%;right:20%;bottom:12%;height:240px;background:radial-gradient(ellipse,#ffffff12 0,transparent 66%);filter:blur(35px);opacity:.8}
+.tunnelScene .cameraVignette{position:absolute;inset:0;background:radial-gradient(circle at 50% 52%,transparent 0 34%,#0008 76%,#000d 100%)}
+.stage.tunnel-open .tunnelScene .wall.left{transform:translateX(-110px)}.stage.tunnel-open .tunnelScene .wall.right{transform:translateX(110px)}
+.stage.tunnel-open .tunnelScene .led.left{transform:translateX(-90px) skewY(7deg);opacity:.45}.stage.tunnel-open .tunnelScene .led.right{transform:translateX(90px) skewY(-7deg);opacity:.45}
+.stage.tunnel-open .tunnelScene .portal{box-shadow:0 0 150px #b6e2ff99,0 0 180px #ffffff44 inset}
+.stage.scene-stadium .tunnelScene,.stage.scene-transparent .tunnelScene,.stage.scene-chroma .tunnelScene{display:none}
+.stage.scene-tunnel .stadium,.stage.scene-tunnel .stadiumPhoto,.stage.scene-tunnel .stadiumShade,.stage.scene-tunnel .pitchLines{display:none!important}
+.stage.scene-tunnel .formationBox{background:#05080cd9;border-color:#e3c66a33}
+.stage.scene-tunnel.group-GK .led{border-color:#6cd8ff55;box-shadow:0 0 45px #6cd8ff16 inset}
+.stage.scene-tunnel.group-MF .led{border-color:#7e8fff55}.stage.scene-tunnel.group-FW .led{border-color:#ff995555}
+.tunnelScene,.tunnelScene .wall,.tunnelScene .led,.tunnelScene .portal{transition:transform .7s cubic-bezier(.2,.8,.2,1),opacity .55s ease,box-shadow .55s ease}
 .formationBox{position:absolute;right:78px;top:175px;width:500px;height:760px;border:1px solid #ffffff20;border-radius:32px;background:#05080cc7;backdrop-filter:blur(7px);padding:28px}.formationHead{display:flex;justify-content:space-between;align-items:flex-start}.formationTitle{font-size:25px;font-weight:950}.formationText{font-size:42px;color:#d8b55b;font-weight:1000}.pitch{position:absolute;left:34px;right:34px;top:120px;bottom:34px;border:3px solid #ffffff50;border-radius:5px;background:linear-gradient(#123d25,#0e321e);overflow:hidden}.pitch:before{content:"";position:absolute;left:0;right:0;top:50%;border-top:2px solid #ffffff55}.pitch:after{content:"";position:absolute;width:115px;height:115px;border:2px solid #ffffff55;border-radius:50%;left:50%;top:50%;transform:translate(-50%,-50%)}.boxTop,.boxBottom{position:absolute;left:50%;width:220px;height:90px;transform:translateX(-50%);border:2px solid #ffffff55}.boxTop{top:-2px}.boxBottom{bottom:-2px}.formationNodes{position:absolute;inset:0}.node{position:absolute;width:54px;height:54px;border-radius:50%;transform:translate(-50%,-50%);background:#161e28;border:2px solid #ffffff75;display:flex;align-items:center;justify-content:center;font-weight:1000;font-size:15px;color:#fff;transition:.25s}.node.active{background:#d8b55b;color:#111;border-color:#fff3b8;box-shadow:0 0 0 8px #d8b55b22}.node small{position:absolute;top:58px;font-size:9px;color:#cbd1d9;white-space:nowrap;max-width:86px;overflow:hidden;text-overflow:ellipsis}
 .fullList{position:absolute;left:95px;top:355px;width:1130px;display:grid;grid-template-columns:repeat(2,1fr);gap:14px 28px}.fullRow{display:grid;grid-template-columns:54px 56px 1fr auto;gap:10px;align-items:center;border-bottom:1px solid #ffffff12;padding:8px 4px}.fullRole{font-size:12px;color:#d8b55b;font-weight:900}.fullNo{font-size:25px;font-weight:1000}.fullName{font-size:22px;font-weight:900}.fullPos{font-size:11px;color:#98a1ad}
 .statusBar{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px}.status{font-size:12px;color:var(--green)}.mini{font-size:11px;color:#8b93a0}
@@ -62,7 +89,7 @@ button,.fileBtn{border:0;border-radius:12px;background:#262d37;color:#fff;font-w
 </head>
 <body>
 <div class="app">
-  <div class="top"><div><div class="brand">SAGI PLAYER INTRO</div><div class="sub">V2.2 视觉升级版 · 分组出场 · 阵型联动 · 专业球场</div></div><div class="ver">V2.2</div></div>
+  <div class="top"><div><div class="brand">SAGI PLAYER INTRO</div><div class="sub">V3.0 · TUNNEL · 分组出场 · 阵型联动 · 专业球场</div></div><div class="ver">V3.0</div></div>
 
   <div class="layout">
     <div class="controls">
@@ -112,9 +139,9 @@ button,.fileBtn{border:0;border-radius:12px;background:#262d37;color:#fff;font-w
 
       <div class="card">
         <h2>直播输出</h2>
-        <div class="grid2"><div><label>vMix背景</label><select id="outputBg"><option value="stadium">球场背景</option><option value="transparent">透明叠加</option><option value="chroma">绿幕</option></select></div><div><label>画面</label><input value="1920 × 1080" readonly></div></div>
-        <div class="actions"><button id="copyVmixBtn" type="button">复制V2.2 vMix链接</button></div>
-        <div class="tiny" style="margin-top:8px">vMix：Add Input → Web Browser → 使用 V2.2 专用链接。手机端点任意组即可同步到直播电脑。</div>
+        <div class="grid2"><div><label>vMix背景</label><select id="outputBg"><option value="tunnel" selected>球员通道 TUNNEL</option><option value="stadium">球场背景</option><option value="transparent">透明叠加</option><option value="chroma">绿幕</option></select></div><div><label>画面</label><input value="1920 × 1080" readonly></div></div>
+        <div class="actions"><button id="copyVmixBtn" type="button">复制V3.0 vMix链接</button></div>
+        <div class="tiny" style="margin-top:8px">vMix：Add Input → Web Browser → 使用 V3.0 专用链接。手机端点任意组即可同步到直播电脑。</div>
       </div>
     </div>
 
@@ -123,6 +150,12 @@ button,.fileBtn{border:0;border-radius:12px;background:#262d37;color:#fff;font-w
         <div id="frame" class="frame">
           <div id="stageScale" class="stageScale">
             <div id="stage" class="stage">
+              <div id="tunnelScene" class="tunnelScene">
+                <div class="tunnelBack"></div><div class="portal"></div><div class="wall left"></div><div class="wall right"></div><div class="ceiling"></div><div class="floor"></div>
+                <div class="led left"><div id="ledLeft" class="ledText">TARLAN FC<small>STARTING XI</small></div></div>
+                <div class="led right"><div id="ledRight" class="ledText">SAGI<small>TUNNEL</small></div></div>
+                <div class="roofLights"></div><div class="fog"></div><div class="cameraVignette"></div>
+              </div>
               <div class="stadium"></div><img id="stadiumPhoto" class="stadiumPhoto"><div class="stadiumShade"></div><div class="pitchLines"></div><div class="light l1"></div><div class="light l2"></div>
               <div id="headerMark" class="headerMark"><img id="stageCrest" class="teamCrest"><div><div id="stageTeam" class="teamHead">TARLAN FC</div><div class="teamSub">STARTING XI</div></div></div>
               <div id="groupTitle" class="groupTitle">STARTING XI</div><div id="groupName" class="groupName">TEAM LINEUP</div><div class="groupLine"></div>
@@ -132,7 +165,7 @@ button,.fileBtn{border:0;border-radius:12px;background:#262d37;color:#fff;font-w
             </div>
           </div>
         </div>
-        <div class="statusBar"><div id="status" class="status">V2.2 已就绪 · BROADCAST HERO</div><div class="mini">1920 × 1080</div></div>
+        <div class="statusBar"><div id="status" class="status">V3.0 已就绪 · TUNNEL BROADCAST</div><div class="mini">1920 × 1080</div></div>
       </div>
     </div>
   </div>
@@ -191,10 +224,16 @@ function renderSubs(){
  q('playersArea').style.display='none';q('fullList').style.display='none';const list=q('subList');list.style.display='grid';
  const subs=substitutes();list.innerHTML=subs.length?subs.map(p=>'<div class="subRow"><div class="subNo">#'+esc(p.number)+'</div><div><div class="subName">'+esc(p.name)+'</div><div class="subStat">'+esc(p.role)+' · '+esc(p.position)+'</div></div><div class="subStat">'+(p.statValue?esc(p.statLabel)+' '+esc(p.statValue):'SUB')+'</div></div>').join(''):'<div class="muted">暂无替补球员</div>';
 }
+function updateTunnelLabels(group){
+ const team=q('teamName').value.trim()||'TEAM',left=q('ledLeft'),right=q('ledRight');
+ const role={TEAM:'STARTING XI',GK:'GOALKEEPER',DF:'DEFENDERS',MF:'MIDFIELDERS',FW:'FORWARDS',FULL:'FORMATION',SUB:'SUBSTITUTES'}[group]||'STARTING XI';
+ left.innerHTML=esc(team)+'<small>'+role+'</small>';
+ right.innerHTML=(group==='TEAM'?'SAGI':(ROLE_NAMES[group]||group))+'<small>'+esc(q('formation').value)+'</small>';
+}
 function applyVisualGroup(group){
- const st=q('stage'),area=q('playersArea'),code=q('roleBackdrop');
- st.classList.remove('group-GK','group-DF','group-MF','group-FW','group-TEAM','group-FULL','group-SUB');
- st.classList.add('group-'+group);
+ const st=q('stage'),area=q('playersArea'),code=q('roleBackdrop');updateTunnelLabels(group);
+ st.classList.remove('group-GK','group-DF','group-MF','group-FW','group-TEAM','group-FULL','group-SUB','tunnel-open');
+ st.classList.add('group-'+group);if(group==='FULL')st.classList.add('tunnel-open');
  area.className='playersArea layout-'+group;
  const codes={TEAM:'XI',GK:'GK',DF:'DEF',MF:'MID',FW:'FWD',FULL:'XI',SUB:'SUB'};
  code.textContent=codes[group]||'XI';
@@ -211,7 +250,14 @@ function renderStage(group){
  if(group==='TEAM')q('playersArea').innerHTML='<div style="align-self:center;text-align:center;color:#ffffff52;font-weight:1000;font-size:138px;letter-spacing:10px;text-shadow:0 18px 45px #000">'+esc(q('formation').value)+'</div>';
  renderFormation(group==='TEAM'?'':group);applyOutputBackground()
 }
-function applyOutputBackground(){const mode=q('outputBg').value;const st=q('stage');if(mode==='transparent'){st.style.background='transparent';st.querySelector('.stadium').style.display='none';q('stadiumPhoto').style.display='none';st.querySelector('.stadiumShade').style.display='none';st.querySelector('.pitchLines').style.display='none'}else if(mode==='chroma'){st.style.background='#00b140';st.querySelector('.stadium').style.display='none';q('stadiumPhoto').style.display='none';st.querySelector('.stadiumShade').style.display='none';st.querySelector('.pitchLines').style.display='none'}else{st.style.background='#07090c';st.querySelector('.stadium').style.display='block';q('stadiumPhoto').style.display=assets.bg?'block':'none';st.querySelector('.stadiumShade').style.display='block';st.querySelector('.pitchLines').style.display='block'}}
+function applyOutputBackground(){
+ const mode=q('outputBg').value,st=q('stage');
+ st.classList.remove('scene-tunnel','scene-stadium','scene-transparent','scene-chroma');st.classList.add('scene-'+mode);
+ if(mode==='transparent'){st.style.background='transparent';st.querySelector('.stadium').style.display='none';q('stadiumPhoto').style.display='none';st.querySelector('.stadiumShade').style.display='none';st.querySelector('.pitchLines').style.display='none'}
+ else if(mode==='chroma'){st.style.background='#00b140';st.querySelector('.stadium').style.display='none';q('stadiumPhoto').style.display='none';st.querySelector('.stadiumShade').style.display='none';st.querySelector('.pitchLines').style.display='none'}
+ else if(mode==='stadium'){st.style.background='#07090c';st.querySelector('.stadium').style.display='block';q('stadiumPhoto').style.display=assets.bg?'block':'none';st.querySelector('.stadiumShade').style.display='block';st.querySelector('.pitchLines').style.display='block'}
+ else{st.style.background='#05070a'}
+}
 function animateStage(){
  const cards=[...q('stage').querySelectorAll('.playerCard,.fullRow,.subRow,.node.active')];
  cards.forEach((el,i)=>{
@@ -226,14 +272,19 @@ function animateStage(){
    el.animate(frames,{duration:isNode?620:isPlayer?680:520,delay:i*(isNode?95:90),fill:'forwards',easing:'cubic-bezier(.18,.82,.18,1)'})
  });
  const title=q('groupName');if(title.animate)title.animate([{opacity:0,transform:'translateX(-70px)',letterSpacing:'8px'},{opacity:1,transform:'translateX(0)',letterSpacing:'-2px'}],{duration:620,fill:'forwards',easing:'ease-out'});
- const glow=q('roleGlow');if(glow&&glow.style.display!=='none'&&glow.animate)glow.animate([{opacity:0,transform:'scale(.72)'},{opacity:.26,transform:'scale(1.04)',offset:.7},{opacity:.22,transform:'scale(1)'}],{duration:900,fill:'forwards',easing:'ease-out'});
+ if(q('outputBg').value==='tunnel'){
+   const tunnel=q('tunnelScene');
+   if(tunnel&&tunnel.animate)tunnel.animate([{transform:'scale(1.065) translateY(14px)',filter:'brightness(.72)'},{transform:'scale(1) translateY(0)',filter:'brightness(1)'}],{duration:980,fill:'forwards',easing:'cubic-bezier(.15,.8,.2,1)'});
+   [q('ledLeft'),q('ledRight')].forEach((el,i)=>{if(el&&el.animate)el.animate([{opacity:0,transform:'translateY(24px)',filter:'blur(7px)'},{opacity:1,transform:'translateY(0)',filter:'blur(0)'}],{duration:620,delay:110+i*90,fill:'forwards',easing:'ease-out'})});
+ }
+  const glow=q('roleGlow');if(glow&&glow.style.display!=='none'&&glow.animate)glow.animate([{opacity:0,transform:'scale(.72)'},{opacity:.26,transform:'scale(1.04)',offset:.7},{opacity:.22,transform:'scale(1)'}],{duration:900,fill:'forwards',easing:'ease-out'});
  const code=q('roleBackdrop');if(code&&code.style.display!=='none'&&code.animate)code.animate([{opacity:0,transform:'scale(.86)'},{opacity:1,transform:'scale(1)'}],{duration:780,fill:'forwards',easing:'ease-out'})
 }
 function cloudAdmin(){try{const x=JSON.parse(localStorage.getItem('sagi_cloud_admin_v20')||'null')||{},b=window.SAGI_CLOUD||{};return{url:x.url||b.url||'',key:x.key||b.key||'',eventSlug:x.eventSlug||b.eventSlug||'',token:x.token||''}}catch(e){const b=window.SAGI_CLOUD||{};return{url:b.url||'',key:b.key||'',eventSlug:b.eventSlug||'',token:''}}}
 function compactPlayersForGroup(group){const src=group==='FULL'?starters():group==='SUB'?substitutes():(['GK','DF','MF','FW'].includes(group)?grouped(group):[]);return src.map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',squadType:p.squadType||'STARTER',photo:(group==='FULL'||group==='SUB')?'':p.photo||''}))}
 async function publishGroup(group,duration){
  const cfg=cloudAdmin();if(!window.SagiCloud||!cfg.url||!cfg.key||!cfg.eventSlug||!cfg.token)return{ok:false};
- try{let cur=await window.SagiCloud.getEvent(cfg.eventSlug,cfg);if(!cur||!cur.payload)return{ok:false};const state={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,6),group,team:q('teamName').value.trim()||'TEAM',formation:q('formation').value,players:compactPlayersForGroup(group),allPlayers:starters().map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||''})),substitutes:substitutes().map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,statLabel:p.statLabel||'',statValue:p.statValue||''})),crest:assets.crest||'',stadium:assets.bg||'',background:q('outputBg').value,visualVersion:'V2.2',duration,startedAt:new Date().toISOString()};const payload=Object.assign({},cur.payload,{lineupIntro:state});try{await window.SagiCloud.saveEvent(cfg.eventSlug,cfg.token,payload,cur.revision,cfg)}catch(e){if(String(e.message).includes('REVISION_CONFLICT')){const fresh=await window.SagiCloud.getEvent(cfg.eventSlug,cfg);await window.SagiCloud.saveEvent(cfg.eventSlug,cfg.token,Object.assign({},fresh.payload,{lineupIntro:state}),fresh.revision,cfg)}else throw e}return{ok:true}}catch(e){return{ok:false}}
+ try{let cur=await window.SagiCloud.getEvent(cfg.eventSlug,cfg);if(!cur||!cur.payload)return{ok:false};const state={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,6),group,team:q('teamName').value.trim()||'TEAM',formation:q('formation').value,players:compactPlayersForGroup(group),allPlayers:starters().map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||''})),substitutes:substitutes().map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,statLabel:p.statLabel||'',statValue:p.statValue||''})),crest:assets.crest||'',stadium:assets.bg||'',background:q('outputBg').value,visualVersion:'V3.0-TUNNEL',duration,startedAt:new Date().toISOString()};const payload=Object.assign({},cur.payload,{lineupIntro:state});try{await window.SagiCloud.saveEvent(cfg.eventSlug,cfg.token,payload,cur.revision,cfg)}catch(e){if(String(e.message).includes('REVISION_CONFLICT')){const fresh=await window.SagiCloud.getEvent(cfg.eventSlug,cfg);await window.SagiCloud.saveEvent(cfg.eventSlug,cfg.token,Object.assign({},fresh.payload,{lineupIntro:state}),fresh.revision,cfg)}else throw e}return{ok:true}}catch(e){return{ok:false}}
 }
 function focusAndRun(fn){const mobile=matchMedia&&matchMedia('(max-width:940px)').matches;if(!mobile){fn();return}try{q('frame').scrollIntoView({behavior:'auto',block:'center'});requestAnimationFrame(()=>requestAnimationFrame(fn))}catch(e){fn()}}
 function playGroup(group,duration){playing=true;focusAndRun(()=>{renderStage(group);animateStage();q('status').textContent='正在播放 '+(group==='TEAM'?'球队开场':group==='FULL'?'完整首发':group==='SUB'?'替补名单':ROLE_NAMES[group]||group);publishGroup(group,duration).then(r=>{if(!r.ok)q('status').textContent+=' · 本机预览'});clearTimeout(seqTimer);seqTimer=setTimeout(()=>{playing=false;q('status').textContent='播放完成 · 画面已保留'},duration)})}
@@ -262,7 +313,7 @@ function demo(){roster=[];const data=[
 ['18','SAMAT','SUB','FW','ST',0,'GOALS','3'],
 ['20','AMAN','SUB','FW','RW',0,'APPS','5']
 ];data.forEach(a=>roster.push({id:uid(),number:a[0],name:a[1],squadType:a[2],role:a[3],position:a[4],captain:!!a[5],statLabel:a[6],statValue:a[7],photo:''}));q('formation').value='4-3-3';selected=0;writePlayer(roster[0]);renderRoster();renderStage('FULL');note('已载入V2.1示例：11首发 + 5替补')}
-function vmixLink(){return new URL('./vmix-v22.html',location.href).toString()}
+function vmixLink(){return new URL('./vmix-v30.html',location.href).toString()}
 async function copyVmix(){try{await navigator.clipboard.writeText(vmixLink());note('V2 vMix链接已复制')}catch(e){prompt('复制这个链接：',vmixLink())}}
 
 q('crestFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;assets.crest=await fileData(f,420,.84);renderPreviews();renderStage(currentGroup)};
