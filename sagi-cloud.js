@@ -10,7 +10,7 @@ async function rpc(name,args,overrides){
   if(!c.url||!c.key) throw new Error('云数据库尚未配置 Project URL / Publishable Key');
   var r=await fetch(clean(c.url)+'/rest/v1/rpc/'+name,{
     method:'POST',
-    headers:{'Content-Type':'application/json','apikey':c.key,'Authorization':'Bearer '+c.key},
+    headers:{'Content-Type':'application/json','apikey':c.key},
     body:JSON.stringify(args||{})
   });
   var text=await r.text(),data=null;
