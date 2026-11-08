@@ -1,5 +1,5 @@
 SAGI EVENT SYSTEM V2.0 E2E RESULT
-time=2026-11-08T10:00:31.957Z
+time=2026-11-08T10:02:28.019Z
 
 PASS | 管理端页面 HTTP 200 | 200
 PASS | 页面标题 V2.0 | SAGI EVENT SYSTEM V2.0
@@ -10,6 +10,10 @@ PASS | 生成单循环 28 场 | 28
 PASS | 生成 7 周赛程 | 7
 PASS | 示例球队名称载入 | A塔尔兰
 PASS | 示例球员可显示 | 3
+PASS | 队徽不再写入 localStorage | {"localLen":8382,"localHasImage":false,"crestLen":883}
+PASS | 队徽写入 IndexedDB | crest length 883
+PASS | 刷新后队徽仍能恢复显示 | 1
+PASS | PWA Service Worker 已注册 | {"supported":true,"count":1}
 PASS | 示例首场比分 2:1 | 2:1
 PASS | 示例首场 4 条比赛事件
 PASS | 射手榜根据进球事件生成 | 1
@@ -24,8 +28,8 @@ A塔尔兰
 #10 A塔尔兰中场
 A塔尔兰
 1 球
-PASS | 海报画布 1080×1920 | {"w":1080,"h":1920,"len":1607582}
-PASS | 海报可实际渲染 PNG | dataURL length 1607582
+PASS | 海报画布 1080×1920 | {"w":1080,"h":1920,"len":1606078}
+PASS | 海报可实际渲染 PNG | dataURL length 1606078
 PASS | Supabase Project URL 正确预填 | https://zgqrjuwltbnkgovtsccb.supabase.co
 PASS | Publishable Key 已预填 | sb_publishable_bqR…
 PASS | 浏览器跨域读取 Supabase 成功 | {"ok":true,"value":"object"}
@@ -36,4 +40,4 @@ PASS | vMix 页面可打开 | status 200 errors
 Browser errors:
 none
 
-SUMMARY: PASS (20/20 checks passed)
+SUMMARY: PASS (24/24 checks passed)
