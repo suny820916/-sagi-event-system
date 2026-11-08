@@ -3,7 +3,6 @@ name: SAGI PLAYER INTRO V2.1 test
 on:
   push:
     paths:
-      - 'intro/index.html'
       - 'intro/v21.html'
       - 'intro/vmix-v21.html'
       - '.github/workflows/intro-v21-e2e.yml'
@@ -41,7 +40,7 @@ jobs:
               const page=await context.newPage();
               page.on('pageerror',e=>errs.push('pageerror: '+e.message));
               page.on('console',m=>{if(m.type()==='error'&&!m.text().includes('Failed to load resource'))errs.push('console: '+m.text())});
-              const r=await page.goto('http://127.0.0.1:8080/intro/',{waitUntil:'networkidle'});
+              const r=await page.goto('http://127.0.0.1:8080/intro/v21.html',{waitUntil:'networkidle'});
               add('页面HTTP 200',r&&r.status()===200,String(r&&r.status()));
               add('标题V2.1',(await page.title())==='SAGI PLAYER INTRO V2.1',await page.title());
               add('手机端无横向溢出',await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+4),await page.evaluate(()=>document.documentElement.scrollWidth+' / '+innerWidth));
