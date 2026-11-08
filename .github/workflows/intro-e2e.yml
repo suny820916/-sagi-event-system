@@ -1,4 +1,4 @@
-name: SAGI PLAYER INTRO V1.0.3 test
+name: SAGI PLAYER INTRO V1.0.4 test
 
 on:
   push:
@@ -44,7 +44,7 @@ jobs:
               page.on('console',m=>{if(m.type()==='error'&&!m.text().includes('Failed to load resource: the server responded with a status of 404'))errs.push('console: '+m.text())});
               const r=await page.goto('http://127.0.0.1:8080/intro/',{waitUntil:'networkidle'});
               add('页面HTTP 200',r&&r.status()===200,String(r&&r.status()));
-              add('标题V1.0.3',(await page.title())==='SAGI PLAYER INTRO V1.0.3',await page.title());
+              add('标题V1.0.4',(await page.title())==='SAGI PLAYER INTRO V1.0.4',await page.title());
               add('1920×1080舞台存在',await page.locator('#stage').count()===1);
               add('手机端无横向溢出',await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+4),await page.evaluate(()=>document.documentElement.scrollWidth+' / '+innerWidth));
 
@@ -93,6 +93,17 @@ jobs:
               add('点击预览画面可重播',await page.locator('#stage').evaluate(el=>el.classList.contains('playing')));
               await page.waitForTimeout(500);
               add('球员层不会黑屏',await page.locator('#stageName').evaluate(el=>getComputedStyle(el).opacity!=='0')&&await page.locator('.photoWrap').evaluate(el=>getComputedStyle(el).opacity!=='0'));
+              const geom=await page.evaluate(()=>{
+                const frame=document.getElementById('frame').getBoundingClientRect();
+                const name=document.getElementById('stageName').getBoundingClientRect();
+                const photo=document.querySelector('.photoWrap').getBoundingClientRect();
+                const probe=document.getElementById('stageProbe').getBoundingClientRect();
+                const hit=r=>r.right>frame.left&&r.left<frame.right&&r.bottom>frame.top&&r.top<frame.bottom;
+                return{frame:{x:frame.x,y:frame.y,w:frame.width,h:frame.height},name:{x:name.x,y:name.y,w:name.width,h:name.height},photo:{x:photo.x,y:photo.y,w:photo.width,h:photo.height},probe:{x:probe.x,y:probe.y,w:probe.width,h:probe.height},nameHit:hit(name),photoHit:hit(photo),probeHit:hit(probe)};
+              });
+              add('姓名实际落在预览框内',geom.nameHit,JSON.stringify(geom));
+              add('球员照片实际落在预览框内',geom.photoHit,JSON.stringify(geom));
+              add('舞台左上角定位正确',geom.probeHit,JSON.stringify(geom));
               await page.click('#stopBtn');
 
               await page.click('#lineupBtn');await page.waitForTimeout(520);
@@ -132,6 +143,6 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if [ -f intro-test-result.txt ]; then
             git add intro-test-result.txt
-            git commit -m "Record SAGI PLAYER INTRO V1.0.3 test result" || exit 0
+            git commit -m "Record SAGI PLAYER INTRO V1.0.4 test result" || exit 0
             git push
           fi
