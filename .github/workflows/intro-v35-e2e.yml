@@ -301,7 +301,7 @@ jobs:
               add('vMix Logo Sting画面同步',await vmix.locator('#stingOverlay').evaluate(el=>el.classList.contains('on')));
               add('vMix Logo Sting赛事名同步',(await vmix.locator('#stingCompetition').textContent())==='TFC WINTER LEAGUE',await vmix.locator('#stingCompetition').textContent());
               add('vMix赛事Logo同步',(await vmix.locator('#stingLogo').getAttribute('src')).startsWith('data:image/gif'),await vmix.locator('#stingLogo').getAttribute('src'));
-              add('vMix主音乐请求同步',(await vmix.locator('#stage').getAttribute('data-music'))==='playing',await vmix.locator('#stage').getAttribute('data-music'));
+              add('vMix外部主音乐同步',(await vmix.locator('#stage').getAttribute('data-music'))==='external',await vmix.locator('#stage').getAttribute('data-music'));
               add('vMix真实STING Cue同步',(await vmix.locator('#stage').getAttribute('data-cue-source'))==='real',await vmix.locator('#stage').getAttribute('data-cue-source'));
               add('vMix HYBRID模式同步',(await vmix.locator('#stage').getAttribute('data-audio-mode'))==='HYBRID',await vmix.locator('#stage').getAttribute('data-audio-mode'));
               add('vMix BLACK GOLD主题同步',(await vmix.locator('#stage').getAttribute('data-audio-theme'))==='BLACK_GOLD',await vmix.locator('#stage').getAttribute('data-audio-theme'));
