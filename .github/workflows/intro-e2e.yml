@@ -89,17 +89,17 @@ jobs:
               await page.click('#loadRosterBtn');await page.waitForTimeout(220);
               add('名单可恢复',await page.locator('#roster .playerRow').count()>=1,String(await page.locator('#roster .playerRow').count()));
 
+              await context.route('**/rest/v1/rpc/sagi_get_event',async route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({slug:'tacheng-winter-2026',revision:1,payload:{playerIntro:{commandId:'test_cmd_1',name:'AZAMAT',number:'10',position:'FORWARD',team:'TACHENG',photo:'',crest:'',theme:'wind',background:'transparent',duration:3500,index:0,total:11}}})}));
               const vmix=await context.newPage();
-              const vr=await vmix.goto('http://127.0.0.1:8080/intro/vmix.html',{waitUntil:'networkidle'});
+              const badResponses=[];vmix.on('response',resp=>{if(resp.status()===404)badResponses.push(resp.url())});
+              const vr=await vmix.goto('http://127.0.0.1:8080/intro/vmix.html',{waitUntil:'domcontentloaded'});
               add('vMix叠加页HTTP 200',vr&&vr.status()===200,String(vr&&vr.status()));
-              await vmix.evaluate(()=>{
-                window.SagiCloud.getEvent=async()=>({payload:{playerIntro:{commandId:'test_cmd_1',name:'AZAMAT',number:'10',position:'FORWARD',team:'TACHENG',photo:'',crest:'',theme:'wind',background:'transparent',duration:3500,index:0,total:11}}});
-              });
-              await vmix.waitForTimeout(850);
+              await vmix.waitForTimeout(950);
               add('vMix收到指令自动播放',await vmix.locator('#stage').evaluate(el=>el.classList.contains('playing')));
               add('vMix姓名更新',(await vmix.locator('#name').textContent())==='AZAMAT',await vmix.locator('#name').textContent());
               add('vMix模板同步',await vmix.locator('#stage').evaluate(el=>el.classList.contains('theme-wind')));
               add('vMix透明背景同步',await vmix.locator('#bg').evaluate(el=>el.classList.contains('transparent')));
+              add('vMix页面无404资源',badResponses.length===0,badResponses.join('|'));
 
               await context.close();
             }catch(e){errs.push('fatal: '+(e.stack||e.message||String(e)))}finally{if(browser)await browser.close()}
