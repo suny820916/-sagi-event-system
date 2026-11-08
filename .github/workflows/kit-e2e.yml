@@ -1,0 +1,108 @@
+name: SAGI KIT DESIGNER V1.0 test
+
+on:
+  push:
+    paths:
+      - 'kit/**'
+      - '.github/workflows/kit-e2e.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  kit-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Prepare Chrome
+        run: |
+          npm install --no-save playwright@1.56.1
+          CHROME_BIN="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          echo "CHROME_BIN=$CHROME_BIN" >> "$GITHUB_ENV"
+          test -n "$CHROME_BIN"
+          "$CHROME_BIN" --version
+      - name: Run kit designer tests
+        shell: bash
+        run: |
+          python3 -m http.server 8080 --bind 127.0.0.1 >/tmp/kit-http.log 2>&1 &
+          sleep 2
+          node <<'NODE'
+          const fs=require('fs');
+          const {chromium}=require('playwright');
+          (async()=>{
+            const out=[],errs=[]; const add=(n,ok,d='')=>out.push({n,ok:!!ok,d});
+            let browser;
+            try{
+              browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_BIN,args:['--no-sandbox','--disable-dev-shm-usage']});
+              const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,acceptDownloads:true});
+              const page=await context.newPage();
+              page.on('pageerror',e=>errs.push('pageerror: '+e.message));
+              page.on('console',m=>{if(m.type()==='error')errs.push('console: '+m.text())});
+              const r=await page.goto('http://127.0.0.1:8080/kit/',{waitUntil:'networkidle'});
+              add('页面HTTP 200',r&&r.status()===200,String(r&&r.status()));
+              add('标题正确',(await page.title())==='SAGI KIT DESIGNER V1.0',await page.title());
+              add('SVG球衣存在',await page.locator('#shirtSvg').count()===1);
+              add('手机端无明显横向溢出',await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+4),await page.evaluate(()=>document.documentElement.scrollWidth+' / '+innerWidth));
+
+              await page.fill('#chestText','塔城测试');
+              add('胸前文字实时更新',(await page.locator('#frontText').textContent())==='塔城测试',await page.locator('#frontText').textContent());
+
+              await page.locator('#bodyColor').evaluate((el)=>{el.value='#8b2e2e';el.dispatchEvent(new Event('input',{bubbles:true}))});
+              add('主体颜色实时更新',(await page.locator('#bodyShape').getAttribute('fill')).toLowerCase()==='#8b2e2e',await page.locator('#bodyShape').getAttribute('fill'));
+
+              await page.selectOption('#pattern','flow');
+              await page.waitForTimeout(80);
+              add('FLOW纹样生成',await page.locator('#patternLayer path').count()>=8,String(await page.locator('#patternLayer path').count()));
+
+              await page.click('#backBtn');
+              add('背面切换正常',await page.locator('#backGroup').evaluate(el=>getComputedStyle(el).display!=='none'));
+              add('正面切换后隐藏',await page.locator('#frontGroup').evaluate(el=>getComputedStyle(el).display==='none'));
+              await page.click('#frontBtn');
+
+              const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl2L9sAAAAASUVORK5CYII=','base64');
+              await page.locator('#crestFile').setInputFiles({name:'crest.png',mimeType:'image/png',buffer:png});
+              await page.waitForTimeout(250);
+              add('队徽上传后预览',await page.locator('#crestPreview img').count()===1);
+              const db=await page.evaluate(async()=>{const db=await new Promise((res,rej)=>{const r=indexedDB.open('sagi_kit_assets',1);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});const val=await new Promise(res=>{const tx=db.transaction('assets','readonly'),r=tx.objectStore('assets').get('crest');r.onsuccess=()=>res(r.result||'');r.onerror=()=>res('')});db.close();return val.length});
+              add('队徽写入IndexedDB',db>50,String(db));
+
+              await page.fill('#playerName','MARHULAN TEST');
+              await page.click('#saveBtn');
+              await page.fill('#playerName','TEMP');
+              await page.click('#loadBtn');
+              add('保存/读取方案正常',(await page.inputValue('#playerName'))==='MARHULAN TEST',await page.inputValue('#playerName'));
+
+              const svgDownload=page.waitForEvent('download');
+              await page.click('#svgBtn');
+              const sd=await svgDownload;
+              add('SVG可下载',sd.suggestedFilename().endsWith('.svg'),sd.suggestedFilename());
+
+              const pngDownload=page.waitForEvent('download');
+              await page.click('#pngBtn');
+              const pd=await pngDownload;
+              add('PNG可下载',pd.suggestedFilename().endsWith('.png'),pd.suggestedFilename());
+
+              add('厂家参数生成',(await page.locator('#spec').innerText()).includes('主体色：#8b2e2e'),(await page.locator('#spec').innerText()).slice(0,150));
+              await context.close();
+            }catch(e){errs.push('fatal: '+(e.stack||e.message||String(e)))}finally{if(browser)await browser.close()}
+            const failed=out.filter(x=>!x.ok);
+            const lines=['SAGI KIT DESIGNER V1.0 TEST','time='+new Date().toISOString(),'',
+              ...out.map(x=>(x.ok?'PASS':'FAIL')+' | '+x.n+(x.d?' | '+x.d:'')),'','Browser errors:',...(errs.length?errs:['none']),'',
+              'SUMMARY: '+(failed.length===0&&errs.length===0?'PASS':'FAIL')+' ('+(out.length-failed.length)+'/'+out.length+' checks passed)'];
+            fs.writeFileSync('kit-test-result.txt',lines.join('\n'));console.log(lines.join('\n'));
+            if(failed.length||errs.length)process.exitCode=1;
+          })();
+          NODE
+      - name: Commit result
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ -f kit-test-result.txt ]; then
+            git add kit-test-result.txt
+            git commit -m "Record SAGI KIT DESIGNER test result" || exit 0
+            git push
+          fi
