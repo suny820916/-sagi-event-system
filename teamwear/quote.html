@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#090b0f">
+<title>SAGI SPORTS · TEAMWEAR QUOTATION</title>
+<style>
+:root{--bg:#080a0d;--panel:#11151b;--panel2:#0c1015;--line:#29323c;--text:#f4f1e9;--muted:#8d97a2;--gold:#d9b85d;--green:#78c997;--red:#e58c8c;--shadow:0 22px 60px #0006}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(circle at 50% -15%,#262116 0,#0b0e12 28%,#06080b 72%);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",Arial,sans-serif}
+.page{max-width:980px;margin:auto;padding:18px 15px 70px}.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 2px 18px}.brand{font-size:20px;font-weight:1000;letter-spacing:.7px}.brand small{display:block;color:#858f9b;font-size:9px;letter-spacing:2.6px;margin-top:5px}.verified{padding:7px 10px;border-radius:999px;border:1px solid #4a5b4f;color:#9bd9af;background:#102017;font-size:8px;font-weight:1000;letter-spacing:1.4px}
+.hero{position:relative;overflow:hidden;background:linear-gradient(145deg,#15191f,#0b0e12);border:1px solid #343d47;border-radius:24px;padding:22px;box-shadow:var(--shadow)}.hero:before{content:"";position:absolute;width:300px;height:300px;border-radius:50%;background:#d7b55b12;right:-110px;top:-170px}.heroGrid{position:relative;display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center}.team{display:flex;align-items:center;gap:13px}.crest{width:78px;height:78px;flex:0 0 78px;border-radius:18px;border:1px solid #404a54;background:#090c10;display:flex;align-items:center;justify-content:center;overflow:hidden;font-weight:1000;font-size:18px;color:#d8b75e}.crest img{width:100%;height:100%;object-fit:contain}.team h1{margin:0;font-size:27px}.team p{margin:6px 0 0;color:#89949f;font-size:10px;line-height:1.6}.quoteMeta{text-align:right;font-size:9px;color:#828d98;line-height:1.8}.quoteMeta b{color:#e2c671}.amountStrip{position:relative;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:18px}.amount{padding:12px;background:#090d12;border:1px solid #2c3540;border-radius:13px}.amount span{display:block;color:#7e8994;font-size:8px;letter-spacing:1px}.amount b{display:block;margin-top:6px;font-size:20px}.amount.total b{color:#ead077}.amount.deposit b{color:#9edbb6}
+.section{margin-top:13px;background:linear-gradient(180deg,#11161c,#0c1015);border:1px solid #2c3540;border-radius:19px;padding:15px;box-shadow:var(--shadow)}.sectionHead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:11px}.section h2{margin:0;font-size:14px}.eyebrow{font-size:8px;color:#d7b55b;letter-spacing:2px;font-weight:1000}.badge{padding:5px 8px;border:1px solid #3a4650;border-radius:999px;color:#97a2ad;font-size:8px;font-weight:1000}
+.items{display:grid;gap:7px}.item{display:grid;grid-template-columns:1.7fr .55fr .65fr .8fr;gap:7px;align-items:center;padding:10px;border-radius:11px;background:#090d11;border:1px solid #28323b}.itemName{font-size:11px;font-weight:1000}.itemDetail{font-size:8px;color:#76818b;margin-top:3px}.itemCell{font-size:9px;color:#9ba5af;text-align:right}.itemPrice{font-size:11px;font-weight:1000;text-align:right}.neg{color:#94d3ac}
+.specs{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}.spec{padding:10px;border-radius:11px;background:#090d11;border:1px solid #28323b}.spec span{display:block;color:#75808b;font-size:8px}.spec b{display:block;margin-top:5px;font-size:10px}
+.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.plan{display:flex;flex-direction:column;padding:12px;border-radius:14px;background:#090d11;border:1px solid #303a43;min-height:260px}.plan.recommended{border-color:#8b7336;box-shadow:0 0 0 1px #d7b55b18 inset}.plan.selected{border-color:#55916d;box-shadow:0 0 0 2px #78c99725 inset}.planTop{display:flex;justify-content:space-between;gap:8px}.planName{font-size:12px;font-weight:1000}.planTag{font-size:8px;color:#e1c777;border:1px solid #65552c;border-radius:999px;padding:4px 7px;white-space:nowrap}.planItems{display:grid;gap:5px;margin:9px 0}.planItem{display:flex;justify-content:space-between;gap:7px;border-bottom:1px solid #202830;padding:6px 0;font-size:9px;color:#8c97a1}.planItem b{color:#e5e8ea}.planBottom{margin-top:auto}.planPrice{display:flex;justify-content:space-between;align-items:end}.planPrice span{font-size:8px;color:#7d8893}.planPrice b{font-size:19px;color:#e5cb77}.selectBtn,.primaryBtn,.secondaryBtn{width:100%;border:1px solid #3a4651;background:#151b22;color:#eef0f2;border-radius:10px;padding:10px 12px;font-weight:1000;font-size:10px;cursor:pointer}.selectBtn{margin-top:9px}.selectBtn.active{background:#204b35;border-color:#4a8e65;color:#b5e6c6}
+.terms{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.term{padding:11px;background:#090d11;border:1px solid #29333c;border-radius:11px}.term span{display:block;color:#77828c;font-size:8px}.term b{display:block;margin-top:5px;font-size:10px;line-height:1.5}.note{padding:12px;border-radius:11px;background:#0b100e;border:1px solid #2b4436;color:#9ab9a5;font-size:10px;line-height:1.75}
+.confirm{margin-top:13px;background:linear-gradient(135deg,#17130b,#10151b);border:1px solid #65552c;border-radius:20px;padding:16px;box-shadow:var(--shadow)}.confirm h2{margin:0 0 6px;font-size:15px}.confirm p{margin:0;color:#8b95a0;font-size:9px;line-height:1.7}.confirmSelection{margin:11px 0;padding:11px;border-radius:11px;background:#090d11;border:1px solid #303944;display:flex;justify-content:space-between;gap:10px;align-items:center}.confirmSelection span{font-size:9px;color:#84909b}.confirmSelection b{font-size:12px;color:#e6ca76;text-align:right}.confirmActions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.primaryBtn{background:linear-gradient(135deg,#8a6e2c,#d7b55b);color:#111;border-color:#b29242}.secondaryBtn{background:#141a21}
+.contact{margin-top:10px;text-align:center;color:#8f9aa5;font-size:9px}.footer{text-align:center;margin-top:18px;color:#56616c;font-size:8px;line-height:1.7}.error{max-width:600px;margin:15vh auto;padding:25px;border-radius:20px;border:1px solid #523838;background:#1a1010;color:#e2a1a1;text-align:center}.error h1{font-size:18px}.error p{font-size:10px;line-height:1.7}.hidden{display:none!important}
+@media(max-width:760px){.heroGrid{grid-template-columns:1fr}.quoteMeta{text-align:left}.amountStrip{grid-template-columns:1fr 1fr}.amountStrip .total{grid-column:1/3}.plans{grid-template-columns:1fr}.specs,.terms{grid-template-columns:1fr 1fr}.item{grid-template-columns:1.5fr .6fr .8fr}.item .unitCell{display:none}.confirmActions{grid-template-columns:1fr}}@media(max-width:480px){.page{padding:12px 10px 50px}.hero{padding:16px}.team h1{font-size:21px}.crest{width:64px;height:64px;flex-basis:64px}.amount b{font-size:17px}.specs,.terms{grid-template-columns:1fr}.item{grid-template-columns:1.45fr .55fr .75fr}}
+@media print{body{background:#fff;color:#111}.page{max-width:none;padding:0}.topbar,.confirmActions,.selectBtn{display:none!important}.hero,.section,.confirm{box-shadow:none;background:#fff;border-color:#ccc;break-inside:avoid}.amount,.item,.spec,.plan,.term,.confirmSelection,.note{background:#fff;border-color:#ddd}.brand small,.team p,.quoteMeta,.itemDetail,.itemCell,.spec span,.planItem,.term span,.confirm p,.footer,.contact{color:#555}.amount.total b,.planPrice b,.confirmSelection b{color:#111}}
+</style>
+</head>
+<body>
+<div id="app" class="page hidden">
+  <div class="topbar">
+    <div class="brand">SAGI SPORTS<small>TEAMWEAR · CUSTOMER QUOTATION</small></div>
+    <div class="verified">CUSTOMER VIEW</div>
+  </div>
+
+  <section class="hero">
+    <div class="heroGrid">
+      <div class="team">
+        <div id="crest" class="crest">S</div>
+        <div><h1 id="teamName">TEAM</h1><p id="teamMeta">SAGI TEAMWEAR</p></div>
+      </div>
+      <div class="quoteMeta">
+        <div>报价编号 <b id="quoteNo">—</b></div>
+        <div>报价日期 <span id="issuedAt">—</span></div>
+        <div>有效期至 <span id="validUntil">—</span></div>
+      </div>
+    </div>
+    <div class="amountStrip">
+      <div class="amount total"><span>当前订单总价</span><b id="total">¥0</b></div>
+      <div id="depositBox" class="amount deposit"><span>建议定金</span><b id="deposit">¥0</b></div>
+      <div id="balanceBox" class="amount"><span>预计尾款</span><b id="balance">¥0</b></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="sectionHead"><div><div class="eyebrow">QUOTATION DETAILS</div><h2>当前报价明细</h2></div><span id="itemCount" class="badge">0 ITEMS</span></div>
+    <div id="items" class="items"></div>
+  </section>
+
+  <section class="section">
+    <div class="sectionHead"><div><div class="eyebrow">DESIGN PROFILE</div><h2>球队定制信息</h2></div><span class="badge">SAGI CUSTOM</span></div>
+    <div class="specs">
+      <div class="spec"><span>主色 / 辅色</span><b id="colors">—</b></div>
+      <div class="spec"><span>胸前文字 / 赞助商</span><b id="frontText">以确认稿为准</b></div>
+      <div class="spec"><span>姓名规则</span><b id="nameRule">以确认稿为准</b></div>
+      <div class="spec"><span>号码字体</span><b id="numberStyle">SAGI TEAMWEAR</b></div>
+    </div>
+  </section>
+
+  <section id="plansSection" class="section hidden">
+    <div class="sectionHead"><div><div class="eyebrow">OPTIONAL PACKAGES</div><h2>可选球队套餐</h2></div><span class="badge">A / B / C</span></div>
+    <div id="plans" class="plans"></div>
+  </section>
+
+  <section class="section">
+    <div class="sectionHead"><div><div class="eyebrow">ORDER TERMS</div><h2>报价说明</h2></div></div>
+    <div class="terms">
+      <div class="term"><span>计划交付</span><b id="deadline">—</b></div>
+      <div class="term"><span>物流规则</span><b id="shippingPolicy">运费另计</b></div>
+      <div class="term"><span>付款方式</span><b id="paymentTerm">定金后排产</b></div>
+    </div>
+    <div id="publicNote" class="note" style="margin-top:8px"></div>
+  </section>
+
+  <section class="confirm">
+    <h2>确认合作意向</h2>
+    <p>如方案与价格确认无误，可复制确认信息发送给 SAGI。正式生产前仍需确认最终设计稿、尺码名单及订单细节。</p>
+    <div class="confirmSelection"><span>当前意向</span><b id="selectedPlan">当前报价方案</b></div>
+    <div class="confirmActions">
+      <button id="copyConfirm" class="primaryBtn" type="button">复制确认信息</button>
+      <button id="printQuote" class="secondaryBtn" type="button">打印 / 保存 PDF</button>
+    </div>
+    <div id="contact" class="contact"></div>
+  </section>
+
+  <div class="footer">SAGI SPORTS · 为球队建立属于自己的赛季视觉与装备系统<br>本页面为客户报价展示页，不包含内部成本与利润信息。</div>
+</div>
+
+<div id="error" class="error hidden">
+  <h1>报价链接无法读取</h1>
+  <p>这个链接可能不完整、已经被截断，或不是 SAGI TEAMWEAR 客户报价链接。请联系 SAGI 获取新的报价链接。</p>
+</div>
+
+<script>
+(()=>{'use strict';
+const q=id=>document.getElementById(id);
+let data=null,selectedPackage=null;
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money=n=>'¥'+Math.round(Number(n)||0).toLocaleString('zh-CN');
+
+function decodePayload(){
+ try{
+  const m=location.hash.match(/(?:^#|&)q=([^&]+)/);if(!m)return null;
+  let s=m[1].replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';
+  const bin=atob(s),bytes=Uint8Array.from(bin,c=>c.charCodeAt(0)),obj=JSON.parse(new TextDecoder().decode(bytes));
+  if(!obj||obj.schema!=='SAGI-CUSTOMER-QUOTE-1')return null;return obj
+ }catch(e){return null}
+}
+function renderCrest(){
+ const el=q('crest');if(data.logo&&/^data:image\//.test(data.logo)){el.innerHTML='<img alt="Team crest" src="'+data.logo+'">';return}
+ const t=(data.teamName||'S').trim();el.textContent=(t[0]||'S').toUpperCase()
+}
+function renderItems(){
+ const w=q('items'),items=Array.isArray(data.items)?data.items:[];q('itemCount').textContent=items.length+' ITEMS';
+ w.innerHTML=items.length?items.map(x=>'<div class="item"><div><div class="itemName">'+esc(x.name)+'</div><div class="itemDetail">'+esc(x.detail||'SAGI TEAMWEAR')+'</div></div><div class="itemCell">'+esc(x.qty)+' '+esc(x.unit||'件')+'</div><div class="itemCell unitCell">'+money(x.unitPrice)+'/件</div><div class="itemPrice '+(Number(x.subtotal)<0?'neg':'')+'">'+(Number(x.subtotal)<0?'- ':'')+money(Math.abs(Number(x.subtotal)||0))+'</div></div>').join(''):'<div class="note">当前没有公开产品明细，请联系 SAGI 确认。</div>'
+}
+function choosePackage(index){
+ const p=data.packages[index];if(!p)return;selectedPackage=p;
+ document.querySelectorAll('.plan').forEach((el,i)=>el.classList.toggle('selected',i===index));
+ document.querySelectorAll('.selectBtn').forEach((el,i)=>{el.classList.toggle('active',i===index);el.textContent=i===index?'已选择此方案':'选择此方案'});
+ q('selectedPlan').textContent=p.label+' · '+money(p.teamTotal)
+}
+function renderPlans(){
+ const list=Array.isArray(data.packages)?data.packages:[],sec=q('plansSection'),w=q('plans');
+ if(!list.length){sec.classList.add('hidden');return}sec.classList.remove('hidden');
+ w.innerHTML=list.map((p,i)=>'<div class="plan '+(p.kind==='recommended'?'recommended':'')+'"><div class="planTop"><div><div class="planName">'+esc(p.label)+'</div><div class="itemDetail">'+esc(p.teamSize)+'人球队方案</div></div>'+(p.kind==='recommended'?'<span class="planTag">推荐</span>':'')+'</div><div class="planItems">'+(p.items||[]).map(x=>'<div class="planItem"><span>'+esc(x.name)+'</span><b>'+money(x.unitPrice)+'/人</b></div>').join('')+'</div><div class="planBottom"><div class="planPrice"><span>人均 '+money(p.perPerson)+'</span><b>'+money(p.teamTotal)+'</b></div><button class="selectBtn" data-i="'+i+'" type="button">选择此方案</button></div></div>').join('');
+ w.querySelectorAll('.selectBtn').forEach(btn=>btn.onclick=()=>choosePackage(Number(btn.dataset.i)));
+ const rec=list.findIndex(x=>x.kind==='recommended');if(rec>=0)choosePackage(rec)
+}
+function confirmationText(){
+ const plan=selectedPackage?(selectedPackage.label+'，球队总价 '+money(selectedPackage.teamTotal)):'当前报价方案，总价 '+money(data.total);
+ return [
+  'SAGI TEAMWEAR 报价确认',
+  '球队：'+(data.teamName||''),
+  '报价编号：'+(data.quoteNo||''),
+  '确认方案：'+plan,
+  '计划交付：'+(data.deadline||'待确认'),
+  '我方希望按以上方案继续确认设计稿、尺码名单及订单细节。'
+ ].join('\n')
+}
+async function copyText(t){
+ try{await navigator.clipboard.writeText(t);return true}catch(e){const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();const ok=document.execCommand('copy');ta.remove();return ok}
+}
+function render(){
+ data=decodePayload();if(!data){q('error').classList.remove('hidden');return}
+ q('app').classList.remove('hidden');document.title=(data.teamName||'球队')+' · SAGI TEAMWEAR 报价';
+ renderCrest();q('teamName').textContent=data.teamName||'球队';q('teamMeta').textContent=(data.meta||[]).join(' · ')||'SAGI TEAMWEAR';
+ q('quoteNo').textContent=data.quoteNo||'—';q('issuedAt').textContent=data.issuedAt||'—';q('validUntil').textContent=data.validUntil||'—';
+ q('total').textContent=money(data.total);q('deposit').textContent=money(data.deposit);q('balance').textContent=money(data.balance);
+ if(!data.showPayment){q('depositBox').classList.add('hidden');q('balanceBox').classList.add('hidden')}
+ renderItems();q('colors').textContent=(data.colors||[]).join(' / ')||'以确认稿为准';q('frontText').textContent=data.frontText||'以确认稿为准';q('nameRule').textContent=data.nameRule||'以确认稿为准';q('numberStyle').textContent=data.numberStyle||'SAGI TEAMWEAR';
+ renderPlans();q('deadline').textContent=data.deadline||'以最终确认订单为准';q('shippingPolicy').textContent=data.shippingPolicy||'运费另计';q('paymentTerm').textContent=data.showPayment?('定金 '+(data.depositRate||50)+'% 后进入排产'):'付款方式与 SAGI 确认';
+ q('publicNote').textContent=data.publicNote||'最终产品以确认稿和订单为准。';q('contact').textContent=data.contact?('联系：'+data.contact):'请与 SAGI SPORTS 确认订单';
+ q('copyConfirm').onclick=async()=>{const ok=await copyText(confirmationText());q('copyConfirm').textContent=ok?'已复制 · 发送给 SAGI':'复制失败';setTimeout(()=>q('copyConfirm').textContent='复制确认信息',1600)};
+ q('printQuote').onclick=()=>window.print()
+}
+render();
+})();
+</script>
+</body>
+</html>
