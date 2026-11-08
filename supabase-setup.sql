@@ -17,7 +17,7 @@ create or replace function public.sagi_get_event(p_slug text)
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare r public.sagi_events;
 begin
@@ -40,7 +40,7 @@ create or replace function public.sagi_claim_event(
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare r public.sagi_events;
 begin
@@ -79,7 +79,7 @@ create or replace function public.sagi_save_event(
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare r public.sagi_events;
 begin
