@@ -344,10 +344,10 @@ function stashActiveTeam(){
 }
 function refreshSideUI(){
  q('homeSideBtn').classList.toggle('on',activeSide==='HOME');q('awaySideBtn').classList.toggle('on',activeSide==='AWAY');
- q('activeSideBadge').textContent=sideLabel(activeSide);q('rosterSideText').textContent=sideLabel(activeSide);
+ q('activeSideBadge').textContent=sideLabel(activeSide);q('rosterSideText').textContent=sideLabel(activeSide);q('stage').dataset.side=activeSide;
 }
 function switchTeam(side,opts={}){
- if(side!=='HOME'&&side!=='AWAY')return;stashActiveTeam();activeSide=side;const t=teamStore[side];
+ if(side!=='HOME'&&side!=='AWAY')return;if(!opts.skipStash)stashActiveTeam();activeSide=side;const t=teamStore[side];
  roster=t.roster||[];q('formation').value=t.formation||'4-3-3';assets.crest=t.crest||'';
  q('teamName').value=side==='HOME'?(q('matchHome').value||'HOME'):(q('matchAway').value||'AWAY');
  selected=roster.length?0:-1;if(selected>=0)writePlayer(roster[0]);else{assets.photo='';assets.mediaBlob=null;assets.mediaObjectUrl='';renderPreviews()}
@@ -618,7 +618,7 @@ async function load(){
   teamStore.AWAY={formation:x.teams?.AWAY?.formation||'4-3-3',roster:await hydrateRoster(x.teams?.AWAY?.roster||[]),crest:await dbGet('crest:AWAY')||''};
   assets.bg=await dbGet('stadium');assets.eventLogo=await dbGet('eventLogo');assets.musicBlob=await dbGet('showMusic');assets.musicObjectUrl=assets.musicBlob instanceof Blob?URL.createObjectURL(assets.musicBlob):'';
   const storedShow=JSON.parse(localStorage.getItem('sagi_show_director_v36')||'null');if(Array.isArray(storedShow)&&storedShow.length)showSteps=storedShow.map(s=>({...s,duration:Math.max(500,Number(s.duration)||1000),enabled:s.enabled!==false}));
-  switchTeam(x.activeSide||'HOME',{silent:true});renderPreviews();renderShowTimeline();syncMatchStage();note('V3.6 双队阵容、音频与SHOW已读取')
+  switchTeam(x.activeSide||'HOME',{silent:true,skipStash:true});renderPreviews();renderShowTimeline();syncMatchStage();note('V3.6 双队阵容、音频与SHOW已读取')
  }catch(e){note('读取失败')}
 }
 
