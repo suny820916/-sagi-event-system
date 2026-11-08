@@ -1,0 +1,147 @@
+name: SAGI PLAYER INTRO V2.1 test
+
+on:
+  push:
+    paths:
+      - 'intro/v21.html'
+      - 'intro/vmix-v21.html'
+      - '.github/workflows/intro-v21-e2e.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  v21-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Prepare Chrome
+        run: |
+          npm install --no-save playwright@1.56.1
+          CHROME_BIN="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          echo "CHROME_BIN=$CHROME_BIN" >> "$GITHUB_ENV"
+          test -n "$CHROME_BIN"
+      - name: Run V2.1 lineup tests
+        shell: bash
+        run: |
+          python3 -m http.server 8080 --bind 127.0.0.1 >/tmp/intro-v21-http.log 2>&1 &
+          sleep 2
+          node <<'NODE'
+          const fs=require('fs');
+          const {chromium}=require('playwright');
+          (async()=>{
+            const out=[],errs=[];const add=(n,ok,d='')=>out.push({n,ok:!!ok,d});let browser;
+            try{
+              browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_BIN,args:['--no-sandbox','--disable-dev-shm-usage']});
+              const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
+              const page=await context.newPage();
+              page.on('pageerror',e=>errs.push('pageerror: '+e.message));
+              page.on('console',m=>{if(m.type()==='error'&&!m.text().includes('Failed to load resource'))errs.push('console: '+m.text())});
+              const r=await page.goto('http://127.0.0.1:8080/intro/v21.html',{waitUntil:'networkidle'});
+              add('页面HTTP 200',r&&r.status()===200,String(r&&r.status()));
+              add('标题V2.1',(await page.title())==='SAGI PLAYER INTRO V2.1',await page.title());
+              add('手机端无横向溢出',await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+4),await page.evaluate(()=>document.documentElement.scrollWidth+' / '+innerWidth));
+              
+              const rows=await page.locator('#roster .playerRow').count();
+              add('示例名单共16人',rows===16,String(rows));
+              const metas=await page.locator('#roster .pmeta').allTextContents();
+              add('首发11人+替补5人',metas.filter(x=>!x.startsWith('SUB')).length===11&&metas.filter(x=>x.startsWith('SUB')).length===5,metas.join('|'));
+              add('队长C存在',(await page.locator('#roster .pname').allTextContents()).some(x=>x.includes('C')));
+              add('球员数据存在',metas.some(x=>x.includes('GOALS'))&&metas.some(x=>x.includes('ASSISTS'))&&metas.some(x=>x.includes('CLEAN SHEETS')),metas.join('|'));
+
+              await page.locator('#gkBtn').scrollIntoViewIfNeeded();await page.click('#gkBtn');await page.waitForTimeout(180);
+              add('门将单独出现',await page.locator('#playersArea .playerCard').count()===1);
+              add('门将数据显示',await page.locator('#playersArea .statPill').count()===1,String(await page.locator('#playersArea .statPill').count()));
+
+              await page.click('#dfBtn');await page.waitForTimeout(180);
+              add('4名后卫组合',await page.locator('#playersArea .playerCard').count()===4);
+              add('后卫阵型4点高亮',await page.locator('#formationNodes .node.active').count()===4);
+              add('阵型点原生动画启动',await page.locator('#formationNodes .node.active').first().evaluate(el=>el.getAnimations&&el.getAnimations().length>0));
+
+              await page.click('#mfBtn');await page.waitForTimeout(180);
+              add('3名中场组合',await page.locator('#playersArea .playerCard').count()===3);
+              add('中场数据卡存在',await page.locator('#playersArea .statPill').count()===3,String(await page.locator('#playersArea .statPill').count()));
+
+              await page.click('#fwBtn');await page.waitForTimeout(180);
+              add('3名前锋组合',await page.locator('#playersArea .playerCard').count()===3);
+              add('前锋GOALS数据存在',(await page.locator('#playersArea').textContent()).includes('GOALS'));
+
+              await page.click('#fullBtn');await page.waitForTimeout(180);
+              add('完整首发仍为11人',await page.locator('#fullList .fullRow').count()===11,String(await page.locator('#fullList .fullRow').count()));
+              add('完整阵型11点全亮',await page.locator('#formationNodes .node.active').count()===11);
+              add('完整首发显示队长C',await page.locator('#fullList .captainBadge').count()===1,String(await page.locator('#fullList .captainBadge').count()));
+
+              await page.click('#subsBtn');await page.waitForTimeout(180);
+              add('替补画面5人',await page.locator('#subList .subRow').count()===5,String(await page.locator('#subList .subRow').count()));
+              add('替补标题正确',(await page.locator('#groupName').textContent())==='SUBSTITUTES',await page.locator('#groupName').textContent());
+
+              await page.click('#autoBtn');await page.waitForTimeout(180);
+              add('自动播放升级为7段',(await page.locator('#status').textContent()).includes('/ 7'),await page.locator('#status').textContent());
+              await page.click('#stopBtn');
+
+              const link=await page.evaluate(()=>new URL('./vmix-v21.html',location.href).toString());
+              add('V2.1 vMix链接正确',link.includes('vmix-v21.html'),link);
+
+              const state={commandId:'v21_test_1',group:'DF',team:'TARLAN FC',formation:'4-3-3',
+                players:[
+                  {name:'DIAS',number:'2',role:'DF',position:'RB',captain:false,statLabel:'APPS',statValue:'12',photo:''},
+                  {name:'NURLAN',number:'4',role:'DF',position:'CB',captain:true,statLabel:'APPS',statValue:'14',photo:''},
+                  {name:'ALMAS',number:'5',role:'DF',position:'CB',captain:false,statLabel:'APPS',statValue:'13',photo:''},
+                  {name:'ERLAN',number:'3',role:'DF',position:'LB',captain:false,statLabel:'APPS',statValue:'11',photo:''}
+                ],
+                allPlayers:[
+                  {name:'AZAMAT',number:'1',role:'GK',position:'GK',captain:false,statLabel:'CLEAN SHEETS',statValue:'6'},
+                  {name:'DIAS',number:'2',role:'DF',position:'RB',captain:false,statLabel:'APPS',statValue:'12'},
+                  {name:'NURLAN',number:'4',role:'DF',position:'CB',captain:true,statLabel:'APPS',statValue:'14'},
+                  {name:'ALMAS',number:'5',role:'DF',position:'CB',captain:false,statLabel:'APPS',statValue:'13'},
+                  {name:'ERLAN',number:'3',role:'DF',position:'LB',captain:false,statLabel:'APPS',statValue:'11'},
+                  {name:'SULTAN',number:'6',role:'MF',position:'CM',captain:false,statLabel:'ASSISTS',statValue:'5'},
+                  {name:'MARHULAN',number:'8',role:'MF',position:'CM',captain:false,statLabel:'APPS',statValue:'14'},
+                  {name:'ASLAN',number:'10',role:'MF',position:'AM',captain:false,statLabel:'GOALS',statValue:'7'},
+                  {name:'DANIYAR',number:'7',role:'FW',position:'RW',captain:false,statLabel:'GOALS',statValue:'8'},
+                  {name:'ARDAK',number:'9',role:'FW',position:'ST',captain:false,statLabel:'GOALS',statValue:'12'},
+                  {name:'TIMUR',number:'11',role:'FW',position:'LW',captain:false,statLabel:'GOALS',statValue:'6'}
+                ],
+                substitutes:[
+                  {name:'BEK',number:'12',role:'GK',position:'GK',statLabel:'APPS',statValue:'3'},
+                  {name:'RUSLAN',number:'14',role:'DF',position:'CB',statLabel:'APPS',statValue:'6'},
+                  {name:'ILIAS',number:'16',role:'MF',position:'CM',statLabel:'ASSISTS',statValue:'2'},
+                  {name:'SAMAT',number:'18',role:'FW',position:'ST',statLabel:'GOALS',statValue:'3'},
+                  {name:'AMAN',number:'20',role:'FW',position:'RW',statLabel:'APPS',statValue:'5'}
+                ],crest:'',stadium:'',background:'stadium',duration:4000};
+              await context.route('**/rest/v1/rpc/sagi_get_event',async route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({slug:'tacheng-winter-2026',revision:1,payload:{lineupIntro:state}})}));
+              const vmix=await context.newPage();const vr=await vmix.goto('http://127.0.0.1:8080/intro/vmix-v21.html',{waitUntil:'domcontentloaded'});
+              add('V2.1 vMix页HTTP 200',vr&&vr.status()===200,String(vr&&vr.status()));await vmix.waitForTimeout(950);
+              add('vMix后卫4人',await vmix.locator('#players .card').count()===4);
+              add('vMix显示队长C',await vmix.locator('#players .captainBadge').count()===1,String(await vmix.locator('#players .captainBadge').count()));
+              add('vMix显示核心数据',await vmix.locator('#players .statPill').count()===4,String(await vmix.locator('#players .statPill').count()));
+              add('vMix阵型队长点有C',await vmix.locator('#nodes .captainNode').count()===1,String(await vmix.locator('#nodes .captainNode').count()));
+
+              state.commandId='v21_test_2';state.group='SUB';state.players=state.substitutes;
+              await context.unroute('**/rest/v1/rpc/sagi_get_event');
+              await context.route('**/rest/v1/rpc/sagi_get_event',async route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({slug:'tacheng-winter-2026',revision:2,payload:{lineupIntro:state}})}));
+              await vmix.waitForTimeout(900);
+              add('vMix替补画面5人',await vmix.locator('#subList .subRow').count()===5,String(await vmix.locator('#subList .subRow').count()));
+              add('vMix替补标题正确',(await vmix.locator('#groupName').textContent())==='SUBSTITUTES',await vmix.locator('#groupName').textContent());
+
+              await context.close();
+            }catch(e){errs.push('fatal: '+(e.stack||e.message||String(e)))}finally{if(browser)await browser.close()}
+            const failed=out.filter(x=>!x.ok),lines=['SAGI PLAYER INTRO V2.1 TEST','time='+new Date().toISOString(),'',
+              ...out.map(x=>(x.ok?'PASS':'FAIL')+' | '+x.n+(x.d?' | '+x.d:'')),'','Browser errors:',...(errs.length?errs:['none']),'',
+              'SUMMARY: '+(failed.length===0&&errs.length===0?'PASS':'FAIL')+' ('+(out.length-failed.length)+'/'+out.length+' checks passed)'];
+            fs.writeFileSync('intro-v21-test-result.txt',lines.join('\n'));console.log(lines.join('\n'));if(failed.length||errs.length)process.exitCode=1;
+          })();
+          NODE
+      - name: Commit result
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ -f intro-v21-test-result.txt ]; then
+            git add intro-v21-test-result.txt
+            git commit -m "Record SAGI PLAYER INTRO V2.1 test result" || exit 0
+            git push
+          fi
