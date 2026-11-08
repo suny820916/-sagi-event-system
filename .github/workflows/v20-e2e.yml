@@ -1,0 +1,165 @@
+name: V2.0 end-to-end browser test
+
+on:
+  push:
+    paths:
+      - '.github/workflows/v20-e2e.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Playwright
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+
+      - name: Run V2.0 mobile browser tests
+        shell: bash
+        run: |
+          python3 -m http.server 8080 --bind 127.0.0.1 >/tmp/sagi-http.log 2>&1 &
+          sleep 2
+          node <<'NODE'
+          const fs = require('fs');
+          const { chromium } = require('playwright');
+
+          (async () => {
+            const results = [];
+            const errors = [];
+            const add = (name, ok, detail='') => results.push({name, ok: !!ok, detail});
+            let browser;
+            try {
+              browser = await chromium.launch({headless:true});
+              const context = await browser.newContext({
+                viewport:{width:390,height:844},
+                isMobile:true,
+                hasTouch:true
+              });
+              const page = await context.newPage();
+              page.on('pageerror', e => errors.push('pageerror: '+e.message));
+              page.on('console', m => {
+                if (m.type()==='error') errors.push('console: '+m.text());
+              });
+              page.on('dialog', async d => { await d.accept(); });
+
+              const resp = await page.goto('http://127.0.0.1:8080/v20.html?v=e2e', {waitUntil:'networkidle'});
+              add('管理端页面 HTTP 200', resp && resp.status()===200, resp ? String(resp.status()) : 'no response');
+              add('页面标题 V2.0', (await page.title()).includes('V2.0'), await page.title());
+
+              await page.waitForTimeout(500);
+              add('球队资料渲染 8 张卡片', await page.locator('#teamCards .teamCard').count()===8, String(await page.locator('#teamCards .teamCard').count()));
+              add('球队下拉框 8 个选项', await page.locator('#rosterTeam option').count()===8, String(await page.locator('#rosterTeam option').count()));
+              add('球队快捷按钮 8 个', await page.locator('#teamPickButtons button').count()===8, String(await page.locator('#teamPickButtons button').count()));
+
+              await page.fill('#date','2026-11-14');
+              await page.click('#gen');
+              await page.waitForTimeout(250);
+              add('生成单循环 28 场', await page.locator('#matchList .match').count()===28, String(await page.locator('#matchList .match').count()));
+              add('生成 7 周赛程', await page.locator('#matchList .week').count()===7, String(await page.locator('#matchList .week').count()));
+
+              await page.click('.nav button[data-tab="event"]');
+              await page.click('#demo');
+              await page.waitForTimeout(250);
+              add('示例球队名称载入', (await page.locator('#rosterTeam option').first().innerText())==='A塔尔兰', await page.locator('#rosterTeam option').first().innerText());
+              add('示例球员可显示', await page.locator('#playerList .playerItem').count()===3, String(await page.locator('#playerList .playerItem').count()));
+
+              await page.click('.nav button[data-tab="matches"]');
+              const scoreInputs = page.locator('#matchList .match').first().locator('input[data-score]');
+              add('示例首场比分 2:1', (await scoreInputs.nth(0).inputValue())==='2' && (await scoreInputs.nth(1).inputValue())==='1',
+                (await scoreInputs.nth(0).inputValue())+':'+(await scoreInputs.nth(1).inputValue()));
+              add('示例首场 4 条比赛事件', (await page.locator('#matchList .match').first().innerText()).includes('比赛事件（4）'), '');
+
+              await page.click('.nav button[data-tab="data"]');
+              await page.click('#dataScorerBtn');
+              add('射手榜根据进球事件生成', (await page.locator('#dataWrap').innerText()).includes('1 球'), (await page.locator('#dataWrap').innerText()).slice(0,180));
+
+              await page.click('.nav button[data-tab="poster"]');
+              await page.selectOption('#posterType','result');
+              await page.click('#previewPoster');
+              await page.waitForTimeout(250);
+              const canvasInfo = await page.evaluate(() => {
+                const c=document.getElementById('posterCanvas');
+                return {w:c.width,h:c.height,len:c.toDataURL('image/png').length};
+              });
+              add('海报画布 1080×1920', canvasInfo.w===1080 && canvasInfo.h===1920, JSON.stringify(canvasInfo));
+              add('海报可实际渲染 PNG', canvasInfo.len>10000, 'dataURL length '+canvasInfo.len);
+
+              await page.click('.nav button[data-tab="tools"]');
+              const cloudUrl = await page.inputValue('#cloudUrl');
+              const cloudKey = await page.inputValue('#cloudKey');
+              add('Supabase Project URL 正确预填', cloudUrl==='https://zgqrjuwltbnkgovtsccb.supabase.co', cloudUrl);
+              add('Publishable Key 已预填', cloudKey.startsWith('sb_publishable_'), cloudKey.slice(0,18)+'…');
+
+              const cloudRead = await page.evaluate(async () => {
+                try {
+                  const url=document.getElementById('cloudUrl').value;
+                  const key=document.getElementById('cloudKey').value;
+                  const slug=document.getElementById('cloudSlug').value;
+                  const r=await window.SagiCloud.getEvent(slug,{url,key,eventSlug:slug});
+                  return {ok:true, value:r===null?'null':'object'};
+                } catch(e) {
+                  return {ok:false,error:e.message||String(e)};
+                }
+              });
+              add('浏览器跨域读取 Supabase 成功', cloudRead.ok, JSON.stringify(cloudRead));
+
+              const manifest = await page.evaluate(async () => {
+                const r=await fetch('./manifest-v20.webmanifest');
+                return {status:r.status, json:await r.json()};
+              });
+              add('PWA manifest 可读取', manifest.status===200 && manifest.json.start_url==='./v20.html', JSON.stringify({status:manifest.status,start_url:manifest.json.start_url}));
+
+              const pub = await context.newPage();
+              const pubErr=[]; pub.on('pageerror',e=>pubErr.push(e.message));
+              const pr=await pub.goto('http://127.0.0.1:8080/public.html', {waitUntil:'networkidle'});
+              add('公开赛事页可打开', pr && pr.status()===200 && pubErr.length===0, 'status '+(pr&&pr.status())+' errors '+pubErr.join('|'));
+
+              const vmix = await context.newPage();
+              const vmErr=[]; vmix.on('pageerror',e=>vmErr.push(e.message));
+              const vr=await vmix.goto('http://127.0.0.1:8080/vmix.html', {waitUntil:'networkidle'});
+              add('vMix 页面可打开', vr && vr.status()===200 && vmErr.length===0, 'status '+(vr&&vr.status())+' errors '+vmErr.join('|'));
+
+              await context.close();
+            } catch(e) {
+              errors.push('fatal: '+(e.stack||e.message||String(e)));
+            } finally {
+              if (browser) await browser.close();
+            }
+
+            const failed = results.filter(x=>!x.ok);
+            const lines = [
+              'SAGI EVENT SYSTEM V2.0 E2E RESULT',
+              'time='+new Date().toISOString(),
+              '',
+              ...results.map(x => (x.ok?'PASS':'FAIL')+' | '+x.name+(x.detail?' | '+x.detail:'')),
+              '',
+              'Browser errors:',
+              ...(errors.length?errors:['none']),
+              '',
+              'SUMMARY: '+(failed.length===0 && errors.length===0 ? 'PASS' : 'FAIL')+
+              ' ('+(results.length-failed.length)+'/'+results.length+' checks passed)'
+            ];
+            fs.writeFileSync('v20-e2e-result.txt', lines.join('\n'));
+            console.log(lines.join('\n'));
+            if (failed.length || errors.length) process.exitCode=1;
+          })();
+          NODE
+
+      - name: Commit test result
+        if: always()
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add v20-e2e-result.txt
+          git commit -m "Record V2.0 end-to-end test result" || exit 0
+          git push
