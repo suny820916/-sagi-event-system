@@ -1,4 +1,4 @@
-name: SAGI KIT DESIGNER V1.1 test
+name: SAGI KIT DESIGNER V1.2 test
 
 on:
   push:
@@ -23,8 +23,7 @@ jobs:
           CHROME_BIN="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
           echo "CHROME_BIN=$CHROME_BIN" >> "$GITHUB_ENV"
           test -n "$CHROME_BIN"
-          "$CHROME_BIN" --version
-      - name: Run V1.1 cut-piece tests
+      - name: Run V1.2 factory pattern tests
         shell: bash
         run: |
           python3 -m http.server 8080 --bind 127.0.0.1 >/tmp/kit-http.log 2>&1 &
@@ -41,81 +40,74 @@ jobs:
               const page=await context.newPage();
               page.on('pageerror',e=>errs.push('pageerror: '+e.message));
               page.on('console',m=>{if(m.type()==='error')errs.push('console: '+m.text())});
-              const r=await page.goto('http://127.0.0.1:8080/kit/',{waitUntil:'networkidle'});
+              const r=await page.goto('http://127.0.0.1:8080/kit/v12.html',{waitUntil:'networkidle'});
               add('页面HTTP 200',r&&r.status()===200,String(r&&r.status()));
-              add('标题V1.1',(await page.title())==='SAGI KIT DESIGNER V1.1',await page.title());
-              add('默认裁片模式',await page.locator('#cutView').evaluate(el=>getComputedStyle(el).display!=='none'));
-              add('前片存在',await page.locator('#frontShape').count()===1);
-              add('后片存在',await page.locator('#backShape').count()===1);
-              add('肩袖裁片存在',await page.locator('#sleeveShape').count()===1);
-              add('袖口裁片存在',await page.locator('#cuffShape').count()===1);
-              add('宽领口存在',await page.locator('#collarWide').count()===1);
-              add('窄领口存在',await page.locator('#collarNarrow').count()===1);
+              add('标题V1.2',(await page.title())==='SAGI KIT DESIGNER V1.2',await page.title());
+              add('默认纸样生产板',await page.locator('#paperView').evaluate(el=>getComputedStyle(el).display!=='none'));
 
-              await page.locator('#collarWideColor').evaluate(el=>{el.value='#123456';el.dispatchEvent(new Event('input',{bubbles:true}))});
-              await page.locator('#collarNarrowColor').evaluate(el=>{el.value='#abcdef';el.dispatchEvent(new Event('input',{bubbles:true}))});
-              add('双层领口可独立改色',(await page.locator('#collarWide').getAttribute('fill'))==='#123456'&&(await page.locator('#collarNarrow').getAttribute('fill'))==='#abcdef',
-                (await page.locator('#collarWide').getAttribute('fill'))+' / '+(await page.locator('#collarNarrow').getAttribute('fill')));
+              for(const id of ['front','back','sleeve','cuff','collarWide','collarNarrow']){
+                add('裁片存在 '+id,await page.locator('#piece-'+id).count()===1);
+              }
 
-              await page.locator('#frontColor').evaluate(el=>{el.value='#8b2e2e';el.dispatchEvent(new Event('input',{bubbles:true}))});
-              await page.locator('#backColor').evaluate(el=>{el.value='#702629';el.dispatchEvent(new Event('input',{bubbles:true}))});
-              await page.locator('#sleeveColor').evaluate(el=>{el.value='#5b1f23';el.dispatchEvent(new Event('input',{bubbles:true}))});
-              await page.locator('#cuffColor').evaluate(el=>{el.value='#1f5b46';el.dispatchEvent(new Event('input',{bubbles:true}))});
-              add('四类主裁片独立配色',
-                (await page.locator('#frontShape').getAttribute('fill')).toLowerCase()==='#8b2e2e' &&
-                (await page.locator('#backShape').getAttribute('fill')).toLowerCase()==='#702629' &&
-                (await page.locator('#sleeveShape').getAttribute('fill')).toLowerCase()==='#5b1f23' &&
-                (await page.locator('#cuffShape').getAttribute('fill')).toLowerCase()==='#1f5b46');
+              add('纸样默认锁定',await page.isChecked('#patternLocked'));
+              add('锁定时位置不可编辑',await page.locator('#pieceX').isDisabled()&&await page.locator('#pieceW').isDisabled());
 
+              await page.uncheck('#patternLocked');
+              await page.fill('#pieceX','45');
+              await page.fill('#pieceY','205');
+              add('解锁后可改前片坐标',(await page.locator('#piece-front').getAttribute('transform')).includes('translate(45 205)'),await page.locator('#piece-front').getAttribute('transform'));
+
+              await page.check('#patternLocked');
+              await page.click('[data-piece="collarWide"]');
+              await page.locator('#pieceColor').evaluate(el=>{el.value='#145b46';el.dispatchEvent(new Event('input',{bubbles:true}))});
+              await page.click('[data-piece="collarNarrow"]');
+              await page.locator('#pieceColor').evaluate(el=>{el.value='#f5ebdd';el.dispatchEvent(new Event('input',{bubbles:true}))});
+              add('双层领口独立配色',(await page.locator('#collarWideShape').getAttribute('fill')).toLowerCase()==='#145b46'&&(await page.locator('#collarNarrowShape').getAttribute('fill')).toLowerCase()==='#f5ebdd');
+
+              await page.click('[data-piece="front"]');
               await page.selectOption('#patternType','flow');
-              await page.locator('#patternOpacity').evaluate(el=>{el.value='20';el.dispatchEvent(new Event('input',{bubbles:true}))});
-              add('前片纹样单独生成',await page.locator('#frontPattern path').count()>0,String(await page.locator('#frontPattern path').count()));
+              add('前片独立纹样',await page.locator('#frontPattern path').count()>0,String(await page.locator('#frontPattern path').count()));
               await page.click('[data-piece="back"]');
               await page.selectOption('#patternType','weave');
-              add('后片可设置独立纹样',await page.locator('#backPattern line').count()>10,String(await page.locator('#backPattern line').count()));
+              add('后片独立纹样',await page.locator('#backPattern line').count()>10,String(await page.locator('#backPattern line').count()));
               await page.click('[data-piece="sleeve"]');
               await page.selectOption('#patternType','diag');
-              add('肩袖可设置独立纹样',await page.locator('#sleevePatternLayer line').count()>10,String(await page.locator('#sleevePatternLayer line').count()));
+              add('肩袖独立纹样',await page.locator('#sleevePattern line').count()>10,String(await page.locator('#sleevePattern line').count()));
 
-              await page.click('#previewModeBtn');
-              add('成衣预览可切换',await page.locator('#previewView').evaluate(el=>getComputedStyle(el).display!=='none'));
-              add('裁片模式切换后隐藏',await page.locator('#cutView').evaluate(el=>getComputedStyle(el).display==='none'));
-              await page.click('#cutModeBtn');
-
+              await page.fill('#crestX','88'); await page.fill('#crestY','118'); await page.fill('#crestW','30');
               const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl2L9sAAAAASUVORK5CYII=','base64');
               await page.locator('#crestFile').setInputFiles({name:'crest.png',mimeType:'image/png',buffer:png});
-              await page.waitForTimeout(250);
-              add('队徽上传到前片',await page.locator('#frontCrest image').count()===1);
-              add('队徽预览显示',await page.locator('#crestPreview img').count()===1);
+              await page.waitForTimeout(200);
+              add('队徽按mm定位到前片',(await page.locator('#frontAssets image').first().getAttribute('x'))==='88'&&(await page.locator('#frontAssets image').first().getAttribute('width'))==='30');
 
-              await page.fill('#sleeveText','TACHENG');
-              add('肩袖文字实时更新',(await page.locator('#sleeveTextSvg').textContent())==='TACHENG',await page.locator('#sleeveTextSvg').textContent());
-              await page.fill('#backNeckText','ONE CITY 29 ONE DREAM');
-              add('后领文字实时更新',(await page.locator('#backNeckTextSvg').textContent())==='ONE CITY 29 ONE DREAM');
+              const refSvg=Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="red"/></svg>');
+              await page.locator('#refFile').setInputFiles({name:'factory.svg',mimeType:'image/svg+xml',buffer:refSvg});
+              await page.waitForTimeout(100);
+              add('厂家参考层可导入',await page.locator('#refLayer image').count()===1);
+              await page.fill('#refOpacity','25');
+              add('参考层透明度可调',(await page.locator('#refLayer').getAttribute('opacity'))==='0.25',await page.locator('#refLayer').getAttribute('opacity'));
 
-              await page.click('#saveBtn');
-              await page.fill('#sleeveText','TEMP');
-              await page.click('#loadBtn');
-              add('V1.1保存读取正常',(await page.inputValue('#sleeveText'))==='TACHENG',await page.inputValue('#sleeveText'));
+              await page.click('#previewBtn');
+              add('成衣预览可切换',await page.locator('#previewView').evaluate(el=>getComputedStyle(el).display!=='none'));
+              await page.click('#paperBtn');
+
+              await page.click('#saveBtn'); await page.fill('#chestText','TEMP'); await page.click('#loadBtn');
+              add('V1.2保存读取正常',(await page.inputValue('#chestText'))==='塔城',await page.inputValue('#chestText'));
 
               const svgDownload=page.waitForEvent('download');
               await page.click('#svgBtn'); const sd=await svgDownload;
-              add('整版SVG可导出',sd.suggestedFilename().endsWith('.svg'),sd.suggestedFilename());
-
-              const pngDownload=page.waitForEvent('download');
-              await page.click('#pngBtn'); const pd=await pngDownload;
-              add('整版PNG可导出',pd.suggestedFilename().endsWith('.png'),pd.suggestedFilename());
+              add('生产SVG可导出',sd.suggestedFilename()==='SAGI-KIT-V12-PRODUCTION.svg',sd.suggestedFilename());
 
               const spec=await page.locator('#spec').innerText();
-              add('厂家参数列出6类裁片',spec.includes('前片 ×1')&&spec.includes('后片 ×1')&&spec.includes('肩袖连体裁片 ×2')&&spec.includes('袖口裁片 ×2')&&spec.includes('领口宽条 ×1')&&spec.includes('领口窄条 ×1'),spec.slice(0,220));
-              add('手机端无明显横向溢出',await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+4),await page.evaluate(()=>document.documentElement.scrollWidth+' / '+innerWidth));
+              add('厂家参数包含mm坐标系',spec.includes('1 SVG单位 = 1 mm')&&spec.includes('前片 ×1')&&spec.includes('肩袖 ×2')&&spec.includes('宽领口 ×1'),spec.slice(0,220));
+              add('手机端无横向溢出',await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+4),await page.evaluate(()=>document.documentElement.scrollWidth+' / '+innerWidth));
               await context.close();
             }catch(e){errs.push('fatal: '+(e.stack||e.message||String(e)))}finally{if(browser)await browser.close()}
             const failed=out.filter(x=>!x.ok);
-            const lines=['SAGI KIT DESIGNER V1.1 TEST','time='+new Date().toISOString(),'',
+            const lines=['SAGI KIT DESIGNER V1.2 TEST','time='+new Date().toISOString(),'',
               ...out.map(x=>(x.ok?'PASS':'FAIL')+' | '+x.n+(x.d?' | '+x.d:'')),'','Browser errors:',...(errs.length?errs:['none']),'',
               'SUMMARY: '+(failed.length===0&&errs.length===0?'PASS':'FAIL')+' ('+(out.length-failed.length)+'/'+out.length+' checks passed)'];
-            fs.writeFileSync('kit-test-result.txt',lines.join('\n')); console.log(lines.join('\n'));
+            fs.writeFileSync('kit-test-result.txt',lines.join('\n'));console.log(lines.join('\n'));
             if(failed.length||errs.length)process.exitCode=1;
           })();
           NODE
@@ -126,6 +118,6 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if [ -f kit-test-result.txt ]; then
             git add kit-test-result.txt
-            git commit -m "Record SAGI KIT DESIGNER V1.1 test result" || exit 0
+            git commit -m "Record SAGI KIT DESIGNER V1.2 test result" || exit 0
             git push
           fi
