@@ -1,0 +1,123 @@
+name: SAGI PLAYER INTRO V1.0 test
+
+on:
+  push:
+    paths:
+      - 'intro/**'
+      - '.github/workflows/intro-e2e.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  intro-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Prepare Chrome
+        run: |
+          npm install --no-save playwright@1.56.1
+          CHROME_BIN="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          echo "CHROME_BIN=$CHROME_BIN" >> "$GITHUB_ENV"
+          test -n "$CHROME_BIN"
+      - name: Run V1.0 player intro tests
+        shell: bash
+        run: |
+          python3 -m http.server 8080 --bind 127.0.0.1 >/tmp/intro-http.log 2>&1 &
+          sleep 2
+          node <<'NODE'
+          const fs=require('fs');
+          const {chromium}=require('playwright');
+          (async()=>{
+            const out=[],errs=[]; const add=(n,ok,d='')=>out.push({n,ok:!!ok,d});
+            let browser;
+            try{
+              browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_BIN,args:['--no-sandbox','--disable-dev-shm-usage']});
+              const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
+              const page=await context.newPage();
+              page.on('pageerror',e=>errs.push('pageerror: '+e.message));
+              page.on('console',m=>{if(m.type()==='error')errs.push('console: '+m.text())});
+              const r=await page.goto('http://127.0.0.1:8080/intro/',{waitUntil:'networkidle'});
+              add('页面HTTP 200',r&&r.status()===200,String(r&&r.status()));
+              add('标题V1.0',(await page.title())==='SAGI PLAYER INTRO V1.0',await page.title());
+              add('1920×1080舞台存在',await page.locator('#stage').count()===1);
+              add('手机端无横向溢出',await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+4),await page.evaluate(()=>document.documentElement.scrollWidth+' / '+innerWidth));
+
+              await page.fill('#name','MARHULAN TEST');
+              await page.fill('#number','88');
+              await page.fill('#position','MIDFIELDER');
+              await page.fill('#team','TARLAN FC');
+              add('资料实时更新',(await page.locator('#stageName').textContent())==='MARHULAN TEST'&&(await page.locator('#bigNumber').textContent())==='88');
+
+              const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl2L9sAAAAASUVORK5CYII=','base64');
+              await page.locator('#photoFile').setInputFiles({name:'player.png',mimeType:'image/png',buffer:png});
+              await page.locator('#crestFile').setInputFiles({name:'crest.png',mimeType:'image/png',buffer:png});
+              await page.waitForTimeout(250);
+              add('球员照片预览',await page.locator('#photoPreview img').count()===1);
+              add('队徽预览',await page.locator('#crestPreview img').count()===1);
+
+              await page.click('#addBtn');
+              add('加入首发名单',await page.locator('#roster .playerRow').count()===1,String(await page.locator('#roster .playerRow').count()));
+              await page.click('#saveRosterBtn');
+              const store=await page.evaluate(async()=>{
+                const local=localStorage.getItem('sagi_player_intro_v1')||'';
+                const db=await new Promise((res,rej)=>{const rr=indexedDB.open('sagi_player_intro_assets',1);rr.onsuccess=()=>res(rr.result);rr.onerror=()=>rej(rr.error)});
+                const keys=await new Promise(res=>{const tx=db.transaction('assets','readonly'),rr=tx.objectStore('assets').getAllKeys();rr.onsuccess=()=>res(rr.result);rr.onerror=()=>res([])});db.close();
+                return{localLen:local.length,localHasImage:local.includes('data:image'),assetKeys:keys.length};
+              });
+              add('localStorage不保存大图片',!store.localHasImage&&store.localLen<5000,JSON.stringify(store));
+              add('球员图片进入IndexedDB',store.assetKeys>=2,JSON.stringify(store));
+
+              await page.fill('#name','PLAYER TWO');await page.fill('#number','9');await page.fill('#position','FORWARD');
+              await page.click('#addBtn');
+              add('首发可加入多名球员',await page.locator('#roster .playerRow').count()===2,String(await page.locator('#roster .playerRow').count()));
+
+              await page.selectOption('#theme','gold');await page.selectOption('#background','transparent');
+              await page.click('#playBtn');await page.waitForTimeout(120);
+              add('单人动画进入playing状态',await page.locator('#stage').evaluate(el=>el.classList.contains('playing')));
+              add('GOLD模板切换成功',await page.locator('#stage').evaluate(el=>el.classList.contains('theme-gold')));
+              add('透明背景切换成功',await page.locator('#bg').evaluate(el=>el.classList.contains('transparent')));
+              await page.click('#stopBtn');
+
+              await page.click('#lineupBtn');await page.waitForTimeout(120);
+              add('连续首发开始播放',(await page.locator('#status').textContent()).includes('首发连续播放'),await page.locator('#status').textContent());
+              await page.click('#stopBtn');
+
+              await page.click('#loadRosterBtn');await page.waitForTimeout(220);
+              add('名单可恢复',await page.locator('#roster .playerRow').count()>=1,String(await page.locator('#roster .playerRow').count()));
+
+              const vmix=await context.newPage();
+              const vr=await vmix.goto('http://127.0.0.1:8080/intro/vmix.html',{waitUntil:'networkidle'});
+              add('vMix叠加页HTTP 200',vr&&vr.status()===200,String(vr&&vr.status()));
+              await vmix.evaluate(()=>{
+                window.SagiCloud.getEvent=async()=>({payload:{playerIntro:{commandId:'test_cmd_1',name:'AZAMAT',number:'10',position:'FORWARD',team:'TACHENG',photo:'',crest:'',theme:'wind',background:'transparent',duration:3500,index:0,total:11}}});
+              });
+              await vmix.waitForTimeout(850);
+              add('vMix收到指令自动播放',await vmix.locator('#stage').evaluate(el=>el.classList.contains('playing')));
+              add('vMix姓名更新',(await vmix.locator('#name').textContent())==='AZAMAT',await vmix.locator('#name').textContent());
+              add('vMix模板同步',await vmix.locator('#stage').evaluate(el=>el.classList.contains('theme-wind')));
+              add('vMix透明背景同步',await vmix.locator('#bg').evaluate(el=>el.classList.contains('transparent')));
+
+              await context.close();
+            }catch(e){errs.push('fatal: '+(e.stack||e.message||String(e)))}finally{if(browser)await browser.close()}
+            const failed=out.filter(x=>!x.ok);
+            const lines=['SAGI PLAYER INTRO V1.0 TEST','time='+new Date().toISOString(),'',
+              ...out.map(x=>(x.ok?'PASS':'FAIL')+' | '+x.n+(x.d?' | '+x.d:'')),'','Browser errors:',...(errs.length?errs:['none']),'',
+              'SUMMARY: '+(failed.length===0&&errs.length===0?'PASS':'FAIL')+' ('+(out.length-failed.length)+'/'+out.length+' checks passed)'];
+            fs.writeFileSync('intro-test-result.txt',lines.join('\n'));console.log(lines.join('\n'));
+            if(failed.length||errs.length)process.exitCode=1;
+          })();
+          NODE
+      - name: Commit result
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ -f intro-test-result.txt ]; then
+            git add intro-test-result.txt
+            git commit -m "Record SAGI PLAYER INTRO V1.0 test result" || exit 0
+            git push
+          fi
