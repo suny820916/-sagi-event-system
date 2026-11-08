@@ -1,5 +1,5 @@
 window.SAGI_CLOUD = {
-  url: "",
+  url: "https://zgqriuwltbnkgovtsccb.supabase.co",
   key: "",
   eventSlug: "tacheng-winter-2026"
 };
