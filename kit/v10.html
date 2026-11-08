@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#080808">
+<title>SAGI KIT DESIGNER V1.0</title>
+<style>
+:root{--bg:#080808;--panel:#141414;--panel2:#0d0d0d;--line:#2e2e2e;--text:#f4f0e7;--muted:#8f8f8f;--gold:#d8b55b;--green:#70c397}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
+.app{max-width:1180px;margin:auto;padding:18px 14px 90px}.top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.brand{font-weight:900;font-size:24px}.sub{color:var(--muted);font-size:12px;margin-top:3px}.ver{border:1px solid #64542b;color:var(--gold);border-radius:999px;padding:7px 10px;font-size:12px}
+.layout{display:grid;grid-template-columns:360px minmax(0,1fr);gap:14px;align-items:start}.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:14px;margin:14px 0}.card h2{margin:0 0 12px;font-size:17px}.muted{color:var(--muted);font-size:12px;line-height:1.6}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}label{display:block;color:#999;font-size:11px;margin:0 0 5px}input,select,textarea{width:100%;background:#090909;color:#fff;border:1px solid #393939;border-radius:12px;padding:10px;font-size:15px}input[type=color]{padding:3px;height:42px}
+button,.fileBtn{border:0;border-radius:12px;background:#282828;color:#fff;font-weight:800;min-height:42px;padding:9px 12px}.primary{background:linear-gradient(135deg,#bb9846,#e2c56e);color:#111}.ok{background:#1f4935}.danger{background:#572525}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px}.tabs button.on{background:#493c20;color:#f3d984}
+.stageCard{position:sticky;top:8px}.stage{background:radial-gradient(circle at 50% 22%,#213047 0,#12161d 34%,#090909 75%);border:1px solid #2f3136;border-radius:20px;min-height:690px;display:flex;align-items:center;justify-content:center;padding:14px;overflow:hidden;position:relative}.stage:before{content:"SAGI KIT LAB";position:absolute;top:22px;left:24px;color:#ffffff12;font-weight:900;letter-spacing:4px;font-size:28px}.stage:after{content:"PRODUCT PREVIEW";position:absolute;bottom:18px;right:22px;color:#ffffff16;font-size:11px;letter-spacing:3px}
+#shirtSvg{width:min(100%,620px);height:auto;filter:drop-shadow(0 30px 30px #0008)}.status{font-size:12px;color:var(--green);margin-top:8px}.rangeRow{display:grid;grid-template-columns:1fr 64px;gap:8px;align-items:center}.swatches{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}.swatch{height:38px;border-radius:10px;border:2px solid #333;cursor:pointer}.asset{display:grid;grid-template-columns:68px 1fr;gap:10px;align-items:center}.assetPreview{width:68px;height:68px;background:#090909;border:1px solid #383838;border-radius:12px;display:flex;align-items:center;justify-content:center;overflow:hidden;color:#555;font-size:10px}.assetPreview img{width:100%;height:100%;object-fit:contain}.fileBtn{display:flex;align-items:center;justify-content:center;cursor:pointer}.fileBtn input{display:none}
+.spec{white-space:pre-wrap;background:#090909;border:1px solid #2c2c2c;border-radius:12px;padding:11px;min-height:170px;font-size:12px;line-height:1.65;color:#d8d8d8}.tiny{font-size:10px;color:#777}.notice{display:none;position:fixed;left:50%;bottom:86px;transform:translateX(-50%);background:#1d1d1d;border:1px solid #4a4025;color:#f0d58d;border-radius:999px;padding:10px 14px;font-size:12px;z-index:20}
+@media(max-width:860px){.layout{grid-template-columns:1fr}.stageCard{position:static;order:-1}.stage{min-height:520px}.app{padding-bottom:40px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top"><div><div class="brand">SAGI KIT DESIGNER</div><div class="sub">足球队服参数化设计 · 正背面预览 · PNG / SVG 导出</div></div><div class="ver">V1.0</div></div>
+
+  <div class="layout">
+    <div class="controls">
+      <div class="card">
+        <h2>视图</h2>
+        <div class="tabs"><button id="frontBtn" class="on" type="button">正面 FRONT</button><button id="backBtn" type="button">背面 BACK</button></div>
+        <div class="grid2" style="margin-top:10px">
+          <div><label>版型</label><select id="template"><option value="match">MATCH 01</option><option value="raglan">RAGLAN 01</option><option value="classic">CLASSIC 01</option></select></div>
+          <div><label>领型</label><select id="collarType"><option value="crew">圆领</option><option value="v">V领</option><option value="split">分体领</option></select></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>配色</h2>
+        <div class="grid2">
+          <div><label>主体色</label><input id="bodyColor" type="color" value="#3b2f6f"></div>
+          <div><label>袖子色</label><input id="sleeveColor" type="color" value="#2a1f55"></div>
+          <div><label>领口色</label><input id="collarColor" type="color" value="#f2efe7"></div>
+          <div><label>点缀色</label><input id="accentColor" type="color" value="#b9a0ff"></div>
+        </div>
+        <div style="margin-top:10px"><label>快速配色</label><div class="swatches">
+          <button class="swatch" data-colors="#8B2E2E,#702629,#F5EBDD,#A84138" style="background:#8B2E2E"></button>
+          <button class="swatch" data-colors="#121212,#1f1f1f,#D7B96C,#B7943E" style="background:#121212"></button>
+          <button class="swatch" data-colors="#274690,#19315f,#EAF2FF,#5aa9ff" style="background:#274690"></button>
+          <button class="swatch" data-colors="#2c6e49,#1d4c34,#d7c08a,#b99b59" style="background:#2c6e49"></button>
+          <button class="swatch" data-colors="#442a70,#302052,#f4eefc,#a989e8" style="background:#442a70"></button>
+        </div></div>
+      </div>
+
+      <div class="card">
+        <h2>纹样</h2>
+        <div class="grid2">
+          <div><label>纹样类型</label><select id="pattern"><option value="none">无纹样</option><option value="flow">FLOW 流线</option><option value="diag">DIAGONAL 斜向</option><option value="weave">WEAVE 针织</option><option value="chevron">CHEVRON 速度纹</option></select></div>
+          <div><label>纹样颜色</label><input id="patternColor" type="color" value="#ffffff"></div>
+        </div>
+        <div style="margin-top:10px"><label>纹样强度</label><div class="rangeRow"><input id="patternOpacity" type="range" min="0" max="30" value="12"><input id="patternOpacityText" value="12%" readonly></div></div>
+      </div>
+
+      <div class="card">
+        <h2>标识与队徽</h2>
+        <div class="asset"><div class="assetPreview" id="crestPreview">队徽</div><div><label>球队队徽</label><label class="fileBtn">上传队徽<input id="crestFile" type="file" accept="image/*"></label></div></div>
+        <div class="asset" style="margin-top:10px"><div class="assetPreview" id="brandPreview">SAGI</div><div><label>SAGI Logo</label><label class="fileBtn">上传Logo<input id="brandFile" type="file" accept="image/*"></label></div></div>
+        <div class="asset" style="margin-top:10px"><div class="assetPreview" id="sponsorPreview">赞助</div><div><label>胸前赞助商</label><label class="fileBtn">上传Logo<input id="sponsorFile" type="file" accept="image/*"></label></div></div>
+        <div class="grid3" style="margin-top:10px">
+          <div><label>队徽%</label><input id="crestSize" type="number" min="6" max="20" value="11"></div>
+          <div><label>SAGI%</label><input id="brandSize" type="number" min="6" max="20" value="10"></div>
+          <div><label>赞助%</label><input id="sponsorSize" type="number" min="12" max="45" value="28"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>文字与号码</h2>
+        <div class="grid2">
+          <div><label>胸前文字</label><input id="chestText" value="塔城"></div>
+          <div><label>号码</label><input id="number" value="88" maxlength="3"></div>
+          <div><label>背后姓名</label><input id="playerName" value="MARHULAN"></div>
+          <div><label>球队名</label><input id="teamName" value="TARLAN FC"></div>
+        </div>
+        <div style="margin-top:10px"><label>号码字体</label><select id="numberFont"><option value="Arial Black">竞技粗体</option><option value="Impact">Impact</option><option value="Arial">简洁无衬线</option></select></div>
+      </div>
+
+      <div class="card">
+        <h2>保存与导出</h2>
+        <div class="actions"><button id="saveBtn" class="ok" type="button">保存当前方案</button><button id="loadBtn" type="button">读取方案</button><button id="resetBtn" class="danger" type="button">恢复默认</button></div>
+        <div class="actions"><button id="pngBtn" class="primary" type="button">导出 PNG</button><button id="svgBtn" type="button">导出 SVG</button><button id="jsonBtn" type="button">导出设计JSON</button></div>
+        <div class="tiny" style="margin-top:8px">PNG：展示效果图；SVG：可继续编辑的矢量稿；JSON：保存设计参数。</div>
+      </div>
+
+      <div class="card">
+        <h2>厂家参数</h2>
+        <div id="spec" class="spec"></div>
+        <div class="actions"><button id="copySpecBtn" type="button">复制参数</button></div>
+      </div>
+    </div>
+
+    <div class="stageCard">
+      <div class="card">
+        <div class="stage">
+          <svg id="shirtSvg" viewBox="0 0 700 820" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <clipPath id="shirtClip"><path id="clipPath" d="M245 105 L185 128 L92 222 L142 308 L212 263 L205 690 Q350 735 495 690 L488 263 L558 308 L608 222 L515 128 L455 105 Q420 146 350 146 Q280 146 245 105Z"/></clipPath>
+              <pattern id="pDiag" width="46" height="46" patternUnits="userSpaceOnUse" patternTransform="rotate(-24)"><rect width="12" height="46" fill="var(--pat)"/></pattern>
+              <pattern id="pWeave" width="24" height="24" patternUnits="userSpaceOnUse" patternTransform="rotate(-18)"><path d="M0 4 H24 M0 12 H24 M0 20 H24" stroke="var(--pat)" stroke-width="3"/><path d="M4 0 V24 M12 0 V24 M20 0 V24" stroke="var(--pat)" stroke-width="1"/></pattern>
+              <pattern id="pChevron" width="70" height="42" patternUnits="userSpaceOnUse"><path d="M0 0 L35 30 L70 0" fill="none" stroke="var(--pat)" stroke-width="8"/></pattern>
+              <linearGradient id="shirtShade" x1="0" x2="1"><stop offset="0" stop-color="#000" stop-opacity=".22"/><stop offset=".22" stop-color="#fff" stop-opacity=".05"/><stop offset=".55" stop-color="#fff" stop-opacity=".1"/><stop offset="1" stop-color="#000" stop-opacity=".25"/></linearGradient>
+              <filter id="softShadow" x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="0" dy="14" stdDeviation="14" flood-color="#000" flood-opacity=".45"/></filter>
+            </defs>
+
+            <g id="shirt" filter="url(#softShadow)">
+              <path id="bodyShape" d="M245 105 L185 128 L92 222 L142 308 L212 263 L205 690 Q350 735 495 690 L488 263 L558 308 L608 222 L515 128 L455 105 Q420 146 350 146 Q280 146 245 105Z" fill="#3b2f6f"/>
+              <path id="leftSleeve" d="M245 105 L185 128 L92 222 L142 308 L212 263 L240 170Z" fill="#2a1f55"/>
+              <path id="rightSleeve" d="M455 105 L515 128 L608 222 L558 308 L488 263 L460 170Z" fill="#2a1f55"/>
+              <g id="patternLayer" clip-path="url(#shirtClip)" opacity=".12"></g>
+              <path d="M245 105 Q280 146 350 146 Q420 146 455 105 L448 89 Q406 121 350 121 Q294 121 252 89Z" id="crewCollar" fill="#f2efe7"/>
+              <path d="M278 103 Q312 127 350 160 Q388 127 422 103 L405 92 Q378 109 350 129 Q322 109 295 92Z" id="vCollar" fill="#f2efe7" display="none"/>
+              <path d="M258 94 Q299 128 350 128 Q401 128 442 94 L428 78 Q392 103 350 103 Q308 103 272 78Z" id="splitCollar" fill="#f2efe7" display="none"/>
+              <path d="M212 263 L205 690 Q350 735 495 690 L488 263" fill="url(#shirtShade)" opacity=".45"/>
+              <path id="accentLine" d="M212 268 Q350 305 488 268" fill="none" stroke="#b9a0ff" stroke-width="5" opacity=".65"/>
+              <g id="frontGroup">
+                <g id="crestGroup"></g>
+                <g id="brandGroup"></g>
+                <g id="sponsorGroup"></g>
+                <text id="frontText" x="350" y="360" text-anchor="middle" fill="#fff" font-size="36" font-weight="900">塔城</text>
+                <text id="frontNo" x="350" y="445" text-anchor="middle" fill="#fff" font-size="74" font-family="Arial Black" font-weight="900">88</text>
+              </g>
+              <g id="backGroup" display="none">
+                <text id="backTeam" x="350" y="290" text-anchor="middle" fill="#fff" font-size="26" font-weight="800" letter-spacing="2">TARLAN FC</text>
+                <text id="backName" x="350" y="345" text-anchor="middle" fill="#fff" font-size="26" font-weight="800" letter-spacing="1">MARHULAN</text>
+                <text id="backNo" x="350" y="520" text-anchor="middle" fill="#fff" font-size="180" font-family="Arial Black" font-weight="900">88</text>
+              </g>
+              <path id="hemAccent" d="M220 666 Q350 704 480 666" fill="none" stroke="#b9a0ff" stroke-width="4" opacity=".7"/>
+            </g>
+          </svg>
+        </div>
+        <div id="status" class="status">V1.0 已就绪 · 当前：正面</div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="notice" class="notice"></div>
+
+<script>
+(function(){
+'use strict';
+const DEFAULT={
+ view:'front',template:'match',collarType:'crew',
+ bodyColor:'#3b2f6f',sleeveColor:'#2a1f55',collarColor:'#f2efe7',accentColor:'#b9a0ff',
+ pattern:'none',patternColor:'#ffffff',patternOpacity:12,
+ chestText:'塔城',number:'88',playerName:'MARHULAN',teamName:'TARLAN FC',numberFont:'Arial Black',
+ crestSize:11,brandSize:10,sponsorSize:28
+};
+let S={...DEFAULT},assets={crest:'',brand:'',sponsor:''};
+const q=id=>document.getElementById(id);
+function note(t){const n=q('notice');n.textContent=t;n.style.display='block';clearTimeout(note.t);note.t=setTimeout(()=>n.style.display='none',1600)}
+function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function read(){
+  ['template','collarType','bodyColor','sleeveColor','collarColor','accentColor','pattern','patternColor','chestText','number','playerName','teamName','numberFont'].forEach(k=>S[k]=q(k).value);
+  ['patternOpacity','crestSize','brandSize','sponsorSize'].forEach(k=>S[k]=Number(q(k).value)||0);
+}
+function apply(){
+  q('bodyShape').setAttribute('fill',S.bodyColor);q('leftSleeve').setAttribute('fill',S.sleeveColor);q('rightSleeve').setAttribute('fill',S.sleeveColor);
+  q('crewCollar').setAttribute('fill',S.collarColor);q('vCollar').setAttribute('fill',S.collarColor);q('splitCollar').setAttribute('fill',S.collarColor);
+  ['crewCollar','vCollar','splitCollar'].forEach(id=>q(id).style.display='none');q(S.collarType==='v'?'vCollar':S.collarType==='split'?'splitCollar':'crewCollar').style.display='';
+  q('accentLine').setAttribute('stroke',S.accentColor);q('hemAccent').setAttribute('stroke',S.accentColor);
+  q('frontText').textContent=S.chestText;q('frontNo').textContent=S.number;q('backNo').textContent=S.number;q('backName').textContent=S.playerName;q('backTeam').textContent=S.teamName;
+  q('frontNo').setAttribute('font-family',S.numberFont);q('backNo').setAttribute('font-family',S.numberFont);
+  q('patternOpacityText').value=S.patternOpacity+'%';document.documentElement.style.setProperty('--pat',S.patternColor);renderPattern();renderAssets();applyTemplate();applyView();renderSpec();
+}
+function applyTemplate(){
+  const body=q('bodyShape'),clip=q('clipPath');
+  let d="M245 105 L185 128 L92 222 L142 308 L212 263 L205 690 Q350 735 495 690 L488 263 L558 308 L608 222 L515 128 L455 105 Q420 146 350 146 Q280 146 245 105Z";
+  if(S.template==='raglan') d="M245 103 L174 130 L82 215 L138 307 L211 259 L203 690 Q350 735 497 690 L489 259 L562 307 L618 215 L526 130 L455 103 Q420 146 350 146 Q280 146 245 103Z";
+  if(S.template==='classic') d="M250 108 L192 130 L104 220 L151 300 L218 263 L210 680 Q350 720 490 680 L482 263 L549 300 L596 220 L508 130 L450 108 Q414 145 350 145 Q286 145 250 108Z";
+  body.setAttribute('d',d);clip.setAttribute('d',d);
+}
+function renderPattern(){
+  const g=q('patternLayer');g.innerHTML='';g.setAttribute('opacity',S.patternOpacity/100);
+  if(S.pattern==='none') return;
+  if(S.pattern==='flow'){
+    let s='';for(let i=0;i<9;i++){const y=190+i*58;s+=`<path d="M120 ${y} Q250 ${y-55} 360 ${y+12} T590 ${y-8}" fill="none" stroke="${S.patternColor}" stroke-width="${8-(i%3)}" opacity="${0.45+i*0.04}"/>`;}g.innerHTML=s;
+  }else{
+    const id=S.pattern==='diag'?'pDiag':S.pattern==='weave'?'pWeave':'pChevron';
+    g.innerHTML=`<rect x="70" y="80" width="560" height="650" fill="url(#${id})"/>`;
+  }
+}
+function imgTag(url,x,y,w,h){return url?`<image href="${url}" x="${x}" y="${y}" width="${w}" height="${h}" preserveAspectRatio="xMidYMid meet"/>`:''}
+function renderAssets(){
+  const crestW=700*S.crestSize/100,brandW=700*S.brandSize/100,sponsorW=700*S.sponsorSize/100;
+  q('crestGroup').innerHTML=imgTag(assets.crest,235-crestW/2,205-crestW/2,crestW,crestW);
+  q('brandGroup').innerHTML=assets.brand?imgTag(assets.brand,465-brandW/2,205-brandW/2,brandW,brandW):`<text x="465" y="214" text-anchor="middle" fill="#fff" font-size="28" font-weight="900">SAGI</text>`;
+  q('sponsorGroup').innerHTML=imgTag(assets.sponsor,350-sponsorW/2,265,sponsorW,sponsorW*0.38);
+  [['crestPreview','crest','队徽'],['brandPreview','brand','SAGI'],['sponsorPreview','sponsor','赞助']].forEach(([id,k,t])=>q(id).innerHTML=assets[k]?`<img src="${assets[k]}">`:t);
+}
+function applyView(){
+  const f=S.view==='front';q('frontGroup').style.display=f?'':'none';q('backGroup').style.display=f?'none':'';
+  q('frontBtn').classList.toggle('on',f);q('backBtn').classList.toggle('on',!f);q('status').textContent='V1.0 已就绪 · 当前：'+(f?'正面 FRONT':'背面 BACK');
+}
+function renderSpec(){
+  q('spec').textContent=[
+    'SAGI KIT DESIGNER V1.0','',
+    '版型：'+S.template.toUpperCase(),'领型：'+S.collarType,
+    '主体色：'+S.bodyColor,'袖子色：'+S.sleeveColor,'领口色：'+S.collarColor,'点缀色：'+S.accentColor,
+    '纹样：'+S.pattern.toUpperCase()+' / '+S.patternOpacity+'%',
+    '胸前文字：'+S.chestText,'号码：'+S.number,'背后姓名：'+S.playerName,'球队名：'+S.teamName,
+    '队徽宽度：衣身约 '+S.crestSize+'%','SAGI Logo：衣身约 '+S.brandSize+'%','赞助商：衣身约 '+S.sponsorSize+'%',
+    '导出建议：SVG用于继续编辑 / PNG用于效果确认'
+  ].join('\n');
+}
+function syncInputs(){Object.keys(DEFAULT).forEach(k=>{if(q(k))q(k).value=S[k]});}
+function fileToData(file){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(file)})}
+async function loadAsset(kind,file){if(!file)return;assets[kind]=await fileToData(file);await putAsset(kind,assets[kind]);renderAssets();note('已载入'+(kind==='crest'?'队徽':kind==='brand'?'SAGI Logo':'赞助商'))}
+function openDB(){return new Promise((resolve,reject)=>{const r=indexedDB.open('sagi_kit_assets',1);r.onupgradeneeded=()=>r.result.createObjectStore('assets');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error)})}
+async function putAsset(k,v){try{const db=await openDB();await new Promise((res,rej)=>{const tx=db.transaction('assets','readwrite');tx.objectStore('assets').put(v,k);tx.oncomplete=res;tx.onerror=()=>rej(tx.error)});db.close()}catch(e){}}
+async function hydrateAssets(){try{const db=await openDB();for(const k of ['crest','brand','sponsor'])assets[k]=await new Promise(res=>{const tx=db.transaction('assets','readonly'),r=tx.objectStore('assets').get(k);r.onsuccess=()=>res(r.result||'');r.onerror=()=>res('')});db.close();renderAssets()}catch(e){}}
+function saveDesign(){read();localStorage.setItem('sagi_kit_v1',JSON.stringify(S));note('方案已保存')}
+function loadDesign(){try{const x=JSON.parse(localStorage.getItem('sagi_kit_v1')||'null');if(x){S={...DEFAULT,...x};syncInputs();apply();note('已读取方案')}else note('还没有保存方案')}catch(e){}}
+function reset(){S={...DEFAULT};syncInputs();apply();note('已恢复默认')}
+function serializeSvg(){
+  const clone=q('shirtSvg').cloneNode(true);clone.setAttribute('xmlns','http://www.w3.org/2000/svg');clone.setAttribute('width','1400');clone.setAttribute('height','1640');
+  return new XMLSerializer().serializeToString(clone);
+}
+function download(name,blob){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1200)}
+function exportSvg(){download('SAGI-KIT-'+S.view+'.svg',new Blob([serializeSvg()],{type:'image/svg+xml'}));note('SVG 已导出')}
+function exportPng(){const svg=serializeSvg(),img=new Image(),url=URL.createObjectURL(new Blob([svg],{type:'image/svg+xml'}));img.onload=()=>{const c=document.createElement('canvas');c.width=1400;c.height=1640;const ctx=c.getContext('2d');ctx.fillStyle='#0b0b0b';ctx.fillRect(0,0,c.width,c.height);ctx.drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);c.toBlob(b=>download('SAGI-KIT-'+S.view+'.png',b),'image/png');note('PNG 已导出')};img.src=url}
+function exportJson(){read();download('SAGI-KIT-design.json',new Blob([JSON.stringify({version:'1.0',design:S},null,2)],{type:'application/json'}));note('设计JSON 已导出')}
+['template','collarType','bodyColor','sleeveColor','collarColor','accentColor','pattern','patternColor','patternOpacity','chestText','number','playerName','teamName','numberFont','crestSize','brandSize','sponsorSize'].forEach(id=>q(id).addEventListener('input',()=>{read();apply()}));
+q('frontBtn').onclick=()=>{S.view='front';applyView()};q('backBtn').onclick=()=>{S.view='back';applyView()};
+q('crestFile').onchange=e=>loadAsset('crest',e.target.files[0]);q('brandFile').onchange=e=>loadAsset('brand',e.target.files[0]);q('sponsorFile').onchange=e=>loadAsset('sponsor',e.target.files[0]);
+document.querySelectorAll('.swatch').forEach(b=>b.onclick=()=>{const [a,s,c,d]=b.dataset.colors.split(',');S.bodyColor=a;S.sleeveColor=s;S.collarColor=c;S.accentColor=d;syncInputs();apply()});
+q('saveBtn').onclick=saveDesign;q('loadBtn').onclick=loadDesign;q('resetBtn').onclick=reset;q('svgBtn').onclick=exportSvg;q('pngBtn').onclick=exportPng;q('jsonBtn').onclick=exportJson;
+q('copySpecBtn').onclick=async()=>{try{await navigator.clipboard.writeText(q('spec').textContent);note('参数已复制')}catch(e){note('复制失败')}};
+syncInputs();apply();hydrateAssets();
+})();
+</script>
+</body>
+</html>
