@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#07090d">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%2307090d%22/%3E%3Ctext x=%2232%22 y=%2243%22 text-anchor=%22middle%22 font-size=%2234%22 fill=%22%23d8b55b%22%3ES%3C/text%3E%3C/svg%3E">
-<title>SAGI 球员出场 V4.0 · 赛事直播总控台</title>
+<title>SAGI 球员出场 V4.1 · 赛事直播总控台</title>
 <style>
 :root{--bg:#07090d;--panel:#11151c;--line:#2b3340;--text:#f4f0e8;--muted:#8f97a5;--gold:#d8b55b;--green:#72c79a}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
@@ -138,7 +138,7 @@ button,.fileBtn{border:0;border-radius:12px;background:#262d37;color:#fff;font-w
 .subNo{font-size:24px;font-weight:1000;color:#d8b55b}.subName{font-size:21px;font-weight:900}.subStat{font-size:11px;color:#aab2be}
 .captainNode:after{content:'C';position:absolute;right:-6px;top:-7px;width:19px;height:19px;border-radius:50%;background:#fff1b7;color:#111;font-size:10px;display:flex;align-items:center;justify-content:center;font-weight:1000}
 
-/* ===== V4.0 BROADCAST CONTROL ROOM ===== */
+/* ===== V4.1 MATCHDAY GRAPHICS ENGINE ===== */
 .broadcastDesk{margin:14px 0 0;background:linear-gradient(180deg,#0b0f15,#070a0e);border:1px solid #303846;border-radius:20px;padding:13px;box-shadow:0 22px 48px #0006}
 .bcMonitors{display:grid;grid-template-columns:1fr 1fr 280px;gap:10px}
 .bcMonitor{min-height:94px;border:1px solid #323b48;border-radius:15px;background:#090d12;padding:12px 14px;position:relative;overflow:hidden}
@@ -163,11 +163,29 @@ button,.fileBtn{border:0;border-radius:12px;background:#262d37;color:#fff;font-w
 @media(max-width:1100px){.bcMonitors{grid-template-columns:1fr 1fr}.bcStatusBox{grid-column:1/3}.bcQuick{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:650px){.bcMonitors{grid-template-columns:1fr}.bcStatusBox{grid-column:auto}.bcTransport{grid-template-columns:1fr 1fr}.bcTransport .goLive{grid-column:1/3}.bcQuick{grid-template-columns:repeat(3,1fr)}}
 
+
+/* ===== V4.1 MATCHDAY GRAPHICS ENGINE ===== */
+.matchdayDesk{margin:14px 0 0;background:linear-gradient(180deg,#10151c,#080b10);border:1px solid #3a4350;border-radius:20px;padding:14px;box-shadow:0 24px 55px #0006}
+.mdHead{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:11px}.mdTitle{font-size:14px;font-weight:1000;letter-spacing:2px;color:#ebd184}.mdTitle small{font-size:10px;color:#7e8996;letter-spacing:1px;margin-left:8px}.mdSync{font-size:10px;color:#75d49e;border:1px solid #2d6748;background:#0d2118;border-radius:999px;padding:6px 9px}
+.mdGrid{display:grid;grid-template-columns:1.25fr .9fr 1.25fr;gap:10px}.mdPanel{background:#080c11;border:1px solid #2e3743;border-radius:15px;padding:11px}
+.mdPanelTitle{font-size:10px;font-weight:1000;letter-spacing:2px;color:#8995a3;margin-bottom:9px}
+.mdScoreLine{display:grid;grid-template-columns:1fr 56px 34px 56px 1fr;gap:7px;align-items:center}.mdTeam{text-align:center;font-size:13px;font-weight:950;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mdScore{font-size:42px;font-weight:1000;text-align:center;color:#fff}.mdScoreBtn{min-height:38px!important;padding:5px!important;font-size:17px!important}
+.mdClock{font-size:42px;font-weight:1000;text-align:center;font-variant-numeric:tabular-nums;letter-spacing:1px}.mdPeriod{text-align:center;color:#d8b55b;font-size:10px;font-weight:900;letter-spacing:2px;margin-top:2px}
+.mdClockBtns,.mdEventBtns{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}.mdClockBtns button,.mdEventBtns button{min-height:38px;font-size:10px;padding:6px}
+.mdGoal{background:#1c5137!important}.mdYellow{background:#6c5b12!important;color:#fff0a5!important}.mdRed{background:#63252b!important}.mdSub{background:#173e55!important}.mdMvp{background:#5b4720!important;color:#f3d98f!important}.mdState{background:#252c36!important}
+.mdInputs{display:grid;grid-template-columns:1fr 1.5fr;gap:7px}.mdInputs select,.mdInputs input{padding:8px;font-size:12px}
+.mdBottom{display:grid;grid-template-columns:1.35fr 1fr 1fr;gap:10px;margin-top:10px}.mdSubGrid{display:grid;grid-template-columns:.8fr 1.2fr 1.2fr;gap:7px}
+.mdActions{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}.mdActions button{min-height:42px;font-size:11px}
+.mdScoreboardBtns{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}.mdScoreboardBtns button{min-height:38px;font-size:10px}
+.mdLiveDot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#596472;margin-right:6px}.mdLiveDot.on{background:#5bd08c;box-shadow:0 0 12px #5bd08c88}
+.mdEventStatus{margin-top:7px;font-size:9px;color:#737e8b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:1050px){.mdGrid,.mdBottom{grid-template-columns:1fr}.mdScoreLine{grid-template-columns:1fr 50px 30px 50px 1fr}}
+
 </style>
 </head>
 <body>
 <div class="app">
-  <div class="top"><div><div class="brand">SAGI 球员出场系统</div><div class="sub">V4.0 · 赛事直播总控台 · 双队阵容 · 分组出场 · 阵型联动 · vMix直播</div></div><div class="ver">V4.0</div></div>
+  <div class="top"><div><div class="brand">SAGI 赛事直播系统</div><div class="sub">V4.1 · 比赛日图形引擎 · 比分 · 进球 · 红黄牌 · 换人 · 半场/全场 · MVP</div></div><div class="ver">V4.1</div></div>
   <div class="broadcastDesk">
     <div class="bcMonitors">
       <div class="bcMonitor preview"><div class="bcKicker">预监 PREVIEW</div><div id="bcPreviewLabel" class="bcBig">主队 · 球队开场</div><div id="bcPreviewMeta" class="bcMeta">准备就绪 · 本机预监，不会直接上屏</div></div>
@@ -188,15 +206,95 @@ button,.fileBtn{border:0;border-radius:12px;background:#262d37;color:#fff;font-w
     <div class="bcQuick">
       <button type="button" data-bc-group="STING" data-bc-label="赛事Logo">赛事Logo</button>
       <button type="button" data-bc-group="MATCH" data-bc-label="比赛信息">比赛信息</button>
-      <button type="button" data-bc-group="开场倒计时" data-bc-label="开场倒计时">开场倒计时</button>
+      <button type="button" data-bc-group="COUNTDOWN" data-bc-label="开场倒计时">开场倒计时</button>
       <button type="button" data-bc-side="HOME" data-bc-group="TEAM" data-bc-label="主队开场">主队开场</button>
       <button type="button" data-bc-side="HOME" data-bc-group="FULL" data-bc-label="主队首发">主队首发</button>
-      <button type="button" data-bc-side="HOME" data-bc-group="SUB" data-bc-label="HOME SUBS">HOME 替补</button>
+      <button type="button" data-bc-side="HOME" data-bc-group="SUB" data-bc-label="主队替补">主队替补</button>
       <button type="button" data-bc-side="AWAY" data-bc-group="TEAM" data-bc-label="客队开场">客队开场</button>
       <button type="button" data-bc-side="AWAY" data-bc-group="FULL" data-bc-label="客队首发">客队首发</button>
-      <button type="button" data-bc-side="AWAY" data-bc-group="SUB" data-bc-label="AWAY SUBS">AWAY 替补</button>
+      <button type="button" data-bc-side="AWAY" data-bc-group="SUB" data-bc-label="客队替补">客队替补</button>
     </div>
     <div class="bcHint">SPACE = GO LIVE · H = HOLD/RESUME · ←/→ = PREV/下一画面 · ESC = 一键清屏 · 本机大画面始终作为 PREVIEW，vMix Browser 作为 PROGRAM。</div>
+  </div>
+
+
+  <div class="matchdayDesk">
+    <div class="mdHead">
+      <div class="mdTitle">V4.1 · 比赛日图形引擎 <small>MATCHDAY GRAPHICS ENGINE</small></div>
+      <div id="mdSync" class="mdSync"><span id="mdSyncDot" class="mdLiveDot"></span>图形引擎待命</div>
+    </div>
+    <div class="mdGrid">
+      <div class="mdPanel">
+        <div class="mdPanelTitle">比分控制 · SCORE</div>
+        <div class="mdScoreLine">
+          <div id="mdHomeName" class="mdTeam">主队</div>
+          <button id="mdHomeMinus" class="mdScoreBtn" type="button">−</button>
+          <div id="mdHomeScore" class="mdScore">0</div>
+          <button id="mdHomePlus" class="mdScoreBtn" type="button">＋</button>
+          <div id="mdAwayName" class="mdTeam">客队</div>
+        </div>
+        <div class="mdScoreLine" style="margin-top:4px">
+          <div></div><button id="mdAwayMinus" class="mdScoreBtn" type="button">−</button><div id="mdAwayScore" class="mdScore">0</div><button id="mdAwayPlus" class="mdScoreBtn" type="button">＋</button><div></div>
+        </div>
+        <div class="mdScoreboardBtns"><button id="mdScoreboardShow" class="ok" type="button">显示比分牌</button><button id="mdScoreboardHide" type="button">隐藏比分牌</button></div>
+      </div>
+
+      <div class="mdPanel">
+        <div class="mdPanelTitle">比赛计时 · CLOCK</div>
+        <div id="mdClock" class="mdClock">00:00</div>
+        <div id="mdPeriodLabel" class="mdPeriod">上半场</div>
+        <div class="mdInputs" style="margin-top:8px">
+          <select id="mdPeriod"><option value="1H">上半场</option><option value="2H">下半场</option><option value="ET1">加时上半场</option><option value="ET2">加时下半场</option><option value="PEN">点球大战</option></select>
+          <input id="mdSetClock" value="00:00" placeholder="00:00">
+        </div>
+        <div class="mdClockBtns"><button id="mdClockStart" class="ok" type="button">▶ 开始</button><button id="mdClockPause" type="button">Ⅱ 暂停</button><button id="mdClockSetBtn" type="button">设置时间</button></div>
+      </div>
+
+      <div class="mdPanel">
+        <div class="mdPanelTitle">比赛事件 · EVENT</div>
+        <div class="mdInputs">
+          <select id="mdEventSide"><option value="HOME">主队</option><option value="AWAY">客队</option></select>
+          <select id="mdEventPlayer"><option value="">选择球员</option></select>
+        </div>
+        <div class="mdEventBtns">
+          <button id="mdGoalBtn" class="mdGoal" type="button">⚽ 进球</button>
+          <button id="mdYellowBtn" class="mdYellow" type="button">▮ 黄牌</button>
+          <button id="mdRedBtn" class="mdRed" type="button">▮ 红牌</button>
+        </div>
+        <div id="mdEventStatus" class="mdEventStatus">选择球队和球员后触发直播图形</div>
+      </div>
+    </div>
+
+    <div class="mdBottom">
+      <div class="mdPanel">
+        <div class="mdPanelTitle">换人 · SUBSTITUTION</div>
+        <div class="mdSubGrid">
+          <select id="mdSubSide"><option value="HOME">主队</option><option value="AWAY">客队</option></select>
+          <select id="mdSubOff"><option value="">换下球员</option></select>
+          <select id="mdSubOn"><option value="">换上球员</option></select>
+        </div>
+        <div class="mdActions" style="margin-top:8px"><button id="mdSubBtn" class="mdSub" type="button">↕ 播放换人图形</button><button id="mdClearEventBtn" type="button">清除事件图形</button></div>
+      </div>
+
+      <div class="mdPanel">
+        <div class="mdPanelTitle">比赛阶段 · MATCH STATE</div>
+        <div class="mdActions">
+          <button id="mdHalfBtn" class="mdState" type="button">半场 HALF TIME</button>
+          <button id="mdFullBtn" class="mdState" type="button">全场 FULL TIME</button>
+          <button id="mdClockReset" type="button">计时归零</button>
+          <button id="mdScoreReset" type="button">比分归零</button>
+        </div>
+      </div>
+
+      <div class="mdPanel">
+        <div class="mdPanelTitle">本场最佳 · MVP</div>
+        <div class="mdInputs">
+          <select id="mdMvpSide"><option value="HOME">主队</option><option value="AWAY">客队</option></select>
+          <select id="mdMvpPlayer"><option value="">选择MVP球员</option></select>
+        </div>
+        <div class="mdActions" style="margin-top:8px"><button id="mdMvpBtn" class="mdMvp" type="button">★ 播放 MVP 图形</button><button id="mdPublishState" type="button">同步当前比分</button></div>
+      </div>
+    </div>
   </div>
 
   <div class="layout">
@@ -315,8 +413,8 @@ button,.fileBtn{border:0;border-radius:12px;background:#262d37;color:#fff;font-w
       <div class="card">
         <h2>vMix 直播输出</h2>
         <div class="grid2"><div><label>输出背景</label><select id="outputBg"><option value="tunnel" selected>球员通道</option><option value="stadium">球场背景</option><option value="transparent">透明背景叠加</option><option value="chroma">绿幕</option></select></div><div><label>画面</label><input value="1920 × 1080" readonly></div></div>
-        <div class="actions"><button id="copyVmixBtn" type="button">复制 V4.0 vMix 链接</button></div>
-        <div class="tiny" style="margin-top:8px">vMix：添加输入 → Web Browser（网页浏览器）→ 粘贴 V4.0 专用链接。控制端点击“切入播出”后同步到直播电脑。</div>
+        <div class="actions"><button id="copyVmixBtn" type="button">复制 V4.1 vMix 链接</button></div>
+        <div class="tiny" style="margin-top:8px">vMix：添加输入 → Web Browser（网页浏览器）→ 粘贴 V4.1 专用链接。控制端点击“切入播出”后同步到直播电脑。</div>
       </div>
     </div>
 
@@ -344,7 +442,7 @@ button,.fileBtn{border:0;border-radius:12px;background:#262d37;color:#fff;font-w
             </div>
           </div>
         </div>
-        <div class="statusBar"><div id="status" class="status">V4.0 已就绪 · 赛事直播总控台</div><div class="mini">1920 × 1080</div></div>
+        <div class="statusBar"><div id="status" class="status">V4.1 已就绪 · 赛事直播总控台</div><div class="mini">1920 × 1080</div></div>
       </div>
     </div>
   </div>
@@ -368,7 +466,7 @@ let roster=[],selected=-1,activeSide='HOME',teamStore={HOME:{roster:[],formation
 const DEFAULT_SHOW=[
  {id:'sting',group:'STING',label:'Logo Sting',duration:2000,transition:'FLASH',cue:'STING',enabled:true},
  {id:'match',group:'MATCH',label:'比赛信息',duration:3000,transition:'FADE',cue:'RISER',enabled:true},
- {id:'countdown',group:'开场倒计时',label:'开场倒计时',duration:5000,transition:'ZOOM',cue:'HIT',enabled:true},
+ {id:'countdown',group:'COUNTDOWN',label:'开场倒计时',duration:5000,transition:'ZOOM',cue:'HIT',enabled:true},
  {id:'home_team',side:'HOME',group:'TEAM',label:'主队开场',duration:2500,transition:'FADE',cue:'RISER',enabled:true},
  {id:'home_gk',side:'HOME',group:'GK',label:'主队门将',duration:3000,transition:'ZOOM',cue:'HIT',enabled:true},
  {id:'home_df',side:'HOME',group:'DF',label:'主队后卫',duration:4000,transition:'SLIDE',cue:'WHOOSH',enabled:true},
@@ -389,7 +487,7 @@ let broadcastHold=false,broadcastPreview={group:'TEAM',side:'HOME',label:'主队
 const BROADCAST_MANUAL=[
  {group:'STING',side:'HOME',label:'赛事Logo',duration:2000},
  {group:'MATCH',side:'HOME',label:'比赛信息',duration:3000},
- {group:'开场倒计时',side:'HOME',label:'开场倒计时',duration:5000},
+ {group:'COUNTDOWN',side:'HOME',label:'开场倒计时',duration:5000},
  {group:'TEAM',side:'HOME',label:'主队开场',duration:2500},
  {group:'GK',side:'HOME',label:'主队门将',duration:3000},
  {group:'DF',side:'HOME',label:'主队后卫',duration:4000},
@@ -405,6 +503,95 @@ const BROADCAST_MANUAL=[
  {group:'FULL',side:'AWAY',label:'客队首发',duration:6000},
  {group:'SUB',side:'AWAY',label:'客队替补',duration:5000}
 ];
+
+
+let matchdayState={homeScore:0,awayScore:0,scoreboardVisible:false,period:'1H',clockBase:0,clockRunning:false,clockStartedAt:0,lastEvent:null};
+function mdPeriodName(p){return({1H:'上半场',2H:'下半场',ET1:'加时上半场',ET2:'加时下半场',PEN:'点球大战'})[p]||p}
+function mdNowSeconds(){return Math.max(0,matchdayState.clockBase+(matchdayState.clockRunning?((Date.now()-matchdayState.clockStartedAt)/1000):0))}
+function mdFormat(sec){sec=Math.max(0,Math.floor(Number(sec)||0));return String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0')}
+function mdParse(s){const m=String(s||'').trim().match(/^(\d{1,3})(?::(\d{1,2}))?$/);if(!m)return null;return Math.max(0,(+m[1])*60+(+(m[2]||0)))}
+function mdRoster(side){stashActiveTeam();return (teamStore[side]&&teamStore[side].roster||[]).slice()}
+function mdPlayer(side,id){return mdRoster(side).find(p=>p.id===id)||null}
+function mdFillSelect(id,side,placeholder){
+ const el=q(id),old=el.value,arr=mdRoster(side);el.innerHTML='<option value="">'+placeholder+'</option>'+arr.map(p=>'<option value="'+esc(p.id)+'">#'+esc(p.number)+' · '+esc(p.name)+' · '+esc(p.squadType==='SUB'?'替补':p.position||p.role)+'</option>').join('');if(arr.some(p=>p.id===old))el.value=old;
+}
+function refreshMatchdayPlayers(){
+ mdFillSelect('mdEventPlayer',q('mdEventSide').value,'选择球员');
+ mdFillSelect('mdSubOff',q('mdSubSide').value,'换下球员');
+ mdFillSelect('mdSubOn',q('mdSubSide').value,'换上球员');
+ mdFillSelect('mdMvpPlayer',q('mdMvpSide').value,'选择MVP球员');
+}
+function refreshMatchdayUI(){
+ q('mdHomeName').textContent=q('matchHome').value.trim()||'主队';q('mdAwayName').textContent=q('matchAway').value.trim()||'客队';
+ q('mdHomeScore').textContent=matchdayState.homeScore;q('mdAwayScore').textContent=matchdayState.awayScore;
+ q('mdClock').textContent=mdFormat(mdNowSeconds());q('mdPeriod').value=matchdayState.period;q('mdPeriodLabel').textContent=mdPeriodName(matchdayState.period);
+ q('mdScoreboardShow').classList.toggle('primary',matchdayState.scoreboardVisible);q('mdSyncDot').classList.toggle('on',matchdayState.scoreboardVisible||!!matchdayState.lastEvent);
+}
+function mdPersist(){try{const s={...matchdayState,clockBase:mdNowSeconds(),clockRunning:false,clockStartedAt:0};localStorage.setItem('sagi_matchday_graphics_v41',JSON.stringify(s))}catch(e){}}
+function mdLoad(){
+ try{const x=JSON.parse(localStorage.getItem('sagi_matchday_graphics_v41')||'null');if(x)matchdayState={...matchdayState,...x,clockRunning:false,clockStartedAt:0};}catch(e){}
+ refreshMatchdayUI();refreshMatchdayPlayers();
+}
+function mdCloudSnapshot(event=null){
+ const now=mdNowSeconds();return{
+  commandId:Date.now()+'_'+Math.random().toString(36).slice(2,7),
+  visualVersion:'V4.1-MATCHDAY-GRAPHICS',
+  home:q('matchHome').value.trim()||'HOME',away:q('matchAway').value.trim()||'AWAY',
+  homeScore:matchdayState.homeScore,awayScore:matchdayState.awayScore,scoreboardVisible:!!matchdayState.scoreboardVisible,
+  clock:{baseSeconds:now,running:!!matchdayState.clockRunning,startedAt:matchdayState.clockRunning?new Date().toISOString():null,period:matchdayState.period},
+  event:event||null,updatedAt:new Date().toISOString()
+ };
+}
+async function publishMatchday(event=null){
+ const cfg=cloudAdmin(),state=mdCloudSnapshot(event);matchdayState.lastEvent=event;mdPersist();refreshMatchdayUI();
+ if(!window.SagiCloud||!cfg.url||!cfg.key||!cfg.eventSlug||!cfg.token){q('mdSync').innerHTML='<span id="mdSyncDot" class="mdLiveDot"></span>仅本机 · 未连接云端';return{ok:false}}
+ try{
+  let cur=await window.SagiCloud.getEvent(cfg.eventSlug,cfg);if(!cur||!cur.payload)return{ok:false};
+  let payload=Object.assign({},cur.payload,{matchdayGraphics:state});
+  try{await window.SagiCloud.saveEvent(cfg.eventSlug,cfg.token,payload,cur.revision,cfg)}
+  catch(e){if(String(e.message).includes('REVISION_CONFLICT')){cur=await window.SagiCloud.getEvent(cfg.eventSlug,cfg);payload=Object.assign({},cur.payload,{matchdayGraphics:state});await window.SagiCloud.saveEvent(cfg.eventSlug,cfg.token,payload,cur.revision,cfg)}else throw e}
+  q('mdSync').innerHTML='<span id="mdSyncDot" class="mdLiveDot on"></span>已同步 vMix';return{ok:true}
+ }catch(e){q('mdSync').innerHTML='<span id="mdSyncDot" class="mdLiveDot"></span>同步失败';return{ok:false}}
+}
+function mdScore(side,delta){if(side==='HOME')matchdayState.homeScore=Math.max(0,matchdayState.homeScore+delta);else matchdayState.awayScore=Math.max(0,matchdayState.awayScore+delta);publishMatchday(null)}
+function mdEvent(type){
+ const side=q('mdEventSide').value,p=mdPlayer(side,q('mdEventPlayer').value);if(!p){note('请先选择球员');return}
+ if(type==='GOAL'){if(side==='HOME')matchdayState.homeScore++;else matchdayState.awayScore++}
+ const ev={type,side,team:side==='HOME'?(q('matchHome').value||'HOME'):(q('matchAway').value||'AWAY'),player:{id:p.id,name:p.name,number:p.number,position:p.position||p.role},at:mdFormat(mdNowSeconds())};
+ q('mdEventStatus').textContent=(type==='GOAL'?'进球':type==='YELLOW'?'黄牌':'红牌')+' · #'+p.number+' '+p.name;publishMatchday(ev)
+}
+function mdSubstitution(){
+ const side=q('mdSubSide').value,off=mdPlayer(side,q('mdSubOff').value),on=mdPlayer(side,q('mdSubOn').value);if(!off||!on){note('请选择换下和换上球员');return}
+ const ev={type:'SUB',side,team:side==='HOME'?(q('matchHome').value||'HOME'):(q('matchAway').value||'AWAY'),off:{id:off.id,name:off.name,number:off.number},on:{id:on.id,name:on.name,number:on.number},at:mdFormat(mdNowSeconds())};q('mdEventStatus').textContent='换人 · #'+off.number+' '+off.name+' → #'+on.number+' '+on.name;publishMatchday(ev)
+}
+function mdMatchState(type){
+ const sec=mdNowSeconds();matchdayState.clockBase=sec;matchdayState.clockRunning=false;matchdayState.clockStartedAt=0;
+ const ev={type,home:q('matchHome').value||'HOME',away:q('matchAway').value||'AWAY',homeScore:matchdayState.homeScore,awayScore:matchdayState.awayScore,at:mdFormat(sec)};
+ q('mdEventStatus').textContent=type==='HALF_TIME'?'半场图形已触发':'全场图形已触发';publishMatchday(ev)
+}
+function mdMvp(){
+ const side=q('mdMvpSide').value,p=mdPlayer(side,q('mdMvpPlayer').value);if(!p){note('请选择MVP球员');return}
+ const ev={type:'MVP',side,team:side==='HOME'?(q('matchHome').value||'HOME'):(q('matchAway').value||'AWAY'),player:{id:p.id,name:p.name,number:p.number,position:p.position||p.role},score:matchdayState.homeScore+'-'+matchdayState.awayScore};
+ q('mdEventStatus').textContent='MVP · #'+p.number+' '+p.name;publishMatchday(ev)
+}
+function initMatchdayGraphics(){
+ q('mdHomeMinus').onclick=()=>mdScore('HOME',-1);q('mdHomePlus').onclick=()=>mdScore('HOME',1);q('mdAwayMinus').onclick=()=>mdScore('AWAY',-1);q('mdAwayPlus').onclick=()=>mdScore('AWAY',1);
+ q('mdScoreboardShow').onclick=()=>{matchdayState.scoreboardVisible=true;publishMatchday(null)};q('mdScoreboardHide').onclick=()=>{matchdayState.scoreboardVisible=false;publishMatchday(null)};
+ q('mdClockStart').onclick=()=>{if(!matchdayState.clockRunning){matchdayState.clockStartedAt=Date.now();matchdayState.clockRunning=true;publishMatchday(null)}};
+ q('mdClockPause').onclick=()=>{matchdayState.clockBase=mdNowSeconds();matchdayState.clockRunning=false;matchdayState.clockStartedAt=0;publishMatchday(null)};
+ q('mdClockReset').onclick=()=>{matchdayState.clockBase=0;matchdayState.clockRunning=false;matchdayState.clockStartedAt=0;publishMatchday(null)};
+ q('mdClockSetBtn').onclick=()=>{const s=mdParse(q('mdSetClock').value);if(s==null){note('时间格式请使用 45:00');return}matchdayState.clockBase=s;matchdayState.clockStartedAt=matchdayState.clockRunning?Date.now():0;publishMatchday(null)};
+ q('mdPeriod').onchange=()=>{matchdayState.period=q('mdPeriod').value;publishMatchday(null)};
+ q('mdGoalBtn').onclick=()=>mdEvent('GOAL');q('mdYellowBtn').onclick=()=>mdEvent('YELLOW');q('mdRedBtn').onclick=()=>mdEvent('RED');
+ q('mdSubBtn').onclick=mdSubstitution;q('mdHalfBtn').onclick=()=>mdMatchState('HALF_TIME');q('mdFullBtn').onclick=()=>mdMatchState('FULL_TIME');q('mdMvpBtn').onclick=mdMvp;
+ q('mdScoreReset').onclick=()=>{matchdayState.homeScore=0;matchdayState.awayScore=0;publishMatchday(null)};
+ q('mdClearEventBtn').onclick=()=>{matchdayState.lastEvent=null;publishMatchday({type:'CLEAR_EVENT'})};q('mdPublishState').onclick=()=>publishMatchday(null);
+ q('mdEventSide').onchange=refreshMatchdayPlayers;q('mdSubSide').onchange=refreshMatchdayPlayers;q('mdMvpSide').onchange=refreshMatchdayPlayers;
+ ['addBtn','updateBtn','removeBtn','demoBtn','loadBtn','homeSideBtn','awaySideBtn'].forEach(id=>q(id)&&q(id).addEventListener('click',()=>setTimeout(refreshMatchdayPlayers,60)));
+ ['matchHome','matchAway'].forEach(id=>q(id)&&q(id).addEventListener('input',refreshMatchdayUI));
+ setInterval(()=>{if(matchdayState.clockRunning)refreshMatchdayUI()},250);
+ mdLoad();
+}
 
 
 function note(t){const n=q('notice');n.textContent=t;n.style.display='block';clearTimeout(note.t);note.t=setTimeout(()=>n.style.display='none',1500)}
@@ -497,19 +684,19 @@ function updateTunnelLabels(group){
 }
 function applyVisualGroup(group){
  const st=q('stage'),area=q('playersArea'),code=q('roleBackdrop');updateTunnelLabels(group);
- st.classList.remove('group-GK','group-DF','group-MF','group-FW','group-TEAM','group-FULL','group-SUB','group-STING','group-MATCH','group-开场倒计时','tunnel-open');
+ st.classList.remove('group-GK','group-DF','group-MF','group-FW','group-TEAM','group-FULL','group-SUB','group-STING','group-MATCH','group-COUNTDOWN','tunnel-open');
  st.classList.add('group-'+group);if(group==='FULL')st.classList.add('tunnel-open');
  area.className='playersArea layout-'+group;
  const codes={STING:'SAGI',MATCH:'MATCH',开场倒计时:'5',TEAM:'XI',GK:'GK',DF:'DEF',MF:'MID',FW:'FWD',FULL:'XI',SUB:'SUB'};
  code.textContent=codes[group]||'XI';
- const packageGroup=['STING','MATCH','开场倒计时'].includes(group);q('roleGlow').style.display=(group==='FULL'||group==='SUB'||packageGroup)?'none':'block';code.style.display=(group==='FULL'||group==='SUB'||packageGroup)?'none':'flex';
+ const packageGroup=['STING','MATCH','COUNTDOWN'].includes(group);q('roleGlow').style.display=(group==='FULL'||group==='SUB'||packageGroup)?'none':'block';code.style.display=(group==='FULL'||group==='SUB'||packageGroup)?'none':'flex';
 }
 function renderStage(group){
  currentGroup=group||'TEAM';applyVisualGroup(currentGroup);syncMatchStage();['stingOverlay','matchOverlay','countdownOverlay'].forEach(id=>q(id).classList.remove('on'));q('stageTeam').textContent=currentTeamName();q('stageCrest').src=assets.crest||'';q('stageCrest').style.visibility=assets.crest?'visible':'hidden';q('stadiumPhoto').src=assets.bg||'';q('stadiumPhoto').className='stadiumPhoto'+(assets.bg?' on':'');q('fullList').style.display='none';q('subList').style.display='none';q('playersArea').style.display='flex';
  let title='STARTING XI',name='TEAM LINEUP',players=[];
  if(group==='STING'){title='MATCH SHOW';name='赛事Logo';q('playersArea').style.display='none';q('stingOverlay').classList.add('on')}
  else if(group==='MATCH'){title='MATCH SHOW';name='比赛信息';q('playersArea').style.display='none';q('matchOverlay').classList.add('on')}
- else if(group==='开场倒计时'){title='MATCH SHOW';name='开场倒计时';q('playersArea').style.display='none';q('countdownOverlay').classList.add('on')}
+ else if(group==='COUNTDOWN'){title='MATCH SHOW';name='开场倒计时';q('playersArea').style.display='none';q('countdownOverlay').classList.add('on')}
  else if(group==='TEAM'){title='SAGI BROADCAST';name=currentTeamName()+' · '+q('formation').value;players=[]}
  else if(group==='FULL'){title='STARTING XI';name='FULL LINEUP';renderFull()} else if(group==='SUB'){title='SQUAD';name='SUBSTITUTES';renderSubs()}
  else{title='STARTING XI';name=ROLE_NAMES[group]||group;players=grouped(group);q('playersArea').innerHTML=players.map(p=>playerCard(p,players.length)).join('')}
@@ -553,7 +740,7 @@ function animatePackageGroup(group,duration){
   const core=q('stingOverlay').querySelector('.stingCore');if(core&&core.animate)core.animate([{opacity:0,transform:'scale(.72)'},{opacity:1,transform:'scale(1.04)',offset:.7},{opacity:1,transform:'scale(1)'}],{duration:900,fill:'forwards',easing:'cubic-bezier(.2,.8,.2,1)'})
  }else if(group==='MATCH'){
   const card=q('matchOverlay').querySelector('.matchCardStage');if(card&&card.animate)card.animate([{opacity:0,transform:'translateY(45px) scale(.97)'},{opacity:1,transform:'translateY(0) scale(1)'}],{duration:720,fill:'forwards',easing:'ease-out'})
- }else if(group==='开场倒计时'){
+ }else if(group==='COUNTDOWN'){
   startCountdown(duration)
  }
 }
@@ -565,7 +752,7 @@ function cloudAdmin(){try{const x=JSON.parse(localStorage.getItem('sagi_cloud_ad
 function compactPlayersForGroup(group){const src=group==='FULL'?starters():group==='SUB'?substitutes():(['GK','DF','MF','FW'].includes(group)?grouped(group):[]);return src.map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',squadType:p.squadType||'STARTER',photo:(group==='FULL'||group==='SUB')?'':p.photo||'',mediaUrl:(group==='FULL'||group==='SUB')?'':p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'}))}
 async function publishGroup(group,duration,show=null){
  const cfg=cloudAdmin();if(!window.SagiCloud||!cfg.url||!cfg.key||!cfg.eventSlug||!cfg.token)return{ok:false};
- try{let cur=await window.SagiCloud.getEvent(cfg.eventSlug,cfg);if(!cur||!cur.payload)return{ok:false};const state={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,6),group,side:activeSide,team:currentTeamName(),formation:q('formation').value,players:compactPlayersForGroup(group),allPlayers:starters().map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',mediaUrl:p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'})),substitutes:substitutes().map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,statLabel:p.statLabel||'',statValue:p.statValue||''})),crest:assets.crest||'',stadium:assets.bg||'',background:q('outputBg').value,visualVersion:'V4.0-DUAL-TEAM-LINEUP',duration,show:show||null,package:packageData(),startedAt:new Date().toISOString()};const payload=Object.assign({},cur.payload,{lineupIntro:state});try{await window.SagiCloud.saveEvent(cfg.eventSlug,cfg.token,payload,cur.revision,cfg)}catch(e){if(String(e.message).includes('REVISION_CONFLICT')){const fresh=await window.SagiCloud.getEvent(cfg.eventSlug,cfg);await window.SagiCloud.saveEvent(cfg.eventSlug,cfg.token,Object.assign({},fresh.payload,{lineupIntro:state}),fresh.revision,cfg)}else throw e}return{ok:true}}catch(e){return{ok:false}}
+ try{let cur=await window.SagiCloud.getEvent(cfg.eventSlug,cfg);if(!cur||!cur.payload)return{ok:false};const state={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,6),group,side:activeSide,team:currentTeamName(),formation:q('formation').value,players:compactPlayersForGroup(group),allPlayers:starters().map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',mediaUrl:p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'})),substitutes:substitutes().map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,statLabel:p.statLabel||'',statValue:p.statValue||''})),crest:assets.crest||'',stadium:assets.bg||'',background:q('outputBg').value,visualVersion:'V4.1-DUAL-TEAM-LINEUP',duration,show:show||null,package:packageData(),startedAt:new Date().toISOString()};const payload=Object.assign({},cur.payload,{lineupIntro:state});try{await window.SagiCloud.saveEvent(cfg.eventSlug,cfg.token,payload,cur.revision,cfg)}catch(e){if(String(e.message).includes('REVISION_CONFLICT')){const fresh=await window.SagiCloud.getEvent(cfg.eventSlug,cfg);await window.SagiCloud.saveEvent(cfg.eventSlug,cfg.token,Object.assign({},fresh.payload,{lineupIntro:state}),fresh.revision,cfg)}else throw e}return{ok:true}}catch(e){return{ok:false}}
 }
 function focusAndRun(fn){const mobile=matchMedia&&matchMedia('(max-width:940px)').matches;if(!mobile){fn();return}try{q('frame').scrollIntoView({behavior:'auto',block:'center'});requestAnimationFrame(()=>requestAnimationFrame(fn))}catch(e){fn()}}
 function escAttr(s){return String(s??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')}
@@ -690,7 +877,7 @@ async function save(){
  if(assets.musicBlob)await dbPut('showMusic',assets.musicBlob);else await dbDel('showMusic');
  localStorage.setItem('sagi_player_intro_v40',JSON.stringify({activeSide:snapshot.activeSide,package:snapshot.package,teams:snapshot.teams}));
  localStorage.setItem('sagi_show_director_v40',JSON.stringify(snapshot.show));
- note('V4.0 双队阵容、音频与节目已保存')
+ note('V4.1 双队阵容、音频与节目已保存')
 }
 async function hydrateRoster(list=[]){const out=[];for(const p of list){p.photo=await dbGet('photo:'+p.id);p.mediaBlob=await dbGet('media:'+p.id);p.mediaObjectUrl=p.mediaBlob instanceof Blob?URL.createObjectURL(p.mediaBlob):'';p.mediaAction=p.mediaAction||'STANDARD';p.directorIn=Number(p.directorIn)||0;p.directorOut=Number(p.directorOut)||0;p.directorSpeed=Number(p.directorSpeed)||1;p.directorFreeze=!!p.directorFreeze;p.directorFreezeMs=Number(p.directorFreezeMs)||1000;p.directorCamera=p.directorCamera||'MEDIUM';out.push(p)}return out}
 async function load(){
@@ -706,7 +893,7 @@ async function load(){
   teamStore.AWAY={formation:x.teams?.AWAY?.formation||'4-3-3',roster:await hydrateRoster(x.teams?.AWAY?.roster||[]),crest:await dbGet('crest:AWAY')||''};
   assets.bg=await dbGet('stadium');assets.eventLogo=await dbGet('eventLogo');assets.musicBlob=await dbGet('showMusic');assets.musicObjectUrl=assets.musicBlob instanceof Blob?URL.createObjectURL(assets.musicBlob):'';
   let storedShow=JSON.parse(localStorage.getItem('sagi_show_director_v40')||'null');if(!storedShow){try{storedShow=JSON.parse(localStorage.getItem('sagi_show_director_v36')||'null')}catch(_){}}if(Array.isArray(storedShow)&&storedShow.length)showSteps=normalizeShowSteps(storedShow);else showSteps=normalizeShowSteps(DEFAULT_SHOW);
-  switchTeam(x.activeSide||'HOME',{silent:true,skipStash:true});renderPreviews();renderShowTimeline();syncMatchStage();note('V4.0 双队阵容、音频与节目已读取')
+  switchTeam(x.activeSide||'HOME',{silent:true,skipStash:true});renderPreviews();renderShowTimeline();syncMatchStage();note('V4.1 双队阵容、音频与节目已读取')
  }catch(e){note('读取失败')}
 }
 
@@ -718,7 +905,7 @@ function demo(){
  ['1','MURAT','STARTER','GK','GK',0,'SAVES','31'],['2','ADIL','STARTER','DF','RB',0,'APPS','11'],['4','BEKZAT','STARTER','DF','CB',1,'APPS','13'],['5','SERIK','STARTER','DF','CB',0,'APPS','12'],['3','AYDIN','STARTER','DF','LB',0,'APPS','10'],['6','NURAS','STARTER','MF','CM',0,'ASSISTS','4'],['8','ELDAR','STARTER','MF','CM',0,'APPS','12'],['10','ALIKHAN','STARTER','MF','AM',0,'GOALS','5'],['7','DAUREN','STARTER','FW','RW',0,'GOALS','6'],['9','YERNAR','STARTER','FW','ST',0,'GOALS','9'],['11','SAYAT','STARTER','FW','LW',0,'GOALS','4'],['12','ASKAR','SUB','GK','GK',0,'APPS','2'],['14','KANAT','SUB','DF','CB',0,'APPS','5'],['16','ARLAN','SUB','MF','CM',0,'ASSISTS','2'],['18','BOLAT','SUB','FW','ST',0,'GOALS','2'],['20','RAMAZAN','SUB','FW','RW',0,'APPS','4']];
  teamStore.HOME={roster:home.map(demoPlayer),formation:'4-3-3',crest:''};teamStore.AWAY={roster:away.map(demoPlayer),formation:'4-3-3',crest:''};
  writePackage({competition:'TFC WINTER LEAGUE',round:'MATCHDAY 01',home:'TARLAN FC',away:'ICE POINT FC',kickoff:'20:00',venue:'TACHENG',musicVolume:.65,audioEngine:{mode:'HYBRID',theme:'SAGI_PULSE',intensity:.75,ducking:.35,cueVolume:1,countdownBeat:true},sfx:{}});
- activeSide='HOME';roster=teamStore.HOME.roster;q('formation').value='4-3-3';assets.crest='';selected=0;writePlayer(roster[0]);refreshSideUI();renderRoster();renderStage('FULL');syncMatchStage();note('已载入 V4.0 双队示例：主队16人 + 客队16人')
+ activeSide='HOME';roster=teamStore.HOME.roster;q('formation').value='4-3-3';assets.crest='';selected=0;writePlayer(roster[0]);refreshSideUI();renderRoster();renderStage('FULL');syncMatchStage();note('已载入 V4.1 双队示例：主队16人 + 客队16人')
 }
 
 
@@ -778,8 +965,8 @@ function initBroadcastControl(){
  refreshBroadcastStatus();
 }
 
-function vmixLink(){return new URL('./vmix-v40.html',location.href).toString()}
-async function copyVmix(){try{await navigator.clipboard.writeText(vmixLink());note('V4.0 vMix 链接已复制')}catch(e){prompt('复制这个链接：',vmixLink())}}
+function vmixLink(){return new URL('./vmix-v41.html',location.href).toString()}
+async function copyVmix(){try{await navigator.clipboard.writeText(vmixLink());note('V4.1 vMix 链接已复制')}catch(e){prompt('复制这个链接：',vmixLink())}}
 
 q('crestFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;assets.crest=await fileData(f,420,.84);teamStore[activeSide].crest=assets.crest;renderPreviews();renderStage(currentGroup)};
 q('bgFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;assets.bg=await fileData(f,1600,.78);renderPreviews();renderStage(currentGroup)};
@@ -796,7 +983,7 @@ q('teamBtn').onclick=()=>setBroadcastPreview('TEAM',activeSide,bcLabel('TEAM',ac
 q('formation').onchange=()=>{teamStore[activeSide].formation=q('formation').value;renderStage(currentGroup)};q('teamName').oninput=()=>{if(activeSide==='HOME')q('matchHome').value=q('teamName').value;else q('matchAway').value=q('teamName').value;renderStage(currentGroup)};q('outputBg').onchange=()=>renderStage(currentGroup);
 ['matchCompetition','matchRound','matchKickoff','matchVenue'].forEach(id=>q(id).oninput=syncMatchStage);q('matchHome').oninput=()=>{if(activeSide==='HOME')q('teamName').value=q('matchHome').value;syncMatchStage()};q('matchAway').oninput=()=>{if(activeSide==='AWAY')q('teamName').value=q('matchAway').value;syncMatchStage()};
 ['audioMode','audioTheme','audioIntensity','audioDucking','cueVolume','countdownBeat'].forEach(id=>q(id).onchange=()=>{q('audioEngineState').textContent=q('audioMode').value+' · '+q('audioTheme').value.replaceAll('_',' ')});
-window.addEventListener('resize',resize);renderPreviews();renderRoster();loadShow();demo();refreshSideUI();syncMatchStage();renderStage('TEAM');resize();initBroadcastControl();setBroadcastPreview('TEAM','HOME','主队开场',2500);
+window.addEventListener('resize',resize);renderPreviews();renderRoster();loadShow();demo();refreshSideUI();syncMatchStage();renderStage('TEAM');resize();initBroadcastControl();initMatchdayGraphics();setBroadcastPreview('TEAM','HOME','主队开场',2500);
 })();
 </script>
 </body></html>
