@@ -3,7 +3,8 @@ name: SAGI PLAYER INTRO V1.0.4 test
 on:
   push:
     paths:
-      - 'intro/**'
+      - 'intro/v104.html'
+      - 'intro/vmix.html'
       - '.github/workflows/intro-e2e.yml'
 
 permissions:
@@ -42,7 +43,7 @@ jobs:
               page.on('pageerror',e=>errs.push('pageerror: '+e.message));
               page.on('response',resp=>{if(resp.status()===404)page404.push(resp.url())});
               page.on('console',m=>{if(m.type()==='error'&&!m.text().includes('Failed to load resource: the server responded with a status of 404'))errs.push('console: '+m.text())});
-              const r=await page.goto('http://127.0.0.1:8080/intro/',{waitUntil:'networkidle'});
+              const r=await page.goto('http://127.0.0.1:8080/intro/v104.html',{waitUntil:'networkidle'});
               add('页面HTTP 200',r&&r.status()===200,String(r&&r.status()));
               add('标题V1.0.4',(await page.title())==='SAGI PLAYER INTRO V1.0.4',await page.title());
               add('1920×1080舞台存在',await page.locator('#stage').count()===1);
