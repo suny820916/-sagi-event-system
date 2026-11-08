@@ -38,7 +38,9 @@ jobs:
               browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_BIN,args:['--no-sandbox','--disable-dev-shm-usage']});
               const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
               const page=await context.newPage();
+              const page404=[];
               page.on('pageerror',e=>errs.push('pageerror: '+e.message));
+              page.on('response',resp=>{if(resp.status()===404)page404.push(resp.url())});
               page.on('console',m=>{if(m.type()==='error')errs.push('console: '+m.text())});
               const r=await page.goto('http://127.0.0.1:8080/intro/',{waitUntil:'networkidle'});
               add('页面HTTP 200',r&&r.status()===200,String(r&&r.status()));
@@ -88,6 +90,7 @@ jobs:
 
               await page.click('#loadRosterBtn');await page.waitForTimeout(220);
               add('名单可恢复',await page.locator('#roster .playerRow').count()>=1,String(await page.locator('#roster .playerRow').count()));
+              add('控制页无404资源',page404.length===0,page404.join('|'));
 
               await context.route('**/rest/v1/rpc/sagi_get_event',async route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({slug:'tacheng-winter-2026',revision:1,payload:{playerIntro:{commandId:'test_cmd_1',name:'AZAMAT',number:'10',position:'FORWARD',team:'TACHENG',photo:'',crest:'',theme:'wind',background:'transparent',duration:3500,index:0,total:11}}})}));
               const vmix=await context.newPage();
