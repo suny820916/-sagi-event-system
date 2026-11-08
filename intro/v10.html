@@ -122,7 +122,12 @@ const q=id=>document.getElementById(id);
 let assets={photo:'',crest:''},roster=[],selected=-1,playing=false,lineupTimer=null;
 function note(t){const n=q('notice');n.textContent=t;n.style.display='block';clearTimeout(note.t);note.t=setTimeout(()=>n.style.display='none',1500)}
 function fileData(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(file)})}
-function readForm(){return{name:q('name').value.trim()||'PLAYER',number:q('number').value.trim()||'00',position:q('position').value.trim()||'PLAYER',team:q('team').value.trim()||'TEAM',photo:assets.photo||'',crest:assets.crest||''}}
+function uid(){return 'p_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8)}
+function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open('sagi_player_intro_assets',1);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('assets'))r.result.createObjectStore('assets')};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
+async function dbPut(k,v){try{const db=await openDB();await new Promise((res,rej)=>{const tx=db.transaction('assets','readwrite');tx.objectStore('assets').put(v,k);tx.oncomplete=res;tx.onerror=()=>rej(tx.error)});db.close()}catch(e){}}
+async function dbGet(k){try{const db=await openDB();const v=await new Promise(res=>{const tx=db.transaction('assets','readonly'),r=tx.objectStore('assets').get(k);r.onsuccess=()=>res(r.result||'');r.onerror=()=>res('')});db.close();return v}catch(e){return''}}
+async function dbDel(k){try{const db=await openDB();await new Promise(res=>{const tx=db.transaction('assets','readwrite');tx.objectStore('assets').delete(k);tx.oncomplete=res;tx.onerror=res});db.close()}catch(e){}}
+function readForm(){return{id:(selected>=0&&roster[selected]&&roster[selected].id)||'',name:q('name').value.trim()||'PLAYER',number:q('number').value.trim()||'00',position:q('position').value.trim()||'PLAYER',team:q('team').value.trim()||'TEAM',photo:assets.photo||'',crest:assets.crest||''}}
 function writeForm(p){q('name').value=p.name||'';q('number').value=p.number||'';q('position').value=p.position||'';q('team').value=p.team||'';assets.photo=p.photo||'';assets.crest=p.crest||'';renderAssetPreviews();renderStage(p)}
 function renderAssetPreviews(){q('photoPreview').innerHTML=assets.photo?'<img src="'+assets.photo+'">':'球员';q('crestPreview').innerHTML=assets.crest?'<img src="'+assets.crest+'" style="object-fit:contain">':'队徽'}
 function renderStage(p,index){
@@ -134,13 +139,13 @@ function playCurrent(){playing=true;restartAnimation(readForm(),selected>=0?sele
 function playLineupAt(i){if(!playing||!roster.length)return;if(i>=roster.length){playing=false;q('status').textContent='首发出场播放完成';q('stage').classList.remove('playing');return}selected=i;renderRoster();writeForm(roster[i]);restartAnimation(roster[i],i);q('status').textContent='首发连续播放 '+(i+1)+' / '+roster.length;clearTimeout(lineupTimer);lineupTimer=setTimeout(()=>playLineupAt(i+1),+q('duration').value)}
 function playLineup(){if(!roster.length){note('请先加入球员');return}playing=true;playLineupAt(0)}
 function stop(){playing=false;clearTimeout(lineupTimer);q('stage').classList.remove('playing');q('status').textContent='已停止'}
-function addPlayer(){const p=readForm();roster.push(p);selected=roster.length-1;renderRoster();note('已加入首发名单')}
-function updatePlayer(){if(selected<0||!roster[selected]){note('请先选择名单球员');return}roster[selected]=readForm();renderRoster();note('已更新')}
-function removePlayer(){if(selected<0)return;roster.splice(selected,1);selected=Math.min(selected,roster.length-1);if(selected>=0)writeForm(roster[selected]);renderRoster();note('已删除')}
+async function addPlayer(){const p=readForm();p.id=p.id||uid();roster.push(p);selected=roster.length-1;await dbPut('photo:'+p.id,p.photo||'');await dbPut('crest:'+p.id,p.crest||'');renderRoster();note('已加入首发名单')}
+async function updatePlayer(){if(selected<0||!roster[selected]){note('请先选择名单球员');return}const id=roster[selected].id||uid(),p=readForm();p.id=id;roster[selected]=p;await dbPut('photo:'+id,p.photo||'');await dbPut('crest:'+id,p.crest||'');renderRoster();note('已更新')}
+async function removePlayer(){if(selected<0)return;const old=roster[selected];roster.splice(selected,1);if(old&&old.id){await dbDel('photo:'+old.id);await dbDel('crest:'+old.id)}selected=Math.min(selected,roster.length-1);if(selected>=0)writeForm(roster[selected]);renderRoster();note('已删除')}
 function renderRoster(){const w=q('roster');w.innerHTML='';if(!roster.length){w.innerHTML='<div class="muted">还没有球员。设置上方资料后点“加入名单”。</div>';return}roster.forEach((p,i)=>{const d=document.createElement('div');d.className='playerRow'+(i===selected?' on':'');d.innerHTML='<div class="thumb">'+(p.photo?'<img src="'+p.photo+'">':'PLAYER')+'</div><div><div class="pname">'+escapeHtml(p.name)+'</div><div class="pmeta">'+escapeHtml(p.position)+' · '+escapeHtml(p.team)+'</div></div><div class="num">'+escapeHtml(p.number)+'</div>';d.onclick=()=>{selected=i;writeForm(roster[i]);renderRoster()};w.appendChild(d)})}
 function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function saveRoster(){try{localStorage.setItem('sagi_player_intro_v1',JSON.stringify(roster));note('名单已保存')}catch(e){note('保存失败')}}
-function loadRoster(){try{const x=JSON.parse(localStorage.getItem('sagi_player_intro_v1')||'[]');if(Array.isArray(x)){roster=x;selected=roster.length?0:-1;if(selected>=0)writeForm(roster[0]);renderRoster();note('名单已读取')}}catch(e){note('读取失败')}}
+async function saveRoster(){try{for(const p of roster){p.id=p.id||uid();await dbPut('photo:'+p.id,p.photo||'');await dbPut('crest:'+p.id,p.crest||'')}const slim=roster.map(p=>({id:p.id,name:p.name,number:p.number,position:p.position,team:p.team}));localStorage.setItem('sagi_player_intro_v1',JSON.stringify(slim));note('名单已保存')}catch(e){note('保存失败')}}
+async function loadRoster(){try{const x=JSON.parse(localStorage.getItem('sagi_player_intro_v1')||'[]');if(Array.isArray(x)){roster=[];for(const p of x){p.id=p.id||uid();p.photo=await dbGet('photo:'+p.id);p.crest=await dbGet('crest:'+p.id);roster.push(p)}selected=roster.length?0:-1;if(selected>=0)writeForm(roster[0]);renderRoster();note('名单已读取')}}catch(e){note('读取失败')}}
 async function loadCloud(){
  try{
   const cfg=window.SAGI_CLOUD||{};if(!cfg.url||!cfg.key||!cfg.eventSlug)throw new Error('云端配置未完成');
