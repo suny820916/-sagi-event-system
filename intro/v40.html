@@ -188,13 +188,13 @@ button,.fileBtn{border:0;border-radius:12px;background:#262d37;color:#fff;font-w
     <div class="bcQuick">
       <button type="button" data-bc-group="STING" data-bc-label="赛事Logo">赛事Logo</button>
       <button type="button" data-bc-group="MATCH" data-bc-label="比赛信息">比赛信息</button>
-      <button type="button" data-bc-group="开场倒计时" data-bc-label="开场倒计时">开场倒计时</button>
+      <button type="button" data-bc-group="COUNTDOWN" data-bc-label="开场倒计时">开场倒计时</button>
       <button type="button" data-bc-side="HOME" data-bc-group="TEAM" data-bc-label="主队开场">主队开场</button>
       <button type="button" data-bc-side="HOME" data-bc-group="FULL" data-bc-label="主队首发">主队首发</button>
-      <button type="button" data-bc-side="HOME" data-bc-group="SUB" data-bc-label="HOME SUBS">HOME 替补</button>
+      <button type="button" data-bc-side="HOME" data-bc-group="SUB" data-bc-label="主队替补">主队替补</button>
       <button type="button" data-bc-side="AWAY" data-bc-group="TEAM" data-bc-label="客队开场">客队开场</button>
       <button type="button" data-bc-side="AWAY" data-bc-group="FULL" data-bc-label="客队首发">客队首发</button>
-      <button type="button" data-bc-side="AWAY" data-bc-group="SUB" data-bc-label="AWAY SUBS">AWAY 替补</button>
+      <button type="button" data-bc-side="AWAY" data-bc-group="SUB" data-bc-label="客队替补">客队替补</button>
     </div>
     <div class="bcHint">SPACE = GO LIVE · H = HOLD/RESUME · ←/→ = PREV/下一画面 · ESC = 一键清屏 · 本机大画面始终作为 PREVIEW，vMix Browser 作为 PROGRAM。</div>
   </div>
@@ -368,7 +368,7 @@ let roster=[],selected=-1,activeSide='HOME',teamStore={HOME:{roster:[],formation
 const DEFAULT_SHOW=[
  {id:'sting',group:'STING',label:'Logo Sting',duration:2000,transition:'FLASH',cue:'STING',enabled:true},
  {id:'match',group:'MATCH',label:'比赛信息',duration:3000,transition:'FADE',cue:'RISER',enabled:true},
- {id:'countdown',group:'开场倒计时',label:'开场倒计时',duration:5000,transition:'ZOOM',cue:'HIT',enabled:true},
+ {id:'countdown',group:'COUNTDOWN',label:'开场倒计时',duration:5000,transition:'ZOOM',cue:'HIT',enabled:true},
  {id:'home_team',side:'HOME',group:'TEAM',label:'主队开场',duration:2500,transition:'FADE',cue:'RISER',enabled:true},
  {id:'home_gk',side:'HOME',group:'GK',label:'主队门将',duration:3000,transition:'ZOOM',cue:'HIT',enabled:true},
  {id:'home_df',side:'HOME',group:'DF',label:'主队后卫',duration:4000,transition:'SLIDE',cue:'WHOOSH',enabled:true},
@@ -389,7 +389,7 @@ let broadcastHold=false,broadcastPreview={group:'TEAM',side:'HOME',label:'主队
 const BROADCAST_MANUAL=[
  {group:'STING',side:'HOME',label:'赛事Logo',duration:2000},
  {group:'MATCH',side:'HOME',label:'比赛信息',duration:3000},
- {group:'开场倒计时',side:'HOME',label:'开场倒计时',duration:5000},
+ {group:'COUNTDOWN',side:'HOME',label:'开场倒计时',duration:5000},
  {group:'TEAM',side:'HOME',label:'主队开场',duration:2500},
  {group:'GK',side:'HOME',label:'主队门将',duration:3000},
  {group:'DF',side:'HOME',label:'主队后卫',duration:4000},
@@ -502,14 +502,14 @@ function applyVisualGroup(group){
  area.className='playersArea layout-'+group;
  const codes={STING:'SAGI',MATCH:'MATCH',开场倒计时:'5',TEAM:'XI',GK:'GK',DF:'DEF',MF:'MID',FW:'FWD',FULL:'XI',SUB:'SUB'};
  code.textContent=codes[group]||'XI';
- const packageGroup=['STING','MATCH','开场倒计时'].includes(group);q('roleGlow').style.display=(group==='FULL'||group==='SUB'||packageGroup)?'none':'block';code.style.display=(group==='FULL'||group==='SUB'||packageGroup)?'none':'flex';
+ const packageGroup=['STING','MATCH','COUNTDOWN'].includes(group);q('roleGlow').style.display=(group==='FULL'||group==='SUB'||packageGroup)?'none':'block';code.style.display=(group==='FULL'||group==='SUB'||packageGroup)?'none':'flex';
 }
 function renderStage(group){
  currentGroup=group||'TEAM';applyVisualGroup(currentGroup);syncMatchStage();['stingOverlay','matchOverlay','countdownOverlay'].forEach(id=>q(id).classList.remove('on'));q('stageTeam').textContent=currentTeamName();q('stageCrest').src=assets.crest||'';q('stageCrest').style.visibility=assets.crest?'visible':'hidden';q('stadiumPhoto').src=assets.bg||'';q('stadiumPhoto').className='stadiumPhoto'+(assets.bg?' on':'');q('fullList').style.display='none';q('subList').style.display='none';q('playersArea').style.display='flex';
  let title='STARTING XI',name='TEAM LINEUP',players=[];
  if(group==='STING'){title='MATCH SHOW';name='赛事Logo';q('playersArea').style.display='none';q('stingOverlay').classList.add('on')}
  else if(group==='MATCH'){title='MATCH SHOW';name='比赛信息';q('playersArea').style.display='none';q('matchOverlay').classList.add('on')}
- else if(group==='开场倒计时'){title='MATCH SHOW';name='开场倒计时';q('playersArea').style.display='none';q('countdownOverlay').classList.add('on')}
+ else if(group==='COUNTDOWN'){title='MATCH SHOW';name='开场倒计时';q('playersArea').style.display='none';q('countdownOverlay').classList.add('on')}
  else if(group==='TEAM'){title='SAGI BROADCAST';name=currentTeamName()+' · '+q('formation').value;players=[]}
  else if(group==='FULL'){title='STARTING XI';name='FULL LINEUP';renderFull()} else if(group==='SUB'){title='SQUAD';name='SUBSTITUTES';renderSubs()}
  else{title='STARTING XI';name=ROLE_NAMES[group]||group;players=grouped(group);q('playersArea').innerHTML=players.map(p=>playerCard(p,players.length)).join('')}
@@ -553,7 +553,7 @@ function animatePackageGroup(group,duration){
   const core=q('stingOverlay').querySelector('.stingCore');if(core&&core.animate)core.animate([{opacity:0,transform:'scale(.72)'},{opacity:1,transform:'scale(1.04)',offset:.7},{opacity:1,transform:'scale(1)'}],{duration:900,fill:'forwards',easing:'cubic-bezier(.2,.8,.2,1)'})
  }else if(group==='MATCH'){
   const card=q('matchOverlay').querySelector('.matchCardStage');if(card&&card.animate)card.animate([{opacity:0,transform:'translateY(45px) scale(.97)'},{opacity:1,transform:'translateY(0) scale(1)'}],{duration:720,fill:'forwards',easing:'ease-out'})
- }else if(group==='开场倒计时'){
+ }else if(group==='COUNTDOWN'){
   startCountdown(duration)
  }
 }
