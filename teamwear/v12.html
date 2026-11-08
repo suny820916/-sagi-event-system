@@ -43,7 +43,7 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
 <div class="app">
   <div class="top">
     <div><div class="brand">SAGI TEAMWEAR SALES SYSTEM</div><div class="sub">球队建档 · 产品方案 · 球员名单 · 报价 · 订单 · 补单</div></div>
-    <div class="ver">V1.2 · PRODUCT CATALOG</div>
+    <div class="ver">V1.2.1 · NEGOTIATED PRICE FIX</div>
   </div>
   <div class="nav">
     <a href="#customer">球队建档</a><a href="#product">比赛服引擎</a><a href="#catalog">产品目录</a><a href="#rosterCard">球员名单</a><a href="#orders">订单管理</a><a href="#quoteCard">报价单</a>
@@ -88,7 +88,7 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
 
           <div><label>主色</label><input id="primaryColor" value="塔城红"></div>
           <div><label>辅色</label><input id="accentColor" value="暖米白"></div>
-          <div><label>定价策略</label><select id="priceStrategy"><option value="margin" selected>SAGI目标毛利</option><option value="bottom">厂家团购底线参考</option><option value="recommended">厂家建议零售参考</option><option value="brand">厂家品牌价参考</option><option value="custom">手动售价</option></select></div>
+          <div><label>定价策略</label><select id="priceStrategy"><option value="fixed">SAGI固定售价</option><option value="margin" selected>SAGI目标毛利</option><option value="bottom">厂家团购底线参考</option><option value="recommended">厂家建议零售参考</option><option value="brand">厂家品牌价参考</option><option value="custom">手动售价</option></select></div>
           <div><label>目标毛利率</label><select id="targetMargin"><option value=".4">40%</option><option value=".45">45%</option><option value=".5" selected>50%</option><option value=".55">55%</option><option value=".6">60%</option></select></div>
 
           <div><label>客户销售单价 / 套</label><input id="salesUnitPrice" type="number" min="0" value="120"></div>
@@ -102,16 +102,16 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
           <div><label>其他工艺成本 / 套</label><input id="otherCraftCost" type="number" min="0" value="0"></div>
 
           <div><label>厂家运费成本</label><input id="factoryShippingCost" type="number" min="0" value="0"></div>
-          <div><label>客户收取运费</label><input id="shippingFee" type="number" min="0" value="0"></div>
+          <div><label>客户收取运费</label><input id="shippingFee" type="number" min="0" value="0"><div class="tiny" style="margin-top:4px">默认不包邮，运费另计</div></div>
           <div><label>发货地区</label><select id="shippingZone"><option value="standard">普通地区</option><option value="remote" selected>新疆 / 西藏 / 内蒙古 / 宁夏 / 青海 / 东北三省</option></select></div>
           <div><label>定金比例</label><select id="depositRate"><option value=".3">30%</option><option value=".5" selected>50%</option><option value=".7">70%</option><option value="1">100%</option></select></div>
         </div>
 
         <div class="priceEngine">
-          <div class="priceEngineHead"><b>厂家成本库 · 2026.10</b><span id="supplierFabric">针眼布150g</span></div>
+          <div class="priceEngineHead"><b>SAGI协商成本库 · 2026.10</b><span id="supplierFabric">针眼布150g</span></div>
           <div class="priceMatrix">
             <div class="priceMetric"><span>厂家经销价 / 套</span><b id="mFactory">¥0</b></div>
-            <div class="priceMetric"><span>SAGI贴牌实际成本 / 套</span><b id="mBrandCost">¥0</b></div>
+            <div class="priceMetric"><span>SAGI协商实际成本 / 套</span><b id="mBrandCost">¥0</b></div>
             <div class="priceMetric warn"><span>厂家团购底线参考</span><b id="mBottom">¥0</b></div>
             <div class="priceMetric"><span>厂家建议零售参考</span><b id="mRecommended">¥0</b></div>
             <div class="priceMetric"><span>厂家品牌价参考</span><b id="mBrandRef">¥0</b></div>
@@ -165,7 +165,7 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
           <div class="catalogSum"><span>附加产品销售额</span><b id="catalogSalesTotal">¥0</b></div>
           <div class="catalogSum"><span>附加产品毛利</span><b id="catalogGrossTotal">¥0</b></div>
         </div>
-        <div class="catalogNote">训练服部分“建议零售价 / 品牌价”在厂家原表中采用合并展示，V1.2 不将该合并值自动套到单件产品；系统优先使用清晰的经销成本、团购底线或 SAGI 目标毛利。外套 / 风雨衣按贴牌规则自动 +¥10；比赛服套装仍按 +¥5。</div>
+        <div class="catalogNote">当前成本优先使用SAGI协商价：服装类按厂家表价约减¥5，贴牌费¥0；配件暂按厂家表价，待单独确认。训练服部分合并显示的建议零售价 / 品牌价不强行套用到单件产品。</div>
       </div>
 
             <div id="rosterCard" class="card">
@@ -258,37 +258,39 @@ const STORAGE_KEY='sagi_teamwear_sales_v12';
 const LEGACY_KEY='sagi_teamwear_sales_v11';
 const LEGACY_KEY_V10='sagi_teamwear_sales_v10';
 const SUPPLIER_CATALOG={
- CLUB:{name:'CLUB',fabric:'针眼布150g',adult:{factory:45,bottom:98,recommended:118,brand:148},child:{factory:40,bottom:88,recommended:108,brand:138}},
- MATCH:{name:'MATCH',fabric:'LANTU球员版/菠萝提花面料160g',adult:{factory:55,bottom:118,recommended:138,brand:168},child:{factory:50,bottom:108,recommended:128,brand:158}},
- PRO:{name:'PRO',fabric:'阿迪球员版制作球衣160g',adult:{factory:60,bottom:128,recommended:148,brand:238},child:{factory:55,bottom:118,recommended:138,brand:218}},
- ELITE:{name:'ELITE',fabric:'nike ADV布料制作球衣170g',adult:{factory:70,bottom:158,recommended:188,brand:258},child:{factory:65,bottom:148,recommended:178,brand:238}}
+ CLUB:{name:'CLUB',fabric:'针眼布150g',adult:{factory:40,bottom:98,recommended:118,brand:148},child:{factory:35,bottom:88,recommended:108,brand:138}},
+ MATCH:{name:'MATCH',fabric:'LANTU球员版/菠萝提花面料160g',adult:{factory:50,bottom:118,recommended:138,brand:168},child:{factory:45,bottom:108,recommended:128,brand:158}},
+ PRO:{name:'PRO',fabric:'阿迪球员版制作球衣160g',adult:{factory:55,bottom:128,recommended:148,brand:238},child:{factory:50,bottom:118,recommended:138,brand:218}},
+ ELITE:{name:'ELITE',fabric:'nike ADV布料制作球衣170g',adult:{factory:65,bottom:158,recommended:188,brand:258},child:{factory:60,bottom:148,recommended:178,brand:238}}
 };
 const SOCKS={adult:{factory:17.5,bottom:25,recommended:28,brand:38},child:{factory:16.5,bottom:25,recommended:28,brand:38}};
 const PRODUCT_CATALOG={
- BASKET_DOUBLE:{category:'比赛服',name:'双面篮球服',fabric:'小方格100g',unit:'套',brandFee:5,minQty:5,adult:{factory:65,bottom:128,recommended:158,brand:178},child:{factory:65,bottom:128,recommended:158,brand:178}},
- BIB:{category:'比赛服',name:'分队背心（号码衣）',fabric:'小方格100g',unit:'件',brandFee:0,minQty:5,adult:{factory:18,bottom:35,recommended:38,brand:68},child:{factory:18,bottom:35,recommended:38,brand:68}},
- TOP_PINHOLE:{category:'比赛服',name:'单上衣 · 针眼布',fabric:'针眼布料',unit:'件',brandFee:0,minQty:5,adult:{factory:30,bottom:60,recommended:68,brand:null},child:{factory:30,bottom:60,recommended:68,brand:null}},
- TOP_JACQUARD:{category:'比赛服',name:'单上衣 · 针眼提花',fabric:'针眼提花 G026',unit:'件',brandFee:0,minQty:5,adult:{factory:35,bottom:70,recommended:78,brand:null},child:{factory:35,bottom:70,recommended:78,brand:null}},
- TOP_LANTU:{category:'比赛服',name:'单上衣 · 球员版',fabric:'LANTU球员版布料',unit:'件',brandFee:0,minQty:5,adult:{factory:35,bottom:70,recommended:78,brand:null},child:{factory:35,bottom:70,recommended:78,brand:null}},
- TOP_ADIDAS:{category:'比赛服',name:'单上衣 · 阿迪面料',fabric:'阿迪面料',unit:'件',brandFee:0,minQty:5,adult:{factory:40,bottom:80,recommended:98,brand:null},child:{factory:40,bottom:80,recommended:98,brand:null}},
- TOP_ADV:{category:'比赛服',name:'单上衣 · ADV面料',fabric:'ADV面料',unit:'件',brandFee:0,minQty:5,adult:{factory:50,bottom:98,recommended:108,brand:null},child:{factory:50,bottom:98,recommended:108,brand:null}},
- HALF190_TOP:{category:'训练服',name:'半拉链单上衣 190g',fabric:'蓝祥丝190g',unit:'件',brandFee:10,minQty:5,adult:{factory:65,bottom:128,recommended:null,brand:null},child:{factory:65,bottom:128,recommended:null,brand:null}},
- TRAIN190_PANT:{category:'训练服',name:'训练裤 190g',fabric:'蓝祥丝190g',unit:'件',brandFee:0,minQty:5,adult:{factory:45,bottom:98,recommended:null,brand:null},child:{factory:45,bottom:98,recommended:null,brand:null}},
- HALF290_TOP:{category:'训练服',name:'半拉链单上衣 290g',fabric:'海盖丝290g',unit:'件',brandFee:10,minQty:5,adult:{factory:70,bottom:139,recommended:null,brand:null},child:{factory:70,bottom:139,recommended:null,brand:null}},
- TRAIN290_PANT:{category:'训练服',name:'训练裤 290g',fabric:'海盖丝290g',unit:'件',brandFee:0,minQty:5,adult:{factory:55,bottom:108,recommended:null,brand:null},child:{factory:55,bottom:108,recommended:null,brand:null}},
- FULL290_TOP:{category:'训练服',name:'全拉链上衣 290g',fabric:'海盖丝290g',unit:'件',brandFee:10,minQty:5,adult:{factory:85,bottom:168,recommended:null,brand:null},child:{factory:85,bottom:168,recommended:null,brand:null}},
- FULL290_PANT:{category:'训练服',name:'全拉链训练裤 290g',fabric:'海盖丝290g',unit:'件',brandFee:0,minQty:5,adult:{factory:55,bottom:108,recommended:null,brand:null},child:{factory:55,bottom:108,recommended:null,brand:null}},
- WIND_MEMORY:{category:'外套',name:'全定制风雨衣 · 防记忆布',fabric:'防记忆布料',unit:'件',brandFee:10,minQty:5,adult:{factory:115,bottom:218,recommended:228,brand:288},child:{factory:105,bottom:218,recommended:228,brand:288}},
- WIND_SHELL:{category:'外套',name:'全定制硬壳风雨衣',fabric:'硬壳风雨衣',unit:'件',brandFee:10,minQty:5,adult:{factory:125,bottom:238,recommended:258,brand:388},child:{factory:115,bottom:238,recommended:258,brand:388}},
- VEST_SINGLE:{category:'外套',name:'全定制棉马甲 · 单面穿',fabric:'棉',unit:'件',brandFee:10,minQty:5,adult:{factory:110,bottom:218,recommended:228,brand:298},child:{factory:110,bottom:218,recommended:228,brand:298}},
- VEST_DOUBLE:{category:'外套',name:'全定制棉马甲 · 双面穿',fabric:'棉',unit:'件',brandFee:10,minQty:5,adult:{factory:130,bottom:268,recommended:298,brand:398},child:{factory:130,bottom:268,recommended:298,brand:398}},
+ BASKET_DOUBLE:{category:'比赛服',name:'双面篮球服',fabric:'小方格100g',unit:'套',brandFee:0,minQty:5,adult:{factory:60,bottom:128,recommended:158,brand:178},child:{factory:60,bottom:128,recommended:158,brand:178}},
+ BIB:{category:'比赛服',name:'分队背心（号码衣）',fabric:'小方格100g',unit:'件',brandFee:0,minQty:5,adult:{factory:13,bottom:35,recommended:38,brand:68},child:{factory:13,bottom:35,recommended:38,brand:68}},
+ TOP_PINHOLE:{category:'比赛服',name:'单上衣 · 针眼布',fabric:'针眼布料',unit:'件',brandFee:0,minQty:5,adult:{factory:25,bottom:60,recommended:68,brand:null},child:{factory:25,bottom:60,recommended:68,brand:null}},
+ TOP_JACQUARD:{category:'比赛服',name:'单上衣 · 针眼提花',fabric:'针眼提花 G026',unit:'件',brandFee:0,minQty:5,adult:{factory:30,bottom:70,recommended:78,brand:null},child:{factory:30,bottom:70,recommended:78,brand:null}},
+ TOP_LANTU:{category:'比赛服',name:'单上衣 · 球员版',fabric:'LANTU球员版布料',unit:'件',brandFee:0,minQty:5,adult:{factory:30,bottom:70,recommended:78,brand:null},child:{factory:30,bottom:70,recommended:78,brand:null}},
+ TOP_ADIDAS:{category:'比赛服',name:'单上衣 · 阿迪面料',fabric:'阿迪面料',unit:'件',brandFee:0,minQty:5,adult:{factory:35,bottom:80,recommended:98,brand:null},child:{factory:35,bottom:80,recommended:98,brand:null}},
+ TOP_ADV:{category:'比赛服',name:'单上衣 · ADV面料',fabric:'ADV面料',unit:'件',brandFee:0,minQty:5,adult:{factory:45,bottom:98,recommended:108,brand:null},child:{factory:45,bottom:98,recommended:108,brand:null}},
+ HALF190_TOP:{category:'训练服',name:'半拉链单上衣 190g',fabric:'蓝祥丝190g',unit:'件',brandFee:0,minQty:5,adult:{factory:60,bottom:128,recommended:null,brand:null},child:{factory:60,bottom:128,recommended:null,brand:null}},
+ TRAIN190_PANT:{category:'训练服',name:'训练裤 190g',fabric:'蓝祥丝190g',unit:'件',brandFee:0,minQty:5,adult:{factory:40,bottom:98,recommended:null,brand:null},child:{factory:40,bottom:98,recommended:null,brand:null}},
+ HALF290_TOP:{category:'训练服',name:'半拉链单上衣 290g',fabric:'海盖丝290g',unit:'件',brandFee:0,minQty:5,adult:{factory:65,bottom:139,recommended:null,brand:null},child:{factory:65,bottom:139,recommended:null,brand:null}},
+ TRAIN290_PANT:{category:'训练服',name:'训练裤 290g',fabric:'海盖丝290g',unit:'件',brandFee:0,minQty:5,adult:{factory:50,bottom:108,recommended:null,brand:null},child:{factory:50,bottom:108,recommended:null,brand:null}},
+ FULL290_TOP:{category:'训练服',name:'全拉链上衣 290g',fabric:'海盖丝290g',unit:'件',brandFee:0,minQty:5,adult:{factory:80,bottom:168,recommended:null,brand:null},child:{factory:80,bottom:168,recommended:null,brand:null}},
+ FULL290_PANT:{category:'训练服',name:'全拉链训练裤 290g',fabric:'海盖丝290g',unit:'件',brandFee:0,minQty:5,adult:{factory:50,bottom:108,recommended:null,brand:null},child:{factory:50,bottom:108,recommended:null,brand:null}},
+ WIND_MEMORY:{category:'外套',name:'全定制风雨衣 · 防记忆布',fabric:'防记忆布料',unit:'件',brandFee:0,minQty:5,adult:{factory:110,bottom:218,recommended:228,brand:288},child:{factory:100,bottom:218,recommended:228,brand:288}},
+ WIND_SHELL:{category:'外套',name:'全定制硬壳风雨衣',fabric:'硬壳风雨衣',unit:'件',brandFee:0,minQty:5,adult:{factory:120,bottom:238,recommended:258,brand:388},child:{factory:110,bottom:238,recommended:258,brand:388}},
+ VEST_SINGLE:{category:'外套',name:'全定制棉马甲 · 单面穿',fabric:'棉',unit:'件',brandFee:0,minQty:5,adult:{factory:105,bottom:218,recommended:228,brand:298},child:{factory:105,bottom:218,recommended:228,brand:298}},
+ VEST_DOUBLE:{category:'外套',name:'全定制棉马甲 · 双面穿',fabric:'棉',unit:'件',brandFee:0,minQty:5,adult:{factory:125,bottom:268,recommended:298,brand:398},child:{factory:125,bottom:268,recommended:298,brand:398}},
  SOCKS:{category:'配件',name:'足球袜',fabric:'棉63% / 锦22% / 氨纶14% / 橡筋1%',unit:'双',brandFee:0,minQty:5,adult:{factory:17.5,bottom:25,recommended:28,brand:38},child:{factory:16.5,bottom:25,recommended:28,brand:38}},
  CAPTAIN:{category:'配件',name:'队长袖标',fabric:'定制袖标',unit:'个',brandFee:0,minQty:5,adult:{factory:10,bottom:25,recommended:30,brand:null},child:{factory:10,bottom:25,recommended:30,brand:null}},
  SHINGUARD:{category:'配件',name:'护腿板',fabric:'护腿板',unit:'个',brandFee:0,minQty:1,adult:{factory:4,bottom:6,recommended:6,brand:null},child:{factory:4,bottom:6,recommended:6,brand:null}},
  SCARF:{category:'配件',name:'球迷围巾',fabric:'针眼布料',unit:'条',brandFee:0,minQty:50,adult:{factory:10,bottom:20,recommended:30,brand:null},child:{factory:10,bottom:20,recommended:30,brand:null}},
  EXCHANGE_FLAG:{category:'配件',name:'交换旗子',fabric:'足球交换旗子',unit:'面',brandFee:0,minQty:5,adult:{factory:10,bottom:20,recommended:30,brand:null},child:{factory:10,bottom:20,recommended:30,brand:null}}
 };
-const SAGI_BRAND_FEE=5;
+const SAGI_BRAND_FEE=0;
+const NEGOTIATED_APPAREL_DISCOUNT=5;
+const SAGI_FIXED_PRICE={CLUB:{adult:79}};
 const STAGES=['线索','设计沟通','已报价','已收定金','生产中','质检','已发货','已完成'];
 let state={orders:[],currentId:null,teamLogo:'',roster:[],catalogItems:[]};
 
@@ -377,9 +379,10 @@ function productFlags(){
 function addonPerUnit(){return n('poloAddon')+n('pocketAddon')+n('longSleeveAddon')+n('otherCraftCost')}
 function roundup5(v){return Math.ceil(Math.max(0,Number(v)||0)/5)*5}
 function suggestedSaleUnit(){
- const {row}=catalogRow(),flags=productFlags(),addon=addonPerUnit(),sock=flags.socks?SOCKS[q('ageGroup').value==='child'?'child':'adult']:null;
+ const {tier,row,age}=catalogRow(),flags=productFlags(),addon=addonPerUnit(),sock=flags.socks?SOCKS[q('ageGroup').value==='child'?'child':'adult']:null;
  const actual=row.factory+SAGI_BRAND_FEE+addon+(sock?sock.factory:0),strategy=q('priceStrategy').value;
  if(flags.manual||strategy==='custom')return n('salesUnitPrice');
+ if(strategy==='fixed'&&SAGI_FIXED_PRICE[tier.name]&&SAGI_FIXED_PRICE[tier.name][age]!=null)return Number(SAGI_FIXED_PRICE[tier.name][age])+addon+(sock?sock.factory:0);
  if(strategy==='bottom')return roundup5(row.bottom+addon+(sock?sock.bottom:0));
  if(strategy==='recommended')return roundup5(row.recommended+addon+(sock?sock.recommended:0));
  if(strategy==='brand')return roundup5(row.brand+addon+(sock?sock.brand:0));
@@ -394,7 +397,7 @@ function syncPriceEngine(force=false){
  q('mBottom').textContent=money(row.bottom);q('mRecommended').textContent=money(row.recommended);q('mBrandRef').textContent=money(row.brand);q('mAddons').textContent=money(addon+(sock?sock.factory:0));q('mCostUnit').textContent=money(actual);q('mSaleUnit').textContent=money(n('salesUnitPrice'));
  const remote=q('shippingZone').value==='remote',qty=state.roster.length+n('extraQty');
  q('supplierRuleNote').className='costNote'+(remote?' warn':'');
- q('supplierRuleNote').textContent='热升华定制套装包含印字印号；SAGI贴牌每套 +¥5。POLO领 +¥10、短裤口袋 +¥5、长袖 +¥10；其他特殊工艺另计。'+(remote?' 当前目的地属于厂家“不包邮”例外地区，请手工填写厂家运费成本。':qty<5?' 当前数量少于5套，厂家规则为不包邮，请确认运费。':' 普通地区5套以上按厂家运费规则执行，仍建议下单前确认实际物流费用。')
+ q('supplierRuleNote').textContent='当前按SAGI协商价核算：服装类较厂家表价约低¥5，贴牌费¥0；针眼布150g成人成本¥40、SAGI售价¥79。POLO领 +¥10、短裤口袋 +¥5、长袖 +¥10；其他特殊工艺另计。'+(remote?' 当前目的地属于厂家“不包邮”例外地区，请手工填写厂家运费成本。':qty<5?' 当前数量少于5套，厂家规则为不包邮，请确认运费。':' 普通地区5套以上按厂家运费规则执行，仍建议下单前确认实际物流费用。')
 }
 function calc(){
  syncPriceEngine(false);
@@ -419,8 +422,8 @@ function fill(o){
 }
 function blank(){
  state.currentId=null;state.teamLogo='';state.roster=[];state.catalogItems=[];
- const defaults={projectName:'',teamName:'',contact:'',contactInfo:'',city:'塔城',competition:'',season:'2026-2027',deadline:'',customerNotes:'',primaryColor:'塔城红',accentColor:'暖米白',salesUnitPrice:120,printFee:0,designFee:300,factoryShippingCost:0,shippingFee:0,discount:0,otherCraftCost:0,frontText:'',nameRule:'英文名',numberStyle:'SAGI 欧赛事字体',productNotes:'',extraQty:0,owner:'SAGI'};
- Object.entries(defaults).forEach(([k,v])=>{if(q(k))q(k).value=v});q('source').value='赛事合作';q('series').value='定制比赛服';q('supplierTier').value='CLUB';q('ageGroup').value='adult';q('productType').value='kit';q('priceStrategy').value='margin';q('targetMargin').value='.5';q('poloAddon').value='0';q('pocketAddon').value='0';q('longSleeveAddon').value='0';q('shippingZone').value='remote';q('depositRate').value='.5';q('orderStatus').value=STAGES[0];renderLogo();renderRoster();if(q('catalogCart'))renderCatalogCart();renderAll()
+ const defaults={projectName:'',teamName:'',contact:'',contactInfo:'',city:'塔城',competition:'',season:'2026-2027',deadline:'',customerNotes:'',primaryColor:'塔城红',accentColor:'暖米白',salesUnitPrice:79,printFee:0,designFee:300,factoryShippingCost:0,shippingFee:0,discount:0,otherCraftCost:0,frontText:'',nameRule:'英文名',numberStyle:'SAGI 欧赛事字体',productNotes:'',extraQty:0,owner:'SAGI'};
+ Object.entries(defaults).forEach(([k,v])=>{if(q(k))q(k).value=v});q('source').value='赛事合作';q('series').value='定制比赛服';q('supplierTier').value='CLUB';q('ageGroup').value='adult';q('productType').value='kit';q('priceStrategy').value='fixed';q('targetMargin').value='.5';q('poloAddon').value='0';q('pocketAddon').value='0';q('longSleeveAddon').value='0';q('shippingZone').value='remote';q('depositRate').value='.5';q('orderStatus').value=STAGES[0];renderLogo();renderRoster();if(q('catalogCart'))renderCatalogCart();renderAll()
 }
 
 function renderLogo(){q('teamLogoPreview').innerHTML=state.teamLogo?'<img src="'+state.teamLogo+'">':'TEAM LOGO';q('quoteLogo').innerHTML=state.teamLogo?'<img src="'+state.teamLogo+'">':'LOGO'}
@@ -452,7 +455,7 @@ function renderQuote(){
  q('qKit').textContent=money(c.kit);q('qSocks').textContent=money(c.socks);q('qPrint').textContent=money(c.print);renderQuoteCatalog();q('qDesign').textContent=money(c.design);q('qShipping').textContent=money(c.shipping);q('qDiscount').textContent='- '+money(c.discount);
  q('qUnit').textContent=money(c.unit);q('qTotal').textContent=money(c.total);q('qDeposit').textContent=money(c.deposit)+'（'+Math.round(c.rate*100)+'%）';q('qBalance').textContent=money(c.balance);q('profitFactoryTotal').textContent=money(c.factoryTotal);q('profitRevenue').textContent=money(c.total);q('profitGross').textContent=money(c.gross);q('profitMargin').textContent=(c.grossMargin*100).toFixed(1)+'%';q('profitMarginBar').style.width=Math.max(0,Math.min(100,c.grossMargin*100))+'%';const warn=[];if(c.qty>0&&c.unit<c.referenceBottom)warn.push('当前销售单价低于厂家团购底线参考 '+money(c.referenceBottom));if(c.gross<0)warn.push('当前订单预计亏损');if(q('shippingZone').value==='remote'&&c.factoryShipping<=0)warn.push('偏远/例外地区尚未填写厂家运费成本');q('profitWarning').className='costNote'+(warn.length?' warn':'');q('profitWarning').textContent=warn.length?warn.join('；'):'利润结构正常。内部成本不会出现在客户打印报价单中。';
  const deadline=q('deadline').value?('计划交付：'+q('deadline').value+'。'):'交期以最终确认订单为准。';
- q('quoteNote').textContent='报价包含比赛服主方案及球队套餐清单中的训练服 / 外套 / 配件。热升华比赛服默认包含印字印号；特殊工艺按最终确认方案执行。'+deadline+' 定金到账后进入排产；新增球员与赛季补单可基于本订单继续追加。';
+ q('quoteNote').textContent='报价包含比赛服主方案及球队套餐清单中的训练服 / 外套 / 配件。热升华比赛服默认包含印字印号；特殊工艺按最终确认方案执行。以上产品价格默认不含运费，运费另计。'+deadline+' 定金到账后进入排产；新增球员与赛季补单可基于本订单继续追加。';
  renderLogo()
 }
 function renderOrders(){
@@ -495,7 +498,7 @@ q('teamLogoFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=ne
 q('addPlayerBtn').onclick=()=>addPlayer();q('demoRosterBtn').onclick=()=>{state.roster=[];[['AZAMAT','1','XL','门将'],['DIAS','2','L','球员'],['NURLAN','4','XL','球员'],['ALMAS','5','L','球员'],['ERLAN','3','M','球员'],['SULTAN','6','L','球员'],['MARHULAN','8','L','球员'],['ASLAN','10','M','球员'],['DANIYAR','7','L','球员'],['ARDAK','9','XL','球员'],['TIMUR','11','L','球员'],['BEK','12','XL','门将']].forEach(x=>addPlayer({name:x[0],number:x[1],size:x[2],type:x[3]}));note('已载入12人示例名单')};
 q('clearRosterBtn').onclick=()=>{state.roster=[];renderRoster();renderAll()};q('saveOrderBtn').onclick=saveOrder;q('quoteSaveBtn').onclick=saveOrder;q('newOrderBtn').onclick=()=>{blank();location.hash='#customer';note('已新建销售项目')};q('printBtn').onclick=()=>window.print();q('quoteReorderBtn').onclick=()=>{const src=state.orders.find(x=>x.id===state.currentId)||collect();createReorder(src)};
 q('orderSearch').oninput=renderOrders;q('statusFilter').onchange=renderOrders;q('orderStatus').onchange=renderAll;q('extraQty').oninput=renderAll;
-['supplierTier','ageGroup','productType','priceStrategy','targetMargin','poloAddon','pocketAddon','longSleeveAddon','shippingZone'].forEach(id=>q(id).addEventListener('change',()=>{syncPriceEngine(true);renderAll()}));['otherCraftCost','factoryShippingCost'].forEach(id=>q(id).addEventListener('input',()=>{syncPriceEngine(true);renderAll()}));q('salesUnitPrice').addEventListener('input',renderAll);
+['supplierTier','ageGroup'].forEach(id=>q(id).addEventListener('change',()=>{const tier=SUPPLIER_CATALOG[q('supplierTier').value],age=q('ageGroup').value==='child'?'child':'adult';q('priceStrategy').value=(tier&&SAGI_FIXED_PRICE[tier.name]&&SAGI_FIXED_PRICE[tier.name][age]!=null)?'fixed':'margin';syncPriceEngine(true);renderAll()}));['productType','priceStrategy','targetMargin','poloAddon','pocketAddon','longSleeveAddon','shippingZone'].forEach(id=>q(id).addEventListener('change',()=>{syncPriceEngine(true);renderAll()}));['otherCraftCost','factoryShippingCost'].forEach(id=>q(id).addEventListener('input',()=>{syncPriceEngine(true);renderAll()}));q('salesUnitPrice').addEventListener('input',renderAll);
 document.querySelectorAll('input,select,textarea').forEach(el=>{if(!['orderSearch','statusFilter','teamLogoFile'].includes(el.id))el.addEventListener('input',()=>{if(el.id==='orderStatus')return;renderAll()});if(el.tagName==='SELECT'&&!['statusFilter','orderStatus'].includes(el.id))el.addEventListener('change',renderAll)});
 initSelects();loadState();blank();initCatalog();renderAll();
 })();
