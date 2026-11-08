@@ -3,102 +3,137 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#080808">\n<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%23080808%22/%3E%3Ctext x=%2232%22 y=%2242%22 text-anchor=%22middle%22 font-size=%2234%22 fill=%22%23d8b55b%22%3ES%3C/text%3E%3C/svg%3E">
-<title>SAGI KIT DESIGNER V1.1</title>
+<meta name="theme-color" content="#080808">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%23080808%22/%3E%3Ctext x=%2232%22 y=%2242%22 text-anchor=%22middle%22 font-size=%2234%22 fill=%22%23d8b55b%22%3ES%3C/text%3E%3C/svg%3E">
+<title>SAGI KIT DESIGNER V1.2</title>
 <style>
-:root{--bg:#080808;--panel:#141414;--panel2:#0b0b0b;--line:#2f2f2f;--text:#f5f0e7;--muted:#8e8e8e;--gold:#d8b55b;--green:#6fc596}
+:root{--bg:#080808;--panel:#141414;--panel2:#0b0b0b;--line:#303030;--text:#f4f0e7;--muted:#909090;--gold:#d8b55b;--green:#72c79a}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
-.app{max-width:1280px;margin:auto;padding:18px 14px 80px}.top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.brand{font-size:24px;font-weight:900}.sub{font-size:12px;color:var(--muted);margin-top:3px}.ver{border:1px solid #65552b;color:var(--gold);padding:7px 10px;border-radius:999px;font-size:12px}
-.layout{display:grid;grid-template-columns:390px minmax(0,1fr);gap:14px;align-items:start}.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:14px;margin:14px 0}.card h2{margin:0 0 12px;font-size:17px}.muted{color:var(--muted);font-size:12px;line-height:1.6}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}label{display:block;color:#999;font-size:11px;margin-bottom:5px}input,select,textarea{width:100%;background:#090909;color:#fff;border:1px solid #393939;border-radius:12px;padding:10px;font-size:15px}input[type=color]{height:42px;padding:3px}
-button,.fileBtn{border:0;border-radius:12px;background:#292929;color:#fff;font-weight:800;min-height:42px;padding:9px 12px}.primary{background:linear-gradient(135deg,#bb9846,#e3c66f);color:#111}.ok{background:#1e4935}.danger{background:#582626}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.modeTabs,.pieceTabs{display:grid;gap:7px}.modeTabs{grid-template-columns:1fr 1fr}.pieceTabs{grid-template-columns:repeat(3,1fr)}.modeTabs button.on,.pieceTabs button.on{background:#493b20;color:#f0d88e;border:1px solid #6b592c}
-.stageCard{position:sticky;top:8px}.stage{background:radial-gradient(circle at 50% 18%,#1e2a3a 0,#11161c 35%,#090909 77%);border:1px solid #2e3136;border-radius:20px;min-height:760px;padding:14px;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}.stage:before{content:"SAGI CUT-PIECE SYSTEM";position:absolute;top:18px;left:20px;font-size:22px;letter-spacing:3px;font-weight:900;color:#ffffff10}.stage:after{content:"FACTORY PATTERN VIEW";position:absolute;right:20px;bottom:16px;color:#ffffff16;font-size:10px;letter-spacing:3px}
-#designSvg{width:min(100%,760px);height:auto;filter:drop-shadow(0 28px 28px #0008)}.status{font-size:12px;color:var(--green);margin-top:8px}.tiny{font-size:10px;color:#777}.rangeRow{display:grid;grid-template-columns:1fr 64px;gap:8px;align-items:center}.asset{display:grid;grid-template-columns:64px 1fr;gap:9px;align-items:center}.assetPreview{width:64px;height:64px;border-radius:12px;border:1px solid #393939;background:#090909;display:flex;align-items:center;justify-content:center;overflow:hidden;color:#666;font-size:10px}.assetPreview img{width:100%;height:100%;object-fit:contain}.fileBtn{display:flex;align-items:center;justify-content:center;cursor:pointer}.fileBtn input{display:none}.spec{white-space:pre-wrap;background:#090909;border:1px solid #2c2c2c;border-radius:12px;padding:11px;min-height:190px;font-size:12px;line-height:1.65;color:#d8d8d8}.notice{display:none;position:fixed;left:50%;bottom:70px;transform:translateX(-50%);background:#1d1d1d;border:1px solid #4f4327;color:#f0d58d;border-radius:999px;padding:10px 14px;font-size:12px;z-index:20}.legend{display:grid;grid-template-columns:1fr 1fr;gap:7px}.legend div{background:#0a0a0a;border:1px solid #2b2b2b;border-radius:10px;padding:8px;font-size:11px;color:#bbb}.pieceHint{padding:9px 10px;border-radius:12px;border:1px solid #3a3320;background:#17140d;color:#d5c48d;font-size:11px;line-height:1.55;margin-top:10px}
-@media(max-width:920px){.layout{grid-template-columns:1fr}.stageCard{position:static;order:-1}.stage{min-height:570px}.app{padding-bottom:35px}.pieceTabs{grid-template-columns:1fr 1fr 1fr}}
+.app{max-width:1320px;margin:auto;padding:18px 14px 70px}.top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.brand{font-size:24px;font-weight:900}.sub{font-size:12px;color:var(--muted);margin-top:3px}.ver{border:1px solid #65552b;color:var(--gold);border-radius:999px;padding:7px 10px;font-size:12px}
+.layout{display:grid;grid-template-columns:410px minmax(0,1fr);gap:14px;align-items:start}.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:14px;margin:14px 0}.card h2{margin:0 0 12px;font-size:17px}.muted{color:var(--muted);font-size:12px;line-height:1.6}.tiny{font-size:10px;color:#777;line-height:1.5}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}label{display:block;color:#999;font-size:11px;margin:0 0 5px}input,select,textarea{width:100%;background:#090909;color:#fff;border:1px solid #393939;border-radius:12px;padding:10px;font-size:15px}input[type=color]{height:42px;padding:3px}
+button,.fileBtn{border:0;border-radius:12px;background:#292929;color:#fff;font-weight:800;min-height:42px;padding:9px 12px}.primary{background:linear-gradient(135deg,#bc9948,#e3c66e);color:#111}.ok{background:#1e4a36}.danger{background:#582727}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.tabs,.pieceTabs{display:grid;gap:7px}.tabs{grid-template-columns:1fr 1fr}.pieceTabs{grid-template-columns:repeat(3,1fr)}.tabs button.on,.pieceTabs button.on{background:#493b20;color:#f0d88e;border:1px solid #6c592c}
+.stageCard{position:sticky;top:8px}.stage{background:#0b0d10;border:1px solid #2e3136;border-radius:20px;min-height:790px;padding:12px;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}.stage:before{content:"SAGI FACTORY PATTERN";position:absolute;left:18px;top:16px;color:#ffffff10;letter-spacing:3px;font-weight:900;font-size:21px}.stage:after{content:"1 SVG UNIT = 1 mm";position:absolute;right:18px;bottom:14px;color:#ffffff18;font-size:10px;letter-spacing:2px}
+#paperSvg{width:min(100%,800px);height:auto;filter:drop-shadow(0 18px 24px #0008)}.status{font-size:12px;color:var(--green);margin-top:8px}.spec{white-space:pre-wrap;background:#090909;border:1px solid #2d2d2d;border-radius:12px;padding:11px;min-height:220px;font-size:12px;line-height:1.65;color:#d8d8d8}.notice{display:none;position:fixed;left:50%;bottom:70px;transform:translateX(-50%);background:#1d1d1d;border:1px solid #4f4327;color:#f0d58d;border-radius:999px;padding:10px 14px;font-size:12px;z-index:20}
+.asset{display:grid;grid-template-columns:64px 1fr;gap:9px;align-items:center}.assetPreview{width:64px;height:64px;background:#090909;border:1px solid #393939;border-radius:12px;display:flex;align-items:center;justify-content:center;overflow:hidden;color:#666;font-size:10px}.assetPreview img{width:100%;height:100%;object-fit:contain}.fileBtn{display:flex;align-items:center;justify-content:center;cursor:pointer}.fileBtn input{display:none}.pieceInfo{background:#0a0a0a;border:1px solid #2d2d2d;border-radius:12px;padding:10px;margin-top:9px}.pieceInfo b{color:#e9d08a}.lockRow{display:flex;align-items:center;gap:9px;background:#0a0a0a;border:1px solid #2d2d2d;border-radius:12px;padding:10px}.lockRow input{width:auto}.refBox{border:1px dashed #454545;border-radius:12px;padding:10px;background:#0b0b0b}.warn{color:#e5c36e;font-size:11px;line-height:1.55;margin-top:8px}
+@media(max-width:940px){.layout{grid-template-columns:1fr}.stageCard{position:static;order:-1}.stage{min-height:590px}.app{padding-bottom:35px}}
 </style>
 </head>
 <body>
 <div class="app">
-  <div class="top"><div><div class="brand">SAGI KIT DESIGNER</div><div class="sub">厂家裁片模式 · 前片 / 后片 / 肩袖 / 袖口 / 双层领口</div></div><div class="ver">V1.1</div></div>
+  <div class="top"><div><div class="brand">SAGI KIT DESIGNER</div><div class="sub">V1.2 厂家纸样版 · 毫米坐标 · 裁片锁定 · 生产SVG</div></div><div class="ver">V1.2</div></div>
 
   <div class="layout">
     <div class="controls">
-      <div class="card">
-        <h2>工作模式</h2>
-        <div class="modeTabs"><button id="cutModeBtn" class="on" type="button">裁片模式</button><button id="previewModeBtn" type="button">成衣预览</button></div>
-        <div class="pieceHint">V1.1 默认按厂家裁片工作：宽领口、窄领口、前片、后片、肩袖连体裁片、袖口裁片。成衣预览只用于确认整体效果。</div>
-      </div>
 
       <div class="card">
-        <h2>裁片配色</h2>
+        <h2>纸样基准</h2>
         <div class="grid2">
-          <div><label>前片</label><input id="frontColor" type="color" value="#8B2E2E"></div>
-          <div><label>后片</label><input id="backColor" type="color" value="#8B2E2E"></div>
-          <div><label>肩袖</label><input id="sleeveColor" type="color" value="#8B2E2E"></div>
-          <div><label>袖口</label><input id="cuffColor" type="color" value="#8B2E2E"></div>
-          <div><label>领口（宽）</label><input id="collarWideColor" type="color" value="#1F5B46"></div>
-          <div><label>领口（窄）</label><input id="collarNarrowColor" type="color" value="#F5EBDD"></div>
-          <div><label>点缀色</label><input id="accentColor" type="color" value="#F5EBDD"></div>
-          <div><label>Logo色</label><input id="logoColor" type="color" value="#D1B06B"></div>
+          <div><label>画板宽度 mm</label><input id="boardW" type="number" value="1000"></div>
+          <div><label>画板高度 mm</label><input id="boardH" type="number" value="1200"></div>
+          <div><label>网格</label><select id="gridStep"><option value="10">10 mm</option><option value="20" selected>20 mm</option><option value="25">25 mm</option><option value="50">50 mm</option></select></div>
+          <div><label>显示网格</label><select id="gridShow"><option value="on">显示</option><option value="off">隐藏</option></select></div>
+        </div>
+        <div class="lockRow" style="margin-top:10px"><input id="patternLocked" type="checkbox" checked><label for="patternLocked" style="margin:0">锁定纸样轮廓（推荐）</label></div>
+        <div class="warn">当前默认轮廓按你提供的厂家裁片图重建。拿到厂家原始 AI / CDR / SVG / PDF 后，应以原厂纸样尺寸替换默认轮廓，才能作为真正 1:1 生产基准。</div>
+      </div>
+
+      <div class="card">
+        <h2>厂家原图参考层</h2>
+        <div class="refBox">
+          <label class="fileBtn">导入厂家 SVG / PNG 参考图<input id="refFile" type="file" accept=".svg,image/svg+xml,image/png,image/jpeg"></label>
+          <div class="grid3" style="margin-top:9px">
+            <div><label>X mm</label><input id="refX" type="number" value="0"></div>
+            <div><label>Y mm</label><input id="refY" type="number" value="0"></div>
+            <div><label>透明%</label><input id="refOpacity" type="number" min="5" max="90" value="35"></div>
+          </div>
+          <div class="grid2" style="margin-top:9px">
+            <div><label>参考宽 mm</label><input id="refW" type="number" value="1000"></div>
+            <div><label>参考高 mm</label><input id="refH" type="number" value="1200"></div>
+          </div>
+          <div class="actions"><button id="clearRefBtn" type="button">移除参考层</button></div>
         </div>
       </div>
 
       <div class="card">
-        <h2>纹样控制</h2>
+        <h2>选择裁片</h2>
         <div class="pieceTabs">
-          <button type="button" data-piece="front" class="on">前片</button>
-          <button type="button" data-piece="back">后片</button>
-          <button type="button" data-piece="sleeve">肩袖</button>
+          <button data-piece="front" class="on" type="button">前片</button>
+          <button data-piece="back" type="button">后片</button>
+          <button data-piece="sleeve" type="button">肩袖</button>
+          <button data-piece="cuff" type="button">袖口</button>
+          <button data-piece="collarWide" type="button">宽领口</button>
+          <button data-piece="collarNarrow" type="button">窄领口</button>
         </div>
-        <div class="grid2" style="margin-top:10px">
-          <div><label>纹样类型</label><select id="patternType"><option value="none">无纹样</option><option value="dash">针织短线</option><option value="flow">FLOW 流场</option><option value="diag">斜向结构</option><option value="weave">WEAVE 针织</option></select></div>
-          <div><label>纹样颜色</label><input id="patternColor" type="color" value="#D86854"></div>
-        </div>
-        <div style="margin-top:9px"><label>纹样强度</label><div class="rangeRow"><input id="patternOpacity" type="range" min="0" max="35" value="14"><input id="patternOpacityText" value="14%" readonly></div></div>
-        <div style="margin-top:9px"><label>纹样密度</label><div class="rangeRow"><input id="patternDensity" type="range" min="1" max="5" value="3"><input id="patternDensityText" value="3" readonly></div></div>
+        <div id="pieceInfo" class="pieceInfo"></div>
       </div>
 
       <div class="card">
-        <h2>前片标识</h2>
+        <h2>裁片尺寸 / 位置</h2>
+        <div class="grid2">
+          <div><label>X mm</label><input id="pieceX" type="number"></div>
+          <div><label>Y mm</label><input id="pieceY" type="number"></div>
+          <div><label>宽 mm</label><input id="pieceW" type="number"></div>
+          <div><label>高 mm</label><input id="pieceH" type="number"></div>
+        </div>
+        <div class="tiny" style="margin-top:8px">纸样锁定时只能查看尺寸，不能改变裁片外形与位置。</div>
+      </div>
+
+      <div class="card">
+        <h2>裁片设计</h2>
+        <div class="grid2">
+          <div><label>底色</label><input id="pieceColor" type="color"></div>
+          <div><label>纹样类型</label><select id="patternType"><option value="none">无纹样</option><option value="dash">短线针织</option><option value="flow">FLOW 流场</option><option value="diag">斜向结构</option><option value="weave">WEAVE 针织</option></select></div>
+          <div><label>纹样颜色</label><input id="patternColor" type="color"></div>
+          <div><label>纹样强度%</label><input id="patternOpacity" type="number" min="0" max="40"></div>
+          <div><label>纹样密度</label><input id="patternDensity" type="number" min="1" max="6"></div>
+          <div><label>安全区 mm</label><input id="safeInset" type="number" min="0" max="40" value="12"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>标识资产</h2>
         <div class="asset"><div class="assetPreview" id="crestPreview">队徽</div><div><label>球队队徽</label><label class="fileBtn">上传队徽<input id="crestFile" type="file" accept="image/*"></label></div></div>
         <div class="asset" style="margin-top:9px"><div class="assetPreview" id="brandPreview">SAGI</div><div><label>SAGI Logo</label><label class="fileBtn">上传Logo<input id="brandFile" type="file" accept="image/*"></label></div></div>
-        <div class="asset" style="margin-top:9px"><div class="assetPreview" id="sponsorPreview">赞助</div><div><label>胸前赞助商</label><label class="fileBtn">上传Logo<input id="sponsorFile" type="file" accept="image/*"></label></div></div>
-        <div class="grid3" style="margin-top:9px">
-          <div><label>队徽%</label><input id="crestSize" type="number" min="5" max="20" value="9"></div>
-          <div><label>SAGI%</label><input id="brandSize" type="number" min="5" max="20" value="8"></div>
-          <div><label>赞助%</label><input id="sponsorSize" type="number" min="12" max="42" value="25"></div>
+        <div class="asset" style="margin-top:9px"><div class="assetPreview" id="sponsorPreview">赞助</div><div><label>赞助商</label><label class="fileBtn">上传Logo<input id="sponsorFile" type="file" accept="image/*"></label></div></div>
+      </div>
+
+      <div class="card">
+        <h2>前片定位（相对前片，mm）</h2>
+        <div class="grid3">
+          <div><label>队徽 X</label><input id="crestX" type="number" value="95"></div>
+          <div><label>队徽 Y</label><input id="crestY" type="number" value="125"></div>
+          <div><label>队徽宽</label><input id="crestW" type="number" value="32"></div>
+          <div><label>SAGI X</label><input id="brandX" type="number" value="245"></div>
+          <div><label>SAGI Y</label><input id="brandY" type="number" value="125"></div>
+          <div><label>SAGI宽</label><input id="brandW" type="number" value="34"></div>
+          <div><label>赞助 X</label><input id="sponsorX" type="number" value="145"></div>
+          <div><label>赞助 Y</label><input id="sponsorY" type="number" value="235"></div>
+          <div><label>赞助宽</label><input id="sponsorW" type="number" value="120"></div>
         </div>
       </div>
 
       <div class="card">
-        <h2>后片 / 肩袖内容</h2>
+        <h2>文字 / 号码定位</h2>
         <div class="grid2">
-          <div><label>后背姓名</label><input id="playerName" value="MARHULAN"></div>
-          <div><label>号码</label><input id="number" value="88" maxlength="3"></div>
-          <div><label>球队名</label><input id="teamName" value="TARLAN FC"></div>
-          <div><label>肩袖文字</label><input id="sleeveText" value="TARBAHATAI"></div>
-          <div><label>后领文字</label><input id="backNeckText" value="ONE CITY · 29 · ONE DREAM"></div>
           <div><label>胸前文字</label><input id="chestText" value="塔城"></div>
+          <div><label>胸前文字 Y mm</label><input id="chestY" type="number" value="290"></div>
+          <div><label>球队名</label><input id="teamName" value="TARLAN FC"></div>
+          <div><label>后背姓名</label><input id="playerName" value="MARHULAN"></div>
+          <div><label>号码</label><input id="number" value="88"></div>
+          <div><label>号码高度 mm</label><input id="numberH" type="number" value="150"></div>
+          <div><label>号码 Y mm</label><input id="numberY" type="number" value="330"></div>
+          <div><label>后领文字</label><input id="backNeckText" value="ONE CITY · 29 · ONE DREAM"></div>
+          <div><label>肩袖文字</label><input id="sleeveText" value="TARBAHATAI"></div>
+          <div><label>号码字体</label><select id="numberFont"><option value="Arial Black">竞技粗体</option><option value="Impact">Impact</option><option value="Arial">简洁无衬线</option></select></div>
         </div>
-        <div style="margin-top:9px"><label>号码字体</label><select id="numberFont"><option value="Arial Black">竞技粗体</option><option value="Impact">Impact</option><option value="Arial">简洁无衬线</option></select></div>
       </div>
 
       <div class="card">
-        <h2>生产辅助</h2>
-        <div class="grid2">
-          <div><label>设计安全线</label><select id="safeLine"><option value="on">显示</option><option value="off">隐藏</option></select></div>
-          <div><label>肩袖条纹</label><select id="sleeveStripe"><option value="on">显示</option><option value="off">隐藏</option></select></div>
-        </div>
-        <div class="legend" style="margin-top:10px">
-          <div>前片 ×1</div><div>后片 ×1</div><div>肩袖 ×2（左右）</div><div>袖口 ×2（左右）</div><div>宽领口 ×1</div><div>窄领口 ×1</div>
-        </div>
-        <div class="tiny" style="margin-top:8px">安全线为设计参考，不代表厂家缝份尺寸；实际缝份以厂家纸样为准。</div>
-      </div>
-
-      <div class="card">
-        <h2>保存与导出</h2>
-        <div class="actions"><button id="saveBtn" class="ok" type="button">保存方案</button><button id="loadBtn" type="button">读取方案</button><button id="resetBtn" class="danger" type="button">恢复默认</button></div>
-        <div class="actions"><button id="pngBtn" class="primary" type="button">导出当前PNG</button><button id="svgBtn" type="button">导出当前SVG</button><button id="jsonBtn" type="button">导出设计JSON</button></div>
+        <h2>视图 / 导出</h2>
+        <div class="tabs"><button id="paperBtn" class="on" type="button">纸样生产板</button><button id="previewBtn" type="button">成衣预览</button></div>
+        <div class="actions"><button id="saveBtn" class="ok" type="button">保存V1.2方案</button><button id="loadBtn" type="button">读取方案</button><button id="resetBtn" class="danger" type="button">恢复默认</button></div>
+        <div class="actions"><button id="svgBtn" class="primary" type="button">导出生产SVG</button><button id="pngBtn" type="button">导出PNG</button><button id="jsonBtn" type="button">导出JSON</button></div>
       </div>
 
       <div class="card">
@@ -111,100 +146,88 @@ button,.fileBtn{border:0;border-radius:12px;background:#292929;color:#fff;font-w
     <div class="stageCard">
       <div class="card">
         <div class="stage">
-          <svg id="designSvg" viewBox="0 0 1000 1180" xmlns="http://www.w3.org/2000/svg">
+          <svg id="paperSvg" viewBox="0 0 1000 1200" xmlns="http://www.w3.org/2000/svg">
             <defs>
-              <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="12" stdDeviation="10" flood-color="#000" flood-opacity=".48"/></filter>
-              <pattern id="diagPattern" width="38" height="38" patternUnits="userSpaceOnUse" patternTransform="rotate(-22)"><rect width="9" height="38" fill="var(--pattern-color)"/></pattern>
-              <pattern id="weavePattern" width="26" height="26" patternUnits="userSpaceOnUse" patternTransform="rotate(-14)"><path d="M0 5H26 M0 13H26 M0 21H26" stroke="var(--pattern-color)" stroke-width="2.4"/><path d="M5 0V26 M13 0V26 M21 0V26" stroke="var(--pattern-color)" stroke-width="1"/></pattern>
-              <clipPath id="frontClip"><path d="M110 300 Q145 238 225 205 Q232 255 285 270 Q338 255 345 205 Q425 238 460 300 L446 650 Q285 690 124 650Z"/></clipPath>
-              <clipPath id="backClip"><path d="M550 275 Q610 205 705 190 Q800 205 860 275 L892 330 L874 645 Q705 685 536 645 L518 330Z"/></clipPath>
-              <clipPath id="sleeveClip"><path d="M150 760 Q205 735 245 680 Q280 630 302 575 Q332 630 400 640 Q468 630 498 575 Q520 630 555 680 Q595 735 650 760 L590 825 L560 910 H240 L210 825Z"/></clipPath>
+              <pattern id="grid10" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M20 0H0V20" fill="none" stroke="#ffffff" stroke-opacity=".07" stroke-width="1"/></pattern>
+              <clipPath id="frontClip"><path d="M70 100 Q110 40 180 20 Q190 75 220 82 Q250 75 260 20 Q330 40 370 100 L355 500 Q220 535 85 500Z"/></clipPath>
+              <clipPath id="backClip"><path d="M40 85 Q95 20 195 10 Q295 20 350 85 L380 135 L360 500 Q195 535 30 500 L10 135Z"/></clipPath>
+              <clipPath id="sleeveClip"><path d="M25 180 Q85 155 125 105 Q155 65 175 20 Q205 72 275 82 Q345 72 375 20 Q395 65 425 105 Q465 155 525 180 L475 235 L445 300 H105 L75 235Z"/></clipPath>
             </defs>
+            <rect id="boardBg" width="1000" height="1200" fill="#0b0d10"/>
+            <rect id="gridLayer" width="1000" height="1200" fill="url(#grid10)"/>
+            <g id="refLayer" opacity=".35"></g>
 
-            <g id="cutView">
-              <g id="collars" filter="url(#shadow)">
-                <text x="70" y="80" fill="#d7c58e" font-size="22" font-weight="800">COLLAR CUT STRIPS</text>
-                <rect id="collarWide" x="70" y="105" width="360" height="42" rx="3" fill="#1F5B46"/>
-                <text x="450" y="133" fill="#eee" font-size="18">领口（宽）</text>
-                <rect id="collarNarrow" x="70" y="160" width="360" height="18" rx="3" fill="#F5EBDD"/>
-                <text x="450" y="176" fill="#eee" font-size="18">领口（窄）</text>
-              </g>
-
-              <g id="frontPiece" filter="url(#shadow)">
-                <path id="frontShape" d="M110 300 Q145 238 225 205 Q232 255 285 270 Q338 255 345 205 Q425 238 460 300 L446 650 Q285 690 124 650Z" fill="#8B2E2E"/>
+            <g id="paperView">
+              <g id="piece-front" transform="translate(30 190)">
+                <path id="frontShape" d="M70 100 Q110 40 180 20 Q190 75 220 82 Q250 75 260 20 Q330 40 370 100 L355 500 Q220 535 85 500Z" fill="#8B2E2E" stroke="#d8b55b" stroke-width="1.5"/>
                 <g id="frontPattern" clip-path="url(#frontClip)"></g>
-                <path class="safeLine" d="M130 306 Q160 258 225 230 Q245 275 285 286 Q325 275 345 230 Q410 258 440 306 L428 632 Q285 668 142 632Z" fill="none" stroke="#fff" stroke-opacity=".38" stroke-dasharray="8 8" stroke-width="2"/>
-                <g id="frontCrest"></g><g id="frontBrand"></g><g id="frontSponsor"></g>
-                <text id="frontChestText" x="285" y="420" text-anchor="middle" fill="#fff" font-size="28" font-weight="900">塔城</text>
-                <text x="285" y="704" text-anchor="middle" fill="#d7c58e" font-size="20" font-weight="800">前片 ×1</text>
+                <path id="frontSafe" d="M82 106 Q118 54 180 35 Q196 86 220 95 Q244 86 260 35 Q322 54 358 106 L344 487 Q220 520 96 487Z" fill="none" stroke="#fff" stroke-opacity=".42" stroke-dasharray="7 7" stroke-width="1.5"/>
+                <g id="frontAssets"></g>
+                <text id="frontChestText" x="220" y="290" text-anchor="middle" fill="#F5EBDD" font-size="28" font-weight="900">塔城</text>
+                <text x="220" y="560" text-anchor="middle" fill="#d8b55b" font-size="16" font-weight="900">FRONT / 前片 ×1</text>
               </g>
 
-              <g id="backPiece" filter="url(#shadow)">
-                <path id="backShape" d="M550 275 Q610 205 705 190 Q800 205 860 275 L892 330 L874 645 Q705 685 536 645 L518 330Z" fill="#8B2E2E"/>
+              <g id="piece-back" transform="translate(515 180)">
+                <path id="backShape" d="M40 85 Q95 20 195 10 Q295 20 350 85 L380 135 L360 500 Q195 535 30 500 L10 135Z" fill="#8B2E2E" stroke="#d8b55b" stroke-width="1.5"/>
                 <g id="backPattern" clip-path="url(#backClip)"></g>
-                <path class="safeLine" d="M565 285 Q620 225 705 212 Q790 225 845 285 L870 336 L854 630 Q705 665 556 630 L540 336Z" fill="none" stroke="#fff" stroke-opacity=".38" stroke-dasharray="8 8" stroke-width="2"/>
-                <text id="backNeckTextSvg" x="705" y="266" text-anchor="middle" fill="#F5EBDD" font-size="11" font-weight="800">ONE CITY · 29 · ONE DREAM</text>
-                <text id="backTeamText" x="705" y="340" text-anchor="middle" fill="#fff" font-size="22" font-weight="800">TARLAN FC</text>
-                <text id="backNameText" x="705" y="390" text-anchor="middle" fill="#fff" font-size="20" font-weight="800">MARHULAN</text>
-                <text id="backNumberText" x="705" y="535" text-anchor="middle" fill="#fff" font-size="122" font-family="Arial Black" font-weight="900">88</text>
-                <text x="705" y="704" text-anchor="middle" fill="#d7c58e" font-size="20" font-weight="800">后片 ×1</text>
+                <path id="backSafe" d="M52 92 Q103 34 195 25 Q287 34 338 92 L365 140 L347 487 Q195 520 43 487 L25 140Z" fill="none" stroke="#fff" stroke-opacity=".42" stroke-dasharray="7 7" stroke-width="1.5"/>
+                <text id="backNeckTextSvg" x="195" y="95" text-anchor="middle" fill="#F5EBDD" font-size="10" font-weight="800">ONE CITY · 29 · ONE DREAM</text>
+                <text id="backTeamText" x="195" y="170" text-anchor="middle" fill="#fff" font-size="22" font-weight="900">TARLAN FC</text>
+                <text id="backNameText" x="195" y="220" text-anchor="middle" fill="#fff" font-size="20" font-weight="800">MARHULAN</text>
+                <text id="backNumberText" x="195" y="390" text-anchor="middle" fill="#fff" font-size="150" font-family="Arial Black" font-weight="900">88</text>
+                <text x="195" y="560" text-anchor="middle" fill="#d8b55b" font-size="16" font-weight="900">BACK / 后片 ×1</text>
               </g>
 
-              <g id="sleevePiece" filter="url(#shadow)">
-                <path id="sleeveShape" d="M150 760 Q205 735 245 680 Q280 630 302 575 Q332 630 400 640 Q468 630 498 575 Q520 630 555 680 Q595 735 650 760 L590 825 L560 910 H240 L210 825Z" fill="#8B2E2E"/>
-                <g id="sleevePatternLayer" clip-path="url(#sleeveClip)"></g>
-                <path class="safeLine" d="M172 764 Q220 740 258 690 Q286 650 306 610 Q340 654 400 660 Q460 654 494 610 Q514 650 542 690 Q580 740 628 764 L573 820 L545 890 H255 L227 820Z" fill="none" stroke="#fff" stroke-opacity=".38" stroke-dasharray="8 8" stroke-width="2"/>
-                <g id="sleeveStripeGroup">
-                  <path d="M296 625 L327 642 L315 664 L282 648Z" fill="#F5EBDD"/>
-                  <path d="M279 661 L320 680 L308 704 L265 684Z" fill="#F5EBDD"/>
-                  <path d="M260 704 L310 724 L300 750 L246 730Z" fill="#F5EBDD"/>
-                  <path d="M242 751 L300 772 L291 799 L228 780Z" fill="#F5EBDD"/>
-                  <path d="M228 801 L290 820 L284 847 L216 832Z" fill="#F5EBDD"/>
+              <g id="piece-sleeve" transform="translate(55 770)">
+                <path id="sleeveShape" d="M25 180 Q85 155 125 105 Q155 65 175 20 Q205 72 275 82 Q345 72 375 20 Q395 65 425 105 Q465 155 525 180 L475 235 L445 300 H105 L75 235Z" fill="#8B2E2E" stroke="#d8b55b" stroke-width="1.5"/>
+                <g id="sleevePattern" clip-path="url(#sleeveClip)"></g>
+                <path id="sleeveSafe" d="M42 181 Q96 158 137 111 Q164 77 181 42 Q215 90 275 96 Q335 90 369 42 Q386 77 413 111 Q454 158 508 181 L460 230 L432 285 H118 L90 230Z" fill="none" stroke="#fff" stroke-opacity=".42" stroke-dasharray="7 7" stroke-width="1.5"/>
+                <g id="sleeveStripe">
+                  <path d="M180 65 L210 82 L198 103 L166 86Z" fill="#F5EBDD"/><path d="M162 100 L205 120 L193 144 L148 124Z" fill="#F5EBDD"/><path d="M145 142 L198 162 L188 188 L132 168Z" fill="#F5EBDD"/><path d="M132 187 L190 208 L181 235 L118 216Z" fill="#F5EBDD"/>
                 </g>
-                <text id="sleeveTextSvg" x="400" y="875" text-anchor="middle" fill="#F5EBDD" font-size="28" font-weight="900">TARBAHATAI</text>
-                <text x="400" y="950" text-anchor="middle" fill="#d7c58e" font-size="20" font-weight="800">肩袖 ×2（左右）</text>
+                <text id="sleeveTextSvg" x="275" y="265" text-anchor="middle" fill="#F5EBDD" font-size="25" font-weight="900">TARBAHATAI</text>
+                <text x="275" y="330" text-anchor="middle" fill="#d8b55b" font-size="16" font-weight="900">SHOULDER-SLEEVE / 肩袖 ×2</text>
               </g>
 
-              <g id="cuffPiece" filter="url(#shadow)">
-                <rect id="cuffShape" x="690" y="790" width="210" height="52" rx="3" fill="#8B2E2E"/>
-                <path class="safeLine" d="M700 800H890V832H700Z" fill="none" stroke="#fff" stroke-opacity=".38" stroke-dasharray="7 6" stroke-width="2"/>
-                <text x="795" y="875" text-anchor="middle" fill="#d7c58e" font-size="20" font-weight="800">袖口 ×2（左右）</text>
+              <g id="piece-cuff" transform="translate(655 805)">
+                <rect id="cuffShape" width="230" height="55" rx="3" fill="#8B2E2E" stroke="#d8b55b" stroke-width="1.5"/>
+                <rect id="cuffSafe" x="12" y="10" width="206" height="35" fill="none" stroke="#fff" stroke-opacity=".42" stroke-dasharray="7 7" stroke-width="1.5"/>
+                <text x="115" y="86" text-anchor="middle" fill="#d8b55b" font-size="16" font-weight="900">CUFF / 袖口 ×2</text>
               </g>
 
-              <g id="cutLegend">
-                <text x="70" y="1030" fill="#aaa" font-size="15">V1.1 FACTORY CUT-PIECE BOARD</text>
-                <text x="70" y="1060" fill="#777" font-size="13">安全线为设计参考 · 实际缝份与裁片尺寸以厂家纸样为准</text>
+              <g id="piece-collarWide" transform="translate(75 70)">
+                <rect id="collarWideShape" width="360" height="34" rx="3" fill="#1F5B46" stroke="#d8b55b" stroke-width="1.3"/>
+                <text x="385" y="23" fill="#eee" font-size="16">COLLAR WIDE / 宽领口 ×1</text>
+              </g>
+              <g id="piece-collarNarrow" transform="translate(75 122)">
+                <rect id="collarNarrowShape" width="360" height="15" rx="2" fill="#F5EBDD" stroke="#d8b55b" stroke-width="1.3"/>
+                <text x="385" y="13" fill="#eee" font-size="16">COLLAR NARROW / 窄领口 ×1</text>
+              </g>
+
+              <g id="boardNotes">
+                <text x="55" y="1135" fill="#aaa" font-size="15">SAGI KIT DESIGNER V1.2 · FACTORY PATTERN BOARD</text>
+                <text x="55" y="1162" fill="#777" font-size="12">默认轮廓按厂家图片重建；正式生产前必须用厂家原始纸样核对尺寸、缝份、放码。</text>
               </g>
             </g>
 
             <g id="previewView" display="none">
-              <text x="500" y="82" text-anchor="middle" fill="#d7c58e" font-size="26" font-weight="900">ASSEMBLED PREVIEW</text>
-              <g id="previewFront" transform="translate(60,120)">
+              <text x="500" y="80" text-anchor="middle" fill="#d8b55b" font-size="26" font-weight="900">ASSEMBLED PREVIEW</text>
+              <g transform="translate(60 145)">
                 <path id="previewFrontBody" d="M210 115 L155 140 L72 226 L120 305 L188 260 L182 655 Q315 695 448 655 L442 260 L510 305 L558 226 L475 140 L420 115 Q388 150 315 150 Q242 150 210 115Z" fill="#8B2E2E"/>
-                <path id="previewFrontSleeveL" d="M210 115 L155 140 L72 226 L120 305 L188 260 L215 172Z" fill="#8B2E2E"/>
-                <path id="previewFrontSleeveR" d="M420 115 L475 140 L558 226 L510 305 L442 260 L415 172Z" fill="#8B2E2E"/>
-                <path id="previewCollarWide" d="M210 115 Q242 150 315 150 Q388 150 420 115 L413 96 Q372 127 315 127 Q258 127 217 96Z" fill="#1F5B46"/>
-                <path id="previewCollarNarrow" d="M226 112 Q260 136 315 136 Q370 136 404 112 L399 103 Q367 124 315 124 Q263 124 231 103Z" fill="#F5EBDD"/>
-                <g id="previewFrontAssets"></g>
-                <text id="previewChestText" x="315" y="360" text-anchor="middle" fill="#fff" font-size="30" font-weight="900">塔城</text>
-                <text x="315" y="710" text-anchor="middle" fill="#d7c58e" font-size="19" font-weight="800">正面</text>
+                <path id="previewFrontSleeveL" d="M210 115 L155 140 L72 226 L120 305 L188 260 L215 172Z" fill="#8B2E2E"/><path id="previewFrontSleeveR" d="M420 115 L475 140 L558 226 L510 305 L442 260 L415 172Z" fill="#8B2E2E"/>
+                <path id="previewWideF" d="M210 115 Q242 150 315 150 Q388 150 420 115 L413 96 Q372 127 315 127 Q258 127 217 96Z" fill="#1F5B46"/><path id="previewNarrowF" d="M226 112 Q260 136 315 136 Q370 136 404 112 L399 103 Q367 124 315 124 Q263 124 231 103Z" fill="#F5EBDD"/>
+                <g id="previewFrontAssets"></g><text id="previewChestText" x="315" y="350" text-anchor="middle" fill="#F5EBDD" font-size="30" font-weight="900">塔城</text>
               </g>
-              <g id="previewBack" transform="translate(510,120)">
+              <g transform="translate(515 145)">
                 <path id="previewBackBody" d="M210 115 L155 140 L72 226 L120 305 L188 260 L182 655 Q315 695 448 655 L442 260 L510 305 L558 226 L475 140 L420 115 Q388 150 315 150 Q242 150 210 115Z" fill="#8B2E2E"/>
-                <path id="previewBackSleeveL" d="M210 115 L155 140 L72 226 L120 305 L188 260 L215 172Z" fill="#8B2E2E"/>
-                <path id="previewBackSleeveR" d="M420 115 L475 140 L558 226 L510 305 L442 260 L415 172Z" fill="#8B2E2E"/>
-                <path id="previewBackCollarWide" d="M210 115 Q242 150 315 150 Q388 150 420 115 L413 96 Q372 127 315 127 Q258 127 217 96Z" fill="#1F5B46"/>
-                <path id="previewBackCollarNarrow" d="M226 112 Q260 136 315 136 Q370 136 404 112 L399 103 Q367 124 315 124 Q263 124 231 103Z" fill="#F5EBDD"/>
-                <text id="previewBackNeck" x="315" y="220" text-anchor="middle" fill="#F5EBDD" font-size="10" font-weight="800">ONE CITY · 29 · ONE DREAM</text>
-                <text id="previewTeam" x="315" y="300" text-anchor="middle" fill="#fff" font-size="20" font-weight="800">TARLAN FC</text>
-                <text id="previewName" x="315" y="342" text-anchor="middle" fill="#fff" font-size="19" font-weight="800">MARHULAN</text>
-                <text id="previewNumber" x="315" y="505" text-anchor="middle" fill="#fff" font-size="135" font-family="Arial Black" font-weight="900">88</text>
-                <text x="315" y="710" text-anchor="middle" fill="#d7c58e" font-size="19" font-weight="800">背面</text>
+                <path id="previewBackSleeveL" d="M210 115 L155 140 L72 226 L120 305 L188 260 L215 172Z" fill="#8B2E2E"/><path id="previewBackSleeveR" d="M420 115 L475 140 L558 226 L510 305 L442 260 L415 172Z" fill="#8B2E2E"/>
+                <path id="previewWideB" d="M210 115 Q242 150 315 150 Q388 150 420 115 L413 96 Q372 127 315 127 Q258 127 217 96Z" fill="#1F5B46"/><path id="previewNarrowB" d="M226 112 Q260 136 315 136 Q370 136 404 112 L399 103 Q367 124 315 124 Q263 124 231 103Z" fill="#F5EBDD"/>
+                <text id="previewBackNeck" x="315" y="220" text-anchor="middle" fill="#F5EBDD" font-size="10" font-weight="800">ONE CITY · 29 · ONE DREAM</text><text id="previewTeam" x="315" y="290" text-anchor="middle" fill="#fff" font-size="20" font-weight="900">TARLAN FC</text><text id="previewName" x="315" y="335" text-anchor="middle" fill="#fff" font-size="19" font-weight="800">MARHULAN</text><text id="previewNumber" x="315" y="510" text-anchor="middle" fill="#fff" font-size="150" font-family="Arial Black" font-weight="900">88</text>
               </g>
             </g>
           </svg>
         </div>
-        <div id="status" class="status">V1.1 已就绪 · 裁片模式</div>
+        <div id="status" class="status">V1.2 已就绪 · 纸样生产板</div>
       </div>
     </div>
   </div>
@@ -214,111 +237,113 @@ button,.fileBtn{border:0;border-radius:12px;background:#292929;color:#fff;font-w
 <script>
 (function(){
 'use strict';
-const DEFAULT={
-  mode:'cut',patternPiece:'front',
-  frontColor:'#8B2E2E',backColor:'#8B2E2E',sleeveColor:'#8B2E2E',cuffColor:'#8B2E2E',
-  collarWideColor:'#1F5B46',collarNarrowColor:'#F5EBDD',accentColor:'#F5EBDD',logoColor:'#D1B06B',
-  patterns:{
-    front:{type:'dash',color:'#D86854',opacity:14,density:3},
-    back:{type:'dash',color:'#D86854',opacity:14,density:3},
-    sleeve:{type:'none',color:'#D86854',opacity:12,density:3}
-  },
-  chestText:'塔城',playerName:'MARHULAN',number:'88',teamName:'TARLAN FC',sleeveText:'TARBAHATAI',backNeckText:'ONE CITY · 29 · ONE DREAM',
-  numberFont:'Arial Black',crestSize:9,brandSize:8,sponsorSize:25,safeLine:'on',sleeveStripe:'on'
+const DEF={
+ view:'paper',selected:'front',boardW:1000,boardH:1200,gridStep:20,gridShow:'on',locked:true,ref:{url:'',x:0,y:0,w:1000,h:1200,opacity:35},
+ pieces:{
+  front:{name:'前片',x:30,y:190,w:370,h:535,color:'#8B2E2E',pattern:'dash',pcolor:'#D86854',opacity:14,density:3,safe:12},
+  back:{name:'后片',x:515,y:180,w:390,h:535,color:'#8B2E2E',pattern:'dash',pcolor:'#D86854',opacity:14,density:3,safe:12},
+  sleeve:{name:'肩袖',x:55,y:770,w:550,h:330,color:'#8B2E2E',pattern:'none',pcolor:'#D86854',opacity:12,density:3,safe:12},
+  cuff:{name:'袖口',x:655,y:805,w:230,h:55,color:'#8B2E2E',pattern:'none',pcolor:'#ffffff',opacity:0,density:1,safe:10},
+  collarWide:{name:'宽领口',x:75,y:70,w:360,h:34,color:'#1F5B46',pattern:'none',pcolor:'#ffffff',opacity:0,density:1,safe:0},
+  collarNarrow:{name:'窄领口',x:75,y:122,w:360,h:15,color:'#F5EBDD',pattern:'none',pcolor:'#ffffff',opacity:0,density:1,safe:0}
+ },
+ crestX:95,crestY:125,crestW:32,brandX:245,brandY:125,brandW:34,sponsorX:145,sponsorY:235,sponsorW:120,
+ chestText:'塔城',chestY:290,teamName:'TARLAN FC',playerName:'MARHULAN',number:'88',numberH:150,numberY:330,backNeckText:'ONE CITY · 29 · ONE DREAM',sleeveText:'TARBAHATAI',numberFont:'Arial Black'
 };
-let S=JSON.parse(JSON.stringify(DEFAULT)),assets={crest:'',brand:'',sponsor:''};
+let S=JSON.parse(JSON.stringify(DEF)),assets={crest:'',brand:'',sponsor:''};
 const q=id=>document.getElementById(id);
 function note(t){const n=q('notice');n.textContent=t;n.style.display='block';clearTimeout(note.t);note.t=setTimeout(()=>n.style.display='none',1500)}
-function readBase(){
- ['frontColor','backColor','sleeveColor','cuffColor','collarWideColor','collarNarrowColor','accentColor','logoColor','chestText','playerName','number','teamName','sleeveText','backNeckText','numberFont','safeLine','sleeveStripe'].forEach(k=>S[k]=q(k).value);
- ['crestSize','brandSize','sponsorSize'].forEach(k=>S[k]=Number(q(k).value)||0);
- const p=S.patterns[S.patternPiece];p.type=q('patternType').value;p.color=q('patternColor').value;p.opacity=Number(q('patternOpacity').value)||0;p.density=Number(q('patternDensity').value)||1;
+function piece(){return S.pieces[S.selected]}
+function syncAll(){
+ q('boardW').value=S.boardW;q('boardH').value=S.boardH;q('gridStep').value=S.gridStep;q('gridShow').value=S.gridShow;q('patternLocked').checked=S.locked;
+ ['crestX','crestY','crestW','brandX','brandY','brandW','sponsorX','sponsorY','sponsorW','chestText','chestY','teamName','playerName','number','numberH','numberY','backNeckText','sleeveText','numberFont'].forEach(k=>q(k).value=S[k]);
+ q('refX').value=S.ref.x;q('refY').value=S.ref.y;q('refW').value=S.ref.w;q('refH').value=S.ref.h;q('refOpacity').value=S.ref.opacity;syncPiece();
 }
-function syncInputs(){
- ['frontColor','backColor','sleeveColor','cuffColor','collarWideColor','collarNarrowColor','accentColor','logoColor','chestText','playerName','number','teamName','sleeveText','backNeckText','numberFont','safeLine','sleeveStripe'].forEach(k=>q(k).value=S[k]);
- ['crestSize','brandSize','sponsorSize'].forEach(k=>q(k).value=S[k]);
- syncPatternInputs();
+function syncPiece(){
+ const p=piece();q('pieceX').value=p.x;q('pieceY').value=p.y;q('pieceW').value=p.w;q('pieceH').value=p.h;q('pieceColor').value=p.color;q('patternType').value=p.pattern;q('patternColor').value=p.pcolor;q('patternOpacity').value=p.opacity;q('patternDensity').value=p.density;q('safeInset').value=p.safe;
+ ['pieceX','pieceY','pieceW','pieceH'].forEach(id=>q(id).disabled=S.locked);
+ document.querySelectorAll('[data-piece]').forEach(b=>b.classList.toggle('on',b.dataset.piece===S.selected));
+ q('pieceInfo').innerHTML='<b>'+p.name+'</b><br>坐标：'+p.x+', '+p.y+' mm<br>外接尺寸：'+p.w+' × '+p.h+' mm';
 }
-function syncPatternInputs(){
- const p=S.patterns[S.patternPiece];q('patternType').value=p.type;q('patternColor').value=p.color;q('patternOpacity').value=p.opacity;q('patternDensity').value=p.density;q('patternOpacityText').value=p.opacity+'%';q('patternDensityText').value=p.density;
- document.querySelectorAll('[data-piece]').forEach(b=>b.classList.toggle('on',b.dataset.piece===S.patternPiece));
+function readGlobal(){
+ S.boardW=+q('boardW').value||1000;S.boardH=+q('boardH').value||1200;S.gridStep=+q('gridStep').value||20;S.gridShow=q('gridShow').value;S.locked=q('patternLocked').checked;
+ ['crestX','crestY','crestW','brandX','brandY','brandW','sponsorX','sponsorY','sponsorW','chestY','numberH','numberY'].forEach(k=>S[k]=+q(k).value||0);
+ ['chestText','teamName','playerName','number','backNeckText','sleeveText','numberFont'].forEach(k=>S[k]=q(k).value);
+ S.ref.x=+q('refX').value||0;S.ref.y=+q('refY').value||0;S.ref.w=+q('refW').value||S.boardW;S.ref.h=+q('refH').value||S.boardH;S.ref.opacity=Math.max(0,Math.min(100,+q('refOpacity').value||0));
+}
+function readPiece(){
+ const p=piece();if(!S.locked){p.x=+q('pieceX').value||0;p.y=+q('pieceY').value||0;p.w=Math.max(1,+q('pieceW').value||1);p.h=Math.max(1,+q('pieceH').value||1)}p.color=q('pieceColor').value;p.pattern=q('patternType').value;p.pcolor=q('patternColor').value;p.opacity=Math.max(0,Math.min(40,+q('patternOpacity').value||0));p.density=Math.max(1,Math.min(6,+q('patternDensity').value||1));p.safe=Math.max(0,+q('safeInset').value||0);
+}
+function setPieceTransform(k){const p=S.pieces[k],base=DEF.pieces[k];const sx=p.w/base.w,sy=p.h/base.h;q('piece-'+k).setAttribute('transform','translate('+p.x+' '+p.y+') scale('+sx+' '+sy+')')}
+function renderGrid(){const step=S.gridStep;q('grid10').setAttribute('width',step);q('grid10').setAttribute('height',step);q('grid10').innerHTML='<path d="M'+step+' 0H0V'+step+'" fill="none" stroke="#ffffff" stroke-opacity=".07" stroke-width="1"/>';q('gridLayer').setAttribute('width',S.boardW);q('gridLayer').setAttribute('height',S.boardH);q('gridLayer').style.display=S.gridShow==='on'?'':'none';q('paperSvg').setAttribute('viewBox','0 0 '+S.boardW+' '+S.boardH);q('boardBg').setAttribute('width',S.boardW);q('boardBg').setAttribute('height',S.boardH)}
+function patternBBox(k){return k==='front'?{x:50,y:0,w:340,h:520}:k==='back'?{x:0,y:0,w:390,h:520}:{x:0,y:0,w:550,h:310}}
+function renderPattern(k){
+ if(!['front','back','sleeve'].includes(k))return;const p=S.pieces[k],g=q(k+'Pattern');g.innerHTML='';g.setAttribute('opacity',p.opacity/100);if(p.pattern==='none')return;const b=patternBBox(k);
+ if(p.pattern==='diag'){let s='',step=Math.max(14,42-p.density*4);for(let x=b.x-b.h;x<b.x+b.w+b.h;x+=step)s+='<line x1="'+x+'" y1="'+(b.y+b.h)+'" x2="'+(x+b.h)+'" y2="'+b.y+'" stroke="'+p.pcolor+'" stroke-width="'+(2+p.density*.7)+'"/>';g.innerHTML=s;return}
+ if(p.pattern==='weave'){let s='',step=Math.max(12,30-p.density*3);for(let y=b.y;y<=b.y+b.h;y+=step)s+='<line x1="'+b.x+'" y1="'+y+'" x2="'+(b.x+b.w)+'" y2="'+y+'" stroke="'+p.pcolor+'" stroke-width="2"/>';for(let x=b.x;x<=b.x+b.w;x+=step)s+='<line x1="'+x+'" y1="'+b.y+'" x2="'+x+'" y2="'+(b.y+b.h)+'" stroke="'+p.pcolor+'" stroke-width="1"/>';g.innerHTML=s;return}
+ if(p.pattern==='flow'){let s='';for(let i=0;i<6+p.density*2;i++){const y=b.y+20+i*(b.h/(5+p.density*2));s+='<path d="M'+b.x+' '+y+' Q'+(b.x+b.w*.35)+' '+(y-32)+' '+(b.x+b.w*.6)+' '+(y+8)+' T'+(b.x+b.w)+' '+(y-8)+'" fill="none" stroke="'+p.pcolor+'" stroke-width="'+(2.5+p.density*.7)+'"/>'}g.innerHTML=s;return}
+ let s='',cols=5+p.density*3,rows=9+p.density*4;for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const x=b.x+(c+.5)*(b.w/cols)+Math.sin(r*.8+c)*5,y=b.y+(r+.5)*(b.h/rows),len=8+p.density*2;s+='<line x1="'+x.toFixed(1)+'" y1="'+y.toFixed(1)+'" x2="'+(x+2).toFixed(1)+'" y2="'+(y+len).toFixed(1)+'" stroke="'+p.pcolor+'" stroke-width="'+(1.1+p.density*.22)+'"/>'}g.innerHTML=s;
 }
 function imgTag(url,x,y,w,h){return url?'<image href="'+url+'" x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" preserveAspectRatio="xMidYMid meet"/>':''}
 function renderAssets(){
- const cw=350*S.crestSize/100,bw=350*S.brandSize/100,sw=350*S.sponsorSize/100;
- q('frontCrest').innerHTML=imgTag(assets.crest,205-cw/2,320-cw/2,cw,cw);
- q('frontBrand').innerHTML=assets.brand?imgTag(assets.brand,365-bw/2,320-bw/2,bw,bw):'<text x="365" y="327" text-anchor="middle" fill="'+S.logoColor+'" font-size="23" font-weight="900">SAGI</text>';
- q('frontSponsor').innerHTML=imgTag(assets.sponsor,285-sw/2,455,sw,sw*0.36);
- const pw=400*S.crestSize/100,pbw=400*S.brandSize/100,psw=400*S.sponsorSize/100;
- q('previewFrontAssets').innerHTML=(assets.crest?imgTag(assets.crest,235-pw/2,230-pw/2,pw,pw):'')+(assets.brand?imgTag(assets.brand,390-pbw/2,230-pbw/2,pbw,pbw):'<text x="390" y="238" text-anchor="middle" fill="'+S.logoColor+'" font-size="24" font-weight="900">SAGI</text>')+(assets.sponsor?imgTag(assets.sponsor,315-psw/2,275,psw,psw*0.36):'');
+ let s='';if(assets.crest)s+=imgTag(assets.crest,S.crestX,S.crestY,S.crestW,S.crestW);if(assets.brand)s+=imgTag(assets.brand,S.brandX,S.brandY,S.brandW,S.brandW);else s+='<text x="'+(S.brandX+S.brandW/2)+'" y="'+(S.brandY+S.brandW*.75)+'" text-anchor="middle" fill="#D1B06B" font-size="'+Math.max(14,S.brandW*.55)+'" font-weight="900">SAGI</text>';if(assets.sponsor)s+=imgTag(assets.sponsor,S.sponsorX,S.sponsorY,S.sponsorW,S.sponsorW*.34);q('frontAssets').innerHTML=s;
+ q('frontChestText').setAttribute('y',S.chestY);q('frontChestText').textContent=S.chestText;
  [['crestPreview','crest','队徽'],['brandPreview','brand','SAGI'],['sponsorPreview','sponsor','赞助']].forEach(([id,k,t])=>q(id).innerHTML=assets[k]?'<img src="'+assets[k]+'">':t);
+ q('previewFrontAssets').innerHTML=(assets.crest?imgTag(assets.crest,235,225,36,36):'')+(assets.brand?imgTag(assets.brand,390,225,38,38):'<text x="409" y="250" fill="#D1B06B" font-size="24" font-weight="900">SAGI</text>')+(assets.sponsor?imgTag(assets.sponsor,260,285,110,38):'');
 }
-function renderPattern(piece){
- const p=S.patterns[piece],g=q(piece==='sleeve'?'sleevePatternLayer':piece+'Pattern');g.innerHTML='';g.setAttribute('opacity',p.opacity/100);
- if(p.type==='none')return;
- const bbox=piece==='front'?{x:100,y:190,w:370,h:480}:piece==='back'?{x:510,y:180,w:390,h:500}:{x:130,y:570,w:540,h:360};
- document.documentElement.style.setProperty('--pattern-color',p.color);
- if(p.type==='diag'){
-   let s='',step=Math.max(18,46-p.density*5);for(let x=bbox.x-bbox.h;x<bbox.x+bbox.w+bbox.h;x+=step)s+='<line x1="'+x+'" y1="'+(bbox.y+bbox.h)+'" x2="'+(x+bbox.h)+'" y2="'+bbox.y+'" stroke="'+p.color+'" stroke-width="'+(3+p.density)+'"/>';g.innerHTML=s;return;
- }
- if(p.type==='weave'){
-   let s='',step=Math.max(14,32-p.density*3);for(let y=bbox.y;y<=bbox.y+bbox.h;y+=step)s+='<line x1="'+bbox.x+'" y1="'+y+'" x2="'+(bbox.x+bbox.w)+'" y2="'+y+'" stroke="'+p.color+'" stroke-width="2"/>';for(let x=bbox.x;x<=bbox.x+bbox.w;x+=step)s+='<line x1="'+x+'" y1="'+bbox.y+'" x2="'+x+'" y2="'+(bbox.y+bbox.h)+'" stroke="'+p.color+'" stroke-width="1"/>';g.innerHTML=s;return;
- }
- if(p.type==='flow'){
-   let s='';for(let i=0;i<6+p.density*2;i++){const y=bbox.y+20+i*(bbox.h/(5+p.density*2));s+='<path d="M'+bbox.x+' '+y+' Q'+(bbox.x+bbox.w*.34)+' '+(y-35)+' '+(bbox.x+bbox.w*.58)+' '+(y+10)+' T'+(bbox.x+bbox.w)+' '+(y-10)+'" fill="none" stroke="'+p.color+'" stroke-width="'+(3+p.density*.7)+'"/>'}g.innerHTML=s;return;
- }
- let lines='',cols=5+p.density*3,rows=8+p.density*4;
- for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const x=bbox.x+(c+.5)*(bbox.w/cols)+Math.sin(r*.8+c)*6,y=bbox.y+(r+.5)*(bbox.h/rows),len=8+p.density*2;lines+='<line x1="'+x.toFixed(1)+'" y1="'+y.toFixed(1)+'" x2="'+(x+2).toFixed(1)+'" y2="'+(y+len).toFixed(1)+'" stroke="'+p.color+'" stroke-width="'+(1.2+p.density*.25)+'"/>'}
- g.innerHTML=lines;
-}
+function renderReference(){q('refLayer').innerHTML=S.ref.url?'<image href="'+S.ref.url+'" x="'+S.ref.x+'" y="'+S.ref.y+'" width="'+S.ref.w+'" height="'+S.ref.h+'" preserveAspectRatio="none"/>':'';q('refLayer').setAttribute('opacity',S.ref.opacity/100)}
 function apply(){
- q('frontShape').setAttribute('fill',S.frontColor);q('backShape').setAttribute('fill',S.backColor);q('sleeveShape').setAttribute('fill',S.sleeveColor);q('cuffShape').setAttribute('fill',S.cuffColor);q('collarWide').setAttribute('fill',S.collarWideColor);q('collarNarrow').setAttribute('fill',S.collarNarrowColor);
- q('frontChestText').textContent=S.chestText;q('frontChestText').setAttribute('fill',S.accentColor);q('backTeamText').textContent=S.teamName;q('backNameText').textContent=S.playerName;q('backNumberText').textContent=S.number;q('backNumberText').setAttribute('font-family',S.numberFont);q('backNeckTextSvg').textContent=S.backNeckText;q('sleeveTextSvg').textContent=S.sleeveText;q('sleeveTextSvg').setAttribute('fill',S.accentColor);q('backNeckTextSvg').setAttribute('fill',S.accentColor);
- q('sleeveStripeGroup').style.display=S.sleeveStripe==='on'?'':'none';q('sleeveStripeGroup').querySelectorAll('path').forEach(p=>p.setAttribute('fill',S.accentColor));
- document.querySelectorAll('.safeLine').forEach(x=>x.style.display=S.safeLine==='on'?'':'none');
- renderPattern('front');renderPattern('back');renderPattern('sleeve');renderAssets();applyPreview();applyMode();renderSpec();
+ renderGrid();['front','back','sleeve','cuff','collarWide','collarNarrow'].forEach(k=>setPieceTransform(k));
+ q('frontShape').setAttribute('fill',S.pieces.front.color);q('backShape').setAttribute('fill',S.pieces.back.color);q('sleeveShape').setAttribute('fill',S.pieces.sleeve.color);q('cuffShape').setAttribute('fill',S.pieces.cuff.color);q('collarWideShape').setAttribute('fill',S.pieces.collarWide.color);q('collarNarrowShape').setAttribute('fill',S.pieces.collarNarrow.color);
+ renderPattern('front');renderPattern('back');renderPattern('sleeve');renderAssets();renderReference();
+ q('backTeamText').textContent=S.teamName;q('backNameText').textContent=S.playerName;q('backNumberText').textContent=S.number;q('backNumberText').setAttribute('font-family',S.numberFont);q('backNumberText').setAttribute('y',S.numberY);q('backNumberText').setAttribute('font-size',S.numberH);q('backNeckTextSvg').textContent=S.backNeckText;q('sleeveTextSvg').textContent=S.sleeveText;
+ q('sleeveStripe').querySelectorAll('path').forEach(p=>p.setAttribute('fill',S.pieces.collarNarrow.color));
+ renderPreview();renderView();renderSpec();syncPiece();
 }
-function applyPreview(){
- ['previewFrontBody'].forEach(id=>q(id).setAttribute('fill',S.frontColor));['previewBackBody'].forEach(id=>q(id).setAttribute('fill',S.backColor));['previewFrontSleeveL','previewFrontSleeveR','previewBackSleeveL','previewBackSleeveR'].forEach(id=>q(id).setAttribute('fill',S.sleeveColor));
- q('previewCollarWide').setAttribute('fill',S.collarWideColor);q('previewBackCollarWide').setAttribute('fill',S.collarWideColor);q('previewCollarNarrow').setAttribute('fill',S.collarNarrowColor);q('previewBackCollarNarrow').setAttribute('fill',S.collarNarrowColor);
- q('previewChestText').textContent=S.chestText;q('previewChestText').setAttribute('fill',S.accentColor);q('previewBackNeck').textContent=S.backNeckText;q('previewBackNeck').setAttribute('fill',S.accentColor);q('previewTeam').textContent=S.teamName;q('previewName').textContent=S.playerName;q('previewNumber').textContent=S.number;q('previewNumber').setAttribute('font-family',S.numberFont);
+function renderPreview(){
+ q('previewFrontBody').setAttribute('fill',S.pieces.front.color);q('previewBackBody').setAttribute('fill',S.pieces.back.color);['previewFrontSleeveL','previewFrontSleeveR','previewBackSleeveL','previewBackSleeveR'].forEach(id=>q(id).setAttribute('fill',S.pieces.sleeve.color));q('previewWideF').setAttribute('fill',S.pieces.collarWide.color);q('previewWideB').setAttribute('fill',S.pieces.collarWide.color);q('previewNarrowF').setAttribute('fill',S.pieces.collarNarrow.color);q('previewNarrowB').setAttribute('fill',S.pieces.collarNarrow.color);q('previewChestText').textContent=S.chestText;q('previewBackNeck').textContent=S.backNeckText;q('previewTeam').textContent=S.teamName;q('previewName').textContent=S.playerName;q('previewNumber').textContent=S.number;q('previewNumber').setAttribute('font-family',S.numberFont)
 }
-function applyMode(){
- const cut=S.mode==='cut';q('cutView').style.display=cut?'inline':'none';q('previewView').style.display=cut?'none':'inline';q('cutModeBtn').classList.toggle('on',cut);q('previewModeBtn').classList.toggle('on',!cut);q('status').textContent='V1.1 已就绪 · '+(cut?'裁片模式':'成衣预览');
-}
-function renderSpec(){
- const p=S.patterns;
- q('spec').textContent=[
- 'SAGI KIT DESIGNER V1.1｜厂家裁片版','',
- '【裁片结构】','前片 ×1','后片 ×1','肩袖连体裁片 ×2（左/右）','袖口裁片 ×2（左/右）','领口宽条 ×1','领口窄条 ×1','',
- '【颜色】','前片 '+S.frontColor,'后片 '+S.backColor,'肩袖 '+S.sleeveColor,'袖口 '+S.cuffColor,'领口宽条 '+S.collarWideColor,'领口窄条 '+S.collarNarrowColor,'点缀 '+S.accentColor,'Logo '+S.logoColor,'',
- '【纹样】','前片 '+p.front.type+' / '+p.front.opacity+'% / 密度'+p.front.density,'后片 '+p.back.type+' / '+p.back.opacity+'% / 密度'+p.back.density,'肩袖 '+p.sleeve.type+' / '+p.sleeve.opacity+'% / 密度'+p.sleeve.density,'',
- '【内容】','胸前文字：'+S.chestText,'背后：'+S.playerName+' / '+S.number,'球队：'+S.teamName,'肩袖文字：'+S.sleeveText,'后领：'+S.backNeckText,'',
- '注意：本工具安全线仅为设计安全区参考，实际纸样尺寸、缝份、放码由厂家提供的原始裁片为准。'
- ].join('\n');
-}
-function fileToData(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(file)})}
+function renderView(){const paper=S.view==='paper';q('paperView').style.display=paper?'inline':'none';q('previewView').style.display=paper?'none':'inline';q('paperBtn').classList.toggle('on',paper);q('previewBtn').classList.toggle('on',!paper);q('status').textContent='V1.2 已就绪 · '+(paper?'纸样生产板':'成衣预览')}
+function renderSpec(){const P=S.pieces;q('spec').textContent=[
+'SAGI KIT DESIGNER V1.2｜厂家纸样版','',
+'坐标系：1 SVG单位 = 1 mm','画板：'+S.boardW+' × '+S.boardH+' mm','纸样锁定：'+(S.locked?'是':'否'),'',
+'【裁片】',
+'前片 ×1｜位置 '+P.front.x+','+P.front.y+'｜外接 '+P.front.w+'×'+P.front.h+' mm｜'+P.front.color,
+'后片 ×1｜位置 '+P.back.x+','+P.back.y+'｜外接 '+P.back.w+'×'+P.back.h+' mm｜'+P.back.color,
+'肩袖 ×2｜位置 '+P.sleeve.x+','+P.sleeve.y+'｜外接 '+P.sleeve.w+'×'+P.sleeve.h+' mm｜'+P.sleeve.color,
+'袖口 ×2｜位置 '+P.cuff.x+','+P.cuff.y+'｜外接 '+P.cuff.w+'×'+P.cuff.h+' mm｜'+P.cuff.color,
+'宽领口 ×1｜'+P.collarWide.w+'×'+P.collarWide.h+' mm｜'+P.collarWide.color,
+'窄领口 ×1｜'+P.collarNarrow.w+'×'+P.collarNarrow.h+' mm｜'+P.collarNarrow.color,'',
+'【前片定位】',
+'队徽：X '+S.crestX+' / Y '+S.crestY+' / 宽 '+S.crestW+' mm',
+'SAGI：X '+S.brandX+' / Y '+S.brandY+' / 宽 '+S.brandW+' mm',
+'赞助：X '+S.sponsorX+' / Y '+S.sponsorY+' / 宽 '+S.sponsorW+' mm','',
+'【文字】','胸前：'+S.chestText+' / Y '+S.chestY+' mm','后背：'+S.playerName+' / '+S.number+' / 号码高度 '+S.numberH+' mm','肩袖：'+S.sleeveText,'后领：'+S.backNeckText,'',
+'生产提醒：当前默认纸样根据厂家图片重建，不等于厂家原始1:1纸样。正式生产前必须用原厂 AI/CDR/SVG/PDF 校对轮廓、缝份、放码。'
+].join('\n')}
+function fileData(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(file)})}
 function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open('sagi_kit_assets',1);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('assets'))r.result.createObjectStore('assets')};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
 async function putAsset(k,v){try{const db=await openDB();await new Promise((res,rej)=>{const tx=db.transaction('assets','readwrite');tx.objectStore('assets').put(v,k);tx.oncomplete=res;tx.onerror=()=>rej(tx.error)});db.close()}catch(e){}}
-async function loadAsset(k,file){if(!file)return;assets[k]=await fileToData(file);await putAsset(k,assets[k]);renderAssets();note('已载入'+(k==='crest'?'队徽':k==='brand'?'SAGI Logo':'赞助商'))}
+async function loadAsset(k,file){if(!file)return;assets[k]=await fileData(file);await putAsset(k,assets[k]);renderAssets();note('已载入'+(k==='crest'?'队徽':k==='brand'?'SAGI Logo':'赞助商'))}
 async function hydrateAssets(){try{const db=await openDB();for(const k of ['crest','brand','sponsor'])assets[k]=await new Promise(res=>{const tx=db.transaction('assets','readonly'),r=tx.objectStore('assets').get(k);r.onsuccess=()=>res(r.result||'');r.onerror=()=>res('')});db.close();renderAssets()}catch(e){}}
-function saveDesign(){readBase();localStorage.setItem('sagi_kit_v11',JSON.stringify(S));note('V1.1方案已保存')}
-function loadDesign(){try{const x=JSON.parse(localStorage.getItem('sagi_kit_v11')||'null');if(x){S={...JSON.parse(JSON.stringify(DEFAULT)),...x,patterns:{...JSON.parse(JSON.stringify(DEFAULT.patterns)),...(x.patterns||{})}};syncInputs();apply();note('已读取V1.1方案')}else note('还没有保存V1.1方案')}catch(e){note('读取失败')}}
-function reset(){S=JSON.parse(JSON.stringify(DEFAULT));syncInputs();apply();note('已恢复默认')}
-function serializeSvg(){const clone=q('designSvg').cloneNode(true);clone.setAttribute('xmlns','http://www.w3.org/2000/svg');clone.setAttribute('width','1600');clone.setAttribute('height','1888');return new XMLSerializer().serializeToString(clone)}
-function download(name,blob){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1200)}
-function exportSvg(){download('SAGI-KIT-V11-'+S.mode+'.svg',new Blob([serializeSvg()],{type:'image/svg+xml'}));note('SVG已导出')}
-function exportPng(){const svg=serializeSvg(),img=new Image(),url=URL.createObjectURL(new Blob([svg],{type:'image/svg+xml'}));img.onload=()=>{const c=document.createElement('canvas');c.width=1600;c.height=1888;const ctx=c.getContext('2d');ctx.fillStyle='#090909';ctx.fillRect(0,0,c.width,c.height);ctx.drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);c.toBlob(b=>download('SAGI-KIT-V11-'+S.mode+'.png',b),'image/png');note('PNG已导出')};img.src=url}
-function exportJson(){readBase();download('SAGI-KIT-V11-design.json',new Blob([JSON.stringify({version:'1.1',design:S},null,2)],{type:'application/json'}));note('设计JSON已导出')}
-['frontColor','backColor','sleeveColor','cuffColor','collarWideColor','collarNarrowColor','accentColor','logoColor','chestText','playerName','number','teamName','sleeveText','backNeckText','numberFont','safeLine','sleeveStripe','crestSize','brandSize','sponsorSize'].forEach(id=>q(id).addEventListener('input',()=>{readBase();apply()}));
-['patternType','patternColor','patternOpacity','patternDensity'].forEach(id=>q(id).addEventListener('input',()=>{readBase();syncPatternInputs();apply()}));
-document.querySelectorAll('[data-piece]').forEach(b=>b.onclick=()=>{readBase();S.patternPiece=b.dataset.piece;syncPatternInputs();});
-q('cutModeBtn').onclick=()=>{S.mode='cut';applyMode()};q('previewModeBtn').onclick=()=>{S.mode='preview';applyMode()};
+function saveDesign(){readGlobal();readPiece();localStorage.setItem('sagi_kit_v12',JSON.stringify(S));note('V1.2方案已保存')}
+function loadDesign(){try{const x=JSON.parse(localStorage.getItem('sagi_kit_v12')||'null');if(x){S={...JSON.parse(JSON.stringify(DEF)),...x,pieces:{...JSON.parse(JSON.stringify(DEF.pieces)),...(x.pieces||{})},ref:{...DEF.ref,...(x.ref||{})}};syncAll();apply();note('已读取V1.2方案')}else note('还没有保存V1.2方案')}catch(e){note('读取失败')}}
+function reset(){S=JSON.parse(JSON.stringify(DEF));syncAll();apply();note('已恢复默认')}
+function serializeSvg(){const clone=q('paperSvg').cloneNode(true);clone.setAttribute('xmlns','http://www.w3.org/2000/svg');clone.setAttribute('width',S.boardW+'mm');clone.setAttribute('height',S.boardH+'mm');clone.setAttribute('viewBox','0 0 '+S.boardW+' '+S.boardH);return new XMLSerializer().serializeToString(clone)}
+function dl(name,blob){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1200)}
+function exportSvg(){readGlobal();readPiece();apply();dl('SAGI-KIT-V12-PRODUCTION.svg',new Blob([serializeSvg()],{type:'image/svg+xml'}));note('生产SVG已导出')}
+function exportPng(){readGlobal();readPiece();apply();const svg=serializeSvg(),img=new Image(),url=URL.createObjectURL(new Blob([svg],{type:'image/svg+xml'}));img.onload=()=>{const c=document.createElement('canvas');c.width=1600;c.height=Math.round(1600*S.boardH/S.boardW);const ctx=c.getContext('2d');ctx.fillStyle='#0b0d10';ctx.fillRect(0,0,c.width,c.height);ctx.drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);c.toBlob(b=>dl('SAGI-KIT-V12-PREVIEW.png',b),'image/png');note('PNG已导出')};img.src=url}
+function exportJson(){readGlobal();readPiece();dl('SAGI-KIT-V12-design.json',new Blob([JSON.stringify({version:'1.2',design:S},null,2)],{type:'application/json'}));note('JSON已导出')}
+['boardW','boardH','gridStep','gridShow','patternLocked','crestX','crestY','crestW','brandX','brandY','brandW','sponsorX','sponsorY','sponsorW','chestText','chestY','teamName','playerName','number','numberH','numberY','backNeckText','sleeveText','numberFont','refX','refY','refW','refH','refOpacity'].forEach(id=>q(id).addEventListener('input',()=>{readGlobal();apply()}));
+['pieceX','pieceY','pieceW','pieceH','pieceColor','patternType','patternColor','patternOpacity','patternDensity','safeInset'].forEach(id=>q(id).addEventListener('input',()=>{readGlobal();readPiece();apply()}));
+q('patternLocked').addEventListener('change',()=>{readGlobal();syncPiece()});
+document.querySelectorAll('[data-piece]').forEach(b=>b.onclick=()=>{readGlobal();readPiece();S.selected=b.dataset.piece;syncPiece()});
+q('paperBtn').onclick=()=>{S.view='paper';renderView()};q('previewBtn').onclick=()=>{S.view='preview';renderView()};
 q('crestFile').onchange=e=>loadAsset('crest',e.target.files[0]);q('brandFile').onchange=e=>loadAsset('brand',e.target.files[0]);q('sponsorFile').onchange=e=>loadAsset('sponsor',e.target.files[0]);
+q('refFile').onchange=async e=>{const file=e.target.files[0];if(!file)return;S.ref.url=await fileData(file);renderReference();note('厂家参考层已载入')};q('clearRefBtn').onclick=()=>{S.ref.url='';renderReference();note('参考层已移除')};
 q('saveBtn').onclick=saveDesign;q('loadBtn').onclick=loadDesign;q('resetBtn').onclick=reset;q('svgBtn').onclick=exportSvg;q('pngBtn').onclick=exportPng;q('jsonBtn').onclick=exportJson;
 q('copySpecBtn').onclick=async()=>{try{await navigator.clipboard.writeText(q('spec').textContent);note('厂家参数已复制')}catch(e){note('复制失败')}};
-syncInputs();apply();hydrateAssets();
+syncAll();apply();hydrateAssets();
 })();
 </script>
-</body>
-</html>
+</body></html>
