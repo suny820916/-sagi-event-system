@@ -4,6 +4,13 @@ on:
   push:
     paths:
       - '.github/workflows/v20-e2e.yml'
+      - 'v20.html'
+      - 'public.html'
+      - 'vmix.html'
+      - 'cloud-config.js'
+      - 'sagi-cloud.js'
+      - 'sw-v20.js'
+      - 'manifest-v20.webmanifest'
 
 permissions:
   contents: write
@@ -74,6 +81,31 @@ jobs:
               await page.waitForTimeout(250);
               add('示例球队名称载入', (await page.locator('#rosterTeam option').first().innerText())==='A塔尔兰', await page.locator('#rosterTeam option').first().innerText());
               add('示例球员可显示', await page.locator('#playerList .playerItem').count()===3, String(await page.locator('#playerList .playerItem').count()));
+
+              const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl2L9sAAAAASUVORK5CYII=','base64');
+              await page.locator('input[data-crest="0"]').setInputFiles({name:'crest.png',mimeType:'image/png',buffer:png});
+              await page.waitForTimeout(700);
+              const storeCheck = await page.evaluate(async () => {
+                const local = localStorage.getItem('sagi_v20')||'';
+                const db = await new Promise((resolve,reject)=>{const r=indexedDB.open('sagi_assets_v20',1);r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error)});
+                const crest = await new Promise(resolve=>{const tx=db.transaction('crests','readonly');const r=tx.objectStore('crests').get('0');r.onsuccess=()=>resolve(r.result||'');r.onerror=()=>resolve('')});
+                db.close();
+                return {localLen:local.length,localHasImage:local.includes('data:image'),crestLen:crest.length};
+              });
+              add('队徽不再写入 localStorage', !storeCheck.localHasImage && storeCheck.localLen<300000, JSON.stringify(storeCheck));
+              add('队徽写入 IndexedDB', storeCheck.crestLen>50, 'crest length '+storeCheck.crestLen);
+              await page.reload({waitUntil:'networkidle'});
+              await page.waitForTimeout(800);
+              add('刷新后队徽仍能恢复显示', await page.locator('#teamCards .teamCard').first().locator('.crest img').count()===1, String(await page.locator('#teamCards .teamCard').first().locator('.crest img').count()));
+
+              const swCheck = await page.evaluate(async () => {
+                if(!('serviceWorker' in navigator)) return {supported:false,count:0};
+                try{
+                  await Promise.race([navigator.serviceWorker.ready,new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),4000))]);
+                }catch(e){}
+                return {supported:true,count:(await navigator.serviceWorker.getRegistrations()).length};
+              });
+              add('PWA Service Worker 已注册', swCheck.supported && swCheck.count>0, JSON.stringify(swCheck));
 
               await page.click('.nav button[data-tab="matches"]');
               const scoreInputs = page.locator('#matchList .match').first().locator('input[data-score]');
