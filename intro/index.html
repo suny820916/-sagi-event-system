@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#07090d">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%2307090d%22/%3E%3Ctext x=%2232%22 y=%2243%22 text-anchor=%22middle%22 font-size=%2234%22 fill=%22%23d8b55b%22%3ES%3C/text%3E%3C/svg%3E">
-<title>SAGI PLAYER INTRO V3.4 · MATCH SHOW PACKAGE</title>
+<title>SAGI PLAYER INTRO V3.5 · BROADCAST AUDIO ENGINE</title>
 <style>
 :root{--bg:#07090d;--panel:#11151c;--line:#2b3340;--text:#f4f0e8;--muted:#8f97a5;--gold:#d8b55b;--green:#72c79a}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
@@ -96,6 +96,11 @@ button,.fileBtn{border:0;border-radius:12px;background:#262d37;color:#fff;font-w
 .packageHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}.packageHead b{font-size:12px;color:#e5ca78;letter-spacing:2px}.packageHead span{font-size:10px;color:#8c96a2}
 .packageGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.packageGrid input,.packageGrid select{font-size:12px}
 .audioRow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.audioStatus{margin-top:8px;font-size:10px;color:#85909d}
+.audioEngine{margin-top:10px;padding:10px;border:1px solid #5a4b27;border-radius:13px;background:linear-gradient(180deg,#15120c,#090c11)}
+.audioEngineHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}.audioEngineHead b{font-size:11px;color:#e7cc7d;letter-spacing:2px}.audioEngineHead span{font-size:9px;color:#8d96a2}
+.audioEngineGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}.audioEngineGrid select{font-size:11px}
+.audioMeters{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}.audioMeter{height:8px;border-radius:999px;background:#111821;overflow:hidden}.audioMeter i{display:block;height:100%;width:0;background:linear-gradient(90deg,#7a6531,#e2c46f);transition:width .12s ease}
+.audioDiag{display:flex;justify-content:space-between;gap:8px;margin-top:6px;font-size:9px;color:#76818e}.audioDiag b{color:#d8b55b}
 .matchOverlay,.countdownOverlay,.stingOverlay{position:absolute;inset:0;z-index:18;display:none;pointer-events:none}
 .matchOverlay.on,.countdownOverlay.on,.stingOverlay.on{display:flex}
 .stingOverlay{align-items:center;justify-content:center;background:radial-gradient(circle at center,#18212b 0,#06090d 52%,#020304 100%)}
@@ -135,7 +140,7 @@ button,.fileBtn{border:0;border-radius:12px;background:#262d37;color:#fff;font-w
 </head>
 <body>
 <div class="app">
-  <div class="top"><div><div class="brand">SAGI PLAYER INTRO</div><div class="sub">V3.4 · MATCH SHOW PACKAGE · 分组出场 · 阵型联动 · 专业球场</div></div><div class="ver">V3.4</div></div>
+  <div class="top"><div><div class="brand">SAGI PLAYER INTRO</div><div class="sub">V3.5 · BROADCAST AUDIO ENGINE · 分组出场 · 阵型联动 · 专业球场</div></div><div class="ver">V3.5</div></div>
 
   <div class="layout">
     <div class="controls">
@@ -172,9 +177,23 @@ button,.fileBtn{border:0;border-radius:12px;background:#262d37;color:#fff;font-w
             <div><label>HIT 音效URL</label><input id="sfxHit" placeholder="https://.../hit.mp3"></div>
             <div><label>RISER 音效URL</label><input id="sfxRiser" placeholder="https://.../riser.mp3"></div>
             <div><label>CROWD 音效URL</label><input id="sfxCrowd" placeholder="https://.../crowd.mp3"></div>
+            <div><label>STING 音效URL</label><input id="sfxSting" placeholder="https://.../sting.mp3"></div>
           </div>
-          <div class="actions"><button id="audioTestBtn" type="button">测试音乐</button><button id="audioStopBtn" type="button">停止音频</button><button id="clearMusicBtn" type="button">清除本机音乐</button></div>
-          <div id="audioStatus" class="audioStatus">AUDIO READY · 没有真实Cue URL时自动使用内置合成音</div>
+          <div class="audioEngine">
+            <div class="audioEngineHead"><b>SAGI AUDIO ENGINE</b><span>主音乐母线 · Cue · Ducking · Fallback</span></div>
+            <div class="audioEngineGrid">
+              <div><label>音频模式</label><select id="audioMode"><option value="HYBRID" selected>HYBRID 混合</option><option value="EXTERNAL">EXTERNAL 仅外部素材</option><option value="BUILTIN">BUILT-IN 内置引擎</option><option value="MUTE">MUTE 静音</option></select></div>
+              <div><label>内置主题</label><select id="audioTheme"><option value="SAGI_PULSE" selected>SAGI PULSE</option><option value="NORTH_WIND">NORTH WIND</option><option value="BLACK_GOLD">BLACK GOLD</option></select></div>
+              <div><label>整体强度</label><select id="audioIntensity"><option value="0.55">LOW</option><option value="0.75" selected>MEDIUM</option><option value="1">HIGH</option></select></div>
+              <div><label>音乐闪避 Ducking</label><select id="audioDucking"><option value="0">OFF</option><option value="0.18">LIGHT</option><option value="0.35" selected>MEDIUM</option><option value="0.55">STRONG</option></select></div>
+              <div><label>Cue 音量</label><select id="cueVolume"><option value="0.65">65%</option><option value="0.8">80%</option><option value="1" selected>100%</option></select></div>
+              <div><label>倒计时节拍</label><select id="countdownBeat"><option value="1" selected>开启</option><option value="0">关闭</option></select></div>
+            </div>
+            <div class="audioMeters"><div><label>MASTER</label><div class="audioMeter"><i id="masterMeter"></i></div></div><div><label>CUE</label><div class="audioMeter"><i id="cueMeter"></i></div></div></div>
+            <div class="audioDiag"><span id="audioEngineState">ENGINE READY</span><span>Fallback <b>ON</b></span></div>
+          </div>
+          <div class="actions"><button id="audioTestBtn" type="button">测试音乐</button><button id="cueTestBtn" type="button">测试HIT</button><button id="audioStopBtn" type="button">停止音频</button><button id="clearMusicBtn" type="button">清除本机音乐</button></div>
+          <div id="audioStatus" class="audioStatus">AUDIO READY · HYBRID 模式优先真实素材，缺失时自动使用 SAGI 内置音频</div>
         </div>
       </div>
 
@@ -237,8 +256,8 @@ button,.fileBtn{border:0;border-radius:12px;background:#262d37;color:#fff;font-w
       <div class="card">
         <h2>直播输出</h2>
         <div class="grid2"><div><label>vMix背景</label><select id="outputBg"><option value="tunnel" selected>球员通道 TUNNEL</option><option value="stadium">球场背景</option><option value="transparent">透明叠加</option><option value="chroma">绿幕</option></select></div><div><label>画面</label><input value="1920 × 1080" readonly></div></div>
-        <div class="actions"><button id="copyVmixBtn" type="button">复制V3.4 vMix链接</button></div>
-        <div class="tiny" style="margin-top:8px">vMix：Add Input → Web Browser → 使用 V3.4 专用链接。手机端点任意组即可同步到直播电脑。</div>
+        <div class="actions"><button id="copyVmixBtn" type="button">复制V3.5 vMix链接</button></div>
+        <div class="tiny" style="margin-top:8px">vMix：Add Input → Web Browser → 使用 V3.5 专用链接。手机端点任意组即可同步到直播电脑。</div>
       </div>
     </div>
 
@@ -266,7 +285,7 @@ button,.fileBtn{border:0;border-radius:12px;background:#262d37;color:#fff;font-w
             </div>
           </div>
         </div>
-        <div class="statusBar"><div id="status" class="status">V3.4 已就绪 · MATCH SHOW PACKAGE</div><div class="mini">1920 × 1080</div></div>
+        <div class="statusBar"><div id="status" class="status">V3.5 已就绪 · BROADCAST AUDIO ENGINE</div><div class="mini">1920 × 1080</div></div>
       </div>
     </div>
   </div>
@@ -288,7 +307,7 @@ const FORMATIONS={
 const ROLE_NAMES={GK:'GOALKEEPER',DF:'DEFENDERS',MF:'MIDFIELDERS',FW:'FORWARDS'};
 let roster=[],selected=-1,assets={photo:'',crest:'',bg:'',eventLogo:'',mediaBlob:null,mediaObjectUrl:'',musicBlob:null,musicObjectUrl:''},playing=false,seqTimer=null,currentGroup='TEAM';
 const DEFAULT_SHOW=[
- {id:'sting',group:'STING',label:'Logo Sting',duration:2000,transition:'FLASH',cue:'HIT',enabled:true},
+ {id:'sting',group:'STING',label:'Logo Sting',duration:2000,transition:'FLASH',cue:'STING',enabled:true},
  {id:'match',group:'MATCH',label:'比赛信息',duration:3000,transition:'FADE',cue:'RISER',enabled:true},
  {id:'countdown',group:'COUNTDOWN',label:'开场倒计时',duration:5000,transition:'ZOOM',cue:'HIT',enabled:true},
  {id:'team',group:'TEAM',label:'球队开场',duration:2500,transition:'FADE',cue:'RISER',enabled:true},
@@ -313,10 +332,10 @@ function fileData(file,max=1100,quality=.82){return new Promise((res,rej)=>{cons
 function readPlayer(){return{id:selected>=0&&roster[selected]?roster[selected].id:'',name:q('playerName').value.trim()||'PLAYER',number:q('playerNo').value.trim()||'00',squadType:q('squadType').value||'STARTER',role:q('role').value,position:q('position').value.trim()||q('role').value,captain:q('captain').value==='1',statLabel:q('statLabel').value.trim()||'',statValue:q('statValue').value.trim()||'',photo:assets.photo||'',mediaBlob:assets.mediaBlob||null,mediaObjectUrl:assets.mediaObjectUrl||'',mediaUrl:q('mediaUrl').value.trim()||'',mediaAction:q('mediaAction').value||'STANDARD',directorIn:Math.max(0,parseFloat(q('directorIn').value)||0),directorOut:Math.max(0,parseFloat(q('directorOut').value)||0),directorSpeed:parseFloat(q('directorSpeed').value)||1,directorFreeze:q('directorFreeze').value==='1',directorFreezeMs:parseInt(q('directorFreezeMs').value,10)||1000,directorCamera:q('directorCamera').value||'MEDIUM'}}
 function writePlayer(p){q('playerName').value=p.name||'';q('playerNo').value=p.number||'';q('squadType').value=p.squadType||'STARTER';q('role').value=p.role||'MF';q('position').value=p.position||p.role||'';q('captain').value=p.captain?'1':'0';q('statLabel').value=p.statLabel||'';q('statValue').value=p.statValue||'';q('mediaUrl').value=p.mediaUrl||'';q('mediaAction').value=p.mediaAction||'STANDARD';q('directorIn').value=Number.isFinite(+p.directorIn)?+p.directorIn:0;q('directorOut').value=Number.isFinite(+p.directorOut)?+p.directorOut:0;q('directorSpeed').value=String(p.directorSpeed||1);q('directorFreeze').value=p.directorFreeze?'1':'0';q('directorFreezeMs').value=String(p.directorFreezeMs||1000);q('directorCamera').value=p.directorCamera||'MEDIUM';assets.photo=p.photo||'';assets.mediaBlob=p.mediaBlob||null;assets.mediaObjectUrl=p.mediaObjectUrl||'';renderPreviews()}
 function packageData(){
- return{competition:q('matchCompetition').value.trim()||'MATCH',round:q('matchRound').value.trim()||'',home:q('matchHome').value.trim()||q('teamName').value.trim()||'HOME',away:q('matchAway').value.trim()||'AWAY',kickoff:q('matchKickoff').value.trim()||'',venue:q('matchVenue').value.trim()||'',eventLogo:assets.eventLogo||'',musicUrl:q('musicUrl').value.trim()||'',musicVolume:Math.max(0,Math.min(1,parseFloat(q('musicVolume').value)||.65)),sfx:{WHOOSH:q('sfxWhoosh').value.trim()||'',HIT:q('sfxHit').value.trim()||'',RISER:q('sfxRiser').value.trim()||'',CROWD:q('sfxCrowd').value.trim()||''}}
+ return{competition:q('matchCompetition').value.trim()||'MATCH',round:q('matchRound').value.trim()||'',home:q('matchHome').value.trim()||q('teamName').value.trim()||'HOME',away:q('matchAway').value.trim()||'AWAY',kickoff:q('matchKickoff').value.trim()||'',venue:q('matchVenue').value.trim()||'',eventLogo:assets.eventLogo||'',musicUrl:q('musicUrl').value.trim()||'',musicVolume:Math.max(0,Math.min(1,parseFloat(q('musicVolume').value)||.65)),audioEngine:{mode:q('audioMode').value||'HYBRID',theme:q('audioTheme').value||'SAGI_PULSE',intensity:Math.max(.1,Math.min(1,parseFloat(q('audioIntensity').value)||.75)),ducking:Math.max(0,Math.min(.8,parseFloat(q('audioDucking').value)||.35)),cueVolume:Math.max(.1,Math.min(1,parseFloat(q('cueVolume').value)||1)),countdownBeat:q('countdownBeat').value==='1'},sfx:{WHOOSH:q('sfxWhoosh').value.trim()||'',HIT:q('sfxHit').value.trim()||'',RISER:q('sfxRiser').value.trim()||'',CROWD:q('sfxCrowd').value.trim()||'',STING:q('sfxSting').value.trim()||''}}
 }
 function writePackage(p={}){
- q('matchCompetition').value=p.competition||'TFC WINTER LEAGUE';q('matchRound').value=p.round||'MATCHDAY 01';q('matchHome').value=p.home||'TARLAN FC';q('matchAway').value=p.away||'OPPONENT';q('matchKickoff').value=p.kickoff||'20:00';q('matchVenue').value=p.venue||'TACHENG';q('musicUrl').value=p.musicUrl||'';q('musicVolume').value=String(p.musicVolume||.65);const s=p.sfx||{};q('sfxWhoosh').value=s.WHOOSH||'';q('sfxHit').value=s.HIT||'';q('sfxRiser').value=s.RISER||'';q('sfxCrowd').value=s.CROWD||''
+ q('matchCompetition').value=p.competition||'TFC WINTER LEAGUE';q('matchRound').value=p.round||'MATCHDAY 01';q('matchHome').value=p.home||'TARLAN FC';q('matchAway').value=p.away||'OPPONENT';q('matchKickoff').value=p.kickoff||'20:00';q('matchVenue').value=p.venue||'TACHENG';q('musicUrl').value=p.musicUrl||'';q('musicVolume').value=String(p.musicVolume||.65);const s=p.sfx||{};q('sfxWhoosh').value=s.WHOOSH||'';q('sfxHit').value=s.HIT||'';q('sfxRiser').value=s.RISER||'';q('sfxCrowd').value=s.CROWD||'';q('sfxSting').value=s.STING||'';const a=p.audioEngine||{};q('audioMode').value=a.mode||'HYBRID';q('audioTheme').value=a.theme||'SAGI_PULSE';q('audioIntensity').value=String(a.intensity||.75);q('audioDucking').value=String(a.ducking==null?.35:a.ducking);q('cueVolume').value=String(a.cueVolume||1);q('countdownBeat').value=a.countdownBeat===false?'0':'1'
 }
 function syncMatchStage(){
  const p=packageData();q('stingLogo').src=p.eventLogo||assets.crest||'';q('stingLogo').style.visibility=(p.eventLogo||assets.crest)?'visible':'hidden';q('stingCompetition').textContent=p.competition;q('matchCompetitionStage').textContent=p.competition;q('matchRoundStage').textContent=p.round;q('matchHomeStage').textContent=p.home;q('matchAwayStage').textContent=p.away;q('matchKickoffStage').textContent=p.kickoff;q('matchVenueStage').textContent=p.venue;q('countdownSub').textContent=p.competition;
@@ -437,21 +456,21 @@ function animatePackageGroup(group,duration){
  }
 }
 function startCountdown(duration){
- const el=q('countdownNumber'),seconds=Math.max(1,Math.round((Number(duration)||5000)/1000));let n=seconds;el.textContent=n;clearInterval(startCountdown.t);const pulse=()=>{if(el.animate)el.animate([{opacity:.2,transform:'scale(1.3)'},{opacity:1,transform:'scale(1)'}],{duration:420,easing:'ease-out'})};pulse();startCountdown.t=setInterval(()=>{n--;if(n<=0){clearInterval(startCountdown.t);el.textContent='GO';pulse();return}el.textContent=n;pulse()},1000)
+ const el=q('countdownNumber'),seconds=Math.max(1,Math.round((Number(duration)||5000)/1000));let n=seconds;el.textContent=n;clearInterval(startCountdown.t);const pulse=()=>{if(el.animate)el.animate([{opacity:.2,transform:'scale(1.3)'},{opacity:1,transform:'scale(1)'}],{duration:420,easing:'ease-out'})};pulse();startCountdown.t=setInterval(()=>{n--;if(n<=0){clearInterval(startCountdown.t);el.textContent='GO';pulse();if(audioSettings().countdownBeat)builtInCue('HIT',.8);return}el.textContent=n;pulse();if(audioSettings().countdownBeat)builtInCue('HIT',.55)},1000)
 }
 function stopCountdown(){clearInterval(startCountdown.t)}
 function cloudAdmin(){try{const x=JSON.parse(localStorage.getItem('sagi_cloud_admin_v20')||'null')||{},b=window.SAGI_CLOUD||{};return{url:x.url||b.url||'',key:x.key||b.key||'',eventSlug:x.eventSlug||b.eventSlug||'',token:x.token||''}}catch(e){const b=window.SAGI_CLOUD||{};return{url:b.url||'',key:b.key||'',eventSlug:b.eventSlug||'',token:''}}}
 function compactPlayersForGroup(group){const src=group==='FULL'?starters():group==='SUB'?substitutes():(['GK','DF','MF','FW'].includes(group)?grouped(group):[]);return src.map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',squadType:p.squadType||'STARTER',photo:(group==='FULL'||group==='SUB')?'':p.photo||'',mediaUrl:(group==='FULL'||group==='SUB')?'':p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'}))}
 async function publishGroup(group,duration,show=null){
  const cfg=cloudAdmin();if(!window.SagiCloud||!cfg.url||!cfg.key||!cfg.eventSlug||!cfg.token)return{ok:false};
- try{let cur=await window.SagiCloud.getEvent(cfg.eventSlug,cfg);if(!cur||!cur.payload)return{ok:false};const state={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,6),group,team:q('teamName').value.trim()||'TEAM',formation:q('formation').value,players:compactPlayersForGroup(group),allPlayers:starters().map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',mediaUrl:p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'})),substitutes:substitutes().map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,statLabel:p.statLabel||'',statValue:p.statValue||''})),crest:assets.crest||'',stadium:assets.bg||'',background:q('outputBg').value,visualVersion:'V3.4-MATCH-SHOW-PACKAGE',duration,show:show||null,package:packageData(),startedAt:new Date().toISOString()};const payload=Object.assign({},cur.payload,{lineupIntro:state});try{await window.SagiCloud.saveEvent(cfg.eventSlug,cfg.token,payload,cur.revision,cfg)}catch(e){if(String(e.message).includes('REVISION_CONFLICT')){const fresh=await window.SagiCloud.getEvent(cfg.eventSlug,cfg);await window.SagiCloud.saveEvent(cfg.eventSlug,cfg.token,Object.assign({},fresh.payload,{lineupIntro:state}),fresh.revision,cfg)}else throw e}return{ok:true}}catch(e){return{ok:false}}
+ try{let cur=await window.SagiCloud.getEvent(cfg.eventSlug,cfg);if(!cur||!cur.payload)return{ok:false};const state={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,6),group,team:q('teamName').value.trim()||'TEAM',formation:q('formation').value,players:compactPlayersForGroup(group),allPlayers:starters().map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',mediaUrl:p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'})),substitutes:substitutes().map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,statLabel:p.statLabel||'',statValue:p.statValue||''})),crest:assets.crest||'',stadium:assets.bg||'',background:q('outputBg').value,visualVersion:'V3.5-BROADCAST-AUDIO-ENGINE',duration,show:show||null,package:packageData(),startedAt:new Date().toISOString()};const payload=Object.assign({},cur.payload,{lineupIntro:state});try{await window.SagiCloud.saveEvent(cfg.eventSlug,cfg.token,payload,cur.revision,cfg)}catch(e){if(String(e.message).includes('REVISION_CONFLICT')){const fresh=await window.SagiCloud.getEvent(cfg.eventSlug,cfg);await window.SagiCloud.saveEvent(cfg.eventSlug,cfg.token,Object.assign({},fresh.payload,{lineupIntro:state}),fresh.revision,cfg)}else throw e}return{ok:true}}catch(e){return{ok:false}}
 }
 function focusAndRun(fn){const mobile=matchMedia&&matchMedia('(max-width:940px)').matches;if(!mobile){fn();return}try{q('frame').scrollIntoView({behavior:'auto',block:'center'});requestAnimationFrame(()=>requestAnimationFrame(fn))}catch(e){fn()}}
 function escAttr(s){return String(s??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')}
 function showEnabled(){return showSteps.filter(s=>s.enabled)}
 function showTotalMs(){return showEnabled().reduce((a,s)=>a+(Number(s.duration)||0),0)}
 function showTransitionOptions(v){return ['CUT','FADE','SLIDE','ZOOM','FLASH'].map(x=>'<option'+(x===v?' selected':'')+'>'+x+'</option>').join('')}
-function showCueOptions(v){return ['NONE','WHOOSH','HIT','RISER','CROWD'].map(x=>'<option'+(x===v?' selected':'')+'>'+x+'</option>').join('')}
+function showCueOptions(v){return ['NONE','WHOOSH','HIT','RISER','CROWD','STING'].map(x=>'<option'+(x===v?' selected':'')+'>'+x+'</option>').join('')}
 function renderShowTimeline(){
  const w=q('showTimeline');if(!w)return;w.innerHTML='';
  showSteps.forEach((s,i)=>{const d=document.createElement('div');d.className='showStep'+(i===showIndex?' active':'')+(s.enabled?'':' disabled');d.dataset.i=i;
@@ -484,21 +503,51 @@ function applyShowTransition(type){
  if(type==='ZOOM'){q('stage').animate([{filter:'brightness(.55)',transform:'scale(1.035)'},{filter:'brightness(1)',transform:'scale(1)'}],{duration:620,easing:'ease-out'});return}
  l.classList.add('dark');l.animate([{opacity:.85},{opacity:0}],{duration:520,easing:'ease-out'})
 }
+function audioSettings(){return packageData().audioEngine||{mode:'HYBRID',theme:'SAGI_PULSE',intensity:.75,ducking:.35,cueVolume:1,countdownBeat:true}}
 function audioSrcForCue(cue){const p=packageData();return p.sfx&&p.sfx[cue]||''}
+function getAudioCtx(){const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return null;const ctx=getAudioCtx.ctx||(getAudioCtx.ctx=new AC());if(ctx.state==='suspended')ctx.resume().catch(()=>{});return ctx}
+function pulseMeter(id,level=1,ms=420){const el=q(id);if(!el)return;el.style.width=Math.max(0,Math.min(100,level*100))+'%';clearTimeout(el._t);el._t=setTimeout(()=>el.style.width='8%',ms)}
 function playAudioUrl(url,volume=1){if(!url)return null;try{const a=new Audio(url);a.volume=Math.max(0,Math.min(1,volume));a.play().catch(()=>{});return a}catch(e){return null}}
-function ensureShowMusic(){
- const p=packageData(),src=assets.musicObjectUrl||p.musicUrl;if(!src)return;let a=ensureShowMusic.audio;if(!a||a.src!==src){try{if(a)a.pause()}catch(e){}a=new Audio(src);a.loop=true;ensureShowMusic.audio=a}a.volume=p.musicVolume;try{const pr=a.play();if(pr&&pr.catch)pr.catch(()=>{})}catch(e){}
- q('audioStatus').textContent='MUSIC PLAYING · '+Math.round(p.musicVolume*100)+'%'
+function noiseBuffer(ctx,duration=.5){const len=Math.max(1,Math.floor(ctx.sampleRate*duration)),b=ctx.createBuffer(1,len,ctx.sampleRate),d=b.getChannelData(0);for(let i=0;i<len;i++)d[i]=Math.random()*2-1;return b}
+function synthTone(ctx,type,f1,f2,dur,gain=.1,when=0){const o=ctx.createOscillator(),g=ctx.createGain(),t=ctx.currentTime+when;o.type=type;o.frequency.setValueAtTime(f1,t);if(f2>0)o.frequency.exponentialRampToValueAtTime(Math.max(1,f2),t+dur);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(Math.max(.0002,gain),t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(g);g.connect(ctx.destination);o.start(t);o.stop(t+dur+.03)}
+function synthNoise(ctx,dur=.45,gain=.08,filterStart=1200,filterEnd=180,when=0){const s=ctx.createBufferSource(),f=ctx.createBiquadFilter(),g=ctx.createGain(),t=ctx.currentTime+when;s.buffer=noiseBuffer(ctx,dur);f.type='bandpass';f.frequency.setValueAtTime(filterStart,t);f.frequency.exponentialRampToValueAtTime(Math.max(40,filterEnd),t+dur);f.Q.value=.8;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(Math.max(.0002,gain),t+.02);g.gain.exponentialRampToValueAtTime(.0001,t+dur);s.connect(f);f.connect(g);g.connect(ctx.destination);s.start(t);s.stop(t+dur+.03)}
+function builtInCue(cue,level=1){
+ const ctx=getAudioCtx();if(!ctx)return false;const s=audioSettings(),k=Math.max(.2,Math.min(1,level*s.intensity*s.cueVolume));pulseMeter('cueMeter',k,650);duckMusic();
+ if(cue==='HIT'){synthTone(ctx,'sine',105,38,.34,.22*k);synthNoise(ctx,.24,.08*k,900,120)}
+ else if(cue==='WHOOSH'){synthNoise(ctx,.62,.11*k,180,2600);synthTone(ctx,'triangle',170,460,.48,.045*k)}
+ else if(cue==='RISER'){synthTone(ctx,'sawtooth',90,920,.88,.055*k);synthNoise(ctx,.82,.055*k,220,2600)}
+ else if(cue==='CROWD'){synthNoise(ctx,1.15,.07*k,260,750);synthTone(ctx,'triangle',115,155,.7,.025*k)}
+ else if(cue==='STING'){synthTone(ctx,'sine',82,42,.46,.24*k);synthTone(ctx,'sawtooth',220,520,.55,.045*k,.04);synthNoise(ctx,.36,.09*k,1800,220,.02)}
+ return true
 }
-function stopShowMusic(){const a=ensureShowMusic.audio;if(a){try{a.pause();a.currentTime=0}catch(e){}}q('audioStatus').textContent='AUDIO READY'}
+function builtInThemeStart(){
+ const s=audioSettings();if(s.mode==='MUTE'||s.mode==='EXTERNAL')return false;const ctx=getAudioCtx();if(!ctx)return false;builtInThemeStop();const state={ctx,nodes:[],timer:null,step:0};builtInThemeStart.state=state;
+ const theme=s.theme||'SAGI_PULSE',int=s.intensity||.75;const bpm=theme==='NORTH_WIND'?96:theme==='BLACK_GOLD'?118:108,beat=60/bpm;
+ const tick=()=>{if(builtInThemeStart.state!==state)return;const st=state.step++,root=theme==='NORTH_WIND'?73.42:theme==='BLACK_GOLD'?55:65.41;const accent=st%4===0;
+   synthTone(ctx,'sine',accent?root:root*1.5,accent?root*.72:root*1.2,Math.min(.38,beat*.7),(accent?.075:.035)*int);
+   if(st%2===0)synthNoise(ctx,.08,.015*int,theme==='NORTH_WIND'?1600:2600,900);
+   if(theme==='NORTH_WIND'&&st%4===2)synthTone(ctx,'triangle',root*3,root*2.25,.2,.018*int);
+   if(theme==='BLACK_GOLD'&&st%4===1)synthTone(ctx,'square',root*4,root*3,.09,.008*int);
+   pulseMeter('masterMeter',accent?.72:.42,Math.min(300,beat*700));
+ };
+ tick();state.timer=setInterval(tick,beat*1000);q('audioEngineState').textContent='BUILT-IN · '+theme.replaceAll('_',' ');return true
+}
+function builtInThemeStop(){const s=builtInThemeStart.state;if(s){clearInterval(s.timer);builtInThemeStart.state=null}}
+function duckMusic(){
+ const s=audioSettings(),a=ensureShowMusic.audio;if(!a||!s.ducking)return;q('stage').dataset.duck='active';setTimeout(()=>q('stage').dataset.duck='idle',650);const base=packageData().musicVolume,low=Math.max(.05,base*(1-s.ducking));try{a.volume=low;clearTimeout(duckMusic.t);duckMusic.t=setTimeout(()=>{try{a.volume=base}catch(e){}},620)}catch(e){}
+}
+function ensureShowMusic(){
+ const p=packageData(),s=p.audioEngine||audioSettings(),src=assets.musicObjectUrl||p.musicUrl;q('stage').dataset.audioMode=s.mode;q('stage').dataset.audioTheme=s.theme;q('stage').dataset.music='off';if(s.mode==='MUTE'){stopShowMusic();q('stage').dataset.music='muted';q('audioStatus').textContent='AUDIO MUTED';return}
+ let externalStarted=false;
+ if((s.mode==='HYBRID'||s.mode==='EXTERNAL')&&src){let a=ensureShowMusic.audio;if(!a||a.src!==src){try{if(a)a.pause()}catch(e){}a=new Audio(src);a.loop=true;ensureShowMusic.audio=a}a.volume=p.musicVolume;try{const pr=a.play();if(pr&&pr.catch)pr.catch(()=>{});externalStarted=true}catch(e){}}
+ if((s.mode==='BUILTIN')||(s.mode==='HYBRID'&&!src)){builtInThemeStart();q('stage').dataset.music='builtin'}else{builtInThemeStop();if(externalStarted)q('stage').dataset.music='external'}
+ q('audioStatus').textContent=(externalStarted?'EXTERNAL MUSIC':'BUILT-IN MUSIC')+' · '+Math.round(p.musicVolume*100)+'%';q('audioEngineState').textContent=s.mode+' · '+s.theme; pulseMeter('masterMeter',.55,700)
+}
+function stopShowMusic(){const a=ensureShowMusic.audio;if(a){try{a.pause();a.currentTime=0}catch(e){}}builtInThemeStop();q('audioStatus').textContent='AUDIO READY';q('audioEngineState').textContent='ENGINE READY';pulseMeter('masterMeter',0,10);pulseMeter('cueMeter',0,10)}
 function triggerCue(cue){
- const b=q('cueBadgeStage');if(!b||cue==='NONE')return;b.textContent=cue;b.animate([{opacity:0,transform:'translateY(-8px)'},{opacity:1,transform:'translateY(0)',offset:.25},{opacity:0}],{duration:900,easing:'ease-out'});
- const real=audioSrcForCue(cue);if(real){playAudioUrl(real,.9);return}
- try{const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;const ctx=triggerCue.ctx||(triggerCue.ctx=new AC());if(ctx.state==='suspended')ctx.resume();const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);const t=ctx.currentTime;
-   if(cue==='HIT'){o.type='sine';o.frequency.setValueAtTime(95,t);o.frequency.exponentialRampToValueAtTime(45,t+.22);g.gain.setValueAtTime(.12,t);g.gain.exponentialRampToValueAtTime(.001,t+.28);o.start(t);o.stop(t+.3)}
-   else if(cue==='WHOOSH'||cue==='RISER'){o.type='sawtooth';o.frequency.setValueAtTime(cue==='RISER'?120:420,t);o.frequency.exponentialRampToValueAtTime(cue==='RISER'?850:110,t+.45);g.gain.setValueAtTime(.035,t);g.gain.exponentialRampToValueAtTime(.001,t+.5);o.start(t);o.stop(t+.52)}
-   else if(cue==='CROWD'){o.type='triangle';o.frequency.setValueAtTime(150,t);g.gain.setValueAtTime(.025,t);g.gain.linearRampToValueAtTime(.055,t+.3);g.gain.exponentialRampToValueAtTime(.001,t+.9);o.start(t);o.stop(t+.92)}
- }catch(e){}
+ const b=q('cueBadgeStage');if(!b||cue==='NONE')return;q('stage').dataset.cue=cue;b.textContent=cue;b.animate([{opacity:0,transform:'translateY(-8px)'},{opacity:1,transform:'translateY(0)',offset:.25},{opacity:0}],{duration:900,easing:'ease-out'});
+ const s=audioSettings();q('stage').dataset.cueSource='none';if(s.mode==='MUTE')return;const real=audioSrcForCue(cue);if((s.mode==='HYBRID'||s.mode==='EXTERNAL')&&real){q('stage').dataset.cueSource='real';duckMusic();pulseMeter('cueMeter',s.cueVolume,.7);playAudioUrl(real,s.cueVolume);return}
+ if(s.mode!=='EXTERNAL'){q('stage').dataset.cueSource='builtin';builtInCue(cue,1)}
 }
 function showProgressTick(step,duration){
  const bar=q('showProgressBar'),now=q('showNow');showStartedAt=performance.now();
@@ -519,8 +568,8 @@ function playGroup(group,duration){playing=true;focusAndRun(()=>{renderStage(gro
 function autoPlay(){startShow()}
 function stop(){stopShow()}
 function resize(){const f=q('frame'),scale=Math.min(f.clientWidth/1920,f.clientHeight/1080),left=(f.clientWidth-1920*scale)/2,top=(f.clientHeight-1080*scale)/2,w=q('stageScale');w.style.transformOrigin='0 0';w.style.transform='translate3d('+left+'px,'+top+'px,0) scale('+scale+')'}
-async function save(){for(const p of roster){p.id=p.id||uid();dbPut('photo:'+p.id,p.photo||'');if(p.mediaBlob)dbPut('media:'+p.id,p.mediaBlob);else dbDel('media:'+p.id)}await dbPut('crest',assets.crest||'');await dbPut('stadium',assets.bg||'');await dbPut('eventLogo',assets.eventLogo||'');if(assets.musicBlob)await dbPut('showMusic',assets.musicBlob);else dbDel('showMusic');localStorage.setItem('sagi_player_intro_v2',JSON.stringify({team:q('teamName').value,formation:q('formation').value,package:packageData(),roster:roster.map(p=>({id:p.id,name:p.name,number:p.number,squadType:p.squadType||'STARTER',role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',mediaUrl:p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'}))}));saveShow();note('V3.4 比赛包装、阵容与SHOW已保存')}
-async function load(){try{const x=JSON.parse(localStorage.getItem('sagi_player_intro_v2')||'null');if(!x){note('还没有保存阵容');return}q('teamName').value=x.team||'';q('formation').value=x.formation||'4-3-3';writePackage(x.package||{});roster=[];for(const p of (x.roster||[])){p.photo=await dbGet('photo:'+p.id);p.mediaBlob=await dbGet('media:'+p.id);p.mediaObjectUrl=p.mediaBlob instanceof Blob?URL.createObjectURL(p.mediaBlob):'';p.mediaAction=p.mediaAction||'STANDARD';p.directorIn=Number(p.directorIn)||0;p.directorOut=Number(p.directorOut)||0;p.directorSpeed=Number(p.directorSpeed)||1;p.directorFreeze=!!p.directorFreeze;p.directorFreezeMs=Number(p.directorFreezeMs)||1000;p.directorCamera=p.directorCamera||'MEDIUM';roster.push(p)}assets.crest=await dbGet('crest');assets.bg=await dbGet('stadium');assets.eventLogo=await dbGet('eventLogo');assets.musicBlob=await dbGet('showMusic');assets.musicObjectUrl=assets.musicBlob instanceof Blob?URL.createObjectURL(assets.musicBlob):'';selected=roster.length?0:-1;if(selected>=0)writePlayer(roster[0]);renderPreviews();renderRoster();renderStage('TEAM');loadShow();syncMatchStage();note('V3.4 比赛包装、阵容与SHOW已读取')}catch(e){note('读取失败')}}
+async function save(){for(const p of roster){p.id=p.id||uid();dbPut('photo:'+p.id,p.photo||'');if(p.mediaBlob)dbPut('media:'+p.id,p.mediaBlob);else dbDel('media:'+p.id)}await dbPut('crest',assets.crest||'');await dbPut('stadium',assets.bg||'');await dbPut('eventLogo',assets.eventLogo||'');if(assets.musicBlob)await dbPut('showMusic',assets.musicBlob);else dbDel('showMusic');localStorage.setItem('sagi_player_intro_v2',JSON.stringify({team:q('teamName').value,formation:q('formation').value,package:packageData(),roster:roster.map(p=>({id:p.id,name:p.name,number:p.number,squadType:p.squadType||'STARTER',role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',mediaUrl:p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'}))}));saveShow();note('V3.5 音频引擎、比赛包装与SHOW已保存')}
+async function load(){try{const x=JSON.parse(localStorage.getItem('sagi_player_intro_v2')||'null');if(!x){note('还没有保存阵容');return}q('teamName').value=x.team||'';q('formation').value=x.formation||'4-3-3';writePackage(x.package||{});roster=[];for(const p of (x.roster||[])){p.photo=await dbGet('photo:'+p.id);p.mediaBlob=await dbGet('media:'+p.id);p.mediaObjectUrl=p.mediaBlob instanceof Blob?URL.createObjectURL(p.mediaBlob):'';p.mediaAction=p.mediaAction||'STANDARD';p.directorIn=Number(p.directorIn)||0;p.directorOut=Number(p.directorOut)||0;p.directorSpeed=Number(p.directorSpeed)||1;p.directorFreeze=!!p.directorFreeze;p.directorFreezeMs=Number(p.directorFreezeMs)||1000;p.directorCamera=p.directorCamera||'MEDIUM';roster.push(p)}assets.crest=await dbGet('crest');assets.bg=await dbGet('stadium');assets.eventLogo=await dbGet('eventLogo');assets.musicBlob=await dbGet('showMusic');assets.musicObjectUrl=assets.musicBlob instanceof Blob?URL.createObjectURL(assets.musicBlob):'';selected=roster.length?0:-1;if(selected>=0)writePlayer(roster[0]);renderPreviews();renderRoster();renderStage('TEAM');loadShow();syncMatchStage();note('V3.5 音频引擎、比赛包装与SHOW已读取')}catch(e){note('读取失败')}}
 function demo(){roster=[];const data=[
 ['1','AZAMAT','STARTER','GK','GK',0,'CLEAN SHEETS','6'],
 ['2','DIAS','STARTER','DF','RB',0,'APPS','12'],
@@ -538,9 +587,9 @@ function demo(){roster=[];const data=[
 ['16','ILIAS','SUB','MF','CM',0,'ASSISTS','2'],
 ['18','SAMAT','SUB','FW','ST',0,'GOALS','3'],
 ['20','AMAN','SUB','FW','RW',0,'APPS','5']
-];data.forEach(a=>roster.push({id:uid(),number:a[0],name:a[1],squadType:a[2],role:a[3],position:a[4],captain:!!a[5],statLabel:a[6],statValue:a[7],photo:'',mediaBlob:null,mediaObjectUrl:'',mediaUrl:'',mediaAction:(a[3]==='GK'?'GK_GLOVES':a[3]==='FW'?'CELEBRATE':'ARMS'),directorIn:0,directorOut:0,directorSpeed:(a[3]==='FW'?.75:1),directorFreeze:a[3]==='FW',directorFreezeMs:1000,directorCamera:(a[3]==='GK'?'STRONG':a[3]==='FW'?'STRONG':'MEDIUM')}));q('formation').value='4-3-3';selected=0;writePlayer(roster[0]);renderRoster();renderStage('FULL');writePackage({competition:'TFC WINTER LEAGUE',round:'MATCHDAY 01',home:'TARLAN FC',away:'OPPONENT',kickoff:'20:00',venue:'TACHENG',musicVolume:.65,sfx:{}});syncMatchStage();note('已载入V3.4示例：比赛包装 + 11首发 + 5替补')}
-function vmixLink(){return new URL('./vmix-v34.html',location.href).toString()}
-async function copyVmix(){try{await navigator.clipboard.writeText(vmixLink());note('V3.4 vMix链接已复制')}catch(e){prompt('复制这个链接：',vmixLink())}}
+];data.forEach(a=>roster.push({id:uid(),number:a[0],name:a[1],squadType:a[2],role:a[3],position:a[4],captain:!!a[5],statLabel:a[6],statValue:a[7],photo:'',mediaBlob:null,mediaObjectUrl:'',mediaUrl:'',mediaAction:(a[3]==='GK'?'GK_GLOVES':a[3]==='FW'?'CELEBRATE':'ARMS'),directorIn:0,directorOut:0,directorSpeed:(a[3]==='FW'?.75:1),directorFreeze:a[3]==='FW',directorFreezeMs:1000,directorCamera:(a[3]==='GK'?'STRONG':a[3]==='FW'?'STRONG':'MEDIUM')}));q('formation').value='4-3-3';selected=0;writePlayer(roster[0]);renderRoster();renderStage('FULL');writePackage({competition:'TFC WINTER LEAGUE',round:'MATCHDAY 01',home:'TARLAN FC',away:'OPPONENT',kickoff:'20:00',venue:'TACHENG',musicVolume:.65,audioEngine:{mode:'HYBRID',theme:'SAGI_PULSE',intensity:.75,ducking:.35,cueVolume:1,countdownBeat:true},sfx:{}});syncMatchStage();note('已载入V3.5示例：比赛包装 + 11首发 + 5替补')}
+function vmixLink(){return new URL('./vmix-v35.html',location.href).toString()}
+async function copyVmix(){try{await navigator.clipboard.writeText(vmixLink());note('V3.5 vMix链接已复制')}catch(e){prompt('复制这个链接：',vmixLink())}}
 
 q('crestFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;assets.crest=await fileData(f,420,.84);renderPreviews();renderStage(currentGroup)};
 q('bgFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;assets.bg=await fileData(f,1600,.78);renderPreviews();renderStage(currentGroup)};
@@ -550,12 +599,13 @@ q('mediaFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;if(f.si
 q('clearMediaBtn').onclick=()=>{if(assets.mediaObjectUrl&&assets.mediaObjectUrl.startsWith('blob:'))try{URL.revokeObjectURL(assets.mediaObjectUrl)}catch(_){}assets.mediaBlob=null;assets.mediaObjectUrl='';q('mediaUrl').value='';renderPreviews();note('已清除当前球员视频')};
 q('eventLogoFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;assets.eventLogo=await fileData(f,600,.88);renderPreviews();syncMatchStage()};
 q('musicFile').onchange=e=>{const f=e.target.files[0];if(!f)return;if(f.size>30*1024*1024){note('音乐建议控制在30MB以内');e.target.value='';return}if(assets.musicObjectUrl&&assets.musicObjectUrl.startsWith('blob:'))try{URL.revokeObjectURL(assets.musicObjectUrl)}catch(_){}assets.musicBlob=f;assets.musicObjectUrl=URL.createObjectURL(f);renderPreviews();q('audioStatus').textContent='LOCAL MUSIC READY · '+Math.round(f.size/1024)+'KB'};
-q('audioTestBtn').onclick=()=>ensureShowMusic();q('audioStopBtn').onclick=()=>stopShowMusic();q('clearMusicBtn').onclick=()=>{stopShowMusic();if(assets.musicObjectUrl&&assets.musicObjectUrl.startsWith('blob:'))try{URL.revokeObjectURL(assets.musicObjectUrl)}catch(_){}assets.musicBlob=null;assets.musicObjectUrl='';renderPreviews();note('已清除本机音乐')};
+q('audioTestBtn').onclick=()=>ensureShowMusic();q('cueTestBtn').onclick=()=>triggerCue('HIT');q('audioStopBtn').onclick=()=>stopShowMusic();q('clearMusicBtn').onclick=()=>{stopShowMusic();if(assets.musicObjectUrl&&assets.musicObjectUrl.startsWith('blob:'))try{URL.revokeObjectURL(assets.musicObjectUrl)}catch(_){}assets.musicBlob=null;assets.musicObjectUrl='';renderPreviews();note('已清除本机音乐')};
 q('clearBgBtn').onclick=()=>{assets.bg='';renderPreviews();renderStage(currentGroup)};
 q('addBtn').onclick=addPlayer;q('updateBtn').onclick=updatePlayer;q('removeBtn').onclick=removePlayer;q('saveBtn').onclick=save;q('loadBtn').onclick=load;q('demoBtn').onclick=demo;
 q('teamBtn').onclick=()=>playGroup('TEAM',2500);q('gkBtn').onclick=()=>playGroup('GK',3000);q('dfBtn').onclick=()=>playGroup('DF',4000);q('mfBtn').onclick=()=>playGroup('MF',4000);q('fwBtn').onclick=()=>playGroup('FW',4000);q('fullBtn').onclick=()=>playGroup('FULL',6000);q('subsBtn').onclick=()=>playGroup('SUB',5000);q('showPlayBtn').onclick=startShow;q('showPrevBtn').onclick=prevShow;q('showNextBtn').onclick=nextShow;q('stopBtn').onclick=stopShow;q('showResetBtn').onclick=resetShow;q('showSaveBtn').onclick=saveShow;q('copyVmixBtn').onclick=copyVmix;
 q('formation').onchange=()=>renderStage(currentGroup);q('teamName').oninput=()=>{q('matchHome').value=q('teamName').value;renderStage(currentGroup)};q('outputBg').onchange=()=>renderStage(currentGroup);
 ['matchCompetition','matchRound','matchHome','matchAway','matchKickoff','matchVenue'].forEach(id=>q(id).oninput=syncMatchStage);
+['audioMode','audioTheme','audioIntensity','audioDucking','cueVolume','countdownBeat'].forEach(id=>q(id).onchange=()=>{q('audioEngineState').textContent=q('audioMode').value+' · '+q('audioTheme').value.replaceAll('_',' ')});
 window.addEventListener('resize',resize);renderPreviews();renderRoster();loadShow();demo();syncMatchStage();renderStage('TEAM');resize();
 })();
 </script>
