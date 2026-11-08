@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#07090d">\n<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%2307090d%22/%3E%3Ctext x=%2232%22 y=%2243%22 text-anchor=%22middle%22 font-size=%2234%22 fill=%22%23d8b55b%22%3ES%3C/text%3E%3C/svg%3E">
-<title>SAGI PLAYER INTRO V1.0</title>
+<title>SAGI PLAYER INTRO V1.0.1</title>
 <style>
 :root{--bg:#07090d;--panel:#11151c;--line:#29303a;--text:#f5f2e9;--muted:#8d95a3;--gold:#d8b55b;--accent:#7ac7ff}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
@@ -36,7 +36,7 @@ button,.fileBtn{border:0;border-radius:12px;background:#252b34;color:#fff;font-w
 </head>
 <body>
 <div class="app">
-  <div class="top"><div><div class="brand">SAGI PLAYER INTRO</div><div class="sub">球员赛前出场动画 · 16:9 · vMix Browser Input</div></div><div class="ver">V1.0</div></div>
+  <div class="top"><div><div class="brand">SAGI PLAYER INTRO</div><div class="sub">球员赛前出场动画 · 16:9 · vMix Browser Input</div></div><div class="ver">V1.0.1</div></div>
 
   <div class="layout">
     <div class="controls">
@@ -106,7 +106,7 @@ button,.fileBtn{border:0;border-radius:12px;background:#252b34;color:#fff;font-w
             </div>
           </div>
         </div>
-        <div class="controlsBar"><div id="status" class="status">V1.0 已就绪</div><div class="mini">1920 × 1080</div></div>
+        <div class="controlsBar"><div id="status" class="status">V1.0.1 已就绪 · 点画面也可播放</div><div class="mini">1920 × 1080</div></div>
       </div>
     </div>
   </div>
@@ -135,9 +135,15 @@ function renderStage(p,index){
 }
 function applyTheme(){const st=q('stage');st.className='stage theme-'+q('theme').value;const bg=q('bg');bg.className='bg'+(q('background').value==='chroma'?' chroma':q('background').value==='transparent'?' transparent':'');q('safe').style.display=q('safeShow').value==='on'?'block':'none'}
 function restartAnimation(p,index){const st=q('stage');renderStage(p,index);applyTheme();st.classList.remove('playing');void st.offsetWidth;st.classList.add('playing')}
-async function playCurrent(){playing=true;const p=readForm(),idx=selected>=0?selected:0;restartAnimation(p,idx);q('status').textContent='正在播放当前球员';publishIntro(p,idx,Math.max(roster.length,1)).then(r=>{if(!r.ok)q('status').textContent='正在播放当前球员 · 本地模式'});clearTimeout(lineupTimer);lineupTimer=setTimeout(()=>{playing=false;q('stage').classList.remove('playing');q('status').textContent='播放完成'},+q('duration').value)}
+function focusStageAndRun(fn){
+ const mobile=window.matchMedia&&window.matchMedia('(max-width:940px)').matches;
+ if(!mobile){fn();return}
+ try{q('frame').scrollIntoView({behavior:'smooth',block:'center'});setTimeout(fn,320)}
+ catch(e){fn()}
+}
+async function playCurrent(){const p=readForm(),idx=selected>=0?selected:0;playing=true;q('status').textContent='准备播放…';focusStageAndRun(()=>{restartAnimation(p,idx);q('status').textContent='正在播放当前球员';publishIntro(p,idx,Math.max(roster.length,1)).then(r=>{if(!r.ok)q('status').textContent='正在播放当前球员 · 本地模式'});clearTimeout(lineupTimer);lineupTimer=setTimeout(()=>{playing=false;q('stage').classList.remove('playing');q('status').textContent='播放完成'},+q('duration').value)})}
 function playLineupAt(i){if(!playing||!roster.length)return;if(i>=roster.length){playing=false;q('status').textContent='首发出场播放完成';q('stage').classList.remove('playing');return}selected=i;renderRoster();writeForm(roster[i]);restartAnimation(roster[i],i);q('status').textContent='首发连续播放 '+(i+1)+' / '+roster.length;publishIntro(roster[i],i,roster.length).then(r=>{if(!r.ok)q('status').textContent='首发连续播放 '+(i+1)+' / '+roster.length+' · 本地模式'});clearTimeout(lineupTimer);lineupTimer=setTimeout(()=>playLineupAt(i+1),+q('duration').value)}
-function playLineup(){if(!roster.length){note('请先加入球员');return}playing=true;playLineupAt(0)}
+function playLineup(){if(!roster.length){note('请先加入球员');return}playing=true;q('status').textContent='准备播放首发…';focusStageAndRun(()=>playLineupAt(0))}
 function stop(){playing=false;clearTimeout(lineupTimer);q('stage').classList.remove('playing');q('status').textContent='已停止'}
 async function addPlayer(){const p=readForm();p.id=uid();roster.push(p);selected=roster.length-1;renderRoster();note('已加入首发名单');dbPut('photo:'+p.id,p.photo||'');dbPut('crest:'+p.id,p.crest||'')}
 async function updatePlayer(){if(selected<0||!roster[selected]){note('请先选择名单球员');return}const id=roster[selected].id||uid(),p=readForm();p.id=id;roster[selected]=p;renderRoster();note('已更新');dbPut('photo:'+id,p.photo||'');dbPut('crest:'+id,p.crest||'')}
@@ -177,7 +183,7 @@ async function copyVmix(){try{await navigator.clipboard.writeText(vmixLink());no
 ['theme','background','safeShow'].forEach(id=>q(id).addEventListener('change',()=>{applyTheme();renderStage(readForm())}));
 q('photoFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;assets.photo=await fileData(f,1080);renderAssetPreviews();renderStage(readForm())};
 q('crestFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;assets.crest=await fileData(f,420);renderAssetPreviews();renderStage(readForm())};
-q('addBtn').onclick=addPlayer;q('updateBtn').onclick=updatePlayer;q('removeBtn').onclick=removePlayer;q('saveRosterBtn').onclick=saveRoster;q('loadRosterBtn').onclick=loadRoster;q('playBtn').onclick=playCurrent;q('lineupBtn').onclick=playLineup;q('stopBtn').onclick=stop;q('fullBtn').onclick=full;q('copyVmixBtn').onclick=copyVmix;q('cloudBtn').onclick=loadCloud;q('cloudTeam').onchange=fillCloudPlayers;q('cloudPlayer').onchange=chooseCloudPlayer;
+q('addBtn').onclick=addPlayer;q('updateBtn').onclick=updatePlayer;q('removeBtn').onclick=removePlayer;q('frame').onclick=()=>{if(!playing)playCurrent()};q('saveRosterBtn').onclick=saveRoster;q('loadRosterBtn').onclick=loadRoster;q('playBtn').onclick=playCurrent;q('lineupBtn').onclick=playLineup;q('stopBtn').onclick=stop;q('fullBtn').onclick=full;q('copyVmixBtn').onclick=copyVmix;q('cloudBtn').onclick=loadCloud;q('cloudTeam').onchange=fillCloudPlayers;q('cloudPlayer').onchange=chooseCloudPlayer;
 window.addEventListener('resize',resize);document.addEventListener('fullscreenchange',resize);
 renderRoster();renderAssetPreviews();renderStage(readForm());applyTheme();resize();
 
