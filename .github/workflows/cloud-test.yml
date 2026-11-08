@@ -1,0 +1,37 @@
+name: Cloud connectivity test
+on:
+  push:
+    paths:
+      - '.github/workflows/cloud-test.yml'
+permissions:
+  contents: write
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test Supabase RPC
+        shell: bash
+        run: |
+          set +e
+          BODY=$(mktemp)
+          CODE=$(curl -sS -o "$BODY" -w "%{http_code}" \
+            -X POST "https://zgqriuwltbnkgovtsccb.supabase.co/rest/v1/rpc/sagi_get_event" \
+            -H "Content-Type: application/json" \
+            -H "apikey: sb_publishable_bqROSu6ZQRdDW3DLazUCfg_4aYxldN8" \
+            --data '{"p_slug":"tacheng-winter-2026"}')
+          RC=$?
+          {
+            echo "curl_exit=$RC"
+            echo "http_status=$CODE"
+            echo "body="
+            cat "$BODY"
+          } > cloud-test-result.txt
+      - name: Commit result
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add cloud-test-result.txt
+          git commit -m "Record Supabase cloud connectivity test" || exit 0
+          git push
