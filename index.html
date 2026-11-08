@@ -13,7 +13,7 @@
 <body>
 <div id="toast" class="toast"></div>
 <div class="w">
-<div class="head"><div><b>SAGI EVENT SYSTEM</b><div class="tiny">赛事 · 直播 · 数据 · 宣传</div></div><span class="tag">V1.1</span></div>
+<div class="head"><div><b>SAGI EVENT SYSTEM</b><div class="tiny">赛事 · 直播 · 数据 · 宣传</div></div><span class="tag">V1.1.1</span></div>
 
 <section id="s0" class="sec on">
 <div class="card hero"><span class="tag">TORANHE / TFC / 青少年赛事</span><h1 id="hero">新建赛事</h1><p class="muted">手机管理8队赛事。支持A/B分组、单循环、8队双败自动晋级与Reset Final。数据保存在当前浏览器。</p><div class="kpis"><div class="k"><span>球队</span><b id="kt">8</b></div><div class="k"><span>比赛</span><b id="km">0</b></div><div class="k"><span>完成</span><b id="kd">0</b></div></div></div>
@@ -43,14 +43,14 @@ function q(id){return document.getElementById(id)}
 function msg(t){var e=q('toast');e.textContent=t;e.style.display='block';setTimeout(function(){e.style.display='none'},1600)}
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 function name(i){return Number.isInteger(i)?S.teams[i]:'待定'}
-function save(){localStorage.setItem(KEY,JSON.stringify(S));renderAll()}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}renderAll()}
 function load(){try{var x=JSON.parse(localStorage.getItem(KEY));if(x)S=Object.assign(S,x)}catch(e){}renderAll()}
 function tab(n,b){document.querySelectorAll('.sec').forEach(function(x){x.classList.remove('on')});q('s'+n).classList.add('on');document.querySelectorAll('.tabs button').forEach(function(x){x.classList.remove('on')});b.classList.add('on');if(n===3)renderLive()}
 function renderTeams(){q('teamInputs').innerHTML=S.teams.map(function(t,i){return '<input id="t'+i+'" value="'+esc(t)+'">' }).join('')}
-function saveTeams(){S.teams=S.teams.map(function(_,i){return q('t'+i).value.trim()||('球队'+(i+1))});save();msg('球队已保存')}
+function saveTeams(){try{S.teams=S.teams.map(function(_,i){var el=q('t'+i);return el&&el.value.trim()?el.value.trim():('球队'+(i+1))});save();msg('球队已保存')}catch(e){alert('保存球队失败：'+(e&&e.message?e.message:e))}}
 function shuffleTeams(){saveTeams();for(var i=S.teams.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var z=S.teams[i];S.teams[i]=S.teams[j];S.teams[j]=z}save();msg('抽签完成')}
 function M(id,stage,h,a,group,source){return {id:id,stage:stage,home:h,away:a,group:group||'',source:source||'',hs:null,as:null,status:'pending',active:true}}
-function createEvent(){saveTeams();S.name=q('ename').value.trim()||'未命名赛事';S.loc=q('loc').value.trim();S.date=q('date').value;S.fmt=q('fmt').value;S.events={};S.champ=null;if(S.fmt==='groups')makeGroups();if(S.fmt==='round')makeRound();if(S.fmt==='double')makeDouble();save();msg('赛事已生成')}
+function createEvent(){try{var newName=q('ename').value.trim()||'未命名赛事';var newLoc=q('loc').value.trim();var newDate=q('date').value;var newFmt=q('fmt').value;var newTeams=S.teams.map(function(_,i){var el=q('t'+i);return el&&el.value.trim()?el.value.trim():('球队'+(i+1))});S.name=newName;S.loc=newLoc;S.date=newDate;S.fmt=newFmt;S.teams=newTeams;S.events={};S.champ=null;if(S.fmt==='groups')makeGroups();if(S.fmt==='round')makeRound();if(S.fmt==='double')makeDouble();save();msg('赛事已生成：'+visible().length+'场')}catch(e){alert('生成赛事失败：'+(e&&e.message?e.message:e))}}
 function makeGroups(){S.matches=[];var ids=0;[['A',[0,1,2,3]],['B',[4,5,6,7]]].forEach(function(g){for(var i=0;i<4;i++)for(var j=i+1;j<4;j++)S.matches.push(M('G'+(++ids),g[0]+'组',g[1][i],g[1][j],g[0]))});S.matches.push(M('SF1','半决赛1',null,null,'','A1 vs B2'));S.matches.push(M('SF2','半决赛2',null,null,'','B1 vs A2'));S.matches.push(M('F','决赛',null,null,'','半决赛胜者'))}
 function makeRound(){S.matches=[];var n=0;for(var i=0;i<8;i++)for(var j=i+1;j<8;j++)S.matches.push(M('R'+(++n),'单循环',i,j))}
 function makeDouble(){S.matches=[
@@ -83,7 +83,7 @@ function renderLive(){renderLiveSel();var id=q('liveSel').value,m=by(id);if(!m){
 function renderHome(){q('hero').textContent=S.name||'新建赛事';q('ename').value=S.name||'';q('loc').value=S.loc||'';q('date').value=S.date||'';q('fmt').value=S.fmt||'groups';q('kt').textContent=S.teams.length;q('km').textContent=visible().length;q('kd').textContent=visible().filter(function(m){return m.status==='done'}).length;renderTeams()}
 function renderAll(){renderHome();renderMatches();renderTables();renderLiveSel()}
 function demo(){S.name='2026 托朗戈杯示例';S.loc='新疆';S.teams=['塔城','乌苏','托里','额敏','独山子','尼勒克','和丰','阿勒泰'];S.fmt='double';makeDouble();save();msg('示例已载入')}
-function clearAll(){if(!confirm('确定清空全部赛事数据？'))return;localStorage.removeItem(KEY);location.reload()}
+function clearAll(){if(!confirm('确定清空全部赛事数据？'))return;try{localStorage.removeItem(KEY)}catch(e){}S={name:'',loc:'',date:'',fmt:'groups',teams:['球队1','球队2','球队3','球队4','球队5','球队6','球队7','球队8'],matches:[],events:{},champ:null};renderAll();msg('已清空')}
 function exportJSON(){var b=new Blob([JSON.stringify(S,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='sagi-event.json';a.click()}
 function copySummary(){var arr=[S.name,S.date,S.loc].filter(Boolean);visible().filter(function(m){return m.status==='done'}).forEach(function(m){arr.push(m.stage+'｜'+name(m.home)+' '+m.hs+':'+m.as+' '+name(m.away))});if(S.champ!=null)arr.push('冠军｜'+name(S.champ));var t=arr.join('\n');if(navigator.clipboard)navigator.clipboard.writeText(t).then(function(){msg('已复制')});else prompt('复制',t)}
 load();
