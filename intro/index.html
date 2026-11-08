@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#07090d">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%2307090d%22/%3E%3Ctext x=%2232%22 y=%2243%22 text-anchor=%22middle%22 font-size=%2234%22 fill=%22%23d8b55b%22%3ES%3C/text%3E%3C/svg%3E">
-<title>SAGI V4.3.1 · LIVE MATCH DIRECTOR</title>
+<title>SAGI V4.4 · LIVE MATCH DIRECTOR</title>
 <style>
 :root{--bg:#07090d;--panel:#11151c;--line:#2b3340;--text:#f4f0e8;--muted:#8f97a5;--gold:#d8b55b;--green:#72c79a}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
@@ -138,7 +138,7 @@ button,.fileBtn{border:0;border-radius:12px;background:#262d37;color:#fff;font-w
 .subNo{font-size:24px;font-weight:1000;color:#d8b55b}.subName{font-size:21px;font-weight:900}.subStat{font-size:11px;color:#aab2be}
 .captainNode:after{content:'C';position:absolute;right:-6px;top:-7px;width:19px;height:19px;border-radius:50%;background:#fff1b7;color:#111;font-size:10px;display:flex;align-items:center;justify-content:center;font-weight:1000}
 
-/* ===== V4.3.1 LIVE MATCH DIRECTOR ===== */
+/* ===== V4.4 LIVE MATCH DIRECTOR ===== */
 .broadcastDesk{margin:14px 0 0;background:linear-gradient(180deg,#0b0f15,#070a0e);border:1px solid #303846;border-radius:20px;padding:13px;box-shadow:0 22px 48px #0006}
 .bcMonitors{display:grid;grid-template-columns:1fr 1fr 280px;gap:10px}
 .bcMonitor{min-height:94px;border:1px solid #323b48;border-radius:15px;background:#090d12;padding:12px 14px;position:relative;overflow:hidden}
@@ -164,7 +164,7 @@ button,.fileBtn{border:0;border-radius:12px;background:#262d37;color:#fff;font-w
 @media(max-width:650px){.bcMonitors{grid-template-columns:1fr}.bcStatusBox{grid-column:auto}.bcTransport{grid-template-columns:1fr 1fr}.bcTransport .goLive{grid-column:1/3}.bcQuick{grid-template-columns:repeat(3,1fr)}}
 
 
-/* ===== V4.3.1 LIVE MATCH DIRECTOR ===== */
+/* ===== V4.4 LIVE MATCH DIRECTOR ===== */
 .matchdayDesk{margin:14px 0 0;background:linear-gradient(180deg,#10151c,#080b10);border:1px solid #3a4350;border-radius:20px;padding:14px;box-shadow:0 24px 55px #0006}
 .mdHead{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:11px}.mdTitle{font-size:14px;font-weight:1000;letter-spacing:2px;color:#ebd184}.mdTitle small{font-size:10px;color:#7e8996;letter-spacing:1px;margin-left:8px}.mdSync{font-size:10px;color:#75d49e;border:1px solid #2d6748;background:#0d2118;border-radius:999px;padding:6px 9px}
 .mdGrid{display:grid;grid-template-columns:1.25fr .9fr 1.25fr;gap:10px}.mdPanel{background:#080c11;border:1px solid #2e3743;border-radius:15px;padding:11px}
@@ -182,7 +182,7 @@ button,.fileBtn{border:0;border-radius:12px;background:#262d37;color:#fff;font-w
 @media(max-width:1050px){.mdGrid,.mdBottom{grid-template-columns:1fr}.mdScoreLine{grid-template-columns:1fr 50px 30px 50px 1fr}}
 
 
-/* ===== V4.3.1 LIVE MATCH DIRECTOR ===== */
+/* ===== V4.4 LIVE MATCH DIRECTOR ===== */
 .vmixDirector{margin:14px 0 0;background:linear-gradient(180deg,#111722,#080c12);border:1px solid #3b4655;border-radius:20px;padding:14px;box-shadow:0 24px 58px #0007}
 .vdHead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}.vdTitle{font-size:14px;font-weight:1000;letter-spacing:2px;color:#8bd2ff}.vdTitle small{font-size:10px;color:#7f8b99;margin-left:8px}.vdStatus{font-size:10px;border:1px solid #35556d;color:#8bd2ff;background:#0c1a24;border-radius:999px;padding:6px 10px}
 .vdGrid{display:grid;grid-template-columns:1.15fr 1fr 1fr;gap:10px}.vdPanel{border:1px solid #303a47;border-radius:14px;background:#080c12;padding:11px}.vdPanelTitle{font-size:10px;font-weight:1000;letter-spacing:2px;color:#8996a5;margin-bottom:9px}
@@ -196,11 +196,58 @@ button,.fileBtn{border:0;border-radius:12px;background:#262d37;color:#fff;font-w
 .mdStatGrid{display:grid;grid-template-columns:1fr 1fr;gap:7px}.mdStat{background:#0a1016;border:1px solid #293440;border-radius:10px;padding:10px}.mdStat b{display:block;font-size:23px;color:#e5ca78}.mdStat span{font-size:9px;color:#768391}
 @media(max-width:1050px){.vdGrid{grid-template-columns:1fr}.vdInputs{grid-template-columns:1fr 1fr}.mdOpsRow{grid-template-columns:1fr}}
 
+
+/* ===== V4.4 MATCH SETUP ENGINE ===== */
+.setupDesk{margin:14px 0;background:linear-gradient(135deg,#0d1219,#101720);border:1px solid #34404d;border-radius:20px;padding:15px;box-shadow:0 18px 45px #0003}
+.setupDesk.ready{border-color:#3e725a;box-shadow:0 0 0 1px #72c79a22 inset,0 18px 45px #0003}
+.setupHead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.setupTitle{font-size:17px;font-weight:1000;letter-spacing:.4px}.setupTitle small{display:block;color:#7f8a97;font-size:10px;letter-spacing:2px;margin-top:4px}
+.setupReadyBadge{padding:8px 12px;border:1px solid #5a3434;border-radius:999px;color:#e68c8c;background:#33161666;font-size:10px;font-weight:1000;letter-spacing:1.5px;white-space:nowrap}.setupReadyBadge.ready{border-color:#477861;color:#91e1b5;background:#14332499}
+.setupGrid{display:grid;grid-template-columns:1fr 1.35fr;gap:10px}.setupPanel{background:#090d12;border:1px solid #29333e;border-radius:14px;padding:11px}.setupPanelTitle{font-size:10px;color:#d8b55b;font-weight:1000;letter-spacing:2px;margin-bottom:9px}
+.setupProjectGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.setupProjectActions{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}.setupProjectActions button{min-height:38px;font-size:11px}
+.setupChecks{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}.setupCheck{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 10px;border-radius:10px;border:1px solid #333e49;background:#0c1117;font-size:10px;color:#96a0ac}.setupCheck b{font-size:10px}.setupCheck.good{border-color:#315b47;background:#0d1c16;color:#9cd6b6}.setupCheck.bad{border-color:#603838;background:#241212;color:#e8a0a0}.setupCheck.warn{border-color:#6b592d;background:#211b0d;color:#e3ca7b}
+.setupSummary{margin-top:9px;padding:9px 10px;border-radius:10px;background:#070a0e;border:1px solid #27313b;color:#8e98a4;font-size:10px;line-height:1.55}.setupSummary.good{border-color:#315b47;color:#9cd6b6}.setupSummary.bad{border-color:#603838;color:#e8a0a0}
+.setupReadyActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}.setupReadyActions button{min-height:42px}.setupReadyActions .readyBtn{background:linear-gradient(135deg,#1f6545,#4a9b70);color:#fff}.setupReadyActions .readyBtn:disabled{opacity:.35;filter:saturate(.2)}.setupReadyActions .unlockBtn{background:#442322}
+button:disabled{cursor:not-allowed;opacity:.42}
+@media(max-width:940px){.setupGrid{grid-template-columns:1fr}.setupChecks{grid-template-columns:1fr}.setupProjectGrid{grid-template-columns:1fr}}
+
 </style>
 </head>
 <body>
 <div class="app">
-  <div class="top"><div><div class="brand">SAGI LIVE MATCH DIRECTOR</div><div class="sub">V4.3.1 · 现场比赛导演 · vMix导播 · 事件日志 · 撤销 · 比分与比赛图形</div></div><div class="ver">V4.3.1</div></div>
+  <div class="top"><div><div class="brand">SAGI LIVE MATCH DIRECTOR</div><div class="sub">V4.4 · 现场比赛导演 · vMix导播 · 事件日志 · 撤销 · 比分与比赛图形</div></div><div class="ver">V4.4</div></div>
+
+  <div id="setupDesk" class="setupDesk">
+    <div class="setupHead">
+      <div class="setupTitle">比赛设置 · MATCH SETUP ENGINE<small>V4.4 · 比赛项目 · 赛制校验 · 阵容检查 · READY GATE</small></div>
+      <div id="setupReadyBadge" class="setupReadyBadge">NOT READY</div>
+    </div>
+    <div class="setupGrid">
+      <div class="setupPanel">
+        <div class="setupPanelTitle">比赛项目 · MATCH PROJECT</div>
+        <div class="setupProjectGrid">
+          <div><label>项目名称</label><input id="projectName" placeholder="例如：长风联赛 MD01 · TARLAN vs ICE POINT"></div>
+          <div><label>已保存项目</label><select id="projectSelect"><option value="">选择比赛项目</option></select></div>
+        </div>
+        <div class="setupProjectActions">
+          <button id="projectSaveBtn" class="ok" type="button">保存比赛项目</button>
+          <button id="projectLoadBtn" type="button">读取项目</button>
+          <button id="projectDeleteBtn" class="danger" type="button">删除项目</button>
+        </div>
+        <div class="tiny" style="margin-top:8px">比赛项目保存赛事信息、赛制、主客队名单、阵型、节目时间线与比赛事件状态；球员照片/视频继续使用本机素材库。</div>
+      </div>
+      <div class="setupPanel">
+        <div class="setupPanelTitle">赛前检查 · PRE-FLIGHT CHECK</div>
+        <div id="setupChecks" class="setupChecks"></div>
+        <div id="setupSummary" class="setupSummary">尚未检查。完成比赛信息和双队阵容后点击“检查比赛”。</div>
+        <div class="setupReadyActions">
+          <button id="setupValidateBtn" type="button">检查比赛</button>
+          <button id="setupReadyBtn" class="readyBtn" type="button" disabled>READY FOR BROADCAST</button>
+          <button id="setupUnlockBtn" class="unlockBtn" type="button">解除 READY</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="broadcastDesk">
     <div class="bcMonitors">
       <div class="bcMonitor preview"><div class="bcKicker">预监 PREVIEW</div><div id="bcPreviewLabel" class="bcBig">主队 · 球队开场</div><div id="bcPreviewMeta" class="bcMeta">准备就绪 · 本机预监，不会直接上屏</div></div>
@@ -236,7 +283,7 @@ button,.fileBtn{border:0;border-radius:12px;background:#262d37;color:#fff;font-w
 
   <div class="vmixDirector">
     <div class="vdHead">
-      <div class="vdTitle">V4.3.1 · vMix 导播控制 <small>LIVE MATCH DIRECTOR</small></div>
+      <div class="vdTitle">V4.4 · vMix 导播控制 <small>LIVE MATCH DIRECTOR</small></div>
       <div id="vdStatus" class="vdStatus">桥接通道待命</div>
     </div>
     <div class="vdGrid">
@@ -247,7 +294,7 @@ button,.fileBtn{border:0;border-radius:12px;background:#262d37;color:#fff;font-w
           <div><label>机位 2</label><input id="vdCam2" value="2"></div>
           <div><label>无人机</label><input id="vdDrone" value="3"></div>
           <div><label>回放输入</label><input id="vdReplay" value="4"></div>
-          <div><label>V4.3.1图形输入</label><input id="vdGraphics" value="5"></div>
+          <div><label>V4.4图形输入</label><input id="vdGraphics" value="5"></div>
         </div>
         <div class="vdInputs" style="grid-template-columns:1fr 1fr 1fr;margin-top:7px">
           <div><label>切换方式</label><select id="vdTransition"><option value="Cut">CUT 硬切</option><option value="Fade">FADE 淡变</option><option value="Stinger1">STINGER 1</option></select></div>
@@ -280,8 +327,8 @@ button,.fileBtn{border:0;border-radius:12px;background:#262d37;color:#fff;font-w
           <button id="vdAllOverlaysOff" type="button">关闭全部 Overlay</button>
           <button id="vdTest" type="button">测试桥接指令</button>
         </div>
-        <div class="vdBridgeHelp">正式比赛建议在 vMix 电脑运行 V4.3.1 Bridge。Control Room 只向云端发送指令，Bridge 再调用本机 vMix API，避免浏览器 HTTPS → 本机 HTTP 的限制。</div>
-        <a class="vdDownload" href="./START_V42_VMIX_BRIDGE.bat" download>下载 / 启动 vMix Bridge</a>
+        <div class="vdBridgeHelp">正式比赛建议在 vMix 电脑运行 V4.4 Bridge。Control Room 只向云端发送指令，Bridge 再调用本机 vMix API，避免浏览器 HTTPS → 本机 HTTP 的限制。</div>
+        <a class="vdDownload" href="./START_V44_VMIX_BRIDGE.bat" download>下载 / 启动 vMix Bridge</a>
         <div class="vdKeys">快捷键：1 主机位 · 2 机位2 · 3 无人机 · 4 回放 · G 图形ON · X 图形OFF。输入框正在编辑时快捷键自动停用。</div>
       </div>
     </div>
@@ -289,7 +336,7 @@ button,.fileBtn{border:0;border-radius:12px;background:#262d37;color:#fff;font-w
 
   <div class="matchdayDesk">
     <div class="mdHead">
-      <div class="mdTitle">V4.3.1 · 现场比赛导演 <small>LIVE MATCH DIRECTOR</small></div>
+      <div class="mdTitle">V4.4 · 现场比赛导演 <small>LIVE MATCH DIRECTOR</small></div>
       <div id="mdSync" class="mdSync"><span id="mdSyncDot" class="mdLiveDot"></span>比赛图形待命</div>
     </div>
     <div class="mdGrid">
@@ -517,8 +564,8 @@ button,.fileBtn{border:0;border-radius:12px;background:#262d37;color:#fff;font-w
       <div class="card">
         <h2>vMix 直播输出</h2>
         <div class="grid2"><div><label>输出背景</label><select id="outputBg"><option value="tunnel" selected>球员通道</option><option value="stadium">球场背景</option><option value="transparent">透明背景叠加</option><option value="chroma">绿幕</option></select></div><div><label>画面</label><input value="1920 × 1080" readonly></div></div>
-        <div class="actions"><button id="copyVmixBtn" type="button">复制 V4.3.1 vMix 链接</button></div>
-        <div class="tiny" style="margin-top:8px">vMix：添加输入 → Web Browser（网页浏览器）→ 粘贴 V4.3.1 专用链接。控制端点击“切入播出”后同步到直播电脑。</div>
+        <div class="actions"><button id="copyVmixBtn" type="button">复制 V4.4 vMix 链接</button></div>
+        <div class="tiny" style="margin-top:8px">vMix：添加输入 → Web Browser（网页浏览器）→ 粘贴 V4.4 专用链接。控制端点击“切入播出”后同步到直播电脑。</div>
       </div>
     </div>
 
@@ -546,7 +593,7 @@ button,.fileBtn{border:0;border-radius:12px;background:#262d37;color:#fff;font-w
             </div>
           </div>
         </div>
-        <div class="statusBar"><div id="status" class="status">V4.3.1 · FORMAT SYNC FIX 已就绪</div><div class="mini">1920 × 1080</div></div>
+        <div class="statusBar"><div id="status" class="status">V4.4 · MATCH SETUP ENGINE 已就绪</div><div class="mini">1920 × 1080</div></div>
       </div>
     </div>
   </div>
@@ -682,6 +729,101 @@ function syncSummary(r){
 }
 
 let roster=[],selected=-1,activeSide='HOME',teamStore={HOME:{roster:[],formation:'4-3-3',crest:''},AWAY:{roster:[],formation:'4-3-3',crest:''}},assets={photo:'',crest:'',bg:'',eventLogo:'',mediaBlob:null,mediaObjectUrl:'',musicBlob:null,musicObjectUrl:''},playing=false,seqTimer=null,currentGroup='TEAM';
+let matchReady=false,setupReadySignature='',setupLastValidation=null;
+const MATCH_PROJECTS_KEY='sagi_match_projects_v44';
+
+function setupNormalizeNumber(v){const s=String(v??'').trim();if(/^\d+$/.test(s))return String(Number(s));return s.toUpperCase()}
+function setupDuplicateNumbers(list=[]){
+ const seen=new Map(),dups=[];(list||[]).forEach(p=>{const n=setupNormalizeNumber(p.number);if(!n)return;if(seen.has(n))dups.push(n);else seen.set(n,1)});return [...new Set(dups)]
+}
+function setupProjectDefaultName(){
+ const comp=q('matchCompetition').value.trim(),round=q('matchRound').value.trim(),home=q('matchHome').value.trim(),away=q('matchAway').value.trim();
+ return [comp,round,[home,away].filter(Boolean).join(' vs ')].filter(Boolean).join(' · ')||'SAGI MATCH PROJECT'
+}
+function setupTeamValidation(side){
+ const t=teamStore[side]||{roster:[],formation:defaultFormationForCount(starterLimit())},list=t.roster||[],formation=t.formation||defaultFormationForCount(starterLimit()),limit=starterLimit();
+ const valid=effectiveStarters(list,formation),raw=rawStarters(list),dups=setupDuplicateNumbers(list),missingIdentity=list.filter(p=>!String(p.name||'').trim()||!String(p.number||'').trim()),badStatus=list.filter(p=>!['STARTER','SUB'].includes(p.squadType||'STARTER'));
+ const gk=valid.filter(p=>p.role==='GK').length,formationOK=formationOutfieldCount(formation)===limit-1;
+ const issues=[];
+ if(!formationOK)issues.push('阵型与'+limit+'人制不匹配');
+ if(raw.length!==limit)issues.push('首发 '+raw.length+'/'+limit);
+ if(valid.length!==limit)issues.push('有效首发 '+valid.length+'/'+limit);
+ if(gk!==1)issues.push('门将 '+gk+'/1');
+ if(dups.length)issues.push('号码重复 '+dups.join(', '));
+ if(missingIdentity.length)issues.push('有 '+missingIdentity.length+' 名球员缺姓名/号码');
+ if(badStatus.length)issues.push('名单身份异常 '+badStatus.length+' 人');
+ return{side,ok:issues.length===0,issues,limit,formation,validCount:valid.length,rawCount:raw.length,gk,duplicates:dups}
+}
+function validateMatchSetup(render=true){
+ stashActiveTeam();
+ const competition=q('matchCompetition').value.trim(),home=q('matchHome').value.trim(),away=q('matchAway').value.trim(),kickoff=q('matchKickoff').value.trim(),venue=q('matchVenue').value.trim(),formatOK=starterLimit()>=3&&formationOutfieldCount(teamStore.HOME.formation)===starterLimit()-1&&formationOutfieldCount(teamStore.AWAY.formation)===starterLimit()-1;
+ const infoIssues=[];if(!competition)infoIssues.push('赛事名称');if(!home)infoIssues.push('主队');if(!away)infoIssues.push('客队');if(!kickoff)infoIssues.push('比赛时间');if(!venue)infoIssues.push('比赛场地');if(home&&away&&home===away)infoIssues.push('主客队名称相同');
+ const H=setupTeamValidation('HOME'),A=setupTeamValidation('AWAY');
+ const checks=[
+  {label:'比赛信息',ok:infoIssues.length===0,meta:infoIssues.length?'缺少/异常：'+infoIssues.join('、'):'赛事信息完整'},
+  {label:'比赛规格',ok:formatOK,meta:formatDisplay()+' · HOME '+teamStore.HOME.formation+' · AWAY '+teamStore.AWAY.formation},
+  {label:'主队首发',ok:H.ok,meta:H.ok?('有效首发 '+H.validCount+'/'+H.limit+' · GK '+H.gk):H.issues.join(' · ')},
+  {label:'客队首发',ok:A.ok,meta:A.ok?('有效首发 '+A.validCount+'/'+A.limit+' · GK '+A.gk):A.issues.join(' · ')},
+  {label:'主队号码',ok:H.duplicates.length===0,meta:H.duplicates.length?'重复：'+H.duplicates.join(', '):'无重复号码'},
+  {label:'客队号码',ok:A.duplicates.length===0,meta:A.duplicates.length?'重复：'+A.duplicates.join(', '):'无重复号码'}
+ ];
+ const ok=checks.every(x=>x.ok),result={ok,checks,home:H,away:A,infoIssues,signature:setupSignatureRaw()};
+ setupLastValidation=result;if(render)renderSetupValidation(result);return result
+}
+function setupSignatureRaw(){
+ stashActiveTeam();
+ const teamSig=side=>{const t=teamStore[side]||{roster:[]};return{formation:t.formation,roster:(t.roster||[]).map(p=>({id:p.id,name:p.name,number:p.number,squadType:p.squadType||'STARTER',role:p.role,position:p.position,captain:!!p.captain}))}};
+ return JSON.stringify({matchConfig:{...matchConfig},competition:q('matchCompetition').value.trim(),round:q('matchRound').value.trim(),home:q('matchHome').value.trim(),away:q('matchAway').value.trim(),kickoff:q('matchKickoff').value.trim(),venue:q('matchVenue').value.trim(),HOME:teamSig('HOME'),AWAY:teamSig('AWAY')})
+}
+function renderSetupValidation(result){
+ const w=q('setupChecks');w.innerHTML=result.checks.map(x=>'<div class="setupCheck '+(x.ok?'good':'bad')+'"><span>'+esc(x.label)+'</span><b>'+(x.ok?'PASS':'CHECK')+'</b><span style="display:none">'+esc(x.meta)+'</span></div>').join('');
+ q('setupSummary').className='setupSummary '+(result.ok?'good':'bad');
+ q('setupSummary').textContent=result.ok?'赛前检查通过。可以点击 READY FOR BROADCAST 解锁正式播出。':'未通过：'+result.checks.filter(x=>!x.ok).map(x=>x.label+'（'+x.meta+'）').join('；');
+ q('setupReadyBtn').disabled=!result.ok;
+}
+function setMatchReady(on){
+ if(on){
+   const r=validateMatchSetup(true);if(!r.ok){matchReady=false;refreshSetupReadyUI();note('赛前检查未通过');return false}
+   matchReady=true;setupReadySignature=r.signature;note('READY FOR BROADCAST · 已解锁正式播出')
+ }else{matchReady=false;setupReadySignature='';note('已解除 READY · PROGRAM 已锁定')}
+ refreshSetupReadyUI();return matchReady
+}
+function requireMatchReady(){
+ if(!matchReady){note('请先完成 READY FOR BROADCAST');return false}
+ const now=setupSignatureRaw();if(now!==setupReadySignature){matchReady=false;setupReadySignature='';validateMatchSetup(true);refreshSetupReadyUI();note('比赛设置已变化 · READY 自动解除');return false}
+ const r=validateMatchSetup(false);if(!r.ok){matchReady=false;setupReadySignature='';renderSetupValidation(r);refreshSetupReadyUI();note('赛前检查状态已失效');return false}
+ return true
+}
+function refreshSetupReadyUI(){
+ const b=q('setupReadyBadge'),desk=q('setupDesk');b.textContent=matchReady?'READY FOR BROADCAST':'NOT READY';b.classList.toggle('ready',matchReady);desk.classList.toggle('ready',matchReady);
+ q('goLiveBtn').disabled=!matchReady;q('showPlayBtn').disabled=!matchReady;
+ document.querySelectorAll('[data-vd-take]').forEach(x=>x.disabled=!matchReady);q('vdGraphicsIn').disabled=!matchReady;
+ q('setupUnlockBtn').disabled=!matchReady;
+}
+function getMatchProjects(){try{const x=JSON.parse(localStorage.getItem(MATCH_PROJECTS_KEY)||'[]');return Array.isArray(x)?x:[]}catch(e){return[]}}
+function putMatchProjects(list){localStorage.setItem(MATCH_PROJECTS_KEY,JSON.stringify((list||[]).slice(0,20)))}
+function refreshProjectList(selected=''){
+ const list=getMatchProjects().sort((a,b)=>(b.savedAt||0)-(a.savedAt||0)),el=q('projectSelect');el.innerHTML='<option value="">选择比赛项目</option>'+list.map(p=>'<option value="'+escAttr(p.id)+'">'+esc(p.name)+' · '+new Date(p.savedAt).toLocaleString()+'</option>').join('');if(selected)el.value=selected
+}
+async function saveMatchProject(){
+ const name=q('projectName').value.trim()||setupProjectDefaultName();q('projectName').value=name;await save();mdPersist();vdSave();
+ const id='match_'+Date.now().toString(36),project={id,name,savedAt:Date.now(),core:localStorage.getItem('sagi_player_intro_v40')||'',show:localStorage.getItem('sagi_show_director_v40')||'',matchday:localStorage.getItem('sagi_matchday_graphics_v42')||'',vmix:localStorage.getItem('sagi_vmix_director_v42')||''};
+ let list=getMatchProjects();const same=list.findIndex(p=>p.name===name);if(same>=0){project.id=list[same].id;list.splice(same,1)}list.unshift(project);putMatchProjects(list);refreshProjectList(project.id);note('比赛项目已保存 · '+name)
+}
+async function loadMatchProject(){
+ const id=q('projectSelect').value,p=getMatchProjects().find(x=>x.id===id);if(!p){note('请选择比赛项目');return}
+ if(p.core)localStorage.setItem('sagi_player_intro_v40',p.core);if(p.show)localStorage.setItem('sagi_show_director_v40',p.show);if(p.matchday)localStorage.setItem('sagi_matchday_graphics_v42',p.matchday);if(p.vmix)localStorage.setItem('sagi_vmix_director_v42',p.vmix);
+ await load();mdLoad();vdLoad();q('projectName').value=p.name;matchReady=false;setupReadySignature='';validateMatchSetup(true);refreshSetupReadyUI();note('比赛项目已读取 · '+p.name)
+}
+function deleteMatchProject(){
+ const id=q('projectSelect').value;if(!id){note('请选择比赛项目');return}let list=getMatchProjects(),p=list.find(x=>x.id===id);list=list.filter(x=>x.id!==id);putMatchProjects(list);refreshProjectList();note('已删除比赛项目'+(p?' · '+p.name:''))
+}
+function initMatchSetup(){
+ q('projectName').value=setupProjectDefaultName();refreshProjectList();q('projectSaveBtn').onclick=saveMatchProject;q('projectLoadBtn').onclick=loadMatchProject;q('projectDeleteBtn').onclick=deleteMatchProject;
+ q('setupValidateBtn').onclick=()=>validateMatchSetup(true);q('setupReadyBtn').onclick=()=>setMatchReady(true);q('setupUnlockBtn').onclick=()=>setMatchReady(false);
+ validateMatchSetup(true);refreshSetupReadyUI()
+}
+
 const DEFAULT_SHOW=[
  {id:'sting',group:'STING',label:'Logo Sting',duration:2000,transition:'FLASH',cue:'STING',enabled:true},
  {id:'match',group:'MATCH',label:'比赛信息',duration:3000,transition:'FADE',cue:'RISER',enabled:true},
@@ -754,7 +896,7 @@ function mdLoad(){
 function mdCloudSnapshot(event=null){
  const now=mdNowSeconds();return{
   commandId:Date.now()+'_'+Math.random().toString(36).slice(2,7),
-  visualVersion:'V4.3.1-LIVE-MATCH-DIRECTOR',
+  visualVersion:'V4.4-LIVE-MATCH-DIRECTOR',
   home:q('matchHome').value.trim()||'HOME',away:q('matchAway').value.trim()||'AWAY',
   homeScore:matchdayState.homeScore,awayScore:matchdayState.awayScore,scoreboardVisible:!!matchdayState.scoreboardVisible,
   clock:{baseSeconds:now,running:!!matchdayState.clockRunning,startedAt:matchdayState.clockRunning?new Date().toISOString():null,period:matchdayState.period},
@@ -850,7 +992,7 @@ function vdLoad(){
 }
 function vdInput(slot){vdSave();return vmixDirectorSettings[slot]||''}
 async function publishVmixDirector(functionName,input='',duration=0,label=''){
- const cfg=cloudAdmin(),cmd={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,7),functionName,input:String(input||''),duration:Math.max(0,Number(duration)||0),label,issuedAt:new Date().toISOString(),version:'V4.3.1'};
+ const cfg=cloudAdmin(),cmd={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,7),functionName,input:String(input||''),duration:Math.max(0,Number(duration)||0),label,issuedAt:new Date().toISOString(),version:'V4.4'};
  q('vdStatus').textContent='发送中 · '+(label||functionName);
  if(!window.SagiCloud||!cfg.url||!cfg.key||!cfg.eventSlug||!cfg.token){q('vdStatus').textContent='未连接云端 · 无法发送';return false}
  try{
@@ -862,10 +1004,10 @@ async function publishVmixDirector(functionName,input='',duration=0,label=''){
  }catch(e){q('vdStatus').textContent='发送失败 · 检查云端/Bridge';return false}
 }
 function vdTake(slot){
- vdSave();const input=vdInput(slot),fn=vmixDirectorSettings.transition,d=fn==='Fade'?vmixDirectorSettings.duration:0;publishVmixDirector(fn,input,d,'PROGRAM '+slot.toUpperCase());
+ if(!requireMatchReady())return;vdSave();const input=vdInput(slot),fn=vmixDirectorSettings.transition,d=fn==='Fade'?vmixDirectorSettings.duration:0;publishVmixDirector(fn,input,d,'PROGRAM '+slot.toUpperCase());
 }
 function vdPreview(slot){publishVmixDirector('PreviewInput',vdInput(slot),0,'PREVIEW '+slot.toUpperCase())}
-function vdOverlayIn(){vdSave();publishVmixDirector('OverlayInput'+vmixDirectorSettings.overlay+'In',vmixDirectorSettings.graphics,0,'GRAPHICS ON')}
+function vdOverlayIn(){if(!requireMatchReady())return;vdSave();publishVmixDirector('OverlayInput'+vmixDirectorSettings.overlay+'In',vmixDirectorSettings.graphics,0,'GRAPHICS ON')}
 function vdOverlayOut(){vdSave();publishVmixDirector('OverlayInput'+vmixDirectorSettings.overlay+'Out','',0,'GRAPHICS OFF')}
 function initVmixDirector(){
  vdLoad();
@@ -1035,7 +1177,7 @@ function cloudAdmin(){try{const x=JSON.parse(localStorage.getItem('sagi_cloud_ad
 function compactPlayersForGroup(group){const src=group==='FULL'?validStarters():group==='SUB'?substitutes():(['GK','DF','MF','FW'].includes(group)?grouped(group):[]);return src.map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',squadType:p.squadType||'STARTER',photo:(group==='FULL'||group==='SUB')?'':p.photo||'',mediaUrl:(group==='FULL'||group==='SUB')?'':p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'}))}
 async function publishGroup(group,duration,show=null){
  const cfg=cloudAdmin();if(!window.SagiCloud||!cfg.url||!cfg.key||!cfg.eventSlug||!cfg.token)return{ok:false};
- try{let cur=await window.SagiCloud.getEvent(cfg.eventSlug,cfg);if(!cur||!cur.payload)return{ok:false};const state={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,6),group,side:activeSide,team:currentTeamName(),formation:q('formation').value,matchFormat:{mode:matchConfig.mode,playerCount:starterLimit()},playerCount:starterLimit(),startingLabel:startingLabel(),players:compactPlayersForGroup(group),allPlayers:validStarters().map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',mediaUrl:p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'})),substitutes:substitutes().map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,statLabel:p.statLabel||'',statValue:p.statValue||''})),crest:assets.crest||'',stadium:assets.bg||'',background:q('outputBg').value,visualVersion:'V4.3.1-FORMAT-SYNC',duration,show:show||null,package:packageData(),startedAt:new Date().toISOString()};const payload=Object.assign({},cur.payload,{lineupIntro:state});try{await window.SagiCloud.saveEvent(cfg.eventSlug,cfg.token,payload,cur.revision,cfg)}catch(e){if(String(e.message).includes('REVISION_CONFLICT')){const fresh=await window.SagiCloud.getEvent(cfg.eventSlug,cfg);await window.SagiCloud.saveEvent(cfg.eventSlug,cfg.token,Object.assign({},fresh.payload,{lineupIntro:state}),fresh.revision,cfg)}else throw e}return{ok:true}}catch(e){return{ok:false}}
+ try{let cur=await window.SagiCloud.getEvent(cfg.eventSlug,cfg);if(!cur||!cur.payload)return{ok:false};const state={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,6),group,side:activeSide,team:currentTeamName(),formation:q('formation').value,matchFormat:{mode:matchConfig.mode,playerCount:starterLimit()},playerCount:starterLimit(),startingLabel:startingLabel(),players:compactPlayersForGroup(group),allPlayers:validStarters().map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',mediaUrl:p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'})),substitutes:substitutes().map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,statLabel:p.statLabel||'',statValue:p.statValue||''})),crest:assets.crest||'',stadium:assets.bg||'',background:q('outputBg').value,visualVersion:'V4.4-MATCH-SETUP',duration,show:show||null,package:packageData(),startedAt:new Date().toISOString()};const payload=Object.assign({},cur.payload,{lineupIntro:state});try{await window.SagiCloud.saveEvent(cfg.eventSlug,cfg.token,payload,cur.revision,cfg)}catch(e){if(String(e.message).includes('REVISION_CONFLICT')){const fresh=await window.SagiCloud.getEvent(cfg.eventSlug,cfg);await window.SagiCloud.saveEvent(cfg.eventSlug,cfg.token,Object.assign({},fresh.payload,{lineupIntro:state}),fresh.revision,cfg)}else throw e}return{ok:true}}catch(e){return{ok:false}}
 }
 function focusAndRun(fn){const mobile=matchMedia&&matchMedia('(max-width:940px)').matches;if(!mobile){fn();return}try{q('frame').scrollIntoView({behavior:'auto',block:'center'});requestAnimationFrame(()=>requestAnimationFrame(fn))}catch(e){fn()}}
 function escAttr(s){return String(s??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')}
@@ -1142,10 +1284,10 @@ function runShowStep(i){
  if(i>=showSteps.length){playing=false;showIndex=-1;stopCountdown();stopShowMusic();q('status').textContent='节目播放结束';q('showNow').textContent='COMPLETE';q('showProgressBar').style.width='100%';renderShowTimeline();return}
  showIndex=i;const s=showSteps[i],d=Math.max(500,Number(s.duration)||1000);if(s.side&&s.side!==activeSide)switchTeam(s.side,{silent:true,noRender:true});renderShowTimeline();broadcastProgramFromShow(s,d);applyShowTransition(s.transition);triggerCue(s.cue);renderStage(s.group);animateStage();animatePackageGroup(s.group,d);showProgressTick(s,d);q('status').textContent='SHOW '+(i+1)+' / '+showSteps.length+' · '+s.label;publishGroup(s.group,d,showMeta(s));clearTimeout(showTimer);if(!broadcastHold)showTimer=setTimeout(()=>runShowStep(i+1),d)
 }
-function startShow(){if(roster.length<1){note('请先加入球员');return}stopShow(false);playing=true;showSession=Date.now().toString(36);ensureShowMusic();focusAndRun(()=>runShowStep(0))}
+function startShow(){if(!requireMatchReady())return;if(roster.length<1){note('请先加入球员');return}stopShow(false);playing=true;showSession=Date.now().toString(36);ensureShowMusic();focusAndRun(()=>runShowStep(0))}
 function stopShow(update=true){playing=false;clearTimeout(showTimer);clearTimeout(seqTimer);stopCountdown();stopShowMusic();if(update){q('status').textContent='节目已停止';q('showNow').textContent='STOPPED'}renderShowTimeline()}
-function nextShow(){if(!showSteps.length)return;playing=true;showSession=showSession||Date.now().toString(36);clearTimeout(showTimer);runShowStep(Math.min(showSteps.length,showIndex+1))}
-function prevShow(){if(!showSteps.length)return;playing=true;showSession=showSession||Date.now().toString(36);clearTimeout(showTimer);let i=Math.max(0,showIndex-1);while(i>0&&!showSteps[i].enabled)i--;runShowStep(i)}
+function nextShow(){if(!requireMatchReady())return;if(!showSteps.length)return;playing=true;showSession=showSession||Date.now().toString(36);clearTimeout(showTimer);runShowStep(Math.min(showSteps.length,showIndex+1))}
+function prevShow(){if(!requireMatchReady())return;if(!showSteps.length)return;playing=true;showSession=showSession||Date.now().toString(36);clearTimeout(showTimer);let i=Math.max(0,showIndex-1);while(i>0&&!showSteps[i].enabled)i--;runShowStep(i)}
 function playGroup(group,duration){playing=true;focusAndRun(()=>{renderStage(group);animateStage();q('status').textContent='正在播放 '+(group==='TEAM'?'球队开场':group==='FULL'?'完整首发':group==='SUB'?'替补名单':ROLE_NAMES[group]||group);publishGroup(group,duration).then(r=>{if(!r.ok)q('status').textContent+=' · 本机预览'});clearTimeout(seqTimer);seqTimer=setTimeout(()=>{playing=false;q('status').textContent='播放完成 · 画面已保留'},duration)})}
 function autoPlay(){startShow()}
 function stop(){stopShow()}
@@ -1160,7 +1302,7 @@ async function save(){
  if(assets.musicBlob)await dbPut('showMusic',assets.musicBlob);else await dbDel('showMusic');
  localStorage.setItem('sagi_player_intro_v40',JSON.stringify({activeSide:snapshot.activeSide,matchConfig:snapshot.matchConfig,package:snapshot.package,teams:snapshot.teams}));
  localStorage.setItem('sagi_show_director_v40',JSON.stringify(snapshot.show));
- note('V4.3.1 双队阵容、音频与节目已保存')
+ note('V4.4 双队阵容、音频与节目已保存')
 }
 async function hydrateRoster(list=[]){const out=[];for(const p of list){p.photo=await dbGet('photo:'+p.id);p.mediaBlob=await dbGet('media:'+p.id);p.mediaObjectUrl=p.mediaBlob instanceof Blob?URL.createObjectURL(p.mediaBlob):'';p.mediaAction=p.mediaAction||'STANDARD';p.directorIn=Number(p.directorIn)||0;p.directorOut=Number(p.directorOut)||0;p.directorSpeed=Number(p.directorSpeed)||1;p.directorFreeze=!!p.directorFreeze;p.directorFreezeMs=Number(p.directorFreezeMs)||1000;p.directorCamera=p.directorCamera||'MEDIUM';out.push(p)}return out}
 async function load(){
@@ -1177,7 +1319,7 @@ async function load(){
   reconcileTeamStarters('HOME',teamStore.HOME.formation);reconcileTeamStarters('AWAY',teamStore.AWAY.formation);
   assets.bg=await dbGet('stadium');assets.eventLogo=await dbGet('eventLogo');assets.musicBlob=await dbGet('showMusic');assets.musicObjectUrl=assets.musicBlob instanceof Blob?URL.createObjectURL(assets.musicBlob):'';
   let storedShow=JSON.parse(localStorage.getItem('sagi_show_director_v40')||'null');if(!storedShow){try{storedShow=JSON.parse(localStorage.getItem('sagi_show_director_v36')||'null')}catch(_){}}if(Array.isArray(storedShow)&&storedShow.length)showSteps=normalizeShowSteps(storedShow);else showSteps=normalizeShowSteps(DEFAULT_SHOW);
-  switchTeam(x.activeSide||'HOME',{silent:true,skipStash:true});renderPreviews();renderShowTimeline();syncMatchStage();note('V4.3.1 双队阵容、音频与节目已读取')
+  switchTeam(x.activeSide||'HOME',{silent:true,skipStash:true});renderPreviews();renderShowTimeline();syncMatchStage();note('V4.4 双队阵容、音频与节目已读取')
  }catch(e){note('读取失败')}
 }
 
@@ -1219,7 +1361,7 @@ function setBroadcastPreview(group,side=activeSide,label='',duration=0){
  q('status').textContent='预监 · '+broadcastPreview.label+' · 等待切入播出';refreshBroadcastStatus();
 }
 async function takeBroadcastLive(){
- const c=broadcastPreview;if(!c)return;if(c.side!==activeSide)switchTeam(c.side,{silent:true,noRender:true});
+ if(!requireMatchReady())return;const c=broadcastPreview;if(!c)return;if(c.side!==activeSide)switchTeam(c.side,{silent:true,noRender:true});
  broadcastProgram={...c,startedAt:Date.now()};applyShowTransition('FADE');triggerCue(bcCueFor(c.group));renderStage(c.group);animateStage();
  if(c.group!=='STING')ensureShowMusic();
  const meta={sessionId:'manual-'+Date.now().toString(36),stepIndex:-1,sequenceIndex:-1,stepTotal:1,label:c.label,side:c.side,transition:'FADE',cue:bcCueFor(c.group),autoNext:false,isFirst:true,isLast:false,controlRoom:true};
@@ -1251,8 +1393,8 @@ function initBroadcastControl(){
  refreshBroadcastStatus();
 }
 
-function vmixLink(){return new URL('./vmix-v431.html',location.href).toString()}
-async function copyVmix(){try{await navigator.clipboard.writeText(vmixLink());note('V4.3.1 vMix 链接已复制')}catch(e){prompt('复制这个链接：',vmixLink())}}
+function vmixLink(){return new URL('./vmix-v44.html',location.href).toString()}
+async function copyVmix(){try{await navigator.clipboard.writeText(vmixLink());note('V4.4 vMix 链接已复制')}catch(e){prompt('复制这个链接：',vmixLink())}}
 
 q('crestFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;assets.crest=await fileData(f,420,.84);teamStore[activeSide].crest=assets.crest;renderPreviews();renderStage(currentGroup)};
 q('bgFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;assets.bg=await fileData(f,1600,.78);renderPreviews();renderStage(currentGroup)};
@@ -1270,7 +1412,7 @@ q('matchFormat').onchange=()=>setMatchFormatFromUI();q('customPlayerCount').onch
 q('formation').onchange=()=>{teamStore[activeSide].formation=q('formation').value;const r=reconcileTeamStarters(activeSide,q('formation').value);roster=teamStore[activeSide].roster||roster;renderRoster();updateFormatUI();renderStage(currentGroup);refreshMatchdayPlayers();note('阵型已切换 '+q('formation').value+(r.changed?' · '+syncSummary(r):''))};q('teamName').oninput=()=>{if(activeSide==='HOME')q('matchHome').value=q('teamName').value;else q('matchAway').value=q('teamName').value;renderStage(currentGroup)};q('outputBg').onchange=()=>renderStage(currentGroup);
 ['matchCompetition','matchRound','matchKickoff','matchVenue'].forEach(id=>q(id).oninput=syncMatchStage);q('matchHome').oninput=()=>{if(activeSide==='HOME')q('teamName').value=q('matchHome').value;syncMatchStage()};q('matchAway').oninput=()=>{if(activeSide==='AWAY')q('teamName').value=q('matchAway').value;syncMatchStage()};
 ['audioMode','audioTheme','audioIntensity','audioDucking','cueVolume','countdownBeat'].forEach(id=>q(id).onchange=()=>{q('audioEngineState').textContent=q('audioMode').value+' · '+q('audioTheme').value.replaceAll('_',' ')});
-window.addEventListener('resize',resize);renderPreviews();renderRoster();loadShow();applyStoredMatchConfig({mode:'11',playerCount:11},true);refreshFormationOptions('4-3-3');demo();refreshSideUI();updateFormatUI();syncMatchStage();renderStage('TEAM');resize();initBroadcastControl();initMatchdayGraphics();initVmixDirector();setBroadcastPreview('TEAM','HOME','主队开场',2500);
+window.addEventListener('resize',resize);renderPreviews();renderRoster();loadShow();applyStoredMatchConfig({mode:'11',playerCount:11},true);refreshFormationOptions('4-3-3');demo();refreshSideUI();updateFormatUI();syncMatchStage();renderStage('TEAM');resize();initBroadcastControl();initMatchdayGraphics();initVmixDirector();initMatchSetup();setBroadcastPreview('TEAM','HOME','主队开场',2500);
 })();
 </script>
 </body></html>
