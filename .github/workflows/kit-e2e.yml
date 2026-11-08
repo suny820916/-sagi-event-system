@@ -1,4 +1,4 @@
-name: SAGI KIT DESIGNER V1.2 test
+name: SAGI KIT DESIGNER V1.2.1 test
 
 on:
   push:
@@ -23,7 +23,7 @@ jobs:
           CHROME_BIN="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
           echo "CHROME_BIN=$CHROME_BIN" >> "$GITHUB_ENV"
           test -n "$CHROME_BIN"
-      - name: Run V1.2 factory pattern tests
+      - name: Run V1.2.1 factory pattern tests
         shell: bash
         run: |
           python3 -m http.server 8080 --bind 127.0.0.1 >/tmp/kit-http.log 2>&1 &
@@ -40,16 +40,16 @@ jobs:
               const page=await context.newPage();
               page.on('pageerror',e=>errs.push('pageerror: '+e.message));
               page.on('console',m=>{if(m.type()==='error')errs.push('console: '+m.text())});
-              const r=await page.goto('http://127.0.0.1:8080/kit/v12.html',{waitUntil:'networkidle'});
+              const r=await page.goto('http://127.0.0.1:8080/kit/v121.html',{waitUntil:'networkidle'});
               add('页面HTTP 200',r&&r.status()===200,String(r&&r.status()));
-              add('标题V1.2',(await page.title())==='SAGI KIT DESIGNER V1.2',await page.title());
+              add('标题V1.2.1',(await page.title())==='SAGI KIT DESIGNER V1.2.1',await page.title());
               add('默认纸样生产板',await page.locator('#paperView').evaluate(el=>getComputedStyle(el).display!=='none'));
 
               for(const id of ['front','back','sleeve','cuff','collarWide','collarNarrow']){
                 add('裁片存在 '+id,await page.locator('#piece-'+id).count()===1);
               }
 
-              add('纸样默认锁定',await page.isChecked('#patternLocked'));
+              add('描摹轮廓默认锁定',await page.isChecked('#patternLocked'));
               add('锁定时位置不可编辑',await page.locator('#pieceX').isDisabled()&&await page.locator('#pieceW').isDisabled());
 
               await page.uncheck('#patternLocked');
@@ -92,19 +92,22 @@ jobs:
               await page.click('#paperBtn');
 
               await page.click('#saveBtn'); await page.fill('#chestText','TEMP'); await page.click('#loadBtn');
-              add('V1.2保存读取正常',(await page.inputValue('#chestText'))==='塔城',await page.inputValue('#chestText'));
+              add('V1.2.1保存读取正常',(await page.inputValue('#chestText'))==='塔城',await page.inputValue('#chestText'));
 
               const svgDownload=page.waitForEvent('download');
               await page.click('#svgBtn'); const sd=await svgDownload;
-              add('生产SVG可导出',sd.suggestedFilename()==='SAGI-KIT-V12-PRODUCTION.svg',sd.suggestedFilename());
+              add('描摹SVG可导出',sd.suggestedFilename()==='SAGI-KIT-V121-TRACE.svg',sd.suggestedFilename());
 
               const spec=await page.locator('#spec').innerText();
-              add('厂家参数包含mm坐标系',spec.includes('1 SVG单位 = 1 mm')&&spec.includes('前片 ×1')&&spec.includes('肩袖 ×2')&&spec.includes('宽领口 ×1'),spec.slice(0,220));
+              add('未标定时不冒充毫米',spec.includes('未标定（当前只保证形状与比例）')&&spec.includes('前片 ×1')&&spec.includes('肩袖 ×2'),spec.slice(0,220));
+              await page.fill('#frontActualWidth','520');
+              const scaleText=await page.inputValue('#scaleInfo');
+              add('输入真实前片宽度后完成mm标定',scaleText.includes('mm/单位'),scaleText);
               add('手机端无横向溢出',await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+4),await page.evaluate(()=>document.documentElement.scrollWidth+' / '+innerWidth));
               await context.close();
             }catch(e){errs.push('fatal: '+(e.stack||e.message||String(e)))}finally{if(browser)await browser.close()}
             const failed=out.filter(x=>!x.ok);
-            const lines=['SAGI KIT DESIGNER V1.2 TEST','time='+new Date().toISOString(),'',
+            const lines=['SAGI KIT DESIGNER V1.2.1 TEST','time='+new Date().toISOString(),'',
               ...out.map(x=>(x.ok?'PASS':'FAIL')+' | '+x.n+(x.d?' | '+x.d:'')),'','Browser errors:',...(errs.length?errs:['none']),'',
               'SUMMARY: '+(failed.length===0&&errs.length===0?'PASS':'FAIL')+' ('+(out.length-failed.length)+'/'+out.length+' checks passed)'];
             fs.writeFileSync('kit-test-result.txt',lines.join('\n'));console.log(lines.join('\n'));
@@ -118,6 +121,6 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if [ -f kit-test-result.txt ]; then
             git add kit-test-result.txt
-            git commit -m "Record SAGI KIT DESIGNER V1.2 test result" || exit 0
+            git commit -m "Record SAGI KIT DESIGNER V1.2.1 test result" || exit 0
             git push
           fi
