@@ -92,7 +92,7 @@ jobs:
               add('点击预览画面可重播',await page.locator('#stage').evaluate(el=>el.classList.contains('playing')));
               await page.click('#stopBtn');
 
-              await page.click('#lineupBtn');await page.waitForTimeout(120);
+              await page.click('#lineupBtn');await page.waitForTimeout(520);
               add('连续首发开始播放',(await page.locator('#status').textContent()).includes('首发连续播放'),await page.locator('#status').textContent());
               await page.click('#stopBtn');
 
