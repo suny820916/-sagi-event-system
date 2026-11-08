@@ -1,4 +1,4 @@
-name: SAGI PLAYER INTRO V1.0.1 test
+name: SAGI PLAYER INTRO V1.0.2 test
 
 on:
   push:
@@ -44,7 +44,7 @@ jobs:
               page.on('console',m=>{if(m.type()==='error'&&!m.text().includes('Failed to load resource: the server responded with a status of 404'))errs.push('console: '+m.text())});
               const r=await page.goto('http://127.0.0.1:8080/intro/',{waitUntil:'networkidle'});
               add('页面HTTP 200',r&&r.status()===200,String(r&&r.status()));
-              add('标题V1.0.1',(await page.title())==='SAGI PLAYER INTRO V1.0.1',await page.title());
+              add('标题V1.0.2',(await page.title())==='SAGI PLAYER INTRO V1.0.2',await page.title());
               add('1920×1080舞台存在',await page.locator('#stage').count()===1);
               add('手机端无横向溢出',await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+4),await page.evaluate(()=>document.documentElement.scrollWidth+' / '+innerWidth));
 
@@ -84,6 +84,7 @@ jobs:
               const afterY=await page.evaluate(()=>scrollY);
               add('手机点击播放后自动回到预览区',afterY<beforeY, beforeY+' -> '+afterY);
               add('单人动画进入playing状态',await page.locator('#stage').evaluate(el=>el.classList.contains('playing')));
+              add('原生动画已启动',await page.locator('#stageName').evaluate(el=>el.getAnimations&&el.getAnimations().length>0),String(await page.locator('#stageName').evaluate(el=>el.getAnimations?el.getAnimations().length:0)));
               add('GOLD模板切换成功',await page.locator('#stage').evaluate(el=>el.classList.contains('theme-gold')));
               add('透明背景切换成功',await page.locator('#bg').evaluate(el=>el.classList.contains('transparent')));
               await page.click('#stopBtn');
@@ -129,6 +130,6 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if [ -f intro-test-result.txt ]; then
             git add intro-test-result.txt
-            git commit -m "Record SAGI PLAYER INTRO V1.0.1 test result" || exit 0
+            git commit -m "Record SAGI PLAYER INTRO V1.0.2 test result" || exit 0
             git push
           fi
