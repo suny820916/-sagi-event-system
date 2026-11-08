@@ -16,7 +16,7 @@ jobs:
           set +e
           BODY=$(mktemp)
           CODE=$(curl -sS -o "$BODY" -w "%{http_code}" \
-            -X POST "https://zgqriuwltbnkgovtsccb.supabase.co/rest/v1/rpc/sagi_get_event" \
+            -X POST "https://zgqrjuwltbnkgovtsccb.supabase.co/rest/v1/rpc/sagi_get_event" \
             -H "Content-Type: application/json" \
             -H "apikey: sb_publishable_bqROSu6ZQRdDW3DLazUCfg_4aYxldN8" \
             --data '{"p_slug":"tacheng-winter-2026"}')
