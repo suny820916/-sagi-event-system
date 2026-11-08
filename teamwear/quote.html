@@ -132,7 +132,7 @@ function choosePackage(index){
  const p=data.packages[index];if(!p)return;selectedPackage=p;
  document.querySelectorAll('.plan').forEach((el,i)=>el.classList.toggle('selected',i===index));
  document.querySelectorAll('.selectBtn').forEach((el,i)=>{el.classList.toggle('active',i===index);el.textContent=i===index?'已选择此方案':'选择此方案'});
- q('selectedPlan').textContent=p.label+' · '+money(p.teamTotal);resetConfirmationCode()
+ q('selectedPlan').textContent=p.label+' · 产品 '+money(p.teamTotal)+' · 确认总额 '+money((Number(p.teamTotal)||0)+(Number(data.nonPackageCharges)||0));resetConfirmationCode()
 }
 function renderPlans(){
  const list=Array.isArray(data.packages)?data.packages:[],sec=q('plansSection'),w=q('plans');
@@ -146,7 +146,7 @@ function encodeConfirmation(obj){
  const bytes=new TextEncoder().encode(JSON.stringify(obj));let bin='';bytes.forEach(b=>bin+=String.fromCharCode(b));return 'SAGI-CFM1.'+btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')
 }
 function confirmationPayload(){
- const current=selectedPackage||null,amount=current?Number(current.teamTotal)||0:Number(data.total)||0;
+ const current=selectedPackage||null,amount=current?(Number(current.teamTotal)||0)+(Number(data.nonPackageCharges)||0):Number(data.total)||0;
  return{
   schema:'SAGI-CONFIRMATION-1',
   orderRef:data.orderRef||'',
@@ -162,7 +162,7 @@ function confirmationPayload(){
 function resetConfirmationCode(){q('confirmationCode').value='';q('confirmationCodeState').textContent=''}
 
 function confirmationText(code=''){
- const plan=selectedPackage?(selectedPackage.label+'，球队总价 '+money(selectedPackage.teamTotal)):'当前报价方案，总价 '+money(data.total);
+ const finalAmount=selectedPackage?((Number(selectedPackage.teamTotal)||0)+(Number(data.nonPackageCharges)||0)):(Number(data.total)||0),plan=selectedPackage?(selectedPackage.label+'，产品方案 '+money(selectedPackage.teamTotal)+'，确认总额 '+money(finalAmount)):'当前报价方案，总价 '+money(data.total);
  return [
   'SAGI TEAMWEAR 订单确认',
   '球队：'+(data.teamName||''),
