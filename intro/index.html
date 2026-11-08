@@ -150,7 +150,7 @@ async function loadCloud(){
 }
 function fillCloudPlayers(){const ev=window.__cloudEvent,ti=+q('cloudTeam').value;if(!ev||!Number.isFinite(ti))return;const team=ev.teams[ti],sel=q('cloudPlayer');sel.innerHTML='<option value="">选择球员</option>';((team&&team.players)||[]).forEach((p,i)=>{const o=document.createElement('option');o.value=i;o.textContent=(p.no?'#'+p.no+' ':'')+(p.name||'球员');sel.appendChild(o)})}
 function chooseCloudPlayer(){const ev=window.__cloudEvent,ti=+q('cloudTeam').value,pi=+q('cloudPlayer').value;if(!ev||!Number.isFinite(ti)||!Number.isFinite(pi))return;const t=ev.teams[ti],p=(t.players||[])[pi];if(!p)return;q('name').value=p.name||'';q('number').value=p.no||p.number||'';q('position').value=p.position||'PLAYER';q('team').value=t.name||'';if(t.crest)assets.crest=t.crest;renderAssetPreviews();renderStage(readForm())}
-function resize(){const f=q('frame'),scale=f.clientWidth/1920;q('stageScale').style.transform='scale('+scale+')';q('stageScale').style.width='1920px';q('stageScale').style.height='1080px'}
+function resize(){const f=q('frame'),scale=Math.min(f.clientWidth/1920,f.clientHeight/1080),left=(f.clientWidth-1920*scale)/2,top=(f.clientHeight-1080*scale)/2;q('stageScale').style.transform='translate('+left+'px,'+top+'px) scale('+scale+')';q('stageScale').style.width='1920px';q('stageScale').style.height='1080px'}
 async function full(){try{await q('frame').requestFullscreen()}catch(e){note('请使用浏览器全屏功能')}}
 function vmixLink(){const u=new URL(location.href);u.searchParams.set('vmix','1');return u.toString()}
 async function copyVmix(){try{await navigator.clipboard.writeText(vmixLink());note('vMix链接已复制')}catch(e){prompt('复制这个链接：',vmixLink())}}
