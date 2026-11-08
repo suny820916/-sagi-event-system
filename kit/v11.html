@@ -258,7 +258,12 @@ function renderPattern(piece){
  if(p.type==='none')return;
  const bbox=piece==='front'?{x:100,y:190,w:370,h:480}:piece==='back'?{x:510,y:180,w:390,h:500}:{x:130,y:570,w:540,h:360};
  document.documentElement.style.setProperty('--pattern-color',p.color);
- if(p.type==='diag'||p.type==='weave'){const id=p.type==='diag'?'diagPattern':'weavePattern';g.innerHTML='<rect x="'+bbox.x+'" y="'+bbox.y+'" width="'+bbox.w+'" height="'+bbox.h+'" fill="url(#'+id+')"/>';return}
+ if(p.type==='diag'){
+   let s='',step=Math.max(18,46-p.density*5);for(let x=bbox.x-bbox.h;x<bbox.x+bbox.w+bbox.h;x+=step)s+='<line x1="'+x+'" y1="'+(bbox.y+bbox.h)+'" x2="'+(x+bbox.h)+'" y2="'+bbox.y+'" stroke="'+p.color+'" stroke-width="'+(3+p.density)+'"/>';g.innerHTML=s;return;
+ }
+ if(p.type==='weave'){
+   let s='',step=Math.max(14,32-p.density*3);for(let y=bbox.y;y<=bbox.y+bbox.h;y+=step)s+='<line x1="'+bbox.x+'" y1="'+y+'" x2="'+(bbox.x+bbox.w)+'" y2="'+y+'" stroke="'+p.color+'" stroke-width="2"/>';for(let x=bbox.x;x<=bbox.x+bbox.w;x+=step)s+='<line x1="'+x+'" y1="'+bbox.y+'" x2="'+x+'" y2="'+(bbox.y+bbox.h)+'" stroke="'+p.color+'" stroke-width="1"/>';g.innerHTML=s;return;
+ }
  if(p.type==='flow'){
    let s='';for(let i=0;i<6+p.density*2;i++){const y=bbox.y+20+i*(bbox.h/(5+p.density*2));s+='<path d="M'+bbox.x+' '+y+' Q'+(bbox.x+bbox.w*.34)+' '+(y-35)+' '+(bbox.x+bbox.w*.58)+' '+(y+10)+' T'+(bbox.x+bbox.w)+' '+(y-10)+'" fill="none" stroke="'+p.color+'" stroke-width="'+(3+p.density*.7)+'"/>'}g.innerHTML=s;return;
  }
