@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#07090d">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%2307090d%22/%3E%3Ctext x=%2232%22 y=%2243%22 text-anchor=%22middle%22 font-size=%2234%22 fill=%22%23d8b55b%22%3ES%3C/text%3E%3C/svg%3E">
-<title>SAGI PLAYER INTRO V2.0</title>
+<title>SAGI PLAYER INTRO V2.1</title>
 <style>
 :root{--bg:#07090d;--panel:#11151c;--line:#2b3340;--text:#f4f0e8;--muted:#8f97a5;--gold:#d8b55b;--green:#72c79a}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
@@ -28,11 +28,18 @@ button,.fileBtn{border:0;border-radius:12px;background:#262d37;color:#fff;font-w
 .groupButtons{display:grid;grid-template-columns:1fr 1fr;gap:8px}.groupButtons button{min-height:48px}.sequence{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.sequence div{background:#0b1016;border:1px solid #29323d;border-radius:11px;padding:8px;text-align:center;font-size:11px;color:#a8b0bb}.sequence b{display:block;color:#e4c878;font-size:14px;margin-bottom:3px}
 .notice{display:none;position:fixed;left:50%;bottom:70px;transform:translateX(-50%);background:#1b2028;border:1px solid #4a4025;color:#f0d58d;border-radius:999px;padding:10px 14px;font-size:12px;z-index:50}
 @media(max-width:940px){.layout{grid-template-columns:1fr}.stageCard{position:static;order:-1}.app{padding-bottom:30px}}
+
+.captainBadge{display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:30px;border-radius:50%;background:#d8b55b;color:#111;font-size:14px;font-weight:1000;margin-left:7px;vertical-align:middle}
+.statPill{display:inline-flex;align-items:center;gap:7px;margin-top:8px;padding:6px 10px;border-radius:999px;background:#ffffff0d;border:1px solid #ffffff1b;color:#d8b55b;font-size:11px;font-weight:900;letter-spacing:1px}
+.subList{position:absolute;left:95px;top:355px;width:1130px;display:grid;grid-template-columns:repeat(2,1fr);gap:14px 28px}
+.subRow{display:grid;grid-template-columns:56px 1fr auto;gap:12px;align-items:center;border-bottom:1px solid #ffffff12;padding:10px 5px;color:#fff}
+.subNo{font-size:24px;font-weight:1000;color:#d8b55b}.subName{font-size:21px;font-weight:900}.subStat{font-size:11px;color:#aab2be}
+.captainNode:after{content:'C';position:absolute;right:-6px;top:-7px;width:19px;height:19px;border-radius:50%;background:#fff1b7;color:#111;font-size:10px;display:flex;align-items:center;justify-content:center;font-weight:1000}
 </style>
 </head>
 <body>
 <div class="app">
-  <div class="top"><div><div class="brand">SAGI PLAYER INTRO</div><div class="sub">V2.0 首发阵容介绍系统 · 分组出场 · 阵型联动 · 专业球场</div></div><div class="ver">V2.0</div></div>
+  <div class="top"><div><div class="brand">SAGI PLAYER INTRO</div><div class="sub">V2.1 首发阵容介绍系统 · 分组出场 · 阵型联动 · 专业球场</div></div><div class="ver">V2.1</div></div>
 
   <div class="layout">
     <div class="controls">
@@ -52,12 +59,16 @@ button,.fileBtn{border:0;border-radius:12px;background:#262d37;color:#fff;font-w
         <div class="grid2">
           <div><label>姓名</label><input id="playerName" value="MARHULAN"></div>
           <div><label>号码</label><input id="playerNo" value="88"></div>
+          <div><label>名单身份</label><select id="squadType"><option value="STARTER">首发</option><option value="SUB">替补</option></select></div>
           <div><label>位置组</label><select id="role"><option value="GK">GK 门将</option><option value="DF">DF 后卫</option><option value="MF" selected>MF 中场</option><option value="FW">FW 前锋</option></select></div>
           <div><label>详细位置</label><input id="position" value="CM"></div>
+          <div><label>队长</label><select id="captain"><option value="0">否</option><option value="1">C 队长</option></select></div>
+          <div><label>数据名称</label><input id="statLabel" value="APPS"></div>
+          <div><label>数据值</label><input id="statValue" value="12"></div>
         </div>
         <div class="asset" style="margin-top:10px"><div class="assetPreview" id="photoPreview">球员</div><div><label>球员照片</label><label class="fileBtn">上传球员照片<input id="photoFile" type="file" accept="image/*"></label></div></div>
         <div class="actions"><button id="addBtn" class="ok" type="button">加入首发</button><button id="updateBtn" type="button">更新当前</button><button id="removeBtn" class="danger" type="button">删除当前</button></div>
-        <div class="muted" style="margin-top:8px">建议首发11人。系统会按照 GK → DF → MF → FW 自动分组。</div>
+        <div class="muted" style="margin-top:8px">首发最多11人；替补可继续加入。系统按 GK → DF → MF → FW 分组，替补独立显示。</div>
         <div id="roster" class="roster" style="margin-top:10px"></div>
         <div class="actions"><button id="saveBtn" type="button">保存阵容</button><button id="loadBtn" type="button">读取阵容</button><button id="demoBtn" type="button">载入4-3-3示例</button></div>
       </div>
@@ -70,10 +81,10 @@ button,.fileBtn{border:0;border-radius:12px;background:#262d37;color:#fff;font-w
           <button id="dfBtn" type="button">后卫 DF</button>
           <button id="mfBtn" type="button">中场 MF</button>
           <button id="fwBtn" type="button">前锋 FW</button>
-          <button id="fullBtn" type="button">完整首发</button>
+          <button id="fullBtn" type="button">完整首发</button><button id="subsBtn" type="button">替补名单</button>
         </div>
         <div class="actions"><button id="autoBtn" class="primary" type="button">连续播放全部</button><button id="stopBtn" type="button">停止</button></div>
-        <div class="sequence" style="margin-top:10px"><div><b>2.5s</b>球队</div><div><b>3s</b>门将</div><div><b>4s</b>后卫</div><div><b>4s</b>中场</div><div><b>4s</b>前锋</div><div><b>6s</b>全阵容</div></div>
+        <div class="sequence" style="margin-top:10px"><div><b>2.5s</b>球队</div><div><b>3s</b>门将</div><div><b>4s</b>后卫</div><div><b>4s</b>中场</div><div><b>4s</b>前锋</div><div><b>6s</b>全阵容</div><div><b>5s</b>替补</div></div>
       </div>
 
       <div class="card">
@@ -92,12 +103,12 @@ button,.fileBtn{border:0;border-radius:12px;background:#262d37;color:#fff;font-w
               <div class="stadium"></div><img id="stadiumPhoto" class="stadiumPhoto"><div class="stadiumShade"></div><div class="pitchLines"></div><div class="light l1"></div><div class="light l2"></div>
               <div id="headerMark" class="headerMark"><img id="stageCrest" class="teamCrest"><div><div id="stageTeam" class="teamHead">TARLAN FC</div><div class="teamSub">STARTING XI</div></div></div>
               <div id="groupTitle" class="groupTitle">STARTING XI</div><div id="groupName" class="groupName">TEAM LINEUP</div><div class="groupLine"></div>
-              <div id="playersArea" class="playersArea"></div><div id="fullList" class="fullList" style="display:none"></div>
+              <div id="playersArea" class="playersArea"></div><div id="fullList" class="fullList" style="display:none"></div><div id="subList" class="subList" style="display:none"></div>
               <div class="formationBox"><div class="formationHead"><div><div class="formationTitle">FORMATION</div><div class="muted">LIVE LINEUP</div></div><div id="formationText" class="formationText">4-3-3</div></div><div class="pitch"><div class="boxTop"></div><div class="boxBottom"></div><div id="formationNodes" class="formationNodes"></div></div></div>
             </div>
           </div>
         </div>
-        <div class="statusBar"><div id="status" class="status">V2.0 已就绪</div><div class="mini">1920 × 1080</div></div>
+        <div class="statusBar"><div id="status" class="status">V2.1 已就绪</div><div class="mini">1920 × 1080</div></div>
       </div>
     </div>
   </div>
@@ -127,33 +138,40 @@ async function dbPut(k,v){try{const db=await openDB();await new Promise((res,rej
 async function dbGet(k){try{const db=await openDB();const v=await new Promise(res=>{const tx=db.transaction('assets','readonly'),r=tx.objectStore('assets').get(k);r.onsuccess=()=>res(r.result||'');r.onerror=()=>res('')});db.close();return v}catch(e){return''}}
 async function dbDel(k){try{const db=await openDB();await new Promise(res=>{const tx=db.transaction('assets','readwrite');tx.objectStore('assets').delete(k);tx.oncomplete=res;tx.onerror=res});db.close()}catch(e){}}
 function fileData(file,max=1100,quality=.82){return new Promise((res,rej)=>{const r=new FileReader();r.onerror=rej;r.onload=()=>{const im=new Image();im.onerror=()=>res(r.result);im.onload=()=>{const ratio=Math.min(1,max/im.width,max/im.height),w=Math.max(1,Math.round(im.width*ratio)),h=Math.max(1,Math.round(im.height*ratio)),cv=document.createElement('canvas');cv.width=w;cv.height=h;const cx=cv.getContext('2d');cx.clearRect(0,0,w,h);cx.drawImage(im,0,0,w,h);try{res(cv.toDataURL('image/webp',quality))}catch(e){res(r.result)}};im.src=r.result};r.readAsDataURL(file)})}
-function readPlayer(){return{id:selected>=0&&roster[selected]?roster[selected].id:'',name:q('playerName').value.trim()||'PLAYER',number:q('playerNo').value.trim()||'00',role:q('role').value,position:q('position').value.trim()||q('role').value,photo:assets.photo||''}}
-function writePlayer(p){q('playerName').value=p.name||'';q('playerNo').value=p.number||'';q('role').value=p.role||'MF';q('position').value=p.position||p.role||'';assets.photo=p.photo||'';renderPreviews()}
+function readPlayer(){return{id:selected>=0&&roster[selected]?roster[selected].id:'',name:q('playerName').value.trim()||'PLAYER',number:q('playerNo').value.trim()||'00',squadType:q('squadType').value||'STARTER',role:q('role').value,position:q('position').value.trim()||q('role').value,captain:q('captain').value==='1',statLabel:q('statLabel').value.trim()||'',statValue:q('statValue').value.trim()||'',photo:assets.photo||''}}
+function writePlayer(p){q('playerName').value=p.name||'';q('playerNo').value=p.number||'';q('squadType').value=p.squadType||'STARTER';q('role').value=p.role||'MF';q('position').value=p.position||p.role||'';q('captain').value=p.captain?'1':'0';q('statLabel').value=p.statLabel||'';q('statValue').value=p.statValue||'';assets.photo=p.photo||'';renderPreviews()}
 function renderPreviews(){q('photoPreview').innerHTML=assets.photo?'<img src="'+assets.photo+'">':'球员';q('crestPreview').innerHTML=assets.crest?'<img src="'+assets.crest+'" style="object-fit:contain">':'队徽';q('bgPreview').innerHTML=assets.bg?'<img src="'+assets.bg+'">':'球场'}
-function addPlayer(){if(roster.length>=11){note('首发最多11人');return}const p=readPlayer();p.id=uid();roster.push(p);selected=roster.length-1;renderRoster();dbPut('photo:'+p.id,p.photo||'');note('已加入首发 '+roster.length+'/11')}
+function starters(){return roster.filter(p=>(p.squadType||'STARTER')==='STARTER')}
+function substitutes(){return roster.filter(p=>p.squadType==='SUB')}
+function addPlayer(){const p=readPlayer();if(p.squadType==='STARTER'&&starters().length>=11){note('首发最多11人');return}if(roster.length>=20){note('整份名单最多20人');return}p.id=uid();roster.push(p);selected=roster.length-1;renderRoster();dbPut('photo:'+p.id,p.photo||'');note('已加入首发 '+roster.length+'/11')}
 function updatePlayer(){if(selected<0||!roster[selected]){note('先选择一名球员');return}const p=readPlayer();p.id=roster[selected].id;roster[selected]=p;renderRoster();dbPut('photo:'+p.id,p.photo||'');note('已更新')}
 function removePlayer(){if(selected<0)return;const p=roster[selected];roster.splice(selected,1);if(p&&p.id)dbDel('photo:'+p.id);selected=Math.min(selected,roster.length-1);if(selected>=0)writePlayer(roster[selected]);renderRoster();renderStage(currentGroup);note('已删除')}
-function renderRoster(){const w=q('roster');w.innerHTML='';if(!roster.length){w.innerHTML='<div class="muted">还没有首发球员。可先点“载入4-3-3示例”查看效果。</div>';return}roster.forEach((p,i)=>{const d=document.createElement('div');d.className='playerRow'+(i===selected?' on':'');d.innerHTML='<div class="thumb">'+(p.photo?'<img src="'+p.photo+'">':p.role)+'</div><div><div class="pname">'+esc(p.name)+'</div><div class="pmeta">'+esc(p.role)+' · '+esc(p.position)+'</div></div><div class="num">'+esc(p.number)+'</div>';d.onclick=()=>{selected=i;writePlayer(p);renderRoster()};w.appendChild(d)})}
-function grouped(role){return roster.filter(p=>p.role===role)}
+function renderRoster(){const w=q('roster');w.innerHTML='';if(!roster.length){w.innerHTML='<div class="muted">还没有首发球员。可先点“载入4-3-3示例”查看效果。</div>';return}roster.forEach((p,i)=>{const d=document.createElement('div');d.className='playerRow'+(i===selected?' on':'');d.innerHTML='<div class="thumb">'+(p.photo?'<img src="'+p.photo+'">':p.role)+'</div><div><div class="pname">'+esc(p.name)+(p.captain?' <span style="color:#d8b55b">C</span>':'')+'</div><div class="pmeta">'+(p.squadType==='SUB'?'SUB · ':'')+esc(p.role)+' · '+esc(p.position)+(p.statValue?' · '+esc(p.statLabel)+' '+esc(p.statValue):'')+'</div></div><div class="num">'+esc(p.number)+'</div>';d.onclick=()=>{selected=i;writePlayer(p);renderRoster()};w.appendChild(d)})}
+function grouped(role){return starters().filter(p=>p.role===role)}
 function getFormationPoints(){
  const f=FORMATIONS[q('formation').value]||FORMATIONS['4-3-3'];const out=[];for(const role of ['GK','DF','MF','FW']){const ps=f[role]||[],players=grouped(role);players.forEach((p,i)=>out.push({p,role,xy:ps[i]||fallbackPoint(role,i,players.length)}))}return out
 }
 function fallbackPoint(role,i,n){const y={GK:91,DF:72,MF:48,FW:22}[role]||50;return[((i+1)/(n+1))*100,y]}
 function renderFormation(activeRole){
- q('formationText').textContent=q('formation').value;const box=q('formationNodes');box.innerHTML='';getFormationPoints().forEach(({p,role,xy})=>{const n=document.createElement('div');n.className='node'+((activeRole==='FULL'||activeRole===role)?' active':'');n.style.left=xy[0]+'%';n.style.top=xy[1]+'%';n.innerHTML='<span>'+esc(p.number)+'</span><small>'+esc(p.name)+'</small>';box.appendChild(n)})
+ q('formationText').textContent=q('formation').value;const box=q('formationNodes');box.innerHTML='';getFormationPoints().forEach(({p,role,xy})=>{const n=document.createElement('div');n.className='node'+((activeRole==='FULL'||activeRole===role)?' active':'')+(p.captain?' captainNode':'');n.style.left=xy[0]+'%';n.style.top=xy[1]+'%';n.innerHTML='<span>'+esc(p.number)+'</span><small>'+esc(p.name)+'</small>';box.appendChild(n)})
 }
 function playerCard(p,n){
  const one=n===1?' one':'';
- return '<div class="playerCard'+one+'"><div class="playerCut">'+(p.photo?'<img src="'+p.photo+'">':'<div class="fallback">'+esc(p.number)+'</div>')+'</div><div class="playerLabel"><div class="playerNo">#'+esc(p.number)+'</div><div class="playerName">'+esc(p.name)+'</div><div class="playerRole">'+esc(p.position||p.role)+'</div></div></div>'
+ return '<div class="playerCard'+one+'"><div class="playerCut">'+(p.photo?'<img src="'+p.photo+'">':'<div class="fallback">'+esc(p.number)+'</div>')+'</div><div class="playerLabel"><div class="playerNo">#'+esc(p.number)+(p.captain?'<span class="captainBadge">C</span>':'')+'</div><div class="playerName">'+esc(p.name)+'</div><div class="playerRole">'+esc(p.position||p.role)+'</div>'+(p.statValue?'<div class="statPill">'+esc(p.statLabel)+' <strong>'+esc(p.statValue)+'</strong></div>':'')+'</div></div>'
 }
 function renderFull(){
- q('playersArea').style.display='none';const list=q('fullList');list.style.display='grid';list.innerHTML=roster.map(p=>'<div class="fullRow"><div class="fullRole">'+esc(p.role)+'</div><div class="fullNo">'+esc(p.number)+'</div><div class="fullName">'+esc(p.name)+'</div><div class="fullPos">'+esc(p.position)+'</div></div>').join('');
+ q('playersArea').style.display='none';q('subList').style.display='none';const list=q('fullList');list.style.display='grid';list.innerHTML=starters().map(p=>'<div class="fullRow"><div class="fullRole">'+esc(p.role)+'</div><div class="fullNo">'+esc(p.number)+'</div><div class="fullName">'+esc(p.name)+(p.captain?' <span class="captainBadge">C</span>':'')+'</div><div class="fullPos">'+esc(p.position)+(p.statValue?' · '+esc(p.statLabel)+' '+esc(p.statValue):'')+'</div></div>').join('');
+
+}
+function renderSubs(){
+ q('playersArea').style.display='none';q('fullList').style.display='none';const list=q('subList');list.style.display='grid';
+ const subs=substitutes();list.innerHTML=subs.length?subs.map(p=>'<div class="subRow"><div class="subNo">#'+esc(p.number)+'</div><div><div class="subName">'+esc(p.name)+'</div><div class="subStat">'+esc(p.role)+' · '+esc(p.position)+'</div></div><div class="subStat">'+(p.statValue?esc(p.statLabel)+' '+esc(p.statValue):'SUB')+'</div></div>').join(''):'<div class="muted">暂无替补球员</div>';
 }
 function renderStage(group){
- currentGroup=group||'TEAM';q('stageTeam').textContent=q('teamName').value.trim()||'TEAM';q('stageCrest').src=assets.crest||'';q('stageCrest').style.visibility=assets.crest?'visible':'hidden';q('stadiumPhoto').src=assets.bg||'';q('stadiumPhoto').className='stadiumPhoto'+(assets.bg?' on':'');q('fullList').style.display='none';q('playersArea').style.display='flex';
+ currentGroup=group||'TEAM';q('stageTeam').textContent=q('teamName').value.trim()||'TEAM';q('stageCrest').src=assets.crest||'';q('stageCrest').style.visibility=assets.crest?'visible':'hidden';q('stadiumPhoto').src=assets.bg||'';q('stadiumPhoto').className='stadiumPhoto'+(assets.bg?' on':'');q('fullList').style.display='none';q('subList').style.display='none';q('playersArea').style.display='flex';
  let title='STARTING XI',name='TEAM LINEUP',players=[];
  if(group==='TEAM'){title='SAGI BROADCAST';name=(q('teamName').value.trim()||'TEAM')+' · '+q('formation').value;players=[]}
- else if(group==='FULL'){title='STARTING XI';name='FULL LINEUP';renderFull()}
+ else if(group==='FULL'){title='STARTING XI';name='FULL LINEUP';renderFull()} else if(group==='SUB'){title='SQUAD';name='SUBSTITUTES';renderSubs()}
  else{title='STARTING XI';name=ROLE_NAMES[group]||group;players=grouped(group);q('playersArea').innerHTML=players.map(p=>playerCard(p,players.length)).join('')}
  q('groupTitle').textContent=title;q('groupName').textContent=name;
  if(group==='TEAM')q('playersArea').innerHTML='<div style="align-self:center;text-align:center;color:#ffffff45;font-weight:1000;font-size:150px;letter-spacing:12px">'+esc(q('formation').value)+'</div>';
@@ -161,26 +179,43 @@ function renderStage(group){
 }
 function applyOutputBackground(){const mode=q('outputBg').value;const st=q('stage');if(mode==='transparent'){st.style.background='transparent';st.querySelector('.stadium').style.display='none';q('stadiumPhoto').style.display='none';st.querySelector('.stadiumShade').style.display='none';st.querySelector('.pitchLines').style.display='none'}else if(mode==='chroma'){st.style.background='#00b140';st.querySelector('.stadium').style.display='none';q('stadiumPhoto').style.display='none';st.querySelector('.stadiumShade').style.display='none';st.querySelector('.pitchLines').style.display='none'}else{st.style.background='#07090c';st.querySelector('.stadium').style.display='block';q('stadiumPhoto').style.display=assets.bg?'block':'none';st.querySelector('.stadiumShade').style.display='block';st.querySelector('.pitchLines').style.display='block'}}
 function animateStage(){
- const cards=[...q('stage').querySelectorAll('.playerCard,.fullRow,.node.active')];cards.forEach((el,i)=>{if(el.animate)el.animate([{opacity:0,transform:'translateY(35px) scale(.97)'},{opacity:1,transform:'translateY(0) scale(1)'}],{duration:520,delay:i*80,fill:'forwards',easing:'cubic-bezier(.2,.8,.2,1)'})});
+ const cards=[...q('stage').querySelectorAll('.playerCard,.fullRow,.subRow,.node.active')];cards.forEach((el,i)=>{if(!el.animate)return;const isNode=el.classList.contains('node');el.animate(isNode?[{opacity:0,transform:'translate(-50%,-50%) scale(.25)'},{opacity:1,transform:'translate(-50%,-50%) scale(1.18)',offset:.72},{opacity:1,transform:'translate(-50%,-50%) scale(1)'}]:[{opacity:0,transform:'translateY(35px) scale(.97)'},{opacity:1,transform:'translateY(0) scale(1)'}],{duration:isNode?620:520,delay:i*(isNode?95:80),fill:'forwards',easing:'cubic-bezier(.2,.8,.2,1)'})});
  const title=q('groupName');if(title.animate)title.animate([{opacity:0,transform:'translateX(-55px)'},{opacity:1,transform:'translateX(0)'}],{duration:560,fill:'forwards',easing:'ease-out'})
 }
 function cloudAdmin(){try{const x=JSON.parse(localStorage.getItem('sagi_cloud_admin_v20')||'null')||{},b=window.SAGI_CLOUD||{};return{url:x.url||b.url||'',key:x.key||b.key||'',eventSlug:x.eventSlug||b.eventSlug||'',token:x.token||''}}catch(e){const b=window.SAGI_CLOUD||{};return{url:b.url||'',key:b.key||'',eventSlug:b.eventSlug||'',token:''}}}
-function compactPlayersForGroup(group){const src=group==='FULL'?roster:(['GK','DF','MF','FW'].includes(group)?grouped(group):[]);return src.map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,photo:group==='FULL'?'':p.photo||''}))}
+function compactPlayersForGroup(group){const src=group==='FULL'?starters():group==='SUB'?substitutes():(['GK','DF','MF','FW'].includes(group)?grouped(group):[]);return src.map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',squadType:p.squadType||'STARTER',photo:(group==='FULL'||group==='SUB')?'':p.photo||''}))}
 async function publishGroup(group,duration){
  const cfg=cloudAdmin();if(!window.SagiCloud||!cfg.url||!cfg.key||!cfg.eventSlug||!cfg.token)return{ok:false};
- try{let cur=await window.SagiCloud.getEvent(cfg.eventSlug,cfg);if(!cur||!cur.payload)return{ok:false};const state={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,6),group,team:q('teamName').value.trim()||'TEAM',formation:q('formation').value,players:compactPlayersForGroup(group),allPlayers:roster.map(p=>({name:p.name,number:p.number,role:p.role,position:p.position})),crest:assets.crest||'',stadium:assets.bg||'',background:q('outputBg').value,duration,startedAt:new Date().toISOString()};const payload=Object.assign({},cur.payload,{lineupIntro:state});try{await window.SagiCloud.saveEvent(cfg.eventSlug,cfg.token,payload,cur.revision,cfg)}catch(e){if(String(e.message).includes('REVISION_CONFLICT')){const fresh=await window.SagiCloud.getEvent(cfg.eventSlug,cfg);await window.SagiCloud.saveEvent(cfg.eventSlug,cfg.token,Object.assign({},fresh.payload,{lineupIntro:state}),fresh.revision,cfg)}else throw e}return{ok:true}}catch(e){return{ok:false}}
+ try{let cur=await window.SagiCloud.getEvent(cfg.eventSlug,cfg);if(!cur||!cur.payload)return{ok:false};const state={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,6),group,team:q('teamName').value.trim()||'TEAM',formation:q('formation').value,players:compactPlayersForGroup(group),allPlayers:starters().map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||''})),substitutes:substitutes().map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,statLabel:p.statLabel||'',statValue:p.statValue||''})),crest:assets.crest||'',stadium:assets.bg||'',background:q('outputBg').value,duration,startedAt:new Date().toISOString()};const payload=Object.assign({},cur.payload,{lineupIntro:state});try{await window.SagiCloud.saveEvent(cfg.eventSlug,cfg.token,payload,cur.revision,cfg)}catch(e){if(String(e.message).includes('REVISION_CONFLICT')){const fresh=await window.SagiCloud.getEvent(cfg.eventSlug,cfg);await window.SagiCloud.saveEvent(cfg.eventSlug,cfg.token,Object.assign({},fresh.payload,{lineupIntro:state}),fresh.revision,cfg)}else throw e}return{ok:true}}catch(e){return{ok:false}}
 }
 function focusAndRun(fn){const mobile=matchMedia&&matchMedia('(max-width:940px)').matches;if(!mobile){fn();return}try{q('frame').scrollIntoView({behavior:'auto',block:'center'});requestAnimationFrame(()=>requestAnimationFrame(fn))}catch(e){fn()}}
-function playGroup(group,duration){playing=true;focusAndRun(()=>{renderStage(group);animateStage();q('status').textContent='正在播放 '+(group==='TEAM'?'球队开场':group==='FULL'?'完整首发':ROLE_NAMES[group]||group);publishGroup(group,duration).then(r=>{if(!r.ok)q('status').textContent+=' · 本机预览'});clearTimeout(seqTimer);seqTimer=setTimeout(()=>{playing=false;q('status').textContent='播放完成 · 画面已保留'},duration)})}
-const AUTO=[['TEAM',2500],['GK',3000],['DF',4000],['MF',4000],['FW',4000],['FULL',6000]];
+function playGroup(group,duration){playing=true;focusAndRun(()=>{renderStage(group);animateStage();q('status').textContent='正在播放 '+(group==='TEAM'?'球队开场':group==='FULL'?'完整首发':group==='SUB'?'替补名单':ROLE_NAMES[group]||group);publishGroup(group,duration).then(r=>{if(!r.ok)q('status').textContent+=' · 本机预览'});clearTimeout(seqTimer);seqTimer=setTimeout(()=>{playing=false;q('status').textContent='播放完成 · 画面已保留'},duration)})}
+const AUTO=[['TEAM',2500],['GK',3000],['DF',4000],['MF',4000],['FW',4000],['FULL',6000],['SUB',5000]];
 function autoAt(i){if(!playing)return;if(i>=AUTO.length){playing=false;q('status').textContent='完整首发播放结束';return}const [g,d]=AUTO[i];renderStage(g);animateStage();q('status').textContent='自动播放 '+(i+1)+' / '+AUTO.length;publishGroup(g,d);clearTimeout(seqTimer);seqTimer=setTimeout(()=>autoAt(i+1),d)}
 function autoPlay(){if(roster.length<1){note('请先加入首发球员');return}playing=true;focusAndRun(()=>autoAt(0))}
 function stop(){playing=false;clearTimeout(seqTimer);q('status').textContent='已停止'}
 function resize(){const f=q('frame'),scale=Math.min(f.clientWidth/1920,f.clientHeight/1080),left=(f.clientWidth-1920*scale)/2,top=(f.clientHeight-1080*scale)/2,w=q('stageScale');w.style.transformOrigin='0 0';w.style.transform='translate3d('+left+'px,'+top+'px,0) scale('+scale+')'}
-async function save(){for(const p of roster){p.id=p.id||uid();dbPut('photo:'+p.id,p.photo||'')}await dbPut('crest',assets.crest||'');await dbPut('stadium',assets.bg||'');localStorage.setItem('sagi_player_intro_v2',JSON.stringify({team:q('teamName').value,formation:q('formation').value,roster:roster.map(p=>({id:p.id,name:p.name,number:p.number,role:p.role,position:p.position}))}));note('V2阵容已保存')}
+async function save(){for(const p of roster){p.id=p.id||uid();dbPut('photo:'+p.id,p.photo||'')}await dbPut('crest',assets.crest||'');await dbPut('stadium',assets.bg||'');localStorage.setItem('sagi_player_intro_v2',JSON.stringify({team:q('teamName').value,formation:q('formation').value,roster:roster.map(p=>({id:p.id,name:p.name,number:p.number,squadType:p.squadType||'STARTER',role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||''}))}));note('V2阵容已保存')}
 async function load(){try{const x=JSON.parse(localStorage.getItem('sagi_player_intro_v2')||'null');if(!x){note('还没有保存V2阵容');return}q('teamName').value=x.team||'';q('formation').value=x.formation||'4-3-3';roster=[];for(const p of (x.roster||[])){p.photo=await dbGet('photo:'+p.id);roster.push(p)}assets.crest=await dbGet('crest');assets.bg=await dbGet('stadium');selected=roster.length?0:-1;if(selected>=0)writePlayer(roster[0]);renderPreviews();renderRoster();renderStage('TEAM');note('V2阵容已读取')}catch(e){note('读取失败')}}
-function demo(){roster=[];const data=[['1','AZAMAT','GK','GK'],['2','DIAS','DF','RB'],['4','NURLAN','DF','CB'],['5','ALMAS','DF','CB'],['3','ERLAN','DF','LB'],['6','SULTAN','MF','CM'],['8','MARHULAN','MF','CM'],['10','ASLAN','MF','AM'],['7','DANIYAR','FW','RW'],['9','ARDAK','FW','ST'],['11','TIMUR','FW','LW']];data.forEach(a=>roster.push({id:uid(),number:a[0],name:a[1],role:a[2],position:a[3],photo:''}));q('formation').value='4-3-3';selected=0;writePlayer(roster[0]);renderRoster();renderStage('FULL');note('已载入4-3-3示例')}
-function vmixLink(){return new URL('./vmix-v20.html',location.href).toString()}
+function demo(){roster=[];const data=[
+['1','AZAMAT','STARTER','GK','GK',0,'CLEAN SHEETS','6'],
+['2','DIAS','STARTER','DF','RB',0,'APPS','12'],
+['4','NURLAN','STARTER','DF','CB',1,'APPS','14'],
+['5','ALMAS','STARTER','DF','CB',0,'APPS','13'],
+['3','ERLAN','STARTER','DF','LB',0,'APPS','11'],
+['6','SULTAN','STARTER','MF','CM',0,'ASSISTS','5'],
+['8','MARHULAN','STARTER','MF','CM',0,'APPS','14'],
+['10','ASLAN','STARTER','MF','AM',0,'GOALS','7'],
+['7','DANIYAR','STARTER','FW','RW',0,'GOALS','8'],
+['9','ARDAK','STARTER','FW','ST',0,'GOALS','12'],
+['11','TIMUR','STARTER','FW','LW',0,'GOALS','6'],
+['12','BEK','SUB','GK','GK',0,'APPS','3'],
+['14','RUSLAN','SUB','DF','CB',0,'APPS','6'],
+['16','ILIAS','SUB','MF','CM',0,'ASSISTS','2'],
+['18','SAMAT','SUB','FW','ST',0,'GOALS','3'],
+['20','AMAN','SUB','FW','RW',0,'APPS','5']
+];data.forEach(a=>roster.push({id:uid(),number:a[0],name:a[1],squadType:a[2],role:a[3],position:a[4],captain:!!a[5],statLabel:a[6],statValue:a[7],photo:''}));q('formation').value='4-3-3';selected=0;writePlayer(roster[0]);renderRoster();renderStage('FULL');note('已载入V2.1示例：11首发 + 5替补')}
+function vmixLink(){return new URL('./vmix-v21.html',location.href).toString()}
 async function copyVmix(){try{await navigator.clipboard.writeText(vmixLink());note('V2 vMix链接已复制')}catch(e){prompt('复制这个链接：',vmixLink())}}
 
 q('crestFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;assets.crest=await fileData(f,420,.84);renderPreviews();renderStage(currentGroup)};
@@ -188,7 +223,7 @@ q('bgFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;assets.bg=
 q('photoFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;assets.photo=await fileData(f,1000,.82);renderPreviews()};
 q('clearBgBtn').onclick=()=>{assets.bg='';renderPreviews();renderStage(currentGroup)};
 q('addBtn').onclick=addPlayer;q('updateBtn').onclick=updatePlayer;q('removeBtn').onclick=removePlayer;q('saveBtn').onclick=save;q('loadBtn').onclick=load;q('demoBtn').onclick=demo;
-q('teamBtn').onclick=()=>playGroup('TEAM',2500);q('gkBtn').onclick=()=>playGroup('GK',3000);q('dfBtn').onclick=()=>playGroup('DF',4000);q('mfBtn').onclick=()=>playGroup('MF',4000);q('fwBtn').onclick=()=>playGroup('FW',4000);q('fullBtn').onclick=()=>playGroup('FULL',6000);q('autoBtn').onclick=autoPlay;q('stopBtn').onclick=stop;q('copyVmixBtn').onclick=copyVmix;
+q('teamBtn').onclick=()=>playGroup('TEAM',2500);q('gkBtn').onclick=()=>playGroup('GK',3000);q('dfBtn').onclick=()=>playGroup('DF',4000);q('mfBtn').onclick=()=>playGroup('MF',4000);q('fwBtn').onclick=()=>playGroup('FW',4000);q('fullBtn').onclick=()=>playGroup('FULL',6000);q('subsBtn').onclick=()=>playGroup('SUB',5000);q('autoBtn').onclick=autoPlay;q('stopBtn').onclick=stop;q('copyVmixBtn').onclick=copyVmix;
 q('formation').onchange=()=>renderStage(currentGroup);q('teamName').oninput=()=>renderStage(currentGroup);q('outputBg').onchange=()=>renderStage(currentGroup);
 window.addEventListener('resize',resize);renderPreviews();renderRoster();demo();renderStage('TEAM');resize();
 })();
