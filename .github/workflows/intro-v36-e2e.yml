@@ -3,6 +3,7 @@ name: SAGI PLAYER INTRO V3.6 DUAL TEAM LINEUP test
 on:
   push:
     paths:
+      - 'intro/index.html'
       - 'intro/v36.html'
       - 'intro/vmix-v36.html'
       - '.github/workflows/intro-v36-e2e.yml'
@@ -41,7 +42,7 @@ jobs:
               const page=await context.newPage();
               page.on('pageerror',e=>errs.push('pageerror: '+e.message));
               page.on('console',m=>{if(m.type()==='error'&&!m.text().includes('Failed to load resource')&&!m.text().includes('MEDIA_ELEMENT_ERROR'))errs.push('console: '+m.text())});
-              const r=await page.goto('http://127.0.0.1:8080/intro/v36.html',{waitUntil:'networkidle'});
+              const r=await page.goto('http://127.0.0.1:8080/intro/',{waitUntil:'networkidle'});
               add('页面HTTP 200',r&&r.status()===200,String(r&&r.status()));
               add('标题V3.6 DUAL TEAM',(await page.title())==='SAGI PLAYER INTRO V3.6 · DUAL TEAM LINEUP',await page.title());
               add('手机端无横向溢出',await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+4),await page.evaluate(()=>document.documentElement.scrollWidth+' / '+innerWidth));
