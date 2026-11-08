@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>SAGI EVENT SYSTEM V1.5</title>
+<style>
+:root{--bg:#080808;--panel:#151515;--line:#303030;--text:#f5f1e8;--muted:#8d8d8d;--gold:#dfbd67;--green:#76c49a;--red:#6b2929}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
+.app{max-width:880px;margin:auto;padding:20px 14px 96px}
+.top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.brand{font-size:23px;font-weight:850}.sub,.muted{color:var(--muted);font-size:12px}.ver{border:1px solid #66552b;color:var(--gold);padding:8px 11px;border-radius:999px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:15px;margin:14px 0}
+.hero h1{font-size:28px;margin:10px 0}.badge{display:inline-block;border:1px solid #59491f;color:var(--gold);border-radius:999px;padding:6px 10px;font-size:12px}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}.k{background:#090909;border:1px solid var(--line);border-radius:14px;padding:12px}.k span{display:block;color:var(--muted);font-size:10px}.k b{font-size:25px;color:#efd88e}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.teams{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+label{display:block;color:var(--muted);font-size:11px;margin-bottom:5px}
+input,select,textarea{width:100%;font-size:16px;background:#090909;color:#fff;border:1px solid #3a3a3a;border-radius:13px;padding:12px}
+textarea{resize:vertical}
+button{min-height:44px;border:0;border-radius:13px;background:#292929;color:#fff;font-weight:750;padding:10px 14px}
+.primary{background:linear-gradient(135deg,#c39f4b,#ecd27f);color:#111}.danger{background:#552424}.ok{background:#214936}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.hidden{display:none!important}
+.nav{position:fixed;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(5,1fr);background:#090909f5;border-top:1px solid #292929;padding-bottom:env(safe-area-inset-bottom);z-index:10}
+.nav button{background:none;color:#777;border-radius:0;padding:12px 2px}.nav .active{color:var(--gold)}
+.week{margin:20px 0 8px;padding-top:4px;color:var(--gold);font-weight:800;font-size:15px}.day{margin:10px 0 6px;color:#c7c7c7;font-size:12px}
+.match{background:#090909;border:1px solid #292929;border-radius:14px;padding:11px;margin:8px 0}
+.mh{display:flex;justify-content:space-between;gap:8px;color:#888;font-size:11px;margin-bottom:7px}
+.score{display:grid;grid-template-columns:minmax(0,1fr) 50px 15px 50px minmax(0,1fr);gap:5px;align-items:center}.score input{text-align:center;padding:8px}.home{text-align:right}.away{text-align:left}
+table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:8px 4px;border-bottom:1px solid #292929;text-align:center}th:nth-child(2),td:nth-child(2){text-align:left}
+.notice{display:none;background:#211b10;border:1px solid #62522a;color:#edd991;border-radius:12px;padding:10px;margin-top:12px}
+.check{margin-top:10px;font-size:12px;color:var(--green)}.check.bad{color:#f28b82}
+.posterPreview{background:#090909;border:1px solid #2b2b2b;border-radius:16px;padding:10px;overflow:hidden}
+#posterCanvas{display:block;width:100%;height:auto;border-radius:10px;background:#000}
+#exportedImage{display:none;width:100%;margin-top:12px;border-radius:12px}
+.posterHelp{font-size:12px;color:#9a9a9a;line-height:1.6;margin-top:8px}
+.pill{display:inline-block;border:1px solid #474747;border-radius:999px;padding:5px 8px;color:#aaa;font-size:11px;margin:2px}
+@media(max-width:430px){.grid{grid-template-columns:1fr}.nav button{font-size:12px}.score{grid-template-columns:minmax(0,1fr) 46px 12px 46px minmax(0,1fr)}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div><div class="brand">SAGI EVENT SYSTEM</div><div class="sub">周末联赛 · 比赛 · 积分 · 海报</div></div>
+    <div class="ver">V1.5</div>
+  </div>
+  <div id="notice" class="notice"></div>
+
+  <section id="event">
+    <div class="card hero">
+      <span class="badge">8队单循环 · 周六2场 + 周日2场</span>
+      <h1 id="hero">塔城长风冬季足球联赛</h1>
+      <div class="muted">7周完成28场。每周8支球队全部出场一次，每支球队每周只踢1场。</div>
+      <div class="kpis">
+        <div class="k"><span>周数</span><b>7</b></div>
+        <div class="k"><span>比赛</span><b id="mc">0</b></div>
+        <div class="k"><span>完成</span><b id="dc">0</b></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>联赛设置</h2>
+      <div class="grid">
+        <div><label>赛事名称</label><input id="ename" value="塔城长风冬季足球联赛"></div>
+        <div><label>地点</label><input id="loc" value="新疆塔城市"></div>
+        <div><label>首周周六日期</label><input id="date" type="date"></div>
+        <div><label>周六第1场</label><input id="sat1" type="time" value="12:00"></div>
+        <div><label>周六第2场</label><input id="sat2" type="time" value="14:00"></div>
+        <div><label>周日第1场</label><input id="sun1" type="time" value="12:00"></div>
+        <div><label>周日第2场</label><input id="sun2" type="time" value="14:00"></div>
+      </div>
+      <div class="actions">
+        <button id="gen" class="primary" type="button">生成7周赛程</button>
+        <button id="demo" type="button">载入示例</button>
+        <button id="clear" class="danger" type="button">清空</button>
+      </div>
+      <div id="check" class="check">规则：每周4场；周六2场、周日2场；每队每周1场。</div>
+    </div>
+
+    <div class="card">
+      <h2>8支球队</h2>
+      <div id="teamInputs" class="teams"></div>
+    </div>
+  </section>
+
+  <section id="matches" class="hidden">
+    <div class="card"><h2>比赛中心</h2><div id="matchList" class="muted">请先生成赛程</div></div>
+  </section>
+
+  <section id="stand" class="hidden">
+    <div id="standWrap"><div class="card muted">请先生成赛程</div></div>
+  </section>
+
+  <section id="poster" class="hidden">
+    <div class="card">
+      <h2>海报工具</h2>
+      <div class="grid">
+        <div>
+          <label>海报类型</label>
+          <select id="posterType">
+            <option value="result">赛事结果海报</option>
+            <option value="preview">下一场预告海报</option>
+            <option value="schedule">本周赛程海报</option>
+            <option value="standings">积分榜海报</option>
+          </select>
+        </div>
+        <div>
+          <label>配色</label>
+          <select id="posterTheme">
+            <option value="gold">黑金高级版</option>
+            <option value="red">红黑激情版</option>
+            <option value="blue">蓝白清爽版</option>
+          </select>
+        </div>
+        <div>
+          <label>比赛</label>
+          <select id="posterMatch"></select>
+        </div>
+        <div>
+          <label>周次</label>
+          <select id="posterWeek">
+            <option value="1">第1周</option><option value="2">第2周</option><option value="3">第3周</option><option value="4">第4周</option>
+            <option value="5">第5周</option><option value="6">第6周</option><option value="7">第7周</option>
+          </select>
+        </div>
+        <div>
+          <label>本场MVP（结果海报可选）</label>
+          <input id="posterMvp" placeholder="例如：阿迪力">
+        </div>
+        <div>
+          <label>进球信息（结果海报可选）</label>
+          <textarea id="posterScorers" rows="3" placeholder="例如：9' 艾克拜尔&#10;58' 努尔兰&#10;74' 马尔哈兰"></textarea>
+        </div>
+      </div>
+      <div class="actions">
+        <button id="previewPoster" class="primary" type="button">预览海报</button>
+        <button id="exportPoster" class="ok" type="button">生成高清PNG</button>
+      </div>
+      <div class="posterHelp">海报按 1080×1920（9:16）生成。手机点“生成高清PNG”后，下方会出现图片，可长按保存到相册。</div>
+    </div>
+
+    <div class="card posterPreview">
+      <canvas id="posterCanvas" width="1080" height="1920"></canvas>
+      <img id="exportedImage" alt="已生成的赛事海报">
+    </div>
+  </section>
+
+  <section id="tools" class="hidden">
+    <div class="card">
+      <h2>工具</h2>
+      <button id="summaryBtn" type="button">生成赛程 / 赛果摘要</button>
+      <textarea id="summary" class="hidden" style="height:260px;margin-top:10px"></textarea>
+    </div>
+  </section>
+</div>
+
+<nav class="nav">
+  <button data-tab="event" class="active">赛事</button>
+  <button data-tab="matches">比赛</button>
+  <button data-tab="stand">积分</button>
+  <button data-tab="poster">海报</button>
+  <button data-tab="tools">工具</button>
+</nav>
+
+<script>
+(function(){
+'use strict';
+var KEY='sagi_v15';
+var S={name:'塔城长风冬季足球联赛',loc:'新疆塔城市',date:'',sat1:'12:00',sat2:'14:00',sun1:'12:00',sun2:'14:00',
+teams:['球队1','球队2','球队3','球队4','球队5','球队6','球队7','球队8'],matches:[]};
+
+function q(id){return document.getElementById(id)}
+function teamName(i){return Number.isInteger(i)?S.teams[i]:'待定'}
+function pad2(v){return String(v).padStart(2,'0')}
+function addDays(dateStr,days){
+  if(!dateStr)return '';
+  var p=dateStr.split('-').map(Number);
+  var d=new Date(Date.UTC(p[0],p[1]-1,p[2]+days));
+  return d.getUTCFullYear()+'-'+pad2(d.getUTCMonth()+1)+'-'+pad2(d.getUTCDate());
+}
+function cnDate(s){
+  if(!s)return '日期待定';
+  var p=s.split('-');return p[0]+'年'+Number(p[1])+'月'+Number(p[2])+'日';
+}
+function M(id,week,home,away,day,date,time){return{id:id,week:week,home:home,away:away,day:day,sdate:date,stime:time,hs:null,as:null,status:'pending'}}
+function note(t){var x=q('notice');x.textContent=t;x.style.display='block';setTimeout(function(){x.style.display='none'},1800)}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function load(){try{var x=JSON.parse(localStorage.getItem(KEY)||'null');if(x&&Array.isArray(x.teams)&&Array.isArray(x.matches))S=Object.assign(S,x)}catch(e){}}
+function readTeams(){var a=[];for(var i=0;i<8;i++){var el=q('t'+i);a.push(el&&el.value.trim()?el.value.trim():'球队'+(i+1))}return a}
+
+function buildSchedule(){
+  S.matches=[];
+  var arr=[0,1,2,3,4,5,6,7], id=1;
+  for(var r=0;r<7;r++){
+    var pairs=[];
+    for(var i=0;i<4;i++){
+      var h=arr[i],a=arr[7-i];
+      if((r+i)%2===1){var temp=h;h=a;a=temp}
+      pairs.push([h,a]);
+    }
+    var satDate=addDays(S.date,r*7),sunDate=addDays(S.date,r*7+1);
+    S.matches.push(M('M'+id++,r+1,pairs[0][0],pairs[0][1],'周六',satDate,S.sat1));
+    S.matches.push(M('M'+id++,r+1,pairs[1][0],pairs[1][1],'周六',satDate,S.sat2));
+    S.matches.push(M('M'+id++,r+1,pairs[2][0],pairs[2][1],'周日',sunDate,S.sun1));
+    S.matches.push(M('M'+id++,r+1,pairs[3][0],pairs[3][1],'周日',sunDate,S.sun2));
+    var fixed=arr[0],rest=arr.slice(1);rest.unshift(rest.pop());arr=[fixed].concat(rest);
+  }
+}
+
+function validateSchedule(){
+  if(S.matches.length!==28)return '赛程场次异常';
+  for(var w=1;w<=7;w++){
+    var ms=S.matches.filter(function(m){return m.week===w});
+    if(ms.length!==4)return '第'+w+'周不是4场';
+    var seen={};
+    ms.forEach(function(m){seen[m.home]=(seen[m.home]||0)+1;seen[m.away]=(seen[m.away]||0)+1});
+    for(var t=0;t<8;t++)if(seen[t]!==1)return '第'+w+'周有球队重复出场';
+    if(ms.filter(function(m){return m.day==='周六'}).length!==2||ms.filter(function(m){return m.day==='周日'}).length!==2)return '第'+w+'周周六/周日场次不正确';
+  }
+  return '';
+}
+
+function generate(){
+  S.name=q('ename').value.trim()||'未命名联赛';
+  S.loc=q('loc').value.trim();
+  S.date=q('date').value;
+  S.sat1=q('sat1').value||'12:00';S.sat2=q('sat2').value||'14:00';S.sun1=q('sun1').value||'12:00';S.sun2=q('sun2').value||'14:00';
+  S.teams=readTeams();
+  buildSchedule();
+  var err=validateSchedule();
+  q('check').textContent=err?('⚠ '+err):'✓ 已检查：7周 × 每周4场；周六2场、周日2场；每支球队每周只踢1场。';
+  q('check').className='check'+(err?' bad':'');
+  save();render();switchTab('matches');note('已生成28场周末赛程');
+}
+
+function renderTeams(){
+  q('teamInputs').innerHTML='';
+  S.teams.forEach(function(t,i){var x=document.createElement('input');x.id='t'+i;x.value=t;q('teamInputs').appendChild(x)});
+}
+
+function renderMatches(){
+  var w=q('matchList');w.innerHTML='';
+  if(!S.matches.length){w.textContent='请先生成赛程';return}
+  var lastWeek=0,lastDay='';
+  S.matches.forEach(function(m,i){
+    if(m.week!==lastWeek){var wh=document.createElement('div');wh.className='week';wh.textContent='第'+m.week+'周';w.appendChild(wh);lastWeek=m.week;lastDay=''}
+    if(m.day!==lastDay){var dh=document.createElement('div');dh.className='day';dh.textContent=m.day+' · '+(m.sdate||'未设置日期');w.appendChild(dh);lastDay=m.day}
+    var d=document.createElement('div');d.className='match';
+    d.innerHTML='<div class="mh"><span>#'+(i+1)+' · '+m.stime+'</span><span>'+(m.status==='done'?'已结束':'未开始')+'</span></div>'+
+      '<div class="score"><div class="home">'+teamName(m.home)+'</div><input data-id="'+m.id+'" data-k="hs" inputmode="numeric" value="'+(m.hs===null?'':m.hs)+'"><span>:</span><input data-id="'+m.id+'" data-k="as" inputmode="numeric" value="'+(m.as===null?'':m.as)+'"><div class="away">'+teamName(m.away)+'</div></div>';
+    w.appendChild(d);
+  });
+  w.querySelectorAll('input[data-id]').forEach(function(x){x.addEventListener('change',function(){setScore(x.dataset.id,x.dataset.k,x.value)})});
+}
+
+function setScore(id,key,v){
+  var m=S.matches.find(function(x){return x.id===id});if(!m)return;
+  m[key]=v===''?null:Math.max(0,parseInt(v,10)||0);
+  m.status=(m.hs!==null&&m.as!==null)?'done':'pending';
+  save();render();renderPosterSelectors();
+}
+
+function standings(){
+  var t={};for(var i=0;i<8;i++)t[i]={i:i,p:0,w:0,d:0,l:0,gf:0,ga:0,pts:0};
+  S.matches.forEach(function(m){
+    if(m.hs===null||m.as===null)return;
+    var h=t[m.home],a=t[m.away];h.p++;a.p++;h.gf+=m.hs;h.ga+=m.as;a.gf+=m.as;a.ga+=m.hs;
+    if(m.hs>m.as){h.w++;a.l++;h.pts+=3}else if(m.hs<m.as){a.w++;h.l++;a.pts+=3}else{h.d++;a.d++;h.pts++;a.pts++}
+  });
+  return Object.keys(t).map(function(k){var x=t[k];x.gd=x.gf-x.ga;return x}).sort(function(a,b){return b.pts-a.pts||b.gd-a.gd||b.gf-a.gf});
+}
+
+function renderStand(){
+  var w=q('standWrap');if(!S.matches.length){w.innerHTML='<div class="card muted">请先生成赛程</div>';return}
+  var a=standings(),h='<div class="card"><h2>联赛积分榜</h2><table><tr><th>#</th><th>球队</th><th>赛</th><th>胜</th><th>平</th><th>负</th><th>净</th><th>分</th></tr>';
+  a.forEach(function(x,i){h+='<tr><td>'+(i+1)+'</td><td>'+teamName(x.i)+'</td><td>'+x.p+'</td><td>'+x.w+'</td><td>'+x.d+'</td><td>'+x.l+'</td><td>'+x.gd+'</td><td><b>'+x.pts+'</b></td></tr>'});
+  w.innerHTML=h+'</table></div>';
+}
+
+function render(){
+  q('hero').textContent=S.name||'塔城长风冬季足球联赛';q('ename').value=S.name||'';q('loc').value=S.loc||'';q('date').value=S.date||'';
+  q('sat1').value=S.sat1||'12:00';q('sat2').value=S.sat2||'14:00';q('sun1').value=S.sun1||'12:00';q('sun2').value=S.sun2||'14:00';
+  q('mc').textContent=S.matches.length;q('dc').textContent=S.matches.filter(function(m){return m.status==='done'}).length;
+  renderTeams();renderMatches();renderStand();renderPosterSelectors();
+}
+
+function switchTab(name){
+  ['event','matches','stand','poster','tools'].forEach(function(x){q(x).classList.toggle('hidden',x!==name)});
+  document.querySelectorAll('.nav button').forEach(function(b){b.classList.toggle('active',b.dataset.tab===name)});
+  if(name==='poster')drawPoster();
+}
+
+function demo(){
+  S.name='塔城长风冬季足球联赛';S.loc='新疆塔城市';S.teams=['A塔尔兰','B塔尔兰','塔城','额敏','裕民','和丰','托里','乌苏'];S.sat1='12:00';S.sat2='14:00';S.sun1='12:00';S.sun2='14:00';
+  buildSchedule();save();render();q('check').textContent='✓ 示例：每周4场，周六2场、周日2场，每队每周1场。';note('示例已载入');
+}
+
+function clearAll(){
+  try{localStorage.removeItem(KEY)}catch(e){}
+  S={name:'塔城长风冬季足球联赛',loc:'新疆塔城市',date:'',sat1:'12:00',sat2:'14:00',sun1:'12:00',sun2:'14:00',teams:['球队1','球队2','球队3','球队4','球队5','球队6','球队7','球队8'],matches:[]};
+  render();note('已清空');
+}
+
+function renderPosterSelectors(){
+  var sel=q('posterMatch'),old=sel.value;sel.innerHTML='';
+  if(!S.matches.length){var o=document.createElement('option');o.value='';o.textContent='请先生成赛程';sel.appendChild(o);return}
+  S.matches.forEach(function(m,i){
+    var o=document.createElement('option');o.value=m.id;o.textContent='第'+m.week+'周 '+m.day+' '+m.stime+'｜'+teamName(m.home)+' vs '+teamName(m.away);sel.appendChild(o);
+  });
+  if(Array.from(sel.options).some(function(o){return o.value===old}))sel.value=old;
+  else{
+    var finished=S.matches.find(function(m){return m.status==='done'});
+    if(finished)sel.value=finished.id;
+  }
+}
+
+function theme(){
+  var v=q('posterTheme').value;
+  if(v==='red')return{bg:'#120808',panel:'#1f0d0d',accent:'#e35d5d',text:'#fff7f5',muted:'#d9b3b3'};
+  if(v==='blue')return{bg:'#08101c',panel:'#101c2c',accent:'#78b7ff',text:'#f2f7ff',muted:'#b7c9de'};
+  return{bg:'#080808',panel:'#17130b',accent:'#e1bd62',text:'#fff8e8',muted:'#c8b98d'};
+}
+
+function rr(ctx,x,y,w,h,r,fill,stroke){
+  r=Math.min(r,w/2,h/2);ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();
+  if(fill){ctx.fillStyle=fill;ctx.fill()}if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=2;ctx.stroke()}
+}
+function fitText(ctx,text,maxWidth,startSize,minSize,weight){
+  var s=startSize;while(s>minSize){ctx.font=(weight||700)+' '+s+'px "PingFang SC","Microsoft YaHei",sans-serif';if(ctx.measureText(text).width<=maxWidth)break;s-=2}return s
+}
+function txt(ctx,text,x,y,size,color,align,weight){
+  ctx.fillStyle=color;ctx.textAlign=align||'left';ctx.textBaseline='alphabetic';ctx.font=(weight||700)+' '+size+'px "PingFang SC","Microsoft YaHei",sans-serif';ctx.fillText(text,x,y);
+}
+function centerFit(ctx,text,y,maxWidth,startSize,minSize,color,weight){
+  var s=fitText(ctx,text,maxWidth,startSize,minSize,weight);txt(ctx,text,540,y,s,color,'center',weight)
+}
+function drawBg(ctx,t){
+  ctx.fillStyle=t.bg;ctx.fillRect(0,0,1080,1920);
+  var g=ctx.createRadialGradient(540,400,40,540,500,800);g.addColorStop(0,t.accent+'38');g.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=g;ctx.fillRect(0,0,1080,1200);
+  ctx.strokeStyle=t.accent+'44';ctx.lineWidth=2;for(var i=0;i<8;i++){ctx.beginPath();ctx.arc(540,1900,250+i*80,Math.PI,Math.PI*2);ctx.stroke()}
+}
+function posterHeader(ctx,t,title,sub){
+  txt(ctx,'SAGI EVENT SYSTEM',70,105,44,t.text,'left',850);
+  rr(ctx,865,58,145,58,28,t.accent,null);txt(ctx,'V1.5',938,99,28,t.bg,'center',900);
+  txt(ctx,title,540,215,64,t.text,'center',900);txt(ctx,sub,540,265,24,t.accent,'center',700);
+  centerFit(ctx,S.name||'未命名赛事',355,900,50,30,t.text,850);
+}
+function drawTeamDisc(ctx,t,name,x,y){
+  ctx.beginPath();ctx.arc(x,y,110,0,Math.PI*2);ctx.fillStyle=t.panel;ctx.fill();ctx.strokeStyle=t.accent;ctx.lineWidth=5;ctx.stroke();
+  var initial=name.slice(0,2);txt(ctx,initial,x,y+18,54,t.text,'center',900);
+}
+function currentPosterMatch(){
+  var id=q('posterMatch').value;return S.matches.find(function(m){return m.id===id})||S.matches[0]||null
+}
+function drawResult(ctx,t){
+  posterHeader(ctx,t,'赛事结果海报','MATCH RESULT');
+  var m=currentPosterMatch();if(!m){txt(ctx,'请先生成赛程',540,900,52,t.muted,'center',700);return}
+  drawTeamDisc(ctx,t,teamName(m.home),270,650);drawTeamDisc(ctx,t,teamName(m.away),810,650);
+  centerFit(ctx,teamName(m.home),820,380,44,24,t.text,800);centerFit(ctx,teamName(m.away),870,380,44,24,t.text,800);
+  var score=(m.hs===null||m.as===null)?'VS':(m.hs+' : '+m.as);txt(ctx,score,540,700,112,t.accent,'center',900);
+  rr(ctx,180,930,720,165,28,t.panel,t.accent+'88');
+  txt(ctx,cnDate(m.sdate)+'  '+m.stime,540,990,34,t.text,'center',750);txt(ctx,(S.loc||'地点待定')+' · 第'+m.week+'周 '+m.day,540,1045,28,t.muted,'center',650);
+  var scorers=q('posterScorers').value.trim().split('\n').filter(Boolean).slice(0,6);
+  txt(ctx,'进球信息',120,1215,42,t.accent,'left',850);
+  if(scorers.length){scorers.forEach(function(s,i){txt(ctx,'⚽  '+s,140,1290+i*58,31,t.text,'left',650)})}else txt(ctx,'暂无进球信息',140,1290,30,t.muted,'left',600);
+  var mvp=q('posterMvp').value.trim();if(mvp){rr(ctx,120,1580,840,150,26,t.panel,t.accent+'88');txt(ctx,'本场 MVP',170,1645,31,t.accent,'left',850);centerFit(ctx,mvp,1710,650,62,34,t.text,900)}
+  txt(ctx,'为身边的足球加油',540,1840,32,t.accent,'center',750);
+}
+function drawPreview(ctx,t){
+  posterHeader(ctx,t,'下一场预告','NEXT MATCH');
+  var m=currentPosterMatch();if(!m){txt(ctx,'请先生成赛程',540,900,52,t.muted,'center',700);return}
+  drawTeamDisc(ctx,t,teamName(m.home),270,760);drawTeamDisc(ctx,t,teamName(m.away),810,760);
+  txt(ctx,'VS',540,790,88,t.accent,'center',900);
+  centerFit(ctx,teamName(m.home),955,380,44,24,t.text,850);centerFit(ctx,teamName(m.away),1010,380,44,24,t.text,850);
+  rr(ctx,150,1160,780,250,30,t.panel,t.accent+'88');
+  txt(ctx,cnDate(m.sdate),540,1240,46,t.text,'center',850);txt(ctx,m.day+' · '+m.stime,540,1310,42,t.accent,'center',850);txt(ctx,S.loc||'地点待定',540,1370,30,t.muted,'center',650);
+  txt(ctx,'第'+m.week+'周',540,1540,58,t.text,'center',900);txt(ctx,'MATCH DAY',540,1600,24,t.accent,'center',750);
+  txt(ctx,'为身边的足球加油',540,1840,32,t.accent,'center',750);
+}
+function drawSchedule(ctx,t){
+  var week=Math.max(1,Math.min(7,parseInt(q('posterWeek').value,10)||1)),ms=S.matches.filter(function(m){return m.week===week});
+  posterHeader(ctx,t,'本周赛程','WEEKLY FIXTURES');
+  txt(ctx,'第 '+week+' 周',540,455,66,t.accent,'center',900);
+  if(!ms.length){txt(ctx,'请先生成赛程',540,900,52,t.muted,'center',700);return}
+  var y=570;
+  ms.forEach(function(m,i){
+    rr(ctx,95,y+i*250,890,205,24,t.panel,t.accent+'55');
+    txt(ctx,m.day+'  '+cnDate(m.sdate)+'  '+m.stime,130,y+55+i*250,27,t.muted,'left',650);
+    var hs=fitText(ctx,teamName(m.home),320,42,24,850);txt(ctx,teamName(m.home),335,y+140+i*250,hs,t.text,'center',850);
+    txt(ctx,'VS',540,y+140+i*250,42,t.accent,'center',900);
+    var as=fitText(ctx,teamName(m.away),320,42,24,850);txt(ctx,teamName(m.away),745,y+140+i*250,as,t.text,'center',850);
+  });
+  txt(ctx,S.loc||'地点待定',540,1690,31,t.muted,'center',650);txt(ctx,'每周4场 · 周六2场 · 周日2场',540,1760,30,t.accent,'center',750);txt(ctx,'为身边的足球加油',540,1840,32,t.accent,'center',750);
+}
+function drawStandings(ctx,t){
+  posterHeader(ctx,t,'联赛积分榜','STANDINGS');
+  var a=standings();var y=510;
+  txt(ctx,'排名',110,y,27,t.muted,'center',650);txt(ctx,'球队',220,y,27,t.muted,'left',650);txt(ctx,'赛',655,y,27,t.muted,'center',650);txt(ctx,'净',775,y,27,t.muted,'center',650);txt(ctx,'分',920,y,27,t.muted,'center',650);
+  a.forEach(function(x,i){
+    var yy=y+95+i*145;rr(ctx,75,yy-62,930,112,20,i<3?t.panel:'#101010',i<3?t.accent+'88':'#303030');
+    txt(ctx,String(i+1),110,yy,36,i<3?t.accent:t.text,'center',900);
+    var fs=fitText(ctx,teamName(x.i),360,36,22,800);txt(ctx,teamName(x.i),220,yy,fs,t.text,'left',800);
+    txt(ctx,String(x.p),655,yy,32,t.text,'center',700);txt(ctx,(x.gd>0?'+':'')+x.gd,775,yy,32,t.text,'center',700);txt(ctx,String(x.pts),920,yy,40,t.accent,'center',900);
+  });
+  txt(ctx,'胜3分 · 平1分 · 负0分',540,1780,28,t.muted,'center',650);txt(ctx,'为身边的足球加油',540,1840,32,t.accent,'center',750);
+}
+function drawPoster(){
+  var c=q('posterCanvas'),ctx=c.getContext('2d'),t=theme();drawBg(ctx,t);
+  var type=q('posterType').value;if(type==='result')drawResult(ctx,t);else if(type==='preview')drawPreview(ctx,t);else if(type==='schedule')drawSchedule(ctx,t);else drawStandings(ctx,t);
+}
+function exportPoster(){
+  drawPoster();
+  try{
+    var img=q('exportedImage');img.src=q('posterCanvas').toDataURL('image/png');img.style.display='block';img.scrollIntoView({behavior:'smooth',block:'start'});note('高清PNG已生成，下方长按图片保存');
+  }catch(e){alert('生成PNG失败：'+e.message)}
+}
+
+document.querySelectorAll('.nav button').forEach(function(b){b.addEventListener('click',function(){switchTab(b.dataset.tab)})});
+q('gen').addEventListener('click',generate);q('demo').addEventListener('click',demo);q('clear').addEventListener('click',clearAll);
+q('previewPoster').addEventListener('click',drawPoster);q('exportPoster').addEventListener('click',exportPoster);
+['posterType','posterTheme','posterMatch','posterWeek'].forEach(function(id){q(id).addEventListener('change',drawPoster)});
+q('posterMvp').addEventListener('input',drawPoster);q('posterScorers').addEventListener('input',drawPoster);
+q('summaryBtn').addEventListener('click',function(){
+  var a=[S.name,S.loc,''];
+  S.matches.forEach(function(m){a.push('第'+m.week+'周 '+m.day+' '+(m.sdate||'')+' '+m.stime+'｜'+teamName(m.home)+' '+(m.hs===null?'VS':m.hs+':'+m.as)+' '+teamName(m.away))});
+  q('summary').value=a.join('\n');q('summary').classList.remove('hidden');
+});
+load();render();drawPoster();
+})();
+</script>
+</body>
+</html>
