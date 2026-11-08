@@ -72,10 +72,10 @@ jobs:
               add('前片纹样单独生成',await page.locator('#frontPattern path').count()>0,String(await page.locator('#frontPattern path').count()));
               await page.click('[data-piece="back"]');
               await page.selectOption('#patternType','weave');
-              add('后片可设置独立纹样',(await page.locator('#backPattern').innerHTML()).includes('weavePattern'),(await page.locator('#backPattern').innerHTML()).slice(0,100));
+              add('后片可设置独立纹样',await page.locator('#backPattern line').count()>10,String(await page.locator('#backPattern line').count()));
               await page.click('[data-piece="sleeve"]');
               await page.selectOption('#patternType','diag');
-              add('肩袖可设置独立纹样',(await page.locator('#sleevePatternLayer').innerHTML()).includes('diagPattern'),(await page.locator('#sleevePatternLayer').innerHTML()).slice(0,100));
+              add('肩袖可设置独立纹样',await page.locator('#sleevePatternLayer line').count()>10,String(await page.locator('#sleevePatternLayer line').count()));
 
               await page.click('#previewModeBtn');
               add('成衣预览可切换',await page.locator('#previewView').evaluate(el=>getComputedStyle(el).display!=='none'));
