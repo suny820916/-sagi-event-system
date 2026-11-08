@@ -1,0 +1,790 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07090d">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%2307090d%22/%3E%3Ctext x=%2232%22 y=%2243%22 text-anchor=%22middle%22 font-size=%2234%22 fill=%22%23d8b55b%22%3ES%3C/text%3E%3C/svg%3E">
+<title>SAGI PLAYER INTRO V4.0 · BROADCAST CONTROL ROOM</title>
+<style>
+:root{--bg:#07090d;--panel:#11151c;--line:#2b3340;--text:#f4f0e8;--muted:#8f97a5;--gold:#d8b55b;--green:#72c79a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
+.app{max-width:1420px;margin:auto;padding:18px 14px 70px}.top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.brand{font-size:25px;font-weight:950}.sub{font-size:12px;color:var(--muted);margin-top:4px}.ver{border:1px solid #6b592d;color:var(--gold);border-radius:999px;padding:7px 11px;font-size:12px}
+.layout{display:grid;grid-template-columns:410px minmax(0,1fr);gap:14px;align-items:start}.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:14px;margin:14px 0}.card h2{margin:0 0 12px;font-size:17px}.muted{color:var(--muted);font-size:12px;line-height:1.6}.tiny{font-size:10px;color:#747d8a;line-height:1.55}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}label{display:block;color:#99a1ae;font-size:11px;margin-bottom:5px}input,select{width:100%;background:#080b10;color:#fff;border:1px solid #343d49;border-radius:12px;padding:10px;font-size:15px}
+button,.fileBtn{border:0;border-radius:12px;background:#262d37;color:#fff;font-weight:850;min-height:42px;padding:9px 12px}.primary{background:linear-gradient(135deg,#bd9949,#e6ca76);color:#101216}.ok{background:#1d4935}.danger{background:#572626}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.fileBtn{display:flex;align-items:center;justify-content:center;cursor:pointer}.fileBtn input{display:none}
+.asset{display:grid;grid-template-columns:68px 1fr;gap:10px;align-items:center}.assetPreview{width:68px;height:68px;border:1px solid #343c48;border-radius:14px;background:#090c11;display:flex;align-items:center;justify-content:center;overflow:hidden;color:#69717c;font-size:10px}.assetPreview img{width:100%;height:100%;object-fit:cover}
+.roster{display:grid;gap:7px;max-height:420px;overflow:auto}.playerRow{display:grid;grid-template-columns:50px 1fr auto;gap:9px;align-items:center;background:#0a0e14;border:1px solid #27303c;border-radius:13px;padding:7px}.playerRow.on{border-color:#8f7637;background:#15130d}.thumb{width:50px;height:50px;border-radius:11px;overflow:hidden;background:#151a22;display:flex;align-items:center;justify-content:center;color:#6f7783;font-size:10px}.thumb img{width:100%;height:100%;object-fit:cover}.pname{font-weight:850}.pmeta{font-size:11px;color:#8e96a3;margin-top:2px}.num{font-size:20px;font-weight:950;color:var(--gold)}
+.stageCard{position:sticky;top:8px}.frame{position:relative;width:100%;aspect-ratio:16/9;background:#000;border:1px solid #2d3440;border-radius:18px;overflow:hidden;box-shadow:0 28px 50px #0008}.stageScale{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0}.stage{position:absolute;inset:0;width:1920px;height:1080px;overflow:hidden;background:#07090c;transform-origin:0 0}
+.stadium{position:absolute;inset:0;background:radial-gradient(circle at 50% 0,#6f8294 0,#263442 18%,#111820 42%,#06080b 74%)}.stadium:before{content:"";position:absolute;left:-5%;right:-5%;top:165px;height:300px;background:linear-gradient(#19212a,#0b1016 68%,transparent),repeating-linear-gradient(90deg,#ffffff08 0 7px,transparent 7px 22px);clip-path:polygon(0 0,100% 0,92% 100%,8% 100%)}.stadium:after{content:"";position:absolute;left:0;right:0;bottom:-35px;height:430px;background:linear-gradient(180deg,#173421,#0a2716 70%,#05130a);clip-path:polygon(20% 0,80% 0,100% 100%,0 100%)}.pitchLines{position:absolute;left:320px;right:320px;bottom:0;height:360px;opacity:.22;transform:perspective(800px) rotateX(62deg);transform-origin:bottom;border:5px solid #fff;border-bottom:0}.pitchLines:before{content:"";position:absolute;left:50%;top:0;bottom:0;border-left:4px solid #fff}.pitchLines:after{content:"";position:absolute;width:170px;height:170px;border:4px solid #fff;border-radius:50%;left:50%;top:45%;transform:translate(-50%,-50%)}
+.stadiumShade{position:absolute;inset:0;background:linear-gradient(90deg,#030508e6 0,#05070a99 38%,#05070a55 58%,#030508c9 100%),linear-gradient(0deg,#040609c7 0,transparent 55%,#03050775 100%)}.stadiumPhoto{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}.stadiumPhoto.on{display:block}.stadiumPhoto.on+.stadiumShade{background:linear-gradient(90deg,#020305e8 0,#05070a9c 42%,#05070a6b 63%,#020305c9 100%),linear-gradient(0deg,#020305b5,transparent 60%)}
+.light{position:absolute;width:760px;height:760px;border-radius:50%;filter:blur(100px);opacity:.22}.l1{left:-180px;top:-330px;background:#5cb4ff}.l2{right:-220px;top:-300px;background:#d7b051}
+.headerMark{position:absolute;left:95px;top:72px;display:flex;align-items:center;gap:24px}.teamCrest{width:96px;height:96px;object-fit:contain;filter:drop-shadow(0 12px 20px #0009)}.teamHead{font-size:34px;font-weight:950;letter-spacing:2px}.teamSub{font-size:17px;color:#d8b55b;letter-spacing:5px;margin-top:7px;font-weight:850}
+.groupTitle{position:absolute;left:100px;top:205px;font-size:28px;letter-spacing:7px;color:#d8b55b;font-weight:900}.groupName{position:absolute;left:95px;top:245px;font-size:72px;line-height:1;font-weight:1000;letter-spacing:-2px}.groupLine{position:absolute;left:98px;top:330px;width:400px;height:5px;background:linear-gradient(90deg,#d8b55b,#fff1b7)}
+.playersArea{position:absolute;left:70px;top:350px;width:1240px;height:650px;display:flex;align-items:flex-end;justify-content:center;gap:18px}.playerCard{position:relative;width:230px;height:570px;opacity:1;transform:translateY(0);flex:0 0 auto}.playerCard.one{width:520px}.playerCut{position:absolute;left:0;right:0;bottom:82px;height:490px;display:flex;align-items:flex-end;justify-content:center}.playerCut img{width:100%;height:100%;object-fit:contain;object-position:center bottom;filter:drop-shadow(0 20px 25px #000d)}
+.mediaVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center bottom;filter:drop-shadow(0 20px 25px #000d);z-index:2;background:transparent}
+.mediaFallback{position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:center;z-index:1}
+.playerCard.hasMedia .playerCut:after{content:"MEDIA DAY";position:absolute;right:8%;top:8%;z-index:4;font-size:10px;font-weight:1000;letter-spacing:2px;color:#f3d77f;background:#07090db8;border:1px solid #d8b55b66;border-radius:999px;padding:6px 9px}
+.playerCard.action-WALK_IN .mediaVideo{transform:scale(1.08);transform-origin:center bottom}
+.playerCard.action-ARMS .mediaVideo{transform:scale(1.03)}
+.playerCard.action-LOOK .mediaVideo{transform:scale(1.05)}
+.playerCard.action-GK_GLOVES .mediaVideo{transform:scale(1.07)}
+.playerCard.action-CELEBRATE .mediaVideo{transform:scale(1.08)}
+.mediaTag{display:inline-flex;align-items:center;gap:6px;margin-top:6px;padding:4px 8px;border-radius:999px;background:#d8b55b17;border:1px solid #d8b55b3d;color:#e9cd78;font-size:10px;font-weight:900;letter-spacing:1px}
+.assetPreview video{width:100%;height:100%;object-fit:cover}
+.mediaHelp{margin-top:8px;padding:9px 10px;border-radius:12px;background:#0a0d12;border:1px solid #2a313b;color:#8f98a7;font-size:11px;line-height:1.55}
+.directorBox{margin-top:10px;padding:11px;border-radius:14px;border:1px solid #5a4a26;background:linear-gradient(180deg,#15120b,#0a0d12)}
+.directorHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}.directorHead b{font-size:12px;letter-spacing:2px;color:#e2c46f}.directorHead span{font-size:10px;color:#8f98a7}
+.directorGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.directorGrid input,.directorGrid select{font-size:13px;padding:9px}
+.directorBadge{display:inline-flex;align-items:center;margin-top:5px;padding:4px 7px;border-radius:999px;background:#ffffff0b;border:1px solid #d8b55b45;color:#d8b55b;font-size:9px;font-weight:900;letter-spacing:.6px}
+.playerCard.directed .playerCut:before{content:"DIRECTOR";position:absolute;left:8%;top:8%;z-index:5;font-size:9px;font-weight:1000;letter-spacing:1.5px;color:#fff;background:#000a;border:1px solid #ffffff25;border-radius:999px;padding:5px 8px}
+.freezeFlash{position:absolute;inset:0;pointer-events:none;z-index:20;background:#fff;opacity:0}.playerCut .fallback{width:84%;height:86%;border-radius:34px;background:linear-gradient(160deg,#222c38,#0c1118);display:flex;align-items:center;justify-content:center;font-size:80px;font-weight:1000;color:#ffffff24;border:1px solid #ffffff10}.playerLabel{position:absolute;left:0;right:0;bottom:0;text-align:center}.playerNo{font-size:34px;color:#d8b55b;font-weight:1000}.playerName{font-size:22px;font-weight:950;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.playerRole{font-size:12px;color:#9ba4b1;letter-spacing:3px;margin-top:5px}
+.roleBackdrop{position:absolute;left:60px;top:300px;width:1160px;height:560px;display:flex;align-items:center;justify-content:center;font-size:260px;font-weight:1000;letter-spacing:-18px;color:#ffffff08;z-index:0;pointer-events:none;user-select:none}
+.roleGlow{position:absolute;left:110px;top:330px;width:1120px;height:620px;border-radius:50%;filter:blur(72px);opacity:.22;z-index:0;pointer-events:none;background:radial-gradient(circle,#d8b55b66 0,transparent 68%)}
+.playersArea{z-index:2}
+.playersArea .playerCard{transition:width .25s ease,height .25s ease,margin-bottom .25s ease,opacity .25s ease,filter .25s ease}
+.playersArea.layout-GK .playerCard{width:540px;height:620px;margin-bottom:6px;z-index:4}
+.playersArea.layout-DF .playerCard:nth-child(1),.playersArea.layout-DF .playerCard:nth-child(4){width:205px;height:500px;margin-bottom:0;opacity:.9;filter:saturate(.9)}
+.playersArea.layout-DF .playerCard:nth-child(2),.playersArea.layout-DF .playerCard:nth-child(3){width:275px;height:610px;margin-bottom:28px;z-index:3}
+.playersArea.layout-MF .playerCard:nth-child(1),.playersArea.layout-MF .playerCard:nth-child(3){width:250px;height:545px;margin-bottom:0;opacity:.92}
+.playersArea.layout-MF .playerCard:nth-child(2){width:350px;height:635px;margin-bottom:30px;z-index:4}
+.playersArea.layout-FW .playerCard:nth-child(1),.playersArea.layout-FW .playerCard:nth-child(3){width:265px;height:570px;margin-bottom:8px;opacity:.94}
+.playersArea.layout-FW .playerCard:nth-child(2){width:365px;height:650px;margin-bottom:32px;z-index:5}
+.playersArea.layout-TEAM{align-items:center}
+.stage.group-GK .roleGlow{background:radial-gradient(circle,#67d7ff66 0,transparent 68%);opacity:.26}
+.stage.group-DF .roleGlow{background:radial-gradient(circle,#d8b55b60 0,transparent 68%)}
+.stage.group-MF .roleGlow{background:radial-gradient(circle,#7b8fff66 0,transparent 68%)}
+.stage.group-FW .roleGlow{background:radial-gradient(circle,#ff9a5260 0,transparent 68%);opacity:.27}
+.stage.group-GK .l1{background:#62d2ff}.stage.group-GK .l2{background:#d8b55b}
+.stage.group-DF .l1{background:#9aa7b3}.stage.group-DF .l2{background:#d8b55b}
+.stage.group-MF .l1{background:#6f82ff}.stage.group-MF .l2{background:#d8b55b}
+.stage.group-FW .l1{background:#d8b55b}.stage.group-FW .l2{background:#ff8f55}
+.playerCard:before{content:"";position:absolute;left:12%;right:12%;bottom:72px;height:120px;border-radius:50%;background:radial-gradient(ellipse,#000b 0,transparent 70%);filter:blur(15px);z-index:-1}
+.playerCard .playerCut{z-index:1}.playerCard .playerLabel{z-index:3}
+
+.tunnelScene{position:absolute;inset:0;overflow:hidden;perspective:1200px;z-index:0}
+.tunnelScene .tunnelBack{position:absolute;left:50%;top:13%;width:480px;height:610px;transform:translateX(-50%);background:linear-gradient(#10151b,#05080b 62%);border:3px solid #ffffff18;box-shadow:0 0 120px #000 inset,0 0 80px #d8b55b18;clip-path:polygon(15% 0,85% 0,100% 100%,0 100%)}
+.tunnelScene .portal{position:absolute;left:50%;top:31%;width:270px;height:430px;transform:translateX(-50%);background:linear-gradient(#afc7da55,#193726 54%,#0f2618);box-shadow:0 0 90px #95d8ff33,0 0 120px #d8b55b1f inset;border:2px solid #ffffff1f;overflow:hidden}
+.tunnelScene .portal:before{content:"";position:absolute;left:-15%;right:-15%;bottom:-20px;height:220px;background:linear-gradient(#1d5b34,#0d2b19);clip-path:polygon(15% 0,85% 0,100% 100%,0 100%)}
+.tunnelScene .wall{position:absolute;top:0;bottom:0;width:46%;background:linear-gradient(90deg,#020305,#0b1016 60%,#151b22);filter:drop-shadow(0 0 26px #000);transform-style:preserve-3d}
+.tunnelScene .wall.left{left:-8%;clip-path:polygon(0 0,100% 14%,75% 100%,0 100%);background:linear-gradient(90deg,#020305 0,#090d12 68%,#1b222a)}
+.tunnelScene .wall.right{right:-8%;clip-path:polygon(0 14%,100% 0,100% 100%,25% 100%);background:linear-gradient(270deg,#020305 0,#090d12 68%,#1b222a)}
+.tunnelScene .ceiling{position:absolute;left:12%;right:12%;top:-6%;height:240px;background:linear-gradient(#06080b,#131922);clip-path:polygon(8% 0,92% 0,76% 100%,24% 100%);box-shadow:0 18px 40px #000}
+.tunnelScene .floor{position:absolute;left:8%;right:8%;bottom:-5%;height:390px;background:linear-gradient(#161b20,#050709 72%);clip-path:polygon(24% 0,76% 0,100% 100%,0 100%)}
+.tunnelScene .floor:before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 110px,#ffffff08 112px 114px,transparent 116px 220px),linear-gradient(90deg,transparent,#d8b55b0d,transparent);transform:perspective(800px) rotateX(56deg);transform-origin:bottom}
+.tunnelScene .led{position:absolute;top:185px;width:410px;height:470px;background:linear-gradient(#0a0d11,#111721);border:1px solid #d8b55b44;box-shadow:0 0 35px #d8b55b18 inset,0 0 22px #000;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.tunnelScene .led.left{left:95px;transform:skewY(7deg)}.tunnelScene .led.right{right:95px;transform:skewY(-7deg)}
+.tunnelScene .led:before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,#ffffff05 0 2px,transparent 2px 8px);mix-blend-mode:screen}
+.tunnelScene .ledText{position:relative;z-index:2;font-size:42px;font-weight:1000;letter-spacing:4px;color:#e7cf8a;text-align:center;max-width:330px;text-shadow:0 0 18px #d8b55b55;line-height:1.08}
+.tunnelScene .ledText small{display:block;margin-top:14px;font-size:16px;letter-spacing:6px;color:#ffffffaa}
+.tunnelScene .roofLights{position:absolute;left:460px;right:460px;top:115px;height:26px;background:repeating-linear-gradient(90deg,#ffffff0a 0 30px,#fff6c4 32px 42px,#ffffff0a 44px 82px);filter:blur(.4px);box-shadow:0 0 24px #fff6c455}
+.tunnelScene .fog{position:absolute;left:20%;right:20%;bottom:12%;height:240px;background:radial-gradient(ellipse,#ffffff12 0,transparent 66%);filter:blur(35px);opacity:.8}
+.tunnelScene .cameraVignette{position:absolute;inset:0;background:radial-gradient(circle at 50% 52%,transparent 0 34%,#0008 76%,#000d 100%)}
+.stage.tunnel-open .tunnelScene .wall.left{transform:translateX(-110px)}.stage.tunnel-open .tunnelScene .wall.right{transform:translateX(110px)}
+.stage.tunnel-open .tunnelScene .led.left{transform:translateX(-90px) skewY(7deg);opacity:.45}.stage.tunnel-open .tunnelScene .led.right{transform:translateX(90px) skewY(-7deg);opacity:.45}
+.stage.tunnel-open .tunnelScene .portal{box-shadow:0 0 150px #b6e2ff99,0 0 180px #ffffff44 inset}
+.stage.scene-stadium .tunnelScene,.stage.scene-transparent .tunnelScene,.stage.scene-chroma .tunnelScene{display:none}
+.stage.scene-tunnel .stadium,.stage.scene-tunnel .stadiumPhoto,.stage.scene-tunnel .stadiumShade,.stage.scene-tunnel .pitchLines{display:none!important}
+.stage.scene-tunnel .formationBox{background:#05080cd9;border-color:#e3c66a33}
+.stage.scene-tunnel.group-GK .led{border-color:#6cd8ff55;box-shadow:0 0 45px #6cd8ff16 inset}
+.stage.scene-tunnel.group-MF .led{border-color:#7e8fff55}.stage.scene-tunnel.group-FW .led{border-color:#ff995555}
+.tunnelScene,.tunnelScene .wall,.tunnelScene .led,.tunnelScene .portal{transition:transform .7s cubic-bezier(.2,.8,.2,1),opacity .55s ease,box-shadow .55s ease}
+.formationBox{position:absolute;right:78px;top:175px;width:500px;height:760px;border:1px solid #ffffff20;border-radius:32px;background:#05080cc7;backdrop-filter:blur(7px);padding:28px}.formationHead{display:flex;justify-content:space-between;align-items:flex-start}.formationTitle{font-size:25px;font-weight:950}.formationText{font-size:42px;color:#d8b55b;font-weight:1000}.pitch{position:absolute;left:34px;right:34px;top:120px;bottom:34px;border:3px solid #ffffff50;border-radius:5px;background:linear-gradient(#123d25,#0e321e);overflow:hidden}.pitch:before{content:"";position:absolute;left:0;right:0;top:50%;border-top:2px solid #ffffff55}.pitch:after{content:"";position:absolute;width:115px;height:115px;border:2px solid #ffffff55;border-radius:50%;left:50%;top:50%;transform:translate(-50%,-50%)}.boxTop,.boxBottom{position:absolute;left:50%;width:220px;height:90px;transform:translateX(-50%);border:2px solid #ffffff55}.boxTop{top:-2px}.boxBottom{bottom:-2px}.formationNodes{position:absolute;inset:0}.node{position:absolute;width:54px;height:54px;border-radius:50%;transform:translate(-50%,-50%);background:#161e28;border:2px solid #ffffff75;display:flex;align-items:center;justify-content:center;font-weight:1000;font-size:15px;color:#fff;transition:.25s}.node.active{background:#d8b55b;color:#111;border-color:#fff3b8;box-shadow:0 0 0 8px #d8b55b22}.node small{position:absolute;top:58px;font-size:9px;color:#cbd1d9;white-space:nowrap;max-width:86px;overflow:hidden;text-overflow:ellipsis}
+.fullList{position:absolute;left:95px;top:355px;width:1130px;display:grid;grid-template-columns:repeat(2,1fr);gap:14px 28px}.fullRow{display:grid;grid-template-columns:54px 56px 1fr auto;gap:10px;align-items:center;border-bottom:1px solid #ffffff12;padding:8px 4px}.fullRole{font-size:12px;color:#d8b55b;font-weight:900}.fullNo{font-size:25px;font-weight:1000}.fullName{font-size:22px;font-weight:900}.fullPos{font-size:11px;color:#98a1ad}
+.statusBar{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px}.status{font-size:12px;color:var(--green)}.mini{font-size:11px;color:#8b93a0}
+.groupButtons{display:grid;grid-template-columns:1fr 1fr;gap:8px}.groupButtons button{min-height:48px}.teamSwitch{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}.teamSwitch button{padding:11px 8px;border-radius:12px;font-size:12px;font-weight:1000;letter-spacing:1px}.teamSwitch button.on{border-color:#d8b55b;background:#211b0d;color:#f1d784;box-shadow:0 0 0 1px #d8b55b33 inset}.teamSideBadge{display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;background:#d8b55b15;border:1px solid #d8b55b44;color:#e6c971;font-size:10px;font-weight:1000;letter-spacing:1px}.dualHint{margin-top:8px;padding:8px 10px;border-radius:10px;background:#0a0e13;border:1px solid #27303a;color:#87919d;font-size:10px;line-height:1.5}
+.matchPackage{margin-top:10px;padding:11px;border:1px solid #33404d;border-radius:14px;background:linear-gradient(180deg,#10151b,#090c11)}
+.packageHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}.packageHead b{font-size:12px;color:#e5ca78;letter-spacing:2px}.packageHead span{font-size:10px;color:#8c96a2}
+.packageGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.packageGrid input,.packageGrid select{font-size:12px}
+.audioRow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.audioStatus{margin-top:8px;font-size:10px;color:#85909d}
+.audioEngine{margin-top:10px;padding:10px;border:1px solid #5a4b27;border-radius:13px;background:linear-gradient(180deg,#15120c,#090c11)}
+.audioEngineHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}.audioEngineHead b{font-size:11px;color:#e7cc7d;letter-spacing:2px}.audioEngineHead span{font-size:9px;color:#8d96a2}
+.audioEngineGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}.audioEngineGrid select{font-size:11px}
+.audioMeters{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}.audioMeter{height:8px;border-radius:999px;background:#111821;overflow:hidden}.audioMeter i{display:block;height:100%;width:0;background:linear-gradient(90deg,#7a6531,#e2c46f);transition:width .12s ease}
+.audioDiag{display:flex;justify-content:space-between;gap:8px;margin-top:6px;font-size:9px;color:#76818e}.audioDiag b{color:#d8b55b}
+.matchOverlay,.countdownOverlay,.stingOverlay{position:absolute;inset:0;z-index:18;display:none;pointer-events:none}
+.matchOverlay.on,.countdownOverlay.on,.stingOverlay.on{display:flex}
+.stingOverlay{align-items:center;justify-content:center;background:radial-gradient(circle at center,#18212b 0,#06090d 52%,#020304 100%)}
+.stingCore{text-align:center}.stingLogo{width:250px;height:250px;object-fit:contain;filter:drop-shadow(0 28px 40px #000c)}.stingComp{margin-top:20px;font-size:28px;font-weight:1000;letter-spacing:6px;color:#e9d28c}.stingLine{width:360px;height:3px;margin:18px auto;background:linear-gradient(90deg,transparent,#d8b55b,transparent)}
+.matchOverlay{align-items:center;justify-content:center;background:linear-gradient(120deg,#040608e8,#0b1117ef)}
+.matchCardStage{width:1320px;padding:60px 70px;border:1px solid #ffffff20;background:#070b0fdb;box-shadow:0 28px 100px #000b;position:relative;overflow:hidden}
+.matchCardStage:before{content:"";position:absolute;left:0;top:0;bottom:0;width:10px;background:#d8b55b}
+.matchCompetition{font-size:22px;font-weight:900;letter-spacing:6px;color:#d8b55b}.matchRound{margin-top:8px;font-size:16px;letter-spacing:4px;color:#8e99a6}
+.matchTeams{display:grid;grid-template-columns:1fr 130px 1fr;gap:24px;align-items:center;margin-top:42px}.matchTeam{text-align:center;font-size:54px;font-weight:1000;letter-spacing:-2px;color:#fff}.matchVs{text-align:center;font-size:24px;font-weight:1000;letter-spacing:5px;color:#8b95a0}
+.matchMetaStage{display:flex;justify-content:center;gap:36px;margin-top:36px;font-size:16px;font-weight:800;letter-spacing:2px;color:#c1c8d0}
+.countdownOverlay{align-items:center;justify-content:center;background:radial-gradient(circle,#0c1118ee,#030507f7 68%)}
+.countdownCore{text-align:center}.countdownLabel{font-size:22px;font-weight:900;letter-spacing:8px;color:#aeb7c1}.countdownNumber{font-size:310px;line-height:.9;font-weight:1000;color:#fff;letter-spacing:-18px;text-shadow:0 0 65px #d8b55b22}.countdownSub{font-size:16px;letter-spacing:5px;color:#d8b55b;margin-top:18px}
+.showDirector{margin-top:10px;padding:11px;border:1px solid #4b4128;border-radius:14px;background:linear-gradient(180deg,#15130e,#090c11)}
+.showHead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}.showHead b{font-size:13px;letter-spacing:2px;color:#e7cc7d}.showHead span{font-size:10px;color:#8d96a2}
+.showTimeline{display:grid;gap:7px}.showStep{display:grid;grid-template-columns:30px 1fr 78px 105px 92px 52px 74px;gap:6px;align-items:center;padding:7px;border:1px solid #29323c;border-radius:11px;background:#0b1016}
+.showStep.active{border-color:#d8b55b;background:#17140d;box-shadow:0 0 0 1px #d8b55b22 inset}.showStep.disabled{opacity:.42}
+.showIndex{width:25px;height:25px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#161d26;color:#d8b55b;font-size:10px;font-weight:1000}
+.showStep .showName{font-size:11px;font-weight:950;color:#e7e9ed}.showStep input,.showStep select{min-width:0;padding:7px;font-size:11px}
+.showMove{display:flex;gap:3px}.showMove button{padding:6px 7px;font-size:10px}.showEnable{display:flex;justify-content:center}
+.showProgress{height:7px;border-radius:999px;background:#111821;overflow:hidden;margin-top:10px}.showProgress i{display:block;height:100%;width:0;background:linear-gradient(90deg,#806b34,#e4c978);transition:width .1s linear}
+.showNow{display:flex;justify-content:space-between;gap:10px;margin-top:7px;font-size:10px;color:#8993a0}.showNow b{color:#e4c978}
+.showTotal{font-variant-numeric:tabular-nums}
+.transitionLayer{position:absolute;inset:0;z-index:40;pointer-events:none;opacity:0}.transitionLayer.gold{background:linear-gradient(90deg,#120f08,#d8b55b,#120f08)}.transitionLayer.dark{background:#020305}.transitionLayer.white{background:#fff}
+.cueBadgeStage{position:absolute;right:52px;top:36px;z-index:41;padding:8px 12px;border-radius:999px;background:#080b0fcc;border:1px solid #d8b55b66;color:#e5ca7a;font-size:11px;font-weight:1000;letter-spacing:2px;opacity:0}
+@media(max-width:650px){.showStep{grid-template-columns:28px 1fr 70px 88px}.showStep .showCue,.showStep .showEnable{grid-column:auto}.showMove{grid-column:2/5}}
+.sequence{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.sequence div{background:#0b1016;border:1px solid #29323d;border-radius:11px;padding:8px;text-align:center;font-size:11px;color:#a8b0bb}.sequence b{display:block;color:#e4c878;font-size:14px;margin-bottom:3px}
+.notice{display:none;position:fixed;left:50%;bottom:70px;transform:translateX(-50%);background:#1b2028;border:1px solid #4a4025;color:#f0d58d;border-radius:999px;padding:10px 14px;font-size:12px;z-index:50}
+@media(max-width:940px){.layout{grid-template-columns:1fr}.stageCard{position:static;order:-1}.app{padding-bottom:30px}}
+
+.captainBadge{display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:30px;border-radius:50%;background:#d8b55b;color:#111;font-size:14px;font-weight:1000;margin-left:7px;vertical-align:middle}
+.statPill{display:inline-flex;align-items:center;gap:7px;margin-top:8px;padding:6px 10px;border-radius:999px;background:#ffffff0d;border:1px solid #ffffff1b;color:#d8b55b;font-size:11px;font-weight:900;letter-spacing:1px}
+.subList{position:absolute;left:95px;top:355px;width:1130px;display:grid;grid-template-columns:repeat(2,1fr);gap:14px 28px}
+.subRow{display:grid;grid-template-columns:56px 1fr auto;gap:12px;align-items:center;border-bottom:1px solid #ffffff12;padding:10px 5px;color:#fff}
+.subNo{font-size:24px;font-weight:1000;color:#d8b55b}.subName{font-size:21px;font-weight:900}.subStat{font-size:11px;color:#aab2be}
+.captainNode:after{content:'C';position:absolute;right:-6px;top:-7px;width:19px;height:19px;border-radius:50%;background:#fff1b7;color:#111;font-size:10px;display:flex;align-items:center;justify-content:center;font-weight:1000}
+
+/* ===== V4.0 BROADCAST CONTROL ROOM ===== */
+.broadcastDesk{margin:14px 0 0;background:linear-gradient(180deg,#0b0f15,#070a0e);border:1px solid #303846;border-radius:20px;padding:13px;box-shadow:0 22px 48px #0006}
+.bcMonitors{display:grid;grid-template-columns:1fr 1fr 280px;gap:10px}
+.bcMonitor{min-height:94px;border:1px solid #323b48;border-radius:15px;background:#090d12;padding:12px 14px;position:relative;overflow:hidden}
+.bcMonitor:before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:#616b78}
+.bcMonitor.preview:before{background:#2aa6ff}.bcMonitor.program:before{background:#e84545}
+.bcKicker{font-size:10px;letter-spacing:3px;font-weight:1000;color:#8994a2}.bcMonitor.preview .bcKicker{color:#67c6ff}.bcMonitor.program .bcKicker{color:#ff7474}
+.bcBig{font-size:23px;font-weight:1000;margin-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bcMeta{font-size:10px;color:#7f8996;margin-top:6px;letter-spacing:1px}
+.bcStatusBox{display:grid;gap:7px;align-content:center;border:1px solid #323b48;border-radius:15px;background:#090d12;padding:12px}
+.bcStatusLine{display:flex;justify-content:space-between;gap:8px;font-size:10px;color:#87919d}.bcStatusLine b{color:#e5e8ed}
+.bcLamp{display:inline-flex;align-items:center;gap:7px}.bcLamp i{width:9px;height:9px;border-radius:50%;background:#66707c;box-shadow:0 0 0 4px #ffffff08}.bcLamp.ready i{background:#5bd08c;box-shadow:0 0 14px #5bd08c88}.bcLamp.live i{background:#ef4747;box-shadow:0 0 16px #ef4747aa}
+.bcTransport{display:grid;grid-template-columns:115px 115px minmax(210px,1fr) 115px 140px;gap:8px;margin-top:10px}
+.bcTransport button{min-height:54px;border:1px solid #333d4a;background:#141a22;font-size:12px;letter-spacing:1px}
+.bcTransport .goLive{background:linear-gradient(135deg,#c62e2e,#f05a4e);color:white;font-size:16px;box-shadow:0 10px 26px #b5252540}
+.bcTransport .hold.on{background:#6b531d;color:#ffe39a;border-color:#aa8736}
+.bcTransport .clearAll{background:#2b1114;border-color:#71313a;color:#ff9ca5}
+.bcQuick{display:grid;grid-template-columns:repeat(9,1fr);gap:7px;margin-top:9px}
+.bcQuick button{min-height:42px;padding:7px 5px;font-size:10px;background:#10161d;border:1px solid #2d3743}
+.bcQuick button.on{border-color:#d8b55b;color:#edd68d;background:#1a160d;box-shadow:0 0 0 1px #d8b55b22 inset}
+.bcHint{margin-top:8px;font-size:9px;color:#6f7a87;letter-spacing:.5px}
+.frame:after{content:"PREVIEW";position:absolute;left:14px;top:14px;z-index:70;padding:7px 10px;border-radius:999px;background:#061019cc;border:1px solid #2aa6ff88;color:#75cfff;font-size:10px;font-weight:1000;letter-spacing:2px;pointer-events:none}
+.stageCard .statusBar:before{content:"LOCAL PREVIEW";font-size:9px;color:#58bfff;border:1px solid #2aa6ff55;border-radius:999px;padding:5px 8px}
+@media(max-width:1100px){.bcMonitors{grid-template-columns:1fr 1fr}.bcStatusBox{grid-column:1/3}.bcQuick{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:650px){.bcMonitors{grid-template-columns:1fr}.bcStatusBox{grid-column:auto}.bcTransport{grid-template-columns:1fr 1fr}.bcTransport .goLive{grid-column:1/3}.bcQuick{grid-template-columns:repeat(3,1fr)}}
+
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top"><div><div class="brand">SAGI PLAYER INTRO</div><div class="sub">V4.0 · BROADCAST CONTROL ROOM · 分组出场 · 阵型联动 · 专业球场</div></div><div class="ver">V4.0</div></div>
+  <div class="broadcastDesk">
+    <div class="bcMonitors">
+      <div class="bcMonitor preview"><div class="bcKicker">PREVIEW</div><div id="bcPreviewLabel" class="bcBig">HOME · TEAM OPEN</div><div id="bcPreviewMeta" class="bcMeta">READY · 本机预演，不会直接上屏</div></div>
+      <div class="bcMonitor program"><div class="bcKicker">PROGRAM</div><div id="bcProgramLabel" class="bcBig">SAFE / OFF AIR</div><div id="bcProgramMeta" class="bcMeta">等待 GO LIVE</div></div>
+      <div class="bcStatusBox">
+        <div class="bcStatusLine"><span class="bcLamp ready" id="bcVmixLamp"><i></i>VMIX LINK</span><b id="bcVmixStatus">CHECKING</b></div>
+        <div class="bcStatusLine"><span class="bcLamp" id="bcOnAirLamp"><i></i>ON AIR</span><b id="bcOnAirStatus">SAFE</b></div>
+        <div class="bcStatusLine"><span>NEXT</span><b id="bcNextLabel">HOME GK</b></div>
+      </div>
+    </div>
+    <div class="bcTransport">
+      <button id="prevLiveBtn" type="button">← PREV</button>
+      <button id="holdBtn" class="hold" type="button">HOLD</button>
+      <button id="goLiveBtn" class="goLive" type="button">● GO LIVE</button>
+      <button id="nextLiveBtn" type="button">NEXT →</button>
+      <button id="clearAllBtn" class="clearAll" type="button">CLEAR ALL</button>
+    </div>
+    <div class="bcQuick">
+      <button type="button" data-bc-group="STING" data-bc-label="LOGO STING">LOGO STING</button>
+      <button type="button" data-bc-group="MATCH" data-bc-label="MATCH INFO">MATCH INFO</button>
+      <button type="button" data-bc-group="COUNTDOWN" data-bc-label="COUNTDOWN">COUNTDOWN</button>
+      <button type="button" data-bc-side="HOME" data-bc-group="TEAM" data-bc-label="HOME TEAM">HOME TEAM</button>
+      <button type="button" data-bc-side="HOME" data-bc-group="FULL" data-bc-label="HOME XI">HOME XI</button>
+      <button type="button" data-bc-side="HOME" data-bc-group="SUB" data-bc-label="HOME SUBS">HOME SUBS</button>
+      <button type="button" data-bc-side="AWAY" data-bc-group="TEAM" data-bc-label="AWAY TEAM">AWAY TEAM</button>
+      <button type="button" data-bc-side="AWAY" data-bc-group="FULL" data-bc-label="AWAY XI">AWAY XI</button>
+      <button type="button" data-bc-side="AWAY" data-bc-group="SUB" data-bc-label="AWAY SUBS">AWAY SUBS</button>
+    </div>
+    <div class="bcHint">SPACE = GO LIVE · H = HOLD/RESUME · ←/→ = PREV/NEXT · ESC = CLEAR ALL · 本机大画面始终作为 PREVIEW，vMix Browser 作为 PROGRAM。</div>
+  </div>
+
+  <div class="layout">
+    <div class="controls">
+      <div class="card">
+        <h2>双队阵容 <span id="activeSideBadge" class="teamSideBadge">HOME 主队</span></h2>
+        <div class="teamSwitch"><button id="homeSideBtn" class="on" type="button">HOME 主队</button><button id="awaySideBtn" type="button">AWAY 客队</button></div>
+        <div class="grid2">
+          <div><label>当前球队</label><input id="teamName" value="TARLAN FC"></div>
+          <div><label>当前阵型</label><select id="formation"><option>4-3-3</option><option>4-4-2</option><option>4-2-3-1</option><option>3-5-2</option><option>3-4-3</option><option>5-3-2</option></select></div>
+        </div>
+        <div class="asset" style="margin-top:10px"><div class="assetPreview" id="crestPreview">队徽</div><div><label>球队队徽</label><label class="fileBtn">上传队徽<input id="crestFile" type="file" accept="image/*"></label></div></div>
+        <div class="asset" style="margin-top:10px"><div class="assetPreview" id="bgPreview">球场</div><div><label>专业球场背景（可选）</label><label class="fileBtn">上传球场背景<input id="bgFile" type="file" accept="image/*"></label></div></div>
+        <div class="actions"><button id="clearBgBtn" type="button">使用内置职业球场</button></div>
+        <div class="dualHint">HOME / AWAY 各自独立保存阵型、队徽、11名首发、替补、球员照片/视频与 MEDIA DAY DIRECTOR 参数。切换球队不会覆盖另一队。</div>
+      </div>
+
+      <div class="card">
+        <h2>MATCH SHOW PACKAGE</h2>
+        <div class="matchPackage">
+          <div class="packageHead"><b>MATCH INFO</b><span>赛事信息 · Logo Sting · Countdown · Audio</span></div>
+          <div class="packageGrid">
+            <div><label>赛事名称</label><input id="matchCompetition" value="TFC WINTER LEAGUE"></div>
+            <div><label>轮次</label><input id="matchRound" value="MATCHDAY 01"></div>
+            <div><label>主队</label><input id="matchHome" value="TARLAN FC"></div>
+            <div><label>客队</label><input id="matchAway" value="OPPONENT"></div>
+            <div><label>比赛时间</label><input id="matchKickoff" value="20:00"></div>
+            <div><label>比赛场地</label><input id="matchVenue" value="TACHENG"></div>
+          </div>
+          <div class="asset" style="margin-top:10px"><div class="assetPreview" id="eventLogoPreview">赛事LOGO</div><div><label>Logo Sting 赛事Logo</label><label class="fileBtn">上传赛事Logo<input id="eventLogoFile" type="file" accept="image/*"></label></div></div>
+          <div class="packageHead" style="margin-top:12px"><b>AUDIO PACKAGE</b><span>主音乐 + 真实Cue音效</span></div>
+          <div class="asset"><div class="assetPreview" id="musicPreview">MUSIC</div><div><label>本机主音乐</label><label class="fileBtn">上传音乐<input id="musicFile" type="file" accept="audio/*"></label></div></div>
+          <div class="packageGrid" style="margin-top:8px">
+            <div><label>vMix 主音乐URL</label><input id="musicUrl" placeholder="https://.../show-music.mp3"></div>
+            <div><label>音乐音量</label><select id="musicVolume"><option value="0.35">35%</option><option value="0.5">50%</option><option value="0.65" selected>65%</option><option value="0.8">80%</option><option value="1">100%</option></select></div>
+            <div><label>WHOOSH 音效URL</label><input id="sfxWhoosh" placeholder="https://.../whoosh.mp3"></div>
+            <div><label>HIT 音效URL</label><input id="sfxHit" placeholder="https://.../hit.mp3"></div>
+            <div><label>RISER 音效URL</label><input id="sfxRiser" placeholder="https://.../riser.mp3"></div>
+            <div><label>CROWD 音效URL</label><input id="sfxCrowd" placeholder="https://.../crowd.mp3"></div>
+            <div><label>STING 音效URL</label><input id="sfxSting" placeholder="https://.../sting.mp3"></div>
+          </div>
+          <div class="audioEngine">
+            <div class="audioEngineHead"><b>SAGI AUDIO ENGINE</b><span>主音乐母线 · Cue · Ducking · Fallback</span></div>
+            <div class="audioEngineGrid">
+              <div><label>音频模式</label><select id="audioMode"><option value="HYBRID" selected>HYBRID 混合</option><option value="EXTERNAL">EXTERNAL 仅外部素材</option><option value="BUILTIN">BUILT-IN 内置引擎</option><option value="MUTE">MUTE 静音</option></select></div>
+              <div><label>内置主题</label><select id="audioTheme"><option value="SAGI_PULSE" selected>SAGI PULSE</option><option value="NORTH_WIND">NORTH WIND</option><option value="BLACK_GOLD">BLACK GOLD</option></select></div>
+              <div><label>整体强度</label><select id="audioIntensity"><option value="0.55">LOW</option><option value="0.75" selected>MEDIUM</option><option value="1">HIGH</option></select></div>
+              <div><label>音乐闪避 Ducking</label><select id="audioDucking"><option value="0">OFF</option><option value="0.18">LIGHT</option><option value="0.35" selected>MEDIUM</option><option value="0.55">STRONG</option></select></div>
+              <div><label>Cue 音量</label><select id="cueVolume"><option value="0.65">65%</option><option value="0.8">80%</option><option value="1" selected>100%</option></select></div>
+              <div><label>倒计时节拍</label><select id="countdownBeat"><option value="1" selected>开启</option><option value="0">关闭</option></select></div>
+            </div>
+            <div class="audioMeters"><div><label>MASTER</label><div class="audioMeter"><i id="masterMeter"></i></div></div><div><label>CUE</label><div class="audioMeter"><i id="cueMeter"></i></div></div></div>
+            <div class="audioDiag"><span id="audioEngineState">ENGINE READY</span><span>Fallback <b>ON</b></span></div>
+          </div>
+          <div class="actions"><button id="audioTestBtn" type="button">测试音乐</button><button id="cueTestBtn" type="button">测试HIT</button><button id="audioStopBtn" type="button">停止音频</button><button id="clearMusicBtn" type="button">清除本机音乐</button></div>
+          <div id="audioStatus" class="audioStatus">AUDIO READY · HYBRID 模式优先真实素材，缺失时自动使用 SAGI 内置音频</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>球员名单 · <span id="rosterSideText">HOME 主队</span></h2>
+        <div class="grid2">
+          <div><label>姓名</label><input id="playerName" value="MARHULAN"></div>
+          <div><label>号码</label><input id="playerNo" value="88"></div>
+          <div><label>名单身份</label><select id="squadType"><option value="STARTER">首发</option><option value="SUB">替补</option></select></div>
+          <div><label>位置组</label><select id="role"><option value="GK">GK 门将</option><option value="DF">DF 后卫</option><option value="MF" selected>MF 中场</option><option value="FW">FW 前锋</option></select></div>
+          <div><label>详细位置</label><input id="position" value="CM"></div>
+          <div><label>队长</label><select id="captain"><option value="0">否</option><option value="1">C 队长</option></select></div>
+          <div><label>数据名称</label><input id="statLabel" value="APPS"></div>
+          <div><label>数据值</label><input id="statValue" value="12"></div>
+        </div>
+        <div class="asset" style="margin-top:10px"><div class="assetPreview" id="photoPreview">球员</div><div><label>球员照片</label><label class="fileBtn">上传球员照片<input id="photoFile" type="file" accept="image/*"></label></div></div>
+        <div class="asset" style="margin-top:10px"><div class="assetPreview" id="mediaPreview">VIDEO</div><div><label>MEDIA DAY 短视频</label><label class="fileBtn">上传3–5秒视频<input id="mediaFile" type="file" accept="video/mp4,video/webm,video/quicktime,video/*"></label></div></div>
+        <div class="grid2" style="margin-top:10px">
+          <div><label>动作类型</label><select id="mediaAction"><option value="STANDARD">标准站姿</option><option value="WALK_IN">走向镜头</option><option value="ARMS">抱臂站定</option><option value="LOOK">转身看镜头</option><option value="GK_GLOVES">门将整理手套</option><option value="CELEBRATE">庆祝动作</option></select></div>
+          <div><label>远端 vMix 视频URL</label><input id="mediaUrl" placeholder="https://.../player.mp4"></div>
+        </div>
+        <div class="mediaHelp">本机上传的视频保存在浏览器本地，用于手机/电脑预演；另一台电脑上的 vMix 优先读取上面的公开 HTTPS 视频URL。未填写时自动回退球员照片。</div>
+        <div class="directorBox">
+          <div class="directorHead"><b>MEDIA DAY DIRECTOR</b><span>每名球员独立参数</span></div>
+          <div class="directorGrid">
+            <div><label>入点 IN（秒）</label><input id="directorIn" type="number" min="0" step="0.1" value="0"></div>
+            <div><label>出点 OUT（秒）</label><input id="directorOut" type="number" min="0" step="0.1" value="0" placeholder="0=片尾"></div>
+            <div><label>播放速度</label><select id="directorSpeed"><option value="0.5">0.50× 慢动作</option><option value="0.75">0.75× 慢动作</option><option value="1" selected>1.00× 正常</option><option value="1.25">1.25×</option></select></div>
+            <div><label>末帧定格</label><select id="directorFreeze"><option value="0">关闭</option><option value="1">开启</option></select></div>
+            <div><label>定格时长</label><select id="directorFreezeMs"><option value="500">0.5秒</option><option value="1000" selected>1秒</option><option value="1500">1.5秒</option><option value="2000">2秒</option></select></div>
+            <div><label>镜头推进</label><select id="directorCamera"><option value="NONE">无</option><option value="LIGHT">轻</option><option value="MEDIUM" selected>中</option><option value="STRONG">强</option></select></div>
+          </div>
+        </div>
+        <div class="actions"><button id="addBtn" class="ok" type="button">加入首发</button><button id="updateBtn" type="button">更新当前</button><button id="removeBtn" class="danger" type="button">删除当前</button><button id="clearMediaBtn" type="button">清除视频</button></div>
+        <div class="muted" style="margin-top:8px">首发最多11人；替补可继续加入。系统按 GK → DF → MF → FW 分组，替补独立显示。</div>
+        <div id="roster" class="roster" style="margin-top:10px"></div>
+        <div class="actions"><button id="saveBtn" type="button">保存阵容</button><button id="loadBtn" type="button">读取阵容</button><button id="demoBtn" type="button">载入4-3-3示例</button></div>
+      </div>
+
+      <div class="card">
+        <h2>SHOW DIRECTOR</h2>
+        <div class="groupButtons">
+          <button id="teamBtn" type="button">球队开场</button>
+          <button id="gkBtn" type="button">门将 GK</button>
+          <button id="dfBtn" type="button">后卫 DF</button>
+          <button id="mfBtn" type="button">中场 MF</button>
+          <button id="fwBtn" type="button">前锋 FW</button>
+          <button id="fullBtn" type="button">完整首发</button><button id="subsBtn" type="button">替补名单</button>
+        </div>
+        <div class="showDirector">
+          <div class="showHead"><b>DUAL TEAM SHOW TIMELINE</b><span>主队 + 客队 · 顺序 · 时长 · 转场 · Cue</span></div>
+          <div id="showTimeline" class="showTimeline"></div>
+          <div class="showProgress"><i id="showProgressBar"></i></div>
+          <div class="showNow"><span id="showNow">READY</span><span class="showTotal">TOTAL <b id="showTotal">57.0s</b></span></div>
+          <div class="actions"><button id="showPlayBtn" class="primary" type="button">▶ 预演整套</button><button id="showPrevBtn" type="button">← 上一段</button><button id="showNextBtn" type="button">下一段 →</button><button id="stopBtn" type="button">■ 停止</button></div>
+          <div class="actions"><button id="showResetBtn" type="button">恢复默认时间线</button><button id="showSaveBtn" type="button">保存SHOW</button></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>直播输出</h2>
+        <div class="grid2"><div><label>vMix背景</label><select id="outputBg"><option value="tunnel" selected>球员通道 TUNNEL</option><option value="stadium">球场背景</option><option value="transparent">透明叠加</option><option value="chroma">绿幕</option></select></div><div><label>画面</label><input value="1920 × 1080" readonly></div></div>
+        <div class="actions"><button id="copyVmixBtn" type="button">复制V4.0 vMix链接</button></div>
+        <div class="tiny" style="margin-top:8px">vMix：Add Input → Web Browser → 使用 V4.0 专用链接。手机端点任意组即可同步到直播电脑。</div>
+      </div>
+    </div>
+
+    <div class="stageCard">
+      <div class="card">
+        <div id="frame" class="frame">
+          <div id="stageScale" class="stageScale">
+            <div id="stage" class="stage">
+              <div id="transitionLayer" class="transitionLayer"></div><div id="cueBadgeStage" class="cueBadgeStage"></div>
+              <div id="stingOverlay" class="stingOverlay"><div class="stingCore"><img id="stingLogo" class="stingLogo"><div class="stingLine"></div><div id="stingCompetition" class="stingComp">SAGI FOOTBALL</div></div></div>
+              <div id="matchOverlay" class="matchOverlay"><div class="matchCardStage"><div id="matchCompetitionStage" class="matchCompetition">TFC WINTER LEAGUE</div><div id="matchRoundStage" class="matchRound">MATCHDAY 01</div><div class="matchTeams"><div id="matchHomeStage" class="matchTeam">TARLAN FC</div><div class="matchVs">VS</div><div id="matchAwayStage" class="matchTeam">OPPONENT</div></div><div class="matchMetaStage"><span id="matchKickoffStage">20:00</span><span>·</span><span id="matchVenueStage">TACHENG</span></div></div></div>
+              <div id="countdownOverlay" class="countdownOverlay"><div class="countdownCore"><div class="countdownLabel">KICKOFF SHOW</div><div id="countdownNumber" class="countdownNumber">5</div><div id="countdownSub" class="countdownSub">TFC WINTER LEAGUE</div></div></div>
+              <div id="tunnelScene" class="tunnelScene">
+                <div class="tunnelBack"></div><div class="portal"></div><div class="wall left"></div><div class="wall right"></div><div class="ceiling"></div><div class="floor"></div>
+                <div class="led left"><div id="ledLeft" class="ledText">TARLAN FC<small>STARTING XI</small></div></div>
+                <div class="led right"><div id="ledRight" class="ledText">SAGI<small>TUNNEL</small></div></div>
+                <div class="roofLights"></div><div class="fog"></div><div class="cameraVignette"></div>
+              </div>
+              <div class="stadium"></div><img id="stadiumPhoto" class="stadiumPhoto"><div class="stadiumShade"></div><div class="pitchLines"></div><div class="light l1"></div><div class="light l2"></div>
+              <div id="headerMark" class="headerMark"><img id="stageCrest" class="teamCrest"><div><div id="stageTeam" class="teamHead">TARLAN FC</div><div class="teamSub">STARTING XI</div></div></div>
+              <div id="groupTitle" class="groupTitle">STARTING XI</div><div id="groupName" class="groupName">TEAM LINEUP</div><div class="groupLine"></div>
+              <div id="freezeFlash" class="freezeFlash"></div><div id="roleGlow" class="roleGlow"></div><div id="roleBackdrop" class="roleBackdrop">XI</div>
+              <div id="playersArea" class="playersArea layout-TEAM"></div><div id="fullList" class="fullList" style="display:none"></div><div id="subList" class="subList" style="display:none"></div>
+              <div class="formationBox"><div class="formationHead"><div><div class="formationTitle">FORMATION</div><div class="muted">LIVE LINEUP</div></div><div id="formationText" class="formationText">4-3-3</div></div><div class="pitch"><div class="boxTop"></div><div class="boxBottom"></div><div id="formationNodes" class="formationNodes"></div></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="statusBar"><div id="status" class="status">V4.0 已就绪 · BROADCAST CONTROL ROOM</div><div class="mini">1920 × 1080</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="notice" class="notice"></div>
+<script src="../cloud-config.js"></script><script src="../sagi-cloud.js"></script>
+<script>
+(function(){
+'use strict';
+const q=id=>document.getElementById(id);
+const FORMATIONS={
+ '4-3-3':{GK:[[50,91]],DF:[[16,73],[38,72],[62,72],[84,73]],MF:[[24,48],[50,52],[76,48]],FW:[[18,22],[50,18],[82,22]]},
+ '4-4-2':{GK:[[50,91]],DF:[[16,73],[38,72],[62,72],[84,73]],MF:[[16,48],[38,50],[62,50],[84,48]],FW:[[35,22],[65,22]]},
+ '4-2-3-1':{GK:[[50,91]],DF:[[16,74],[38,72],[62,72],[84,74]],MF:[[36,56],[64,56],[18,38],[50,36],[82,38]],FW:[[50,18]]},
+ '3-5-2':{GK:[[50,91]],DF:[[25,72],[50,75],[75,72]],MF:[[12,48],[32,54],[50,42],[68,54],[88,48]],FW:[[35,22],[65,22]]},
+ '3-4-3':{GK:[[50,91]],DF:[[25,72],[50,75],[75,72]],MF:[[16,49],[38,52],[62,52],[84,49]],FW:[[18,22],[50,18],[82,22]]},
+ '5-3-2':{GK:[[50,91]],DF:[[10,72],[30,75],[50,73],[70,75],[90,72]],MF:[[25,48],[50,52],[75,48]],FW:[[35,22],[65,22]]}
+};
+const ROLE_NAMES={GK:'GOALKEEPER',DF:'DEFENDERS',MF:'MIDFIELDERS',FW:'FORWARDS'};
+let roster=[],selected=-1,activeSide='HOME',teamStore={HOME:{roster:[],formation:'4-3-3',crest:''},AWAY:{roster:[],formation:'4-3-3',crest:''}},assets={photo:'',crest:'',bg:'',eventLogo:'',mediaBlob:null,mediaObjectUrl:'',musicBlob:null,musicObjectUrl:''},playing=false,seqTimer=null,currentGroup='TEAM';
+const DEFAULT_SHOW=[
+ {id:'sting',group:'STING',label:'Logo Sting',duration:2000,transition:'FLASH',cue:'STING',enabled:true},
+ {id:'match',group:'MATCH',label:'比赛信息',duration:3000,transition:'FADE',cue:'RISER',enabled:true},
+ {id:'countdown',group:'COUNTDOWN',label:'开场倒计时',duration:5000,transition:'ZOOM',cue:'HIT',enabled:true},
+ {id:'home_team',side:'HOME',group:'TEAM',label:'主队开场',duration:2500,transition:'FADE',cue:'RISER',enabled:true},
+ {id:'home_gk',side:'HOME',group:'GK',label:'主队门将',duration:3000,transition:'ZOOM',cue:'HIT',enabled:true},
+ {id:'home_df',side:'HOME',group:'DF',label:'主队后卫',duration:4000,transition:'SLIDE',cue:'WHOOSH',enabled:true},
+ {id:'home_mf',side:'HOME',group:'MF',label:'主队中场',duration:4000,transition:'SLIDE',cue:'WHOOSH',enabled:true},
+ {id:'home_fw',side:'HOME',group:'FW',label:'主队前锋',duration:4000,transition:'FLASH',cue:'HIT',enabled:true},
+ {id:'home_full',side:'HOME',group:'FULL',label:'主队完整首发',duration:6000,transition:'ZOOM',cue:'CROWD',enabled:true},
+ {id:'away_team',side:'AWAY',group:'TEAM',label:'客队开场',duration:2500,transition:'FADE',cue:'RISER',enabled:true},
+ {id:'away_gk',side:'AWAY',group:'GK',label:'客队门将',duration:3000,transition:'ZOOM',cue:'HIT',enabled:true},
+ {id:'away_df',side:'AWAY',group:'DF',label:'客队后卫',duration:4000,transition:'SLIDE',cue:'WHOOSH',enabled:true},
+ {id:'away_mf',side:'AWAY',group:'MF',label:'客队中场',duration:4000,transition:'SLIDE',cue:'WHOOSH',enabled:true},
+ {id:'away_fw',side:'AWAY',group:'FW',label:'客队前锋',duration:4000,transition:'FLASH',cue:'HIT',enabled:true},
+ {id:'away_full',side:'AWAY',group:'FULL',label:'客队完整首发',duration:6000,transition:'ZOOM',cue:'CROWD',enabled:true}
+];
+let showSteps=DEFAULT_SHOW.map(x=>({...x})),showIndex=-1,showStartedAt=0,showSession='',showTimer=null;
+let broadcastHold=false,broadcastPreview={group:'TEAM',side:'HOME',label:'HOME TEAM',duration:2500},broadcastProgram=null,broadcastManualIndex=3;
+const BROADCAST_MANUAL=[
+ {group:'STING',side:'HOME',label:'LOGO STING',duration:2000},
+ {group:'MATCH',side:'HOME',label:'MATCH INFO',duration:3000},
+ {group:'COUNTDOWN',side:'HOME',label:'COUNTDOWN',duration:5000},
+ {group:'TEAM',side:'HOME',label:'HOME TEAM',duration:2500},
+ {group:'GK',side:'HOME',label:'HOME GK',duration:3000},
+ {group:'DF',side:'HOME',label:'HOME DF',duration:4000},
+ {group:'MF',side:'HOME',label:'HOME MF',duration:4000},
+ {group:'FW',side:'HOME',label:'HOME FW',duration:4000},
+ {group:'FULL',side:'HOME',label:'HOME XI',duration:6000},
+ {group:'SUB',side:'HOME',label:'HOME SUBS',duration:5000},
+ {group:'TEAM',side:'AWAY',label:'AWAY TEAM',duration:2500},
+ {group:'GK',side:'AWAY',label:'AWAY GK',duration:3000},
+ {group:'DF',side:'AWAY',label:'AWAY DF',duration:4000},
+ {group:'MF',side:'AWAY',label:'AWAY MF',duration:4000},
+ {group:'FW',side:'AWAY',label:'AWAY FW',duration:4000},
+ {group:'FULL',side:'AWAY',label:'AWAY XI',duration:6000},
+ {group:'SUB',side:'AWAY',label:'AWAY SUBS',duration:5000}
+];
+
+
+function note(t){const n=q('notice');n.textContent=t;n.style.display='block';clearTimeout(note.t);note.t=setTimeout(()=>n.style.display='none',1500)}
+function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function uid(){return'p_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8)}
+function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open('sagi_player_intro_v2_assets',1);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('assets'))r.result.createObjectStore('assets')};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
+async function dbPut(k,v){try{const db=await openDB();await new Promise((res,rej)=>{const tx=db.transaction('assets','readwrite');tx.objectStore('assets').put(v,k);tx.oncomplete=res;tx.onerror=()=>rej(tx.error)});db.close()}catch(e){}}
+async function dbGet(k){try{const db=await openDB();const v=await new Promise(res=>{const tx=db.transaction('assets','readonly'),r=tx.objectStore('assets').get(k);r.onsuccess=()=>res(r.result||'');r.onerror=()=>res('')});db.close();return v}catch(e){return''}}
+async function dbDel(k){try{const db=await openDB();await new Promise(res=>{const tx=db.transaction('assets','readwrite');tx.objectStore('assets').delete(k);tx.oncomplete=res;tx.onerror=res});db.close()}catch(e){}}
+function fileData(file,max=1100,quality=.82){return new Promise((res,rej)=>{const r=new FileReader();r.onerror=rej;r.onload=()=>{const im=new Image();im.onerror=()=>res(r.result);im.onload=()=>{const ratio=Math.min(1,max/im.width,max/im.height),w=Math.max(1,Math.round(im.width*ratio)),h=Math.max(1,Math.round(im.height*ratio)),cv=document.createElement('canvas');cv.width=w;cv.height=h;const cx=cv.getContext('2d');cx.clearRect(0,0,w,h);cx.drawImage(im,0,0,w,h);try{res(cv.toDataURL('image/webp',quality))}catch(e){res(r.result)}};im.src=r.result};r.readAsDataURL(file)})}
+function sideLabel(side){return side==='AWAY'?'AWAY 客队':'HOME 主队'}
+function currentTeamName(){return activeSide==='AWAY'?(q('matchAway').value.trim()||q('teamName').value.trim()||'AWAY'):(q('matchHome').value.trim()||q('teamName').value.trim()||'HOME')}
+function stashActiveTeam(){
+ const t=teamStore[activeSide];t.roster=roster;t.formation=q('formation').value||'4-3-3';t.crest=assets.crest||'';
+}
+function refreshSideUI(){
+ q('homeSideBtn').classList.toggle('on',activeSide==='HOME');q('awaySideBtn').classList.toggle('on',activeSide==='AWAY');
+ q('activeSideBadge').textContent=sideLabel(activeSide);q('rosterSideText').textContent=sideLabel(activeSide);q('stage').dataset.side=activeSide;
+}
+function switchTeam(side,opts={}){
+ if(side!=='HOME'&&side!=='AWAY')return;if(!opts.skipStash)stashActiveTeam();activeSide=side;const t=teamStore[side];
+ roster=t.roster||[];q('formation').value=t.formation||'4-3-3';assets.crest=t.crest||'';
+ q('teamName').value=side==='HOME'?(q('matchHome').value||'HOME'):(q('matchAway').value||'AWAY');
+ selected=roster.length?0:-1;if(selected>=0)writePlayer(roster[0]);else{assets.photo='';assets.mediaBlob=null;assets.mediaObjectUrl='';renderPreviews()}
+ refreshSideUI();q('stage').dataset.side=activeSide;renderRoster();renderPreviews();if(!opts.noRender)renderStage(currentGroup);if(!opts.silent)note('已切换到 '+sideLabel(side))
+}
+function readPlayer(){return{id:selected>=0&&roster[selected]?roster[selected].id:'',name:q('playerName').value.trim()||'PLAYER',number:q('playerNo').value.trim()||'00',squadType:q('squadType').value||'STARTER',role:q('role').value,position:q('position').value.trim()||q('role').value,captain:q('captain').value==='1',statLabel:q('statLabel').value.trim()||'',statValue:q('statValue').value.trim()||'',photo:assets.photo||'',mediaBlob:assets.mediaBlob||null,mediaObjectUrl:assets.mediaObjectUrl||'',mediaUrl:q('mediaUrl').value.trim()||'',mediaAction:q('mediaAction').value||'STANDARD',directorIn:Math.max(0,parseFloat(q('directorIn').value)||0),directorOut:Math.max(0,parseFloat(q('directorOut').value)||0),directorSpeed:parseFloat(q('directorSpeed').value)||1,directorFreeze:q('directorFreeze').value==='1',directorFreezeMs:parseInt(q('directorFreezeMs').value,10)||1000,directorCamera:q('directorCamera').value||'MEDIUM'}}
+function writePlayer(p){q('playerName').value=p.name||'';q('playerNo').value=p.number||'';q('squadType').value=p.squadType||'STARTER';q('role').value=p.role||'MF';q('position').value=p.position||p.role||'';q('captain').value=p.captain?'1':'0';q('statLabel').value=p.statLabel||'';q('statValue').value=p.statValue||'';q('mediaUrl').value=p.mediaUrl||'';q('mediaAction').value=p.mediaAction||'STANDARD';q('directorIn').value=Number.isFinite(+p.directorIn)?+p.directorIn:0;q('directorOut').value=Number.isFinite(+p.directorOut)?+p.directorOut:0;q('directorSpeed').value=String(p.directorSpeed||1);q('directorFreeze').value=p.directorFreeze?'1':'0';q('directorFreezeMs').value=String(p.directorFreezeMs||1000);q('directorCamera').value=p.directorCamera||'MEDIUM';assets.photo=p.photo||'';assets.mediaBlob=p.mediaBlob||null;assets.mediaObjectUrl=p.mediaObjectUrl||'';renderPreviews()}
+function packageData(){
+ return{competition:q('matchCompetition').value.trim()||'MATCH',round:q('matchRound').value.trim()||'',home:q('matchHome').value.trim()||'HOME',away:q('matchAway').value.trim()||'AWAY',kickoff:q('matchKickoff').value.trim()||'',venue:q('matchVenue').value.trim()||'',eventLogo:assets.eventLogo||'',musicUrl:q('musicUrl').value.trim()||'',musicVolume:Math.max(0,Math.min(1,parseFloat(q('musicVolume').value)||.65)),audioEngine:{mode:q('audioMode').value||'HYBRID',theme:q('audioTheme').value||'SAGI_PULSE',intensity:Math.max(.1,Math.min(1,parseFloat(q('audioIntensity').value)||.75)),ducking:Math.max(0,Math.min(.8,parseFloat(q('audioDucking').value)||.35)),cueVolume:Math.max(.1,Math.min(1,parseFloat(q('cueVolume').value)||1)),countdownBeat:q('countdownBeat').value==='1'},sfx:{WHOOSH:q('sfxWhoosh').value.trim()||'',HIT:q('sfxHit').value.trim()||'',RISER:q('sfxRiser').value.trim()||'',CROWD:q('sfxCrowd').value.trim()||'',STING:q('sfxSting').value.trim()||''}}
+}
+function writePackage(p={}){
+ q('matchCompetition').value=p.competition||'TFC WINTER LEAGUE';q('matchRound').value=p.round||'MATCHDAY 01';q('matchHome').value=p.home||'TARLAN FC';q('matchAway').value=p.away||'OPPONENT';q('matchKickoff').value=p.kickoff||'20:00';q('matchVenue').value=p.venue||'TACHENG';q('musicUrl').value=p.musicUrl||'';q('musicVolume').value=String(p.musicVolume||.65);const s=p.sfx||{};q('sfxWhoosh').value=s.WHOOSH||'';q('sfxHit').value=s.HIT||'';q('sfxRiser').value=s.RISER||'';q('sfxCrowd').value=s.CROWD||'';q('sfxSting').value=s.STING||'';const a=p.audioEngine||{};q('audioMode').value=a.mode||'HYBRID';q('audioTheme').value=a.theme||'SAGI_PULSE';q('audioIntensity').value=String(a.intensity||.75);q('audioDucking').value=String(a.ducking==null?.35:a.ducking);q('cueVolume').value=String(a.cueVolume||1);q('countdownBeat').value=a.countdownBeat===false?'0':'1'
+}
+function syncMatchStage(){
+ const p=packageData();q('stingLogo').src=p.eventLogo||assets.crest||'';q('stingLogo').style.visibility=(p.eventLogo||assets.crest)?'visible':'hidden';q('stingCompetition').textContent=p.competition;q('matchCompetitionStage').textContent=p.competition;q('matchRoundStage').textContent=p.round;q('matchHomeStage').textContent=p.home;q('matchAwayStage').textContent=p.away;q('matchKickoffStage').textContent=p.kickoff;q('matchVenueStage').textContent=p.venue;q('countdownSub').textContent=p.competition;
+}
+function renderPreviews(){q('photoPreview').innerHTML=assets.photo?'<img src="'+assets.photo+'">':'球员';q('mediaPreview').innerHTML=assets.mediaObjectUrl?'<video src="'+assets.mediaObjectUrl+'" muted loop playsinline autoplay></video>':'VIDEO';q('crestPreview').innerHTML=assets.crest?'<img src="'+assets.crest+'" style="object-fit:contain">':'队徽';q('bgPreview').innerHTML=assets.bg?'<img src="'+assets.bg+'">':'球场';q('eventLogoPreview').innerHTML=assets.eventLogo?'<img src="'+assets.eventLogo+'" style="object-fit:contain">':'赛事LOGO';q('musicPreview').textContent=assets.musicObjectUrl?'AUDIO ✓':'MUSIC'}
+function starters(){return roster.filter(p=>(p.squadType||'STARTER')==='STARTER')}
+function substitutes(){return roster.filter(p=>p.squadType==='SUB')}
+function addPlayer(){const p=readPlayer();if(p.squadType==='STARTER'&&starters().length>=11){note('首发最多11人');return}if(roster.length>=20){note('整份名单最多20人');return}p.id=uid();roster.push(p);selected=roster.length-1;renderRoster();dbPut('photo:'+p.id,p.photo||'');if(p.mediaBlob)dbPut('media:'+p.id,p.mediaBlob);note('已加入名单 '+roster.length+'人')}
+function updatePlayer(){if(selected<0||!roster[selected]){note('先选择一名球员');return}const p=readPlayer();p.id=roster[selected].id;roster[selected]=p;renderRoster();dbPut('photo:'+p.id,p.photo||'');if(p.mediaBlob)dbPut('media:'+p.id,p.mediaBlob);else dbDel('media:'+p.id);note('已更新')}
+function removePlayer(){if(selected<0)return;const p=roster[selected];roster.splice(selected,1);if(p&&p.id){dbDel('photo:'+p.id);dbDel('media:'+p.id)}selected=Math.min(selected,roster.length-1);if(selected>=0)writePlayer(roster[selected]);renderRoster();renderStage(currentGroup);note('已删除')}
+function renderRoster(){const w=q('roster');w.innerHTML='';if(!roster.length){w.innerHTML='<div class="muted">当前球队还没有球员。可载入双队示例查看效果。</div>';return}roster.forEach((p,i)=>{const d=document.createElement('div');d.className='playerRow'+(i===selected?' on':'');d.innerHTML='<div class="thumb">'+(p.photo?'<img src="'+p.photo+'">':p.role)+'</div><div><div class="pname">'+esc(p.name)+(p.captain?' <span style="color:#d8b55b">C</span>':'')+'</div><div class="pmeta">'+(p.squadType==='SUB'?'SUB · ':'')+esc(p.role)+' · '+esc(p.position)+(p.statValue?' · '+esc(p.statLabel)+' '+esc(p.statValue):'')+((p.mediaBlob||p.mediaUrl)?' · MEDIA '+(p.directorSpeed||1)+'×'+(p.directorFreeze?' · FREEZE':''):'')+'</div></div><div class="num">'+esc(p.number)+'</div>';d.onclick=()=>{selected=i;writePlayer(p);renderRoster()};w.appendChild(d)})}
+function grouped(role){return starters().filter(p=>p.role===role)}
+function getFormationPoints(){
+ const f=FORMATIONS[q('formation').value]||FORMATIONS['4-3-3'];const out=[];for(const role of ['GK','DF','MF','FW']){const ps=f[role]||[],players=grouped(role);players.forEach((p,i)=>out.push({p,role,xy:ps[i]||fallbackPoint(role,i,players.length)}))}return out
+}
+function fallbackPoint(role,i,n){const y={GK:91,DF:72,MF:48,FW:22}[role]||50;return[((i+1)/(n+1))*100,y]}
+function renderFormation(activeRole){
+ q('formationText').textContent=q('formation').value;const box=q('formationNodes');box.innerHTML='';getFormationPoints().forEach(({p,role,xy})=>{const n=document.createElement('div');n.className='node'+((activeRole==='FULL'||activeRole===role)?' active':'')+(p.captain?' captainNode':'');n.style.left=xy[0]+'%';n.style.top=xy[1]+'%';n.innerHTML='<span>'+esc(p.number)+'</span><small>'+esc(p.name)+'</small>';box.appendChild(n)})
+}
+function mediaSource(p){return p.mediaObjectUrl||p.mediaUrl||''}
+function directorAttrs(p){
+ return ' data-in="'+(Number(p.directorIn)||0)+'" data-out="'+(Number(p.directorOut)||0)+'" data-speed="'+(Number(p.directorSpeed)||1)+'" data-freeze="'+(p.directorFreeze?'1':'0')+'" data-freezems="'+(Number(p.directorFreezeMs)||1000)+'" data-camera="'+esc(p.directorCamera||'MEDIUM')+'"';
+}
+function playerCard(p,n){
+ const one=n===1?' one':'',media=mediaSource(p),action=' action-'+esc(p.mediaAction||'STANDARD'),hasMedia=media?' hasMedia':'',directed=media?' directed':'';
+ const fallback=p.photo?'<img src="'+p.photo+'">':'<div class="fallback">'+esc(p.number)+'</div>';
+ const visual=media?'<div class="mediaFallback">'+fallback+'</div><video class="mediaVideo" src="'+esc(media)+'" muted playsinline preload="auto"'+directorAttrs(p)+'></video>':fallback;
+ const dirTag=media?'<div class="directorBadge">IN '+(Number(p.directorIn)||0).toFixed(1)+' · '+(Number(p.directorSpeed)||1).toFixed(2)+'×'+(p.directorFreeze?' · FREEZE':'')+'</div>':'';
+ return '<div class="playerCard'+one+hasMedia+action+directed+'"><div class="playerCut">'+visual+'</div><div class="playerLabel"><div class="playerNo">#'+esc(p.number)+(p.captain?'<span class="captainBadge">C</span>':'')+'</div><div class="playerName">'+esc(p.name)+'</div><div class="playerRole">'+esc(p.position||p.role)+'</div>'+(p.statValue?'<div class="statPill">'+esc(p.statLabel)+' <strong>'+esc(p.statValue)+'</strong></div>':'')+(media?'<div class="mediaTag">MEDIA DAY · '+esc(p.mediaAction||'STANDARD')+'</div>':'')+dirTag+'</div></div>'
+}
+function flashFreeze(){
+ const f=q('freezeFlash');if(!f||!f.animate)return;
+ f.animate([{opacity:0},{opacity:.22,offset:.35},{opacity:0}],{duration:180,fill:'none'});
+}
+function configureDirectorVideo(v){
+ const inPt=Math.max(0,parseFloat(v.dataset.in)||0),outPt=Math.max(0,parseFloat(v.dataset.out)||0),speed=Math.max(.25,parseFloat(v.dataset.speed)||1),freeze=v.dataset.freeze==='1',freezeMs=Math.max(0,parseInt(v.dataset.freezems,10)||1000);
+ v.playbackRate=speed;
+ const start=()=>{try{const max=Math.max(0,(v.duration||0)-.03),target=Math.min(inPt,max);if(Math.abs(v.currentTime-target)>.08)v.currentTime=target;const p=v.play();if(p&&p.catch)p.catch(()=>{})}catch(e){}};
+ if(v.readyState>=1)start();else v.addEventListener('loadedmetadata',start,{once:true});
+ const onTime=()=>{const end=outPt>inPt?outPt:(Number.isFinite(v.duration)?v.duration:0);if(end>0&&v.currentTime>=Math.max(inPt,end-.035)){v.removeEventListener('timeupdate',onTime);try{v.pause();v.currentTime=Math.max(inPt,Math.min(end,v.duration||end)-.03)}catch(e){}if(freeze){flashFreeze();v.dataset.frozen='1';setTimeout(()=>{v.dataset.freezeDone='1'},freezeMs)}}};
+ v.addEventListener('timeupdate',onTime);
+}
+function playMediaVideos(){q('stage').querySelectorAll('video.mediaVideo').forEach(configureDirectorVideo)}
+function renderFull(){
+ q('playersArea').style.display='none';q('subList').style.display='none';const list=q('fullList');list.style.display='grid';list.innerHTML=starters().map(p=>'<div class="fullRow"><div class="fullRole">'+esc(p.role)+'</div><div class="fullNo">'+esc(p.number)+'</div><div class="fullName">'+esc(p.name)+(p.captain?' <span class="captainBadge">C</span>':'')+'</div><div class="fullPos">'+esc(p.position)+(p.statValue?' · '+esc(p.statLabel)+' '+esc(p.statValue):'')+'</div></div>').join('');
+
+}
+function renderSubs(){
+ q('playersArea').style.display='none';q('fullList').style.display='none';const list=q('subList');list.style.display='grid';
+ const subs=substitutes();list.innerHTML=subs.length?subs.map(p=>'<div class="subRow"><div class="subNo">#'+esc(p.number)+'</div><div><div class="subName">'+esc(p.name)+'</div><div class="subStat">'+esc(p.role)+' · '+esc(p.position)+'</div></div><div class="subStat">'+(p.statValue?esc(p.statLabel)+' '+esc(p.statValue):'SUB')+'</div></div>').join(''):'<div class="muted">暂无替补球员</div>';
+}
+function updateTunnelLabels(group){
+ const team=currentTeamName(),left=q('ledLeft'),right=q('ledRight');
+ const role={TEAM:'STARTING XI',GK:'GOALKEEPER',DF:'DEFENDERS',MF:'MIDFIELDERS',FW:'FORWARDS',FULL:'FORMATION',SUB:'SUBSTITUTES'}[group]||'STARTING XI';
+ left.innerHTML=esc(team)+'<small>'+role+'</small>';
+ right.innerHTML=(group==='TEAM'?'SAGI':(ROLE_NAMES[group]||group))+'<small>'+esc(q('formation').value)+'</small>';
+}
+function applyVisualGroup(group){
+ const st=q('stage'),area=q('playersArea'),code=q('roleBackdrop');updateTunnelLabels(group);
+ st.classList.remove('group-GK','group-DF','group-MF','group-FW','group-TEAM','group-FULL','group-SUB','group-STING','group-MATCH','group-COUNTDOWN','tunnel-open');
+ st.classList.add('group-'+group);if(group==='FULL')st.classList.add('tunnel-open');
+ area.className='playersArea layout-'+group;
+ const codes={STING:'SAGI',MATCH:'MATCH',COUNTDOWN:'5',TEAM:'XI',GK:'GK',DF:'DEF',MF:'MID',FW:'FWD',FULL:'XI',SUB:'SUB'};
+ code.textContent=codes[group]||'XI';
+ const packageGroup=['STING','MATCH','COUNTDOWN'].includes(group);q('roleGlow').style.display=(group==='FULL'||group==='SUB'||packageGroup)?'none':'block';code.style.display=(group==='FULL'||group==='SUB'||packageGroup)?'none':'flex';
+}
+function renderStage(group){
+ currentGroup=group||'TEAM';applyVisualGroup(currentGroup);syncMatchStage();['stingOverlay','matchOverlay','countdownOverlay'].forEach(id=>q(id).classList.remove('on'));q('stageTeam').textContent=currentTeamName();q('stageCrest').src=assets.crest||'';q('stageCrest').style.visibility=assets.crest?'visible':'hidden';q('stadiumPhoto').src=assets.bg||'';q('stadiumPhoto').className='stadiumPhoto'+(assets.bg?' on':'');q('fullList').style.display='none';q('subList').style.display='none';q('playersArea').style.display='flex';
+ let title='STARTING XI',name='TEAM LINEUP',players=[];
+ if(group==='STING'){title='MATCH SHOW';name='LOGO STING';q('playersArea').style.display='none';q('stingOverlay').classList.add('on')}
+ else if(group==='MATCH'){title='MATCH SHOW';name='MATCH INFO';q('playersArea').style.display='none';q('matchOverlay').classList.add('on')}
+ else if(group==='COUNTDOWN'){title='MATCH SHOW';name='COUNTDOWN';q('playersArea').style.display='none';q('countdownOverlay').classList.add('on')}
+ else if(group==='TEAM'){title='SAGI BROADCAST';name=currentTeamName()+' · '+q('formation').value;players=[]}
+ else if(group==='FULL'){title='STARTING XI';name='FULL LINEUP';renderFull()} else if(group==='SUB'){title='SQUAD';name='SUBSTITUTES';renderSubs()}
+ else{title='STARTING XI';name=ROLE_NAMES[group]||group;players=grouped(group);q('playersArea').innerHTML=players.map(p=>playerCard(p,players.length)).join('')}
+ q('groupTitle').textContent=title;q('groupName').textContent=name;
+ if(group==='TEAM')q('playersArea').innerHTML='<div style="align-self:center;text-align:center;color:#ffffff52;font-weight:1000;font-size:138px;letter-spacing:10px;text-shadow:0 18px 45px #000">'+esc(q('formation').value)+'</div>';
+ renderFormation(['TEAM','STING','MATCH','COUNTDOWN'].includes(group)?'':group);applyOutputBackground();setTimeout(playMediaVideos,0)
+}
+function applyOutputBackground(){
+ const mode=q('outputBg').value,st=q('stage');
+ st.classList.remove('scene-tunnel','scene-stadium','scene-transparent','scene-chroma');st.classList.add('scene-'+mode);
+ if(mode==='transparent'){st.style.background='transparent';st.querySelector('.stadium').style.display='none';q('stadiumPhoto').style.display='none';st.querySelector('.stadiumShade').style.display='none';st.querySelector('.pitchLines').style.display='none'}
+ else if(mode==='chroma'){st.style.background='#00b140';st.querySelector('.stadium').style.display='none';q('stadiumPhoto').style.display='none';st.querySelector('.stadiumShade').style.display='none';st.querySelector('.pitchLines').style.display='none'}
+ else if(mode==='stadium'){st.style.background='#07090c';st.querySelector('.stadium').style.display='block';q('stadiumPhoto').style.display=assets.bg?'block':'none';st.querySelector('.stadiumShade').style.display='block';st.querySelector('.pitchLines').style.display='block'}
+ else{st.style.background='#05070a'}
+}
+function animateStage(){
+ const cards=[...q('stage').querySelectorAll('.playerCard,.fullRow,.subRow,.node.active')];
+ cards.forEach((el,i)=>{
+   if(!el.animate)return;
+   const isNode=el.classList.contains('node'),isPlayer=el.classList.contains('playerCard');
+   let frames;
+   if(isNode)frames=[{opacity:0,transform:'translate(-50%,-50%) scale(.25)'},{opacity:1,transform:'translate(-50%,-50%) scale(1.18)',offset:.72},{opacity:1,transform:'translate(-50%,-50%) scale(1)'}];
+   else if(isPlayer){
+     const dir=i%2===0?-70:70;
+     frames=[{opacity:0,transform:'translate('+dir+'px,42px) scale(.9)'},{opacity:1,transform:'translate(0,0) scale(1)'}];
+   } else frames=[{opacity:0,transform:'translateY(35px) scale(.97)'},{opacity:1,transform:'translateY(0) scale(1)'}];
+   el.animate(frames,{duration:isNode?620:isPlayer?680:520,delay:i*(isNode?95:90),fill:'forwards',easing:'cubic-bezier(.18,.82,.18,1)'})
+ });
+ q('stage').querySelectorAll('video.mediaVideo').forEach((v,i)=>{if(!v.animate)return;const cam=v.dataset.camera||'MEDIUM',scale={NONE:1.02,LIGHT:1.06,MEDIUM:1.10,STRONG:1.16}[cam]||1.10;v.animate([{opacity:0,transform:'scale('+scale+') translateY(20px)'},{opacity:1,transform:'scale(1) translateY(0)'}],{duration:900,delay:100+i*90,fill:'forwards',easing:'cubic-bezier(.18,.82,.18,1)'})});
+  const title=q('groupName');if(title.animate)title.animate([{opacity:0,transform:'translateX(-70px)',letterSpacing:'8px'},{opacity:1,transform:'translateX(0)',letterSpacing:'-2px'}],{duration:620,fill:'forwards',easing:'ease-out'});
+ if(q('outputBg').value==='tunnel'){
+   const tunnel=q('tunnelScene'),cams=[...q('stage').querySelectorAll('video.mediaVideo')].map(v=>v.dataset.camera||'MEDIUM'),rank={NONE:0,LIGHT:1,MEDIUM:2,STRONG:3},best=cams.sort((a,b)=>(rank[b]||0)-(rank[a]||0))[0]||'MEDIUM',scale={NONE:1.025,LIGHT:1.045,MEDIUM:1.07,STRONG:1.105}[best]||1.07,y={NONE:5,LIGHT:9,MEDIUM:15,STRONG:23}[best]||15;
+   if(tunnel&&tunnel.animate)tunnel.animate([{transform:'scale('+scale+') translateY('+y+'px)',filter:'brightness(.7)'},{transform:'scale(1) translateY(0)',filter:'brightness(1)'}],{duration:1050,fill:'forwards',easing:'cubic-bezier(.15,.8,.2,1)'});
+   [q('ledLeft'),q('ledRight')].forEach((el,i)=>{if(el&&el.animate)el.animate([{opacity:0,transform:'translateY(24px)',filter:'blur(7px)'},{opacity:1,transform:'translateY(0)',filter:'blur(0)'}],{duration:620,delay:110+i*90,fill:'forwards',easing:'ease-out'})});
+ }
+  const glow=q('roleGlow');if(glow&&glow.style.display!=='none'&&glow.animate)glow.animate([{opacity:0,transform:'scale(.72)'},{opacity:.26,transform:'scale(1.04)',offset:.7},{opacity:.22,transform:'scale(1)'}],{duration:900,fill:'forwards',easing:'ease-out'});
+ const code=q('roleBackdrop');if(code&&code.style.display!=='none'&&code.animate)code.animate([{opacity:0,transform:'scale(.86)'},{opacity:1,transform:'scale(1)'}],{duration:780,fill:'forwards',easing:'ease-out'})
+}
+function animatePackageGroup(group,duration){
+ if(group==='STING'){
+  const core=q('stingOverlay').querySelector('.stingCore');if(core&&core.animate)core.animate([{opacity:0,transform:'scale(.72)'},{opacity:1,transform:'scale(1.04)',offset:.7},{opacity:1,transform:'scale(1)'}],{duration:900,fill:'forwards',easing:'cubic-bezier(.2,.8,.2,1)'})
+ }else if(group==='MATCH'){
+  const card=q('matchOverlay').querySelector('.matchCardStage');if(card&&card.animate)card.animate([{opacity:0,transform:'translateY(45px) scale(.97)'},{opacity:1,transform:'translateY(0) scale(1)'}],{duration:720,fill:'forwards',easing:'ease-out'})
+ }else if(group==='COUNTDOWN'){
+  startCountdown(duration)
+ }
+}
+function startCountdown(duration){
+ const el=q('countdownNumber'),seconds=Math.max(1,Math.round((Number(duration)||5000)/1000));let n=seconds;el.textContent=n;clearInterval(startCountdown.t);const pulse=()=>{if(el.animate)el.animate([{opacity:.2,transform:'scale(1.3)'},{opacity:1,transform:'scale(1)'}],{duration:420,easing:'ease-out'})};pulse();startCountdown.t=setInterval(()=>{n--;if(n<=0){clearInterval(startCountdown.t);el.textContent='GO';pulse();if(audioSettings().countdownBeat)builtInCue('HIT',.8);return}el.textContent=n;pulse();if(audioSettings().countdownBeat)builtInCue('HIT',.55)},1000)
+}
+function stopCountdown(){clearInterval(startCountdown.t)}
+function cloudAdmin(){try{const x=JSON.parse(localStorage.getItem('sagi_cloud_admin_v20')||'null')||{},b=window.SAGI_CLOUD||{};return{url:x.url||b.url||'',key:x.key||b.key||'',eventSlug:x.eventSlug||b.eventSlug||'',token:x.token||''}}catch(e){const b=window.SAGI_CLOUD||{};return{url:b.url||'',key:b.key||'',eventSlug:b.eventSlug||'',token:''}}}
+function compactPlayersForGroup(group){const src=group==='FULL'?starters():group==='SUB'?substitutes():(['GK','DF','MF','FW'].includes(group)?grouped(group):[]);return src.map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',squadType:p.squadType||'STARTER',photo:(group==='FULL'||group==='SUB')?'':p.photo||'',mediaUrl:(group==='FULL'||group==='SUB')?'':p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'}))}
+async function publishGroup(group,duration,show=null){
+ const cfg=cloudAdmin();if(!window.SagiCloud||!cfg.url||!cfg.key||!cfg.eventSlug||!cfg.token)return{ok:false};
+ try{let cur=await window.SagiCloud.getEvent(cfg.eventSlug,cfg);if(!cur||!cur.payload)return{ok:false};const state={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,6),group,side:activeSide,team:currentTeamName(),formation:q('formation').value,players:compactPlayersForGroup(group),allPlayers:starters().map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',mediaUrl:p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'})),substitutes:substitutes().map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,statLabel:p.statLabel||'',statValue:p.statValue||''})),crest:assets.crest||'',stadium:assets.bg||'',background:q('outputBg').value,visualVersion:'V4.0-DUAL-TEAM-LINEUP',duration,show:show||null,package:packageData(),startedAt:new Date().toISOString()};const payload=Object.assign({},cur.payload,{lineupIntro:state});try{await window.SagiCloud.saveEvent(cfg.eventSlug,cfg.token,payload,cur.revision,cfg)}catch(e){if(String(e.message).includes('REVISION_CONFLICT')){const fresh=await window.SagiCloud.getEvent(cfg.eventSlug,cfg);await window.SagiCloud.saveEvent(cfg.eventSlug,cfg.token,Object.assign({},fresh.payload,{lineupIntro:state}),fresh.revision,cfg)}else throw e}return{ok:true}}catch(e){return{ok:false}}
+}
+function focusAndRun(fn){const mobile=matchMedia&&matchMedia('(max-width:940px)').matches;if(!mobile){fn();return}try{q('frame').scrollIntoView({behavior:'auto',block:'center'});requestAnimationFrame(()=>requestAnimationFrame(fn))}catch(e){fn()}}
+function escAttr(s){return String(s??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')}
+function showEnabled(){return showSteps.filter(s=>s.enabled)}
+function showTotalMs(){return showEnabled().reduce((a,s)=>a+(Number(s.duration)||0),0)}
+function showTransitionOptions(v){return ['CUT','FADE','SLIDE','ZOOM','FLASH'].map(x=>'<option'+(x===v?' selected':'')+'>'+x+'</option>').join('')}
+function showCueOptions(v){return ['NONE','WHOOSH','HIT','RISER','CROWD','STING'].map(x=>'<option'+(x===v?' selected':'')+'>'+x+'</option>').join('')}
+function renderShowTimeline(){
+ const w=q('showTimeline');if(!w)return;w.innerHTML='';
+ showSteps.forEach((s,i)=>{const d=document.createElement('div');d.className='showStep'+(i===showIndex?' active':'')+(s.enabled?'':' disabled');d.dataset.i=i;
+   d.innerHTML='<div class="showIndex">'+(i+1)+'</div><div class="showName">'+esc(s.label)+'</div>'+
+   '<input class="showDur" type="number" min="0.5" max="30" step="0.5" value="'+((Number(s.duration)||1000)/1000).toFixed(1)+'">'+
+   '<select class="showTransition">'+showTransitionOptions(s.transition)+'</select>'+
+   '<select class="showCue">'+showCueOptions(s.cue)+'</select>'+
+   '<label class="showEnable"><input type="checkbox" '+(s.enabled?'checked':'')+'></label>'+
+   '<div class="showMove"><button class="up" type="button">↑</button><button class="down" type="button">↓</button></div>';
+   d.querySelector('.showDur').onchange=e=>{s.duration=Math.max(500,Math.round((parseFloat(e.target.value)||1)*1000));renderShowSummary()};
+   d.querySelector('.showTransition').onchange=e=>s.transition=e.target.value;
+   d.querySelector('.showCue').onchange=e=>s.cue=e.target.value;
+   d.querySelector('.showEnable input').onchange=e=>{s.enabled=e.target.checked;renderShowTimeline()};
+   d.querySelector('.up').onclick=()=>moveShowStep(i,-1);d.querySelector('.down').onclick=()=>moveShowStep(i,1);w.appendChild(d)
+ });
+ renderShowSummary()
+}
+function renderShowSummary(){
+ const total=showTotalMs(),el=q('showTotal');if(el)el.textContent=(total/1000).toFixed(1)+'s';
+}
+function moveShowStep(i,dir){const j=i+dir;if(j<0||j>=showSteps.length)return;[showSteps[i],showSteps[j]]=[showSteps[j],showSteps[i]];if(showIndex===i)showIndex=j;else if(showIndex===j)showIndex=i;renderShowTimeline()}
+function resetShow(){stopShow(false);showSteps=DEFAULT_SHOW.map(x=>({...x}));showIndex=-1;renderShowTimeline();note('SHOW时间线已恢复默认')}
+function saveShow(){localStorage.setItem('sagi_show_director_v40',JSON.stringify(showSteps));note('SHOW时间线已保存')}
+function loadShow(){try{const x=JSON.parse(localStorage.getItem('sagi_show_director_v40')||'null');if(Array.isArray(x)&&x.length)showSteps=x.map(s=>({...s,duration:Math.max(500,Number(s.duration)||1000),enabled:s.enabled!==false}));}catch(e){}renderShowTimeline()}
+function applyShowTransition(type){
+ const l=q('transitionLayer');if(!l||!l.animate)return;l.className='transitionLayer';l.style.opacity='0';
+ if(type==='CUT')return;
+ if(type==='FLASH'){l.classList.add('white');l.animate([{opacity:0},{opacity:.82,offset:.28},{opacity:0}],{duration:380,easing:'ease-out'});return}
+ if(type==='SLIDE'){l.classList.add('gold');l.animate([{opacity:.78,transform:'translateX(-105%)'},{opacity:.78,transform:'translateX(0)',offset:.48},{opacity:0,transform:'translateX(105%)'}],{duration:650,easing:'cubic-bezier(.2,.8,.2,1)'});return}
+ if(type==='ZOOM'){q('stage').animate([{filter:'brightness(.55)',transform:'scale(1.035)'},{filter:'brightness(1)',transform:'scale(1)'}],{duration:620,easing:'ease-out'});return}
+ l.classList.add('dark');l.animate([{opacity:.85},{opacity:0}],{duration:520,easing:'ease-out'})
+}
+function audioSettings(){return packageData().audioEngine||{mode:'HYBRID',theme:'SAGI_PULSE',intensity:.75,ducking:.35,cueVolume:1,countdownBeat:true}}
+function audioSrcForCue(cue){const p=packageData();return p.sfx&&p.sfx[cue]||''}
+function getAudioCtx(){const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return null;const ctx=getAudioCtx.ctx||(getAudioCtx.ctx=new AC());if(ctx.state==='suspended')ctx.resume().catch(()=>{});return ctx}
+function pulseMeter(id,level=1,ms=420){const el=q(id);if(!el)return;el.style.width=Math.max(0,Math.min(100,level*100))+'%';clearTimeout(el._t);el._t=setTimeout(()=>el.style.width='8%',ms)}
+function playAudioUrl(url,volume=1){if(!url)return null;try{const a=new Audio(url);a.volume=Math.max(0,Math.min(1,volume));a.play().catch(()=>{});return a}catch(e){return null}}
+function noiseBuffer(ctx,duration=.5){const len=Math.max(1,Math.floor(ctx.sampleRate*duration)),b=ctx.createBuffer(1,len,ctx.sampleRate),d=b.getChannelData(0);for(let i=0;i<len;i++)d[i]=Math.random()*2-1;return b}
+function synthTone(ctx,type,f1,f2,dur,gain=.1,when=0){const o=ctx.createOscillator(),g=ctx.createGain(),t=ctx.currentTime+when;o.type=type;o.frequency.setValueAtTime(f1,t);if(f2>0)o.frequency.exponentialRampToValueAtTime(Math.max(1,f2),t+dur);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(Math.max(.0002,gain),t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(g);g.connect(ctx.destination);o.start(t);o.stop(t+dur+.03)}
+function synthNoise(ctx,dur=.45,gain=.08,filterStart=1200,filterEnd=180,when=0){const s=ctx.createBufferSource(),f=ctx.createBiquadFilter(),g=ctx.createGain(),t=ctx.currentTime+when;s.buffer=noiseBuffer(ctx,dur);f.type='bandpass';f.frequency.setValueAtTime(filterStart,t);f.frequency.exponentialRampToValueAtTime(Math.max(40,filterEnd),t+dur);f.Q.value=.8;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(Math.max(.0002,gain),t+.02);g.gain.exponentialRampToValueAtTime(.0001,t+dur);s.connect(f);f.connect(g);g.connect(ctx.destination);s.start(t);s.stop(t+dur+.03)}
+function builtInCue(cue,level=1){
+ const ctx=getAudioCtx();if(!ctx)return false;const s=audioSettings(),k=Math.max(.2,Math.min(1,level*s.intensity*s.cueVolume));pulseMeter('cueMeter',k,650);duckMusic();
+ if(cue==='HIT'){synthTone(ctx,'sine',105,38,.34,.22*k);synthNoise(ctx,.24,.08*k,900,120)}
+ else if(cue==='WHOOSH'){synthNoise(ctx,.62,.11*k,180,2600);synthTone(ctx,'triangle',170,460,.48,.045*k)}
+ else if(cue==='RISER'){synthTone(ctx,'sawtooth',90,920,.88,.055*k);synthNoise(ctx,.82,.055*k,220,2600)}
+ else if(cue==='CROWD'){synthNoise(ctx,1.15,.07*k,260,750);synthTone(ctx,'triangle',115,155,.7,.025*k)}
+ else if(cue==='STING'){synthTone(ctx,'sine',82,42,.46,.24*k);synthTone(ctx,'sawtooth',220,520,.55,.045*k,.04);synthNoise(ctx,.36,.09*k,1800,220,.02)}
+ return true
+}
+function builtInThemeStart(){
+ const s=audioSettings();if(s.mode==='MUTE'||s.mode==='EXTERNAL')return false;const ctx=getAudioCtx();if(!ctx)return false;builtInThemeStop();const state={ctx,nodes:[],timer:null,step:0};builtInThemeStart.state=state;
+ const theme=s.theme||'SAGI_PULSE',int=s.intensity||.75;const bpm=theme==='NORTH_WIND'?96:theme==='BLACK_GOLD'?118:108,beat=60/bpm;
+ const tick=()=>{if(builtInThemeStart.state!==state)return;const st=state.step++,root=theme==='NORTH_WIND'?73.42:theme==='BLACK_GOLD'?55:65.41;const accent=st%4===0;
+   synthTone(ctx,'sine',accent?root:root*1.5,accent?root*.72:root*1.2,Math.min(.38,beat*.7),(accent?.075:.035)*int);
+   if(st%2===0)synthNoise(ctx,.08,.015*int,theme==='NORTH_WIND'?1600:2600,900);
+   if(theme==='NORTH_WIND'&&st%4===2)synthTone(ctx,'triangle',root*3,root*2.25,.2,.018*int);
+   if(theme==='BLACK_GOLD'&&st%4===1)synthTone(ctx,'square',root*4,root*3,.09,.008*int);
+   pulseMeter('masterMeter',accent?.72:.42,Math.min(300,beat*700));
+ };
+ tick();state.timer=setInterval(tick,beat*1000);q('audioEngineState').textContent='BUILT-IN · '+theme.replaceAll('_',' ');return true
+}
+function builtInThemeStop(){const s=builtInThemeStart.state;if(s){clearInterval(s.timer);builtInThemeStart.state=null}}
+function duckMusic(){
+ const s=audioSettings(),a=ensureShowMusic.audio;if(!a||!s.ducking)return;q('stage').dataset.duck='active';setTimeout(()=>q('stage').dataset.duck='idle',650);const base=packageData().musicVolume,low=Math.max(.05,base*(1-s.ducking));try{a.volume=low;clearTimeout(duckMusic.t);duckMusic.t=setTimeout(()=>{try{a.volume=base}catch(e){}},620)}catch(e){}
+}
+function ensureShowMusic(){
+ const p=packageData(),s=p.audioEngine||audioSettings(),src=assets.musicObjectUrl||p.musicUrl;q('stage').dataset.audioMode=s.mode;q('stage').dataset.audioTheme=s.theme;q('stage').dataset.music='off';if(s.mode==='MUTE'){stopShowMusic();q('stage').dataset.music='muted';q('audioStatus').textContent='AUDIO MUTED';return}
+ let externalStarted=false;
+ if((s.mode==='HYBRID'||s.mode==='EXTERNAL')&&src){let a=ensureShowMusic.audio;if(!a||a.src!==src){try{if(a)a.pause()}catch(e){}a=new Audio(src);a.loop=true;ensureShowMusic.audio=a}a.volume=p.musicVolume;try{const pr=a.play();if(pr&&pr.catch)pr.catch(()=>{});externalStarted=true}catch(e){}}
+ if((s.mode==='BUILTIN')||(s.mode==='HYBRID'&&!src)){builtInThemeStart();q('stage').dataset.music='builtin'}else{builtInThemeStop();if(externalStarted)q('stage').dataset.music='external'}
+ q('audioStatus').textContent=(externalStarted?'EXTERNAL MUSIC':'BUILT-IN MUSIC')+' · '+Math.round(p.musicVolume*100)+'%';q('audioEngineState').textContent=s.mode+' · '+s.theme; pulseMeter('masterMeter',.55,700)
+}
+function stopShowMusic(){const a=ensureShowMusic.audio;if(a){try{a.pause();a.currentTime=0}catch(e){}}builtInThemeStop();q('audioStatus').textContent='AUDIO READY';q('audioEngineState').textContent='ENGINE READY';pulseMeter('masterMeter',0,10);pulseMeter('cueMeter',0,10)}
+function triggerCue(cue){
+ const b=q('cueBadgeStage');if(!b||cue==='NONE')return;q('stage').dataset.cue=cue;b.textContent=cue;b.animate([{opacity:0,transform:'translateY(-8px)'},{opacity:1,transform:'translateY(0)',offset:.25},{opacity:0}],{duration:900,easing:'ease-out'});
+ const s=audioSettings();q('stage').dataset.cueSource='none';if(s.mode==='MUTE')return;const real=audioSrcForCue(cue);if((s.mode==='HYBRID'||s.mode==='EXTERNAL')&&real){q('stage').dataset.cueSource='real';duckMusic();pulseMeter('cueMeter',s.cueVolume,.7);playAudioUrl(real,s.cueVolume);return}
+ if(s.mode!=='EXTERNAL'){q('stage').dataset.cueSource='builtin';builtInCue(cue,1)}
+}
+function showProgressTick(step,duration){
+ const bar=q('showProgressBar'),now=q('showNow');showStartedAt=performance.now();
+ const tick=()=>{if(!playing||showSteps[showIndex]!==step)return;const p=Math.min(1,(performance.now()-showStartedAt)/duration);if(bar)bar.style.width=(p*100).toFixed(1)+'%';if(now)now.innerHTML='<b>'+esc(step.label)+'</b> · '+((duration-(performance.now()-showStartedAt))/1000).toFixed(1)+'s';if(p<1)requestAnimationFrame(tick)};tick()
+}
+function showMeta(step){const en=showEnabled(),pos=en.indexOf(step);return{sessionId:showSession,stepIndex:showIndex,sequenceIndex:pos,stepTotal:en.length,label:step.label,side:step.side||activeSide,transition:step.transition,cue:step.cue,autoNext:true,isFirst:pos===0,isLast:pos===en.length-1}}
+function runShowStep(i){
+ if(!playing)return;
+ while(i<showSteps.length&&!showSteps[i].enabled)i++;
+ if(i>=showSteps.length){playing=false;showIndex=-1;stopCountdown();stopShowMusic();q('status').textContent='SHOW播放结束';q('showNow').textContent='COMPLETE';q('showProgressBar').style.width='100%';renderShowTimeline();return}
+ showIndex=i;const s=showSteps[i],d=Math.max(500,Number(s.duration)||1000);if(s.side&&s.side!==activeSide)switchTeam(s.side,{silent:true,noRender:true});renderShowTimeline();broadcastProgramFromShow(s,d);applyShowTransition(s.transition);triggerCue(s.cue);renderStage(s.group);animateStage();animatePackageGroup(s.group,d);showProgressTick(s,d);q('status').textContent='SHOW '+(i+1)+' / '+showSteps.length+' · '+s.label;publishGroup(s.group,d,showMeta(s));clearTimeout(showTimer);if(!broadcastHold)showTimer=setTimeout(()=>runShowStep(i+1),d)
+}
+function startShow(){if(roster.length<1){note('请先加入球员');return}stopShow(false);playing=true;showSession=Date.now().toString(36);ensureShowMusic();focusAndRun(()=>runShowStep(0))}
+function stopShow(update=true){playing=false;clearTimeout(showTimer);clearTimeout(seqTimer);stopCountdown();stopShowMusic();if(update){q('status').textContent='SHOW已停止';q('showNow').textContent='STOPPED'}renderShowTimeline()}
+function nextShow(){if(!showSteps.length)return;playing=true;showSession=showSession||Date.now().toString(36);clearTimeout(showTimer);runShowStep(Math.min(showSteps.length,showIndex+1))}
+function prevShow(){if(!showSteps.length)return;playing=true;showSession=showSession||Date.now().toString(36);clearTimeout(showTimer);let i=Math.max(0,showIndex-1);while(i>0&&!showSteps[i].enabled)i--;runShowStep(i)}
+function playGroup(group,duration){playing=true;focusAndRun(()=>{renderStage(group);animateStage();q('status').textContent='正在播放 '+(group==='TEAM'?'球队开场':group==='FULL'?'完整首发':group==='SUB'?'替补名单':ROLE_NAMES[group]||group);publishGroup(group,duration).then(r=>{if(!r.ok)q('status').textContent+=' · 本机预览'});clearTimeout(seqTimer);seqTimer=setTimeout(()=>{playing=false;q('status').textContent='播放完成 · 画面已保留'},duration)})}
+function autoPlay(){startShow()}
+function stop(){stopShow()}
+function resize(){const f=q('frame'),scale=Math.min(f.clientWidth/1920,f.clientHeight/1080),left=(f.clientWidth-1920*scale)/2,top=(f.clientHeight-1080*scale)/2,w=q('stageScale');w.style.transformOrigin='0 0';w.style.transform='translate3d('+left+'px,'+top+'px,0) scale('+scale+')'}
+async function save(){
+ stashActiveTeam();
+ for(const side of ['HOME','AWAY'])for(const p of teamStore[side].roster)p.id=p.id||uid();
+ const playerMeta=p=>({id:p.id,name:p.name,number:p.number,squadType:p.squadType||'STARTER',role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',mediaUrl:p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'});
+ const snapshot={activeSide,package:JSON.parse(JSON.stringify(packageData())),teams:{HOME:{formation:teamStore.HOME.formation,roster:teamStore.HOME.roster.map(playerMeta)},AWAY:{formation:teamStore.AWAY.formation,roster:teamStore.AWAY.roster.map(playerMeta)}},show:showSteps.map(s=>({...s}))};
+ for(const side of ['HOME','AWAY'])for(const p of teamStore[side].roster){await dbPut('photo:'+p.id,p.photo||'');if(p.mediaBlob)await dbPut('media:'+p.id,p.mediaBlob);else await dbDel('media:'+p.id)}
+ await dbPut('crest:HOME',teamStore.HOME.crest||'');await dbPut('crest:AWAY',teamStore.AWAY.crest||'');await dbPut('stadium',assets.bg||'');await dbPut('eventLogo',assets.eventLogo||'');
+ if(assets.musicBlob)await dbPut('showMusic',assets.musicBlob);else await dbDel('showMusic');
+ localStorage.setItem('sagi_player_intro_v40',JSON.stringify({activeSide:snapshot.activeSide,package:snapshot.package,teams:snapshot.teams}));
+ localStorage.setItem('sagi_show_director_v40',JSON.stringify(snapshot.show));
+ note('V4.0 双队阵容、音频与SHOW已保存')
+}
+async function hydrateRoster(list=[]){const out=[];for(const p of list){p.photo=await dbGet('photo:'+p.id);p.mediaBlob=await dbGet('media:'+p.id);p.mediaObjectUrl=p.mediaBlob instanceof Blob?URL.createObjectURL(p.mediaBlob):'';p.mediaAction=p.mediaAction||'STANDARD';p.directorIn=Number(p.directorIn)||0;p.directorOut=Number(p.directorOut)||0;p.directorSpeed=Number(p.directorSpeed)||1;p.directorFreeze=!!p.directorFreeze;p.directorFreezeMs=Number(p.directorFreezeMs)||1000;p.directorCamera=p.directorCamera||'MEDIUM';out.push(p)}return out}
+async function load(){
+ try{
+  let x=JSON.parse(localStorage.getItem('sagi_player_intro_v40')||'null');if(!x){try{x=JSON.parse(localStorage.getItem('sagi_player_intro_v36')||'null')}catch(_){}}
+  if(!x){
+   const legacy=JSON.parse(localStorage.getItem('sagi_player_intro_v2')||'null');
+   if(legacy)x={activeSide:'HOME',package:legacy.package||{},teams:{HOME:{formation:legacy.formation||'4-3-3',roster:legacy.roster||[]},AWAY:{formation:'4-3-3',roster:[]}}};
+  }
+  if(!x){note('还没有保存阵容');return}
+  writePackage(x.package||{});
+  teamStore.HOME={formation:x.teams?.HOME?.formation||'4-3-3',roster:await hydrateRoster(x.teams?.HOME?.roster||[]),crest:await dbGet('crest:HOME')||await dbGet('crest')||''};
+  teamStore.AWAY={formation:x.teams?.AWAY?.formation||'4-3-3',roster:await hydrateRoster(x.teams?.AWAY?.roster||[]),crest:await dbGet('crest:AWAY')||''};
+  assets.bg=await dbGet('stadium');assets.eventLogo=await dbGet('eventLogo');assets.musicBlob=await dbGet('showMusic');assets.musicObjectUrl=assets.musicBlob instanceof Blob?URL.createObjectURL(assets.musicBlob):'';
+  let storedShow=JSON.parse(localStorage.getItem('sagi_show_director_v40')||'null');if(!storedShow){try{storedShow=JSON.parse(localStorage.getItem('sagi_show_director_v36')||'null')}catch(_){}}if(Array.isArray(storedShow)&&storedShow.length)showSteps=storedShow.map(s=>({...s,duration:Math.max(500,Number(s.duration)||1000),enabled:s.enabled!==false}));
+  switchTeam(x.activeSide||'HOME',{silent:true,skipStash:true});renderPreviews();renderShowTimeline();syncMatchStage();note('V4.0 双队阵容、音频与SHOW已读取')
+ }catch(e){note('读取失败')}
+}
+
+function demoPlayer(a){return{id:uid(),number:a[0],name:a[1],squadType:a[2],role:a[3],position:a[4],captain:!!a[5],statLabel:a[6],statValue:a[7],photo:'',mediaBlob:null,mediaObjectUrl:'',mediaUrl:'',mediaAction:(a[3]==='GK'?'GK_GLOVES':a[3]==='FW'?'CELEBRATE':'ARMS'),directorIn:0,directorOut:0,directorSpeed:(a[3]==='FW'?.75:1),directorFreeze:a[3]==='FW',directorFreezeMs:1000,directorCamera:(a[3]==='GK'?'STRONG':a[3]==='FW'?'STRONG':'MEDIUM')}}
+function demo(){
+ const home=[
+ ['1','AZAMAT','STARTER','GK','GK',0,'CLEAN SHEETS','6'],['2','DIAS','STARTER','DF','RB',0,'APPS','12'],['4','NURLAN','STARTER','DF','CB',1,'APPS','14'],['5','ALMAS','STARTER','DF','CB',0,'APPS','13'],['3','ERLAN','STARTER','DF','LB',0,'APPS','11'],['6','SULTAN','STARTER','MF','CM',0,'ASSISTS','5'],['8','MARHULAN','STARTER','MF','CM',0,'APPS','14'],['10','ASLAN','STARTER','MF','AM',0,'GOALS','7'],['7','DANIYAR','STARTER','FW','RW',0,'GOALS','8'],['9','ARDAK','STARTER','FW','ST',0,'GOALS','12'],['11','TIMUR','STARTER','FW','LW',0,'GOALS','6'],['12','BEK','SUB','GK','GK',0,'APPS','3'],['14','RUSLAN','SUB','DF','CB',0,'APPS','6'],['16','ILIAS','SUB','MF','CM',0,'ASSISTS','2'],['18','SAMAT','SUB','FW','ST',0,'GOALS','3'],['20','AMAN','SUB','FW','RW',0,'APPS','5']];
+ const away=[
+ ['1','MURAT','STARTER','GK','GK',0,'SAVES','31'],['2','ADIL','STARTER','DF','RB',0,'APPS','11'],['4','BEKZAT','STARTER','DF','CB',1,'APPS','13'],['5','SERIK','STARTER','DF','CB',0,'APPS','12'],['3','AYDIN','STARTER','DF','LB',0,'APPS','10'],['6','NURAS','STARTER','MF','CM',0,'ASSISTS','4'],['8','ELDAR','STARTER','MF','CM',0,'APPS','12'],['10','ALIKHAN','STARTER','MF','AM',0,'GOALS','5'],['7','DAUREN','STARTER','FW','RW',0,'GOALS','6'],['9','YERNAR','STARTER','FW','ST',0,'GOALS','9'],['11','SAYAT','STARTER','FW','LW',0,'GOALS','4'],['12','ASKAR','SUB','GK','GK',0,'APPS','2'],['14','KANAT','SUB','DF','CB',0,'APPS','5'],['16','ARLAN','SUB','MF','CM',0,'ASSISTS','2'],['18','BOLAT','SUB','FW','ST',0,'GOALS','2'],['20','RAMAZAN','SUB','FW','RW',0,'APPS','4']];
+ teamStore.HOME={roster:home.map(demoPlayer),formation:'4-3-3',crest:''};teamStore.AWAY={roster:away.map(demoPlayer),formation:'4-3-3',crest:''};
+ writePackage({competition:'TFC WINTER LEAGUE',round:'MATCHDAY 01',home:'TARLAN FC',away:'ICE POINT FC',kickoff:'20:00',venue:'TACHENG',musicVolume:.65,audioEngine:{mode:'HYBRID',theme:'SAGI_PULSE',intensity:.75,ducking:.35,cueVolume:1,countdownBeat:true},sfx:{}});
+ activeSide='HOME';roster=teamStore.HOME.roster;q('formation').value='4-3-3';assets.crest='';selected=0;writePlayer(roster[0]);refreshSideUI();renderRoster();renderStage('FULL');syncMatchStage();note('已载入V4.0双队示例：主队16人 + 客队16人')
+}
+
+
+function bcCueFor(group){return({STING:'STING',MATCH:'RISER',COUNTDOWN:'HIT',TEAM:'RISER',GK:'HIT',DF:'WHOOSH',MF:'WHOOSH',FW:'HIT',FULL:'CROWD',SUB:'WHOOSH'})[group]||'NONE'}
+function bcDuration(group){return({STING:2000,MATCH:3000,COUNTDOWN:5000,TEAM:2500,GK:3000,DF:4000,MF:4000,FW:4000,FULL:6000,SUB:5000})[group]||3500}
+function bcLabel(group,side){const p=side==='AWAY'?'AWAY':'HOME';return({STING:'LOGO STING',MATCH:'MATCH INFO',COUNTDOWN:'COUNTDOWN',TEAM:p+' TEAM',GK:p+' GK',DF:p+' DF',MF:p+' MF',FW:p+' FW',FULL:p+' XI',SUB:p+' SUBS'})[group]||group}
+function refreshBroadcastStatus(){
+ const cfg=cloudAdmin(),ready=!!(cfg.url&&cfg.key&&cfg.eventSlug&&cfg.token);
+ q('bcVmixStatus').textContent=ready?'READY':'LOCAL ONLY';
+ q('bcVmixLamp').classList.toggle('ready',ready);
+ q('bcOnAirLamp').classList.toggle('live',!!broadcastProgram);
+ q('bcOnAirStatus').textContent=broadcastProgram?'ON AIR':'SAFE';
+ q('bcProgramLabel').textContent=broadcastProgram?broadcastProgram.label:'SAFE / OFF AIR';
+ q('bcProgramMeta').textContent=broadcastProgram?(broadcastProgram.side+' · '+broadcastProgram.group+' · '+(broadcastProgram.duration/1000).toFixed(1)+'s'):'等待 GO LIVE';
+ q('bcPreviewLabel').textContent=broadcastPreview.label;
+ q('bcPreviewMeta').textContent=broadcastPreview.side+' · '+broadcastPreview.group+' · READY';
+ const nxt=BROADCAST_MANUAL[(broadcastManualIndex+1+BROADCAST_MANUAL.length)%BROADCAST_MANUAL.length];q('bcNextLabel').textContent=nxt.label;
+ document.querySelectorAll('[data-bc-group]').forEach(b=>b.classList.toggle('on',b.dataset.bcGroup===broadcastPreview.group&&(!b.dataset.bcSide||b.dataset.bcSide===broadcastPreview.side)));
+}
+function setBroadcastPreview(group,side=activeSide,label='',duration=0){
+ const targetSide=(side==='AWAY'?'AWAY':'HOME');if(targetSide!==activeSide)switchTeam(targetSide,{silent:true,noRender:true});
+ broadcastPreview={group,side:targetSide,label:label||bcLabel(group,targetSide),duration:duration||bcDuration(group)};
+ currentGroup=group;renderStage(group);animateStage();
+ const found=BROADCAST_MANUAL.findIndex(x=>x.group===group&&x.side===targetSide);if(found>=0)broadcastManualIndex=found;
+ q('status').textContent='PREVIEW · '+broadcastPreview.label+' · 等待 GO LIVE';refreshBroadcastStatus();
+}
+async function takeBroadcastLive(){
+ const c=broadcastPreview;if(!c)return;if(c.side!==activeSide)switchTeam(c.side,{silent:true,noRender:true});
+ broadcastProgram={...c,startedAt:Date.now()};applyShowTransition('FADE');triggerCue(bcCueFor(c.group));renderStage(c.group);animateStage();
+ if(c.group!=='STING')ensureShowMusic();
+ const meta={sessionId:'manual-'+Date.now().toString(36),stepIndex:-1,sequenceIndex:-1,stepTotal:1,label:c.label,side:c.side,transition:'FADE',cue:bcCueFor(c.group),autoNext:false,isFirst:true,isLast:false,controlRoom:true};
+ const r=await publishGroup(c.group,c.duration,meta);q('status').textContent=(r.ok?'PROGRAM ON AIR · ':'LOCAL PROGRAM · ')+c.label;refreshBroadcastStatus();
+}
+function stepBroadcastPreview(dir){
+ broadcastManualIndex=(broadcastManualIndex+dir+BROADCAST_MANUAL.length)%BROADCAST_MANUAL.length;const c=BROADCAST_MANUAL[broadcastManualIndex];setBroadcastPreview(c.group,c.side,c.label,c.duration);
+}
+function toggleBroadcastHold(){
+ broadcastHold=!broadcastHold;
+ q('holdBtn').classList.toggle('on',broadcastHold);q('holdBtn').textContent=broadcastHold?'RESUME':'HOLD';
+ if(broadcastHold){clearTimeout(showTimer);q('status').textContent='HOLD · 当前 PROGRAM 保持';}
+ else{q('status').textContent='RESUME · READY';if(playing&&showIndex>=0)runShowStep(showIndex+1)}
+}
+async function clearBroadcastAll(){
+ broadcastHold=false;q('holdBtn').classList.remove('on');q('holdBtn').textContent='HOLD';stopShow(false);stopShowMusic();
+ const meta={sessionId:'clear-'+Date.now().toString(36),stepIndex:-1,sequenceIndex:-1,stepTotal:1,label:'CLEAR ALL',side:activeSide,transition:'CUT',cue:'NONE',autoNext:false,isFirst:true,isLast:true,controlRoom:true};
+ await publishGroup('CLEAR',200,meta);broadcastProgram=null;q('status').textContent='PROGRAM CLEARED · SAFE';refreshBroadcastStatus();
+}
+function broadcastProgramFromShow(s,d){
+ broadcastProgram={group:s.group,side:s.side||activeSide,label:'AUTO · '+s.label,duration:d,startedAt:Date.now()};refreshBroadcastStatus();
+}
+function initBroadcastControl(){
+ document.querySelectorAll('[data-bc-group]').forEach(b=>b.onclick=()=>setBroadcastPreview(b.dataset.bcGroup,b.dataset.bcSide||activeSide,b.dataset.bcLabel||'',bcDuration(b.dataset.bcGroup)));
+ q('goLiveBtn').onclick=takeBroadcastLive;q('holdBtn').onclick=toggleBroadcastHold;q('prevLiveBtn').onclick=()=>stepBroadcastPreview(-1);q('nextLiveBtn').onclick=()=>stepBroadcastPreview(1);q('clearAllBtn').onclick=clearBroadcastAll;
+ document.addEventListener('keydown',e=>{const tag=(document.activeElement&&document.activeElement.tagName)||'';if(['INPUT','SELECT','TEXTAREA'].includes(tag))return;
+  if(e.code==='Space'){e.preventDefault();takeBroadcastLive()}else if(e.key==='h'||e.key==='H'){toggleBroadcastHold()}else if(e.key==='ArrowRight'){stepBroadcastPreview(1)}else if(e.key==='ArrowLeft'){stepBroadcastPreview(-1)}else if(e.key==='Escape'){clearBroadcastAll()}
+ });
+ refreshBroadcastStatus();
+}
+
+function vmixLink(){return new URL('./vmix-v40.html',location.href).toString()}
+async function copyVmix(){try{await navigator.clipboard.writeText(vmixLink());note('V4.0 vMix链接已复制')}catch(e){prompt('复制这个链接：',vmixLink())}}
+
+q('crestFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;assets.crest=await fileData(f,420,.84);teamStore[activeSide].crest=assets.crest;renderPreviews();renderStage(currentGroup)};
+q('bgFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;assets.bg=await fileData(f,1600,.78);renderPreviews();renderStage(currentGroup)};
+q('photoFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;assets.photo=await fileData(f,1000,.82);renderPreviews()};
+q('mediaFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;if(f.size>20*1024*1024){note('视频建议控制在20MB以内');e.target.value='';return}if(assets.mediaObjectUrl&&assets.mediaObjectUrl.startsWith('blob:'))try{URL.revokeObjectURL(assets.mediaObjectUrl)}catch(_){}
+ assets.mediaBlob=f;assets.mediaObjectUrl=URL.createObjectURL(f);renderPreviews();note('MEDIA DAY视频已载入 · '+Math.round(f.size/1024)+'KB')};
+q('clearMediaBtn').onclick=()=>{if(assets.mediaObjectUrl&&assets.mediaObjectUrl.startsWith('blob:'))try{URL.revokeObjectURL(assets.mediaObjectUrl)}catch(_){}assets.mediaBlob=null;assets.mediaObjectUrl='';q('mediaUrl').value='';renderPreviews();note('已清除当前球员视频')};
+q('eventLogoFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;assets.eventLogo=await fileData(f,600,.88);renderPreviews();syncMatchStage()};
+q('musicFile').onchange=e=>{const f=e.target.files[0];if(!f)return;if(f.size>30*1024*1024){note('音乐建议控制在30MB以内');e.target.value='';return}if(assets.musicObjectUrl&&assets.musicObjectUrl.startsWith('blob:'))try{URL.revokeObjectURL(assets.musicObjectUrl)}catch(_){}assets.musicBlob=f;assets.musicObjectUrl=URL.createObjectURL(f);renderPreviews();q('audioStatus').textContent='LOCAL MUSIC READY · '+Math.round(f.size/1024)+'KB'};
+q('audioTestBtn').onclick=()=>ensureShowMusic();q('cueTestBtn').onclick=()=>triggerCue('HIT');q('audioStopBtn').onclick=()=>stopShowMusic();q('clearMusicBtn').onclick=()=>{stopShowMusic();if(assets.musicObjectUrl&&assets.musicObjectUrl.startsWith('blob:'))try{URL.revokeObjectURL(assets.musicObjectUrl)}catch(_){}assets.musicBlob=null;assets.musicObjectUrl='';renderPreviews();note('已清除本机音乐')};
+q('clearBgBtn').onclick=()=>{assets.bg='';renderPreviews();renderStage(currentGroup)};q('homeSideBtn').onclick=()=>switchTeam('HOME');q('awaySideBtn').onclick=()=>switchTeam('AWAY');
+q('addBtn').onclick=addPlayer;q('updateBtn').onclick=updatePlayer;q('removeBtn').onclick=removePlayer;q('saveBtn').onclick=save;q('loadBtn').onclick=load;q('demoBtn').onclick=demo;
+q('teamBtn').onclick=()=>setBroadcastPreview('TEAM',activeSide,bcLabel('TEAM',activeSide),2500);q('gkBtn').onclick=()=>setBroadcastPreview('GK',activeSide,bcLabel('GK',activeSide),3000);q('dfBtn').onclick=()=>setBroadcastPreview('DF',activeSide,bcLabel('DF',activeSide),4000);q('mfBtn').onclick=()=>setBroadcastPreview('MF',activeSide,bcLabel('MF',activeSide),4000);q('fwBtn').onclick=()=>setBroadcastPreview('FW',activeSide,bcLabel('FW',activeSide),4000);q('fullBtn').onclick=()=>setBroadcastPreview('FULL',activeSide,bcLabel('FULL',activeSide),6000);q('subsBtn').onclick=()=>setBroadcastPreview('SUB',activeSide,bcLabel('SUB',activeSide),5000);q('showPlayBtn').onclick=startShow;q('showPrevBtn').onclick=prevShow;q('showNextBtn').onclick=nextShow;q('stopBtn').onclick=stopShow;q('showResetBtn').onclick=resetShow;q('showSaveBtn').onclick=saveShow;q('copyVmixBtn').onclick=copyVmix;
+q('formation').onchange=()=>{teamStore[activeSide].formation=q('formation').value;renderStage(currentGroup)};q('teamName').oninput=()=>{if(activeSide==='HOME')q('matchHome').value=q('teamName').value;else q('matchAway').value=q('teamName').value;renderStage(currentGroup)};q('outputBg').onchange=()=>renderStage(currentGroup);
+['matchCompetition','matchRound','matchKickoff','matchVenue'].forEach(id=>q(id).oninput=syncMatchStage);q('matchHome').oninput=()=>{if(activeSide==='HOME')q('teamName').value=q('matchHome').value;syncMatchStage()};q('matchAway').oninput=()=>{if(activeSide==='AWAY')q('teamName').value=q('matchAway').value;syncMatchStage()};
+['audioMode','audioTheme','audioIntensity','audioDucking','cueVolume','countdownBeat'].forEach(id=>q(id).onchange=()=>{q('audioEngineState').textContent=q('audioMode').value+' · '+q('audioTheme').value.replaceAll('_',' ')});
+window.addEventListener('resize',resize);renderPreviews();renderRoster();loadShow();demo();refreshSideUI();syncMatchStage();renderStage('TEAM');resize();initBroadcastControl();setBroadcastPreview('TEAM','HOME','HOME TEAM',2500);
+})();
+</script>
+</body></html>
