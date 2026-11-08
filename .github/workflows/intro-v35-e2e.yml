@@ -1,0 +1,373 @@
+name: SAGI PLAYER INTRO V3.5 BROADCAST AUDIO ENGINE test
+
+on:
+  push:
+    paths:
+      - 'intro/v35.html'
+      - 'intro/vmix-v35.html'
+      - '.github/workflows/intro-v35-e2e.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  v35-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Prepare Chrome
+        run: |
+          npm install --no-save playwright@1.56.1
+          CHROME_BIN="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          echo "CHROME_BIN=$CHROME_BIN" >> "$GITHUB_ENV"
+          test -n "$CHROME_BIN"
+      - name: Run V3.5 BROADCAST AUDIO ENGINE tests
+        shell: bash
+        run: |
+          python3 -m http.server 8080 --bind 127.0.0.1 >/tmp/intro-v35-http.log 2>&1 &
+          sleep 2
+          node <<'NODE'
+          const fs=require('fs');
+          const {chromium}=require('playwright');
+          (async()=>{
+            const out=[],errs=[];const add=(n,ok,d='')=>out.push({n,ok:!!ok,d});let browser;
+            try{
+              browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_BIN,args:['--no-sandbox','--disable-dev-shm-usage']});
+              const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
+              await context.route('https://audio.test/**',async route=>route.fulfill({status:200,contentType:'audio/mpeg',body:Buffer.from('49443303000000000000','hex')}));
+              const page=await context.newPage();
+              page.on('pageerror',e=>errs.push('pageerror: '+e.message));
+              page.on('console',m=>{if(m.type()==='error'&&!m.text().includes('Failed to load resource')&&!m.text().includes('MEDIA_ELEMENT_ERROR'))errs.push('console: '+m.text())});
+              const r=await page.goto('http://127.0.0.1:8080/intro/v35.html',{waitUntil:'networkidle'});
+              add('页面HTTP 200',r&&r.status()===200,String(r&&r.status()));
+              add('标题V3.5 AUDIO ENGINE',(await page.title())==='SAGI PLAYER INTRO V3.5 · BROADCAST AUDIO ENGINE',await page.title());
+              add('手机端无横向溢出',await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+4),await page.evaluate(()=>document.documentElement.scrollWidth+' / '+innerWidth));
+              add('默认输出为TUNNEL',(await page.locator('#outputBg').inputValue())==='tunnel',await page.locator('#outputBg').inputValue());
+              add('TUNNEL场景存在',await page.locator('#tunnelScene').count()===1);
+              add('舞台scene-tunnel启用',await page.locator('#stage').evaluate(el=>el.classList.contains('scene-tunnel')));
+              add('左LED显示球队',(await page.locator('#ledLeft').textContent()).includes('TARLAN FC'),await page.locator('#ledLeft').textContent());
+              add('右LED显示SAGI',(await page.locator('#ledRight').textContent()).includes('SAGI'),await page.locator('#ledRight').textContent());
+              add('SHOW TIMELINE默认10段',await page.locator('#showTimeline .showStep').count()===10,String(await page.locator('#showTimeline .showStep').count()));
+              add('SHOW默认总时长38.5秒',(await page.locator('#showTotal').textContent())==='38.5s',await page.locator('#showTotal').textContent());
+              add('SHOW整套预演按钮存在',await page.locator('#showPlayBtn').count()===1);
+              add('SHOW上一段按钮存在',await page.locator('#showPrevBtn').count()===1);
+              add('SHOW下一段按钮存在',await page.locator('#showNextBtn').count()===1);
+              const defaultShowNames=await page.locator('#showTimeline .showName').allTextContents();
+              add('SHOW默认顺序正确',defaultShowNames.join('|')==='Logo Sting|比赛信息|开场倒计时|球队开场|门将 GK|后卫 DF|中场 MF|前锋 FW|完整首发|替补名单',defaultShowNames.join('|'));
+              await page.locator('#showTimeline .showStep').first().locator('.down').click();await page.waitForTimeout(60);
+              const movedShowNames=await page.locator('#showTimeline .showName').allTextContents();
+              add('SHOW顺序可调整',movedShowNames[0]==='比赛信息'&&movedShowNames[1]==='Logo Sting',movedShowNames.join('|'));
+              await page.click('#showResetBtn');await page.waitForTimeout(60);
+              add('SHOW恢复默认顺序',(await page.locator('#showTimeline .showName').first().textContent())==='Logo Sting',await page.locator('#showTimeline .showName').first().textContent());
+              const firstShow=page.locator('#showTimeline .showStep').first(),lastShow=page.locator('#showTimeline .showStep').last();
+              await firstShow.locator('.showDur').fill('1.5');await firstShow.locator('.showDur').dispatchEvent('change');
+              await firstShow.locator('.showTransition').selectOption('FLASH');await firstShow.locator('.showCue').selectOption('STING');
+              await lastShow.locator('.showEnable input').uncheck();await page.waitForTimeout(60);
+              add('SHOW段时长可编辑',(await firstShow.locator('.showDur').inputValue())==='1.5',await firstShow.locator('.showDur').inputValue());
+              add('SHOW转场可编辑',(await firstShow.locator('.showTransition').inputValue())==='FLASH',await firstShow.locator('.showTransition').inputValue());
+              add('SHOW Cue可编辑',(await firstShow.locator('.showCue').inputValue())==='STING',await firstShow.locator('.showCue').inputValue());
+              add('SHOW段可禁用',!(await lastShow.locator('.showEnable input').isChecked()));
+              add('SHOW禁用后总时长33.0秒',(await page.locator('#showTotal').textContent())==='33.0s',await page.locator('#showTotal').textContent());
+              await page.click('#showSaveBtn');await page.reload({waitUntil:'networkidle'});await page.waitForTimeout(100);
+              add('SHOW保存后时长不丢失',(await page.locator('#showTimeline .showStep').first().locator('.showDur').inputValue())==='1.5',await page.locator('#showTimeline .showStep').first().locator('.showDur').inputValue());
+              add('SHOW保存后转场不丢失',(await page.locator('#showTimeline .showStep').first().locator('.showTransition').inputValue())==='FLASH',await page.locator('#showTimeline .showStep').first().locator('.showTransition').inputValue());
+              add('SHOW保存后Cue不丢失',(await page.locator('#showTimeline .showStep').first().locator('.showCue').inputValue())==='STING',await page.locator('#showTimeline .showStep').first().locator('.showCue').inputValue());
+              add('SHOW保存后禁用状态不丢失',!(await page.locator('#showTimeline .showStep').last().locator('.showEnable input').isChecked()));
+              await page.click('#showResetBtn');await page.waitForTimeout(60);
+              const firstLive=page.locator('#showTimeline .showStep').first(),secondLive=page.locator('#showTimeline .showStep').nth(1);
+              await firstLive.locator('.showDur').fill('0.5');await firstLive.locator('.showDur').dispatchEvent('change');
+              await firstLive.locator('.showTransition').selectOption('FADE');await firstLive.locator('.showCue').selectOption('RISER');
+              await secondLive.locator('.showEnable input').uncheck();
+              
+              add('MATCH PACKAGE赛事名称控件存在',await page.locator('#matchCompetition').count()===1);
+              add('MATCH PACKAGE主客队控件存在',await page.locator('#matchHome').count()===1&&await page.locator('#matchAway').count()===1);
+              add('赛事Logo上传控件存在',await page.locator('#eventLogoFile').count()===1);
+              add('主音乐上传控件存在',await page.locator('#musicFile').count()===1);
+              add('真实Cue URL控件存在',await page.locator('#sfxWhoosh').count()===1&&await page.locator('#sfxHit').count()===1&&await page.locator('#sfxRiser').count()===1&&await page.locator('#sfxCrowd').count()===1&&await page.locator('#sfxSting').count()===1);
+              add('AUDIO ENGINE四种模式',await page.locator('#audioMode option').count()===4,String(await page.locator('#audioMode option').count()));
+              add('AUDIO ENGINE三套主题',await page.locator('#audioTheme option').count()===3,String(await page.locator('#audioTheme option').count()));
+              add('Ducking控件存在',await page.locator('#audioDucking').count()===1);
+              add('Cue音量控件存在',await page.locator('#cueVolume').count()===1);
+              add('倒计时节拍控件存在',await page.locator('#countdownBeat').count()===1);
+              await page.fill('#matchCompetition','TFC WINTER LEAGUE');
+              await page.fill('#matchRound','MATCHDAY 03');
+              await page.fill('#matchHome','TARLAN FC');
+              await page.fill('#matchAway','ICE POINT FC');
+              await page.fill('#matchKickoff','14:30');
+              await page.fill('#matchVenue','TACHENG SPORTS CENTER');
+              await page.locator('#eventLogoFile').setInputFiles({name:'event.png',mimeType:'image/png',buffer:Buffer.from('89504e470d0a1a0a','hex')});await page.waitForTimeout(80);
+              add('赛事Logo预览生成',await page.locator('#eventLogoPreview img').count()===1,String(await page.locator('#eventLogoPreview img').count()));
+              await page.locator('#musicFile').setInputFiles({name:'show.mp3',mimeType:'audio/mpeg',buffer:Buffer.from('49443303000000000000','hex')});await page.waitForTimeout(50);
+              add('本机主音乐已载入',(await page.locator('#musicPreview').textContent()).includes('AUDIO'),await page.locator('#musicPreview').textContent());
+              await page.click('#clearMusicBtn');await page.waitForTimeout(30);
+              await page.fill('#musicUrl','https://audio.test/show.mp3');
+              await page.selectOption('#musicVolume','0.65');
+              await page.fill('#sfxWhoosh','https://audio.test/whoosh.mp3');
+              await page.fill('#sfxHit','https://audio.test/hit.mp3');
+              await page.fill('#sfxRiser','https://audio.test/riser.mp3');
+              await page.fill('#sfxCrowd','https://audio.test/crowd.mp3');
+              await page.fill('#sfxSting','https://audio.test/sting.mp3');
+              await page.selectOption('#audioMode','BUILTIN');await page.selectOption('#audioTheme','NORTH_WIND');await page.selectOption('#audioDucking','0.35');
+              await page.fill('#musicUrl','');await page.click('#audioTestBtn');await page.waitForTimeout(80);
+              add('BUILT-IN主音乐可启动',(await page.locator('#stage').getAttribute('data-music'))==='builtin',await page.locator('#stage').getAttribute('data-music'));
+              add('NORTH WIND主题生效',(await page.locator('#stage').getAttribute('data-audio-theme'))==='NORTH_WIND',await page.locator('#stage').getAttribute('data-audio-theme'));
+              await page.click('#cueTestBtn');await page.waitForTimeout(40);
+              add('BUILT-IN HIT Cue可触发',(await page.locator('#stage').getAttribute('data-cue-source'))==='builtin',await page.locator('#stage').getAttribute('data-cue-source'));
+              await page.click('#audioStopBtn');
+              await page.selectOption('#audioMode','HYBRID');await page.selectOption('#audioTheme','SAGI_PULSE');await page.fill('#musicUrl','https://audio.test/show.mp3');
+              await page.click('#audioTestBtn');await page.waitForTimeout(50);
+              add('HYBRID远端主音乐优先',(await page.locator('#stage').getAttribute('data-music'))==='external',await page.locator('#stage').getAttribute('data-music'));
+              await page.click('#cueTestBtn');await page.waitForTimeout(40);
+              add('HYBRID真实HIT Cue优先',(await page.locator('#stage').getAttribute('data-cue-source'))==='real',await page.locator('#stage').getAttribute('data-cue-source'));
+              add('Ducking被触发',(await page.locator('#stage').getAttribute('data-duck'))==='active'||(await page.locator('#stage').getAttribute('data-duck'))==='idle',await page.locator('#stage').getAttribute('data-duck'));
+              await page.selectOption('#audioMode','MUTE');await page.click('#audioTestBtn');await page.waitForTimeout(30);
+              add('MUTE模式生效',(await page.locator('#stage').getAttribute('data-music'))==='muted',await page.locator('#stage').getAttribute('data-music'));
+              await page.selectOption('#audioMode','HYBRID');await page.click('#audioStopBtn');
+              add('比赛信息实时同步赛事名',(await page.locator('#matchCompetitionStage').textContent())==='TFC WINTER LEAGUE',await page.locator('#matchCompetitionStage').textContent());
+              add('比赛信息实时同步客队',(await page.locator('#matchAwayStage').textContent())==='ICE POINT FC',await page.locator('#matchAwayStage').textContent());
+              await page.click('#saveBtn');await page.waitForTimeout(120);
+              await page.fill('#matchAway','TEMP');await page.fill('#musicUrl','');
+              await page.click('#loadBtn');await page.waitForTimeout(220);
+              add('比赛包装保存读取客队不丢失',(await page.locator('#matchAway').inputValue())==='ICE POINT FC',await page.locator('#matchAway').inputValue());
+              add('比赛包装保存读取音乐URL不丢失',(await page.locator('#musicUrl').inputValue())==='https://audio.test/show.mp3',await page.locator('#musicUrl').inputValue());
+              add('比赛包装保存读取Cue URL不丢失',(await page.locator('#sfxHit').inputValue())==='https://audio.test/hit.mp3',await page.locator('#sfxHit').inputValue());
+              add('STING URL保存读取不丢失',(await page.locator('#sfxSting').inputValue())==='https://audio.test/sting.mp3',await page.locator('#sfxSting').inputValue());
+              add('AUDIO ENGINE模式保存读取不丢失',(await page.locator('#audioMode').inputValue())==='HYBRID',await page.locator('#audioMode').inputValue());
+              add('AUDIO ENGINE主题保存读取不丢失',(await page.locator('#audioTheme').inputValue())==='SAGI_PULSE',await page.locator('#audioTheme').inputValue());
+
+              const rows=await page.locator('#roster .playerRow').count();
+              add('示例名单共16人',rows===16,String(rows));
+              const metas=await page.locator('#roster .pmeta').allTextContents();
+              add('首发11人+替补5人',metas.filter(x=>!x.startsWith('SUB')).length===11&&metas.filter(x=>x.startsWith('SUB')).length===5,metas.join('|'));
+              add('队长C存在',(await page.locator('#roster .pname').allTextContents()).some(x=>x.includes('C')));
+              add('球员数据存在',metas.some(x=>x.includes('GOALS'))&&metas.some(x=>x.includes('ASSISTS'))&&metas.some(x=>x.includes('CLEAN SHEETS')),metas.join('|'));
+              await page.click('#showResetBtn');await page.waitForTimeout(40);
+              const stingStep=page.locator('#showTimeline .showStep').first();
+              await stingStep.locator('.showDur').fill('0.5');await stingStep.locator('.showDur').dispatchEvent('change');
+              await stingStep.locator('.showTransition').selectOption('FLASH');await stingStep.locator('.showCue').selectOption('STING');
+              await page.click('#showPlayBtn');await page.waitForTimeout(120);
+              add('SHOW播放Logo Sting第一段',await page.locator('#stingOverlay').evaluate(el=>el.classList.contains('on')));
+              add('Logo Sting赛事名同步',(await page.locator('#stingCompetition').textContent())==='TFC WINTER LEAGUE',await page.locator('#stingCompetition').textContent());
+              add('Logo Sting FLASH转场启动',await page.locator('#transitionLayer').evaluate(el=>el.getAnimations&&el.getAnimations().length>0),String(await page.locator('#transitionLayer').evaluate(el=>el.getAnimations?el.getAnimations().length:0)));
+              add('Logo Sting STING Cue触发',(await page.locator('#cueBadgeStage').textContent())==='STING',await page.locator('#cueBadgeStage').textContent());
+              await page.click('#showNextBtn');await page.waitForTimeout(100);
+              add('MATCH INFO画面可进入',await page.locator('#matchOverlay').evaluate(el=>el.classList.contains('on')));
+              add('MATCH INFO显示主客队',(await page.locator('#matchHomeStage').textContent())==='TARLAN FC'&&(await page.locator('#matchAwayStage').textContent())==='ICE POINT FC',(await page.locator('#matchHomeStage').textContent())+' vs '+(await page.locator('#matchAwayStage').textContent()));
+              await page.click('#showNextBtn');await page.waitForTimeout(100);
+              add('COUNTDOWN画面可进入',await page.locator('#countdownOverlay').evaluate(el=>el.classList.contains('on')));
+              add('COUNTDOWN初始数字5',(await page.locator('#countdownNumber').textContent())==='5',await page.locator('#countdownNumber').textContent());
+              add('SHOW进度条工作',parseFloat(await page.locator('#showProgressBar').evaluate(el=>el.style.width||'0'))>=0,await page.locator('#showProgressBar').evaluate(el=>el.style.width));
+              await page.click('#stopBtn');await page.waitForTimeout(50);
+              add('SHOW停止按钮生效',(await page.locator('#showNow').textContent())==='STOPPED',await page.locator('#showNow').textContent());
+              await page.click('#showResetBtn');
+              add('MEDIA DAY上传控件存在',await page.locator('#mediaFile').count()===1);
+              add('远端vMix视频URL控件存在',await page.locator('#mediaUrl').count()===1);
+              add('MEDIA DAY动作选择存在',await page.locator('#mediaAction option').count()>=6,String(await page.locator('#mediaAction option').count()));
+              add('DIRECTOR入点控件存在',await page.locator('#directorIn').count()===1);
+              add('DIRECTOR出点控件存在',await page.locator('#directorOut').count()===1);
+              add('DIRECTOR速度控件存在',await page.locator('#directorSpeed option').count()>=4,String(await page.locator('#directorSpeed option').count()));
+              add('DIRECTOR定格控件存在',await page.locator('#directorFreeze').count()===1);
+              add('DIRECTOR镜头推进控件存在',await page.locator('#directorCamera option').count()===4,String(await page.locator('#directorCamera option').count()));
+              await page.locator('#mediaFile').setInputFiles({name:'gk-test.mp4',mimeType:'video/mp4',buffer:Buffer.from('000000186674797069736f6d0000020069736f6d69736f32','hex')});
+              await page.waitForTimeout(80);
+              add('本机视频预览生成',await page.locator('#mediaPreview video').count()===1,String(await page.locator('#mediaPreview video').count()));
+              await page.selectOption('#mediaAction','GK_GLOVES');
+              await page.fill('#mediaUrl','https://media.test/gk.mp4');
+              await page.fill('#directorIn','0.6');
+              await page.fill('#directorOut','2.4');
+              await page.selectOption('#directorSpeed','0.5');
+              await page.selectOption('#directorFreeze','1');
+              await page.selectOption('#directorFreezeMs','1500');
+              await page.selectOption('#directorCamera','STRONG');
+              await page.click('#updateBtn');
+              add('名单标记MEDIA',(await page.locator('#roster .pmeta').first().textContent()).includes('MEDIA'),await page.locator('#roster .pmeta').first().textContent());
+              add('名单标记0.5慢动作',(await page.locator('#roster .pmeta').first().textContent()).includes('0.5×'),await page.locator('#roster .pmeta').first().textContent());
+              add('名单标记FREEZE',(await page.locator('#roster .pmeta').first().textContent()).includes('FREEZE'),await page.locator('#roster .pmeta').first().textContent());
+              await page.click('#saveBtn');await page.waitForTimeout(80);
+              await page.fill('#directorIn','0');await page.selectOption('#directorSpeed','1');await page.selectOption('#directorFreeze','0');await page.selectOption('#directorCamera','NONE');
+              await page.click('#loadBtn');await page.waitForTimeout(180);
+              add('保存读取IN点不丢失',(await page.locator('#directorIn').inputValue())==='0.6',await page.locator('#directorIn').inputValue());
+              add('保存读取速度不丢失',(await page.locator('#directorSpeed').inputValue())==='0.5',await page.locator('#directorSpeed').inputValue());
+              add('保存读取FREEZE不丢失',(await page.locator('#directorFreeze').inputValue())==='1',await page.locator('#directorFreeze').inputValue());
+              add('保存读取镜头强度不丢失',(await page.locator('#directorCamera').inputValue())==='STRONG',await page.locator('#directorCamera').inputValue());
+              add('保存读取远端URL不丢失',(await page.locator('#mediaUrl').inputValue())==='https://media.test/gk.mp4',await page.locator('#mediaUrl').inputValue());
+
+              await page.locator('#gkBtn').scrollIntoViewIfNeeded();await page.click('#gkBtn');await page.waitForTimeout(180);
+              add('门将单独出现',await page.locator('#playersArea .playerCard').count()===1);
+              add('门将数据显示',await page.locator('#playersArea .statPill').count()===1,String(await page.locator('#playersArea .statPill').count()));
+              add('GK英雄布局启用',await page.locator('#playersArea').evaluate(el=>el.classList.contains('layout-GK')));
+              add('GK大字背景正确',(await page.locator('#roleBackdrop').textContent())==='GK',await page.locator('#roleBackdrop').textContent());
+              const gkWidth=await page.locator('#playersArea .playerCard').evaluate(el=>el.getBoundingClientRect().width);
+              add('GK英雄位尺寸放大',gkWidth>80,String(gkWidth));
+              add('GK通道LED切换',(await page.locator('#ledLeft').textContent()).includes('GOALKEEPER'),await page.locator('#ledLeft').textContent());
+              add('TUNNEL镜头推进动画启动',await page.locator('#tunnelScene').evaluate(el=>el.getAnimations&&el.getAnimations().length>0),String(await page.locator('#tunnelScene').evaluate(el=>el.getAnimations?el.getAnimations().length:0)));
+              add('GK使用MEDIA DAY视频层',await page.locator('#playersArea .mediaVideo').count()===1,String(await page.locator('#playersArea .mediaVideo').count()));
+              add('GK MEDIA DAY标签显示',(await page.locator('#playersArea .mediaTag').textContent()).includes('GK_GLOVES'),await page.locator('#playersArea .mediaTag').textContent());
+              add('视频与照片兜底层同时存在',await page.locator('#playersArea .mediaFallback').count()===1,String(await page.locator('#playersArea .mediaFallback').count()));
+              const gkVideo=page.locator('#playersArea .mediaVideo');
+              add('DIRECTOR IN写入视频',(await gkVideo.getAttribute('data-in'))==='0.6',await gkVideo.getAttribute('data-in'));
+              add('DIRECTOR OUT写入视频',(await gkVideo.getAttribute('data-out'))==='2.4',await gkVideo.getAttribute('data-out'));
+              add('DIRECTOR 0.5×生效',Math.abs((await gkVideo.evaluate(v=>v.playbackRate))-.5)<.001,String(await gkVideo.evaluate(v=>v.playbackRate)));
+              add('DIRECTOR FREEZE写入视频',(await gkVideo.getAttribute('data-freeze'))==='1',await gkVideo.getAttribute('data-freeze'));
+              add('DIRECTOR STRONG镜头写入',(await gkVideo.getAttribute('data-camera'))==='STRONG',await gkVideo.getAttribute('data-camera'));
+              add('DIRECTOR标签显示0.50×',(await page.locator('#playersArea .directorBadge').textContent()).includes('0.50×'),await page.locator('#playersArea .directorBadge').textContent());
+              const freezeTriggered=await gkVideo.evaluate(v=>{try{Object.defineProperty(v,'duration',{configurable:true,value:5});Object.defineProperty(v,'currentTime',{configurable:true,writable:true,value:2.41});v.pause=()=>{};v.dispatchEvent(new Event('timeupdate'));return v.dataset.frozen==='1'}catch(e){return false}});
+              add('DIRECTOR末帧定格逻辑触发',freezeTriggered,String(freezeTriggered));
+
+              await page.click('#dfBtn');await page.waitForTimeout(180);
+              add('4名后卫组合',await page.locator('#playersArea .playerCard').count()===4);
+              add('后卫阵型4点高亮',await page.locator('#formationNodes .node.active').count()===4);
+              add('阵型点原生动画启动',await page.locator('#formationNodes .node.active').first().evaluate(el=>el.getAnimations&&el.getAnimations().length>0));
+              add('后卫DEF大字背景',(await page.locator('#roleBackdrop').textContent())==='DEF',await page.locator('#roleBackdrop').textContent());
+              const dfWidths=await page.locator('#playersArea .playerCard').evaluateAll(els=>els.map(x=>x.getBoundingClientRect().width));
+              add('后卫中间两人更突出',dfWidths.length===4&&dfWidths[1]>dfWidths[0]*1.2&&dfWidths[2]>dfWidths[3]*1.2,JSON.stringify(dfWidths));
+
+              await page.click('#mfBtn');await page.waitForTimeout(180);
+              add('3名中场组合',await page.locator('#playersArea .playerCard').count()===3);
+              add('中场数据卡存在',await page.locator('#playersArea .statPill').count()===3,String(await page.locator('#playersArea .statPill').count()));
+              add('中场MID大字背景',(await page.locator('#roleBackdrop').textContent())==='MID',await page.locator('#roleBackdrop').textContent());
+              const mfWidths=await page.locator('#playersArea .playerCard').evaluateAll(els=>els.map(x=>x.getBoundingClientRect().width));
+              add('中场核心人物最大',mfWidths.length===3&&mfWidths[1]>mfWidths[0]*1.25&&mfWidths[1]>mfWidths[2]*1.25,JSON.stringify(mfWidths));
+
+              await page.click('#fwBtn');await page.waitForTimeout(180);
+              add('3名前锋组合',await page.locator('#playersArea .playerCard').count()===3);
+              add('前锋GOALS数据存在',(await page.locator('#playersArea').textContent()).includes('GOALS'));
+              add('前锋FWD大字背景',(await page.locator('#roleBackdrop').textContent())==='FWD',await page.locator('#roleBackdrop').textContent());
+              const fwWidths=await page.locator('#playersArea .playerCard').evaluateAll(els=>els.map(x=>x.getBoundingClientRect().width));
+              add('前锋中锋英雄位最大',fwWidths.length===3&&fwWidths[1]>fwWidths[0]*1.25&&fwWidths[1]>fwWidths[2]*1.25,JSON.stringify(fwWidths));
+              const visualGeom=await page.evaluate(()=>{const f=document.getElementById('frame').getBoundingClientRect(),cards=[...document.querySelectorAll('#playersArea .playerCard')].map(x=>x.getBoundingClientRect());const hit=r=>r.right>f.left&&r.left<f.right&&r.bottom>f.top&&r.top<f.bottom;return{frame:{x:f.x,y:f.y,w:f.width,h:f.height},cards:cards.map(r=>({x:r.x,y:r.y,w:r.width,h:r.height,hit:hit(r)}))}});
+              add('V3.5人物全部在预览框内',visualGeom.cards.every(x=>x.hit),JSON.stringify(visualGeom));
+
+              await page.click('#fullBtn');await page.waitForTimeout(180);
+              add('完整首发仍为11人',await page.locator('#fullList .fullRow').count()===11,String(await page.locator('#fullList .fullRow').count()));
+              add('完整阵型11点全亮',await page.locator('#formationNodes .node.active').count()===11);
+              add('完整首发显示队长C',await page.locator('#fullList .captainBadge').count()===1,String(await page.locator('#fullList .captainBadge').count()));
+              add('FULL时通道出口打开',await page.locator('#stage').evaluate(el=>el.classList.contains('tunnel-open')));
+              add('FULL时LED切换FORMATION',(await page.locator('#ledLeft').textContent()).includes('FORMATION'),await page.locator('#ledLeft').textContent());
+
+              await page.click('#subsBtn');await page.waitForTimeout(180);
+              add('替补画面5人',await page.locator('#subList .subRow').count()===5,String(await page.locator('#subList .subRow').count()));
+              add('替补标题正确',(await page.locator('#groupName').textContent())==='SUBSTITUTES',await page.locator('#groupName').textContent());
+              await page.selectOption('#outputBg','stadium');await page.waitForTimeout(100);
+              add('切换STADIUM后通道隐藏',await page.locator('#tunnelScene').evaluate(el=>getComputedStyle(el).display==='none'),await page.locator('#tunnelScene').evaluate(el=>getComputedStyle(el).display));
+              await page.selectOption('#outputBg','tunnel');await page.waitForTimeout(100);
+              add('切回TUNNEL后通道恢复',await page.locator('#tunnelScene').evaluate(el=>getComputedStyle(el).display!=='none'),await page.locator('#tunnelScene').evaluate(el=>getComputedStyle(el).display));
+
+              await page.click('#showPlayBtn');await page.waitForTimeout(120);
+              add('MATCH SHOW可再次启动',(await page.locator('#status').textContent()).includes('SHOW'),await page.locator('#status').textContent());
+              await page.click('#stopBtn');
+
+              const link=await page.evaluate(()=>new URL('./vmix-v35.html',location.href).toString());
+              add('V3.5 vMix链接正确',link.includes('vmix-v35.html'),link);
+
+              const state={commandId:'v35_test_1',visualVersion:'V3.5-BROADCAST-AUDIO-ENGINE',group:'STING',team:'TARLAN FC',formation:'4-3-3',
+                players:[
+                  {name:'DIAS',number:'2',role:'DF',position:'RB',captain:false,statLabel:'APPS',statValue:'12',photo:''},
+                  {name:'NURLAN',number:'4',role:'DF',position:'CB',captain:true,statLabel:'APPS',statValue:'14',photo:'',mediaUrl:'https://media.test/nurlan.mp4',mediaAction:'ARMS',directorIn:0.4,directorOut:2.2,directorSpeed:0.75,directorFreeze:true,directorFreezeMs:1000,directorCamera:'STRONG'},
+                  {name:'ALMAS',number:'5',role:'DF',position:'CB',captain:false,statLabel:'APPS',statValue:'13',photo:''},
+                  {name:'ERLAN',number:'3',role:'DF',position:'LB',captain:false,statLabel:'APPS',statValue:'11',photo:''}
+                ],
+                allPlayers:[
+                  {name:'AZAMAT',number:'1',role:'GK',position:'GK',captain:false,statLabel:'CLEAN SHEETS',statValue:'6'},
+                  {name:'DIAS',number:'2',role:'DF',position:'RB',captain:false,statLabel:'APPS',statValue:'12'},
+                  {name:'NURLAN',number:'4',role:'DF',position:'CB',captain:true,statLabel:'APPS',statValue:'14'},
+                  {name:'ALMAS',number:'5',role:'DF',position:'CB',captain:false,statLabel:'APPS',statValue:'13'},
+                  {name:'ERLAN',number:'3',role:'DF',position:'LB',captain:false,statLabel:'APPS',statValue:'11'},
+                  {name:'SULTAN',number:'6',role:'MF',position:'CM',captain:false,statLabel:'ASSISTS',statValue:'5'},
+                  {name:'MARHULAN',number:'8',role:'MF',position:'CM',captain:false,statLabel:'APPS',statValue:'14'},
+                  {name:'ASLAN',number:'10',role:'MF',position:'AM',captain:false,statLabel:'GOALS',statValue:'7'},
+                  {name:'DANIYAR',number:'7',role:'FW',position:'RW',captain:false,statLabel:'GOALS',statValue:'8'},
+                  {name:'ARDAK',number:'9',role:'FW',position:'ST',captain:false,statLabel:'GOALS',statValue:'12'},
+                  {name:'TIMUR',number:'11',role:'FW',position:'LW',captain:false,statLabel:'GOALS',statValue:'6'}
+                ],
+                substitutes:[
+                  {name:'BEK',number:'12',role:'GK',position:'GK',statLabel:'APPS',statValue:'3'},
+                  {name:'RUSLAN',number:'14',role:'DF',position:'CB',statLabel:'APPS',statValue:'6'},
+                  {name:'ILIAS',number:'16',role:'MF',position:'CM',statLabel:'ASSISTS',statValue:'2'},
+                  {name:'SAMAT',number:'18',role:'FW',position:'ST',statLabel:'GOALS',statValue:'3'},
+                  {name:'AMAN',number:'20',role:'FW',position:'RW',statLabel:'APPS',statValue:'5'}
+                ],crest:'',stadium:'',background:'tunnel',duration:2000,
+                package:{competition:'TFC WINTER LEAGUE',round:'MATCHDAY 03',home:'TARLAN FC',away:'ICE POINT FC',kickoff:'14:30',venue:'TACHENG SPORTS CENTER',eventLogo:'data:image/gif;base64,R0lGODlhAQABAAAAACw=',musicUrl:'https://audio.test/show.mp3',musicVolume:0.65,audioEngine:{mode:'HYBRID',theme:'BLACK_GOLD',intensity:0.75,ducking:0.35,cueVolume:1,countdownBeat:true},sfx:{WHOOSH:'https://audio.test/whoosh.mp3',HIT:'https://audio.test/hit.mp3',RISER:'https://audio.test/riser.mp3',CROWD:'https://audio.test/crowd.mp3',STING:'https://audio.test/sting.mp3'}},
+                show:{sessionId:'show_test_1',stepIndex:0,sequenceIndex:0,stepTotal:10,label:'Logo Sting',transition:'FLASH',cue:'STING',autoNext:true,isFirst:true,isLast:false}};
+              await context.route('**/rest/v1/rpc/sagi_get_event',async route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({slug:'tacheng-winter-2026',revision:1,payload:{lineupIntro:state}})}));
+              await context.route('https://media.test/**',async route=>route.fulfill({status:200,contentType:'video/mp4',body:Buffer.from('000000186674797069736f6d0000020069736f6d69736f32','hex')}));
+              const vmix=await context.newPage();const vr=await vmix.goto('http://127.0.0.1:8080/intro/vmix-v35.html',{waitUntil:'domcontentloaded'});
+              add('V3.5 vMix页HTTP 200',vr&&vr.status()===200,String(vr&&vr.status()));await vmix.waitForTimeout(950);
+              add('vMix TUNNEL场景启用',await vmix.locator('#stage').evaluate(el=>el.classList.contains('scene-tunnel')));
+              add('vMix通道可见',await vmix.locator('#tunnelScene').evaluate(el=>getComputedStyle(el).display!=='none'));
+              add('vMix Logo Sting画面同步',await vmix.locator('#stingOverlay').evaluate(el=>el.classList.contains('on')));
+              add('vMix Logo Sting赛事名同步',(await vmix.locator('#stingCompetition').textContent())==='TFC WINTER LEAGUE',await vmix.locator('#stingCompetition').textContent());
+              add('vMix赛事Logo同步',(await vmix.locator('#stingLogo').getAttribute('src')).startsWith('data:image/gif'),await vmix.locator('#stingLogo').getAttribute('src'));
+              add('vMix主音乐请求同步',(await vmix.locator('#stage').getAttribute('data-music'))==='playing',await vmix.locator('#stage').getAttribute('data-music'));
+              add('vMix真实STING Cue同步',(await vmix.locator('#stage').getAttribute('data-cue-source'))==='real',await vmix.locator('#stage').getAttribute('data-cue-source'));
+              add('vMix HYBRID模式同步',(await vmix.locator('#stage').getAttribute('data-audio-mode'))==='HYBRID',await vmix.locator('#stage').getAttribute('data-audio-mode'));
+              add('vMix BLACK GOLD主题同步',(await vmix.locator('#stage').getAttribute('data-audio-theme'))==='BLACK_GOLD',await vmix.locator('#stage').getAttribute('data-audio-theme'));
+              add('vMix SHOW步骤索引同步',(await vmix.locator('#stage').getAttribute('data-show-step'))==='0',await vmix.locator('#stage').getAttribute('data-show-step'));
+              add('vMix SHOW步骤名称同步',(await vmix.locator('#showStepStage').textContent()).includes('Logo Sting'),await vmix.locator('#showStepStage').textContent());
+              add('vMix SHOW Cue同步',(await vmix.locator('#cueBadgeStage').textContent())==='STING',await vmix.locator('#cueBadgeStage').textContent());
+              add('vMix SHOW FLASH转场同步',await vmix.locator('#transitionLayer').evaluate(el=>el.classList.contains('white')),await vmix.locator('#transitionLayer').getAttribute('class'));
+              state.commandId='v35_test_builtin';state.group='MATCH';state.duration=3000;state.package.audioEngine={mode:'BUILTIN',theme:'NORTH_WIND',intensity:.75,ducking:.35,cueVolume:1,countdownBeat:true};state.package.musicUrl='';state.package.sfx.RISER='';state.show={sessionId:'show_test_1',stepIndex:1,sequenceIndex:1,stepTotal:10,label:'比赛信息',transition:'FADE',cue:'RISER',autoNext:true,isFirst:false,isLast:false};
+              await context.unroute('**/rest/v1/rpc/sagi_get_event');await context.route('**/rest/v1/rpc/sagi_get_event',async route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({slug:'tacheng-winter-2026',revision:2,payload:{lineupIntro:state}})}));await vmix.waitForTimeout(850);
+              add('vMix BUILT-IN模式自动接管',(await vmix.locator('#stage').getAttribute('data-music'))==='builtin',await vmix.locator('#stage').getAttribute('data-music'));
+              add('vMix内置RISER Cue接管',(await vmix.locator('#stage').getAttribute('data-cue-source'))==='builtin',await vmix.locator('#stage').getAttribute('data-cue-source'));
+              add('vMix NORTH WIND主题生效',(await vmix.locator('#stage').getAttribute('data-audio-theme'))==='NORTH_WIND',await vmix.locator('#stage').getAttribute('data-audio-theme'));
+              state.commandId='v35_test_2';state.package.audioEngine={mode:'HYBRID',theme:'BLACK_GOLD',intensity:.75,ducking:.35,cueVolume:1,countdownBeat:true};state.package.musicUrl='https://audio.test/show.mp3';state.package.sfx.RISER='https://audio.test/riser.mp3';state.group='MATCH';state.duration=3000;state.show={sessionId:'show_test_1',stepIndex:1,sequenceIndex:1,stepTotal:10,label:'比赛信息',transition:'FADE',cue:'RISER',autoNext:true,isFirst:false,isLast:false};
+              await context.unroute('**/rest/v1/rpc/sagi_get_event');await context.route('**/rest/v1/rpc/sagi_get_event',async route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({slug:'tacheng-winter-2026',revision:5,payload:{lineupIntro:state}})}));await vmix.waitForTimeout(850);
+              add('vMix MATCH INFO画面同步',await vmix.locator('#matchOverlay').evaluate(el=>el.classList.contains('on')));
+              add('vMix MATCH INFO客队同步',(await vmix.locator('#matchAwayStage').textContent())==='ICE POINT FC',await vmix.locator('#matchAwayStage').textContent());
+              state.commandId='v35_test_3';state.group='COUNTDOWN';state.duration=5000;state.show={sessionId:'show_test_1',stepIndex:2,sequenceIndex:2,stepTotal:10,label:'开场倒计时',transition:'ZOOM',cue:'HIT',autoNext:true,isFirst:false,isLast:false};
+              await context.unroute('**/rest/v1/rpc/sagi_get_event');await context.route('**/rest/v1/rpc/sagi_get_event',async route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({slug:'tacheng-winter-2026',revision:3,payload:{lineupIntro:state}})}));await vmix.waitForTimeout(850);
+              add('vMix COUNTDOWN画面同步',await vmix.locator('#countdownOverlay').evaluate(el=>el.classList.contains('on')));
+              add('vMix COUNTDOWN初始数字5',(await vmix.locator('#countdownNumber').textContent())==='5',await vmix.locator('#countdownNumber').textContent());
+              state.commandId='v35_test_4';state.group='DF';state.duration=4000;state.show={sessionId:'show_test_1',stepIndex:5,sequenceIndex:5,stepTotal:10,label:'后卫 DF',transition:'SLIDE',cue:'WHOOSH',autoNext:true,isFirst:false,isLast:false};
+              await context.unroute('**/rest/v1/rpc/sagi_get_event');await context.route('**/rest/v1/rpc/sagi_get_event',async route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({slug:'tacheng-winter-2026',revision:4,payload:{lineupIntro:state}})}));await vmix.waitForTimeout(850);
+              add('vMix左LED同步球队',(await vmix.locator('#ledLeft').textContent()).includes('TARLAN FC'),await vmix.locator('#ledLeft').textContent());
+              add('vMix后卫LED同步',(await vmix.locator('#ledLeft').textContent()).includes('DEFENDERS'),await vmix.locator('#ledLeft').textContent());
+              add('vMix通道镜头动画启动',await vmix.locator('#tunnelScene').evaluate(el=>el.getAnimations&&el.getAnimations().length>0),String(await vmix.locator('#tunnelScene').evaluate(el=>el.getAnimations?el.getAnimations().length:0)));
+              add('vMix后卫4人',await vmix.locator('#players .card').count()===4);
+              add('vMix只给有URL的球员启用视频',await vmix.locator('#players .mediaVideo').count()===1,String(await vmix.locator('#players .mediaVideo').count()));
+              add('vMix MEDIA DAY标签同步',(await vmix.locator('#players .mediaTag').textContent()).includes('ARMS'),await vmix.locator('#players .mediaTag').textContent());
+              const vmixVideo=vmix.locator('#players .mediaVideo');
+              add('vMix DIRECTOR IN同步',(await vmixVideo.getAttribute('data-in'))==='0.4',await vmixVideo.getAttribute('data-in'));
+              add('vMix DIRECTOR OUT同步',(await vmixVideo.getAttribute('data-out'))==='2.2',await vmixVideo.getAttribute('data-out'));
+              add('vMix DIRECTOR速度同步',Math.abs((await vmixVideo.evaluate(v=>v.playbackRate))-.75)<.001,String(await vmixVideo.evaluate(v=>v.playbackRate)));
+              add('vMix DIRECTOR FREEZE同步',(await vmixVideo.getAttribute('data-freeze'))==='1',await vmixVideo.getAttribute('data-freeze'));
+              add('vMix DIRECTOR STRONG镜头同步',(await vmixVideo.getAttribute('data-camera'))==='STRONG',await vmixVideo.getAttribute('data-camera'));
+              add('vMix DIRECTOR标签显示',(await vmix.locator('#players .directorBadge').textContent()).includes('0.75×'),await vmix.locator('#players .directorBadge').textContent());
+              add('无视频URL球员仍走照片兜底',await vmix.locator('#players .mediaFallback').count()===1,String(await vmix.locator('#players .mediaFallback').count()));
+              add('vMix显示队长C',await vmix.locator('#players .captainBadge').count()===1,String(await vmix.locator('#players .captainBadge').count()));
+              add('vMix显示核心数据',await vmix.locator('#players .statPill').count()===4,String(await vmix.locator('#players .statPill').count()));
+              add('vMix阵型队长点有C',await vmix.locator('#nodes .captainNode').count()===1,String(await vmix.locator('#nodes .captainNode').count()));
+              add('vMix V3.5后卫布局启用',await vmix.locator('#players').evaluate(el=>el.classList.contains('layout-DF')));
+              add('vMix DEF大字背景',(await vmix.locator('#roleBackdrop').textContent())==='DEF',await vmix.locator('#roleBackdrop').textContent());
+              const vmixDfWidths=await vmix.locator('#players .card').evaluateAll(els=>els.map(x=>x.getBoundingClientRect().width));
+              add('vMix后卫中间层级正确',vmixDfWidths.length===4&&vmixDfWidths[1]>vmixDfWidths[0]*1.2&&vmixDfWidths[2]>vmixDfWidths[3]*1.2,JSON.stringify(vmixDfWidths));
+
+              state.commandId='v35_test_5';state.group='SUB';state.players=state.substitutes;state.duration=5000;state.show={sessionId:'show_test_1',stepIndex:9,sequenceIndex:9,stepTotal:10,label:'替补名单',transition:'FADE',cue:'NONE',autoNext:true,isFirst:false,isLast:true};
+              await context.unroute('**/rest/v1/rpc/sagi_get_event');
+              await context.route('**/rest/v1/rpc/sagi_get_event',async route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({slug:'tacheng-winter-2026',revision:2,payload:{lineupIntro:state}})}));
+              await vmix.waitForTimeout(900);
+              add('vMix替补画面5人',await vmix.locator('#subList .subRow').count()===5,String(await vmix.locator('#subList .subRow').count()));
+              add('vMix替补标题正确',(await vmix.locator('#groupName').textContent())==='SUBSTITUTES',await vmix.locator('#groupName').textContent());
+
+              await context.close();
+            }catch(e){errs.push('fatal: '+(e.stack||e.message||String(e)))}finally{if(browser)await browser.close()}
+            const failed=out.filter(x=>!x.ok),lines=['SAGI PLAYER INTRO V3.5 BROADCAST AUDIO ENGINE TEST','time='+new Date().toISOString(),'',
+              ...out.map(x=>(x.ok?'PASS':'FAIL')+' | '+x.n+(x.d?' | '+x.d:'')),'','Browser errors:',...(errs.length?errs:['none']),'',
+              'SUMMARY: '+(failed.length===0&&errs.length===0?'PASS':'FAIL')+' ('+(out.length-failed.length)+'/'+out.length+' checks passed)'];
+            fs.writeFileSync('intro-v35-test-result.txt',lines.join('\n'));console.log(lines.join('\n'));if(failed.length||errs.length)process.exitCode=1;
+          })();
+          NODE
+      - name: Commit result
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ -f intro-v35-test-result.txt ]; then
+            git add intro-v35-test-result.txt
+            git commit -m "Record SAGI PLAYER INTRO V3.5 BROADCAST AUDIO ENGINE test result" || exit 0
+            git push
+          fi
