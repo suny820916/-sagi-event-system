@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#07090d">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%2307090d%22/%3E%3Ctext x=%2232%22 y=%2243%22 text-anchor=%22middle%22 font-size=%2234%22 fill=%22%23d8b55b%22%3ES%3C/text%3E%3C/svg%3E">
-<title>SAGI PLAYER INTRO V3.3 · SHOW DIRECTOR</title>
+<title>SAGI PLAYER INTRO V3.4 · MATCH SHOW PACKAGE</title>
 <style>
 :root{--bg:#07090d;--panel:#11151c;--line:#2b3340;--text:#f4f0e8;--muted:#8f97a5;--gold:#d8b55b;--green:#72c79a}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
@@ -92,7 +92,23 @@ button,.fileBtn{border:0;border-radius:12px;background:#262d37;color:#fff;font-w
 .formationBox{position:absolute;right:78px;top:175px;width:500px;height:760px;border:1px solid #ffffff20;border-radius:32px;background:#05080cc7;backdrop-filter:blur(7px);padding:28px}.formationHead{display:flex;justify-content:space-between;align-items:flex-start}.formationTitle{font-size:25px;font-weight:950}.formationText{font-size:42px;color:#d8b55b;font-weight:1000}.pitch{position:absolute;left:34px;right:34px;top:120px;bottom:34px;border:3px solid #ffffff50;border-radius:5px;background:linear-gradient(#123d25,#0e321e);overflow:hidden}.pitch:before{content:"";position:absolute;left:0;right:0;top:50%;border-top:2px solid #ffffff55}.pitch:after{content:"";position:absolute;width:115px;height:115px;border:2px solid #ffffff55;border-radius:50%;left:50%;top:50%;transform:translate(-50%,-50%)}.boxTop,.boxBottom{position:absolute;left:50%;width:220px;height:90px;transform:translateX(-50%);border:2px solid #ffffff55}.boxTop{top:-2px}.boxBottom{bottom:-2px}.formationNodes{position:absolute;inset:0}.node{position:absolute;width:54px;height:54px;border-radius:50%;transform:translate(-50%,-50%);background:#161e28;border:2px solid #ffffff75;display:flex;align-items:center;justify-content:center;font-weight:1000;font-size:15px;color:#fff;transition:.25s}.node.active{background:#d8b55b;color:#111;border-color:#fff3b8;box-shadow:0 0 0 8px #d8b55b22}.node small{position:absolute;top:58px;font-size:9px;color:#cbd1d9;white-space:nowrap;max-width:86px;overflow:hidden;text-overflow:ellipsis}
 .fullList{position:absolute;left:95px;top:355px;width:1130px;display:grid;grid-template-columns:repeat(2,1fr);gap:14px 28px}.fullRow{display:grid;grid-template-columns:54px 56px 1fr auto;gap:10px;align-items:center;border-bottom:1px solid #ffffff12;padding:8px 4px}.fullRole{font-size:12px;color:#d8b55b;font-weight:900}.fullNo{font-size:25px;font-weight:1000}.fullName{font-size:22px;font-weight:900}.fullPos{font-size:11px;color:#98a1ad}
 .statusBar{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px}.status{font-size:12px;color:var(--green)}.mini{font-size:11px;color:#8b93a0}
-.groupButtons{display:grid;grid-template-columns:1fr 1fr;gap:8px}.groupButtons button{min-height:48px}.showDirector{margin-top:10px;padding:11px;border:1px solid #4b4128;border-radius:14px;background:linear-gradient(180deg,#15130e,#090c11)}
+.groupButtons{display:grid;grid-template-columns:1fr 1fr;gap:8px}.groupButtons button{min-height:48px}.matchPackage{margin-top:10px;padding:11px;border:1px solid #33404d;border-radius:14px;background:linear-gradient(180deg,#10151b,#090c11)}
+.packageHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}.packageHead b{font-size:12px;color:#e5ca78;letter-spacing:2px}.packageHead span{font-size:10px;color:#8c96a2}
+.packageGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.packageGrid input,.packageGrid select{font-size:12px}
+.audioRow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.audioStatus{margin-top:8px;font-size:10px;color:#85909d}
+.matchOverlay,.countdownOverlay,.stingOverlay{position:absolute;inset:0;z-index:18;display:none;pointer-events:none}
+.matchOverlay.on,.countdownOverlay.on,.stingOverlay.on{display:flex}
+.stingOverlay{align-items:center;justify-content:center;background:radial-gradient(circle at center,#18212b 0,#06090d 52%,#020304 100%)}
+.stingCore{text-align:center}.stingLogo{width:250px;height:250px;object-fit:contain;filter:drop-shadow(0 28px 40px #000c)}.stingComp{margin-top:20px;font-size:28px;font-weight:1000;letter-spacing:6px;color:#e9d28c}.stingLine{width:360px;height:3px;margin:18px auto;background:linear-gradient(90deg,transparent,#d8b55b,transparent)}
+.matchOverlay{align-items:center;justify-content:center;background:linear-gradient(120deg,#040608e8,#0b1117ef)}
+.matchCardStage{width:1320px;padding:60px 70px;border:1px solid #ffffff20;background:#070b0fdb;box-shadow:0 28px 100px #000b;position:relative;overflow:hidden}
+.matchCardStage:before{content:"";position:absolute;left:0;top:0;bottom:0;width:10px;background:#d8b55b}
+.matchCompetition{font-size:22px;font-weight:900;letter-spacing:6px;color:#d8b55b}.matchRound{margin-top:8px;font-size:16px;letter-spacing:4px;color:#8e99a6}
+.matchTeams{display:grid;grid-template-columns:1fr 130px 1fr;gap:24px;align-items:center;margin-top:42px}.matchTeam{text-align:center;font-size:54px;font-weight:1000;letter-spacing:-2px;color:#fff}.matchVs{text-align:center;font-size:24px;font-weight:1000;letter-spacing:5px;color:#8b95a0}
+.matchMetaStage{display:flex;justify-content:center;gap:36px;margin-top:36px;font-size:16px;font-weight:800;letter-spacing:2px;color:#c1c8d0}
+.countdownOverlay{align-items:center;justify-content:center;background:radial-gradient(circle,#0c1118ee,#030507f7 68%)}
+.countdownCore{text-align:center}.countdownLabel{font-size:22px;font-weight:900;letter-spacing:8px;color:#aeb7c1}.countdownNumber{font-size:310px;line-height:.9;font-weight:1000;color:#fff;letter-spacing:-18px;text-shadow:0 0 65px #d8b55b22}.countdownSub{font-size:16px;letter-spacing:5px;color:#d8b55b;margin-top:18px}
+.showDirector{margin-top:10px;padding:11px;border:1px solid #4b4128;border-radius:14px;background:linear-gradient(180deg,#15130e,#090c11)}
 .showHead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}.showHead b{font-size:13px;letter-spacing:2px;color:#e7cc7d}.showHead span{font-size:10px;color:#8d96a2}
 .showTimeline{display:grid;gap:7px}.showStep{display:grid;grid-template-columns:30px 1fr 78px 105px 92px 52px 74px;gap:6px;align-items:center;padding:7px;border:1px solid #29323c;border-radius:11px;background:#0b1016}
 .showStep.active{border-color:#d8b55b;background:#17140d;box-shadow:0 0 0 1px #d8b55b22 inset}.showStep.disabled{opacity:.42}
@@ -119,7 +135,7 @@ button,.fileBtn{border:0;border-radius:12px;background:#262d37;color:#fff;font-w
 </head>
 <body>
 <div class="app">
-  <div class="top"><div><div class="brand">SAGI PLAYER INTRO</div><div class="sub">V3.3 · SHOW DIRECTOR · 分组出场 · 阵型联动 · 专业球场</div></div><div class="ver">V3.3</div></div>
+  <div class="top"><div><div class="brand">SAGI PLAYER INTRO</div><div class="sub">V3.4 · MATCH SHOW PACKAGE · 分组出场 · 阵型联动 · 专业球场</div></div><div class="ver">V3.4</div></div>
 
   <div class="layout">
     <div class="controls">
@@ -132,6 +148,34 @@ button,.fileBtn{border:0;border-radius:12px;background:#262d37;color:#fff;font-w
         <div class="asset" style="margin-top:10px"><div class="assetPreview" id="crestPreview">队徽</div><div><label>球队队徽</label><label class="fileBtn">上传队徽<input id="crestFile" type="file" accept="image/*"></label></div></div>
         <div class="asset" style="margin-top:10px"><div class="assetPreview" id="bgPreview">球场</div><div><label>专业球场背景（可选）</label><label class="fileBtn">上传球场背景<input id="bgFile" type="file" accept="image/*"></label></div></div>
         <div class="actions"><button id="clearBgBtn" type="button">使用内置职业球场</button></div>
+      </div>
+
+      <div class="card">
+        <h2>MATCH SHOW PACKAGE</h2>
+        <div class="matchPackage">
+          <div class="packageHead"><b>MATCH INFO</b><span>赛事信息 · Logo Sting · Countdown · Audio</span></div>
+          <div class="packageGrid">
+            <div><label>赛事名称</label><input id="matchCompetition" value="TFC WINTER LEAGUE"></div>
+            <div><label>轮次</label><input id="matchRound" value="MATCHDAY 01"></div>
+            <div><label>主队</label><input id="matchHome" value="TARLAN FC"></div>
+            <div><label>客队</label><input id="matchAway" value="OPPONENT"></div>
+            <div><label>比赛时间</label><input id="matchKickoff" value="20:00"></div>
+            <div><label>比赛场地</label><input id="matchVenue" value="TACHENG"></div>
+          </div>
+          <div class="asset" style="margin-top:10px"><div class="assetPreview" id="eventLogoPreview">赛事LOGO</div><div><label>Logo Sting 赛事Logo</label><label class="fileBtn">上传赛事Logo<input id="eventLogoFile" type="file" accept="image/*"></label></div></div>
+          <div class="packageHead" style="margin-top:12px"><b>AUDIO PACKAGE</b><span>主音乐 + 真实Cue音效</span></div>
+          <div class="asset"><div class="assetPreview" id="musicPreview">MUSIC</div><div><label>本机主音乐</label><label class="fileBtn">上传音乐<input id="musicFile" type="file" accept="audio/*"></label></div></div>
+          <div class="packageGrid" style="margin-top:8px">
+            <div><label>vMix 主音乐URL</label><input id="musicUrl" placeholder="https://.../show-music.mp3"></div>
+            <div><label>音乐音量</label><select id="musicVolume"><option value="0.35">35%</option><option value="0.5">50%</option><option value="0.65" selected>65%</option><option value="0.8">80%</option><option value="1">100%</option></select></div>
+            <div><label>WHOOSH 音效URL</label><input id="sfxWhoosh" placeholder="https://.../whoosh.mp3"></div>
+            <div><label>HIT 音效URL</label><input id="sfxHit" placeholder="https://.../hit.mp3"></div>
+            <div><label>RISER 音效URL</label><input id="sfxRiser" placeholder="https://.../riser.mp3"></div>
+            <div><label>CROWD 音效URL</label><input id="sfxCrowd" placeholder="https://.../crowd.mp3"></div>
+          </div>
+          <div class="actions"><button id="audioTestBtn" type="button">测试音乐</button><button id="audioStopBtn" type="button">停止音频</button><button id="clearMusicBtn" type="button">清除本机音乐</button></div>
+          <div id="audioStatus" class="audioStatus">AUDIO READY · 没有真实Cue URL时自动使用内置合成音</div>
+        </div>
       </div>
 
       <div class="card">
@@ -184,7 +228,7 @@ button,.fileBtn{border:0;border-radius:12px;background:#262d37;color:#fff;font-w
           <div class="showHead"><b>SHOW TIMELINE</b><span>顺序 · 时长 · 转场 · Cue · 跳过</span></div>
           <div id="showTimeline" class="showTimeline"></div>
           <div class="showProgress"><i id="showProgressBar"></i></div>
-          <div class="showNow"><span id="showNow">READY</span><span class="showTotal">TOTAL <b id="showTotal">28.5s</b></span></div>
+          <div class="showNow"><span id="showNow">READY</span><span class="showTotal">TOTAL <b id="showTotal">38.5s</b></span></div>
           <div class="actions"><button id="showPlayBtn" class="primary" type="button">▶ 预演整套</button><button id="showPrevBtn" type="button">← 上一段</button><button id="showNextBtn" type="button">下一段 →</button><button id="stopBtn" type="button">■ 停止</button></div>
           <div class="actions"><button id="showResetBtn" type="button">恢复默认时间线</button><button id="showSaveBtn" type="button">保存SHOW</button></div>
         </div>
@@ -193,8 +237,8 @@ button,.fileBtn{border:0;border-radius:12px;background:#262d37;color:#fff;font-w
       <div class="card">
         <h2>直播输出</h2>
         <div class="grid2"><div><label>vMix背景</label><select id="outputBg"><option value="tunnel" selected>球员通道 TUNNEL</option><option value="stadium">球场背景</option><option value="transparent">透明叠加</option><option value="chroma">绿幕</option></select></div><div><label>画面</label><input value="1920 × 1080" readonly></div></div>
-        <div class="actions"><button id="copyVmixBtn" type="button">复制V3.3 vMix链接</button></div>
-        <div class="tiny" style="margin-top:8px">vMix：Add Input → Web Browser → 使用 V3.3 专用链接。手机端点任意组即可同步到直播电脑。</div>
+        <div class="actions"><button id="copyVmixBtn" type="button">复制V3.4 vMix链接</button></div>
+        <div class="tiny" style="margin-top:8px">vMix：Add Input → Web Browser → 使用 V3.4 专用链接。手机端点任意组即可同步到直播电脑。</div>
       </div>
     </div>
 
@@ -204,6 +248,9 @@ button,.fileBtn{border:0;border-radius:12px;background:#262d37;color:#fff;font-w
           <div id="stageScale" class="stageScale">
             <div id="stage" class="stage">
               <div id="transitionLayer" class="transitionLayer"></div><div id="cueBadgeStage" class="cueBadgeStage"></div>
+              <div id="stingOverlay" class="stingOverlay"><div class="stingCore"><img id="stingLogo" class="stingLogo"><div class="stingLine"></div><div id="stingCompetition" class="stingComp">SAGI FOOTBALL</div></div></div>
+              <div id="matchOverlay" class="matchOverlay"><div class="matchCardStage"><div id="matchCompetitionStage" class="matchCompetition">TFC WINTER LEAGUE</div><div id="matchRoundStage" class="matchRound">MATCHDAY 01</div><div class="matchTeams"><div id="matchHomeStage" class="matchTeam">TARLAN FC</div><div class="matchVs">VS</div><div id="matchAwayStage" class="matchTeam">OPPONENT</div></div><div class="matchMetaStage"><span id="matchKickoffStage">20:00</span><span>·</span><span id="matchVenueStage">TACHENG</span></div></div></div>
+              <div id="countdownOverlay" class="countdownOverlay"><div class="countdownCore"><div class="countdownLabel">KICKOFF SHOW</div><div id="countdownNumber" class="countdownNumber">5</div><div id="countdownSub" class="countdownSub">TFC WINTER LEAGUE</div></div></div>
               <div id="tunnelScene" class="tunnelScene">
                 <div class="tunnelBack"></div><div class="portal"></div><div class="wall left"></div><div class="wall right"></div><div class="ceiling"></div><div class="floor"></div>
                 <div class="led left"><div id="ledLeft" class="ledText">TARLAN FC<small>STARTING XI</small></div></div>
@@ -219,7 +266,7 @@ button,.fileBtn{border:0;border-radius:12px;background:#262d37;color:#fff;font-w
             </div>
           </div>
         </div>
-        <div class="statusBar"><div id="status" class="status">V3.3 已就绪 · SHOW DIRECTOR</div><div class="mini">1920 × 1080</div></div>
+        <div class="statusBar"><div id="status" class="status">V3.4 已就绪 · MATCH SHOW PACKAGE</div><div class="mini">1920 × 1080</div></div>
       </div>
     </div>
   </div>
@@ -239,8 +286,11 @@ const FORMATIONS={
  '5-3-2':{GK:[[50,91]],DF:[[10,72],[30,75],[50,73],[70,75],[90,72]],MF:[[25,48],[50,52],[75,48]],FW:[[35,22],[65,22]]}
 };
 const ROLE_NAMES={GK:'GOALKEEPER',DF:'DEFENDERS',MF:'MIDFIELDERS',FW:'FORWARDS'};
-let roster=[],selected=-1,assets={photo:'',crest:'',bg:'',mediaBlob:null,mediaObjectUrl:''},playing=false,seqTimer=null,currentGroup='TEAM';
+let roster=[],selected=-1,assets={photo:'',crest:'',bg:'',eventLogo:'',mediaBlob:null,mediaObjectUrl:'',musicBlob:null,musicObjectUrl:''},playing=false,seqTimer=null,currentGroup='TEAM';
 const DEFAULT_SHOW=[
+ {id:'sting',group:'STING',label:'Logo Sting',duration:2000,transition:'FLASH',cue:'HIT',enabled:true},
+ {id:'match',group:'MATCH',label:'比赛信息',duration:3000,transition:'FADE',cue:'RISER',enabled:true},
+ {id:'countdown',group:'COUNTDOWN',label:'开场倒计时',duration:5000,transition:'ZOOM',cue:'HIT',enabled:true},
  {id:'team',group:'TEAM',label:'球队开场',duration:2500,transition:'FADE',cue:'RISER',enabled:true},
  {id:'gk',group:'GK',label:'门将 GK',duration:3000,transition:'ZOOM',cue:'HIT',enabled:true},
  {id:'df',group:'DF',label:'后卫 DF',duration:4000,transition:'SLIDE',cue:'WHOOSH',enabled:true},
@@ -262,7 +312,16 @@ async function dbDel(k){try{const db=await openDB();await new Promise(res=>{cons
 function fileData(file,max=1100,quality=.82){return new Promise((res,rej)=>{const r=new FileReader();r.onerror=rej;r.onload=()=>{const im=new Image();im.onerror=()=>res(r.result);im.onload=()=>{const ratio=Math.min(1,max/im.width,max/im.height),w=Math.max(1,Math.round(im.width*ratio)),h=Math.max(1,Math.round(im.height*ratio)),cv=document.createElement('canvas');cv.width=w;cv.height=h;const cx=cv.getContext('2d');cx.clearRect(0,0,w,h);cx.drawImage(im,0,0,w,h);try{res(cv.toDataURL('image/webp',quality))}catch(e){res(r.result)}};im.src=r.result};r.readAsDataURL(file)})}
 function readPlayer(){return{id:selected>=0&&roster[selected]?roster[selected].id:'',name:q('playerName').value.trim()||'PLAYER',number:q('playerNo').value.trim()||'00',squadType:q('squadType').value||'STARTER',role:q('role').value,position:q('position').value.trim()||q('role').value,captain:q('captain').value==='1',statLabel:q('statLabel').value.trim()||'',statValue:q('statValue').value.trim()||'',photo:assets.photo||'',mediaBlob:assets.mediaBlob||null,mediaObjectUrl:assets.mediaObjectUrl||'',mediaUrl:q('mediaUrl').value.trim()||'',mediaAction:q('mediaAction').value||'STANDARD',directorIn:Math.max(0,parseFloat(q('directorIn').value)||0),directorOut:Math.max(0,parseFloat(q('directorOut').value)||0),directorSpeed:parseFloat(q('directorSpeed').value)||1,directorFreeze:q('directorFreeze').value==='1',directorFreezeMs:parseInt(q('directorFreezeMs').value,10)||1000,directorCamera:q('directorCamera').value||'MEDIUM'}}
 function writePlayer(p){q('playerName').value=p.name||'';q('playerNo').value=p.number||'';q('squadType').value=p.squadType||'STARTER';q('role').value=p.role||'MF';q('position').value=p.position||p.role||'';q('captain').value=p.captain?'1':'0';q('statLabel').value=p.statLabel||'';q('statValue').value=p.statValue||'';q('mediaUrl').value=p.mediaUrl||'';q('mediaAction').value=p.mediaAction||'STANDARD';q('directorIn').value=Number.isFinite(+p.directorIn)?+p.directorIn:0;q('directorOut').value=Number.isFinite(+p.directorOut)?+p.directorOut:0;q('directorSpeed').value=String(p.directorSpeed||1);q('directorFreeze').value=p.directorFreeze?'1':'0';q('directorFreezeMs').value=String(p.directorFreezeMs||1000);q('directorCamera').value=p.directorCamera||'MEDIUM';assets.photo=p.photo||'';assets.mediaBlob=p.mediaBlob||null;assets.mediaObjectUrl=p.mediaObjectUrl||'';renderPreviews()}
-function renderPreviews(){q('photoPreview').innerHTML=assets.photo?'<img src="'+assets.photo+'">':'球员';q('mediaPreview').innerHTML=assets.mediaObjectUrl?'<video src="'+assets.mediaObjectUrl+'" muted loop playsinline autoplay></video>':'VIDEO';q('crestPreview').innerHTML=assets.crest?'<img src="'+assets.crest+'" style="object-fit:contain">':'队徽';q('bgPreview').innerHTML=assets.bg?'<img src="'+assets.bg+'">':'球场'}
+function packageData(){
+ return{competition:q('matchCompetition').value.trim()||'MATCH',round:q('matchRound').value.trim()||'',home:q('matchHome').value.trim()||q('teamName').value.trim()||'HOME',away:q('matchAway').value.trim()||'AWAY',kickoff:q('matchKickoff').value.trim()||'',venue:q('matchVenue').value.trim()||'',eventLogo:assets.eventLogo||'',musicUrl:q('musicUrl').value.trim()||'',musicVolume:Math.max(0,Math.min(1,parseFloat(q('musicVolume').value)||.65)),sfx:{WHOOSH:q('sfxWhoosh').value.trim()||'',HIT:q('sfxHit').value.trim()||'',RISER:q('sfxRiser').value.trim()||'',CROWD:q('sfxCrowd').value.trim()||''}}
+}
+function writePackage(p={}){
+ q('matchCompetition').value=p.competition||'TFC WINTER LEAGUE';q('matchRound').value=p.round||'MATCHDAY 01';q('matchHome').value=p.home||'TARLAN FC';q('matchAway').value=p.away||'OPPONENT';q('matchKickoff').value=p.kickoff||'20:00';q('matchVenue').value=p.venue||'TACHENG';q('musicUrl').value=p.musicUrl||'';q('musicVolume').value=String(p.musicVolume||.65);const s=p.sfx||{};q('sfxWhoosh').value=s.WHOOSH||'';q('sfxHit').value=s.HIT||'';q('sfxRiser').value=s.RISER||'';q('sfxCrowd').value=s.CROWD||''
+}
+function syncMatchStage(){
+ const p=packageData();q('stingLogo').src=p.eventLogo||assets.crest||'';q('stingLogo').style.visibility=(p.eventLogo||assets.crest)?'visible':'hidden';q('stingCompetition').textContent=p.competition;q('matchCompetitionStage').textContent=p.competition;q('matchRoundStage').textContent=p.round;q('matchHomeStage').textContent=p.home;q('matchAwayStage').textContent=p.away;q('matchKickoffStage').textContent=p.kickoff;q('matchVenueStage').textContent=p.venue;q('countdownSub').textContent=p.competition;
+}
+function renderPreviews(){q('photoPreview').innerHTML=assets.photo?'<img src="'+assets.photo+'">':'球员';q('mediaPreview').innerHTML=assets.mediaObjectUrl?'<video src="'+assets.mediaObjectUrl+'" muted loop playsinline autoplay></video>':'VIDEO';q('crestPreview').innerHTML=assets.crest?'<img src="'+assets.crest+'" style="object-fit:contain">':'队徽';q('bgPreview').innerHTML=assets.bg?'<img src="'+assets.bg+'">':'球场';q('eventLogoPreview').innerHTML=assets.eventLogo?'<img src="'+assets.eventLogo+'" style="object-fit:contain">':'赛事LOGO';q('musicPreview').textContent=assets.musicObjectUrl?'AUDIO ✓':'MUSIC'}
 function starters(){return roster.filter(p=>(p.squadType||'STARTER')==='STARTER')}
 function substitutes(){return roster.filter(p=>p.squadType==='SUB')}
 function addPlayer(){const p=readPlayer();if(p.squadType==='STARTER'&&starters().length>=11){note('首发最多11人');return}if(roster.length>=20){note('整份名单最多20人');return}p.id=uid();roster.push(p);selected=roster.length-1;renderRoster();dbPut('photo:'+p.id,p.photo||'');if(p.mediaBlob)dbPut('media:'+p.id,p.mediaBlob);note('已加入名单 '+roster.length+'人')}
@@ -317,23 +376,25 @@ function updateTunnelLabels(group){
 }
 function applyVisualGroup(group){
  const st=q('stage'),area=q('playersArea'),code=q('roleBackdrop');updateTunnelLabels(group);
- st.classList.remove('group-GK','group-DF','group-MF','group-FW','group-TEAM','group-FULL','group-SUB','tunnel-open');
+ st.classList.remove('group-GK','group-DF','group-MF','group-FW','group-TEAM','group-FULL','group-SUB','group-STING','group-MATCH','group-COUNTDOWN','tunnel-open');
  st.classList.add('group-'+group);if(group==='FULL')st.classList.add('tunnel-open');
  area.className='playersArea layout-'+group;
- const codes={TEAM:'XI',GK:'GK',DF:'DEF',MF:'MID',FW:'FWD',FULL:'XI',SUB:'SUB'};
+ const codes={STING:'SAGI',MATCH:'MATCH',COUNTDOWN:'5',TEAM:'XI',GK:'GK',DF:'DEF',MF:'MID',FW:'FWD',FULL:'XI',SUB:'SUB'};
  code.textContent=codes[group]||'XI';
- q('roleGlow').style.display=(group==='FULL'||group==='SUB')?'none':'block';
- code.style.display=(group==='FULL'||group==='SUB')?'none':'flex';
+ const packageGroup=['STING','MATCH','COUNTDOWN'].includes(group);q('roleGlow').style.display=(group==='FULL'||group==='SUB'||packageGroup)?'none':'block';code.style.display=(group==='FULL'||group==='SUB'||packageGroup)?'none':'flex';
 }
 function renderStage(group){
- currentGroup=group||'TEAM';applyVisualGroup(currentGroup);q('stageTeam').textContent=q('teamName').value.trim()||'TEAM';q('stageCrest').src=assets.crest||'';q('stageCrest').style.visibility=assets.crest?'visible':'hidden';q('stadiumPhoto').src=assets.bg||'';q('stadiumPhoto').className='stadiumPhoto'+(assets.bg?' on':'');q('fullList').style.display='none';q('subList').style.display='none';q('playersArea').style.display='flex';
+ currentGroup=group||'TEAM';applyVisualGroup(currentGroup);syncMatchStage();['stingOverlay','matchOverlay','countdownOverlay'].forEach(id=>q(id).classList.remove('on'));q('stageTeam').textContent=q('teamName').value.trim()||'TEAM';q('stageCrest').src=assets.crest||'';q('stageCrest').style.visibility=assets.crest?'visible':'hidden';q('stadiumPhoto').src=assets.bg||'';q('stadiumPhoto').className='stadiumPhoto'+(assets.bg?' on':'');q('fullList').style.display='none';q('subList').style.display='none';q('playersArea').style.display='flex';
  let title='STARTING XI',name='TEAM LINEUP',players=[];
- if(group==='TEAM'){title='SAGI BROADCAST';name=(q('teamName').value.trim()||'TEAM')+' · '+q('formation').value;players=[]}
+ if(group==='STING'){title='MATCH SHOW';name='LOGO STING';q('playersArea').style.display='none';q('stingOverlay').classList.add('on')}
+ else if(group==='MATCH'){title='MATCH SHOW';name='MATCH INFO';q('playersArea').style.display='none';q('matchOverlay').classList.add('on')}
+ else if(group==='COUNTDOWN'){title='MATCH SHOW';name='COUNTDOWN';q('playersArea').style.display='none';q('countdownOverlay').classList.add('on')}
+ else if(group==='TEAM'){title='SAGI BROADCAST';name=(q('teamName').value.trim()||'TEAM')+' · '+q('formation').value;players=[]}
  else if(group==='FULL'){title='STARTING XI';name='FULL LINEUP';renderFull()} else if(group==='SUB'){title='SQUAD';name='SUBSTITUTES';renderSubs()}
  else{title='STARTING XI';name=ROLE_NAMES[group]||group;players=grouped(group);q('playersArea').innerHTML=players.map(p=>playerCard(p,players.length)).join('')}
  q('groupTitle').textContent=title;q('groupName').textContent=name;
  if(group==='TEAM')q('playersArea').innerHTML='<div style="align-self:center;text-align:center;color:#ffffff52;font-weight:1000;font-size:138px;letter-spacing:10px;text-shadow:0 18px 45px #000">'+esc(q('formation').value)+'</div>';
- renderFormation(group==='TEAM'?'':group);applyOutputBackground();setTimeout(playMediaVideos,0)
+ renderFormation(['TEAM','STING','MATCH','COUNTDOWN'].includes(group)?'':group);applyOutputBackground();setTimeout(playMediaVideos,0)
 }
 function applyOutputBackground(){
  const mode=q('outputBg').value,st=q('stage');
@@ -366,11 +427,24 @@ function animateStage(){
   const glow=q('roleGlow');if(glow&&glow.style.display!=='none'&&glow.animate)glow.animate([{opacity:0,transform:'scale(.72)'},{opacity:.26,transform:'scale(1.04)',offset:.7},{opacity:.22,transform:'scale(1)'}],{duration:900,fill:'forwards',easing:'ease-out'});
  const code=q('roleBackdrop');if(code&&code.style.display!=='none'&&code.animate)code.animate([{opacity:0,transform:'scale(.86)'},{opacity:1,transform:'scale(1)'}],{duration:780,fill:'forwards',easing:'ease-out'})
 }
+function animatePackageGroup(group,duration){
+ if(group==='STING'){
+  const core=q('stingOverlay').querySelector('.stingCore');if(core&&core.animate)core.animate([{opacity:0,transform:'scale(.72)'},{opacity:1,transform:'scale(1.04)',offset:.7},{opacity:1,transform:'scale(1)'}],{duration:900,fill:'forwards',easing:'cubic-bezier(.2,.8,.2,1)'})
+ }else if(group==='MATCH'){
+  const card=q('matchOverlay').querySelector('.matchCardStage');if(card&&card.animate)card.animate([{opacity:0,transform:'translateY(45px) scale(.97)'},{opacity:1,transform:'translateY(0) scale(1)'}],{duration:720,fill:'forwards',easing:'ease-out'})
+ }else if(group==='COUNTDOWN'){
+  startCountdown(duration)
+ }
+}
+function startCountdown(duration){
+ const el=q('countdownNumber'),seconds=Math.max(1,Math.round((Number(duration)||5000)/1000));let n=seconds;el.textContent=n;clearInterval(startCountdown.t);const pulse=()=>{if(el.animate)el.animate([{opacity:.2,transform:'scale(1.3)'},{opacity:1,transform:'scale(1)'}],{duration:420,easing:'ease-out'})};pulse();startCountdown.t=setInterval(()=>{n--;if(n<=0){clearInterval(startCountdown.t);el.textContent='GO';pulse();return}el.textContent=n;pulse()},1000)
+}
+function stopCountdown(){clearInterval(startCountdown.t)}
 function cloudAdmin(){try{const x=JSON.parse(localStorage.getItem('sagi_cloud_admin_v20')||'null')||{},b=window.SAGI_CLOUD||{};return{url:x.url||b.url||'',key:x.key||b.key||'',eventSlug:x.eventSlug||b.eventSlug||'',token:x.token||''}}catch(e){const b=window.SAGI_CLOUD||{};return{url:b.url||'',key:b.key||'',eventSlug:b.eventSlug||'',token:''}}}
 function compactPlayersForGroup(group){const src=group==='FULL'?starters():group==='SUB'?substitutes():(['GK','DF','MF','FW'].includes(group)?grouped(group):[]);return src.map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',squadType:p.squadType||'STARTER',photo:(group==='FULL'||group==='SUB')?'':p.photo||'',mediaUrl:(group==='FULL'||group==='SUB')?'':p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'}))}
 async function publishGroup(group,duration,show=null){
  const cfg=cloudAdmin();if(!window.SagiCloud||!cfg.url||!cfg.key||!cfg.eventSlug||!cfg.token)return{ok:false};
- try{let cur=await window.SagiCloud.getEvent(cfg.eventSlug,cfg);if(!cur||!cur.payload)return{ok:false};const state={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,6),group,team:q('teamName').value.trim()||'TEAM',formation:q('formation').value,players:compactPlayersForGroup(group),allPlayers:starters().map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',mediaUrl:p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'})),substitutes:substitutes().map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,statLabel:p.statLabel||'',statValue:p.statValue||''})),crest:assets.crest||'',stadium:assets.bg||'',background:q('outputBg').value,visualVersion:'V3.3-SHOW-DIRECTOR',duration,show:show||null,startedAt:new Date().toISOString()};const payload=Object.assign({},cur.payload,{lineupIntro:state});try{await window.SagiCloud.saveEvent(cfg.eventSlug,cfg.token,payload,cur.revision,cfg)}catch(e){if(String(e.message).includes('REVISION_CONFLICT')){const fresh=await window.SagiCloud.getEvent(cfg.eventSlug,cfg);await window.SagiCloud.saveEvent(cfg.eventSlug,cfg.token,Object.assign({},fresh.payload,{lineupIntro:state}),fresh.revision,cfg)}else throw e}return{ok:true}}catch(e){return{ok:false}}
+ try{let cur=await window.SagiCloud.getEvent(cfg.eventSlug,cfg);if(!cur||!cur.payload)return{ok:false};const state={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,6),group,team:q('teamName').value.trim()||'TEAM',formation:q('formation').value,players:compactPlayersForGroup(group),allPlayers:starters().map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',mediaUrl:p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'})),substitutes:substitutes().map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,statLabel:p.statLabel||'',statValue:p.statValue||''})),crest:assets.crest||'',stadium:assets.bg||'',background:q('outputBg').value,visualVersion:'V3.4-MATCH-SHOW-PACKAGE',duration,show:show||null,package:packageData(),startedAt:new Date().toISOString()};const payload=Object.assign({},cur.payload,{lineupIntro:state});try{await window.SagiCloud.saveEvent(cfg.eventSlug,cfg.token,payload,cur.revision,cfg)}catch(e){if(String(e.message).includes('REVISION_CONFLICT')){const fresh=await window.SagiCloud.getEvent(cfg.eventSlug,cfg);await window.SagiCloud.saveEvent(cfg.eventSlug,cfg.token,Object.assign({},fresh.payload,{lineupIntro:state}),fresh.revision,cfg)}else throw e}return{ok:true}}catch(e){return{ok:false}}
 }
 function focusAndRun(fn){const mobile=matchMedia&&matchMedia('(max-width:940px)').matches;if(!mobile){fn();return}try{q('frame').scrollIntoView({behavior:'auto',block:'center'});requestAnimationFrame(()=>requestAnimationFrame(fn))}catch(e){fn()}}
 function escAttr(s){return String(s??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')}
@@ -400,8 +474,8 @@ function renderShowSummary(){
 }
 function moveShowStep(i,dir){const j=i+dir;if(j<0||j>=showSteps.length)return;[showSteps[i],showSteps[j]]=[showSteps[j],showSteps[i]];if(showIndex===i)showIndex=j;else if(showIndex===j)showIndex=i;renderShowTimeline()}
 function resetShow(){stopShow(false);showSteps=DEFAULT_SHOW.map(x=>({...x}));showIndex=-1;renderShowTimeline();note('SHOW时间线已恢复默认')}
-function saveShow(){localStorage.setItem('sagi_show_director_v33',JSON.stringify(showSteps));note('SHOW时间线已保存')}
-function loadShow(){try{const x=JSON.parse(localStorage.getItem('sagi_show_director_v33')||'null');if(Array.isArray(x)&&x.length)showSteps=x.map(s=>({...s,duration:Math.max(500,Number(s.duration)||1000),enabled:s.enabled!==false}));}catch(e){}renderShowTimeline()}
+function saveShow(){localStorage.setItem('sagi_show_director_v34',JSON.stringify(showSteps));note('SHOW时间线已保存')}
+function loadShow(){try{const x=JSON.parse(localStorage.getItem('sagi_show_director_v34')||'null');if(Array.isArray(x)&&x.length)showSteps=x.map(s=>({...s,duration:Math.max(500,Number(s.duration)||1000),enabled:s.enabled!==false}));}catch(e){}renderShowTimeline()}
 function applyShowTransition(type){
  const l=q('transitionLayer');if(!l||!l.animate)return;l.className='transitionLayer';l.style.opacity='0';
  if(type==='CUT')return;
@@ -410,8 +484,16 @@ function applyShowTransition(type){
  if(type==='ZOOM'){q('stage').animate([{filter:'brightness(.55)',transform:'scale(1.035)'},{filter:'brightness(1)',transform:'scale(1)'}],{duration:620,easing:'ease-out'});return}
  l.classList.add('dark');l.animate([{opacity:.85},{opacity:0}],{duration:520,easing:'ease-out'})
 }
+function audioSrcForCue(cue){const p=packageData();return p.sfx&&p.sfx[cue]||''}
+function playAudioUrl(url,volume=1){if(!url)return null;try{const a=new Audio(url);a.volume=Math.max(0,Math.min(1,volume));a.play().catch(()=>{});return a}catch(e){return null}}
+function ensureShowMusic(){
+ const p=packageData(),src=assets.musicObjectUrl||p.musicUrl;if(!src)return;let a=ensureShowMusic.audio;if(!a||a.src!==src){try{if(a)a.pause()}catch(e){}a=new Audio(src);a.loop=true;ensureShowMusic.audio=a}a.volume=p.musicVolume;try{const pr=a.play();if(pr&&pr.catch)pr.catch(()=>{})}catch(e){}
+ q('audioStatus').textContent='MUSIC PLAYING · '+Math.round(p.musicVolume*100)+'%'
+}
+function stopShowMusic(){const a=ensureShowMusic.audio;if(a){try{a.pause();a.currentTime=0}catch(e){}}q('audioStatus').textContent='AUDIO READY'}
 function triggerCue(cue){
  const b=q('cueBadgeStage');if(!b||cue==='NONE')return;b.textContent=cue;b.animate([{opacity:0,transform:'translateY(-8px)'},{opacity:1,transform:'translateY(0)',offset:.25},{opacity:0}],{duration:900,easing:'ease-out'});
+ const real=audioSrcForCue(cue);if(real){playAudioUrl(real,.9);return}
  try{const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;const ctx=triggerCue.ctx||(triggerCue.ctx=new AC());if(ctx.state==='suspended')ctx.resume();const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);const t=ctx.currentTime;
    if(cue==='HIT'){o.type='sine';o.frequency.setValueAtTime(95,t);o.frequency.exponentialRampToValueAtTime(45,t+.22);g.gain.setValueAtTime(.12,t);g.gain.exponentialRampToValueAtTime(.001,t+.28);o.start(t);o.stop(t+.3)}
    else if(cue==='WHOOSH'||cue==='RISER'){o.type='sawtooth';o.frequency.setValueAtTime(cue==='RISER'?120:420,t);o.frequency.exponentialRampToValueAtTime(cue==='RISER'?850:110,t+.45);g.gain.setValueAtTime(.035,t);g.gain.exponentialRampToValueAtTime(.001,t+.5);o.start(t);o.stop(t+.52)}
@@ -422,23 +504,23 @@ function showProgressTick(step,duration){
  const bar=q('showProgressBar'),now=q('showNow');showStartedAt=performance.now();
  const tick=()=>{if(!playing||showSteps[showIndex]!==step)return;const p=Math.min(1,(performance.now()-showStartedAt)/duration);if(bar)bar.style.width=(p*100).toFixed(1)+'%';if(now)now.innerHTML='<b>'+esc(step.label)+'</b> · '+((duration-(performance.now()-showStartedAt))/1000).toFixed(1)+'s';if(p<1)requestAnimationFrame(tick)};tick()
 }
-function showMeta(step){return{sessionId:showSession,stepIndex:showIndex,stepTotal:showEnabled().length,label:step.label,transition:step.transition,cue:step.cue,autoNext:true}}
+function showMeta(step){const en=showEnabled(),pos=en.indexOf(step);return{sessionId:showSession,stepIndex:showIndex,sequenceIndex:pos,stepTotal:en.length,label:step.label,transition:step.transition,cue:step.cue,autoNext:true,isFirst:pos===0,isLast:pos===en.length-1}}
 function runShowStep(i){
  if(!playing)return;
  while(i<showSteps.length&&!showSteps[i].enabled)i++;
- if(i>=showSteps.length){playing=false;showIndex=-1;q('status').textContent='SHOW播放结束';q('showNow').textContent='COMPLETE';q('showProgressBar').style.width='100%';renderShowTimeline();return}
- showIndex=i;const s=showSteps[i],d=Math.max(500,Number(s.duration)||1000);renderShowTimeline();applyShowTransition(s.transition);triggerCue(s.cue);renderStage(s.group);animateStage();showProgressTick(s,d);q('status').textContent='SHOW '+(i+1)+' / '+showSteps.length+' · '+s.label;publishGroup(s.group,d,showMeta(s));clearTimeout(showTimer);showTimer=setTimeout(()=>runShowStep(i+1),d)
+ if(i>=showSteps.length){playing=false;showIndex=-1;stopCountdown();stopShowMusic();q('status').textContent='SHOW播放结束';q('showNow').textContent='COMPLETE';q('showProgressBar').style.width='100%';renderShowTimeline();return}
+ showIndex=i;const s=showSteps[i],d=Math.max(500,Number(s.duration)||1000);renderShowTimeline();applyShowTransition(s.transition);triggerCue(s.cue);renderStage(s.group);animateStage();animatePackageGroup(s.group,d);showProgressTick(s,d);q('status').textContent='SHOW '+(i+1)+' / '+showSteps.length+' · '+s.label;publishGroup(s.group,d,showMeta(s));clearTimeout(showTimer);showTimer=setTimeout(()=>runShowStep(i+1),d)
 }
-function startShow(){if(roster.length<1){note('请先加入球员');return}stopShow(false);playing=true;showSession=Date.now().toString(36);focusAndRun(()=>runShowStep(0))}
-function stopShow(update=true){playing=false;clearTimeout(showTimer);clearTimeout(seqTimer);if(update){q('status').textContent='SHOW已停止';q('showNow').textContent='STOPPED'}renderShowTimeline()}
+function startShow(){if(roster.length<1){note('请先加入球员');return}stopShow(false);playing=true;showSession=Date.now().toString(36);ensureShowMusic();focusAndRun(()=>runShowStep(0))}
+function stopShow(update=true){playing=false;clearTimeout(showTimer);clearTimeout(seqTimer);stopCountdown();stopShowMusic();if(update){q('status').textContent='SHOW已停止';q('showNow').textContent='STOPPED'}renderShowTimeline()}
 function nextShow(){if(!showSteps.length)return;playing=true;showSession=showSession||Date.now().toString(36);clearTimeout(showTimer);runShowStep(Math.min(showSteps.length,showIndex+1))}
 function prevShow(){if(!showSteps.length)return;playing=true;showSession=showSession||Date.now().toString(36);clearTimeout(showTimer);let i=Math.max(0,showIndex-1);while(i>0&&!showSteps[i].enabled)i--;runShowStep(i)}
 function playGroup(group,duration){playing=true;focusAndRun(()=>{renderStage(group);animateStage();q('status').textContent='正在播放 '+(group==='TEAM'?'球队开场':group==='FULL'?'完整首发':group==='SUB'?'替补名单':ROLE_NAMES[group]||group);publishGroup(group,duration).then(r=>{if(!r.ok)q('status').textContent+=' · 本机预览'});clearTimeout(seqTimer);seqTimer=setTimeout(()=>{playing=false;q('status').textContent='播放完成 · 画面已保留'},duration)})}
 function autoPlay(){startShow()}
 function stop(){stopShow()}
 function resize(){const f=q('frame'),scale=Math.min(f.clientWidth/1920,f.clientHeight/1080),left=(f.clientWidth-1920*scale)/2,top=(f.clientHeight-1080*scale)/2,w=q('stageScale');w.style.transformOrigin='0 0';w.style.transform='translate3d('+left+'px,'+top+'px,0) scale('+scale+')'}
-async function save(){for(const p of roster){p.id=p.id||uid();dbPut('photo:'+p.id,p.photo||'');if(p.mediaBlob)dbPut('media:'+p.id,p.mediaBlob);else dbDel('media:'+p.id)}await dbPut('crest',assets.crest||'');await dbPut('stadium',assets.bg||'');localStorage.setItem('sagi_player_intro_v2',JSON.stringify({team:q('teamName').value,formation:q('formation').value,roster:roster.map(p=>({id:p.id,name:p.name,number:p.number,squadType:p.squadType||'STARTER',role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',mediaUrl:p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'}))}));saveShow();note('V3.3 阵容、媒体与SHOW已保存')}
-async function load(){try{const x=JSON.parse(localStorage.getItem('sagi_player_intro_v2')||'null');if(!x){note('还没有保存阵容');return}q('teamName').value=x.team||'';q('formation').value=x.formation||'4-3-3';roster=[];for(const p of (x.roster||[])){p.photo=await dbGet('photo:'+p.id);p.mediaBlob=await dbGet('media:'+p.id);p.mediaObjectUrl=p.mediaBlob instanceof Blob?URL.createObjectURL(p.mediaBlob):'';p.mediaAction=p.mediaAction||'STANDARD';p.directorIn=Number(p.directorIn)||0;p.directorOut=Number(p.directorOut)||0;p.directorSpeed=Number(p.directorSpeed)||1;p.directorFreeze=!!p.directorFreeze;p.directorFreezeMs=Number(p.directorFreezeMs)||1000;p.directorCamera=p.directorCamera||'MEDIUM';roster.push(p)}assets.crest=await dbGet('crest');assets.bg=await dbGet('stadium');selected=roster.length?0:-1;if(selected>=0)writePlayer(roster[0]);renderPreviews();renderRoster();renderStage('TEAM');loadShow();note('V3.3 阵容、媒体与SHOW已读取')}catch(e){note('读取失败')}}
+async function save(){for(const p of roster){p.id=p.id||uid();dbPut('photo:'+p.id,p.photo||'');if(p.mediaBlob)dbPut('media:'+p.id,p.mediaBlob);else dbDel('media:'+p.id)}await dbPut('crest',assets.crest||'');await dbPut('stadium',assets.bg||'');await dbPut('eventLogo',assets.eventLogo||'');if(assets.musicBlob)await dbPut('showMusic',assets.musicBlob);else dbDel('showMusic');localStorage.setItem('sagi_player_intro_v2',JSON.stringify({team:q('teamName').value,formation:q('formation').value,package:packageData(),roster:roster.map(p=>({id:p.id,name:p.name,number:p.number,squadType:p.squadType||'STARTER',role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',mediaUrl:p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'}))}));saveShow();note('V3.4 比赛包装、阵容与SHOW已保存')}
+async function load(){try{const x=JSON.parse(localStorage.getItem('sagi_player_intro_v2')||'null');if(!x){note('还没有保存阵容');return}q('teamName').value=x.team||'';q('formation').value=x.formation||'4-3-3';writePackage(x.package||{});roster=[];for(const p of (x.roster||[])){p.photo=await dbGet('photo:'+p.id);p.mediaBlob=await dbGet('media:'+p.id);p.mediaObjectUrl=p.mediaBlob instanceof Blob?URL.createObjectURL(p.mediaBlob):'';p.mediaAction=p.mediaAction||'STANDARD';p.directorIn=Number(p.directorIn)||0;p.directorOut=Number(p.directorOut)||0;p.directorSpeed=Number(p.directorSpeed)||1;p.directorFreeze=!!p.directorFreeze;p.directorFreezeMs=Number(p.directorFreezeMs)||1000;p.directorCamera=p.directorCamera||'MEDIUM';roster.push(p)}assets.crest=await dbGet('crest');assets.bg=await dbGet('stadium');assets.eventLogo=await dbGet('eventLogo');assets.musicBlob=await dbGet('showMusic');assets.musicObjectUrl=assets.musicBlob instanceof Blob?URL.createObjectURL(assets.musicBlob):'';selected=roster.length?0:-1;if(selected>=0)writePlayer(roster[0]);renderPreviews();renderRoster();renderStage('TEAM');loadShow();syncMatchStage();note('V3.4 比赛包装、阵容与SHOW已读取')}catch(e){note('读取失败')}}
 function demo(){roster=[];const data=[
 ['1','AZAMAT','STARTER','GK','GK',0,'CLEAN SHEETS','6'],
 ['2','DIAS','STARTER','DF','RB',0,'APPS','12'],
@@ -456,9 +538,9 @@ function demo(){roster=[];const data=[
 ['16','ILIAS','SUB','MF','CM',0,'ASSISTS','2'],
 ['18','SAMAT','SUB','FW','ST',0,'GOALS','3'],
 ['20','AMAN','SUB','FW','RW',0,'APPS','5']
-];data.forEach(a=>roster.push({id:uid(),number:a[0],name:a[1],squadType:a[2],role:a[3],position:a[4],captain:!!a[5],statLabel:a[6],statValue:a[7],photo:'',mediaBlob:null,mediaObjectUrl:'',mediaUrl:'',mediaAction:(a[3]==='GK'?'GK_GLOVES':a[3]==='FW'?'CELEBRATE':'ARMS'),directorIn:0,directorOut:0,directorSpeed:(a[3]==='FW'?.75:1),directorFreeze:a[3]==='FW',directorFreezeMs:1000,directorCamera:(a[3]==='GK'?'STRONG':a[3]==='FW'?'STRONG':'MEDIUM')}));q('formation').value='4-3-3';selected=0;writePlayer(roster[0]);renderRoster();renderStage('FULL');note('已载入V3.3示例：11首发 + 5替补')}
-function vmixLink(){return new URL('./vmix-v33.html',location.href).toString()}
-async function copyVmix(){try{await navigator.clipboard.writeText(vmixLink());note('V3.3 vMix链接已复制')}catch(e){prompt('复制这个链接：',vmixLink())}}
+];data.forEach(a=>roster.push({id:uid(),number:a[0],name:a[1],squadType:a[2],role:a[3],position:a[4],captain:!!a[5],statLabel:a[6],statValue:a[7],photo:'',mediaBlob:null,mediaObjectUrl:'',mediaUrl:'',mediaAction:(a[3]==='GK'?'GK_GLOVES':a[3]==='FW'?'CELEBRATE':'ARMS'),directorIn:0,directorOut:0,directorSpeed:(a[3]==='FW'?.75:1),directorFreeze:a[3]==='FW',directorFreezeMs:1000,directorCamera:(a[3]==='GK'?'STRONG':a[3]==='FW'?'STRONG':'MEDIUM')}));q('formation').value='4-3-3';selected=0;writePlayer(roster[0]);renderRoster();renderStage('FULL');writePackage({competition:'TFC WINTER LEAGUE',round:'MATCHDAY 01',home:'TARLAN FC',away:'OPPONENT',kickoff:'20:00',venue:'TACHENG',musicVolume:.65,sfx:{}});syncMatchStage();note('已载入V3.4示例：比赛包装 + 11首发 + 5替补')}
+function vmixLink(){return new URL('./vmix-v34.html',location.href).toString()}
+async function copyVmix(){try{await navigator.clipboard.writeText(vmixLink());note('V3.4 vMix链接已复制')}catch(e){prompt('复制这个链接：',vmixLink())}}
 
 q('crestFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;assets.crest=await fileData(f,420,.84);renderPreviews();renderStage(currentGroup)};
 q('bgFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;assets.bg=await fileData(f,1600,.78);renderPreviews();renderStage(currentGroup)};
@@ -466,11 +548,15 @@ q('photoFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;assets.
 q('mediaFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;if(f.size>20*1024*1024){note('视频建议控制在20MB以内');e.target.value='';return}if(assets.mediaObjectUrl&&assets.mediaObjectUrl.startsWith('blob:'))try{URL.revokeObjectURL(assets.mediaObjectUrl)}catch(_){}
  assets.mediaBlob=f;assets.mediaObjectUrl=URL.createObjectURL(f);renderPreviews();note('MEDIA DAY视频已载入 · '+Math.round(f.size/1024)+'KB')};
 q('clearMediaBtn').onclick=()=>{if(assets.mediaObjectUrl&&assets.mediaObjectUrl.startsWith('blob:'))try{URL.revokeObjectURL(assets.mediaObjectUrl)}catch(_){}assets.mediaBlob=null;assets.mediaObjectUrl='';q('mediaUrl').value='';renderPreviews();note('已清除当前球员视频')};
+q('eventLogoFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;assets.eventLogo=await fileData(f,600,.88);renderPreviews();syncMatchStage()};
+q('musicFile').onchange=e=>{const f=e.target.files[0];if(!f)return;if(f.size>30*1024*1024){note('音乐建议控制在30MB以内');e.target.value='';return}if(assets.musicObjectUrl&&assets.musicObjectUrl.startsWith('blob:'))try{URL.revokeObjectURL(assets.musicObjectUrl)}catch(_){}assets.musicBlob=f;assets.musicObjectUrl=URL.createObjectURL(f);renderPreviews();q('audioStatus').textContent='LOCAL MUSIC READY · '+Math.round(f.size/1024)+'KB'};
+q('audioTestBtn').onclick=()=>ensureShowMusic();q('audioStopBtn').onclick=()=>stopShowMusic();q('clearMusicBtn').onclick=()=>{stopShowMusic();if(assets.musicObjectUrl&&assets.musicObjectUrl.startsWith('blob:'))try{URL.revokeObjectURL(assets.musicObjectUrl)}catch(_){}assets.musicBlob=null;assets.musicObjectUrl='';renderPreviews();note('已清除本机音乐')};
 q('clearBgBtn').onclick=()=>{assets.bg='';renderPreviews();renderStage(currentGroup)};
 q('addBtn').onclick=addPlayer;q('updateBtn').onclick=updatePlayer;q('removeBtn').onclick=removePlayer;q('saveBtn').onclick=save;q('loadBtn').onclick=load;q('demoBtn').onclick=demo;
 q('teamBtn').onclick=()=>playGroup('TEAM',2500);q('gkBtn').onclick=()=>playGroup('GK',3000);q('dfBtn').onclick=()=>playGroup('DF',4000);q('mfBtn').onclick=()=>playGroup('MF',4000);q('fwBtn').onclick=()=>playGroup('FW',4000);q('fullBtn').onclick=()=>playGroup('FULL',6000);q('subsBtn').onclick=()=>playGroup('SUB',5000);q('showPlayBtn').onclick=startShow;q('showPrevBtn').onclick=prevShow;q('showNextBtn').onclick=nextShow;q('stopBtn').onclick=stopShow;q('showResetBtn').onclick=resetShow;q('showSaveBtn').onclick=saveShow;q('copyVmixBtn').onclick=copyVmix;
-q('formation').onchange=()=>renderStage(currentGroup);q('teamName').oninput=()=>renderStage(currentGroup);q('outputBg').onchange=()=>renderStage(currentGroup);
-window.addEventListener('resize',resize);renderPreviews();renderRoster();loadShow();demo();renderStage('TEAM');resize();
+q('formation').onchange=()=>renderStage(currentGroup);q('teamName').oninput=()=>{q('matchHome').value=q('teamName').value;renderStage(currentGroup)};q('outputBg').onchange=()=>renderStage(currentGroup);
+['matchCompetition','matchRound','matchHome','matchAway','matchKickoff','matchVenue'].forEach(id=>q(id).oninput=syncMatchStage);
+window.addEventListener('resize',resize);renderPreviews();renderRoster();loadShow();demo();syncMatchStage();renderStage('TEAM');resize();
 })();
 </script>
 </body></html>
