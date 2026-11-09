@@ -449,7 +449,7 @@ function fmt(n){return num(n).toLocaleString('zh-CN')}
 function save(){localStorage.setItem(OS_KEY,JSON.stringify({projects:state.projects,contents:state.contents,assetOverrides:state.assetOverrides,currentProjectId:state.currentProjectId,accountData:state.accountData,accountTrendData:state.accountTrendData}))}
 function load(){
  try{const x=JSON.parse(localStorage.getItem(OS_KEY)||'{}');state.projects=Array.isArray(x.projects)?x.projects:[];state.contents=Array.isArray(x.contents)?x.contents:[];state.assetOverrides=x.assetOverrides&&typeof x.assetOverrides==='object'?x.assetOverrides:{};state.currentProjectId=x.currentProjectId||'';state.accountData=Array.isArray(x.accountData)?x.accountData:[];state.accountTrendData=Array.isArray(x.accountTrendData)?x.accountTrendData:[]}catch(e){}
- seedSagiAccountHistory();loadSales()
+ seedSagiAccountHistory();seedSagiTrendHistory();loadSales()
 }
 function loadSales(){
  let x=null;try{x=JSON.parse(localStorage.getItem(TEAM_KEY)||'null');for(const k of LEGACY_TEAM)if(!x)x=JSON.parse(localStorage.getItem(k)||'null')}catch(e){}
@@ -479,6 +479,14 @@ function seedSagiAccountHistory(){
    inquiries:0,orders:0,revenue:0,hook:'234次出场、146球、20多年7号｜葡萄牙7号只有一个',
    note:'用户确认的真实历史表现样本',recordedAt:Date.parse('2026-11-05T12:00:00+08:00')
  });
+ try{save()}catch(e){}
+}
+
+function seedSagiTrendHistory(){
+ const seed=[["2026-10-10",1,6130,92,9,16,47.99,42.2,79.12,33.86],["2026-10-11",0,4563,70,2,10,40.11,48.37,100,14.42],["2026-10-12",0,2017,9,0,-4,35.87,48.48,17.14,14.31],["2026-10-13",0,1491,16,3,0,35.69,50.65,68.95,12.62],["2026-10-14",0,1033,9,9,0,35.33,54.17,19.2,12.94],["2026-10-15",1,3054,46,21,4,33.24,53.36,100,9.19],["2026-10-16",1,1937,47,3,2,32.52,58.01,40.09,8.93],["2026-10-17",3,10963,184,43,4,38.09,54.44,100,6.68],["2026-10-18",1,6687,102,8,-1,33.12,52.36,100,5.94],["2026-10-19",0,2602,31,5,2,32.77,51.27,100,7.13],["2026-10-20",1,2354,46,2,2,28.56,53.22,77.5,6.58],["2026-10-21",0,1556,16,2,0,31.78,52.04,100,6.8],["2026-10-22",0,1324,11,4,5,32.03,54.31,53.42,6.62],["2026-10-23",0,1253,10,9,1,33.92,55.39,100,8.38],["2026-10-24",0,1099,-28,1,1,31.02,56.38,82.72,8.09],["2026-10-25",0,796,4,0,1,30.12,61.59,65.71,6.64],["2026-10-26",0,2265,45,0,5,47.27,45.16,47.97,8.58],["2026-10-27",0,548,-4,0,0,29.03,56.18,100,6.62],["2026-10-28",0,551,11,1,1,28.03,59.66,100,6.79],["2026-10-29",0,521,5,7,1,33.95,61.32,33.95,8.1],["2026-10-30",1,2350,85,2,5,40.74,41.22,11.39,9.36],["2026-10-31",0,748,9,1,1,33.72,52.08,50.82,7.92],["2026-11-01",1,2497,74,10,14,37.64,52.92,100,12.59],["2026-11-02",0,1335,1,2,1,40.2,52.9,100,12.46],["2026-11-03",1,1826,30,1,4,29.47,55.78,75.21,8.21],["2026-11-04",1,4058,113,8,11,43.18,44.87,49.22,17.7],["2026-11-05",1,27986,624,207,98,38.8,45.67,17.88,9.74],["2026-11-06",1,430684,6965,965,1042,40.36,43.64,17.55,9.85],["2026-11-07",2,42254,702,55,65,36.61,48.3,19.41,9.54],["2026-11-08",0,12859,180,14,16,30.91,49.48,51.63,7.58]];
+ const map=new Map((state.accountTrendData||[]).map(x=>[x.date,x]));
+ seed.forEach(r=>{if(!map.has(r[0]))map.set(r[0],{date:r[0],posts:r[1],views:r[2],likes:r[3],shares:r[4],comments:r[5],fiveSecCompletion:r[6],twoSecBounce:r[7],coverCtr:r[8],avgWatchTime:r[9],source:'douyin-export-20261109'})});
+ state.accountTrendData=Array.from(map.values()).sort((a,b)=>String(a.date).localeCompare(String(b.date)));
  try{save()}catch(e){}
 }
 
