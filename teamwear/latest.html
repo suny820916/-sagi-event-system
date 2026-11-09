@@ -2082,7 +2082,7 @@ function previewProductionSheet(){
 function initOrderConfirmation(){
  q('customerOrderGenerateBtn').onclick=generateCustomerOrderLink;q('customerOrderShareBtn').onclick=shareCustomerOrderLink;q('confirmationImportBtn').onclick=importCustomerConfirmation;q('productionReadyBtn').onclick=enterProduction;q('productionSheetBtn').onclick=previewProductionSheet;
  q('designApproval').onchange=()=>{currentConfirmation().designApproval=q('designApproval').value;renderOrderConfirmation();renderAll()};
- q('depositStatus').onchange=()=>{currentConfirmation().depositStatus=q('depositStatus').value;if(q('depositStatus').value==='paid'){currentConfirmation().depositPaid=calc().total;q('depositPaid').value=String(calc().total);updateSalesStageAuto('已付全款',{contactToday:true});state.currentDepositPaidAt=new Date().toISOString();q('nextAction').value='准备生产资料';addActivity('payment','全款到账',money(calc().total))}persistSalesActivity();renderOrderConfirmation();renderAll()};
+ q('depositStatus').onchange=()=>{currentConfirmation().depositStatus=q('depositStatus').value;if(q('depositStatus').value==='paid'){currentConfirmation().depositPaid=calc().total;q('depositPaid').value=String(calc().total);q('orderStatus').value='已收全款';updateSalesStageAuto('已付全款',{contactToday:true});state.currentDepositPaidAt=new Date().toISOString();q('nextAction').value='准备生产资料';addActivity('payment','全款到账',money(calc().total))}persistSalesActivity();renderOrderConfirmation();renderAll()};
  q('depositPaid').oninput=()=>{currentConfirmation().depositPaid=n('depositPaid');renderOrderConfirmation()};renderOrderConfirmation()
 }
 
