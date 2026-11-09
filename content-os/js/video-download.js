@@ -3,7 +3,7 @@ const C=window.SAGI_CORE;if(!C)return;
 const q=C.q,note=C.note,save=C.save,uid=C.uid,esc=C.esc,S=()=>C.state;
 const DIRECT_RE=/\.(mp4|mov|webm|m4v|ogg)(?:$|[?#])/i;
 const STREAM_RE=/\.(m3u8|mpd)(?:$|[?#])/i;
-const PLATFORM_RE=/(youtube\.com|youtu\.be|douyin\.com|iesdouyin\.com|tiktok\.com|bilibili\.com|b23\.tv|instagram\.com|facebook\.com|x\.com|twitter\.com)/i;
+const BRIDGE_KEY='sagi_local_bridge_url_v1';\nconst PLATFORM_RE=/(youtube\.com|youtu\.be|douyin\.com|iesdouyin\.com|tiktok\.com|bilibili\.com|b23\.tv|instagram\.com|facebook\.com|x\.com|twitter\.com)/i;
 let currentStatus='等待粘贴视频链接。';
 
 function normalize(v){
@@ -64,23 +64,24 @@ function remember(x){
  S().downloadItems.unshift({id:uid('dl'),url:x.url,title:x.title||safeName(x.url,''),createdAt:Date.now()});
  S().downloadItems=S().downloadItems.slice(0,20);save();renderHistory()
 }
-async function platformDownload(){
- const x=current();
- if(!x.url){setStatus('请先粘贴有效链接。','bad');return}
- if(!x.platform){setStatus('当前不是已识别的社交平台链接；普通视频请直接使用“下载视频”。','warn');return}
- try{
-   await navigator.clipboard.writeText(x.url);
-   setStatus((platformName(x.url)||'社交平台')+' 链接已复制。正在打开 Cobalt，进入后直接粘贴即可。','good')
- }catch(e){setStatus('正在打开 Cobalt。请在页面中粘贴当前链接。','good')}
- window.open('https://cobalt.tools/','_blank','noopener')
+function bridgeBase(){
+ const typed=(q('downloadBridgeUrl')?.value||'').trim();
+ return (typed||localStorage.getItem(BRIDGE_KEY)||'').replace(/\/+$/,'');
 }
-async function copyYtDlpCommand(){
+function saveBridge(){
+ const v=(q('downloadBridgeUrl')?.value||'').trim().replace(/\/+$/,'');
+ if(!/^https?:\/\//i.test(v)){setStatus('Bridge 地址格式不正确。示例：http://192.168.1.8:8765','bad');return}
+ localStorage.setItem(BRIDGE_KEY,v);setStatus('Bridge 地址已保存。以后直接点“下载 INS 视频”即可。','good');note('SAGI LOCAL BRIDGE 地址已保存')
+}
+function platformDownload(){
  const x=current();
  if(!x.url){setStatus('请先粘贴有效链接。','bad');return}
- const safe=x.url.replace(/"/g,'%22');
- const cmd='yt-dlp --no-playlist -f "best[ext=mp4]/best" -o "SAGI_%(title).80s.%(ext)s" "'+safe+'"';
- try{await navigator.clipboard.writeText(cmd);setStatus('yt-dlp 命令已复制。电脑端打开 PowerShell / CMD 粘贴即可。','good');note('yt-dlp 下载命令已复制')}
- catch(e){setStatus(cmd,'warn')}
+ if(!/instagram\.com/i.test(x.url)){setStatus('当前直连 Bridge 版本先支持 Instagram Reel / Post。','warn');return}
+ const base=bridgeBase();
+ if(!base){setStatus('首次使用：先在下方填写电脑 Bridge 地址，例如 http://192.168.1.8:8765，然后点“保存 Bridge 地址”。','warn');return}
+ const href=base+'/download?url='+encodeURIComponent(x.url)+'&name='+encodeURIComponent(x.title||'SAGI_INS_VIDEO');
+ setStatus('正在交给 SAGI LOCAL BRIDGE 解析，视频完成后会直接进入手机下载。','good');
+ const a=document.createElement('a');a.href=href;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove()
 }
 function download(){
  const x=current();
@@ -133,8 +134,8 @@ if(q('downloadStartBtn'))q('downloadStartBtn').onclick=download;
 if(q('downloadOpenBtn'))q('downloadOpenBtn').onclick=openOriginal;
 if(q('downloadToJobBtn'))q('downloadToJobBtn').onclick=sendToJob;
 if(q('downloadPlatformBtn'))q('downloadPlatformBtn').onclick=platformDownload;
-if(q('downloadCommandBtn'))q('downloadCommandBtn').onclick=copyYtDlpCommand;
+if(q('downloadCommandBtn'))q('downloadCommandBtn').onclick=saveBridge;
 if(q('downloadUrl')){q('downloadUrl').addEventListener('input',refreshPlatformUI);q('downloadUrl').addEventListener('keydown',e=>{if(e.key==='Enter')preview()});refreshPlatformUI()}
-window.SAGI_DOWNLOADER={render,preview,download,platformDownload,copyYtDlpCommand,sendToJob};
+window.SAGI_DOWNLOADER={render,preview,download,platformDownload,saveBridge,sendToJob};
 render();
 })();
