@@ -1382,9 +1382,9 @@ function followMessageParts(o,goal,tone){
   return intro+age+'你看了吗？按你们'+(qty?qty+'个人':'现在的情况')+(budget?('、预算大概'+money(budget)+'/人'):'')+'，我还是比较推荐'+bestLabel+(bestPP?('，差不多'+money(bestPP)+'/人'):'')+'，预算基本能控制住，该有的也都有。你觉得这个方向可以的话，我就直接往具体配色和设计稿推进。';
  }
  if(goal==='deposit'){
-  if(short)return intro+'方案已经确认了，我这边收到定金就可以锁定设计和排产。应付定金大概'+money(deposit)+'，你看今天方便安排吗？';
-  if(pro)return intro+'目前方案与金额已经确认。按当前订单，定金为'+money(deposit)+'。定金到账后我这边会锁定最终设计稿、尺码名单并进入排产流程。方便的话今天可以安排一下。';
-  return intro+'你们方案这边已经确认了，下一步就是定金到账后我给你们锁设计和排产。现在这单定金是'+money(deposit)+'，你这边方便的话今天安排一下，我收到后就继续往下走，不耽误交期。';
+  if(short)return intro+'方案已经确认了，我这边收到全款就可以锁定设计和排产。应付全款是'+money(deposit)+'，你看今天方便安排吗？';
+  if(pro)return intro+'目前方案与金额已经确认。按当前订单，应付全款为'+money(deposit)+'。全款到账后我这边会锁定最终设计稿、尺码名单并进入排产流程。方便的话今天可以安排一下。';
+  return intro+'你们方案这边已经确认了，下一步就是全款到账后我给你们锁设计和排产。现在这单应付全款是'+money(deposit)+'，你这边方便的话今天安排一下，我收到后就继续往下走，不耽误交期。';
  }
  if(goal==='reactivate'){
   const reason=o.lostReason||'之前暂时没定';
@@ -2043,7 +2043,7 @@ function buildCustomerOrderLink(){
  if(!text('teamName'))return'';
  if(!state.roster.length&&calc().qty>0)return'';
  const payload=buildCustomerOrderPayload(),u=new URL('./confirmation.html',location.href);
- u.searchParams.set('v','105');u.searchParams.set('t',String(Date.now()));
+ u.searchParams.set('v','106');u.searchParams.set('t',String(Date.now()));
  return u.toString()+'#d='+encodePublicQuote(payload)
 }
 function syncCustomerOrderNativeLink(){
@@ -2208,8 +2208,8 @@ function recoverConfirmedHistoricalData(){
    shippingRecipient:'玛尔谷兰',
    shippingPhone:'13095140164',
    shippingAddress:'新疆维吾尔自治区伊犁哈萨克自治州奎屯市 新疆应用职业技术学院西校区',
-   customerNotes:'历史订单恢复：此前确认已付定金并已发货。订单金额未从历史记录中可靠恢复，因此保留为空，避免写入错误金额。',
-   salesStage:'已付定金',
+   customerNotes:'历史订单恢复：此前确认已付全款并已发货。订单金额未从历史记录中可靠恢复，因此保留为空，避免写入错误金额。',
+   salesStage:'已付全款',
    leadTemperature:'hot',
    nextAction:'已发货 · 后续补单 / 售后',
    series:'SAGI 黑金定制比赛服',
@@ -2243,7 +2243,7 @@ function recoverConfirmedHistoricalData(){
    pinned:true,
    createdAt:new Date('2026-11-04T12:00:00+08:00').getTime(),
    activityTimeline:[
-    {id:'recover_hist_1',kind:'history',title:'历史订单恢复',meta:'已付定金 · 已发货 · 15人名单',at:'2026/11/9',ts:Date.now()}
+    {id:'recover_hist_1',kind:'history',title:'历史订单恢复',meta:'已付全款 · 已发货 · 15人名单',at:'2026/11/9',ts:Date.now()}
    ]
   });
   shipped.updatedAt=new Date('2026-11-09T17:20:00+08:00').getTime();
@@ -2985,7 +2985,7 @@ function setWorkspace(name,scroll=true){
 function renderWorkspaceSummary(){
  if(!q('workspaceTeam'))return;const team=text('teamName')||state.orders.find(x=>x.id===state.currentId)?.teamName||'未选择球队',stage=q('salesStage')?.value||'新线索',orderStatus=q('orderStatus')?.value||'线索';
  q('workspaceTeam').textContent=team;q('workspaceStatus').textContent=(currentWorkspace==='production'||currentWorkspace==='archive')?displayOrderStatus(orderStatus):(currentWorkspace==='marketing'?(q('douyinPublishStatus')?.selectedOptions?.[0]?.textContent||'内容制作'):stage);
- q('workspaceStatus').classList.toggle('good',stage==='已付定金'||orderStatus==='已完成');q('workspaceStatus').classList.toggle('warn',!(stage==='已付定金'||orderStatus==='已完成'))
+ q('workspaceStatus').classList.toggle('good',['已付全款','已付定金'].includes(stage)||orderStatus==='已完成');q('workspaceStatus').classList.toggle('warn',!(['已付全款','已付定金'].includes(stage)||orderStatus==='已完成'))
 }
 function initWorkspaceUI(){
  q('globalPinAddBtn').onclick=pinSelectedOrderFromTop;
