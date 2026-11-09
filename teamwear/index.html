@@ -2039,7 +2039,7 @@ async function buildCustomerOrderPayload(){
 async function generateCustomerOrderLink(openNow=false){
  if(!text('teamName')){note('请先填写球队名称');return''}
  if(!state.roster.length&&calc().qty>0){note('请先确认球员名单');return''}
- const payload=await buildCustomerOrderPayload(),base=new URL('./confirmation.html?v=103',location.href).toString(),link=base+'#d='+encodePublicQuote(payload);
+ const payload=await buildCustomerOrderPayload(),u=new URL('./confirmation.html',location.href);u.searchParams.set('v','104');u.searchParams.set('t',String(Date.now()));const link=u.toString()+'#d='+encodePublicQuote(payload);
  state.lastCustomerConfirmationLink=link;
  q('customerOrderLink').value=link;q('customerOrderState').textContent='READY';q('customerOrderState').classList.add('ready');
  addActivity('confirm','生成客户订单确认单',payload.orderNo+' · '+money(payload.total));saveOrder(true);
