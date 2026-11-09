@@ -8,6 +8,7 @@ const ZH_LAYER_VERSION=2;
 const VIEW_META={
  matchday:['MATCHDAY MODE · 比赛日现场指挥','现场只标记值得剪的时刻，让电脑端优先分析正确的时间点。'],
  videojobs:['AI VIDEO JOB · 视频任务调度','手机下任务，电脑负责 VideoHighlighter / Cutpoint / FFmpeg。'],
+ downloader:['VIDEO DOWNLOAD · 视频下载','下载你拥有或已获授权的视频直链，并直接送进 AI VIDEO JOB。'],
  review:['REVIEW · 成片审核','不用手机重剪，一键给出返修指令。'],
  daily:['DAILY VIRAL · 每日爆款指挥官','互联网热点 + SAGI项目 + 历史数据，直接决定今天先发什么。'],
  today:['TODAY · 今日内容作战室','先决定今天最值得发布什么，再进入制作。'],
@@ -1583,10 +1584,10 @@ function openContent(id,view='create'){
  const c=state.contents.find(x=>x.id===id);if(!c)return;state.currentContentId=id;state.currentProjectId=c.projectId;state.director={goal:c.goal,format:c.format,requested:c.format,style:c.style,platform:c.platform,theme:c.title,hooks:c.hooks||[c.hook],hook:c.hook,shots:c.shots||shotsFor(c.format),music:c.music,cta:c.cta,scheduleAt:c.scheduleAt,cover:c.cover,generatedAt:c.createdAt,score:scoreDirector(c.format,c.hook,c.goal,allProjects().find(p=>p.id===c.projectId))};save();renderAll();switchView(view)
 }
 function autoCalendar(){const p=project();if(!p){note('请先选择项目');return}const names=['品牌','人物故事','产品','足球热点','比赛预热','MATCH DAY','赛果 / MVP'];note('已生成7天内容结构建议');renderWeek(q('calendarFull'))}
-function switchView(v){document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===v));document.querySelectorAll('[data-view-panel]').forEach(p=>p.classList.toggle('active',p.dataset.viewPanel===v));q('viewTitle').textContent=VIEW_META[v][0];q('viewDesc').textContent=VIEW_META[v][1];if(v==='matchday')window.SAGI_MOBILE?.renderMatchday?.();if(v==='videojobs')window.SAGI_MOBILE?.renderVideoJobs?.();if(v==='review')window.SAGI_MOBILE?.renderReview?.();if(v==='daily'){if(dailyCommandNeedsRefresh()&&!state.dailyCommandLoading)runDailyViralCommand(true);else renderDailyCommand()}if(v==='trends')renderTrends();if(v==='flow')renderFlow();if(v==='viralgen')renderViralGenerator();if(v==='viral')renderViralModel();if(v==='account')renderAccountData();if(v==='assets')renderAssets();if(v==='video')renderVideoEngine();if(v==='create')renderCreate();if(v==='publish')renderPublish();if(v==='learning')renderLearning();if(v==='performance')renderPerformance();if(v==='projects')renderProjects();if(v==='calendar')renderCalendar()}
+function switchView(v){document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===v));document.querySelectorAll('[data-view-panel]').forEach(p=>p.classList.toggle('active',p.dataset.viewPanel===v));q('viewTitle').textContent=VIEW_META[v][0];q('viewDesc').textContent=VIEW_META[v][1];if(v==='matchday')window.SAGI_MOBILE?.renderMatchday?.();if(v==='videojobs')window.SAGI_MOBILE?.renderVideoJobs?.();if(v==='downloader')window.SAGI_DOWNLOADER?.render?.();if(v==='review')window.SAGI_MOBILE?.renderReview?.();if(v==='daily'){if(dailyCommandNeedsRefresh()&&!state.dailyCommandLoading)runDailyViralCommand(true);else renderDailyCommand()}if(v==='trends')renderTrends();if(v==='flow')renderFlow();if(v==='viralgen')renderViralGenerator();if(v==='viral')renderViralModel();if(v==='account')renderAccountData();if(v==='assets')renderAssets();if(v==='video')renderVideoEngine();if(v==='create')renderCreate();if(v==='publish')renderPublish();if(v==='learning')renderLearning();if(v==='performance')renderPerformance();if(v==='projects')renderProjects();if(v==='calendar')renderCalendar()}
 function isMobileRuntime(){return typeof matchMedia==='function'&&matchMedia('(max-width:900px)').matches}
 function renderAll(){
- window.SAGI_MOBILE?.renderAll?.();
+ window.SAGI_MOBILE?.renderAll?.();window.SAGI_DOWNLOADER?.render?.();
  renderProjectSelect();renderKpis();renderTodayRecommendation();renderToday();renderDailyCommand();renderPublish();
  if(isMobileRuntime())return;
  renderTrends();renderFlow();renderDirector();renderCalendar();renderAssets();renderVideoEngine();renderCreate();renderLearning();renderViralGenerator();renderViralModel();renderAccountData();renderAccountTrend();renderPerformance();renderProjects()
