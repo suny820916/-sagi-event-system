@@ -166,11 +166,11 @@
         <span>默认使用 CLOUD：5G / Wi‑Fi 都能用，正常使用无需电脑地址。LOCAL 仅作为同一 Wi‑Fi 下的备用方案。仅用于你拥有或已获授权保存/使用的内容。</span>
       </div>
 
-      <div class="section card">
-        <div class="sectionHead"><div><h2>下载引擎</h2><p>CLOUD 适合手机随时使用；LOCAL 适合同一 Wi‑Fi 的电脑 Bridge。</p></div><span id="downloadEngineBadge" class="pill good">CLOUD</span></div>
+      <div class="section card downloadEngineCard">
+        <div class="sectionHead"><div><h2>下载方式</h2><p>默认云端直下，不需要填写电脑地址。</p></div><span id="downloadEngineBadge" class="pill good">CLOUD</span></div>
         <div class="downloadEngine">
-          <button class="downloadEngineBtn active" data-download-engine="cloud" type="button"><b>☁ CLOUD</b><span>5G / 任意网络</span></button>
-          <button class="downloadEngineBtn" data-download-engine="local" type="button"><b>⌁ LOCAL</b><span>电脑同 Wi‑Fi</span></button>
+          <button class="downloadEngineBtn active" data-download-engine="cloud" type="button"><b>☁ CLOUD · 默认</b><span>5G / Wi‑Fi · 不依赖电脑</span></button>
+          <button class="downloadEngineBtn" data-download-engine="local" type="button"><b>⌁ LOCAL · 备用</b><span>仅同一 Wi‑Fi 时使用电脑</span></button>
         </div>
       </div>
 
@@ -193,15 +193,20 @@
         </div>
       </div>
 
-      <div class="section card downloadSettings">
-        <div class="sectionHead"><div><h2>BRIDGE SETTINGS</h2><p>首次部署/设置一次，以后不用再管。</p></div><button class="btn" id="downloadTestBtn" type="button">测试连接</button></div>
-        <div class="grid2">
-          <div class="field"><label>Cloud Bridge URL</label><input id="downloadCloudUrl" inputmode="url" placeholder="https://sagi-cloud-bridge.onrender.com"></div>
-          <div class="field"><label>Cloud Access Token</label><input id="downloadCloudToken" type="password" autocomplete="off" placeholder="SAGI_BRIDGE_TOKEN"></div>
-          <div class="field"><label>Local Bridge URL</label><input id="downloadBridgeUrl" inputmode="url" placeholder="http://192.168.1.8:8765"></div>
+      <details class="section card downloadSettings downloadAdvanced">
+        <summary><b>高级设置</b><span>正常使用不用打开</span></summary>
+        <div class="downloadAdvancedBody">
+          <div class="sectionHead"><div><h2>BRIDGE SETTINGS</h2><p>云端部署或 LOCAL 备用时才需要配置。</p></div><button class="btn" id="downloadTestBtn" type="button">测试连接</button></div>
+          <div id="downloadCloudSettings" class="grid2">
+            <div class="field"><label>Cloud Bridge URL</label><input id="downloadCloudUrl" inputmode="url" placeholder="https://你的-sagi-cloud-bridge地址"></div>
+            <div class="field"><label>Cloud Access Token</label><input id="downloadCloudToken" type="password" autocomplete="off" placeholder="SAGI_BRIDGE_TOKEN"></div>
+          </div>
+          <div id="downloadLocalSettings" class="downloadLocalSettings" hidden>
+            <div class="field"><label>Local Bridge URL · 仅 LOCAL 模式</label><input id="downloadBridgeUrl" inputmode="url" placeholder="http://192.168.1.8:8765"></div>
+          </div>
+          <div class="toolbar"><button class="btn" id="downloadCommandBtn" type="button">保存高级设置</button></div>
         </div>
-        <div class="toolbar"><button class="btn" id="downloadCommandBtn" type="button">保存下载设置</button></div>
-      </div>
+      </details>
 
       <div class="section card">
         <div class="sectionHead"><div><h2>预览</h2><p>普通视频直链可直接预览；Instagram 由 Bridge 解析。</p></div></div>
