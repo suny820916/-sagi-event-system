@@ -60,7 +60,9 @@ function setEngine(v){
  localStorage.setItem(KEYS.engine,v);
  document.querySelectorAll('[data-download-engine]').forEach(b=>b.classList.toggle('active',b.dataset.downloadEngine===v));
  if(q('downloadEngineBadge'))q('downloadEngineBadge').textContent=v.toUpperCase();
- setStatus(v==='cloud'?'CLOUD 模式：5G / Wi‑Fi 都可用。':'LOCAL 模式：手机与电脑需在同一 Wi‑Fi。','good')
+ if(q('downloadLocalSettings'))q('downloadLocalSettings').hidden=v!=='local';
+ if(q('downloadCloudSettings'))q('downloadCloudSettings').hidden=v!=='cloud';
+ setStatus(v==='cloud'?'CLOUD 模式：正常使用无需填写电脑地址。':'LOCAL 备用模式：仅此时需要电脑 Bridge 地址。','good')
 }
 function saveSettings(){
  const s=settings();
@@ -113,8 +115,8 @@ function localInstagram(x,s){
  setTimeout(()=>setProgress(false),3500)
 }
 async function cloudInstagram(x,s){
- if(!s.cloudUrl){setStatus('CLOUD Bridge 尚未设置。部署后把公网 URL 填入设置。','warn');return}
- if(!s.cloudToken){setStatus('Cloud Access Token 为空。请填写 SAGI_BRIDGE_TOKEN。','warn');return}
+ if(!s.cloudUrl){setStatus('云端服务尚未绑定。当前不需要填写电脑地址；部署 SAGI CLOUD BRIDGE 后只需配置一次云端地址。','warn');return}
+ if(!s.cloudToken){setStatus('云端服务需要 Access Token。它属于云端配置，不是电脑地址。','warn');return}
  if(activePoll){clearTimeout(activePoll);activePoll=null}
  setProgress(true,'创建云端任务',8);setStatus('正在创建 SAGI CLOUD 下载任务…','good');
  try{
