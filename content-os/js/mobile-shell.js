@@ -9,7 +9,6 @@ if(q('matchClockBtn'))q('matchClockBtn').onclick=()=>window.SAGI_MATCHDAY?.toggl
 if(q('matchToJobBtn'))q('matchToJobBtn').onclick=()=>{C.switchView('videojobs');if(q('jobSource'))q('jobSource').value='matchday'};
 document.querySelectorAll('[data-job-type]').forEach(b=>b.onclick=()=>window.SAGI_VIDEO_JOBS?.setType?.(b.dataset.jobType));if(q('jobCreateBtn'))q('jobCreateBtn').onclick=()=>window.SAGI_VIDEO_JOBS?.create?.();if(q('jobExportAllBtn'))q('jobExportAllBtn').onclick=()=>window.SAGI_VIDEO_JOBS?.exportAll?.();
 document.addEventListener('click',e=>{const s=e.target.closest?.('[data-job-suggest]');if(s)window.SAGI_VIDEO_JOBS?.create?.(s.dataset.jobSuggest)});
-document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>{if(matchMedia('(max-width:900px)').matches)localStorage.setItem('sagi_mobile_view',b.dataset.view)}));
 window.SAGI_MOBILE.renderAll();
-if(matchMedia('(max-width:900px)').matches){const v=localStorage.getItem('sagi_mobile_view')||'matchday';if(['matchday','videojobs','downloader','review','daily','publish'].includes(v))C.switchView(v);else C.switchView('matchday')}
+if(matchMedia('(max-width:900px)').matches){const v=localStorage.getItem('sagi_mobile_view')||'matchday';C.switchView(['matchday','videojobs','downloader','review','daily','publish'].includes(v)?v:'matchday')}
 })();
