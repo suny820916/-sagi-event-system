@@ -1503,6 +1503,7 @@ function orderProductionMeta(o){
  return ' · 生产 '+percent+'%'+(overdue?(' · ⚠ '+overdue+'项逾期'):'')
 }
 
+function displayOrderStatus(s){return s==='已完成'?'交易完成':(s||'线索')}
 function renderOrders(){
  const search=q('orderSearch').value.trim().toLowerCase(),status=q('statusFilter').value,w=q('orderList');
  const list=state.orders.filter(o=>(!status||o.status===status)&&(!search||[o.projectName,o.teamName,o.contact,o.city].join(' ').toLowerCase().includes(search))).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
@@ -1510,7 +1511,7 @@ function renderOrders(){
  w.innerHTML='';
  list.forEach(o=>{const d=document.createElement('div');d.className='orderItem';d.innerHTML=
   '<div><div class="orderName">'+escapeHtml(o.projectName||o.teamName||'未命名项目')+'</div><div class="orderMeta">'+escapeHtml([o.teamName,o.city,o.season].filter(Boolean).join(' · ')+orderProductionMeta(o))+'</div></div>'+
-  '<div><span class="statusTag">'+escapeHtml(o.salesStage||'新线索')+'</span></div><div class="money">'+money(o.calc?.total||0)+'</div>'+
+  '<div><span class="statusTag">'+escapeHtml(o.salesStage||'新线索')+'</span><div class="tiny" style="margin-top:4px">订单 · '+escapeHtml(displayOrderStatus(o.status))+'</div></div><div class="money">'+money(o.actualOrderTotal||o.calc?.total||0)+'</div>'+
   '<div class="actions" style="margin:0"><button data-open type="button">打开</button><button data-reorder type="button">补单</button><button data-del class="danger" type="button">删</button></div>';
   d.querySelector('[data-open]').onclick=()=>{fill(o);location.hash='#customer';note('已打开 '+o.projectName)};
   d.querySelector('[data-reorder]').onclick=()=>createReorder(o);
@@ -1549,7 +1550,7 @@ function setWorkspace(name,scroll=true){
 }
 function renderWorkspaceSummary(){
  if(!q('workspaceTeam'))return;const team=text('teamName')||state.orders.find(x=>x.id===state.currentId)?.teamName||'未选择球队',stage=q('salesStage')?.value||'新线索',orderStatus=q('orderStatus')?.value||'线索';
- q('workspaceTeam').textContent=team;q('workspaceStatus').textContent=currentWorkspace==='production'?orderStatus:stage;
+ q('workspaceTeam').textContent=team;q('workspaceStatus').textContent=(currentWorkspace==='production'||currentWorkspace==='archive')?displayOrderStatus(orderStatus):stage;
  q('workspaceStatus').classList.toggle('good',stage==='已付定金'||orderStatus==='已完成');q('workspaceStatus').classList.toggle('warn',!(stage==='已付定金'||orderStatus==='已完成'))
 }
 function initWorkspaceUI(){
