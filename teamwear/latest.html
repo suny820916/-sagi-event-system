@@ -213,6 +213,17 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
 .douyinPhoneBg.motion-punch{animation:douyinPunch .85s ease both}.douyinPhoneBg.motion-push{animation:douyinPush 1.8s ease both}.douyinPhoneBg.motion-drift{animation:douyinDrift 2.6s ease both}.douyinPhoneBg.motion-cut{animation:douyinCut .36s ease both}
 @keyframes douyinPunch{from{transform:scale(1.16)}to{transform:scale(1)}}@keyframes douyinPush{from{transform:scale(1)}to{transform:scale(1.08)}}@keyframes douyinDrift{from{transform:scale(1.06) translateX(-1.5%)}to{transform:scale(1.1) translateX(1.5%)}}@keyframes douyinCut{0%{filter:brightness(1.65);transform:scale(1.04)}100%{filter:brightness(1);transform:scale(1)}}
 @media(max-width:700px){.douyinProPanel{grid-template-columns:1fr 1fr}}
+
+.autoVideoStudio{margin-top:10px;border:1px solid #34414a;border-radius:12px;background:#091014;padding:10px}
+.autoVideoHead{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.autoVideoHead h4{margin:0;font-size:10px}.autoVideoHead span{font-size:7px;color:#72808a}
+.autoVideoControls{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:8px}.autoVideoControls .span2{grid-column:span 2}
+.autoVideoProgress{margin-top:8px;height:8px;border-radius:999px;background:#151d22;overflow:hidden;border:1px solid #2d373e}.autoVideoProgress i{display:block;height:100%;width:0;background:currentColor;transition:width .16s linear}
+.autoVideoStatus{display:flex;justify-content:space-between;gap:8px;margin-top:5px;font-size:7px;color:#78858e}
+.autoVideoResult{margin-top:9px;display:grid;grid-template-columns:220px 1fr;gap:10px;align-items:start}.autoVideoResult video{width:100%;aspect-ratio:9/16;background:#05080a;border-radius:13px;border:1px solid #303a41}
+.autoVideoMeta{border:1px solid #2e3940;border-radius:10px;padding:9px;background:#0b1115}.autoVideoMeta b{display:block;font-size:9px}.autoVideoMeta p{font-size:7px;color:#7f8a93;line-height:1.55;margin:6px 0}
+.autoVideoActions{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
+@media(max-width:800px){.autoVideoControls{grid-template-columns:1fr 1fr}.autoVideoResult{grid-template-columns:180px 1fr}}
+@media(max-width:560px){.autoVideoControls{grid-template-columns:1fr}.autoVideoControls .span2{grid-column:auto}.autoVideoResult{grid-template-columns:1fr}.autoVideoResult video{width:210px;margin:auto}}
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -224,7 +235,7 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
 <div class="app">
   <div class="top">
     <div><div class="brand">SAGI TEAMWEAR SALES SYSTEM</div><div class="sub">球队建档 · 产品方案 · 球员名单 · 报价 · 订单 · 补单</div></div>
-    <div><div class="ver">V1.8.8 · DOUYIN PRO DIRECTOR</div><div style="font-size:7px;color:#6f7b75;margin-top:5px;text-align:right">BUILD 2026.11.09 · PRO DIRECTOR</div></div>
+    <div><div class="ver">V1.8.9 · AUTO VIDEO STUDIO</div><div style="font-size:7px;color:#6f7b75;margin-top:5px;text-align:right">BUILD 2026.11.09 · AUTO VIDEO</div></div>
   </div>
   <div id="globalPinnedBar" class="globalPinnedBar">
     <div class="globalPinnedHead"><b>置顶订单 · PINNED</b><span>打开系统第一眼就能找到</span></div>
@@ -658,7 +669,7 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
 
         <div id="douyinContentEngine" class="douyinEngine">
           <div class="douyinEngineHead">
-            <div><h3>DOUYIN PRO DIRECTOR · V1.8.8</h3><p>订单素材 → 自动编排 → 9:16预览 → 发布包 → 发布队列</p></div>
+            <div><h3>DOUYIN PRO DIRECTOR · V1.8.9</h3><p>订单素材 → 自动编排 → 9:16预览 → 发布包 → 发布队列</p></div>
             <div id="douyinConnectionState" class="douyinConn">官方发布接口 · 未连接</div>
           </div>
 
@@ -706,6 +717,40 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
             <div>
               <label>镜头 / 图片顺序</label>
               <div id="douyinStoryboard" class="douyinStoryboard"><div class="marketingEmpty">还没有内容计划。</div></div>
+            </div>
+          </div>
+
+
+          <div id="autoVideoStudio" class="autoVideoStudio">
+            <div class="autoVideoHead">
+              <div><h4>AUTO VIDEO STUDIO · V1.8.9</h4><span>自动合成竖屏短视频 · 动态镜头 · 字幕 · 音乐 · 导出</span></div>
+              <span id="autoVideoFormatState">等待检测浏览器视频格式</span>
+            </div>
+            <div class="autoVideoControls">
+              <div><label>输出清晰度</label><select id="autoVideoResolution"><option value="720" selected>720×1280 · 手机稳定</option><option value="1080">1080×1920 · 高清</option></select></div>
+              <div><label>帧率</label><select id="autoVideoFps"><option value="24">24 fps</option><option value="30" selected>30 fps</option></select></div>
+              <div><label>音乐音量</label><input id="autoVideoMusicVolume" type="range" min="0" max="100" value="32"></div>
+              <div><label>背景音乐</label><input id="autoVideoMusicFile" type="file" accept="audio/*"></div>
+              <div class="span2"><label>音乐提示</label><input id="autoVideoMusicHint" value="北疆民族节奏 + 现代鼓点 + 电吉他；0–2秒低频，6秒后抬升，片尾重击" readonly></div>
+              <div><label>字幕</label><select id="autoVideoSubtitles"><option value="on" selected>显示</option><option value="off">关闭</option></select></div>
+              <div><label>片尾品牌</label><select id="autoVideoBrandEnd"><option value="on" selected>SAGI片尾露出</option><option value="off">不露出</option></select></div>
+            </div>
+            <div class="douyinToolbar">
+              <button id="autoVideoRenderBtn" class="primary" type="button">生成完整视频</button>
+              <button id="autoVideoCancelBtn" type="button">停止生成</button>
+            </div>
+            <div class="autoVideoProgress"><i id="autoVideoProgressBar"></i></div>
+            <div class="autoVideoStatus"><span id="autoVideoStatusText">请先选择15秒或25秒视频并完成导演级编排。</span><span id="autoVideoProgressText">0%</span></div>
+            <div id="autoVideoResult" class="autoVideoResult" style="display:none">
+              <video id="autoVideoPreview" controls playsinline></video>
+              <div class="autoVideoMeta">
+                <b id="autoVideoResultTitle">视频已生成</b>
+                <p id="autoVideoResultMeta">—</p>
+                <div class="autoVideoActions">
+                  <button id="autoVideoSaveBtn" class="blue" type="button">保存 / 分享视频</button>
+                  <button id="autoVideoDiscardBtn" type="button">清除本次视频</button>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -892,7 +937,7 @@ const NEGOTIATED_APPAREL_DISCOUNT=5;
 const SAGI_FIXED_PRICE={CLUB:{adult:79}};
 const STAGES=['线索','设计沟通','已报价','客户已确认','已收定金','生产中','质检','已发货','已完成'];
 const SALES_STAGES=['新线索','已联系','有意向','已报价','已查看报价','已确认','已付定金','未成交'];
-let state={orders:[],currentId:null,teamLogo:'',roster:[],catalogItems:[],costOverrides:{},packagePlans:[],packageTargetQty:0,lastCustomerQuoteLink:'',confirmation:{},productionTracker:{},currentQuoteSentAt:'',currentDepositPaidAt:'',currentFollowUpHistory:[],currentActivityTimeline:[],currentOrderMedia:{design:'',poster:'',jersey:'',delivery:''},smartRosterDraft:[],currentDouyinPlan:[],douyinPreviewTimers:[]};
+let state={orders:[],currentId:null,teamLogo:'',roster:[],catalogItems:[],costOverrides:{},packagePlans:[],packageTargetQty:0,lastCustomerQuoteLink:'',confirmation:{},productionTracker:{},currentQuoteSentAt:'',currentDepositPaidAt:'',currentFollowUpHistory:[],currentActivityTimeline:[],currentOrderMedia:{design:'',poster:'',jersey:'',delivery:''},smartRosterDraft:[],currentDouyinPlan:[],douyinPreviewTimers:[],currentDouyinSceneIndex:0,douyinMusicFile:null,autoVideoBlob:null,autoVideoUrl:'',autoVideoMime:'',autoVideoCancel:false};
 
 function uid(){return 'tw_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7)}
 function money(n){return '¥'+Math.round(Number(n)||0).toLocaleString('zh-CN')}
@@ -1141,7 +1186,7 @@ function compressImageFile(file,maxSide=960,quality=.64){
 function downloadJson(filename,obj){
  const blob=new Blob([JSON.stringify(obj,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500)
 }
-function backupPayload(orders){return{schema:'SAGI-TEAMWEAR-BACKUP-1',version:'V1.8.8',exportedAt:new Date().toISOString(),orders:JSON.parse(JSON.stringify(orders||[])),costOverrides:JSON.parse(JSON.stringify(state.costOverrides||{}))}}
+function backupPayload(orders){return{schema:'SAGI-TEAMWEAR-BACKUP-1',version:'V1.8.9',exportedAt:new Date().toISOString(),orders:JSON.parse(JSON.stringify(orders||[])),costOverrides:JSON.parse(JSON.stringify(state.costOverrides||{}))}}
 function exportAllBackup(){downloadJson('SAGI_TEAMWEAR_BACKUP_'+localDateOnly()+'.json',backupPayload(state.orders));note('全部订单备份已导出')}
 function exportCurrentBackup(){const o=state.orders.find(x=>x.id===state.currentId);if(!o){note('请先打开并保存一笔订单');return}downloadJson('SAGI_'+(o.teamName||'TEAM').replace(/\s+/g,'_')+'_'+localDateOnly()+'.json',backupPayload([o]));note('当前球队档案已导出')}
 function importBackupFile(file){
@@ -1365,7 +1410,14 @@ function collect(){
   series:q('series').value,supplierTier:q('supplierTier').value,ageGroup:q('ageGroup').value,productType:q('productType').value,priceStrategy:q('priceStrategy').value,targetMargin:Number(q('targetMargin').value)||.5,salesUnitPrice:n('salesUnitPrice'),primaryColor:text('primaryColor'),accentColor:text('accentColor'),printFee:n('printFee'),designFee:n('designFee'),discount:n('discount'),poloAddon:n('poloAddon'),pocketAddon:n('pocketAddon'),longSleeveAddon:n('longSleeveAddon'),otherCraftCost:n('otherCraftCost'),factoryShippingCost:n('factoryShippingCost'),shippingFee:n('shippingFee'),shippingZone:q('shippingZone').value,depositRate:Number(q('depositRate').value)||.5,frontText:text('frontText'),nameRule:text('nameRule'),numberStyle:text('numberStyle'),productNotes:q('productNotes').value.trim(),
   roster:JSON.parse(JSON.stringify(state.roster)),catalogItems:JSON.parse(JSON.stringify(state.catalogItems)),packageTargetQty:state.packageTargetQty||0,packageTeamSize:n('packageTeamSize'),packageBudget:n('packageBudget'),packageAge:q('packageAge').value,packageMargin:Number(q('packageMargin').value)||.4,confirmation:JSON.parse(JSON.stringify(currentConfirmation())),productionTracker:JSON.parse(JSON.stringify(currentProductionTracker())),publicContact:text('publicContact'),publicQuoteNote:q('publicQuoteNote').value.trim(),quoteValidDays:Number(q('quoteValidDays').value)||7,quoteShowPackages:q('quoteShowPackages').value,quoteShowPayment:q('quoteShowPayment').value,extraQty:n('extraQty'),status:q('orderStatus').value,owner:text('owner')||'SAGI',pinned:state.currentId?!!state.orders.find(x=>x.id===state.currentId)?.pinned:false,calc:c,updatedAt:Date.now(),createdAt:state.currentId?(state.orders.find(x=>x.id===state.currentId)?.createdAt||Date.now()):Date.now()
  }}
+
+function resetAutoVideoSession(){
+ state.douyinMusicFile=null;state.autoVideoCancel=false;if(state.autoVideoUrl)URL.revokeObjectURL(state.autoVideoUrl);state.autoVideoUrl='';state.autoVideoBlob=null;state.autoVideoMime='';
+ if(q('autoVideoMusicFile'))q('autoVideoMusicFile').value='';if(q('autoVideoPreview'))q('autoVideoPreview').removeAttribute('src');if(q('autoVideoResult'))q('autoVideoResult').style.display='none';if(q('autoVideoProgressBar'))autoVideoSetProgress(0,'请选择音乐并生成视频')
+}
+
 function fill(o){
+ resetAutoVideoSession();
  state.currentId=o.id||null;state.smartRosterDraft=[];state.teamLogo=o.teamLogo||'';state.currentQuoteSentAt=o.quoteSentAt||'';state.currentDepositPaidAt=o.depositPaidAt||'';state.currentFollowUpHistory=Array.isArray(o.followUpHistory)?JSON.parse(JSON.stringify(o.followUpHistory)):[];state.currentActivityTimeline=Array.isArray(o.activityTimeline)?JSON.parse(JSON.stringify(o.activityTimeline)):[];state.currentOrderMedia={design:'',poster:'',jersey:'',delivery:'',...(o.mediaArchive||{})};state.currentDouyinPlan=Array.isArray(o.douyinContent?.plan)?JSON.parse(JSON.stringify(o.douyinContent.plan)).map(s=>{const x={...s};delete x.asset;return x}):[];state.currentDouyinPackageGeneratedAt=o.douyinContent?.packageGeneratedAt||'';state.currentDouyinPublishedAt=o.douyinContent?.publishedAt||'';state.currentDouyinWorkId=o.douyinContent?.workId||'';state.roster=Array.isArray(o.roster)?JSON.parse(JSON.stringify(o.roster)):[];state.catalogItems=Array.isArray(o.catalogItems)?JSON.parse(JSON.stringify(o.catalogItems)):[];state.packageTargetQty=Number(o.packageTargetQty)||0;state.confirmation={...confirmationDefaults(),...(o.confirmation||{})};state.productionTracker={...productionTrackerDefaults(),...(o.productionTracker||{})};
  const set=(id,v)=>q(id).value=v??'';
  set('packageTeamSize',o.packageTeamSize||o.packageTargetQty||22);set('packageBudget',o.packageBudget||200);set('packageAge',o.packageAge||o.ageGroup||'adult');set('packageMargin',String(o.packageMargin??.4));set('projectName',o.projectName);set('teamName',o.teamName);set('actualOrderTotal',o.actualOrderTotal??o.calc?.total??0);set('actualCostTotal',o.actualCostTotal??o.calc?.factoryTotal??0);set('feedbackStatus',o.feedbackStatus||'');set('customerFeedback',o.customerFeedback||'');set('marketingTitle',o.marketingTitle||'');set('marketingTagline',o.marketingTagline||'');set('momentsCopy',o.momentsCopy||'');set('douyinCopy',o.douyinCopy||'');set('caseCopy',o.caseCopy||'');set('caseTags',o.caseTags||'');q('marketingSentClient').checked=!!o.marketingStatus?.sentClient;q('marketingMomentsPublished').checked=!!o.marketingStatus?.momentsPublished;q('marketingDouyinPublished').checked=!!o.marketingStatus?.douyinPublished;q('marketingPosterReady').checked=!!o.marketingStatus?.posterReady;q('publicCaseEnabled').checked=!!o.publicCaseEnabled;q('marketingInCaseLibrary').checked=!!o.marketingInCaseLibrary;set('douyinMode',o.douyinContent?.mode||'image');set('douyinAngle',o.douyinContent?.angle||'launch');set('douyinGoal',o.douyinContent?.goal||'retention');set('douyinPublishStatus',o.douyinContent?.status||'draft');set('douyinHook',o.douyinContent?.hook||'');set('douyinCoverTitle',o.douyinContent?.coverTitle||'');set('douyinCta',o.douyinContent?.cta||'');set('douyinHashtags',o.douyinContent?.hashtags||'');set('douyinScheduleAt',o.douyinContent?.scheduleAt||'');set('salesStage',o.salesStage||'新线索');set('leadTemperature',o.leadTemperature||'warm');set('lastContactDate',o.lastContactDate||'');set('nextFollowUp',o.nextFollowUp||'');set('nextAction',o.nextAction||'');set('lostReason',o.lostReason||'');set('source',o.source||'赛事合作');set('contact',o.contact);set('contactInfo',o.contactInfo);set('shippingRecipient',o.shippingRecipient||'');set('shippingPhone',o.shippingPhone||'');set('shippingAddress',o.shippingAddress||'');set('city',o.city);set('competition',o.competition);set('season',o.season||'2026-2027');set('deadline',o.deadline);set('customerNotes',o.customerNotes);
@@ -1373,6 +1425,7 @@ function fill(o){
  generatePackagePlans(false);q('followMessage').value='';renderLogo();renderRoster();renderCatalogCart();renderOrderConfirmation();renderProductionTracker();renderAll()
 }
 function blank(){
+ resetAutoVideoSession();
  state.currentId=null;state.smartRosterDraft=[];state.teamLogo='';state.currentQuoteSentAt='';state.currentDepositPaidAt='';state.currentFollowUpHistory=[];state.currentActivityTimeline=[];state.currentOrderMedia={design:'',poster:'',jersey:'',delivery:''};state.currentDouyinPlan=[];state.currentDouyinPackageGeneratedAt='';state.currentDouyinPublishedAt='';state.currentDouyinWorkId='';state.roster=[];state.catalogItems=[];state.packageTargetQty=0;state.confirmation=confirmationDefaults();state.productionTracker=productionTrackerDefaults();
  const defaults={projectName:'',teamName:'',contact:'',contactInfo:'',shippingRecipient:'',shippingPhone:'',shippingAddress:'',actualOrderTotal:0,actualCostTotal:0,feedbackStatus:'',customerFeedback:'',marketingTitle:'',marketingTagline:'',momentsCopy:'',douyinCopy:'',caseCopy:'',caseTags:'',douyinHook:'',douyinCoverTitle:'',douyinCta:'',douyinHashtags:'',douyinScheduleAt:'',city:'塔城',competition:'',season:'2026-2027',deadline:'',customerNotes:'',primaryColor:'塔城红',accentColor:'暖米白',salesUnitPrice:79,printFee:0,designFee:300,factoryShippingCost:0,shippingFee:0,discount:0,otherCraftCost:0,frontText:'',nameRule:'英文名',numberStyle:'SAGI 欧赛事字体',productNotes:'',publicContact:'',publicQuoteNote:'热升华比赛服默认包含印字印号；特殊工艺按最终确认方案执行。产品价格默认不含运费，运费另计。',extraQty:0,owner:'SAGI'};
  Object.entries(defaults).forEach(([k,v])=>{if(q(k))q(k).value=v});q('followMessage').value='';q('salesStage').value='新线索';q('leadTemperature').value='warm';q('lastContactDate').value='';q('nextFollowUp').value='';q('nextAction').value='首次联系客户';q('lostReason').value='';q('packageTeamSize').value='22';q('packageBudget').value='200';q('packageAge').value='adult';q('packageMargin').value='.4';q('source').value='赛事合作';q('series').value='定制比赛服';q('supplierTier').value='CLUB';q('ageGroup').value='adult';q('productType').value='kit';q('priceStrategy').value='fixed';q('targetMargin').value='.5';q('poloAddon').value='0';q('pocketAddon').value='0';q('longSleeveAddon').value='0';q('shippingZone').value='remote';q('depositRate').value='.5';q('quoteValidDays').value='7';q('quoteShowPackages').value='yes';q('quoteShowPayment').value='yes';q('marketingSentClient').checked=false;q('marketingMomentsPublished').checked=false;q('marketingDouyinPublished').checked=false;q('marketingPosterReady').checked=false;q('publicCaseEnabled').checked=false;q('marketingInCaseLibrary').checked=false;q('douyinMode').value='image';q('douyinAngle').value='launch';q('douyinGoal').value='retention';q('douyinPublishStatus').value='draft';q('orderStatus').value=STAGES[0];renderLogo();renderRoster();if(q('catalogCart'))renderCatalogCart();renderAll()
@@ -1907,6 +1960,100 @@ async function renderDouyinFrameBlob(scene,index,total){
  return await new Promise(resolve=>cv.toBlob(resolve,'image/jpeg',.92))
 }
 
+
+function detectAutoVideoMime(){
+ if(typeof MediaRecorder==='undefined')return'';
+ const candidates=['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'];
+ for(const m of candidates){try{if(MediaRecorder.isTypeSupported(m))return m}catch(e){}}
+ return''
+}
+function renderAutoVideoCapability(){
+ const mime=detectAutoVideoMime(),el=q('autoVideoFormatState');if(!el)return;
+ el.textContent=mime?('导出格式 · '+(mime.includes('mp4')?'MP4':'WebM')):'当前浏览器不支持直接视频合成';
+ el.style.color=mime?(mime.includes('mp4')?'#8fc89d':'#d0b66b'):'#d37f7f'
+}
+function autoVideoSetProgress(p,msg){
+ const v=Math.max(0,Math.min(100,Math.round(p)));q('autoVideoProgressBar').style.width=v+'%';q('autoVideoProgressText').textContent=v+'%';if(msg)q('autoVideoStatusText').textContent=msg
+}
+function autoVideoSceneAt(plan,seconds){
+ let cursor=0;for(let i=0;i<plan.length;i++){const d=Number(plan[i].duration)||1;if(seconds<cursor+d)return{scene:plan[i],index:i,local:(seconds-cursor)/d,start:cursor,duration:d};cursor+=d}
+ const last=plan.length-1;return{scene:plan[last],index:last,local:1,start:cursor-(Number(plan[last]?.duration)||1),duration:Number(plan[last]?.duration)||1}
+}
+function autoVideoEase(t){return t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2}
+function drawAutoVideoCover(ctx,img,w,h,progress,motion){
+ ctx.fillStyle='#05080a';ctx.fillRect(0,0,w,h);if(!img)return;
+ const ir=img.width/img.height,cr=w/h;let sw,sh,sx,sy;if(ir>cr){sh=img.height;sw=sh*cr;sx=(img.width-sw)/2;sy=0}else{sw=img.width;sh=sw/cr;sx=0;sy=(img.height-sh)/2}
+ const e=autoVideoEase(Math.max(0,Math.min(1,progress))),m=motion||'push';let zoom=1.02,panX=0,panY=0;
+ if(m==='punch')zoom=1.14-(.12*e);else if(m==='drift'){zoom=1.06+.035*e;panX=(e-.5)*w*.04}else if(m==='cut')zoom=1.03;else zoom=1.01+.075*e;
+ const dw=w*zoom,dh=h*zoom,dx=(w-dw)/2+panX,dy=(h-dh)/2+panY;ctx.drawImage(img,sx,sy,sw,sh,dx,dy,dw,dh)
+}
+function drawAutoVideoText(ctx,scene,w,h,sceneIndex,total,showSubs,brandEnd){
+ const grad=ctx.createLinearGradient(0,h*.45,0,h);grad.addColorStop(0,'rgba(0,0,0,0)');grad.addColorStop(1,'rgba(0,0,0,.83)');ctx.fillStyle=grad;ctx.fillRect(0,h*.42,w,h*.58);
+ const pad=w*.07,usable=w*.78;
+ ctx.fillStyle='rgba(255,255,255,.84)';ctx.font='700 '+Math.round(w*.024)+'px Arial';ctx.fillText(scene.kicker||'SAGI CONTENT',pad,h*.72);
+ ctx.fillStyle='#fff';ctx.font='900 '+Math.round(w*.062)+'px Arial, sans-serif';canvasWrapText(ctx,scene.title||'',pad,h*.77,usable,Math.round(w*.072),3);
+ if(showSubs){ctx.fillStyle='rgba(255,255,255,.88)';ctx.font='500 '+Math.round(w*.028)+'px Arial, sans-serif';canvasWrapText(ctx,scene.sub||'',pad,h*.91,usable,Math.round(w*.04),2)}
+ ctx.fillStyle='rgba(255,255,255,.78)';ctx.font='700 '+Math.round(w*.018)+'px Arial';ctx.textAlign='right';ctx.fillText((sceneIndex+1)+' / '+total,w-pad,h*.055);ctx.textAlign='left';
+ if(brandEnd&&sceneIndex===total-1){ctx.fillStyle='#fff';ctx.font='900 '+Math.round(w*.028)+'px Arial';ctx.fillText('SAGI SPORTS',pad,h*.965)}
+}
+async function preloadAutoVideoImages(plan){
+ const map={};for(const s of plan){const key=s.assetKey;if(key&&!map[key]){const src=douyinAssetMap()[key];if(src)map[key]=await loadCanvasImage(src).catch(()=>null)}}return map
+}
+async function prepareAutoVideoAudio(){
+ const file=state.douyinMusicFile,AC=window.AudioContext||window.webkitAudioContext;if(!file||!AC)return null;const ctx=new AC();await ctx.resume();
+ const ab=await file.arrayBuffer(),buffer=await ctx.decodeAudioData(ab.slice(0)),dest=ctx.createMediaStreamDestination(),gain=ctx.createGain();gain.gain.value=(Number(q('autoVideoMusicVolume').value)||0)/100;
+ const source=ctx.createBufferSource();source.buffer=buffer;source.loop=true;source.connect(gain);gain.connect(dest);return{ctx,source,dest}
+}
+function clearAutoVideoResult(){
+ if(state.autoVideoUrl)URL.revokeObjectURL(state.autoVideoUrl);state.autoVideoUrl='';state.autoVideoBlob=null;state.autoVideoMime='';q('autoVideoPreview').removeAttribute('src');q('autoVideoResult').style.display='none';autoVideoSetProgress(0,'已清除本次生成结果')
+}
+async function renderAutoVideo(){
+ if(q('douyinMode').value==='image'){note('请先把内容形式切换为15秒或25秒视频');return}
+ let plan=state.currentDouyinPlan||[];if(!plan.length){buildDouyinPlan();plan=state.currentDouyinPlan||[]}
+ const mime=detectAutoVideoMime();if(!mime||typeof HTMLCanvasElement.prototype.captureStream!=='function'){note('当前浏览器不支持直接视频合成，请使用镜头包');return}
+ state.autoVideoCancel=false;clearAutoVideoResult();const btn=q('autoVideoRenderBtn');btn.disabled=true;btn.textContent='正在生成…';
+ try{
+  const base=Number(q('autoVideoResolution').value)||720,w=base,h=Math.round(base*16/9),fps=Number(q('autoVideoFps').value)||30,total=plan.reduce((a,s)=>a+(Number(s.duration)||0),0),canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;const ctx=canvas.getContext('2d',{alpha:false});
+  autoVideoSetProgress(2,'正在预加载素材…');const images=await preloadAutoVideoImages(plan);
+  let audio=null;try{audio=await prepareAutoVideoAudio()}catch(e){audio=null}
+  const canvasStream=canvas.captureStream(fps),tracks=[...canvasStream.getVideoTracks()];if(audio?.dest?.stream?.getAudioTracks)tracks.push(...audio.dest.stream.getAudioTracks());
+  const stream=new MediaStream(tracks),chunks=[],rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:base>=1080?10000000:6000000});
+  rec.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data)};
+  const done=new Promise((resolve,reject)=>{rec.onstop=resolve;rec.onerror=e=>reject(e.error||e)});
+  rec.start(500);if(audio)audio.source.start(0);
+  const started=performance.now(),showSubs=q('autoVideoSubtitles').value==='on',brandEnd=q('autoVideoBrandEnd').value==='on';
+  await new Promise(resolve=>{
+   const frame=()=>{
+    const elapsed=(performance.now()-started)/1000;if(state.autoVideoCancel||elapsed>=total){resolve();return}
+    const hit=autoVideoSceneAt(plan,elapsed),scene=hit.scene,img=images[scene.assetKey]||null;
+    drawAutoVideoCover(ctx,img,w,h,hit.local,scene.motion);
+    const edge=Math.min(hit.local*7,(1-hit.local)*7,1);if(edge<1){ctx.fillStyle='rgba(0,0,0,'+((1-edge)*.22)+')';ctx.fillRect(0,0,w,h)}
+    drawAutoVideoText(ctx,scene,w,h,hit.index,plan.length,showSubs,brandEnd);
+    autoVideoSetProgress(5+(elapsed/total)*90,'正在合成 '+(hit.index+1)+' / '+plan.length+' · '+scene.kicker);
+    requestAnimationFrame(frame)
+   };frame()
+  });
+  if(audio){try{audio.source.stop()}catch(e){}try{await audio.ctx.close()}catch(e){}}
+  rec.stop();await done;stream.getTracks().forEach(t=>t.stop());
+  if(state.autoVideoCancel){autoVideoSetProgress(0,'已停止生成');note('视频生成已停止');return}
+  const blob=new Blob(chunks,{type:mime});state.autoVideoBlob=blob;state.autoVideoMime=mime;state.autoVideoUrl=URL.createObjectURL(blob);
+  q('autoVideoPreview').src=state.autoVideoUrl;q('autoVideoResult').style.display='grid';q('autoVideoResultTitle').textContent='视频已生成 · '+(mime.includes('mp4')?'MP4':'WebM');
+  q('autoVideoResultMeta').textContent=(w+'×'+h)+' · '+fps+'fps · '+total.toFixed(1)+'秒 · '+(blob.size/1024/1024).toFixed(1)+'MB'+(state.douyinMusicFile?' · 已混入音乐':' · 无音乐');
+  state.currentDouyinPackageGeneratedAt=new Date().toISOString();if(q('douyinPublishStatus').value==='draft')q('douyinPublishStatus').value='review';if(state.currentId){addActivity('marketing','自动生成抖音视频',(mime.includes('mp4')?'MP4':'WebM')+' · '+total.toFixed(1)+'秒');saveOrder(true);renderDouyinQueue()}
+  autoVideoSetProgress(100,'视频合成完成，可以预览、保存或分享。');note('完整视频已生成')
+ }catch(e){autoVideoSetProgress(0,'视频合成失败');note('视频合成失败 · 可改用720p重试')}
+ finally{btn.disabled=false;btn.textContent='生成完整视频'}
+}
+function cancelAutoVideo(){state.autoVideoCancel=true}
+async function saveOrShareAutoVideo(){
+ const blob=state.autoVideoBlob;if(!blob){note('请先生成完整视频');return}const ext=state.autoVideoMime.includes('mp4')?'mp4':'webm',team=(text('teamName')||'SAGI_TEAM').replace(/[\\/:*?"<>|\s]+/g,'_'),filename='SAGI_DOUYIN_'+team+'_'+localDateOnly()+'.'+ext,file=new File([blob],filename,{type:state.autoVideoMime});
+ try{if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:text('douyinCoverTitle')||team,text:q('douyinCopy').value.trim()});note('已打开视频分享菜单')}else{triggerBlobDownload(blob,filename);note('视频已保存')}}catch(e){if(e?.name!=='AbortError')triggerBlobDownload(blob,filename)}
+}
+function initAutoVideoStudio(){
+ renderAutoVideoCapability();q('autoVideoMusicFile').onchange=e=>{state.douyinMusicFile=e.target.files?.[0]||null;q('autoVideoStatusText').textContent=state.douyinMusicFile?('已选择音乐：'+state.douyinMusicFile.name):'未选择音乐'};
+ q('autoVideoRenderBtn').onclick=renderAutoVideo;q('autoVideoCancelBtn').onclick=cancelAutoVideo;q('autoVideoSaveBtn').onclick=saveOrShareAutoVideo;q('autoVideoDiscardBtn').onclick=clearAutoVideoResult
+}
+
 function safeDouyinFilename(index){
  const team=(text('teamName')||'SAGI_TEAM').replace(/[\\/:*?"<>|\s]+/g,'_');
  return 'SAGI_'+team+'_'+String(index+1).padStart(2,'0')+'.jpg'
@@ -1967,7 +2114,7 @@ function renderDouyinQueue(){
  w.innerHTML='';list.slice(0,12).forEach(o=>{const st=o.douyinContent?.status||'draft',d=document.createElement('div');d.className='douyinQueueItem';d.innerHTML='<div><b>'+escapeHtml(o.douyinContent?.coverTitle||o.teamName||o.projectName||'未命名内容')+'</b><span>'+escapeHtml(o.teamName||'')+' · '+escapeHtml(o.douyinContent?.mode==='image'?'图片模式':(o.douyinContent?.mode==='video15'?'15秒视频':'25秒视频'))+(o.douyinContent?.scheduleAt?' · '+escapeHtml(o.douyinContent.scheduleAt.replace('T',' ')):'')+'</span></div><span class="douyinStatus '+(st==='ready'?'ready':st==='published'?'published':'')+'">'+(labels[st]||st)+'</span><button type="button">打开</button>';d.querySelector('button').onclick=()=>{fill(o);setWorkspace('marketing',false);window.scrollTo({top:0,behavior:'smooth'})};w.appendChild(d)})
 }
 function renderDouyinEngine(){
- if(!q('douyinContentEngine'))return;renderDouyinStoryboard();renderDouyinQueue();renderDouyinQuality();if((state.currentDouyinPlan||[]).length)showDouyinScene(0)
+ if(!q('douyinContentEngine'))return;renderAutoVideoCapability();renderDouyinStoryboard();renderDouyinQueue();renderDouyinQuality();if((state.currentDouyinPlan||[]).length)showDouyinScene(0)
 }
 function initDouyinEngine(){
  q('douyinAutoPlanBtn').onclick=buildDouyinPlan;q('douyinHookABBtn').onclick=generateDouyinHookAB;q('douyinPreviewPlayBtn').onclick=playDouyinPreview;q('douyinPreviewStopBtn').onclick=stopDouyinPreview;q('douyinSaveCurrentBtn').onclick=saveCurrentDouyinFrame;q('douyinCopyCaptionBtn').onclick=copyDouyinCaption;q('douyinExportBtn').onclick=exportDouyinPackage;q('douyinReadyBtn').onclick=markDouyinReady;q('douyinPublishBtn').onclick=requestDouyinPublish;
@@ -2163,7 +2310,7 @@ q('clearRosterBtn').onclick=()=>{state.roster=[];renderRoster();renderAll()};q('
 q('salesStage').onchange=()=>{if(q('salesStage').value==='未成交'&&!q('lostReason').value)note('请补充未成交原因');persistSalesActivity();renderAll()};q('lostReason').onchange=()=>{if(q('lostReason').value)q('salesStage').value='未成交';persistSalesActivity();renderAll()};q('nextFollowUp').onchange=()=>{persistSalesActivity();renderAll()};q('leadTemperature').onchange=()=>{persistSalesActivity();renderAll()};q('historyOrderImportBtn').onclick=importHistoryOrder;q('orderSearch').oninput=renderOrders;q('statusFilter').onchange=renderOrders;q('orderStatus').onchange=renderAll;q('extraQty').oninput=()=>{state.packageTargetQty=0;renderAll()};
 ['supplierTier','ageGroup'].forEach(id=>q(id).addEventListener('change',()=>{const tier=SUPPLIER_CATALOG[q('supplierTier').value],age=q('ageGroup').value==='child'?'child':'adult';q('priceStrategy').value=(tier&&SAGI_FIXED_PRICE[tier.name]&&SAGI_FIXED_PRICE[tier.name][age]!=null)?'fixed':'margin';syncPriceEngine(true);renderAll()}));['productType','priceStrategy','targetMargin','poloAddon','pocketAddon','longSleeveAddon','shippingZone'].forEach(id=>q(id).addEventListener('change',()=>{syncPriceEngine(true);renderAll()}));['otherCraftCost','factoryShippingCost'].forEach(id=>q(id).addEventListener('input',()=>{syncPriceEngine(true);renderAll()}));q('salesUnitPrice').addEventListener('input',renderAll);
 document.querySelectorAll('input,select,textarea').forEach(el=>{if(!['orderSearch','statusFilter','teamLogoFile'].includes(el.id))el.addEventListener('input',()=>{if(el.id==='orderStatus')return;renderAll()});if(el.tagName==='SELECT'&&!['statusFilter','orderStatus'].includes(el.id))el.addEventListener('change',renderAll)});
-initWorkspaceUI();initVisualMarketing();initDouyinEngine();initArchiveTools();q('followGenerateBtn').onclick=generateFollowUpMessage;q('followCopyBtn').onclick=copyFollowUpMessage;q('followContactedBtn').onclick=markFollowUpContacted;q('followScheduleBtn').onclick=scheduleNextFollowUp;initQuickOutcomes();q('followTone').onchange=()=>{if(q('followMessage').value.trim())generateFollowUpMessage()};q('followGoal').onchange=()=>{if(q('followMessage').value.trim())generateFollowUpMessage()};
+initWorkspaceUI();initVisualMarketing();initDouyinEngine();initAutoVideoStudio();initArchiveTools();q('followGenerateBtn').onclick=generateFollowUpMessage;q('followCopyBtn').onclick=copyFollowUpMessage;q('followContactedBtn').onclick=markFollowUpContacted;q('followScheduleBtn').onclick=scheduleNextFollowUp;initQuickOutcomes();q('followTone').onchange=()=>{if(q('followMessage').value.trim())generateFollowUpMessage()};q('followGoal').onchange=()=>{if(q('followMessage').value.trim())generateFollowUpMessage()};
 initSelects();loadState();blank();initCostProfile();initPackageBuilder();initCatalog();initCustomerQuotationMode();initOrderConfirmation();initProductionTracker();renderAll();
 })();
 </script>
