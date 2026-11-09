@@ -128,6 +128,22 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
 .archiveCard{border-color:#384552!important;background:linear-gradient(145deg,#0d1318,#10151a)!important}.archiveGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.archiveMedia{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.mediaSlot{border:1px solid #2f3a43;border-radius:11px;background:#090d11;padding:8px}.mediaPreview{aspect-ratio:16/10;border:1px dashed #394650;border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;color:#65727c;font-size:8px}.mediaPreview img{width:100%;height:100%;object-fit:cover}.mediaActions{display:flex;gap:5px;margin-top:6px}.mediaActions button{padding:6px 8px;font-size:8px}.timelineGrid{display:grid;grid-template-columns:1.1fr .9fr;gap:10px;margin-top:10px}.timelineList{max-height:330px;overflow:auto;display:grid;gap:6px}.timelineItem{position:relative;padding:8px 9px 8px 28px;border:1px solid #29343d;border-radius:9px;background:#090d11}.timelineItem:before{content:'';position:absolute;left:11px;top:13px;width:7px;height:7px;border-radius:50%;background:#8eaa93}.timelineItem b{font-size:9px}.timelineItem span{display:block;margin-top:3px;color:#73808a;font-size:7px}.timelineItem p{margin:5px 0 0;color:#a0aab3;font-size:8px}.reorderBox{border:1px solid #2d3942;border-radius:10px;background:#090d11;padding:9px}.reorderPlayers{max-height:245px;overflow:auto;display:grid;gap:4px;margin-top:7px}.reorderPlayer{display:grid;grid-template-columns:26px 1fr 54px 58px;gap:6px;align-items:center;padding:6px;border-bottom:1px solid #222c33;font-size:8px}.reorderToolbar,.backupToolbar{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}.backupBox{margin-top:10px;padding:10px;border:1px solid #35424c;border-radius:10px;background:#090d11}.backupNotice{font-size:8px;color:#84909a;line-height:1.55;margin-top:6px}
 @media(max-width:1100px){.salesPools{grid-template-columns:1fr 1fr 1fr}.archiveGrid{grid-template-columns:1fr 1fr}.archiveMedia{grid-template-columns:1fr 1fr}.timelineGrid{grid-template-columns:1fr}}@media(max-width:650px){.salesPools,.archiveGrid,.archiveMedia{grid-template-columns:1fr}.reorderPlayer{grid-template-columns:26px 1fr 50px 50px}}
 
+
+/* ===== V1.8 CLEAR WORKSPACE UI ===== */
+.workspaceNav{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:10px 0 12px;position:sticky;top:6px;z-index:25;padding:6px;background:rgba(7,10,13,.92);backdrop-filter:blur(10px);border:1px solid #28333c;border-radius:13px}
+.workspaceBtn{border:1px solid #303c45!important;border-radius:9px!important;background:#0d1318!important;padding:10px 8px!important;text-align:left!important;color:#8c98a2!important}
+.workspaceBtn b{display:block;font-size:10px;color:#d9e0e5}.workspaceBtn span{display:block;font-size:7px;margin-top:3px;color:#68747e}.workspaceBtn.active{border-color:#77907d!important;background:#172019!important}.workspaceBtn.active b{color:#b9e0c2}
+.workspaceIntro{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 10px;padding:9px 11px;border:1px solid #28343d;border-radius:10px;background:#0b1014}.workspaceIntro b{font-size:10px}.workspaceIntro span{font-size:8px;color:#7e8993}
+.workspaceHidden{display:none!important}
+.sectionSubnav{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.sectionSubnav button{font-size:8px;padding:6px 9px}
+.analyticsHidden{display:none!important}
+.card h2{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.card h2 small{margin-left:auto}
+.card.sectionPrimary{border-color:#3a4a42;box-shadow:0 0 0 1px rgba(100,130,110,.08)}
+.card.sectionSecondary{opacity:.96}
+.shippingFields.salesCompactHidden{display:none}
+.simpleStatus{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.simpleStatus .pill{border:1px solid #35434c;border-radius:999px;padding:5px 8px;font-size:8px;color:#9ca8b1}.simpleStatus .pill.good{border-color:#41624d;color:#a9d6b3}.simpleStatus .pill.warn{border-color:#655a37;color:#dfca83}
+@media(max-width:720px){.workspaceNav{grid-template-columns:1fr 1fr}.workspaceBtn{padding:9px 7px!important}.workspaceIntro{align-items:flex-start;flex-direction:column}}
+
 </style>
 </head>
 <body>
@@ -136,9 +152,13 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
     <div><div class="brand">SAGI TEAMWEAR SALES SYSTEM</div><div class="sub">球队建档 · 产品方案 · 球员名单 · 报价 · 订单 · 补单</div></div>
     <div class="ver">V1.8 · FOLLOW-UP ASSISTANT</div>
   </div>
-  <div class="nav">
-    <a href="#customer">球队建档</a><a href="#product">比赛服引擎</a><a href="#costProfile">成本档案</a><a href="#packageBuilder">套餐生成</a><a href="#catalog">产品目录</a><a href="#rosterCard">球员名单</a><a href="#orderConfirmation">订单确认</a><a href="#productionTracker">生产追踪</a><a href="#orderArchive">订单档案</a><a href="#orders">订单管理</a><a href="#customerQuotationMode">客户模式</a><a href="#quoteCard">报价单</a>
+  <div class="workspaceNav" id="workspaceNav">
+    <button class="workspaceBtn active" data-workspace="sales" type="button"><b>销售工作台</b><span>客户 · 跟进 · 套餐 · 报价</span></button>
+    <button class="workspaceBtn" data-workspace="order" type="button"><b>订单配置</b><span>产品 · 名单 · 确认 · 收款</span></button>
+    <button class="workspaceBtn" data-workspace="production" type="button"><b>生产发货</b><span>厂家 · 节点 · 物流 · 签收</span></button>
+    <button class="workspaceBtn" data-workspace="archive" type="button"><b>客户档案</b><span>历史订单 · 补单 · 备份</span></button>
   </div>
+  <div class="workspaceIntro"><div><b id="workspaceTitle">销售工作台</b><span id="workspaceDesc">先处理今天要跟进的客户，再完成报价与成交。</span></div><div class="simpleStatus"><span class="pill" id="workspaceTeam">未选择球队</span><span class="pill warn" id="workspaceStatus">新线索</span></div></div>
   <div class="kpis">
     <div class="kpi"><span>客户 / 球队</span><b id="kpiTeams">0</b><small>已沉淀订单客户</small></div>
     <div class="kpi"><span>销售项目</span><b id="kpiOrders">0</b><small>本机订单项目</small></div>
@@ -148,7 +168,7 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
   </div>
 
   <div id="salesConversionCenter" class="card salesCenterCard">
-    <h2><span class="sectionNo">00</span>销售转化中心 <small>SALES CONVERSION CENTER</small></h2>
+    <h2><span class="sectionNo">00</span>销售工作台 <small>SALES CONVERSION CENTER</small></h2>
     <div class="salesKpis">
       <div class="salesKpi hot"><span>今日待跟进</span><b id="salesTodayFollow">0</b></div>
       <div class="salesKpi bad"><span>报价即将过期</span><b id="salesExpiring">0</b></div>
@@ -156,7 +176,8 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
       <div class="salesKpi good"><span>本月成交</span><b id="salesMonthWon">0</b></div>
       <div class="salesKpi good"><span>报价→定金转化率</span><b id="salesConversionRate">0%</b></div>
     </div>
-    <div class="salesCenterGrid">
+    <div class="sectionSubnav"><button id="salesAnalyticsToggle" type="button">查看销售分析</button></div>
+    <div class="salesCenterGrid analyticsHidden" id="salesAnalyticsPanel">
       <div class="salesPanel">
         <h3>今天最应该联系谁 <span id="salesQueueBadge" class="salesBadge hot">NEXT ACTION</span></h3>
         <div id="salesFollowQueue" class="followList"></div>
@@ -214,7 +235,7 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
   <div class="layout">
     <div class="stack">
       <div id="customer" class="card">
-        <h2><span class="sectionNo">01</span>球队 / 客户建档 <small>CRM</small></h2>
+        <h2><span class="sectionNo">01</span>客户信息 <small>CRM</small></h2>
         <div class="grid3">
           <div><label>销售项目名称</label><input id="projectName" placeholder="例如：塔尔兰 2027 主客场球衣"></div>
           <div><label>球队名称</label><input id="teamName" placeholder="TARLAN FC"></div>
@@ -236,7 +257,7 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
           <div><label>下一步动作</label><input id="nextAction" placeholder="例如：周三联系负责人确认B方案"></div>
           <div><label>未成交原因</label><select id="lostReason"><option value="">— 未标记 —</option><option>价格高</option><option>暂时不做</option><option>负责人未决定</option><option>已有供应商</option><option>交期问题</option><option>款式不满意</option><option>联系不上</option><option>其他</option></select></div>
         </div>
-        <div class="grid3" style="margin-top:8px">
+        <div class="grid3 shippingFields" style="margin-top:8px">
           <div><label>收货人</label><input id="shippingRecipient" placeholder="收货人姓名"></div>
           <div><label>收货电话</label><input id="shippingPhone" placeholder="手机号码"></div>
           <div><label>收货地址</label><input id="shippingAddress" placeholder="省 / 市 / 区县 / 详细地址"></div>
@@ -249,7 +270,7 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
       </div>
 
       <div id="product" class="card">
-        <h2><span class="sectionNo">02</span>产品与价格引擎 <small>PRODUCT CATALOG</small></h2>
+        <h2><span class="sectionNo">02</span>比赛服报价 <small>PRODUCT CATALOG</small></h2>
         <div class="grid4">
           <div><label>SAGI 产品系列</label><select id="series"><option>定制比赛服</option><option>疆·艾系列</option><option>SAGI FLOW</option><option>ENGINEERED KNIT</option><option>青训比赛服</option><option>赛事官方服</option></select></div>
           <div><label>产品档位</label><select id="supplierTier"><option value="CLUB">CLUB · 针眼布150g</option><option value="MATCH">MATCH · 球员版160g</option><option value="PRO">PRO · 阿迪球员版160g</option><option value="ELITE">ELITE · ADV 170g</option></select></div>
@@ -333,7 +354,7 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
       </div>
 
       <div id="packageBuilder" class="card packageBuilderCard">
-        <h2><span class="sectionNo">05</span>球队套餐生成器 <small>TEAM PACKAGE BUILDER</small></h2>
+        <h2><span class="sectionNo">05</span>球队套餐 <small>TEAM PACKAGE BUILDER</small></h2>
         <div class="packageBuilderGrid">
           <div><label>球队人数</label><input id="packageTeamSize" type="number" min="1" value="22"></div>
           <div><label>人均产品预算</label><input id="packageBudget" type="number" min="1" value="200"></div>
@@ -355,7 +376,7 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
       </div>
 
       <div id="catalog" class="card">
-        <h2><span class="sectionNo">06</span>SAGI 产品目录 <small>MULTI-PRODUCT CATALOG · 2026.10</small></h2>
+        <h2><span class="sectionNo">06</span>SAGI 加购产品 <small>MULTI-PRODUCT CATALOG · 2026.10</small></h2>
         <div class="catalogToolbar">
           <div><label>产品分类</label><select id="catalogCategory"><option value="">全部产品</option><option>比赛服</option><option>训练服</option><option>外套</option><option>配件</option></select></div>
           <div><label>目录规格</label><select id="catalogAge"><option value="adult">成人</option><option value="child">儿童</option></select></div>
@@ -382,7 +403,7 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
       </div>
 
             <div id="rosterCard" class="card">
-        <h2><span class="sectionNo">07</span>球员名单 / 尺码 <small>ROSTER & SIZE</small></h2>
+        <h2><span class="sectionNo">07</span>球员名单 <small>ROSTER & SIZE</small></h2>
         <div class="actions" style="margin-top:0;margin-bottom:10px">
           <button id="addPlayerBtn" class="primary" type="button">＋ 添加球员</button>
           <button id="demoRosterBtn" type="button">载入示例 12 人</button>
@@ -398,7 +419,7 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
       </div>
 
       <div id="orderConfirmation" class="card confirmEngineCard">
-        <h2><span class="sectionNo">08</span>订单确认中心 <small>ORDER CONFIRMATION</small></h2>
+        <h2><span class="sectionNo">08</span>收款与订单确认 <small>ORDER CONFIRMATION</small></h2>
         <div class="confirmGrid">
           <div><label>客户确认方案</label><input id="confirmedPlan" readonly placeholder="尚未确认"></div>
           <div><label>确认金额</label><input id="confirmedAmount" readonly value="0"></div>
@@ -425,7 +446,7 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
       </div>
 
       <div id="productionTracker" class="card productionTrackerCard">
-        <h2><span class="sectionNo">09</span>生产进度追踪 <small>PRODUCTION TRACKER</small></h2>
+        <h2><span class="sectionNo">09</span>生产与发货 <small>PRODUCTION TRACKER</small></h2>
         <div class="productionTrackerTop">
           <div><label>厂家 / 供应商</label><input id="factoryName" placeholder="厂家名称"></div>
           <div><label>厂家订单号</label><input id="factoryOrderNo" placeholder="厂家单号"></div>
@@ -457,8 +478,8 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
         <div style="margin-top:8px"><label>生产总备注</label><textarea id="productionNotes" placeholder="厂家沟通、加急、补做、异常、包装要求等"></textarea></div>
       </div>
 
-      <div class="card">
-        <h2><span class="sectionNo">10</span>销售阶段 <small>PIPELINE</small></h2>
+      <div id="pipelineCard" class="card">
+        <h2><span class="sectionNo">10</span>订单状态 <small>PIPELINE</small></h2>
         <div id="pipeline" class="pipeline"></div>
         <div class="grid2" style="margin-top:10px">
           <div><label>当前状态</label><select id="orderStatus"></select></div>
@@ -472,7 +493,7 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
       </div>
 
       <div id="orderArchive" class="card archiveCard">
-        <h2><span class="sectionNo">11</span>真实订单档案 <small>REAL ORDER ARCHIVE</small></h2>
+        <h2><span class="sectionNo">11</span>客户订单档案 <small>REAL ORDER ARCHIVE</small></h2>
         <div class="archiveGrid">
           <div><label>实际成交金额</label><input id="actualOrderTotal" type="number" min="0" value="0"></div>
           <div><label>实际总成本</label><input id="actualCostTotal" type="number" min="0" value="0"></div>
@@ -499,7 +520,8 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
           </div>
         </div>
         <div class="backupBox">
-          <label>数据备份与恢复 · BACKUP & RESTORE</label>
+          <div class="sectionSubnav" style="margin-top:0"><button id="backupPanelToggle" type="button">数据备份 / 恢复</button></div>
+          <div id="backupPanelBody" class="analyticsHidden"><label>数据备份与恢复 · BACKUP & RESTORE</label>
           <div class="backupToolbar">
             <button id="backupAllBtn" class="primary" type="button">导出全部订单备份</button>
             <button id="backupCurrentBtn" type="button">导出当前球队档案</button>
@@ -508,11 +530,12 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
             <button id="backupImportBtn" type="button">导入备份</button>
           </div>
           <div class="backupNotice">备份文件可能包含客户姓名、电话、地址和本机保存的订单图片，请作为私密业务资料保存，不要公开上传。</div>
+          </div>
         </div>
       </div>
 
       <div id="orders" class="card ordersCard">
-        <h2><span class="sectionNo">12</span>订单管理 <small>ORDER DATABASE</small></h2>
+        <h2><span class="sectionNo">12</span>全部订单 <small>ORDER DATABASE</small></h2>
         <div class="grid2">
           <div><label>搜索</label><input id="orderSearch" placeholder="球队 / 项目 / 联系人"></div>
           <div><label>筛选状态</label><select id="statusFilter"><option value="">全部状态</option></select></div>
@@ -1507,11 +1530,41 @@ function saveOrder(silent=false){
 function createReorder(source){
  const o=JSON.parse(JSON.stringify(source));o.id=uid();o.projectName=(source.teamName||'球队')+' · 补单 '+new Date().toLocaleDateString('zh-CN');o.status='线索';o.salesStage='新线索';o.lastContactDate='';o.nextFollowUp='';o.nextAction='联系球队确认补单需求';o.lostReason='';o.quoteSentAt='';o.depositPaidAt='';o.followUpHistory=[];o.activityTimeline=[];o.discount=0;o.extraQty=0;o.packageTargetQty=0;o.confirmation=confirmationDefaults();o.productionTracker=productionTrackerDefaults();o.actualOrderTotal=0;o.actualCostTotal=0;o.feedbackStatus='';o.customerFeedback='';o.mediaArchive={design:source.mediaArchive?.design||'',jersey:source.mediaArchive?.jersey||'',delivery:''};o.updatedAt=Date.now();o.createdAt=Date.now();o.roster=[];o.catalogItems=(o.catalogItems||[]).map(x=>({...x,id:uid(),qty:0}));fill(o);note('已创建补单项目 · 添加需要补货的球员')
 }
+
+const WORKSPACE_CONFIG={
+ sales:{title:'销售工作台',desc:'先处理今天要跟进的客户，再完成报价与成交。',sections:['salesConversionCenter','customer','packageBuilder','customerQuotationMode','quoteCard','orders']},
+ order:{title:'订单配置',desc:'确认产品、名单、报价、定金与正式订单信息。',sections:['customer','product','costProfile','packageBuilder','catalog','rosterCard','orderConfirmation','pipelineCard','customerQuotationMode','quoteCard','orders']},
+ production:{title:'生产发货',desc:'只看生产、物流和签收，减少销售信息干扰。',sections:['orderConfirmation','productionTracker','pipelineCard','orders']},
+ archive:{title:'客户档案',desc:'查看真实成交档案、历史记录、补单和数据备份。',sections:['orderArchive','orders']}
+};
+let currentWorkspace=localStorage.getItem('sagi_teamwear_workspace_v18')||'sales';
+function setWorkspace(name,scroll=true){
+ if(!WORKSPACE_CONFIG[name])name='sales';currentWorkspace=name;localStorage.setItem('sagi_teamwear_workspace_v18',name);
+ const all=['salesConversionCenter','customer','product','costProfile','packageBuilder','catalog','rosterCard','orderConfirmation','productionTracker','pipelineCard','orderArchive','orders','customerQuotationMode','quoteCard'];
+ all.forEach(id=>{const el=q(id);if(el)el.classList.toggle('workspaceHidden',!WORKSPACE_CONFIG[name].sections.includes(id))});
+ document.querySelectorAll('[data-workspace]').forEach(b=>b.classList.toggle('active',b.dataset.workspace===name));
+ q('workspaceTitle').textContent=WORKSPACE_CONFIG[name].title;q('workspaceDesc').textContent=WORKSPACE_CONFIG[name].desc;
+ const shipping=q('shippingRecipient')?.closest('.shippingFields');if(shipping)shipping.classList.toggle('salesCompactHidden',name==='sales');
+ if(scroll)window.scrollTo({top:0,behavior:'smooth'})
+}
+function renderWorkspaceSummary(){
+ if(!q('workspaceTeam'))return;const team=text('teamName')||state.orders.find(x=>x.id===state.currentId)?.teamName||'未选择球队',stage=q('salesStage')?.value||'新线索',orderStatus=q('orderStatus')?.value||'线索';
+ q('workspaceTeam').textContent=team;q('workspaceStatus').textContent=currentWorkspace==='production'?orderStatus:stage;
+ q('workspaceStatus').classList.toggle('good',stage==='已付定金'||orderStatus==='已完成');q('workspaceStatus').classList.toggle('warn',!(stage==='已付定金'||orderStatus==='已完成'))
+}
+function initWorkspaceUI(){
+ ['salesConversionCenter','customer','productionTracker','orderArchive','orders'].forEach(id=>q(id)?.classList.add('sectionPrimary'));['costProfile','catalog','customerQuotationMode','quoteCard'].forEach(id=>q(id)?.classList.add('sectionSecondary'));
+ document.querySelectorAll('[data-workspace]').forEach(b=>b.onclick=()=>setWorkspace(b.dataset.workspace,true));
+ q('salesAnalyticsToggle').onclick=()=>{const p=q('salesAnalyticsPanel'),hidden=p.classList.toggle('analyticsHidden');q('salesAnalyticsToggle').textContent=hidden?'查看销售分析':'收起销售分析'};
+ q('backupPanelToggle').onclick=()=>{const p=q('backupPanelBody'),hidden=p.classList.toggle('analyticsHidden');q('backupPanelToggle').textContent=hidden?'数据备份 / 恢复':'收起备份工具'};
+ setWorkspace(currentWorkspace,false)
+}
+
 function renderKpis(){
  const teams=new Set(state.orders.map(o=>o.teamName).filter(Boolean)).size,active=state.orders.filter(o=>o.status!=='已完成').length,revenue=state.orders.reduce((a,o)=>a+(o.calc?.total||0),0),balance=state.orders.reduce((a,o)=>a+(o.calc?.balance||0),0);
  q('kpiTeams').textContent=teams;q('kpiOrders').textContent=state.orders.length;q('kpiActive').textContent=active;q('kpiRevenue').textContent=money(revenue);q('kpiBalance').textContent=money(balance)
 }
-function renderAll(){if(q('orderConfirmation'))renderOrderConfirmation();if(q('productionTracker'))renderProductionTracker();if(state.lastCustomerQuoteLink){state.lastCustomerQuoteLink='';if(q('customerQuoteLink'))q('customerQuoteLink').value='';if(q('customerLinkState')){q('customerLinkState').textContent='PRIVATE DATA FILTER ON';q('customerLinkState').classList.remove('ready')}}q('rosterCountView').value=String(state.roster.length);q('productionQtyView').value=String(state.roster.length+n('extraQty'));syncPriceEngine(false);const ct=catalogTotals();q('catalogQtyTotal').textContent=ct.qty;q('catalogCostTotal').textContent=money(ct.cost);q('catalogSalesTotal').textContent=money(ct.sales);q('catalogGrossTotal').textContent=money(ct.gross);renderPipeline();renderQuote();renderOrders();renderKpis();renderSalesDashboard();renderSalesPools();renderFollowUpAssistant();renderOrderArchive()}
+function renderAll(){if(q('orderConfirmation'))renderOrderConfirmation();if(q('productionTracker'))renderProductionTracker();if(state.lastCustomerQuoteLink){state.lastCustomerQuoteLink='';if(q('customerQuoteLink'))q('customerQuoteLink').value='';if(q('customerLinkState')){q('customerLinkState').textContent='PRIVATE DATA FILTER ON';q('customerLinkState').classList.remove('ready')}}q('rosterCountView').value=String(state.roster.length);q('productionQtyView').value=String(state.roster.length+n('extraQty'));syncPriceEngine(false);const ct=catalogTotals();q('catalogQtyTotal').textContent=ct.qty;q('catalogCostTotal').textContent=money(ct.cost);q('catalogSalesTotal').textContent=money(ct.sales);q('catalogGrossTotal').textContent=money(ct.gross);renderPipeline();renderQuote();renderOrders();renderKpis();renderSalesDashboard();renderSalesPools();renderFollowUpAssistant();renderOrderArchive();renderWorkspaceSummary();setWorkspace(currentWorkspace,false)}
 
 function initSelects(){
  q('orderStatus').innerHTML=STAGES.map(x=>'<option>'+x+'</option>').join('');
@@ -1523,7 +1576,7 @@ q('clearRosterBtn').onclick=()=>{state.roster=[];renderRoster();renderAll()};q('
 q('salesStage').onchange=()=>{if(q('salesStage').value==='未成交'&&!q('lostReason').value)note('请补充未成交原因');persistSalesActivity();renderAll()};q('lostReason').onchange=()=>{if(q('lostReason').value)q('salesStage').value='未成交';persistSalesActivity();renderAll()};q('nextFollowUp').onchange=()=>{persistSalesActivity();renderAll()};q('leadTemperature').onchange=()=>{persistSalesActivity();renderAll()};q('historyOrderImportBtn').onclick=importHistoryOrder;q('orderSearch').oninput=renderOrders;q('statusFilter').onchange=renderOrders;q('orderStatus').onchange=renderAll;q('extraQty').oninput=()=>{state.packageTargetQty=0;renderAll()};
 ['supplierTier','ageGroup'].forEach(id=>q(id).addEventListener('change',()=>{const tier=SUPPLIER_CATALOG[q('supplierTier').value],age=q('ageGroup').value==='child'?'child':'adult';q('priceStrategy').value=(tier&&SAGI_FIXED_PRICE[tier.name]&&SAGI_FIXED_PRICE[tier.name][age]!=null)?'fixed':'margin';syncPriceEngine(true);renderAll()}));['productType','priceStrategy','targetMargin','poloAddon','pocketAddon','longSleeveAddon','shippingZone'].forEach(id=>q(id).addEventListener('change',()=>{syncPriceEngine(true);renderAll()}));['otherCraftCost','factoryShippingCost'].forEach(id=>q(id).addEventListener('input',()=>{syncPriceEngine(true);renderAll()}));q('salesUnitPrice').addEventListener('input',renderAll);
 document.querySelectorAll('input,select,textarea').forEach(el=>{if(!['orderSearch','statusFilter','teamLogoFile'].includes(el.id))el.addEventListener('input',()=>{if(el.id==='orderStatus')return;renderAll()});if(el.tagName==='SELECT'&&!['statusFilter','orderStatus'].includes(el.id))el.addEventListener('change',renderAll)});
-initArchiveTools();q('followGenerateBtn').onclick=generateFollowUpMessage;q('followCopyBtn').onclick=copyFollowUpMessage;q('followContactedBtn').onclick=markFollowUpContacted;q('followScheduleBtn').onclick=scheduleNextFollowUp;initQuickOutcomes();q('followTone').onchange=()=>{if(q('followMessage').value.trim())generateFollowUpMessage()};q('followGoal').onchange=()=>{if(q('followMessage').value.trim())generateFollowUpMessage()};
+initWorkspaceUI();initArchiveTools();q('followGenerateBtn').onclick=generateFollowUpMessage;q('followCopyBtn').onclick=copyFollowUpMessage;q('followContactedBtn').onclick=markFollowUpContacted;q('followScheduleBtn').onclick=scheduleNextFollowUp;initQuickOutcomes();q('followTone').onchange=()=>{if(q('followMessage').value.trim())generateFollowUpMessage()};q('followGoal').onchange=()=>{if(q('followMessage').value.trim())generateFollowUpMessage()};
 initSelects();loadState();blank();initCostProfile();initPackageBuilder();initCatalog();initCustomerQuotationMode();initOrderConfirmation();initProductionTracker();renderAll();
 })();
 </script>
