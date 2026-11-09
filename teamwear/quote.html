@@ -45,8 +45,8 @@
     </div>
     <div class="amountStrip">
       <div class="amount total"><span>当前订单总价</span><b id="total">¥0</b></div>
-      <div id="depositBox" class="amount deposit"><span>建议定金</span><b id="deposit">¥0</b></div>
-      <div id="balanceBox" class="amount"><span>预计尾款</span><b id="balance">¥0</b></div>
+      <div id="depositBox" class="amount deposit"><span>应付全款</span><b id="deposit">¥0</b></div>
+      <div id="balanceBox" class="amount"><span>待付金额</span><b id="balance">¥0</b></div>
     </div>
   </section>
 
@@ -75,18 +75,18 @@
     <div class="terms">
       <div class="term"><span>计划交付</span><b id="deadline">—</b></div>
       <div class="term"><span>物流规则</span><b id="shippingPolicy">运费另计</b></div>
-      <div class="term"><span>付款方式</span><b id="paymentTerm">定金后排产</b></div>
+      <div class="term"><span>付款方式</span><b id="paymentTerm">全款后排产</b></div>
     </div>
     <div id="publicNote" class="note" style="margin-top:8px"></div>
   </section>
 
   <section class="confirm">
     <h2>确认合作意向</h2>
-    <p>确认方案与价格后，请填写确认人姓名并生成 SAGI CONFIRMATION CODE。正式生产仍需完成设计稿、尺码名单和定金确认。</p>
+    <p>确认方案与价格后，请填写确认人姓名并生成 SAGI CONFIRMATION CODE。正式生产仍需完成设计稿、尺码名单和全款确认。</p>
     <div class="confirmSelection"><span>当前意向</span><b id="selectedPlan">当前报价方案</b></div>
     <div class="confirmForm">
       <input id="confirmerName" placeholder="确认人姓名 / 球队负责人">
-      <label class="confirmAgree"><input id="confirmAgreement" type="checkbox"><span>我已确认当前选择的方案、产品数量与报价金额，并同意继续进入设计稿、尺码名单、定金及生产确认流程。</span></label>
+      <label class="confirmAgree"><input id="confirmAgreement" type="checkbox"><span>我已确认当前选择的方案、产品数量与报价金额，并同意继续进入设计稿、尺码名单、全款及生产确认流程。</span></label>
       <textarea id="confirmationCode" readonly placeholder="点击“生成确认码”后显示"></textarea>
       <div id="confirmationCodeState" class="confirmCodeState"></div>
     </div>
@@ -171,7 +171,7 @@ function confirmationText(code=''){
   '确认方案：'+plan,
   '计划交付：'+(data.deadline||'待确认'),
   code?('确认码：'+code):'',
-  '我方已确认方案与报价，同意继续进入设计稿、尺码名单、定金及生产确认流程。'
+  '我方已确认方案与报价，同意继续进入设计稿、尺码名单、全款及生产确认流程。'
  ].filter(Boolean).join('\n')
 }
 async function copyText(t){
@@ -182,10 +182,10 @@ function render(){
  q('app').classList.remove('hidden');document.title=(data.teamName||'球队')+' · SAGI TEAMWEAR 报价';
  renderCrest();q('teamName').textContent=data.teamName||'球队';q('teamMeta').textContent=(data.meta||[]).join(' · ')||'SAGI TEAMWEAR';
  q('quoteNo').textContent=data.quoteNo||'—';q('issuedAt').textContent=data.issuedAt||'—';q('validUntil').textContent=data.validUntil||'—';
- q('total').textContent=money(data.total);q('deposit').textContent=money(data.deposit);q('balance').textContent=money(data.balance);
+ q('total').textContent=money(data.total);q('deposit').textContent=money(data.total);q('balance').textContent=money(0);
  if(!data.showPayment){q('depositBox').classList.add('hidden');q('balanceBox').classList.add('hidden')}
  renderItems();q('colors').textContent=(data.colors||[]).join(' / ')||'以确认稿为准';q('frontText').textContent=data.frontText||'以确认稿为准';q('nameRule').textContent=data.nameRule||'以确认稿为准';q('numberStyle').textContent=data.numberStyle||'SAGI TEAMWEAR';
- renderPlans();q('deadline').textContent=data.deadline||'以最终确认订单为准';q('shippingPolicy').textContent=data.shippingPolicy||'运费另计';q('paymentTerm').textContent=data.showPayment?('定金 '+(data.depositRate||50)+'% 后进入排产'):'付款方式与 SAGI 确认';
+ renderPlans();q('deadline').textContent=data.deadline||'以最终确认订单为准';q('shippingPolicy').textContent=data.shippingPolicy||'运费另计';q('paymentTerm').textContent=data.showPayment?'全款 100% 到账后进入排产':'付款方式与 SAGI 确认';
  q('publicNote').textContent=data.publicNote||'最终产品以确认稿和订单为准。';q('contact').textContent=data.contact?('联系：'+data.contact):'请与 SAGI SPORTS 确认订单';
  q('copyConfirm').onclick=async()=>{
   const name=q('confirmerName').value.trim();if(!name){q('confirmationCodeState').textContent='请先填写确认人姓名';q('confirmerName').focus();return}
