@@ -110,6 +110,14 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
 .followQueueActions{display:flex;gap:5px}.followQueueActions button{padding:7px 8px;font-size:8px}
 @media(max-width:850px){.followControls,.followScore{grid-template-columns:1fr 1fr}}@media(max-width:560px){.followControls,.followScore{grid-template-columns:1fr}}
 
+
+/* V1.8 sales-manager enhancements */
+.followScore{grid-template-columns:repeat(6,1fr)}
+.followScoreBox.score b{color:#9fdbb7}.followScoreBox.risk b{color:#e1c476}
+.quickOutcome{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.quickOutcome button{padding:7px 9px;font-size:8px}
+.opportunityTag{display:inline-flex;align-items:center;gap:4px;padding:3px 6px;border:1px solid #43515b;border-radius:999px;font-size:7px;font-weight:1000;color:#aab5be}.opportunityTag.high{border-color:#3f654f;color:#a9dcbc}.opportunityTag.mid{border-color:#66572f;color:#ddc777}.opportunityTag.low{border-color:#613d3d;color:#d9a0a0}
+@media(max-width:1050px){.followScore{grid-template-columns:repeat(3,1fr)}}@media(max-width:650px){.followScore{grid-template-columns:1fr 1fr}}
+
 </style>
 </head>
 <body>
@@ -160,6 +168,8 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
         <div class="followScoreBox"><span>报价距今</span><b id="followQuoteAge">—</b></div>
         <div class="followScoreBox"><span>预计订单</span><b id="followOrderValue">¥0</b></div>
         <div class="followScoreBox"><span>已跟进次数</span><b id="followCount">0</b></div>
+        <div class="followScoreBox score"><span>成交机会</span><b id="followOpportunityScore">0</b></div>
+        <div class="followScoreBox risk"><span>当前卡点</span><b id="followBottleneck">—</b></div>
       </div>
       <div class="followControls">
         <div><label>话术语气</label><select id="followTone"><option value="friend" selected>熟人 / 足球圈自然沟通</option><option value="pro">专业简洁</option><option value="short">超短微信</option></select></div>
@@ -172,6 +182,12 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
         <button id="followCopyBtn" class="primary" type="button">复制微信话术</button>
         <button id="followContactedBtn" type="button">标记已联系并记录</button>
         <button id="followScheduleBtn" type="button">只安排下次跟进</button>
+      </div>
+      <div class="quickOutcome">
+        <button id="quickViewedBtn" type="button">客户已看报价</button>
+        <button id="quickThinkingBtn" type="button">客户说再考虑</button>
+        <button id="quickBudgetBtn" type="button">客户觉得价格高</button>
+        <button id="quickDecisionBtn" type="button">负责人还没决定</button>
       </div>
       <div style="margin-top:10px"><label>最近跟进记录</label><div id="followHistory" class="followHistory"></div></div>
     </div>
@@ -595,11 +611,11 @@ function salesDashboardData(){
 }
 function renderSalesDashboard(){
  const d=salesDashboardData();q('salesTodayFollow').textContent=d.follow.length;q('salesExpiring').textContent=d.expiring.length;q('salesDepositDue').textContent=money(d.depositDue);q('salesMonthWon').textContent=d.monthWon;q('salesConversionRate').textContent=(d.rate*100).toFixed(0)+'%';
- const queue=[...d.orders].filter(o=>!isSalesWon(o)&&o.salesStage!=='未成交').sort((a,b)=>salesUrgency(a)-salesUrgency(b)||(a.nextFollowUp||'9999').localeCompare(b.nextFollowUp||'9999')).slice(0,6),w=q('salesFollowQueue');w.innerHTML='';
+ const queue=[...d.orders].filter(o=>!isSalesWon(o)&&o.salesStage!=='未成交').sort((a,b)=>salesUrgency(a)-salesUrgency(b)||opportunityScore(b)-opportunityScore(a)||(a.nextFollowUp||'9999').localeCompare(b.nextFollowUp||'9999')).slice(0,6),w=q('salesFollowQueue');w.innerHTML='';
  if(!queue.length){w.innerHTML='<div class="empty">暂无待跟进销售线索。</div>'}
  queue.forEach(o=>{const urgent=salesUrgency(o)<=2,expiry=orderQuoteExpiry(o),el=document.createElement('div');el.className='followItem'+(urgent?' urgent':'');
-   const meta=[o.city,o.contact,o.nextFollowUp?('跟进 '+o.nextFollowUp):'',expiry?('报价到期 '+expiry):''].filter(Boolean).join(' · ');
-   el.innerHTML='<div><div class="followName">'+escapeHtml(o.teamName||o.projectName||'未命名客户')+'</div><div class="followMeta">'+escapeHtml(meta)+'</div></div><div class="followStage">'+escapeHtml(o.salesStage||'新线索')+'</div><div class="followAction">'+escapeHtml(o.nextAction||defaultNextAction(o))+'</div><div class="followQueueActions"><button data-script type="button">话术</button><button data-open type="button">打开</button></div>';
+   const meta=[o.city,o.contact,o.nextFollowUp?('跟进 '+o.nextFollowUp):'',expiry?('报价到期 '+expiry):''].filter(Boolean).join(' · '),score=opportunityScore(o);
+   el.innerHTML='<div><div class="followName">'+escapeHtml(o.teamName||o.projectName||'未命名客户')+' <span class="opportunityTag '+opportunityClass(score)+'">'+score+'分</span></div><div class="followMeta">'+escapeHtml(meta)+'</div></div><div class="followStage">'+escapeHtml(o.salesStage||'新线索')+'</div><div class="followAction">'+escapeHtml(salesBottleneck(o))+'</div><div class="followQueueActions"><button data-script type="button">话术</button><button data-open type="button">打开</button></div>';
    el.querySelector('[data-script]').onclick=()=>openFollowUpForOrder(o);el.querySelector('[data-open]').onclick=()=>{fill(o);location.hash='#customer';note('已打开 '+(o.teamName||o.projectName))};w.appendChild(el)
  });
  const funnelStages=['新线索','已联系','有意向','已报价','已确认','已付定金'],counts={};
@@ -612,6 +628,50 @@ function renderSalesDashboard(){
  const max=Math.max(1,counts['新线索']);q('salesFunnel').innerHTML=funnelStages.map(s=>'<div class="funnelRow"><span>'+s+'</span><div class="funnelTrack"><i style="width:'+Math.round(counts[s]/max*100)+'%"></i></div><b>'+counts[s]+'</b></div>').join('');
  const by={};d.orders.forEach(o=>{const src=o.source||'其他';by[src]=by[src]||{leads:0,quoted:0,won:0};by[src].leads++;if(isSalesQuoted(o))by[src].quoted++;if(isSalesWon(o))by[src].won++});
  const rows=Object.entries(by).sort((a,b)=>b[1].leads-a[1].leads);q('salesSourceTable').innerHTML='<div class="sourceRow head"><div>来源</div><div>线索</div><div>成交</div><div>转化率</div></div>'+rows.map(([src,x])=>'<div class="sourceRow"><div>'+escapeHtml(src)+'</div><b>'+x.leads+'</b><b>'+x.won+'</b><b>'+(x.leads?Math.round(x.won/x.leads*100):0)+'%</b></div>').join('');
+}
+
+
+function opportunityScore(o){
+ if(!o||o.salesStage==='未成交')return 0;if(isSalesWon(o))return 100;
+ const stage={新线索:18,已联系:28,有意向:48,已报价:58,已查看报价:70,已确认:88}[o.salesStage]??20;
+ let score=stage;
+ if(o.leadTemperature==='hot')score+=10;else if(o.leadTemperature==='warm')score+=5;
+ if(Number(o.packageTeamSize)>0||Number(o.calc?.qty)>0)score+=4;
+ if(Number(o.packageBudget)>0)score+=4;
+ if(o.contactInfo)score+=2;
+ if(isSalesConfirmed(o))score+=4;
+ const age=followQuoteAgeDays(o);if(age!=null&&age>7)score-=8;if(age!=null&&age>14)score-=8;
+ if(o.nextFollowUp&&o.nextFollowUp<localDateOnly())score-=3;
+ return Math.max(0,Math.min(99,Math.round(score)))
+}
+function salesBottleneck(o){
+ if(!o)return'未选择客户';
+ if(o.salesStage==='未成交')return o.lostReason||'未成交';
+ if(isSalesWon(o))return'已成交';
+ if(!o.contactInfo)return'缺联系方式';
+ if((o.salesStage==='新线索'||o.salesStage==='已联系')&&!(Number(o.packageBudget)>0))return'预算未确认';
+ if((o.salesStage==='新线索'||o.salesStage==='已联系')&&!(Number(o.packageTeamSize)>0||Number(o.calc?.qty)>0))return'人数未确认';
+ if(o.salesStage==='有意向'&&!isSalesQuoted(o))return'还没发报价';
+ if(o.salesStage==='已报价')return'等待客户查看';
+ if(o.salesStage==='已查看报价')return'等待选方案';
+ if(o.salesStage==='已确认'&&o.confirmation?.depositStatus!=='paid')return'等待定金';
+ return defaultNextAction(o)
+}
+function opportunityClass(score){return score>=75?'high':score>=50?'mid':'low'}
+function recordQuickOutcome(kind,opts={}){
+ const o=currentSalesOrder();if(!o){note('请先打开客户');return}
+ if(opts.stage)q('salesStage').value=opts.stage;
+ if(opts.reason)q('lostReason').value=opts.reason;
+ q('lastContactDate').value=localDateOnly();
+ const days=Math.max(1,Number(opts.nextDays)||3);q('nextFollowUp').value=addDaysDate(localDateOnly(),days);
+ if(opts.action)q('nextAction').value=opts.action;
+ addFollowUpHistory(kind,opts.note||kind);persistSalesActivity();renderAll();generateFollowUpMessage();note(kind+' · 已记录')
+}
+function initQuickOutcomes(){
+ q('quickViewedBtn').onclick=()=>recordQuickOutcome('客户已看报价',{stage:'已查看报价',nextDays:1,action:'询问A/B/C方案选择',note:'客户已查看报价，下一步推动选择方案'});
+ q('quickThinkingBtn').onclick=()=>recordQuickOutcome('客户说再考虑',{nextDays:3,action:'三天后再次确认决定',note:'客户表示需要再考虑，3天后跟进'});
+ q('quickBudgetBtn').onclick=()=>recordQuickOutcome('客户反馈价格高',{nextDays:2,action:'重新按预算调整A/B/C方案',note:'客户反馈价格偏高，下一步重新按预算调整方案'});
+ q('quickDecisionBtn').onclick=()=>recordQuickOutcome('负责人未决定',{nextDays:3,action:'等待负责人内部决定',note:'客户反馈负责人尚未决定，3天后跟进'})
 }
 
 function currentSalesOrder(){
@@ -700,7 +760,7 @@ function scheduleNextFollowUp(){
 function renderFollowUpAssistant(){
  if(!q('followUpAssistant'))return;const o=currentSalesOrder(),hist=state.currentFollowUpHistory||[];
  q('followTarget').textContent=o?(o.teamName||o.projectName||'当前客户'):'请先打开一支球队';
- q('followStageView').textContent=o?(o.salesStage||'新线索'):'—';const age=o?followQuoteAgeDays(o):null;q('followQuoteAge').textContent=age==null?'未报价':age+'天';q('followOrderValue').textContent=money(o?.calc?.total||0);q('followCount').textContent=hist.length;
+ q('followStageView').textContent=o?(o.salesStage||'新线索'):'—';const age=o?followQuoteAgeDays(o):null;q('followQuoteAge').textContent=age==null?'未报价':age+'天';q('followOrderValue').textContent=money(o?.calc?.total||0);q('followCount').textContent=hist.length;q('followOpportunityScore').textContent=o?(opportunityScore(o)+' / 100'):'0';q('followBottleneck').textContent=o?salesBottleneck(o):'—';
  const w=q('followHistory');w.innerHTML=hist.length?hist.slice(0,8).map(x=>'<div class="followHistoryItem"><b>'+escapeHtml(x.kind||'跟进')+'</b><span>'+escapeHtml(x.at||x.date||'')+'</span><p>'+escapeHtml(x.message||'')+'</p></div>').join(''):'<div class="empty">还没有跟进记录。</div>'
 }
 function openFollowUpForOrder(o){
@@ -1277,7 +1337,7 @@ q('clearRosterBtn').onclick=()=>{state.roster=[];renderRoster();renderAll()};q('
 q('salesStage').onchange=()=>{if(q('salesStage').value==='未成交'&&!q('lostReason').value)note('请补充未成交原因');persistSalesActivity();renderAll()};q('lostReason').onchange=()=>{if(q('lostReason').value)q('salesStage').value='未成交';persistSalesActivity();renderAll()};q('nextFollowUp').onchange=()=>{persistSalesActivity();renderAll()};q('leadTemperature').onchange=()=>{persistSalesActivity();renderAll()};q('orderSearch').oninput=renderOrders;q('statusFilter').onchange=renderOrders;q('orderStatus').onchange=renderAll;q('extraQty').oninput=()=>{state.packageTargetQty=0;renderAll()};
 ['supplierTier','ageGroup'].forEach(id=>q(id).addEventListener('change',()=>{const tier=SUPPLIER_CATALOG[q('supplierTier').value],age=q('ageGroup').value==='child'?'child':'adult';q('priceStrategy').value=(tier&&SAGI_FIXED_PRICE[tier.name]&&SAGI_FIXED_PRICE[tier.name][age]!=null)?'fixed':'margin';syncPriceEngine(true);renderAll()}));['productType','priceStrategy','targetMargin','poloAddon','pocketAddon','longSleeveAddon','shippingZone'].forEach(id=>q(id).addEventListener('change',()=>{syncPriceEngine(true);renderAll()}));['otherCraftCost','factoryShippingCost'].forEach(id=>q(id).addEventListener('input',()=>{syncPriceEngine(true);renderAll()}));q('salesUnitPrice').addEventListener('input',renderAll);
 document.querySelectorAll('input,select,textarea').forEach(el=>{if(!['orderSearch','statusFilter','teamLogoFile'].includes(el.id))el.addEventListener('input',()=>{if(el.id==='orderStatus')return;renderAll()});if(el.tagName==='SELECT'&&!['statusFilter','orderStatus'].includes(el.id))el.addEventListener('change',renderAll)});
-q('followGenerateBtn').onclick=generateFollowUpMessage;q('followCopyBtn').onclick=copyFollowUpMessage;q('followContactedBtn').onclick=markFollowUpContacted;q('followScheduleBtn').onclick=scheduleNextFollowUp;q('followTone').onchange=()=>{if(q('followMessage').value.trim())generateFollowUpMessage()};q('followGoal').onchange=()=>{if(q('followMessage').value.trim())generateFollowUpMessage()};
+q('followGenerateBtn').onclick=generateFollowUpMessage;q('followCopyBtn').onclick=copyFollowUpMessage;q('followContactedBtn').onclick=markFollowUpContacted;q('followScheduleBtn').onclick=scheduleNextFollowUp;initQuickOutcomes();q('followTone').onchange=()=>{if(q('followMessage').value.trim())generateFollowUpMessage()};q('followGoal').onchange=()=>{if(q('followMessage').value.trim())generateFollowUpMessage()};
 initSelects();loadState();blank();initCostProfile();initPackageBuilder();initCatalog();initCustomerQuotationMode();initOrderConfirmation();initProductionTracker();renderAll();
 })();
 </script>
