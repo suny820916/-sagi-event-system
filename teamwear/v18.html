@@ -122,6 +122,12 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
 .historyImportBox{margin-top:10px;padding:10px;border:1px solid #33404a;border-radius:10px;background:#0b1014}
 .historyImportBox textarea{min-height:82px;font-size:9px}.historyImportActions{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-top:7px}.historyImportHint{font-size:8px;color:#7f8a94;line-height:1.5}
 
+
+/* ===== V1.8 FIVE-PART UPGRADE ===== */
+.salesPools{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-top:10px}.salesPool{border:1px solid #303a43;border-radius:11px;background:#090d11;min-height:120px;overflow:hidden}.salesPool h4{margin:0;padding:9px 10px;border-bottom:1px solid #273139;font-size:9px}.salesPoolList{padding:6px;display:grid;gap:5px}.poolItem{padding:7px;border:1px solid #26313a;border-radius:8px;background:#0e1419;cursor:pointer}.poolItem:hover{border-color:#5d6e7b}.poolItem b{display:block;font-size:9px}.poolItem span{display:block;margin-top:3px;font-size:7px;color:#79848e}.poolEmpty{padding:12px 8px;color:#606c76;font-size:8px}
+.archiveCard{border-color:#384552!important;background:linear-gradient(145deg,#0d1318,#10151a)!important}.archiveGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.archiveMedia{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.mediaSlot{border:1px solid #2f3a43;border-radius:11px;background:#090d11;padding:8px}.mediaPreview{aspect-ratio:16/10;border:1px dashed #394650;border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;color:#65727c;font-size:8px}.mediaPreview img{width:100%;height:100%;object-fit:cover}.mediaActions{display:flex;gap:5px;margin-top:6px}.mediaActions button{padding:6px 8px;font-size:8px}.timelineGrid{display:grid;grid-template-columns:1.1fr .9fr;gap:10px;margin-top:10px}.timelineList{max-height:330px;overflow:auto;display:grid;gap:6px}.timelineItem{position:relative;padding:8px 9px 8px 28px;border:1px solid #29343d;border-radius:9px;background:#090d11}.timelineItem:before{content:'';position:absolute;left:11px;top:13px;width:7px;height:7px;border-radius:50%;background:#8eaa93}.timelineItem b{font-size:9px}.timelineItem span{display:block;margin-top:3px;color:#73808a;font-size:7px}.timelineItem p{margin:5px 0 0;color:#a0aab3;font-size:8px}.reorderBox{border:1px solid #2d3942;border-radius:10px;background:#090d11;padding:9px}.reorderPlayers{max-height:245px;overflow:auto;display:grid;gap:4px;margin-top:7px}.reorderPlayer{display:grid;grid-template-columns:26px 1fr 54px 58px;gap:6px;align-items:center;padding:6px;border-bottom:1px solid #222c33;font-size:8px}.reorderToolbar,.backupToolbar{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}.backupBox{margin-top:10px;padding:10px;border:1px solid #35424c;border-radius:10px;background:#090d11}.backupNotice{font-size:8px;color:#84909a;line-height:1.55;margin-top:6px}
+@media(max-width:1100px){.salesPools{grid-template-columns:1fr 1fr 1fr}.archiveGrid{grid-template-columns:1fr 1fr}.archiveMedia{grid-template-columns:1fr 1fr}.timelineGrid{grid-template-columns:1fr}}@media(max-width:650px){.salesPools,.archiveGrid,.archiveMedia{grid-template-columns:1fr}.reorderPlayer{grid-template-columns:26px 1fr 50px 50px}}
+
 </style>
 </head>
 <body>
@@ -131,7 +137,7 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
     <div class="ver">V1.8 · FOLLOW-UP ASSISTANT</div>
   </div>
   <div class="nav">
-    <a href="#customer">球队建档</a><a href="#product">比赛服引擎</a><a href="#costProfile">成本档案</a><a href="#packageBuilder">套餐生成</a><a href="#catalog">产品目录</a><a href="#rosterCard">球员名单</a><a href="#orderConfirmation">订单确认</a><a href="#productionTracker">生产追踪</a><a href="#orders">订单管理</a><a href="#customerQuotationMode">客户模式</a><a href="#quoteCard">报价单</a>
+    <a href="#customer">球队建档</a><a href="#product">比赛服引擎</a><a href="#costProfile">成本档案</a><a href="#packageBuilder">套餐生成</a><a href="#catalog">产品目录</a><a href="#rosterCard">球员名单</a><a href="#orderConfirmation">订单确认</a><a href="#productionTracker">生产追踪</a><a href="#orderArchive">订单档案</a><a href="#orders">订单管理</a><a href="#customerQuotationMode">客户模式</a><a href="#quoteCard">报价单</a>
   </div>
   <div class="kpis">
     <div class="kpi"><span>客户 / 球队</span><b id="kpiTeams">0</b><small>已沉淀订单客户</small></div>
@@ -161,6 +167,14 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
         <h3 style="margin-top:14px">客户来源转化</h3>
         <div id="salesSourceTable" class="sourceTable"></div>
       </div>
+    </div>
+
+    <div class="salesPools">
+      <div class="salesPool"><h4>高概率成交</h4><div id="poolHigh" class="salesPoolList"></div></div>
+      <div class="salesPool"><h4>今天必须跟</h4><div id="poolToday" class="salesPoolList"></div></div>
+      <div class="salesPool"><h4>报价沉默</h4><div id="poolSilent" class="salesPoolList"></div></div>
+      <div class="salesPool"><h4>等待定金</h4><div id="poolDeposit" class="salesPoolList"></div></div>
+      <div class="salesPool"><h4>已流失</h4><div id="poolLost" class="salesPoolList"></div></div>
     </div>
     <div id="followUpAssistant" class="followAssistant">
       <div class="followAssistantHead">
@@ -457,8 +471,48 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
         </div>
       </div>
 
+      <div id="orderArchive" class="card archiveCard">
+        <h2><span class="sectionNo">11</span>真实订单档案 <small>REAL ORDER ARCHIVE</small></h2>
+        <div class="archiveGrid">
+          <div><label>实际成交金额</label><input id="actualOrderTotal" type="number" min="0" value="0"></div>
+          <div><label>实际总成本</label><input id="actualCostTotal" type="number" min="0" value="0"></div>
+          <div><label>实际毛利</label><input id="actualGrossView" readonly value="¥0"></div>
+          <div><label>客户评价状态</label><select id="feedbackStatus"><option value="">未记录</option><option>满意</option><option>一般</option><option>需要售后</option></select></div>
+        </div>
+        <div style="margin-top:8px"><label>客户反馈 / 售后备注</label><textarea id="customerFeedback" placeholder="签收反馈、质量评价、补做、售后、下次需求等"></textarea></div>
+        <div class="archiveMedia">
+          <div class="mediaSlot"><label>设计稿 / 球衣效果图</label><div id="mediaDesignPreview" class="mediaPreview">暂无图片</div><div class="mediaActions"><input id="mediaDesignFile" type="file" accept="image/*" style="display:none"><button id="mediaDesignAdd" type="button">添加/替换</button><button id="mediaDesignClear" type="button">清除</button></div></div>
+          <div class="mediaSlot"><label>球员上身 / 实物图</label><div id="mediaJerseyPreview" class="mediaPreview">暂无图片</div><div class="mediaActions"><input id="mediaJerseyFile" type="file" accept="image/*" style="display:none"><button id="mediaJerseyAdd" type="button">添加/替换</button><button id="mediaJerseyClear" type="button">清除</button></div></div>
+          <div class="mediaSlot"><label>发货 / 签收凭证</label><div id="mediaDeliveryPreview" class="mediaPreview">暂无图片</div><div class="mediaActions"><input id="mediaDeliveryFile" type="file" accept="image/*" style="display:none"><button id="mediaDeliveryAdd" type="button">添加/替换</button><button id="mediaDeliveryClear" type="button">清除</button></div></div>
+        </div>
+        <div class="timelineGrid">
+          <div>
+            <label>订单活动时间线</label>
+            <div id="activityTimeline" class="timelineList"></div>
+            <div class="reorderToolbar"><input id="timelineNote" placeholder="手动补充事件，例如：客户要求补做18号" style="flex:1"><button id="timelineAddBtn" type="button">添加事件</button></div>
+          </div>
+          <div class="reorderBox">
+            <label>智能补单 · SMART REORDER</label>
+            <div class="tiny" style="margin-top:4px">勾选需要补单的球员，自动继承原球队、配色、字体和产品配置。</div>
+            <div class="reorderToolbar"><button id="reorderSelectAllBtn" type="button">全选</button><button id="reorderClearBtn" type="button">清空</button><button id="reorderCreateBtn" class="primary" type="button">创建所选补单</button></div>
+            <div id="smartReorderPlayers" class="reorderPlayers"></div>
+          </div>
+        </div>
+        <div class="backupBox">
+          <label>数据备份与恢复 · BACKUP & RESTORE</label>
+          <div class="backupToolbar">
+            <button id="backupAllBtn" class="primary" type="button">导出全部订单备份</button>
+            <button id="backupCurrentBtn" type="button">导出当前球队档案</button>
+            <select id="backupImportMode"><option value="merge">导入时合并</option><option value="replace">导入时替换全部</option></select>
+            <input id="backupFile" type="file" accept=".json,application/json" style="display:none">
+            <button id="backupImportBtn" type="button">导入备份</button>
+          </div>
+          <div class="backupNotice">备份文件可能包含客户姓名、电话、地址和本机保存的订单图片，请作为私密业务资料保存，不要公开上传。</div>
+        </div>
+      </div>
+
       <div id="orders" class="card ordersCard">
-        <h2><span class="sectionNo">11</span>订单管理 <small>ORDER DATABASE</small></h2>
+        <h2><span class="sectionNo">12</span>订单管理 <small>ORDER DATABASE</small></h2>
         <div class="grid2">
           <div><label>搜索</label><input id="orderSearch" placeholder="球队 / 项目 / 联系人"></div>
           <div><label>筛选状态</label><select id="statusFilter"><option value="">全部状态</option></select></div>
@@ -583,7 +637,7 @@ const NEGOTIATED_APPAREL_DISCOUNT=5;
 const SAGI_FIXED_PRICE={CLUB:{adult:79}};
 const STAGES=['线索','设计沟通','已报价','客户已确认','已收定金','生产中','质检','已发货','已完成'];
 const SALES_STAGES=['新线索','已联系','有意向','已报价','已查看报价','已确认','已付定金','未成交'];
-let state={orders:[],currentId:null,teamLogo:'',roster:[],catalogItems:[],costOverrides:{},packagePlans:[],packageTargetQty:0,lastCustomerQuoteLink:'',confirmation:{},productionTracker:{},currentQuoteSentAt:'',currentDepositPaidAt:'',currentFollowUpHistory:[]};
+let state={orders:[],currentId:null,teamLogo:'',roster:[],catalogItems:[],costOverrides:{},packagePlans:[],packageTargetQty:0,lastCustomerQuoteLink:'',confirmation:{},productionTracker:{},currentQuoteSentAt:'',currentDepositPaidAt:'',currentFollowUpHistory:[],currentActivityTimeline:[],currentOrderMedia:{design:'',jersey:'',delivery:''}};
 
 function uid(){return 'tw_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7)}
 function money(n){return '¥'+Math.round(Number(n)||0).toLocaleString('zh-CN')}
@@ -691,6 +745,31 @@ function initQuickOutcomes(){
  q('quickDecisionBtn').onclick=()=>recordQuickOutcome('负责人未决定',{nextDays:3,action:'等待负责人内部决定',note:'客户反馈负责人尚未决定，3天后跟进'})
 }
 
+
+function silentQuote(o){const age=followQuoteAgeDays(o);return !isSalesWon(o)&&o.salesStage!=='未成交'&&['已报价','已查看报价'].includes(o.salesStage)&&age!=null&&age>=3}
+function salesPools(){
+ const all=state.orders||[],today=localDateOnly();
+ return{
+  high:all.filter(o=>!isSalesWon(o)&&o.salesStage!=='未成交'&&opportunityScore(o)>=75).sort((a,b)=>opportunityScore(b)-opportunityScore(a)).slice(0,6),
+  today:all.filter(o=>!isSalesWon(o)&&o.salesStage!=='未成交'&&o.nextFollowUp&&o.nextFollowUp<=today).sort((a,b)=>salesUrgency(a)-salesUrgency(b)).slice(0,6),
+  silent:all.filter(silentQuote).sort((a,b)=>(followQuoteAgeDays(b)||0)-(followQuoteAgeDays(a)||0)).slice(0,6),
+  deposit:all.filter(o=>isSalesConfirmed(o)&&!isSalesWon(o)).sort((a,b)=>opportunityScore(b)-opportunityScore(a)).slice(0,6),
+  lost:all.filter(o=>o.salesStage==='未成交').sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0)).slice(0,6)
+ }
+}
+function renderPoolList(id,list,metaFn){
+ const w=q(id);if(!list.length){w.innerHTML='<div class="poolEmpty">暂无客户</div>';return}
+ w.innerHTML='';list.forEach(o=>{const d=document.createElement('div');d.className='poolItem';d.innerHTML='<b>'+escapeHtml(o.teamName||o.projectName||'未命名')+'</b><span>'+escapeHtml(metaFn(o))+'</span>';d.onclick=()=>openFollowUpForOrder(o);w.appendChild(d)})
+}
+function renderSalesPools(){
+ const p=salesPools();
+ renderPoolList('poolHigh',p.high,o=>opportunityScore(o)+'分 · '+salesBottleneck(o));
+ renderPoolList('poolToday',p.today,o=>(o.nextFollowUp||'今天')+' · '+defaultNextAction(o));
+ renderPoolList('poolSilent',p.silent,o=>'报价 '+(followQuoteAgeDays(o)||0)+' 天未推进');
+ renderPoolList('poolDeposit',p.deposit,o=>'待收 '+money(Math.max(0,(o.calc?.deposit||0)-(Number(o.confirmation?.depositPaid)||0))));
+ renderPoolList('poolLost',p.lost,o=>o.lostReason||'未成交')
+}
+
 function currentSalesOrder(){
  if(state.currentId){const o=state.orders.find(x=>x.id===state.currentId);if(o)return{...o,salesStage:q('salesStage').value,leadTemperature:q('leadTemperature').value,nextFollowUp:q('nextFollowUp').value,nextAction:text('nextAction'),lostReason:q('lostReason').value,calc:calc(),packageTeamSize:n('packageTeamSize'),packageBudget:n('packageBudget')}}
  if(text('teamName'))return collect();return null
@@ -769,7 +848,7 @@ function markFollowUpContacted(){
  q('lastContactDate').value=localDateOnly();const days=Math.max(1,Number(q('followNextDays').value)||3);q('nextFollowUp').value=addDaysDate(localDateOnly(),days);
  if(q('salesStage').value==='新线索')q('salesStage').value='已联系';
  q('nextAction').value=defaultNextAction({...o,salesStage:q('salesStage').value});
- addFollowUpHistory('微信跟进',msg);persistSalesActivity();renderFollowUpAssistant();renderAll();note('已记录本次跟进 · '+days+'天后提醒')
+ addFollowUpHistory('微信跟进',msg);addActivity('followup','微信跟进',msg);persistSalesActivity();renderFollowUpAssistant();renderAll();note('已记录本次跟进 · '+days+'天后提醒')
 }
 function scheduleNextFollowUp(){
  const o=currentSalesOrder();if(!o){note('请先打开客户');return}const days=Math.max(1,Number(q('followNextDays').value)||3);q('nextFollowUp').value=addDaysDate(localDateOnly(),days);persistSalesActivity();renderFollowUpAssistant();renderAll();note('已安排 '+days+' 天后跟进')
@@ -791,7 +870,32 @@ function updateSalesStageAuto(stage,opts={}){
 }
 function persistSalesActivity(){
  if(!state.currentId)return;const o=state.orders.find(x=>x.id===state.currentId);if(!o)return;
- o.salesStage=q('salesStage').value;o.leadTemperature=q('leadTemperature').value;o.lastContactDate=q('lastContactDate').value;o.nextFollowUp=q('nextFollowUp').value;o.nextAction=text('nextAction');o.lostReason=q('lostReason').value;o.quoteSentAt=state.currentQuoteSentAt||o.quoteSentAt||'';o.depositPaidAt=state.currentDepositPaidAt||o.depositPaidAt||'';o.confirmation=JSON.parse(JSON.stringify(currentConfirmation()));o.followUpHistory=JSON.parse(JSON.stringify(state.currentFollowUpHistory||[]));o.updatedAt=Date.now();persist();renderSalesDashboard();renderOrders();renderKpis()
+ o.salesStage=q('salesStage').value;o.leadTemperature=q('leadTemperature').value;o.lastContactDate=q('lastContactDate').value;o.nextFollowUp=q('nextFollowUp').value;o.nextAction=text('nextAction');o.lostReason=q('lostReason').value;o.quoteSentAt=state.currentQuoteSentAt||o.quoteSentAt||'';o.depositPaidAt=state.currentDepositPaidAt||o.depositPaidAt||'';o.confirmation=JSON.parse(JSON.stringify(currentConfirmation()));o.followUpHistory=JSON.parse(JSON.stringify(state.currentFollowUpHistory||[]));o.activityTimeline=JSON.parse(JSON.stringify(state.currentActivityTimeline||[]));o.mediaArchive=JSON.parse(JSON.stringify(state.currentOrderMedia||{}));o.actualOrderTotal=n('actualOrderTotal');o.actualCostTotal=n('actualCostTotal');o.feedbackStatus=q('feedbackStatus').value;o.customerFeedback=q('customerFeedback').value.trim();o.updatedAt=Date.now();persist();renderSalesDashboard();renderOrders();renderKpis()
+}
+
+
+function activityDefaults(){return[]}
+function addActivity(kind,title,meta=''){
+ state.currentActivityTimeline=Array.isArray(state.currentActivityTimeline)?state.currentActivityTimeline:[];
+ state.currentActivityTimeline.unshift({id:uid(),kind:kind||'note',title:String(title||'订单事件'),meta:String(meta||''),at:new Date().toLocaleString('zh-CN'),ts:Date.now()});
+ state.currentActivityTimeline=state.currentActivityTimeline.slice(0,100)
+}
+function compressImageFile(file,maxSide=1280,quality=.72){
+ return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onerror=reject;reader.onload=()=>{const img=new Image();img.onerror=reject;img.onload=()=>{let w=img.width,h=img.height,scale=Math.min(1,maxSide/Math.max(w,h));w=Math.max(1,Math.round(w*scale));h=Math.max(1,Math.round(h*scale));const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;const ctx=canvas.getContext('2d');ctx.drawImage(img,0,0,w,h);resolve(canvas.toDataURL('image/jpeg',quality))};img.src=reader.result};reader.readAsDataURL(file)})
+}
+function downloadJson(filename,obj){
+ const blob=new Blob([JSON.stringify(obj,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500)
+}
+function backupPayload(orders){return{schema:'SAGI-TEAMWEAR-BACKUP-1',version:'V1.8',exportedAt:new Date().toISOString(),orders:JSON.parse(JSON.stringify(orders||[])),costOverrides:JSON.parse(JSON.stringify(state.costOverrides||{}))}}
+function exportAllBackup(){downloadJson('SAGI_TEAMWEAR_BACKUP_'+localDateOnly()+'.json',backupPayload(state.orders));note('全部订单备份已导出')}
+function exportCurrentBackup(){const o=state.orders.find(x=>x.id===state.currentId);if(!o){note('请先打开并保存一笔订单');return}downloadJson('SAGI_'+(o.teamName||'TEAM').replace(/\s+/g,'_')+'_'+localDateOnly()+'.json',backupPayload([o]));note('当前球队档案已导出')}
+function importBackupFile(file){
+ if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const obj=JSON.parse(reader.result);if(!obj||obj.schema!=='SAGI-TEAMWEAR-BACKUP-1'||!Array.isArray(obj.orders))throw new Error('invalid');
+   const mode=q('backupImportMode').value;if(mode==='replace'){if(!confirm('将用备份文件替换当前全部订单，确定继续？'))return;state.orders=obj.orders}
+   else{const map=new Map(state.orders.map(o=>[o.id,o]));obj.orders.forEach(o=>{const old=map.get(o.id);if(!old||(o.updatedAt||0)>=(old.updatedAt||0))map.set(o.id,o)});state.orders=[...map.values()]}
+   if(obj.costOverrides&&typeof obj.costOverrides==='object'){state.costOverrides={...state.costOverrides,...obj.costOverrides};localStorage.setItem(COST_PROFILE_KEY,JSON.stringify(state.costOverrides))}
+   persist();blank();renderAll();note('备份导入完成 · '+obj.orders.length+' 笔订单')
+ }catch(e){note('备份文件无效或已损坏')}};reader.readAsText(file)
 }
 
 function persist(){localStorage.setItem(STORAGE_KEY,JSON.stringify({orders:state.orders}))}
@@ -1002,20 +1106,20 @@ function calc(){
 }
 function collect(){
  const c=calc();return{
-  id:state.currentId||uid(),projectName:text('projectName')||((text('teamName')||'球队')+' 球服项目'),teamName:text('teamName'),source:q('source').value,contact:text('contact'),contactInfo:text('contactInfo'),city:text('city'),competition:text('competition'),season:text('season'),deadline:q('deadline').value,teamLogo:state.teamLogo,customerNotes:q('customerNotes').value.trim(),shippingRecipient:text('shippingRecipient'),shippingPhone:text('shippingPhone'),shippingAddress:text('shippingAddress'),salesStage:q('salesStage').value,leadTemperature:q('leadTemperature').value,lastContactDate:q('lastContactDate').value,nextFollowUp:q('nextFollowUp').value,nextAction:text('nextAction'),lostReason:q('lostReason').value,quoteSentAt:state.currentQuoteSentAt||'',depositPaidAt:state.currentDepositPaidAt||'',followUpHistory:JSON.parse(JSON.stringify(state.currentFollowUpHistory||[])),
+  id:state.currentId||uid(),projectName:text('projectName')||((text('teamName')||'球队')+' 球服项目'),teamName:text('teamName'),source:q('source').value,contact:text('contact'),contactInfo:text('contactInfo'),city:text('city'),competition:text('competition'),season:text('season'),deadline:q('deadline').value,teamLogo:state.teamLogo,customerNotes:q('customerNotes').value.trim(),shippingRecipient:text('shippingRecipient'),shippingPhone:text('shippingPhone'),shippingAddress:text('shippingAddress'),salesStage:q('salesStage').value,leadTemperature:q('leadTemperature').value,lastContactDate:q('lastContactDate').value,nextFollowUp:q('nextFollowUp').value,nextAction:text('nextAction'),lostReason:q('lostReason').value,quoteSentAt:state.currentQuoteSentAt||'',depositPaidAt:state.currentDepositPaidAt||'',followUpHistory:JSON.parse(JSON.stringify(state.currentFollowUpHistory||[])),activityTimeline:JSON.parse(JSON.stringify(state.currentActivityTimeline||[])),mediaArchive:JSON.parse(JSON.stringify(state.currentOrderMedia||{})),actualOrderTotal:n('actualOrderTotal'),actualCostTotal:n('actualCostTotal'),feedbackStatus:q('feedbackStatus').value,customerFeedback:q('customerFeedback').value.trim(),
   series:q('series').value,supplierTier:q('supplierTier').value,ageGroup:q('ageGroup').value,productType:q('productType').value,priceStrategy:q('priceStrategy').value,targetMargin:Number(q('targetMargin').value)||.5,salesUnitPrice:n('salesUnitPrice'),primaryColor:text('primaryColor'),accentColor:text('accentColor'),printFee:n('printFee'),designFee:n('designFee'),discount:n('discount'),poloAddon:n('poloAddon'),pocketAddon:n('pocketAddon'),longSleeveAddon:n('longSleeveAddon'),otherCraftCost:n('otherCraftCost'),factoryShippingCost:n('factoryShippingCost'),shippingFee:n('shippingFee'),shippingZone:q('shippingZone').value,depositRate:Number(q('depositRate').value)||.5,frontText:text('frontText'),nameRule:text('nameRule'),numberStyle:text('numberStyle'),productNotes:q('productNotes').value.trim(),
   roster:JSON.parse(JSON.stringify(state.roster)),catalogItems:JSON.parse(JSON.stringify(state.catalogItems)),packageTargetQty:state.packageTargetQty||0,packageTeamSize:n('packageTeamSize'),packageBudget:n('packageBudget'),packageAge:q('packageAge').value,packageMargin:Number(q('packageMargin').value)||.4,confirmation:JSON.parse(JSON.stringify(currentConfirmation())),productionTracker:JSON.parse(JSON.stringify(currentProductionTracker())),publicContact:text('publicContact'),publicQuoteNote:q('publicQuoteNote').value.trim(),quoteValidDays:Number(q('quoteValidDays').value)||7,quoteShowPackages:q('quoteShowPackages').value,quoteShowPayment:q('quoteShowPayment').value,extraQty:n('extraQty'),status:q('orderStatus').value,owner:text('owner')||'SAGI',calc:c,updatedAt:Date.now(),createdAt:state.currentId?(state.orders.find(x=>x.id===state.currentId)?.createdAt||Date.now()):Date.now()
  }}
 function fill(o){
- state.currentId=o.id||null;state.teamLogo=o.teamLogo||'';state.currentQuoteSentAt=o.quoteSentAt||'';state.currentDepositPaidAt=o.depositPaidAt||'';state.currentFollowUpHistory=Array.isArray(o.followUpHistory)?JSON.parse(JSON.stringify(o.followUpHistory)):[];state.roster=Array.isArray(o.roster)?JSON.parse(JSON.stringify(o.roster)):[];state.catalogItems=Array.isArray(o.catalogItems)?JSON.parse(JSON.stringify(o.catalogItems)):[];state.packageTargetQty=Number(o.packageTargetQty)||0;state.confirmation={...confirmationDefaults(),...(o.confirmation||{})};state.productionTracker={...productionTrackerDefaults(),...(o.productionTracker||{})};
+ state.currentId=o.id||null;state.teamLogo=o.teamLogo||'';state.currentQuoteSentAt=o.quoteSentAt||'';state.currentDepositPaidAt=o.depositPaidAt||'';state.currentFollowUpHistory=Array.isArray(o.followUpHistory)?JSON.parse(JSON.stringify(o.followUpHistory)):[];state.currentActivityTimeline=Array.isArray(o.activityTimeline)?JSON.parse(JSON.stringify(o.activityTimeline)):[];state.currentOrderMedia={design:'',jersey:'',delivery:'',...(o.mediaArchive||{})};state.roster=Array.isArray(o.roster)?JSON.parse(JSON.stringify(o.roster)):[];state.catalogItems=Array.isArray(o.catalogItems)?JSON.parse(JSON.stringify(o.catalogItems)):[];state.packageTargetQty=Number(o.packageTargetQty)||0;state.confirmation={...confirmationDefaults(),...(o.confirmation||{})};state.productionTracker={...productionTrackerDefaults(),...(o.productionTracker||{})};
  const set=(id,v)=>q(id).value=v??'';
- set('packageTeamSize',o.packageTeamSize||o.packageTargetQty||22);set('packageBudget',o.packageBudget||200);set('packageAge',o.packageAge||o.ageGroup||'adult');set('packageMargin',String(o.packageMargin??.4));set('projectName',o.projectName);set('teamName',o.teamName);set('salesStage',o.salesStage||'新线索');set('leadTemperature',o.leadTemperature||'warm');set('lastContactDate',o.lastContactDate||'');set('nextFollowUp',o.nextFollowUp||'');set('nextAction',o.nextAction||'');set('lostReason',o.lostReason||'');set('source',o.source||'赛事合作');set('contact',o.contact);set('contactInfo',o.contactInfo);set('shippingRecipient',o.shippingRecipient||'');set('shippingPhone',o.shippingPhone||'');set('shippingAddress',o.shippingAddress||'');set('city',o.city);set('competition',o.competition);set('season',o.season||'2026-2027');set('deadline',o.deadline);set('customerNotes',o.customerNotes);
+ set('packageTeamSize',o.packageTeamSize||o.packageTargetQty||22);set('packageBudget',o.packageBudget||200);set('packageAge',o.packageAge||o.ageGroup||'adult');set('packageMargin',String(o.packageMargin??.4));set('projectName',o.projectName);set('teamName',o.teamName);set('actualOrderTotal',o.actualOrderTotal??o.calc?.total??0);set('actualCostTotal',o.actualCostTotal??o.calc?.factoryTotal??0);set('feedbackStatus',o.feedbackStatus||'');set('customerFeedback',o.customerFeedback||'');set('salesStage',o.salesStage||'新线索');set('leadTemperature',o.leadTemperature||'warm');set('lastContactDate',o.lastContactDate||'');set('nextFollowUp',o.nextFollowUp||'');set('nextAction',o.nextAction||'');set('lostReason',o.lostReason||'');set('source',o.source||'赛事合作');set('contact',o.contact);set('contactInfo',o.contactInfo);set('shippingRecipient',o.shippingRecipient||'');set('shippingPhone',o.shippingPhone||'');set('shippingAddress',o.shippingAddress||'');set('city',o.city);set('competition',o.competition);set('season',o.season||'2026-2027');set('deadline',o.deadline);set('customerNotes',o.customerNotes);
  set('series',o.series||'定制比赛服');set('supplierTier',o.supplierTier||'CLUB');set('ageGroup',o.ageGroup||'adult');set('productType',o.productType==='上衣 + 短裤'?'kit':(o.productType||'kit'));set('priceStrategy',o.priceStrategy||'margin');set('targetMargin',String(o.targetMargin??.5));set('salesUnitPrice',o.salesUnitPrice??o.jerseyPrice??120);set('primaryColor',o.primaryColor);set('accentColor',o.accentColor);set('printFee',o.printFee??0);set('designFee',o.designFee??300);set('discount',o.discount??0);set('poloAddon',String(o.poloAddon??0));set('pocketAddon',String(o.pocketAddon??0));set('longSleeveAddon',String(o.longSleeveAddon??0));set('otherCraftCost',o.otherCraftCost??0);set('factoryShippingCost',o.factoryShippingCost??0);set('shippingFee',o.shippingFee??0);set('shippingZone',o.shippingZone||'remote');set('depositRate',String(o.depositRate??.5));set('frontText',o.frontText);set('nameRule',o.nameRule);set('numberStyle',o.numberStyle);set('productNotes',o.productNotes);set('extraQty',o.extraQty??0);set('publicContact',o.publicContact||'');set('publicQuoteNote',o.publicQuoteNote||'热升华比赛服默认包含印字印号；特殊工艺按最终确认方案执行。产品价格默认不含运费，运费另计。');set('quoteValidDays',String(o.quoteValidDays||7));set('quoteShowPackages',o.quoteShowPackages||'yes');set('quoteShowPayment',o.quoteShowPayment||'yes');set('orderStatus',o.status||STAGES[0]);set('owner',o.owner||'SAGI');
  generatePackagePlans(false);q('followMessage').value='';renderLogo();renderRoster();renderCatalogCart();renderOrderConfirmation();renderProductionTracker();renderAll()
 }
 function blank(){
- state.currentId=null;state.teamLogo='';state.currentQuoteSentAt='';state.currentDepositPaidAt='';state.currentFollowUpHistory=[];state.roster=[];state.catalogItems=[];state.packageTargetQty=0;state.confirmation=confirmationDefaults();state.productionTracker=productionTrackerDefaults();
- const defaults={projectName:'',teamName:'',contact:'',contactInfo:'',shippingRecipient:'',shippingPhone:'',shippingAddress:'',city:'塔城',competition:'',season:'2026-2027',deadline:'',customerNotes:'',primaryColor:'塔城红',accentColor:'暖米白',salesUnitPrice:79,printFee:0,designFee:300,factoryShippingCost:0,shippingFee:0,discount:0,otherCraftCost:0,frontText:'',nameRule:'英文名',numberStyle:'SAGI 欧赛事字体',productNotes:'',publicContact:'',publicQuoteNote:'热升华比赛服默认包含印字印号；特殊工艺按最终确认方案执行。产品价格默认不含运费，运费另计。',extraQty:0,owner:'SAGI'};
+ state.currentId=null;state.teamLogo='';state.currentQuoteSentAt='';state.currentDepositPaidAt='';state.currentFollowUpHistory=[];state.currentActivityTimeline=[];state.currentOrderMedia={design:'',jersey:'',delivery:''};state.roster=[];state.catalogItems=[];state.packageTargetQty=0;state.confirmation=confirmationDefaults();state.productionTracker=productionTrackerDefaults();
+ const defaults={projectName:'',teamName:'',contact:'',contactInfo:'',shippingRecipient:'',shippingPhone:'',shippingAddress:'',actualOrderTotal:0,actualCostTotal:0,feedbackStatus:'',customerFeedback:'',city:'塔城',competition:'',season:'2026-2027',deadline:'',customerNotes:'',primaryColor:'塔城红',accentColor:'暖米白',salesUnitPrice:79,printFee:0,designFee:300,factoryShippingCost:0,shippingFee:0,discount:0,otherCraftCost:0,frontText:'',nameRule:'英文名',numberStyle:'SAGI 欧赛事字体',productNotes:'',publicContact:'',publicQuoteNote:'热升华比赛服默认包含印字印号；特殊工艺按最终确认方案执行。产品价格默认不含运费，运费另计。',extraQty:0,owner:'SAGI'};
  Object.entries(defaults).forEach(([k,v])=>{if(q(k))q(k).value=v});q('followMessage').value='';q('salesStage').value='新线索';q('leadTemperature').value='warm';q('lastContactDate').value='';q('nextFollowUp').value='';q('nextAction').value='首次联系客户';q('lostReason').value='';q('packageTeamSize').value='22';q('packageBudget').value='200';q('packageAge').value='adult';q('packageMargin').value='.4';q('source').value='赛事合作';q('series').value='定制比赛服';q('supplierTier').value='CLUB';q('ageGroup').value='adult';q('productType').value='kit';q('priceStrategy').value='fixed';q('targetMargin').value='.5';q('poloAddon').value='0';q('pocketAddon').value='0';q('longSleeveAddon').value='0';q('shippingZone').value='remote';q('depositRate').value='.5';q('quoteValidDays').value='7';q('quoteShowPackages').value='yes';q('quoteShowPayment').value='yes';q('orderStatus').value=STAGES[0];renderLogo();renderRoster();if(q('catalogCart'))renderCatalogCart();renderAll()
 }
 
@@ -1118,6 +1222,7 @@ function toggleProductionStep(key){
  else{ s.status='done';s.completedDate=localDateOnly();const next=PRODUCTION_STEPS[idx+1];if(next&&pt.steps[next.key].status==='pending')pt.steps[next.key].status='in_progress'}
  if(key==='shipped'&&s.status==='done'&&!pt.actualShipDate)pt.actualShipDate=s.completedDate;
  if(key==='delivered'&&s.status==='done'&&!pt.actualDeliveredDate)pt.actualDeliveredDate=s.completedDate;
+ if(s.status==='done')addActivity('production',(PRODUCTION_STEPS[idx]?.name||key)+'完成',s.completedDate||localDateOnly());
  syncSalesStatusFromProduction();renderProductionTracker();renderPipeline();saveProductionProgress()
 }
 function advanceProductionStep(){
@@ -1203,12 +1308,12 @@ function importCustomerConfirmation(){
  if(obj.orderRef&&state.currentId&&obj.orderRef!==state.currentId){note('确认码不属于当前订单');return}
  const cf=currentConfirmation();cf.quoteConfirmed=true;cf.quoteNo=obj.quoteNo||'';cf.planId=obj.planId||'';cf.planLabel=obj.planLabel||'当前报价方案';cf.confirmedAmount=Number(obj.confirmedAmount)||0;cf.confirmedAt=obj.confirmedAt||new Date().toLocaleString('zh-CN');cf.confirmer=obj.confirmer||'客户';
  const idx={A:0,B:1,C:2}[cf.planId];if(Number.isInteger(idx)&&state.packagePlans[idx])applyPackagePlan(idx);
- q('orderStatus').value='客户已确认';updateSalesStageAuto('已确认',{contactToday:true,nextDays:1});q('nextAction').value='跟进定金';q('confirmationCodeInput').value='';persistSalesActivity();renderOrderConfirmation();renderPipeline();note('客户确认已导入 · '+cf.planLabel)
+ q('orderStatus').value='客户已确认';addActivity('confirm','客户确认方案',(cf.planLabel||'当前报价')+' · '+money(cf.confirmedAmount));updateSalesStageAuto('已确认',{contactToday:true,nextDays:1});q('nextAction').value='跟进定金';q('confirmationCodeInput').value='';persistSalesActivity();renderOrderConfirmation();renderPipeline();note('客户确认已导入 · '+cf.planLabel)
 }
 function makeProductionNo(){return 'SAGI-PROD-'+new Date().toISOString().slice(0,10).replace(/-/g,'')+'-'+Math.random().toString(36).slice(2,6).toUpperCase()}
 function enterProduction(){
  const checks=productionChecks();if(!checks.every(x=>x.ok)){renderOrderConfirmation();note('生产门禁未通过');return}
- const cf=currentConfirmation();if(!cf.productionNo)cf.productionNo=makeProductionNo();cf.productionReadyAt=new Date().toLocaleString('zh-CN');q('orderStatus').value='生产中';startProductionTracker();saveOrder(true);renderOrderConfirmation();renderProductionTracker();renderPipeline();note('订单已进入生产 · '+cf.productionNo)
+ const cf=currentConfirmation();if(!cf.productionNo)cf.productionNo=makeProductionNo();cf.productionReadyAt=new Date().toLocaleString('zh-CN');q('orderStatus').value='生产中';addActivity('production','进入生产',cf.productionNo);startProductionTracker();saveOrder(true);renderOrderConfirmation();renderProductionTracker();renderPipeline();note('订单已进入生产 · '+cf.productionNo)
 }
 function productionSheetHtml(){
  const cf=currentConfirmation(),pt=currentProductionTracker(),cc=calc(),rows=state.roster.map((p,i)=>'<tr><td>'+(i+1)+'</td><td>'+escapeHtml(p.name)+'</td><td>'+escapeHtml(p.number)+'</td><td>'+escapeHtml(p.size)+'</td><td>'+escapeHtml(p.type)+'</td></tr>').join(''),products=[];
@@ -1222,7 +1327,7 @@ function previewProductionSheet(){
 function initOrderConfirmation(){
  q('confirmationImportBtn').onclick=importCustomerConfirmation;q('productionReadyBtn').onclick=enterProduction;q('productionSheetBtn').onclick=previewProductionSheet;
  q('designApproval').onchange=()=>{currentConfirmation().designApproval=q('designApproval').value;renderOrderConfirmation();renderAll()};
- q('depositStatus').onchange=()=>{currentConfirmation().depositStatus=q('depositStatus').value;if(q('depositStatus').value==='paid'){updateSalesStageAuto('已付定金',{contactToday:true});state.currentDepositPaidAt=new Date().toISOString();q('nextAction').value='准备生产资料'}persistSalesActivity();renderOrderConfirmation();renderAll()};
+ q('depositStatus').onchange=()=>{currentConfirmation().depositStatus=q('depositStatus').value;if(q('depositStatus').value==='paid'){updateSalesStageAuto('已付定金',{contactToday:true});state.currentDepositPaidAt=new Date().toISOString();q('nextAction').value='准备生产资料';addActivity('payment','定金到账',money(n('depositPaid')))}persistSalesActivity();renderOrderConfirmation();renderAll()};
  q('depositPaid').oninput=()=>{currentConfirmation().depositPaid=n('depositPaid');renderOrderConfirmation()};renderOrderConfirmation()
 }
 
@@ -1273,7 +1378,7 @@ async function buildPublicQuotePayload(){
 async function generateCustomerQuoteLink(openNow=false){
  if(!text('teamName')){note('请先填写球队名称');return''}
  const payload=await buildPublicQuotePayload(),base=new URL('./quote.html',location.href).toString(),link=base+'#q='+encodePublicQuote(payload);
- state.lastCustomerQuoteLink=link;if(!state.currentQuoteSentAt)state.currentQuoteSentAt=new Date().toISOString();if(['新线索','已联系','有意向'].includes(q('salesStage').value))updateSalesStageAuto('已报价',{contactToday:true,nextDays:3});q('nextAction').value='确认客户是否已查看报价';persistSalesActivity();q('customerQuoteLink').value=link;q('customerLinkState').textContent='PUBLIC LINK READY';q('customerLinkState').classList.add('ready');
+ state.lastCustomerQuoteLink=link;if(!state.currentQuoteSentAt)state.currentQuoteSentAt=new Date().toISOString();addActivity('quote','发送客户报价','报价编号 '+payload.quoteNo+' · '+money(payload.total));if(['新线索','已联系','有意向'].includes(q('salesStage').value))updateSalesStageAuto('已报价',{contactToday:true,nextDays:3});q('nextAction').value='确认客户是否已查看报价';persistSalesActivity();q('customerQuoteLink').value=link;q('customerLinkState').textContent='PUBLIC LINK READY';q('customerLinkState').classList.add('ready');
  if(openNow)window.open(link,'_blank');return link
 }
 async function copyCustomerQuoteLink(){
@@ -1319,7 +1424,7 @@ function normalizeHistoryOrder(src){
  o.source=o.source||'其他';o.contact=o.contact||'';o.contactInfo=o.contactInfo||'';o.city=o.city||'';o.competition=o.competition||'';o.season=o.season||'';
  o.shippingRecipient=o.shippingRecipient||'';o.shippingPhone=o.shippingPhone||'';o.shippingAddress=o.shippingAddress||'';o.customerNotes=o.customerNotes||'历史订单补录';
  o.salesStage=o.salesStage||'已付定金';o.leadTemperature=o.leadTemperature||'hot';o.lastContactDate=o.lastContactDate||'';o.nextFollowUp=o.nextFollowUp||'';o.nextAction=o.nextAction||'等待签收 / 后续补单';o.lostReason='';
- o.quoteSentAt=o.quoteSentAt||'';o.depositPaidAt=o.depositPaidAt||'';o.followUpHistory=Array.isArray(o.followUpHistory)?o.followUpHistory:[];
+ o.quoteSentAt=o.quoteSentAt||'';o.depositPaidAt=o.depositPaidAt||'';o.followUpHistory=Array.isArray(o.followUpHistory)?o.followUpHistory:[];o.activityTimeline=Array.isArray(o.activityTimeline)?o.activityTimeline:[{id:uid(),kind:'history',title:'历史订单导入',meta:o.status||'历史订单',at:new Date().toLocaleString('zh-CN'),ts:now}];o.mediaArchive={design:'',jersey:'',delivery:'',...(o.mediaArchive||{})};o.actualOrderTotal=Number(o.actualOrderTotal)||Number(o.orderTotal)||0;o.actualCostTotal=Number(o.actualCostTotal)||0;o.feedbackStatus=o.feedbackStatus||'';o.customerFeedback=o.customerFeedback||'';
  o.series=o.series||'定制比赛服';o.supplierTier=o.supplierTier||'CLUB';o.ageGroup=o.ageGroup||'adult';o.productType=o.productType||'custom-package';o.priceStrategy=o.priceStrategy||'custom';o.targetMargin=Number(o.targetMargin)||.5;o.salesUnitPrice=Number(o.salesUnitPrice)||0;
  o.primaryColor=o.primaryColor||'';o.accentColor=o.accentColor||'';o.printFee=Number(o.printFee)||0;o.designFee=Number(o.designFee)||0;o.discount=Number(o.discount)||0;o.poloAddon=Number(o.poloAddon)||0;o.pocketAddon=Number(o.pocketAddon)||0;o.longSleeveAddon=Number(o.longSleeveAddon)||0;o.otherCraftCost=Number(o.otherCraftCost)||0;o.factoryShippingCost=Number(o.factoryShippingCost)||0;o.shippingFee=Number(o.shippingFee)||0;o.shippingZone=o.shippingZone||'remote';o.depositRate=Number(o.depositRate)||.5;
  o.frontText=o.frontText||'';o.nameRule=o.nameRule||'';o.numberStyle=o.numberStyle||'';o.productNotes=o.productNotes||'';
@@ -1335,6 +1440,37 @@ function importHistoryOrder(){
  const o=normalizeHistoryOrder(src),exists=state.orders.findIndex(x=>x.id===o.id);
  if(exists>=0)state.orders[exists]=o;else state.orders.unshift(o);
  state.currentId=o.id;persist();q('historyOrderImportCode').value='';fill(o);location.hash='#orders';renderAll();note('历史订单已导入 · '+o.teamName)
+}
+
+
+function renderMediaPreview(id,data){const w=q(id);w.innerHTML=data?'<img src="'+data+'" alt="">':'暂无图片'}
+function renderTimeline(){
+ const w=q('activityTimeline'),list=state.currentActivityTimeline||[];w.innerHTML=list.length?list.map(x=>'<div class="timelineItem"><b>'+escapeHtml(x.title||'订单事件')+'</b><span>'+escapeHtml(x.at||'')+' · '+escapeHtml(x.kind||'')+'</span>'+(x.meta?'<p>'+escapeHtml(x.meta)+'</p>':'')+'</div>').join(''):'<div class="empty">还没有订单事件。</div>'
+}
+function renderSmartReorder(){
+ const w=q('smartReorderPlayers');w.innerHTML='';if(!state.currentId||!state.roster.length){w.innerHTML='<div class="empty">打开一笔包含球员名单的历史订单后，可在这里选择补单球员。</div>';return}
+ state.roster.forEach(p=>{const row=document.createElement('label');row.className='reorderPlayer';row.innerHTML='<input type="checkbox" data-reorder-player="'+escapeHtml(p.id)+'"><span>'+escapeHtml(p.name||'未命名')+'</span><b>'+escapeHtml(p.number||'—')+'</b><span>'+escapeHtml(p.size||'—')+'</span>';w.appendChild(row)})
+}
+function renderOrderArchive(){
+ if(!q('orderArchive'))return;renderMediaPreview('mediaDesignPreview',state.currentOrderMedia?.design);renderMediaPreview('mediaJerseyPreview',state.currentOrderMedia?.jersey);renderMediaPreview('mediaDeliveryPreview',state.currentOrderMedia?.delivery);
+ q('actualGrossView').value=money(n('actualOrderTotal')-n('actualCostTotal'));renderTimeline();renderSmartReorder()
+}
+async function setArchiveMedia(slot,file){
+ if(!file)return;try{const data=await compressImageFile(file);state.currentOrderMedia={design:'',jersey:'',delivery:'',...(state.currentOrderMedia||{}),[slot]:data};renderOrderArchive();if(state.currentId)persistSalesActivity();note('订单图片已保存到本机档案')}catch(e){note('图片处理失败')}
+}
+function clearArchiveMedia(slot){state.currentOrderMedia={design:'',jersey:'',delivery:'',...(state.currentOrderMedia||{}),[slot]:''};renderOrderArchive();if(state.currentId)persistSalesActivity()}
+function addManualTimeline(){const t=text('timelineNote');if(!t){note('请先填写事件内容');return}addActivity('note','手动记录',t);q('timelineNote').value='';if(state.currentId)persistSalesActivity();renderTimeline();note('时间线事件已添加')}
+function createSmartReorder(){
+ const src=state.orders.find(x=>x.id===state.currentId);if(!src){note('请先打开已保存订单');return}
+ const selected=[...document.querySelectorAll('[data-reorder-player]:checked')].map(el=>el.dataset.reorderPlayer),players=(src.roster||[]).filter(p=>selected.includes(p.id));
+ if(!players.length){note('请至少勾选一名补单球员');return}
+ const o=JSON.parse(JSON.stringify(src));o.id=uid();o.projectName=(src.teamName||'球队')+' · 智能补单 '+new Date().toLocaleDateString('zh-CN');o.status='线索';o.salesStage='有意向';o.lastContactDate=localDateOnly();o.nextFollowUp=addDaysDate(localDateOnly(),1);o.nextAction='确认补单数量与价格';o.lostReason='';o.quoteSentAt='';o.depositPaidAt='';o.followUpHistory=[];o.activityTimeline=[];o.discount=0;o.extraQty=0;o.packageTargetQty=players.length;o.packageTeamSize=players.length;o.confirmation=confirmationDefaults();o.productionTracker=productionTrackerDefaults();o.actualOrderTotal=0;o.actualCostTotal=0;o.feedbackStatus='';o.customerFeedback='';o.mediaArchive=JSON.parse(JSON.stringify(source.mediaArchive||{}));o.updatedAt=Date.now();o.createdAt=Date.now();o.roster=players.map(p=>({...p,id:uid()}));o.catalogItems=(o.catalogItems||[]).map(x=>({...x,id:uid(),qty:0}));o.actualOrderTotal=0;o.actualCostTotal=0;o.feedbackStatus='';o.customerFeedback='';o.mediaArchive=JSON.parse(JSON.stringify(src.mediaArchive||{}));state.currentActivityTimeline=[];addActivity('reorder','创建智能补单','继承原订单 · '+players.length+' 名球员');o.activityTimeline=JSON.parse(JSON.stringify(state.currentActivityTimeline));state.orders.unshift(o);persist();fill(o);location.hash='#customer';note('已创建智能补单 · '+players.length+' 人')
+}
+function initArchiveTools(){
+ ['actualOrderTotal','actualCostTotal','feedbackStatus','customerFeedback'].forEach(id=>q(id).addEventListener('change',()=>{renderOrderArchive();if(state.currentId)persistSalesActivity()}));
+ [['design','mediaDesignFile','mediaDesignAdd','mediaDesignClear'],['jersey','mediaJerseyFile','mediaJerseyAdd','mediaJerseyClear'],['delivery','mediaDeliveryFile','mediaDeliveryAdd','mediaDeliveryClear']].forEach(([slot,fileId,addId,clearId])=>{q(addId).onclick=()=>q(fileId).click();q(fileId).onchange=e=>{setArchiveMedia(slot,e.target.files[0]);e.target.value=''};q(clearId).onclick=()=>clearArchiveMedia(slot)});
+ q('timelineAddBtn').onclick=addManualTimeline;q('reorderSelectAllBtn').onclick=()=>document.querySelectorAll('[data-reorder-player]').forEach(x=>x.checked=true);q('reorderClearBtn').onclick=()=>document.querySelectorAll('[data-reorder-player]').forEach(x=>x.checked=false);q('reorderCreateBtn').onclick=createSmartReorder;
+ q('backupAllBtn').onclick=exportAllBackup;q('backupCurrentBtn').onclick=exportCurrentBackup;q('backupImportBtn').onclick=()=>q('backupFile').click();q('backupFile').onchange=e=>{importBackupFile(e.target.files[0]);e.target.value=''}
 }
 
 function orderProductionMeta(o){
@@ -1360,6 +1496,7 @@ function renderOrders(){
  })
 }
 function saveOrder(silent=false){
+ const isNew=!state.currentId;if(isNew&&text('teamName'))addActivity('crm','建立客户 / 订单档案',text('teamName'));
  const o=collect();if(!o.teamName){note('请先填写球队名称');q('teamName').focus();return}
  const activeCatalog=(o.catalogItems||[]).filter(x=>(Number(x.qty)||0)>0);
  if(!o.roster.length&&!activeCatalog.length&&SALES_STAGES.indexOf(o.salesStage)>=3){note('已报价项目请加入球员名单或至少一项产品');return}
@@ -1368,13 +1505,13 @@ function saveOrder(silent=false){
  const idx=state.orders.findIndex(x=>x.id===o.id);if(idx>=0)state.orders[idx]=o;else state.orders.unshift(o);state.currentId=o.id;persist();renderAll();if(!silent)note(idx>=0?'订单已更新':'订单已保存')
 }
 function createReorder(source){
- const o=JSON.parse(JSON.stringify(source));o.id=uid();o.projectName=(source.teamName||'球队')+' · 补单 '+new Date().toLocaleDateString('zh-CN');o.status='线索';o.salesStage='新线索';o.lastContactDate='';o.nextFollowUp='';o.nextAction='联系球队确认补单需求';o.lostReason='';o.quoteSentAt='';o.depositPaidAt='';o.followUpHistory=[];o.discount=0;o.extraQty=0;o.packageTargetQty=0;o.confirmation=confirmationDefaults();o.productionTracker=productionTrackerDefaults();o.updatedAt=Date.now();o.createdAt=Date.now();o.roster=[];o.catalogItems=(o.catalogItems||[]).map(x=>({...x,id:uid(),qty:0}));fill(o);note('已创建补单项目 · 添加需要补货的球员')
+ const o=JSON.parse(JSON.stringify(source));o.id=uid();o.projectName=(source.teamName||'球队')+' · 补单 '+new Date().toLocaleDateString('zh-CN');o.status='线索';o.salesStage='新线索';o.lastContactDate='';o.nextFollowUp='';o.nextAction='联系球队确认补单需求';o.lostReason='';o.quoteSentAt='';o.depositPaidAt='';o.followUpHistory=[];o.activityTimeline=[];o.discount=0;o.extraQty=0;o.packageTargetQty=0;o.confirmation=confirmationDefaults();o.productionTracker=productionTrackerDefaults();o.updatedAt=Date.now();o.createdAt=Date.now();o.roster=[];o.catalogItems=(o.catalogItems||[]).map(x=>({...x,id:uid(),qty:0}));fill(o);note('已创建补单项目 · 添加需要补货的球员')
 }
 function renderKpis(){
  const teams=new Set(state.orders.map(o=>o.teamName).filter(Boolean)).size,active=state.orders.filter(o=>o.status!=='已完成').length,revenue=state.orders.reduce((a,o)=>a+(o.calc?.total||0),0),balance=state.orders.reduce((a,o)=>a+(o.calc?.balance||0),0);
  q('kpiTeams').textContent=teams;q('kpiOrders').textContent=state.orders.length;q('kpiActive').textContent=active;q('kpiRevenue').textContent=money(revenue);q('kpiBalance').textContent=money(balance)
 }
-function renderAll(){if(q('orderConfirmation'))renderOrderConfirmation();if(q('productionTracker'))renderProductionTracker();if(state.lastCustomerQuoteLink){state.lastCustomerQuoteLink='';if(q('customerQuoteLink'))q('customerQuoteLink').value='';if(q('customerLinkState')){q('customerLinkState').textContent='PRIVATE DATA FILTER ON';q('customerLinkState').classList.remove('ready')}}q('rosterCountView').value=String(state.roster.length);q('productionQtyView').value=String(state.roster.length+n('extraQty'));syncPriceEngine(false);const ct=catalogTotals();q('catalogQtyTotal').textContent=ct.qty;q('catalogCostTotal').textContent=money(ct.cost);q('catalogSalesTotal').textContent=money(ct.sales);q('catalogGrossTotal').textContent=money(ct.gross);renderPipeline();renderQuote();renderOrders();renderKpis();renderSalesDashboard();renderFollowUpAssistant()}
+function renderAll(){if(q('orderConfirmation'))renderOrderConfirmation();if(q('productionTracker'))renderProductionTracker();if(state.lastCustomerQuoteLink){state.lastCustomerQuoteLink='';if(q('customerQuoteLink'))q('customerQuoteLink').value='';if(q('customerLinkState')){q('customerLinkState').textContent='PRIVATE DATA FILTER ON';q('customerLinkState').classList.remove('ready')}}q('rosterCountView').value=String(state.roster.length);q('productionQtyView').value=String(state.roster.length+n('extraQty'));syncPriceEngine(false);const ct=catalogTotals();q('catalogQtyTotal').textContent=ct.qty;q('catalogCostTotal').textContent=money(ct.cost);q('catalogSalesTotal').textContent=money(ct.sales);q('catalogGrossTotal').textContent=money(ct.gross);renderPipeline();renderQuote();renderOrders();renderKpis();renderSalesDashboard();renderSalesPools();renderFollowUpAssistant();renderOrderArchive()}
 
 function initSelects(){
  q('orderStatus').innerHTML=STAGES.map(x=>'<option>'+x+'</option>').join('');
@@ -1386,7 +1523,7 @@ q('clearRosterBtn').onclick=()=>{state.roster=[];renderRoster();renderAll()};q('
 q('salesStage').onchange=()=>{if(q('salesStage').value==='未成交'&&!q('lostReason').value)note('请补充未成交原因');persistSalesActivity();renderAll()};q('lostReason').onchange=()=>{if(q('lostReason').value)q('salesStage').value='未成交';persistSalesActivity();renderAll()};q('nextFollowUp').onchange=()=>{persistSalesActivity();renderAll()};q('leadTemperature').onchange=()=>{persistSalesActivity();renderAll()};q('historyOrderImportBtn').onclick=importHistoryOrder;q('orderSearch').oninput=renderOrders;q('statusFilter').onchange=renderOrders;q('orderStatus').onchange=renderAll;q('extraQty').oninput=()=>{state.packageTargetQty=0;renderAll()};
 ['supplierTier','ageGroup'].forEach(id=>q(id).addEventListener('change',()=>{const tier=SUPPLIER_CATALOG[q('supplierTier').value],age=q('ageGroup').value==='child'?'child':'adult';q('priceStrategy').value=(tier&&SAGI_FIXED_PRICE[tier.name]&&SAGI_FIXED_PRICE[tier.name][age]!=null)?'fixed':'margin';syncPriceEngine(true);renderAll()}));['productType','priceStrategy','targetMargin','poloAddon','pocketAddon','longSleeveAddon','shippingZone'].forEach(id=>q(id).addEventListener('change',()=>{syncPriceEngine(true);renderAll()}));['otherCraftCost','factoryShippingCost'].forEach(id=>q(id).addEventListener('input',()=>{syncPriceEngine(true);renderAll()}));q('salesUnitPrice').addEventListener('input',renderAll);
 document.querySelectorAll('input,select,textarea').forEach(el=>{if(!['orderSearch','statusFilter','teamLogoFile'].includes(el.id))el.addEventListener('input',()=>{if(el.id==='orderStatus')return;renderAll()});if(el.tagName==='SELECT'&&!['statusFilter','orderStatus'].includes(el.id))el.addEventListener('change',renderAll)});
-q('followGenerateBtn').onclick=generateFollowUpMessage;q('followCopyBtn').onclick=copyFollowUpMessage;q('followContactedBtn').onclick=markFollowUpContacted;q('followScheduleBtn').onclick=scheduleNextFollowUp;initQuickOutcomes();q('followTone').onchange=()=>{if(q('followMessage').value.trim())generateFollowUpMessage()};q('followGoal').onchange=()=>{if(q('followMessage').value.trim())generateFollowUpMessage()};
+initArchiveTools();q('followGenerateBtn').onclick=generateFollowUpMessage;q('followCopyBtn').onclick=copyFollowUpMessage;q('followContactedBtn').onclick=markFollowUpContacted;q('followScheduleBtn').onclick=scheduleNextFollowUp;initQuickOutcomes();q('followTone').onchange=()=>{if(q('followMessage').value.trim())generateFollowUpMessage()};q('followGoal').onchange=()=>{if(q('followMessage').value.trim())generateFollowUpMessage()};
 initSelects();loadState();blank();initCostProfile();initPackageBuilder();initCatalog();initCustomerQuotationMode();initOrderConfirmation();initProductionTracker();renderAll();
 })();
 </script>
