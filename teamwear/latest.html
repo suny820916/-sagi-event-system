@@ -2046,15 +2046,15 @@ async function generateCustomerOrderLink(openNow=false){
  if(openNow)window.open(link,'_blank');
  return link
 }
-async function previewCustomerOrder(){const w=window.open('about:blank','_blank'),link=await generateCustomerOrderLink(false);if(!link){if(w)w.close();return}if(w)w.location.href=link;else location.href=link}
+async function previewCustomerOrder(){const link=await generateCustomerOrderLink(false);if(!link)return;location.href=link}
 async function copyCustomerOrderLink(){
  const link=await generateCustomerOrderLink(false);if(!link)return;
  try{await navigator.clipboard.writeText(link);note('客户订单确认单链接已复制')}catch(e){q('customerOrderLink').focus();q('customerOrderLink').select();document.execCommand('copy');note('客户订单确认单链接已复制')}
 }
 async function printCustomerOrder(){
- const w=window.open('about:blank','_blank'),link=await generateCustomerOrderLink(false);if(!link){if(w)w.close();return}
- if(w)w.location.href=link;else location.href=link;
- note('确认单已打开 · 请点顶部“下载 PDF”')
+ const link=await generateCustomerOrderLink(false);if(!link)return;
+ sessionStorage.setItem('sagi_customer_order_auto_pdf','1');
+ location.href=link
 }
 
 function productionSheetHtml(){
@@ -2128,12 +2128,10 @@ async function copyCustomerQuoteLink(){
  try{await navigator.clipboard.writeText(link);note('客户报价链接已复制')}catch(e){q('customerQuoteLink').focus();q('customerQuoteLink').select();document.execCommand('copy');note('客户报价链接已复制')}
 }
 async function previewCustomerQuote(){
- const win=window.open('about:blank','_blank');const link=await generateCustomerQuoteLink(false);
- if(!link){if(win)win.close();return}if(win)win.location.href=link;else location.href=link
+ const link=await generateCustomerQuoteLink(false);if(!link)return;location.href=link
 }
 async function openCustomerQuote(){
- const win=window.open('about:blank','_blank'),link=state.lastCustomerQuoteLink||await generateCustomerQuoteLink(false);
- if(!link){if(win)win.close();return}if(win)win.location.href=link;else location.href=link
+ const link=state.lastCustomerQuoteLink||await generateCustomerQuoteLink(false);if(!link)return;location.href=link
 }
 function initCustomerQuotationMode(){
  q('customerPreviewBtn').onclick=previewCustomerQuote;q('customerCopyBtn').onclick=copyCustomerQuoteLink;q('customerOpenBtn').onclick=openCustomerQuote;
