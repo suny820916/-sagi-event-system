@@ -152,6 +152,14 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
 
 .orderItem.pinned{border-color:#6b815f;box-shadow:inset 3px 0 0 #8ba27b}
 .pinMark{display:inline-flex;margin-left:6px;padding:2px 5px;border:1px solid #596c51;border-radius:999px;font-size:7px;color:#b7d1a8;vertical-align:middle}
+
+.globalPinnedBar{margin:10px 0 12px;padding:9px;border:1px solid #445341;border-radius:13px;background:linear-gradient(145deg,#121913,#0c1110)}
+.globalPinnedHead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px}
+.globalPinnedHead b{font-size:9px;color:#c1d8bc}.globalPinnedHead span{font-size:7px;color:#768478}
+.globalPinnedList{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.globalPinnedItem{border:1px solid #344238;border-radius:10px;background:#0d1410;padding:9px;cursor:pointer;display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}
+.globalPinnedItem:hover{border-color:#72876d}.globalPinnedName{font-size:9px;font-weight:1000;color:#e0e8dd}.globalPinnedMeta{font-size:7px;color:#7f8c81;margin-top:4px}.globalPinnedState{font-size:7px;color:#b7ceb2;margin-top:4px}.globalPinnedActions{display:grid;gap:5px}.globalPinnedActions button{padding:5px 7px;font-size:7px}.globalPinnedEmpty{font-size:8px;color:#657068;padding:5px}
+@media(max-width:850px){.globalPinnedList{grid-template-columns:1fr 1fr}}@media(max-width:560px){.globalPinnedList{grid-template-columns:1fr}}
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -163,6 +171,10 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
   <div class="top">
     <div><div class="brand">SAGI TEAMWEAR SALES SYSTEM</div><div class="sub">球队建档 · 产品方案 · 球员名单 · 报价 · 订单 · 补单</div></div>
     <div class="ver">V1.8 · FOLLOW-UP ASSISTANT</div>
+  </div>
+  <div id="globalPinnedBar" class="globalPinnedBar" style="display:none">
+    <div class="globalPinnedHead"><b>置顶订单 · PINNED</b><span>常用订单固定在系统最上方</span></div>
+    <div id="globalPinnedList" class="globalPinnedList"></div>
   </div>
   <div class="workspaceNav" id="workspaceNav">
     <button class="workspaceBtn active" data-workspace="sales" type="button"><b>销售工作台</b><span>客户 · 跟进 · 套餐 · 报价</span></button>
@@ -1638,6 +1650,29 @@ function orderProductionMeta(o){
 }
 
 function displayOrderStatus(s){return s==='已完成'?'交易完成':(s||'线索')}
+
+function preferredWorkspaceForOrder(o){
+ if(o?.status==='已完成')return'archive';
+ if(['生产中','质检','已发货'].includes(o?.status))return'production';
+ return'order'
+}
+function openPinnedOrder(o){
+ fill(o);setWorkspace(preferredWorkspaceForOrder(o),false);window.scrollTo({top:0,behavior:'smooth'});note('已打开 '+(o.projectName||o.teamName||'订单'))
+}
+function renderGlobalPinnedOrders(){
+ const bar=q('globalPinnedBar'),w=q('globalPinnedList');if(!bar||!w)return;
+ const list=(state.orders||[]).filter(o=>o.pinned).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
+ bar.style.display=list.length?'block':'none';w.innerHTML='';
+ if(!list.length)return;
+ list.forEach(o=>{const d=document.createElement('div');d.className='globalPinnedItem';
+  d.innerHTML='<div><div class="globalPinnedName">'+escapeHtml(o.projectName||o.teamName||'未命名订单')+'</div><div class="globalPinnedMeta">'+escapeHtml([o.teamName,o.city,o.season].filter(Boolean).join(' · '))+'</div><div class="globalPinnedState">销售：'+escapeHtml(o.salesStage||'新线索')+' · 订单：'+escapeHtml(displayOrderStatus(o.status))+'</div></div><div class="globalPinnedActions"><button data-open type="button">打开</button><button data-unpin type="button">取消置顶</button></div>';
+  d.onclick=e=>{if(e.target.closest('button'))return;openPinnedOrder(o)};
+  d.querySelector('[data-open]').onclick=()=>openPinnedOrder(o);
+  d.querySelector('[data-unpin]').onclick=()=>{o.pinned=false;o.updatedAt=Date.now();persist();renderOrders();renderGlobalPinnedOrders();note('已取消置顶')};
+  w.appendChild(d)
+ })
+}
+
 function renderOrders(){
  const search=q('orderSearch').value.trim().toLowerCase(),status=q('statusFilter').value,w=q('orderList');
  const list=state.orders.filter(o=>(!status||o.status===status)&&(!search||[o.projectName,o.teamName,o.contact,o.city].join(' ').toLowerCase().includes(search))).sort((a,b)=>(Number(!!b.pinned)-Number(!!a.pinned))||((b.updatedAt||0)-(a.updatedAt||0)));
@@ -1647,7 +1682,7 @@ function renderOrders(){
   '<div><div class="orderName">'+escapeHtml(o.projectName||o.teamName||'未命名项目')+(o.pinned?'<span class="pinMark">置顶</span>':'')+'</div><div class="orderMeta">'+escapeHtml([o.teamName,o.city,o.season].filter(Boolean).join(' · ')+orderProductionMeta(o))+'</div></div>'+
   '<div><span class="statusTag">'+escapeHtml(o.salesStage||'新线索')+'</span><div class="tiny" style="margin-top:4px">订单 · '+escapeHtml(displayOrderStatus(o.status))+'</div></div><div class="money">'+money(o.actualOrderTotal||o.calc?.total||0)+'</div>'+
   '<div class="actions" style="margin:0"><button data-pin type="button">'+(o.pinned?'取消置顶':'置顶')+'</button><button data-open type="button">打开</button><button data-reorder type="button">补单</button><button data-del class="danger" type="button">删</button></div>';
-  d.querySelector('[data-pin]').onclick=()=>{o.pinned=!o.pinned;o.updatedAt=Date.now();persist();renderOrders();note(o.pinned?'订单已置顶':'已取消置顶')};
+  d.querySelector('[data-pin]').onclick=()=>{o.pinned=!o.pinned;o.updatedAt=Date.now();persist();renderOrders();renderGlobalPinnedOrders();note(o.pinned?'订单已置顶到系统顶部':'已取消置顶')};
   d.querySelector('[data-open]').onclick=()=>{fill(o);location.hash='#customer';note('已打开 '+o.projectName)};
   d.querySelector('[data-reorder]').onclick=()=>createReorder(o);
   d.querySelector('[data-del]').onclick=()=>{if(confirm('删除这个订单？')){state.orders=state.orders.filter(x=>x.id!==o.id);if(state.currentId===o.id)blank();persist();renderAll();note('订单已删除')}};
@@ -1700,7 +1735,7 @@ function renderKpis(){
  const teams=new Set(state.orders.map(o=>o.teamName).filter(Boolean)).size,active=state.orders.filter(o=>o.status!=='已完成').length,revenue=state.orders.reduce((a,o)=>a+(o.calc?.total||0),0),balance=state.orders.reduce((a,o)=>a+(o.calc?.balance||0),0);
  q('kpiTeams').textContent=teams;q('kpiOrders').textContent=state.orders.length;q('kpiActive').textContent=active;q('kpiRevenue').textContent=money(revenue);q('kpiBalance').textContent=money(balance)
 }
-function renderAll(){if(q('orderConfirmation'))renderOrderConfirmation();if(q('productionTracker'))renderProductionTracker();if(state.lastCustomerQuoteLink){state.lastCustomerQuoteLink='';if(q('customerQuoteLink'))q('customerQuoteLink').value='';if(q('customerLinkState')){q('customerLinkState').textContent='PRIVATE DATA FILTER ON';q('customerLinkState').classList.remove('ready')}}q('rosterCountView').value=String(state.roster.length);q('productionQtyView').value=String(state.roster.length+n('extraQty'));syncPriceEngine(false);const ct=catalogTotals();q('catalogQtyTotal').textContent=ct.qty;q('catalogCostTotal').textContent=money(ct.cost);q('catalogSalesTotal').textContent=money(ct.sales);q('catalogGrossTotal').textContent=money(ct.gross);renderPipeline();renderQuote();renderOrders();renderKpis();renderSalesDashboard();renderSalesPools();renderFollowUpAssistant();renderOrderArchive();renderWorkspaceSummary();setWorkspace(currentWorkspace,false)}
+function renderAll(){if(q('orderConfirmation'))renderOrderConfirmation();if(q('productionTracker'))renderProductionTracker();if(state.lastCustomerQuoteLink){state.lastCustomerQuoteLink='';if(q('customerQuoteLink'))q('customerQuoteLink').value='';if(q('customerLinkState')){q('customerLinkState').textContent='PRIVATE DATA FILTER ON';q('customerLinkState').classList.remove('ready')}}q('rosterCountView').value=String(state.roster.length);q('productionQtyView').value=String(state.roster.length+n('extraQty'));syncPriceEngine(false);const ct=catalogTotals();q('catalogQtyTotal').textContent=ct.qty;q('catalogCostTotal').textContent=money(ct.cost);q('catalogSalesTotal').textContent=money(ct.sales);q('catalogGrossTotal').textContent=money(ct.gross);renderPipeline();renderQuote();renderOrders();renderGlobalPinnedOrders();renderKpis();renderSalesDashboard();renderSalesPools();renderFollowUpAssistant();renderOrderArchive();renderWorkspaceSummary();setWorkspace(currentWorkspace,false)}
 
 function initSelects(){
  q('orderStatus').innerHTML=STAGES.map(x=>'<option>'+x+'</option>').join('');
