@@ -7,20 +7,27 @@ from datetime import datetime, timedelta, timezone
 import tempfile
 import shutil
 import secrets
+import hashlib
+import hmac
 import os
 import time
 import yt_dlp
 
 app = Flask(__name__)
-CORS(app, resources={r"/api/*": {"origins": "*"}})
 
-TOKEN = (os.getenv("SAGI_BRIDGE_TOKEN") or "").strip()
+ALLOWED_ORIGIN = (os.getenv("SAGI_ALLOWED_ORIGIN") or "https://suny820916.github.io").rstrip("/")
+SERVER_SECRET = (os.getenv("SAGI_SERVER_SECRET") or os.getenv("SAGI_BRIDGE_TOKEN") or "").strip()
 PORT = int(os.getenv("PORT") or "10000")
-MAX_FILE_MB = int(os.getenv("SAGI_MAX_FILE_MB") or "500")
+MAX_FILE_MB = int(os.getenv("SAGI_MAX_FILE_MB") or "300")
 JOB_TTL_MIN = int(os.getenv("SAGI_JOB_TTL_MIN") or "30")
+RATE_LIMIT_PER_HOUR = int(os.getenv("SAGI_RATE_LIMIT_PER_HOUR") or "20")
+
+CORS(app, resources={r"/api/*": {"origins": [ALLOWED_ORIGIN]}})
 
 jobs = {}
 jobs_lock = Lock()
+rate_hits = {}
+rate_lock = Lock()
 
 def now():
     return datetime.now(timezone.utc)
@@ -28,11 +35,38 @@ def now():
 def iso(dt=None):
     return (dt or now()).isoformat()
 
+def client_token():
+    if not SERVER_SECRET:
+        return ""
+    return hmac.new(
+        SERVER_SECRET.encode("utf-8"),
+        b"sagi-content-os-instagram-cloud-client-v1",
+        hashlib.sha256,
+    ).hexdigest()
+
+def origin_allowed():
+    origin = (request.headers.get("Origin") or "").rstrip("/")
+    return origin == ALLOWED_ORIGIN
+
 def authorized():
-    if not TOKEN:
+    token = client_token()
+    if not token:
         return False
     header = request.headers.get("Authorization", "")
-    return header == f"Bearer {TOKEN}"
+    supplied = header[7:] if header.startswith("Bearer ") else ""
+    return bool(supplied) and hmac.compare_digest(supplied, token)
+
+def rate_allowed():
+    key = request.headers.get("X-Forwarded-For", request.remote_addr or "unknown").split(",")[0].strip()
+    cutoff = time.time() - 3600
+    with rate_lock:
+        arr = [t for t in rate_hits.get(key, []) if t >= cutoff]
+        if len(arr) >= RATE_LIMIT_PER_HOUR:
+            rate_hits[key] = arr
+            return False
+        arr.append(time.time())
+        rate_hits[key] = arr
+    return True
 
 def allowed_instagram(url):
     try:
@@ -153,24 +187,46 @@ def cleanup_loop():
 
 Thread(target=cleanup_loop, daemon=True).start()
 
+@app.after_request
+def security_headers(resp):
+    resp.headers["Cache-Control"] = "no-store"
+    resp.headers["X-Content-Type-Options"] = "nosniff"
+    return resp
+
 @app.get("/")
 @app.get("/health")
 def health():
     return jsonify({
         "ok": True,
         "service": "SAGI CLOUD BRIDGE",
-        "version": "1.0.0",
+        "version": "1.1.0",
         "instagram": True,
-        "auth": "bearer",
+        "activation": True,
         "maxFileMB": MAX_FILE_MB,
         "jobTTLMinutes": JOB_TTL_MIN,
-        "tokenConfigured": bool(TOKEN),
+        "configured": bool(SERVER_SECRET),
+    })
+
+@app.post("/api/activate")
+def activate():
+    if not origin_allowed():
+        return jsonify({"ok": False, "error": "Origin not allowed"}), 403
+    token = client_token()
+    if not token:
+        return jsonify({"ok": False, "error": "Cloud service secret is not configured"}), 503
+    return jsonify({
+        "ok": True,
+        "service": "SAGI CLOUD BRIDGE",
+        "token": token,
+        "version": "1.1.0",
     })
 
 @app.post("/api/jobs")
 def create_job():
     if not authorized():
         return jsonify({"ok": False, "error": "Unauthorized"}), 401
+    if not rate_allowed():
+        return jsonify({"ok": False, "error": "Hourly download limit reached"}), 429
 
     data = request.get_json(silent=True) or {}
     url = (data.get("url") or "").strip()
