@@ -118,6 +118,10 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
 .opportunityTag{display:inline-flex;align-items:center;gap:4px;padding:3px 6px;border:1px solid #43515b;border-radius:999px;font-size:7px;font-weight:1000;color:#aab5be}.opportunityTag.high{border-color:#3f654f;color:#a9dcbc}.opportunityTag.mid{border-color:#66572f;color:#ddc777}.opportunityTag.low{border-color:#613d3d;color:#d9a0a0}
 @media(max-width:1050px){.followScore{grid-template-columns:repeat(3,1fr)}}@media(max-width:650px){.followScore{grid-template-columns:1fr 1fr}}
 
+
+.historyImportBox{margin-top:10px;padding:10px;border:1px solid #33404a;border-radius:10px;background:#0b1014}
+.historyImportBox textarea{min-height:82px;font-size:9px}.historyImportActions{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-top:7px}.historyImportHint{font-size:8px;color:#7f8a94;line-height:1.5}
+
 </style>
 </head>
 <body>
@@ -458,6 +462,14 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
         <div class="grid2">
           <div><label>搜索</label><input id="orderSearch" placeholder="球队 / 项目 / 联系人"></div>
           <div><label>筛选状态</label><select id="statusFilter"><option value="">全部状态</option></select></div>
+        </div>
+        <div class="historyImportBox">
+          <label>历史订单私密导入码</label>
+          <textarea id="historyOrderImportCode" placeholder="粘贴 SAGI-HIST1... 导入码"></textarea>
+          <div class="historyImportActions">
+            <button id="historyOrderImportBtn" class="primary" type="button">导入历史订单</button>
+            <span class="historyImportHint">导入码只写入当前浏览器本机订单库，不上传到 GitHub 源码。</span>
+          </div>
         </div>
         <div id="orderList" class="orderList" style="margin-top:10px"></div>
       </div>
@@ -1293,6 +1305,38 @@ function renderQuote(){
  renderLogo()
 }
 
+
+function decodeHistoryOrderCode(raw){
+ try{
+  const code=String(raw||'').trim();if(!code.startsWith('SAGI-HIST1.'))return null;
+  let s=code.slice(11).replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';
+  const bin=atob(s),bytes=Uint8Array.from(bin,ch=>ch.charCodeAt(0)),obj=JSON.parse(new TextDecoder().decode(bytes));
+  return obj&&obj.schema==='SAGI-HISTORY-ORDER-1'&&obj.order?obj.order:null
+ }catch(e){return null}
+}
+function normalizeHistoryOrder(src){
+ const now=Date.now(),o=JSON.parse(JSON.stringify(src||{}));o.id=o.id||uid();o.projectName=o.projectName||((o.teamName||'球队')+' · 历史订单');o.teamName=o.teamName||'历史球队';
+ o.source=o.source||'其他';o.contact=o.contact||'';o.contactInfo=o.contactInfo||'';o.city=o.city||'';o.competition=o.competition||'';o.season=o.season||'';
+ o.shippingRecipient=o.shippingRecipient||'';o.shippingPhone=o.shippingPhone||'';o.shippingAddress=o.shippingAddress||'';o.customerNotes=o.customerNotes||'历史订单补录';
+ o.salesStage=o.salesStage||'已付定金';o.leadTemperature=o.leadTemperature||'hot';o.lastContactDate=o.lastContactDate||'';o.nextFollowUp=o.nextFollowUp||'';o.nextAction=o.nextAction||'等待签收 / 后续补单';o.lostReason='';
+ o.quoteSentAt=o.quoteSentAt||'';o.depositPaidAt=o.depositPaidAt||'';o.followUpHistory=Array.isArray(o.followUpHistory)?o.followUpHistory:[];
+ o.series=o.series||'定制比赛服';o.supplierTier=o.supplierTier||'CLUB';o.ageGroup=o.ageGroup||'adult';o.productType=o.productType||'custom-package';o.priceStrategy=o.priceStrategy||'custom';o.targetMargin=Number(o.targetMargin)||.5;o.salesUnitPrice=Number(o.salesUnitPrice)||0;
+ o.primaryColor=o.primaryColor||'';o.accentColor=o.accentColor||'';o.printFee=Number(o.printFee)||0;o.designFee=Number(o.designFee)||0;o.discount=Number(o.discount)||0;o.poloAddon=Number(o.poloAddon)||0;o.pocketAddon=Number(o.pocketAddon)||0;o.longSleeveAddon=Number(o.longSleeveAddon)||0;o.otherCraftCost=Number(o.otherCraftCost)||0;o.factoryShippingCost=Number(o.factoryShippingCost)||0;o.shippingFee=Number(o.shippingFee)||0;o.shippingZone=o.shippingZone||'remote';o.depositRate=Number(o.depositRate)||.5;
+ o.frontText=o.frontText||'';o.nameRule=o.nameRule||'';o.numberStyle=o.numberStyle||'';o.productNotes=o.productNotes||'';
+ o.roster=Array.isArray(o.roster)?o.roster.map(p=>({id:p.id||uid(),name:p.name||'',number:String(p.number||''),size:p.size||'L',type:p.type||'球员'})):[];
+ o.catalogItems=Array.isArray(o.catalogItems)?o.catalogItems:[];o.packageTargetQty=Number(o.packageTargetQty)||o.roster.length;o.packageTeamSize=Number(o.packageTeamSize)||o.roster.length;o.packageBudget=Number(o.packageBudget)||0;o.packageAge=o.packageAge||'adult';o.packageMargin=Number(o.packageMargin)||.4;
+ o.confirmation={...confirmationDefaults(),...(o.confirmation||{})};o.productionTracker={...productionTrackerDefaults(),...(o.productionTracker||{})};
+ o.publicContact=o.publicContact||'';o.publicQuoteNote=o.publicQuoteNote||'';o.quoteValidDays=Number(o.quoteValidDays)||7;o.quoteShowPackages=o.quoteShowPackages||'no';o.quoteShowPayment=o.quoteShowPayment||'no';o.extraQty=Number(o.extraQty)||0;
+ o.status=o.status||'已发货';o.owner=o.owner||'SAGI';o.calc=o.calc||{qty:o.roster.length,total:Number(o.orderTotal)||0,deposit:Number(o.depositPaid)||0,balance:0,gross:0,grossMargin:0,factoryTotal:0,catalog:{qty:0,cost:0,sales:0,gross:0}};o.updatedAt=now;o.createdAt=o.createdAt||now;
+ return o
+}
+function importHistoryOrder(){
+ const src=decodeHistoryOrderCode(q('historyOrderImportCode').value);if(!src){note('历史订单导入码无效');return}
+ const o=normalizeHistoryOrder(src),exists=state.orders.findIndex(x=>x.id===o.id);
+ if(exists>=0)state.orders[exists]=o;else state.orders.unshift(o);
+ state.currentId=o.id;persist();q('historyOrderImportCode').value='';fill(o);location.hash='#orders';renderAll();note('历史订单已导入 · '+o.teamName)
+}
+
 function orderProductionMeta(o){
  const pt=o&&o.productionTracker;if(!pt||!pt.active)return'';
  const steps=pt.steps||{},done=PRODUCTION_STEPS.filter(s=>steps[s.key]&&steps[s.key].status==='done').length,total=PRODUCTION_STEPS.length,percent=Math.round(done/total*100),today=localDateOnly();
@@ -1339,7 +1383,7 @@ function initSelects(){
 q('teamLogoFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{state.teamLogo=r.result;renderAll()};r.readAsDataURL(f)};
 q('addPlayerBtn').onclick=()=>addPlayer();q('demoRosterBtn').onclick=()=>{state.roster=[];[['AZAMAT','1','XL','门将'],['DIAS','2','L','球员'],['NURLAN','4','XL','球员'],['ALMAS','5','L','球员'],['ERLAN','3','M','球员'],['SULTAN','6','L','球员'],['MARHULAN','8','L','球员'],['ASLAN','10','M','球员'],['DANIYAR','7','L','球员'],['ARDAK','9','XL','球员'],['TIMUR','11','L','球员'],['BEK','12','XL','门将']].forEach(x=>addPlayer({name:x[0],number:x[1],size:x[2],type:x[3]}));note('已载入12人示例名单')};
 q('clearRosterBtn').onclick=()=>{state.roster=[];renderRoster();renderAll()};q('saveOrderBtn').onclick=saveOrder;q('quoteSaveBtn').onclick=saveOrder;q('newOrderBtn').onclick=()=>{blank();location.hash='#customer';note('已新建销售项目')};q('printBtn').onclick=()=>window.print();q('quoteReorderBtn').onclick=()=>{const src=state.orders.find(x=>x.id===state.currentId)||collect();createReorder(src)};
-q('salesStage').onchange=()=>{if(q('salesStage').value==='未成交'&&!q('lostReason').value)note('请补充未成交原因');persistSalesActivity();renderAll()};q('lostReason').onchange=()=>{if(q('lostReason').value)q('salesStage').value='未成交';persistSalesActivity();renderAll()};q('nextFollowUp').onchange=()=>{persistSalesActivity();renderAll()};q('leadTemperature').onchange=()=>{persistSalesActivity();renderAll()};q('orderSearch').oninput=renderOrders;q('statusFilter').onchange=renderOrders;q('orderStatus').onchange=renderAll;q('extraQty').oninput=()=>{state.packageTargetQty=0;renderAll()};
+q('salesStage').onchange=()=>{if(q('salesStage').value==='未成交'&&!q('lostReason').value)note('请补充未成交原因');persistSalesActivity();renderAll()};q('lostReason').onchange=()=>{if(q('lostReason').value)q('salesStage').value='未成交';persistSalesActivity();renderAll()};q('nextFollowUp').onchange=()=>{persistSalesActivity();renderAll()};q('leadTemperature').onchange=()=>{persistSalesActivity();renderAll()};q('historyOrderImportBtn').onclick=importHistoryOrder;q('orderSearch').oninput=renderOrders;q('statusFilter').onchange=renderOrders;q('orderStatus').onchange=renderAll;q('extraQty').oninput=()=>{state.packageTargetQty=0;renderAll()};
 ['supplierTier','ageGroup'].forEach(id=>q(id).addEventListener('change',()=>{const tier=SUPPLIER_CATALOG[q('supplierTier').value],age=q('ageGroup').value==='child'?'child':'adult';q('priceStrategy').value=(tier&&SAGI_FIXED_PRICE[tier.name]&&SAGI_FIXED_PRICE[tier.name][age]!=null)?'fixed':'margin';syncPriceEngine(true);renderAll()}));['productType','priceStrategy','targetMargin','poloAddon','pocketAddon','longSleeveAddon','shippingZone'].forEach(id=>q(id).addEventListener('change',()=>{syncPriceEngine(true);renderAll()}));['otherCraftCost','factoryShippingCost'].forEach(id=>q(id).addEventListener('input',()=>{syncPriceEngine(true);renderAll()}));q('salesUnitPrice').addEventListener('input',renderAll);
 document.querySelectorAll('input,select,textarea').forEach(el=>{if(!['orderSearch','statusFilter','teamLogoFile'].includes(el.id))el.addEventListener('input',()=>{if(el.id==='orderStatus')return;renderAll()});if(el.tagName==='SELECT'&&!['statusFilter','orderStatus'].includes(el.id))el.addEventListener('change',renderAll)});
 q('followGenerateBtn').onclick=generateFollowUpMessage;q('followCopyBtn').onclick=copyFollowUpMessage;q('followContactedBtn').onclick=markFollowUpContacted;q('followScheduleBtn').onclick=scheduleNextFollowUp;initQuickOutcomes();q('followTone').onchange=()=>{if(q('followMessage').value.trim())generateFollowUpMessage()};q('followGoal').onchange=()=>{if(q('followMessage').value.trim())generateFollowUpMessage()};
