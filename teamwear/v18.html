@@ -880,7 +880,7 @@ function addActivity(kind,title,meta=''){
  state.currentActivityTimeline.unshift({id:uid(),kind:kind||'note',title:String(title||'订单事件'),meta:String(meta||''),at:new Date().toLocaleString('zh-CN'),ts:Date.now()});
  state.currentActivityTimeline=state.currentActivityTimeline.slice(0,100)
 }
-function compressImageFile(file,maxSide=1280,quality=.72){
+function compressImageFile(file,maxSide=960,quality=.64){
  return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onerror=reject;reader.onload=()=>{const img=new Image();img.onerror=reject;img.onload=()=>{let w=img.width,h=img.height,scale=Math.min(1,maxSide/Math.max(w,h));w=Math.max(1,Math.round(w*scale));h=Math.max(1,Math.round(h*scale));const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;const ctx=canvas.getContext('2d');ctx.drawImage(img,0,0,w,h);resolve(canvas.toDataURL('image/jpeg',quality))};img.src=reader.result};reader.readAsDataURL(file)})
 }
 function downloadJson(filename,obj){
@@ -898,7 +898,7 @@ function importBackupFile(file){
  }catch(e){note('备份文件无效或已损坏')}};reader.readAsText(file)
 }
 
-function persist(){localStorage.setItem(STORAGE_KEY,JSON.stringify({orders:state.orders}))}
+function persist(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify({orders:state.orders}));return true}catch(e){note('本机存储空间不足：请先导出备份，再删除不必要的大图或旧订单');return false}}
 function loadState(){try{let x=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');if(!x)x=JSON.parse(localStorage.getItem(LEGACY_KEY)||'null');if(!x)x=JSON.parse(localStorage.getItem(LEGACY_KEY_V11)||'null');if(!x)x=JSON.parse(localStorage.getItem(LEGACY_KEY_V10)||'null');if(x&&Array.isArray(x.orders))state.orders=x.orders;const cp=JSON.parse(localStorage.getItem(COST_PROFILE_KEY)||'{}');state.costOverrides=cp&&typeof cp==='object'?cp:{}}catch(e){state.costOverrides={}}}
 
 
@@ -1464,7 +1464,7 @@ function createSmartReorder(){
  const src=state.orders.find(x=>x.id===state.currentId);if(!src){note('请先打开已保存订单');return}
  const selected=[...document.querySelectorAll('[data-reorder-player]:checked')].map(el=>el.dataset.reorderPlayer),players=(src.roster||[]).filter(p=>selected.includes(p.id));
  if(!players.length){note('请至少勾选一名补单球员');return}
- const o=JSON.parse(JSON.stringify(src));o.id=uid();o.projectName=(src.teamName||'球队')+' · 智能补单 '+new Date().toLocaleDateString('zh-CN');o.status='线索';o.salesStage='有意向';o.lastContactDate=localDateOnly();o.nextFollowUp=addDaysDate(localDateOnly(),1);o.nextAction='确认补单数量与价格';o.lostReason='';o.quoteSentAt='';o.depositPaidAt='';o.followUpHistory=[];o.activityTimeline=[];o.discount=0;o.extraQty=0;o.packageTargetQty=players.length;o.packageTeamSize=players.length;o.confirmation=confirmationDefaults();o.productionTracker=productionTrackerDefaults();o.actualOrderTotal=0;o.actualCostTotal=0;o.feedbackStatus='';o.customerFeedback='';o.mediaArchive=JSON.parse(JSON.stringify(source.mediaArchive||{}));o.updatedAt=Date.now();o.createdAt=Date.now();o.roster=players.map(p=>({...p,id:uid()}));o.catalogItems=(o.catalogItems||[]).map(x=>({...x,id:uid(),qty:0}));o.actualOrderTotal=0;o.actualCostTotal=0;o.feedbackStatus='';o.customerFeedback='';o.mediaArchive=JSON.parse(JSON.stringify(src.mediaArchive||{}));state.currentActivityTimeline=[];addActivity('reorder','创建智能补单','继承原订单 · '+players.length+' 名球员');o.activityTimeline=JSON.parse(JSON.stringify(state.currentActivityTimeline));state.orders.unshift(o);persist();fill(o);location.hash='#customer';note('已创建智能补单 · '+players.length+' 人')
+ const o=JSON.parse(JSON.stringify(src));o.id=uid();o.projectName=(src.teamName||'球队')+' · 智能补单 '+new Date().toLocaleDateString('zh-CN');o.status='线索';o.salesStage='有意向';o.lastContactDate=localDateOnly();o.nextFollowUp=addDaysDate(localDateOnly(),1);o.nextAction='确认补单数量与价格';o.lostReason='';o.quoteSentAt='';o.depositPaidAt='';o.followUpHistory=[];o.activityTimeline=[];o.discount=0;o.extraQty=0;o.packageTargetQty=players.length;o.packageTeamSize=players.length;o.confirmation=confirmationDefaults();o.productionTracker=productionTrackerDefaults();o.actualOrderTotal=0;o.actualCostTotal=0;o.feedbackStatus='';o.customerFeedback='';o.updatedAt=Date.now();o.createdAt=Date.now();o.roster=players.map(p=>({...p,id:uid()}));o.catalogItems=(o.catalogItems||[]).map(x=>({...x,id:uid(),qty:0}));o.mediaArchive={design:src.mediaArchive?.design||'',jersey:src.mediaArchive?.jersey||'',delivery:''};state.currentActivityTimeline=[];addActivity('reorder','创建智能补单','继承原订单 · '+players.length+' 名球员');o.activityTimeline=JSON.parse(JSON.stringify(state.currentActivityTimeline));state.orders.unshift(o);persist();fill(o);location.hash='#customer';note('已创建智能补单 · '+players.length+' 人')
 }
 function initArchiveTools(){
  ['actualOrderTotal','actualCostTotal','feedbackStatus','customerFeedback'].forEach(id=>q(id).addEventListener('change',()=>{renderOrderArchive();if(state.currentId)persistSalesActivity()}));
@@ -1505,7 +1505,7 @@ function saveOrder(silent=false){
  const idx=state.orders.findIndex(x=>x.id===o.id);if(idx>=0)state.orders[idx]=o;else state.orders.unshift(o);state.currentId=o.id;persist();renderAll();if(!silent)note(idx>=0?'订单已更新':'订单已保存')
 }
 function createReorder(source){
- const o=JSON.parse(JSON.stringify(source));o.id=uid();o.projectName=(source.teamName||'球队')+' · 补单 '+new Date().toLocaleDateString('zh-CN');o.status='线索';o.salesStage='新线索';o.lastContactDate='';o.nextFollowUp='';o.nextAction='联系球队确认补单需求';o.lostReason='';o.quoteSentAt='';o.depositPaidAt='';o.followUpHistory=[];o.activityTimeline=[];o.discount=0;o.extraQty=0;o.packageTargetQty=0;o.confirmation=confirmationDefaults();o.productionTracker=productionTrackerDefaults();o.updatedAt=Date.now();o.createdAt=Date.now();o.roster=[];o.catalogItems=(o.catalogItems||[]).map(x=>({...x,id:uid(),qty:0}));fill(o);note('已创建补单项目 · 添加需要补货的球员')
+ const o=JSON.parse(JSON.stringify(source));o.id=uid();o.projectName=(source.teamName||'球队')+' · 补单 '+new Date().toLocaleDateString('zh-CN');o.status='线索';o.salesStage='新线索';o.lastContactDate='';o.nextFollowUp='';o.nextAction='联系球队确认补单需求';o.lostReason='';o.quoteSentAt='';o.depositPaidAt='';o.followUpHistory=[];o.activityTimeline=[];o.discount=0;o.extraQty=0;o.packageTargetQty=0;o.confirmation=confirmationDefaults();o.productionTracker=productionTrackerDefaults();o.actualOrderTotal=0;o.actualCostTotal=0;o.feedbackStatus='';o.customerFeedback='';o.mediaArchive={design:source.mediaArchive?.design||'',jersey:source.mediaArchive?.jersey||'',delivery:''};o.updatedAt=Date.now();o.createdAt=Date.now();o.roster=[];o.catalogItems=(o.catalogItems||[]).map(x=>({...x,id:uid(),qty:0}));fill(o);note('已创建补单项目 · 添加需要补货的球员')
 }
 function renderKpis(){
  const teams=new Set(state.orders.map(o=>o.teamName).filter(Boolean)).size,active=state.orders.filter(o=>o.status!=='已完成').length,revenue=state.orders.reduce((a,o)=>a+(o.calc?.total||0),0),balance=state.orders.reduce((a,o)=>a+(o.calc?.balance||0),0);
