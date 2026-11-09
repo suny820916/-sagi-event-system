@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: sagi-cloud-bridge
+    runtime: docker
+    rootDir: sagi-cloud-bridge
+    plan: starter
+    autoDeploy: true
+    envVars:
+      - key: SAGI_BRIDGE_TOKEN
+        generateValue: true
+      - key: SAGI_MAX_FILE_MB
+        value: "500"
+      - key: SAGI_JOB_TTL_MIN
+        value: "30"
