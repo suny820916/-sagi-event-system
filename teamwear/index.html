@@ -99,13 +99,24 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
 .salesFields{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}.salesReasonWrap{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.salesBadge{display:inline-flex;padding:5px 8px;border-radius:999px;border:1px solid #3d4650;font-size:8px;color:#9ca6af;font-weight:1000}.salesBadge.hot{border-color:#6b562d;color:#e1c272;background:#241d0d}
 @media(max-width:1050px){.salesKpis{grid-template-columns:1fr 1fr 1fr}.salesCenterGrid{grid-template-columns:1fr}.salesFields{grid-template-columns:1fr 1fr}.followItem{grid-template-columns:1fr 1fr}}@media(max-width:650px){.salesKpis,.salesFields,.salesReasonWrap{grid-template-columns:1fr}.followItem{grid-template-columns:1fr}.sourceRow{grid-template-columns:1fr 46px 46px 55px}}
 
+
+/* ===== V1.8 FOLLOW-UP ASSISTANT ===== */
+.followAssistant{margin-top:10px;padding:12px;border:1px solid #4a4434;border-radius:14px;background:linear-gradient(145deg,#12110c,#0a0f13)}
+.followAssistantHead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.followAssistantHead h3{margin:0;font-size:12px}.followTarget{font-size:9px;color:#d8be73;font-weight:1000}
+.followControls{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px}.followMessage{margin-top:8px;min-height:150px;line-height:1.75}
+.followActions{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}.followActions button{min-height:38px}.followHistory{display:grid;gap:6px;margin-top:10px;max-height:210px;overflow:auto}
+.followHistoryItem{padding:8px 10px;border:1px solid #29343c;border-radius:9px;background:#090d11}.followHistoryItem b{font-size:9px}.followHistoryItem span{display:block;margin-top:3px;color:#74808a;font-size:8px}.followHistoryItem p{margin:6px 0 0;color:#9ca6af;font-size:8px;line-height:1.55;white-space:pre-wrap}
+.followScore{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:9px}.followScoreBox{padding:8px;border:1px solid #303a43;border-radius:9px;background:#090d11}.followScoreBox span{display:block;color:#72808b;font-size:8px}.followScoreBox b{display:block;margin-top:4px;font-size:12px}
+.followQueueActions{display:flex;gap:5px}.followQueueActions button{padding:7px 8px;font-size:8px}
+@media(max-width:850px){.followControls,.followScore{grid-template-columns:1fr 1fr}}@media(max-width:560px){.followControls,.followScore{grid-template-columns:1fr}}
+
 </style>
 </head>
 <body>
 <div class="app">
   <div class="top">
     <div><div class="brand">SAGI TEAMWEAR SALES SYSTEM</div><div class="sub">球队建档 · 产品方案 · 球员名单 · 报价 · 订单 · 补单</div></div>
-    <div class="ver">V1.7 · SALES CONVERSION CENTER</div>
+    <div class="ver">V1.8 · FOLLOW-UP ASSISTANT</div>
   </div>
   <div class="nav">
     <a href="#customer">球队建档</a><a href="#product">比赛服引擎</a><a href="#costProfile">成本档案</a><a href="#packageBuilder">套餐生成</a><a href="#catalog">产品目录</a><a href="#rosterCard">球员名单</a><a href="#orderConfirmation">订单确认</a><a href="#productionTracker">生产追踪</a><a href="#orders">订单管理</a><a href="#customerQuotationMode">客户模式</a><a href="#quoteCard">报价单</a>
@@ -138,6 +149,31 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
         <h3 style="margin-top:14px">客户来源转化</h3>
         <div id="salesSourceTable" class="sourceTable"></div>
       </div>
+    </div>
+    <div id="followUpAssistant" class="followAssistant">
+      <div class="followAssistantHead">
+        <div><h3>跟进助手 · FOLLOW-UP ASSISTANT</h3><div class="tiny" style="margin-top:4px">根据客户阶段、预算、报价和未成交原因生成微信话术</div></div>
+        <div id="followTarget" class="followTarget">请先打开一支球队</div>
+      </div>
+      <div class="followScore">
+        <div class="followScoreBox"><span>当前阶段</span><b id="followStageView">—</b></div>
+        <div class="followScoreBox"><span>报价距今</span><b id="followQuoteAge">—</b></div>
+        <div class="followScoreBox"><span>预计订单</span><b id="followOrderValue">¥0</b></div>
+        <div class="followScoreBox"><span>已跟进次数</span><b id="followCount">0</b></div>
+      </div>
+      <div class="followControls">
+        <div><label>话术语气</label><select id="followTone"><option value="friend" selected>熟人 / 足球圈自然沟通</option><option value="pro">专业简洁</option><option value="short">超短微信</option></select></div>
+        <div><label>这次目标</label><select id="followGoal"><option value="auto" selected>系统自动判断</option><option value="reply">让客户回复</option><option value="budget">确认人数与预算</option><option value="package">推动选择A/B/C</option><option value="deposit">推动支付定金</option><option value="reactivate">重新唤醒客户</option></select></div>
+        <div><label>下次跟进</label><select id="followNextDays"><option value="1">明天</option><option value="2">2天后</option><option value="3" selected>3天后</option><option value="7">7天后</option></select></div>
+      </div>
+      <textarea id="followMessage" class="followMessage" placeholder="打开客户后点击“生成跟进话术”"></textarea>
+      <div class="followActions">
+        <button id="followGenerateBtn" class="blue" type="button">生成跟进话术</button>
+        <button id="followCopyBtn" class="primary" type="button">复制微信话术</button>
+        <button id="followContactedBtn" type="button">标记已联系并记录</button>
+        <button id="followScheduleBtn" type="button">只安排下次跟进</button>
+      </div>
+      <div style="margin-top:10px"><label>最近跟进记录</label><div id="followHistory" class="followHistory"></div></div>
     </div>
   </div>
 
@@ -514,7 +550,7 @@ const NEGOTIATED_APPAREL_DISCOUNT=5;
 const SAGI_FIXED_PRICE={CLUB:{adult:79}};
 const STAGES=['线索','设计沟通','已报价','客户已确认','已收定金','生产中','质检','已发货','已完成'];
 const SALES_STAGES=['新线索','已联系','有意向','已报价','已查看报价','已确认','已付定金','未成交'];
-let state={orders:[],currentId:null,teamLogo:'',roster:[],catalogItems:[],costOverrides:{},packagePlans:[],packageTargetQty:0,lastCustomerQuoteLink:'',confirmation:{},productionTracker:{},currentQuoteSentAt:'',currentDepositPaidAt:''};
+let state={orders:[],currentId:null,teamLogo:'',roster:[],catalogItems:[],costOverrides:{},packagePlans:[],packageTargetQty:0,lastCustomerQuoteLink:'',confirmation:{},productionTracker:{},currentQuoteSentAt:'',currentDepositPaidAt:'',currentFollowUpHistory:[]};
 
 function uid(){return 'tw_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7)}
 function money(n){return '¥'+Math.round(Number(n)||0).toLocaleString('zh-CN')}
@@ -563,8 +599,8 @@ function renderSalesDashboard(){
  if(!queue.length){w.innerHTML='<div class="empty">暂无待跟进销售线索。</div>'}
  queue.forEach(o=>{const urgent=salesUrgency(o)<=2,expiry=orderQuoteExpiry(o),el=document.createElement('div');el.className='followItem'+(urgent?' urgent':'');
    const meta=[o.city,o.contact,o.nextFollowUp?('跟进 '+o.nextFollowUp):'',expiry?('报价到期 '+expiry):''].filter(Boolean).join(' · ');
-   el.innerHTML='<div><div class="followName">'+escapeHtml(o.teamName||o.projectName||'未命名客户')+'</div><div class="followMeta">'+escapeHtml(meta)+'</div></div><div class="followStage">'+escapeHtml(o.salesStage||'新线索')+'</div><div class="followAction">'+escapeHtml(o.nextAction||defaultNextAction(o))+'</div><button type="button">打开</button>';
-   el.querySelector('button').onclick=()=>{fill(o);location.hash='#customer';note('已打开 '+(o.teamName||o.projectName))};w.appendChild(el)
+   el.innerHTML='<div><div class="followName">'+escapeHtml(o.teamName||o.projectName||'未命名客户')+'</div><div class="followMeta">'+escapeHtml(meta)+'</div></div><div class="followStage">'+escapeHtml(o.salesStage||'新线索')+'</div><div class="followAction">'+escapeHtml(o.nextAction||defaultNextAction(o))+'</div><div class="followQueueActions"><button data-script type="button">话术</button><button data-open type="button">打开</button></div>';
+   el.querySelector('[data-script]').onclick=()=>openFollowUpForOrder(o);el.querySelector('[data-open]').onclick=()=>{fill(o);location.hash='#customer';note('已打开 '+(o.teamName||o.projectName))};w.appendChild(el)
  });
  const funnelStages=['新线索','已联系','有意向','已报价','已确认','已付定金'],counts={};
  counts['新线索']=d.orders.length;
@@ -577,6 +613,100 @@ function renderSalesDashboard(){
  const by={};d.orders.forEach(o=>{const src=o.source||'其他';by[src]=by[src]||{leads:0,quoted:0,won:0};by[src].leads++;if(isSalesQuoted(o))by[src].quoted++;if(isSalesWon(o))by[src].won++});
  const rows=Object.entries(by).sort((a,b)=>b[1].leads-a[1].leads);q('salesSourceTable').innerHTML='<div class="sourceRow head"><div>来源</div><div>线索</div><div>成交</div><div>转化率</div></div>'+rows.map(([src,x])=>'<div class="sourceRow"><div>'+escapeHtml(src)+'</div><b>'+x.leads+'</b><b>'+x.won+'</b><b>'+(x.leads?Math.round(x.won/x.leads*100):0)+'%</b></div>').join('');
 }
+
+function currentSalesOrder(){
+ if(state.currentId){const o=state.orders.find(x=>x.id===state.currentId);if(o)return{...o,salesStage:q('salesStage').value,leadTemperature:q('leadTemperature').value,nextFollowUp:q('nextFollowUp').value,nextAction:text('nextAction'),lostReason:q('lostReason').value,calc:calc(),packageTeamSize:n('packageTeamSize'),packageBudget:n('packageBudget')}}
+ if(text('teamName'))return collect();return null
+}
+function followQuoteAgeDays(o){
+ if(!o?.quoteSentAt)return null;const d=new Date(o.quoteSentAt);if(Number.isNaN(d.getTime()))return null;return Math.max(0,Math.floor((Date.now()-d.getTime())/86400000))
+}
+function followBestPackage(){
+ if(!state.packagePlans?.length)return null;
+ const budget=Math.max(1,n('packageBudget')||200),under=state.packagePlans.filter(x=>x.plan&&x.plan.perPerson<=budget);
+ return (under.find(x=>x.kind==='recommended')||under.sort((a,b)=>b.plan.perPerson-a.plan.perPerson)[0]||state.packagePlans.find(x=>x.kind==='recommended')||state.packagePlans[0])||null
+}
+function followGoalAuto(o){
+ const s=o.salesStage||'新线索';
+ if(s==='新线索'||s==='已联系')return'budget';
+ if(s==='有意向')return'package';
+ if(s==='已报价'||s==='已查看报价')return'package';
+ if(s==='已确认')return'deposit';
+ if(s==='未成交')return'reactivate';
+ return'reply'
+}
+function followGreeting(o,tone){
+ const name=(o.contact||'').trim();
+ if(tone==='pro')return name?(name+'，您好。'):'您好。';
+ if(tone==='short')return name?(name+'，'):'你好，';
+ return name?(name+'哥，'):'哥，'
+}
+function followMessageParts(o,goal,tone){
+ const team=o.teamName||'你们球队',qty=Number(o.packageTeamSize)||Number(o.calc?.qty)||0,budget=Number(o.packageBudget)||0,quoteAge=followQuoteAgeDays(o),best=followBestPackage(),bestLabel=best?.label||'推荐方案',bestPP=best?.plan?.perPerson||0,total=Number(o.calc?.total)||0,deposit=Number(o.calc?.deposit)||0;
+ const intro=followGreeting(o,tone),short=tone==='short',pro=tone==='pro';
+ if(goal==='budget'){
+  if(short)return intro+'想确认一下，'+team+'这次大概多少人、每人预算控制在多少？我按预算直接给你配3套方案。';
+  if(pro)return intro+'想确认一下'+team+'本次预计人数和人均装备预算。我可以按预算直接整理基础、推荐、升级三套方案，方便你们内部快速选择。';
+  return intro+'想跟你确认一下，'+team+'这次大概多少个人？每个人预算准备控制在多少？你把人数和预算告诉我，我直接给你配A/B/C三套，省得你们自己一件一件凑。';
+ }
+ if(goal==='package'){
+  const age=quoteAge==null?'前面给你的方案':quoteAge===0?'今天发你的方案':quoteAge===1?'昨天发你的方案':('前'+quoteAge+'天发你的方案');
+  if(short)return intro+age+'看了吗？我更建议'+bestLabel+(bestPP?('，大概'+money(bestPP)+'/人'):'')+'。你们如果方向可以，我就继续往设计稿推进。';
+  if(pro)return intro+age+'想跟进一下。结合'+(qty?qty+'人':'你们球队')+(budget?('、人均预算'+money(budget)):'')+'，我目前更推荐'+bestLabel+(bestPP?('（约'+money(bestPP)+'/人）'):'')+'。如果方向认可，我这边可以继续进入配色和设计确认。';
+  return intro+age+'你看了吗？按你们'+(qty?qty+'个人':'现在的情况')+(budget?('、预算大概'+money(budget)+'/人'):'')+'，我还是比较推荐'+bestLabel+(bestPP?('，差不多'+money(bestPP)+'/人'):'')+'，预算基本能控制住，该有的也都有。你觉得这个方向可以的话，我就直接往具体配色和设计稿推进。';
+ }
+ if(goal==='deposit'){
+  if(short)return intro+'方案已经确认了，我这边收到定金就可以锁定设计和排产。应付定金大概'+money(deposit)+'，你看今天方便安排吗？';
+  if(pro)return intro+'目前方案与金额已经确认。按当前订单，定金为'+money(deposit)+'。定金到账后我这边会锁定最终设计稿、尺码名单并进入排产流程。方便的话今天可以安排一下。';
+  return intro+'你们方案这边已经确认了，下一步就是定金到账后我给你们锁设计和排产。现在这单定金是'+money(deposit)+'，你这边方便的话今天安排一下，我收到后就继续往下走，不耽误交期。';
+ }
+ if(goal==='reactivate'){
+  const reason=o.lostReason||'之前暂时没定';
+  if(short)return intro+'前面球衣的事情后来还准备做吗？如果预算或方案有变化，我可以重新给你配一版。';
+  if(reason==='价格高')return intro+'之前你觉得预算有点高，我又重新想了一下。我们可以不牺牲球队整体效果，把产品档位和组合重新配一下，先把人均预算压到你们能接受的范围。你告诉我现在大概想控制到多少，我重新给你出三套。';
+  if(reason==='负责人未决定')return intro+'之前你说还要等负责人一起定，我想问下现在有没有往前推进？如果需要，我可以把方案再简化成三档价格，让你们内部更容易直接选。';
+  if(reason==='已有供应商')return intro+'之前你们有固定供应商我理解。后面如果有补单、第二套比赛服或者新赛季想换设计，也可以把SAGI当一个备选，我可以先按你们现有预算给一套方案，不影响你们现在的合作。';
+  return intro+'前面'+reason+'，我就没一直催你。现在想问一下，你们球衣这件事还准备继续做吗？如果人数、预算或者时间有变化，我可以按现在的情况重新配一套方案。';
+ }
+ // reply
+ if(short)return intro+'球衣这边还有什么没确定的？你告诉我卡在哪，我直接帮你解决。';
+ if(pro)return intro+'想确认一下目前球衣项目还有哪一项没有确定。无论是预算、款式、交期还是尺码，我都可以按你们现在的情况直接调整方案。';
+ return intro+'球衣这边你们现在主要还卡在哪一块？预算、款式、交期还是内部没统一？你直接告诉我，我按那个问题帮你把方案改掉，别让你们来回折腾。';
+}
+function generateFollowUpMessage(){
+ const o=currentSalesOrder();if(!o){note('请先打开或新建一支球队');return}
+ const tone=q('followTone').value,selected=q('followGoal').value,goal=selected==='auto'?followGoalAuto(o):selected,msg=followMessageParts(o,goal,tone);
+ q('followMessage').value=msg;renderFollowUpAssistant()
+}
+async function copyFollowUpMessage(){
+ if(!q('followMessage').value.trim())generateFollowUpMessage();const msg=q('followMessage').value.trim();if(!msg)return;
+ try{await navigator.clipboard.writeText(msg);note('微信跟进话术已复制')}catch(e){q('followMessage').focus();q('followMessage').select();document.execCommand('copy');note('微信跟进话术已复制')}
+}
+function addFollowUpHistory(kind,message){
+ state.currentFollowUpHistory=Array.isArray(state.currentFollowUpHistory)?state.currentFollowUpHistory:[];
+ state.currentFollowUpHistory.unshift({id:uid(),at:new Date().toLocaleString('zh-CN'),date:localDateOnly(),kind:kind||'跟进',message:String(message||'').trim()});state.currentFollowUpHistory=state.currentFollowUpHistory.slice(0,30)
+}
+function markFollowUpContacted(){
+ const o=currentSalesOrder();if(!o){note('请先打开客户');return}
+ let msg=q('followMessage').value.trim();if(!msg){generateFollowUpMessage();msg=q('followMessage').value.trim()}
+ q('lastContactDate').value=localDateOnly();const days=Math.max(1,Number(q('followNextDays').value)||3);q('nextFollowUp').value=addDaysDate(localDateOnly(),days);
+ if(q('salesStage').value==='新线索')q('salesStage').value='已联系';
+ q('nextAction').value=defaultNextAction({...o,salesStage:q('salesStage').value});
+ addFollowUpHistory('微信跟进',msg);persistSalesActivity();renderFollowUpAssistant();renderAll();note('已记录本次跟进 · '+days+'天后提醒')
+}
+function scheduleNextFollowUp(){
+ const o=currentSalesOrder();if(!o){note('请先打开客户');return}const days=Math.max(1,Number(q('followNextDays').value)||3);q('nextFollowUp').value=addDaysDate(localDateOnly(),days);persistSalesActivity();renderFollowUpAssistant();renderAll();note('已安排 '+days+' 天后跟进')
+}
+function renderFollowUpAssistant(){
+ if(!q('followUpAssistant'))return;const o=currentSalesOrder(),hist=state.currentFollowUpHistory||[];
+ q('followTarget').textContent=o?(o.teamName||o.projectName||'当前客户'):'请先打开一支球队';
+ q('followStageView').textContent=o?(o.salesStage||'新线索'):'—';const age=o?followQuoteAgeDays(o):null;q('followQuoteAge').textContent=age==null?'未报价':age+'天';q('followOrderValue').textContent=money(o?.calc?.total||0);q('followCount').textContent=hist.length;
+ const w=q('followHistory');w.innerHTML=hist.length?hist.slice(0,8).map(x=>'<div class="followHistoryItem"><b>'+escapeHtml(x.kind||'跟进')+'</b><span>'+escapeHtml(x.at||x.date||'')+'</span><p>'+escapeHtml(x.message||'')+'</p></div>').join(''):'<div class="empty">还没有跟进记录。</div>'
+}
+function openFollowUpForOrder(o){
+ fill(o);location.hash='#followUpAssistant';setTimeout(()=>{generateFollowUpMessage();q('followMessage').focus()},0)
+}
+
 function updateSalesStageAuto(stage,opts={}){
  if(!q('salesStage'))return;q('salesStage').value=stage;
  if(opts.contactToday){q('lastContactDate').value=localDateOnly()}
@@ -584,7 +714,7 @@ function updateSalesStageAuto(stage,opts={}){
 }
 function persistSalesActivity(){
  if(!state.currentId)return;const o=state.orders.find(x=>x.id===state.currentId);if(!o)return;
- o.salesStage=q('salesStage').value;o.leadTemperature=q('leadTemperature').value;o.lastContactDate=q('lastContactDate').value;o.nextFollowUp=q('nextFollowUp').value;o.nextAction=text('nextAction');o.lostReason=q('lostReason').value;o.quoteSentAt=state.currentQuoteSentAt||o.quoteSentAt||'';o.depositPaidAt=state.currentDepositPaidAt||o.depositPaidAt||'';o.confirmation=JSON.parse(JSON.stringify(currentConfirmation()));o.updatedAt=Date.now();persist();renderSalesDashboard();renderOrders();renderKpis()
+ o.salesStage=q('salesStage').value;o.leadTemperature=q('leadTemperature').value;o.lastContactDate=q('lastContactDate').value;o.nextFollowUp=q('nextFollowUp').value;o.nextAction=text('nextAction');o.lostReason=q('lostReason').value;o.quoteSentAt=state.currentQuoteSentAt||o.quoteSentAt||'';o.depositPaidAt=state.currentDepositPaidAt||o.depositPaidAt||'';o.confirmation=JSON.parse(JSON.stringify(currentConfirmation()));o.followUpHistory=JSON.parse(JSON.stringify(state.currentFollowUpHistory||[]));o.updatedAt=Date.now();persist();renderSalesDashboard();renderOrders();renderKpis()
 }
 
 function persist(){localStorage.setItem(STORAGE_KEY,JSON.stringify({orders:state.orders}))}
@@ -795,21 +925,21 @@ function calc(){
 }
 function collect(){
  const c=calc();return{
-  id:state.currentId||uid(),projectName:text('projectName')||((text('teamName')||'球队')+' 球服项目'),teamName:text('teamName'),source:q('source').value,contact:text('contact'),contactInfo:text('contactInfo'),city:text('city'),competition:text('competition'),season:text('season'),deadline:q('deadline').value,teamLogo:state.teamLogo,customerNotes:q('customerNotes').value.trim(),salesStage:q('salesStage').value,leadTemperature:q('leadTemperature').value,lastContactDate:q('lastContactDate').value,nextFollowUp:q('nextFollowUp').value,nextAction:text('nextAction'),lostReason:q('lostReason').value,quoteSentAt:state.currentQuoteSentAt||'',depositPaidAt:state.currentDepositPaidAt||'',
+  id:state.currentId||uid(),projectName:text('projectName')||((text('teamName')||'球队')+' 球服项目'),teamName:text('teamName'),source:q('source').value,contact:text('contact'),contactInfo:text('contactInfo'),city:text('city'),competition:text('competition'),season:text('season'),deadline:q('deadline').value,teamLogo:state.teamLogo,customerNotes:q('customerNotes').value.trim(),salesStage:q('salesStage').value,leadTemperature:q('leadTemperature').value,lastContactDate:q('lastContactDate').value,nextFollowUp:q('nextFollowUp').value,nextAction:text('nextAction'),lostReason:q('lostReason').value,quoteSentAt:state.currentQuoteSentAt||'',depositPaidAt:state.currentDepositPaidAt||'',followUpHistory:JSON.parse(JSON.stringify(state.currentFollowUpHistory||[])),
   series:q('series').value,supplierTier:q('supplierTier').value,ageGroup:q('ageGroup').value,productType:q('productType').value,priceStrategy:q('priceStrategy').value,targetMargin:Number(q('targetMargin').value)||.5,salesUnitPrice:n('salesUnitPrice'),primaryColor:text('primaryColor'),accentColor:text('accentColor'),printFee:n('printFee'),designFee:n('designFee'),discount:n('discount'),poloAddon:n('poloAddon'),pocketAddon:n('pocketAddon'),longSleeveAddon:n('longSleeveAddon'),otherCraftCost:n('otherCraftCost'),factoryShippingCost:n('factoryShippingCost'),shippingFee:n('shippingFee'),shippingZone:q('shippingZone').value,depositRate:Number(q('depositRate').value)||.5,frontText:text('frontText'),nameRule:text('nameRule'),numberStyle:text('numberStyle'),productNotes:q('productNotes').value.trim(),
   roster:JSON.parse(JSON.stringify(state.roster)),catalogItems:JSON.parse(JSON.stringify(state.catalogItems)),packageTargetQty:state.packageTargetQty||0,packageTeamSize:n('packageTeamSize'),packageBudget:n('packageBudget'),packageAge:q('packageAge').value,packageMargin:Number(q('packageMargin').value)||.4,confirmation:JSON.parse(JSON.stringify(currentConfirmation())),productionTracker:JSON.parse(JSON.stringify(currentProductionTracker())),publicContact:text('publicContact'),publicQuoteNote:q('publicQuoteNote').value.trim(),quoteValidDays:Number(q('quoteValidDays').value)||7,quoteShowPackages:q('quoteShowPackages').value,quoteShowPayment:q('quoteShowPayment').value,extraQty:n('extraQty'),status:q('orderStatus').value,owner:text('owner')||'SAGI',calc:c,updatedAt:Date.now(),createdAt:state.currentId?(state.orders.find(x=>x.id===state.currentId)?.createdAt||Date.now()):Date.now()
  }}
 function fill(o){
- state.currentId=o.id||null;state.teamLogo=o.teamLogo||'';state.currentQuoteSentAt=o.quoteSentAt||'';state.currentDepositPaidAt=o.depositPaidAt||'';state.roster=Array.isArray(o.roster)?JSON.parse(JSON.stringify(o.roster)):[];state.catalogItems=Array.isArray(o.catalogItems)?JSON.parse(JSON.stringify(o.catalogItems)):[];state.packageTargetQty=Number(o.packageTargetQty)||0;state.confirmation={...confirmationDefaults(),...(o.confirmation||{})};state.productionTracker={...productionTrackerDefaults(),...(o.productionTracker||{})};
+ state.currentId=o.id||null;state.teamLogo=o.teamLogo||'';state.currentQuoteSentAt=o.quoteSentAt||'';state.currentDepositPaidAt=o.depositPaidAt||'';state.currentFollowUpHistory=Array.isArray(o.followUpHistory)?JSON.parse(JSON.stringify(o.followUpHistory)):[];state.roster=Array.isArray(o.roster)?JSON.parse(JSON.stringify(o.roster)):[];state.catalogItems=Array.isArray(o.catalogItems)?JSON.parse(JSON.stringify(o.catalogItems)):[];state.packageTargetQty=Number(o.packageTargetQty)||0;state.confirmation={...confirmationDefaults(),...(o.confirmation||{})};state.productionTracker={...productionTrackerDefaults(),...(o.productionTracker||{})};
  const set=(id,v)=>q(id).value=v??'';
  set('packageTeamSize',o.packageTeamSize||o.packageTargetQty||22);set('packageBudget',o.packageBudget||200);set('packageAge',o.packageAge||o.ageGroup||'adult');set('packageMargin',String(o.packageMargin??.4));set('projectName',o.projectName);set('teamName',o.teamName);set('salesStage',o.salesStage||'新线索');set('leadTemperature',o.leadTemperature||'warm');set('lastContactDate',o.lastContactDate||'');set('nextFollowUp',o.nextFollowUp||'');set('nextAction',o.nextAction||'');set('lostReason',o.lostReason||'');set('source',o.source||'赛事合作');set('contact',o.contact);set('contactInfo',o.contactInfo);set('city',o.city);set('competition',o.competition);set('season',o.season||'2026-2027');set('deadline',o.deadline);set('customerNotes',o.customerNotes);
  set('series',o.series||'定制比赛服');set('supplierTier',o.supplierTier||'CLUB');set('ageGroup',o.ageGroup||'adult');set('productType',o.productType==='上衣 + 短裤'?'kit':(o.productType||'kit'));set('priceStrategy',o.priceStrategy||'margin');set('targetMargin',String(o.targetMargin??.5));set('salesUnitPrice',o.salesUnitPrice??o.jerseyPrice??120);set('primaryColor',o.primaryColor);set('accentColor',o.accentColor);set('printFee',o.printFee??0);set('designFee',o.designFee??300);set('discount',o.discount??0);set('poloAddon',String(o.poloAddon??0));set('pocketAddon',String(o.pocketAddon??0));set('longSleeveAddon',String(o.longSleeveAddon??0));set('otherCraftCost',o.otherCraftCost??0);set('factoryShippingCost',o.factoryShippingCost??0);set('shippingFee',o.shippingFee??0);set('shippingZone',o.shippingZone||'remote');set('depositRate',String(o.depositRate??.5));set('frontText',o.frontText);set('nameRule',o.nameRule);set('numberStyle',o.numberStyle);set('productNotes',o.productNotes);set('extraQty',o.extraQty??0);set('publicContact',o.publicContact||'');set('publicQuoteNote',o.publicQuoteNote||'热升华比赛服默认包含印字印号；特殊工艺按最终确认方案执行。产品价格默认不含运费，运费另计。');set('quoteValidDays',String(o.quoteValidDays||7));set('quoteShowPackages',o.quoteShowPackages||'yes');set('quoteShowPayment',o.quoteShowPayment||'yes');set('orderStatus',o.status||STAGES[0]);set('owner',o.owner||'SAGI');
- generatePackagePlans(false);renderLogo();renderRoster();renderCatalogCart();renderOrderConfirmation();renderProductionTracker();renderAll()
+ generatePackagePlans(false);q('followMessage').value='';renderLogo();renderRoster();renderCatalogCart();renderOrderConfirmation();renderProductionTracker();renderAll()
 }
 function blank(){
- state.currentId=null;state.teamLogo='';state.currentQuoteSentAt='';state.currentDepositPaidAt='';state.roster=[];state.catalogItems=[];state.packageTargetQty=0;state.confirmation=confirmationDefaults();state.productionTracker=productionTrackerDefaults();
+ state.currentId=null;state.teamLogo='';state.currentQuoteSentAt='';state.currentDepositPaidAt='';state.currentFollowUpHistory=[];state.roster=[];state.catalogItems=[];state.packageTargetQty=0;state.confirmation=confirmationDefaults();state.productionTracker=productionTrackerDefaults();
  const defaults={projectName:'',teamName:'',contact:'',contactInfo:'',city:'塔城',competition:'',season:'2026-2027',deadline:'',customerNotes:'',primaryColor:'塔城红',accentColor:'暖米白',salesUnitPrice:79,printFee:0,designFee:300,factoryShippingCost:0,shippingFee:0,discount:0,otherCraftCost:0,frontText:'',nameRule:'英文名',numberStyle:'SAGI 欧赛事字体',productNotes:'',publicContact:'',publicQuoteNote:'热升华比赛服默认包含印字印号；特殊工艺按最终确认方案执行。产品价格默认不含运费，运费另计。',extraQty:0,owner:'SAGI'};
- Object.entries(defaults).forEach(([k,v])=>{if(q(k))q(k).value=v});q('salesStage').value='新线索';q('leadTemperature').value='warm';q('lastContactDate').value='';q('nextFollowUp').value='';q('nextAction').value='首次联系客户';q('lostReason').value='';q('packageTeamSize').value='22';q('packageBudget').value='200';q('packageAge').value='adult';q('packageMargin').value='.4';q('source').value='赛事合作';q('series').value='定制比赛服';q('supplierTier').value='CLUB';q('ageGroup').value='adult';q('productType').value='kit';q('priceStrategy').value='fixed';q('targetMargin').value='.5';q('poloAddon').value='0';q('pocketAddon').value='0';q('longSleeveAddon').value='0';q('shippingZone').value='remote';q('depositRate').value='.5';q('quoteValidDays').value='7';q('quoteShowPackages').value='yes';q('quoteShowPayment').value='yes';q('orderStatus').value=STAGES[0];renderLogo();renderRoster();if(q('catalogCart'))renderCatalogCart();renderAll()
+ Object.entries(defaults).forEach(([k,v])=>{if(q(k))q(k).value=v});q('followMessage').value='';q('salesStage').value='新线索';q('leadTemperature').value='warm';q('lastContactDate').value='';q('nextFollowUp').value='';q('nextAction').value='首次联系客户';q('lostReason').value='';q('packageTeamSize').value='22';q('packageBudget').value='200';q('packageAge').value='adult';q('packageMargin').value='.4';q('source').value='赛事合作';q('series').value='定制比赛服';q('supplierTier').value='CLUB';q('ageGroup').value='adult';q('productType').value='kit';q('priceStrategy').value='fixed';q('targetMargin').value='.5';q('poloAddon').value='0';q('pocketAddon').value='0';q('longSleeveAddon').value='0';q('shippingZone').value='remote';q('depositRate').value='.5';q('quoteValidDays').value='7';q('quoteShowPackages').value='yes';q('quoteShowPayment').value='yes';q('orderStatus').value=STAGES[0];renderLogo();renderRoster();if(q('catalogCart'))renderCatalogCart();renderAll()
 }
 
 function renderLogo(){q('teamLogoPreview').innerHTML=state.teamLogo?'<img src="'+state.teamLogo+'">':'TEAM LOGO';q('quoteLogo').innerHTML=state.teamLogo?'<img src="'+state.teamLogo+'">':'LOGO'}
@@ -1129,13 +1259,13 @@ function saveOrder(silent=false){
  const idx=state.orders.findIndex(x=>x.id===o.id);if(idx>=0)state.orders[idx]=o;else state.orders.unshift(o);state.currentId=o.id;persist();renderAll();if(!silent)note(idx>=0?'订单已更新':'订单已保存')
 }
 function createReorder(source){
- const o=JSON.parse(JSON.stringify(source));o.id=uid();o.projectName=(source.teamName||'球队')+' · 补单 '+new Date().toLocaleDateString('zh-CN');o.status='线索';o.salesStage='新线索';o.lastContactDate='';o.nextFollowUp='';o.nextAction='联系球队确认补单需求';o.lostReason='';o.quoteSentAt='';o.depositPaidAt='';o.discount=0;o.extraQty=0;o.packageTargetQty=0;o.confirmation=confirmationDefaults();o.productionTracker=productionTrackerDefaults();o.updatedAt=Date.now();o.createdAt=Date.now();o.roster=[];o.catalogItems=(o.catalogItems||[]).map(x=>({...x,id:uid(),qty:0}));fill(o);note('已创建补单项目 · 添加需要补货的球员')
+ const o=JSON.parse(JSON.stringify(source));o.id=uid();o.projectName=(source.teamName||'球队')+' · 补单 '+new Date().toLocaleDateString('zh-CN');o.status='线索';o.salesStage='新线索';o.lastContactDate='';o.nextFollowUp='';o.nextAction='联系球队确认补单需求';o.lostReason='';o.quoteSentAt='';o.depositPaidAt='';o.followUpHistory=[];o.discount=0;o.extraQty=0;o.packageTargetQty=0;o.confirmation=confirmationDefaults();o.productionTracker=productionTrackerDefaults();o.updatedAt=Date.now();o.createdAt=Date.now();o.roster=[];o.catalogItems=(o.catalogItems||[]).map(x=>({...x,id:uid(),qty:0}));fill(o);note('已创建补单项目 · 添加需要补货的球员')
 }
 function renderKpis(){
  const teams=new Set(state.orders.map(o=>o.teamName).filter(Boolean)).size,active=state.orders.filter(o=>o.status!=='已完成').length,revenue=state.orders.reduce((a,o)=>a+(o.calc?.total||0),0),balance=state.orders.reduce((a,o)=>a+(o.calc?.balance||0),0);
  q('kpiTeams').textContent=teams;q('kpiOrders').textContent=state.orders.length;q('kpiActive').textContent=active;q('kpiRevenue').textContent=money(revenue);q('kpiBalance').textContent=money(balance)
 }
-function renderAll(){if(q('orderConfirmation'))renderOrderConfirmation();if(q('productionTracker'))renderProductionTracker();if(state.lastCustomerQuoteLink){state.lastCustomerQuoteLink='';if(q('customerQuoteLink'))q('customerQuoteLink').value='';if(q('customerLinkState')){q('customerLinkState').textContent='PRIVATE DATA FILTER ON';q('customerLinkState').classList.remove('ready')}}q('rosterCountView').value=String(state.roster.length);q('productionQtyView').value=String(state.roster.length+n('extraQty'));syncPriceEngine(false);const ct=catalogTotals();q('catalogQtyTotal').textContent=ct.qty;q('catalogCostTotal').textContent=money(ct.cost);q('catalogSalesTotal').textContent=money(ct.sales);q('catalogGrossTotal').textContent=money(ct.gross);renderPipeline();renderQuote();renderOrders();renderKpis();renderSalesDashboard()}
+function renderAll(){if(q('orderConfirmation'))renderOrderConfirmation();if(q('productionTracker'))renderProductionTracker();if(state.lastCustomerQuoteLink){state.lastCustomerQuoteLink='';if(q('customerQuoteLink'))q('customerQuoteLink').value='';if(q('customerLinkState')){q('customerLinkState').textContent='PRIVATE DATA FILTER ON';q('customerLinkState').classList.remove('ready')}}q('rosterCountView').value=String(state.roster.length);q('productionQtyView').value=String(state.roster.length+n('extraQty'));syncPriceEngine(false);const ct=catalogTotals();q('catalogQtyTotal').textContent=ct.qty;q('catalogCostTotal').textContent=money(ct.cost);q('catalogSalesTotal').textContent=money(ct.sales);q('catalogGrossTotal').textContent=money(ct.gross);renderPipeline();renderQuote();renderOrders();renderKpis();renderSalesDashboard();renderFollowUpAssistant()}
 
 function initSelects(){
  q('orderStatus').innerHTML=STAGES.map(x=>'<option>'+x+'</option>').join('');
@@ -1147,6 +1277,7 @@ q('clearRosterBtn').onclick=()=>{state.roster=[];renderRoster();renderAll()};q('
 q('salesStage').onchange=()=>{if(q('salesStage').value==='未成交'&&!q('lostReason').value)note('请补充未成交原因');persistSalesActivity();renderAll()};q('lostReason').onchange=()=>{if(q('lostReason').value)q('salesStage').value='未成交';persistSalesActivity();renderAll()};q('nextFollowUp').onchange=()=>{persistSalesActivity();renderAll()};q('leadTemperature').onchange=()=>{persistSalesActivity();renderAll()};q('orderSearch').oninput=renderOrders;q('statusFilter').onchange=renderOrders;q('orderStatus').onchange=renderAll;q('extraQty').oninput=()=>{state.packageTargetQty=0;renderAll()};
 ['supplierTier','ageGroup'].forEach(id=>q(id).addEventListener('change',()=>{const tier=SUPPLIER_CATALOG[q('supplierTier').value],age=q('ageGroup').value==='child'?'child':'adult';q('priceStrategy').value=(tier&&SAGI_FIXED_PRICE[tier.name]&&SAGI_FIXED_PRICE[tier.name][age]!=null)?'fixed':'margin';syncPriceEngine(true);renderAll()}));['productType','priceStrategy','targetMargin','poloAddon','pocketAddon','longSleeveAddon','shippingZone'].forEach(id=>q(id).addEventListener('change',()=>{syncPriceEngine(true);renderAll()}));['otherCraftCost','factoryShippingCost'].forEach(id=>q(id).addEventListener('input',()=>{syncPriceEngine(true);renderAll()}));q('salesUnitPrice').addEventListener('input',renderAll);
 document.querySelectorAll('input,select,textarea').forEach(el=>{if(!['orderSearch','statusFilter','teamLogoFile'].includes(el.id))el.addEventListener('input',()=>{if(el.id==='orderStatus')return;renderAll()});if(el.tagName==='SELECT'&&!['statusFilter','orderStatus'].includes(el.id))el.addEventListener('change',renderAll)});
+q('followGenerateBtn').onclick=generateFollowUpMessage;q('followCopyBtn').onclick=copyFollowUpMessage;q('followContactedBtn').onclick=markFollowUpContacted;q('followScheduleBtn').onclick=scheduleNextFollowUp;q('followTone').onchange=()=>{if(q('followMessage').value.trim())generateFollowUpMessage()};q('followGoal').onchange=()=>{if(q('followMessage').value.trim())generateFollowUpMessage()};
 initSelects();loadState();blank();initCostProfile();initPackageBuilder();initCatalog();initCustomerQuotationMode();initOrderConfirmation();initProductionTracker();renderAll();
 })();
 </script>
