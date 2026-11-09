@@ -1282,6 +1282,7 @@ function dailyCandidate(plan,label,source,p,bonus=0,meta={}){
  const viral=plan?.viral||viralScoreForPlan(plan,p),base=viral?.total||0;
  return{plan:dailyCompactPlan(plan),label,source,projectId:p?.id||'',priority:Math.min(99,Math.round(base+bonus)),viral:base,verdict:viral?.verdict||'',why:viral?.risks?.[0]?.[1]||'结构健康',meta}
 }
+const DAILY_COMMAND_SCHEMA_VERSION=4;
 const DAILY_COMMAND_MAX_AGE_MS=20*60*1000;
 const DAILY_HOT_MAX_HOURS=12;
 function trustedFootballDomain(a){
@@ -1296,7 +1297,8 @@ function classifyBig5(a){
 function footballArticleRelevant(a){
  const title=String(a?.title||'').toLowerCase(),url=String(a?.url||'').toLowerCase(),all=title+' '+url;
  if(/\bnfl\b|american football|college football|rugby|australian rules|\bafl\b/.test(all))return false;
- return /\/soccer\/|\/football\/|football|soccer|premier league|champions league|europa league|world cup|nations league|la liga|laliga|serie a|bundesliga|uefa|fifa|中超|国足|足协杯|足球|ronaldo|cristiano|messi|mbapp[eé]|yamal/.test(all)
+ if(classifyBig5(a))return true;
+ return /\/soccer\/|\/football\/|football|soccer|premier league|champions league|europa league|world cup|nations league|la liga|laliga|serie a|bundesliga|ligue 1|uefa|fifa|中超|国足|足协杯|足球|ronaldo|cristiano|messi|mbapp[eé]|yamal/.test(all)
 }
 function eventWords(v){
  const stop=new Set(['the','a','an','and','or','to','of','in','on','for','with','at','from','after','before','as','is','are','was','were','will','has','have','had','football','soccer','team','teams','player','players','match','game','games','league','cup','club','clubs','latest','news','today']);
@@ -1320,15 +1322,15 @@ function dailySourceMode(result){
 }
 function dailyCommandNeedsRefresh(){
  const d=state.dailyCommand;
- return !d||d.date!==today()||d.zhVersion!==ZH_LAYER_VERSION||!d.updatedAt||Date.now()-d.updatedAt>DAILY_COMMAND_MAX_AGE_MS
+ return !d||d.schemaVersion!==DAILY_COMMAND_SCHEMA_VERSION||d.date!==today()||d.zhVersion!==ZH_LAYER_VERSION||!d.updatedAt||Date.now()-d.updatedAt>DAILY_COMMAND_MAX_AGE_MS
 }
 function trendMetaText(a){
  const age=Math.max(0,trendAgeHours(a?.seendate)),support=Math.max(1,Number(a?.eventSupport)||1);
  return (a?.leagueLabel?(a.leagueLabel+' · '):'')+(age<1?'<1h':age.toFixed(1)+'h')+' · '+support+'源 · '+(a?.eventVerified?'已验证':'单源')
 }
-async function fetchDailyTrendPool(){
- const globalResult=await trendFetchShared(TREND_PROFILES.global.query,{profile:'global',force:false,maxrecords:100});
- const big5Result=await trendFetchShared(BIG5_QUERY,{profile:'global',force:false,maxrecords:100});
+async function fetchDailyTrendPool(forceFresh=false){
+ const globalResult=await trendFetchShared(TREND_PROFILES.global.query,{profile:'global',force:forceFresh,maxrecords:100});
+ const big5Result=await trendFetchShared(BIG5_QUERY,{profile:'global',force:forceFresh,maxrecords:100});
  const channels=[
   {name:'GLOBAL',result:globalResult,maxHours:DAILY_HOT_MAX_HOURS,items:globalResult.items||[]},
   {name:'BIG5',result:big5Result,maxHours:BIG5_HOT_MAX_HOURS,items:big5Result.items||[]}
@@ -1374,6 +1376,22 @@ function dailyCommandCard(el,c,kind){
  el.innerHTML='<div class="commandLabel">'+kind+' · '+esc(c.source)+'</div><h3>'+esc(c.label)+'</h3><div class="commandScore">'+c.priority+'<small>/99</small></div><div class="commandMeta">'+esc(c.verdict||'')+' · VIRAL '+c.viral+esc(fresh)+'</div><div class="commandWhy">'+esc(c.why||'')+'</div><div class="toolbar"><button class="btn '+(kind.startsWith('P1')?'primary':'')+'" data-daily-action type="button">'+(c.source==='CONTENT TASK'?'打开任务':'采用方案')+'</button></div>';
  el.querySelector('[data-daily-action]').onclick=()=>executeDailyCandidate(c)
 }
+function renderDailyBig5(){
+ const host=q('dailyBig5Grid');if(!host)return;
+ const d=state.dailyCommand,rows=d?.big5Leagues||[],order=['premier','laliga','seriea','bundesliga','ligue1'],labels={premier:'英超',laliga:'西甲',seriea:'意甲',bundesliga:'德甲',ligue1:'法甲'};
+ const map=new Map(rows.map(x=>[x.key,x]));
+ host.innerHTML=order.map(key=>{
+   const x=map.get(key);
+   if(!x)return '<article class="big5Card emptyLeague"><div class="big5League">'+labels[key]+'</div><h3>暂无新鲜信号</h3><p>等待下一轮联网抓取</p></article>';
+   const status=x.eligible?'已验证':'观察',klass=x.eligible?'verified':'watch';
+   return '<article class="big5Card '+klass+'"><div class="big5League">'+labels[key]+'<span>'+status+'</span></div><h3>'+esc(x.title)+'</h3><p>'+esc(x.meta)+'</p><div class="toolbar"><button class="btn '+(x.eligible?'primary':'')+'" data-big5-key="'+key+'" type="button">'+(x.eligible?'采用这条':'查看原文')+'</button></div></article>'
+ }).join('');
+ host.querySelectorAll('[data-big5-key]').forEach(b=>b.onclick=()=>{
+   const x=map.get(b.dataset.big5Key);if(!x)return;
+   if(x.eligible&&x.candidate){executeDailyCandidate(x.candidate);return}
+   if(x.url)window.open(x.url,'_blank','noopener')
+ })
+}
 function renderDailyCommand(){
  const d=state.dailyCommand,m=viralModelProfile(),badge=q('dailyInternetBadge');
  q('dailyModelBadge').textContent='MODEL · '+m.confidence+'%';q('dailyConfidence').textContent=m.confidence+'%';
@@ -1381,20 +1399,20 @@ function renderDailyCommand(){
    badge.textContent=state.dailyCommandLoading?'INTERNET · SCANNING':'INTERNET · WAITING';
    q('dailyUpdated').textContent='未更新';q('dailyTrendCount').textContent='0';q('dailyProjectCount').textContent='0';
    q('dailyRanking').innerHTML='<div class="empty">今日指挥尚未生成。</div>';q('dailyCommandInsight').textContent='系统会联网扫描热点，再与现有内容任务和项目一起排序。';
-   dailyCommandCard(q('dailyP1'),null,'P1 · NOW');dailyCommandCard(q('dailyP2'),null,'P2 · NEXT');dailyCommandCard(q('dailyHold'),null,'HOLD');return
+   dailyCommandCard(q('dailyP1'),null,'P1 · NOW');dailyCommandCard(q('dailyP2'),null,'P2 · NEXT');dailyCommandCard(q('dailyHold'),null,'HOLD');renderDailyBig5();return
  }
  badge.textContent=d.sourceMode==='LIVE VERIFIED'?'INTERNET · LIVE VERIFIED':d.sourceMode==='FRESH CACHE'?'INTERNET · FRESH CACHE':d.sourceMode==='CACHE'?'INTERNET · CACHE':'INTERNET · LOCAL';
  q('dailyUpdated').textContent=d.updatedText||'今日';q('dailyTrendCount').textContent=d.trendCount;q('dailyProjectCount').textContent=d.localCount;
  const ranked=d.ranked||[],p1=ranked[0]||null,p2=ranked[1]||null,hold=d.hold||null;
  dailyCommandCard(q('dailyP1'),p1,'P1 · NOW');dailyCommandCard(q('dailyP2'),p2,'P2 · NEXT');dailyCommandCard(q('dailyHold'),hold,'HOLD');
  q('dailyRanking').innerHTML=ranked.length?ranked.slice(0,8).map((c,i)=>'<div class="dailyRankRow"><strong>'+String(i+1).padStart(2,'0')+'</strong><div><b>'+esc(c.label)+'</b><span>'+esc(c.source)+' · '+esc(c.verdict)+' · VIRAL '+c.viral+(c.meta?.trend?.freshness?' · '+esc(c.meta.trend.freshness):'')+'</span></div><em>'+c.priority+'</em></div>').join(''):'<div class="empty">暂无候选</div>';
- q('dailyCommandInsight').textContent=d.insight||'今日优先级已生成。'
+ q('dailyCommandInsight').textContent=d.insight||'今日优先级已生成。';renderDailyBig5()
 }
 async function runDailyViralCommand(auto=false){
  if(state.dailyCommandLoading)return;state.dailyCommandLoading=true;renderDailyCommand();q('dailyRunBtn').disabled=true;
  let trendResult={items:[],sourceMode:'LOCAL',verifiedCount:0},online=false;
- try{trendResult=await fetchDailyTrendPool();online=trendResult.sourceMode!=='CACHE'&&trendResult.items.length>0}catch(e){}
- const trends=trendResult.items||[],eligible=trends.filter(a=>a.dailyEligible),selectedHot=selectDailyHotItems(trends,8);
+ try{trendResult=await fetchDailyTrendPool(!auto);online=trendResult.sourceMode!=='CACHE'&&trendResult.items.length>0}catch(e){}
+ const trends=trendResult.items||[],eligible=trends.filter(a=>a.dailyEligible),selectedHot=selectDailyHotItems(trends,8),big5Leagues=['premier','laliga','seriea','bundesliga','ligue1'].map(key=>{const x=trends.filter(a=>a.league===key).sort((a,b)=>(Number(b.dailyEligible)-Number(a.dailyEligible))||b.score-a.score||trendAgeHours(a.seendate)-trendAgeHours(b.seendate))[0];if(!x)return null;return{key,label:x.leagueLabel,title:x.title,url:x.url,eligible:!!x.dailyEligible,score:x.score,meta:trendMetaText(x)+' · '+(x.domain||'互联网'),candidate:x.dailyEligible?dailyBestTrendCandidate(x):null}}).filter(Boolean);
  if(trends.length){state.trendItems=trends;state.trendFetchedAt=Date.now();q('trendStatus').textContent='DAILY VIRAL 已同步 · '+eligible.length+' 条已验证 · 五大联赛 '+(trendResult.big5Count||0)+' 条 / '+trends.length+' 条信号';renderTrends()}
  const candidates=[],hot=selectedHot.map(dailyBestTrendCandidate);candidates.push(...hot);
  const localProjects=allProjects().filter(p=>p.type!=='hot').slice(0,10);
@@ -1404,7 +1422,7 @@ async function runDailyViralCommand(auto=false){
  const hasStrongHot=ranked.some(c=>c.source==='LIVE RADAR'&&c.priority>=78),hasLocal=ranked.some(c=>c.source!=='LIVE RADAR'&&c.priority>=68);
  const sourceNote=trendResult.sourceMode==='CACHE'?'互联网源当前只剩旧缓存，旧闻不进入P1/P2。':eligible.length?'今日热点采用“全球突发 + 五大联赛专属雷达”；五大联赛近18小时合格内容保留曝光位。':'当前没有通过验证的强热点，不为了热点而硬发。';
  const insight=(hasStrongHot&&hasLocal?'建议“热点拉新 + 本地内容留人”：P1抢真实热点，P2保持新疆足球身份。':hasStrongHot?'今天存在已验证强热点，优先抢时效；本地内容放第二顺位。':hasLocal?'今天没有已验证强热点，优先发萨吉体育自己的赛事、球队或人物内容。':'今天候选整体偏弱，优先继续制作和补素材。')+' '+sourceNote;
- state.dailyCommand={date:today(),zhVersion:ZH_LAYER_VERSION,updatedAt:Date.now(),updatedText:new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})+' · '+trendResult.sourceMode,online,sourceMode:trendResult.sourceMode,trendCount:hot.length,verifiedTrendCount:eligible.length,big5Count:trendResult.big5Count||0,localCount:Math.max(0,candidates.length-hot.length),ranked:ranked.slice(0,12),hold,insight};
+ state.dailyCommand={schemaVersion:DAILY_COMMAND_SCHEMA_VERSION,date:today(),zhVersion:ZH_LAYER_VERSION,updatedAt:Date.now(),updatedText:new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})+' · '+trendResult.sourceMode,online,sourceMode:trendResult.sourceMode,trendCount:hot.length,verifiedTrendCount:eligible.length,big5Count:trendResult.big5Count||0,big5Leagues,localCount:Math.max(0,candidates.length-hot.length),ranked:ranked.slice(0,12),hold,insight};
  state.dailyCommandLoading=false;save();renderAll();q('dailyRunBtn').disabled=false;if(!auto)note('今日指挥已刷新 · 已验证热点 '+eligible.length+' 条')
 }
 function executeDailyCandidate(c){
