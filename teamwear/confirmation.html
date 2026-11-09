@@ -28,7 +28,7 @@
   <button id="imageBtn" type="button">生成长图</button>
   <button id="systemPrintBtn" type="button">系统打印</button>
   <button id="shareBtn" type="button">分享确认单链接</button>
-  <span id="downloadState" style="align-self:center;color:#aeb8b1;font-size:10px">V1.0.4 · 页面已加载 · 正在检查导出组件…</span>
+  <span id="downloadState" style="align-self:center;color:#aeb8b1;font-size:10px">V1.0.6 · FULL PAYMENT · 页面已加载 · 正在检查导出组件…</span>
 </div>
 <div id="exportHelp" style="width:min(900px,calc(100% - 24px));margin:10px auto 0;padding:9px 12px;border:1px solid #c9d2cc;border-radius:9px;background:#f7faf8;color:#526158;font-size:10px;line-height:1.6">iPhone：第一次点“生成 PDF / 长图”生成文件；按钮变成“保存 / 分享”后再点一次，可直接存到“文件”或转发微信。若组件加载失败，请用“系统打印”。</div>
 <main id="sheet" class="sheet"><div class="empty">正在读取订单确认单…</div></main>
@@ -470,21 +470,21 @@ function render(){
  const items=(p.items||[]).map(x=>'<tr><td>'+esc(x.name)+'</td><td>'+esc(x.detail||'')+'</td><td>'+esc(x.qty)+' '+esc(x.unit||'')+'</td><td class="money">'+money(x.unitPrice)+'</td><td class="money">'+money(x.subtotal)+'</td></tr>').join('');
  const roster=(p.roster||[]).map(x=>'<tr><td>'+x.index+'</td><td>'+esc(x.name)+'</td><td>'+esc(x.number)+'</td><td>'+esc(x.size)+'</td><td>'+esc(x.type)+'</td></tr>').join('');
  sheet.innerHTML=
- '<div class="head"><div class="brand"><h1>SAGI SPORTS</h1><p>CUSTOMER ORDER CONFIRMATION · 客户订单确认单</p></div><div style="display:flex;gap:12px;align-items:flex-start"><div class="docno"><b>'+esc(p.orderNo)+'</b>生成时间：'+esc(p.issuedAt)+'<br>版本：V1.0.4</div><div class="logo">'+(p.logo?'<img src="'+p.logo+'">':'SAGI')+'</div></div></div>'+
+ '<div class="head"><div class="brand"><h1>SAGI SPORTS</h1><p>CUSTOMER ORDER CONFIRMATION · 客户订单确认单</p></div><div style="display:flex;gap:12px;align-items:flex-start"><div class="docno"><b>'+esc(p.orderNo)+'</b>生成时间：'+esc(p.issuedAt)+'<br>版本：V1.0.6</div><div class="logo">'+(p.logo?'<img src="'+p.logo+'">':'SAGI')+'</div></div></div>'+
  '<div class="notice">'+esc(p.customerNote||'请确认订单信息，确认后进入生产准备。')+'</div>'+
  '<div class="grid"><div class="box"><h3>客户 / 球队</h3><div class="kv"><span>球队名称</span><b>'+esc(p.teamName)+'</b><span>联系人</span><b>'+esc(p.contact||'—')+'</b><span>联系电话</span><b>'+esc(p.contactInfo||'—')+'</b><span>项目</span><b>'+esc((p.meta||[]).join(' · ')||'—')+'</b></div></div>'+
  '<div class="box"><h3>产品规格</h3><div class="kv"><span>产品系列</span><b>'+esc(p.productSeries||'—')+'</b><span>产品类型</span><b>'+esc(p.productType||'—')+'</b><span>主色 / 辅色</span><b>'+esc((p.colors||[]).join(' / ')||'—')+'</b><span>胸前文字</span><b>'+esc(p.frontText||'—')+'</b><span>姓名规则</span><b>'+esc(p.nameRule||'—')+'</b><span>号码字体</span><b>'+esc(p.numberStyle||'—')+'</b></div></div></div>'+
- '<div class="section"><h2>订单产品</h2><div class="tableWrap"><table><thead><tr><th>项目</th><th>说明</th><th>数量</th><th class="money">单价</th><th class="money">小计</th></tr></thead><tbody>'+items+'</tbody></table></div><div class="totals"><div class="totalRow total"><span>订单总金额</span><b>'+money(p.total)+'</b></div><div class="totalRow deposit"><span>定金 '+esc(p.depositRate)+'%</span><b>'+money(p.deposit)+'</b></div><div class="totalRow"><span>尾款</span><b>'+money(p.balance)+'</b></div></div></div>'+
+ '<div class="section"><h2>订单产品</h2><div class="tableWrap"><table><thead><tr><th>项目</th><th>说明</th><th>数量</th><th class="money">单价</th><th class="money">小计</th></tr></thead><tbody>'+items+'</tbody></table></div><div class="totals"><div class="totalRow total"><span>订单总金额</span><b>'+money(p.total)+'</b></div><div class="totalRow deposit"><span>应付全款</span><b>'+money(p.total)+'</b></div><div class="totalRow"><span>付款方式</span><b>全款 100%</b></div></div></div>'+
  '<div class="section"><h2>球员名单 / 姓名 / 号码 / 尺码</h2><div class="tableWrap"><table><thead><tr><th>#</th><th>姓名</th><th>号码</th><th>尺码</th><th>类型</th></tr></thead><tbody>'+roster+'</tbody></table></div><div class="rosterNote">额外备货：'+esc(p.extraQty||0)+' 件/套。姓名拼写、号码与尺码请逐项核对。</div></div>'+
  '<div class="grid section"><div class="box"><h3>收货信息</h3><div class="kv"><span>收货人</span><b>'+esc(p.shippingRecipient||'—')+'</b><span>联系电话</span><b>'+esc(p.shippingPhone||'—')+'</b><span>收货地址</span><b>'+esc(p.shippingAddress||'—')+'</b></div></div><div class="box"><h3>交付与备注</h3><div class="kv"><span>预计交付</span><b>'+esc(p.deadline||'待确认')+'</b><span>特别说明</span><b>'+esc(p.productNotes||'无')+'</b></div></div></div>'+
- '<div class="confirmBox"><h2>客户确认</h2><p>请在确认前再次核对球队名称、姓名拼写、号码、尺码、颜色、数量、金额及收货信息。如需修改，请先联系 SAGI SPORTS。点击确认代表您认可本确认单内容作为本次生产依据。</p><div class="confirmFields"><input id="confirmer" placeholder="确认人姓名 / 负责人"><input id="confirmPhone" placeholder="联系电话（可选）"></div><label class="agree"><input id="agree" type="checkbox"><span>我已逐项核对以上订单信息，并确认无误。</span></label><button id="confirmBtn" class="primary" style="border:0;border-radius:8px;padding:10px 14px;background:#243d2d;color:#fff;font-weight:800" type="button">确认订单无误</button><div id="confirmResult" class="confirmResult"><b>确认完成</b><p>请把下面的确认码复制并发送给 SAGI SPORTS。销售系统导入后会自动进入“客户已确认”。</p><textarea id="confirmCode" readonly></textarea><button id="copyCodeBtn" type="button" style="margin-top:7px;padding:8px 10px">复制确认码</button></div></div>'+
- '<div class="foot">SAGI SPORTS · CUSTOMER ORDER CONFIRMATION V1.0.4<br>本页面的数据保存在链接的 URL Fragment 中，不作为公开订单数据库展示。最终生产以客户确认后的订单版本为准。</div>';
+ '<div class="confirmBox"><h2>客户确认</h2><p>请在确认前再次核对球队名称、姓名拼写、号码、尺码、颜色、数量、金额及收货信息。如需修改，请先联系 SAGI SPORTS。点击确认代表您认可本确认单内容，并同意按订单总金额支付全款；全款到账后进入生产。</p><div class="confirmFields"><input id="confirmer" placeholder="确认人姓名 / 负责人"><input id="confirmPhone" placeholder="联系电话（可选）"></div><label class="agree"><input id="agree" type="checkbox"><span>我已逐项核对以上订单信息，并确认无误。</span></label><button id="confirmBtn" class="primary" style="border:0;border-radius:8px;padding:10px 14px;background:#243d2d;color:#fff;font-weight:800" type="button">确认订单无误</button><div id="confirmResult" class="confirmResult"><b>确认完成</b><p>请把下面的确认码复制并发送给 SAGI SPORTS。销售系统导入后会自动进入“客户已确认”。</p><textarea id="confirmCode" readonly></textarea><button id="copyCodeBtn" type="button" style="margin-top:7px;padding:8px 10px">复制确认码</button></div></div>'+
+ '<div class="foot">SAGI SPORTS · CUSTOMER ORDER CONFIRMATION V1.0.6 · FULL PAYMENT<br>本页面的数据保存在链接的 URL Fragment 中，不作为公开订单数据库展示。最终生产以客户确认后的订单版本为准。</div>';
  document.getElementById('confirmBtn').onclick=confirmOrder;
  document.getElementById('copyCodeBtn').onclick=copyCode
 }
 function confirmOrder(){
  const p=payload(),name=document.getElementById('confirmer').value.trim(),agree=document.getElementById('agree').checked;if(!name){alert('请填写确认人姓名');return}if(!agree){alert('请勾选“已核对并确认无误”');return}
- const obj={schema:'SAGI-CONFIRMATION-1',orderRef:p.orderRef||'',quoteNo:p.orderNo||'',teamName:p.teamName||'',planId:'',planLabel:'客户订单确认单 V1.0',confirmedAmount:Number(p.total)||0,confirmedAt:new Date().toLocaleString('zh-CN'),confirmer:name,phone:document.getElementById('confirmPhone').value.trim(),source:'CUSTOMER ORDER CONFIRMATION V1.0'};
+ const obj={schema:'SAGI-CONFIRMATION-1',orderRef:p.orderRef||'',quoteNo:p.orderNo||'',teamName:p.teamName||'',planId:'',planLabel:'客户订单确认单 V1.0.6 · 全款',confirmedAmount:Number(p.total)||0,confirmedAt:new Date().toLocaleString('zh-CN'),confirmer:name,phone:document.getElementById('confirmPhone').value.trim(),source:'CUSTOMER ORDER CONFIRMATION V1.0.6 FULL PAYMENT'};
  document.getElementById('confirmCode').value='SAGI-CFM1.'+encode(obj);document.getElementById('confirmResult').classList.add('show');document.getElementById('confirmBtn').disabled=true;document.getElementById('confirmBtn').textContent='已确认'
 }
 async function copyCode(){const el=document.getElementById('confirmCode');try{await navigator.clipboard.writeText(el.value);alert('确认码已复制')}catch(e){el.select();document.execCommand('copy');alert('确认码已复制')}}
@@ -576,7 +576,7 @@ document.getElementById('pdfBtn').onclick=generatePdf;
 document.getElementById('imageBtn').onclick=generateImage;
 document.getElementById('systemPrintBtn').onclick=()=>window.print();
 document.getElementById('shareBtn').onclick=async()=>{const p=payload(),data={title:'SAGI SPORTS 客户订单确认单',text:(p?.teamName||'')+' · '+(p?.orderNo||''),url:location.href};if(navigator.share){try{await navigator.share(data)}catch(e){}}else{try{await navigator.clipboard.writeText(location.href);alert('确认单链接已复制')}catch(e){}}};
-render();setTimeout(()=>{setExportStatus(window.html2canvas&&window.jspdf?.jsPDF?'V1.0.4 · 导出组件已就绪':'V1.0.4 · 导出组件加载失败 · 请使用系统打印',!(window.html2canvas&&window.jspdf?.jsPDF))},50);
+render();setTimeout(()=>{setExportStatus(window.html2canvas&&window.jspdf?.jsPDF?'V1.0.6 · FULL PAYMENT · 导出组件已就绪':'V1.0.6 · 导出组件加载失败 · 请使用系统打印',!(window.html2canvas&&window.jspdf?.jsPDF))},50);
 })();
 </script>
 </body>
