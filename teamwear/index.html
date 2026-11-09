@@ -599,7 +599,7 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
           <div class="customerConfirmActions">
             <button id="customerOrderPreviewBtn" class="blue" type="button">预览确认单</button>
             <button id="customerOrderCopyBtn" class="primary" type="button">复制确认单链接</button>
-            <button id="customerOrderPrintBtn" type="button">打印 / 保存PDF</button>
+            <button id="customerOrderPrintBtn" type="button">打开确认单 / 下载PDF</button>
           </div>
           <div class="customerConfirmLink">
             <input id="customerOrderLink" readonly placeholder="生成后这里会出现客户确认单链接">
@@ -2053,9 +2053,8 @@ async function copyCustomerOrderLink(){
 }
 async function printCustomerOrder(){
  const w=window.open('about:blank','_blank'),link=await generateCustomerOrderLink(false);if(!link){if(w)w.close();return}
- if(!w){location.href=link;return}
- w.location.href=link;
- setTimeout(()=>{try{w.focus();w.print()}catch(e){}},1200)
+ if(w)w.location.href=link;else location.href=link;
+ note('确认单已打开 · 请点顶部“下载 PDF”')
 }
 
 function productionSheetHtml(){
