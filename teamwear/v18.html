@@ -2039,6 +2039,7 @@ async function renderAutoVideo(){
   const blob=new Blob(chunks,{type:mime});state.autoVideoBlob=blob;state.autoVideoMime=mime;state.autoVideoUrl=URL.createObjectURL(blob);
   q('autoVideoPreview').src=state.autoVideoUrl;q('autoVideoResult').style.display='grid';q('autoVideoResultTitle').textContent='视频已生成 · '+(mime.includes('mp4')?'MP4':'WebM');
   q('autoVideoResultMeta').textContent=(w+'×'+h)+' · '+fps+'fps · '+total.toFixed(1)+'秒 · '+(blob.size/1024/1024).toFixed(1)+'MB'+(state.douyinMusicFile?' · 已混入音乐':' · 无音乐');
+  state.currentDouyinPackageGeneratedAt=new Date().toISOString();if(q('douyinPublishStatus').value==='draft')q('douyinPublishStatus').value='review';if(state.currentId){addActivity('marketing','自动生成抖音视频',(mime.includes('mp4')?'MP4':'WebM')+' · '+total.toFixed(1)+'秒');saveOrder(true);renderDouyinQueue()}
   autoVideoSetProgress(100,'视频合成完成，可以预览、保存或分享。');note('完整视频已生成')
  }catch(e){autoVideoSetProgress(0,'视频合成失败');note('视频合成失败 · 可改用720p重试')}
  finally{btn.disabled=false;btn.textContent='生成完整视频'}
