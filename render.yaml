@@ -2,11 +2,12 @@ services:
   - type: web
     name: sagi-cloud-bridge-suny820916
     runtime: docker
-    rootDir: sagi-cloud-bridge
     plan: free
     region: singapore
-    autoDeployTrigger: off
+    dockerfilePath: ./sagi-cloud-bridge/Dockerfile
+    dockerContext: ./sagi-cloud-bridge
     healthCheckPath: /health
+    autoDeployTrigger: commit
     envVars:
       - key: SAGI_SERVER_SECRET
         generateValue: true
