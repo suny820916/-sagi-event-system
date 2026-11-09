@@ -3071,7 +3071,14 @@ function saveOrder(silent=false){
  if(!o.roster.length&&!activeCatalog.length&&SALES_STAGES.indexOf(o.salesStage)>=3){note('已报价项目请加入球员名单或至少一项产品');return}
  const below=activeCatalog.find(x=>{const p=PRODUCT_CATALOG[x.productId];return p&&(Number(x.qty)||0)<(p.minQty||1)});
  if(below){const p=PRODUCT_CATALOG[below.productId];note(p.name+' 起订量 '+p.minQty+' '+p.unit);return}
- const idx=state.orders.findIndex(x=>x.id===o.id);if(idx>=0)state.orders[idx]=o;else state.orders.unshift(o);state.currentId=o.id;persist();renderAll();if(!silent)note(idx>=0?'订单已更新':'订单已保存')
+ const idx=state.orders.findIndex(x=>x.id===o.id);if(idx>=0)state.orders[idx]=o;else state.orders.unshift(o);state.currentId=o.id;
+ const cf=currentConfirmation(),fullPaid=cf.depositStatus==='paid'&&Number(cf.depositPaid)>=calc().total-1;
+ if(fullPaid&&!cf.paymentReceiptNo){
+  if(!state.currentDepositPaidAt)state.currentDepositPaidAt=new Date().toISOString();
+  paymentReceiptNo();cf.paymentReceiptGeneratedAt=new Date().toISOString();cf.paymentAutoFlowUpdatedAt=new Date().toISOString();
+  addActivity('payment','自动生成收款凭证',cf.paymentReceiptNo);o.confirmation=JSON.parse(JSON.stringify(cf));o.depositPaidAt=state.currentDepositPaidAt;o.activityTimeline=JSON.parse(JSON.stringify(state.currentActivityTimeline||[]));
+ }
+ persist();renderAll();if(!silent)note(idx>=0?'订单已更新':(fullPaid?'订单已保存 · 收款凭证已自动生成':'订单已保存'))
 }
 function createReorder(source){
  const o=JSON.parse(JSON.stringify(source));o.id=uid();o.projectName=(source.teamName||'球队')+' · 补单 '+new Date().toLocaleDateString('zh-CN');o.status='线索';o.salesStage='新线索';o.lastContactDate='';o.nextFollowUp='';o.nextAction='联系球队确认补单需求';o.lostReason='';o.quoteSentAt='';o.depositPaidAt='';o.followUpHistory=[];o.activityTimeline=[];o.pinned=false;o.discount=0;o.extraQty=0;o.packageTargetQty=0;o.confirmation=confirmationDefaults();o.productionTracker=productionTrackerDefaults();o.actualOrderTotal=0;o.actualCostTotal=0;o.feedbackStatus='';o.customerFeedback='';o.marketingTitle='';o.marketingTagline='';o.momentsCopy='';o.douyinCopy='';o.caseCopy='';o.caseTags='';o.marketingStatus={sentClient:false,momentsPublished:false,douyinPublished:false,posterReady:false};o.publicCaseEnabled=false;o.marketingInCaseLibrary=false;o.contentPlan={nextDate:'',channel:'douyin',priority:'normal',note:'',matrix:{}};o.contentPerformanceHistory=[];o.douyinContent={mode:'image',angle:'launch',goal:'retention',status:'draft',hook:'',coverTitle:'',cta:'',hashtags:'',scheduleAt:'',plan:[],packageGeneratedAt:'',publishedAt:'',workId:''};o.mediaArchive={design:source.mediaArchive?.design||'',poster:'',jersey:source.mediaArchive?.jersey||'',delivery:''};o.updatedAt=Date.now();o.createdAt=Date.now();o.roster=[];o.catalogItems=(o.catalogItems||[]).map(x=>({...x,id:uid(),qty:0}));fill(o);note('已创建补单项目 · 添加需要补货的球员')
