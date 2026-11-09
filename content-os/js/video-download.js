@@ -3,7 +3,7 @@ const C=window.SAGI_CORE;if(!C)return;
 const q=C.q,note=C.note,save=C.save,uid=C.uid,esc=C.esc,S=()=>C.state;
 
 const CLOUD_URL='https://sagi-cloud-bridge-suny820916.onrender.com';
-const DEPLOY_URL='https://render.com/deploy?repo=https://github.com/suny820916/-sagi-event-system';
+const DEPLOY_URL='https://render.com/deploy?repo=https%3A%2F%2Fgithub.com%2Fsuny820916%2F-sagi-event-system';
 const KEYS={
  engine:'sagi_download_engine_v1',
  cloudToken:'sagi_cloud_bridge_token_v2',
