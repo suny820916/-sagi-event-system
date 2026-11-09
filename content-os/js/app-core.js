@@ -1395,7 +1395,7 @@ function renderDailyBig5(){
 function renderDailyCommand(){
  const d=state.dailyCommand,m=viralModelProfile(),badge=q('dailyInternetBadge');
  q('dailyModelBadge').textContent='MODEL · '+m.confidence+'%';q('dailyConfidence').textContent=m.confidence+'%';
- if(!d||d.date!==today()||d.zhVersion!==ZH_LAYER_VERSION){
+ if(!d||d.schemaVersion!==DAILY_COMMAND_SCHEMA_VERSION||d.date!==today()||d.zhVersion!==ZH_LAYER_VERSION){
    badge.textContent=state.dailyCommandLoading?'INTERNET · SCANNING':'INTERNET · WAITING';
    q('dailyUpdated').textContent='未更新';q('dailyTrendCount').textContent='0';q('dailyProjectCount').textContent='0';
    q('dailyRanking').innerHTML='<div class="empty">今日指挥尚未生成。</div>';q('dailyCommandInsight').textContent='系统会联网扫描热点，再与现有内容任务和项目一起排序。';
