@@ -86,7 +86,8 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
 .productionGate{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:10px;padding:11px;border-radius:12px;background:#090d11;border:1px solid #343e47}.productionGate.ready{border-color:#47775a;background:#0b1b13}.productionGate span{font-size:9px;color:#8b95a0}.productionGate b{display:block;font-size:12px;margin-bottom:3px}.productionActions{display:flex;gap:7px;flex-wrap:wrap}.productionReadyBtn{background:linear-gradient(135deg,#24643f,#65ad78);color:#fff;border-color:#4f9569}.productionReadyBtn:disabled{opacity:.35;filter:saturate(.2)}
 .confirmSummary{margin-top:9px;padding:9px 10px;border:1px solid #343e47;border-radius:10px;background:#090d11;color:#89949e;font-size:9px;line-height:1.65}
 .paymentReceiptPanel{margin-top:10px;padding:11px;border:1px solid #365445;border-radius:12px;background:linear-gradient(145deg,#0b1711,#101914)}.paymentReceiptHead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.paymentReceiptHead b{display:block;font-size:12px;color:#b7e1c4}.paymentReceiptHead span{font-size:8px;color:#789084}.paymentReceiptControls{display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:8px;margin-top:9px}.paymentReceiptActions{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}.paymentReceiptState{margin-left:auto;align-self:center;font-size:8px;color:#7f9086}.paymentReceiptState.ready{color:#9bd5ad}.paymentReceiptLink{display:inline-flex;align-items:center;justify-content:center;text-decoration:none}.paymentReceiptLink.disabled{opacity:.4;pointer-events:none}
-@media(max-width:1000px){.confirmGrid{grid-template-columns:1fr 1fr}.confirmStatusGrid{grid-template-columns:1fr 1fr}.paymentReceiptControls{grid-template-columns:1fr 1fr}}@media(max-width:650px){.confirmGrid,.confirmStatusGrid,.paymentReceiptControls{grid-template-columns:1fr}.confirmCodeRow{grid-template-columns:1fr}.productionGate{align-items:flex-start;flex-direction:column}.paymentReceiptHead{flex-direction:column}.paymentReceiptState{margin-left:0}}
+@media(max-width:1000px){.confirmGrid{grid-template-columns:1fr 1fr}.confirmStatusGrid{grid-template-columns:1fr 1fr}.paymentReceiptControls{grid-template-columns:1fr 1fr}}.paymentAutoFlow{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:10px 0}.autoFlowStep{position:relative;padding:10px;border:1px solid #303b45;border-radius:10px;background:#090d11;color:#7e8a82;min-height:62px}.autoFlowStep small{display:block;font-size:7px;letter-spacing:1px;margin-bottom:5px}.autoFlowStep b{display:block;font-size:10px}.autoFlowStep.done{border-color:#35604a;background:#0c1b14;color:#a7d9b7}.autoFlowStep.current{border-color:#8d7440;background:#1c180e;color:#e1c67e}.autoFlowStep .autoDot{position:absolute;right:8px;top:8px;width:7px;height:7px;border-radius:50%;background:#4b5550}.autoFlowStep.done .autoDot{background:#77c993}.autoFlowStep.current .autoDot{background:#e2bd61}.autoFlowSummary{margin-top:7px;font-size:8px;color:#87948c;line-height:1.55}
+@media(max-width:650px){.confirmGrid,.confirmStatusGrid,.paymentReceiptControls{grid-template-columns:1fr}.confirmCodeRow{grid-template-columns:1fr}.productionGate{align-items:flex-start;flex-direction:column}.paymentReceiptHead{flex-direction:column}.paymentReceiptState{margin-left:0}.paymentAutoFlow{grid-template-columns:1fr 1fr}}
 
 
 /* ===== V1.6 PRODUCTION TRACKER ===== */
@@ -593,7 +594,7 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
       </div>
 
       <div id="orderConfirmation" class="card confirmEngineCard">
-        <h2><span class="sectionNo">08</span>客户订单确认 <small>CUSTOMER ORDER CONFIRMATION · PAYMENT RECEIPT · V1.0.7</small></h2>
+        <h2><span class="sectionNo">08</span>客户订单确认 <small>CUSTOMER ORDER CONFIRMATION · PAYMENT AUTO FLOW · V1.0.8</small></h2>
         <div class="customerConfirmLaunch">
           <div>
             <b>客户准备下单 → 原生链接确认单</b>
@@ -623,6 +624,8 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
           <div><label>SAGI CONFIRMATION CODE</label><textarea id="confirmationCodeInput" placeholder="把客户页生成的 SAGI-CFM1... 确认码粘贴到这里"></textarea></div>
           <div style="align-self:end"><button id="confirmationImportBtn" class="primary" type="button">导入客户确认</button></div>
         </div>
+        <div id="paymentAutoFlow" class="paymentAutoFlow"></div>
+        <div id="paymentAutoFlowSummary" class="autoFlowSummary">AUTO FLOW 正在检查订单状态…</div>
         <div class="paymentReceiptPanel">
           <div class="paymentReceiptHead">
             <div><b>PAYMENT RECEIPT · 收款确认单</b><span>仅在 100% 全款到账后生成，可直接发给客户</span></div>
@@ -1964,7 +1967,7 @@ function initProductionTracker(){
  q('productionAutoPlanBtn').onclick=autoPlanProduction;q('productionStartNextBtn').onclick=advanceProductionStep;q('productionSaveBtn').onclick=saveProductionProgress;renderProductionTracker()
 }
 
-function confirmationDefaults(){return{quoteConfirmed:false,quoteNo:'',planId:'',planLabel:'',confirmedAmount:0,confirmedAt:'',confirmer:'',customerOrderNo:'',customerOrderGeneratedAt:'',designApproval:'not_sent',depositStatus:'unpaid',depositPaid:0,paymentMethod:'微信转账',paymentReceiptNo:'',paymentReceiptGeneratedAt:'',productionNo:'',productionReadyAt:''}}
+function confirmationDefaults(){return{quoteConfirmed:false,quoteNo:'',planId:'',planLabel:'',confirmedAmount:0,confirmedAt:'',confirmer:'',customerOrderNo:'',customerOrderGeneratedAt:'',designApproval:'not_sent',depositStatus:'unpaid',depositPaid:0,paymentMethod:'微信转账',paymentReceiptNo:'',paymentReceiptGeneratedAt:'',paymentAutoFlowUpdatedAt:'',productionNo:'',productionReadyAt:''}}
 function currentConfirmation(){state.confirmation={...confirmationDefaults(),...(state.confirmation||{})};return state.confirmation}
 function decodeConfirmationCode(raw){
  try{
@@ -2006,10 +2009,56 @@ function paymentReceiptNo(){
 }
 function buildPaymentReceiptPayload(){
  const cf=currentConfirmation(),c=calc(),paidAt=state.currentDepositPaidAt?new Date(state.currentDepositPaidAt).toLocaleString('zh-CN'):new Date().toLocaleString('zh-CN');
- return{schema:'SAGI-PAYMENT-RECEIPT-1',version:'1.0.7',orderRef:state.currentId||'',orderNo:customerOrderNo(),receiptNo:paymentReceiptNo(),issuedAt:new Date().toLocaleString('zh-CN'),paidAt,teamName:text('teamName')||'球队',contact:text('contact'),contactInfo:text('contactInfo'),productType:q('productType').selectedOptions[0]?.textContent||q('productType').value,total:c.total,amount:Number(cf.depositPaid)||0,paymentMethod:cf.paymentMethod||'其他',status:'paid'}
+ return{schema:'SAGI-PAYMENT-RECEIPT-1',version:'1.0.8',orderRef:state.currentId||'',orderNo:customerOrderNo(),receiptNo:paymentReceiptNo(),issuedAt:new Date().toLocaleString('zh-CN'),paidAt,teamName:text('teamName')||'球队',contact:text('contact'),contactInfo:text('contactInfo'),productType:q('productType').selectedOptions[0]?.textContent||q('productType').value,total:c.total,amount:Number(cf.depositPaid)||0,paymentMethod:cf.paymentMethod||'其他',status:'paid',flow:'PAYMENT AUTO FLOW V1.0.8'}
 }
 function buildPaymentReceiptLink(){
  const data=encodePublicQuote(buildPaymentReceiptPayload()),url=new URL('./receipt.html',location.href.split('#')[0]);url.hash='d='+data;return url.href
+}
+function renderPaymentAutoFlow(){
+ const cf=currentConfirmation(),required=calc().total,full=cf.depositStatus==='paid'&&Number(cf.depositPaid)>=required-1,receipt=full&&!!cf.paymentReceiptNo,checks=productionChecks(),gate=checks.every(x=>x.ok);
+ const steps=[
+  {label:'01 · CUSTOMER',title:'客户确认',ok:!!cf.quoteConfirmed,meta:cf.quoteConfirmed?'CONFIRMED':'WAITING'},
+  {label:'02 · PAYMENT',title:'100% 全款',ok:full,meta:full?money(cf.depositPaid):money(cf.depositPaid)+' / '+money(required)},
+  {label:'03 · RECEIPT',title:'收款凭证',ok:receipt,meta:receipt?cf.paymentReceiptNo:(full?'AUTO GENERATING':'LOCKED')},
+  {label:'04 · GATE',title:'生产门禁',ok:gate,meta:gate?'READY FOR PRODUCTION':'CHECK REQUIRED'}
+ ];
+ const firstPending=steps.findIndex(x=>!x.ok),w=q('paymentAutoFlow');
+ if(w)w.innerHTML=steps.map((x,i)=>'<div class="autoFlowStep '+(x.ok?'done':i===firstPending?'current':'')+'"><span class="autoDot"></span><small>'+escapeHtml(x.label)+'</small><b>'+escapeHtml(x.title)+'</b><small>'+escapeHtml(x.meta)+'</small></div>').join('');
+ const missing=checks.filter(x=>!x.ok).map(x=>x.label),s=q('paymentAutoFlowSummary');
+ if(s)s.textContent=gate?'AUTO FLOW：客户确认、全款、凭证与生产条件全部完成，可进入生产。':full&&receipt?'AUTO FLOW：收款闭环已完成；生产门禁还需 '+missing.join(' / ')+'。':cf.quoteConfirmed?'AUTO FLOW：客户已确认，等待 100% 全款到账。':'AUTO FLOW：等待客户确认订单。'
+}
+function invalidateAutoPaymentReceipt(reason){
+ const cf=currentConfirmation();
+ if(cf.paymentReceiptNo)addActivity('payment','收款凭证自动失效',reason||'实收金额发生变化');
+ cf.paymentReceiptNo='';cf.paymentReceiptGeneratedAt=''
+}
+function runPaymentAutoFlow(opts={}){
+ const cf=currentConfirmation(),required=calc().total,paid=Math.max(0,Number(cf.depositPaid)||0),was=cf.depositStatus,full=required>0&&paid>=required-1;
+ if(full){
+  cf.depositStatus='paid';cf.depositPaid=required;
+  if(!state.currentDepositPaidAt)state.currentDepositPaidAt=new Date().toISOString();
+  q('orderStatus').value='已收全款';updateSalesStageAuto('已付全款',{contactToday:true});
+  if(was!=='paid')addActivity('payment','全款到账',money(required));
+  if(state.currentId&&!cf.paymentReceiptNo){paymentReceiptNo();cf.paymentReceiptGeneratedAt=new Date().toISOString();addActivity('payment','自动生成收款凭证',cf.paymentReceiptNo)}
+  const pending=productionChecks().filter(x=>!x.ok).map(x=>x.label);
+  q('nextAction').value=pending.length?('补齐生产资料：'+pending.join(' / ')):'进入生产';
+ }else if(paid>0){
+  if(was==='paid'||cf.paymentReceiptNo)invalidateAutoPaymentReceipt('实收金额低于订单全款');
+  cf.depositStatus='partial';state.currentDepositPaidAt='';
+  if(q('orderStatus').value==='已收全款')q('orderStatus').value=cf.quoteConfirmed?'客户已确认':'已报价';
+  if(q('salesStage').value==='已付全款')updateSalesStageAuto(cf.quoteConfirmed?'已确认':'已报价',{contactToday:true,nextDays:1});
+  q('nextAction').value='跟进剩余款 '+money(Math.max(0,required-paid))
+ }else{
+  if(was==='paid'||cf.paymentReceiptNo)invalidateAutoPaymentReceipt('收款状态改为未支付');
+  cf.depositStatus='unpaid';cf.depositPaid=0;state.currentDepositPaidAt='';
+  if(q('orderStatus').value==='已收全款')q('orderStatus').value=cf.quoteConfirmed?'客户已确认':'已报价';
+  if(q('salesStage').value==='已付全款')updateSalesStageAuto(cf.quoteConfirmed?'已确认':'已报价',{contactToday:true,nextDays:1});
+  q('nextAction').value=cf.quoteConfirmed?'跟进全款':'等待客户确认'
+ }
+ cf.paymentAutoFlowUpdatedAt=new Date().toISOString();
+ q('depositStatus').value=cf.depositStatus;q('depositPaid').value=String(Number(cf.depositPaid)||0);
+ persistSalesActivity();renderOrderConfirmation();renderAll();
+ if(opts.notify)note(full?(cf.paymentReceiptNo?'全款到账 · 收款凭证已自动生成':'全款到账 · 保存订单后自动生成凭证'):(paid>0?'已记录部分到账':'收款状态已更新'))
 }
 function refreshPaymentReceiptUI(){
  const cf=currentConfirmation(),ready=cf.depositStatus==='paid'&&Number(cf.depositPaid)>=calc().total-1;
@@ -2046,7 +2095,7 @@ function renderOrderConfirmation(){
  q('productionReadyBtn').disabled=!all||!!cf.productionReadyAt;q('productionGate').classList.toggle('ready',all);
  q('productionGateTitle').textContent=cf.productionReadyAt?'PRODUCTION READY':all?'READY FOR PRODUCTION':'PRODUCTION LOCKED';
  q('productionGateText').textContent=cf.productionReadyAt?('已进入生产 · '+cf.productionReadyAt):(all?'所有门禁已通过':'尚未满足全部生产条件');
- syncCustomerOrderNativeLink();refreshPaymentReceiptUI()
+ syncCustomerOrderNativeLink();refreshPaymentReceiptUI();renderPaymentAutoFlow()
 }
 function importCustomerConfirmation(){
  const obj=decodeConfirmationCode(q('confirmationCodeInput').value);if(!obj){note('确认码无效');return}
@@ -2054,7 +2103,9 @@ function importCustomerConfirmation(){
  if(obj.orderRef&&state.currentId&&obj.orderRef!==state.currentId){note('确认码不属于当前订单');return}
  const cf=currentConfirmation();cf.quoteConfirmed=true;cf.quoteNo=obj.quoteNo||'';cf.planId=obj.planId||'';cf.planLabel=obj.planLabel||'当前报价方案';cf.confirmedAmount=Number(obj.confirmedAmount)||0;cf.confirmedAt=obj.confirmedAt||new Date().toLocaleString('zh-CN');cf.confirmer=obj.confirmer||'客户';
  const idx={A:0,B:1,C:2}[cf.planId];if(Number.isInteger(idx)&&state.packagePlans[idx])applyPackagePlan(idx);
- q('orderStatus').value='客户已确认';addActivity('confirm','客户确认方案',(cf.planLabel||'当前报价')+' · '+money(cf.confirmedAmount));updateSalesStageAuto('已确认',{contactToday:true,nextDays:1});q('nextAction').value='跟进全款';q('confirmationCodeInput').value='';persistSalesActivity();renderOrderConfirmation();renderPipeline();note('客户确认已导入 · '+cf.planLabel)
+ q('orderStatus').value='客户已确认';addActivity('confirm','客户确认方案',(cf.planLabel||'当前报价')+' · '+money(cf.confirmedAmount));updateSalesStageAuto('已确认',{contactToday:true,nextDays:1});q('nextAction').value='跟进全款';q('confirmationCodeInput').value='';
+ if(cf.depositStatus==='paid'&&Number(cf.depositPaid)>=calc().total-1){runPaymentAutoFlow({notify:false});renderPipeline();note('客户确认已导入 · 全款闭环已同步');return}
+ persistSalesActivity();renderOrderConfirmation();renderPipeline();note('客户确认已导入 · '+cf.planLabel)
 }
 function makeProductionNo(){return 'SAGI-PROD-'+new Date().toISOString().slice(0,10).replace(/-/g,'')+'-'+Math.random().toString(36).slice(2,6).toUpperCase()}
 function enterProduction(){
@@ -2141,8 +2192,8 @@ function previewProductionSheet(){
 function initOrderConfirmation(){
  q('customerOrderGenerateBtn').onclick=generateCustomerOrderLink;q('customerOrderShareBtn').onclick=shareCustomerOrderLink;q('confirmationImportBtn').onclick=importCustomerConfirmation;q('productionReadyBtn').onclick=enterProduction;q('productionSheetBtn').onclick=previewProductionSheet;q('paymentReceiptBtn').onclick=generatePaymentReceipt;q('paymentReceiptShareBtn').onclick=sharePaymentReceiptLink;q('paymentMethod').onchange=()=>{currentConfirmation().paymentMethod=q('paymentMethod').value;persistSalesActivity();refreshPaymentReceiptUI()};
  q('designApproval').onchange=()=>{currentConfirmation().designApproval=q('designApproval').value;renderOrderConfirmation();renderAll()};
- q('depositStatus').onchange=()=>{currentConfirmation().depositStatus=q('depositStatus').value;if(q('depositStatus').value==='paid'){currentConfirmation().depositPaid=calc().total;q('depositPaid').value=String(calc().total);q('orderStatus').value='已收全款';updateSalesStageAuto('已付全款',{contactToday:true});state.currentDepositPaidAt=new Date().toISOString();q('nextAction').value='准备生产资料';addActivity('payment','全款到账',money(calc().total))}persistSalesActivity();renderOrderConfirmation();renderAll()};
- q('depositPaid').oninput=()=>{currentConfirmation().depositPaid=n('depositPaid');renderOrderConfirmation()};renderOrderConfirmation()
+ q('depositStatus').onchange=()=>{const cf=currentConfirmation(),v=q('depositStatus').value;if(v==='paid')cf.depositPaid=calc().total;else if(v==='unpaid')cf.depositPaid=0;else cf.depositPaid=Math.min(Number(cf.depositPaid)||0,Math.max(0,calc().total-1));runPaymentAutoFlow({notify:true})};
+ q('depositPaid').onchange=()=>{currentConfirmation().depositPaid=n('depositPaid');runPaymentAutoFlow({notify:true})};q('depositPaid').oninput=()=>{currentConfirmation().depositPaid=n('depositPaid');renderPaymentAutoFlow()};renderOrderConfirmation()
 }
 
 function publicDate(d=new Date()){return d.toLocaleDateString('zh-CN')}
