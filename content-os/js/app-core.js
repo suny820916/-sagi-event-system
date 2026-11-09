@@ -450,6 +450,15 @@ const TREND_PROFILES={
  xinjiang:{label:'新疆足球',query:'Xinjiang (football OR soccer)',boost:['xinjiang','youth','academy','champion','tournament']},
  stars:{label:'C罗 / 梅西',query:'("Cristiano Ronaldo" OR Ronaldo OR Messi OR "Lionel Messi")',boost:['ronaldo','cristiano','messi','record','goal','retire','final']}
 };
+const BIG5_LEAGUES={
+ premier:{label:'英超',en:'Premier League',re:/premier league|arsenal|liverpool|manchester city|man city|manchester united|man utd|chelsea|tottenham|spurs|newcastle|aston villa|brighton|west ham/i},
+ laliga:{label:'西甲',en:'La Liga',re:/la liga|laliga|real madrid|barcelona|atletico madrid|atlético madrid|athletic bilbao|real sociedad|villarreal|real betis|sevilla/i},
+ seriea:{label:'意甲',en:'Serie A',re:/serie a|juventus|inter milan|internazionale|ac milan|napoli|as roma|\broma\b|lazio|atalanta|fiorentina/i},
+ bundesliga:{label:'德甲',en:'Bundesliga',re:/bundesliga|bayern munich|bayern münchen|borussia dortmund|dortmund|bayer leverkusen|leverkusen|rb leipzig|eintracht frankfurt|stuttgart/i},
+ ligue1:{label:'法甲',en:'Ligue 1',re:/ligue 1|paris saint-germain|paris st-germain|\bpsg\b|marseille|olympique lyon|\blyon\b|monaco|lille/i}
+};
+const BIG5_QUERY='("Premier League" OR "La Liga" OR "Serie A" OR Bundesliga OR "Ligue 1" OR Arsenal OR Liverpool OR "Manchester United" OR "Manchester City" OR Chelsea OR Tottenham OR Barcelona OR "Real Madrid" OR "Atletico Madrid" OR Juventus OR "Inter Milan" OR "AC Milan" OR Napoli OR "Bayern Munich" OR Dortmund OR Leverkusen OR PSG OR "Paris Saint-Germain" OR Marseille)';
+const BIG5_HOT_MAX_HOURS=18;
 const TREND_CACHE_KEY='sagi_content_os_trend_cache_v1';
 const TREND_CACHE_MS=10*60*1000;
 const TREND_MIN_GAP_MS=6500;
@@ -1277,7 +1286,12 @@ const DAILY_COMMAND_MAX_AGE_MS=20*60*1000;
 const DAILY_HOT_MAX_HOURS=12;
 function trustedFootballDomain(a){
  const d=String(a?.domain||'').toLowerCase();
- return /(^|\.)(reuters|bbc|espn|skysports|theguardian|apnews|goal|marca|as|fifa|uefa|the-afc|news|xinhuanet|cctv|sina)\./.test(d)||/sports\.sina\.com\.cn|news\.cn/.test(d)
+ return /(^|\.)(reuters|bbc|espn|skysports|theguardian|apnews|goal|marca|as|fifa|uefa|the-afc|news|xinhuanet|cctv|sina|premierleague|laliga|bundesliga|ligue1|lequipe|football-italia)\./.test(d)||/sports\.sina\.com\.cn|news\.cn|legaseriea\.it/.test(d)
+}
+function classifyBig5(a){
+ const text=String((a?.title||'')+' '+(a?.url||'')+' '+(a?.domain||''));
+ for(const [key,v] of Object.entries(BIG5_LEAGUES))if(v.re.test(text))return{key,label:v.label,en:v.en};
+ return null
 }
 function footballArticleRelevant(a){
  const title=String(a?.title||'').toLowerCase(),url=String(a?.url||'').toLowerCase(),all=title+' '+url;
@@ -1310,30 +1324,49 @@ function dailyCommandNeedsRefresh(){
 }
 function trendMetaText(a){
  const age=Math.max(0,trendAgeHours(a?.seendate)),support=Math.max(1,Number(a?.eventSupport)||1);
- return (age<1?'<1h':age.toFixed(1)+'h')+' · '+support+'源 · '+(a?.eventVerified?'已验证':'单源')
+ return (a?.leagueLabel?(a.leagueLabel+' · '):'')+(age<1?'<1h':age.toFixed(1)+'h')+' · '+support+'源 · '+(a?.eventVerified?'已验证':'单源')
 }
 async function fetchDailyTrendPool(){
- const result=await trendFetchShared(TREND_PROFILES.global.query,{profile:'global',force:false,maxrecords:100});
- const sourceMode=dailySourceMode(result),cacheTooOld=sourceMode==='CACHE'&&Number(result.cacheAgeMs||0)>30*60*1000;
- const fresh=(result.items||[]).filter(a=>footballArticleRelevant(a)&&trendAgeHours(a.seendate)<=24);
- const clusters=clusterDailyEvents(fresh);
- const rescored=[];
- clusters.forEach(c=>{
-   c.items.forEach(a=>{
-     const profiles=['global','china','xinjiang','stars'],best=profiles.map(p=>{const raw=trendScore(a,p),fit=accountFitScore(a);return{p,score:Math.round(raw*.62+fit*.38)}}).sort((x,y)=>y.score-x.score)[0];
-     const age=trendAgeHours(a.seendate),trusted=trustedFootballDomain(a),verified=c.support>=2||(trusted&&age<=6);
-     const base=best.score+(c.support>=2?Math.min(14,(c.support-1)*5):0)+(trusted?5:0)-(age>12?12:0)-(!verified?8:0);
-     rescored.push({...a,score:Math.max(1,Math.min(99,Math.round(base))),dailyProfile:best.p,eventSupport:Math.max(1,c.support),eventVerified:verified,dailyEligible:!cacheTooOld&&age<=DAILY_HOT_MAX_HOURS&&verified,sourceMode,reason:trendReason(a,base)+(verified?' · '+Math.max(1,c.support)+'个来源':' · 单源观察')})
-   })
+ const globalResult=await trendFetchShared(TREND_PROFILES.global.query,{profile:'global',force:false,maxrecords:100});
+ const big5Result=await trendFetchShared(BIG5_QUERY,{profile:'global',force:false,maxrecords:100});
+ const channels=[
+  {name:'GLOBAL',result:globalResult,maxHours:DAILY_HOT_MAX_HOURS,items:globalResult.items||[]},
+  {name:'BIG5',result:big5Result,maxHours:BIG5_HOT_MAX_HOURS,items:big5Result.items||[]}
+ ];
+ const merged=new Map(),modes=[];
+ channels.forEach(ch=>{
+   const mode=dailySourceMode(ch.result);modes.push(mode);
+   const cacheTooOld=mode==='CACHE'&&Number(ch.result.cacheAgeMs||0)>30*60*1000;
+   const fresh=(ch.items||[]).filter(a=>footballArticleRelevant(a)&&trendAgeHours(a.seendate)<=24);
+   const clusters=clusterDailyEvents(fresh);
+   clusters.forEach(c=>c.items.forEach(a=>{
+     const league=classifyBig5(a),profiles=['global','china','xinjiang','stars'],best=profiles.map(p=>{const raw=trendScore(a,p),fit=accountFitScore(a);return{p,score:Math.round(raw*.62+fit*.38)}}).sort((x,y)=>y.score-x.score)[0];
+     const age=trendAgeHours(a.seendate),trusted=trustedFootballDomain(a),verified=c.support>=2||(trusted&&age<=(ch.name==='BIG5'?12:6));
+     const leagueBoost=league?6:0,base=best.score+(c.support>=2?Math.min(14,(c.support-1)*5):0)+(trusted?5:0)+leagueBoost-(age>12?8:0)-(!verified?8:0);
+     const item={...a,score:Math.max(1,Math.min(99,Math.round(base))),dailyProfile:best.p,eventSupport:Math.max(1,c.support),eventVerified:verified,dailyEligible:!cacheTooOld&&age<=ch.maxHours&&verified,sourceMode:mode,channel:ch.name,league:league?.key||'',leagueLabel:league?.label||'',leagueEn:league?.en||'',reason:trendReason(a,base)+(league?(' · '+league.label):'')+(verified?' · '+Math.max(1,c.support)+'个来源':' · 单源观察')};
+     const key=(a.url||'')||String(a.title||'').toLowerCase();const prev=merged.get(key);if(!prev||item.score>prev.score)merged.set(key,item)
+   }))
  });
- const ranked=rescored.sort((a,b)=>(Number(b.dailyEligible)-Number(a.dailyEligible))||b.score-a.score||trendAgeHours(a.seendate)-trendAgeHours(b.seendate)).slice(0,24);
- const items=await localizeTrendItems(ranked,24);
- return{items,sourceMode,cacheAgeMs:Number(result.cacheAgeMs||0),verifiedCount:items.filter(x=>x.dailyEligible).length}
+ const rescored=[...merged.values()].sort((a,b)=>(Number(b.dailyEligible)-Number(a.dailyEligible))||(Number(!!b.league)-Number(!!a.league))||b.score-a.score||trendAgeHours(a.seendate)-trendAgeHours(b.seendate));
+ const sourceMode=modes.includes('LIVE VERIFIED')?'LIVE VERIFIED':modes.includes('FRESH CACHE')?'FRESH CACHE':'CACHE';
+ const items=await localizeTrendItems(rescored.slice(0,36),36);
+ return{items,sourceMode,cacheAgeMs:Math.max(Number(globalResult.cacheAgeMs||0),Number(big5Result.cacheAgeMs||0)),verifiedCount:items.filter(x=>x.dailyEligible).length,big5Count:items.filter(x=>x.dailyEligible&&x.league).length}
+}
+function selectDailyHotItems(items,limit=8){
+ const eligible=(items||[]).filter(a=>a.dailyEligible),picked=[],used=new Set();
+ ['premier','laliga','seriea','bundesliga','ligue1'].forEach(key=>{
+   const x=eligible.filter(a=>a.league===key).sort((a,b)=>b.score-a.score)[0];
+   if(x){picked.push(x);used.add(x.url||x.title)}
+ });
+ eligible.sort((a,b)=>b.score-a.score||trendAgeHours(a.seendate)-trendAgeHours(b.seendate)).forEach(x=>{
+   const k=x.url||x.title;if(picked.length<limit&&!used.has(k)){picked.push(x);used.add(k)}
+ });
+ return picked.slice(0,limit)
 }
 function dailyBestTrendCandidate(a){
  const p=dailyVirtualHotProject(),src={url:a.url,domain:a.domain,title:a.title,originalTitle:a.originalTitle||a.title,seendate:a.seendate,score:a.score},plans=['speed','emotion','debate'].map(k=>variantPlan(k,a.title,p,src)).sort((x,y)=>(y.viral?.total||0)-(x.viral?.total||0)),best=plans[0];
  const freshness=trendAgeHours(a.seendate)<=3?6:trendAgeHours(a.seendate)<=8?4:1,supportBonus=Math.min(8,Math.max(0,(Number(a.eventSupport)||1)-1)*3);
- return dailyCandidate(best,generatorShortTopic(a.title,42),'LIVE RADAR',p,freshness+supportBonus,{trend:{url:a.url,domain:a.domain,title:a.title,originalTitle:a.originalTitle||a.title,seendate:a.seendate,score:a.score,sourcecountry:a.sourcecountry,sourcecountryZh:a.sourcecountryZh,language:a.language,languageZh:a.languageZh,socialimage:a.socialimage,reason:a.reason,translated:a.translated,eventSupport:a.eventSupport,eventVerified:a.eventVerified,sourceMode:a.sourceMode,freshness:trendMetaText(a)}})
+ return dailyCandidate(best,generatorShortTopic(a.title,42),'LIVE RADAR',p,freshness+supportBonus,{trend:{url:a.url,domain:a.domain,title:a.title,originalTitle:a.originalTitle||a.title,seendate:a.seendate,score:a.score,sourcecountry:a.sourcecountry,sourcecountryZh:a.sourcecountryZh,language:a.language,languageZh:a.languageZh,socialimage:a.socialimage,reason:a.reason,translated:a.translated,eventSupport:a.eventSupport,eventVerified:a.eventVerified,sourceMode:a.sourceMode,channel:a.channel,league:a.league,leagueLabel:a.leagueLabel,leagueEn:a.leagueEn,freshness:trendMetaText(a)}})
 }
 function dailyCommandCard(el,c,kind){
  if(!c){el.innerHTML='<div class="commandLabel">'+kind+'</div><h3>暂无合适候选</h3>';return}
@@ -1361,17 +1394,17 @@ async function runDailyViralCommand(auto=false){
  if(state.dailyCommandLoading)return;state.dailyCommandLoading=true;renderDailyCommand();q('dailyRunBtn').disabled=true;
  let trendResult={items:[],sourceMode:'LOCAL',verifiedCount:0},online=false;
  try{trendResult=await fetchDailyTrendPool();online=trendResult.sourceMode!=='CACHE'&&trendResult.items.length>0}catch(e){}
- const trends=trendResult.items||[],eligible=trends.filter(a=>a.dailyEligible);
- if(trends.length){state.trendItems=trends;state.trendFetchedAt=Date.now();q('trendStatus').textContent='DAILY VIRAL 已同步 · '+eligible.length+' 条已验证 / '+trends.length+' 条信号';renderTrends()}
- const candidates=[],hot=eligible.slice(0,8).map(dailyBestTrendCandidate);candidates.push(...hot);
+ const trends=trendResult.items||[],eligible=trends.filter(a=>a.dailyEligible),selectedHot=selectDailyHotItems(trends,8);
+ if(trends.length){state.trendItems=trends;state.trendFetchedAt=Date.now();q('trendStatus').textContent='DAILY VIRAL 已同步 · '+eligible.length+' 条已验证 · 五大联赛 '+(trendResult.big5Count||0)+' 条 / '+trends.length+' 条信号';renderTrends()}
+ const candidates=[],hot=selectedHot.map(dailyBestTrendCandidate);candidates.push(...hot);
  const localProjects=allProjects().filter(p=>p.type!=='hot').slice(0,10);
  localProjects.forEach(p=>{const plan=dailyProjectPlan(p),scheduled=projectContent(p.id).some(c=>(c.scheduleAt||'').slice(0,10)===today()),bonus=scheduled?4:0;candidates.push(dailyCandidate(plan,p.name,'SAGI PROJECT',p,bonus))});
  state.contents.filter(c=>c.status!=='published').forEach(c=>{const p=allProjects().find(x=>x.id===c.projectId),plan=dailyExistingPlan(c,p),bonus=(c.status==='ready'?8:0)+((c.scheduleAt||'').slice(0,10)===today()?5:0);candidates.push(dailyCandidate(plan,c.title||'未命名内容','CONTENT TASK',p,bonus,{contentId:c.id,status:c.status}))});
  const ranked=candidates.filter(c=>c.viral>0).sort((a,b)=>b.priority-a.priority||b.viral-a.viral),hold=ranked.slice().reverse().find(c=>c.priority<70)||ranked[ranked.length-1]||null;
  const hasStrongHot=ranked.some(c=>c.source==='LIVE RADAR'&&c.priority>=78),hasLocal=ranked.some(c=>c.source!=='LIVE RADAR'&&c.priority>=68);
- const sourceNote=trendResult.sourceMode==='CACHE'?'互联网源当前只剩旧缓存，旧闻不进入P1/P2。':eligible.length?'今日热点已按“近12小时 + 足球相关 + 多源/权威源验证”筛选。':'当前没有通过验证的强热点，不为了热点而硬发。';
+ const sourceNote=trendResult.sourceMode==='CACHE'?'互联网源当前只剩旧缓存，旧闻不进入P1/P2。':eligible.length?'今日热点采用“全球突发 + 五大联赛专属雷达”；五大联赛近18小时合格内容保留曝光位。':'当前没有通过验证的强热点，不为了热点而硬发。';
  const insight=(hasStrongHot&&hasLocal?'建议“热点拉新 + 本地内容留人”：P1抢真实热点，P2保持新疆足球身份。':hasStrongHot?'今天存在已验证强热点，优先抢时效；本地内容放第二顺位。':hasLocal?'今天没有已验证强热点，优先发萨吉体育自己的赛事、球队或人物内容。':'今天候选整体偏弱，优先继续制作和补素材。')+' '+sourceNote;
- state.dailyCommand={date:today(),zhVersion:ZH_LAYER_VERSION,updatedAt:Date.now(),updatedText:new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})+' · '+trendResult.sourceMode,online,sourceMode:trendResult.sourceMode,trendCount:hot.length,verifiedTrendCount:eligible.length,localCount:Math.max(0,candidates.length-hot.length),ranked:ranked.slice(0,12),hold,insight};
+ state.dailyCommand={date:today(),zhVersion:ZH_LAYER_VERSION,updatedAt:Date.now(),updatedText:new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})+' · '+trendResult.sourceMode,online,sourceMode:trendResult.sourceMode,trendCount:hot.length,verifiedTrendCount:eligible.length,big5Count:trendResult.big5Count||0,localCount:Math.max(0,candidates.length-hot.length),ranked:ranked.slice(0,12),hold,insight};
  state.dailyCommandLoading=false;save();renderAll();q('dailyRunBtn').disabled=false;if(!auto)note('今日指挥已刷新 · 已验证热点 '+eligible.length+' 条')
 }
 function executeDailyCandidate(c){
