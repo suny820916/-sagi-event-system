@@ -3,7 +3,8 @@ const C=window.SAGI_CORE;if(!C)return;
 const q=C.q,note=C.note,save=C.save,uid=C.uid,esc=C.esc,S=()=>C.state;
 const DIRECT_RE=/\.(mp4|mov|webm|m4v|ogg)(?:$|[?#])/i;
 const STREAM_RE=/\.(m3u8|mpd)(?:$|[?#])/i;
-const BRIDGE_KEY='sagi_local_bridge_url_v1';\nconst PLATFORM_RE=/(youtube\.com|youtu\.be|douyin\.com|iesdouyin\.com|tiktok\.com|bilibili\.com|b23\.tv|instagram\.com|facebook\.com|x\.com|twitter\.com)/i;
+const BRIDGE_KEY='sagi_local_bridge_url_v1';
+const PLATFORM_RE=/(youtube\.com|youtu\.be|douyin\.com|iesdouyin\.com|tiktok\.com|bilibili\.com|b23\.tv|instagram\.com|facebook\.com|x\.com|twitter\.com)/i;
 let currentStatus='等待粘贴视频链接。';
 
 function normalize(v){
@@ -127,6 +128,8 @@ function renderHistory(){
  host.querySelectorAll('[data-dl-del]').forEach(b=>b.onclick=()=>remove(b.dataset.dlDel))
 }
 function render(){
+ const savedBridge=localStorage.getItem(BRIDGE_KEY)||'';
+ if(q('downloadBridgeUrl')&&!q('downloadBridgeUrl').value)q('downloadBridgeUrl').value=savedBridge;
  renderHistory();const s=q('downloadStatus');if(s&&!s.textContent.trim())setStatus(currentStatus)
 }
 if(q('downloadPreviewBtn'))q('downloadPreviewBtn').onclick=preview;
