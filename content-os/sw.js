@@ -1,4 +1,4 @@
-const CACHE='sagi-content-os-shell-v12';
+const CACHE='sagi-content-os-shell-v13';
 const SHELL=['./','./index.html','./manifest.webmanifest','./icon.svg'];
 self.addEventListener('install',e=>{
   self.skipWaiting();
