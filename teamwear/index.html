@@ -144,6 +144,7 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
 .card.sectionPrimary{border-color:#3a4a42;box-shadow:0 0 0 1px rgba(100,130,110,.08)}
 .card.sectionSecondary{opacity:.96}
 .shippingFields.salesCompactHidden{display:none}
+.salesCenterCard{display:none!important}
 .simpleStatus{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.simpleStatus .pill{border:1px solid #35434c;border-radius:999px;padding:5px 8px;font-size:8px;color:#9ca8b1}.simpleStatus .pill.good{border-color:#41624d;color:#a9d6b3}.simpleStatus .pill.warn{border-color:#655a37;color:#dfca83}
 @media(max-width:720px){.workspaceNav{grid-template-columns:1fr 1fr}.workspaceBtn{padding:9px 7px!important}.workspaceIntro{align-items:flex-start;flex-direction:column}}
 
@@ -292,13 +293,12 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
     <div id="globalPinnedList" class="globalPinnedList"></div>
   </div>
   <div class="workspaceNav" id="workspaceNav">
-    <button class="workspaceBtn active" data-workspace="sales" type="button"><b>销售工作台</b><span>客户 · 跟进 · 套餐 · 报价</span></button>
-    <button class="workspaceBtn" data-workspace="order" type="button"><b>订单配置</b><span>产品 · 名单 · 确认 · 收款</span></button>
+    <button class="workspaceBtn active" data-workspace="order" type="button"><b>订单配置</b><span>产品 · 名单 · 确认 · 收款</span></button>
     <button class="workspaceBtn" data-workspace="production" type="button"><b>生产发货</b><span>厂家 · 节点 · 物流 · 签收</span></button>
     <button class="workspaceBtn" data-workspace="archive" type="button"><b>客户档案</b><span>历史订单 · 补单 · 备份</span></button>
     <a class="workspaceBtn" href="../content-os/latest.html?v=10" style="text-decoration:none"><b>CONTENT OS</b><span>AI导演 · 制作 · 发布 · 学习</span></a>
   </div>
-  <div class="workspaceIntro"><div><b id="workspaceTitle">销售工作台</b><span id="workspaceDesc">先处理今天要跟进的客户，再完成报价与成交。</span></div><div class="simpleStatus"><span class="pill" id="workspaceTeam">未选择球队</span><span class="pill warn" id="workspaceStatus">新线索</span></div></div>
+  <div class="workspaceIntro"><div><b id="workspaceTitle">订单配置</b><span id="workspaceDesc">确认产品、名单、报价、定金与正式订单信息。</span></div><div class="simpleStatus"><span class="pill" id="workspaceTeam">未选择球队</span><span class="pill warn" id="workspaceStatus">新线索</span></div></div>
   <div class="kpis">
     <div class="kpi"><span>客户 / 球队</span><b id="kpiTeams">0</b><small>已沉淀订单客户</small></div>
     <div class="kpi"><span>销售项目</span><b id="kpiOrders">0</b><small>本机订单项目</small></div>
@@ -2747,15 +2747,14 @@ function createReorder(source){
 }
 
 const WORKSPACE_CONFIG={
- sales:{title:'销售工作台',desc:'先处理今天要跟进的客户，再完成报价与成交。',sections:['salesConversionCenter','customer','packageBuilder','customerQuotationMode','quoteCard','orders']},
  order:{title:'订单配置',desc:'确认产品、名单、报价、定金与正式订单信息。',sections:['customer','product','costProfile','packageBuilder','catalog','rosterCard','orderConfirmation','pipelineCard','customerQuotationMode','quoteCard','orders']},
  production:{title:'生产发货',desc:'只看生产、物流和签收，减少销售信息干扰。',sections:['orderConfirmation','productionTracker','pipelineCard','orders']},
  archive:{title:'客户档案',desc:'查看真实成交档案、历史记录、补单和数据备份。',sections:['orderArchive','orders']},
  marketing:{title:'内容中心',desc:'统一安排今天发什么、素材缺口、视频制作、发布与案例沉淀。',sections:['contentCommandCenter','visualMarketing','customer','orders']}
 };
-let currentWorkspace=localStorage.getItem('sagi_teamwear_workspace_v18')||'sales';
+let currentWorkspace=localStorage.getItem('sagi_teamwear_workspace_v18')||'order';if(currentWorkspace==='sales')currentWorkspace='order';
 function setWorkspace(name,scroll=true){
- if(!WORKSPACE_CONFIG[name])name='sales';currentWorkspace=name;localStorage.setItem('sagi_teamwear_workspace_v18',name);
+ if(!WORKSPACE_CONFIG[name])name='order';currentWorkspace=name;localStorage.setItem('sagi_teamwear_workspace_v18',name);
  const all=['salesConversionCenter','customer','product','costProfile','packageBuilder','catalog','rosterCard','orderConfirmation','productionTracker','pipelineCard','contentCommandCenter','visualMarketing','orderArchive','orders','customerQuotationMode','quoteCard'];
  all.forEach(id=>{const el=q(id);if(el)el.classList.toggle('workspaceHidden',!WORKSPACE_CONFIG[name].sections.includes(id))});
  document.querySelectorAll('[data-workspace]').forEach(b=>b.classList.toggle('active',b.dataset.workspace===name));
@@ -2770,9 +2769,9 @@ function renderWorkspaceSummary(){
 }
 function initWorkspaceUI(){
  q('globalPinAddBtn').onclick=pinSelectedOrderFromTop;
- ['salesConversionCenter','customer','productionTracker','contentCommandCenter','visualMarketing','orderArchive','orders'].forEach(id=>q(id)?.classList.add('sectionPrimary'));['costProfile','catalog','customerQuotationMode','quoteCard'].forEach(id=>q(id)?.classList.add('sectionSecondary'));
+ ['customer','productionTracker','contentCommandCenter','visualMarketing','orderArchive','orders'].forEach(id=>q(id)?.classList.add('sectionPrimary'));['costProfile','catalog','customerQuotationMode','quoteCard'].forEach(id=>q(id)?.classList.add('sectionSecondary'));
  document.querySelectorAll('[data-workspace]').forEach(b=>b.onclick=()=>setWorkspace(b.dataset.workspace,true));
- q('salesAnalyticsToggle').onclick=()=>{const p=q('salesAnalyticsPanel'),hidden=p.classList.toggle('analyticsHidden');q('salesAnalyticsToggle').textContent=hidden?'查看销售分析':'收起销售分析'};
+ if(q('salesAnalyticsToggle'))q('salesAnalyticsToggle').onclick=()=>{const p=q('salesAnalyticsPanel'),hidden=p.classList.toggle('analyticsHidden');q('salesAnalyticsToggle').textContent=hidden?'查看销售分析':'收起销售分析'};
  q('backupPanelToggle').onclick=()=>{const p=q('backupPanelBody'),hidden=p.classList.toggle('analyticsHidden');q('backupPanelToggle').textContent=hidden?'数据备份 / 恢复':'收起备份工具'};
  setWorkspace(currentWorkspace,false)
 }
