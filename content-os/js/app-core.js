@@ -458,11 +458,12 @@ const BIG5_LEAGUES={
  ligue1:{label:'法甲',en:'Ligue 1',re:/ligue 1|paris saint-germain|paris st-germain|\bpsg\b|marseille|olympique lyon|\blyon\b|monaco|lille/i}
 };
 const BIG5_QUERY='("Premier League" OR "La Liga" OR "Serie A" OR Bundesliga OR "Ligue 1" OR Arsenal OR Liverpool OR "Manchester United" OR "Manchester City" OR Chelsea OR Tottenham OR Barcelona OR "Real Madrid" OR "Atletico Madrid" OR Juventus OR "Inter Milan" OR "AC Milan" OR Napoli OR "Bayern Munich" OR Dortmund OR Leverkusen OR PSG OR "Paris Saint-Germain" OR Marseille)';
-const BIG5_HOT_MAX_HOURS=18;
-const TREND_CACHE_KEY='sagi_content_os_trend_cache_v1';
+const BIG5_HOT_MAX_HOURS=24;
+const TREND_CACHE_KEY='sagi_content_os_trend_cache_v2';
 const TREND_CACHE_MS=10*60*1000;
-const TREND_MIN_GAP_MS=6500;
-let trendRequestInFlight=null,trendLastRequestAt=0;
+const TREND_MIN_GAP_MS=7000;
+const trendRequestInFlight=new Map();
+let trendLastRequestAt=0;
 function trendEndpoint(query,maxrecords=80){
  const u=new URL('https://api.gdeltproject.org/api/v2/doc/doc');
  u.searchParams.set('query',query);u.searchParams.set('mode','artlist');u.searchParams.set('maxrecords',String(maxrecords));u.searchParams.set('format','json');u.searchParams.set('timespan','24h');u.searchParams.set('sort','hybridrel');
@@ -533,14 +534,22 @@ async function localizeTrendItems(items,max=24){
  return out
 }
 
-function trendReadCache(){
- try{const x=JSON.parse(localStorage.getItem(TREND_CACHE_KEY)||'null');return x&&Array.isArray(x.items)?x:null}catch(e){return null}
+function trendCacheSlot(query){
+ let h=2166136261,s=String(query||'');
+ for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}
+ return TREND_CACHE_KEY+'_'+(h>>>0).toString(36)
+}
+function trendReadCache(query){
+ try{
+  const x=JSON.parse(localStorage.getItem(trendCacheSlot(query))||'null');
+  return x&&x.query===query&&Array.isArray(x.items)?x:null
+ }catch(e){return null}
 }
 function trendWriteCache(query,items){
- try{localStorage.setItem(TREND_CACHE_KEY,JSON.stringify({query,items,fetchedAt:Date.now()}))}catch(e){}
+ try{localStorage.setItem(trendCacheSlot(query),JSON.stringify({query,items,fetchedAt:Date.now()}))}catch(e){}
 }
-function trendCachedItems(maxAge=TREND_CACHE_MS){
- const x=trendReadCache();return x&&Date.now()-num(x.fetchedAt)<=maxAge?x.items:[]
+function trendCachedItems(query,maxAge=TREND_CACHE_MS){
+ const x=trendReadCache(query);return x&&Date.now()-num(x.fetchedAt)<=maxAge?x.items:[]
 }
 function profileMatch(a,profile){
  const t=((a.title||'')+' '+(a.sourcecountry||'')+' '+(a.domain||'')).toLowerCase();
@@ -559,10 +568,10 @@ function scoreTrendItems(articles,profile='global'){
  return items.sort((a,b)=>b.score-a.score||trendAgeHours(a.seendate)-trendAgeHours(b.seendate))
 }
 async function trendFetchShared(query,{profile='global',force=false,maxrecords=80}={}){
- const cached=trendReadCache();
- if(!force&&cached&&cached.query===query&&Date.now()-num(cached.fetchedAt)<=TREND_CACHE_MS)return{items:cached.items,cached:true,limited:false,cacheAgeMs:Date.now()-num(cached.fetchedAt)};
- if(trendRequestInFlight)return trendRequestInFlight;
- trendRequestInFlight=(async()=>{
+ const cached=trendReadCache(query);
+ if(!force&&cached&&Date.now()-num(cached.fetchedAt)<=TREND_CACHE_MS)return{items:cached.items,cached:true,limited:false,cacheAgeMs:Date.now()-num(cached.fetchedAt)};
+ if(trendRequestInFlight.has(query))return trendRequestInFlight.get(query);
+ const request=(async()=>{
    const gap=Date.now()-trendLastRequestAt;if(gap<TREND_MIN_GAP_MS)await sleep(TREND_MIN_GAP_MS-gap);
    let attempt=0,lastErr=null;
    while(attempt<2){
@@ -570,9 +579,9 @@ async function trendFetchShared(query,{profile='global',force=false,maxrecords=8
      try{
        const res=await fetch(trendEndpoint(query,maxrecords),{cache:'no-store'});
        if(res.status===429){
-         const retry=Math.max(TREND_MIN_GAP_MS,Math.min(15000,(Number(res.headers.get('retry-after'))||6)*1000));
+         const retry=Math.max(TREND_MIN_GAP_MS,Math.min(18000,(Number(res.headers.get('retry-after'))||7)*1000));
          if(attempt<2){await sleep(retry);continue}
-         const fallback=trendCachedItems(24*60*60*1000);if(fallback.length){const c=trendReadCache();return{items:fallback,cached:true,limited:true,cacheAgeMs:c?Date.now()-num(c.fetchedAt):24*60*60*1000}};
+         const fallback=trendCachedItems(query,24*60*60*1000);if(fallback.length){const c=trendReadCache(query);return{items:fallback,cached:true,limited:true,cacheAgeMs:c?Date.now()-num(c.fetchedAt):24*60*60*1000}};
          throw new Error('热点源限流 HTTP 429')
        }
        if(!res.ok)throw new Error('HTTP '+res.status);
@@ -580,10 +589,11 @@ async function trendFetchShared(query,{profile='global',force=false,maxrecords=8
        trendWriteCache(query,items);return{items,cached:false,limited:false,cacheAgeMs:0}
      }catch(e){lastErr=e;if(attempt<2)await sleep(TREND_MIN_GAP_MS)}
    }
-   const fallback=trendCachedItems(24*60*60*1000);if(fallback.length){const c=trendReadCache();return{items:fallback,cached:true,limited:true,cacheAgeMs:c?Date.now()-num(c.fetchedAt):24*60*60*1000}};
+   const fallback=trendCachedItems(query,24*60*60*1000);if(fallback.length){const c=trendReadCache(query);return{items:fallback,cached:true,limited:true,cacheAgeMs:c?Date.now()-num(c.fetchedAt):24*60*60*1000}};
    throw lastErr||new Error('热点源暂时不可用')
  })();
- try{return await trendRequestInFlight}finally{trendRequestInFlight=null}
+ trendRequestInFlight.set(query,request);
+ try{return await request}finally{trendRequestInFlight.delete(query)}
 }
 function trendAgeHours(seendate){
  if(!seendate)return 24;
@@ -1329,8 +1339,12 @@ function trendMetaText(a){
  return (a?.leagueLabel?(a.leagueLabel+' · '):'')+(age<1?'<1h':age.toFixed(1)+'h')+' · '+support+'源 · '+(a?.eventVerified?'已验证':'单源')
 }
 async function fetchDailyTrendPool(forceFresh=false){
- const globalResult=await trendFetchShared(TREND_PROFILES.global.query,{profile:'global',force:forceFresh,maxrecords:100});
- const big5Result=await trendFetchShared(BIG5_QUERY,{profile:'global',force:forceFresh,maxrecords:100});
+ let big5Result={items:[],cached:false,limited:false,cacheAgeMs:0,error:''};
+ let globalResult={items:[],cached:false,limited:false,cacheAgeMs:0,error:''};
+ try{big5Result=await trendFetchShared(BIG5_QUERY,{profile:'global',force:forceFresh,maxrecords:250})}
+ catch(e){big5Result={items:[],cached:false,limited:true,cacheAgeMs:0,error:String(e?.message||e)}}
+ try{globalResult=await trendFetchShared(TREND_PROFILES.global.query,{profile:'global',force:false,maxrecords:120})}
+ catch(e){globalResult={items:[],cached:false,limited:true,cacheAgeMs:0,error:String(e?.message||e)}}
  const channels=[
   {name:'GLOBAL',result:globalResult,maxHours:DAILY_HOT_MAX_HOURS,items:globalResult.items||[]},
   {name:'BIG5',result:big5Result,maxHours:BIG5_HOT_MAX_HOURS,items:big5Result.items||[]}
@@ -1352,7 +1366,7 @@ async function fetchDailyTrendPool(forceFresh=false){
  const rescored=[...merged.values()].sort((a,b)=>(Number(b.dailyEligible)-Number(a.dailyEligible))||(Number(!!b.league)-Number(!!a.league))||b.score-a.score||trendAgeHours(a.seendate)-trendAgeHours(b.seendate));
  const sourceMode=modes.includes('LIVE VERIFIED')?'LIVE VERIFIED':modes.includes('FRESH CACHE')?'FRESH CACHE':'CACHE';
  const items=await localizeTrendItems(rescored.slice(0,36),36);
- return{items,sourceMode,cacheAgeMs:Math.max(Number(globalResult.cacheAgeMs||0),Number(big5Result.cacheAgeMs||0)),verifiedCount:items.filter(x=>x.dailyEligible).length,big5Count:items.filter(x=>x.dailyEligible&&x.league).length}
+ return{items,sourceMode,cacheAgeMs:Math.max(Number(globalResult.cacheAgeMs||0),Number(big5Result.cacheAgeMs||0)),verifiedCount:items.filter(x=>x.dailyEligible).length,big5Count:items.filter(x=>x.dailyEligible&&x.league).length,big5RawCount:(big5Result.items||[]).length,big5Error:big5Result.error||'',globalError:globalResult.error||''}
 }
 function selectDailyHotItems(items,limit=8){
  const eligible=(items||[]).filter(a=>a.dailyEligible),picked=[],used=new Set();
@@ -1413,7 +1427,7 @@ async function runDailyViralCommand(auto=false){
  let trendResult={items:[],sourceMode:'LOCAL',verifiedCount:0},online=false;
  try{trendResult=await fetchDailyTrendPool(!auto);online=trendResult.sourceMode!=='CACHE'&&trendResult.items.length>0}catch(e){}
  const trends=trendResult.items||[],eligible=trends.filter(a=>a.dailyEligible),selectedHot=selectDailyHotItems(trends,8),big5Leagues=['premier','laliga','seriea','bundesliga','ligue1'].map(key=>{const x=trends.filter(a=>a.league===key).sort((a,b)=>(Number(b.dailyEligible)-Number(a.dailyEligible))||b.score-a.score||trendAgeHours(a.seendate)-trendAgeHours(b.seendate))[0];if(!x)return null;return{key,label:x.leagueLabel,title:x.title,url:x.url,eligible:!!x.dailyEligible,score:x.score,meta:trendMetaText(x)+' · '+(x.domain||'互联网'),candidate:x.dailyEligible?dailyBestTrendCandidate(x):null}}).filter(Boolean);
- if(trends.length){state.trendItems=trends;state.trendFetchedAt=Date.now();q('trendStatus').textContent='DAILY VIRAL 已同步 · '+eligible.length+' 条已验证 · 五大联赛 '+(trendResult.big5Count||0)+' 条 / '+trends.length+' 条信号';renderTrends()}
+ if(trends.length){state.trendItems=trends;state.trendFetchedAt=Date.now();q('trendStatus').textContent='DAILY VIRAL 已同步 · '+eligible.length+' 条已验证 · 五大联赛 '+(trendResult.big5Count||0)+' 条 / 原始 '+(trendResult.big5RawCount||0)+' 条 · 总信号 '+trends.length+(trendResult.big5Error?' · BIG5源异常':'');renderTrends()}
  const candidates=[],hot=selectedHot.map(dailyBestTrendCandidate);candidates.push(...hot);
  const localProjects=allProjects().filter(p=>p.type!=='hot').slice(0,10);
  localProjects.forEach(p=>{const plan=dailyProjectPlan(p),scheduled=projectContent(p.id).some(c=>(c.scheduleAt||'').slice(0,10)===today()),bonus=scheduled?4:0;candidates.push(dailyCandidate(plan,p.name,'SAGI PROJECT',p,bonus))});
