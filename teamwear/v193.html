@@ -600,7 +600,7 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
           </div>
           <div class="customerConfirmActions">
             <button id="customerOrderGenerateBtn" class="primary" type="button">生成 / 更新确认单</button>
-            <a id="customerOrderOpenLink" class="customerOrderNativeLink disabled" href="#" aria-disabled="true">打开客户确认单</a>
+            <a id="customerOrderOpenLink" class="customerOrderNativeLink disabled" href="#" aria-disabled="true">直接打开客户确认单</a>
             <button id="customerOrderShareBtn" class="blue" type="button">分享确认单链接</button>
           </div>
           <div class="customerConfirmLink">
@@ -1986,7 +1986,8 @@ function renderOrderConfirmation(){
  q('confirmSummary').textContent=all?'全部生产条件已通过，可以生成生产单并进入生产。':'未通过：'+checks.filter(x=>!x.ok).map(x=>x.label+'（'+x.meta+'）').join('；');
  q('productionReadyBtn').disabled=!all||!!cf.productionReadyAt;q('productionGate').classList.toggle('ready',all);
  q('productionGateTitle').textContent=cf.productionReadyAt?'PRODUCTION READY':all?'READY FOR PRODUCTION':'PRODUCTION LOCKED';
- q('productionGateText').textContent=cf.productionReadyAt?('已进入生产 · '+cf.productionReadyAt):(all?'所有门禁已通过':'尚未满足全部生产条件')
+ q('productionGateText').textContent=cf.productionReadyAt?('已进入生产 · '+cf.productionReadyAt):(all?'所有门禁已通过':'尚未满足全部生产条件');
+ syncCustomerOrderNativeLink()
 }
 function importCustomerConfirmation(){
  const obj=decodeConfirmationCode(q('confirmationCodeInput').value);if(!obj){note('确认码无效');return}
@@ -2038,21 +2039,32 @@ function buildCustomerOrderPayload(){
   generatedBy:'SAGI SALES · CUSTOMER ORDER CONFIRMATION V1.0'
  }
 }
-function generateCustomerOrderLink(){
- if(!text('teamName')){note('请先填写球队名称');return''}
- if(!state.roster.length&&calc().qty>0){note('请先确认球员名单');return''}
+function buildCustomerOrderLink(){
+ if(!text('teamName'))return'';
+ if(!state.roster.length&&calc().qty>0)return'';
  const payload=buildCustomerOrderPayload(),u=new URL('./confirmation.html',location.href);
  u.searchParams.set('v','105');u.searchParams.set('t',String(Date.now()));
- const link=u.toString()+'#d='+encodePublicQuote(payload);
+ return u.toString()+'#d='+encodePublicQuote(payload)
+}
+function syncCustomerOrderNativeLink(){
+ const link=buildCustomerOrderLink(),a=q('customerOrderOpenLink');
+ if(!a||!q('customerOrderLink')||!q('customerOrderState'))return'';
  state.lastCustomerConfirmationLink=link;
- q('customerOrderLink').value=link;q('customerOrderState').textContent='READY';q('customerOrderState').classList.add('ready');
- const a=q('customerOrderOpenLink');a.href=link;a.classList.remove('disabled');a.setAttribute('aria-disabled','false');
+ q('customerOrderLink').value=link;
+ q('customerOrderState').textContent=link?'READY':'NOT READY';
+ q('customerOrderState').classList.toggle('ready',!!link);
+ a.href=link||'#';a.classList.toggle('disabled',!link);a.setAttribute('aria-disabled',link?'false':'true');
+ return link
+}
+function generateCustomerOrderLink(){
+ const link=syncCustomerOrderNativeLink();if(!link){note(!text('teamName')?'请先填写球队名称':'请先确认球员名单');return''}
+ const payload=buildCustomerOrderPayload();
  addActivity('confirm','生成客户订单确认单',payload.orderNo+' · '+money(payload.total));saveOrder(true);
- note('确认单已生成 · 直接点“打开客户确认单”');
+ note('确认单已更新 · 直接点“打开客户确认单”');
  return link
 }
 async function shareCustomerOrderLink(){
- const link=q('customerOrderLink').value||state.lastCustomerConfirmationLink||generateCustomerOrderLink();if(!link)return;
+ const link=syncCustomerOrderNativeLink();if(!link){note('请先补全球队名称和名单');return;}
  const data={title:'SAGI SPORTS 客户订单确认单',text:(text('teamName')||'球队')+' · 客户订单确认单',url:link};
  if(navigator.share){try{await navigator.share(data);return}catch(e){if(e?.name==='AbortError')return}}
  q('customerOrderLink').removeAttribute('readonly');q('customerOrderLink').focus();q('customerOrderLink').select();note('请长按已选中的链接 → 复制');setTimeout(()=>q('customerOrderLink').setAttribute('readonly','readonly'),1500)
