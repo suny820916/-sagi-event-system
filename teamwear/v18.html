@@ -645,7 +645,7 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
             <h3>当前球队 · 下一条内容</h3>
             <div class="contentPlanControls">
               <div><label>计划日期</label><input id="contentNextDate" type="date"></div>
-              <div><label>发布渠道</label><select id="contentNextChannel"><option value="douyin">抖音</option><option value="moments">朋友圈</option><option value="wechat">微信群</option><option value="case">案例库</option></select></div>
+              <div><label>发布渠道</label><select id="contentNextChannel"><option value="douyin">抖音</option><option value="moments">朋友圈</option><option value="wechat">微信群</option><option value="case">案例库</option><option value="production">内容制作 / 补素材</option></select></div>
               <div><label>优先级</label><select id="contentPriority"><option value="high">今天优先</option><option value="normal" selected>正常</option><option value="low">可延后</option></select></div>
               <div class="wide"><label>发布备注</label><input id="contentPlanNote" placeholder="例如：先发新队服图片模式，晚上再发15秒视频"></div>
             </div>
@@ -2214,17 +2214,18 @@ function contentIsPublished(o){return !!o.marketingStatus?.momentsPublished||!!o
 function contentNeedsWork(o){const m=contentMatrixDefaults(o);return !contentIsPublished(o)&&Object.values(m).some(v=>v==='todo')}
 function contentOpenOrder(o){fill(o);setWorkspace('marketing',false);window.scrollTo({top:0,behavior:'smooth'});note('已打开内容项目 · '+(o.teamName||o.projectName||'订单'))}
 function renderContentCommandCenter(){
- if(!q('contentCommandCenter'))return;
- const today=localDateOnly(),orders=state.orders||[],todayList=orders.filter(o=>o.contentPlan?.nextDate===today&&!contentIsPublished(o)).sort((a,b)=>(a.contentPlan?.priority==='high'?-1:0)-(b.contentPlan?.priority==='high'?-1:0)),missing=orders.filter(o=>contentMissingAssets(o).length),todo=orders.filter(contentNeedsWork),published=orders.filter(contentIsPublished);
+ if(!q('contentCommandCenter'))return;if(state.currentId){state.currentContentPlan={...(state.currentContentPlan||{}),matrix:currentContentMatrix()}}
+ const today=localDateOnly(),orders=state.orders||[],todayList=orders.filter(o=>!contentIsPublished(o)&&(o.contentPlan?.nextDate===today||(!o.contentPlan?.nextDate&&o.douyinContent?.status==='ready'))).sort((a,b)=>(a.contentPlan?.priority==='high'?-1:0)-(b.contentPlan?.priority==='high'?-1:0)),missing=orders.filter(o=>contentMissingAssets(o).length),todo=orders.filter(contentNeedsWork),published=orders.filter(contentIsPublished);
  q('contentTodayCount').textContent=todayList.length;q('contentMissingCount').textContent=missing.length;q('contentTodoCount').textContent=todo.length;q('contentPublishedCount').textContent=published.length;
- const tq=q('contentTodayQueue');tq.innerHTML='';if(!todayList.length)tq.innerHTML='<div class="marketingEmpty">今天还没有安排发布内容。</div>';todayList.slice(0,8).forEach(o=>{const d=document.createElement('div');d.className='contentQueueItem';d.innerHTML='<div><b>'+escapeHtml(o.teamName||o.projectName||'未命名')+'</b><span>'+escapeHtml(({douyin:'抖音',moments:'朋友圈',wechat:'微信群',case:'案例库'})[o.contentPlan?.channel]||'内容')+' · '+escapeHtml(o.contentPlan?.note||'待发布')+'</span></div><button type="button">打开</button>';d.querySelector('button').onclick=()=>contentOpenOrder(o);tq.appendChild(d)});
+ const tq=q('contentTodayQueue');tq.innerHTML='';if(!todayList.length)tq.innerHTML='<div class="marketingEmpty">今天还没有安排发布内容。</div>';todayList.slice(0,8).forEach(o=>{const d=document.createElement('div');d.className='contentQueueItem';d.innerHTML='<div><b>'+escapeHtml(o.teamName||o.projectName||'未命名')+'</b><span>'+escapeHtml(({douyin:'抖音',moments:'朋友圈',wechat:'微信群',case:'案例库',production:'内容制作'})[o.contentPlan?.channel]||'内容')+' · '+escapeHtml(o.contentPlan?.note||'待发布')+'</span></div><button type="button">打开</button>';d.querySelector('button').onclick=()=>contentOpenOrder(o);tq.appendChild(d)});
  const gaps=q('contentGapList');gaps.innerHTML='';if(!missing.length)gaps.innerHTML='<div class="marketingEmpty">当前订单素材基本完整。</div>';missing.slice(0,6).forEach(o=>{const d=document.createElement('div');d.className='contentGapItem';d.innerHTML='<b>'+escapeHtml(o.teamName||o.projectName||'未命名')+'</b><span>缺：'+escapeHtml(contentMissingAssets(o).join(' · '))+'</span>';d.onclick=()=>contentOpenOrder(o);gaps.appendChild(d)});
- const body=q('contentMatrixBody');body.innerHTML='';orders.slice().sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0)).forEach(o=>{const m=contentMatrixDefaults(o),tr=document.createElement('tr'),next=o.contentPlan?.nextDate?((o.contentPlan.nextDate===today?'今天':'')+o.contentPlan.nextDate+' · '+(({douyin:'抖音',moments:'朋友圈',wechat:'微信群',case:'案例库'})[o.contentPlan?.channel]||'')):'未安排';tr.innerHTML='<td><b>'+escapeHtml(o.teamName||o.projectName||'未命名')+'</b></td>'+['poster','image','video15','video25','moments','douyin'].map(k=>'<td><span class="contentState '+contentStateClass(m[k])+'">'+contentStateLabel(m[k])+'</span></td>').join('')+'<td>'+escapeHtml(next)+'</td><td><button type="button">打开</button></td>';tr.querySelector('button').onclick=()=>contentOpenOrder(o);body.appendChild(tr)})
+ const body=q('contentMatrixBody');body.innerHTML='';orders.slice().sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0)).forEach(o=>{const m=contentMatrixDefaults(o),tr=document.createElement('tr'),next=o.contentPlan?.nextDate?((o.contentPlan.nextDate===today?'今天':'')+o.contentPlan.nextDate+' · '+(({douyin:'抖音',moments:'朋友圈',wechat:'微信群',case:'案例库',production:'内容制作'})[o.contentPlan?.channel]||'')):'未安排';tr.innerHTML='<td><b>'+escapeHtml(o.teamName||o.projectName||'未命名')+'</b></td>'+['poster','image','video15','video25','moments','douyin'].map(k=>'<td><span class="contentState '+contentStateClass(m[k])+'">'+contentStateLabel(m[k])+'</span></td>').join('')+'<td>'+escapeHtml(next)+'</td><td><button type="button">打开</button></td>';tr.querySelector('button').onclick=()=>contentOpenOrder(o);body.appendChild(tr)})
 }
 function autoContentPlan(){
  if(!state.currentId){note('请先打开或保存一笔订单');return}
  const o=state.orders.find(x=>x.id===state.currentId)||collect(),m=currentContentMatrix();let channel='douyin',planNote='制作并发布下一条抖音内容';
- if(m.poster==='todo'&&!(state.currentOrderMedia?.poster)){planNote='先完成球队主海报，再进入图片/视频制作';channel='case'}
+ if(m.poster==='todo'&&!(state.currentOrderMedia?.poster||state.currentOrderMedia?.design)){planNote='先补齐设计图或主海报，再进入图片/视频制作';channel='production'}
+ else if(m.poster==='todo'&&!state.currentOrderMedia?.poster){channel='production';planNote='已有设计图，先制作球队主海报和封面'}
  else if(m.moments!=='published'){channel='moments';planNote='先发朋友圈，让球队客户和本地足球圈看到新视觉'}
  else if(m.douyin!=='published'){channel='douyin';planNote=(state.currentOrderMedia?.jersey?'优先制作15秒上身短视频':'优先制作6张图片模式')}
  else{channel='case';planNote='已完成主要渠道，沉淀为SAGI真实案例'}
@@ -2400,7 +2401,7 @@ function setWorkspace(name,scroll=true){
 }
 function renderWorkspaceSummary(){
  if(!q('workspaceTeam'))return;const team=text('teamName')||state.orders.find(x=>x.id===state.currentId)?.teamName||'未选择球队',stage=q('salesStage')?.value||'新线索',orderStatus=q('orderStatus')?.value||'线索';
- q('workspaceTeam').textContent=team;q('workspaceStatus').textContent=(currentWorkspace==='production'||currentWorkspace==='archive')?displayOrderStatus(orderStatus):stage;
+ q('workspaceTeam').textContent=team;q('workspaceStatus').textContent=(currentWorkspace==='production'||currentWorkspace==='archive')?displayOrderStatus(orderStatus):(currentWorkspace==='marketing'?(q('douyinPublishStatus')?.selectedOptions?.[0]?.textContent||'内容制作'):stage);
  q('workspaceStatus').classList.toggle('good',stage==='已付定金'||orderStatus==='已完成');q('workspaceStatus').classList.toggle('warn',!(stage==='已付定金'||orderStatus==='已完成'))
 }
 function initWorkspaceUI(){
