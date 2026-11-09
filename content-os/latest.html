@@ -248,7 +248,7 @@
         <b>让 CONTENT OS 学习「萨吉体育」真正发过什么、什么内容真的有流量。</b>
         <span>当前数据层已启用。历史数据可先通过 CSV / JSON 批量导入；抖音开放平台 OAuth 审核通过后，可升级为自动同步。</span>
         <div class="accountStatus">
-          <span class="pill good">ACCOUNT · 萨吉体育</span>
+          <span class="pill good">ACCOUNT · 萨吉体育</span><span class="pill good">DOUYIN · 181444241</span>
           <span class="pill good">DATA LAYER · 已启用</span>
           <span class="pill warn">OFFICIAL API · 待授权</span>
         </div>
@@ -365,7 +365,7 @@ const VIEW_META={
  projects:['PROJECTS · 内容项目','球队、赛事、品牌、产品、热点和人物故事统一建档。']
 };
 const CONTENT_TYPES={team:'球队',event:'赛事',brand:'品牌',product:'产品',hot:'热点',story:'人物故事'};
-const ACCOUNT_PROFILE={platform:'douyin',name:'萨吉体育',brand:'SAGI SPORTS',positioning:'新疆足球与足球装备内容',voice:'专业、热血、真实、不过度标题党'};
+const ACCOUNT_PROFILE={platform:'douyin',name:'萨吉体育',douyinId:'181444241',brand:'SAGI SPORTS',positioning:'新疆足球与足球装备内容',voice:'专业、热血、真实、不过度标题党'};
 let state={salesOrders:[],projects:[],contents:[],assetOverrides:{},currentProjectId:'',currentContentId:'',director:{},performanceTargetId:'',trendItems:[],trendSelected:null,trendFetchedAt:0,accountData:[]};
 function uid(p='id'){return p+'_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7)}
 function today(){const d=new Date(),z=n=>String(n).padStart(2,'0');return d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate())}
@@ -401,7 +401,7 @@ function seedSagiAccountHistory(){
  const id='sagi_real_cr7_retirement_20261105';
  if(state.accountData.some(x=>x.id===id))return;
  state.accountData.push({
-   id,accountName:'萨吉体育',source:'user-confirmed',title:'C罗官宣国家队退役｜葡萄牙7号只有一个',
+   id,accountName:'萨吉体育',douyinId:'181444241',source:'user-confirmed',title:'C罗官宣国家队退役｜葡萄牙7号只有一个',
    date:'2026-11-05',format:'poster',views:456000,likes:7524,comments:1135,saves:439,shares:null,
    inquiries:0,orders:0,revenue:0,hook:'234次出场、146球、20多年7号｜葡萄牙7号只有一个',
    note:'用户确认的真实历史表现样本',recordedAt:Date.parse('2026-11-05T12:00:00+08:00')
@@ -446,7 +446,7 @@ function normalizeAccountRecord(x,i=0){
  const clean=v=>{const n=Number(String(v??'').replace(/[,，\s]/g,''));return Number.isFinite(n)?Math.max(0,n):0};
  const key=(date+'|'+title).toLowerCase();
  let h=0;for(let j=0;j<key.length;j++)h=(h*31+key.charCodeAt(j))>>>0;
- return{id:'sagi_import_'+h.toString(36),accountName:'萨吉体育',source:'import',title,date,format,
+ return{id:'sagi_import_'+h.toString(36),accountName:'萨吉体育',douyinId:'181444241',source:'import',title,date,format,
    views:clean(x.views),likes:clean(x.likes),comments:clean(x.comments),saves:clean(x.saves),shares:clean(x.shares),
    inquiries:clean(x.inquiries),orders:clean(x.orders),revenue:clean(x.revenue),hook:title,recordedAt:date?Date.parse(date+'T12:00:00+08:00'):Date.now()}
 }
