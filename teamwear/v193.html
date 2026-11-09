@@ -2103,6 +2103,119 @@ function normalizeHistoryOrder(src){
  o.status=o.status||'已发货';o.owner=o.owner||'SAGI';o.calc=o.calc||{qty:o.roster.length,total:Number(o.orderTotal)||0,deposit:Number(o.depositPaid)||0,balance:0,gross:0,grossMargin:0,factoryTotal:0,catalog:{qty:0,cost:0,sales:0,gross:0}};o.updatedAt=now;o.createdAt=o.createdAt||now;
  return o
 }
+
+const RECOVERY_ORDER_IDS={
+ shipped:'recover_tacheng_blackgold_20261104',
+ tarlan:'recover_tarlan_roster_20261109'
+};
+function recoverConfirmedHistoricalData(){
+ const existing=new Set((state.orders||[]).map(o=>o.id));
+ let added=0;
+ if(!existing.has(RECOVERY_ORDER_IDS.shipped)){
+  const shipped=normalizeHistoryOrder({
+   id:RECOVERY_ORDER_IDS.shipped,
+   projectName:'塔城黑金比赛服 · 已发货订单',
+   teamName:'塔城足球队',
+   source:'老客户',
+   contact:'玛尔谷兰',
+   contactInfo:'13095140164',
+   city:'塔城 / 奎屯',
+   shippingRecipient:'玛尔谷兰',
+   shippingPhone:'13095140164',
+   shippingAddress:'新疆维吾尔自治区伊犁哈萨克自治州奎屯市 新疆应用职业技术学院西校区',
+   customerNotes:'历史订单恢复：此前确认已付定金并已发货。订单金额未从历史记录中可靠恢复，因此保留为空，避免写入错误金额。',
+   salesStage:'已付定金',
+   leadTemperature:'hot',
+   nextAction:'已发货 · 后续补单 / 售后',
+   series:'SAGI 黑金定制比赛服',
+   supplierTier:'CLUB',
+   ageGroup:'adult',
+   productType:'custom-package',
+   priceStrategy:'custom',
+   primaryColor:'黑色',
+   accentColor:'金色',
+   frontText:'塔城',
+   productNotes:'黑色主体 + 金色肩袖流线 + 深灰暗纹。款式参考黑金 / 蓝金；18号 Takao.M 为蓝色长袖。名字、号码、英文大小写及符号按名单原样制作。',
+   roster:[
+    {name:'Marhulan',number:'88',size:'L',type:'球员'},
+    {name:'xrpt',number:'7',size:'2XL',type:'球员'},
+    {name:'吾莱',number:'11',size:'XL',type:'球员'},
+    {name:'SLK',number:'10',size:'XL',type:'球员'},
+    {name:'ERXAT · M r',number:'74',size:'XL',type:'球员'},
+    {name:'Takao.M',number:'18',size:'L',type:'球员'},
+    {name:'Nuertao.T',number:'8',size:'XL',type:'球员'},
+    {name:'ALao',number:'25',size:'XL',type:'球员'},
+    {name:'Yrmk',number:'19',size:'XL',type:'球员'},
+    {name:'Haysaer',number:'4',size:'2XL',type:'球员'},
+    {name:'苏麦·安克',number:'53',size:'L',type:'球员'},
+    {name:'扎提',number:'6',size:'L',type:'球员'},
+    {name:'Aybek',number:'27',size:'2XL',type:'球员'},
+    {name:'Narat.M',number:'22',size:'2XL',type:'球员'},
+    {name:'jastalap·A',number:'30',size:'XL',type:'球员'}
+   ],
+   packageTargetQty:15,packageTeamSize:15,
+   status:'已发货',
+   pinned:true,
+   createdAt:new Date('2026-11-04T12:00:00+08:00').getTime(),
+   activityTimeline:[
+    {id:'recover_hist_1',kind:'history',title:'历史订单恢复',meta:'已付定金 · 已发货 · 15人名单',at:'2026/11/9',ts:Date.now()}
+   ]
+  });
+  shipped.updatedAt=new Date('2026-11-09T17:20:00+08:00').getTime();
+  state.orders.unshift(shipped);added++;
+ }
+ if(!existing.has(RECOVERY_ORDER_IDS.tarlan)){
+  const tarlan=normalizeHistoryOrder({
+   id:RECOVERY_ORDER_IDS.tarlan,
+   projectName:'塔尔兰足球队 · 15人名单待完善',
+   teamName:'塔尔兰足球队',
+   source:'现有球队',
+   city:'塔城',
+   customerNotes:'恢复资料：此前聊天中确认了15人订购名单，但当时没有成功保存为完整销售订单。客户、价格、产品确认、收款和物流字段请后续补充。',
+   salesStage:'新线索',
+   leadTemperature:'warm',
+   nextAction:'补充订单产品、价格、客户与物流信息',
+   series:'定制比赛服',
+   supplierTier:'CLUB',
+   ageGroup:'adult',
+   productType:'custom-package',
+   priceStrategy:'custom',
+   roster:[
+    {name:'jiayihe',number:'11',size:'XL',type:'球员'},
+    {name:'kaisar',number:'10',size:'L',type:'球员'},
+    {name:'alkam',number:'86',size:'M',type:'球员'},
+    {name:'Ynrar',number:'45',size:'XL',type:'球员'},
+    {name:'Heran',number:'18',size:'L',type:'球员'},
+    {name:'erfan',number:'53',size:'2XL',type:'球员'},
+    {name:'Xeraly',number:'7',size:'L',type:'球员'},
+    {name:'Erjan',number:'27',size:'L',type:'球员'},
+    {name:'tlke',number:'17',size:'2XL',type:'球员'},
+    {name:'Berdhan',number:'49',size:'XL',type:'球员'},
+    {name:'yerjan',number:'22',size:'XL',type:'球员'},
+    {name:'yerhanat',number:'12',size:'2XL',type:'球员'},
+    {name:'yigeer',number:'9',size:'XL',type:'球员'},
+    {name:'yernar',number:'21',size:'XL',type:'球员'},
+    {name:'hair',number:'40+',size:'XL',type:'球员'}
+   ],
+   productNotes:'名单恢复备注：Ynrar 原记录尺码写作 XI，系统暂按 XL 处理；hair 的号码保留为 40+。这两项仍需最终确认。',
+   packageTargetQty:15,packageTeamSize:15,
+   status:'线索',
+   pinned:false,
+   createdAt:new Date('2026-11-09T12:45:00+08:00').getTime(),
+   activityTimeline:[
+    {id:'recover_tarlan_1',kind:'history',title:'恢复塔尔兰15人订购名单',meta:'仅恢复名单；原完整订单未保存',at:'2026/11/9',ts:Date.now()}
+   ]
+  });
+  tarlan.updatedAt=new Date('2026-11-09T17:20:00+08:00').getTime();
+  state.orders.push(tarlan);added++;
+ }
+ if(added){
+  state.orders.sort((a,b)=>Number(b.pinned)-Number(a.pinned)||Number(b.updatedAt||0)-Number(a.updatedAt||0));
+  persist();
+ }
+ return added
+}
+
 function importHistoryOrder(){
  const src=decodeHistoryOrderCode(q('historyOrderImportCode').value);if(!src){note('历史订单导入码无效');return}
  const o=normalizeHistoryOrder(src),exists=state.orders.findIndex(x=>x.id===o.id);
@@ -2821,7 +2934,7 @@ initSelects();function retireOldTeamwearPWA(){
  }
 }
 retireOldTeamwearPWA();
-loadState();blank();initCostProfile();initPackageBuilder();initCatalog();initCustomerQuotationMode();initOrderConfirmation();initProductionTracker();renderAll();
+loadState();const recoveredCount=recoverConfirmedHistoricalData();blank();initCostProfile();initPackageBuilder();initCatalog();initCustomerQuotationMode();initOrderConfirmation();initProductionTracker();renderAll();if(q('storageRecoveryStatus'))q('storageRecoveryStatus').textContent=recoveredCount?('已自动恢复 '+recoveredCount+' 组历史资料：已发货订单 + 塔尔兰15人名单。'):'系统已扫描并合并本机历史订单库。';
 })();
 </script>
 </body>
