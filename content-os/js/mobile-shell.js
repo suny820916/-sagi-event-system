@@ -1,5 +1,5 @@
 (()=>{'use strict';
-const C=window.SAGI_CORE;if(!C)return,q=C.q;
+const C=window.SAGI_CORE;if(!C)return;const q=C.q;
 window.SAGI_MOBILE={renderMatchday:()=>window.SAGI_MATCHDAY?.render?.(),renderVideoJobs:()=>window.SAGI_VIDEO_JOBS?.render?.(),renderReview:()=>window.SAGI_REVIEW?.render?.(),renderAll(){this.renderMatchday();this.renderVideoJobs();this.renderReview()}};
 document.querySelectorAll('[data-match-event]').forEach(b=>b.onclick=()=>window.SAGI_MATCHDAY?.addMarker?.(b.dataset.matchEvent));
 document.querySelectorAll('[data-match-recent]').forEach(b=>b.onclick=()=>window.SAGI_MATCHDAY?.addMarker?.(b.dataset.matchRecent,{recent:true}));
