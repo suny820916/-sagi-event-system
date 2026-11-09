@@ -80,6 +80,8 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
 /* ===== V1.5 ORDER CONFIRMATION ===== */
 .confirmEngineCard{border-color:#4d5132!important;background:linear-gradient(145deg,#15160d,#0e1419)!important}
 .customerConfirmLaunch{border:1px solid #3c4c45;border-radius:11px;background:#0b1210;padding:10px;margin:9px 0 12px}.customerConfirmLaunch>div:first-child b{display:block;font-size:10px;color:#dfe8e1}.customerConfirmLaunch>div:first-child span{display:block;font-size:8px;color:#788980;margin-top:4px;line-height:1.55}.customerConfirmActions{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}.customerConfirmLink{display:grid;grid-template-columns:1fr auto;gap:7px;align-items:center;margin-top:8px}.customerConfirmLink span{font-size:8px;border:1px solid #445149;border-radius:999px;padding:6px 8px;color:#839289;white-space:nowrap}.customerConfirmLink span.ready{border-color:#466452;color:#9ed0ab}.customerConfirmLink input{font-size:8px}
+.customerOrderNativeLink{display:inline-flex;align-items:center;justify-content:center;border:1px solid #315980;background:#172b43;color:#a9d1ff;border-radius:9px;padding:9px 12px;font-weight:900;font-size:10px;text-decoration:none}.customerOrderNativeLink.disabled{opacity:.45;pointer-events:none}
+@media(max-width:720px){.workspaceNav{position:static!important;top:auto!important;z-index:auto!important}.customerConfirmActions{display:grid;grid-template-columns:1fr 1fr}.customerConfirmActions>*:first-child{grid-column:1/3}}
 .confirmGrid{display:grid;grid-template-columns:1.1fr .75fr .75fr .75fr;gap:8px}.confirmCodeRow{display:grid;grid-template-columns:1fr auto;gap:7px;margin-top:9px}.confirmCodeRow textarea{min-height:70px}.confirmStatusGrid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-top:10px}.confirmCheck{padding:9px;border-radius:10px;border:1px solid #3d3a2e;background:#0b0f12;color:#8e978f;font-size:8px;line-height:1.5}.confirmCheck b{display:block;margin-bottom:4px;font-size:10px}.confirmCheck.good{border-color:#35604a;background:#0c1b14;color:#a4d9b7}.confirmCheck.bad{border-color:#5a3838;background:#211313;color:#dda1a1}
 .productionGate{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:10px;padding:11px;border-radius:12px;background:#090d11;border:1px solid #343e47}.productionGate.ready{border-color:#47775a;background:#0b1b13}.productionGate span{font-size:9px;color:#8b95a0}.productionGate b{display:block;font-size:12px;margin-bottom:3px}.productionActions{display:flex;gap:7px;flex-wrap:wrap}.productionReadyBtn{background:linear-gradient(135deg,#24643f,#65ad78);color:#fff;border-color:#4f9569}.productionReadyBtn:disabled{opacity:.35;filter:saturate(.2)}
 .confirmSummary{margin-top:9px;padding:9px 10px;border:1px solid #343e47;border-radius:10px;background:#090d11;color:#89949e;font-size:9px;line-height:1.65}
@@ -597,9 +599,9 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
             <span>自动读取产品、名单、金额、定金、收货地址和交付日期。客户确认后再收定金进入生产。</span>
           </div>
           <div class="customerConfirmActions">
-            <button id="customerOrderPreviewBtn" class="blue" type="button">预览确认单</button>
-            <button id="customerOrderCopyBtn" class="primary" type="button">复制确认单链接</button>
-            <button id="customerOrderPrintBtn" type="button">打开确认单（导出）</button>
+            <button id="customerOrderGenerateBtn" class="primary" type="button">生成 / 更新确认单</button>
+            <a id="customerOrderOpenLink" class="customerOrderNativeLink disabled" href="#" aria-disabled="true">打开客户确认单</a>
+            <button id="customerOrderShareBtn" class="blue" type="button">分享确认单链接</button>
           </div>
           <div class="customerConfirmLink">
             <input id="customerOrderLink" readonly placeholder="生成后这里会出现客户确认单链接">
@@ -1703,7 +1705,7 @@ function fill(o){
  const set=(id,v)=>q(id).value=v??'';
  set('packageTeamSize',o.packageTeamSize||o.packageTargetQty||22);set('packageBudget',o.packageBudget||200);set('packageAge',o.packageAge||o.ageGroup||'adult');set('packageMargin',String(o.packageMargin??.4));set('projectName',o.projectName);set('teamName',o.teamName);set('actualOrderTotal',o.actualOrderTotal??o.calc?.total??0);set('actualCostTotal',o.actualCostTotal??o.calc?.factoryTotal??0);set('feedbackStatus',o.feedbackStatus||'');set('customerFeedback',o.customerFeedback||'');set('marketingTitle',o.marketingTitle||'');set('marketingTagline',o.marketingTagline||'');set('momentsCopy',o.momentsCopy||'');set('douyinCopy',o.douyinCopy||'');set('caseCopy',o.caseCopy||'');set('caseTags',o.caseTags||'');set('contentNextDate',o.contentPlan?.nextDate||'');set('contentNextChannel',o.contentPlan?.channel||'douyin');set('contentPriority',o.contentPlan?.priority||'normal');set('contentPlanNote',o.contentPlan?.note||'');q('marketingSentClient').checked=!!o.marketingStatus?.sentClient;q('marketingMomentsPublished').checked=!!o.marketingStatus?.momentsPublished;q('marketingDouyinPublished').checked=!!o.marketingStatus?.douyinPublished;q('marketingPosterReady').checked=!!o.marketingStatus?.posterReady;q('publicCaseEnabled').checked=!!o.publicCaseEnabled;q('marketingInCaseLibrary').checked=!!o.marketingInCaseLibrary;set('douyinMode',o.douyinContent?.mode||'image');set('douyinAngle',o.douyinContent?.angle||'launch');set('douyinGoal',o.douyinContent?.goal||'retention');set('douyinPublishStatus',o.douyinContent?.status||'draft');set('douyinHook',o.douyinContent?.hook||'');set('douyinCoverTitle',o.douyinContent?.coverTitle||'');set('douyinCta',o.douyinContent?.cta||'');set('douyinHashtags',o.douyinContent?.hashtags||'');set('douyinScheduleAt',o.douyinContent?.scheduleAt||'');if(q('directorGoal')){set('directorGoal',state.currentDirectorPlan.goal||'brand');set('directorFormat',state.currentDirectorPlan.requestedFormat||'auto');set('directorStyle',state.currentDirectorPlan.style||'premium');set('directorTheme',state.currentDirectorPlan.manualTheme||'')}fillPerformanceForm((state.currentPerformanceHistory||[]).slice().sort((a,b)=>(b.recordedAt||0)-(a.recordedAt||0))[0]||null);set('salesStage',o.salesStage||'新线索');set('leadTemperature',o.leadTemperature||'warm');set('lastContactDate',o.lastContactDate||'');set('nextFollowUp',o.nextFollowUp||'');set('nextAction',o.nextAction||'');set('lostReason',o.lostReason||'');set('source',o.source||'赛事合作');set('contact',o.contact);set('contactInfo',o.contactInfo);set('shippingRecipient',o.shippingRecipient||'');set('shippingPhone',o.shippingPhone||'');set('shippingAddress',o.shippingAddress||'');set('city',o.city);set('competition',o.competition);set('season',o.season||'2026-2027');set('deadline',o.deadline);set('customerNotes',o.customerNotes);
  set('series',o.series||'定制比赛服');set('supplierTier',o.supplierTier||'CLUB');set('ageGroup',o.ageGroup||'adult');set('productType',o.productType==='上衣 + 短裤'?'kit':(o.productType||'kit'));set('priceStrategy',o.priceStrategy||'margin');set('targetMargin',String(o.targetMargin??.5));set('salesUnitPrice',o.salesUnitPrice??o.jerseyPrice??120);set('primaryColor',o.primaryColor);set('accentColor',o.accentColor);set('printFee',o.printFee??0);set('designFee',o.designFee??300);set('discount',o.discount??0);set('poloAddon',String(o.poloAddon??0));set('pocketAddon',String(o.pocketAddon??0));set('longSleeveAddon',String(o.longSleeveAddon??0));set('otherCraftCost',o.otherCraftCost??0);set('factoryShippingCost',o.factoryShippingCost??0);set('shippingFee',o.shippingFee??0);set('shippingZone',o.shippingZone||'remote');set('depositRate',String(o.depositRate??.5));set('frontText',o.frontText);set('nameRule',o.nameRule);set('numberStyle',o.numberStyle);set('productNotes',o.productNotes);set('extraQty',o.extraQty??0);set('publicContact',o.publicContact||'');set('publicQuoteNote',o.publicQuoteNote||'热升华比赛服默认包含印字印号；特殊工艺按最终确认方案执行。产品价格默认不含运费，运费另计。');set('quoteValidDays',String(o.quoteValidDays||7));set('quoteShowPackages',o.quoteShowPackages||'yes');set('quoteShowPayment',o.quoteShowPayment||'yes');set('orderStatus',o.status||STAGES[0]);set('owner',o.owner||'SAGI');
- generatePackagePlans(false);q('followMessage').value='';if(q('customerOrderLink'))q('customerOrderLink').value='';if(q('customerOrderState')){q('customerOrderState').textContent=state.confirmation.customerOrderNo?'GENERATED':'NOT GENERATED';q('customerOrderState').classList.toggle('ready',!!state.confirmation.customerOrderNo)}renderLogo();renderRoster();renderCatalogCart();renderOrderConfirmation();renderProductionTracker();renderAll()
+ generatePackagePlans(false);q('followMessage').value='';if(q('customerOrderLink'))q('customerOrderLink').value='';if(q('customerOrderOpenLink')){q('customerOrderOpenLink').href='#';q('customerOrderOpenLink').classList.add('disabled');q('customerOrderOpenLink').setAttribute('aria-disabled','true')}if(q('customerOrderState')){q('customerOrderState').textContent='NOT GENERATED';q('customerOrderState').classList.remove('ready')}renderLogo();renderRoster();renderCatalogCart();renderOrderConfirmation();renderProductionTracker();renderAll()
 }
 function blank(){
  resetAutoVideoSession();
@@ -2009,8 +2011,8 @@ function customerOrderNo(){
  }
  return cf.customerOrderNo
 }
-async function buildCustomerOrderPayload(){
- const c=calc(),logo=await publicLogoSmallDataUrl(state.teamLogo),items=[],main=publicMainItem();
+function buildCustomerOrderPayload(){
+ const c=calc(),items=[],main=publicMainItem();
  if(main)items.push(main);items.push(...publicCatalogItems());
  if(c.print>0)items.push({name:'姓名号码 / 个性化',detail:'按最终名单制作',qty:state.roster.length,unit:'人',unitPrice:n('printFee'),subtotal:c.print});
  if(c.design>0)items.push({name:'设计服务',detail:'SAGI TEAMWEAR',qty:1,unit:'项',unitPrice:c.design,subtotal:c.design});
@@ -2019,7 +2021,7 @@ async function buildCustomerOrderPayload(){
  const cf=currentConfirmation();cf.customerOrderGeneratedAt=new Date().toISOString();
  return{
   schema:'SAGI-CUSTOMER-ORDER-1',version:'1.0',orderRef:state.currentId||'',orderNo:customerOrderNo(),
-  issuedAt:new Date().toLocaleString('zh-CN'),brand:'SAGI SPORTS',teamName:text('teamName')||'球队',logo,
+  issuedAt:new Date().toLocaleString('zh-CN'),brand:'SAGI SPORTS',teamName:text('teamName')||'球队',logo:'',
   contact:text('contact'),contactInfo:text('contactInfo'),
   meta:[text('city'),text('competition'),text('season')].filter(Boolean),
   productSeries:q('series').value+' · '+q('supplierTier').value,
@@ -2036,24 +2038,24 @@ async function buildCustomerOrderPayload(){
   generatedBy:'SAGI SALES · CUSTOMER ORDER CONFIRMATION V1.0'
  }
 }
-async function generateCustomerOrderLink(openNow=false){
+function generateCustomerOrderLink(){
  if(!text('teamName')){note('请先填写球队名称');return''}
  if(!state.roster.length&&calc().qty>0){note('请先确认球员名单');return''}
- const payload=await buildCustomerOrderPayload(),u=new URL('./confirmation.html',location.href);u.searchParams.set('v','104');u.searchParams.set('t',String(Date.now()));const link=u.toString()+'#d='+encodePublicQuote(payload);
+ const payload=buildCustomerOrderPayload(),u=new URL('./confirmation.html',location.href);
+ u.searchParams.set('v','105');u.searchParams.set('t',String(Date.now()));
+ const link=u.toString()+'#d='+encodePublicQuote(payload);
  state.lastCustomerConfirmationLink=link;
  q('customerOrderLink').value=link;q('customerOrderState').textContent='READY';q('customerOrderState').classList.add('ready');
+ const a=q('customerOrderOpenLink');a.href=link;a.classList.remove('disabled');a.setAttribute('aria-disabled','false');
  addActivity('confirm','生成客户订单确认单',payload.orderNo+' · '+money(payload.total));saveOrder(true);
- if(openNow)window.open(link,'_blank');
+ note('确认单已生成 · 直接点“打开客户确认单”');
  return link
 }
-async function previewCustomerOrder(){const link=await generateCustomerOrderLink(false);if(!link)return;location.href=link}
-async function copyCustomerOrderLink(){
- const link=await generateCustomerOrderLink(false);if(!link)return;
- try{await navigator.clipboard.writeText(link);note('客户订单确认单链接已复制')}catch(e){q('customerOrderLink').focus();q('customerOrderLink').select();document.execCommand('copy');note('客户订单确认单链接已复制')}
-}
-async function printCustomerOrder(){
- const link=await generateCustomerOrderLink(false);if(!link)return;
- location.assign(link)
+async function shareCustomerOrderLink(){
+ const link=q('customerOrderLink').value||state.lastCustomerConfirmationLink||generateCustomerOrderLink();if(!link)return;
+ const data={title:'SAGI SPORTS 客户订单确认单',text:(text('teamName')||'球队')+' · 客户订单确认单',url:link};
+ if(navigator.share){try{await navigator.share(data);return}catch(e){if(e?.name==='AbortError')return}}
+ q('customerOrderLink').removeAttribute('readonly');q('customerOrderLink').focus();q('customerOrderLink').select();note('请长按已选中的链接 → 复制');setTimeout(()=>q('customerOrderLink').setAttribute('readonly','readonly'),1500)
 }
 
 function productionSheetHtml(){
@@ -2066,7 +2068,7 @@ function previewProductionSheet(){
  const win=window.open('about:blank','_blank');if(!win){note('浏览器阻止了新窗口');return}win.document.open();win.document.write(productionSheetHtml());win.document.close()
 }
 function initOrderConfirmation(){
- q('customerOrderPreviewBtn').onclick=previewCustomerOrder;q('customerOrderCopyBtn').onclick=copyCustomerOrderLink;q('customerOrderPrintBtn').onclick=printCustomerOrder;q('confirmationImportBtn').onclick=importCustomerConfirmation;q('productionReadyBtn').onclick=enterProduction;q('productionSheetBtn').onclick=previewProductionSheet;
+ q('customerOrderGenerateBtn').onclick=generateCustomerOrderLink;q('customerOrderShareBtn').onclick=shareCustomerOrderLink;q('confirmationImportBtn').onclick=importCustomerConfirmation;q('productionReadyBtn').onclick=enterProduction;q('productionSheetBtn').onclick=previewProductionSheet;
  q('designApproval').onchange=()=>{currentConfirmation().designApproval=q('designApproval').value;renderOrderConfirmation();renderAll()};
  q('depositStatus').onchange=()=>{currentConfirmation().depositStatus=q('depositStatus').value;if(q('depositStatus').value==='paid'){updateSalesStageAuto('已付定金',{contactToday:true});state.currentDepositPaidAt=new Date().toISOString();q('nextAction').value='准备生产资料';addActivity('payment','定金到账',money(n('depositPaid')))}persistSalesActivity();renderOrderConfirmation();renderAll()};
  q('depositPaid').oninput=()=>{currentConfirmation().depositPaid=n('depositPaid');renderOrderConfirmation()};renderOrderConfirmation()
