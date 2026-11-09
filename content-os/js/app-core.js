@@ -551,7 +551,7 @@ function scoreTrendItems(articles,profile='global'){
 }
 async function trendFetchShared(query,{profile='global',force=false,maxrecords=80}={}){
  const cached=trendReadCache();
- if(!force&&cached&&cached.query===query&&Date.now()-num(cached.fetchedAt)<=TREND_CACHE_MS)return{items:cached.items,cached:true};
+ if(!force&&cached&&cached.query===query&&Date.now()-num(cached.fetchedAt)<=TREND_CACHE_MS)return{items:cached.items,cached:true,limited:false,cacheAgeMs:Date.now()-num(cached.fetchedAt)};
  if(trendRequestInFlight)return trendRequestInFlight;
  trendRequestInFlight=(async()=>{
    const gap=Date.now()-trendLastRequestAt;if(gap<TREND_MIN_GAP_MS)await sleep(TREND_MIN_GAP_MS-gap);
@@ -563,15 +563,15 @@ async function trendFetchShared(query,{profile='global',force=false,maxrecords=8
        if(res.status===429){
          const retry=Math.max(TREND_MIN_GAP_MS,Math.min(15000,(Number(res.headers.get('retry-after'))||6)*1000));
          if(attempt<2){await sleep(retry);continue}
-         const fallback=trendCachedItems(24*60*60*1000);if(fallback.length)return{items:fallback,cached:true,limited:true};
+         const fallback=trendCachedItems(24*60*60*1000);if(fallback.length){const c=trendReadCache();return{items:fallback,cached:true,limited:true,cacheAgeMs:c?Date.now()-num(c.fetchedAt):24*60*60*1000}};
          throw new Error('热点源限流 HTTP 429')
        }
        if(!res.ok)throw new Error('HTTP '+res.status);
        const data=await res.json(),items=scoreTrendItems(data.articles||[],profile).slice(0,maxrecords);
-       trendWriteCache(query,items);return{items,cached:false}
+       trendWriteCache(query,items);return{items,cached:false,limited:false,cacheAgeMs:0}
      }catch(e){lastErr=e;if(attempt<2)await sleep(TREND_MIN_GAP_MS)}
    }
-   const fallback=trendCachedItems(24*60*60*1000);if(fallback.length)return{items:fallback,cached:true,limited:true};
+   const fallback=trendCachedItems(24*60*60*1000);if(fallback.length){const c=trendReadCache();return{items:fallback,cached:true,limited:true,cacheAgeMs:c?Date.now()-num(c.fetchedAt):24*60*60*1000}};
    throw lastErr||new Error('热点源暂时不可用')
  })();
  try{return await trendRequestInFlight}finally{trendRequestInFlight=null}
@@ -1273,22 +1273,72 @@ function dailyCandidate(plan,label,source,p,bonus=0,meta={}){
  const viral=plan?.viral||viralScoreForPlan(plan,p),base=viral?.total||0;
  return{plan:dailyCompactPlan(plan),label,source,projectId:p?.id||'',priority:Math.min(99,Math.round(base+bonus)),viral:base,verdict:viral?.verdict||'',why:viral?.risks?.[0]?.[1]||'结构健康',meta}
 }
-async function fetchDailyTrendPool(){
- const result=await trendFetchShared(TREND_PROFILES.global.query,{profile:'global',force:false,maxrecords:80}),pool=result.items||[];
- const rescored=pool.map(a=>{
-   const profiles=['global','china','xinjiang','stars'],best=profiles.map(p=>{const raw=trendScore(a,p),fit=accountFitScore(a);return{p,score:Math.round(raw*.62+fit*.38)}}).sort((x,y)=>y.score-x.score)[0];
-   return{...a,score:best.score,dailyProfile:best.p,reason:trendReason(a,best.score)}
+const DAILY_COMMAND_MAX_AGE_MS=20*60*1000;
+const DAILY_HOT_MAX_HOURS=12;
+function trustedFootballDomain(a){
+ const d=String(a?.domain||'').toLowerCase();
+ return /(^|\.)(reuters|bbc|espn|skysports|theguardian|apnews|goal|marca|as|fifa|uefa|the-afc|news|xinhuanet|cctv|sina)\./.test(d)||/sports\.sina\.com\.cn|news\.cn/.test(d)
+}
+function footballArticleRelevant(a){
+ const title=String(a?.title||'').toLowerCase(),url=String(a?.url||'').toLowerCase(),all=title+' '+url;
+ if(/\bnfl\b|american football|college football|rugby|australian rules|\bafl\b/.test(all))return false;
+ return /\/soccer\/|\/football\/|football|soccer|premier league|champions league|europa league|world cup|nations league|la liga|laliga|serie a|bundesliga|uefa|fifa|中超|国足|足协杯|足球|ronaldo|cristiano|messi|mbapp[eé]|yamal/.test(all)
+}
+function eventWords(v){
+ const stop=new Set(['the','a','an','and','or','to','of','in','on','for','with','at','from','after','before','as','is','are','was','were','will','has','have','had','football','soccer','team','teams','player','players','match','game','games','league','cup','club','clubs','latest','news','today']);
+ return String(v||'').toLowerCase().replace(/[^a-z0-9\u3400-\u9fff]+/g,' ').split(/\s+/).filter(x=>x.length>2&&!stop.has(x)).slice(0,18)
+}
+function wordSimilarity(a,b){
+ const A=new Set(eventWords(a)),B=new Set(eventWords(b));if(!A.size||!B.size)return 0;let hit=0;A.forEach(x=>{if(B.has(x))hit++});return hit/Math.max(1,Math.min(A.size,B.size))
+}
+function clusterDailyEvents(items){
+ const clusters=[];
+ (items||[]).forEach(a=>{
+   let c=clusters.find(x=>wordSimilarity(x.seed.title,a.title)>=.34);
+   if(!c){c={seed:a,items:[],domains:new Set()};clusters.push(c)}
+   c.items.push(a);if(a.domain)c.domains.add(String(a.domain).toLowerCase())
  });
- return await localizeTrendItems(rescored.sort((a,b)=>b.score-a.score||trendAgeHours(a.seendate)-trendAgeHours(b.seendate)).slice(0,18),18)
+ return clusters.map(c=>({items:c.items,domains:[...c.domains],support:c.domains.size}))
+}
+function dailySourceMode(result){
+ if(result?.limited)return result.cacheAgeMs<=30*60*1000?'FRESH CACHE':'CACHE';
+ return result?.cached?'FRESH CACHE':'LIVE VERIFIED'
+}
+function dailyCommandNeedsRefresh(){
+ const d=state.dailyCommand;
+ return !d||d.date!==today()||d.zhVersion!==ZH_LAYER_VERSION||!d.updatedAt||Date.now()-d.updatedAt>DAILY_COMMAND_MAX_AGE_MS
+}
+function trendMetaText(a){
+ const age=Math.max(0,trendAgeHours(a?.seendate)),support=Math.max(1,Number(a?.eventSupport)||1);
+ return (age<1?'<1h':age.toFixed(1)+'h')+' · '+support+'源 · '+(a?.eventVerified?'已验证':'单源')
+}
+async function fetchDailyTrendPool(){
+ const result=await trendFetchShared(TREND_PROFILES.global.query,{profile:'global',force:false,maxrecords:100});
+ const sourceMode=dailySourceMode(result),cacheTooOld=sourceMode==='CACHE'&&Number(result.cacheAgeMs||0)>30*60*1000;
+ const fresh=(result.items||[]).filter(a=>footballArticleRelevant(a)&&trendAgeHours(a.seendate)<=24);
+ const clusters=clusterDailyEvents(fresh);
+ const rescored=[];
+ clusters.forEach(c=>{
+   c.items.forEach(a=>{
+     const profiles=['global','china','xinjiang','stars'],best=profiles.map(p=>{const raw=trendScore(a,p),fit=accountFitScore(a);return{p,score:Math.round(raw*.62+fit*.38)}}).sort((x,y)=>y.score-x.score)[0];
+     const age=trendAgeHours(a.seendate),trusted=trustedFootballDomain(a),verified=c.support>=2||(trusted&&age<=6);
+     const base=best.score+(c.support>=2?Math.min(14,(c.support-1)*5):0)+(trusted?5:0)-(age>12?12:0)-(!verified?8:0);
+     rescored.push({...a,score:Math.max(1,Math.min(99,Math.round(base))),dailyProfile:best.p,eventSupport:Math.max(1,c.support),eventVerified:verified,dailyEligible:!cacheTooOld&&age<=DAILY_HOT_MAX_HOURS&&verified,sourceMode,reason:trendReason(a,base)+(verified?' · '+Math.max(1,c.support)+'个来源':' · 单源观察')})
+   })
+ });
+ const ranked=rescored.sort((a,b)=>(Number(b.dailyEligible)-Number(a.dailyEligible))||b.score-a.score||trendAgeHours(a.seendate)-trendAgeHours(b.seendate)).slice(0,24);
+ const items=await localizeTrendItems(ranked,24);
+ return{items,sourceMode,cacheAgeMs:Number(result.cacheAgeMs||0),verifiedCount:items.filter(x=>x.dailyEligible).length}
 }
 function dailyBestTrendCandidate(a){
  const p=dailyVirtualHotProject(),src={url:a.url,domain:a.domain,title:a.title,originalTitle:a.originalTitle||a.title,seendate:a.seendate,score:a.score},plans=['speed','emotion','debate'].map(k=>variantPlan(k,a.title,p,src)).sort((x,y)=>(y.viral?.total||0)-(x.viral?.total||0)),best=plans[0];
- const freshness=trendAgeHours(a.seendate)<=3?5:trendAgeHours(a.seendate)<=8?3:0;
- return dailyCandidate(best,generatorShortTopic(a.title,42),'LIVE RADAR',p,freshness,{trend:{url:a.url,domain:a.domain,title:a.title,originalTitle:a.originalTitle||a.title,seendate:a.seendate,score:a.score,sourcecountry:a.sourcecountry,sourcecountryZh:a.sourcecountryZh,language:a.language,languageZh:a.languageZh,socialimage:a.socialimage,reason:a.reason,translated:a.translated}})
+ const freshness=trendAgeHours(a.seendate)<=3?6:trendAgeHours(a.seendate)<=8?4:1,supportBonus=Math.min(8,Math.max(0,(Number(a.eventSupport)||1)-1)*3);
+ return dailyCandidate(best,generatorShortTopic(a.title,42),'LIVE RADAR',p,freshness+supportBonus,{trend:{url:a.url,domain:a.domain,title:a.title,originalTitle:a.originalTitle||a.title,seendate:a.seendate,score:a.score,sourcecountry:a.sourcecountry,sourcecountryZh:a.sourcecountryZh,language:a.language,languageZh:a.languageZh,socialimage:a.socialimage,reason:a.reason,translated:a.translated,eventSupport:a.eventSupport,eventVerified:a.eventVerified,sourceMode:a.sourceMode,freshness:trendMetaText(a)}})
 }
 function dailyCommandCard(el,c,kind){
  if(!c){el.innerHTML='<div class="commandLabel">'+kind+'</div><h3>暂无合适候选</h3>';return}
- el.innerHTML='<div class="commandLabel">'+kind+' · '+esc(c.source)+'</div><h3>'+esc(c.label)+'</h3><div class="commandScore">'+c.priority+'<small>/99</small></div><div class="commandMeta">'+esc(c.verdict||'')+' · VIRAL '+c.viral+'</div><div class="commandWhy">'+esc(c.why||'')+'</div><div class="toolbar"><button class="btn '+(kind.startsWith('P1')?'primary':'')+'" data-daily-action type="button">'+(c.source==='CONTENT TASK'?'打开任务':'采用方案')+'</button></div>';
+ const fresh=c.meta?.trend?.freshness?(' · '+c.meta.trend.freshness):'';
+ el.innerHTML='<div class="commandLabel">'+kind+' · '+esc(c.source)+'</div><h3>'+esc(c.label)+'</h3><div class="commandScore">'+c.priority+'<small>/99</small></div><div class="commandMeta">'+esc(c.verdict||'')+' · VIRAL '+c.viral+esc(fresh)+'</div><div class="commandWhy">'+esc(c.why||'')+'</div><div class="toolbar"><button class="btn '+(kind.startsWith('P1')?'primary':'')+'" data-daily-action type="button">'+(c.source==='CONTENT TASK'?'打开任务':'采用方案')+'</button></div>';
  el.querySelector('[data-daily-action]').onclick=()=>executeDailyCandidate(c)
 }
 function renderDailyCommand(){
@@ -1300,27 +1350,29 @@ function renderDailyCommand(){
    q('dailyRanking').innerHTML='<div class="empty">今日指挥尚未生成。</div>';q('dailyCommandInsight').textContent='系统会联网扫描热点，再与现有内容任务和项目一起排序。';
    dailyCommandCard(q('dailyP1'),null,'P1 · NOW');dailyCommandCard(q('dailyP2'),null,'P2 · NEXT');dailyCommandCard(q('dailyHold'),null,'HOLD');return
  }
- badge.textContent=d.online?'INTERNET · LIVE':'INTERNET · LOCAL';
+ badge.textContent=d.sourceMode==='LIVE VERIFIED'?'INTERNET · LIVE VERIFIED':d.sourceMode==='FRESH CACHE'?'INTERNET · FRESH CACHE':d.sourceMode==='CACHE'?'INTERNET · CACHE':'INTERNET · LOCAL';
  q('dailyUpdated').textContent=d.updatedText||'今日';q('dailyTrendCount').textContent=d.trendCount;q('dailyProjectCount').textContent=d.localCount;
  const ranked=d.ranked||[],p1=ranked[0]||null,p2=ranked[1]||null,hold=d.hold||null;
  dailyCommandCard(q('dailyP1'),p1,'P1 · NOW');dailyCommandCard(q('dailyP2'),p2,'P2 · NEXT');dailyCommandCard(q('dailyHold'),hold,'HOLD');
- q('dailyRanking').innerHTML=ranked.length?ranked.slice(0,8).map((c,i)=>'<div class="dailyRankRow"><strong>'+String(i+1).padStart(2,'0')+'</strong><div><b>'+esc(c.label)+'</b><span>'+esc(c.source)+' · '+esc(c.verdict)+' · VIRAL '+c.viral+'</span></div><em>'+c.priority+'</em></div>').join(''):'<div class="empty">暂无候选</div>';
+ q('dailyRanking').innerHTML=ranked.length?ranked.slice(0,8).map((c,i)=>'<div class="dailyRankRow"><strong>'+String(i+1).padStart(2,'0')+'</strong><div><b>'+esc(c.label)+'</b><span>'+esc(c.source)+' · '+esc(c.verdict)+' · VIRAL '+c.viral+(c.meta?.trend?.freshness?' · '+esc(c.meta.trend.freshness):'')+'</span></div><em>'+c.priority+'</em></div>').join(''):'<div class="empty">暂无候选</div>';
  q('dailyCommandInsight').textContent=d.insight||'今日优先级已生成。'
 }
 async function runDailyViralCommand(auto=false){
  if(state.dailyCommandLoading)return;state.dailyCommandLoading=true;renderDailyCommand();q('dailyRunBtn').disabled=true;
- let trends=[],online=false;
- try{trends=await fetchDailyTrendPool();online=trends.length>0}catch(e){}
- if(trends.length){state.trendItems=trends;state.trendFetchedAt=Date.now();q('trendStatus').textContent='DAILY VIRAL 已同步 · '+trends.length+' 条互联网信号';renderTrends()}
- const candidates=[],hot=trends.slice(0,8).map(dailyBestTrendCandidate);candidates.push(...hot);
+ let trendResult={items:[],sourceMode:'LOCAL',verifiedCount:0},online=false;
+ try{trendResult=await fetchDailyTrendPool();online=trendResult.sourceMode!=='CACHE'&&trendResult.items.length>0}catch(e){}
+ const trends=trendResult.items||[],eligible=trends.filter(a=>a.dailyEligible);
+ if(trends.length){state.trendItems=trends;state.trendFetchedAt=Date.now();q('trendStatus').textContent='DAILY VIRAL 已同步 · '+eligible.length+' 条已验证 / '+trends.length+' 条信号';renderTrends()}
+ const candidates=[],hot=eligible.slice(0,8).map(dailyBestTrendCandidate);candidates.push(...hot);
  const localProjects=allProjects().filter(p=>p.type!=='hot').slice(0,10);
  localProjects.forEach(p=>{const plan=dailyProjectPlan(p),scheduled=projectContent(p.id).some(c=>(c.scheduleAt||'').slice(0,10)===today()),bonus=scheduled?4:0;candidates.push(dailyCandidate(plan,p.name,'SAGI PROJECT',p,bonus))});
  state.contents.filter(c=>c.status!=='published').forEach(c=>{const p=allProjects().find(x=>x.id===c.projectId),plan=dailyExistingPlan(c,p),bonus=(c.status==='ready'?8:0)+((c.scheduleAt||'').slice(0,10)===today()?5:0);candidates.push(dailyCandidate(plan,c.title||'未命名内容','CONTENT TASK',p,bonus,{contentId:c.id,status:c.status}))});
  const ranked=candidates.filter(c=>c.viral>0).sort((a,b)=>b.priority-a.priority||b.viral-a.viral),hold=ranked.slice().reverse().find(c=>c.priority<70)||ranked[ranked.length-1]||null;
  const hasStrongHot=ranked.some(c=>c.source==='LIVE RADAR'&&c.priority>=78),hasLocal=ranked.some(c=>c.source!=='LIVE RADAR'&&c.priority>=68);
- const insight=hasStrongHot&&hasLocal?'今天建议“热点拉新 + 本地内容留人”：P1抢热点窗口，P2保持萨吉体育自己的新疆足球身份。':hasStrongHot?'今天热点强度明显更高，优先抢时效；本地内容放到第二顺位。':hasLocal?'今天没有明显强热点，优先发萨吉体育自己的赛事、球队或人物内容。':'今天候选整体偏弱，不必为了日更硬发；优先继续制作和补素材。';
- state.dailyCommand={date:today(),zhVersion:ZH_LAYER_VERSION,updatedAt:Date.now(),updatedText:new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}),online,trendCount:hot.length,localCount:Math.max(0,candidates.length-hot.length),ranked:ranked.slice(0,12),hold,insight};
- state.dailyCommandLoading=false;save();renderAll();q('dailyRunBtn').disabled=false;if(!auto)note('今日爆款指挥已生成 · P1 '+(ranked[0]?.priority||0)+'分')
+ const sourceNote=trendResult.sourceMode==='CACHE'?'互联网源当前只剩旧缓存，旧闻不进入P1/P2。':eligible.length?'今日热点已按“近12小时 + 足球相关 + 多源/权威源验证”筛选。':'当前没有通过验证的强热点，不为了热点而硬发。';
+ const insight=(hasStrongHot&&hasLocal?'建议“热点拉新 + 本地内容留人”：P1抢真实热点，P2保持新疆足球身份。':hasStrongHot?'今天存在已验证强热点，优先抢时效；本地内容放第二顺位。':hasLocal?'今天没有已验证强热点，优先发萨吉体育自己的赛事、球队或人物内容。':'今天候选整体偏弱，优先继续制作和补素材。')+' '+sourceNote;
+ state.dailyCommand={date:today(),zhVersion:ZH_LAYER_VERSION,updatedAt:Date.now(),updatedText:new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})+' · '+trendResult.sourceMode,online,sourceMode:trendResult.sourceMode,trendCount:hot.length,verifiedTrendCount:eligible.length,localCount:Math.max(0,candidates.length-hot.length),ranked:ranked.slice(0,12),hold,insight};
+ state.dailyCommandLoading=false;save();renderAll();q('dailyRunBtn').disabled=false;if(!auto)note('今日指挥已刷新 · 已验证热点 '+eligible.length+' 条')
 }
 function executeDailyCandidate(c){
  if(!c)return;
@@ -1466,7 +1518,7 @@ function openContent(id,view='create'){
  const c=state.contents.find(x=>x.id===id);if(!c)return;state.currentContentId=id;state.currentProjectId=c.projectId;state.director={goal:c.goal,format:c.format,requested:c.format,style:c.style,platform:c.platform,theme:c.title,hooks:c.hooks||[c.hook],hook:c.hook,shots:c.shots||shotsFor(c.format),music:c.music,cta:c.cta,scheduleAt:c.scheduleAt,cover:c.cover,generatedAt:c.createdAt,score:scoreDirector(c.format,c.hook,c.goal,allProjects().find(p=>p.id===c.projectId))};save();renderAll();switchView(view)
 }
 function autoCalendar(){const p=project();if(!p){note('请先选择项目');return}const names=['品牌','人物故事','产品','足球热点','比赛预热','MATCH DAY','赛果 / MVP'];note('已生成7天内容结构建议');renderWeek(q('calendarFull'))}
-function switchView(v){document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===v));document.querySelectorAll('[data-view-panel]').forEach(p=>p.classList.toggle('active',p.dataset.viewPanel===v));q('viewTitle').textContent=VIEW_META[v][0];q('viewDesc').textContent=VIEW_META[v][1];if(v==='matchday')window.SAGI_MOBILE?.renderMatchday?.();if(v==='videojobs')window.SAGI_MOBILE?.renderVideoJobs?.();if(v==='review')window.SAGI_MOBILE?.renderReview?.();if(v==='daily'){renderDailyCommand();if((state.dailyCommand?.date!==today()||state.dailyCommand?.zhVersion!==ZH_LAYER_VERSION)&&!state.dailyCommandLoading)runDailyViralCommand(true)}if(v==='trends')renderTrends();if(v==='flow')renderFlow();if(v==='viralgen')renderViralGenerator();if(v==='viral')renderViralModel();if(v==='account')renderAccountData();if(v==='assets')renderAssets();if(v==='video')renderVideoEngine();if(v==='create')renderCreate();if(v==='publish')renderPublish();if(v==='learning')renderLearning();if(v==='performance')renderPerformance();if(v==='projects')renderProjects();if(v==='calendar')renderCalendar()}
+function switchView(v){document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===v));document.querySelectorAll('[data-view-panel]').forEach(p=>p.classList.toggle('active',p.dataset.viewPanel===v));q('viewTitle').textContent=VIEW_META[v][0];q('viewDesc').textContent=VIEW_META[v][1];if(v==='matchday')window.SAGI_MOBILE?.renderMatchday?.();if(v==='videojobs')window.SAGI_MOBILE?.renderVideoJobs?.();if(v==='review')window.SAGI_MOBILE?.renderReview?.();if(v==='daily'){if(dailyCommandNeedsRefresh()&&!state.dailyCommandLoading)runDailyViralCommand(true);else renderDailyCommand()}if(v==='trends')renderTrends();if(v==='flow')renderFlow();if(v==='viralgen')renderViralGenerator();if(v==='viral')renderViralModel();if(v==='account')renderAccountData();if(v==='assets')renderAssets();if(v==='video')renderVideoEngine();if(v==='create')renderCreate();if(v==='publish')renderPublish();if(v==='learning')renderLearning();if(v==='performance')renderPerformance();if(v==='projects')renderProjects();if(v==='calendar')renderCalendar()}
 function isMobileRuntime(){return typeof matchMedia==='function'&&matchMedia('(max-width:900px)').matches}
 function renderAll(){
  window.SAGI_MOBILE?.renderAll?.();
@@ -1479,7 +1531,7 @@ q('projectSelect').onchange=()=>{state.currentProjectId=q('projectSelect').value
 q('videoRenderBtn').onclick=smartRenderVideo;q('directorFootageInput').onchange=handleFootageSelection;q('directorFootageInput').oninput=handleFootageSelection;q('directorMusicInput').onchange=handleMusicSelection;q('directorMusicInput').oninput=handleMusicSelection;q('directorAnalyzeFootageBtn').onclick=analyzeFootageFiles;q('directorBuildCutBtn').onclick=buildDirectorCut;q('directorClearFootageBtn').onclick=clearDirectorFootage;q('directorDuration').onchange=()=>{if(state.footage.length)buildDirectorCut()};q('videoReloadBtn').onclick=()=>state.videoDraft?.source&&prepareVideoSource({...state.videoDraft.source,title:state.videoDraft.title},false);q('videoCopyScriptBtn').onclick=copyVideoScript;q('dailyRunBtn').onclick=()=>runDailyViralCommand(false);q('dailyOpenP1Btn').onclick=executeDailyP1;q('dailyOpenRadarBtn').onclick=()=>switchView('trends');q('syncSalesBtn').onclick=syncSales;q('accountImportBtn').onclick=importAccountFile;q('accountImportFile').onchange=analyzeAccountFile;q('accountTemplateBtn').onclick=downloadAccountTemplate;q('accountApiDocsBtn').onclick=openDouyinApiDocs;q('trendRefreshBtn').onclick=fetchInternetTrends;q('trendOpenGoogleBtn').onclick=openGoogleTrends;q('trendProfile').onchange=()=>{q('trendQuery').disabled=q('trendProfile').value!=='custom'};q('flowNextBtn').onclick=runFlowNext;q('flowTodayBtn').onclick=()=>switchView('today');q('newProjectBtn').onclick=q('projectCreateTopBtn').onclick=()=>q('projectModal').classList.add('show');document.querySelectorAll('[data-close-modal]').forEach(b=>b.onclick=()=>b.closest('.modalMask').classList.remove('show'));q('createProjectBtn').onclick=createProject;
 q('generatorRunBtn').onclick=()=>generateViralVariants();q('generatorSaveBestBtn').onclick=saveBestViralVariant;q('generatorTopic').onkeydown=e=>{if(e.key==='Enter')generateViralVariants()};q('viralAnalyzeBtn').onclick=()=>{renderViralModel();note('爆款模型已重新分析')};q('viralOptimizeBtn').onclick=optimizeCurrentForViral;q('generateDirectorBtn').onclick=()=>generateDirector(false);q('saveDirectorBtn').onclick=saveDirectorAsContent;q('todayGenerateBtn').onclick=()=>{generateDirector(false);switchView('director')};q('todayOpenDirectorBtn').onclick=()=>switchView('director');q('todayAddPlanBtn').onclick=addTodayPlan;q('calendarAutoBtn').onclick=autoCalendar;q('createFromDirectorBtn').onclick=()=>{if(!state.director?.generatedAt)generateDirector(true);renderCreate();note('故事板已生成')};q('markReadyBtn').onclick=markReady;q('packageCopyBtn').onclick=copyPackage;q('savePerformanceBtn').onclick=savePerformance;
 window.SAGI_CORE={q,uid,today,esc,note,save,switchView,renderAll,get state(){return state}};
-load();renderAll();if(!isMobileRuntime()&&(state.dailyCommand?.date!==today()||state.dailyCommand?.zhVersion!==ZH_LAYER_VERSION))runDailyViralCommand(true);
+load();renderAll();if(!isMobileRuntime()&&dailyCommandNeedsRefresh())runDailyViralCommand(true);
 
 function registerContentOSApp(){
  if(!('serviceWorker' in navigator))return;
