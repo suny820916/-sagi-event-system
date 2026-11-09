@@ -582,6 +582,10 @@ function updateSalesStageAuto(stage,opts={}){
  if(opts.contactToday){q('lastContactDate').value=localDateOnly()}
  if(opts.nextDays!=null){q('nextFollowUp').value=addDaysDate(localDateOnly(),opts.nextDays)}
 }
+function persistSalesActivity(){
+ if(!state.currentId)return;const o=state.orders.find(x=>x.id===state.currentId);if(!o)return;
+ o.salesStage=q('salesStage').value;o.leadTemperature=q('leadTemperature').value;o.lastContactDate=q('lastContactDate').value;o.nextFollowUp=q('nextFollowUp').value;o.nextAction=text('nextAction');o.lostReason=q('lostReason').value;o.quoteSentAt=state.currentQuoteSentAt||o.quoteSentAt||'';o.depositPaidAt=state.currentDepositPaidAt||o.depositPaidAt||'';o.confirmation=JSON.parse(JSON.stringify(currentConfirmation()));o.updatedAt=Date.now();persist();renderSalesDashboard();renderOrders();renderKpis()
+}
 
 function persist(){localStorage.setItem(STORAGE_KEY,JSON.stringify({orders:state.orders}))}
 function loadState(){try{let x=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');if(!x)x=JSON.parse(localStorage.getItem(LEGACY_KEY)||'null');if(!x)x=JSON.parse(localStorage.getItem(LEGACY_KEY_V11)||'null');if(!x)x=JSON.parse(localStorage.getItem(LEGACY_KEY_V10)||'null');if(x&&Array.isArray(x.orders))state.orders=x.orders;const cp=JSON.parse(localStorage.getItem(COST_PROFILE_KEY)||'{}');state.costOverrides=cp&&typeof cp==='object'?cp:{}}catch(e){state.costOverrides={}}}
@@ -992,7 +996,7 @@ function importCustomerConfirmation(){
  if(obj.orderRef&&state.currentId&&obj.orderRef!==state.currentId){note('确认码不属于当前订单');return}
  const cf=currentConfirmation();cf.quoteConfirmed=true;cf.quoteNo=obj.quoteNo||'';cf.planId=obj.planId||'';cf.planLabel=obj.planLabel||'当前报价方案';cf.confirmedAmount=Number(obj.confirmedAmount)||0;cf.confirmedAt=obj.confirmedAt||new Date().toLocaleString('zh-CN');cf.confirmer=obj.confirmer||'客户';
  const idx={A:0,B:1,C:2}[cf.planId];if(Number.isInteger(idx)&&state.packagePlans[idx])applyPackagePlan(idx);
- q('orderStatus').value='客户已确认';updateSalesStageAuto('已确认',{contactToday:true,nextDays:1});q('nextAction').value='跟进定金';q('confirmationCodeInput').value='';renderOrderConfirmation();renderPipeline();note('客户确认已导入 · '+cf.planLabel)
+ q('orderStatus').value='客户已确认';updateSalesStageAuto('已确认',{contactToday:true,nextDays:1});q('nextAction').value='跟进定金';q('confirmationCodeInput').value='';persistSalesActivity();renderOrderConfirmation();renderPipeline();note('客户确认已导入 · '+cf.planLabel)
 }
 function makeProductionNo(){return 'SAGI-PROD-'+new Date().toISOString().slice(0,10).replace(/-/g,'')+'-'+Math.random().toString(36).slice(2,6).toUpperCase()}
 function enterProduction(){
@@ -1011,7 +1015,7 @@ function previewProductionSheet(){
 function initOrderConfirmation(){
  q('confirmationImportBtn').onclick=importCustomerConfirmation;q('productionReadyBtn').onclick=enterProduction;q('productionSheetBtn').onclick=previewProductionSheet;
  q('designApproval').onchange=()=>{currentConfirmation().designApproval=q('designApproval').value;renderOrderConfirmation();renderAll()};
- q('depositStatus').onchange=()=>{currentConfirmation().depositStatus=q('depositStatus').value;if(q('depositStatus').value==='paid'){updateSalesStageAuto('已付定金',{contactToday:true});state.currentDepositPaidAt=new Date().toISOString();q('nextAction').value='准备生产资料'}renderOrderConfirmation();renderAll()};
+ q('depositStatus').onchange=()=>{currentConfirmation().depositStatus=q('depositStatus').value;if(q('depositStatus').value==='paid'){updateSalesStageAuto('已付定金',{contactToday:true});state.currentDepositPaidAt=new Date().toISOString();q('nextAction').value='准备生产资料'}persistSalesActivity();renderOrderConfirmation();renderAll()};
  q('depositPaid').oninput=()=>{currentConfirmation().depositPaid=n('depositPaid');renderOrderConfirmation()};renderOrderConfirmation()
 }
 
@@ -1062,7 +1066,7 @@ async function buildPublicQuotePayload(){
 async function generateCustomerQuoteLink(openNow=false){
  if(!text('teamName')){note('请先填写球队名称');return''}
  const payload=await buildPublicQuotePayload(),base=new URL('./quote.html',location.href).toString(),link=base+'#q='+encodePublicQuote(payload);
- state.lastCustomerQuoteLink=link;if(!state.currentQuoteSentAt)state.currentQuoteSentAt=new Date().toISOString();if(['新线索','已联系','有意向'].includes(q('salesStage').value))updateSalesStageAuto('已报价',{contactToday:true,nextDays:3});q('customerQuoteLink').value=link;q('customerLinkState').textContent='PUBLIC LINK READY';q('customerLinkState').classList.add('ready');
+ state.lastCustomerQuoteLink=link;if(!state.currentQuoteSentAt)state.currentQuoteSentAt=new Date().toISOString();if(['新线索','已联系','有意向'].includes(q('salesStage').value))updateSalesStageAuto('已报价',{contactToday:true,nextDays:3});q('nextAction').value='确认客户是否已查看报价';persistSalesActivity();q('customerQuoteLink').value=link;q('customerLinkState').textContent='PUBLIC LINK READY';q('customerLinkState').classList.add('ready');
  if(openNow)window.open(link,'_blank');return link
 }
 async function copyCustomerQuoteLink(){
@@ -1140,7 +1144,7 @@ function initSelects(){
 q('teamLogoFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{state.teamLogo=r.result;renderAll()};r.readAsDataURL(f)};
 q('addPlayerBtn').onclick=()=>addPlayer();q('demoRosterBtn').onclick=()=>{state.roster=[];[['AZAMAT','1','XL','门将'],['DIAS','2','L','球员'],['NURLAN','4','XL','球员'],['ALMAS','5','L','球员'],['ERLAN','3','M','球员'],['SULTAN','6','L','球员'],['MARHULAN','8','L','球员'],['ASLAN','10','M','球员'],['DANIYAR','7','L','球员'],['ARDAK','9','XL','球员'],['TIMUR','11','L','球员'],['BEK','12','XL','门将']].forEach(x=>addPlayer({name:x[0],number:x[1],size:x[2],type:x[3]}));note('已载入12人示例名单')};
 q('clearRosterBtn').onclick=()=>{state.roster=[];renderRoster();renderAll()};q('saveOrderBtn').onclick=saveOrder;q('quoteSaveBtn').onclick=saveOrder;q('newOrderBtn').onclick=()=>{blank();location.hash='#customer';note('已新建销售项目')};q('printBtn').onclick=()=>window.print();q('quoteReorderBtn').onclick=()=>{const src=state.orders.find(x=>x.id===state.currentId)||collect();createReorder(src)};
-q('salesStage').onchange=()=>{if(q('salesStage').value==='未成交'&&!q('lostReason').value)note('请补充未成交原因');renderAll()};q('lostReason').onchange=()=>{if(q('lostReason').value)q('salesStage').value='未成交';renderAll()};q('nextFollowUp').onchange=renderAll;q('leadTemperature').onchange=renderAll;q('orderSearch').oninput=renderOrders;q('statusFilter').onchange=renderOrders;q('orderStatus').onchange=renderAll;q('extraQty').oninput=()=>{state.packageTargetQty=0;renderAll()};
+q('salesStage').onchange=()=>{if(q('salesStage').value==='未成交'&&!q('lostReason').value)note('请补充未成交原因');persistSalesActivity();renderAll()};q('lostReason').onchange=()=>{if(q('lostReason').value)q('salesStage').value='未成交';persistSalesActivity();renderAll()};q('nextFollowUp').onchange=()=>{persistSalesActivity();renderAll()};q('leadTemperature').onchange=()=>{persistSalesActivity();renderAll()};q('orderSearch').oninput=renderOrders;q('statusFilter').onchange=renderOrders;q('orderStatus').onchange=renderAll;q('extraQty').oninput=()=>{state.packageTargetQty=0;renderAll()};
 ['supplierTier','ageGroup'].forEach(id=>q(id).addEventListener('change',()=>{const tier=SUPPLIER_CATALOG[q('supplierTier').value],age=q('ageGroup').value==='child'?'child':'adult';q('priceStrategy').value=(tier&&SAGI_FIXED_PRICE[tier.name]&&SAGI_FIXED_PRICE[tier.name][age]!=null)?'fixed':'margin';syncPriceEngine(true);renderAll()}));['productType','priceStrategy','targetMargin','poloAddon','pocketAddon','longSleeveAddon','shippingZone'].forEach(id=>q(id).addEventListener('change',()=>{syncPriceEngine(true);renderAll()}));['otherCraftCost','factoryShippingCost'].forEach(id=>q(id).addEventListener('input',()=>{syncPriceEngine(true);renderAll()}));q('salesUnitPrice').addEventListener('input',renderAll);
 document.querySelectorAll('input,select,textarea').forEach(el=>{if(!['orderSearch','statusFilter','teamLogoFile'].includes(el.id))el.addEventListener('input',()=>{if(el.id==='orderStatus')return;renderAll()});if(el.tagName==='SELECT'&&!['statusFilter','orderStatus'].includes(el.id))el.addEventListener('change',renderAll)});
 initSelects();loadState();blank();initCostProfile();initPackageBuilder();initCatalog();initCustomerQuotationMode();initOrderConfirmation();initProductionTracker();renderAll();
