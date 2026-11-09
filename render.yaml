@@ -1,14 +1,20 @@
 services:
   - type: web
-    name: sagi-cloud-bridge
+    name: sagi-cloud-bridge-suny820916
     runtime: docker
     rootDir: sagi-cloud-bridge
-    plan: starter
-    autoDeploy: true
+    plan: free
+    region: singapore
+    autoDeployTrigger: off
+    healthCheckPath: /health
     envVars:
-      - key: SAGI_BRIDGE_TOKEN
+      - key: SAGI_SERVER_SECRET
         generateValue: true
+      - key: SAGI_ALLOWED_ORIGIN
+        value: "https://suny820916.github.io"
       - key: SAGI_MAX_FILE_MB
-        value: "500"
+        value: "300"
       - key: SAGI_JOB_TTL_MIN
         value: "30"
+      - key: SAGI_RATE_LIMIT_PER_HOUR
+        value: "20"
