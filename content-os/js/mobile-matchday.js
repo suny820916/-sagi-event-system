@@ -1,0 +1,31 @@
+(()=>{'use strict';
+const C=window.SAGI_CORE;if(!C)return;const q=C.q,note=C.note,save=C.save,uid=C.uid,esc=C.esc,today=C.today;
+const LABELS={goal:'进球',save:'扑救',shot:'射门',celebration:'庆祝',duel:'强对抗',crowd:'观众爆发',skill:'精彩配合',card:'牌/冲突',highlight:'刚刚精彩'};
+const S=()=>C.state;
+function normalize(){const m=S().matchday||(S().matchday={});Object.assign(m,{home:m.home||'主队',away:m.away||'客队',elapsed:Number(m.elapsed)||0,running:!!m.running,runningSince:Number(m.runningSince)||0,half:m.half===2?2:1,markers:Array.isArray(m.markers)?m.markers:[],homeScore:Number(m.homeScore)||0,awayScore:Number(m.awayScore)||0,finished:!!m.finished,history:Array.isArray(m.history)?m.history:[]});return m}
+function seconds(){const m=normalize();return Math.max(0,Math.floor(m.elapsed+(m.running&&m.runningSince?(Date.now()-m.runningSince)/1000:0)))}
+function clock(sec){sec=Math.max(0,Math.floor(sec||0));return String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0')}
+function snapshot(){const m=normalize();return{home:m.home,away:m.away,elapsed:seconds(),running:m.running,half:m.half,markers:JSON.parse(JSON.stringify(m.markers||[])),homeScore:m.homeScore,awayScore:m.awayScore,finished:m.finished}}
+function pushHistory(){const m=normalize();m.history=(m.history||[]).slice(-19);m.history.push(snapshot())}
+function restoreSnapshot(x){const m=normalize(),history=m.history||[];S().matchday={...x,history,runningSince:x.running?Date.now():0};save();render()}
+function undo(){const m=normalize();const x=(m.history||[]).pop();if(!x){note('没有可撤销的操作');return}restoreSnapshot(x);note('已撤销上一步')}
+function toggleClock(){const m=normalize();if(m.running){m.elapsed=seconds();m.running=false;m.runningSince=0}else{m.finished=false;m.running=true;m.runningSince=Date.now()}save();render()}
+function changeScore(side,delta){const m=normalize();pushHistory();if(side==='home')m.homeScore=Math.max(0,m.homeScore+Number(delta||0));else m.awayScore=Math.max(0,m.awayScore+Number(delta||0));save();render();note((side==='home'?m.home:m.away)+' 比分 '+(delta>0?'+':'')+delta)}
+function addMarker(type,opt={}){const m=normalize();if(!opt.skipHistory)pushHistory();const sec=seconds(),recent=!!opt.recent,label=LABELS[type]||type,ws=Math.max(0,sec-(recent?35:30)),we=sec+(recent?15:30);
+m.home=q('matchHome')?.value||m.home;m.away=q('matchAway')?.value||m.away;
+m.markers.unshift({id:uid('mark'),type,label,sec,half:m.half,side:opt.side||'',recent,createdAt:Date.now(),windowStart:ws,windowEnd:we,homeScore:m.homeScore,awayScore:m.awayScore,score:m.homeScore+'-'+m.awayScore});
+save();render();note(clock(sec)+' · '+label+' · '+m.homeScore+':'+m.awayScore)}
+function goal(side){const m=normalize();pushHistory();if(side==='home')m.homeScore++;else m.awayScore++;addMarker('goal',{side,skipHistory:true})}
+function half(){const m=normalize();pushHistory();m.elapsed=seconds();m.running=false;m.runningSince=0;m.half=2;m.finished=false;save();render();note('下半场已就绪')}
+function finish(){const m=normalize();pushHistory();m.elapsed=seconds();m.running=false;m.runningSince=0;m.finished=true;save();render();note('全场结束 · '+m.homeScore+':'+m.awayScore)}
+function reset(){const m=normalize();S().matchday={home:q('matchHome')?.value||m.home||'主队',away:q('matchAway')?.value||m.away||'客队',elapsed:0,running:false,runningSince:0,half:1,markers:[],homeScore:0,awayScore:0,finished:false,history:[]};save();render();note('比赛记录已重置')}
+function del(id){const m=normalize();pushHistory();m.markers=m.markers.filter(x=>x.id!==id);save();render()}
+function download(name,obj){const blob=new Blob([JSON.stringify(obj,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),500)}
+function exportMarkers(){const m=normalize();download('SAGI_MATCHDAY_'+today()+'.json',{schema:'sagi.matchday.v2',exportedAt:new Date().toISOString(),match:{home:m.home,away:m.away,homeScore:m.homeScore,awayScore:m.awayScore,half:m.half,finished:m.finished,elapsed:seconds()},markers:m.markers||[]});note('比赛标记任务包已导出')}
+let timer=null;function ensureTimer(){if(timer)return;timer=setInterval(()=>{const m=normalize();if(m.running){const e=q('matchClock');if(e)e.textContent=clock(seconds())}},500)}
+function render(){const m=normalize();ensureTimer();const home=q('matchHome'),away=q('matchAway');if(home&&document.activeElement!==home)home.value=m.home;if(away&&document.activeElement!==away)away.value=m.away;
+if(q('matchHomeScore'))q('matchHomeScore').textContent=m.homeScore;if(q('matchAwayScore'))q('matchAwayScore').textContent=m.awayScore;if(q('matchClock'))q('matchClock').textContent=clock(seconds());
+if(q('matchClockState'))q('matchClockState').textContent=(m.finished?'全场结束':m.running?'进行中':'已暂停')+' · '+(m.half===2?'下半场':'上半场');if(q('matchClockBtn'))q('matchClockBtn').textContent=m.running?'暂停':'开始';
+const marks=m.markers||[];if(q('matchMarkerCount'))q('matchMarkerCount').textContent=marks.length+' MARKERS';const log=q('matchLog');if(log){log.innerHTML=marks.length?marks.map(x=>'<div class="matchLogRow"><time>'+clock(x.sec)+'</time><strong>'+esc(x.label)+(x.side?' · '+(x.side==='home'?esc(m.home):esc(m.away)):'')+'</strong><span><span class="scoreTag">'+(x.homeScore??m.homeScore)+':'+(x.awayScore??m.awayScore)+'</span> 重点 '+clock(x.windowStart)+'–'+clock(x.windowEnd)+(x.recent?' · 刚刚发生':'')+'</span><button class="btn" data-del-marker="'+x.id+'" type="button">删除</button></div>').join(''):'<div class="empty">还没有比赛事件。</div>';log.querySelectorAll('[data-del-marker]').forEach(b=>b.onclick=()=>del(b.dataset.delMarker))}}
+window.SAGI_MATCHDAY={render,toggleClock,changeScore,goal,addMarker,half,finish,reset,undo,exportMarkers,setTeams(){const m=normalize();m.home=q('matchHome')?.value||m.home;m.away=q('matchAway')?.value||m.away;save()},getPayload(){const m=normalize();return{home:m.home,away:m.away,homeScore:m.homeScore,awayScore:m.awayScore,half:m.half,finished:m.finished,elapsed:seconds(),markers:m.markers||[]}}};
+})();
