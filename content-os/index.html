@@ -279,7 +279,7 @@ function performanceScore(x){const r=performanceRates(x);return Math.round(Math.
 function allPerformance(){
  const rows=[];
  state.contents.forEach(c=>{if(c.metrics&&(num(c.metrics.views)||num(c.metrics.inquiries)||num(c.metrics.orders)))rows.push({...c.metrics,id:'os:'+c.id,contentId:c.id,projectId:c.projectId,title:c.title,format:c.format,hook:c.hook,goal:c.goal,recordedAt:c.metrics.recordedAt||c.updatedAt||0,source:'contentos'})});
- state.salesOrders.forEach(o=>(o.contentPerformanceHistory||[]).forEach(x=>rows.push({...x,id:'saleperf:'+x.id,projectId:'sale:'+o.id,title:x.title||o.teamName,format:x.contentType||'image',hook:x.hook||'',goal:x.directorGoal||x.douyinGoal||'',source:'sales'})));
+ const osIds=new Set(state.contents.map(c=>c.id));state.salesOrders.forEach(o=>(o.contentPerformanceHistory||[]).forEach(x=>{if(x.contentOsId&&osIds.has(x.contentOsId))return;rows.push({...x,id:'saleperf:'+x.id,projectId:'sale:'+o.id,title:x.title||o.teamName,format:x.contentType||'image',hook:x.hook||'',goal:x.directorGoal||x.douyinGoal||'',source:'sales'})}));
  const seen=new Set();return rows.filter(x=>{const key=x.id||[x.projectId,x.title,x.recordedAt].join('|');if(seen.has(key))return false;seen.add(key);return true})
 }
 function formatLabel(v){return({image:'图片模式',video15:'15秒视频',video25:'25秒品牌片',poster:'海报 / 图文'})[v]||v||'内容'}
@@ -419,7 +419,7 @@ function openPerformanceModal(id){
 }
 function savePerformance(){
  const c=state.contents.find(x=>x.id===state.performanceTargetId);if(!c)return;const m={views:num(q('mViews').value),likes:num(q('mLikes').value),comments:num(q('mComments').value),saves:num(q('mSaves').value),shares:num(q('mShares').value),inquiries:num(q('mInquiries').value),orders:num(q('mOrders').value),revenue:num(q('mRevenue').value),recordedAt:Date.now()};c.metrics=m;c.status='published';c.updatedAt=Date.now();save();
- if(c.projectId.startsWith('sale:'))patchSales(c.projectId.slice(5),o=>{const rec={id:'perf_'+Date.now().toString(36),contentType:c.format,dataDate:today(),title:c.title,...m,recordedAt:Date.now(),recordedAtText:new Date().toLocaleString('zh-CN'),channel:c.platform,hook:c.hook,coverTitle:c.cover,directorGoal:c.goal,angle:c.goal==='event'?'departure':'launch'};o.contentPerformanceHistory=[rec,...(o.contentPerformanceHistory||[])].slice(0,100);o.updatedAt=Date.now()});
+ if(c.projectId.startsWith('sale:'))patchSales(c.projectId.slice(5),o=>{const rec={id:'perf_'+Date.now().toString(36),contentOsId:c.id,contentType:c.format,dataDate:today(),title:c.title,...m,recordedAt:Date.now(),recordedAtText:new Date().toLocaleString('zh-CN'),channel:c.platform,hook:c.hook,coverTitle:c.cover,directorGoal:c.goal,angle:c.goal==='event'?'departure':'launch'};o.contentPerformanceHistory=[rec,...(o.contentPerformanceHistory||[])].slice(0,100);o.updatedAt=Date.now()});
  q('performanceModal').classList.remove('show');renderAll();note('表现数据已保存，学习引擎已更新')
 }
 function renderLearning(){
@@ -450,7 +450,7 @@ function autoCalendar(){const p=project();if(!p){note('请先选择项目');retu
 function switchView(v){document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===v));document.querySelectorAll('[data-view-panel]').forEach(p=>p.classList.toggle('active',p.dataset.viewPanel===v));q('viewTitle').textContent=VIEW_META[v][0];q('viewDesc').textContent=VIEW_META[v][1];if(v==='assets')renderAssets();if(v==='create')renderCreate();if(v==='publish')renderPublish();if(v==='learning')renderLearning();if(v==='performance')renderPerformance();if(v==='projects')renderProjects();if(v==='calendar')renderCalendar()}
 function renderAll(){renderProjectSelect();renderKpis();renderTodayRecommendation();renderToday();renderDirector();renderCalendar();renderAssets();renderCreate();renderPublish();renderLearning();renderPerformance();renderProjects()}
 document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>switchView(b.dataset.view));
-q('projectSelect').onchange=()=>{state.currentProjectId=q('projectSelect').value;state.currentContentId='';state.director={};save();renderAll()};
+q('projectSelect').onchange=()=>{state.currentProjectId=q('projectSelect').value;state.currentContentId='';state.director={};const p=project();if(p){q('directorGoal').value=p.type==='event'?'event':p.type==='story'?'story':p.type==='product'?'sales':p.type==='hot'?'reach':'brand'}save();renderAll()};
 q('syncSalesBtn').onclick=syncSales;q('newProjectBtn').onclick=q('projectCreateTopBtn').onclick=()=>q('projectModal').classList.add('show');document.querySelectorAll('[data-close-modal]').forEach(b=>b.onclick=()=>b.closest('.modalMask').classList.remove('show'));q('createProjectBtn').onclick=createProject;
 q('generateDirectorBtn').onclick=()=>generateDirector(false);q('saveDirectorBtn').onclick=saveDirectorAsContent;q('todayGenerateBtn').onclick=()=>{generateDirector(false);switchView('director')};q('todayOpenDirectorBtn').onclick=()=>switchView('director');q('todayAddPlanBtn').onclick=addTodayPlan;q('calendarAutoBtn').onclick=autoCalendar;q('createFromDirectorBtn').onclick=()=>{if(!state.director?.generatedAt)generateDirector(true);renderCreate();note('故事板已生成')};q('markReadyBtn').onclick=markReady;q('packageCopyBtn').onclick=copyPackage;q('savePerformanceBtn').onclick=savePerformance;
 load();renderAll();
