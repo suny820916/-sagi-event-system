@@ -29,7 +29,7 @@ button.primary{background:#173c29;color:#fff;border-color:#173c29}.state{font-si
   <button id="imageBtn" type="button">生成长图</button>
   <button id="printBtn" type="button">系统打印</button>
   <button id="shareBtn" type="button">分享凭证链接</button>
-  <span id="state" class="state">V1.0.7 · PAYMENT RECEIPT</span>
+  <span id="state" class="state">V1.0.8 · PAYMENT RECEIPT</span>
 </div>
 <main id="sheet" class="sheet"><div class="empty">正在读取收款凭证…</div></main>
 <script src="./vendor/html2canvas.min.js"></script>
@@ -45,13 +45,13 @@ function render(){
  const p=payload();
  if(!p||p.schema!=='SAGI-PAYMENT-RECEIPT-1'){sheet.innerHTML='<div class="empty"><h2>收款凭证无效</h2><p>请让 SAGI SPORTS 重新生成收款凭证。</p></div>';return}
  sheet.innerHTML=
- '<div class="head"><div class="brand"><h1>SAGI SPORTS</h1><p>PAYMENT RECEIPT · 收款确认单</p></div><div class="docno"><b>'+esc(p.receiptNo)+'</b>关联订单：'+esc(p.orderNo||'—')+'<br>生成时间：'+esc(p.issuedAt||'—')+'<br>版本：V1.0.7</div></div>'+
+ '<div class="head"><div class="brand"><h1>SAGI SPORTS</h1><p>PAYMENT RECEIPT · 收款确认单</p></div><div class="docno"><b>'+esc(p.receiptNo)+'</b>关联订单：'+esc(p.orderNo||'—')+'<br>生成时间：'+esc(p.issuedAt||'—')+'<br>版本：V1.0.8</div></div>'+
  '<div class="paid"><div><small>PAYMENT STATUS</small><strong>PAID · 已收全款</strong></div><div class="amount">'+money(p.amount)+'</div></div>'+
  '<div class="grid"><div class="box"><h3>客户 / 球队</h3><div class="kv"><span>球队名称</span><b>'+esc(p.teamName||'—')+'</b><span>联系人</span><b>'+esc(p.contact||'—')+'</b><span>联系电话</span><b>'+esc(p.contactInfo||'—')+'</b><span>产品项目</span><b>'+esc(p.productType||'定制队服')+'</b></div></div>'+
  '<div class="box"><h3>收款信息</h3><div class="kv"><span>到账时间</span><b>'+esc(p.paidAt||'—')+'</b><span>支付方式</span><b>'+esc(p.paymentMethod||'其他')+'</b><span>收款状态</span><b>100% FULL PAYMENT</b><span>收款单号</span><b>'+esc(p.receiptNo||'—')+'</b></div></div></div>'+
  '<div class="section amountCard"><div class="amountRow"><span>订单总金额</span><b>'+money(p.total)+'</b></div><div class="amountRow"><span>本次确认收款</span><b>'+money(p.amount)+'</b></div><div class="amountRow total"><span>待收余额</span><b>'+money(Math.max(0,(Number(p.total)||0)-(Number(p.amount)||0)))+'</b></div></div>'+
- '<div class="note"><b>收款说明：</b>本凭证确认 SAGI SPORTS 已收到上述订单全款。全款到账后，订单可进入生产准备流程。若订单内容后续发生双方确认的增减项，应以最新订单及补充款项记录为准。<br><b>提示：</b>本凭证为订单收款确认，不等同于税务发票。</div>'+
- '<div class="foot">SAGI SPORTS · PAYMENT RECEIPT V1.0.7 · FULL PAYMENT<br>关联订单：'+esc(p.orderNo||'—')+' · 收款凭证：'+esc(p.receiptNo||'—')+'</div>'
+ '<div class="note"><b>收款说明：</b>本凭证确认 SAGI SPORTS 已收到上述订单全款。全款到账后，系统自动完成收款闭环，并同步生产准备门禁。若订单内容后续发生双方确认的增减项，应以最新订单及补充款项记录为准。<br><b>提示：</b>本凭证为订单收款确认，不等同于税务发票。</div>'+
+ '<div class="foot">SAGI SPORTS · PAYMENT RECEIPT V1.0.8 · FULL PAYMENT<br>关联订单：'+esc(p.orderNo||'—')+' · 收款凭证：'+esc(p.receiptNo||'—')+'</div>'
 }
 const exportState={pdfFile:null,pdfUrl:'',imageFile:null,imageUrl:''};
 function setState(t,bad=false){stateEl.textContent=t;stateEl.style.color=bad?'#a53d3d':'#66756b'}
@@ -91,7 +91,7 @@ async function makeImage(){
 document.getElementById('backBtn').onclick=()=>{if(history.length>1)history.back();else location.href='./'};
 document.getElementById('pdfBtn').onclick=makePdf;document.getElementById('imageBtn').onclick=makeImage;document.getElementById('printBtn').onclick=()=>window.print();
 document.getElementById('shareBtn').onclick=async()=>{const p=payload(),data={title:'SAGI SPORTS 收款确认单',text:(p?.teamName||'')+' · '+(p?.receiptNo||''),url:location.href};if(navigator.share){try{await navigator.share(data)}catch(e){}}else{try{await navigator.clipboard.writeText(location.href);alert('收款凭证链接已复制')}catch(e){}}};
-render();setTimeout(()=>setState(window.html2canvas&&window.jspdf?.jsPDF?'V1.0.7 · PAYMENT RECEIPT · 导出组件已就绪':'V1.0.7 · 导出组件加载失败 · 可使用系统打印',!(window.html2canvas&&window.jspdf?.jsPDF)),100)
+render();setTimeout(()=>setState(window.html2canvas&&window.jspdf?.jsPDF?'V1.0.8 · PAYMENT RECEIPT · 导出组件已就绪':'V1.0.8 · 导出组件加载失败 · 可使用系统打印',!(window.html2canvas&&window.jspdf?.jsPDF)),100)
 })();
 </script>
 </body>
