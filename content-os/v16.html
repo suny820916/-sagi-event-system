@@ -1002,6 +1002,7 @@ function generateViralVariants(topic){
  if(!raw){note('请先输入主题或从 LIVE RADAR 选择热点');return[]}
  let p=project();
  if(state.trendSelected&&(!p||p.type!=='hot'))p=ensureHotProject();
+ if(!p)p=ensureHotProject();
  state.viralGeneratorTopic=raw;q('generatorTopic').value=raw;
  state.viralVariants=['speed','emotion','debate'].map(k=>variantPlan(k,raw,p)).sort((a,b)=>(b.viral?.total||0)-(a.viral?.total||0));
  save();renderViralGenerator();note('已生成3套打法 · 冠军 '+(state.viralVariants[0]?.viral?.total||0)+'分');return state.viralVariants
