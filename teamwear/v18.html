@@ -650,7 +650,7 @@ function followMessageParts(o,goal,tone){
   return intro+'想跟你确认一下，'+team+'这次大概多少个人？每个人预算准备控制在多少？你把人数和预算告诉我，我直接给你配A/B/C三套，省得你们自己一件一件凑。';
  }
  if(goal==='package'){
-  const age=quoteAge!=null?('前'+quoteAge+'天发你的方案'):'前面给你的方案';
+  const age=quoteAge==null?'前面给你的方案':quoteAge===0?'今天发你的方案':quoteAge===1?'昨天发你的方案':('前'+quoteAge+'天发你的方案');
   if(short)return intro+age+'看了吗？我更建议'+bestLabel+(bestPP?('，大概'+money(bestPP)+'/人'):'')+'。你们如果方向可以，我就继续往设计稿推进。';
   if(pro)return intro+age+'想跟进一下。结合'+(qty?qty+'人':'你们球队')+(budget?('、人均预算'+money(budget)):'')+'，我目前更推荐'+bestLabel+(bestPP?('（约'+money(bestPP)+'/人）'):'')+'。如果方向认可，我这边可以继续进入配色和设计确认。';
   return intro+age+'你看了吗？按你们'+(qty?qty+'个人':'现在的情况')+(budget?('、预算大概'+money(budget)+'/人'):'')+'，我还是比较推荐'+bestLabel+(bestPP?('，差不多'+money(bestPP)+'/人'):'')+'，预算基本能控制住，该有的也都有。你觉得这个方向可以的话，我就直接往具体配色和设计稿推进。';
