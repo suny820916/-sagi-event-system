@@ -658,7 +658,7 @@ async function fetchInternetTrends(){
    q('trendStatus').textContent=mode+' · '+state.trendItems.length+' 条信号 · '+new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})+' 更新';
    note((result?.limited?'热点源繁忙，已使用缓存 · ':'互联网热点已刷新 · ')+state.trendItems.length+'条')
  }catch(err){
-   const fallback=trendCachedItems(24*60*60*1000);
+   const fallback=trendCachedItems(query,24*60*60*1000);
    if(fallback.length){state.trendItems=await localizeTrendItems(fallback.slice(0,24),24);renderTrends();q('trendStatus').textContent='热点源暂时不可用 · 已使用最近缓存 '+state.trendItems.length+' 条';note('已切换最近热点缓存')}
    else{q('trendStatus').textContent='热点源暂时不可用：'+err.message+'。DAILY VIRAL 仍会使用本地项目继续排序。';note('热点源暂时不可用')}
  }finally{q('trendRefreshBtn').disabled=false}
