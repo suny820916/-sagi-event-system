@@ -20,6 +20,7 @@
 </head>
 <body>
 <div class="toolbar">
+  <button id="backBtn" type="button">← 返回 SALES</button>
   <button id="pdfBtn" class="primary" type="button">下载 PDF</button>
   <button id="imageBtn" type="button">下载长图</button>
   <button id="shareBtn" type="button">分享确认单</button>
@@ -96,6 +97,7 @@ async function downloadPdf(){
    console.error(e);state.textContent='下载失败，已切换到打印保存';window.print();
  }finally{btn.disabled=false;btn.textContent='下载 PDF'}
 }
+document.getElementById('backBtn').onclick=()=>{if(history.length>1)history.back();else location.href='./'};
 document.getElementById('pdfBtn').onclick=downloadPdf;
 document.getElementById('imageBtn').onclick=async()=>{if(!window.html2canvas){alert('长图组件未加载，请使用“打印 / 保存 PDF”');return}const btn=document.getElementById('imageBtn');btn.disabled=true;btn.textContent='正在生成…';try{const cv=await html2canvas(sheet,{scale:2,backgroundColor:'#ffffff',useCORS:true});const a=document.createElement('a');const p=payload();a.download=(p?.orderNo||'SAGI_ORDER_CONFIRMATION')+'.png';a.href=cv.toDataURL('image/png');a.click()}catch(e){alert('长图生成失败，请使用“打印 / 保存 PDF”')}finally{btn.disabled=false;btn.textContent='下载长图'}};
 document.getElementById('shareBtn').onclick=async()=>{const p=payload(),data={title:'SAGI SPORTS 客户订单确认单',text:(p?.teamName||'')+' · '+(p?.orderNo||''),url:location.href};if(navigator.share){try{await navigator.share(data)}catch(e){}}else{try{await navigator.clipboard.writeText(location.href);alert('确认单链接已复制')}catch(e){}}};
