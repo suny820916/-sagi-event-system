@@ -204,6 +204,8 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
 @media(max-width:900px){.douyinControls{grid-template-columns:1fr 1fr}.douyinWork{grid-template-columns:1fr}.douyinPhone{width:240px}}
 @media(max-width:600px){.douyinControls{grid-template-columns:1fr}.douyinControls .wide,.douyinControls .span2{grid-column:auto}.douyinQueueItem{grid-template-columns:1fr auto}}
 
+
+.douyinSceneActions{display:flex;flex-direction:column;gap:4px;align-items:flex-end}.douyinSceneActions button{padding:4px 6px;font-size:7px}
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -215,7 +217,7 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
 <div class="app">
   <div class="top">
     <div><div class="brand">SAGI TEAMWEAR SALES SYSTEM</div><div class="sub">球队建档 · 产品方案 · 球员名单 · 报价 · 订单 · 补单</div></div>
-    <div><div class="ver">V1.8.7 · DOUYIN CONTENT ENGINE</div><div style="font-size:7px;color:#6f7b75;margin-top:5px;text-align:right">BUILD 2026.11.09 · DOUYIN ENGINE</div></div>
+    <div><div class="ver">V1.8.7 · DOUYIN CONTENT ENGINE</div><div style="font-size:7px;color:#6f7b75;margin-top:5px;text-align:right">BUILD 2026.11.09 · DOUYIN DIRECT EXPORT</div></div>
   </div>
   <div id="globalPinnedBar" class="globalPinnedBar">
     <div class="globalPinnedHead"><b>置顶订单 · PINNED</b><span>打开系统第一眼就能找到</span></div>
@@ -668,7 +670,9 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
             <button id="douyinAutoPlanBtn" class="primary" type="button">自动编排内容</button>
             <button id="douyinPreviewPlayBtn" type="button">▶ 播放预览</button>
             <button id="douyinPreviewStopBtn" type="button">■ 停止</button>
-            <button id="douyinExportBtn" class="blue" type="button">生成发布包</button>
+            <button id="douyinSaveCurrentBtn" class="blue" type="button">保存 / 分享当前图</button>
+            <button id="douyinCopyCaptionBtn" type="button">复制抖音文案</button>
+            <button id="douyinExportBtn" type="button">ZIP备份包</button>
             <button id="douyinReadyBtn" type="button">加入待发布队列</button>
             <button id="douyinPublishBtn" type="button">发布到抖音</button>
           </div>
@@ -1831,7 +1835,7 @@ function buildDouyinPlan(){
 }
 function douyinSceneAsset(scene){const key=scene?.assetKey||'';return douyinAssetMap()[key]||''}
 function showDouyinScene(index){
- const plan=state.currentDouyinPlan||[];if(!plan.length)return;const i=Math.max(0,Math.min(index,plan.length-1)),s=plan[i],bg=q('douyinPhoneBg'),asset=douyinSceneAsset(s);
+ const plan=state.currentDouyinPlan||[];if(!plan.length)return;const i=Math.max(0,Math.min(index,plan.length-1)),s=plan[i],bg=q('douyinPhoneBg'),asset=douyinSceneAsset(s);state.currentDouyinSceneIndex=i;
  bg.style.backgroundImage=asset?'url("'+asset+'")':'linear-gradient(145deg,#1a2329,#050709)';
  q('douyinPhoneKicker').textContent=s.kicker||'SAGI CONTENT';q('douyinPhoneTitle').textContent=s.title||'';q('douyinPhoneSub').textContent=s.sub||'';q('douyinPhoneIndex').textContent=(i+1)+' / '+plan.length;
  document.querySelectorAll('.douyinScene').forEach((el,j)=>el.classList.toggle('on',j===i))
@@ -1839,7 +1843,7 @@ function showDouyinScene(index){
 function renderDouyinStoryboard(){
  const w=q('douyinStoryboard'),plan=state.currentDouyinPlan||[];if(!w)return;
  if(!plan.length){w.innerHTML='<div class="marketingEmpty">还没有内容计划。点“自动编排内容”开始。</div>';return}
- w.innerHTML='';plan.forEach((s,i)=>{const d=document.createElement('div');d.className='douyinScene',asset=douyinSceneAsset(s);d.innerHTML='<div class="douyinSceneThumb"'+(asset?' style="background-image:url(&quot;'+asset+'&quot;)"':'')+'>'+(asset?'':'TEXT')+'</div><div class="douyinSceneBody"><b>'+escapeHtml(s.title||'画面 '+(i+1))+'</b><span>'+escapeHtml(s.sub||'')+'</span></div><div class="douyinSceneTime">'+(s.duration?(s.duration+'s'):'第'+(i+1)+'张')+'</div>';d.onclick=()=>showDouyinScene(i);w.appendChild(d)})
+ w.innerHTML='';plan.forEach((s,i)=>{const d=document.createElement('div');d.className='douyinScene',asset=douyinSceneAsset(s);d.innerHTML='<div class="douyinSceneThumb"'+(asset?' style="background-image:url(&quot;'+asset+'&quot;)"':'')+'>'+(asset?'':'TEXT')+'</div><div class="douyinSceneBody"><b>'+escapeHtml(s.title||'画面 '+(i+1))+'</b><span>'+escapeHtml(s.sub||'')+'</span></div><div class="douyinSceneActions"><span class="douyinSceneTime">'+(s.duration?(s.duration+'s'):'第'+(i+1)+'张')+'</span><button data-save-scene type="button">保存</button></div>';d.onclick=e=>{if(e.target.closest('button'))return;showDouyinScene(i)};d.querySelector('[data-save-scene]').onclick=()=>saveOrShareDouyinFrame(i);w.appendChild(d)})
 }
 function stopDouyinPreview(){(state.douyinPreviewTimers||[]).forEach(clearTimeout);state.douyinPreviewTimers=[]}
 function playDouyinPreview(){
@@ -1863,6 +1867,34 @@ async function renderDouyinFrameBlob(scene,index,total){
  ctx.font='400 31px Arial, sans-serif';ctx.fillStyle='rgba(255,255,255,.88)';canvasWrapText(ctx,scene.sub,80,1780,900,44,2);
  return await new Promise(resolve=>cv.toBlob(resolve,'image/jpeg',.92))
 }
+
+function safeDouyinFilename(index){
+ const team=(text('teamName')||'SAGI_TEAM').replace(/[\\/:*?"<>|\s]+/g,'_');
+ return 'SAGI_'+team+'_'+String(index+1).padStart(2,'0')+'.jpg'
+}
+function triggerBlobDownload(blob,filename){
+ const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1800)
+}
+async function saveOrShareDouyinFrame(index){
+ let plan=state.currentDouyinPlan||[];if(!plan.length){buildDouyinPlan();plan=state.currentDouyinPlan||[]}
+ const i=Math.max(0,Math.min(Number(index)||0,plan.length-1));if(!plan[i]){note('还没有可保存的画面');return}
+ try{
+  const blob=await renderDouyinFrameBlob(plan[i],i,plan.length),filename=safeDouyinFilename(i),file=new File([blob],filename,{type:'image/jpeg'});
+  if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
+   await navigator.share({files:[file],title:text('douyinCoverTitle')||text('teamName')||'SAGI DOUYIN',text:q('douyinCopy').value.trim()});
+   note('已打开系统分享 / 保存菜单')
+  }else{
+   triggerBlobDownload(blob,filename);note('当前画面已导出')
+  }
+ }catch(e){if(e?.name!=='AbortError')note('画面导出失败')}
+}
+function saveCurrentDouyinFrame(){saveOrShareDouyinFrame(Number(state.currentDouyinSceneIndex)||0)}
+function copyDouyinCaption(){
+ const caption=[q('douyinCopy').value.trim(),text('douyinHashtags')].filter(Boolean).join('\n\n');
+ if(!caption){note('还没有抖音文案');return}
+ navigator.clipboard?.writeText(caption).then(()=>note('抖音文案已复制')).catch(()=>{const t=document.createElement('textarea');t.value=caption;document.body.appendChild(t);t.select();document.execCommand('copy');t.remove();note('抖音文案已复制')})
+}
+
 async function exportDouyinPackage(){
  let plan=state.currentDouyinPlan||[];if(!plan.length){buildDouyinPlan();plan=state.currentDouyinPlan||[]}
  if(typeof JSZip==='undefined'){note('发布包组件加载失败，请刷新页面');return}
@@ -1875,9 +1907,9 @@ async function exportDouyinPackage(){
   zip.file('storyboard.json',JSON.stringify(manifest,null,2));
   if(q('douyinMode').value!=='image')zip.file('EDIT_GUIDE.txt',plan.map((s,i)=>String(i+1).padStart(2,'0')+' | '+s.kicker+' | '+(s.duration||0)+'s | '+s.title+' | '+s.sub).join('\n')+'\n\n建议：9:16 1080x1920；使用快速推拉/轻微风吹动感；按镜头时长剪辑后导出 MP4。');
   const blob=await zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:6}}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='SAGI_DOUYIN_'+team+'_'+localDateOnly()+'.zip';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);
-  state.currentDouyinPackageGeneratedAt=new Date().toISOString();if(q('douyinPublishStatus').value==='draft')q('douyinPublishStatus').value='review';if(state.currentId)saveOrder(true);renderDouyinQueue();note('抖音发布包已生成')
- }catch(e){note('发布包生成失败')}
- finally{btn.disabled=false;btn.textContent='生成发布包'}
+  state.currentDouyinPackageGeneratedAt=new Date().toISOString();if(q('douyinPublishStatus').value==='draft')q('douyinPublishStatus').value='review';if(state.currentId)saveOrder(true);renderDouyinQueue();note('ZIP备份包已生成')
+ }catch(e){note('ZIP备份包生成失败')}
+ finally{btn.disabled=false;btn.textContent='ZIP备份包'}
 }
 function markDouyinReady(){
  if(!state.currentId){note('请先保存或打开一笔订单');return}if(!(state.currentDouyinPlan||[]).length){note('请先自动编排内容');return}
@@ -1899,7 +1931,7 @@ function renderDouyinEngine(){
  if(!q('douyinContentEngine'))return;renderDouyinStoryboard();renderDouyinQueue();if((state.currentDouyinPlan||[]).length)showDouyinScene(0)
 }
 function initDouyinEngine(){
- q('douyinAutoPlanBtn').onclick=buildDouyinPlan;q('douyinPreviewPlayBtn').onclick=playDouyinPreview;q('douyinPreviewStopBtn').onclick=stopDouyinPreview;q('douyinExportBtn').onclick=exportDouyinPackage;q('douyinReadyBtn').onclick=markDouyinReady;q('douyinPublishBtn').onclick=requestDouyinPublish;
+ q('douyinAutoPlanBtn').onclick=buildDouyinPlan;q('douyinPreviewPlayBtn').onclick=playDouyinPreview;q('douyinPreviewStopBtn').onclick=stopDouyinPreview;q('douyinSaveCurrentBtn').onclick=saveCurrentDouyinFrame;q('douyinCopyCaptionBtn').onclick=copyDouyinCaption;q('douyinExportBtn').onclick=exportDouyinPackage;q('douyinReadyBtn').onclick=markDouyinReady;q('douyinPublishBtn').onclick=requestDouyinPublish;
  ['douyinMode','douyinAngle'].forEach(id=>q(id).onchange=()=>{state.currentDouyinPlan=[];renderDouyinEngine()});
 }
 
