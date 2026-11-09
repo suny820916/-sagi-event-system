@@ -1135,9 +1135,11 @@ function dailyExistingPlan(c,p){
  const plan={sourceType:'content',sourceId:c.id,goal:c.goal||'reach',format:c.format||'video15',style:c.style||'dynamic',platform:c.platform||'douyin',theme:c.title||'',hook:c.hook||c.title||'',hooks:c.hooks||[c.hook||c.title||''],shots:c.shots||shotsFor(c.format||'video15'),music:c.music||'',cta:c.cta||'',scheduleAt:c.scheduleAt||defaultTime(),cover:c.cover||c.title||'',generatedAt:c.updatedAt||Date.now()};
  plan.viral=viralScoreForPlan(plan,p);plan.score=scoreDirector(plan.format,plan.hook,plan.goal,p);return plan
 }
+function compactViral(v){if(!v)return null;return{total:v.total,verdict:v.verdict,confidence:v.confidence,factors:(v.factors||[]).map(x=>[x[0],x[1]]),risks:(v.risks||[]).slice(0,3),actions:(v.actions||[]).slice(0,3)}}
+function dailyCompactPlan(plan){const p={...plan};p.viral=compactViral(plan?.viral);return p}
 function dailyCandidate(plan,label,source,p,bonus=0,meta={}){
  const viral=plan?.viral||viralScoreForPlan(plan,p),base=viral?.total||0;
- return{plan,label,source,projectId:p?.id||'',priority:Math.min(99,Math.round(base+bonus)),viral:base,verdict:viral?.verdict||'',why:viral?.risks?.[0]?.[1]||'结构健康',meta}
+ return{plan:dailyCompactPlan(plan),label,source,projectId:p?.id||'',priority:Math.min(99,Math.round(base+bonus)),viral:base,verdict:viral?.verdict||'',why:viral?.risks?.[0]?.[1]||'结构健康',meta}
 }
 async function fetchDailyTrendPool(){
  const defs=[['global',TREND_PROFILES.global],['china',TREND_PROFILES.china],['stars',TREND_PROFILES.stars]],sets=await Promise.allSettled(defs.map(async([profile,d])=>{
@@ -1151,7 +1153,7 @@ async function fetchDailyTrendPool(){
 function dailyBestTrendCandidate(a){
  const p=dailyVirtualHotProject(),src={url:a.url,domain:a.domain,title:a.title,seendate:a.seendate,score:a.score},plans=['speed','emotion','debate'].map(k=>variantPlan(k,a.title,p,src)).sort((x,y)=>(y.viral?.total||0)-(x.viral?.total||0)),best=plans[0];
  const freshness=trendAgeHours(a.seendate)<=3?5:trendAgeHours(a.seendate)<=8?3:0;
- return dailyCandidate(best,generatorShortTopic(a.title,42),'LIVE RADAR',p,freshness,{trend:a,variants:plans})
+ return dailyCandidate(best,generatorShortTopic(a.title,42),'LIVE RADAR',p,freshness,{trend:{url:a.url,domain:a.domain,title:a.title,seendate:a.seendate,score:a.score,sourcecountry:a.sourcecountry,language:a.language,socialimage:a.socialimage,reason:a.reason}})
 }
 function dailyCommandCard(el,c,kind){
  if(!c){el.innerHTML='<div class="commandLabel">'+kind+'</div><h3>暂无合适候选</h3>';return}
@@ -1178,6 +1180,7 @@ async function runDailyViralCommand(auto=false){
  if(state.dailyCommandLoading)return;state.dailyCommandLoading=true;renderDailyCommand();q('dailyRunBtn').disabled=true;
  let trends=[],online=false;
  try{trends=await fetchDailyTrendPool();online=trends.length>0}catch(e){}
+ if(trends.length){state.trendItems=trends;state.trendFetchedAt=Date.now();q('trendStatus').textContent='DAILY VIRAL 已同步 · '+trends.length+' 条互联网信号';renderTrends()}
  const candidates=[],hot=trends.slice(0,8).map(dailyBestTrendCandidate);candidates.push(...hot);
  const localProjects=allProjects().filter(p=>p.type!=='hot').slice(0,10);
  localProjects.forEach(p=>{const plan=dailyProjectPlan(p),scheduled=projectContent(p.id).some(c=>(c.scheduleAt||'').slice(0,10)===today()),bonus=scheduled?4:0;candidates.push(dailyCandidate(plan,p.name,'SAGI PROJECT',p,bonus))});
@@ -1192,7 +1195,7 @@ function executeDailyCandidate(c){
  if(!c)return;
  if(c.source==='CONTENT TASK'&&c.meta?.contentId){openContent(c.meta.contentId,c.meta.status==='ready'?'publish':'create');return}
  if(c.source==='LIVE RADAR'&&c.meta?.trend){
-   state.trendSelected=c.meta.trend;ensureHotProject();state.viralGeneratorTopic=c.meta.trend.title;state.viralVariants=c.meta.variants||[];save();renderAll();switchView('viralgen');return
+   state.trendSelected=c.meta.trend;ensureHotProject();state.viralGeneratorTopic=c.meta.trend.title;state.viralVariants=[];save();renderAll();switchView('viralgen');generateViralVariants(c.meta.trend.title);return
  }
  if(c.projectId&&c.projectId!=='daily:hot')state.currentProjectId=c.projectId;
  state.director=JSON.parse(JSON.stringify(c.plan));state.director.generatedAt=Date.now();state.currentContentId='';save();renderAll();switchView('director')
