@@ -6,13 +6,6 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#070a0d">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="SAGI SALES">
-<link rel="manifest" href="./manifest.webmanifest">
-<link rel="icon" href="./sales-icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="./sales-icon.svg">
 <title>SAGI TEAMWEAR SALES SYSTEM V1.2</title>
 <style>
@@ -1063,6 +1056,7 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
 
       <div id="orders" class="card ordersCard">
         <h2><span class="sectionNo">13</span>全部订单 <small>ORDER DATABASE</small></h2>
+        <div id="storageRecoveryStatus" class="backupNotice" style="margin-bottom:9px">系统会自动扫描并合并所有旧版本 SAGI 本地订单库。</div>
         <div class="grid2">
           <div><label>搜索</label><input id="orderSearch" placeholder="球队 / 项目 / 联系人"></div>
           <div><label>筛选状态</label><select id="statusFilter"><option value="">全部状态</option></select></div>
@@ -1449,7 +1443,20 @@ function importBackupFile(file){
 }
 
 function persist(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify({orders:state.orders}));return true}catch(e){note('本机存储空间不足：请先导出备份，再删除不必要的大图或旧订单');return false}}
-function loadState(){try{let x=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');if(!x)x=JSON.parse(localStorage.getItem(LEGACY_KEY)||'null');if(!x)x=JSON.parse(localStorage.getItem(LEGACY_KEY_V11)||'null');if(!x)x=JSON.parse(localStorage.getItem(LEGACY_KEY_V10)||'null');if(x&&Array.isArray(x.orders))state.orders=x.orders;const cp=JSON.parse(localStorage.getItem(COST_PROFILE_KEY)||'{}');state.costOverrides=cp&&typeof cp==='object'?cp:{}}catch(e){state.costOverrides={}}}
+function loadState(){
+ try{
+   const merged=new Map(),keys=[];
+   for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&/^sagi_teamwear_sales_v/i.test(k))keys.push(k)}
+   [STORAGE_KEY,LEGACY_KEY,LEGACY_KEY_V11,LEGACY_KEY_V10].forEach(k=>{if(!keys.includes(k))keys.push(k)});
+   keys.forEach(k=>{try{const x=JSON.parse(localStorage.getItem(k)||'null');if(x&&Array.isArray(x.orders))x.orders.forEach(o=>{if(!o||!o.id)return;const old=merged.get(o.id);if(!old||Number(o.updatedAt||0)>=Number(old.updatedAt||0))merged.set(o.id,o)})}catch(e){}});
+   state.orders=[...merged.values()].sort((a,b)=>Number(b.updatedAt||0)-Number(a.updatedAt||0));
+   if(state.orders.length)localStorage.setItem(STORAGE_KEY,JSON.stringify({orders:state.orders}));
+   const cpKeys=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&/^sagi_teamwear_cost_profile_v/i.test(k))cpKeys.push(k)}
+   const cp={};cpKeys.forEach(k=>{try{const x=JSON.parse(localStorage.getItem(k)||'{}');if(x&&typeof x==='object')Object.assign(cp,x)}catch(e){}});
+   state.costOverrides=cp;
+   if(Object.keys(cp).length)localStorage.setItem(COST_PROFILE_KEY,JSON.stringify(cp));
+ }catch(e){state.costOverrides={}}
+}
 
 
 
@@ -2800,26 +2807,14 @@ q('salesStage').onchange=()=>{if(q('salesStage').value==='未成交'&&!q('lostRe
 ['supplierTier','ageGroup'].forEach(id=>q(id).addEventListener('change',()=>{const tier=SUPPLIER_CATALOG[q('supplierTier').value],age=q('ageGroup').value==='child'?'child':'adult';q('priceStrategy').value=(tier&&SAGI_FIXED_PRICE[tier.name]&&SAGI_FIXED_PRICE[tier.name][age]!=null)?'fixed':'margin';syncPriceEngine(true);renderAll()}));['productType','priceStrategy','targetMargin','poloAddon','pocketAddon','longSleeveAddon','shippingZone'].forEach(id=>q(id).addEventListener('change',()=>{syncPriceEngine(true);renderAll()}));['otherCraftCost','factoryShippingCost'].forEach(id=>q(id).addEventListener('input',()=>{syncPriceEngine(true);renderAll()}));q('salesUnitPrice').addEventListener('input',renderAll);
 document.querySelectorAll('input,select,textarea').forEach(el=>{if(!['orderSearch','statusFilter','teamLogoFile'].includes(el.id))el.addEventListener('input',()=>{if(el.id==='orderStatus')return;renderAll()});if(el.tagName==='SELECT'&&!['statusFilter','orderStatus'].includes(el.id))el.addEventListener('change',renderAll)});
 initWorkspaceUI();initContentCommandCenter();initContentPerformance();initContentLearning();initAiDirector();initVisualMarketing();initDouyinEngine();initAutoVideoStudio();initArchiveTools();q('followGenerateBtn').onclick=generateFollowUpMessage;q('followCopyBtn').onclick=copyFollowUpMessage;q('followContactedBtn').onclick=markFollowUpContacted;q('followScheduleBtn').onclick=scheduleNextFollowUp;initQuickOutcomes();q('followTone').onchange=()=>{if(q('followMessage').value.trim())generateFollowUpMessage()};q('followGoal').onchange=()=>{if(q('followMessage').value.trim())generateFollowUpMessage()};
-initSelects();loadState();blank();initCostProfile();initPackageBuilder();initCatalog();initCustomerQuotationMode();initOrderConfirmation();initProductionTracker();renderAll();
-})();
-
-function registerTeamwearApp(){
- if(!('serviceWorker' in navigator))return;
- let refreshing=false;
- navigator.serviceWorker.addEventListener('controllerchange',()=>{
-   if(refreshing)return;refreshing=true;location.reload();
- });
- navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).then(reg=>{
-   const activate=worker=>{if(worker&&worker.state==='installed'&&navigator.serviceWorker.controller)worker.postMessage({type:'SKIP_WAITING'})};
-   if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});
-   reg.addEventListener('updatefound',()=>{const w=reg.installing;if(w)w.addEventListener('statechange',()=>activate(w))});
-   const check=()=>reg.update().catch(()=>{});
-   check();
-   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')check()});
-   setInterval(check,30*60*1000);
- }).catch(()=>{});
+initSelects();function retireOldTeamwearPWA(){
+ if('serviceWorker' in navigator){
+   navigator.serviceWorker.getRegistrations().then(list=>list.forEach(reg=>{try{const u=String(reg.scope||'');if(u.includes('/teamwear/'))reg.unregister()}catch(e){}})).catch(()=>{})
+ }
 }
-registerTeamwearApp();
+retireOldTeamwearPWA();
+loadState();blank();initCostProfile();initPackageBuilder();initCatalog();initCustomerQuotationMode();initOrderConfirmation();initProductionTracker();renderAll();
+})();
 </script>
 </body>
 </html>
