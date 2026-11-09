@@ -2,6 +2,9 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <title>SAGI SPORTS · 客户订单确认单</title>
@@ -9,23 +12,25 @@
 :root{--ink:#101412;--muted:#6d7771;--line:#d8ddd9;--soft:#f4f6f4;--green:#223a2b;--gold:#a88a42}
 *{box-sizing:border-box}html,body{margin:0;background:#e9ece9;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",Arial,sans-serif}
 .toolbar{position:sticky;top:0;z-index:20;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding:10px;background:rgba(15,20,17,.94);backdrop-filter:blur(10px)}
-.toolbar button{border:1px solid #48524c;background:#202923;color:#f4f7f5;border-radius:8px;padding:9px 12px;font-weight:700;font-size:12px}.toolbar button.primary{background:#e6ede8;color:#122018;border-color:#e6ede8}.toolbar button.gold{background:#42371c;border-color:#806c36;color:#f1d88f}
+.toolbar button:disabled{opacity:.55;cursor:wait}.toolbar button{border:1px solid #48524c;background:#202923;color:#f4f7f5;border-radius:8px;padding:9px 12px;font-weight:700;font-size:12px}.toolbar button.primary{background:#e6ede8;color:#122018;border-color:#e6ede8}.toolbar button.gold{background:#42371c;border-color:#806c36;color:#f1d88f}
 .sheet{width:min(900px,calc(100% - 24px));margin:18px auto 40px;background:white;box-shadow:0 10px 40px rgba(0,0,0,.12);padding:34px}
 .head{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;border-bottom:2px solid #202a24;padding-bottom:18px}.brand h1{margin:0;font-size:26px;letter-spacing:.8px}.brand p{margin:6px 0 0;color:var(--muted);font-size:12px}.logo{width:78px;height:78px;border:1px solid var(--line);border-radius:12px;display:flex;align-items:center;justify-content:center;overflow:hidden;font-weight:800;color:#738078}.logo img{width:100%;height:100%;object-fit:contain}.docno{text-align:right;font-size:12px;color:var(--muted);line-height:1.65}.docno b{display:block;color:var(--ink);font-size:14px}
 .notice{margin:18px 0;padding:12px 14px;border-left:4px solid var(--gold);background:#fbf8ef;font-size:12px;line-height:1.7;color:#554a2e}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.box{border:1px solid var(--line);border-radius:10px;padding:12px}.box h3,.section h2{margin:0 0 9px}.box h3{font-size:13px}.kv{display:grid;grid-template-columns:110px 1fr;gap:6px 9px;font-size:12px;line-height:1.5}.kv span:nth-child(odd){color:var(--muted)}.section{margin-top:18px}.section h2{font-size:14px;border-bottom:1px solid var(--line);padding-bottom:8px}.tableWrap{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:580px}th,td{border-bottom:1px solid var(--line);padding:9px 7px;text-align:left;font-size:11px}th{background:var(--soft);color:#57625c}.money{text-align:right}.totals{margin-left:auto;width:min(360px,100%);margin-top:10px}.totalRow{display:flex;justify-content:space-between;padding:7px 2px;font-size:12px;border-bottom:1px solid var(--line)}.totalRow.total{font-size:17px;font-weight:800;border-bottom:2px solid #25352c}.totalRow.deposit b{color:#6b5624}.rosterNote{font-size:10px;color:var(--muted);margin-top:6px}.confirmBox{margin-top:22px;border:2px solid #294232;border-radius:12px;padding:14px;background:#f6f9f7}.confirmBox h2{margin:0;font-size:15px}.confirmBox p{font-size:11px;color:#657168;line-height:1.7}.confirmFields{display:grid;grid-template-columns:1fr 1fr;gap:9px}.confirmFields input{width:100%;border:1px solid #bcc7c0;border-radius:8px;padding:10px;font-size:13px}.agree{display:flex;align-items:flex-start;gap:8px;margin:11px 0;font-size:11px;line-height:1.6}.agree input{margin-top:3px}.confirmResult{display:none;margin-top:12px;padding:12px;border:1px solid #9fbaaa;border-radius:10px;background:#edf6f0}.confirmResult.show{display:block}.confirmResult textarea{width:100%;min-height:88px;border:1px solid #b5c4ba;border-radius:8px;padding:8px;font-size:9px;word-break:break-all}.foot{margin-top:24px;border-top:1px solid var(--line);padding-top:12px;font-size:10px;color:#77817b;line-height:1.7}.empty{padding:60px 20px;text-align:center;color:#69746d}
 @media(max-width:650px){.sheet{width:100%;margin:0;box-shadow:none;padding:20px 16px}.head{flex-direction:column}.docno{text-align:left}.grid,.confirmFields{grid-template-columns:1fr}.toolbar{justify-content:flex-start}.kv{grid-template-columns:92px 1fr}}
-@media print{html,body{background:white}.toolbar{display:none}.sheet{width:auto;margin:0;box-shadow:none;padding:10mm}.confirmBox{break-inside:avoid}.section{break-inside:auto}@page{size:A4;margin:8mm}}
+@media print{html,body{background:white}.toolbar,#exportHelp{display:none}.sheet{width:auto;margin:0;box-shadow:none;padding:10mm}.confirmBox{break-inside:avoid}.section{break-inside:auto}@page{size:A4;margin:8mm}}
 </style>
 </head>
 <body>
 <div class="toolbar">
   <button id="backBtn" type="button">← 返回 SALES</button>
-  <button id="pdfBtn" class="primary" type="button">下载 PDF</button>
-  <button id="imageBtn" type="button">下载长图</button>
-  <button id="shareBtn" type="button">分享确认单</button>
+  <button id="pdfBtn" class="primary" type="button">生成 PDF</button>
+  <button id="imageBtn" type="button">生成长图</button>
+  <button id="systemPrintBtn" type="button">系统打印</button>
+  <button id="shareBtn" type="button">分享确认单链接</button>
   <span id="downloadState" style="align-self:center;color:#aeb8b1;font-size:10px"></span>
 </div>
+<div id="exportHelp" style="width:min(900px,calc(100% - 24px));margin:10px auto 0;padding:9px 12px;border:1px solid #c9d2cc;border-radius:9px;background:#f7faf8;color:#526158;font-size:10px;line-height:1.6">iPhone：第一次点“生成 PDF / 长图”生成文件；按钮变成“保存 / 分享”后再点一次，可直接存到“文件”或转发微信。若组件加载失败，请用“系统打印”。</div>
 <main id="sheet" class="sheet"><div class="empty">正在读取订单确认单…</div></main>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
@@ -44,7 +49,7 @@ function render(){
  const items=(p.items||[]).map(x=>'<tr><td>'+esc(x.name)+'</td><td>'+esc(x.detail||'')+'</td><td>'+esc(x.qty)+' '+esc(x.unit||'')+'</td><td class="money">'+money(x.unitPrice)+'</td><td class="money">'+money(x.subtotal)+'</td></tr>').join('');
  const roster=(p.roster||[]).map(x=>'<tr><td>'+x.index+'</td><td>'+esc(x.name)+'</td><td>'+esc(x.number)+'</td><td>'+esc(x.size)+'</td><td>'+esc(x.type)+'</td></tr>').join('');
  sheet.innerHTML=
- '<div class="head"><div class="brand"><h1>SAGI SPORTS</h1><p>CUSTOMER ORDER CONFIRMATION · 客户订单确认单</p></div><div style="display:flex;gap:12px;align-items:flex-start"><div class="docno"><b>'+esc(p.orderNo)+'</b>生成时间：'+esc(p.issuedAt)+'<br>版本：V1.0</div><div class="logo">'+(p.logo?'<img src="'+p.logo+'">':'SAGI')+'</div></div></div>'+
+ '<div class="head"><div class="brand"><h1>SAGI SPORTS</h1><p>CUSTOMER ORDER CONFIRMATION · 客户订单确认单</p></div><div style="display:flex;gap:12px;align-items:flex-start"><div class="docno"><b>'+esc(p.orderNo)+'</b>生成时间：'+esc(p.issuedAt)+'<br>版本：V1.0.2</div><div class="logo">'+(p.logo?'<img src="'+p.logo+'">':'SAGI')+'</div></div></div>'+
  '<div class="notice">'+esc(p.customerNote||'请确认订单信息，确认后进入生产准备。')+'</div>'+
  '<div class="grid"><div class="box"><h3>客户 / 球队</h3><div class="kv"><span>球队名称</span><b>'+esc(p.teamName)+'</b><span>联系人</span><b>'+esc(p.contact||'—')+'</b><span>联系电话</span><b>'+esc(p.contactInfo||'—')+'</b><span>项目</span><b>'+esc((p.meta||[]).join(' · ')||'—')+'</b></div></div>'+
  '<div class="box"><h3>产品规格</h3><div class="kv"><span>产品系列</span><b>'+esc(p.productSeries||'—')+'</b><span>产品类型</span><b>'+esc(p.productType||'—')+'</b><span>主色 / 辅色</span><b>'+esc((p.colors||[]).join(' / ')||'—')+'</b><span>胸前文字</span><b>'+esc(p.frontText||'—')+'</b><span>姓名规则</span><b>'+esc(p.nameRule||'—')+'</b><span>号码字体</span><b>'+esc(p.numberStyle||'—')+'</b></div></div></div>'+
@@ -52,7 +57,7 @@ function render(){
  '<div class="section"><h2>球员名单 / 姓名 / 号码 / 尺码</h2><div class="tableWrap"><table><thead><tr><th>#</th><th>姓名</th><th>号码</th><th>尺码</th><th>类型</th></tr></thead><tbody>'+roster+'</tbody></table></div><div class="rosterNote">额外备货：'+esc(p.extraQty||0)+' 件/套。姓名拼写、号码与尺码请逐项核对。</div></div>'+
  '<div class="grid section"><div class="box"><h3>收货信息</h3><div class="kv"><span>收货人</span><b>'+esc(p.shippingRecipient||'—')+'</b><span>联系电话</span><b>'+esc(p.shippingPhone||'—')+'</b><span>收货地址</span><b>'+esc(p.shippingAddress||'—')+'</b></div></div><div class="box"><h3>交付与备注</h3><div class="kv"><span>预计交付</span><b>'+esc(p.deadline||'待确认')+'</b><span>特别说明</span><b>'+esc(p.productNotes||'无')+'</b></div></div></div>'+
  '<div class="confirmBox"><h2>客户确认</h2><p>请在确认前再次核对球队名称、姓名拼写、号码、尺码、颜色、数量、金额及收货信息。如需修改，请先联系 SAGI SPORTS。点击确认代表您认可本确认单内容作为本次生产依据。</p><div class="confirmFields"><input id="confirmer" placeholder="确认人姓名 / 负责人"><input id="confirmPhone" placeholder="联系电话（可选）"></div><label class="agree"><input id="agree" type="checkbox"><span>我已逐项核对以上订单信息，并确认无误。</span></label><button id="confirmBtn" class="primary" style="border:0;border-radius:8px;padding:10px 14px;background:#243d2d;color:#fff;font-weight:800" type="button">确认订单无误</button><div id="confirmResult" class="confirmResult"><b>确认完成</b><p>请把下面的确认码复制并发送给 SAGI SPORTS。销售系统导入后会自动进入“客户已确认”。</p><textarea id="confirmCode" readonly></textarea><button id="copyCodeBtn" type="button" style="margin-top:7px;padding:8px 10px">复制确认码</button></div></div>'+
- '<div class="foot">SAGI SPORTS · CUSTOMER ORDER CONFIRMATION V1.0<br>本页面的数据保存在链接的 URL Fragment 中，不作为公开订单数据库展示。最终生产以客户确认后的订单版本为准。</div>';
+ '<div class="foot">SAGI SPORTS · CUSTOMER ORDER CONFIRMATION V1.0.2<br>本页面的数据保存在链接的 URL Fragment 中，不作为公开订单数据库展示。最终生产以客户确认后的订单版本为准。</div>';
  document.getElementById('confirmBtn').onclick=confirmOrder;
  document.getElementById('copyCodeBtn').onclick=copyCode
 }
@@ -62,44 +67,89 @@ function confirmOrder(){
  document.getElementById('confirmCode').value='SAGI-CFM1.'+encode(obj);document.getElementById('confirmResult').classList.add('show');document.getElementById('confirmBtn').disabled=true;document.getElementById('confirmBtn').textContent='已确认'
 }
 async function copyCode(){const el=document.getElementById('confirmCode');try{await navigator.clipboard.writeText(el.value);alert('确认码已复制')}catch(e){el.select();document.execCommand('copy');alert('确认码已复制')}}
-async function downloadPdf(){
- const p=payload(),btn=document.getElementById('pdfBtn'),state=document.getElementById('downloadState');
- if(!window.html2canvas||!window.jspdf?.jsPDF){state.textContent='PDF组件加载失败';window.print();return}
- btn.disabled=true;btn.textContent='正在生成 PDF…';state.textContent='请稍候';
- try{
-   const canvas=await html2canvas(sheet,{scale:1.8,backgroundColor:'#ffffff',useCORS:true,logging:false,windowWidth:Math.max(900,sheet.scrollWidth)});
-   const img=canvas.toDataURL('image/jpeg',0.92);
-   const {jsPDF}=window.jspdf;
-   const pdf=new jsPDF({orientation:'p',unit:'mm',format:'a4',compress:true});
-   const pageW=210,pageH=297,margin=8,usableW=pageW-margin*2,usableH=pageH-margin*2;
-   const ratio=usableW/canvas.width;
-   const imgHmm=canvas.height*ratio;
-   let srcY=0,page=0;
-   while(srcY<imgHmm){
-     if(page>0)pdf.addPage();
-     const yPx=srcY/ratio;
-     const hPx=Math.min(canvas.height-yPx,usableH/ratio);
-     const part=document.createElement('canvas');
-     part.width=canvas.width;part.height=Math.max(1,Math.floor(hPx));
-     part.getContext('2d').drawImage(canvas,0,Math.floor(yPx),canvas.width,part.height,0,0,part.width,part.height);
-     const partImg=part.toDataURL('image/jpeg',0.92);
-     const partHmm=part.height*ratio;
-     pdf.addImage(partImg,'JPEG',margin,margin,usableW,partHmm,undefined,'FAST');
-     srcY+=usableH;page++;
-   }
-   const name=(p?.orderNo||'SAGI_ORDER_CONFIRMATION')+'.pdf';
-   const blob=pdf.output('blob');
-   const url=URL.createObjectURL(blob);
-   const a=document.createElement('a');a.href=url;a.download=name;a.style.display='none';document.body.appendChild(a);a.click();a.remove();
-   state.textContent='PDF 已生成';
-   setTimeout(()=>URL.revokeObjectURL(url),30000);
- }catch(e){
-   console.error(e);state.textContent='下载失败，已切换到打印保存';window.print();
- }finally{btn.disabled=false;btn.textContent='下载 PDF'}
+
+const exportState={pdfFile:null,pdfUrl:'',imageFile:null,imageUrl:''};
+function setExportStatus(msg,isError=false){
+ const el=document.getElementById('downloadState');el.textContent=msg||'';el.style.color=isError?'#ffb0a8':'#aeb8b1'
 }
+function revokeExportUrl(key){const u=exportState[key];if(u){try{URL.revokeObjectURL(u)}catch(e){}exportState[key]=''}}
+function safeCaptureScale(maxScale=1.35,maxPixels=9000000){
+ const w=Math.max(320,sheet.scrollWidth||sheet.offsetWidth||900),h=Math.max(600,sheet.scrollHeight||sheet.offsetHeight||1200);
+ return Math.max(.82,Math.min(maxScale,Math.sqrt(maxPixels/(w*h))))
+}
+async function waitForSheetImages(){
+ const imgs=[...sheet.querySelectorAll('img')];await Promise.all(imgs.map(img=>{
+  if(img.complete)return Promise.resolve();
+  return new Promise(res=>{img.onload=img.onerror=()=>res();setTimeout(res,1800)})
+ }))
+}
+function canShareFile(file){
+ try{return !!(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]}))}catch(e){return false}
+}
+async function shareOrOpenFile(file,url,label){
+ if(canShareFile(file)){
+  try{await navigator.share({files:[file],title:label});setExportStatus('已打开 iPhone 分享菜单');return}catch(e){if(e?.name==='AbortError'){setExportStatus('已取消分享');return}}
+ }
+ const isiOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+ if(isiOS){setExportStatus('正在打开文件预览…');location.href=url;return}
+ const a=document.createElement('a');a.href=url;a.download=file.name;a.style.display='none';document.body.appendChild(a);a.click();a.remove();setExportStatus('文件已下载')
+}
+async function buildCanvas(maxScale=1.35,maxPixels=9000000){
+ if(!window.html2canvas)throw new Error('长图组件未加载');
+ await waitForSheetImages();
+ const scale=safeCaptureScale(maxScale,maxPixels);
+ return await html2canvas(sheet,{scale,backgroundColor:'#ffffff',useCORS:true,logging:false,windowWidth:Math.max(900,sheet.scrollWidth),scrollX:0,scrollY:0})
+}
+async function generatePdf(){
+ const p=payload(),btn=document.getElementById('pdfBtn');
+ if(exportState.pdfFile){return shareOrOpenFile(exportState.pdfFile,exportState.pdfUrl,'SAGI 客户订单确认单')}
+ if(!window.jspdf?.jsPDF||!window.html2canvas){setExportStatus('PDF组件未加载，请点“系统打印”',true);return}
+ btn.disabled=true;btn.textContent='正在生成 PDF…';setExportStatus('正在生成，请稍候');
+ try{
+   const canvas=await buildCanvas(1.28,7500000),{jsPDF}=window.jspdf;
+   const pdf=new jsPDF({orientation:'p',unit:'mm',format:'a4',compress:true});
+   const pageW=210,pageH=297,margin=8,usableW=pageW-margin*2,usableH=pageH-margin*2,ratio=usableW/canvas.width,totalHmm=canvas.height*ratio;
+   let srcYmm=0,page=0;
+   while(srcYmm<totalHmm-.1){
+     if(page>0)pdf.addPage();
+     const yPx=Math.floor(srcYmm/ratio),maxPx=Math.ceil(usableH/ratio),hPx=Math.min(canvas.height-yPx,maxPx);
+     const part=document.createElement('canvas');part.width=canvas.width;part.height=Math.max(1,hPx);
+     const ctx=part.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,part.width,part.height);ctx.drawImage(canvas,0,yPx,canvas.width,hPx,0,0,part.width,part.height);
+     const partImg=part.toDataURL('image/jpeg',0.86),partHmm=part.height*ratio;
+     pdf.addImage(partImg,'JPEG',margin,margin,usableW,partHmm,undefined,'FAST');
+     srcYmm+=usableH;page++;
+     part.width=1;part.height=1;
+   }
+   const blob=pdf.output('blob'),name=(p?.orderNo||'SAGI_ORDER_CONFIRMATION')+'.pdf';
+   exportState.pdfFile=new File([blob],name,{type:'application/pdf',lastModified:Date.now()});
+   revokeExportUrl('pdfUrl');exportState.pdfUrl=URL.createObjectURL(blob);
+   btn.textContent='保存 / 分享 PDF';setExportStatus('PDF 已生成 · 再点一次保存/分享');
+ }catch(e){
+   console.error('PDF_EXPORT_ERROR',e);setExportStatus('PDF生成失败：'+(e?.message||'未知错误')+'，请使用系统打印',true);btn.textContent='重新生成 PDF'
+ }finally{btn.disabled=false}
+}
+async function generateImage(){
+ const p=payload(),btn=document.getElementById('imageBtn');
+ if(exportState.imageFile){return shareOrOpenFile(exportState.imageFile,exportState.imageUrl,'SAGI 客户订单确认单长图')}
+ if(!window.html2canvas){setExportStatus('长图组件未加载，请使用系统打印',true);return}
+ btn.disabled=true;btn.textContent='正在生成长图…';setExportStatus('正在生成长图');
+ try{
+   const canvas=await buildCanvas(1.18,6500000);
+   const blob=await new Promise((res,rej)=>canvas.toBlob(b=>b?res(b):rej(new Error('图片生成失败')),'image/jpeg',0.9));
+   const name=(p?.orderNo||'SAGI_ORDER_CONFIRMATION')+'.jpg';
+   exportState.imageFile=new File([blob],name,{type:'image/jpeg',lastModified:Date.now()});
+   revokeExportUrl('imageUrl');exportState.imageUrl=URL.createObjectURL(blob);
+   btn.textContent='保存 / 分享长图';setExportStatus('长图已生成 · 再点一次保存/分享');
+ }catch(e){
+   console.error('IMAGE_EXPORT_ERROR',e);setExportStatus('长图生成失败：'+(e?.message||'未知错误'),true);btn.textContent='重新生成长图'
+ }finally{btn.disabled=false}
+}
+window.addEventListener('error',e=>{if(String(e?.message||'').includes('Script error'))return;setExportStatus('页面错误：'+(e?.message||'未知错误'),true)});
+window.addEventListener('unhandledrejection',e=>setExportStatus('操作失败：'+(e?.reason?.message||e?.reason||'未知错误'),true));
 document.getElementById('backBtn').onclick=()=>{if(history.length>1)history.back();else location.href='./'};
-document.getElementById('pdfBtn').onclick=downloadPdf;
-document.getElementById('imageBtn').onclick=async()=>{if(!window.html2canvas){alert('长图组件未加载，请使用“打印 / 保存 PDF”');return}const btn=document.getElementById('imageBtn');btn.disabled=true;btn.textContent='正在生成…';try{const cv=await html2canvas(sheet,{scale:2,backgroundColor:'#ffffff',useCORS:true});const a=document.createElement('a');const p=payload();a.download=(p?.orderNo||'SAGI_ORDER_CONFIRMATION')+'.png';a.href=cv.toDataURL('image/png');a.click()}catch(e){alert('长图生成失败，请使用“打印 / 保存 PDF”')}finally{btn.disabled=false;btn.textContent='下载长图'}};
+document.getElementById('pdfBtn').onclick=generatePdf;
+document.getElementById('imageBtn').onclick=generateImage;
+document.getElementById('systemPrintBtn').onclick=()=>window.print();
 document.getElementById('shareBtn').onclick=async()=>{const p=payload(),data={title:'SAGI SPORTS 客户订单确认单',text:(p?.teamName||'')+' · '+(p?.orderNo||''),url:location.href};if(navigator.share){try{await navigator.share(data)}catch(e){}}else{try{await navigator.clipboard.writeText(location.href);alert('确认单链接已复制')}catch(e){}}};
 render();
 })();
