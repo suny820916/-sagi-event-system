@@ -172,8 +172,12 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
     <div><div class="brand">SAGI TEAMWEAR SALES SYSTEM</div><div class="sub">球队建档 · 产品方案 · 球员名单 · 报价 · 订单 · 补单</div></div>
     <div class="ver">V1.8 · FOLLOW-UP ASSISTANT</div>
   </div>
-  <div id="globalPinnedBar" class="globalPinnedBar" style="display:none">
-    <div class="globalPinnedHead"><b>置顶订单 · PINNED</b><span>常用订单固定在系统最上方</span></div>
+  <div id="globalPinnedBar" class="globalPinnedBar">
+    <div class="globalPinnedHead"><b>置顶订单 · PINNED</b><span>打开系统第一眼就能找到</span></div>
+    <div class="globalPinnedHead" style="margin-top:2px">
+      <select id="globalPinSelect" style="flex:1"><option value="">选择一个订单置顶</option></select>
+      <button id="globalPinAddBtn" type="button">＋ 置顶</button>
+    </div>
     <div id="globalPinnedList" class="globalPinnedList"></div>
   </div>
   <div class="workspaceNav" id="workspaceNav">
@@ -1660,10 +1664,11 @@ function openPinnedOrder(o){
  fill(o);setWorkspace(preferredWorkspaceForOrder(o),false);window.scrollTo({top:0,behavior:'smooth'});note('已打开 '+(o.projectName||o.teamName||'订单'))
 }
 function renderGlobalPinnedOrders(){
- const bar=q('globalPinnedBar'),w=q('globalPinnedList');if(!bar||!w)return;
- const list=(state.orders||[]).filter(o=>o.pinned).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
- bar.style.display=list.length?'block':'none';w.innerHTML='';
- if(!list.length)return;
+ const w=q('globalPinnedList'),sel=q('globalPinSelect');if(!w||!sel)return;
+ const all=(state.orders||[]),list=all.filter(o=>o.pinned).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0)),available=all.filter(o=>!o.pinned).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
+ sel.innerHTML='<option value="">选择一个订单置顶</option>'+available.map(o=>'<option value="'+escapeHtml(o.id)+'">'+escapeHtml(o.projectName||o.teamName||'未命名订单')+'</option>').join('');
+ w.innerHTML='';
+ if(!list.length){w.innerHTML='<div class="globalPinnedEmpty">暂无置顶订单。上面选择一个订单，点“＋ 置顶”，以后打开系统就会固定显示在这里。</div>';return}
  list.forEach(o=>{const d=document.createElement('div');d.className='globalPinnedItem';
   d.innerHTML='<div><div class="globalPinnedName">'+escapeHtml(o.projectName||o.teamName||'未命名订单')+'</div><div class="globalPinnedMeta">'+escapeHtml([o.teamName,o.city,o.season].filter(Boolean).join(' · '))+'</div><div class="globalPinnedState">销售：'+escapeHtml(o.salesStage||'新线索')+' · 订单：'+escapeHtml(displayOrderStatus(o.status))+'</div></div><div class="globalPinnedActions"><button data-open type="button">打开</button><button data-unpin type="button">取消置顶</button></div>';
   d.onclick=e=>{if(e.target.closest('button'))return;openPinnedOrder(o)};
@@ -1671,6 +1676,10 @@ function renderGlobalPinnedOrders(){
   d.querySelector('[data-unpin]').onclick=()=>{o.pinned=false;o.updatedAt=Date.now();persist();renderOrders();renderGlobalPinnedOrders();note('已取消置顶')};
   w.appendChild(d)
  })
+}
+function pinSelectedOrderFromTop(){
+ const id=q('globalPinSelect').value;if(!id){note('先选择一个订单');return}
+ const o=state.orders.find(x=>x.id===id);if(!o)return;o.pinned=true;o.updatedAt=Date.now();persist();renderOrders();renderGlobalPinnedOrders();note('订单已置顶到系统最上方')
 }
 
 function renderOrders(){
@@ -1724,6 +1733,7 @@ function renderWorkspaceSummary(){
  q('workspaceStatus').classList.toggle('good',stage==='已付定金'||orderStatus==='已完成');q('workspaceStatus').classList.toggle('warn',!(stage==='已付定金'||orderStatus==='已完成'))
 }
 function initWorkspaceUI(){
+ q('globalPinAddBtn').onclick=pinSelectedOrderFromTop;
  ['salesConversionCenter','customer','productionTracker','orderArchive','orders'].forEach(id=>q(id)?.classList.add('sectionPrimary'));['costProfile','catalog','customerQuotationMode','quoteCard'].forEach(id=>q(id)?.classList.add('sectionSecondary'));
  document.querySelectorAll('[data-workspace]').forEach(b=>b.onclick=()=>setWorkspace(b.dataset.workspace,true));
  q('salesAnalyticsToggle').onclick=()=>{const p=q('salesAnalyticsPanel'),hidden=p.classList.toggle('analyticsHidden');q('salesAnalyticsToggle').textContent=hidden?'查看销售分析':'收起销售分析'};
