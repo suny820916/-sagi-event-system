@@ -1,4 +1,4 @@
-const CACHE='sagi-teamwear-shell-v2';
+const CACHE='sagi-teamwear-shell-v3';
 const SHELL=['./','./index.html','./manifest.webmanifest','./sales-icon.svg','./confirmation.html','./receipt.html','./vendor/html2canvas.min.js','./vendor/jspdf.umd.min.js'];
 self.addEventListener('install',e=>{
   self.skipWaiting();
