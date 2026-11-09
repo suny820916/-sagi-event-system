@@ -1,4 +1,4 @@
-const CACHE='sagi-content-os-shell-v28';
+const CACHE='sagi-content-os-shell-v29';
 const SHELL=['./','./index.html','./manifest.webmanifest','./icon.svg','./css/mobile.css','./css/mobile.css?v=220','./js/app-core.js','./js/app-core.js?v=220','./js/mobile-matchday.js','./js/video-download.js','./js/video-jobs.js','./js/review.js','./js/mobile-shell.js'];
 self.addEventListener('install',e=>{
   self.skipWaiting();
