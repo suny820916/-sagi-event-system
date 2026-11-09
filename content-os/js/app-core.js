@@ -1292,7 +1292,7 @@ function dailyCandidate(plan,label,source,p,bonus=0,meta={}){
  const viral=plan?.viral||viralScoreForPlan(plan,p),base=viral?.total||0;
  return{plan:dailyCompactPlan(plan),label,source,projectId:p?.id||'',priority:Math.min(99,Math.round(base+bonus)),viral:base,verdict:viral?.verdict||'',why:viral?.risks?.[0]?.[1]||'结构健康',meta}
 }
-const DAILY_COMMAND_SCHEMA_VERSION=4;
+const DAILY_COMMAND_SCHEMA_VERSION=5;
 const DAILY_COMMAND_MAX_AGE_MS=20*60*1000;
 const DAILY_HOT_MAX_HOURS=12;
 function trustedFootballDomain(a){
@@ -1596,7 +1596,7 @@ q('projectSelect').onchange=()=>{state.currentProjectId=q('projectSelect').value
 q('videoRenderBtn').onclick=smartRenderVideo;q('directorFootageInput').onchange=handleFootageSelection;q('directorFootageInput').oninput=handleFootageSelection;q('directorMusicInput').onchange=handleMusicSelection;q('directorMusicInput').oninput=handleMusicSelection;q('directorAnalyzeFootageBtn').onclick=analyzeFootageFiles;q('directorBuildCutBtn').onclick=buildDirectorCut;q('directorClearFootageBtn').onclick=clearDirectorFootage;q('directorDuration').onchange=()=>{if(state.footage.length)buildDirectorCut()};q('videoReloadBtn').onclick=()=>state.videoDraft?.source&&prepareVideoSource({...state.videoDraft.source,title:state.videoDraft.title},false);q('videoCopyScriptBtn').onclick=copyVideoScript;q('dailyRunBtn').onclick=()=>runDailyViralCommand(false);q('dailyOpenP1Btn').onclick=executeDailyP1;q('dailyOpenRadarBtn').onclick=()=>switchView('trends');q('syncSalesBtn').onclick=syncSales;q('accountImportBtn').onclick=importAccountFile;q('accountImportFile').onchange=analyzeAccountFile;q('accountTemplateBtn').onclick=downloadAccountTemplate;q('accountApiDocsBtn').onclick=openDouyinApiDocs;q('trendRefreshBtn').onclick=fetchInternetTrends;q('trendOpenGoogleBtn').onclick=openGoogleTrends;q('trendProfile').onchange=()=>{q('trendQuery').disabled=q('trendProfile').value!=='custom'};q('flowNextBtn').onclick=runFlowNext;q('flowTodayBtn').onclick=()=>switchView('today');q('newProjectBtn').onclick=q('projectCreateTopBtn').onclick=()=>q('projectModal').classList.add('show');document.querySelectorAll('[data-close-modal]').forEach(b=>b.onclick=()=>b.closest('.modalMask').classList.remove('show'));q('createProjectBtn').onclick=createProject;
 q('generatorRunBtn').onclick=()=>generateViralVariants();q('generatorSaveBestBtn').onclick=saveBestViralVariant;q('generatorTopic').onkeydown=e=>{if(e.key==='Enter')generateViralVariants()};q('viralAnalyzeBtn').onclick=()=>{renderViralModel();note('爆款模型已重新分析')};q('viralOptimizeBtn').onclick=optimizeCurrentForViral;q('generateDirectorBtn').onclick=()=>generateDirector(false);q('saveDirectorBtn').onclick=saveDirectorAsContent;q('todayGenerateBtn').onclick=()=>{generateDirector(false);switchView('director')};q('todayOpenDirectorBtn').onclick=()=>switchView('director');q('todayAddPlanBtn').onclick=addTodayPlan;q('calendarAutoBtn').onclick=autoCalendar;q('createFromDirectorBtn').onclick=()=>{if(!state.director?.generatedAt)generateDirector(true);renderCreate();note('故事板已生成')};q('markReadyBtn').onclick=markReady;q('packageCopyBtn').onclick=copyPackage;q('savePerformanceBtn').onclick=savePerformance;
 window.SAGI_CORE={q,uid,today,esc,note,save,switchView,renderAll,get state(){return state}};
-load();renderAll();if(!isMobileRuntime()&&dailyCommandNeedsRefresh())runDailyViralCommand(true);
+load();renderAll();if(dailyCommandNeedsRefresh())setTimeout(()=>runDailyViralCommand(true),isMobileRuntime()?900:150);
 
 function registerContentOSApp(){
  if(!('serviceWorker' in navigator))return;
