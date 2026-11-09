@@ -83,6 +83,10 @@ async function waitForSheetImages(){
   return new Promise(res=>{img.onload=img.onerror=()=>res();setTimeout(res,1800)})
  }))
 }
+function makeExportFile(blob,name,type){
+ try{return new File([blob],name,{type,lastModified:Date.now()})}
+ catch(e){blob.name=name;return blob}
+}
 function canShareFile(file){
  try{return !!(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]}))}catch(e){return false}
 }
@@ -121,7 +125,7 @@ async function generatePdf(){
      part.width=1;part.height=1;
    }
    const blob=pdf.output('blob'),name=(p?.orderNo||'SAGI_ORDER_CONFIRMATION')+'.pdf';
-   exportState.pdfFile=new File([blob],name,{type:'application/pdf',lastModified:Date.now()});
+   exportState.pdfFile=makeExportFile(blob,name,'application/pdf');
    revokeExportUrl('pdfUrl');exportState.pdfUrl=URL.createObjectURL(blob);
    btn.textContent='保存 / 分享 PDF';setExportStatus('PDF 已生成 · 再点一次保存/分享');
  }catch(e){
@@ -137,7 +141,7 @@ async function generateImage(){
    const canvas=await buildCanvas(1.18,6500000);
    const blob=await new Promise((res,rej)=>canvas.toBlob(b=>b?res(b):rej(new Error('图片生成失败')),'image/jpeg',0.9));
    const name=(p?.orderNo||'SAGI_ORDER_CONFIRMATION')+'.jpg';
-   exportState.imageFile=new File([blob],name,{type:'image/jpeg',lastModified:Date.now()});
+   exportState.imageFile=makeExportFile(blob,name,'image/jpeg');
    revokeExportUrl('imageUrl');exportState.imageUrl=URL.createObjectURL(blob);
    btn.textContent='保存 / 分享长图';setExportStatus('长图已生成 · 再点一次保存/分享');
  }catch(e){
@@ -151,7 +155,7 @@ document.getElementById('pdfBtn').onclick=generatePdf;
 document.getElementById('imageBtn').onclick=generateImage;
 document.getElementById('systemPrintBtn').onclick=()=>window.print();
 document.getElementById('shareBtn').onclick=async()=>{const p=payload(),data={title:'SAGI SPORTS 客户订单确认单',text:(p?.teamName||'')+' · '+(p?.orderNo||''),url:location.href};if(navigator.share){try{await navigator.share(data)}catch(e){}}else{try{await navigator.clipboard.writeText(location.href);alert('确认单链接已复制')}catch(e){}}};
-render();
+render();setTimeout(()=>{setExportStatus(window.html2canvas&&window.jspdf?.jsPDF?'导出组件已就绪':'导出组件加载失败 · 请使用系统打印',!(window.html2canvas&&window.jspdf?.jsPDF))},50);
 })();
 </script>
 </body>
