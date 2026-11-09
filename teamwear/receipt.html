@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#173225">
+<title>SAGI SPORTS · PAYMENT RECEIPT</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;background:#e9eee9;color:#172019;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",Arial,sans-serif}
+body{padding:18px}.toolbar{width:min(900px,100%);margin:0 auto 10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+button{appearance:none;border:1px solid #bcc9bf;background:#fff;color:#1d3023;border-radius:9px;padding:10px 13px;font-weight:800;font-size:12px}
+button.primary{background:#173c29;color:#fff;border-color:#173c29}.state{font-size:10px;color:#66756b;margin-left:auto}
+.sheet{width:min(900px,100%);margin:0 auto;background:#fff;border-radius:16px;box-shadow:0 14px 34px rgba(24,44,31,.14);padding:28px}
+.head{display:flex;justify-content:space-between;gap:20px;border-bottom:2px solid #173c29;padding-bottom:18px}.brand h1{margin:0;font-size:26px;letter-spacing:2px}.brand p{margin:5px 0 0;color:#6b756f;font-size:11px;letter-spacing:1.2px}
+.docno{text-align:right;font-size:10px;color:#6c756f;line-height:1.7}.docno b{display:block;color:#193223;font-size:14px}
+.paid{margin:22px 0;padding:18px 20px;border-radius:14px;background:linear-gradient(135deg,#173c29,#2c6948);color:#fff;display:flex;justify-content:space-between;gap:18px;align-items:center}
+.paid small{font-size:10px;letter-spacing:1.5px;opacity:.75}.paid strong{display:block;font-size:26px;margin-top:3px}.paid .amount{text-align:right;font-size:30px;font-weight:900}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.box{border:1px solid #d7dfd8;border-radius:12px;padding:14px}.box h3{margin:0 0 10px;font-size:11px;letter-spacing:1px;color:#3f5146}.kv{display:grid;grid-template-columns:92px 1fr;gap:8px 12px;font-size:11px;line-height:1.55}.kv span{color:#7a857d}.kv b{font-weight:800;word-break:break-word}
+.section{margin-top:12px}.amountCard{border:1px solid #cbd7cf;border-radius:12px;padding:16px}.amountRow{display:flex;justify-content:space-between;padding:7px 0;font-size:12px;border-bottom:1px dashed #dbe2dd}.amountRow:last-child{border-bottom:0}.amountRow.total{font-size:16px;font-weight:900;color:#173c29}
+.note{margin-top:14px;padding:12px 14px;border-radius:10px;background:#f4f7f4;color:#59675d;font-size:10px;line-height:1.7}.foot{margin-top:20px;padding-top:14px;border-top:1px solid #d9e0da;text-align:center;color:#7b867e;font-size:9px;line-height:1.7}.empty{text-align:center;padding:70px 20px;color:#6e7a72}
+@media(max-width:650px){body{padding:10px}.sheet{padding:18px;border-radius:12px}.head{flex-direction:column}.docno{text-align:left}.paid{align-items:flex-start;flex-direction:column}.paid .amount{text-align:left}.grid{grid-template-columns:1fr}.state{width:100%;margin-left:0}.kv{grid-template-columns:86px 1fr}}
+@media print{html,body{background:#fff}.toolbar{display:none}.sheet{width:auto;margin:0;box-shadow:none;border-radius:0;padding:8mm}@page{size:A4;margin:8mm}}
+</style>
+</head>
+<body>
+<div class="toolbar">
+  <button id="backBtn" type="button">← 返回 SALES</button>
+  <button id="pdfBtn" class="primary" type="button">生成 PDF</button>
+  <button id="imageBtn" type="button">生成长图</button>
+  <button id="printBtn" type="button">系统打印</button>
+  <button id="shareBtn" type="button">分享凭证链接</button>
+  <span id="state" class="state">V1.0.7 · PAYMENT RECEIPT</span>
+</div>
+<main id="sheet" class="sheet"><div class="empty">正在读取收款凭证…</div></main>
+<script src="./vendor/html2canvas.min.js"></script>
+<script src="./vendor/jspdf.umd.min.js"></script>
+<script>
+(()=>{
+const sheet=document.getElementById('sheet'),stateEl=document.getElementById('state');
+function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function money(v){return '¥'+(Number(v)||0).toLocaleString('zh-CN',{minimumFractionDigits:0,maximumFractionDigits:2})}
+function decode(raw){try{let s=raw.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';const bin=atob(s),bytes=Uint8Array.from(bin,c=>c.charCodeAt(0));return JSON.parse(new TextDecoder().decode(bytes))}catch(e){return null}}
+function payload(){const m=location.hash.match(/(?:^#|&)d=([^&]+)/);return m?decode(m[1]):null}
+function render(){
+ const p=payload();
+ if(!p||p.schema!=='SAGI-PAYMENT-RECEIPT-1'){sheet.innerHTML='<div class="empty"><h2>收款凭证无效</h2><p>请让 SAGI SPORTS 重新生成收款凭证。</p></div>';return}
+ sheet.innerHTML=
+ '<div class="head"><div class="brand"><h1>SAGI SPORTS</h1><p>PAYMENT RECEIPT · 收款确认单</p></div><div class="docno"><b>'+esc(p.receiptNo)+'</b>关联订单：'+esc(p.orderNo||'—')+'<br>生成时间：'+esc(p.issuedAt||'—')+'<br>版本：V1.0.7</div></div>'+
+ '<div class="paid"><div><small>PAYMENT STATUS</small><strong>PAID · 已收全款</strong></div><div class="amount">'+money(p.amount)+'</div></div>'+
+ '<div class="grid"><div class="box"><h3>客户 / 球队</h3><div class="kv"><span>球队名称</span><b>'+esc(p.teamName||'—')+'</b><span>联系人</span><b>'+esc(p.contact||'—')+'</b><span>联系电话</span><b>'+esc(p.contactInfo||'—')+'</b><span>产品项目</span><b>'+esc(p.productType||'定制队服')+'</b></div></div>'+
+ '<div class="box"><h3>收款信息</h3><div class="kv"><span>到账时间</span><b>'+esc(p.paidAt||'—')+'</b><span>支付方式</span><b>'+esc(p.paymentMethod||'其他')+'</b><span>收款状态</span><b>100% FULL PAYMENT</b><span>收款单号</span><b>'+esc(p.receiptNo||'—')+'</b></div></div></div>'+
+ '<div class="section amountCard"><div class="amountRow"><span>订单总金额</span><b>'+money(p.total)+'</b></div><div class="amountRow"><span>本次确认收款</span><b>'+money(p.amount)+'</b></div><div class="amountRow total"><span>待收余额</span><b>'+money(Math.max(0,(Number(p.total)||0)-(Number(p.amount)||0)))+'</b></div></div>'+
+ '<div class="note"><b>收款说明：</b>本凭证确认 SAGI SPORTS 已收到上述订单全款。全款到账后，订单可进入生产准备流程。若订单内容后续发生双方确认的增减项，应以最新订单及补充款项记录为准。<br><b>提示：</b>本凭证为订单收款确认，不等同于税务发票。</div>'+
+ '<div class="foot">SAGI SPORTS · PAYMENT RECEIPT V1.0.7 · FULL PAYMENT<br>关联订单：'+esc(p.orderNo||'—')+' · 收款凭证：'+esc(p.receiptNo||'—')+'</div>'
+}
+const exportState={pdfFile:null,pdfUrl:'',imageFile:null,imageUrl:''};
+function setState(t,bad=false){stateEl.textContent=t;stateEl.style.color=bad?'#a53d3d':'#66756b'}
+function makeFile(blob,name,type){try{return new File([blob],name,{type,lastModified:Date.now()})}catch(e){blob.name=name;return blob}}
+function revoke(k){const u=exportState[k];if(u){try{URL.revokeObjectURL(u)}catch(e){}exportState[k]=''}}
+function canShareFile(file){try{return !!(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]}))}catch(e){return false}}
+async function shareOrOpen(file,url,label){
+ if(canShareFile(file)){try{await navigator.share({files:[file],title:label});setState('已打开分享菜单');return}catch(e){if(e?.name==='AbortError')return}}
+ const isiOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+ if(isiOS){location.href=url;return}
+ const a=document.createElement('a');a.href=url;a.download=file.name;a.style.display='none';document.body.appendChild(a);a.click();a.remove()
+}
+async function capture(maxScale=1.4,maxPixels=7000000){
+ if(!window.html2canvas)throw new Error('长图组件未加载');
+ const w=Math.max(320,sheet.scrollWidth||900),h=Math.max(500,sheet.scrollHeight||1200),scale=Math.max(.9,Math.min(maxScale,Math.sqrt(maxPixels/(w*h))));
+ return html2canvas(sheet,{scale,backgroundColor:'#fff',useCORS:true,logging:false,windowWidth:Math.max(900,w),scrollX:0,scrollY:0})
+}
+async function makePdf(){
+ const p=payload(),btn=document.getElementById('pdfBtn');
+ if(exportState.pdfFile)return shareOrOpen(exportState.pdfFile,exportState.pdfUrl,'SAGI 收款确认单');
+ if(!window.jspdf?.jsPDF||!window.html2canvas){setState('PDF组件未加载，请使用系统打印',true);return}
+ btn.disabled=true;btn.textContent='正在生成 PDF…';
+ try{
+  const canvas=await capture(1.3,6500000),{jsPDF}=window.jspdf,pdf=new jsPDF({orientation:'p',unit:'mm',format:'a4',compress:true});
+  const pageW=210,pageH=297,margin=8,usableW=194,usableH=281,ratio=usableW/canvas.width,total=canvas.height*ratio;let y=0,page=0;
+  while(y<total-.1){if(page++)pdf.addPage();const yPx=Math.floor(y/ratio),hPx=Math.min(canvas.height-yPx,Math.ceil(usableH/ratio)),part=document.createElement('canvas');part.width=canvas.width;part.height=Math.max(1,hPx);const ctx=part.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,part.width,part.height);ctx.drawImage(canvas,0,yPx,canvas.width,hPx,0,0,part.width,part.height);pdf.addImage(part.toDataURL('image/jpeg',.9),'JPEG',margin,margin,usableW,part.height*ratio,undefined,'FAST');y+=usableH}
+  const blob=pdf.output('blob'),name=(p?.receiptNo||'SAGI_PAYMENT_RECEIPT')+'.pdf';exportState.pdfFile=makeFile(blob,name,'application/pdf');revoke('pdfUrl');exportState.pdfUrl=URL.createObjectURL(blob);btn.textContent='保存 / 分享 PDF';setState('PDF 已生成 · 再点一次保存/分享')
+ }catch(e){setState('PDF生成失败：'+(e?.message||'未知错误'),true);btn.textContent='重新生成 PDF'}finally{btn.disabled=false}
+}
+async function makeImage(){
+ const p=payload(),btn=document.getElementById('imageBtn');
+ if(exportState.imageFile)return shareOrOpen(exportState.imageFile,exportState.imageUrl,'SAGI 收款确认单长图');
+ if(!window.html2canvas){setState('长图组件未加载',true);return}
+ btn.disabled=true;btn.textContent='正在生成长图…';
+ try{const canvas=await capture(1.2,6000000),blob=await new Promise((res,rej)=>canvas.toBlob(b=>b?res(b):rej(new Error('图片生成失败')),'image/jpeg',.92)),name=(p?.receiptNo||'SAGI_PAYMENT_RECEIPT')+'.jpg';exportState.imageFile=makeFile(blob,name,'image/jpeg');revoke('imageUrl');exportState.imageUrl=URL.createObjectURL(blob);btn.textContent='保存 / 分享长图';setState('长图已生成 · 再点一次保存/分享')}catch(e){setState('长图生成失败：'+(e?.message||'未知错误'),true);btn.textContent='重新生成长图'}finally{btn.disabled=false}
+}
+document.getElementById('backBtn').onclick=()=>{if(history.length>1)history.back();else location.href='./'};
+document.getElementById('pdfBtn').onclick=makePdf;document.getElementById('imageBtn').onclick=makeImage;document.getElementById('printBtn').onclick=()=>window.print();
+document.getElementById('shareBtn').onclick=async()=>{const p=payload(),data={title:'SAGI SPORTS 收款确认单',text:(p?.teamName||'')+' · '+(p?.receiptNo||''),url:location.href};if(navigator.share){try{await navigator.share(data)}catch(e){}}else{try{await navigator.clipboard.writeText(location.href);alert('收款凭证链接已复制')}catch(e){}}};
+render();setTimeout(()=>setState(window.html2canvas&&window.jspdf?.jsPDF?'V1.0.7 · PAYMENT RECEIPT · 导出组件已就绪':'V1.0.7 · 导出组件加载失败 · 可使用系统打印',!(window.html2canvas&&window.jspdf?.jsPDF)),100)
+})();
+</script>
+</body>
+</html>
