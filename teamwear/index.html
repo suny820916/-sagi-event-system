@@ -409,6 +409,14 @@ button,input,select,textarea{font:inherit}.app{max-width:1480px;margin:auto;padd
           <button id="demoRosterBtn" type="button">载入示例 12 人</button>
           <button id="clearRosterBtn" class="danger" type="button">清空名单</button>
         </div>
+        <div class="historyImportBox" style="margin-bottom:10px">
+          <label>名单私密导入码</label>
+          <textarea id="rosterImportCode" placeholder="粘贴 SAGI-ROSTER1... 名单导入码"></textarea>
+          <div class="historyImportActions">
+            <button id="rosterImportBtn" type="button">导入到当前订单</button>
+            <select id="rosterImportMode"><option value="replace">替换当前名单</option><option value="merge">合并到当前名单</option></select>
+          </div>
+        </div>
         <div class="rosterHead"><div>#</div><div>姓名</div><div>号码</div><div>尺码</div><div>类型</div><div></div></div>
         <div id="rosterRows" class="rosterRows"></div>
         <div class="grid3" style="margin-top:10px">
@@ -1147,6 +1155,33 @@ function blank(){
 }
 
 function renderLogo(){q('teamLogoPreview').innerHTML=state.teamLogo?'<img src="'+state.teamLogo+'">':'TEAM LOGO';q('quoteLogo').innerHTML=state.teamLogo?'<img src="'+state.teamLogo+'">':'LOGO'}
+
+function decodeRosterImportCode(raw){
+ try{
+  const code=String(raw||'').trim();if(!code.startsWith('SAGI-ROSTER1.'))return null;
+  let s=code.slice(13).replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';
+  const bin=atob(s),bytes=Uint8Array.from(bin,ch=>ch.charCodeAt(0)),obj=JSON.parse(new TextDecoder().decode(bytes));
+  return obj&&obj.schema==='SAGI-ROSTER-1'&&Array.isArray(obj.roster)?obj:null
+ }catch(e){return null}
+}
+function normalizeImportedSize(v){
+ const s=String(v||'').trim().toUpperCase();
+ if(s==='XI')return'XL';
+ if(s==='XXL')return'2XL';
+ return ['130','140','150','160','XS','S','M','L','XL','2XL','3XL','4XL'].includes(s)?s:(s||'L')
+}
+function importRosterCode(){
+ const obj=decodeRosterImportCode(q('rosterImportCode').value);if(!obj){note('名单导入码无效');return}
+ const currentTeam=text('teamName').trim(),target=String(obj.teamName||'').trim();
+ if(target&&currentTeam&&target!==currentTeam&&!confirm('导入码球队为「'+target+'」，当前订单为「'+currentTeam+'」。仍然继续导入吗？'))return;
+ const rows=obj.roster.map(p=>({id:uid(),name:String(p.name||'').trim(),number:String(p.number||'').replace(/号$/,'').trim(),size:normalizeImportedSize(p.size),type:p.type||'球员'}));
+ if(q('rosterImportMode').value==='replace')state.roster=rows;else state.roster=[...state.roster,...rows];
+ if(target&&!currentTeam)q('teamName').value=target;
+ state.packageTargetQty=state.roster.length;q('packageTeamSize').value=String(state.roster.length);
+ addActivity('roster','导入球员名单',(target||currentTeam||'当前球队')+' · '+rows.length+'人'+(obj.note?(' · '+obj.note):''));
+ q('rosterImportCode').value='';renderRoster();renderAll();if(state.currentId)saveOrder(true);note('名单已导入 · '+rows.length+' 人')
+}
+
 function addPlayer(p={}){state.roster.push({id:p.id||uid(),name:p.name||'',number:p.number||'',size:p.size||'L',type:p.type||'球员'});renderRoster();renderAll()}
 
 function syncPackageTargetQty(){
@@ -1572,7 +1607,7 @@ function initSelects(){
  q('statusFilter').innerHTML='<option value="">全部状态</option>'+STAGES.map(x=>'<option>'+x+'</option>').join('')
 }
 q('teamLogoFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{state.teamLogo=r.result;renderAll()};r.readAsDataURL(f)};
-q('addPlayerBtn').onclick=()=>addPlayer();q('demoRosterBtn').onclick=()=>{state.roster=[];[['AZAMAT','1','XL','门将'],['DIAS','2','L','球员'],['NURLAN','4','XL','球员'],['ALMAS','5','L','球员'],['ERLAN','3','M','球员'],['SULTAN','6','L','球员'],['MARHULAN','8','L','球员'],['ASLAN','10','M','球员'],['DANIYAR','7','L','球员'],['ARDAK','9','XL','球员'],['TIMUR','11','L','球员'],['BEK','12','XL','门将']].forEach(x=>addPlayer({name:x[0],number:x[1],size:x[2],type:x[3]}));note('已载入12人示例名单')};
+q('rosterImportBtn').onclick=importRosterCode;q('addPlayerBtn').onclick=()=>addPlayer();q('demoRosterBtn').onclick=()=>{state.roster=[];[['AZAMAT','1','XL','门将'],['DIAS','2','L','球员'],['NURLAN','4','XL','球员'],['ALMAS','5','L','球员'],['ERLAN','3','M','球员'],['SULTAN','6','L','球员'],['MARHULAN','8','L','球员'],['ASLAN','10','M','球员'],['DANIYAR','7','L','球员'],['ARDAK','9','XL','球员'],['TIMUR','11','L','球员'],['BEK','12','XL','门将']].forEach(x=>addPlayer({name:x[0],number:x[1],size:x[2],type:x[3]}));note('已载入12人示例名单')};
 q('clearRosterBtn').onclick=()=>{state.roster=[];renderRoster();renderAll()};q('saveOrderBtn').onclick=saveOrder;q('quoteSaveBtn').onclick=saveOrder;q('newOrderBtn').onclick=()=>{blank();location.hash='#customer';note('已新建销售项目')};q('printBtn').onclick=()=>window.print();q('quoteReorderBtn').onclick=()=>{const src=state.orders.find(x=>x.id===state.currentId)||collect();createReorder(src)};
 q('salesStage').onchange=()=>{if(q('salesStage').value==='未成交'&&!q('lostReason').value)note('请补充未成交原因');persistSalesActivity();renderAll()};q('lostReason').onchange=()=>{if(q('lostReason').value)q('salesStage').value='未成交';persistSalesActivity();renderAll()};q('nextFollowUp').onchange=()=>{persistSalesActivity();renderAll()};q('leadTemperature').onchange=()=>{persistSalesActivity();renderAll()};q('historyOrderImportBtn').onclick=importHistoryOrder;q('orderSearch').oninput=renderOrders;q('statusFilter').onchange=renderOrders;q('orderStatus').onchange=renderAll;q('extraQty').oninput=()=>{state.packageTargetQty=0;renderAll()};
 ['supplierTier','ageGroup'].forEach(id=>q(id).addEventListener('change',()=>{const tier=SUPPLIER_CATALOG[q('supplierTier').value],age=q('ageGroup').value==='child'?'child':'adult';q('priceStrategy').value=(tier&&SAGI_FIXED_PRICE[tier.name]&&SAGI_FIXED_PRICE[tier.name][age]!=null)?'fixed':'margin';syncPriceEngine(true);renderAll()}));['productType','priceStrategy','targetMargin','poloAddon','pocketAddon','longSleeveAddon','shippingZone'].forEach(id=>q(id).addEventListener('change',()=>{syncPriceEngine(true);renderAll()}));['otherCraftCost','factoryShippingCost'].forEach(id=>q(id).addEventListener('input',()=>{syncPriceEngine(true);renderAll()}));q('salesUnitPrice').addEventListener('input',renderAll);
