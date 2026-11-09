@@ -57,11 +57,30 @@ function remember(x){
  S().downloadItems.unshift({id:uid('dl'),url:x.url,title:x.title||safeName(x.url,''),createdAt:Date.now()});
  S().downloadItems=S().downloadItems.slice(0,20);save();renderHistory()
 }
+async function platformDownload(){
+ const x=current();
+ if(!x.url){setStatus('请先粘贴有效链接。','bad');return}
+ if(!x.platform){setStatus('当前不是已识别的社交平台链接；普通视频请直接使用“下载视频”。','warn');return}
+ try{
+   await navigator.clipboard.writeText(x.url);
+   setStatus((platformName(x.url)||'社交平台')+' 链接已复制。正在打开 Cobalt，进入后直接粘贴即可。','good')
+ }catch(e){setStatus('正在打开 Cobalt。请在页面中粘贴当前链接。','good')}
+ window.open('https://cobalt.tools/','_blank','noopener')
+}
+async function copyYtDlpCommand(){
+ const x=current();
+ if(!x.url){setStatus('请先粘贴有效链接。','bad');return}
+ const safe=x.url.replace(/"/g,'%22');
+ const cmd='yt-dlp --no-playlist -f "best[ext=mp4]/best" -o "SAGI_%(title).80s.%(ext)s" "'+safe+'"';
+ try{await navigator.clipboard.writeText(cmd);setStatus('yt-dlp 命令已复制。电脑端打开 PowerShell / CMD 粘贴即可。','good');note('yt-dlp 下载命令已复制')}
+ catch(e){setStatus(cmd,'warn')}
+}
 function download(){
  const x=current();
  if(!x.url){setStatus('请先粘贴有效视频链接。','bad');return}
  if(!x.direct){
-   setStatus((x.platform?platformName(x.url)+' 页面':'当前链接')+'不是可直接下载的视频文件。请使用你有权下载的 MP4 / MOV / WEBM 直链。','warn');return
+   if(x.platform){platformDownload();return}
+   setStatus('当前链接不是可直接下载的视频文件。请使用你有权下载的 MP4 / MOV / WEBM 直链。','warn');return
  }
  const a=document.createElement('a');a.href=x.url;a.download=safeName(x.url,x.title);a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
  remember(x);
@@ -106,7 +125,9 @@ q('downloadPreviewBtn').onclick=preview;
 q('downloadStartBtn').onclick=download;
 q('downloadOpenBtn').onclick=openOriginal;
 q('downloadToJobBtn').onclick=sendToJob;
+q('downloadPlatformBtn').onclick=platformDownload;
+q('downloadCommandBtn').onclick=copyYtDlpCommand;
 q('downloadUrl').addEventListener('keydown',e=>{if(e.key==='Enter')preview()});
-window.SAGI_DOWNLOADER={render,preview,download,sendToJob};
+window.SAGI_DOWNLOADER={render,preview,download,platformDownload,copyYtDlpCommand,sendToJob};
 render();
 })();
