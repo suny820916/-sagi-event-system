@@ -1,0 +1,662 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#070a0c">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SAGI CONTENT">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="./icon.svg">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>SAGI CONTENT OS V2.1</title>
+<style>
+:root{--bg:#070a0c;--panel:#0d1215;--panel2:#10171b;--line:#263238;--line2:#33454d;--text:#edf2f3;--muted:#819097;--soft:#a8b5ba;--accent:#8fb9c7;--accent2:#c5dce3;--good:#82b99a;--warn:#d3bd78;--bad:#cf858a;--radius:14px}
+*{box-sizing:border-box}html{background:var(--bg);color:var(--text);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}body{margin:0;background:radial-gradient(circle at 90% 0,rgba(78,124,140,.13),transparent 28%),var(--bg);min-height:100vh;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}button,input,select,textarea{font:inherit}button{cursor:pointer}.app{display:grid;grid-template-columns:220px 1fr;min-height:100vh}.side{position:sticky;top:0;height:100vh;padding:18px 14px;border-right:1px solid var(--line);background:rgba(7,10,12,.96);display:flex;flex-direction:column;gap:14px}.brand{padding:5px 5px 14px;border-bottom:1px solid var(--line)}.brand strong{display:block;font-size:17px;letter-spacing:.6px}.brand span{display:block;color:var(--muted);font-size:10px;margin-top:5px}.version{display:inline-block;margin-top:9px;border:1px solid #36505a;border-radius:999px;padding:4px 7px;font-size:9px;color:#a8ced9}.nav{display:grid;gap:5px}.nav button{border:1px solid transparent;background:transparent;color:#9ba7ac;text-align:left;border-radius:9px;padding:10px 10px}.nav button b{display:block;font-size:12px}.nav button span{display:block;font-size:9px;color:#65747b;margin-top:3px}.nav button.active{border-color:#36505a;background:#101a1f;color:#eef4f5}.nav button.active span{color:#86a4ae}.sideFoot{margin-top:auto;display:grid;gap:7px}.sideFoot a,.sideFoot button{display:block;text-decoration:none;border:1px solid var(--line);border-radius:8px;background:#0c1114;color:#aeb9bd;padding:8px;text-align:center;font-size:10px}.main{padding:18px 20px 50px;min-width:0}.top{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:14px}.top h1{font-size:18px;margin:0}.top p{font-size:10px;color:var(--muted);margin:5px 0 0}.projectBar{display:flex;gap:7px;align-items:center}.projectBar select{min-width:240px}.control,select,input,textarea{border:1px solid var(--line2);background:#0a1013;color:var(--text);border-radius:8px;padding:8px 9px;outline:none}textarea{min-height:84px;resize:vertical}.btn{border:1px solid var(--line2);background:#11191d;color:#dfe7ea;border-radius:8px;padding:8px 10px;font-size:10px}.btn.primary{background:#dbe8ec;color:#0b1114;border-color:#dbe8ec;font-weight:800}.btn.blue{background:#17303a;border-color:#355965;color:#b8d9e3}.btn.good{background:#112119;border-color:#315441;color:#9dceb1}.btn.warn{background:#241d10;border-color:#5d4b28;color:#d7c487}.btn.danger{background:#211113;border-color:#5a3034;color:#d99a9f}.view{display:none}.view.active{display:block}.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px}.card{border:1px solid var(--line);border-radius:var(--radius);background:linear-gradient(150deg,#0c1215,#0a0e10);padding:12px}.card h2,.card h3{margin:0}.card h2{font-size:12px}.card h3{font-size:11px}.sub{font-size:9px;color:var(--muted);margin-top:4px;line-height:1.5}.kpi span{display:block;font-size:9px;color:var(--muted)}.kpi b{display:block;font-size:24px;margin-top:6px}.kpi small{display:block;font-size:8px;color:#647178;margin-top:4px}.section{margin-top:10px}.sectionHead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:9px}.sectionHead h2{font-size:12px;margin:0}.sectionHead p{font-size:9px;color:var(--muted);margin:4px 0 0}.empty{border:1px dashed #334047;border-radius:10px;padding:18px;text-align:center;color:#6f7c82;font-size:10px}.todayGrid{display:grid;grid-template-columns:1.2fr .8fr;gap:10px}.taskList,.queue,.rank,.patterns{display:grid;gap:6px}.task{border:1px solid var(--line);border-radius:10px;padding:9px;display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}.task b{font-size:11px}.task span{display:block;font-size:9px;color:var(--muted);margin-top:3px}.pill{display:inline-block;border:1px solid #38515b;border-radius:999px;padding:3px 6px;font-size:8px;color:#9fc0ca}.pill.good{border-color:#355344;color:#91bca1}.pill.warn{border-color:#594a2f;color:#d0b877}.pill.bad{border-color:#5d3438;color:#d39297}.hero{border:1px solid #34505b;border-radius:14px;padding:14px;background:radial-gradient(circle at 92% 0,rgba(75,129,147,.22),transparent 32%),#0b1216}.heroTag{font-size:9px;color:#8fb9c7}.heroTitle{font-size:22px;font-weight:850;line-height:1.2;margin-top:7px;max-width:740px}.heroMeta{font-size:10px;color:#83939a;margin-top:7px}.heroActions{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}.scoreBox{display:flex;align-items:end;gap:5px}.scoreBox b{font-size:34px}.scoreBox span{font-size:10px;color:#718189;margin-bottom:6px}.directorLayout{display:grid;grid-template-columns:1.1fr .9fr;gap:10px}.formGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}.field label{display:block;font-size:8px;color:#7d8d94;margin-bottom:5px}.field.wide{grid-column:span 2}.toolbar{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}.briefGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:9px}.briefCell{border:1px solid var(--line);border-radius:8px;padding:7px}.briefCell span{display:block;font-size:8px;color:#74848b}.briefCell b{display:block;font-size:10px;margin-top:4px;line-height:1.35}.hookList{display:grid;gap:5px}.hook{display:grid;grid-template-columns:28px 1fr auto;gap:7px;align-items:center;border:1px solid var(--line);border-radius:9px;padding:7px}.hook strong{color:#8eb7c4;font-size:10px}.hook b{font-size:9px;line-height:1.45}.shotList{display:grid;gap:0}.shot{display:grid;grid-template-columns:70px 1fr;gap:8px;padding:8px 3px;border-bottom:1px solid #1d292e}.shot:last-child{border-bottom:0}.shot span{font-size:8px;color:#74929d}.shot b{font-size:9px}.scoreRows{display:grid;gap:6px;margin-top:8px}.scoreRow{display:grid;grid-template-columns:65px 1fr 32px;gap:7px;align-items:center;font-size:8px;color:#899aa1}.bar{height:6px;background:#172329;border-radius:999px;overflow:hidden}.bar i{display:block;height:100%;background:linear-gradient(90deg,#547e8d,#b4d4df);border-radius:999px}.assetGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.asset{border:1px solid var(--line);border-radius:11px;overflow:hidden;background:#0a0e10}.assetPreview{aspect-ratio:4/3;background:#10171a;display:flex;align-items:center;justify-content:center;color:#536168;font-size:9px;background-size:cover;background-position:center}.assetBody{padding:8px}.assetBody b{font-size:10px}.assetBody span{display:block;font-size:8px;color:#718087;margin-top:3px}.assetActions{display:flex;gap:5px;margin-top:7px}.assetActions button{padding:5px 7px}.storyboard{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.scene{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#0a0f12}.sceneVisual{aspect-ratio:9/12;background:#11181b;background-size:cover;background-position:center;position:relative}.sceneOverlay{position:absolute;inset:0;background:linear-gradient(transparent 40%,rgba(0,0,0,.84));display:flex;flex-direction:column;justify-content:flex-end;padding:10px}.sceneOverlay small{font-size:8px;color:#9fb4bc}.sceneOverlay b{font-size:13px;margin-top:4px}.sceneBody{padding:7px}.sceneBody span{font-size:8px;color:#7e8d94}.tableWrap{overflow:auto;border:1px solid var(--line);border-radius:10px}.table{width:100%;border-collapse:collapse;min-width:780px}.table th,.table td{padding:8px;border-bottom:1px solid #1c292e;text-align:left;font-size:9px}.table th{color:#788991;font-weight:600;background:#0b1114}.table td b{font-size:10px}.table tr:last-child td{border-bottom:0}.rankItem{display:grid;grid-template-columns:30px 1fr auto;gap:8px;align-items:center;border:1px solid var(--line);border-radius:9px;padding:8px}.rankItem strong{font-size:14px;text-align:center}.rankItem b{font-size:10px}.rankItem span{display:block;font-size:8px;color:#75858c;margin-top:3px}.rankItem em{font-style:normal;font-size:9px;color:#9ab5a4}.insight{border:1px solid #45503c;border-radius:10px;background:#10150e;color:#acb99b;padding:10px;font-size:10px;line-height:1.65}.pattern{border:1px solid var(--line);border-radius:9px;padding:8px}.pattern b{font-size:10px}.pattern span{display:block;font-size:8px;color:#7b8a90;margin-top:4px;line-height:1.55}.projectList{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.projectCard{border:1px solid var(--line);border-radius:11px;padding:10px;background:#0b1013}.projectCard b{font-size:11px}.projectCard span{display:block;color:#74838a;font-size:8px;margin-top:4px}.projectCard .toolbar{margin-top:8px}.notice{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#dbe8ec;color:#071014;border-radius:999px;padding:8px 13px;font-size:10px;font-weight:700;opacity:0;pointer-events:none;transition:.2s;z-index:20}.notice.show{opacity:1}.modalMask{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;padding:20px;z-index:30}.modalMask.show{display:flex}.modal{width:min(640px,100%);max-height:90vh;overflow:auto;border:1px solid #38505a;border-radius:14px;background:#0c1215;padding:13px}.modal h3{font-size:12px;margin:0}.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.day{border:1px solid var(--line);border-radius:8px;padding:7px;min-height:68px}.day.today{border-color:#4d7482;background:#0d181d}.day span{display:block;font-size:8px;color:#718189}.day b{display:block;font-size:9px;margin-top:5px;line-height:1.4}.day em{display:block;font-size:8px;color:#89a9b4;font-style:normal;margin-top:4px}
+@media(max-width:1000px){.app{grid-template-columns:1fr}.side{position:relative;height:auto;border-right:0;border-bottom:1px solid var(--line)}.nav{grid-template-columns:repeat(4,1fr)}.sideFoot{grid-template-columns:1fr 1fr}.todayGrid,.directorLayout,.grid2{grid-template-columns:1fr}.grid4{grid-template-columns:1fr 1fr}.assetGrid,.projectList,.storyboard{grid-template-columns:1fr 1fr}.calendar{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:650px){.main{padding:13px}.top{align-items:flex-start;flex-direction:column}.projectBar{width:100%;flex-wrap:wrap}.projectBar select{min-width:0;flex:1}.nav{grid-template-columns:1fr 1fr}.grid4,.grid3,.formGrid,.assetGrid,.projectList,.storyboard{grid-template-columns:1fr}.field.wide{grid-column:auto}.briefGrid{grid-template-columns:1fr 1fr}.calendar{grid-template-columns:1fr 1fr}.heroTitle{font-size:18px}}
+.flowStages{display:grid;grid-template-columns:repeat(6,1fr);gap:7px}.flowStage{border:1px solid var(--line);border-radius:11px;padding:10px;background:#0a1013;min-height:92px}.flowStage strong{display:block;font-size:9px;color:#7f929a;letter-spacing:.5px}.flowStage b{display:block;font-size:25px;margin-top:7px}.flowStage span{display:block;font-size:8px;color:#65767d;line-height:1.45;margin-top:5px}.flowStage.active{border-color:#4f7785;background:#0d181d}.flowNext{border:1px solid #3c626f;border-radius:14px;padding:14px;background:radial-gradient(circle at 95% 0,rgba(82,140,158,.2),transparent 34%),#0a1216}.flowNextLabel{font-size:9px;color:#8fb9c7}.flowNextTitle{font-size:19px;font-weight:850;margin-top:6px}.flowNextMeta{font-size:9px;color:#819097;margin-top:6px;line-height:1.55}.flowQueue{display:grid;gap:6px}.flowRow{display:grid;grid-template-columns:88px 1fr auto;gap:8px;align-items:center;border:1px solid var(--line);border-radius:9px;padding:8px}.flowRow>strong{font-size:8px;color:#90a9b2}.flowRow b{font-size:10px}.flowRow span{display:block;font-size:8px;color:#718087;margin-top:3px}.flowHealth{display:grid;grid-template-columns:1fr 1fr;gap:7px}.flowHealth div{border:1px solid var(--line);border-radius:9px;padding:9px}.flowHealth span{display:block;font-size:8px;color:#718087}.flowHealth b{display:block;font-size:18px;margin-top:4px}
+@media(max-width:1000px){.flowStages{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:650px){.flowStages{grid-template-columns:1fr 1fr}.flowRow{grid-template-columns:68px 1fr}.flowRow .btn{grid-column:2}}
+.trendControls{display:grid;grid-template-columns:180px 1fr auto auto;gap:7px;align-items:end}.trendStatus{font-size:9px;color:#7f929a;margin-top:8px}.trendGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.trendCard{border:1px solid var(--line);border-radius:12px;background:#0a1013;overflow:hidden}.trendImg{aspect-ratio:16/9;background:#11191d center/cover no-repeat;display:flex;align-items:center;justify-content:center;color:#536168;font-size:9px}.trendBody{padding:10px}.trendTop{display:flex;align-items:center;justify-content:space-between;gap:7px}.heat{display:inline-flex;align-items:center;gap:5px;border:1px solid #5f4d2c;background:#241d10;color:#d7c487;border-radius:999px;padding:4px 7px;font-size:8px}.trendSource{font-size:8px;color:#718087}.trendCard h3{font-size:11px;line-height:1.5;margin:8px 0 0}.trendCard p{font-size:8px;color:#73838a;line-height:1.55;margin:6px 0 0}.trendActions{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}.trendReason{margin-top:7px;border-top:1px solid #1d292e;padding-top:7px;font-size:8px;color:#8a9aa0;line-height:1.5}.trendEmpty{grid-column:1/-1}.trendHero{border:1px solid #4b6470;border-radius:14px;background:radial-gradient(circle at 95% 0,rgba(79,132,151,.22),transparent 34%),#0a1216;padding:14px}.trendHero b{font-size:18px;display:block;margin-top:6px;line-height:1.35}.trendHero span{font-size:9px;color:#84969d;display:block;margin-top:6px;line-height:1.55}
+@media(max-width:1000px){.trendGrid{grid-template-columns:1fr 1fr}.trendControls{grid-template-columns:1fr 1fr}}
+@media(max-width:650px){.trendGrid,.trendControls{grid-template-columns:1fr}}
+.accountHero{border:1px solid #3c626f;border-radius:14px;padding:14px;background:radial-gradient(circle at 92% 0,rgba(78,131,149,.22),transparent 34%),#0a1216}.accountHero b{display:block;font-size:20px;margin-top:6px}.accountHero span{display:block;font-size:9px;color:#83949b;margin-top:6px;line-height:1.55}.accountStatus{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}.dataSource{border:1px solid var(--line);border-radius:10px;padding:9px}.dataSource b{font-size:10px}.dataSource span{display:block;font-size:8px;color:#718087;margin-top:4px;line-height:1.5}.importBox{display:grid;grid-template-columns:1fr auto auto;gap:7px;align-items:end}.accountTableTitle{max-width:420px;white-space:normal;line-height:1.45}.miniGood{color:#9dceb1}.miniWarn{color:#d7c487}.importPreview{margin-top:10px;border:1px solid #2b3d45;border-radius:11px;background:#091014;padding:10px}.previewHead{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.previewHead b{font-size:11px}.previewHead span{font-size:8px;color:#7f9198}.previewStats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}.previewStat{border:1px solid #1d2a30;border-radius:8px;padding:7px}.previewStat span{font-size:7px;color:#718087;display:block}.previewStat b{font-size:13px;display:block;margin-top:3px}.previewCols{font-size:8px;color:#87979e;line-height:1.6;margin-top:8px}.previewRows{margin-top:8px;border-top:1px solid #1d2a30;padding-top:7px}.previewRows div{font-size:8px;color:#a4b0b5;padding:3px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:650px){.importBox{grid-template-columns:1fr}.previewStats{grid-template-columns:1fr 1fr}}
+.viralHero{border:1px solid #67532f;border-radius:15px;padding:15px;background:radial-gradient(circle at 92% 0,rgba(193,151,63,.20),transparent 34%),#11100c}.viralHero b{font-size:21px;display:block;margin-top:6px;line-height:1.3}.viralHero span{display:block;font-size:9px;color:#948a75;line-height:1.55;margin-top:6px}.viralMain{display:grid;grid-template-columns:320px 1fr;gap:10px}.viralScoreCard{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:260px}.viralDial{width:142px;height:142px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(#d9b86b var(--viral,0%),#1b1f20 0);position:relative}.viralDial:before{content:'';position:absolute;inset:11px;border-radius:50%;background:#0b1012}.viralDial strong{position:relative;font-size:38px;z-index:1}.viralDial span{position:absolute;z-index:1;margin-top:50px;font-size:8px;color:#86949a}.viralVerdict{font-size:16px;font-weight:800;margin-top:14px}.viralReason{font-size:8px;color:#829198;text-align:center;line-height:1.55;margin-top:6px;max-width:240px}.viralFactors{display:grid;gap:7px}.viralFactor{display:grid;grid-template-columns:90px 1fr 32px;gap:8px;align-items:center}.viralFactor span{font-size:8px;color:#89979d}.viralFactor .bar{height:6px}.viralFactor b{font-size:9px;text-align:right}.viralRiskList,.viralActionList{display:grid;gap:7px}.viralItem{border:1px solid #223036;border-radius:9px;padding:9px;background:#091014}.viralItem b{font-size:9px}.viralItem span{display:block;font-size:8px;color:#819098;line-height:1.5;margin-top:4px}.benchmarkGrid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}.benchmark{border:1px solid #253239;border-radius:9px;padding:9px}.benchmark span{font-size:7px;color:#718087;display:block}.benchmark b{font-size:15px;display:block;margin-top:4px}.viralMini{margin-top:10px;border-top:1px solid #243137;padding-top:10px}.viralMiniHead{display:flex;justify-content:space-between;align-items:center}.viralMiniHead span{font-size:8px;color:#7d8d94}.viralMiniHead b{font-size:18px}.viralModelTag{display:inline-flex;align-items:center;border:1px solid #6b5731;border-radius:999px;padding:4px 7px;font-size:8px;color:#d6bd7a;background:#211a0d}.viralQueue{display:grid;gap:7px}.viralQueueRow{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;border:1px solid #223036;border-radius:9px;padding:9px}.viralQueueRow b{font-size:9px}.viralQueueRow span{display:block;font-size:8px;color:#78888f;margin-top:3px}.viralQueueRow em{font-style:normal;font-size:15px;font-weight:800}
+@media(max-width:900px){.viralMain{grid-template-columns:1fr}.benchmarkGrid{grid-template-columns:1fr 1fr}}@media(max-width:650px){.benchmarkGrid{grid-template-columns:1fr 1fr}}
+.genHero{border:1px solid #615238;border-radius:15px;padding:15px;background:radial-gradient(circle at 90% 0,rgba(207,165,74,.18),transparent 34%),#11100d}.genHero b{display:block;font-size:21px;margin-top:6px;line-height:1.35}.genHero span{display:block;font-size:9px;color:#958a74;line-height:1.55;margin-top:6px}.genControls{display:grid;grid-template-columns:1fr auto auto;gap:7px;align-items:end}.genPick{border:1px solid #6d5730;border-radius:13px;padding:12px;background:#17130b}.genPick .pickTag{font-size:8px;color:#d7bd78}.genPick b{display:block;font-size:17px;margin-top:5px;line-height:1.4}.genPick span{display:block;font-size:8px;color:#94886f;margin-top:5px;line-height:1.5}.variantGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.variantCard{border:1px solid #27343a;border-radius:13px;background:#091014;padding:11px;position:relative}.variantCard.best{border-color:#806634;background:linear-gradient(180deg,#17130c,#091014 52%)}.variantTop{display:flex;justify-content:space-between;gap:8px;align-items:center}.variantTop strong{font-size:10px}.variantScore{font-size:22px;font-weight:900}.variantScore small{font-size:8px;color:#7c8b91;font-weight:500}.variantCard h3{font-size:12px;line-height:1.5;margin:10px 0 0}.variantMeta{font-size:8px;color:#7e8d93;margin-top:6px;line-height:1.5}.variantBlock{border-top:1px solid #1e2a2f;margin-top:8px;padding-top:8px}.variantBlock span{font-size:7px;color:#68777d;display:block}.variantBlock b{font-size:9px;line-height:1.55;display:block;margin-top:3px}.variantFactors{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}.variantFactors i{font-style:normal;font-size:7px;border:1px solid #29383f;border-radius:999px;padding:3px 5px;color:#87969c}.variantActions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.sourceStrip{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}.sourceStrip span{font-size:8px;border:1px solid #2a383e;border-radius:999px;padding:4px 7px;color:#85949a}.sourceStrip span.on{border-color:#69552f;color:#d6bd7c;background:#211b0e}.genEmpty{grid-column:1/-1}.bestBadge{position:absolute;right:9px;top:9px;font-size:7px;padding:4px 6px;border-radius:999px;border:1px solid #806634;color:#d9bd75;background:#211a0b}
+@media(max-width:900px){.variantGrid{grid-template-columns:1fr}.genControls{grid-template-columns:1fr 1fr}}@media(max-width:650px){.genControls{grid-template-columns:1fr}}
+.dailyHero{border:1px solid #6b5731;border-radius:15px;padding:15px;background:radial-gradient(circle at 92% 0,rgba(209,166,75,.20),transparent 34%),#11100c}.dailyHero b{font-size:22px;display:block;margin-top:6px;line-height:1.3}.dailyHero span{display:block;font-size:9px;color:#988d78;line-height:1.55;margin-top:6px}.dailyStatus{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.commandGrid{display:grid;grid-template-columns:1.15fr 1fr 1fr;gap:9px}.commandCard{border:1px solid #27343a;border-radius:13px;padding:12px;background:#091014;min-height:190px}.commandCard.p1{border-color:#806634;background:linear-gradient(180deg,#17130b,#091014 55%)}.commandCard.hold{border-color:#483036}.commandLabel{font-size:8px;color:#7d8c92}.commandCard.p1 .commandLabel{color:#d9bd76}.commandCard h3{font-size:14px;line-height:1.45;margin:8px 0 0}.commandScore{font-size:28px;font-weight:900;margin-top:10px}.commandScore small{font-size:8px;color:#74848b}.commandMeta{font-size:8px;color:#7e8e95;line-height:1.5;margin-top:7px}.commandWhy{font-size:8px;color:#a3afb4;line-height:1.55;border-top:1px solid #223036;padding-top:8px;margin-top:8px}.dailyRank{display:grid;gap:7px}.dailyRankRow{display:grid;grid-template-columns:26px 1fr auto;gap:8px;align-items:center;border:1px solid #223036;border-radius:9px;padding:9px}.dailyRankRow>strong{font-size:13px}.dailyRankRow b{font-size:9px;line-height:1.4}.dailyRankRow span{display:block;font-size:8px;color:#798990;margin-top:3px}.dailyRankRow em{font-style:normal;font-size:16px;font-weight:900}.dailyControls{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}.dailyInsight{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.dailyInsight div{border:1px solid #243137;border-radius:9px;padding:9px}.dailyInsight span{font-size:7px;color:#708087;display:block}.dailyInsight b{font-size:10px;display:block;margin-top:4px;line-height:1.45}.dailyLoading{opacity:.65;pointer-events:none}.trendOriginal{font-size:7px;color:#64747b;line-height:1.45;margin-top:5px;border-left:2px solid #26343a;padding-left:6px}.zhBadge{font-size:7px;color:#cbb06e;border:1px solid #69572f;border-radius:999px;padding:2px 5px;margin-left:5px}
+@media(max-width:900px){.commandGrid{grid-template-columns:1fr}.dailyInsight{grid-template-columns:1fr}}@media(max-width:650px){.dailyControls .btn{flex:1}}
+.videoHero{border:1px solid #614f30;border-radius:15px;padding:15px;background:radial-gradient(circle at 90% 0,rgba(205,164,74,.18),transparent 34%),#11100c}.videoHero b{display:block;font-size:21px;line-height:1.35;margin-top:6px}.videoHero span{display:block;font-size:9px;color:#968b76;line-height:1.55;margin-top:6px}.videoLayout{display:grid;grid-template-columns:1fr 340px;gap:10px}.videoSource{border:1px solid #26343a;border-radius:11px;padding:10px;background:#091014}.videoSource h3{font-size:13px;line-height:1.5;margin:6px 0}.videoSource p{font-size:8px;color:#7c8d94;line-height:1.55;margin:5px 0}.factList{display:grid;gap:7px;margin-top:9px}.factItem{border:1px solid #223036;border-radius:9px;padding:9px;background:#0a1013}.factItem span{font-size:7px;color:#708087}.factItem b{display:block;font-size:9px;line-height:1.55;margin-top:3px}.timeline{display:grid;gap:6px}.timelineRow{display:grid;grid-template-columns:56px 1fr;gap:7px;border:1px solid #223036;border-radius:8px;padding:8px}.timelineRow span{font-size:8px;color:#789098}.timelineRow b{font-size:9px;line-height:1.45}.videoStage{display:flex;flex-direction:column;align-items:center}.videoCanvasWrap{width:100%;max-width:300px;aspect-ratio:9/16;border:1px solid #2a393f;border-radius:14px;overflow:hidden;background:#050708;box-shadow:0 20px 50px rgba(0,0,0,.35)}#videoCanvas{display:block;width:100%;height:100%}.videoPreview{width:100%;max-width:300px;aspect-ratio:9/16;border-radius:14px;background:#050708;margin-top:9px}.renderProgress{width:100%;max-width:300px;margin-top:9px}.renderTrack{height:6px;border-radius:999px;background:#1a2226;overflow:hidden}.renderTrack i{display:block;height:100%;width:0;background:#d7bd78}.renderMeta{display:flex;justify-content:space-between;font-size:8px;color:#78888f;margin-top:5px}.videoOptions{display:grid;gap:7px;margin-top:9px;width:100%;max-width:300px}.checkRow{display:flex;align-items:flex-start;gap:7px;border:1px solid #233137;border-radius:8px;padding:8px;font-size:8px;color:#91a0a6}.checkRow input{margin-top:1px}.videoDownload{display:none;text-decoration:none;text-align:center;border:1px solid #41614d;background:#14251a;color:#a9d6b7;border-radius:8px;padding:9px;font-size:10px;font-weight:700}.videoDownload.show{display:block}.videoNotice{font-size:8px;color:#7a8b91;line-height:1.55;margin-top:8px}.readerStatus{font-size:8px;color:#91a1a7;margin-top:7px}.videoEmpty{min-height:180px;display:grid;place-items:center;text-align:center;color:#718187;font-size:9px}
+
+.videoAssetStrip{display:flex;gap:6px;overflow-x:auto;padding:7px 0 2px}.videoAssetThumb{width:56px;height:78px;border-radius:7px;border:1px solid #2d3a40;background:#0a0f11 center/cover no-repeat;flex:0 0 auto;position:relative}.videoAssetThumb i{position:absolute;left:4px;bottom:4px;font-style:normal;font-size:6px;padding:2px 4px;border-radius:999px;background:rgba(0,0,0,.66);color:#e9edef}.assetQuality{display:inline-flex;align-items:center;gap:5px;font-size:7px;border:1px solid #324148;border-radius:999px;padding:3px 6px;margin-top:5px}.assetQuality.pro{border-color:#6e5a32;color:#d7bd78}.assetQuality.mid{border-color:#3c5965;color:#9fc3d0}.assetQuality.low{border-color:#5b3539;color:#d39a9f}
+
+.directorBin{border-color:#3a4a51}.directorImport{display:grid;grid-template-columns:1.4fr 1fr 160px;gap:7px}.footageGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:9px}.footageCard{border:1px solid #27353b;border-radius:9px;overflow:hidden;background:#080d0f}.footageThumb{height:96px;background:#111820 center/cover no-repeat;position:relative;display:grid;place-items:center;color:#7e9097;font-size:8px}.footageThumb video{width:100%;height:100%;object-fit:cover}.footageCardBody{padding:7px}.footageCardBody b{display:block;font-size:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.footageMeta{display:flex;justify-content:space-between;gap:5px;font-size:7px;color:#708087;margin-top:4px}.motionMeter{height:4px;background:#1c282d;border-radius:99px;margin-top:5px;overflow:hidden}.motionMeter i{display:block;height:100%;background:#d7b568}.qualityTag{font-size:6px;border:1px solid #304047;border-radius:999px;padding:2px 4px}.qualityTag.high{color:#a9d2b7;border-color:#41614d}.qualityTag.mid{color:#b5cbd3;border-color:#42616d}.qualityTag.low{color:#d19a9f;border-color:#5a373b}.directorCutList{display:grid;gap:6px}.directorCutRow{display:grid;grid-template-columns:58px 82px 1fr auto;gap:8px;align-items:center;border:1px solid #243238;border-radius:8px;padding:8px}.directorCutRow>span{font-size:7px;color:#72838a}.directorCutRow strong{font-size:8px;color:#d7b568}.directorCutRow b{font-size:8px;line-height:1.4}.directorCutRow em{font-style:normal;font-size:7px;color:#91a1a7}.directorMode{display:inline-flex;border:1px solid #705a31;color:#d8bd77;border-radius:999px;padding:3px 6px;font-size:7px}.directorMode.fallback{border-color:#4d5960;color:#93a2a8}
+
+@media(max-width:900px){.videoLayout{grid-template-columns:1fr}.videoStage{order:-1}.directorImport{grid-template-columns:1fr}.footageGrid{grid-template-columns:1fr 1fr}}
+</style>
+<link rel="stylesheet" href="./css/mobile.css?v=210">
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="brand">
+      <strong>SAGI CONTENT OS</strong>
+      <span>内容运营中心 · CONTENT OPERATING SYSTEM</span>
+      <i class="version">V2.1 · MOBILE FIRST</i>
+    </div>
+    <div class="nav">
+      <button data-view="matchday"><b>MATCHDAY</b><span>比赛日现场指挥</span></button>
+      <button data-view="videojobs"><b>AI VIDEO JOB</b><span>一键下剪辑任务</span></button>
+      <button data-view="review"><b>REVIEW</b><span>手机审核返修</span></button>
+      <button class="active" data-view="daily"><b>DAILY VIRAL</b><span>每日爆款指挥</span></button>
+      <button data-view="today"><b>TODAY</b><span>今日计划</span></button>
+      <button data-view="trends"><b>LIVE RADAR</b><span>互联网热点</span></button>
+      <button data-view="flow"><b>FLOW</b><span>内容流水线</span></button>
+      <button data-view="director"><b>AI DIRECTOR</b><span>AI内容导演</span></button>
+      <button data-view="calendar"><b>CALENDAR</b><span>内容排期</span></button>
+      <button data-view="assets"><b>ASSETS</b><span>素材库</span></button>
+      <button data-view="video"><b>AI VIDEO DIRECTOR</b><span>真实镜头自动剪辑</span></button>
+      <button data-view="create"><b>CREATE</b><span>内容制作</span></button>
+      <button data-view="publish"><b>PUBLISH</b><span>发布中心</span></button>
+      <button data-view="learning"><b>LEARNING</b><span>内容学习</span></button>
+      <button data-view="viralgen"><b>VIRAL GEN</b><span>爆款内容生成</span></button>
+      <button data-view="viral"><b>VIRAL MODEL</b><span>萨吉爆款模型</span></button>
+      <button data-view="account"><b>ACCOUNT DATA</b><span>萨吉体育数据</span></button>
+      <button data-view="performance"><b>PERFORMANCE</b><span>表现与转化</span></button>
+      <button data-view="projects"><b>PROJECTS</b><span>内容项目</span></button>
+    </div>
+    <div class="sideFoot">
+      <a href="../teamwear/latest.html?v=193">返回 SALES OS</a>
+      <button id="syncSalesBtn" type="button">同步 SALES 数据</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="top">
+      <div><h1 id="viewTitle">DAILY VIRAL · 每日爆款指挥官</h1><p id="viewDesc">互联网热点 + SAGI项目 + 历史数据，直接决定今天先发什么。</p></div>
+      <div class="projectBar">
+        <select id="projectSelect"></select>
+        <button class="btn" id="newProjectBtn" type="button">＋ 新建内容项目</button>
+      </div>
+    </div>
+
+
+
+    <section class="view" data-view-panel="matchday">
+      <div class="mobileHero">
+        <div class="heroTag">MATCHDAY MODE · FIELD COMMAND</div>
+        <b>比分、时间、关键时刻，一只手完成。</b>
+        <span>每个事件自动记录比赛时间、实时比分和分析窗口。普通事件前后±30秒；“刚刚精彩”优先保存过去35秒到未来15秒。</span>
+        <div class="matchScore">
+          <div class="matchTeam">
+            <label>主队</label><input id="matchHome" placeholder="主队" value="主队">
+            <div class="scoreControl"><button data-score-side="home" data-score-delta="-1" type="button">−</button><b id="matchHomeScore">0</b><button data-score-side="home" data-score-delta="1" type="button">＋</button></div>
+            <button class="btn goalTeamBtn" data-goal-side="home" type="button">⚽ 主队进球</button>
+          </div>
+          <div class="matchClock"><b id="matchClock">00:00</b><span id="matchClockState">未开始</span><button class="btn primary" id="matchClockBtn" type="button">开始</button></div>
+          <div class="matchTeam">
+            <label>客队</label><input id="matchAway" placeholder="客队" value="客队">
+            <div class="scoreControl"><button data-score-side="away" data-score-delta="-1" type="button">−</button><b id="matchAwayScore">0</b><button data-score-side="away" data-score-delta="1" type="button">＋</button></div>
+            <button class="btn goalTeamBtn" data-goal-side="away" type="button">⚽ 客队进球</button>
+          </div>
+        </div>
+        <div class="matchToolbar"><button class="btn" id="matchUndoBtn" type="button">↶ 撤销</button><button class="btn" id="matchHalfBtn" type="button">半场</button><button class="btn" id="matchFullBtn" type="button">全场</button><button class="btn" id="matchResetBtn" type="button">重置</button><button class="btn blue" id="matchToJobBtn" type="button">创建视频任务</button></div>
+      </div>
+      <div class="section card">
+        <div class="sectionHead"><div><h2>LIVE MARKERS</h2><p>进球直接点主/客队；其他事件只需一次点击。</p></div><span id="matchMarkerCount" class="pill">0 MARKERS</span></div>
+        <div class="matchEventGrid">
+          <button class="matchEventBtn quick" data-match-recent="highlight" type="button">⚡ 刚刚精彩<small>-35s → +15s</small></button>
+          <button class="matchEventBtn quick" data-match-recent="crowd" type="button">🔥 刚刚爆发<small>观众 / 现场情绪</small></button>
+          <button class="matchEventBtn hot" data-match-event="save" type="button">🧤 扑救<small>SAVE</small></button>
+          <button class="matchEventBtn" data-match-event="shot" type="button">🎯 射门<small>SHOT</small></button>
+          <button class="matchEventBtn" data-match-event="celebration" type="button">🙌 庆祝<small>CELEBRATION</small></button>
+          <button class="matchEventBtn" data-match-event="duel" type="button">💥 强对抗<small>DUEL</small></button>
+          <button class="matchEventBtn" data-match-event="crowd" type="button">🔥 观众爆发<small>CROWD</small></button>
+          <button class="matchEventBtn" data-match-event="skill" type="button">✨ 精彩配合<small>SKILL</small></button>
+          <button class="matchEventBtn danger" data-match-event="card" type="button">🟨🟥 牌/冲突<small>CARD / CONFLICT</small></button>
+        </div>
+      </div>
+      <div class="section card">
+        <div class="sectionHead"><div><h2>MATCH LOG</h2><p>时间点 + 比分 + 重点分析窗口，直接给电脑端使用。</p></div><button class="btn" id="matchExportBtn" type="button">导出比赛标记</button></div>
+        <div id="matchLog" class="matchLog"><div class="empty">还没有比赛事件。</div></div>
+      </div>
+    </section>
+
+    <section class="view" data-view-panel="videojobs">
+      <div class="mobileHero">
+        <div class="heroTag">AI VIDEO JOB · MOBILE DISPATCH</div>
+        <b>手机决定“剪什么”，电脑负责“怎么剪”。</b>
+        <span>任务会保存到 CONTENT OS，并可导出标准 JSON 给后续 SAGI LOCAL BRIDGE。当前尚未连接电脑桥接，因此新任务会显示 WAITING FOR BRIDGE。</span>
+      </div>
+      <div class="section card">
+        <div class="sectionHead"><div><h2>选择成片类型</h2><p>点一个模板，再创建任务。</p></div><span id="jobSelectedType" class="pill">15S HOT</span></div>
+        <div id="jobSuggestions" class="jobSuggestions"></div>
+        <div id="jobTypeGrid" class="jobQuick">
+          <button class="jobType active" data-job-type="hot15" type="button"><b>15秒热点版</b><span>最强镜头前1秒出现，适合抖音热点。</span></button>
+          <button class="jobType" data-job-type="emotion25" type="button"><b>25秒情绪版</b><span>人物、现场、庆祝、观众情绪。</span></button>
+          <button class="jobType" data-job-type="top5" type="button"><b>比赛 TOP5</b><span>自动挑5个最值得看的时刻。</span></button>
+          <button class="jobType" data-job-type="goals" type="button"><b>进球集锦</b><span>优先 GOAL + CELEBRATION。</span></button>
+          <button class="jobType" data-job-type="player" type="button"><b>球员个人集锦</b><span>后续交给人物识别/球员标签。</span></button>
+          <button class="jobType" data-job-type="recap" type="button"><b>赛后回顾</b><span>比赛走势 + 高光 + 情绪结尾。</span></button>
+        </div>
+        <div class="grid2" style="margin-top:9px">
+          <div class="field"><label>任务标题</label><input id="jobTitle" placeholder="例如：塔城长风联赛 第1轮赛后回顾"></div>
+          <div class="field"><label>优先素材来源</label><select id="jobSource"><option value="matchday">MATCHDAY 标记</option><option value="footage">已导入真实素材</option><option value="trend">当前互联网热点</option></select></div>
+        </div>
+        <div class="toolbar"><button class="btn primary" id="jobCreateBtn" type="button">创建 AI 剪辑任务</button><button class="btn" id="jobExportAllBtn" type="button">导出全部任务</button></div>
+        <div class="bridgeBar"><div><b><i class="bridgeDot"></i>SAGI LOCAL BRIDGE</b><span>电脑桥接尚未连接</span></div><span>DISCONNECTED</span></div>
+      </div>
+      <div class="section card">
+        <div class="sectionHead"><div><h2>VIDEO JOB QUEUE</h2><p>手机端任务队列。</p></div><span id="jobCount" class="pill">0 JOBS</span></div>
+        <div id="jobList" class="jobList"><div class="empty">还没有视频任务。</div></div>
+      </div>
+    </section>
+
+    <section class="view" data-view-panel="review">
+      <div class="mobileHero">
+        <div class="heroTag">REVIEW · ONE-TAP FEEDBACK</div>
+        <b>成片不用在手机上重剪，只告诉电脑“哪里不对”。</b>
+        <span>审核动作会写回任务：通过、换开头、换音乐、字幕减少、节奏加快、改15秒或整条重剪。</span>
+      </div>
+      <div class="section card">
+        <div class="sectionHead"><div><h2>REVIEW QUEUE</h2><p>READY / REVISION / APPROVED 统一在这里处理。</p></div><span id="reviewCount" class="pill">0 ITEMS</span></div>
+        <div id="reviewList" class="reviewList"><div class="empty">还没有等待审核的任务。</div></div>
+      </div>
+    </section>
+
+    <section class="view active" data-view-panel="daily">
+      <div class="dailyHero">
+        <div class="heroTag">DAILY VIRAL COMMAND · 萨吉体育</div>
+        <b>今天不问“发什么都行”，只回答：哪一条最值得抢，哪一条应该接着做，哪一条今天先别发。</b>
+        <span>系统联网扫描足球热点，同时读取萨吉体育内容项目、待发布任务和 V1.5 爆款模型。结果是优先级建议，不承诺爆款。</span>
+        <div class="dailyStatus">
+          <span class="pill good">DOUYIN · 181444241</span>
+          <span id="dailyInternetBadge" class="pill">INTERNET · WAITING</span>
+          <span id="dailyModelBadge" class="pill">MODEL · READY</span>
+        </div>
+        <div class="dailyControls">
+          <button class="btn primary" id="dailyRunBtn" type="button">刷新并生成今日指挥</button>
+          <button class="btn blue" id="dailyOpenP1Btn" type="button">执行 P1</button>
+          <button class="btn" id="dailyOpenRadarBtn" type="button">打开 LIVE RADAR</button>
+        </div>
+      </div>
+
+      <div class="section commandGrid">
+        <div id="dailyP1" class="commandCard p1"><div class="commandLabel">P1 · NOW｜现在最值得做</div><h3>正在生成今日指挥...</h3></div>
+        <div id="dailyP2" class="commandCard"><div class="commandLabel">P2 · NEXT｜第二优先</div><h3>等待候选内容</h3></div>
+        <div id="dailyHold" class="commandCard hold"><div class="commandLabel">HOLD｜今天先别发</div><h3>等待风险判断</h3></div>
+      </div>
+
+      <div class="section grid2">
+        <div class="card">
+          <div class="sectionHead"><div><h2>DAILY RANKING</h2><p>热点、现有任务、赛事/球队项目放在同一张榜里比较。</p></div><span id="dailyUpdated" class="pill">未更新</span></div>
+          <div id="dailyRanking" class="dailyRank"><div class="empty">正在等待今日候选。</div></div>
+        </div>
+        <div class="card">
+          <div class="sectionHead"><div><h2>COMMAND LOGIC</h2><p>为什么系统今天这样安排。</p></div></div>
+          <div class="dailyInsight">
+            <div><span>热点候选</span><b id="dailyTrendCount">0</b></div>
+            <div><span>项目 / 任务候选</span><b id="dailyProjectCount">0</b></div>
+            <div><span>模型置信度</span><b id="dailyConfidence">0%</b></div>
+          </div>
+          <div id="dailyCommandInsight" class="insight" style="margin-top:9px">等待生成今日指挥。</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" data-view-panel="today">
+      <div class="grid4">
+        <div class="card kpi"><span>今日计划</span><b id="kpiToday">0</b><small>计划在今天发布</small></div>
+        <div class="card kpi"><span>待制作</span><b id="kpiDraft">0</b><small>导演方案已生成</small></div>
+        <div class="card kpi"><span>待发布</span><b id="kpiReady">0</b><small>成品等待发布</small></div>
+        <div class="card kpi"><span>已学习内容</span><b id="kpiLearned">0</b><small>有真实表现数据</small></div>
+      </div>
+      <div class="section hero">
+        <div class="heroTag">AI RECOMMENDATION · TODAY'S CONTENT</div>
+        <div id="todayHeroTitle" class="heroTitle">选择一个内容项目，AI导演会告诉你今天最值得发什么。</div>
+        <div id="todayHeroMeta" class="heroMeta">内容目标 · 推荐形式 · 发布时间 · 学习依据</div>
+        <div class="heroActions">
+          <button class="btn primary" id="todayGenerateBtn" type="button">生成今日导演方案</button>
+          <button class="btn blue" id="todayOpenDirectorBtn" type="button">进入 AI DIRECTOR</button>
+          <button class="btn" id="todayAddPlanBtn" type="button">加入今日计划</button>
+        </div>
+      </div>
+      <div class="section todayGrid">
+        <div class="card">
+          <div class="sectionHead"><div><h2>TODAY'S PLAN</h2><p>今天真正需要做的内容，不让计划散在聊天和脑子里。</p></div></div>
+          <div id="todayQueue" class="taskList"></div>
+        </div>
+        <div class="card">
+          <div class="sectionHead"><div><h2>AI OPPORTUNITY</h2><p>系统根据项目状态和历史表现给出的机会提醒。</p></div></div>
+          <div id="opportunityBox" class="insight">等待项目数据。</div>
+        </div>
+      </div>
+      <div class="section card">
+        <div class="sectionHead"><div><h2>THIS WEEK</h2><p>保持品牌、产品、人物、赛事和热点之间的内容平衡。</p></div></div>
+        <div id="weekCalendar" class="calendar"></div>
+      </div>
+    </section>
+
+
+
+    <section class="view" data-view-panel="trends">
+      <div class="trendHero">
+        <div class="heroTag">DOUYIN ACCOUNT · 萨吉体育</div>
+        <b>先找到正在升温的话题，再判断它适不适合「萨吉体育」来发。</b>
+        <span>互联网热度只用于选题优先级判断；最终传播还取决于时机、Hook、画面、人物和账号历史表现。</span>
+      </div>
+      <div class="section card">
+        <div class="sectionHead"><div><h2>LIVE TREND RADAR</h2><p>抓取近24小时新闻信号，优先显示新鲜、相关、可转化成短视频的足球话题。</p></div><span class="pill good">中文优先</span><span class="pill">INTERNET ON</span></div>
+        <div class="trendControls">
+          <div class="field"><label>热点频道</label><select id="trendProfile">
+            <option value="global">全球足球</option>
+            <option value="china">中国足球</option>
+            <option value="xinjiang">新疆足球</option>
+            <option value="stars">C罗 / 梅西</option>
+            <option value="custom">自定义</option>
+          </select></div>
+          <div class="field"><label>自定义关键词</label><input id="trendQuery" placeholder="例如：Cristiano Ronaldo / 中超 / 新疆足球"></div>
+          <button class="btn primary" id="trendRefreshBtn" type="button">刷新互联网热点</button>
+          <button class="btn" id="trendOpenGoogleBtn" type="button">查看 Google Trends</button>
+        </div>
+        <div id="trendStatus" class="trendStatus">尚未联网刷新。</div>
+      </div>
+      <div class="section">
+        <div id="trendGrid" class="trendGrid"><div class="empty trendEmpty">点击“刷新互联网热点”开始抓取。</div></div>
+      </div>
+    </section>
+
+    <section class="view" data-view-panel="flow">
+      <div class="flowStages" id="flowStages"></div>
+      <div class="section flowNext">
+        <div class="flowNextLabel">NEXT ACTION ENGINE · 下一步动作</div>
+        <div id="flowNextTitle" class="flowNextTitle">系统正在判断最值得先做的动作</div>
+        <div id="flowNextMeta" class="flowNextMeta">项目、排期、制作状态、发布状态和学习数据会一起参与判断。</div>
+        <div class="heroActions">
+          <button class="btn primary" id="flowNextBtn" type="button">执行下一步</button>
+          <button class="btn" id="flowTodayBtn" type="button">返回 TODAY</button>
+        </div>
+      </div>
+      <div class="section grid2">
+        <div class="card">
+          <div class="sectionHead"><div><h2>PIPELINE QUEUE</h2><p>所有内容按真实状态进入同一条流水线。</p></div></div>
+          <div id="flowQueue" class="flowQueue"></div>
+        </div>
+        <div class="card">
+          <div class="sectionHead"><div><h2>SYSTEM HEALTH</h2><p>快速判断系统是不是只在做内容，却没有发布和学习。</p></div></div>
+          <div id="flowHealth" class="flowHealth"></div>
+          <div id="flowInsight" class="insight" style="margin-top:8px">等待数据。</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" data-view-panel="director">
+      <div class="directorLayout">
+        <div class="card">
+          <div class="sectionHead"><div><h2>AI CONTENT DIRECTOR</h2><p>先选目标，再决定形式、Hook、镜头、音乐和发布时间。</p></div><span class="pill">CONTENT BRAIN</span></div>
+          <div class="formGrid">
+            <div class="field"><label>内容目标</label><select id="directorGoal"><option value="reach">传播 / 播放</option><option value="follow">涨粉 / 关注</option><option value="interaction">互动 / 评论</option><option value="brand" selected>品牌 / SAGI识别</option><option value="sales">销售 / 询单</option><option value="event">赛事 / 报名关注</option><option value="story">故事 / 情绪</option></select></div>
+            <div class="field"><label>内容形式</label><select id="directorFormat"><option value="auto">AI 自动选择</option><option value="image">图片模式</option><option value="video15">15秒短视频</option><option value="video25">25秒品牌短片</option><option value="poster">海报 / 图文</option></select></div>
+            <div class="field"><label>导演风格</label><select id="directorStyle"><option value="premium">顶级品牌广告感</option><option value="dynamic">快速动感</option><option value="north">北疆风 / 风感</option><option value="emotion">人物情绪</option><option value="product">产品细节</option></select></div>
+            <div class="field"><label>发布平台</label><select id="directorPlatform"><option value="douyin">抖音</option><option value="wechat">微信 / 朋友圈</option><option value="multi">多平台</option></select></div>
+            <div class="field wide"><label>本条主题（可留空）</label><input id="directorTheme" placeholder="留空由 AI 根据项目自动决定"></div>
+            <div class="field wide"><label>补充要求</label><input id="directorNote" placeholder="例如：更像耐克/阿迪广告、强调风吹动感"></div>
+          </div>
+          <div class="toolbar">
+            <button class="btn primary" id="generateDirectorBtn" type="button">AI 生成导演方案</button>
+            <button class="btn blue" id="saveDirectorBtn" type="button">保存为内容任务</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="sectionHead"><div><h2>PRE-PUBLISH SCORE</h2><p>发布前先检查内容结构，而不是发完才后悔。</p></div></div>
+          <div class="scoreBox"><b id="directorScore">0</b><span>/ 100</span></div>
+          <div id="scoreRows" class="scoreRows"></div><div class="viralMini"><div class="viralMiniHead"><span>SAGI VIRAL INDEX</span><b id="directorViralScore">0</b></div><div id="directorViralVerdict" class="sub">等待爆款模型分析</div></div>
+        </div>
+      </div>
+
+      <div class="section card">
+        <div class="heroTag">DIRECTOR BRIEF</div>
+        <div id="briefTitle" class="heroTitle" style="font-size:18px">等待生成导演方案</div>
+        <div id="briefMeta" class="heroMeta">AI会结合当前项目素材与历史表现。</div>
+        <div id="briefGrid" class="briefGrid"></div>
+      </div>
+      <div class="section grid2">
+        <div class="card"><div class="sectionHead"><div><h2>HOOK DIRECTOR</h2><p>生成5个开头，选择一个进入制作。</p></div></div><div id="hookList" class="hookList"></div></div>
+        <div class="card"><div class="sectionHead"><div><h2>SHOT LIST</h2><p>把“怎么剪”直接变成镜头执行单。</p></div></div><div id="shotList" class="shotList"></div></div>
+      </div>
+    </section>
+
+    <section class="view" data-view-panel="calendar">
+      <div class="card">
+        <div class="sectionHead"><div><h2>CONTENT CALENDAR</h2><p>跨球队、赛事、品牌统一看未来内容。</p></div><button class="btn" id="calendarAutoBtn" type="button">生成7天建议</button></div>
+        <div id="calendarFull" class="calendar"></div>
+      </div>
+      <div class="section card">
+        <div class="sectionHead"><div><h2>SCHEDULED CONTENT</h2><p>未来已经安排的内容。</p></div></div>
+        <div id="scheduledList" class="queue"></div>
+      </div>
+    </section>
+
+    <section class="view" data-view-panel="assets">
+      <div class="card">
+        <div class="sectionHead"><div><h2>ASSET LIBRARY</h2><p>销售系统已有素材会自动出现；这里也可以补充 CONTENT OS 专用素材。</p></div><span id="assetProjectName" class="pill">未选择项目</span></div>
+        <div id="assetGrid" class="assetGrid"></div>
+      </div>
+    </section>
+
+
+    <section class="view" data-view-panel="video">
+      <div class="videoHero">
+        <div class="heroTag">AI FOOTBALL VIDEO DIRECTOR · 萨吉体育</div>
+        <b>真实足球镜头做主体，AI负责选镜头、排节奏、加中文信息和品牌包装。</b>
+        <span>优先使用你手机里的比赛 / 球员 / 无人机 / 观众 / 球衣真实视频。互联网新闻图只作为补充。所有导入素材只在当前设备浏览器中处理，不上传到仓库。</span>
+      </div>
+
+      <div class="section videoLayout">
+
+        <div>
+          <div class="card directorBin">
+            <div class="sectionHead"><div><h2>FOOTAGE BIN · 真实镜头库</h2><p>一次导入多段视频/照片，AI分析清晰度、方向和运动强度。</p></div><span id="directorQualityBadge" class="pill">NO FOOTAGE</span></div>
+            <div class="directorImport">
+              <div class="field"><label>比赛 / 球员 / 无人机 / 观众素材</label><input id="directorFootageInput" type="file" multiple accept="video/*,image/*"></div>
+              <div class="field"><label>配乐（可选 · 使用你有权使用的音频）</label><input id="directorMusicInput" type="file" accept="audio/*"></div>
+              <div class="field"><label>成片时长</label><select id="directorDuration"><option value="15">15秒 · 热点爆发</option><option value="25">25秒 · 品牌叙事</option></select></div>
+            </div>
+            <div class="toolbar"><button class="btn primary" id="directorAnalyzeFootageBtn" type="button">重新分析镜头</button><button class="btn blue" id="directorBuildCutBtn" type="button">生成导演时间线</button><button class="btn" id="directorClearFootageBtn" type="button">清空本地素材</button></div>
+            <div id="directorFootageSummary" class="readerStatus">选择视频后会立即显示数量并自动分析。若分析失败，会直接显示原因。</div>
+            <div id="directorFootageGrid" class="footageGrid"></div>
+          </div>
+
+          <div class="section card">
+            <div class="sectionHead"><div><h2>AI DIRECTOR CUT</h2><p>HOOK → ACTION → DETAIL → EMOTION → IMPACT → CTA。镜头优先级由运动强度和画质决定。</p></div><span id="directorCutBadge" class="pill">WAITING</span></div>
+            <div id="directorCutList" class="directorCutList"><div class="empty">导入真实视频后生成导演时间线。</div></div>
+          </div>
+
+          <div class="card">
+            <div class="sectionHead"><div><h2>NEWS SOURCE</h2><p>从 LIVE RADAR 选择热点，系统会读取原文并生成中文视频脚本。</p></div><span id="videoSourceBadge" class="pill">NO SOURCE</span></div>
+            <div id="videoSourceBox" class="videoEmpty">还没有选择互联网热点。去 LIVE RADAR 点击“直接制作视频”。</div>
+            <div id="videoReaderStatus" class="readerStatus"></div>
+          </div>
+          <div class="section card">
+            <div class="sectionHead"><div><h2>FACTS · 中文事实</h2><p>最多使用3条短事实，适合15秒短视频，不做长文搬运。</p></div><button class="btn" id="videoReloadBtn" type="button">重新读取原文</button></div>
+            <div id="videoFacts" class="factList"><div class="empty">等待资料</div></div>
+          </div>
+          <div class="section card">
+            <div class="sectionHead"><div><h2>NEWS SCRIPT</h2><p>中文资料只负责信息层，不再替代真实镜头。</p></div><button class="btn blue" id="videoCopyScriptBtn" type="button">复制脚本</button></div>
+            <div id="videoTimeline" class="timeline"><div class="empty">等待生成脚本</div></div>
+          </div>
+        </div>
+        </div>
+        <div class="card videoStage">
+          <div class="sectionHead" style="width:100%"><div><h2>DIRECTOR RENDER</h2><p>1080×1920 · 真实视频优先 · 导演时间线</p></div><span id="videoRenderBadge" class="pill">DIRECTOR</span></div>
+          <div class="videoCanvasWrap"><canvas id="videoCanvas" width="1080" height="1920"></canvas></div>
+          <video id="videoPreview" class="videoPreview" controls playsinline style="display:none"></video>
+          <div class="renderProgress"><div class="renderTrack"><i id="videoProgressBar"></i></div><div class="renderMeta"><span id="videoProgressText">等待生成</span><span id="videoFormatText">自动检测格式</span></div></div>
+          <div class="videoOptions">
+            <label class="checkRow"><input id="videoUseImage" type="checkbox" checked> <span>PRO ASSET CUT：自动使用网页多图做镜头切换（仅用于你有权使用的素材；发布前确认版权/授权）</span></label><div id="videoAssetStatus" class="readerStatus">尚未分析视觉素材。</div>
+            <label class="checkRow"><input id="videoUseAudio" type="checkbox" checked> <span>加入原创低频节奏音轨；如果浏览器不支持则自动静音生成</span></label>
+            <button class="btn primary" id="videoRenderBtn" type="button">生成导演版视频</button>
+            <a id="videoDownload" class="videoDownload" href="#">保存视频文件</a>
+          </div>
+          <div class="videoNotice">V1.9 导演模式：有 ≥3 段真实视频时优先使用 FOOTAGE DIRECTOR；不足时退回 PRO ASSET CUT / MOTION ONLY。视频与音乐文件仅保留在当前浏览器会话，刷新页面后需要重新选择。</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" data-view-panel="create">
+      <div class="card">
+        <div class="sectionHead"><div><h2>CREATE STUDIO</h2><p>导演方案 → 故事板。图片模式、15秒、25秒共享同一套内容结构。</p></div><button class="btn primary" id="createFromDirectorBtn" type="button">用当前导演方案生成故事板</button></div>
+        <div id="storyboard" class="storyboard"></div>
+      </div>
+      <div class="section card">
+        <div class="sectionHead"><div><h2>CONTENT PACKAGE</h2><p>把制作执行信息集中在一个地方。</p></div></div>
+        <div class="grid3">
+          <div class="field"><label>封面标题</label><input id="packageCover" placeholder="封面标题"></div>
+          <div class="field"><label>CTA</label><input id="packageCta" placeholder="结尾行动语"></div>
+          <div class="field"><label>话题</label><input id="packageTags" value="#新疆足球 #足球队服 #SAGI"></div>
+        </div>
+        <div class="toolbar"><button class="btn blue" id="packageCopyBtn" type="button">复制制作执行单</button><button class="btn good" id="markReadyBtn" type="button">标记为待发布</button></div>
+      </div>
+    </section>
+
+    <section class="view" data-view-panel="publish">
+      <div class="card">
+        <div class="sectionHead"><div><h2>PUBLISH CENTER</h2><p>这里管理草稿、待发布、已发布和数据回填。</p></div></div>
+        <div class="tableWrap"><table class="table"><thead><tr><th>内容</th><th>项目</th><th>形式</th><th>计划时间</th><th>状态</th><th>操作</th></tr></thead><tbody id="publishTable"></tbody></table></div>
+      </div>
+    </section>
+
+    <section class="view" data-view-panel="learning">
+      <div class="grid4">
+        <div class="card kpi"><span>已学习内容</span><b id="learnCount">0</b><small>真实数据样本</small></div>
+        <div class="card kpi"><span>高表现内容</span><b id="learnHigh">0</b><small>评分≥60</small></div>
+        <div class="card kpi"><span>已发现模式</span><b id="learnPatterns">0</b><small>可复用规律</small></div>
+        <div class="card kpi"><span>学习置信度</span><b id="learnConfidence">0%</b><small>样本越多越可靠</small></div>
+      </div>
+      <div class="section grid2">
+        <div class="card"><div class="sectionHead"><div><h2>最重要发现</h2><p>不照搬平台通用公式，只学习 SAGI 自己的真实结果。</p></div></div><div id="learningInsight" class="insight"></div></div>
+        <div class="card"><div class="sectionHead"><div><h2>WINNING PATTERNS</h2><p>可重复使用，但不要机械复制。</p></div></div><div id="winningPatterns" class="patterns"></div></div>
+      </div>
+    </section>
+
+
+
+
+    <section class="view" data-view-panel="viralgen">
+      <div class="genHero">
+        <div class="heroTag">VIRAL CONTENT GENERATOR · 爆款内容生成器</div>
+        <b>同一个选题，不只给一个答案。一次生成3套打法，让 SAGI VIRAL MODEL 自己选冠军。</b>
+        <span>A 抢时效 · B 强情绪 · C 强评论。系统使用「萨吉体育」账号真实数据与当前热点信号自动评分，第一名标记为 TODAY PICK。</span>
+      </div>
+
+      <div class="section card">
+        <div class="sectionHead"><div><h2>TOPIC INPUT</h2><p>可以来自 LIVE RADAR，也可以直接输入你准备做的足球内容。</p></div><span class="viralModelTag">3 VARIANTS</span></div>
+        <div class="genControls">
+          <div class="field"><label>今天要做的主题</label><input id="generatorTopic" placeholder="例如：C罗距离1000球还差15球"></div>
+          <button class="btn primary" id="generatorRunBtn" type="button">生成3套打法</button>
+          <button class="btn good" id="generatorSaveBestBtn" type="button">冠军方案进入制作</button>
+        </div>
+        <div id="generatorSources" class="sourceStrip"></div>
+      </div>
+
+      <div id="generatorPick" class="section genPick" style="display:none">
+        <div class="pickTag">TODAY PICK · 今日优先方案</div>
+        <b id="generatorPickTitle"></b>
+        <span id="generatorPickMeta"></span>
+      </div>
+
+      <div class="section">
+        <div id="variantGrid" class="variantGrid"><div class="empty genEmpty">输入主题或从 LIVE RADAR 选择热点，然后生成3套打法。</div></div>
+      </div>
+    </section>
+
+    <section class="view" data-view-panel="viral">
+      <div class="viralHero">
+        <div class="heroTag">SAGI VIRAL MODEL · 萨吉爆款模型</div>
+        <b>不是预测“必爆”，而是判断这条内容有没有进入萨吉体育高流量结构。</b>
+        <span>模型综合萨吉体育历史作品、账号日趋势、互联网热点、Hook、前2秒、互动设计、SAGI适配与素材强度，给出发布前爆款指数。</span>
+      </div>
+
+      <div class="section grid4">
+        <div class="card kpi"><span>模型置信度</span><b id="viralConfidence">0%</b><small>样本越多越可靠</small></div>
+        <div class="card kpi"><span>作品样本</span><b id="viralWorkSamples">0</b><small>逐条表现数据</small></div>
+        <div class="card kpi"><span>趋势样本</span><b id="viralTrendDays">0</b><small>账号每日趋势</small></div>
+        <div class="card kpi"><span>流量集中度</span><b id="viralPeakShare">0%</b><small>峰值日占周期播放</small></div>
+      </div>
+
+      <div class="section viralMain">
+        <div class="card viralScoreCard">
+          <div id="viralDial" class="viralDial" style="--viral:0%"><strong id="viralScore">0</strong><span>VIRAL INDEX</span></div>
+          <div id="viralVerdict" class="viralVerdict">等待内容方案</div>
+          <div id="viralReason" class="viralReason">先在 AI DIRECTOR 生成一条内容，爆款模型会立即分析。</div>
+          <div class="toolbar" style="justify-content:center;margin-top:12px">
+            <button class="btn primary" id="viralAnalyzeBtn" type="button">分析当前方案</button>
+            <button class="btn good" id="viralOptimizeBtn" type="button">一键爆款优化</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="sectionHead"><div><h2>VIRAL SIGNALS</h2><p>把“感觉这条可能火”拆成可以修改的结构。</p></div><span class="viralModelTag">SAGI MODEL</span></div>
+          <div id="viralFactors" class="viralFactors"></div>
+          <div class="sectionHead" style="margin-top:15px"><div><h2>风险点</h2><p>优先修最影响分发的地方。</p></div></div>
+          <div id="viralRisks" class="viralRiskList"></div>
+        </div>
+      </div>
+
+      <div class="section card">
+        <div class="sectionHead"><div><h2>SAGI BENCHMARK</h2><p>只用萨吉体育已经导入的真实账号数据建立基线，不照搬全平台平均值。</p></div></div>
+        <div class="benchmarkGrid">
+          <div class="benchmark"><span>5秒完播基线</span><b id="viralB5">—</b></div>
+          <div class="benchmark"><span>2秒跳出基线</span><b id="viralB2">—</b></div>
+          <div class="benchmark"><span>封面点击基线</span><b id="viralBCover">—</b></div>
+          <div class="benchmark"><span>平均播放时长</span><b id="viralBWatch">—</b></div>
+          <div class="benchmark"><span>作品播放中位数</span><b id="viralBMedian">—</b></div>
+        </div>
+      </div>
+
+      <div class="section grid2">
+        <div class="card">
+          <div class="sectionHead"><div><h2>NEXT ACTIONS</h2><p>模型不会只打分，会告诉你下一步具体改什么。</p></div></div>
+          <div id="viralActions" class="viralActionList"></div>
+        </div>
+        <div class="card">
+          <div class="sectionHead"><div><h2>CONTENT VIRAL RANK</h2><p>当前 CONTENT OS 中最值得优先发布的内容。</p></div></div>
+          <div id="viralQueue" class="viralQueue"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" data-view-panel="account">
+      <div class="accountHero">
+        <div class="heroTag">DOUYIN ACCOUNT DATA · 萨吉体育</div>
+        <b>让 CONTENT OS 学习「萨吉体育」真正发过什么、什么内容真的有流量。</b>
+        <span>当前数据层已启用。历史数据可先通过 CSV / JSON 批量导入；抖音开放平台 OAuth 审核通过后，可升级为自动同步。</span>
+        <div class="accountStatus">
+          <span class="pill good">ACCOUNT · 萨吉体育</span><span class="pill good">DOUYIN · 181444241</span>
+          <span class="pill good">DATA LAYER · 已启用</span>
+          <span class="pill warn">OFFICIAL API · 待授权</span>
+        </div>
+      </div>
+
+      <div class="section grid4">
+        <div class="card kpi"><span>已接入作品</span><b id="accountWorks">0</b><small>历史真实样本</small></div>
+        <div class="card kpi"><span>累计播放</span><b id="accountViews">0</b><small>已导入作品</small></div>
+        <div class="card kpi"><span>累计点赞</span><b id="accountLikes">0</b><small>已导入作品</small></div>
+        <div class="card kpi"><span>累计评论</span><b id="accountComments">0</b><small>已导入作品</small></div>
+      </div>
+
+      <div class="section grid2">
+        <div class="card">
+          <div class="sectionHead"><div><h2>SMART DATA IMPORTER</h2><p>抖音后台文件直接扔进来：Excel / CSV / JSON 自动识别、预览、去重。</p></div><span class="pill good">V1.4</span></div>
+          <div class="importBox">
+            <div class="field"><label>数据文件</label><input id="accountImportFile" type="file" accept=".xlsx,.xls,.csv,.json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv,application/json"></div>
+            <button class="btn primary" id="accountImportBtn" type="button">确认导入</button>
+            <button class="btn" id="accountTemplateBtn" type="button">下载模板</button>
+          </div>
+          <div id="accountImportStatus" class="sub" style="margin-top:9px">选择文件后系统会先自动分析。支持：标题、日期、播放、点赞、评论、收藏、分享、新增粉丝、完播率、平均观看时长。</div>
+          <div id="accountImportPreview" class="importPreview" style="display:none"></div>
+        </div>
+        <div class="card">
+          <div class="sectionHead"><div><h2>OFFICIAL DOUYIN API</h2><p>官方直连需要开放平台应用审核 + 萨吉体育账号 OAuth 授权。</p></div></div>
+          <div class="dataSource"><b>计划申请权限</b><span>video.list · data.external.item · data.external.user · fans.data</span></div>
+          <div class="dataSource" style="margin-top:7px"><b>安全规则</b><span>ClientSecret、access_token、refresh_token 只放服务端，不写进手机网页。</span></div>
+          <div class="toolbar"><button class="btn blue" id="accountApiDocsBtn" type="button">打开抖音开放平台</button></div>
+        </div>
+      </div>
+
+      <div class="section card">
+        <div class="sectionHead"><div><h2>ACCOUNT TREND · 账号趋势</h2><p>识别抖音“短视频全量指标”这类按日汇总文件，不与逐条作品数据混在一起。</p></div><span id="accountTrendBadge" class="pill">0 DAYS</span></div>
+        <div class="grid4">
+          <div class="card kpi"><span>趋势天数</span><b id="trendDays">0</b><small>已导入日期</small></div>
+          <div class="card kpi"><span>趋势播放</span><b id="trendViews">0</b><small>按日汇总</small></div>
+          <div class="card kpi"><span>趋势投稿</span><b id="trendPosts">0</b><small>按日汇总</small></div>
+          <div class="card kpi"><span>峰值日期</span><b id="trendPeakDate">—</b><small id="trendPeakViews">暂无数据</small></div>
+        </div>
+        <div id="accountTrendInsight" class="insight" style="margin-top:10px">导入抖音“短视频全量指标”后，这里会显示账号的流量峰值与趋势。</div>
+      </div>
+
+      <div class="section card">
+        <div class="sectionHead"><div><h2>SAGI HISTORICAL CONTENT</h2><p>这些真实表现会直接影响 AI DIRECTOR 的形式、Hook 和热点适配判断。</p></div><span id="accountDataBadge" class="pill">0 RECORDS</span></div>
+        <div class="tableWrap">
+          <table class="table">
+            <thead><tr><th>作品</th><th>日期</th><th>形式</th><th>播放</th><th>点赞</th><th>评论</th><th>收藏</th><th>综合分</th></tr></thead>
+            <tbody id="accountDataTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" data-view-panel="performance">
+      <div class="grid4">
+        <div class="card kpi"><span>总播放</span><b id="perfViews">0</b><small>全部记录</small></div>
+        <div class="card kpi"><span>总互动</span><b id="perfEngagement">0</b><small>赞评藏转</small></div>
+        <div class="card kpi"><span>内容询单</span><b id="perfInquiries">0</b><small>内容带来的咨询</small></div>
+        <div class="card kpi"><span>归因订单</span><b id="perfOrders">0</b><small>内容促成订单</small></div>
+      </div>
+      <div class="section grid2">
+        <div class="card"><div class="sectionHead"><div><h2>TOP CONTENT</h2><p>按询单与综合表现排序。</p></div></div><div id="performanceRank" class="rank"></div></div>
+        <div class="card"><div class="sectionHead"><div><h2>LEARNING SUMMARY</h2><p>把数据变成下一条内容决策。</p></div></div><div id="performanceInsight" class="insight"></div></div>
+      </div>
+    </section>
+
+    <section class="view" data-view-panel="projects">
+      <div class="card">
+        <div class="sectionHead"><div><h2>CONTENT PROJECTS</h2><p>球队来自 SALES OS；赛事、品牌、产品、热点和人物故事可以直接在这里创建。</p></div><button class="btn primary" id="projectCreateTopBtn" type="button">＋ 新建项目</button></div>
+        <div id="projectList" class="projectList"></div>
+      </div>
+    </section>
+  </main>
+</div>
+<div class="mobileDock">
+  <button data-view="matchday"><b>MATCH</b>现场</button>
+  <button data-view="videojobs"><b>JOB</b>任务</button>
+  <button data-view="review"><b>REVIEW</b>审核</button>
+  <button data-view="daily"><b>TODAY</b>今日</button>
+  <button data-view="publish"><b>POST</b>发布</button>
+</div>
+
+<div id="notice" class="notice"></div>
+
+<div id="projectModal" class="modalMask">
+  <div class="modal">
+    <div class="sectionHead"><div><h3>新建 CONTENT 项目</h3><p class="sub">不需要先建立销售订单，也可以做赛事、热点、品牌和人物内容。</p></div><button class="btn" data-close-modal type="button">关闭</button></div>
+    <div class="formGrid">
+      <div class="field"><label>项目类型</label><select id="newProjectType"><option value="team">球队</option><option value="event">赛事</option><option value="brand">品牌</option><option value="product">产品</option><option value="hot">热点</option><option value="story">人物故事</option></select></div>
+      <div class="field wide"><label>项目名称</label><input id="newProjectName" placeholder="例如：塔城长风冬季联赛"></div>
+      <div class="field"><label>城市 / 标签</label><input id="newProjectTag" placeholder="塔城 / 新疆足球"></div>
+      <div class="field wide"><label>项目说明</label><input id="newProjectDesc" placeholder="这个内容项目长期要讲什么"></div>
+    </div>
+    <div class="toolbar"><button class="btn primary" id="createProjectBtn" type="button">创建项目</button></div>
+  </div>
+</div>
+
+<div id="performanceModal" class="modalMask">
+  <div class="modal">
+    <div class="sectionHead"><div><h3>发布后数据回填</h3><p id="performanceModalTitle" class="sub"></p></div><button class="btn" data-close-modal type="button">关闭</button></div>
+    <div class="formGrid">
+      <div class="field"><label>播放</label><input id="mViews" type="number" min="0" value="0"></div>
+      <div class="field"><label>点赞</label><input id="mLikes" type="number" min="0" value="0"></div>
+      <div class="field"><label>评论</label><input id="mComments" type="number" min="0" value="0"></div>
+      <div class="field"><label>收藏</label><input id="mSaves" type="number" min="0" value="0"></div>
+      <div class="field"><label>分享</label><input id="mShares" type="number" min="0" value="0"></div>
+      <div class="field"><label>询单</label><input id="mInquiries" type="number" min="0" value="0"></div>
+      <div class="field"><label>归因订单</label><input id="mOrders" type="number" min="0" value="0"></div>
+      <div class="field"><label>归因销售额</label><input id="mRevenue" type="number" min="0" value="0"></div>
+    </div>
+    <div class="toolbar"><button class="btn primary" id="savePerformanceBtn" type="button">保存表现数据</button></div>
+  </div>
+</div>
+
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script src="./js/app-core.js?v=210"></script>
+<script src="./js/mobile-matchday.js?v=210"></script>
+<script src="./js/video-jobs.js?v=210"></script>
+<script src="./js/review.js?v=210"></script>
+<script src="./js/mobile-shell.js?v=210"></script>
+</body>
+</html>
