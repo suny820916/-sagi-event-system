@@ -34,6 +34,13 @@ function setStatus(msg,kind=''){
  currentStatus=msg;
  const el=q('downloadStatus');if(el){el.textContent=msg;el.className='downloadStatus '+kind}
 }
+function refreshPlatformUI(){
+ const el=q('downloadStartBtn'),url=normalize(q('downloadUrl')?.value);
+ if(!el)return;
+ if(/instagram\.com/i.test(url))el.textContent='下载 INS 视频';
+ else if(PLATFORM_RE.test(url)&&!DIRECT_RE.test(url))el.textContent='社媒视频下载';
+ else el.textContent='下载视频';
+}
 function current(){
  const url=normalize(q('downloadUrl')?.value),title=(q('downloadTitle')?.value||'').trim();
  return{url,title,direct:DIRECT_RE.test(url),stream:STREAM_RE.test(url),platform:PLATFORM_RE.test(url)}
@@ -43,7 +50,7 @@ function preview(){
  if(!x.url){setStatus('链接无效，请粘贴 http / https 视频地址。','bad');return}
  if(x.platform&&!x.direct){
    video.removeAttribute('src');video.load();
-   setStatus(platformName(x.url)+' 页面不是视频文件直链。浏览器版不绕过平台限制；可打开原链接，或粘贴你拥有权限的 MP4 / MOV / WEBM 直链。','warn');return
+   setStatus('已识别 '+platformName(x.url)+' 链接。直接点击“下载视频”，系统会进入社媒下载流程。','good');return
  }
  if(x.stream){
    video.removeAttribute('src');video.load();
@@ -121,13 +128,13 @@ function renderHistory(){
 function render(){
  renderHistory();const s=q('downloadStatus');if(s&&!s.textContent.trim())setStatus(currentStatus)
 }
-q('downloadPreviewBtn').onclick=preview;
-q('downloadStartBtn').onclick=download;
-q('downloadOpenBtn').onclick=openOriginal;
-q('downloadToJobBtn').onclick=sendToJob;
-q('downloadPlatformBtn').onclick=platformDownload;
-q('downloadCommandBtn').onclick=copyYtDlpCommand;
-q('downloadUrl').addEventListener('keydown',e=>{if(e.key==='Enter')preview()});
+if(q('downloadPreviewBtn'))q('downloadPreviewBtn').onclick=preview;
+if(q('downloadStartBtn'))q('downloadStartBtn').onclick=download;
+if(q('downloadOpenBtn'))q('downloadOpenBtn').onclick=openOriginal;
+if(q('downloadToJobBtn'))q('downloadToJobBtn').onclick=sendToJob;
+if(q('downloadPlatformBtn'))q('downloadPlatformBtn').onclick=platformDownload;
+if(q('downloadCommandBtn'))q('downloadCommandBtn').onclick=copyYtDlpCommand;
+if(q('downloadUrl')){q('downloadUrl').addEventListener('input',refreshPlatformUI);q('downloadUrl').addEventListener('keydown',e=>{if(e.key==='Enter')preview()});refreshPlatformUI()}
 window.SAGI_DOWNLOADER={render,preview,download,platformDownload,copyYtDlpCommand,sendToJob};
 render();
 })();
