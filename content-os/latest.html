@@ -1363,7 +1363,7 @@ function directorMode(){
 function renderDirectorBin(){
  const grid=q('directorFootageGrid'),sum=q('directorFootageSummary'),badge=q('directorQualityBadge'),cut=q('directorCutList'),cutBadge=q('directorCutBadge');if(!grid)return;
  const items=state.footage||[],mode=directorMode(),a=state.footageAnalysis||{selected:0,done:0,failed:0,errors:[]},selectedNow=q('directorFootageInput')?.files?.length||a.selected||0;
- if(state.directorAnalyzing){badge.textContent='QUEUE '+(a.done+a.failed)+'/'+selectedNow
+ if(state.directorAnalyzing){badge.textContent='QUEUE '+(a.done+a.failed)+'/'+selectedNow}
  else if(items.length){badge.textContent=mode.name}
  else if(selectedNow){badge.textContent=selectedNow+' SELECTED'}
  else badge.textContent='NO FOOTAGE';
