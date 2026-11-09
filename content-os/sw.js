@@ -1,5 +1,5 @@
-const CACHE='sagi-content-os-shell-v33';
-const SHELL=['./','./index.html','./manifest.webmanifest','./icon.svg','./css/mobile.css','./css/mobile.css?v=250','./js/app-core.js','./js/app-core.js?v=220','./js/mobile-matchday.js','./js/video-download.js','./js/video-download.js?v=250','./js/video-jobs.js','./js/review.js','./js/mobile-shell.js'];
+const CACHE='sagi-content-os-shell-v34';
+const SHELL=['./','./index.html','./manifest.webmanifest','./icon.svg','./css/mobile.css','./css/mobile.css?v=250','./js/app-core.js','./js/app-core.js?v=251','./js/mobile-matchday.js','./js/video-download.js','./js/video-download.js?v=250','./js/video-jobs.js','./js/review.js','./js/mobile-shell.js','./js/mobile-shell.js?v=251'];
 self.addEventListener('install',e=>{
   self.skipWaiting();
   e.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL)).catch(()=>{}));
