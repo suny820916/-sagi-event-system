@@ -4,6 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#07090d">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./sagi-app-icon.svg">
+<meta name="application-name" content="SAGI LIVE MATCH DIRECTOR">
+<meta name="apple-mobile-web-app-title" content="SAGI 导播">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="format-detection" content="telephone=no">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%2307090d%22/%3E%3Ctext x=%2232%22 y=%2243%22 text-anchor=%22middle%22 font-size=%2234%22 fill=%22%23d8b55b%22%3ES%3C/text%3E%3C/svg%3E">
 <title>SAGI V4.5 · LIVE MATCH DIRECTOR</title>
 <style>
@@ -222,11 +230,30 @@ button:disabled{cursor:not-allowed;opacity:.42}
 .formationEditorHint{position:absolute;right:92px;bottom:49px;z-index:9;display:none;padding:7px 10px;border-radius:999px;background:#090b0fe8;border:1px solid #d8b55b66;color:#e6cc7b;font-size:11px;font-weight:900;letter-spacing:1px}.formationEditorHint.on{display:block}
 @media(max-width:940px){.editorActions{grid-template-columns:1fr}.editorContext{grid-template-columns:1fr}}
 
+
+/* ===== INSTALLABLE PWA SHELL ===== */
+.pwaBar{margin:10px 0 0;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid #2e3945;border-radius:14px;background:#0a0f15}
+.pwaInfo{min-width:0}.pwaTitle{font-size:11px;font-weight:1000;letter-spacing:1.4px;color:#d8b55b}.pwaStatus{margin-top:3px;font-size:10px;color:#7f8a97;line-height:1.45}
+.pwaActions{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}.pwaActions button{min-height:36px;padding:7px 10px;font-size:10px;border-radius:10px}
+.pwaInstall{background:#1d4935}.pwaUpdate{background:#5b4720;color:#f3d98f}.pwaUpdate[hidden]{display:none}
+@media(max-width:650px){.pwaBar{align-items:flex-start;flex-direction:column}.pwaActions{width:100%;display:grid;grid-template-columns:1fr 1fr}.pwaActions button{width:100%;min-height:44px}.pwaStatus{font-size:11px}}
+
 </style>
 </head>
 <body>
 <div class="app">
   <div class="top"><div><div class="brand">SAGI LIVE MATCH DIRECTOR</div><div class="sub">V4.5 · 现场比赛导演 · vMix导播 · 事件日志 · 撤销 · 比分与比赛图形</div></div><div class="ver">V4.5</div></div>
+
+  <div id="pwaBar" class="pwaBar">
+    <div class="pwaInfo">
+      <div class="pwaTitle">SAGI 导播应用 · 手机 / 桌面同步</div>
+      <div id="pwaStatus" class="pwaStatus">正在检查应用安装与更新状态…</div>
+    </div>
+    <div class="pwaActions">
+      <button id="pwaInstallBtn" class="pwaInstall" type="button">安装到主屏幕 / 桌面</button>
+      <button id="pwaUpdateBtn" class="pwaUpdate" type="button" hidden>立即更新</button>
+    </div>
+  </div>
 
   <div id="setupDesk" class="setupDesk">
     <div class="setupHead">
@@ -1502,6 +1529,117 @@ q('formation').onchange=()=>{teamStore[activeSide].formation=q('formation').valu
 ['matchCompetition','matchRound','matchKickoff','matchVenue'].forEach(id=>q(id).oninput=syncMatchStage);q('matchHome').oninput=()=>{if(activeSide==='HOME')q('teamName').value=q('matchHome').value;syncMatchStage()};q('matchAway').oninput=()=>{if(activeSide==='AWAY')q('teamName').value=q('matchAway').value;syncMatchStage()};
 ['audioMode','audioTheme','audioIntensity','audioDucking','cueVolume','countdownBeat'].forEach(id=>q(id).onchange=()=>{q('audioEngineState').textContent=q('audioMode').value+' · '+q('audioTheme').value.replaceAll('_',' ')});
 window.addEventListener('resize',resize);renderPreviews();renderRoster();loadShow();applyStoredMatchConfig({mode:'11',playerCount:11},true);refreshFormationOptions('4-3-3');demo();refreshSideUI();updateFormatUI();syncMatchStage();renderStage('TEAM');resize();initBroadcastControl();initMatchdayGraphics();initVmixDirector();initMatchSetup();initFormationEditor();setBroadcastPreview('TEAM','HOME','主队开场',2500);
+})();
+</script>
+
+<script>
+(function(){
+'use strict';
+const statusEl=document.getElementById('pwaStatus');
+const installBtn=document.getElementById('pwaInstallBtn');
+const updateBtn=document.getElementById('pwaUpdateBtn');
+if(!statusEl||!installBtn||!updateBtn)return;
+
+const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const standalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
+let deferredPrompt=null;
+let waitingWorker=null;
+
+function setStatus(text){statusEl.textContent=text}
+function setInstalledState(){
+  if(standalone){
+    installBtn.textContent='已安装';
+    installBtn.disabled=true;
+    setStatus('已从主屏幕 / 桌面打开 · 每次启动都会检查最新版本');
+  }else if(isIOS){
+    installBtn.textContent='添加到主屏幕';
+    setStatus('iPhone / iPad：Safari → 分享 → 添加到主屏幕');
+  }else{
+    setStatus('可安装为独立应用 · 桌面图标始终打开最新 Control Room');
+  }
+}
+
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();
+  deferredPrompt=e;
+  if(!standalone){
+    installBtn.disabled=false;
+    installBtn.textContent='安装到桌面';
+    setStatus('已准备好安装 · 安装后可像普通应用一样从桌面打开');
+  }
+});
+
+window.addEventListener('appinstalled',()=>{
+  deferredPrompt=null;
+  installBtn.textContent='已安装';
+  installBtn.disabled=true;
+  setStatus('安装完成 · 以后从桌面 / 主屏幕打开即可');
+});
+
+installBtn.addEventListener('click',async()=>{
+  if(standalone)return;
+  if(deferredPrompt){
+    try{
+      deferredPrompt.prompt();
+      await deferredPrompt.userChoice;
+      deferredPrompt=null;
+    }catch(e){}
+    return;
+  }
+  if(isIOS){
+    setStatus('操作：Safari 底部“分享” → “添加到主屏幕” → 右上角“添加”');
+  }else{
+    setStatus('Chrome / Edge：地址栏右侧“安装”图标，或浏览器菜单 → 安装此网站为应用');
+  }
+});
+
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('./sw.js',{scope:'./',updateViaCache:'none'}).then(reg=>{
+    reg.update().catch(()=>{});
+
+    function showUpdate(worker){
+      waitingWorker=worker||reg.waiting;
+      updateBtn.hidden=false;
+      setStatus('发现新版本 · 可立即更新；不操作也会在下次打开时使用最新版');
+    }
+
+    if(reg.waiting)showUpdate(reg.waiting);
+
+    reg.addEventListener('updatefound',()=>{
+      const worker=reg.installing;
+      if(!worker)return;
+      worker.addEventListener('statechange',()=>{
+        if(worker.state==='installed'&&navigator.serviceWorker.controller)showUpdate(reg.waiting||worker);
+      });
+    });
+
+    setInterval(()=>reg.update().catch(()=>{}),300000);
+  }).catch(()=>{
+    setStatus('应用可正常使用 · 当前浏览器未启用自动更新服务');
+  });
+
+  updateBtn.addEventListener('click',()=>{
+    if(waitingWorker){
+      waitingWorker.postMessage({type:'SKIP_WAITING'});
+      updateBtn.disabled=true;
+      updateBtn.textContent='更新中…';
+      setStatus('正在切换到新版本…');
+    }else{
+      location.reload();
+    }
+  });
+
+  let reloading=false;
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{
+    if(reloading)return;
+    reloading=true;
+    location.reload();
+  });
+}else{
+  setStatus('当前浏览器不支持应用安装服务；仍可用浏览器书签方式打开');
+}
+
+setInstalledState();
 })();
 </script>
 </body></html>
