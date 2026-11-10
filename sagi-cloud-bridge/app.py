@@ -999,42 +999,76 @@ def run_cloud_render(job_id, options):
             gc.collect()
 
 
+FOOTBALL_TEAM_ALIASES = {
+    "皇马": "realmadrid", "皇家马德里": "realmadrid",
+    "real madrid": "realmadrid", "real madrid cf": "realmadrid", "rma": "realmadrid",
+    "巴萨": "barcelona", "巴塞罗那": "barcelona",
+    "barcelona": "barcelona", "fc barcelona": "barcelona",
+    "拜仁": "bayernmunich", "bayern munich": "bayernmunich", "bayern münchen": "bayernmunich",
+    "曼城": "manchestercity", "manchester city": "manchestercity",
+    "曼联": "manchesterunited", "manchester united": "manchesterunited",
+    "利物浦": "liverpool", "liverpool": "liverpool",
+    "阿森纳": "arsenal", "arsenal": "arsenal",
+    "切尔西": "chelsea", "chelsea": "chelsea",
+    "巴黎": "parissaintgermain", "巴黎圣日耳曼": "parissaintgermain",
+    "psg": "parissaintgermain", "paris saint germain": "parissaintgermain",
+    "国米": "intermilan", "国际米兰": "intermilan",
+    "inter": "intermilan", "inter milan": "intermilan", "internazionale": "intermilan",
+    "ac米兰": "acmilan", "ac milan": "acmilan",
+    "尤文": "juventus", "juventus": "juventus",
+    "马竞": "atleticomadrid", "atletico madrid": "atleticomadrid", "atlético madrid": "atleticomadrid",
+    "多特": "borussiadortmund", "borussia dortmund": "borussiadortmund",
+}
+
 def _football_norm(value):
-    text = re.sub(r"[^a-z0-9]+", "", str(value or "").lower())
-    for token in ("footballclub", "futbolclub", "clubdefutbol", "club", "fc", "cf", "afc"):
+    text = str(value or "").strip().lower()
+    text = (text.replace("á", "a").replace("é", "e").replace("í", "i")
+                .replace("ó", "o").replace("ú", "u").replace("ü", "u").replace("ñ", "n"))
+    text = re.sub(r"[^a-z0-9]+", "", text)
+    for token in ("footballclub", "futbolclub", "clubdefutbol"):
         text = text.replace(token, "")
+    # Strip common club suffixes only at the edges; never remove arbitrary
+    # occurrences inside a team name.
+    text = re.sub(r"^(?:afc|fc|cf)", "", text)
+    text = re.sub(r"(?:afc|fc|cf)$", "", text)
     return text
 
+def _football_canonical_team(value):
+    raw = str(value or "").strip()
+    if not raw:
+        return ""
+    direct = FOOTBALL_TEAM_ALIASES.get(raw.lower())
+    if direct:
+        return direct
+    n = _football_norm(raw)
+    if not n:
+        return ""
+    for alias, canonical in FOOTBALL_TEAM_ALIASES.items():
+        if _football_norm(alias) == n:
+            return canonical
+    return n
+
 def _football_team_match(query, *values):
-    q = _football_norm(query)
+    q = _football_canonical_team(query)
     if not q:
         return False
-    aliases = {
-        "皇马": ["realmadrid", "realmadridcf", "rma"],
-        "皇家马德里": ["realmadrid", "realmadridcf", "rma"],
-        "巴萨": ["barcelona", "fcbarcelona", "bar"],
-        "拜仁": ["bayernmunich", "bayernmunchen", "fcb"],
-        "曼城": ["manchestercity", "mancity"],
-        "曼联": ["manchesterunited", "manutd"],
-        "巴黎": ["parissaintgermain", "psg"],
-        "巴黎圣日耳曼": ["parissaintgermain", "psg"],
-        "国米": ["intermilan", "internazionale", "inter"],
-        "国际米兰": ["intermilan", "internazionale", "inter"],
-        "AC米兰": ["acmilan", "milan"],
-    }
-    acceptable = {q}
-    for key, vals in aliases.items():
-        if str(query or "").strip().lower() == key.lower():
-            acceptable.update(vals)
     for value in values:
-        n = _football_norm(value)
-        if not n:
-            continue
-        if any(a == n or a in n or n in a for a in acceptable if len(a) >= 3):
+        if _football_canonical_team(value) == q:
             return True
     return False
 
-def _football_cache_get(key):
+def _football_team_in_text(query, text):
+    q = _football_canonical_team(query)
+    body = _football_norm(text)
+    if not q or not body:
+        return False
+    if q in body:
+        return True
+    raw = str(query or "").strip().lower()
+    aliases = [k for k,v in FOOTBALL_TEAM_ALIASES.items() if v == q]
+    return any(_football_norm(a) and _football_norm(a) in body for a in aliases + [raw])
+
+def _football_cache_getdef _football_cache_get(key):
     with football_cache_lock:
         row = football_cache.get(key)
         if not row:
@@ -1179,7 +1213,7 @@ def _official_football_evidence(team, competition):
         text = (r.text or "")[:120000]
         lines = []
         for line in text.splitlines():
-            if not _football_team_match(team, line):
+            if not _football_team_in_text(team, line):
                 continue
             if re.search(r"\b\d{1,2}\s*[-–—:]\s*\d{1,2}\b", line):
                 lines.append(re.sub(r"\s+", " ", line).strip()[:260])
@@ -1189,31 +1223,76 @@ def _official_football_evidence(team, competition):
     except Exception:
         return {"checked": False, "url": url, "hits": []}
 
-def _football_merge(rows, limit):
+def _official_confirms_match(official, row):
+    evidence = (official or {}).get(row.get("competition")) or {}
+    hits = evidence.get("hits") or []
+    if not hits:
+        return False
+    home = _football_canonical_team(row.get("home"))
+    away = _football_canonical_team(row.get("away"))
+    score = str(row.get("score") or "")
+    if not home or not away or not score:
+        return False
+    for hit in hits:
+        body = _football_norm(hit)
+        if home not in body or away not in body:
+            continue
+        nums = re.findall(r"\b(\d{1,2})\s*[-–—:]\s*(\d{1,2})\b", str(hit or ""))
+        if any(f"{a}-{b}" == score for a,b in nums):
+            return True
+    return False
+
+def _football_merge(rows, limit, official=None):
     buckets = {}
     for row in rows:
-        key = "|".join([
-            str(row.get("date") or "")[:10],
-            _football_norm(row.get("home")),
-            _football_norm(row.get("away")),
-            str(row.get("score") or ""),
-        ])
-        if not key.strip("|"):
+        date_key = str(row.get("date") or "")[:10]
+        home_key = _football_canonical_team(row.get("home"))
+        away_key = _football_canonical_team(row.get("away"))
+        score_key = str(row.get("score") or "")
+        key = "|".join([date_key, home_key, away_key, score_key])
+        if not date_key or not home_key or not away_key or not score_key:
             continue
         b = buckets.setdefault(key, dict(row))
         providers = set(b.get("providers") or [b.get("provider")])
         providers.add(row.get("provider"))
         providers.discard(None)
         b["providers"] = sorted(providers)
-        b["confidence"] = min(99, 72 + max(0, len(providers) - 1) * 12)
-    merged = list(buckets.values())
-    merged.sort(key=lambda x: str(x.get("date") or ""), reverse=True)
-    return merged[:max(1, min(20, int(limit or 8)))]
 
-def football_form_payload(team, competition="AUTO", season=2026, limit=8):
+    merged = []
+    for b in buckets.values():
+        providers = list(b.get("providers") or [])
+        structured_count = len(set(providers))
+        official_confirmed = _official_confirms_match(official or {}, b)
+        verified = structured_count >= 2 or (structured_count >= 1 and official_confirmed)
+        if structured_count >= 3:
+            confidence = 99
+            tier = "cross-source"
+        elif structured_count >= 2:
+            confidence = 96
+            tier = "cross-source"
+        elif official_confirmed:
+            confidence = 93
+            tier = "official-cross"
+        else:
+            confidence = 64 if providers == ["ESPN public feed"] else 72
+            tier = "candidate"
+        b["providerCount"] = structured_count
+        b["officialConfirmed"] = bool(official_confirmed)
+        b["verified"] = bool(verified)
+        b["verificationTier"] = tier
+        b["confidence"] = confidence
+        merged.append(b)
+
+    merged.sort(key=lambda x: str(x.get("date") or ""), reverse=True)
+    verified_rows = [x for x in merged if x.get("verified")]
+    candidate_rows = [x for x in merged if not x.get("verified")]
+    cap = max(1, min(20, int(limit or 8)))
+    return verified_rows[:cap], candidate_rows[:cap]
+
+def football_form_payloaddef football_form_payload(team, competition="AUTO", season=2026, limit=8):
     all_codes = list(FOOTBALL_COMPETITIONS.keys())
     requested = all_codes if competition == "AUTO" else [competition]
-    cache_key = json.dumps([team, requested, season, limit], ensure_ascii=False)
+    cache_key = json.dumps(["v2", team, requested, season, limit], ensure_ascii=False)
     cached = _football_cache_get(cache_key)
     if cached is not None:
         return cached
@@ -1222,11 +1301,15 @@ def football_form_payload(team, competition="AUTO", season=2026, limit=8):
     provider_errors = {}
     official = {}
     relevant = []
+    provider_counts = {}
+
+    def add_rows(provider, rows):
+        clean = list(rows or [])
+        if clean:
+            provider_counts[provider] = provider_counts.get(provider, 0) + len(clean)
+            all_rows.extend(clean)
 
     if competition == "AUTO":
-        # Discovery pass: ESPN has no key requirement and is queried in parallel.
-        # Only competitions where this team actually appears are promoted to the
-        # expensive official / authenticated verification pass.
         discovered = {}
         def espn_task(comp):
             try:
@@ -1242,21 +1325,17 @@ def football_form_payload(team, competition="AUTO", season=2026, limit=8):
                     provider_errors[f"ESPN public feed:{comp}"] = error
                 if rows:
                     discovered[comp] = rows
-                    all_rows.extend(rows)
+                    add_rows("ESPN public feed", rows)
         relevant = list(discovered.keys())
-
-        # If discovery yields nothing, keep the six major competitions as a
-        # conservative fallback rather than querying every domestic cup.
         if not relevant:
             relevant = [code for code, cfg in FOOTBALL_COMPETITIONS.items() if cfg.get("primary")]
     else:
         relevant = requested
         try:
-            all_rows.extend(_espn_matches(team, competition))
+            add_rows("ESPN public feed", _espn_matches(team, competition))
         except Exception as e:
             provider_errors[f"ESPN public feed:{competition}"] = str(e)[:180]
 
-    # Verification pass: official site evidence + configured professional APIs.
     for comp in relevant:
         official[comp] = _official_football_evidence(team, comp)
         for name, fn in (
@@ -1264,39 +1343,55 @@ def football_form_payload(team, competition="AUTO", season=2026, limit=8):
             ("API-Football", lambda c=comp: _api_football_matches(team, c, season)),
         ):
             try:
-                all_rows.extend(fn())
+                add_rows(name, fn())
             except Exception as e:
                 provider_errors[f"{name}:{comp}"] = str(e)[:180]
 
-    matches = _football_merge(all_rows, limit)
+    matches, candidates = _football_merge(all_rows, limit, official)
     official_hits = sum(len((official.get(c) or {}).get("hits") or []) for c in relevant)
-    active = ["official competition websites", "ESPN public feed"]
+    checked = ["ESPN public feed"]
+    if any((official.get(c) or {}).get("checked") for c in relevant):
+        checked.insert(0, "official competition websites")
     if FOOTBALL_DATA_TOKEN:
-        active.insert(1, "football-data.org")
+        checked.append("football-data.org")
     if API_FOOTBALL_KEY:
-        active.insert(2 if FOOTBALL_DATA_TOKEN else 1, "API-Football")
+        checked.append("API-Football")
+    active = [name for name in ("football-data.org", "API-Football", "ESPN public feed") if provider_counts.get(name)]
+    if official_hits:
+        active.insert(0, "official competition websites")
 
     return _football_cache_set(cache_key, {
         "ok": True,
+        "version": "2.0",
         "team": team,
+        "canonicalTeam": _football_canonical_team(team),
         "competition": competition,
         "season": season,
         "matches": matches,
+        "candidates": candidates,
         "relevantCompetitions": relevant,
         "official": official,
         "officialHits": official_hits,
         "providers": {
-            "priority": ["official competition websites", "football-data.org", "API-Football", "ESPN public feed", "news cross-check", "OCR"],
+            "priority": ["official competition websites", "football-data.org", "API-Football", "ESPN public feed"],
             "active": active,
+            "checked": checked,
+            "counts": provider_counts,
             "footballDataConfigured": bool(FOOTBALL_DATA_TOKEN),
             "apiFootballConfigured": bool(API_FOOTBALL_KEY),
             "sportmonksConfigured": bool(SPORTMONKS_TOKEN),
+        },
+        "verificationPolicy": {
+            "autoApply": "two independent structured sources OR one structured source confirmed by the official competition page",
+            "singleSource": "candidate only; never auto-applied to poster",
+            "verifiedCount": len(matches),
+            "candidateCount": len(candidates),
         },
         "errors": provider_errors,
         "generatedAt": iso(),
     })
 
-def public_job(job):
+def public_jobdef public_job(job):
     data = {
         "id": job["id"],
         "status": job["status"],
@@ -1979,7 +2074,7 @@ def health():
         "maxFileMB": MAX_FILE_MB,
         "jobTTLMinutes": JOB_TTL_MIN,
         "footballDataHub": True,
-        "footballDataHubVersion": "1.0",
+        "footballDataHubVersion": "2.0",
         "footballCompetitions": list(FOOTBALL_COMPETITIONS.keys()),
         "footballDataConfigured": bool(FOOTBALL_DATA_TOKEN),
         "apiFootballConfigured": bool(API_FOOTBALL_KEY),
@@ -1994,10 +2089,11 @@ def football_status():
         return jsonify({"ok": False, "error": "Unauthorized"}), 401
     return jsonify({
         "ok": True,
-        "version": "1.0",
+        "version": "2.0",
         "competitions": [{"code": code, "name": cfg["name"], "official": cfg["official"]} for code, cfg in FOOTBALL_COMPETITIONS.items() if cfg.get("primary")],
         "providers": {
-            "priority": ["official competition websites", "football-data.org", "API-Football", "ESPN public feed", "news cross-check", "OCR"],
+            "priority": ["official competition websites", "football-data.org", "API-Football", "ESPN public feed"],
+            "policy": "verified matches require two-source agreement; single-source rows are candidates only",
             "footballDataConfigured": bool(FOOTBALL_DATA_TOKEN),
             "apiFootballConfigured": bool(API_FOOTBALL_KEY),
             "sportmonksConfigured": bool(SPORTMONKS_TOKEN),
