@@ -4,6 +4,7 @@ from urllib.parse import urlparse
 from pathlib import Path
 from threading import Thread, Lock
 from datetime import datetime, timedelta, timezone
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import tempfile
 import shutil
 import secrets
@@ -1194,38 +1195,78 @@ def _football_merge(rows, limit):
     return merged[:max(1, min(20, int(limit or 8)))]
 
 def football_form_payload(team, competition="AUTO", season=2026, limit=8):
-    comps = list(FOOTBALL_COMPETITIONS.keys()) if competition == "AUTO" else [competition]
-    cache_key = json.dumps([team, comps, season, limit], ensure_ascii=False)
+    all_codes = list(FOOTBALL_COMPETITIONS.keys())
+    requested = all_codes if competition == "AUTO" else [competition]
+    cache_key = json.dumps([team, requested, season, limit], ensure_ascii=False)
     cached = _football_cache_get(cache_key)
     if cached is not None:
         return cached
+
     all_rows = []
     provider_errors = {}
     official = {}
-    for comp in comps:
+    relevant = []
+
+    if competition == "AUTO":
+        # Discovery pass: ESPN has no key requirement and is queried in parallel.
+        # Only competitions where this team actually appears are promoted to the
+        # expensive official / authenticated verification pass.
+        discovered = {}
+        def espn_task(comp):
+            try:
+                return comp, _espn_matches(team, comp), ""
+            except Exception as e:
+                return comp, [], str(e)[:180]
+
+        with ThreadPoolExecutor(max_workers=6) as pool:
+            futures = [pool.submit(espn_task, comp) for comp in requested]
+            for future in as_completed(futures):
+                comp, rows, error = future.result()
+                if error:
+                    provider_errors[f"ESPN public feed:{comp}"] = error
+                if rows:
+                    discovered[comp] = rows
+                    all_rows.extend(rows)
+        relevant = list(discovered.keys())
+
+        # If discovery yields nothing, keep the six major competitions as a
+        # conservative fallback rather than querying every domestic cup.
+        if not relevant:
+            relevant = [code for code, cfg in FOOTBALL_COMPETITIONS.items() if cfg.get("primary")]
+    else:
+        relevant = requested
+        try:
+            all_rows.extend(_espn_matches(team, competition))
+        except Exception as e:
+            provider_errors[f"ESPN public feed:{competition}"] = str(e)[:180]
+
+    # Verification pass: official site evidence + configured professional APIs.
+    for comp in relevant:
         official[comp] = _official_football_evidence(team, comp)
         for name, fn in (
             ("football-data.org", lambda c=comp: _football_data_matches(team, c, season)),
-            ("ESPN public feed", lambda c=comp: _espn_matches(team, c)),
             ("API-Football", lambda c=comp: _api_football_matches(team, c, season)),
         ):
             try:
                 all_rows.extend(fn())
             except Exception as e:
                 provider_errors[f"{name}:{comp}"] = str(e)[:180]
+
     matches = _football_merge(all_rows, limit)
-    official_hits = sum(len((official.get(c) or {}).get("hits") or []) for c in comps)
-    active = ["ESPN public feed"]
+    official_hits = sum(len((official.get(c) or {}).get("hits") or []) for c in relevant)
+    active = ["official competition websites", "ESPN public feed"]
     if FOOTBALL_DATA_TOKEN:
-        active.insert(0, "football-data.org")
+        active.insert(1, "football-data.org")
     if API_FOOTBALL_KEY:
-        active.append("API-Football")
+        active.insert(2 if FOOTBALL_DATA_TOKEN else 1, "API-Football")
+
     return _football_cache_set(cache_key, {
         "ok": True,
         "team": team,
         "competition": competition,
         "season": season,
         "matches": matches,
+        "relevantCompetitions": relevant,
         "official": official,
         "officialHits": official_hits,
         "providers": {
