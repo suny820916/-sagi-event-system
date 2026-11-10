@@ -1,0 +1,86 @@
+name: SAGI Live Caption Fast Check
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/sagi-live-caption-fast.yml"
+
+jobs:
+  live-caption:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Test deployed Render caption-media
+        run: |
+          python - <<'PY'
+          import io, json, math, struct, time, urllib.request, urllib.error, uuid, wave, tempfile, os
+          BASE="https://sagi-cloud-bridge-suny820916.onrender.com"
+          ORIGIN="https://suny820916.github.io"
+
+          def req(url, method="GET", data=None, headers=None, timeout=90):
+              r=urllib.request.Request(url,data=data,method=method,headers=headers or {})
+              try:
+                  with urllib.request.urlopen(r,timeout=timeout) as x:
+                      return x.status,x.read().decode("utf-8","replace")
+              except urllib.error.HTTPError as e:
+                  return e.code,e.read().decode("utf-8","replace")
+
+          print("HEALTH")
+          status,body=req(BASE+"/health",headers={"Origin":ORIGIN},timeout=90)
+          print(status,body)
+          assert status==200, body
+          health=json.loads(body)
+          assert health.get("version")=="1.6.12", health.get("version")
+          assert health.get("captionMedia") is True
+
+          print("ACTIVATE")
+          status,body=req(BASE+"/api/activate","POST",b"{}",{"Origin":ORIGIN,"Content-Type":"application/json"},90)
+          print(status,body[:1000])
+          assert status==200, body
+          token=json.loads(body).get("token")
+          assert token
+
+          # Generate 3 seconds of valid PCM WAV. This exercises the same live model/decode endpoint.
+          path="/tmp/sagi_live.wav"
+          sr=16000
+          with wave.open(path,"wb") as w:
+              w.setnchannels(1);w.setsampwidth(2);w.setframerate(sr)
+              frames=bytearray()
+              for i in range(sr*3):
+                  # speech-like multi-tone envelope rather than silence
+                  env=0.4+0.6*abs(math.sin(2*math.pi*2.7*i/sr))
+                  x=int(1800*env*(math.sin(2*math.pi*180*i/sr)+0.35*math.sin(2*math.pi*360*i/sr)))
+                  frames += struct.pack("<h",max(-32767,min(32767,x)))
+              w.writeframes(frames)
+          raw=open(path,"rb").read()
+
+          boundary="----SAGI"+uuid.uuid4().hex
+          b=boundary.encode()
+          parts=[]
+          def field(name,value):
+              parts.extend([b"--"+b+b"\r\n",f'Content-Disposition: form-data; name="{name}"\r\n\r\n'.encode(),str(value).encode(),b"\r\n"])
+          field("start","0");field("duration","3");field("language","en")
+          parts.extend([
+              b"--"+b+b"\r\n",
+              b'Content-Disposition: form-data; name="media"; filename="sagi_live.wav"\r\n',
+              b"Content-Type: audio/wav\r\n\r\n",raw,b"\r\n",
+              b"--"+b+b"--\r\n"
+          ])
+          payload=b"".join(parts)
+          headers={"Origin":ORIGIN,"Authorization":"Bearer "+token,"Content-Type":"multipart/form-data; boundary="+boundary}
+
+          print("CAPTION_MEDIA")
+          status,body=req(BASE+"/api/caption-media","POST",payload,headers,240)
+          print(status,body[:5000])
+          assert status==200, body
+          d=json.loads(body)
+          assert d.get("ok") is True, d
+          assert d.get("engine")=="faster-whisper-tiny-int8-media", d
+          print("LIVE CAPTION-MEDIA PASS; segments=",len(d.get("segments") or []),"elapsedMs=",d.get("elapsedMs"))
+          PY
