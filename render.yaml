@@ -56,9 +56,8 @@ services:
     runtime: docker
     plan: free
     region: singapore
-    rootDir: sagi-cobalt
-    dockerfilePath: ./Dockerfile
-    dockerContext: .
+    dockerfilePath: ./sagi-cobalt/Dockerfile
+    dockerContext: ./sagi-cobalt
     healthCheckPath: /
     autoDeployTrigger: commit
     envVars:
