@@ -1,0 +1,52 @@
+name: Deploy SAGI Cloud to Render
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "sagi-cloud-bridge/**"
+      - "render.yaml"
+      - ".github/workflows/render-deploy.yml"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check deploy hook secret
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$RENDER_DEPLOY_HOOK_URL" ]; then
+            echo "::error::Missing repository secret RENDER_DEPLOY_HOOK_URL"
+            echo "Open Render service > Settings > Deploy Hook, then save that URL in GitHub repository secret RENDER_DEPLOY_HOOK_URL."
+            exit 1
+          fi
+
+      - name: Trigger Render deploy
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          curl --fail --show-error --silent --retry 3 "$RENDER_DEPLOY_HOOK_URL"
+
+      - name: Wait for SAGI Cloud 1.6.9
+        run: |
+          python - <<'PY'
+          import json, time, urllib.request, sys
+          url = "https://sagi-cloud-bridge-suny820916.onrender.com/health"
+          expected = "1.6.9"
+          for i in range(36):
+              try:
+                  with urllib.request.urlopen(url, timeout=15) as r:
+                      data = json.loads(r.read().decode("utf-8"))
+                  version = str(data.get("version", ""))
+                  print(f"check {i+1}/36: version={version}")
+                  if version == expected:
+                      print("SAGI Cloud deployment verified.")
+                      sys.exit(0)
+              except Exception as e:
+                  print(f"check {i+1}/36 failed: {e}")
+              time.sleep(10)
+          print("Expected SAGI Cloud version 1.6.9 was not observed.")
+          sys.exit(1)
+          PY
