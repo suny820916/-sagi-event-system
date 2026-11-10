@@ -120,11 +120,13 @@ jobs:
           d = r.get_json()
           assert d["ok"] and len(d["segments"]) == 2
 
-          r = c.post("/api/translate-context", headers={**headers, "Content-Type": "application/json"}, json={"source":"en","target":"zh-CN","mode":"faithful","segments":["Hello world","This is a test."]})
+          source_segments = ["Hello world" if i % 2 == 0 else "This is a test." for i in range(20)]
+          r = c.post("/api/translate-context", headers={**headers, "Content-Type": "application/json"}, json={"source":"en","target":"zh-CN","mode":"faithful","segments":source_segments})
           assert r.status_code == 200, (r.status_code, r.get_data(as_text=True))
           d = r.get_json()
-          assert d["ok"] and len(d["segments"]) == 2
-          print("Flask API smoke OK", d["segments"])
+          assert d["ok"] and len(d["segments"]) == 20, len(d.get("segments", []))
+          assert all(str(x).strip() for x in d["segments"])
+          print("Flask API smoke OK", len(d["segments"]), "translated segments")
           PY
 
       - name: Frontend JavaScript syntax and wiring
@@ -149,6 +151,58 @@ jobs:
           print("frontend wiring OK")
           PY
           node --check /tmp/sagi-down.js
+
+      - name: Semantic translation timeline regression
+        run: |
+          python - <<'PY'
+          import pathlib, re
+          html = pathlib.Path("content-os/sagi-down.html").read_text(encoding="utf-8")
+
+          def extract_function(name):
+              token = "function " + name + "("
+              start = html.index(token)
+              brace = html.index("{", start)
+              depth = 0
+              i = brace
+              quote = None
+              escape = False
+              while i < len(html):
+                  ch = html[i]
+                  if quote:
+                      if escape:
+                          escape = False
+                      elif ch == "\\":
+                          escape = True
+                      elif ch == quote:
+                          quote = None
+                  else:
+                      if ch in ("'", '"', "`"):
+                          quote = ch
+                      elif ch == "{":
+                          depth += 1
+                      elif ch == "}":
+                          depth -= 1
+                          if depth == 0:
+                              return html[start:i+1]
+                  i += 1
+              raise RuntimeError(name)
+
+          funcs = [
+              extract_function("pickSemanticCut"),
+              extract_function("redistributeParagraphToTimeline"),
+          ]
+          test = r"""
+          const group = Array.from({length:20}, (_,i)=>({start:i,end:i+1,text:'source sentence '+(i+1)}));
+          const translated = '这是第一句完整中文。这里是第二句，继续说明原来的含义。第三句解释足球阵型。第四句补充压迫和空间。第五句继续保持上下文。最后第六句完成整个段落。';
+          const out = redistributeParagraphToTimeline(translated, group);
+          if(out.length !== 20) throw new Error('timeline count '+out.length);
+          if(out.some(x => !String(x.text||'').trim())) throw new Error('empty redistributed subtitle');
+          if(out.some((x,i)=>x.start!==group[i].start || x.end!==group[i].end)) throw new Error('timeline timestamps changed');
+          console.log('semantic redistribution OK', out.length);
+          """
+          pathlib.Path("/tmp/semantic-regression.js").write_text("\n".join(funcs)+"\n"+test, encoding="utf-8")
+          PY
+          node /tmp/semantic-regression.js
 
       - name: Python compile check
         run: python -m compileall -q sagi-cloud-bridge
