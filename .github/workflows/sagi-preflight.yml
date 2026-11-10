@@ -561,6 +561,19 @@ jobs:
           from pathlib import Path
           p=Path("/tmp/sagi-browser-smoke/sagi-down.html")
           s=p.read_text(encoding="utf-8")
+          seed=r"""<script>
+          localStorage.setItem('sagi_down_match_data_hub_v2',JSON.stringify({
+            competition:'AUTO',team:'Real Madrid',teamOverride:'',status:'ready',confidence:96,streak:8,
+            matches:Array.from({length:8},(_,i)=>({
+              date:'2026-11-'+String(10-i).padStart(2,'0')+'T20:00:00Z',
+              competition:'PD',home:i%2?'Opponent '+(i+1):'Real Madrid',
+              away:i%2?'Real Madrid':'Opponent '+(i+1),
+              homeScore:i%2?0:2,awayScore:i%2?2:0,verified:true,confidence:96,providers:['A','B']
+            })),
+            candidates:[],providers:{active:['A','B'],checked:['A','B']},updatedAt:new Date().toISOString()
+          }));
+          </script>"""
+          s=s.replace("<script>\n(()=>{'use strict';",seed+"\n<script>\n(()=>{'use strict';",1)
           smoke=r"""
           <script>
           setTimeout(()=>{
@@ -572,7 +585,11 @@ jobs:
               const lock=document.getElementById('sdOrigLayerLockBtn');
               const vis=document.getElementById('sdOrigLayerVisibleBtn');
               const del=document.getElementById('sdOrigLayerDeleteBtn');
-              if(!list||!addType||!add||!dup||!lock||!vis||!del)throw new Error('layer controls missing');
+              const board=document.getElementById('sdDataMatchBoardBtn');
+              if(!list||!addType||!add||!dup||!lock||!vis||!del||!board)throw new Error('layer controls missing');
+              board.click();
+              const boardRow=[...list.querySelectorAll('[data-layer-row]')].find(x=>x.textContent.includes('MATCH BOARD'));
+              if(!boardRow)throw new Error('MATCH BOARD generation failed');
               const initial=list.querySelectorAll('[data-layer-row]').length;
               addType.value='title';add.click();
               const afterAdd=list.querySelectorAll('[data-layer-row]').length;
