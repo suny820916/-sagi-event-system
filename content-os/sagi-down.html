@@ -157,14 +157,15 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 .origPoster .origControls{margin-top:9px}
 @media(max-width:520px){.origFilterPresets{grid-template-columns:1fr 1fr}.origTuneGrid{grid-template-columns:1fr}}
 
-/* SAGI POSTER LAYER EDITOR V1.0 */
-.origLayerEditor{margin-top:9px;border:1px solid #33434a;border-radius:12px;background:#081013;padding:10px}
-.origLayerHead{display:flex;justify-content:space-between;gap:8px;align-items:center}.origLayerHead b{font-size:10px}.origLayerHead span{font-size:8px;color:#72858c}
-.origLayerTabs{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:8px}.origLayerBtn{border:1px solid #314149;border-radius:9px;background:#091114;color:#94a4a9;padding:8px 5px;font-size:8px}.origLayerBtn.active{border-color:#d7b568;color:#e4ca84;background:#18150c;box-shadow:0 0 0 1px #d7b568 inset}
-.origLayerControls{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}.origLayerControls label{font-size:7px;color:#71858c}.origLayerControls input{width:100%;margin-top:4px;padding:0;accent-color:#d7b568}
-.origLayerActions{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}.origDragHint{font-size:7px;color:#6f8289;line-height:1.45;margin-top:7px}
+/* SAGI V3.9.1 · LAYER CORE */
+.origLayerEditor{margin-top:9px;border:1px solid #4b4430;border-radius:12px;background:linear-gradient(180deg,#0b1113,#080d0f);padding:10px}
+.origLayerHead{display:flex;justify-content:space-between;gap:8px;align-items:center}.origLayerHead b{font-size:10px}.origLayerHead span{font-size:8px;color:#72858c}.origLayerHead .badge{color:#e4ca84;border-color:#66572f}
+.origLayerAddRow{display:grid;grid-template-columns:1fr auto auto;gap:6px;margin-top:8px}.origLayerAddRow select{min-width:0;border:1px solid #314149;background:#071013;color:#e7ecee;border-radius:9px;padding:8px;font-size:8px}.origLayerAddRow .btn{padding:8px 9px;font-size:8px}
+.origLayerList{display:grid;gap:5px;margin-top:8px;max-height:250px;overflow:auto;overscroll-behavior:contain}.origLayerRow{display:grid;grid-template-columns:30px minmax(0,1fr) 30px 30px;gap:5px;align-items:center;border:1px solid #293940;border-radius:9px;background:#071013;padding:6px}.origLayerRow.active{border-color:#d7b568;background:#17140d;box-shadow:0 0 0 1px rgba(215,181,104,.35) inset}.origLayerRow.hidden{opacity:.48}.origLayerRow .z{font-size:7px;color:#687a80;text-align:center}.origLayerMain{min-width:0;border:0;background:transparent;color:#e3e8ea;text-align:left;padding:0}.origLayerMain b{display:block;font-size:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.origLayerMain span{display:block;font-size:6px;color:#70838a;margin-top:2px}.origLayerIcon{border:1px solid #33444a;border-radius:7px;background:#0a1114;color:#9eafb4;padding:5px 0;font-size:9px}.origLayerRow.active .origLayerIcon{border-color:#5c5133}.origLayerIcon.on{color:#e6cd85;border-color:#6b5b32}
+.origLayerControls{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}.origLayerControls label{font-size:7px;color:#71858c}.origLayerControls input{width:100%;margin-top:4px;padding:0;accent-color:#d7b568}.origLayerControls input:disabled{opacity:.35}
+.origLayerActions{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}.origLayerActions.secondary{grid-template-columns:repeat(5,1fr)}.origLayerActions .btn{padding:8px 4px;font-size:7px}.origLayerActions .danger{border-color:#6a3434;color:#efaaaa;background:#170b0b}.origDragHint{font-size:7px;color:#6f8289;line-height:1.45;margin-top:7px}
 .origOfficial{margin-top:9px;border:1px solid #345744;border-radius:11px;background:#08120c;padding:9px}.origOfficialTop{display:flex;justify-content:space-between;gap:8px;align-items:center}.origOfficialTop b{font-size:9px}.origOfficialTop span{font-size:7px;color:#79a185}.origOfficialRows{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:7px}.origOfficialRows div{border:1px solid #294133;border-radius:8px;padding:7px;background:#06100a}.origOfficialRows span{display:block;font-size:7px;color:#6f8b78}.origOfficialRows b{display:block;font-size:9px;margin-top:3px}.officialOk{color:#9fd2ad!important}.officialWarn{color:#d7b568!important}
-@media(max-width:520px){.origLayerControls{grid-template-columns:1fr}.origOfficialRows{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){.origLayerAddRow{grid-template-columns:1fr 1fr}.origLayerAddRow select{grid-column:1/-1}.origLayerControls{grid-template-columns:1fr}.origLayerActions.secondary{grid-template-columns:repeat(3,1fr)}.origLayerList{max-height:220px}.origOfficialRows{grid-template-columns:1fr 1fr}}
 
 /* SAGI MATERIAL KIT V1.0 */
 .origMaterial{margin-top:9px;border:1px solid #334247;border-radius:12px;background:#081013;padding:10px}
@@ -216,7 +217,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 <div class="wrap">
   <div class="top">
     <div class="brand"><b>SAGI DOWN</b><span>DOWNLOAD · IMAGE AI · VIDEO</span></div>
-    <span class="badge">V3.8 · VERIFIED DATA + DIRECT LAYERS</span>
+    <span class="badge">V3.9.1 · LAYER CORE</span>
   </div>
 
   <section class="hero">
@@ -478,6 +479,44 @@ AEK 2-3 皇马
         </div>
       </div>
 
+      <div class="origLayerEditor" id="sdOrigLayerEditor">
+        <div class="origLayerHead">
+          <div><b>LAYER CORE · 图层工作室</b><span>添加、删除、复制、隐藏、锁定与层级管理。画布仍可直接拖动 / 缩放。</span></div>
+          <span class="badge">V3.9.1</span>
+        </div>
+        <div class="origLayerAddRow">
+          <select id="sdOrigLayerAddType">
+            <option value="title">文字 / 标题图层</option>
+            <option value="scores">比分 / 数据图层</option>
+            <option value="photo">图片图层</option>
+            <option value="person">人物图层</option>
+            <option value="number">大数字 / 观点图层</option>
+          </select>
+          <button class="btn gold" id="sdOrigLayerAddBtn" type="button">＋ 添加图层</button>
+          <button class="btn" id="sdOrigLayerDuplicateBtn" type="button">复制当前</button>
+        </div>
+        <div class="origLayerList" id="sdOrigLayerList"></div>
+        <div class="origLayerControls">
+          <label>水平位置 X<input id="sdOrigLayerX" type="range" min="-55" max="55" value="0"></label>
+          <label>垂直位置 Y<input id="sdOrigLayerY" type="range" min="-55" max="55" value="0"></label>
+          <label>图层缩放<input id="sdOrigLayerScale" type="range" min="40" max="220" value="100"></label>
+        </div>
+        <div class="origLayerActions">
+          <button class="btn gold" id="sdOrigAutoLayoutBtn" type="button">自动排版</button>
+          <button class="btn" id="sdOrigLayerDownBtn" type="button">下移一层</button>
+          <button class="btn" id="sdOrigLayerUpBtn" type="button">上移一层</button>
+          <button class="btn" id="sdOrigResetLayerBtn" type="button">重置图层</button>
+        </div>
+        <div class="origLayerActions secondary">
+          <button class="btn" id="sdOrigLayerBottomBtn" type="button">置底</button>
+          <button class="btn" id="sdOrigLayerTopBtn" type="button">置顶</button>
+          <button class="btn" id="sdOrigLayerVisibleBtn" type="button">隐藏</button>
+          <button class="btn" id="sdOrigLayerLockBtn" type="button">锁定</button>
+          <button class="btn danger" id="sdOrigLayerDeleteBtn" type="button">删除</button>
+        </div>
+        <div class="origDragHint" id="sdOrigLayerHint">图层列表从上到下对应画面从前到后。锁定后不会被画布误拖；隐藏后不会导出。</div>
+      </div>
+
       <div class="origVisualTune" id="sdOrigVisualTune">
         <div class="origVisualHead">
           <div><b>VISUAL TUNE · 原创图视觉微调</b><span>这里才是正式海报的滤镜。人物与背景分开处理，不再修改上面的参考图。</span></div>
@@ -511,33 +550,7 @@ AEK 2-3 皇马
 
 
 
-      <div class="origLayerEditor" id="sdOrigLayerEditor">
-        <div class="origLayerHead">
-          <div><b>LAYER EDITOR · 图层排版</b><span>点选图层后，可直接在画布拖动，也可用滑杆微调。</span></div>
-          <span class="badge">DRAG</span>
-        </div>
-        <div class="origLayerTabs">
-          <button class="origLayerBtn" data-orig-layer="photo" type="button">图片</button>
-          <button class="origLayerBtn active" data-orig-layer="person" type="button">人物</button>
-          <button class="origLayerBtn" data-orig-layer="number" type="button">大数字</button>
-          <button class="origLayerBtn" data-orig-layer="scores" type="button">比分</button>
-          <button class="origLayerBtn" data-orig-layer="title" type="button">标题</button>
-        </div>
-        <div class="origLayerControls">
-          <label>水平位置 X<input id="sdOrigLayerX" type="range" min="-55" max="55" value="0"></label>
-          <label>垂直位置 Y<input id="sdOrigLayerY" type="range" min="-55" max="55" value="0"></label>
-          <label>图层缩放<input id="sdOrigLayerScale" type="range" min="40" max="220" value="100"></label>
-        </div>
-        <div class="origLayerActions">
-          <button class="btn gold" id="sdOrigAutoLayoutBtn" type="button">自动排版</button>
-          <button class="btn" id="sdOrigLayerDownBtn" type="button">下移一层</button>
-          <button class="btn" id="sdOrigLayerUpBtn" type="button">上移一层</button>
-          <button class="btn" id="sdOrigResetLayerBtn" type="button">重置图层</button>
-        </div>
-        <div class="origDragHint">画布拖动只移动当前选中的图层。人物、数字、比分、标题互不绑定，避免再次全部挤在一起。</div>
-      </div>
-
-      <div class="origOfficial" id="sdOrigOfficialVerify">
+            <div class="origOfficial" id="sdOrigOfficialVerify">
         <div class="origOfficialTop">
           <div><b>OFFICIAL DATA VERIFY · 官方数据核验</b><span>皇马内容优先核对 Real Madrid 官方网站，一般媒体只作为补充。</span></div>
           <span class="badge">OFFICIAL FIRST</span>
@@ -855,7 +868,7 @@ Unbelievable finish."></textarea>
 
 <script>
 (()=>{'use strict';
-const SAGI_DOWN_BUILD='V3.8.0';
+const SAGI_DOWN_BUILD='V3.9.1';
 document.documentElement.dataset.sagiDownBuild=SAGI_DOWN_BUILD;
 const BTCH_PUBLIC='https://btch-downloader-api-green.vercel.app';
 const DOWNLOAD_ROUTER_VERSION='3.0';
@@ -3316,50 +3329,145 @@ let SDORIG_PERSON_IMAGE=null,SDORIG_PERSON_URL='',SDORIG_PHOTO_IMAGE=null,SDORIG
 try{SDORIG={...SDORIG,...JSON.parse(localStorage.getItem(SDORIG_KEY)||'{}')}}catch(e){}
 
 function sdOrigSave(){try{localStorage.setItem(SDORIG_KEY,JSON.stringify(SDORIG))}catch(e){}}
-const SDORIG_LAYER_DEFAULTS={photo:{x:0,y:0,scale:100},person:{x:8,y:-6,scale:88},number:{x:-8,y:-8,scale:86},scores:{x:0,y:3,scale:90},title:{x:0,y:14,scale:90}};
-const SDORIG_LAYER_LABELS={photo:'图片',person:'人物',number:'大数字 / 观点',scores:'比分',title:'标题'};
+const SDORIG_LAYER_DEFAULTS={
+  photo:{type:'photo',name:'图片',x:0,y:0,scale:100,visible:true,locked:false,opacity:100,background:false},
+  person:{type:'person',name:'人物',x:8,y:-6,scale:88,visible:true,locked:false,opacity:100},
+  number:{type:'number',name:'大数字 / 观点',x:-8,y:-8,scale:86,visible:true,locked:false,opacity:100},
+  scores:{type:'scores',name:'比分',x:0,y:3,scale:90,visible:true,locked:false,opacity:100},
+  title:{type:'title',name:'标题',x:0,y:14,scale:90,visible:true,locked:false,opacity:100}
+};
+const SDORIG_LAYER_LABELS={photo:'图片',person:'人物',number:'大数字 / 观点',scores:'比分 / 数据',title:'文字 / 标题'};
+let SDORIG_LAYER_SEQ=0;
+function sdOrigLayerType(id){
+  const l=SDORIG.layers?.[id];
+  return l?.type||((id&&SDORIG_LAYER_DEFAULTS[id])?id:'title')
+}
+function sdOrigLayerLabel(id){
+  const l=SDORIG.layers?.[id],type=sdOrigLayerType(id);
+  return String(l?.name||SDORIG_LAYER_LABELS[type]||type)
+}
+function sdOrigLayerBase(type){
+  return {...(SDORIG_LAYER_DEFAULTS[type]||SDORIG_LAYER_DEFAULTS.title),type}
+}
 function sdOrigEnsureLayers(){
   SDORIG.layers=SDORIG.layers&&typeof SDORIG.layers==='object'?SDORIG.layers:{};
-  for(const k of Object.keys(SDORIG_LAYER_DEFAULTS))SDORIG.layers[k]={...SDORIG_LAYER_DEFAULTS[k],...(SDORIG.layers[k]||{})};
-  const valid=Object.keys(SDORIG_LAYER_DEFAULTS);
-  const current=Array.isArray(SDORIG.layerOrder)?SDORIG.layerOrder.filter(x=>valid.includes(x)):[];
-  SDORIG.layerOrder=[...current,...valid.filter(x=>!current.includes(x))];
-  if(!SDORIG.activeLayer||!valid.includes(SDORIG.activeLayer))SDORIG.activeLayer='person'
+  if(!SDORIG.layerCoreVersion){
+    for(const type of Object.keys(SDORIG_LAYER_DEFAULTS)){
+      SDORIG.layers[type]={...sdOrigLayerBase(type),...(SDORIG.layers[type]||{}),type};
+    }
+    SDORIG.layerCoreVersion=1
+  }
+  for(const [id,raw] of Object.entries(SDORIG.layers)){
+    const type=raw?.type||((SDORIG_LAYER_DEFAULTS[id]&&id)||'title');
+    SDORIG.layers[id]={...sdOrigLayerBase(type),...raw,type,visible:raw?.visible!==false,locked:raw?.locked===true}
+  }
+  const ids=Object.keys(SDORIG.layers);
+  const current=Array.isArray(SDORIG.layerOrder)?SDORIG.layerOrder.filter(id=>ids.includes(id)):[];
+  SDORIG.layerOrder=[...current,...ids.filter(id=>!current.includes(id))];
+  if(!SDORIG.activeLayer||!SDORIG.layers[SDORIG.activeLayer])SDORIG.activeLayer=SDORIG.layerOrder.slice().reverse().find(id=>SDORIG.layers[id]?.visible!==false)||SDORIG.layerOrder.at(-1)||''
 }
-function sdOrigLayer(name){sdOrigEnsureLayers();return SDORIG.layers[name]||SDORIG.layers.person}
-function sdOrigWithLayer(ctx,w,h,name,fn){
-  const l=sdOrigLayer(name),s=(Number(l.scale)||100)/100;
-  ctx.save();
+function sdOrigLayer(id){sdOrigEnsureLayers();return SDORIG.layers[id]||null}
+function sdOrigFindFirstType(type){sdOrigEnsureLayers();return SDORIG.layerOrder.find(id=>sdOrigLayerType(id)===type)||''}
+function sdOrigNewLayerId(type){
+  let id='';do{id=type+'_'+Date.now().toString(36)+'_'+(++SDORIG_LAYER_SEQ)}while(SDORIG.layers[id]);return id
+}
+function sdOrigWithLayer(ctx,w,h,id,fn){
+  const l=sdOrigLayer(id);if(!l||l.visible===false)return;
+  const s=(Number(l.scale)||100)/100,opacity=Math.max(0,Math.min(1,(Number(l.opacity)??100)/100));
+  ctx.save();ctx.globalAlpha*=opacity;
   ctx.translate(w/2+(Number(l.x)||0)/100*w,h/2+(Number(l.y)||0)/100*h);
-  ctx.scale(s,s);ctx.translate(-w/2,-h/2);fn();ctx.restore()
+  ctx.scale(s,s);ctx.translate(-w/2,-h/2);fn(l);ctx.restore()
 }
-function sdOrigSyncLayerControls(){
-  if(!q('sdOrigLayerX'))return;const l=sdOrigLayer(SDORIG.activeLayer);
-  q('sdOrigLayerX').value=l.x;q('sdOrigLayerY').value=l.y;q('sdOrigLayerScale').value=l.scale;
-  document.querySelectorAll('[data-orig-layer]').forEach(b=>b.classList.toggle('active',b.dataset.origLayer===SDORIG.activeLayer));
-  if(q('sdOrigCanvasLayerLabel'))q('sdOrigCanvasLayerLabel').textContent=(SDORIG_LAYER_LABELS[SDORIG.activeLayer]||SDORIG.activeLayer)+'图层 · 拖动位置 · 右下角缩放'
+function sdOrigAddLayer(type,silent=false){
+  sdOrigEnsureLayers();type=SDORIG_LAYER_DEFAULTS[type]?type:'title';
+  if(SDORIG.layerOrder.length>=16){toast('最多保留16个图层');return''}
+  const id=sdOrigNewLayerId(type),same=SDORIG.layerOrder.filter(x=>sdOrigLayerType(x)===type).length;
+  const base=sdOrigLayerBase(type);
+  SDORIG.layers[id]={...base,name:SDORIG_LAYER_LABELS[type]+(same?(' '+(same+1)):'新图层'),x:(Number(base.x)||0)+Math.min(12,same*3),y:(Number(base.y)||0)+Math.min(12,same*3)};
+  SDORIG.layerOrder.push(id);SDORIG.activeLayer=id;SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigSyncLayerControls();sdOrigDraw();
+  if(!silent)toast('已添加'+SDORIG_LAYER_LABELS[type]+'图层');return id
+}
+function sdOrigDuplicateLayer(){
+  const src=sdOrigLayer(SDORIG.activeLayer);if(!src)return;
+  if(SDORIG.layerOrder.length>=16){toast('最多保留16个图层');return}
+  const id=sdOrigNewLayerId(src.type),copy={...src,name:sdOrigLayerLabel(SDORIG.activeLayer)+' 副本',x:Math.min(55,(Number(src.x)||0)+4),y:Math.min(55,(Number(src.y)||0)+4),locked:false};
+  SDORIG.layers[id]=copy;const i=SDORIG.layerOrder.indexOf(SDORIG.activeLayer);SDORIG.layerOrder.splice(i+1,0,id);SDORIG.activeLayer=id;
+  SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigSyncLayerControls();sdOrigDraw();toast('已复制当前图层')
+}
+function sdOrigDeleteLayer(){
+  const id=SDORIG.activeLayer,l=sdOrigLayer(id);if(!l)return;
+  if(l.locked){toast('图层已锁定，请先解锁');return}
+  delete SDORIG.layers[id];SDORIG.layerOrder=SDORIG.layerOrder.filter(x=>x!==id);
+  SDORIG.activeLayer=SDORIG.layerOrder.slice().reverse().find(x=>SDORIG.layers[x]?.visible!==false)||SDORIG.layerOrder.at(-1)||'';
+  SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigSyncLayerControls();sdOrigDraw();toast('图层已删除')
+}
+function sdOrigToggleLayerVisible(id=SDORIG.activeLayer){
+  const l=sdOrigLayer(id);if(!l)return;l.visible=l.visible===false;SDORIG.activeLayer=id;SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigSyncLayerControls();sdOrigDraw();toast(l.visible?'图层已显示':'图层已隐藏')
+}
+function sdOrigToggleLayerLock(id=SDORIG.activeLayer){
+  const l=sdOrigLayer(id);if(!l)return;l.locked=!l.locked;SDORIG.activeLayer=id;sdOrigSave();sdOrigSyncLayerControls();sdOrigDraw();toast(l.locked?'图层已锁定':'图层已解锁')
 }
 function sdOrigMoveLayer(dir){
-  sdOrigEnsureLayers();const a=SDORIG.layerOrder,i=a.indexOf(SDORIG.activeLayer);if(i<0)return;
+  const l=sdOrigLayer(SDORIG.activeLayer);if(!l)return;if(l.locked){toast('图层已锁定，请先解锁');return}
+  const a=SDORIG.layerOrder,i=a.indexOf(SDORIG.activeLayer);if(i<0)return;
   const j=Math.max(0,Math.min(a.length-1,i+dir));if(j===i)return;
-  [a[i],a[j]]=[a[j],a[i]];SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigDraw();toast(dir>0?'图层已上移':'图层已下移')
+  [a[i],a[j]]=[a[j],a[i]];SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigSyncLayerControls();sdOrigDraw();toast(dir>0?'图层已上移':'图层已下移')
+}
+function sdOrigMoveLayerEdge(edge){
+  const l=sdOrigLayer(SDORIG.activeLayer);if(!l)return;if(l.locked){toast('图层已锁定，请先解锁');return}
+  const a=SDORIG.layerOrder,i=a.indexOf(SDORIG.activeLayer);if(i<0)return;
+  a.splice(i,1);edge==='top'?a.push(SDORIG.activeLayer):a.unshift(SDORIG.activeLayer);
+  SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigSyncLayerControls();sdOrigDraw();toast(edge==='top'?'图层已置顶':'图层已置底')
 }
 function sdOrigScaleLayer(delta){
-  const l=sdOrigLayer(SDORIG.activeLayer);l.scale=Math.max(40,Math.min(220,(Number(l.scale)||100)+delta));q('sdOrigLayerScale').value=l.scale;SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigDraw()
+  const l=sdOrigLayer(SDORIG.activeLayer);if(!l)return;if(l.locked){toast('图层已锁定');return}
+  l.scale=Math.max(40,Math.min(220,(Number(l.scale)||100)+delta));if(q('sdOrigLayerScale'))q('sdOrigLayerScale').value=l.scale;SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigDraw()
+}
+function sdOrigRenderLayerList(){
+  const host=q('sdOrigLayerList');if(!host)return;sdOrigEnsureLayers();
+  const topFirst=SDORIG.layerOrder.slice().reverse();
+  host.innerHTML=topFirst.length?topFirst.map((id,idx)=>{
+    const l=SDORIG.layers[id],type=sdOrigLayerType(id),active=id===SDORIG.activeLayer;
+    return '<div class="origLayerRow '+(active?'active ':'')+(l.visible===false?'hidden ':'')+'" data-layer-row="'+escapeHtml(id)+'">'+
+      '<span class="z">'+String(topFirst.length-idx).padStart(2,'0')+'</span>'+
+      '<button class="origLayerMain" data-layer-select="'+escapeHtml(id)+'" type="button"><b>'+escapeHtml(sdOrigLayerLabel(id))+'</b><span>'+escapeHtml(SDORIG_LAYER_LABELS[type]||type)+(l.locked?' · 已锁定':'')+'</span></button>'+
+      '<button class="origLayerIcon '+(l.visible!==false?'on':'')+'" data-layer-eye="'+escapeHtml(id)+'" type="button" aria-label="显示隐藏">'+(l.visible!==false?'◉':'○')+'</button>'+
+      '<button class="origLayerIcon '+(l.locked?'on':'')+'" data-layer-lock="'+escapeHtml(id)+'" type="button" aria-label="锁定">'+(l.locked?'▣':'□')+'</button>'+
+    '</div>'
+  }).join(''):'<div class="mini">暂无图层，点击“添加图层”。</div>';
+  host.querySelectorAll('[data-layer-select]').forEach(b=>b.onclick=()=>{SDORIG.activeLayer=b.dataset.layerSelect;sdOrigSave();sdOrigSyncLayerControls();sdOrigDraw()});
+  host.querySelectorAll('[data-layer-eye]').forEach(b=>b.onclick=e=>{e.stopPropagation();sdOrigToggleLayerVisible(b.dataset.layerEye)});
+  host.querySelectorAll('[data-layer-lock]').forEach(b=>b.onclick=e=>{e.stopPropagation();sdOrigToggleLayerLock(b.dataset.layerLock)})
+}
+function sdOrigSyncLayerControls(){
+  sdOrigEnsureLayers();const l=sdOrigLayer(SDORIG.activeLayer);
+  const locked=!!l?.locked;
+  if(q('sdOrigLayerX')){q('sdOrigLayerX').value=l?.x||0;q('sdOrigLayerX').disabled=!l||locked}
+  if(q('sdOrigLayerY')){q('sdOrigLayerY').value=l?.y||0;q('sdOrigLayerY').disabled=!l||locked}
+  if(q('sdOrigLayerScale')){q('sdOrigLayerScale').value=l?.scale||100;q('sdOrigLayerScale').disabled=!l||locked}
+  if(q('sdOrigCanvasLayerLabel'))q('sdOrigCanvasLayerLabel').textContent=l?(sdOrigLayerLabel(SDORIG.activeLayer)+' · '+(l.locked?'已锁定':'拖动位置 · 右下角缩放')):'暂无图层';
+  if(q('sdOrigLayerVisibleBtn'))q('sdOrigLayerVisibleBtn').textContent=l?.visible===false?'显示':'隐藏';
+  if(q('sdOrigLayerLockBtn'))q('sdOrigLayerLockBtn').textContent=l?.locked?'解锁':'锁定';
+  if(q('sdOrigLayerHint'))q('sdOrigLayerHint').textContent=l?.locked?'当前图层已锁定：可查看/隐藏，但不会被拖动、缩放、删除或改层级。':'图层列表从上到下对应画面从前到后。锁定后不会被画布误拖；隐藏后不会导出。';
+  const photoType=l&&sdOrigLayerType(SDORIG.activeLayer)==='photo';
+  if(photoType&&q('sdOrigPhotoMode'))q('sdOrigPhotoMode').value=l.background?'background':'layer';
+  if(photoType&&q('sdOrigPhotoOpacity'))q('sdOrigPhotoOpacity').value=Number(l.opacity)||100;
+  sdOrigRenderLayerList()
 }
 function sdOrigAutoLayout(){
-  sdOrigEnsureLayers();
-  const hasPerson=!!SDORIG_PERSON_IMAGE;
-  SDORIG.layers.photo={x:0,y:SDORIG.photoMode==='background'?0:-8,scale:SDORIG.photoMode==='background'?105:86};
-  SDORIG.layers.person={x:hasPerson?10:0,y:hasPerson?-7:0,scale:hasPerson?82:100};
-  SDORIG.layers.number={x:-12,y:-11,scale:80};
-  SDORIG.layers.scores={x:0,y:4,scale:84};
-  SDORIG.layers.title={x:0,y:17,scale:86};
-  SDORIG.layerOrder=['photo','person','number','scores','title'];
-  SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigSyncLayerControls();sdOrigDraw();toast('已自动避让排版')
+  sdOrigEnsureLayers();const counts={};
+  for(const id of SDORIG.layerOrder){
+    const l=SDORIG.layers[id];if(!l||l.locked)continue;
+    const type=sdOrigLayerType(id),n=counts[type]||0;counts[type]=n+1;const base=sdOrigLayerBase(type);
+    l.x=(Number(base.x)||0)+(n?Math.min(12,n*4):0);l.y=(Number(base.y)||0)+(n?Math.min(12,n*4):0);l.scale=Number(base.scale)||100;
+    if(type==='photo'&&l.background){l.x=0;l.y=0;l.scale=105}
+  }
+  SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigSyncLayerControls();sdOrigDraw();toast('已按现有图层自动排版')
 }
 function sdOrigResetActiveLayer(){
-  sdOrigEnsureLayers();SDORIG.layers[SDORIG.activeLayer]={...SDORIG_LAYER_DEFAULTS[SDORIG.activeLayer]};SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigSyncLayerControls();sdOrigDraw();toast('当前图层已重置')
+  const l=sdOrigLayer(SDORIG.activeLayer);if(!l)return;if(l.locked){toast('图层已锁定，请先解锁');return}
+  const type=sdOrigLayerType(SDORIG.activeLayer),keep={type,name:l.name,visible:l.visible,locked:l.locked,opacity:l.opacity,background:l.background};
+  SDORIG.layers[SDORIG.activeLayer]={...sdOrigLayerBase(type),...keep};SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigSyncLayerControls();sdOrigDraw();toast('当前图层已重置')
 }
 sdOrigEnsureLayers();
 
@@ -3426,7 +3534,7 @@ async function sdOrigLoadPhoto(file){
   if(SDORIG_PHOTO_URL)URL.revokeObjectURL(SDORIG_PHOTO_URL);
   const url=URL.createObjectURL(file),img=new Image();
   img.onload=()=>{
-    SDORIG_PHOTO_URL=url;SDORIG_PHOTO_IMAGE=img;SDORIG.photoFileName=file.name;SDORIG.activeLayer='photo';SDORIG.generatedAt=Date.now();sdOrigSave();
+    SDORIG_PHOTO_URL=url;SDORIG_PHOTO_IMAGE=img;SDORIG.photoFileName=file.name;SDORIG.activeLayer=sdOrigFindFirstType('photo')||sdOrigAddLayer('photo',true);SDORIG.generatedAt=Date.now();sdOrigSave();
     q('sdOrigPhotoPreview').src=url;q('sdOrigPhotoPreview').classList.add('show');q('sdOrigPhotoFileTitle').textContent=file.name;
     sdOrigRender();toast('图片已作为独立图层加入画布')
   };
@@ -3447,7 +3555,7 @@ async function sdOrigLoadPerson(file){
     if(sameName||similarity>=.985){
       URL.revokeObjectURL(url);q('sdOrigPersonFile').value='';q('sdOrigPersonHint').textContent='已拒绝：人物素材与下载原图过于接近。请选择另一张教练/球员照片，保证原创视觉不复刻来源图。';toast('人物素材与原图过于相似，已拒绝');return
     }
-    SDORIG_PERSON_URL=url;SDORIG_PERSON_IMAGE=img;SDORIG.personFileName=file.name;SDORIG.generatedAt=Date.now();sdOrigSave();
+    SDORIG_PERSON_URL=url;SDORIG_PERSON_IMAGE=img;SDORIG.personFileName=file.name;if(!sdOrigFindFirstType('person'))SDORIG.activeLayer=sdOrigAddLayer('person',true);SDORIG.generatedAt=Date.now();sdOrigSave();
     q('sdOrigPersonPreview').src=url;q('sdOrigPersonPreview').classList.add('show');q('sdOrigPersonFileTitle').textContent=file.name;
     q('sdOrigPersonHint').textContent='人物素材已加入原创画布 · 与下载原图相似度 '+Math.round(similarity*100)+'% · 来源原图像素仍为 0%。';
     sdOrigRender();toast('人物素材已加入原创海报')
@@ -3544,51 +3652,52 @@ function sdOrigHeader(ctx,w,h,c){
   if(SDORIG.outputMode!=='final'){ctx.fillStyle='#788b92';ctx.font='650 '+Math.max(18,w*.019)+'px -apple-system,"PingFang SC",sans-serif';ctx.fillText('EDIT PREVIEW · ORIGINAL WORKSPACE',pad,h*.136)}
 }
 
-function sdOrigDrawPhoto(ctx,w,h){
+function sdOrigDrawPhoto(ctx,w,h,id){
   if(!SDORIG_PHOTO_IMAGE)return;
-  const img=SDORIG_PHOTO_IMAGE,background=SDORIG.photoMode==='background',opacity=Math.max(.2,Math.min(1,(Number(SDORIG.photoOpacity)||100)/100));
-  let box=background?{x:0,y:0,w,h}:{x:w*.12,y:h*.16,w:w*.76,h:h*.52};
+  const l=sdOrigLayer(id)||{},img=SDORIG_PHOTO_IMAGE,background=!!l.background,opacity=Math.max(.2,Math.min(1,(Number(l.opacity)||100)/100));
+  const box=background?{x:0,y:0,w,h}:{x:w*.12,y:h*.16,w:w*.76,h:h*.52};
   const fit=background?Math.max(box.w/img.naturalWidth,box.h/img.naturalHeight):Math.min(box.w/img.naturalWidth,box.h/img.naturalHeight);
   const iw=img.naturalWidth*fit,ih=img.naturalHeight*fit,cx=box.x+box.w/2,cy=box.y+box.h/2;
-  ctx.save();ctx.globalAlpha=opacity;
-  if(background){ctx.beginPath();ctx.rect(0,0,w,h);ctx.clip()}
-  else{sdOrigRound(ctx,box.x,box.y,box.w,box.h,w*.025);ctx.clip()}
+  ctx.save();ctx.globalAlpha*=opacity;
+  if(background){ctx.beginPath();ctx.rect(0,0,w,h);ctx.clip()}else{sdOrigRound(ctx,box.x,box.y,box.w,box.h,w*.025);ctx.clip()}
   ctx.filter='brightness('+(Number(SDORIG.bgBright)||100)+'%) saturate('+(Number(SDORIG.bgSat)||100)+'%)';
   ctx.drawImage(img,cx-iw/2,cy-ih/2,iw,ih);ctx.filter='none';ctx.restore();
-  if(background){const g=ctx.createLinearGradient(0,0,0,h);g.addColorStop(0,'rgba(3,6,7,.18)');g.addColorStop(.58,'rgba(3,6,7,.38)');g.addColorStop(1,'rgba(3,6,7,.72)');ctx.fillStyle=g;ctx.fillRect(0,0,w,h)}
+  if(background){const g=ctx.createLinearGradient(0,0,0,h);g.addColorStop(0,'rgba(3,6,7,.16)');g.addColorStop(.58,'rgba(3,6,7,.34)');g.addColorStop(1,'rgba(3,6,7,.70)');ctx.fillStyle=g;ctx.fillRect(0,0,w,h)}
 }
-function sdOrigLayerVisible(name){
-  if(name==='photo')return !!SDORIG_PHOTO_IMAGE;
-  if(name==='person')return !!SDORIG_PERSON_IMAGE;
-  if(name==='scores')return sdOrigScoreRows().length>0;
-  if(name==='number')return ['number','coach','question'].includes(SDORIG.template);
-  if(name==='title')return true;
+function sdOrigLayerVisible(id){
+  const l=sdOrigLayer(id);if(!l||l.visible===false)return false;const type=sdOrigLayerType(id);
+  if(type==='photo')return !!SDORIG_PHOTO_IMAGE;
+  if(type==='person')return !!SDORIG_PERSON_IMAGE;
+  if(type==='scores')return sdOrigScoreRows().length>0;
+  if(type==='number')return ['number','coach','question'].includes(SDORIG.template);
+  if(type==='title')return true;
   return false
 }
-function sdOrigLayerBounds(name,w,h){
+function sdOrigLayerBounds(id,w,h){
+  const l=sdOrigLayer(id),type=sdOrigLayerType(id),photoBg=type==='photo'&&!!l?.background;
   const bases={
-    photo:SDORIG.photoMode==='background'?{x:w*.025,y:h*.025,w:w*.95,h:h*.90}:{x:w*.12,y:h*.16,w:w*.76,h:h*.52},
+    photo:photoBg?{x:w*.025,y:h*.025,w:w*.95,h:h*.90}:{x:w*.12,y:h*.16,w:w*.76,h:h*.52},
     person:{x:w*.50,y:h*.13,w:w*.46,h:h*.43},
     number:{x:w*.05,y:h*.18,w:w*.90,h:h*.42},
     scores:{x:w*.05,y:h*.46,w:w*.90,h:h*.19},
     title:{x:w*.05,y:h*.60,w:w*.90,h:h*.28}
   };
-  const b=bases[name]||bases.title,l=sdOrigLayer(name),s=(Number(l.scale)||100)/100,dx=(Number(l.x)||0)/100*w,dy=(Number(l.y)||0)/100*h;
+  const b=bases[type]||bases.title,s=(Number(l?.scale)||100)/100,dx=(Number(l?.x)||0)/100*w,dy=(Number(l?.y)||0)/100*h;
   const cx=w/2+(b.x+b.w/2-w/2)*s+dx,cy=h/2+(b.y+b.h/2-h/2)*s+dy;
   return{x:cx-b.w*s/2,y:cy-b.h*s/2,w:b.w*s,h:b.h*s}
 }
 function sdOrigHitLayer(x,y,w,h){
   sdOrigEnsureLayers();const order=SDORIG.layerOrder.slice().reverse();
-  for(const name of order){if(!sdOrigLayerVisible(name))continue;const b=sdOrigLayerBounds(name,w,h);if(x>=b.x&&x<=b.x+b.w&&y>=b.y&&y<=b.y+b.h)return name}
+  for(const id of order){if(!sdOrigLayerVisible(id))continue;const b=sdOrigLayerBounds(id,w,h);if(x>=b.x&&x<=b.x+b.w&&y>=b.y&&y<=b.y+b.h)return id}
   return null
 }
 function sdOrigDrawSelection(ctx,w,h){
-  if(SDORIG.outputMode==='final'||!sdOrigLayerVisible(SDORIG.activeLayer))return;
+  const l=sdOrigLayer(SDORIG.activeLayer);if(SDORIG.outputMode==='final'||!l||!sdOrigLayerVisible(SDORIG.activeLayer))return;
   const b=sdOrigLayerBounds(SDORIG.activeLayer,w,h),r=Math.max(10,w*.012);
-  ctx.save();ctx.setLineDash([Math.max(10,w*.012),Math.max(7,w*.008)]);ctx.strokeStyle='rgba(226,201,130,.95)';ctx.lineWidth=Math.max(2,w*.0025);ctx.strokeRect(b.x,b.y,b.w,b.h);ctx.setLineDash([]);
-  ctx.fillStyle='#e2c982';ctx.strokeStyle='#0a0d0e';ctx.lineWidth=Math.max(2,w*.002);
-  for(const [x,y] of [[b.x,b.y],[b.x+b.w,b.y],[b.x,b.y+b.h],[b.x+b.w,b.y+b.h]]){ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();ctx.stroke()}
-  ctx.fillStyle='rgba(5,8,9,.88)';sdOrigRound(ctx,b.x,Math.max(4,b.y-r*3.2),Math.max(w*.13,110),r*2.2,r*.5);ctx.fill();ctx.fillStyle='#f0d58e';ctx.font='800 '+Math.max(14,w*.016)+'px -apple-system,"PingFang SC",sans-serif';ctx.fillText(SDORIG_LAYER_LABELS[SDORIG.activeLayer]||SDORIG.activeLayer,b.x+r*.6,Math.max(r*1.5,b.y-r*1.65));ctx.restore()
+  ctx.save();ctx.setLineDash([Math.max(10,w*.012),Math.max(7,w*.008)]);ctx.strokeStyle=l.locked?'rgba(150,165,170,.8)':'rgba(226,201,130,.95)';ctx.lineWidth=Math.max(2,w*.0025);ctx.strokeRect(b.x,b.y,b.w,b.h);ctx.setLineDash([]);
+  ctx.fillStyle=l.locked?'#87979c':'#e2c982';ctx.strokeStyle='#0a0d0e';ctx.lineWidth=Math.max(2,w*.002);
+  if(!l.locked)for(const [x,y] of [[b.x,b.y],[b.x+b.w,b.y],[b.x,b.y+b.h],[b.x+b.w,b.y+b.h]]){ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();ctx.stroke()}
+  ctx.fillStyle='rgba(5,8,9,.88)';sdOrigRound(ctx,b.x,Math.max(4,b.y-r*3.2),Math.max(w*.17,140),r*2.2,r*.5);ctx.fill();ctx.fillStyle=l.locked?'#a8b4b8':'#f0d58e';ctx.font='800 '+Math.max(14,w*.016)+'px -apple-system,"PingFang SC",sans-serif';ctx.fillText((l.locked?'🔒 ':'')+sdOrigLayerLabel(SDORIG.activeLayer),b.x+r*.6,Math.max(r*1.5,b.y-r*1.65));ctx.restore()
 }
 
 function sdOrigDrawPerson(ctx,w,h,c){
@@ -3663,23 +3772,24 @@ function sdOrigFooter(ctx,w,h,c){
 }
 function sdOrigDraw(){
   const cv=sdOrigCanvas();if(!cv)return;sdOrigSetup();sdOrigEnsureLayers();const ctx=cv.getContext('2d'),w=cv.width,h=cv.height,cx=sdOrigContext();ctx.clearRect(0,0,w,h);sdOrigGradient(ctx,w,h);
-  if(SDORIG_PHOTO_IMAGE&&SDORIG.photoMode==='background')sdOrigWithLayer(ctx,w,h,'photo',()=>sdOrigDrawPhoto(ctx,w,h));
   sdOrigPitch(ctx,w,h);sdOrigDrawVignette(ctx,w,h);
-  const painters={
-    photo:()=>{if(SDORIG.photoMode!=='background')sdOrigDrawPhoto(ctx,w,h)},
-    person:()=>sdOrigDrawPerson(ctx,w,h,cx),
-    number:()=>{if(SDORIG.template==='number')sdOrigBigNumber(ctx,w,h,cx);else if(SDORIG.template==='coach')sdOrigCoachThesis(ctx,w,h,cx);else if(SDORIG.template==='question')sdOrigQuestion(ctx,w,h,cx)},
-    scores:()=>{if(SDORIG.template==='timeline')sdOrigTimeline(ctx,w,h,cx);else if(SDORIG.template==='data')sdOrigDataCard(ctx,w,h,cx);else sdOrigScoreStrip(ctx,w,h,cx)},
-    title:()=>sdOrigMainText(ctx,w,h,cx)
-  };
-  for(const name of SDORIG.layerOrder){if(name==='photo'&&SDORIG.photoMode==='background')continue;const fn=painters[name];if(fn)sdOrigWithLayer(ctx,w,h,name,fn)}
+  for(const id of SDORIG.layerOrder){
+    if(!sdOrigLayerVisible(id))continue;const type=sdOrigLayerType(id);
+    sdOrigWithLayer(ctx,w,h,id,()=>{
+      if(type==='photo')sdOrigDrawPhoto(ctx,w,h,id);
+      else if(type==='person')sdOrigDrawPerson(ctx,w,h,cx);
+      else if(type==='number'){if(SDORIG.template==='number')sdOrigBigNumber(ctx,w,h,cx);else if(SDORIG.template==='coach')sdOrigCoachThesis(ctx,w,h,cx);else if(SDORIG.template==='question')sdOrigQuestion(ctx,w,h,cx)}
+      else if(type==='scores'){if(SDORIG.template==='timeline')sdOrigTimeline(ctx,w,h,cx);else if(SDORIG.template==='data')sdOrigDataCard(ctx,w,h,cx);else sdOrigScoreStrip(ctx,w,h,cx)}
+      else if(type==='title')sdOrigMainText(ctx,w,h,cx)
+    })
+  }
   sdOrigHeader(ctx,w,h,cx);sdOrigFooter(ctx,w,h,cx);sdOrigDrawSelection(ctx,w,h)
 }
 function sdOrigRender(){
   if(!q('sdOriginalPoster'))return;
   const c=sdOrigContext();q('sdOrigPixelUse').textContent='0%';q('sdOrigOriginality').textContent='100%';q('sdOrigHook').textContent=c.hook||'等待分析';q('sdOrigSubject').textContent=SDORIG.subject||c.subject||'—';q('sdOrigRole').textContent=SDORIG.role||c.person||'—';q('sdOrigFact').textContent=SDORIG.fact||c.fact||'—';q('sdOrigStructure').textContent=SDORIG.structure||'—';
   q('sdOrigTitle').value=SDORIG.title||'';q('sdOrigSub').value=SDORIG.sub||'';q('sdOrigPerson').value=SDORIG.person||'';q('sdOrigRatio').value=SDORIG.ratio||'3:4';
-  q('sdOrigPersonScale').value=SDORIG.personScale||100;q('sdOrigPersonX').value=SDORIG.personX||0;q('sdOrigPersonMode').value=SDORIG.personMode||'hero';q('sdOrigPhotoMode').value=SDORIG.photoMode||'layer';q('sdOrigPhotoOpacity').value=SDORIG.photoOpacity||100;q('sdOrigScoreText').value=SDORIG.scoreText||'';if(SDORIG.personFileName)q('sdOrigPersonFileTitle').textContent=SDORIG.personFileName;if(SDORIG.photoFileName)q('sdOrigPhotoFileTitle').textContent=SDORIG.photoFileName;sdOrigRenderScores();
+  q('sdOrigPersonScale').value=SDORIG.personScale||100;q('sdOrigPersonX').value=SDORIG.personX||0;q('sdOrigPersonMode').value=SDORIG.personMode||'hero';q('sdOrigScoreText').value=SDORIG.scoreText||'';if(SDORIG.personFileName)q('sdOrigPersonFileTitle').textContent=SDORIG.personFileName;if(SDORIG.photoFileName)q('sdOrigPhotoFileTitle').textContent=SDORIG.photoFileName;sdOrigRenderScores();
   document.querySelectorAll('[data-orig-variant]').forEach(b=>b.classList.toggle('active',Number(b.dataset.origVariant)===Number(SDORIG.variant)));
   document.querySelectorAll('[data-orig-template]').forEach(b=>b.classList.toggle('active',b.dataset.origTemplate===SDORIG.template));
   const coach=c.coach?('主教练上下文：'+c.coach+'。系统依据来源账号与联网文章中的教练身份判断，不使用人脸身份识别。'):('暂未从来源/新闻上下文验证主教练姓名，海报将以球队趋势为主。');
@@ -3729,9 +3839,9 @@ q('sdOrigRatio').onchange=e=>{SDORIG.ratio=e.target.value;SDORIG.generatedAt=Dat
 
 q('sdOrigPhotoFile').onchange=e=>{const file=e.target.files?.[0];if(file)sdOrigLoadPhoto(file);e.target.value=''};
 q('sdOrigPhotoRemoveBtn').onclick=sdOrigRemovePhoto;
-q('sdOrigPhotoSelectBtn').onclick=()=>{SDORIG.activeLayer='photo';sdOrigSave();sdOrigSyncLayerControls();sdOrigDraw()};
-q('sdOrigPhotoMode').onchange=e=>{SDORIG.photoMode=e.target.value;SDORIG.activeLayer='photo';if(SDORIG.photoMode==='background'){SDORIG.layerOrder=SDORIG.layerOrder.filter(x=>x!=='photo');SDORIG.layerOrder.unshift('photo')}SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigSyncLayerControls();sdOrigDraw()};
-q('sdOrigPhotoOpacity').oninput=e=>{SDORIG.photoOpacity=Number(e.target.value);SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigDraw()};
+q('sdOrigPhotoSelectBtn').onclick=()=>{const id=sdOrigFindFirstType('photo')||sdOrigAddLayer('photo',true);SDORIG.activeLayer=id;sdOrigSave();sdOrigSyncLayerControls();sdOrigDraw()};
+q('sdOrigPhotoMode').onchange=e=>{let id=(sdOrigLayerType(SDORIG.activeLayer)==='photo'&&SDORIG.activeLayer)||sdOrigFindFirstType('photo')||sdOrigAddLayer('photo',true);const l=sdOrigLayer(id);if(!l)return;SDORIG.activeLayer=id;l.background=e.target.value==='background';SDORIG.photoMode=e.target.value;if(l.background&&!l.locked){SDORIG.layerOrder=SDORIG.layerOrder.filter(x=>x!==id);SDORIG.layerOrder.unshift(id)}SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigSyncLayerControls();sdOrigDraw()};
+q('sdOrigPhotoOpacity').oninput=e=>{const id=(sdOrigLayerType(SDORIG.activeLayer)==='photo'&&SDORIG.activeLayer)||sdOrigFindFirstType('photo');const l=id&&sdOrigLayer(id);if(l&&!l.locked){l.opacity=Number(e.target.value);SDORIG.photoOpacity=l.opacity;SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigDraw()}};
 
 q('sdOrigPersonFile').onchange=e=>{const file=e.target.files?.[0];if(file)sdOrigLoadPerson(file);e.target.value=''};
 q('sdOrigPersonRemoveBtn').onclick=sdOrigRemovePerson;
@@ -3743,10 +3853,16 @@ q('sdOrigScoreText').oninput=e=>{SDORIG.scoreText=e.target.value;SDORIG.generate
 q('sdOrigScoreAutoBtn').onclick=sdOrigSyncScores;
 q('sdOrigScoreClearBtn').onclick=()=>{SDORIG.scoreText='';sdOrigSave();q('sdOrigScoreText').value='';sdOrigRenderScores();sdOrigDraw();toast('比分素材已清空')};
 
-document.querySelectorAll('[data-orig-layer]').forEach(btn=>btn.onclick=()=>{SDORIG.activeLayer=btn.dataset.origLayer;sdOrigSave();sdOrigSyncLayerControls();sdOrigDraw()});
-q('sdOrigLayerX').oninput=e=>{const l=sdOrigLayer(SDORIG.activeLayer);l.x=Number(e.target.value);SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigDraw()};
-q('sdOrigLayerY').oninput=e=>{const l=sdOrigLayer(SDORIG.activeLayer);l.y=Number(e.target.value);SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigDraw()};
-q('sdOrigLayerScale').oninput=e=>{const l=sdOrigLayer(SDORIG.activeLayer);l.scale=Number(e.target.value);SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigDraw()};
+q('sdOrigLayerAddBtn').onclick=()=>sdOrigAddLayer(q('sdOrigLayerAddType').value);
+q('sdOrigLayerDuplicateBtn').onclick=sdOrigDuplicateLayer;
+q('sdOrigLayerDeleteBtn').onclick=sdOrigDeleteLayer;
+q('sdOrigLayerVisibleBtn').onclick=()=>sdOrigToggleLayerVisible();
+q('sdOrigLayerLockBtn').onclick=()=>sdOrigToggleLayerLock();
+q('sdOrigLayerBottomBtn').onclick=()=>sdOrigMoveLayerEdge('bottom');
+q('sdOrigLayerTopBtn').onclick=()=>sdOrigMoveLayerEdge('top');
+q('sdOrigLayerX').oninput=e=>{const l=sdOrigLayer(SDORIG.activeLayer);if(!l||l.locked)return;l.x=Number(e.target.value);SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigDraw()};
+q('sdOrigLayerY').oninput=e=>{const l=sdOrigLayer(SDORIG.activeLayer);if(!l||l.locked)return;l.y=Number(e.target.value);SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigDraw()};
+q('sdOrigLayerScale').oninput=e=>{const l=sdOrigLayer(SDORIG.activeLayer);if(!l||l.locked)return;l.scale=Number(e.target.value);SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigDraw()};
 q('sdOrigAutoLayoutBtn').onclick=sdOrigAutoLayout;q('sdOrigResetLayerBtn').onclick=sdOrigResetActiveLayer;
 q('sdOrigLayerDownBtn').onclick=()=>sdOrigMoveLayer(-1);q('sdOrigLayerUpBtn').onclick=()=>sdOrigMoveLayer(1);
 q('sdOrigCanvasDownBtn').onclick=()=>sdOrigMoveLayer(-1);q('sdOrigCanvasUpBtn').onclick=()=>sdOrigMoveLayer(1);
@@ -3755,24 +3871,28 @@ q('sdOrigCanvasMinusBtn').onclick=()=>sdOrigScaleLayer(-5);q('sdOrigCanvasPlusBt
   const cv=sdOrigCanvas();let drag=null;
   const point=e=>{const r=cv.getBoundingClientRect();return{x:(e.clientX-r.left)/Math.max(1,r.width)*cv.width,y:(e.clientY-r.top)/Math.max(1,r.height)*cv.height,rect:r}};
   cv.onpointerdown=e=>{
-    const p=point(e),activeBounds=sdOrigLayerBounds(SDORIG.activeLayer,cv.width,cv.height),handle=Math.max(28,cv.width*.035);
-    const hx=activeBounds.x+activeBounds.w,hy=activeBounds.y+activeBounds.h;
-    let mode=(sdOrigLayerVisible(SDORIG.activeLayer)&&Math.hypot(p.x-hx,p.y-hy)<=handle)?'resize':'move';
-    if(mode==='move'){
-      const hit=sdOrigHitLayer(p.x,p.y,cv.width,cv.height);
-      if(hit){SDORIG.activeLayer=hit;sdOrigSyncLayerControls();sdOrigDraw()}
+    const p=point(e);let l=sdOrigLayer(SDORIG.activeLayer);
+    if(l&&l.visible!==false&&!l.locked&&sdOrigLayerVisible(SDORIG.activeLayer)){
+      const activeBounds=sdOrigLayerBounds(SDORIG.activeLayer,cv.width,cv.height),handle=Math.max(28,cv.width*.035),hx=activeBounds.x+activeBounds.w,hy=activeBounds.y+activeBounds.h;
+      if(Math.hypot(p.x-hx,p.y-hy)<=handle){
+        const cx=activeBounds.x+activeBounds.w/2,cy=activeBounds.y+activeBounds.h/2;
+        drag={mode:'resize',startX:p.x,startY:p.y,lx:Number(l.x)||0,ly:Number(l.y)||0,scale:Number(l.scale)||100,cx,cy,dist:Math.max(20,Math.hypot(p.x-cx,p.y-cy))};
+        cv.setPointerCapture?.(e.pointerId);e.preventDefault();return
+      }
     }
-    const l=sdOrigLayer(SDORIG.activeLayer),bounds=sdOrigLayerBounds(SDORIG.activeLayer,cv.width,cv.height),cx=bounds.x+bounds.w/2,cy=bounds.y+bounds.h/2;
-    if(mode==='resize'&&!sdOrigLayerVisible(SDORIG.activeLayer))mode='move';
-    drag={mode,startX:p.x,startY:p.y,lx:Number(l.x)||0,ly:Number(l.y)||0,scale:Number(l.scale)||100,cx,cy,dist:Math.max(20,Math.hypot(p.x-cx,p.y-cy))};
+    const hit=sdOrigHitLayer(p.x,p.y,cv.width,cv.height);
+    if(hit){SDORIG.activeLayer=hit;sdOrigSave();sdOrigSyncLayerControls();sdOrigDraw();l=sdOrigLayer(hit)}
+    if(!l||l.locked||l.visible===false)return;
+    const bounds=sdOrigLayerBounds(SDORIG.activeLayer,cv.width,cv.height),cx=bounds.x+bounds.w/2,cy=bounds.y+bounds.h/2;
+    drag={mode:'move',startX:p.x,startY:p.y,lx:Number(l.x)||0,ly:Number(l.y)||0,scale:Number(l.scale)||100,cx,cy,dist:1};
     cv.setPointerCapture?.(e.pointerId);e.preventDefault()
   };
   cv.onpointermove=e=>{
-    if(!drag)return;const p=point(e),l=sdOrigLayer(SDORIG.activeLayer);
+    if(!drag)return;const p=point(e),l=sdOrigLayer(SDORIG.activeLayer);if(!l||l.locked){drag=null;return}
     if(drag.mode==='resize'){
-      const ratio=Math.hypot(p.x-drag.cx,p.y-drag.cy)/drag.dist;l.scale=Math.max(40,Math.min(220,drag.scale*ratio));q('sdOrigLayerScale').value=l.scale
+      const ratio=Math.hypot(p.x-drag.cx,p.y-drag.cy)/drag.dist;l.scale=Math.max(40,Math.min(220,drag.scale*ratio));if(q('sdOrigLayerScale'))q('sdOrigLayerScale').value=l.scale
     }else{
-      l.x=Math.max(-55,Math.min(55,drag.lx+(p.x-drag.startX)/cv.width*100));l.y=Math.max(-55,Math.min(55,drag.ly+(p.y-drag.startY)/cv.height*100));q('sdOrigLayerX').value=Math.max(-35,Math.min(35,l.x));q('sdOrigLayerY').value=Math.max(-35,Math.min(35,l.y))
+      l.x=Math.max(-55,Math.min(55,drag.lx+(p.x-drag.startX)/cv.width*100));l.y=Math.max(-55,Math.min(55,drag.ly+(p.y-drag.startY)/cv.height*100));if(q('sdOrigLayerX'))q('sdOrigLayerX').value=l.x;if(q('sdOrigLayerY'))q('sdOrigLayerY').value=l.y
     }
     sdOrigDraw();e.preventDefault()
   };
@@ -3799,7 +3919,7 @@ if(q('captionSpeed'))q('captionSpeed').value='fast';
 if(q('captionRange'))q('captionRange').value='trim';
 setTimeout(async()=>{await wakeCaptionCloud();refreshAIVoiceStatus(false)},180);
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=380',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=391',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})}
 })();
 </script>
 </body>
