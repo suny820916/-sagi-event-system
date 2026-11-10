@@ -29,11 +29,7 @@ jobs:
 
           # Recent public NASA reel independently indexed in October 2026.
           url="https://www.instagram.com/reel/DeIXf9SNQVO/"
-          script=r"""
-import json, sys
-from parth_dl import get_info
-print(json.dumps(get_info(sys.argv[1], verbose=False), ensure_ascii=False))
-"""
+          script="import json,sys; from parth_dl import get_info; print(json.dumps(get_info(sys.argv[1], verbose=False), ensure_ascii=False))"
           try:
               p=subprocess.run(
                   [sys.executable,"-c",script,url],
