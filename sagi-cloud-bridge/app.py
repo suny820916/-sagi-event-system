@@ -30,8 +30,8 @@ app = Flask(__name__)
 ALLOWED_ORIGIN = (os.getenv("SAGI_ALLOWED_ORIGIN") or "https://suny820916.github.io").rstrip("/")
 SERVER_SECRET = (os.getenv("SAGI_SERVER_SECRET") or os.getenv("SAGI_BRIDGE_TOKEN") or "").strip()
 PORT = int(os.getenv("PORT") or "10000")
-DEPLOY_REVISION = "2026-11-10-v2000-cobalt-core"
-APP_VERSION = "2.0.0"
+DEPLOY_REVISION = "2026-11-10-v3000-multi-engine-router"
+APP_VERSION = "3.0.0"
 MAX_FILE_MB = int(os.getenv("SAGI_MAX_FILE_MB") or "300")
 JOB_TTL_MIN = int(os.getenv("SAGI_JOB_TTL_MIN") or "30")
 RATE_LIMIT_PER_HOUR = int(os.getenv("SAGI_RATE_LIMIT_PER_HOUR") or "20")
@@ -40,6 +40,11 @@ caption_rate_hits = {}
 caption_rate_lock = Lock()
 COBALT_HOSTPORT = (os.getenv("SAGI_COBALT_HOSTPORT") or "").strip()
 INSTAGRAM_PROXY = (os.getenv("SAGI_INSTAGRAM_PROXY") or "").strip()
+BTCH_BASE = (os.getenv("SAGI_BTCH_BASE") or "https://btch-downloader-api-green.vercel.app").strip().rstrip("/")
+BTCH_TIMEOUT_SECONDS = max(5, min(25, int(os.getenv("SAGI_BTCH_TIMEOUT_SECONDS") or "12")))
+TIKWM_BASE = "https://www.tikwm.com/api/"
+FXTWITTER_BASE = "https://api.fxtwitter.com/2"
+ENGINE_COOLDOWN_SECONDS = max(10, min(180, int(os.getenv("SAGI_ENGINE_COOLDOWN_SECONDS") or "45")))
 
 CORS(app, resources={r"/api/*": {"origins": [ALLOWED_ORIGIN]}, r"/health": {"origins": [ALLOWED_ORIGIN]}, r"/": {"origins": [ALLOWED_ORIGIN]}})
 
@@ -50,6 +55,8 @@ rate_lock = Lock()
 pair_codes = {}
 pair_lock = Lock()
 worker_presence = {"last_seen": 0, "worker_id": ""}
+engine_state = {}
+engine_state_lock = Lock()
 
 CAPTION_MODEL_DIR = str(Path(__file__).resolve().parent / "model_cache" / "tiny")
 caption_model = None
@@ -183,6 +190,340 @@ def safe_name(name):
     raw = (name or "SAGI_INS_VIDEO").strip()
     clean = "".join(c for c in raw if c not in '\\/:*?"<>|').strip()
     return (clean or "SAGI_INS_VIDEO")[:100]
+
+
+def source_platform(url):
+    host = _url_host(url)
+    if host == "instagram.com" or host.endswith(".instagram.com"):
+        return "instagram"
+    if host == "tiktok.com" or host.endswith(".tiktok.com"):
+        return "tiktok"
+    if host in ("x.com", "twitter.com") or host.endswith(".x.com") or host.endswith(".twitter.com"):
+        return "twitter"
+    if host in ("youtube.com", "youtu.be") or host.endswith(".youtube.com"):
+        return "youtube"
+    return ""
+
+
+def _engine_can_try(name):
+    with engine_state_lock:
+        row = engine_state.get(name) or {}
+        return float(row.get("open_until") or 0) <= time.time()
+
+
+def _engine_result(name, ok, error=""):
+    with engine_state_lock:
+        row = dict(engine_state.get(name) or {})
+        if ok:
+            row.update({"fails": 0, "open_until": 0, "last_error": "", "last_ok": iso()})
+        else:
+            fails = int(row.get("fails") or 0) + 1
+            row.update({"fails": fails, "last_error": str(error)[:180], "last_fail": iso()})
+            if fails >= 2:
+                row["open_until"] = time.time() + ENGINE_COOLDOWN_SECONDS
+        engine_state[name] = row
+
+
+def _set_job_engine(job_id, engine, switching=False):
+    with jobs_lock:
+        job = jobs.get(job_id)
+        if not job:
+            return
+        trace = list(job.get("engineTrace") or [])
+        if not trace or trace[-1] != engine:
+            trace.append(engine)
+        job["engineTrace"] = trace[-8:]
+        job["strategy"] = engine
+        job["status"] = "router_switching" if switching else "router_trying"
+        job["updated_at"] = iso()
+
+
+def _media_extension(kind, content_type="", url=""):
+    low = str(content_type or "").lower()
+    path = urlparse(str(url or "")).path.lower()
+    if kind in ("video", "gif") or "video/" in low:
+        if path.endswith(".webm"):
+            return ".webm"
+        return ".mp4"
+    if "png" in low or path.endswith(".png"):
+        return ".png"
+    if "webp" in low or path.endswith(".webp"):
+        return ".webp"
+    return ".jpg"
+
+
+def _save_remote_items(job_id, items, wanted_name, strategy, title=""):
+    clean_items = []
+    seen = set()
+    for raw in items or []:
+        u = str((raw or {}).get("url") or "").strip()
+        kind = str((raw or {}).get("type") or (raw or {}).get("kind") or "video").lower()
+        if not u.startswith(("http://", "https://")) or u in seen:
+            continue
+        seen.add(u)
+        clean_items.append({"url": u, "type": kind})
+        if len(clean_items) >= 20:
+            break
+    if not clean_items:
+        raise RuntimeError(strategy.upper() + "_NO_MEDIA")
+
+    work = tempfile.mkdtemp(prefix=f"sagi_router_{strategy}_{job_id}_")
+    saved = []
+    total = 0
+    max_bytes = MAX_FILE_MB * 1024 * 1024
+    try:
+        for idx, item in enumerate(clean_items, start=1):
+            media_url = item["url"]
+            headers = {
+                "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile/15E148 Safari/604.1",
+                "Accept": "*/*",
+            }
+            low = media_url.lower()
+            if "cdninstagram.com" in low or "fbcdn.net" in low:
+                headers["Referer"] = "https://www.instagram.com/"
+            elif "tiktok" in low or "tikwm" in low:
+                headers["Referer"] = "https://www.tiktok.com/"
+            elif "twimg.com" in low:
+                headers["Referer"] = "https://x.com/"
+            r = requests.get(media_url, headers=headers, stream=True, timeout=(7, 60), allow_redirects=True)
+            r.raise_for_status()
+            ctype = (r.headers.get("Content-Type") or "").lower()
+            if "text/html" in ctype or "application/json" in ctype:
+                raise RuntimeError(strategy.upper() + "_NON_MEDIA_RESPONSE")
+            ext = _media_extension(item["type"], ctype, media_url)
+            p = Path(work) / f"{idx:02d}{ext}"
+            size = 0
+            with p.open("wb") as out:
+                for chunk in r.iter_content(chunk_size=256 * 1024):
+                    if not chunk:
+                        continue
+                    size += len(chunk)
+                    total += len(chunk)
+                    if total > max_bytes:
+                        raise RuntimeError(f"媒体超过云端限制 {MAX_FILE_MB}MB")
+                    out.write(chunk)
+            if size > 0:
+                saved.append((item["type"], p))
+
+        if not saved:
+            raise RuntimeError(strategy.upper() + "_EMPTY_FILE")
+
+        base_name = safe_name(wanted_name or "SAGI_VIDEO")
+        if len(saved) == 1:
+            kind, src = saved[0]
+            filename = base_name if "." in base_name else base_name + src.suffix
+            dst = Path(work) / filename
+            if src.resolve() != dst.resolve():
+                src.replace(dst)
+            final_path = dst
+            media_kind = "video" if kind in ("video", "gif") else "image"
+            count = 1
+        else:
+            filename = base_name + "_MEDIA.zip"
+            final_path = Path(work) / filename
+            with zipfile.ZipFile(final_path, "w", compression=zipfile.ZIP_STORED) as zf:
+                for idx, (_, src) in enumerate(saved, start=1):
+                    zf.write(src, arcname=f"{idx:02d}{src.suffix}")
+            for _, src in saved:
+                src.unlink(missing_ok=True)
+            media_kind = "carousel"
+            count = len(saved)
+
+        with jobs_lock:
+            job = jobs.get(job_id)
+            if not job:
+                shutil.rmtree(work, ignore_errors=True)
+                return False
+            job.update({
+                "status": "ready",
+                "updated_at": iso(),
+                "path": str(final_path),
+                "workdir": work,
+                "filename": filename,
+                "title": title or filename,
+                "size": final_path.stat().st_size,
+                "strategy": strategy,
+                "mediaKind": media_kind,
+                "fileCount": count,
+                "error": "",
+                "errorCode": "",
+            })
+        return True
+    except Exception:
+        shutil.rmtree(work, ignore_errors=True)
+        raise
+
+
+def _btch_media(payload):
+    normalized = (payload or {}).get("normalized") or {}
+    rows = []
+    if normalized.get("kind") == "media":
+        rows = normalized.get("media") or []
+    elif normalized.get("kind") == "list":
+        for item in normalized.get("items") or []:
+            if isinstance(item, dict):
+                rows.extend(item.get("media") or [])
+    items = []
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        u = row.get("url")
+        kind = str(row.get("type") or "video").lower()
+        if u:
+            items.append({"url": u, "type": "image" if kind in ("image", "photo") else kind})
+    return items, str(normalized.get("title") or (payload or {}).get("title") or "")
+
+
+def run_btch_download(job_id, url, wanted_name):
+    platform = source_platform(url)
+    if platform not in ("instagram", "tiktok", "twitter", "youtube"):
+        raise RuntimeError("BTCH_UNSUPPORTED")
+    r = requests.get(
+        BTCH_BASE + "/api/download/" + platform,
+        params={"url": url},
+        headers={"Accept": "application/json", "User-Agent": "SAGI-DOWN/3.0"},
+        timeout=(5, BTCH_TIMEOUT_SECONDS),
+    )
+    if r.status_code == 429:
+        raise RuntimeError("BTCH_RATE_LIMIT")
+    r.raise_for_status()
+    payload = r.json()
+    if not payload.get("success", True):
+        raise RuntimeError("BTCH_UPSTREAM_FAILED")
+    items, title = _btch_media(payload)
+    return _save_remote_items(job_id, items, wanted_name, "btch", title)
+
+
+def run_parth_download(job_id, url, wanted_name):
+    from parth_dl import get_info
+    info = get_info(url, verbose=False)
+    items = []
+    for entry in info.get("entries") or []:
+        formats = [x for x in (entry.get("formats") or []) if x.get("url")]
+        if not formats:
+            continue
+        def score(x):
+            area = int(x.get("width") or 0) * int(x.get("height") or 0)
+            return (1 if x.get("has_audio") else 0, area)
+        best = max(formats, key=score)
+        items.append({"url": best["url"], "type": entry.get("kind") or "video"})
+    return _save_remote_items(job_id, items, wanted_name, "parth-dl", info.get("title") or "")
+
+
+def run_tikwm_download(job_id, url, wanted_name):
+    r = requests.post(
+        TIKWM_BASE,
+        data={"url": url},
+        headers={"User-Agent": "SAGI-DOWN/3.0", "Accept": "application/json"},
+        timeout=(5, 18),
+    )
+    r.raise_for_status()
+    payload = r.json() or {}
+    if int(payload.get("code") or -1) != 0 or not payload.get("data"):
+        raise RuntimeError("TIKWM_FAILED: " + str(payload.get("msg") or "unknown"))
+    data = payload["data"]
+    items = []
+    for u in data.get("images") or []:
+        if u:
+            items.append({"url": u, "type": "image"})
+    if not items:
+        video = data.get("hdplay") or data.get("play") or data.get("wmplay")
+        if video:
+            items.append({"url": video, "type": "video"})
+    return _save_remote_items(job_id, items, wanted_name, "tikwm", data.get("title") or "")
+
+
+def _fxtwitter_items(payload):
+    found = []
+    seen = set()
+
+    def add(kind, url, score=0):
+        u = str(url or "").strip()
+        if not u.startswith(("http://", "https://")) or u in seen:
+            return
+        seen.add(u)
+        found.append({"type": kind, "url": u, "_score": score})
+
+    def walk(obj):
+        if isinstance(obj, dict):
+            video_info = obj.get("video_info")
+            if isinstance(video_info, dict):
+                variants = []
+                for v in video_info.get("variants") or []:
+                    if isinstance(v, dict) and str(v.get("content_type") or "").startswith("video/mp4") and v.get("url"):
+                        variants.append(v)
+                if variants:
+                    best = max(variants, key=lambda x: int(x.get("bitrate") or 0))
+                    add("video", best.get("url"), int(best.get("bitrate") or 0))
+                    return
+            if obj.get("__typename") == "ApiImage" and obj.get("original_img_url"):
+                add("image", obj.get("original_img_url"))
+            elif str(obj.get("type") or "").lower() in ("photo", "image") and obj.get("media_url_https"):
+                add("image", obj.get("media_url_https"))
+            for value in obj.values():
+                walk(value)
+        elif isinstance(obj, list):
+            for value in obj:
+                walk(value)
+
+    walk((payload or {}).get("status") or payload)
+    return [{k: v for k, v in row.items() if k != "_score"} for row in found]
+
+
+def run_fxtwitter_download(job_id, url, wanted_name):
+    m = re.search(r"/status/(\d+)", url)
+    if not m:
+        raise RuntimeError("FXTWITTER_INVALID_URL")
+    status_id = m.group(1)
+    r = requests.get(
+        FXTWITTER_BASE + "/status/" + status_id,
+        headers={"Accept": "application/json", "User-Agent": "SAGI-DOWN/3.0"},
+        timeout=(5, 15),
+    )
+    r.raise_for_status()
+    payload = r.json() or {}
+    if int(payload.get("code") or 200) >= 400:
+        raise RuntimeError("FXTWITTER_FAILED")
+    items = _fxtwitter_items(payload)
+    title = str(((payload.get("status") or {}).get("text") or ""))[:100]
+    return _save_remote_items(job_id, items, wanted_name, "fxtwitter", title)
+
+
+def _router_engines(platform):
+    return {
+        "instagram": ["btch", "parth-dl"],
+        "tiktok": ["btch", "tikwm"],
+        "twitter": ["fxtwitter", "btch"],
+        "youtube": [],
+    }.get(platform, [])
+
+
+def run_router_engine(job_id, engine, url, wanted_name):
+    _set_job_engine(job_id, engine, switching=True)
+    if not _engine_can_try(engine):
+        raise RuntimeError(engine.upper() + "_CIRCUIT_OPEN")
+    try:
+        if engine == "btch":
+            ok = run_btch_download(job_id, url, wanted_name)
+        elif engine == "parth-dl":
+            ok = run_parth_download(job_id, url, wanted_name)
+        elif engine == "tikwm":
+            ok = run_tikwm_download(job_id, url, wanted_name)
+        elif engine == "fxtwitter":
+            ok = run_fxtwitter_download(job_id, url, wanted_name)
+        else:
+            raise RuntimeError("UNKNOWN_ENGINE")
+        _engine_result(engine, bool(ok))
+        return bool(ok)
+    except Exception as e:
+        _engine_result(engine, False, e)
+        with jobs_lock:
+            job = jobs.get(job_id)
+            if job:
+                job["status"] = "router_switching"
+                job["updated_at"] = iso()
+                job["lastEngineError"] = str(e)[:220]
+        return False
 
 
 def _persist_render_jobs_locked():
