@@ -213,20 +213,34 @@ jobs:
 
           # Fast Instagram page parser must extract public media without waiting
           # on a 150-second gallery subprocess.
-          sample_html = '''
+          single_html = '''
           <meta property="og:image" content="https://scontent.cdninstagram.com/v/t51/sample1.jpg?x=1">
-          <script>{"display_url":"https:\\/\\/scontent.cdninstagram.com\\/v\\/t51\\/sample2.jpg?x=2","video_url":"https:\\/\\/scontent.cdninstagram.com\\/v\\/t50\\/clip.mp4?x=3"}</script>
+          <img src="https://scontent.cdninstagram.com/v/t51/recommendation.jpg?x=9">
           '''
-          media = mod._extract_instagram_media_urls(sample_html)
-          assert any(k=="image" and "sample1.jpg" in u for k,u in media), media
+          media = mod._extract_instagram_media_urls(single_html)
+          assert len(media) == 1 and media[0][0] == "image" and "sample1.jpg" in media[0][1], media
+
+          video_html = '''
+          <meta property="og:image" content="https://scontent.cdninstagram.com/v/t51/poster.jpg?x=1">
+          <meta property="og:video" content="https://scontent.cdninstagram.com/v/t50/clip.mp4?x=2">
+          '''
+          media = mod._extract_instagram_media_urls(video_html)
+          assert len(media) == 1 and media[0][0] == "video" and "clip.mp4" in media[0][1], media
+
+          carousel_html = '''
+          edge_sidecar_to_children
+          <script>{"display_url":"https:\\/\\/scontent.cdninstagram.com\\/v\\/t51\\/sample2.jpg?x=2","video_url":"https:\\/\\/scontent.cdninstagram.com\\/v\\/t50\\/clip2.mp4?x=3"}</script>
+          '''
+          media = mod._extract_instagram_media_urls(carousel_html)
           assert any(k=="image" and "sample2.jpg" in u for k,u in media), media
-          assert any(k=="video" and "clip.mp4" in u for k,u in media), media
+          assert any(k=="video" and "clip2.mp4" in u for k,u in media), media
           assert mod._instagram_shortcode("https://www.instagram.com/p/ABC_123/?foo=1") == "ABC_123"
           print("Instagram fast HTML parser smoke OK", len(media))
 
-          # Instagram /p/ posts that contain no video must switch to gallery-dl
-          # instead of surfacing yt-dlp's "There is no video in this post".
+          # If fast parsing truly cannot resolve a post, only then use the short
+          # gallery-dl fallback. This test must never make a live Instagram request.
           original_extract = mod._download_with_strategy
+          original_fast = mod.run_instagram_fast_post
           original_gallery = mod.run_gallery_download
           original_cobalt = mod.cobalt_base
           def no_video(*args, **kwargs):
@@ -239,6 +253,7 @@ jobs:
                       "filename":"SAGI_TEST_CAROUSEL.zip","error":"","errorCode":""
                   })
           mod._download_with_strategy = no_video
+          mod.run_instagram_fast_post = lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError("FAST_NO_MEDIA"))
           mod.run_gallery_download = fake_gallery
           mod.cobalt_base = lambda: ""
           gid = "gallery-smoke"
@@ -259,6 +274,7 @@ jobs:
               print("Instagram post fallback smoke OK", gj["strategy"], gj["mediaKind"])
           finally:
               mod._download_with_strategy = original_extract
+              mod.run_instagram_fast_post = original_fast
               mod.run_gallery_download = original_gallery
               mod.cobalt_base = original_cobalt
 
