@@ -96,6 +96,23 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 @media(max-width:420px){.imgIntelFacts{grid-template-columns:1fr 1fr}.imgIntelActions{grid-template-columns:1fr}.imgTrendActions{display:grid;grid-template-columns:1fr 1fr}}
 
 
+
+/* SAGI MATERIAL KIT V1.0 */
+.origMaterial{margin-top:9px;border:1px solid #334247;border-radius:12px;background:#081013;padding:10px}
+.origMaterialHead{display:flex;justify-content:space-between;gap:9px;align-items:center}.origMaterialHead b{font-size:10px}.origMaterialHead span{font-size:8px;color:#71858c}
+.origMaterialGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.origMaterialBox{border:1px solid #293940;border-radius:11px;background:#091014;padding:9px}
+.origMaterialBox h4{font-size:9px;margin:0;color:#d9e0e2}.origMaterialBox p{font-size:7px;line-height:1.45;color:#70838a;margin:4px 0 0}
+.origMaterialPick{position:relative;border:1px dashed #4b5e66;border-radius:10px;padding:10px;text-align:center;margin-top:7px;background:#070c0e}
+.origMaterialPick input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}.origMaterialPick b{display:block;font-size:9px}.origMaterialPick span{display:block;font-size:7px;color:#6f8289;margin-top:3px}
+.origMaterialPreview{display:none;width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:9px;margin-top:7px;background:#050708}.origMaterialPreview.show{display:block}
+.origMaterialTools{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:7px}.origMaterialTools .btn{padding:8px 6px;font-size:8px}
+.origMaterialTextarea{width:100%;min-height:122px;resize:vertical;border:1px solid #2d4048;background:#05090b;color:#fff;border-radius:9px;padding:9px;font-size:9px;line-height:1.55;outline:none;margin-top:7px}
+.origMaterialHint{font-size:7px;color:#687b82;line-height:1.45;margin-top:6px}
+.origPersonControls{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:7px}.origPersonControls label{font-size:7px;color:#6f8289}.origPersonControls input,.origPersonControls select{width:100%;margin-top:3px;border:1px solid #2d4048;background:#060b0d;color:#fff;border-radius:8px;padding:7px;font-size:8px}
+.origScoreChips{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}.origScoreChip{border:1px solid #3c4b50;border-radius:999px;padding:4px 6px;font-size:7px;color:#a8b4b8}.origScoreChip.latest{border-color:#d7b568;color:#e2c982}
+@media(max-width:520px){.origMaterialGrid{grid-template-columns:1fr}.origPersonControls{grid-template-columns:1fr 1fr}}
+
 /* SAGI ORIGINAL POSTER V1.0 */
 .origPoster{margin-top:10px;border:1px solid #63512e;border-radius:14px;background:linear-gradient(180deg,#15130d,#090d0f);padding:11px}
 .origHead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.origHead b{font-size:12px}.origHead span{display:block;font-size:8px;color:#9b8a61;line-height:1.5;margin-top:3px}.origHead .badge{white-space:nowrap}
@@ -129,7 +146,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 <div class="wrap">
   <div class="top">
     <div class="brand"><b>SAGI DOWN</b><span>DOWNLOAD · IMAGE AI · VIDEO</span></div>
-    <span class="badge">V3.4 · HOT HOOK → ORIGINAL POSTER</span>
+    <span class="badge">V3.4.1 · MATERIAL KIT</span>
   </div>
 
   <section class="hero">
@@ -250,6 +267,52 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
         <button class="btn gold" id="sdOrigGenerateBtn" type="button">根据热点生成3张原创海报</button>
         <button class="btn ghost" id="sdOrigRefreshBtn" type="button">重新组合</button>
       </div>
+
+
+      <div class="origMaterial" id="sdOrigMaterialKit">
+        <div class="origMaterialHead">
+          <div><b>MATERIAL KIT · 原创海报素材</b><span>人物素材 + 比分素材</span></div>
+          <span class="badge">V1.0</span>
+        </div>
+
+        <div class="origMaterialGrid">
+          <div class="origMaterialBox">
+            <h4>人物素材</h4>
+            <p>单独上传教练 / 球员素材。建议使用另一张照片或透明 PNG，不使用下载原图人物裁切。</p>
+            <div class="origMaterialPick">
+              <input id="sdOrigPersonFile" type="file" accept="image/*">
+              <b id="sdOrigPersonFileTitle">选择人物素材</b>
+              <span>透明 PNG 最佳 · JPG / HEIC 转换后也可使用</span>
+            </div>
+            <img id="sdOrigPersonPreview" class="origMaterialPreview" alt="">
+            <div class="origPersonControls">
+              <label>大小<input id="sdOrigPersonScale" type="range" min="55" max="150" value="100"></label>
+              <label>左右<input id="sdOrigPersonX" type="range" min="-35" max="35" value="0"></label>
+              <label>显示<select id="sdOrigPersonMode"><option value="hero" selected>主视觉</option><option value="cut">硬切构图</option><option value="soft">柔光人物</option></select></label>
+            </div>
+            <div class="origMaterialTools">
+              <button class="btn" id="sdOrigPersonRemoveBtn" type="button">移除人物</button>
+              <button class="btn gold" id="sdOrigPersonUseCoachBtn" type="button">套用主教练角色</button>
+            </div>
+            <div class="origMaterialHint" id="sdOrigPersonHint">系统会与下载原图做相似度检查；过于接近会拒绝作为原创人物素材。</div>
+          </div>
+
+          <div class="origMaterialBox">
+            <h4>比分素材</h4>
+            <p>从图片分析自动提取，也可以手动补球队名。每行一场，例如：瓦伦西亚 0-3 皇马。</p>
+            <textarea id="sdOrigScoreText" class="origMaterialTextarea" placeholder="瓦伦西亚 0-3 皇马
+AEK 2-3 皇马
+桑坦德竞技 0-3 皇马"></textarea>
+            <div class="origMaterialTools">
+              <button class="btn gold" id="sdOrigScoreAutoBtn" type="button">从分析填入</button>
+              <button class="btn" id="sdOrigScoreClearBtn" type="button">清空比分</button>
+            </div>
+            <div id="sdOrigScoreChips" class="origScoreChips"></div>
+            <div class="origMaterialHint">比分素材会重新画成横向数据带 / 时间线 / 数据卡，不复制原下载图片里的比分框样式。</div>
+          </div>
+        </div>
+      </div>
+
 
       <div class="origPolicy">
         <div><span>原图像素复用</span><b id="sdOrigPixelUse">0%</b></div>
@@ -568,7 +631,7 @@ Unbelievable finish."></textarea>
 
 <script>
 (()=>{'use strict';
-const SAGI_DOWN_BUILD='V3.4.0';
+const SAGI_DOWN_BUILD='V3.4.1';
 document.documentElement.dataset.sagiDownBuild=SAGI_DOWN_BUILD;
 const BTCH_PUBLIC='https://btch-downloader-api-green.vercel.app';
 const DOWNLOAD_ROUTER_VERSION='3.0';
@@ -2984,7 +3047,7 @@ if(q('captionSpeed'))q('captionSpeed').value='fast';
 if(q('captionRange'))q('captionRange').value='trim';
 setTimeout(async()=>{await wakeCaptionCloud();refreshAIVoiceStatus(false)},180);
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=340',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=341',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})}
 })();
 </script>
 </body>
