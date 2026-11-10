@@ -469,7 +469,9 @@ function cloudDownloadWindow(){
 function cloudDownloadStatusLabel(job){
   const s=String(job?.status||'');
   if(s==='queued')return '已进入云端队列';
-  if(s==='downloading'||s==='cobalt_processing'||s==='cobalt_fetching')return '云端正在解析并下载源视频';
+  if(s==='gallery_processing')return '检测到 Instagram Post · 正在解析图片/轮播';
+  if(s==='gallery_packaging')return '正在打包轮播内容';
+  if(s==='downloading'||s==='cobalt_processing'||s==='cobalt_fetching')return '云端正在解析并下载源内容';
   if(s==='worker_downloading')return '下载节点正在处理';
   return s||'处理中'
 }
@@ -484,7 +486,8 @@ async function pollCloudDownload(jobId,handoff){
     if(!r.ok||!d?.ok)throw new Error(d?.error||('HTTP '+r.status));
     const job=d.job||{};
     if(job.status==='ready'&&job.downloadUrl){
-      setStatus('SAGI Cloud 已准备好视频，正在开始下载。','good');
+      const kind=job.mediaKind==='carousel'?'轮播 ZIP':(job.mediaKind==='image'?'图片':'视频');
+      setStatus('SAGI Cloud 已准备好'+kind+'，正在开始下载。','good');
       if(handoff&&!handoff.closed)handoff.location.replace(job.downloadUrl);
       else location.href=job.downloadUrl;
       return
@@ -2120,7 +2123,7 @@ if(q('captionSpeed'))q('captionSpeed').value='fast';
 if(q('captionRange'))q('captionRange').value='trim';
 setTimeout(async()=>{await wakeCaptionCloud();refreshAIVoiceStatus(false)},180);
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=196',{updateViaCache:'none'}).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=197',{updateViaCache:'none'}).catch(()=>{})}
 })();
 </script>
 </body>

@@ -51,7 +51,7 @@ jobs:
               time.sleep(8)
           if not health:
               raise SystemExit("LIVE_HEALTH_FAILED")
-          expected="1.7.1"
+          expected="1.7.2"
           if str(health.get("version"))!=expected:
               print("waiting for expected live version",expected)
               health=None
@@ -70,6 +70,10 @@ jobs:
               if not health:
                   raise SystemExit("STALE_LIVE_VERSION")
           print("LIVE_VERSION",health.get("version"),"REV",health.get("deployRevision"))
+          if health.get("instagramPostFallback")!="gallery-dl":
+              raise SystemExit("INSTAGRAM_POST_FALLBACK_MISSING")
+          if "carousel-zip" not in (health.get("downloadMediaKinds") or []):
+              raise SystemExit("CAROUSEL_DOWNLOAD_MISSING")
 
           print("2) activating...")
           r=requests.post(BASE+"/api/activate",headers={"Origin":ORIGIN,"Content-Type":"application/json"},json={},timeout=70)

@@ -45,10 +45,11 @@ jobs:
       - name: Verify dependency compatibility
         run: |
           python - <<'PY'
-          import av, faster_whisper, sys
+          import av, faster_whisper, gallery_dl, sys
           print("python", sys.version)
           print("av", av.__version__)
           print("faster_whisper", getattr(faster_whisper, "__version__", "unknown"))
+          print("gallery_dl", getattr(gallery_dl, "__version__", "unknown"))
           major = int(av.__version__.split(".")[0])
           assert major < 19, f"PyAV must stay <19 with released faster-whisper, got {av.__version__}"
           PY
@@ -173,7 +174,7 @@ jobs:
           c = mod.app.test_client()
           health = c.get("/health").get_json()
           print("health", health)
-          assert health["version"] == "1.7.1"
+          assert health["version"] == "1.7.2"
           assert health["captionMedia"] is True
           assert health["contextTranslate"] is True
           assert health["smartTranslate"] is True
@@ -181,6 +182,8 @@ jobs:
           assert health["cloudRender"] is True
           assert health["cloudDownload"] is True
           assert set(health["downloadPlatforms"]) >= {"Instagram","YouTube","TikTok","X"}
+          assert health["instagramPostFallback"] == "gallery-dl"
+          assert "carousel-zip" in health["downloadMediaKinds"]
 
           token = mod.client_token()
           headers = {"Authorization": "Bearer " + token, "Origin": "https://suny820916.github.io"}
@@ -206,6 +209,44 @@ jobs:
               print("SAGI Cloud Download API smoke OK")
           finally:
               mod.Thread = original_thread
+
+          # Instagram /p/ posts that contain no video must switch to gallery-dl
+          # instead of surfacing yt-dlp's "There is no video in this post".
+          original_extract = mod._download_with_strategy
+          original_gallery = mod.run_gallery_download
+          original_cobalt = mod.cobalt_base
+          def no_video(*args, **kwargs):
+              raise mod.DownloadError("ERROR: [Instagram] TEST: There is no video in this post")
+          def fake_gallery(job_id, url, wanted_name):
+              with mod.jobs_lock:
+                  mod.jobs[job_id].update({
+                      "status":"ready","strategy":"gallery-dl","mediaKind":"carousel",
+                      "fileCount":3,"size":123,"path":__file__,"workdir":"",
+                      "filename":"SAGI_TEST_CAROUSEL.zip","error":"","errorCode":""
+                  })
+          mod._download_with_strategy = no_video
+          mod.run_gallery_download = fake_gallery
+          mod.cobalt_base = lambda: ""
+          gid = "gallery-smoke"
+          with mod.jobs_lock:
+              mod.jobs[gid] = {
+                  "id":gid,"status":"queued","created_at":mod.iso(),"updated_at":mod.iso(),
+                  "title":"SAGI_TEST","source_url":"https://www.instagram.com/p/TEST/",
+                  "requested_name":"SAGI_TEST","error":"","errorCode":"","size":0,
+                  "worker":"","strategy":"sagi_cloud","download_key":"k","path":"","workdir":"","filename":""
+              }
+          try:
+              mod.run_download(gid, "https://www.instagram.com/p/TEST/", "SAGI_TEST")
+              with mod.jobs_lock:
+                  gj = dict(mod.jobs[gid])
+              assert gj["status"] == "ready", gj
+              assert gj["strategy"] == "gallery-dl", gj
+              assert gj["mediaKind"] == "carousel" and gj["fileCount"] == 3, gj
+              print("Instagram post fallback smoke OK", gj["strategy"], gj["mediaKind"])
+          finally:
+              mod._download_with_strategy = original_extract
+              mod.run_gallery_download = original_gallery
+              mod.cobalt_base = original_cobalt
 
           r = c.post("/api/caption", headers=headers, data={"audio": (io.BytesIO(b"RIFFfake"), "caption.wav"), "language": "en"}, content_type="multipart/form-data")
           assert r.status_code == 200, (r.status_code, r.get_data(as_text=True))
