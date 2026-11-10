@@ -179,9 +179,33 @@ jobs:
           assert health["smartTranslate"] is True
           assert health["aiVoice"] is True
           assert health["cloudRender"] is True
+          assert health["cloudDownload"] is True
+          assert set(health["downloadPlatforms"]) >= {"Instagram","YouTube","TikTok","X"}
 
           token = mod.client_token()
           headers = {"Authorization": "Bearer " + token, "Origin": "https://suny820916.github.io"}
+
+          # Native cloud download route must accept supported social links without
+          # requiring a residential proxy or opening cobalt.tools.
+          class FakeThread:
+              def __init__(self, target=None, args=(), daemon=None, **kwargs):
+                  self.target=target; self.args=args
+              def start(self): pass
+          original_thread = mod.Thread
+          mod.Thread = FakeThread
+          try:
+              r = c.post("/api/jobs", headers={**headers, "Content-Type":"application/json"},
+                         json={"url":"https://www.youtube.com/watch?v=dQw4w9WgXcQ","name":"SAGI_TEST"})
+              assert r.status_code == 202, (r.status_code, r.get_data(as_text=True))
+              jd = r.get_json()
+              assert jd["ok"] is True and jd["engine"] == "sagi-cloud-download"
+              assert jd["job"]["strategy"] == "sagi_cloud"
+              r = c.post("/api/jobs", headers={**headers, "Content-Type":"application/json"},
+                         json={"url":"https://example.com/video","name":"bad"})
+              assert r.status_code == 400, (r.status_code, r.get_data(as_text=True))
+              print("SAGI Cloud Download API smoke OK")
+          finally:
+              mod.Thread = original_thread
 
           r = c.post("/api/caption", headers=headers, data={"audio": (io.BytesIO(b"RIFFfake"), "caption.wav"), "language": "en"}, content_type="multipart/form-data")
           assert r.status_code == 200, (r.status_code, r.get_data(as_text=True))
@@ -305,6 +329,9 @@ jobs:
               "previewAIVoice",
               "cloneMyVoice",
               "cloudCaptionMedia",
+              "pollCloudDownload",
+              "health.cloudDownload",
+              "SAGI 云端下载",
               "runAiCaption(true)",
               "V1.9.4 · ONE-SHOT STABILITY",
           ]
