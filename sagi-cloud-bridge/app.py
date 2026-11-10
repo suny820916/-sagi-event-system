@@ -442,7 +442,7 @@ def run_tikwm_download(job_id, url, wanted_name):
     )
     r.raise_for_status()
     payload = r.json() or {}
-    if int(payload.get("code") or -1) != 0 or not payload.get("data"):
+    if int(payload.get("code", -1)) != 0 or not payload.get("data"):
         raise RuntimeError("TIKWM_FAILED: " + str(payload.get("msg") or "unknown"))
     data = payload["data"]
     items = []
