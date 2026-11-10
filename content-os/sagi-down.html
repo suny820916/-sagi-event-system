@@ -146,7 +146,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 <div class="wrap">
   <div class="top">
     <div class="brand"><b>SAGI DOWN</b><span>DOWNLOAD · IMAGE AI · VIDEO</span></div>
-    <span class="badge">V3.4.1 · MATERIAL KIT</span>
+    <span class="badge">V3.4.2 · STREAK VERIFY HOTFIX</span>
   </div>
 
   <section class="hero">
@@ -631,7 +631,7 @@ Unbelievable finish."></textarea>
 
 <script>
 (()=>{'use strict';
-const SAGI_DOWN_BUILD='V3.4.1';
+const SAGI_DOWN_BUILD='V3.4.2';
 document.documentElement.dataset.sagiDownBuild=SAGI_DOWN_BUILD;
 const BTCH_PUBLIC='https://btch-downloader-api-green.vercel.app';
 const DOWNLOAD_ROUTER_VERSION='3.0';
@@ -2729,25 +2729,40 @@ async function sdIntelSourceEvidence(source){
   return texts.join('\n').slice(0,60000)
 }
 async function sdIntelNews(keywords,source,location,scores){
-  const query=sdIntelQueryTerm(keywords,source,location,scores);sdIntelProgress(66,'正在联网核对最近24小时足球新闻和来源账号…');
-  const items=[];
-  try{
-    const u='https://api.gdeltproject.org/api/v2/doc/doc?query='+encodeURIComponent('('+query+') (football OR soccer)')+'&mode=ArtList&maxrecords=20&format=json&timespan=24h&sort=HybridRel';
-    const r=await fetch(u,{cache:'no-store'});if(r.ok){const d=await r.json(),rows=Array.isArray(d?.articles)?d.articles:[];rows.filter(x=>x?.title&&x?.url).slice(0,10).forEach(x=>items.push({title:String(x.title||''),url:String(x.url||''),domain:String(x.domain||''),seendate:String(x.seendate||''),language:String(x.language||''),socialimage:String(x.socialimage||'')}))}
-  }catch(e){console.warn('GDELT lookup failed',e)}
+  const query=sdIntelQueryTerm(keywords,source,location,scores);sdIntelProgress(66,'正在联网校准：24小时热点优先，必要时扩大到7天…');
+  const items=[],seen=new Set();
+  const pull=async timespan=>{
+    try{
+      const u='https://api.gdeltproject.org/api/v2/doc/doc?query='+encodeURIComponent('('+query+') (football OR soccer)')+'&mode=ArtList&maxrecords=30&format=json&timespan='+timespan+'&sort=HybridRel';
+      const r=await fetch(u,{cache:'no-store'});if(!r.ok)return;
+      const d=await r.json(),rows=Array.isArray(d?.articles)?d.articles:[];
+      rows.filter(x=>x?.title&&x?.url).forEach(x=>{
+        const key=String(x.url||x.title||'');if(seen.has(key))return;seen.add(key);
+        items.push({title:String(x.title||''),url:String(x.url||''),domain:String(x.domain||''),seendate:String(x.seendate||''),language:String(x.language||''),socialimage:String(x.socialimage||'')})
+      })
+    }catch(e){console.warn('GDELT lookup failed',timespan,e)}
+  };
+  await pull('24h');
+  if(items.length<6)await pull('7d');
   const evidenceText=await sdIntelSourceEvidence(source);
-  return{items,evidenceText}
+  return{items:items.slice(0,16),evidenceText}
 }
 function sdIntelWordNumber(v){
   const m={one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10};return m[String(v||'').toLowerCase()]||0
 }
 function sdIntelVerifiedStreak(evidenceText,source,scores){
-  const t=String(evidenceText||'');
-  let m=t.match(/\b(\d{1,2})\s+(?:consecutive|straight)\s+wins?\b/i);if(m)return Number(m[1])||0;
-  m=t.match(/\b(one|two|three|four|five|six|seven|eight|nine|ten)\s+(?:consecutive|straight)\s+wins?\b/i);if(m)return sdIntelWordNumber(m[1]);
-  m=t.match(/(\d{1,2})\s*连胜/);if(m)return Number(m[1])||0;
-  if(source?.subject==='皇马'&&scores?.length>=8&&/seven straight wins|one victory from|7\s+straight wins/i.test(t)&&/Valencia[\s\S]{0,120}(?:3[-–—:]0|0[-–—:]3)|(?:3[-–—:]0|0[-–—:]3)[\s\S]{0,120}Valencia/i.test(t))return 8;
-  return 0
+  const t=String(evidenceText||''),found=[];
+  const push=n=>{n=Number(n)||0;if(n>0&&n<=30)found.push(n)};
+  for(const m of t.matchAll(/\b(\d{1,2})\s+(?:consecutive|straight)\s+(?:wins?|victories)\b/gi))push(m[1]);
+  for(const m of t.matchAll(/\b(one|two|three|four|five|six|seven|eight|nine|ten)\s+(?:consecutive|straight)\s+(?:wins?|victories)\b/gi))push(sdIntelWordNumber(m[1]));
+  const ord={first:1,second:2,third:3,fourth:4,fifth:5,sixth:6,seventh:7,eighth:8,ninth:9,tenth:10};
+  for(const m of t.matchAll(/\b(first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth)\s+consecutive\s+(?:win|victory)\b/gi))push(ord[String(m[1]||'').toLowerCase()]);
+  for(const m of t.matchAll(/(?:made it|secured|recorded|claimed|earned)[^.!?\n]{0,80}\b(one|two|three|four|five|six|seven|eight|nine|ten)\s+consecutive\s+(?:wins?|victories)\b/gi))push(sdIntelWordNumber(m[1]));
+  for(const m of t.matchAll(/(?:made it|secured|recorded|claimed|earned)[^.!?\n]{0,80}\b(\d{1,2})\s+consecutive\s+(?:wins?|victories)\b/gi))push(m[1]);
+  for(const m of t.matchAll(/(\d{1,2})\s*连胜/g))push(m[1]);
+  if(source?.subject==='皇马'&&/Valencia[\s\S]{0,180}(?:3[-–—:]0|0[-–—:]3)|(?:3[-–—:]0|0[-–—:]3)[\s\S]{0,180}Valencia/i.test(t)&&/seven straight wins|seven consecutive wins|one victory from|7\s+straight wins/i.test(t))push(8);
+  if(scores?.length>=8)push(scores.length);
+  return found.length?Math.max(...found):0
 }
 function sdIntelTopicSignals(ocr,keywords,news,visual,faces,meta){
   const text=(ocr+' '+keywords.join(' ')+' '+news.slice(0,5).map(x=>x.title).join(' ')+' '+String(meta.evidenceText||'')).toLowerCase(),signals=[];
@@ -2859,8 +2874,8 @@ async function sdIntelAnalyze(){
     const signals=sdIntelTopicSignals(bundle.post,keywords,lookup.items,visual,faces,meta),score=sdIntelHotScore(bundle.post,keywords,lookup.items,visual,faces,signals,meta);
     sdIntelProgress(86,'正在把“事实”转成抖音选题，而不是只堆关键词…');
     const angles=sdIntelMakeAngles(bundle.post,keywords,lookup.items,visual,faces,signals,score,meta);
-    SDINTEL={ocr:bundle.post,sourceOcr:bundle.source,keywords,scores,source,score,faces,visual,news:lookup.items,signals,angles,evidenceText:lookup.evidenceText,verifiedStreak,mode:bundle.mode,location,analyzedAt:Date.now(),sourceName:SDIMG.sourceName};
-    sdIntelSave();if(typeof SDORIG!=='undefined'){SDORIG.activeForPublish=false;SDORIG.generatedAt=0;if(!String(SDORIG.scoreText||'').trim())SDORIG.scoreText=sdOrigAutoScoreText?.()||'';const coach=sdOrigCoachName?.();if(coach&&!String(SDORIG.person||'').trim()){SDORIG.person=coach+' · 主教练';SDORIG.role=SDORIG.person}sdOrigSave?.();sdOrigRender?.()}sdIntelProgress(100,verifiedStreak?('分析完成 · 已联网验证 '+verifiedStreak+'连胜 · 已生成3套抖音打法'):(scores.length>=3?('分析完成 · 已识别 '+scores.length+'组比分 · 正在按走势制造话题'):'分析完成 · 已按图片主体生成抖音选题'));sdIntelRender();toast('图片深度分析完成')
+    SDINTEL={ocr:bundle.post,sourceOcr:bundle.source,keywords,scores,source,score,faces,visual,news:lookup.items,signals,angles,evidenceText:verificationText,verifiedStreak,mode:bundle.mode,location,analyzedAt:Date.now(),sourceName:SDIMG.sourceName};
+    sdIntelSave();if(typeof SDORIG!=='undefined'){SDORIG.activeForPublish=false;SDORIG.generatedAt=0;if(!String(SDORIG.scoreText||'').trim())SDORIG.scoreText=sdOrigAutoScoreText?.()||'';const coach=sdOrigCoachName?.();if(coach&&!String(SDORIG.person||'').trim()){SDORIG.person=coach+' · 主教练';SDORIG.role=SDORIG.person}sdOrigSave?.();sdOrigRender?.()}sdIntelProgress(100,verifiedStreak?('分析完成 · 已按最新证据校准 '+verifiedStreak+'连胜 · 已生成3套抖音打法'):(scores.length>=3?('分析完成 · 已识别 '+scores.length+'组比分 · 正在按走势制造话题'):'分析完成 · 已按图片主体生成抖音选题'));sdIntelRender();toast('图片深度分析完成')
   }catch(e){console.error(e);sdIntelProgress(0,'分析失败：'+(e?.message||'未知错误'));toast('图片分析失败')}
   finally{SDINTEL_RUNNING=false;q('sdImgAnalyzeBtn').disabled=false}
 }
@@ -3148,7 +3163,7 @@ if(q('captionSpeed'))q('captionSpeed').value='fast';
 if(q('captionRange'))q('captionRange').value='trim';
 setTimeout(async()=>{await wakeCaptionCloud();refreshAIVoiceStatus(false)},180);
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=341',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=342',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})}
 })();
 </script>
 </body>
