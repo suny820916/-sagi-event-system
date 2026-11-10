@@ -485,7 +485,7 @@ function cobaltOfficialUrl(sourceUrl){
 }
 function handoffToOfficialCobalt(sourceUrl,handoff,reason=''){
   const target=cobaltOfficialUrl(sourceUrl);
-  setStatus((reason?reason+' · ':'')+'已自动切换 Cobalt 官方下载，无需再次粘贴链接。','good');
+  setStatus((reason?reason+' · ':'')+'已打开 Cobalt 官方网页并带入链接，请在该页面确认下载。','good');
   try{
     if(handoff&&!handoff.closed){handoff.location.replace(target);return true}
   }catch(e){}
@@ -525,10 +525,22 @@ async function pollCloudDownload(jobId,handoff,sourceUrl,maxCloudWaitMs=7000){
   const started=Date.now();
   while(Date.now()-started<maxCloudWaitMs){
     await new Promise(r=>setTimeout(r,1200));
-    const r=await fetch(CAPTION_CLOUD+'/api/jobs/'+encodeURIComponent(jobId),{
-      headers:{Authorization:'Bearer '+STUDIO.cloudCaptionToken},cache:'no-store'
-    });
-    const d=await r.json().catch(()=>({}));
+    // Poll requests must not outlive the overall cloud deadline.
+    const remaining=maxCloudWaitMs-(Date.now()-started);
+    if(remaining<=0)break;
+    const pollCtl=new AbortController();
+    const pollTimer=setTimeout(()=>pollCtl.abort(),Math.max(100,remaining));
+    let r,d;
+    try{
+      r=await fetch(CAPTION_CLOUD+'/api/jobs/'+encodeURIComponent(jobId),{
+        headers:{Authorization:'Bearer '+STUDIO.cloudCaptionToken},
+        cache:'no-store',signal:pollCtl.signal
+      });
+      d=await r.json().catch(()=>({}));
+    }catch(e){
+      if(e?.name==='AbortError')break;
+      throw e;
+    }finally{clearTimeout(pollTimer)}
     if(!r.ok||!d?.ok)throw new Error(d?.error||('HTTP '+r.status));
     const job=d.job||{};
     if(job.status==='ready'&&job.downloadUrl){
@@ -571,7 +583,10 @@ async function download(){
         signal:ctl.signal
       })
     }finally{clearTimeout(timer)}
-    const data=await r.json().catch(()=>({}));
+    const data=await Promise.race([
+      r.json().catch(()=>({})),
+      new Promise(resolve=>setTimeout(()=>resolve({}),1500))
+    ]);
     if(!r.ok||!data?.ok||!data?.job?.id){
       handoffToOfficialCobalt(v,handoff,'SAGI Cobalt 未接收任务');
       return
