@@ -181,7 +181,9 @@ jobs:
           assert health["aiVoice"] is True
           assert health["cloudRender"] is True
           assert health["cloudDownload"] is True
-          assert set(health["downloadPlatforms"]) >= {"Instagram","YouTube","TikTok","X"}\n          assert health["instagramPostFallback"] == "gallery-dl"\n          assert "carousel-zip" in health["downloadMediaKinds"]
+          assert set(health["downloadPlatforms"]) >= {"Instagram","YouTube","TikTok","X"}
+          assert health["instagramPostFallback"] == "gallery-dl"
+          assert "carousel-zip" in health["downloadMediaKinds"]
 
           token = mod.client_token()
           headers = {"Authorization": "Bearer " + token, "Origin": "https://suny820916.github.io"}
