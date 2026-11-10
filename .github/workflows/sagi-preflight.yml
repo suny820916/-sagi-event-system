@@ -263,10 +263,12 @@ jobs:
               "cloneMyVoice",
               "cloudCaptionMedia",
               "runAiCaption(true)",
-              "V1.9.1 · CLOUD COMPAT FIX",
+              "V1.9.2 · VERIFIED CLOUD",
           ]
           for x in required:
               assert x in s, x
+          # attack duplicate transition frontend
+          assert "攻防攻防转换" in s or "footballPolishZh" in s
           print("frontend wiring OK")
           PY
           node --check /tmp/sagi-down.js
