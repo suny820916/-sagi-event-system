@@ -173,7 +173,7 @@ jobs:
           c = mod.app.test_client()
           health = c.get("/health").get_json()
           print("health", health)
-          assert health["version"] == "1.7.0"
+          assert health["version"] == "1.7.1"
           assert health["captionMedia"] is True
           assert health["contextTranslate"] is True
           assert health["smartTranslate"] is True
