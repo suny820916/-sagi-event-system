@@ -1,5 +1,5 @@
-const CACHE='sagi-content-os-shell-v41';
-const SHELL=['./','./index.html','./manifest.webmanifest','./icon.svg','./css/mobile.css','./css/mobile.css?v=250','./js/app-core.js','./js/app-core.js?v=254','./js/mobile-matchday.js','./js/video-download.js','./js/video-download.js?v=290','./js/video-jobs.js','./js/review.js','./js/mobile-shell.js','./js/mobile-shell.js?v=251'];
+const CACHE='sagi-content-os-shell-v42';
+const SHELL=['./','./index.html','./manifest.webmanifest','./icon.svg','./css/mobile.css','./css/mobile.css?v=250','./css/image-studio.css','./css/image-studio.css?v=2100','./js/app-core.js','./js/app-core.js?v=300','./js/mobile-matchday.js','./js/video-download.js','./js/video-download.js?v=290','./js/video-jobs.js','./js/review.js','./js/mobile-shell.js','./js/mobile-shell.js?v=251','./js/image-studio.js','./js/image-studio.js?v=2100'];
 self.addEventListener('install',e=>{
   e.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL)).catch(()=>{}));
 });
