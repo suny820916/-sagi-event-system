@@ -121,7 +121,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 #imageStudioCard[data-flow="publish"] #sdOriginalPoster> :not(.origHead):not(.imgPublish){display:none!important}
 #imageStudioCard[data-flow="publish"] #sdOriginalPoster .imgPublish{display:block!important}
 
-/* SAGI V3.7 · MATCH INTELLIGENCE HUB */
+/* SAGI V3.8 · VERIFIED DATA + DIRECT LAYERS */
 .imageFlowNav{position:sticky;top:8px;z-index:20;display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin:10px 0;padding:6px;border:1px solid #314149;border-radius:12px;background:rgba(5,10,12,.94);backdrop-filter:blur(14px)}
 .imageFlowStep{border:1px solid transparent;border-radius:9px;background:transparent;color:#71858c;padding:8px 4px;font-size:7px}.imageFlowStep b{display:block;font-size:9px;color:#a7b2b6;margin-bottom:2px}.imageFlowStep.active{border-color:#d7b568;background:#19160d;color:#d8bd77}.imageFlowStep.active b{color:#f0d48b}
 .imageFlowStatus{display:flex;justify-content:space-between;gap:8px;align-items:center;margin:7px 0 2px;font-size:7px;color:#71858c}.imageFlowStatus strong{color:#d7b568}
@@ -135,9 +135,13 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 .dataProviderRow{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}.dataProvider{font-size:6px;border:1px solid #2c4437;border-radius:99px;padding:4px 6px;color:#7f9b88}.dataProvider.live{border-color:#4f7a5f;color:#a6d4b4}.dataProvider.off{opacity:.55}
 .dataHubActions{display:grid;grid-template-columns:1.4fr .6fr;gap:6px;margin-top:8px}
 .dataConfidence{margin-top:7px;font-size:7px;color:#718a79;line-height:1.5}
-@media(max-width:520px){.dataHubGrid{grid-template-columns:1fr 1fr}.dataHubActions{grid-template-columns:1fr}.imageFlowNav{top:4px}}
+.dataTeamEdit{display:grid;grid-template-columns:1fr auto;gap:6px;margin-top:8px}.dataTeamEdit label{font-size:7px;color:#789080}.dataTeamEdit input{display:block;width:100%;margin-top:4px;border:1px solid #31513d;background:#050d08;color:#eaf3ed;border-radius:9px;padding:9px;font-size:9px;outline:none}.dataTeamEdit .btn{align-self:end;padding:9px 10px}
+.dataSectionLabel{margin-top:9px;font-size:7px;font-weight:850;letter-spacing:.5px;color:#92ad9b}.dataSectionLabel.candidate{color:#aa9270}
+.dataMatch.verified{border-color:#39654a}.dataMatch.candidate{border-color:#4a4030;background:#100d08;opacity:.88}.dataMatch.candidate strong{color:#c7ad72}.dataMatch em{font-style:normal;font-size:6px;border:1px solid #3f624b;border-radius:99px;padding:2px 5px;color:#9bc9a7}.dataMatch.candidate em{border-color:#665333;color:#c5a871}
+.dataProvider.checked{border-color:#3d5748;color:#91ad99}.dataProvider.off{opacity:.42}
+@media(max-width:520px){.dataHubGrid{grid-template-columns:1fr 1fr}.dataHubActions,.dataTeamEdit{grid-template-columns:1fr}.imageFlowNav{top:4px}}
 
-/* SAGI V3.7 · MATCH INTELLIGENCE HUB */
+/* SAGI V3.8 · VERIFIED DATA + DIRECT LAYERS */
 #imageStudioCard>.imgPresetGrid,
 #imageStudioCard>.imgChipRow,
 #imageStudioCard>.imgAdjustGrid,
@@ -156,9 +160,9 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 /* SAGI POSTER LAYER EDITOR V1.0 */
 .origLayerEditor{margin-top:9px;border:1px solid #33434a;border-radius:12px;background:#081013;padding:10px}
 .origLayerHead{display:flex;justify-content:space-between;gap:8px;align-items:center}.origLayerHead b{font-size:10px}.origLayerHead span{font-size:8px;color:#72858c}
-.origLayerTabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}.origLayerBtn{border:1px solid #314149;border-radius:9px;background:#091114;color:#94a4a9;padding:8px 5px;font-size:8px}.origLayerBtn.active{border-color:#d7b568;color:#e4ca84;background:#18150c;box-shadow:0 0 0 1px #d7b568 inset}
+.origLayerTabs{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:8px}.origLayerBtn{border:1px solid #314149;border-radius:9px;background:#091114;color:#94a4a9;padding:8px 5px;font-size:8px}.origLayerBtn.active{border-color:#d7b568;color:#e4ca84;background:#18150c;box-shadow:0 0 0 1px #d7b568 inset}
 .origLayerControls{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}.origLayerControls label{font-size:7px;color:#71858c}.origLayerControls input{width:100%;margin-top:4px;padding:0;accent-color:#d7b568}
-.origLayerActions{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}.origDragHint{font-size:7px;color:#6f8289;line-height:1.45;margin-top:7px}
+.origLayerActions{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}.origDragHint{font-size:7px;color:#6f8289;line-height:1.45;margin-top:7px}
 .origOfficial{margin-top:9px;border:1px solid #345744;border-radius:11px;background:#08120c;padding:9px}.origOfficialTop{display:flex;justify-content:space-between;gap:8px;align-items:center}.origOfficialTop b{font-size:9px}.origOfficialTop span{font-size:7px;color:#79a185}.origOfficialRows{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:7px}.origOfficialRows div{border:1px solid #294133;border-radius:8px;padding:7px;background:#06100a}.origOfficialRows span{display:block;font-size:7px;color:#6f8b78}.origOfficialRows b{display:block;font-size:9px;margin-top:3px}.officialOk{color:#9fd2ad!important}.officialWarn{color:#d7b568!important}
 @media(max-width:520px){.origLayerControls{grid-template-columns:1fr}.origOfficialRows{grid-template-columns:1fr 1fr}}
 
@@ -184,7 +188,8 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 .origActionRow{display:grid;grid-template-columns:1.35fr .65fr;gap:7px;margin-top:9px}
 .origPolicy{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}.origPolicy div{border:1px solid #3b3524;border-radius:9px;background:#0d0c08;padding:8px}.origPolicy span{display:block;font-size:7px;color:#867954}.origPolicy b{display:block;font-size:10px;margin-top:3px;color:#e0c57c}
 .origVariantGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:9px}.origVariant{border:1px solid #314047;border-radius:10px;background:#0a1114;color:#e8edef;padding:9px 7px;text-align:left}.origVariant b{display:block;font-size:9px}.origVariant span{display:block;font-size:7px;color:#72858c;line-height:1.4;margin-top:3px}.origVariant.active{border-color:#d7b568;background:#18150c;box-shadow:0 0 0 1px #d7b568 inset}
-.origCanvasWrap{margin-top:9px;border:1px solid #2d393e;border-radius:13px;background:#040607;padding:7px;display:flex;justify-content:center}.origCanvasWrap canvas{display:block;width:100%;max-height:62vh;object-fit:contain;border-radius:9px;background:#070a0c;box-shadow:0 18px 44px rgba(0,0,0,.42);touch-action:none}
+.origCanvasWrap{position:relative;margin-top:9px;border:1px solid #2d393e;border-radius:13px;background:#040607;padding:7px;display:flex;justify-content:center;overflow:hidden}.origCanvasWrap canvas{display:block;width:100%;max-height:62vh;object-fit:contain;border-radius:9px;background:#070a0c;box-shadow:0 18px 44px rgba(0,0,0,.42);touch-action:none}
+.origCanvasToolbar{position:absolute;left:14px;right:14px;bottom:14px;z-index:8;display:flex;align-items:center;gap:5px;padding:6px;border:1px solid rgba(215,181,104,.46);border-radius:11px;background:rgba(5,8,9,.88);backdrop-filter:blur(12px);box-shadow:0 8px 24px rgba(0,0,0,.35)}.origCanvasToolbar span{min-width:0;flex:1;font-size:7px;color:#e6cc83;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.origCanvasToolbar button{border:1px solid #45545a;border-radius:8px;background:#0b1215;color:#dce3e5;padding:6px 7px;font-size:7px}.origCanvasToolbar button.gold{border-color:#d7b568;color:#f0d58e;background:#19160d}
 .origMeta{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:7px}.origMeta div{border:1px solid #2e393e;border-radius:9px;padding:7px;background:#081014}.origMeta span{display:block;font-size:7px;color:#71858c}.origMeta b{display:block;font-size:9px;margin-top:3px}
 .origTemplateRow{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}.origChip{border:1px solid #35454b;border-radius:99px;background:#0a1114;color:#899aa0;padding:6px 8px;font-size:8px}.origChip.active{border-color:#cdb16a;color:#e3c982;background:#18150c}
 .origControls{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}.origControls label{display:block;font-size:8px;color:#71858c}.origControls select,.origControls input{width:100%;margin-top:4px;border:1px solid #2c3e45;background:#070b0d;color:#fff;border-radius:9px;padding:9px;font-size:9px}
@@ -328,8 +333,8 @@ div>
 
       <div class="dataHub" id="sdDataHub">
         <div class="dataHubHead">
-          <div><b>MATCH DATA HUB · 五大联赛 + 欧冠</b><span>官方赛事源优先；专业足球 API 交叉验证；公共赛事源补充；OCR 只做最后兜底。</span></div>
-          <span class="badge">V1.0</span>
+          <div><b>MATCH DATA HUB · 五大联赛 + 欧冠</b><span>逐场核验：两个独立结构化数据源一致，或结构化数据被官方赛事页确认，才允许写入海报。</span></div>
+          <span class="badge">V2.0 · VERIFIED ONLY</span>
         </div>
         <div class="dataCompRow">
           <button class="dataComp active" data-data-comp="AUTO" type="button">AUTO</button>
@@ -340,16 +345,23 @@ div>
           <button class="dataComp" data-data-comp="FL1" type="button">法甲</button>
           <button class="dataComp" data-data-comp="CL" type="button">欧冠</button>
         </div>
+        <div class="dataTeamEdit">
+          <label>核验球队<input id="sdDataTeamInput" placeholder="自动识别；识别错了可直接改球队名"></label>
+          <button class="btn" id="sdDataTeamVerifyBtn" type="button">按此球队核验</button>
+        </div>
         <div class="dataHubGrid">
           <div><span>识别球队</span><b id="sdDataTeam">—</b></div>
           <div><span>数据置信度</span><b id="sdDataConfidence">—</b></div>
           <div><span>连续状态</span><b id="sdDataStreak">—</b></div>
           <div><span>已核验比赛</span><b id="sdDataMatchCount">0场</b></div>
-          <div><span>官方命中</span><b id="sdDataOfficial">—</b></div>
+          <div><span>单源候选</span><b id="sdDataCandidateCount">0场</b></div>
           <div><span>更新时间</span><b id="sdDataUpdated">—</b></div>
         </div>
         <div id="sdDataProviders" class="dataProviderRow"></div>
+        <div class="dataSectionLabel">✓ 已核验 · 可进入海报</div>
         <div id="sdDataMatches" class="dataMatches"></div>
+        <div class="dataSectionLabel candidate">△ 单源候选 · 仅查看，不自动使用</div>
+        <div id="sdDataCandidates" class="dataMatches"></div>
         <div class="dataHubActions">
           <button class="btn gold" id="sdDataVerifyBtn" type="button">重新核验比赛数据</button>
           <button class="btn" id="sdDataApplyBtn" type="button">应用到海报</button>
@@ -407,6 +419,26 @@ div>
           </div>
 
           <div class="origMaterialBox">
+            <h4>图片图层 / 背景</h4>
+            <p>任意图片都可作为独立图层，直接在海报上点选、拖动、缩放；也可一键放到底层作为背景。</p>
+            <div class="origMaterialPick">
+              <input id="sdOrigPhotoFile" type="file" accept="image/*">
+              <b id="sdOrigPhotoFileTitle">选择图片图层</b>
+              <span>PNG / JPG / HEIC · 可独立排版</span>
+            </div>
+            <img id="sdOrigPhotoPreview" class="origMaterialPreview" alt="">
+            <div class="origPersonControls">
+              <label>用途<select id="sdOrigPhotoMode"><option value="layer" selected>独立图片图层</option><option value="background">设为背景</option></select></label>
+              <label>透明度<input id="sdOrigPhotoOpacity" type="range" min="20" max="100" value="100"></label>
+            </div>
+            <div class="origMaterialTools">
+              <button class="btn" id="sdOrigPhotoRemoveBtn" type="button">移除图片</button>
+              <button class="btn gold" id="sdOrigPhotoSelectBtn" type="button">选中图片图层</button>
+            </div>
+            <div class="origMaterialHint">图片是独立图层，不会和人物、比分、标题绑在一起。</div>
+          </div>
+
+          <div class="origMaterialBox">
             <h4>比分素材</h4>
             <p>从图片分析自动提取，也可以手动补球队名。每行一场，例如：瓦伦西亚 0-3 皇马。</p>
             <textarea id="sdOrigScoreText" class="origMaterialTextarea" placeholder="瓦伦西亚 0-3 皇马
@@ -435,7 +467,16 @@ AEK 2-3 皇马
         <button class="origVariant" data-orig-variant="2" type="button"><b>C · 强评论问题</b><span>争议问句 · 抖音评论入口</span></button>
       </div>
 
-      <div class="origCanvasWrap"><canvas id="sdOrigCanvas" width="1080" height="1440"></canvas></div>
+      <div class="origCanvasWrap">
+        <canvas id="sdOrigCanvas" width="1080" height="1440"></canvas>
+        <div class="origCanvasToolbar" id="sdOrigCanvasToolbar">
+          <span id="sdOrigCanvasLayerLabel">人物图层 · 点画面可切换</span>
+          <button id="sdOrigCanvasDownBtn" type="button">下移</button>
+          <button id="sdOrigCanvasUpBtn" type="button">上移</button>
+          <button id="sdOrigCanvasMinusBtn" type="button">－</button>
+          <button class="gold" id="sdOrigCanvasPlusBtn" type="button">＋</button>
+        </div>
+      </div>
 
       <div class="origVisualTune" id="sdOrigVisualTune">
         <div class="origVisualHead">
@@ -476,19 +517,22 @@ AEK 2-3 皇马
           <span class="badge">DRAG</span>
         </div>
         <div class="origLayerTabs">
+          <button class="origLayerBtn" data-orig-layer="photo" type="button">图片</button>
           <button class="origLayerBtn active" data-orig-layer="person" type="button">人物</button>
           <button class="origLayerBtn" data-orig-layer="number" type="button">大数字</button>
           <button class="origLayerBtn" data-orig-layer="scores" type="button">比分</button>
           <button class="origLayerBtn" data-orig-layer="title" type="button">标题</button>
         </div>
         <div class="origLayerControls">
-          <label>水平位置 X<input id="sdOrigLayerX" type="range" min="-35" max="35" value="0"></label>
-          <label>垂直位置 Y<input id="sdOrigLayerY" type="range" min="-35" max="35" value="0"></label>
-          <label>图层缩放<input id="sdOrigLayerScale" type="range" min="60" max="160" value="100"></label>
+          <label>水平位置 X<input id="sdOrigLayerX" type="range" min="-55" max="55" value="0"></label>
+          <label>垂直位置 Y<input id="sdOrigLayerY" type="range" min="-55" max="55" value="0"></label>
+          <label>图层缩放<input id="sdOrigLayerScale" type="range" min="40" max="220" value="100"></label>
         </div>
         <div class="origLayerActions">
-          <button class="btn gold" id="sdOrigAutoLayoutBtn" type="button">自动避让排版</button>
-          <button class="btn" id="sdOrigResetLayerBtn" type="button">重置当前图层</button>
+          <button class="btn gold" id="sdOrigAutoLayoutBtn" type="button">自动排版</button>
+          <button class="btn" id="sdOrigLayerDownBtn" type="button">下移一层</button>
+          <button class="btn" id="sdOrigLayerUpBtn" type="button">上移一层</button>
+          <button class="btn" id="sdOrigResetLayerBtn" type="button">重置图层</button>
         </div>
         <div class="origDragHint">画布拖动只移动当前选中的图层。人物、数字、比分、标题互不绑定，避免再次全部挤在一起。</div>
       </div>
@@ -3113,7 +3157,7 @@ async function sdIntelAnalyze(){
     sdIntelProgress(86,'正在把“事实”转成抖音选题，而不是只堆关键词…');
     const angles=sdIntelMakeAngles(bundle.post,keywords,lookup.items,visual,faces,signals,score,meta);
     SDINTEL={ocr:bundle.post,sourceOcr:bundle.source,keywords,scores:evidenceScores,source,score,faces,visual,news:lookup.items,signals,angles,evidenceText:verificationText,verifiedStreak,official,mode:bundle.mode,location,analyzedAt:Date.now(),sourceName:SDIMG.sourceName};
-    sdIntelSave();if(typeof SDORIG!=='undefined'){SDORIG.activeForPublish=false;SDORIG.generatedAt=0;if((official.scoreRows||[]).length)SDORIG.scoreText=sdIntelOfficialScoreText(official.scoreRows);else if(!String(SDORIG.scoreText||'').trim())SDORIG.scoreText=sdOrigAutoScoreText?.()||'';const coach=sdOrigCoachName?.();if(coach&&!String(SDORIG.person||'').trim()){SDORIG.person=coach+' · 主教练';SDORIG.role=SDORIG.person}sdOrigSave?.();sdOrigRender?.()}sdIntelProgress(94,'图片分析完成 · 正在进入结构化比赛数据核验…');sdIntelRender();if(typeof sdDataVerify==='function')await sdDataVerify(true);sdIntelProgress(100,'分析 + 比赛数据核验完成 · 可以进入二次创作');if(typeof sdFlowSet==='function')sdFlowSet('create',false);toast('图片分析与比赛数据核验完成')
+    sdIntelSave();if(typeof SDORIG!=='undefined'){SDORIG.activeForPublish=false;SDORIG.generatedAt=0;SDORIG.scoreText='';const coach=sdOrigCoachName?.();if(coach&&!String(SDORIG.person||'').trim()){SDORIG.person=coach+' · 主教练';SDORIG.role=SDORIG.person}sdOrigSave?.();sdOrigRender?.()}sdIntelProgress(94,'图片分析完成 · 正在进入结构化比赛数据核验…');sdIntelRender();if(typeof sdDataVerify==='function')await sdDataVerify(true);sdIntelProgress(100,'分析 + 比赛数据核验完成 · 可以进入二次创作');if(typeof sdFlowSet==='function')sdFlowSet('create',false);toast('图片分析与比赛数据核验完成')
   }catch(e){console.error(e);sdIntelProgress(0,'分析失败：'+(e?.message||'未知错误'));toast('图片分析失败')}
   finally{SDINTEL_RUNNING=false;q('sdImgAnalyzeBtn').disabled=false}
 }
@@ -3121,16 +3165,16 @@ q('sdImgAnalyzeBtn').onclick=sdIntelAnalyze;q('sdImgAnalyzeClearBtn').onclick=sd
 /* ===== END IMAGE INTELLIGENCE ===== */
 
 
-/* ===== SAGI MATCH DATA HUB V1.0 ===== */
-const SDDATA_KEY='sagi_down_match_data_hub_v1';
-let SDDATA={competition:'AUTO',team:'',matches:[],officialHits:0,providers:{},confidence:0,streak:0,updatedAt:'',status:'idle'};
+/* ===== SAGI MATCH DATA HUB V2.0 · VERIFIED ONLY ===== */
+const SDDATA_KEY='sagi_down_match_data_hub_v2';
+let SDDATA={competition:'AUTO',team:'',teamOverride:'',matches:[],candidates:[],officialHits:0,providers:{},confidence:0,streak:0,updatedAt:'',status:'idle',verificationPolicy:{}};
 try{SDDATA={...SDDATA,...JSON.parse(localStorage.getItem(SDDATA_KEY)||'{}')}}catch(e){}
 function sdDataSave(){try{localStorage.setItem(SDDATA_KEY,JSON.stringify(SDDATA))}catch(e){}}
 function sdDataNorm(v){return String(v||'').toLowerCase().replace(/[^a-z0-9\u3400-\u9fff]+/g,'')}
 function sdDataCanonicalTeam(v){
   const raw=String(v||'').trim(),map={
-    '皇马':'realmadrid','皇家马德里':'realmadrid','Real Madrid':'realmadrid',
-    '巴萨':'barcelona','巴塞罗那':'barcelona','Barcelona':'barcelona',
+    '皇马':'realmadrid','皇家马德里':'realmadrid','Real Madrid':'realmadrid','Real Madrid CF':'realmadrid',
+    '巴萨':'barcelona','巴塞罗那':'barcelona','Barcelona':'barcelona','FC Barcelona':'barcelona',
     '曼城':'manchestercity','Manchester City':'manchestercity',
     '曼联':'manchesterunited','Manchester United':'manchesterunited',
     '利物浦':'liverpool','Liverpool':'liverpool',
@@ -3138,15 +3182,12 @@ function sdDataCanonicalTeam(v){
     '切尔西':'chelsea','Chelsea':'chelsea',
     '拜仁':'bayernmunich','Bayern Munich':'bayernmunich',
     '巴黎':'parissaintgermain','巴黎圣日耳曼':'parissaintgermain','PSG':'parissaintgermain',
-    '国际米兰':'intermilan','国米':'intermilan','Inter Milan':'intermilan',
+    '国际米兰':'intermilan','国米':'intermilan','Inter':'intermilan','Inter Milan':'intermilan',
     'AC米兰':'acmilan','AC Milan':'acmilan'
   };
   return map[raw]||sdDataNorm(raw)
 }
-function sdDataTeamSide(team,name){
-  const a=sdDataCanonicalTeam(team),b=sdDataCanonicalTeam(name);
-  return !!a&&!!b&&(a===b||a.includes(b)||b.includes(a))
-}
+function sdDataTeamSide(team,name){return !!team&&!!name&&sdDataCanonicalTeam(team)===sdDataCanonicalTeam(name)}
 function sdDataWinStreak(team,matches){
   let streak=0;
   for(const m of (matches||[])){
@@ -3164,6 +3205,11 @@ function sdDataScoreText(matches){
 function sdDataCompetitionLabel(code){
   return({AUTO:'AUTO',PL:'英超',PD:'西甲',BL1:'德甲',SA:'意甲',FL1:'法甲',CL:'欧冠',FAC:'足总杯',CDR:'国王杯',DFB:'德国杯',CI:'意大利杯',CDF:'法国杯'})[code]||code
 }
+function sdDataMatchHtml(m,candidate=false){
+  const providers=(m.providers||[m.provider]).filter(Boolean);
+  const tier=candidate?'单源候选':(m.verificationTier==='official-cross'?'官方交叉':'多源一致');
+  return '<div class="dataMatch '+(candidate?'candidate':'verified')+'"><span>'+escapeHtml(m.home)+'</span><strong>'+m.homeScore+'-'+m.awayScore+'</strong><span class="away">'+escapeHtml(m.away)+'</span><small><em>'+tier+'</em> · '+escapeHtml(sdDataCompetitionLabel(m.competition))+' · '+escapeHtml(providers.join(' + '))+' · 可信度 '+(m.confidence||0)+'</small></div>'
+}
 function sdDataRender(){
   if(!q('sdDataHub'))return;
   document.querySelectorAll('[data-data-comp]').forEach(b=>b.classList.toggle('active',b.dataset.dataComp===SDDATA.competition));
@@ -3171,24 +3217,29 @@ function sdDataRender(){
   q('sdDataConfidence').textContent=SDDATA.confidence?SDDATA.confidence+'/100':'—';
   q('sdDataStreak').textContent=SDDATA.streak?SDDATA.streak+'连胜':'—';
   q('sdDataMatchCount').textContent=(SDDATA.matches||[]).length+'场';
-  q('sdDataOfficial').textContent=SDDATA.officialHits?('命中 '+SDDATA.officialHits+' 条'):'待核验';
+  q('sdDataCandidateCount').textContent=(SDDATA.candidates||[]).length+'场';
   q('sdDataUpdated').textContent=SDDATA.updatedAt?new Date(SDDATA.updatedAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}):'—';
-  const p=SDDATA.providers||{},active=p.active||[];
+  const teamInput=q('sdDataTeamInput');
+  if(teamInput&&document.activeElement!==teamInput)teamInput.value=SDDATA.teamOverride||SDDATA.team||'';
+  const p=SDDATA.providers||{},active=p.active||[],checked=p.checked||[];
   const providerDefs=[
-    ['官方赛事源','official competition websites',true],
-    ['football-data','football-data.org',!!p.footballDataConfigured],
-    ['API-Football','API-Football',!!p.apiFootballConfigured],
-    ['ESPN Feed','ESPN public feed',true],
-    ['Sportmonks','Sportmonks',!!p.sportmonksConfigured]
+    ['官方赛事源','official competition websites'],
+    ['football-data','football-data.org'],
+    ['API-Football','API-Football'],
+    ['ESPN Feed','ESPN public feed']
   ];
-  q('sdDataProviders').innerHTML=providerDefs.map(([label,key,on])=>'<span class="dataProvider '+(active.includes(key)||on?'live':'off')+'">'+label+(active.includes(key)?' ✓':'')+'</span>').join('');
-  q('sdDataMatches').innerHTML=(SDDATA.matches||[]).slice(0,8).map(m=>'<div class="dataMatch"><span>'+escapeHtml(m.home)+'</span><strong>'+m.homeScore+'-'+m.awayScore+'</strong><span class="away">'+escapeHtml(m.away)+'</span><small>'+escapeHtml(sdDataCompetitionLabel(m.competition))+' · '+escapeHtml((m.providers||[m.provider]).join(' + '))+' · 可信度 '+(m.confidence||72)+'</small></div>').join('')||'<div class="mini">暂无结构化赛果。</div>';
+  q('sdDataProviders').innerHTML=providerDefs.map(([label,key])=>{
+    const cls=active.includes(key)?'live':(checked.includes(key)?'checked':'off');
+    return '<span class="dataProvider '+cls+'">'+label+(active.includes(key)?' ✓':(checked.includes(key)?' · 已检查':''))+'</span>'
+  }).join('');
+  q('sdDataMatches').innerHTML=(SDDATA.matches||[]).slice(0,8).map(m=>sdDataMatchHtml(m,false)).join('')||'<div class="mini">暂无达到双源核验门槛的赛果。</div>';
+  q('sdDataCandidates').innerHTML=(SDDATA.candidates||[]).slice(0,8).map(m=>sdDataMatchHtml(m,true)).join('')||'<div class="mini">暂无单源候选。</div>';
 }
 function sdDataRebuildIntel(){
   if(!(SDDATA.matches||[]).length)return;
   const matches=SDDATA.matches.slice(0,12),scores=matches.map(m=>m.homeScore+':'+m.awayScore),verifiedStreak=SDDATA.streak||0;
   SDINTEL.scores=scores;SDINTEL.verifiedStreak=verifiedStreak;
-  SDINTEL.official={...(SDINTEL.official||{}),verified:SDDATA.officialHits>0,source:'MATCH DATA HUB · 官方赛事源优先',latest:matches[0]?(matches[0].home+' '+matches[0].homeScore+'-'+matches[0].awayScore+' '+matches[0].away):'',scoreRows:matches.map(m=>({left:m.home,score:m.homeScore+'-'+m.awayScore,right:m.away,official:SDDATA.officialHits>0}))};
+  SDINTEL.official={...(SDINTEL.official||{}),verified:true,source:'MATCH DATA HUB V2 · 逐场交叉核验',latest:matches[0]?(matches[0].home+' '+matches[0].homeScore+'-'+matches[0].awayScore+' '+matches[0].away):'',scoreRows:matches.map(m=>({left:m.home,score:m.homeScore+'-'+m.awayScore,right:m.away,official:true}))};
   const meta={mode:SDINTEL.mode,source:SDINTEL.source,location:SDINTEL.location,scores,evidenceText:SDINTEL.evidenceText||'',verifiedStreak,official:SDINTEL.official};
   SDINTEL.signals=sdIntelTopicSignals(SDINTEL.ocr||'',SDINTEL.keywords||[],SDINTEL.news||[],SDINTEL.visual||{},SDINTEL.faces||0,meta);
   SDINTEL.score=sdIntelHotScore(SDINTEL.ocr||'',SDINTEL.keywords||[],SDINTEL.news||[],SDINTEL.visual||{},SDINTEL.faces||0,SDINTEL.signals,meta);
@@ -3196,16 +3247,20 @@ function sdDataRebuildIntel(){
   sdIntelSave();sdIntelRender()
 }
 function sdDataApply(){
-  if(!(SDDATA.matches||[]).length){toast('暂无可应用的核验赛果');return}
+  if(!(SDDATA.matches||[]).length){toast((SDDATA.candidates||[]).length?'只有单源候选，系统不会把它写进海报':'暂无已核验赛果');return}
   SDORIG.scoreText=sdDataScoreText(SDDATA.matches.slice(0,8));SDORIG.generatedAt=0;
-  sdDataRebuildIntel();sdOrigSave();sdOrigRender();toast('已用核验数据更新海报');sdFlowSet('create',true)
+  sdDataRebuildIntel();sdOrigSave();sdOrigRender();toast('已用双源核验数据更新海报');sdFlowSet('create',true)
 }
 async function sdDataVerify(auto=false){
   if(!SDINTEL.analyzedAt){if(!auto)toast('请先分析图片');return false}
-  const team=sdIntelSubjectName(SDINTEL.keywords||[],SDINTEL.ocr||'',SDINTEL.source||null);
-  if(!team||/这张足球图|足球热点/.test(team)){q('sdDataStatus').textContent='暂未识别出明确球队，保留图片分析结果。';return false}
-  SDDATA.team=team;SDDATA.status='loading';sdDataSave();sdDataRender();
-  q('sdDataStatus').textContent='正在连接 MATCH DATA HUB · 官方赛事源优先核验…';
+  const inferred=sdIntelSubjectName(SDINTEL.keywords||[],SDINTEL.ocr||'',SDINTEL.source||null);
+  if(auto)SDDATA.teamOverride='';
+  const typed=String(q('sdDataTeamInput')?.value||'').trim();
+  const team=(!auto&&(typed||SDDATA.teamOverride))||inferred;
+  if(!team||/这张足球图|足球热点/.test(team)){q('sdDataStatus').textContent='暂未识别出明确球队。可在“核验球队”输入框直接填写球队名后重试。';return false}
+  if(!auto&&typed)SDDATA.teamOverride=typed;
+  SDDATA.team=team;SDDATA.status='loading';SDDATA.matches=[];SDDATA.candidates=[];sdDataSave();sdDataRender();
+  q('sdDataStatus').textContent='正在逐场比对结构化数据源；单源赛果只会进入候选区…';
   try{
     const ready=await wakeCaptionCloud();if(!ready||!STUDIO.cloudCaptionToken)throw new Error('SAGI Cloud 未连接');
     const season=(new Date().getMonth()<6?new Date().getFullYear()-1:new Date().getFullYear());
@@ -3213,23 +3268,27 @@ async function sdDataVerify(auto=false){
     const d=await r.json().catch(()=>({}));
     if(!r.ok||!d?.ok)throw new Error(d?.error||('HTTP '+r.status));
     SDDATA.matches=Array.isArray(d.matches)?d.matches:[];
-    SDDATA.officialHits=Number(d.officialHits)||0;SDDATA.providers=d.providers||{};SDDATA.updatedAt=d.generatedAt||new Date().toISOString();SDDATA.status='ready';
+    SDDATA.candidates=Array.isArray(d.candidates)?d.candidates:[];
+    SDDATA.officialHits=Number(d.officialHits)||0;SDDATA.providers=d.providers||{};SDDATA.verificationPolicy=d.verificationPolicy||{};SDDATA.updatedAt=d.generatedAt||new Date().toISOString();SDDATA.status='ready';
     SDDATA.streak=sdDataWinStreak(team,SDDATA.matches);
-    const avg=SDDATA.matches.length?SDDATA.matches.reduce((a,m)=>a+(Number(m.confidence)||72),0)/SDDATA.matches.length:0;
-    SDDATA.confidence=Math.min(99,Math.round(avg+(SDDATA.officialHits?7:0)+(SDDATA.providers?.footballDataConfigured?4:0)+(SDDATA.providers?.apiFootballConfigured?4:0)));
+    const avg=SDDATA.matches.length?SDDATA.matches.reduce((a,m)=>a+(Number(m.confidence)||0),0)/SDDATA.matches.length:0;
+    SDDATA.confidence=SDDATA.matches.length?Math.round(avg):0;
     sdDataSave();sdDataRender();
-    q('sdDataStatus').textContent=(d.relevantCompetitions?.length?('已识别赛事：'+d.relevantCompetitions.map(sdDataCompetitionLabel).join(' / ')+'。'):'')+' 数据已按官方源 → 专业API → 公共赛事源完成交叉核验。';
-    if(SDDATA.matches.length){sdDataApply();return true}
-    return false
+    if(SDDATA.matches.length){
+      q('sdDataStatus').textContent='已核验 '+SDDATA.matches.length+' 场；'+SDDATA.candidates.length+' 场单源候选被隔离。海报只使用已核验赛果。';
+      sdDataApply();return true
+    }
+    q('sdDataStatus').textContent=SDDATA.candidates.length?('找到 '+SDDATA.candidates.length+' 场单源候选，但没有比赛达到交叉核验门槛，因此不会自动写入海报。'):'没有找到可核验赛果；不会用 OCR 或猜测比分代替。';
+    SDINTEL.verifiedStreak=0;SDINTEL.scores=[];sdIntelSave();return false
   }catch(e){
-    console.warn('MATCH DATA HUB',e);SDDATA.status='failed';sdDataSave();sdDataRender();
-    q('sdDataStatus').textContent='数据中心暂不可用：'+(e?.message||e)+'。当前仍保留官方网页核验 + 新闻 + OCR 结果。';
+    console.warn('MATCH DATA HUB V2',e);SDDATA.status='failed';SDDATA.matches=[];sdDataSave();sdDataRender();
+    q('sdDataStatus').textContent='数据中心暂不可用：'+(e?.message||e)+'。为避免错比分，当前不会把未核验数据写入海报。';
     return false
   }
 }
 /* ===== END MATCH DATA HUB ===== */
 
-/* ===== SAGI IMAGE FLOW V1.0 ===== */
+/* ===== SAGI IMAGE FLOW V1.0 ===== *//* ===== SAGI IMAGE FLOW V1.0 ===== */
 const SDFLOW_LABELS={source:['参考图','导入 / 下载后自动分析'],verify:['数据核验','官方源优先核验热点与赛果'],create:['图片二次创作','人物 / 背景 / 比分 / 排版'],publish:['发布','导出图片 / 文案 / 分享']};
 function sdFlowSet(stage='source',scroll=false){
   const card=q('imageStudioCard');if(!card)return;stage=SDFLOW_LABELS[stage]?stage:'source';card.dataset.flow=stage;
@@ -3243,6 +3302,7 @@ function sdFlowSet(stage='source',scroll=false){
 document.querySelectorAll('[data-image-flow]').forEach(b=>b.onclick=()=>sdFlowSet(b.dataset.imageFlow,true));
 document.querySelectorAll('[data-data-comp]').forEach(b=>b.onclick=()=>{SDDATA.competition=b.dataset.dataComp;sdDataSave();sdDataRender();if(SDINTEL.analyzedAt)sdDataVerify(false)});
 q('sdDataVerifyBtn').onclick=()=>sdDataVerify(false);q('sdDataApplyBtn').onclick=sdDataApply;
+q('sdDataTeamVerifyBtn').onclick=()=>{SDDATA.teamOverride=String(q('sdDataTeamInput').value||'').trim();sdDataSave();sdDataVerify(false)};
 sdDataRender();sdFlowSet(SDIMG_IMAGE?'verify':'source',false);
 /* ===== END SAGI IMAGE FLOW ===== */
 
@@ -3251,16 +3311,20 @@ sdDataRender();sdFlowSet(SDIMG_IMAGE?'verify':'source',false);
 /* ===== SAGI ORIGINAL POSTER ENGINE V1.0 ===== */
 const SDORIG_KEY='sagi_down_original_poster_v1';
 const SDORIG_RATIOS={'3:4':{w:1080,h:1440},'9:16':{w:1080,h:1920},'1:1':{w:1080,h:1080}};
-let SDORIG={variant:0,template:'number',ratio:'3:4',title:'',sub:'',person:'',subject:'',fact:'',role:'',structure:'',hook:'',generatedAt:0,activeForPublish:false,personFileName:'',personScale:100,personX:0,personMode:'hero',scoreText:'',activeLayer:'person',filterPreset:'editorial',outputMode:'edit',personBright:100,personContrast:108,personSat:96,bgBright:92,bgSat:82,vignette:12,layers:{person:{x:8,y:-6,scale:88},number:{x:-8,y:-8,scale:86},scores:{x:0,y:3,scale:90},title:{x:0,y:14,scale:90}}};
-let SDORIG_PERSON_IMAGE=null,SDORIG_PERSON_URL='';
+let SDORIG={variant:0,template:'number',ratio:'3:4',title:'',sub:'',person:'',subject:'',fact:'',role:'',structure:'',hook:'',generatedAt:0,activeForPublish:false,personFileName:'',personScale:100,personX:0,personMode:'hero',photoFileName:'',photoMode:'layer',photoOpacity:100,scoreText:'',activeLayer:'person',layerOrder:['photo','person','number','scores','title'],filterPreset:'editorial',outputMode:'edit',personBright:100,personContrast:108,personSat:96,bgBright:92,bgSat:82,vignette:12,layers:{photo:{x:0,y:0,scale:100},person:{x:8,y:-6,scale:88},number:{x:-8,y:-8,scale:86},scores:{x:0,y:3,scale:90},title:{x:0,y:14,scale:90}}};
+let SDORIG_PERSON_IMAGE=null,SDORIG_PERSON_URL='',SDORIG_PHOTO_IMAGE=null,SDORIG_PHOTO_URL='';
 try{SDORIG={...SDORIG,...JSON.parse(localStorage.getItem(SDORIG_KEY)||'{}')}}catch(e){}
 
 function sdOrigSave(){try{localStorage.setItem(SDORIG_KEY,JSON.stringify(SDORIG))}catch(e){}}
-const SDORIG_LAYER_DEFAULTS={person:{x:8,y:-6,scale:88},number:{x:-8,y:-8,scale:86},scores:{x:0,y:3,scale:90},title:{x:0,y:14,scale:90}};
+const SDORIG_LAYER_DEFAULTS={photo:{x:0,y:0,scale:100},person:{x:8,y:-6,scale:88},number:{x:-8,y:-8,scale:86},scores:{x:0,y:3,scale:90},title:{x:0,y:14,scale:90}};
+const SDORIG_LAYER_LABELS={photo:'图片',person:'人物',number:'大数字 / 观点',scores:'比分',title:'标题'};
 function sdOrigEnsureLayers(){
   SDORIG.layers=SDORIG.layers&&typeof SDORIG.layers==='object'?SDORIG.layers:{};
   for(const k of Object.keys(SDORIG_LAYER_DEFAULTS))SDORIG.layers[k]={...SDORIG_LAYER_DEFAULTS[k],...(SDORIG.layers[k]||{})};
-  if(!SDORIG.activeLayer||!SDORIG_LAYER_DEFAULTS[SDORIG.activeLayer])SDORIG.activeLayer='person'
+  const valid=Object.keys(SDORIG_LAYER_DEFAULTS);
+  const current=Array.isArray(SDORIG.layerOrder)?SDORIG.layerOrder.filter(x=>valid.includes(x)):[];
+  SDORIG.layerOrder=[...current,...valid.filter(x=>!current.includes(x))];
+  if(!SDORIG.activeLayer||!valid.includes(SDORIG.activeLayer))SDORIG.activeLayer='person'
 }
 function sdOrigLayer(name){sdOrigEnsureLayers();return SDORIG.layers[name]||SDORIG.layers.person}
 function sdOrigWithLayer(ctx,w,h,name,fn){
@@ -3272,15 +3336,26 @@ function sdOrigWithLayer(ctx,w,h,name,fn){
 function sdOrigSyncLayerControls(){
   if(!q('sdOrigLayerX'))return;const l=sdOrigLayer(SDORIG.activeLayer);
   q('sdOrigLayerX').value=l.x;q('sdOrigLayerY').value=l.y;q('sdOrigLayerScale').value=l.scale;
-  document.querySelectorAll('[data-orig-layer]').forEach(b=>b.classList.toggle('active',b.dataset.origLayer===SDORIG.activeLayer))
+  document.querySelectorAll('[data-orig-layer]').forEach(b=>b.classList.toggle('active',b.dataset.origLayer===SDORIG.activeLayer));
+  if(q('sdOrigCanvasLayerLabel'))q('sdOrigCanvasLayerLabel').textContent=(SDORIG_LAYER_LABELS[SDORIG.activeLayer]||SDORIG.activeLayer)+'图层 · 拖动位置 · 右下角缩放'
+}
+function sdOrigMoveLayer(dir){
+  sdOrigEnsureLayers();const a=SDORIG.layerOrder,i=a.indexOf(SDORIG.activeLayer);if(i<0)return;
+  const j=Math.max(0,Math.min(a.length-1,i+dir));if(j===i)return;
+  [a[i],a[j]]=[a[j],a[i]];SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigDraw();toast(dir>0?'图层已上移':'图层已下移')
+}
+function sdOrigScaleLayer(delta){
+  const l=sdOrigLayer(SDORIG.activeLayer);l.scale=Math.max(40,Math.min(220,(Number(l.scale)||100)+delta));q('sdOrigLayerScale').value=l.scale;SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigDraw()
 }
 function sdOrigAutoLayout(){
   sdOrigEnsureLayers();
   const hasPerson=!!SDORIG_PERSON_IMAGE;
-  SDORIG.layers.person={x:hasPerson?8:0,y:hasPerson?-8:0,scale:hasPerson?84:100};
-  SDORIG.layers.number={x:-10,y:-10,scale:82};
-  SDORIG.layers.scores={x:0,y:5,scale:86};
-  SDORIG.layers.title={x:0,y:16,scale:88};
+  SDORIG.layers.photo={x:0,y:SDORIG.photoMode==='background'?0:-8,scale:SDORIG.photoMode==='background'?105:86};
+  SDORIG.layers.person={x:hasPerson?10:0,y:hasPerson?-7:0,scale:hasPerson?82:100};
+  SDORIG.layers.number={x:-12,y:-11,scale:80};
+  SDORIG.layers.scores={x:0,y:4,scale:84};
+  SDORIG.layers.title={x:0,y:17,scale:86};
+  SDORIG.layerOrder=['photo','person','number','scores','title'];
   SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigSyncLayerControls();sdOrigDraw();toast('已自动避让排版')
 }
 function sdOrigResetActiveLayer(){
@@ -3288,7 +3363,7 @@ function sdOrigResetActiveLayer(){
 }
 sdOrigEnsureLayers();
 
-const SDORIG_FILTER_PRESETS={
+const SDORIG_FILTER_PRESETS=const SDORIG_FILTER_PRESETS={
   editorial:{personBright:100,personContrast:114,personSat:92,bgBright:88,bgSat:76,vignette:14},
   matchday:{personBright:103,personContrast:108,personSat:100,bgBright:96,bgSat:92,vignette:8},
   hero:{personBright:105,personContrast:120,personSat:96,bgBright:82,bgSat:68,vignette:18},
@@ -3332,12 +3407,10 @@ function sdOrigScoreRows(){
   return (SDINTEL.scores||[]).slice(0,12).map((score,i)=>({left:'MATCH '+String(i+1).padStart(2,'0'),score:String(score).replace(':','-'),right:'',raw:String(score)}))
 }
 function sdOrigAutoScoreText(){
-  if((SDINTEL.official?.scoreRows||[]).length)return sdIntelOfficialScoreText(SDINTEL.official.scoreRows);
-  const scores=(SDINTEL.scores||[]).slice(0,12);
-  if(!scores.length)return'';
-  return scores.map((s,i)=>'MATCH '+String(i+1).padStart(2,'0')+' · '+String(s).replace(':','-')).join('\n')
+  if(typeof SDDATA!=='undefined'&&(SDDATA.matches||[]).length)return sdDataScoreText(SDDATA.matches.slice(0,12));
+  return'';
 }
-function sdOrigFingerprint(img){
+function sdOrigFingerprintfunction sdOrigFingerprint(img){
   const cv=document.createElement('canvas'),n=12;cv.width=n;cv.height=n;const ctx=cv.getContext('2d',{willReadFrequently:true});
   ctx.drawImage(img,0,0,n,n);const d=ctx.getImageData(0,0,n,n).data,out=[];
   for(let i=0;i<d.length;i+=4)out.push(d[i],d[i+1],d[i+2]);
@@ -3345,6 +3418,21 @@ function sdOrigFingerprint(img){
 }
 function sdOrigSimilarity(a,b){
   if(!a||!b||a.length!==b.length)return 0;let diff=0;for(let i=0;i<a.length;i++)diff+=Math.abs(a[i]-b[i]);return 1-diff/(a.length*255)
+}
+async function sdOrigLoadPhoto(file){
+  if(!file)return;
+  if(SDORIG_PHOTO_URL)URL.revokeObjectURL(SDORIG_PHOTO_URL);
+  const url=URL.createObjectURL(file),img=new Image();
+  img.onload=()=>{
+    SDORIG_PHOTO_URL=url;SDORIG_PHOTO_IMAGE=img;SDORIG.photoFileName=file.name;SDORIG.activeLayer='photo';SDORIG.generatedAt=Date.now();sdOrigSave();
+    q('sdOrigPhotoPreview').src=url;q('sdOrigPhotoPreview').classList.add('show');q('sdOrigPhotoFileTitle').textContent=file.name;
+    sdOrigRender();toast('图片已作为独立图层加入画布')
+  };
+  img.onerror=()=>{URL.revokeObjectURL(url);toast('图片图层读取失败')};img.src=url
+}
+function sdOrigRemovePhoto(){
+  if(SDORIG_PHOTO_URL)URL.revokeObjectURL(SDORIG_PHOTO_URL);SDORIG_PHOTO_URL='';SDORIG_PHOTO_IMAGE=null;SDORIG.photoFileName='';sdOrigSave();
+  q('sdOrigPhotoPreview').removeAttribute('src');q('sdOrigPhotoPreview').classList.remove('show');q('sdOrigPhotoFileTitle').textContent='选择图片图层';sdOrigDraw()
 }
 async function sdOrigLoadPerson(file){
   if(!file)return;
@@ -3454,6 +3542,53 @@ function sdOrigHeader(ctx,w,h,c){
   if(SDORIG.outputMode!=='final'){ctx.fillStyle='#788b92';ctx.font='650 '+Math.max(18,w*.019)+'px -apple-system,"PingFang SC",sans-serif';ctx.fillText('EDIT PREVIEW · ORIGINAL WORKSPACE',pad,h*.136)}
 }
 
+function sdOrigDrawPhoto(ctx,w,h){
+  if(!SDORIG_PHOTO_IMAGE)return;
+  const img=SDORIG_PHOTO_IMAGE,background=SDORIG.photoMode==='background',opacity=Math.max(.2,Math.min(1,(Number(SDORIG.photoOpacity)||100)/100));
+  let box=background?{x:0,y:0,w,h}:{x:w*.12,y:h*.16,w:w*.76,h:h*.52};
+  const fit=background?Math.max(box.w/img.naturalWidth,box.h/img.naturalHeight):Math.min(box.w/img.naturalWidth,box.h/img.naturalHeight);
+  const iw=img.naturalWidth*fit,ih=img.naturalHeight*fit,cx=box.x+box.w/2,cy=box.y+box.h/2;
+  ctx.save();ctx.globalAlpha=opacity;
+  if(background){ctx.beginPath();ctx.rect(0,0,w,h);ctx.clip()}
+  else{sdOrigRound(ctx,box.x,box.y,box.w,box.h,w*.025);ctx.clip()}
+  ctx.filter='brightness('+(Number(SDORIG.bgBright)||100)+'%) saturate('+(Number(SDORIG.bgSat)||100)+'%)';
+  ctx.drawImage(img,cx-iw/2,cy-ih/2,iw,ih);ctx.filter='none';ctx.restore();
+  if(background){const g=ctx.createLinearGradient(0,0,0,h);g.addColorStop(0,'rgba(3,6,7,.18)');g.addColorStop(.58,'rgba(3,6,7,.38)');g.addColorStop(1,'rgba(3,6,7,.72)');ctx.fillStyle=g;ctx.fillRect(0,0,w,h)}
+}
+function sdOrigLayerVisible(name){
+  if(name==='photo')return !!SDORIG_PHOTO_IMAGE;
+  if(name==='person')return !!SDORIG_PERSON_IMAGE;
+  if(name==='scores')return sdOrigScoreRows().length>0;
+  if(name==='number')return ['number','coach','question'].includes(SDORIG.template);
+  if(name==='title')return true;
+  return false
+}
+function sdOrigLayerBounds(name,w,h){
+  const bases={
+    photo:SDORIG.photoMode==='background'?{x:w*.025,y:h*.025,w:w*.95,h:h*.90}:{x:w*.12,y:h*.16,w:w*.76,h:h*.52},
+    person:{x:w*.50,y:h*.13,w:w*.46,h:h*.43},
+    number:{x:w*.05,y:h*.18,w:w*.90,h:h*.42},
+    scores:{x:w*.05,y:h*.46,w:w*.90,h:h*.19},
+    title:{x:w*.05,y:h*.60,w:w*.90,h:h*.28}
+  };
+  const b=bases[name]||bases.title,l=sdOrigLayer(name),s=(Number(l.scale)||100)/100,dx=(Number(l.x)||0)/100*w,dy=(Number(l.y)||0)/100*h;
+  const cx=w/2+(b.x+b.w/2-w/2)*s+dx,cy=h/2+(b.y+b.h/2-h/2)*s+dy;
+  return{x:cx-b.w*s/2,y:cy-b.h*s/2,w:b.w*s,h:b.h*s}
+}
+function sdOrigHitLayer(x,y,w,h){
+  sdOrigEnsureLayers();const order=SDORIG.layerOrder.slice().reverse();
+  for(const name of order){if(!sdOrigLayerVisible(name))continue;const b=sdOrigLayerBounds(name,w,h);if(x>=b.x&&x<=b.x+b.w&&y>=b.y&&y<=b.y+b.h)return name}
+  return null
+}
+function sdOrigDrawSelection(ctx,w,h){
+  if(SDORIG.outputMode==='final'||!sdOrigLayerVisible(SDORIG.activeLayer))return;
+  const b=sdOrigLayerBounds(SDORIG.activeLayer,w,h),r=Math.max(10,w*.012);
+  ctx.save();ctx.setLineDash([Math.max(10,w*.012),Math.max(7,w*.008)]);ctx.strokeStyle='rgba(226,201,130,.95)';ctx.lineWidth=Math.max(2,w*.0025);ctx.strokeRect(b.x,b.y,b.w,b.h);ctx.setLineDash([]);
+  ctx.fillStyle='#e2c982';ctx.strokeStyle='#0a0d0e';ctx.lineWidth=Math.max(2,w*.002);
+  for(const [x,y] of [[b.x,b.y],[b.x+b.w,b.y],[b.x,b.y+b.h],[b.x+b.w,b.y+b.h]]){ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();ctx.stroke()}
+  ctx.fillStyle='rgba(5,8,9,.88)';sdOrigRound(ctx,b.x,Math.max(4,b.y-r*3.2),Math.max(w*.13,110),r*2.2,r*.5);ctx.fill();ctx.fillStyle='#f0d58e';ctx.font='800 '+Math.max(14,w*.016)+'px -apple-system,"PingFang SC",sans-serif';ctx.fillText(SDORIG_LAYER_LABELS[SDORIG.activeLayer]||SDORIG.activeLayer,b.x+r*.6,Math.max(r*1.5,b.y-r*1.65));ctx.restore()
+}
+
 function sdOrigDrawPerson(ctx,w,h,c){
   if(!SDORIG_PERSON_IMAGE)return;
   const img=SDORIG_PERSON_IMAGE,mode=SDORIG.personMode||'hero',scale=(Number(SDORIG.personScale)||100)/100,xShift=(Number(SDORIG.personX)||0)/100*w;
@@ -3525,25 +3660,24 @@ function sdOrigFooter(ctx,w,h,c){
   ctx.textAlign='right';ctx.fillStyle='#d7b568';ctx.font='800 '+Math.round(w*.020)+'px -apple-system,"PingFang SC",sans-serif';ctx.fillText('SAGI',w-pad,h*.95);ctx.textAlign='left'
 }
 function sdOrigDraw(){
-  const cv=sdOrigCanvas();if(!cv)return;sdOrigSetup();sdOrigEnsureLayers();const ctx=cv.getContext('2d'),w=cv.width,h=cv.height,c=sdOrigContext();ctx.clearRect(0,0,w,h);sdOrigGradient(ctx,w,h);sdOrigPitch(ctx,w,h);sdOrigDrawVignette(ctx,w,h);
-  sdOrigWithLayer(ctx,w,h,'person',()=>sdOrigDrawPerson(ctx,w,h,c));sdOrigHeader(ctx,w,h,c);
-  sdOrigWithLayer(ctx,w,h,'number',()=>{
-    if(SDORIG.template==='number')sdOrigBigNumber(ctx,w,h,c);
-    else if(SDORIG.template==='coach')sdOrigCoachThesis(ctx,w,h,c);
-    else if(SDORIG.template==='question')sdOrigQuestion(ctx,w,h,c);
-  });
-  sdOrigWithLayer(ctx,w,h,'scores',()=>{
-    if(SDORIG.template==='timeline')sdOrigTimeline(ctx,w,h,c);
-    else if(SDORIG.template==='data')sdOrigDataCard(ctx,w,h,c);
-    else sdOrigScoreStrip(ctx,w,h,c)
-  });
-  sdOrigWithLayer(ctx,w,h,'title',()=>sdOrigMainText(ctx,w,h,c));sdOrigFooter(ctx,w,h,c)
+  const cv=sdOrigCanvas();if(!cv)return;sdOrigSetup();sdOrigEnsureLayers();const ctx=cv.getContext('2d'),w=cv.width,h=cv.height,cx=sdOrigContext();ctx.clearRect(0,0,w,h);sdOrigGradient(ctx,w,h);
+  if(SDORIG_PHOTO_IMAGE&&SDORIG.photoMode==='background')sdOrigWithLayer(ctx,w,h,'photo',()=>sdOrigDrawPhoto(ctx,w,h));
+  sdOrigPitch(ctx,w,h);sdOrigDrawVignette(ctx,w,h);
+  const painters={
+    photo:()=>{if(SDORIG.photoMode!=='background')sdOrigDrawPhoto(ctx,w,h)},
+    person:()=>sdOrigDrawPerson(ctx,w,h,cx),
+    number:()=>{if(SDORIG.template==='number')sdOrigBigNumber(ctx,w,h,cx);else if(SDORIG.template==='coach')sdOrigCoachThesis(ctx,w,h,cx);else if(SDORIG.template==='question')sdOrigQuestion(ctx,w,h,cx)},
+    scores:()=>{if(SDORIG.template==='timeline')sdOrigTimeline(ctx,w,h,cx);else if(SDORIG.template==='data')sdOrigDataCard(ctx,w,h,cx);else sdOrigScoreStrip(ctx,w,h,cx)},
+    title:()=>sdOrigMainText(ctx,w,h,cx)
+  };
+  for(const name of SDORIG.layerOrder){if(name==='photo'&&SDORIG.photoMode==='background')continue;const fn=painters[name];if(fn)sdOrigWithLayer(ctx,w,h,name,fn)}
+  sdOrigHeader(ctx,w,h,cx);sdOrigFooter(ctx,w,h,cx);sdOrigDrawSelection(ctx,w,h)
 }
 function sdOrigRender(){
   if(!q('sdOriginalPoster'))return;
   const c=sdOrigContext();q('sdOrigPixelUse').textContent='0%';q('sdOrigOriginality').textContent='100%';q('sdOrigHook').textContent=c.hook||'等待分析';q('sdOrigSubject').textContent=SDORIG.subject||c.subject||'—';q('sdOrigRole').textContent=SDORIG.role||c.person||'—';q('sdOrigFact').textContent=SDORIG.fact||c.fact||'—';q('sdOrigStructure').textContent=SDORIG.structure||'—';
   q('sdOrigTitle').value=SDORIG.title||'';q('sdOrigSub').value=SDORIG.sub||'';q('sdOrigPerson').value=SDORIG.person||'';q('sdOrigRatio').value=SDORIG.ratio||'3:4';
-  q('sdOrigPersonScale').value=SDORIG.personScale||100;q('sdOrigPersonX').value=SDORIG.personX||0;q('sdOrigPersonMode').value=SDORIG.personMode||'hero';q('sdOrigScoreText').value=SDORIG.scoreText||'';if(SDORIG.personFileName)q('sdOrigPersonFileTitle').textContent=SDORIG.personFileName;sdOrigRenderScores();
+  q('sdOrigPersonScale').value=SDORIG.personScale||100;q('sdOrigPersonX').value=SDORIG.personX||0;q('sdOrigPersonMode').value=SDORIG.personMode||'hero';q('sdOrigPhotoMode').value=SDORIG.photoMode||'layer';q('sdOrigPhotoOpacity').value=SDORIG.photoOpacity||100;q('sdOrigScoreText').value=SDORIG.scoreText||'';if(SDORIG.personFileName)q('sdOrigPersonFileTitle').textContent=SDORIG.personFileName;if(SDORIG.photoFileName)q('sdOrigPhotoFileTitle').textContent=SDORIG.photoFileName;sdOrigRenderScores();
   document.querySelectorAll('[data-orig-variant]').forEach(b=>b.classList.toggle('active',Number(b.dataset.origVariant)===Number(SDORIG.variant)));
   document.querySelectorAll('[data-orig-template]').forEach(b=>b.classList.toggle('active',b.dataset.origTemplate===SDORIG.template));
   const coach=c.coach?('主教练上下文：'+c.coach+'。系统依据来源账号与联网文章中的教练身份判断，不使用人脸身份识别。'):('暂未从来源/新闻上下文验证主教练姓名，海报将以球队趋势为主。');
@@ -3591,6 +3725,12 @@ q('sdOrigSub').oninput=e=>{SDORIG.sub=e.target.value;SDORIG.generatedAt=Date.now
 q('sdOrigPerson').oninput=e=>{SDORIG.person=e.target.value;SDORIG.role=e.target.value;SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigRender()};
 q('sdOrigRatio').onchange=e=>{SDORIG.ratio=e.target.value;SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigRender()};
 
+q('sdOrigPhotoFile').onchange=e=>{const file=e.target.files?.[0];if(file)sdOrigLoadPhoto(file);e.target.value=''};
+q('sdOrigPhotoRemoveBtn').onclick=sdOrigRemovePhoto;
+q('sdOrigPhotoSelectBtn').onclick=()=>{SDORIG.activeLayer='photo';sdOrigSave();sdOrigSyncLayerControls();sdOrigDraw()};
+q('sdOrigPhotoMode').onchange=e=>{SDORIG.photoMode=e.target.value;SDORIG.activeLayer='photo';if(SDORIG.photoMode==='background'){SDORIG.layerOrder=SDORIG.layerOrder.filter(x=>x!=='photo');SDORIG.layerOrder.unshift('photo')}SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigSyncLayerControls();sdOrigDraw()};
+q('sdOrigPhotoOpacity').oninput=e=>{SDORIG.photoOpacity=Number(e.target.value);SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigDraw()};
+
 q('sdOrigPersonFile').onchange=e=>{const file=e.target.files?.[0];if(file)sdOrigLoadPerson(file);e.target.value=''};
 q('sdOrigPersonRemoveBtn').onclick=sdOrigRemovePerson;
 q('sdOrigPersonUseCoachBtn').onclick=()=>{const coach=sdOrigCoachName();if(coach){SDORIG.person=coach+' · 主教练';SDORIG.role=SDORIG.person;q('sdOrigPerson').value=SDORIG.person;sdOrigSave();sdOrigRender();toast('已套用主教练角色')}else toast('暂未验证主教练姓名')};
@@ -3601,16 +3741,41 @@ q('sdOrigScoreText').oninput=e=>{SDORIG.scoreText=e.target.value;SDORIG.generate
 q('sdOrigScoreAutoBtn').onclick=sdOrigSyncScores;
 q('sdOrigScoreClearBtn').onclick=()=>{SDORIG.scoreText='';sdOrigSave();q('sdOrigScoreText').value='';sdOrigRenderScores();sdOrigDraw();toast('比分素材已清空')};
 
-document.querySelectorAll('[data-orig-layer]').forEach(b=>b.onclick=()=>{SDORIG.activeLayer=b.dataset.origLayer;sdOrigSave();sdOrigSyncLayerControls()});
+document.querySelectorAll('[data-orig-layer]').forEach(btn=>btn.onclick=()=>{SDORIG.activeLayer=btn.dataset.origLayer;sdOrigSave();sdOrigSyncLayerControls();sdOrigDraw()});
 q('sdOrigLayerX').oninput=e=>{const l=sdOrigLayer(SDORIG.activeLayer);l.x=Number(e.target.value);SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigDraw()};
 q('sdOrigLayerY').oninput=e=>{const l=sdOrigLayer(SDORIG.activeLayer);l.y=Number(e.target.value);SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigDraw()};
 q('sdOrigLayerScale').oninput=e=>{const l=sdOrigLayer(SDORIG.activeLayer);l.scale=Number(e.target.value);SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigDraw()};
 q('sdOrigAutoLayoutBtn').onclick=sdOrigAutoLayout;q('sdOrigResetLayerBtn').onclick=sdOrigResetActiveLayer;
+q('sdOrigLayerDownBtn').onclick=()=>sdOrigMoveLayer(-1);q('sdOrigLayerUpBtn').onclick=()=>sdOrigMoveLayer(1);
+q('sdOrigCanvasDownBtn').onclick=()=>sdOrigMoveLayer(-1);q('sdOrigCanvasUpBtn').onclick=()=>sdOrigMoveLayer(1);
+q('sdOrigCanvasMinusBtn').onclick=()=>sdOrigScaleLayer(-5);q('sdOrigCanvasPlusBtn').onclick=()=>sdOrigScaleLayer(5);
 {
-  const c=sdOrigCanvas();let drag=null;
-  c.onpointerdown=e=>{const l=sdOrigLayer(SDORIG.activeLayer);drag={x:e.clientX,y:e.clientY,lx:Number(l.x)||0,ly:Number(l.y)||0};c.setPointerCapture?.(e.pointerId)};
-  c.onpointermove=e=>{if(!drag)return;const r=c.getBoundingClientRect(),l=sdOrigLayer(SDORIG.activeLayer);l.x=Math.max(-35,Math.min(35,drag.lx+(e.clientX-drag.x)/Math.max(1,r.width)*100));l.y=Math.max(-35,Math.min(35,drag.ly+(e.clientY-drag.y)/Math.max(1,r.height)*100));q('sdOrigLayerX').value=l.x;q('sdOrigLayerY').value=l.y;sdOrigDraw()};
-  const end=()=>{if(drag){drag=null;SDORIG.generatedAt=Date.now();sdOrigSave()}};c.onpointerup=end;c.onpointercancel=end
+  const cv=sdOrigCanvas();let drag=null;
+  const point=e=>{const r=cv.getBoundingClientRect();return{x:(e.clientX-r.left)/Math.max(1,r.width)*cv.width,y:(e.clientY-r.top)/Math.max(1,r.height)*cv.height,rect:r}};
+  cv.onpointerdown=e=>{
+    const p=point(e),activeBounds=sdOrigLayerBounds(SDORIG.activeLayer,cv.width,cv.height),handle=Math.max(28,cv.width*.035);
+    const hx=activeBounds.x+activeBounds.w,hy=activeBounds.y+activeBounds.h;
+    let mode=(sdOrigLayerVisible(SDORIG.activeLayer)&&Math.hypot(p.x-hx,p.y-hy)<=handle)?'resize':'move';
+    if(mode==='move'){
+      const hit=sdOrigHitLayer(p.x,p.y,cv.width,cv.height);
+      if(hit){SDORIG.activeLayer=hit;sdOrigSyncLayerControls();sdOrigDraw()}
+    }
+    const l=sdOrigLayer(SDORIG.activeLayer),bounds=sdOrigLayerBounds(SDORIG.activeLayer,cv.width,cv.height),cx=bounds.x+bounds.w/2,cy=bounds.y+bounds.h/2;
+    if(mode==='resize'&&!sdOrigLayerVisible(SDORIG.activeLayer))mode='move';
+    drag={mode,startX:p.x,startY:p.y,lx:Number(l.x)||0,ly:Number(l.y)||0,scale:Number(l.scale)||100,cx,cy,dist:Math.max(20,Math.hypot(p.x-cx,p.y-cy))};
+    cv.setPointerCapture?.(e.pointerId);e.preventDefault()
+  };
+  cv.onpointermove=e=>{
+    if(!drag)return;const p=point(e),l=sdOrigLayer(SDORIG.activeLayer);
+    if(drag.mode==='resize'){
+      const ratio=Math.hypot(p.x-drag.cx,p.y-drag.cy)/drag.dist;l.scale=Math.max(40,Math.min(220,drag.scale*ratio));q('sdOrigLayerScale').value=l.scale
+    }else{
+      l.x=Math.max(-55,Math.min(55,drag.lx+(p.x-drag.startX)/cv.width*100));l.y=Math.max(-55,Math.min(55,drag.ly+(p.y-drag.startY)/cv.height*100));q('sdOrigLayerX').value=Math.max(-35,Math.min(35,l.x));q('sdOrigLayerY').value=Math.max(-35,Math.min(35,l.y))
+    }
+    sdOrigDraw();e.preventDefault()
+  };
+  const end=()=>{if(drag){drag=null;SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigSyncLayerControls()}};
+  cv.onpointerup=end;cv.onpointercancel=end
 }
 
 document.querySelectorAll('[data-orig-filter]').forEach(b=>b.onclick=()=>sdOrigApplyFilterPreset(b.dataset.origFilter));
@@ -3632,7 +3797,7 @@ if(q('captionSpeed'))q('captionSpeed').value='fast';
 if(q('captionRange'))q('captionRange').value='trim';
 setTimeout(async()=>{await wakeCaptionCloud();refreshAIVoiceStatus(false)},180);
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=370',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=380',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})}
 })();
 </script>
 </body>
