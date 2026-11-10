@@ -408,15 +408,15 @@ div>
             </div>
             <img id="sdOrigPersonPreview" class="origMaterialPreview" alt="">
             <div class="origPersonControls">
-              <label>大小<input id="sdOrigPersonScale" type="range" min="55" max="150" value="100"></label>
-              <label>左右<input id="sdOrigPersonX" type="range" min="-35" max="35" value="0"></label>
+              <label>裁切缩放<input id="sdOrigPersonScale" type="range" min="55" max="150" value="100"></label>
+              <label>裁切横移<input id="sdOrigPersonX" type="range" min="-35" max="35" value="0"></label>
               <label>显示<select id="sdOrigPersonMode"><option value="hero" selected>主视觉</option><option value="cut">硬切构图</option><option value="soft">柔光人物</option></select></label>
             </div>
             <div class="origMaterialTools">
               <button class="btn" id="sdOrigPersonRemoveBtn" type="button">移除人物</button>
               <button class="btn gold" id="sdOrigPersonUseCoachBtn" type="button">套用主教练角色</button>
             </div>
-            <div class="origMaterialHint" id="sdOrigPersonHint">系统会与下载原图做相似度检查；过于接近会拒绝作为原创人物素材。</div>
+            <div class="origMaterialHint" id="sdOrigPersonHint">导入后自动成为人物图层。图层工作室负责整体位置/大小；这里的缩放与横移只调整人物在框内的裁切。</div>
           </div>
 
           <div class="origMaterialBox">
@@ -436,7 +436,7 @@ div>
               <button class="btn" id="sdOrigPhotoRemoveBtn" type="button">移除图片</button>
               <button class="btn gold" id="sdOrigPhotoSelectBtn" type="button">选中图片图层</button>
             </div>
-            <div class="origMaterialHint">图片是独立图层，不会和人物、比分、标题绑在一起。</div>
+            <div class="origMaterialHint" id="sdOrigPhotoHint">图片是独立图层，不会和人物、比分、标题绑在一起。重新导入会自动显示并解锁图片层。</div>
           </div>
 
           <div class="origMaterialBox">
@@ -868,7 +868,7 @@ Unbelievable finish."></textarea>
 
 <script>
 (()=>{'use strict';
-const SAGI_DOWN_BUILD='V3.9.1.1';
+const SAGI_DOWN_BUILD='V3.9.1.2';
 document.documentElement.dataset.sagiDownBuild=SAGI_DOWN_BUILD;
 const BTCH_PUBLIC='https://btch-downloader-api-green.vercel.app';
 const DOWNLOAD_ROUTER_VERSION='3.0';
@@ -3532,18 +3532,67 @@ function sdOrigSimilarity(a,b){
 }
 async function sdOrigLoadPhoto(file){
   if(!file)return;
-  if(SDORIG_PHOTO_URL)URL.revokeObjectURL(SDORIG_PHOTO_URL);
-  const url=URL.createObjectURL(file),img=new Image();
-  img.onload=()=>{
-    SDORIG_PHOTO_URL=url;SDORIG_PHOTO_IMAGE=img;SDORIG.photoFileName=file.name;SDORIG.activeLayer=sdOrigFindFirstType('photo')||sdOrigAddLayer('photo',true);SDORIG.generatedAt=Date.now();sdOrigSave();
-    q('sdOrigPhotoPreview').src=url;q('sdOrigPhotoPreview').classList.add('show');q('sdOrigPhotoFileTitle').textContent=file.name;
-    sdOrigRender();toast('图片已作为独立图层加入画布')
+  const title=q('sdOrigPhotoFileTitle'),hint=q('sdOrigPhotoHint');
+  if(title)title.textContent='正在读取 '+(file.name||'图片')+'…';
+  if(hint)hint.textContent='正在解码图片并加入画布。';
+  let url='',img=new Image();
+  const fail=msg=>{
+    try{if(url)URL.revokeObjectURL(url)}catch(e){}
+    if(title)title.textContent=SDORIG.photoFileName||'选择图片图层';
+    if(hint)hint.textContent=msg+'；原有图片不会被覆盖。';
+    toast(msg)
   };
-  img.onerror=()=>{URL.revokeObjectURL(url);toast('图片图层读取失败')};img.src=url
+  try{
+    url=URL.createObjectURL(file);
+    img.decoding='async';
+    const loaded=new Promise((resolve,reject)=>{
+      img.onload=()=>resolve(true);
+      img.onerror=()=>reject(new Error('图片格式无法直接解码'));
+    });
+    img.src=url;
+    try{
+      if(typeof img.decode==='function')await img.decode();
+      else await loaded;
+    }catch(e){
+      await loaded;
+    }
+
+    const oldUrl=SDORIG_PHOTO_URL;
+    let photoId=(sdOrigLayerType(SDORIG.activeLayer)==='photo'&&SDORIG.activeLayer)||sdOrigFindFirstType('photo')||sdOrigAddLayer('photo',true);
+    const layer=sdOrigLayer(photoId);
+    if(layer){
+      layer.visible=true;
+      layer.locked=false;
+      if(!Number.isFinite(Number(layer.scale)))layer.scale=100;
+      if(!Number.isFinite(Number(layer.opacity)))layer.opacity=100;
+    }
+
+    SDORIG_PHOTO_URL=url;
+    SDORIG_PHOTO_IMAGE=img;
+    SDORIG.photoFileName=file.name||'图片';
+    SDORIG.activeLayer=photoId;
+    SDORIG.generatedAt=Date.now();
+    sdOrigSave();
+
+    if(oldUrl&&oldUrl!==url){try{URL.revokeObjectURL(oldUrl)}catch(e){}}
+    const preview=q('sdOrigPhotoPreview');
+    if(preview){preview.src=url;preview.classList.add('show')}
+    if(title)title.textContent=SDORIG.photoFileName;
+    if(hint)hint.textContent='图片已加入画布 · 当前图片层已自动显示并解锁。';
+    sdOrigRender();
+    toast('图片图层导入成功');
+  }catch(e){
+    console.warn('PHOTO IMPORT',e);
+    fail('图片读取失败，请换 JPG / PNG 或重新选择照片');
+  }
 }
 function sdOrigRemovePhoto(){
-  if(SDORIG_PHOTO_URL)URL.revokeObjectURL(SDORIG_PHOTO_URL);SDORIG_PHOTO_URL='';SDORIG_PHOTO_IMAGE=null;SDORIG.photoFileName='';sdOrigSave();
-  q('sdOrigPhotoPreview').removeAttribute('src');q('sdOrigPhotoPreview').classList.remove('show');q('sdOrigPhotoFileTitle').textContent='选择图片图层';sdOrigDraw()
+  try{if(SDORIG_PHOTO_URL)URL.revokeObjectURL(SDORIG_PHOTO_URL)}catch(e){}
+  SDORIG_PHOTO_URL='';SDORIG_PHOTO_IMAGE=null;SDORIG.photoFileName='';sdOrigSave();
+  const preview=q('sdOrigPhotoPreview');if(preview){preview.removeAttribute('src');preview.classList.remove('show')}
+  if(q('sdOrigPhotoFileTitle'))q('sdOrigPhotoFileTitle').textContent='选择图片图层';
+  if(q('sdOrigPhotoHint'))q('sdOrigPhotoHint').textContent='图片素材已移除。图片图层保留，可重新导入。';
+  sdOrigSyncLayerControls();sdOrigDraw()
 }
 async function sdOrigLoadPerson(file){
   if(!file)return;
@@ -3572,10 +3621,6 @@ async function sdOrigLoadPerson(file){
       // Some iOS Safari builds reject decode() although onload still succeeds.
       await loaded;
     }
-
-    let similarity=0;
-    try{if(SDIMG_IMAGE)similarity=sdOrigSimilarity(sdOrigFingerprint(SDIMG_IMAGE),sdOrigFingerprint(img))}catch(e){}
-
     if(SDORIG_PERSON_URL&&SDORIG_PERSON_URL!==url){
       try{URL.revokeObjectURL(SDORIG_PERSON_URL)}catch(e){}
     }
@@ -3597,11 +3642,7 @@ async function sdOrigLoadPerson(file){
     const preview=q('sdOrigPersonPreview');
     if(preview){preview.src=url;preview.classList.add('show')}
     if(title)title.textContent=SDORIG.personFileName;
-    if(hint){
-      hint.textContent=similarity>=.985
-        ?'人物素材已加入画布。它与来源图较相似，但不会再被系统强制拒绝；你可以继续移动、缩放、调色和重新排版。'
-        :'人物素材已加入画布 · 可直接拖动、缩放与调层级。';
-    }
+    if(hint)hint.textContent='人物素材已加入画布 · 当前人物层已自动显示并解锁，可直接拖动、缩放、调色和调层级。';
     sdOrigRender();
     toast('人物图片导入成功');
   }catch(e){
@@ -3754,8 +3795,8 @@ function sdOrigDrawSelection(ctx,w,h){
 function sdOrigDrawPerson(ctx,w,h,c){
   if(!SDORIG_PERSON_IMAGE)return;
   const img=SDORIG_PERSON_IMAGE,mode=SDORIG.personMode||'hero',scale=(Number(SDORIG.personScale)||100)/100,xShift=(Number(SDORIG.personX)||0)/100*w;
-  const box={x:w*.53+xShift,y:h*.15,w:w*.41,h:h*.38};
-  const fit=Math.max(box.w/img.naturalWidth,box.h/img.naturalHeight)*scale,iw=img.naturalWidth*fit,ih=img.naturalHeight*fit,cx=box.x+box.w*.52,cy=box.y+box.h*.53;
+  const box={x:w*.53,y:h*.15,w:w*.41,h:h*.38};
+  const fit=Math.max(box.w/img.naturalWidth,box.h/img.naturalHeight)*scale,iw=img.naturalWidth*fit,ih=img.naturalHeight*fit,cx=box.x+box.w*.52+xShift,cy=box.y+box.h*.53;
   ctx.save();
   if(mode==='cut'){
     ctx.beginPath();ctx.moveTo(box.x+w*.05,box.y);ctx.lineTo(box.x+box.w,box.y);ctx.lineTo(box.x+box.w,box.y+box.h);ctx.lineTo(box.x,box.y+box.h);ctx.closePath();ctx.clip()
@@ -3888,9 +3929,9 @@ q('sdOrigSub').oninput=e=>{SDORIG.sub=e.target.value;SDORIG.generatedAt=Date.now
 q('sdOrigPerson').oninput=e=>{SDORIG.person=e.target.value;SDORIG.role=e.target.value;SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigRender()};
 q('sdOrigRatio').onchange=e=>{SDORIG.ratio=e.target.value;SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigRender()};
 
-q('sdOrigPhotoFile').onchange=e=>{const file=e.target.files?.[0];if(file)sdOrigLoadPhoto(file);e.target.value=''};
+q('sdOrigPhotoFile').onchange=async e=>{const file=e.target.files?.[0];if(file)await sdOrigLoadPhoto(file);e.target.value=''};
 q('sdOrigPhotoRemoveBtn').onclick=sdOrigRemovePhoto;
-q('sdOrigPhotoSelectBtn').onclick=()=>{const id=sdOrigFindFirstType('photo')||sdOrigAddLayer('photo',true);SDORIG.activeLayer=id;sdOrigSave();sdOrigSyncLayerControls();sdOrigDraw()};
+q('sdOrigPhotoSelectBtn').onclick=()=>{const id=sdOrigFindFirstType('photo')||sdOrigAddLayer('photo',true),l=sdOrigLayer(id);if(l)l.visible=true;SDORIG.activeLayer=id;sdOrigSave();sdOrigSyncLayerControls();sdOrigDraw()};
 q('sdOrigPhotoMode').onchange=e=>{let id=(sdOrigLayerType(SDORIG.activeLayer)==='photo'&&SDORIG.activeLayer)||sdOrigFindFirstType('photo')||sdOrigAddLayer('photo',true);const l=sdOrigLayer(id);if(!l)return;SDORIG.activeLayer=id;l.background=e.target.value==='background';SDORIG.photoMode=e.target.value;if(l.background&&!l.locked){SDORIG.layerOrder=SDORIG.layerOrder.filter(x=>x!==id);SDORIG.layerOrder.unshift(id)}SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigSyncLayerControls();sdOrigDraw()};
 q('sdOrigPhotoOpacity').oninput=e=>{const id=(sdOrigLayerType(SDORIG.activeLayer)==='photo'&&SDORIG.activeLayer)||sdOrigFindFirstType('photo');const l=id&&sdOrigLayer(id);if(l&&!l.locked){l.opacity=Number(e.target.value);SDORIG.photoOpacity=l.opacity;SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigDraw()}};
 
@@ -3970,7 +4011,7 @@ if(q('captionSpeed'))q('captionSpeed').value='fast';
 if(q('captionRange'))q('captionRange').value='trim';
 setTimeout(async()=>{await wakeCaptionCloud();refreshAIVoiceStatus(false)},180);
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=3911',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=3912',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})}
 })();
 </script>
 </body>
