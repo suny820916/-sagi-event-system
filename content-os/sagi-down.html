@@ -469,11 +469,13 @@ function cloudDownloadWindow(){
 function cloudDownloadStatusLabel(job){
   const s=String(job?.status||'');
   if(s==='queued')return '已进入云端队列';
-  if(s==='instagram_fast')return '检测到 Instagram Post · 正在快速解析';
+  if(s==='cobalt_processing')return 'SAGI Cobalt · 正在解析链接';
+  if(s==='cobalt_fetching')return 'SAGI Cobalt · 已找到媒体，正在获取文件';
+  if(s==='instagram_fast')return 'Cobalt 未命中 · 正在尝试 Instagram 快速解析';
   if(s==='instagram_fetching')return '已找到帖子媒体 · 正在下载';
   if(s==='gallery_processing')return '快速解析未命中 · 正在尝试短时备用解析';
   if(s==='gallery_packaging')return '正在打包轮播内容';
-  if(s==='downloading'||s==='cobalt_processing'||s==='cobalt_fetching')return '云端正在解析并下载源内容';
+  if(s==='downloading')return 'SAGI Cloud · 正在自动兜底解析';
   if(s==='worker_downloading')return '下载节点正在处理';
   return s||'处理中'
 }
@@ -523,7 +525,10 @@ async function download(){
     const ready=await wakeCaptionCloud(true);
     const health=STUDIO.cloudHealth||{};
     if(!ready||!STUDIO.cloudCaptionToken)throw new Error(STUDIO.cloudLastError||'SAGI Cloud 未连接');
-    if(!health.cloudDownload)throw new Error('当前云端还是旧版本，尚未部署 SAGI Cloud Download 1.0');
+    if(!health.cloudDownload)throw new Error('当前云端下载引擎不可用');
+    if(health.downloadPrimary==='cobalt'&&!health.cobaltConfigured){
+      setStatus('Cobalt 服务正在启动 · SAGI 会自动使用备用解析…','good');
+    }
     const r=await fetch(CAPTION_CLOUD+'/api/jobs',{
       method:'POST',
       headers:{'Content-Type':'application/json',Authorization:'Bearer '+STUDIO.cloudCaptionToken},
@@ -2135,7 +2140,7 @@ if(q('captionSpeed'))q('captionSpeed').value='fast';
 if(q('captionRange'))q('captionRange').value='trim';
 setTimeout(async()=>{await wakeCaptionCloud();refreshAIVoiceStatus(false)},180);
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=199',{updateViaCache:'none'}).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=200',{updateViaCache:'none'}).catch(()=>{})}
 })();
 </script>
 </body>
