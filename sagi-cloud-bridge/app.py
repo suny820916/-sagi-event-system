@@ -15,6 +15,8 @@ import subprocess
 import json
 import re
 import gc
+import sys
+import zipfile
 import requests
 import yt_dlp
 from yt_dlp.utils import DownloadError
@@ -26,8 +28,8 @@ app = Flask(__name__)
 ALLOWED_ORIGIN = (os.getenv("SAGI_ALLOWED_ORIGIN") or "https://suny820916.github.io").rstrip("/")
 SERVER_SECRET = (os.getenv("SAGI_SERVER_SECRET") or os.getenv("SAGI_BRIDGE_TOKEN") or "").strip()
 PORT = int(os.getenv("PORT") or "10000")
-DEPLOY_REVISION = "2026-11-10-v1710-cloud-download"
-APP_VERSION = "1.7.1"
+DEPLOY_REVISION = "2026-11-10-v1720-instagram-post-fallback"
+APP_VERSION = "1.7.2"
 MAX_FILE_MB = int(os.getenv("SAGI_MAX_FILE_MB") or "300")
 JOB_TTL_MIN = int(os.getenv("SAGI_JOB_TTL_MIN") or "30")
 RATE_LIMIT_PER_HOUR = int(os.getenv("SAGI_RATE_LIMIT_PER_HOUR") or "20")
@@ -618,6 +620,8 @@ def public_job(job):
         "strategy": job.get("strategy", ""),
         "worker": job.get("worker", ""),
         "size": job.get("size", 0),
+        "mediaKind": job.get("mediaKind", ""),
+        "fileCount": int(job.get("fileCount", 0) or 0),
     }
     if job["status"] == "ready":
         data["downloadUrl"] = (
@@ -629,6 +633,117 @@ def public_job(job):
 def _looks_like_429(message):
     text = (message or "").lower()
     return "429" in text or "too many requests" in text or "rate-limit" in text or "rate limit" in text
+
+def _looks_like_no_video(message):
+    text = (message or "").lower()
+    return (
+        "there is no video in this post" in text
+        or "no video formats found" in text
+        or "no video found" in text
+    )
+
+def run_gallery_download(job_id, url, wanted_name):
+    """Instagram photo/carousel fallback. Streams media to disk and packages carousels as ZIP."""
+    with jobs_lock:
+        job = jobs.get(job_id)
+        if not job:
+            return
+        job.update({
+            "status": "gallery_processing",
+            "updated_at": iso(),
+            "strategy": "gallery-dl",
+            "error": "",
+            "errorCode": "",
+        })
+
+    work = tempfile.mkdtemp(prefix=f"sagi_gallery_{job_id}_")
+    try:
+        cmd = [
+            sys.executable, "-m", "gallery_dl",
+            "--no-input", "--quiet",
+            "--directory", work,
+            "--user-agent",
+            "Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 Version/18.5 Mobile/15E148 Safari/604.1",
+        ]
+        if INSTAGRAM_PROXY:
+            cmd += ["--proxy", INSTAGRAM_PROXY]
+        cmd += [url]
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=150)
+        if proc.returncode != 0:
+            detail = (proc.stderr or proc.stdout or "gallery-dl failed").strip()
+            raise RuntimeError("INSTAGRAM_POST_FALLBACK_FAILED: " + detail[-900:])
+
+        allowed = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".mp4", ".mov", ".m4v", ".webm"}
+        files = [
+            p for p in Path(work).rglob("*")
+            if p.is_file() and p.suffix.lower() in allowed and p.stat().st_size > 0
+        ]
+        if not files:
+            raise RuntimeError("INSTAGRAM_POST_FALLBACK_EMPTY")
+
+        total = sum(p.stat().st_size for p in files)
+        if total > MAX_FILE_MB * 1024 * 1024:
+            raise RuntimeError(f"帖子媒体总大小超过云端限制 {MAX_FILE_MB}MB")
+
+        base = safe_name(wanted_name or "SAGI_INSTAGRAM_POST")
+        video_exts = {".mp4", ".mov", ".m4v", ".webm"}
+        if len(files) == 1:
+            src = files[0]
+            ext = src.suffix.lower() or ".bin"
+            filename = base if base.lower().endswith(ext) else base + ext
+            dst = Path(work) / filename
+            if src.resolve() != dst.resolve():
+                if dst.exists():
+                    dst.unlink()
+                shutil.move(str(src), str(dst))
+            media_path = dst
+            kind = "video" if ext in video_exts else "image"
+            count = 1
+        else:
+            with jobs_lock:
+                current = jobs.get(job_id)
+                if current:
+                    current.update({"status": "gallery_packaging", "updated_at": iso()})
+            filename = base + "_CAROUSEL.zip"
+            media_path = Path(work) / filename
+            with zipfile.ZipFile(media_path, "w", compression=zipfile.ZIP_STORED) as zf:
+                for idx, src in enumerate(sorted(files), start=1):
+                    ext = src.suffix.lower() or ".bin"
+                    zf.write(src, arcname=f"{idx:02d}{ext}")
+            for src in files:
+                try:
+                    if src.resolve() != media_path.resolve():
+                        src.unlink()
+                except Exception:
+                    pass
+            kind = "carousel"
+            count = len(files)
+
+        size = media_path.stat().st_size
+        with jobs_lock:
+            job = jobs.get(job_id)
+            if not job:
+                shutil.rmtree(work, ignore_errors=True)
+                return
+            if job.get("workdir") and job.get("workdir") != work:
+                shutil.rmtree(job["workdir"], ignore_errors=True)
+            job.update({
+                "status": "ready",
+                "updated_at": iso(),
+                "path": str(media_path),
+                "workdir": work,
+                "filename": filename,
+                "title": filename,
+                "size": size,
+                "strategy": "gallery-dl",
+                "mediaKind": kind,
+                "fileCount": count,
+                "error": "",
+                "errorCode": "",
+            })
+    except Exception:
+        shutil.rmtree(work, ignore_errors=True)
+        raise
 
 def _download_with_strategy(url, work, strategy):
     outtmpl = str(Path(work) / "%(title).80s_%(id)s.%(ext)s")
@@ -687,6 +802,7 @@ def run_download(job_id, url, wanted_name):
     info = None
     errors = []
     saw_429 = False
+    needs_gallery = False
 
     try:
         for strategy in strategies:
@@ -705,6 +821,9 @@ def run_download(job_id, url, wanted_name):
                 errors.append(f"{strategy}: {msg}")
                 if _looks_like_429(msg):
                     saw_429 = True
+                if is_instagram_url(url) and _looks_like_no_video(msg):
+                    needs_gallery = True
+                    break
                 # clear partial files before trying the next extractor profile
                 for p in Path(work).iterdir():
                     if p.is_file():
@@ -718,9 +837,19 @@ def run_download(job_id, url, wanted_name):
                 errors.append(f"{strategy}: {msg}")
                 if _looks_like_429(msg):
                     saw_429 = True
+                if is_instagram_url(url) and _looks_like_no_video(msg):
+                    needs_gallery = True
+                    break
                 time.sleep(1)
 
         if not info:
+            if needs_gallery:
+                shutil.rmtree(work, ignore_errors=True)
+                try:
+                    run_gallery_download(job_id, url, wanted_name)
+                    return
+                except Exception as e:
+                    errors.append("gallery-dl: " + str(e))
             # Optional self-hosted Cobalt remains a fallback, never the primary path.
             if cobalt_base():
                 shutil.rmtree(work, ignore_errors=True)
@@ -855,8 +984,10 @@ def health():
         "version": APP_VERSION,
         "instagram": True,
         "cloudDownload": True,
-        "cloudDownloadVersion": "1.0",
+        "cloudDownloadVersion": "1.1",
         "downloadPlatforms": ["Instagram", "YouTube", "TikTok", "X"],
+        "instagramPostFallback": "gallery-dl",
+        "downloadMediaKinds": ["video", "image", "carousel-zip"],
         "hybridWorker": True,
         "workerOnline": worker_online(),
         "activation": True,
