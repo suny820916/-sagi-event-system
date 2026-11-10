@@ -183,7 +183,8 @@ jobs:
           assert health["cloudDownload"] is True
           assert set(health["downloadPlatforms"]) >= {"Instagram","YouTube","TikTok","X"}
           assert health["instagramPostFallback"] == "html-fast -> gallery-dl-short"
-          assert "carousel-zip" in health["downloadMediaKinds"]\n          assert health["galleryFallbackTimeoutSeconds"] == 25
+          assert "carousel-zip" in health["downloadMediaKinds"]
+          assert health["galleryFallbackTimeoutSeconds"] == 25
 
           token = mod.client_token()
           headers = {"Authorization": "Bearer " + token, "Origin": "https://suny820916.github.io"}
