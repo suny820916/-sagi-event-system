@@ -219,6 +219,46 @@ jobs:
           assert mod._router_engines("instagram") == ["btch","parth-dl"]
           assert mod._router_engines("tiktok") == ["btch","tikwm"]
           assert mod._router_engines("twitter") == ["fxtwitter","btch"]
+          assert mod._router_engines("youtube") == []
+
+          # YouTube cloud path: yt-dlp is primary, BTCH must run only after native failure.
+          original_router = mod._router_engines
+          original_btch = mod.run_btch_download
+          original_direct = mod._download_with_strategy
+          yt_calls = []
+          def fail_native(*args, **kwargs):
+              yt_calls.append("yt-dlp")
+              raise mod.DownloadError("forced native failure")
+          def fallback_btch(job_id, url, wanted_name):
+              yt_calls.append("btch")
+              with mod.jobs_lock:
+                  mod.jobs[job_id].update({
+                      "status":"ready","strategy":"btch","mediaKind":"video",
+                      "fileCount":1,"size":123,"path":__file__,"workdir":"",
+                      "filename":"SAGI_YT_TEST.mp4","error":"","errorCode":""
+                  })
+              return True
+          yid = "youtube-fallback-smoke"
+          with mod.jobs_lock:
+              mod.jobs[yid] = {
+                  "id":yid,"status":"queued","created_at":mod.iso(),"updated_at":mod.iso(),
+                  "title":"SAGI_YT_TEST","source_url":"https://youtu.be/BaW_jenozKc",
+                  "requested_name":"SAGI_YT_TEST","error":"","errorCode":"","size":0,
+                  "worker":"","strategy":"sagi_cloud","download_key":"k","path":"","workdir":"","filename":""
+              }
+          mod._download_with_strategy = fail_native
+          mod.run_btch_download = fallback_btch
+          try:
+              mod.run_download(yid, "https://youtu.be/BaW_jenozKc", "SAGI_YT_TEST")
+              with mod.jobs_lock:
+                  yj = dict(mod.jobs[yid])
+              assert yt_calls == ["yt-dlp","btch"], yt_calls
+              assert yj["status"] == "ready" and yj["strategy"] == "btch", yj
+              print("YouTube yt-dlp -> BTCH fallback smoke OK", yt_calls)
+          finally:
+              mod._router_engines = original_router
+              mod.run_btch_download = original_btch
+              mod._download_with_strategy = original_direct
 
           # First successful router engine must stop native yt-dlp immediately.
           original_router = mod._router_engines
@@ -470,6 +510,28 @@ jobs:
               body=json.loads(r.read().decode("utf-8"))
           keys={x.get("key") for x in body.get("platforms",[])}
           assert {"instagram","tiktok","twitter","youtube"} <= keys, keys
+
+          # Deep health checks the upstream downloader itself, not only the HTTP wrapper.
+          req=urllib.request.Request(base+"/api/health?deep=1",headers={"User-Agent":"SAGI-preflight"})
+          with urllib.request.urlopen(req,timeout=45) as r:
+              deep=json.loads(r.read().decode("utf-8"))
+          assert deep.get("success") is True and deep.get("status") == "ok", deep
+          upstream=deep.get("upstream") or {}
+          assert upstream.get("ok") is True, deep
+          print("BTCH DEEP HEALTH OK",upstream)
+
+          # Real media resolver smoke using youtube-dl's purpose-built public test video.
+          import urllib.parse
+          test_url="https://www.youtube.com/watch?v=BaW_jenozKc"
+          resolve=base+"/api/download/youtube?"+urllib.parse.urlencode({"url":test_url})
+          req=urllib.request.Request(resolve,headers={"Origin":"https://suny820916.github.io","User-Agent":"SAGI-preflight"})
+          with urllib.request.urlopen(req,timeout=45) as r:
+              resolved=json.loads(r.read().decode("utf-8"))
+          assert resolved.get("success") is True, resolved
+          norm=resolved.get("normalized") or {}
+          media=norm.get("media") or []
+          assert norm.get("kind") == "media" and any(str(x.get("url") or "").startswith("http") for x in media), norm
+          print("BTCH REAL YOUTUBE RESOLVE OK",norm.get("title"),len(media))
           print("BTCH PUBLIC NODE OK",sorted(keys))
           PY
 
