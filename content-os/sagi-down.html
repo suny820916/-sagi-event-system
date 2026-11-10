@@ -33,6 +33,22 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 .recreateFields{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px}.recreateFields input,.recreateFields select{width:100%;border:1px solid #2c3e45;background:#070b0d;color:#fff;border-radius:10px;padding:10px;font-size:10px;outline:none}.recreateFields label{display:block;font-size:8px;color:#71858c;margin-bottom:4px}
 .recreatePlan{margin-top:9px;border:1px solid #2a3c43;border-radius:11px;padding:10px;background:#0a1114}.recreatePlan b{font-size:10px}.recreatePlan pre{white-space:pre-wrap;margin:7px 0 0;font-family:inherit;color:#83979e;font-size:9px;line-height:1.55}
 .recreateActions{display:grid;grid-template-columns:1fr .65fr;gap:7px;margin-top:9px}
+
+.studioCard{border-color:#455766;background:linear-gradient(180deg,#101820,#090e12)}
+.studioHero{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px}.studioHero b{font-size:12px}.studioHero span{font-size:8px;color:#748890}
+.studioStep{border:1px solid #263a43;border-radius:12px;background:#0a1115;padding:11px;margin-top:8px}.studioStepHead{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:8px}.studioStepHead b{font-size:10px}.studioStepHead span{font-size:8px;color:#6e838b}
+.studioVideo{display:none;width:100%;max-height:330px;border-radius:12px;background:#000;margin-top:8px}.studioVideo.show{display:block}
+.trimGrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}.trimGrid label{font-size:8px;color:#71858c;display:block;margin-bottom:4px}.trimGrid input,.trimGrid select,.studioSelect{width:100%;border:1px solid #2c3e45;background:#070b0d;color:#fff;border-radius:10px;padding:10px;font-size:10px;outline:none}
+.trimBtns{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:7px}
+.subtitleBox,.narrationBox{width:100%;min-height:115px;border:1px solid #2c3e45;background:#070b0d;color:#fff;border-radius:10px;padding:10px;font-size:11px;line-height:1.55;resize:vertical;outline:none}
+.langRow{display:grid;grid-template-columns:1fr 1fr auto;gap:7px;margin-top:7px;align-items:end}.langRow label{font-size:8px;color:#71858c}.langRow select{width:100%;border:1px solid #2c3e45;background:#070b0d;color:#fff;border-radius:10px;padding:10px;font-size:10px}
+.subHint{font-size:8px;color:#647980;line-height:1.45;margin-top:6px}
+.narrationActions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-top:7px}.recording{border-color:#7b4a4a!important;color:#e1a2a2!important}
+.voiceMeta{font-size:8px;color:#6e838b;margin-top:7px}
+.exportRow{display:grid;grid-template-columns:1fr .7fr;gap:7px;margin-top:9px}.exportProgress{height:7px;background:#0a0f12;border:1px solid #26373e;border-radius:99px;overflow:hidden;margin-top:9px}.exportProgress i{display:block;height:100%;width:0;background:#d7b568;transition:.2s}
+.resultVideo{display:none;width:100%;border-radius:12px;background:#000;margin-top:10px}.resultVideo.show{display:block}
+.resultActions{display:none;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}.resultActions.show{display:grid}
+.capability{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}.capability span{font-size:8px;border:1px solid #2c414a;border-radius:99px;padding:5px 7px;color:#789099}.capability span.ok{border-color:#355741;color:#94bd9e}.capability span.warn{border-color:#665438;color:#d0b16e}
 @media(max-width:420px){.actions{grid-template-columns:1fr 1fr}.actions .primary{grid-column:1/-1}.platformStrip{grid-template-columns:repeat(2,1fr)}.rowActions{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
@@ -40,7 +56,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 <div class="wrap">
   <div class="top">
     <div class="brand"><b>SAGI DOWN</b><span>VIDEO LINK SHORTCUT</span></div>
-    <span class="badge">V1.3 · RECREATE</span>
+    <span class="badge">V1.4 · MOBILE STUDIO</span>
   </div>
 
   <section class="hero">
@@ -124,6 +140,82 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
       <button class="btn gold" id="recreateFromLinkBtn" type="button">只用链接创建</button>
     </div>
     <div id="recreateStatus" class="status">可以先下载，再回来选择视频；也可以只用当前链接创建任务。</div>
+  </section>
+
+  <section class="card studioCard" id="mobileStudio">
+    <div class="studioHero">
+      <div><b>MOBILE STUDIO · 手机直接剪</b><span>本地视频处理，不上传原素材</span></div>
+      <span class="badge">BETA</span>
+    </div>
+
+    <div class="studioStep">
+      <div class="studioStepHead"><b>01 · 导入视频</b><span>文件 / 照片</span></div>
+      <div class="filePick">
+        <input id="studioFile" type="file" accept="video/*">
+        <b id="studioFileTitle">选择要剪的视频</b>
+        <span id="studioFileHint">视频只在本机浏览器处理</span>
+      </div>
+      <video id="studioVideo" class="studioVideo" controls playsinline></video>
+      <div class="capability" id="studioCapabilities"></div>
+    </div>
+
+    <div class="studioStep">
+      <div class="studioStepHead"><b>02 · 裁剪与画幅</b><span>先定入点 / 出点</span></div>
+      <div class="trimGrid">
+        <div><label>开始秒数</label><input id="trimStart" type="number" min="0" step="0.1" value="0"></div>
+        <div><label>结束秒数</label><input id="trimEnd" type="number" min="0" step="0.1" value="15"></div>
+        <div><label>画幅</label><select id="studioAspect"><option value="9:16">9:16 竖屏</option><option value="16:9">16:9 横屏</option><option value="1:1">1:1 方形</option><option value="source">原画幅</option></select></div>
+      </div>
+      <div class="trimBtns">
+        <button class="btn" id="setInBtn" type="button">当前画面设为入点</button>
+        <button class="btn" id="setOutBtn" type="button">当前画面设为出点</button>
+      </div>
+    </div>
+
+    <div class="studioStep">
+      <div class="studioStepHead"><b>03 · 字幕 + 翻译</b><span>一行一句，自动分配时间</span></div>
+      <textarea id="subtitleText" class="subtitleBox" placeholder="每行一句字幕，例如：
+What a goal!
+Unbelievable finish."></textarea>
+      <div class="langRow">
+        <label>原语言<select id="subtitleSourceLang"><option value="en">English</option><option value="pt">Português</option><option value="es">Español</option><option value="ru">Русский</option><option value="fr">Français</option><option value="de">Deutsch</option><option value="zh-CN">中文</option></select></label>
+        <label>翻译为<select id="subtitleTargetLang"><option value="zh-CN">中文</option><option value="en">English</option><option value="pt">Português</option><option value="es">Español</option></select></label>
+        <button class="btn blue" id="translateSubtitleBtn" type="button">翻译字幕</button>
+      </div>
+      <div class="subHint">翻译优先使用浏览器自带 Translator；不支持时使用 MyMemory 免费翻译接口。每行字幕会平均分布在裁剪区间内。</div>
+    </div>
+
+    <div class="studioStep">
+      <div class="studioStepHead"><b>04 · 解说</b><span>朗读试听 / 麦克风录制</span></div>
+      <textarea id="narrationText" class="narrationBox" placeholder="写中文解说文案，例如：
+这次进攻真正厉害的地方，不是最后这一脚，而是前面连续两次拉扯防线。"></textarea>
+      <div class="narrationActions">
+        <button class="btn blue" id="speakNarrationBtn" type="button">手机朗读试听</button>
+        <button class="btn gold" id="recordNarrationBtn" type="button">录制我的解说</button>
+        <button class="btn" id="stopNarrationBtn" type="button">停止录音</button>
+      </div>
+      <div class="voiceMeta" id="voiceMeta">尚未录制解说。导出时可只保留原声。</div>
+    </div>
+
+    <div class="studioStep">
+      <div class="studioStepHead"><b>05 · 导出成片</b><span>FFmpeg WASM 本地合成</span></div>
+      <div class="trimGrid">
+        <div><label>原声</label><select id="originalAudio"><option value="0.25">25% 保留</option><option value="0.5">50% 保留</option><option value="1">100% 保留</option><option value="0">静音</option></select></div>
+        <div><label>字幕</label><select id="burnSubtitle"><option value="yes">烧录到画面</option><option value="no">不烧录</option></select></div>
+        <div><label>质量</label><select id="exportQuality"><option value="fast">快速</option><option value="balanced">均衡</option><option value="high">高质量</option></select></div>
+      </div>
+      <div class="exportRow">
+        <button class="btn primary" id="exportStudioBtn" type="button">导出手机成片</button>
+        <button class="btn" id="cancelExportBtn" type="button">取消</button>
+      </div>
+      <div class="exportProgress"><i id="exportProgressBar"></i></div>
+      <div id="studioStatus" class="status">选择视频后即可直接在手机上剪辑。</div>
+      <video id="resultVideo" class="resultVideo" controls playsinline></video>
+      <div id="resultActions" class="resultActions">
+        <a class="btn primary" id="saveResultBtn" download="SAGI_MOBILE_EDIT.mp4">保存成片</a>
+        <button class="btn blue" id="shareResultBtn" type="button">分享成片</button>
+      </div>
+    </div>
   </section>
 
   <section class="card">
@@ -289,6 +381,207 @@ function makeJob(useFile){
   setTimeout(()=>{location.href='./index.html'},350)
 }
 
+
+const STUDIO={
+ file:null,url:'',duration:0,width:0,height:0,
+ voiceBlob:null,voiceMime:'',voiceUrl:'',recorder:null,voiceStream:null,chunks:[],
+ ffmpeg:null,ffmpegLoaded:false,exporting:false,resultBlob:null,resultUrl:''
+};
+
+function studioStatus(t,k=''){const e=q('studioStatus');if(e){e.textContent=t;e.className='status '+k}}
+function setProgress(v){const e=q('exportProgressBar');if(e)e.style.width=Math.max(0,Math.min(100,Number(v)||0))+'%'}
+function renderCapabilities(){
+ const e=q('studioCapabilities');if(!e)return;
+ const items=[
+   ['WASM',typeof WebAssembly!=='undefined'],
+   ['语音合成','speechSynthesis' in window],
+   ['麦克风录音',!!(navigator.mediaDevices&&window.MediaRecorder)],
+   ['浏览器翻译','Translator' in window]
+ ];
+ e.innerHTML=items.map(x=>'<span class="'+(x[1]?'ok':'warn')+'">'+x[0]+' '+(x[1]?'✓':'△')+'</span>').join('')
+}
+function studioAspectFilter(){
+ const a=q('studioAspect')?.value||'9:16';
+ if(a==='9:16')return 'scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920';
+ if(a==='16:9')return 'scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080';
+ if(a==='1:1')return 'scale=1080:1080:force_original_aspect_ratio=increase,crop=1080:1080';
+ return 'null'
+}
+function studioOutputSize(){
+ const a=q('studioAspect')?.value||'9:16';
+ if(a==='16:9')return[1920,1080];if(a==='1:1')return[1080,1080];if(a==='source'&&STUDIO.width&&STUDIO.height)return[STUDIO.width,STUDIO.height];return[1080,1920]
+}
+function handleStudioFile(e){
+ const file=e.target.files?.[0];if(!file)return;
+ if(!String(file.type||'').startsWith('video/')){studioStatus('请选择视频文件。','warn');return}
+ STUDIO.file=file;
+ if(STUDIO.url)URL.revokeObjectURL(STUDIO.url);
+ STUDIO.url=URL.createObjectURL(file);
+ const v=q('studioVideo');v.src=STUDIO.url;v.classList.add('show');
+ q('studioFileTitle').textContent=file.name||'已选择视频';
+ q('studioFileHint').textContent=fmtBytes(file.size||0)+' · 正在读取视频';
+ v.onloadedmetadata=()=>{
+   STUDIO.duration=v.duration||0;STUDIO.width=v.videoWidth||0;STUDIO.height=v.videoHeight||0;
+   q('trimStart').value='0';q('trimEnd').value=Math.min(STUDIO.duration,15).toFixed(1);
+   q('studioFileHint').textContent=fmtDuration(STUDIO.duration)+' · '+STUDIO.width+'×'+STUDIO.height+' · '+fmtBytes(file.size||0);
+   studioStatus('视频已载入。先设置入点和出点，再处理字幕与解说。','good')
+ }
+}
+function setTrimPoint(which){
+ const v=q('studioVideo');if(!v||!STUDIO.file)return;
+ const t=Math.max(0,Math.min(STUDIO.duration||0,v.currentTime||0));
+ q(which==='in'?'trimStart':'trimEnd').value=t.toFixed(1);
+ studioStatus((which==='in'?'入点':'出点')+'已设为 '+t.toFixed(1)+' 秒。','good')
+}
+function studioRange(){
+ let s=Math.max(0,Number(q('trimStart')?.value)||0),e=Math.max(0,Number(q('trimEnd')?.value)||0);
+ if(STUDIO.duration)e=Math.min(e,STUDIO.duration);
+ if(e<=s)e=Math.min(STUDIO.duration||s+15,s+15);
+ return[s,e,Math.max(.1,e-s)]
+}
+function subtitleLines(){
+ return String(q('subtitleText')?.value||'').split(/\n+/).map(x=>x.trim()).filter(Boolean).slice(0,12)
+}
+async function translateLine(text,source,target){
+ if(!text||source===target)return text;
+ try{
+   if(window.Translator?.create){
+     const tr=await window.Translator.create({sourceLanguage:source,targetLanguage:target});
+     const out=await tr.translate(text);try{tr.destroy?.()}catch(e){};if(out)return out
+   }
+ }catch(e){}
+ const params=new URLSearchParams({q:text,langpair:source+'|'+target});
+ const r=await fetch('https://api.mymemory.translated.net/get?'+params.toString(),{cache:'no-store'});
+ const d=await r.json();if(!r.ok||!d?.responseData?.translatedText)throw new Error('翻译服务暂不可用');
+ return d.responseData.translatedText
+}
+async function translateSubtitles(){
+ const lines=subtitleLines();if(!lines.length){studioStatus('请先输入字幕文本。','warn');return}
+ const source=q('subtitleSourceLang').value,target=q('subtitleTargetLang').value;
+ const btn=q('translateSubtitleBtn');btn.disabled=true;btn.textContent='翻译中…';studioStatus('正在逐行翻译字幕…','good');
+ try{
+   const out=[];for(let i=0;i<lines.length;i++){out.push(await translateLine(lines[i],source,target));setProgress((i+1)/lines.length*18)}
+   q('subtitleText').value=out.join('\n');studioStatus('字幕翻译完成。','good');toast('字幕已翻译')
+ }catch(e){studioStatus('翻译失败：'+(e.message||e),'warn')}
+ finally{btn.disabled=false;btn.textContent='翻译字幕';setProgress(0)}
+}
+function speakNarration(){
+ const text=String(q('narrationText')?.value||'').trim();if(!text){studioStatus('请先填写解说文案。','warn');return}
+ if(!('speechSynthesis'in window)){studioStatus('当前浏览器不支持手机朗读。','warn');return}
+ speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='zh-CN';u.rate=1.02;u.pitch=.96;speechSynthesis.speak(u);studioStatus('正在用手机语音朗读解说文案。','good')
+}
+function pickAudioMime(){
+ const list=['audio/mp4','audio/webm;codecs=opus','audio/webm'];
+ for(const x of list)if(window.MediaRecorder?.isTypeSupported?.(x))return x;
+ return''
+}
+async function startVoiceRecord(){
+ if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){studioStatus('当前浏览器无法录制麦克风。','warn');return}
+ try{
+   STUDIO.voiceStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true},video:false});
+   STUDIO.chunks=[];const mime=pickAudioMime();STUDIO.voiceMime=mime;
+   STUDIO.recorder=new MediaRecorder(STUDIO.voiceStream,mime?{mimeType:mime}:undefined);
+   STUDIO.recorder.ondataavailable=e=>{if(e.data?.size)STUDIO.chunks.push(e.data)};
+   STUDIO.recorder.onstop=()=>{
+     STUDIO.voiceBlob=new Blob(STUDIO.chunks,{type:STUDIO.voiceMime||'audio/mp4'});
+     if(STUDIO.voiceUrl)URL.revokeObjectURL(STUDIO.voiceUrl);STUDIO.voiceUrl=URL.createObjectURL(STUDIO.voiceBlob);
+     q('voiceMeta').textContent='解说已录制 · '+fmtBytes(STUDIO.voiceBlob.size)+' · 导出时会自动混音';
+     q('recordNarrationBtn').classList.remove('recording');studioStatus('解说录音已准备好。','good');
+     STUDIO.voiceStream?.getTracks().forEach(t=>t.stop());STUDIO.voiceStream=null
+   };
+   STUDIO.recorder.start(300);q('recordNarrationBtn').classList.add('recording');q('voiceMeta').textContent='正在录音…';studioStatus('正在录制解说，完成后点“停止录音”。','good')
+ }catch(e){studioStatus('无法使用麦克风：'+(e.message||e),'warn')}
+}
+function stopVoiceRecord(){if(STUDIO.recorder&&STUDIO.recorder.state!=='inactive')STUDIO.recorder.stop()}
+async function loadScript(src){
+ return new Promise((resolve,reject)=>{if(window.FFmpegWASM?.FFmpeg)return resolve();const s=document.createElement('script');s.src=src;s.onload=resolve;s.onerror=()=>reject(new Error('FFmpeg 脚本加载失败'));document.head.appendChild(s)})
+}
+async function toBlobURLRemote(url,mime){
+ const r=await fetch(url);if(!r.ok)throw new Error('资源加载失败 '+r.status);const b=await r.blob();return URL.createObjectURL(new Blob([b],{type:mime}))
+}
+async function ensureFFmpeg(){
+ if(STUDIO.ffmpegLoaded&&STUDIO.ffmpeg)return STUDIO.ffmpeg;
+ studioStatus('首次使用正在载入手机剪辑引擎（约30MB）…','good');setProgress(3);
+ await loadScript('https://cdnjs.cloudflare.com/ajax/libs/ffmpeg/0.12.15/umd/ffmpeg.min.js');
+ const ffmpeg=new window.FFmpegWASM.FFmpeg();STUDIO.ffmpeg=ffmpeg;
+ ffmpeg.on('progress',({progress})=>{if(STUDIO.exporting&&Number.isFinite(progress))setProgress(20+Math.max(0,Math.min(.78,progress))*75)});
+ const workerLoadURL=await toBlobURLRemote('https://cdnjs.cloudflare.com/ajax/libs/ffmpeg/0.12.15/umd/814.ffmpeg.min.js','text/javascript');
+ const core='https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd';
+ const coreURL=await toBlobURLRemote(core+'/ffmpeg-core.js','text/javascript');
+ const wasmURL=await toBlobURLRemote(core+'/ffmpeg-core.wasm','application/wasm');
+ await ffmpeg.load({workerLoadURL,coreURL,wasmURL});STUDIO.ffmpegLoaded=true;setProgress(18);return ffmpeg
+}
+function canvasSubtitlePng(text,w,h){
+ const c=document.createElement('canvas');c.width=Math.min(1000,Math.max(700,Math.round(w*.84)));c.height=Math.min(240,Math.max(150,Math.round(h*.12)));
+ const x=c.getContext('2d');x.clearRect(0,0,c.width,c.height);
+ const fs=Math.max(30,Math.min(54,Math.round(c.width/20)));x.font='700 '+fs+'px -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif';x.textAlign='center';x.textBaseline='middle';
+ const words=String(text);const max=c.width*.9;let lines=[words];
+ if(x.measureText(words).width>max){
+   let a='',b='';for(const ch of words){if(x.measureText(a+ch).width<=max)a+=ch;else b+=ch}lines=[a,b].filter(Boolean)
+ }
+ const cy=c.height/2-(lines.length-1)*fs*.55;lines.forEach((line,i)=>{
+   const yy=cy+i*fs*1.1;x.lineJoin='round';x.strokeStyle='rgba(0,0,0,.92)';x.lineWidth=Math.max(7,fs*.18);x.strokeText(line,c.width/2,yy);x.fillStyle='#fff';x.fillText(line,c.width/2,yy)
+ });
+ return new Promise(resolve=>c.toBlob(resolve,'image/png'))
+}
+async function buildSubtitleInputs(ffmpeg,args,duration,w,h){
+ const lines=subtitleLines();if(!lines.length||q('burnSubtitle').value!=='yes')return{args,filters:[],last:'vbase',count:0};
+ const step=duration/lines.length,filters=[];let last='vbase';
+ for(let i=0;i<lines.length;i++){
+   const blob=await canvasSubtitlePng(lines[i],w,h);const name='sub_'+i+'.png';await ffmpeg.writeFile(name,new Uint8Array(await blob.arrayBuffer()));
+   args.push('-loop','1','-i',name);
+   const next='vsub'+i,start=(i*step).toFixed(3),end=((i+1)*step).toFixed(3);
+   filters.push('['+last+']['+(i+1)+':v]overlay=(W-w)/2:H-h-'+Math.max(50,Math.round(h*.045))+":enable='between(t,"+start+','+end+")'["+next+']');last=next
+ }
+ return{args,filters,last,count:lines.length}
+}
+async function exportStudio(){
+ if(!STUDIO.file){studioStatus('请先选择要剪的视频。','warn');return}
+ if(STUDIO.exporting)return;
+ const [start,end,duration]=studioRange();if(duration<=.15){studioStatus('裁剪区间太短。','warn');return}
+ STUDIO.exporting=true;q('exportStudioBtn').disabled=true;setProgress(1);
+ try{
+   const ffmpeg=await ensureFFmpeg();studioStatus('正在把视频交给本地剪辑引擎…','good');
+   const ext=(STUDIO.file.name.split('.').pop()||'mp4').replace(/[^a-z0-9]/ig,'').toLowerCase()||'mp4',inputName='input.'+ext;
+   await ffmpeg.writeFile(inputName,new Uint8Array(await STUDIO.file.arrayBuffer()));setProgress(20);
+   const [ow,oh]=studioOutputSize(),vf=studioAspectFilter();
+   let args=['-ss',String(start),'-t',String(duration),'-i',inputName];
+   const sub=await buildSubtitleInputs(ffmpeg,args,duration,ow,oh);
+   let voiceIndex=1+sub.count;
+   if(STUDIO.voiceBlob){const voiceExt=STUDIO.voiceMime.includes('webm')?'webm':'m4a';await ffmpeg.writeFile('voice.'+voiceExt,new Uint8Array(await STUDIO.voiceBlob.arrayBuffer()));args.push('-i','voice.'+voiceExt)}
+   const filters=[];filters.push('[0:v]'+vf+',setsar=1[vbase]');filters.push(...sub.filters);
+   const originalVol=Number(q('originalAudio').value)||0;
+   let audioMap='0:a?';
+   if(STUDIO.voiceBlob){
+     if(originalVol>0){filters.push('[0:a]volume='+originalVol+'[a0]');filters.push('['+voiceIndex+':a]volume=1[a1]');filters.push('[a0][a1]amix=inputs=2:duration=first:dropout_transition=2[aout]');audioMap='[aout]'}
+     else{filters.push('['+voiceIndex+':a]volume=1[aout]');audioMap='[aout]'}
+   }else if(originalVol!==1&&originalVol>0){filters.push('[0:a]volume='+originalVol+'[aout]');audioMap='[aout]'}
+   else if(originalVol===0){audioMap=''}
+   const last=sub.last||'vbase';args.push('-filter_complex',filters.join(';'),'-map','['+last+']');
+   if(audioMap)args.push('-map',audioMap);
+   const quality=q('exportQuality').value,crf=quality==='high'?'20':quality==='balanced'?'23':'27',preset=quality==='high'?'veryfast':'ultrafast';
+   args.push('-c:v','libx264','-preset',preset,'-crf',crf);
+   if(audioMap)args.push('-c:a','aac','-b:a','160k');
+   args.push('-movflags','+faststart','-shortest','SAGI_MOBILE_EDIT.mp4');
+   studioStatus('正在手机本地合成成片，请保持页面打开…','good');await ffmpeg.exec(args);
+   const data=await ffmpeg.readFile('SAGI_MOBILE_EDIT.mp4');STUDIO.resultBlob=new Blob([data.buffer],{type:'video/mp4'});
+   if(STUDIO.resultUrl)URL.revokeObjectURL(STUDIO.resultUrl);STUDIO.resultUrl=URL.createObjectURL(STUDIO.resultBlob);
+   q('resultVideo').src=STUDIO.resultUrl;q('resultVideo').classList.add('show');q('saveResultBtn').href=STUDIO.resultUrl;q('resultActions').classList.add('show');
+   setProgress(100);studioStatus('成片已生成 · '+fmtBytes(STUDIO.resultBlob.size)+'。可以保存到手机或直接分享。','good');toast('成片已生成')
+ }catch(e){
+   console.error(e);studioStatus('手机导出失败：'+(e.message||e)+ '。建议先用15–30秒短片测试。','bad');setProgress(0)
+ }finally{STUDIO.exporting=false;q('exportStudioBtn').disabled=false}
+}
+function cancelExport(){
+ if(STUDIO.exporting&&STUDIO.ffmpeg){try{STUDIO.ffmpeg.terminate()}catch(e){}STUDIO.ffmpeg=null;STUDIO.ffmpegLoaded=false;STUDIO.exporting=false;setProgress(0);q('exportStudioBtn').disabled=false;studioStatus('已取消导出。')}
+}
+async function shareResult(){
+ if(!STUDIO.resultBlob)return;
+ const file=new File([STUDIO.resultBlob],'SAGI_MOBILE_EDIT.mp4',{type:'video/mp4'});
+ try{if(navigator.canShare?.({files:[file]}))await navigator.share({files:[file],title:'SAGI MOBILE EDIT'});else await navigator.share({title:'SAGI MOBILE EDIT',url:STUDIO.resultUrl})}
+ catch(e){if(e.name!=='AbortError')studioStatus('无法直接分享，请点“保存成片”。','warn')}
+}
+
 q('pasteBtn').onclick=paste;
 q('clearBtn').onclick=clearInput;
 q('downloadBtn').onclick=download;
@@ -299,10 +592,20 @@ q('recreateFile').onchange=handleRecreateFile;
 document.querySelectorAll('[data-preset]').forEach(b=>b.onclick=()=>{recreatePreset=b.dataset.preset;renderRecreatePreset()});
 q('createRecreateJobBtn').onclick=()=>makeJob(true);
 q('recreateFromLinkBtn').onclick=()=>makeJob(false);
+q('studioFile').onchange=handleStudioFile;
+q('setInBtn').onclick=()=>setTrimPoint('in');
+q('setOutBtn').onclick=()=>setTrimPoint('out');
+q('translateSubtitleBtn').onclick=translateSubtitles;
+q('speakNarrationBtn').onclick=speakNarration;
+q('recordNarrationBtn').onclick=startVoiceRecord;
+q('stopNarrationBtn').onclick=stopVoiceRecord;
+q('exportStudioBtn').onclick=exportStudio;
+q('cancelExportBtn').onclick=cancelExport;
+q('shareResultBtn').onclick=shareResult;
 input.addEventListener('input',updateDetect);
-renderHistory();updateDetect();renderRecreatePreset();
+renderHistory();updateDetect();renderRecreatePreset();renderCapabilities();
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=13',{updateViaCache:'none'}).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=14',{updateViaCache:'none'}).catch(()=>{})}
 })();
 </script>
 </body>
