@@ -7,7 +7,6 @@ on:
       - "sagi-cloud-bridge/**"
       - "content-os/sagi-down.html"
       - "content-os/sagi-down-sw.js"
-      - "sagi-cobalt/**"
       - "render.yaml"
       - ".github/workflows/sagi-preflight.yml"
   pull_request:
@@ -47,11 +46,12 @@ jobs:
       - name: Verify dependency compatibility
         run: |
           python - <<'PY'
-          import av, faster_whisper, gallery_dl, sys
+          import av, faster_whisper, gallery_dl, parth_dl, sys
           print("python", sys.version)
           print("av", av.__version__)
           print("faster_whisper", getattr(faster_whisper, "__version__", "unknown"))
           print("gallery_dl", getattr(gallery_dl, "__version__", "unknown"))
+          print("parth_dl", getattr(parth_dl, "__version__", "unknown"))
           major = int(av.__version__.split(".")[0])
           assert major < 19, f"PyAV must stay <19 with released faster-whisper, got {av.__version__}"
           PY
@@ -176,7 +176,7 @@ jobs:
           c = mod.app.test_client()
           health = c.get("/health").get_json()
           print("health", health)
-          assert health["version"] == "2.0.0"
+          assert health["version"] == "3.0.0"
           assert health["captionMedia"] is True
           assert health["contextTranslate"] is True
           assert health["smartTranslate"] is True
@@ -184,12 +184,18 @@ jobs:
           assert health["cloudRender"] is True
           assert health["cloudDownload"] is True
           assert set(health["downloadPlatforms"]) >= {"Instagram","YouTube","TikTok","X"}
-          assert health["instagramPostFallback"] == "html-fast -> gallery-dl-short"
+          assert health["instagramPostFallback"].startswith("btch -> parth-dl")
+          assert health["downloadRouter"] is True
+          assert health["downloadRouterVersion"] == "3.0"
+          assert health["btchEnabled"] is True
+          assert health["parthDlEnabled"] is True
+          assert health["tikwmEnabled"] is True
+          assert health["fxtwitterEnabled"] is True
           assert "carousel-zip" in health["downloadMediaKinds"]
           assert health["galleryFallbackTimeoutSeconds"] == 25
-          assert health["cloudDownloadVersion"] == "2.0"
-          assert health["downloadPrimary"] == "cobalt"
-          assert health["cobaltMode"] == "self-hosted"
+          assert health["cloudDownloadVersion"] == "3.0"
+          assert health["downloadPrimary"] == "multi-engine-router"
+          assert health["cobaltMode"] == "legacy-fallback-only"
           assert health["cobaltConfigured"] is False
           assert health["instagramProxyConfigured"] is False
           assert health["instagramEgress"] == "render-direct"
@@ -205,47 +211,51 @@ jobs:
           assert "proxy.test" not in str(proxied_health)
           mod.INSTAGRAM_PROXY = ""
 
-          # Cobalt hostname from Render must automatically use HTTPS.
-          mod.COBALT_HOSTPORT = "sagi-cobalt-suny820916.onrender.com"
-          assert mod.cobalt_base() == "https://sagi-cobalt-suny820916.onrender.com"
-          mod.COBALT_HOSTPORT = ""
+          # V3 router: platform detection and engine ordering.
+          assert mod.source_platform("https://www.instagram.com/reel/TEST/") == "instagram"
+          assert mod.source_platform("https://www.tiktok.com/@u/video/123") == "tiktok"
+          assert mod.source_platform("https://x.com/u/status/123") == "twitter"
+          assert mod.source_platform("https://youtu.be/abc") == "youtube"
+          assert mod._router_engines("instagram") == ["btch","parth-dl"]
+          assert mod._router_engines("tiktok") == ["btch","tikwm"]
+          assert mod._router_engines("twitter") == ["fxtwitter","btch"]
 
-          # Cobalt must be the first engine when configured. If it succeeds,
-          # direct yt-dlp must not run at all.
-          original_cobalt_base = mod.cobalt_base
-          original_cobalt_run = mod.run_cobalt_download
+          # First successful router engine must stop native yt-dlp immediately.
+          original_router = mod._router_engines
+          original_btch = mod.run_btch_download
           original_direct = mod._download_with_strategy
-          cobalt_calls = []
-          def fake_cobalt(job_id, url, wanted_name, terminal=True):
-              cobalt_calls.append((url, terminal))
+          calls = []
+          def fake_btch(job_id, url, wanted_name):
+              calls.append("btch")
               with mod.jobs_lock:
                   mod.jobs[job_id].update({
-                      "status":"ready","strategy":"cobalt","mediaKind":"video",
+                      "status":"ready","strategy":"btch","mediaKind":"video",
                       "fileCount":1,"size":123,"path":__file__,"workdir":"",
                       "filename":"SAGI_TEST.mp4","error":"","errorCode":""
                   })
-              return True, ""
-          mod.cobalt_base = lambda: "https://sagi-cobalt.example"
-          mod.run_cobalt_download = fake_cobalt
-          mod._download_with_strategy = lambda *a, **k: (_ for _ in ()).throw(RuntimeError("DIRECT_SHOULD_NOT_RUN"))
-          cid = "cobalt-primary-smoke"
+              return True
+          mod._router_engines = lambda platform: ["btch"]
+          mod.run_btch_download = fake_btch
+          mod._download_with_strategy = lambda *a, **k: (_ for _ in ()).throw(RuntimeError("NATIVE_SHOULD_NOT_RUN"))
+          rid = "router-primary-smoke"
           with mod.jobs_lock:
-              mod.jobs[cid] = {
-                  "id":cid,"status":"queued","created_at":mod.iso(),"updated_at":mod.iso(),
+              mod.jobs[rid] = {
+                  "id":rid,"status":"queued","created_at":mod.iso(),"updated_at":mod.iso(),
                   "title":"SAGI_TEST","source_url":"https://www.instagram.com/reel/TEST/",
                   "requested_name":"SAGI_TEST","error":"","errorCode":"","size":0,
                   "worker":"","strategy":"sagi_cloud","download_key":"k","path":"","workdir":"","filename":""
               }
           try:
-              mod.run_download(cid, "https://www.instagram.com/reel/TEST/", "SAGI_TEST")
+              mod.run_download(rid, "https://www.instagram.com/reel/TEST/", "SAGI_TEST")
               with mod.jobs_lock:
-                  cj = dict(mod.jobs[cid])
-              assert cj["status"] == "ready" and cj["strategy"] == "cobalt", cj
-              assert cobalt_calls and cobalt_calls[0][1] is False
-              print("Cobalt-primary routing smoke OK")
+                  rj = dict(mod.jobs[rid])
+              assert rj["status"] == "ready" and rj["strategy"] == "btch", rj
+              assert calls == ["btch"], calls
+              assert "btch" in rj.get("engineTrace", []), rj
+              print("Multi-engine primary routing smoke OK", rj["engineTrace"])
           finally:
-              mod.cobalt_base = original_cobalt_base
-              mod.run_cobalt_download = original_cobalt_run
+              mod._router_engines = original_router
+              mod.run_btch_download = original_btch
               mod._download_with_strategy = original_direct
 
           token = mod.client_token()
@@ -304,7 +314,7 @@ jobs:
           original_extract = mod._download_with_strategy
           original_fast = mod.run_instagram_fast_post
           original_gallery = mod.run_gallery_download
-          original_cobalt = mod.cobalt_base
+          original_router_order = mod._router_engines
           def no_video(*args, **kwargs):
               raise mod.DownloadError("ERROR: [Instagram] TEST: There is no video in this post")
           def fake_gallery(job_id, url, wanted_name):
@@ -317,7 +327,7 @@ jobs:
           mod._download_with_strategy = no_video
           mod.run_instagram_fast_post = lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError("FAST_NO_MEDIA"))
           mod.run_gallery_download = fake_gallery
-          mod.cobalt_base = lambda: ""
+          mod._router_engines = lambda platform: []
           gid = "gallery-smoke"
           with mod.jobs_lock:
               mod.jobs[gid] = {
@@ -338,7 +348,7 @@ jobs:
               mod._download_with_strategy = original_extract
               mod.run_instagram_fast_post = original_fast
               mod.run_gallery_download = original_gallery
-              mod.cobalt_base = original_cobalt
+              mod._router_engines = original_router_order
 
           r = c.post("/api/caption", headers=headers, data={"audio": (io.BytesIO(b"RIFFfake"), "caption.wav"), "language": "en"}, content_type="multipart/form-data")
           assert r.status_code == 200, (r.status_code, r.get_data(as_text=True))
@@ -442,6 +452,27 @@ jobs:
               assert r.status == 200
           PY
 
+      - name: Verify public BTCH browser node
+        run: |
+          python - <<'PY'
+          import json, urllib.request
+          base="https://btch-downloader-api-green.vercel.app"
+          req=urllib.request.Request(base+"/api/health",headers={"Origin":"https://suny820916.github.io","User-Agent":"SAGI-preflight"})
+          with urllib.request.urlopen(req,timeout=30) as r:
+              body=json.loads(r.read().decode("utf-8"))
+              cors=r.headers.get("access-control-allow-origin","")
+              print("btch health",r.status,body,"cors",cors)
+              assert r.status == 200
+              assert body.get("success") is True
+              assert cors in ("*","https://suny820916.github.io")
+          req=urllib.request.Request(base+"/api/platforms",headers={"User-Agent":"SAGI-preflight"})
+          with urllib.request.urlopen(req,timeout=30) as r:
+              body=json.loads(r.read().decode("utf-8"))
+          keys={x.get("key") for x in body.get("platforms",[])}
+          assert {"instagram","tiktok","twitter","youtube"} <= keys, keys
+          print("BTCH PUBLIC NODE OK",sorted(keys))
+          PY
+
       - name: Frontend JavaScript syntax and wiring
         run: |
           python - <<'PY'
@@ -463,15 +494,15 @@ jobs:
               "cloneMyVoice",
               "cloudCaptionMedia",
               "pollCloudDownload",
-              "cobaltOfficialUrl",
-              "handoffToOfficialCobalt",
+              "tryBtchBrowser",
+              "BTCH_PUBLIC",
+              "chooseBtchMedia",
               "async function probeDownloadCloud",
-              "COBALT+'#'+encodeURIComponent(clean)",
-              "Instagram · Cobalt Direct 已启动",
               "health.cloudDownload",
-              "COBALT 一键下载",
+              "智能一键下载",
+              "MULTI ENGINE ROUTER",
               "runAiCaption(true)",
-              "V2.0.3 · INSTAGRAM DIRECT",
+              "V3.0 · MULTI ENGINE ROUTER",
           ]
           for x in required:
               assert x in s, x

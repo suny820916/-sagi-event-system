@@ -6,7 +6,6 @@ on:
     paths:
       - "sagi-cloud-bridge/**"
       - "render.yaml"
-      - "sagi-cobalt/**"
       - ".github/workflows/render-deploy.yml"
   workflow_dispatch:
 
@@ -34,12 +33,12 @@ jobs:
         run: |
           curl --fail --show-error --silent --retry 3 "$RENDER_DEPLOY_HOOK_URL"
 
-      - name: Wait for SAGI Cloud 2.0.0
+      - name: Wait for SAGI Cloud 3.0.0
         run: |
           python - <<'PY'
           import json, time, urllib.request, sys
           url = "https://sagi-cloud-bridge-suny820916.onrender.com/health"
-          expected = "2.0.0"
+          expected = "3.0.0"
           for i in range(36):
               try:
                   with urllib.request.urlopen(url, timeout=15) as r:
@@ -52,28 +51,6 @@ jobs:
               except Exception as e:
                   print(f"check {i+1}/36 failed: {e}")
               time.sleep(10)
-          print("Expected SAGI Cloud version 2.0.0 was not observed.")
-          sys.exit(1)
-          PY
-
-      - name: Verify self-hosted Cobalt
-        run: |
-          python - <<'PY'
-          import json, time, urllib.request, sys
-          url="https://sagi-cobalt-suny820916.onrender.com/"
-          for i in range(24):
-              try:
-                  with urllib.request.urlopen(url, timeout=20) as r:
-                      data=json.loads(r.read().decode("utf-8"))
-                  version=str((data.get("cobalt") or {}).get("version") or "")
-                  services=(data.get("cobalt") or {}).get("services") or []
-                  print("cobalt check",i+1,"version",version,"services",services[:8])
-                  if version and "instagram" in services:
-                      print("SAGI Cobalt verified.")
-                      sys.exit(0)
-              except Exception as e:
-                  print("cobalt check",i+1,"failed",repr(e))
-              time.sleep(10)
-          print("SAGI Cobalt was not observed.")
+          print("Expected SAGI Cloud version 3.0.0 was not observed.")
           sys.exit(1)
           PY

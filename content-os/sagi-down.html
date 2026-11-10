@@ -85,13 +85,13 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 <div class="wrap">
   <div class="top">
     <div class="brand"><b>SAGI DOWN</b><span>VIDEO LINK SHORTCUT</span></div>
-    <span class="badge">V2.0.3 · INSTAGRAM DIRECT</span>
+    <span class="badge">V3.0 · MULTI ENGINE ROUTER</span>
   </div>
 
   <section class="hero">
     <div class="heroTop"><small>ONE TAP DOWNLOAD</small><span class="badge">MOBILE FIRST</span></div>
     <h1>复制视频链接，回来直接下。</h1>
-    <p>粘贴链接即可下载。优先使用 SAGI Cobalt；云端未就绪或解析失败时自动切换 Cobalt 官方直连，不需要配置代理、API 或 Token。</p>
+    <p>粘贴链接即可下载。SAGI 会按平台自动切换 btch、parth-dl、TikWM、FxTwitter、yt-dlp 等下载引擎；一个节点失败会自动换下一个，不需要配置代理、API 或 Token。</p>
     <div class="platformStrip">
       <div class="platformChip"><b>Instagram</b>Reel / Post</div>
       <div class="platformChip"><b>YouTube</b>Video / Shorts</div>
@@ -116,7 +116,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
     </div>
 
     <div class="actions">
-      <button class="btn primary" id="downloadBtn" type="button">COBALT 一键下载</button>
+      <button class="btn primary" id="downloadBtn" type="button">智能一键下载</button>
       <button class="btn blue" id="copyBtn" type="button">复制链接</button>
       <button class="btn" id="openBtn" type="button">原链接</button>
     </div>
@@ -378,7 +378,8 @@ Unbelievable finish."></textarea>
 
 <script>
 (()=>{'use strict';
-const COBALT='https://cobalt.tools/';
+const BTCH_PUBLIC='https://btch-downloader-api-green.vercel.app';
+const DOWNLOAD_ROUTER_VERSION='3.0';
 const KEY='sagi_down_history_v2';
 const OLD_KEY='sagi_down_history_v1';
 const q=id=>document.getElementById(id);
@@ -468,33 +469,67 @@ function cloudDownloadWindow(){
 }
 function cloudDownloadStatusLabel(job){
   const s=String(job?.status||'');
-  if(s==='queued')return '已进入云端队列';
-  if(s==='cobalt_processing')return 'SAGI Cobalt · 正在解析链接';
-  if(s==='cobalt_fetching')return 'SAGI Cobalt · 已找到媒体，正在获取文件';
-  if(s==='instagram_fast')return 'Cobalt 未命中 · 正在尝试 Instagram 快速解析';
-  if(s==='instagram_fetching')return '已找到帖子媒体 · 正在下载';
-  if(s==='gallery_processing')return '快速解析未命中 · 正在尝试短时备用解析';
+  if(s==='queued')return '已进入下载队列';
+  if(s==='router_trying')return '正在尝试下载节点';
+  if(s==='router_switching')return '当前节点未命中 · 正在自动切换';
+  if(s==='instagram_fast')return '正在尝试 Instagram 专用解析';
+  if(s==='instagram_fetching')return '已找到帖子媒体 · 正在获取文件';
+  if(s==='gallery_processing')return '正在尝试备用解析';
   if(s==='gallery_packaging')return '正在打包轮播内容';
-  if(s==='downloading')return 'SAGI Cloud · 正在自动兜底解析';
+  if(s==='downloading')return 'SAGI Router · 正在处理';
   if(s==='worker_downloading')return '下载节点正在处理';
   return s||'处理中'
 }
-function cobaltOfficialUrl(sourceUrl){
-  const clean=extractUrl(sourceUrl);
-  return clean?COBALT+'#'+encodeURIComponent(clean):COBALT
+function btchPlatform(sourceUrl){
+  const d=detect(sourceUrl);
+  if(d[2]==='INS')return'instagram';
+  if(d[2]==='TT')return'tiktok';
+  if(d[2]==='X')return'twitter';
+  if(d[2]==='YT')return'youtube';
+  return''
 }
-function handoffToOfficialCobalt(sourceUrl,handoff,reason=''){
-  const target=cobaltOfficialUrl(sourceUrl);
-  setStatus((reason?reason+' · ':'')+'已自动切换 Cobalt 官方下载，无需再次粘贴链接。','good');
+function chooseBtchMedia(data){
+  const n=data?.normalized||{};
+  let rows=[];
+  if(n.kind==='media')rows=Array.isArray(n.media)?n.media:[];
+  else if(n.kind==='list'&&Array.isArray(n.items)){
+    rows=n.items.flatMap(x=>Array.isArray(x?.media)?x.media:[]);
+  }
+  const valid=rows.filter(x=>x&&/^https?:\/\//i.test(String(x.url||'')));
+  if(!valid.length)return null;
+  const score=x=>{
+    const label=String(x.label||'').toLowerCase(),type=String(x.type||'').toLowerCase();
+    let n=0;
+    if(type==='video')n+=100;
+    if(label.includes('no watermark')||label.includes('no-watermark'))n+=40;
+    if(label.includes('1080')||label.includes('hd'))n+=20;
+    if(label.includes('720'))n+=10;
+    return n
+  };
+  return valid.sort((a,b)=>score(b)-score(a))[0]
+}
+async function tryBtchBrowser(sourceUrl,handoff,timeoutMs=7000){
+  const platform=btchPlatform(sourceUrl);
+  if(!platform)return false;
+  const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),timeoutMs);
   try{
-    if(handoff&&!handoff.closed){handoff.location.replace(target);return true}
-  }catch(e){}
-  try{
-    const w=window.open(target,'_blank','noopener');
-    if(w)return true
-  }catch(e){}
-  location.href=target;
-  return true
+    setStatus('下载节点 1 · 正在解析 '+detect(sourceUrl)[0]+'…','good');
+    const endpoint=BTCH_PUBLIC+'/api/download/'+platform+'?url='+encodeURIComponent(sourceUrl);
+    const r=await fetch(endpoint,{headers:{Accept:'application/json'},cache:'no-store',signal:ctl.signal});
+    if(!r.ok)return false;
+    const data=await r.json().catch(()=>null);
+    if(!data?.success)return false;
+    const media=chooseBtchMedia(data);
+    if(!media?.url)return false;
+    const ext=String(media.type||'').toLowerCase()==='image'?'.jpg':'.mp4';
+    const fileUrl=BTCH_PUBLIC+'/api/fetch-media?url='+encodeURIComponent(media.url)+'&filename='+encodeURIComponent('SAGI_VIDEO'+ext);
+    setStatus('下载节点 1 已找到媒体 · 正在开始下载。','good');
+    if(handoff&&!handoff.closed)handoff.location.replace(fileUrl);
+    else location.href=fileUrl;
+    return true
+  }catch(e){
+    return false
+  }finally{clearTimeout(timer)}
 }
 async function probeDownloadCloud(timeoutMs=4500){
   const healthCtl=new AbortController(),healthTimer=setTimeout(()=>healthCtl.abort(),timeoutMs);
@@ -503,9 +538,7 @@ async function probeDownloadCloud(timeoutMs=4500){
     if(!r.ok)return{ready:false,reason:'health_'+r.status};
     const health=await r.json();
     STUDIO.cloudHealth=health;
-    if(!(health.cloudDownload&&health.downloadPrimary==='cobalt'&&health.cobaltConfigured)){
-      return{ready:false,health,reason:'cobalt_not_live'}
-    }
+    if(!health.cloudDownload)return{ready:false,health,reason:'download_offline'};
     if(STUDIO.cloudCaptionToken)return{ready:true,health,token:STUDIO.cloudCaptionToken};
     const actCtl=new AbortController(),actTimer=setTimeout(()=>actCtl.abort(),timeoutMs);
     try{
@@ -521,74 +554,59 @@ async function probeDownloadCloud(timeoutMs=4500){
     return{ready:false,reason:e?.name==='AbortError'?'timeout':'offline'}
   }finally{clearTimeout(healthTimer)}
 }
-async function pollCloudDownload(jobId,handoff,sourceUrl,maxCloudWaitMs=7000){
+async function pollCloudDownload(jobId,handoff,maxCloudWaitMs=22000){
   const started=Date.now();
   while(Date.now()-started<maxCloudWaitMs){
-    await new Promise(r=>setTimeout(r,1200));
-    const r=await fetch(CAPTION_CLOUD+'/api/jobs/'+encodeURIComponent(jobId),{
-      headers:{Authorization:'Bearer '+STUDIO.cloudCaptionToken},cache:'no-store'
-    });
-    const d=await r.json().catch(()=>({}));
+    await new Promise(r=>setTimeout(r,1100));
+    const remain=maxCloudWaitMs-(Date.now()-started);
+    if(remain<=0)break;
+    const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),Math.min(4500,remain));
+    let r,d;
+    try{
+      r=await fetch(CAPTION_CLOUD+'/api/jobs/'+encodeURIComponent(jobId),{
+        headers:{Authorization:'Bearer '+STUDIO.cloudCaptionToken},cache:'no-store',signal:ctl.signal
+      });
+      d=await r.json().catch(()=>({}));
+    }catch(e){
+      if(e?.name==='AbortError')continue;
+      throw e
+    }finally{clearTimeout(timer)}
     if(!r.ok||!d?.ok)throw new Error(d?.error||('HTTP '+r.status));
     const job=d.job||{};
     if(job.status==='ready'&&job.downloadUrl){
       const kind=job.mediaKind==='carousel'?'轮播 ZIP':(job.mediaKind==='image'?'图片':'视频');
-      setStatus('SAGI Cloud 已准备好'+kind+'，正在开始下载。','good');
+      setStatus('SAGI Router 已准备好'+kind+' · 正在下载。','good');
       if(handoff&&!handoff.closed)handoff.location.replace(job.downloadUrl);
       else location.href=job.downloadUrl;
-      return
+      return true
     }
-    if(job.status==='failed'){
-      if(job.errorCode==='unsupported_source'){
-        throw new Error('当前链接暂不支持。')
-      }
-      handoffToOfficialCobalt(sourceUrl,handoff,'SAGI 云端未能完成解析');
-      return
-    }
+    if(job.status==='failed')throw new Error(job.error||'所有下载节点均未命中');
     setStatus(cloudDownloadStatusLabel(job)+'…','good')
   }
-  handoffToOfficialCobalt(sourceUrl,handoff,'SAGI 云端响应较慢')
+  throw new Error('下载节点响应超时')
 }
 async function download(){
   const v=currentUrl();if(!v){setStatus('请先粘贴有效的视频链接。','warn');return}
   const d=detect(v),handoff=cloudDownloadWindow();
   saveHistory(v);
-
-  // Instagram is routed straight to cobalt.tools from the user's tap.
-  // This avoids Render/datacenter IP blocks and removes cloud wake-up delays.
-  if(d[0]==='Instagram'){
-    setStatus('Instagram · Cobalt Direct 已启动，正在直接解析…','good');
-    handoffToOfficialCobalt(v,handoff,'Instagram 直连模式');
-    return
-  }
-
-  setStatus(d[0]+' · 正在选择最快 Cobalt 通道…','good');
+  setStatus(d[0]+' · MULTI ENGINE ROUTER 正在启动…','good');
   try{
+    if(await tryBtchBrowser(v,handoff,6500))return;
+    setStatus('下载节点 1 未命中 · 正在切换 SAGI Router…','good');
     const cloud=await probeDownloadCloud(4500);
-    if(!cloud.ready){
-      handoffToOfficialCobalt(v,handoff,'SAGI Cobalt 云端未就绪');
-      return
-    }
-    setStatus('SAGI Cobalt 已连接 · 正在解析链接…','good');
-    const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),7000);
-    let r;
-    try{
-      r=await fetch(CAPTION_CLOUD+'/api/jobs',{
-        method:'POST',
-        headers:{'Content-Type':'application/json',Authorization:'Bearer '+cloud.token},
-        body:JSON.stringify({url:v,name:'SAGI_VIDEO'}),
-        signal:ctl.signal
-      })
-    }finally{clearTimeout(timer)}
+    if(!cloud.ready)throw new Error('当前可用下载节点均未连接');
+    const r=await fetch(CAPTION_CLOUD+'/api/jobs',{
+      method:'POST',
+      headers:{'Content-Type':'application/json',Authorization:'Bearer '+cloud.token},
+      body:JSON.stringify({url:v,name:'SAGI_VIDEO'})
+    });
     const data=await r.json().catch(()=>({}));
-    if(!r.ok||!data?.ok||!data?.job?.id){
-      handoffToOfficialCobalt(v,handoff,'SAGI Cobalt 未接收任务');
-      return
-    }
-    setStatus('SAGI Cobalt 已接收链接 · 超时会自动切换官方直连…','good');
-    await pollCloudDownload(data.job.id,handoff,v,8000)
+    if(!r.ok||!data?.ok||!data?.job?.id)throw new Error(data?.error||('HTTP '+r.status));
+    setStatus('SAGI Router 已接收链接 · 正在自动选择节点…','good');
+    await pollCloudDownload(data.job.id,handoff,22000)
   }catch(e){
-    handoffToOfficialCobalt(v,handoff,'SAGI 自动兜底')
+    try{if(handoff&&!handoff.closed)handoff.close()}catch(_){}
+    setStatus('下载失败：'+(e?.message||'当前所有下载节点都不可用')+'。请稍后再试。','warn')
   }
 }
 function openOriginal(){const v=currentUrl();if(!v){setStatus('请先粘贴有效链接。','warn');return}window.open(v,'_blank','noopener')}
