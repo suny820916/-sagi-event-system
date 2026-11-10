@@ -533,7 +533,7 @@ jobs:
           with urllib.request.urlopen(req,timeout=45) as r:
               tik=json.loads(r.read().decode("utf-8"))
               print("TikWM status",r.status,"code",tik.get("code"))
-          assert int(tik.get("code") or -1) == 0 and isinstance(tik.get("data"),dict), tik
+          assert int(tik.get("code", -1)) == 0 and isinstance(tik.get("data"),dict), tik
           td=tik["data"]
           assert td.get("play") or td.get("hdplay") or (td.get("images") or []), td
           print("TIKWM REAL RESOLVE OK")
