@@ -3397,14 +3397,16 @@ function sdOrigScoreRows(){
     const m=line.match(/^(.*?)\s*(\d{1,2})\s*[-–—:：]\s*(\d{1,2})\s*(.*?)$/);
     if(m){
       const left=String(m[1]||'').replace(/[·|｜-]+$/,'').trim(),right=String(m[4]||'').replace(/^[·|｜-]+/,'').trim();
-      return{left:left||('MATCH '+String(i+1).padStart(2,'0')),score:m[2]+'-'+m[3],right,raw:line}
+      return{left:left||('MATCH '+String(i+1).padStart(2,'0')),score:m[2]+'-'+m[3],right,raw:line,manual:true}
     }
     const score=(line.match(/(\d{1,2})\s*[-–—:：]\s*(\d{1,2})/)||[]);
-    return{left:'MATCH '+String(i+1).padStart(2,'0'),score:score.length?score[1]+'-'+score[2]:line,right:'',raw:line}
+    return{left:'MATCH '+String(i+1).padStart(2,'0'),score:score.length?score[1]+'-'+score[2]:line,right:'',raw:line,manual:true}
   });
   if(rows.length)return rows.slice(0,12);
-  if((SDINTEL.official?.scoreRows||[]).length)return SDINTEL.official.scoreRows.slice(0,12).map(r=>({...r,raw:r.left+' '+r.score+' '+r.right}));
-  return (SDINTEL.scores||[]).slice(0,12).map((score,i)=>({left:'MATCH '+String(i+1).padStart(2,'0'),score:String(score).replace(':','-'),right:'',raw:String(score)}))
+  if(typeof SDDATA!=='undefined'&&(SDDATA.matches||[]).length){
+    return SDDATA.matches.slice(0,12).map(m=>({left:m.home,score:m.homeScore+'-'+m.awayScore,right:m.away,raw:m.home+' '+m.homeScore+'-'+m.awayScore+' '+m.away,verified:true}))
+  }
+  return [];
 }
 function sdOrigAutoScoreText(){
   if(typeof SDDATA!=='undefined'&&(SDDATA.matches||[]).length)return sdDataScoreText(SDDATA.matches.slice(0,12));
