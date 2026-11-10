@@ -42,7 +42,7 @@ caption_model = None
 caption_model_error = ""
 caption_model_lock = Lock()
 caption_ready_at = 0.0
-CAPTION_MAX_MB = int(os.getenv("SAGI_CAPTION_MAX_MB") or "12")
+CAPTION_MAX_MB = int(os.getenv("SAGI_CAPTION_MAX_MB") or "16")
 
 def now():
     return datetime.now(timezone.utc)
@@ -348,13 +348,14 @@ def health():
     return jsonify({
         "ok": True,
         "service": "SAGI CLOUD BRIDGE",
-        "version": "1.6.0",
+        "version": "1.6.2",
         "instagram": True,
         "hybridWorker": True,
         "workerOnline": worker_online(),
         "activation": True,
         "captionFast": True,
         "captionModel": "faster-whisper-tiny-int8",
+        "captionMaxSeconds": 180,
         "captionReady": caption_model is not None,
         "captionError": caption_model_error,
         "maxFileMB": MAX_FILE_MB,
