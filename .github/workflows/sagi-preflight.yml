@@ -226,7 +226,7 @@ jobs:
           r = c.get("/api/voice/status", headers=headers)
           assert r.status_code == 200, r.get_data(as_text=True)
           vd = r.get_json()
-          assert vd["configured"] is True and vd["voiceCount"] == 2
+          assert vd["configured"] is True and vd["voiceCount"] >= 2 and vd["cloneConfigured"] is True
 
           r = c.post("/api/voice/clone", headers=headers, data={
               "sample": (io.BytesIO(b"voice"*1000), "voice.m4a"),
