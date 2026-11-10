@@ -85,7 +85,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 <div class="wrap">
   <div class="top">
     <div class="brand"><b>SAGI DOWN</b><span>VIDEO LINK SHORTCUT</span></div>
-    <span class="badge">V2.0 · COBALT ENGINE</span>
+    <span class="badge">V2.0.3 · INSTAGRAM DIRECT</span>
   </div>
 
   <section class="hero">
@@ -552,7 +552,16 @@ async function pollCloudDownload(jobId,handoff,sourceUrl,maxCloudWaitMs=7000){
 async function download(){
   const v=currentUrl();if(!v){setStatus('请先粘贴有效的视频链接。','warn');return}
   const d=detect(v),handoff=cloudDownloadWindow();
-  saveHistory(v);copyText(v).catch(()=>{});
+  saveHistory(v);
+
+  // Instagram is routed straight to cobalt.tools from the user's tap.
+  // This avoids Render/datacenter IP blocks and removes cloud wake-up delays.
+  if(d[0]==='Instagram'){
+    setStatus('Instagram · Cobalt Direct 已启动，正在直接解析…','good');
+    handoffToOfficialCobalt(v,handoff,'Instagram 直连模式');
+    return
+  }
+
   setStatus(d[0]+' · 正在选择最快 Cobalt 通道…','good');
   try{
     const cloud=await probeDownloadCloud(4500);
@@ -577,8 +586,7 @@ async function download(){
       return
     }
     setStatus('SAGI Cobalt 已接收链接 · 超时会自动切换官方直连…','good');
-    const waitMs=d[0]==='Instagram'?5500:8000;
-    await pollCloudDownload(data.job.id,handoff,v,waitMs)
+    await pollCloudDownload(data.job.id,handoff,v,8000)
   }catch(e){
     handoffToOfficialCobalt(v,handoff,'SAGI 自动兜底')
   }
@@ -2180,7 +2188,7 @@ if(q('captionSpeed'))q('captionSpeed').value='fast';
 if(q('captionRange'))q('captionRange').value='trim';
 setTimeout(async()=>{await wakeCaptionCloud();refreshAIVoiceStatus(false)},180);
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=202',{updateViaCache:'none'}).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=203',{updateViaCache:'none'}).catch(()=>{})}
 })();
 </script>
 </body>
