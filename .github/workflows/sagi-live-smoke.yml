@@ -1,0 +1,99 @@
+name: SAGI Live Cloud Smoke
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/sagi-live-smoke.yml"
+
+jobs:
+  live-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install media test tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg espeak-ng
+          python -m pip install requests
+
+      - name: Build real spoken MP4
+        run: |
+          espeak-ng -v en-us -s 145 -w /tmp/speech.wav "This is a real SAGI cloud subtitle test. The double pivot protects the back four during transition."
+          ffmpeg -hide_banner -loglevel error -y -f lavfi -i color=c=black:s=640x360:d=8 -i /tmp/speech.wav -shortest -c:v libx264 -preset ultrafast -c:a aac /tmp/sagi_live_test.mp4
+          ls -lh /tmp/sagi_live_test.mp4
+
+      - name: Test live health activation and caption media
+        run: |
+          python - <<'PY'
+          import json, os, requests, sys, time
+          BASE="https://sagi-cloud-bridge-suny820916.onrender.com"
+          ORIGIN="https://suny820916.github.io"
+
+          print("1) waking live cloud...")
+          health=None
+          for i in range(8):
+              try:
+                  r=requests.get(BASE+"/health",headers={"Origin":ORIGIN},timeout=70)
+                  print("health",r.status_code,r.text[:1200])
+                  if r.ok:
+                      health=r.json()
+                      break
+              except Exception as e:
+                  print("health attempt",i+1,"error",repr(e))
+              time.sleep(8)
+          if not health:
+              raise SystemExit("LIVE_HEALTH_FAILED")
+          print("LIVE_VERSION",health.get("version"),"REV",health.get("deployRevision"))
+          if str(health.get("version"))!="1.6.12":
+              raise SystemExit("STALE_LIVE_VERSION="+str(health.get("version")))
+
+          print("2) activating...")
+          r=requests.post(BASE+"/api/activate",headers={"Origin":ORIGIN,"Content-Type":"application/json"},json={},timeout=70)
+          print("activate",r.status_code,r.text[:1000])
+          r.raise_for_status()
+          token=r.json().get("token")
+          if not token:
+              raise SystemExit("ACTIVATE_NO_TOKEN")
+
+          print("3) posting real spoken mp4...")
+          headers={"Origin":ORIGIN,"Authorization":"Bearer "+token}
+          with open("/tmp/sagi_live_test.mp4","rb") as f:
+              files={"media":("sagi_live_test.mp4",f,"video/mp4")}
+              data={"start":"0","duration":"8","language":"en"}
+              r=requests.post(BASE+"/api/caption-media",headers=headers,files=files,data=data,timeout=240)
+          print("caption",r.status_code,r.text[:5000])
+          if r.status_code!=200:
+              raise SystemExit("CAPTION_MEDIA_HTTP_"+str(r.status_code))
+          d=r.json()
+          if not d.get("ok"):
+              raise SystemExit("CAPTION_MEDIA_NOT_OK")
+          segs=d.get("segments") or []
+          if not segs:
+              raise SystemExit("CAPTION_MEDIA_EMPTY")
+          text=" ".join(str(x.get("text") or "") for x in segs)
+          print("CAPTION_TEXT",text)
+          if "SAGI" not in text.upper() and "cloud" not in text.lower():
+              raise SystemExit("CAPTION_CONTENT_UNEXPECTED="+text)
+
+          print("4) testing live context translation...")
+          r=requests.post(BASE+"/api/translate-context",headers={**headers,"Content-Type":"application/json"},json={
+              "source":"en","target":"zh-CN","mode":"football",
+              "segments":[x.get("text") or "" for x in segs]
+          },timeout=120)
+          print("translate",r.status_code,r.text[:5000])
+          if r.status_code!=200:
+              raise SystemExit("TRANSLATE_HTTP_"+str(r.status_code))
+          td=r.json()
+          if not td.get("ok") or not (td.get("segments") or []):
+              raise SystemExit("TRANSLATE_NOT_OK")
+
+          print("LIVE CLOUD END-TO-END PASS")
+          PY
