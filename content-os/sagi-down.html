@@ -306,11 +306,11 @@ Unbelievable finish."></textarea>
         <div class="voiceGrid">
           <label>AI配音
             <select id="aiVoiceMode">
-              <option value="ai_male" selected>AI专业男声</option>
+              <option value="ai_male">AI专业男声</option>
               <option value="ai_female">AI专业女声</option>
               <option value="clone">我的克隆声音</option>
               <option value="recorded">使用我的录音</option>
-              <option value="none">不加解说</option>
+              <option value="none" selected>不加解说（稳定优先）</option>
             </select>
           </label>
           <label>语速
@@ -341,7 +341,7 @@ Unbelievable finish."></textarea>
         <div><label>质量</label><select id="exportQuality"><option value="fast">快速</option><option value="balanced">均衡</option><option value="high">高质量</option></select></div>
       </div>
       <div class="cloudRenderBox">
-        <div class="heroMini">CLOUD RENDER · 推荐</div>
+        <div class="heroMini">CLOUD RENDER · 需云端 V1.6.13+</div>
         <div class="mini">视频上传一次，云端完成字幕烧录、AI配音、原声混音和H.264编码。默认720×1280快速模式，明显减轻iPhone负担。</div>
         <div class="cloudRenderActions">
           <button class="btn gold" id="cloudRenderBtn" type="button">云端快速成片</button>
@@ -1892,7 +1892,7 @@ async function ensureFFmpeg(){
  ];
  await loadScript(main);
  if(!window.FFmpegWASM?.FFmpeg)throw new Error('FFmpeg 主模块未加载');
- const ffmpeg=new window.FFmpegWASM.FFmpeg();STUDIO.ffmpeg=ffmpeg;
+ const ffmpeg=new window.FFmpegWASM.FFmpeg();STUDIO.ffmpeg=ffmpeg;let ffmpegLastError='';ffmpeg.on('log',({type,message})=>{if(type==='stderr'&&/error|failed|invalid|unknown encoder|out of memory/i.test(message||''))ffmpegLastError=String(message).slice(0,220)});STUDIO.ffmpegLastError=()=>ffmpegLastError;
  ffmpeg.on('progress',({progress})=>{if(STUDIO.exporting&&Number.isFinite(progress))setProgress(20+Math.max(0,Math.min(.78,progress))*75)});
  const classWorkerURL=await toBlobURLRemote([
    'https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.15/dist/umd/814.ffmpeg.js',
@@ -1918,14 +1918,22 @@ function canvasSubtitlePng(text,w,h){
  });
  return new Promise(resolve=>c.toBlob(resolve,'image/png'))
 }
-async function buildSubtitleInputs(ffmpeg,args,duration,w,h){
- const timeline=captionTimeline();if(!timeline.length||q('burnSubtitle').value!=='yes')return{args,filters:[],last:'vbase',count:0};
+async function buildSubtitleInputs(ffmpeg,args,duration,w,h,trimStart=0){
+ const timeline=captionTimeline().filter(c=>Number(c.end)>trimStart&&Number(c.start)<trimStart+duration&&String(c.text||'').trim());
+ if(!timeline.length||q('burnSubtitle').value!=='yes')return{args,filters:[],last:'vbase',count:0};
+ // iPhone 上无限循环 PNG 输入会显著增加内存和编码负担。使用低帧率静态图片并限定时长。
  const filters=[];let last='vbase';
  for(let i=0;i<timeline.length;i++){
-   const c=timeline[i],blob=await canvasSubtitlePng(c.text,w,h),name='sub_'+i+'.png';await ffmpeg.writeFile(name,new Uint8Array(await blob.arrayBuffer()));
-   args.push('-loop','1','-i',name);
-   const next='vsub'+i,start=Math.max(0,c.start).toFixed(3),end=Math.min(duration,Math.max(c.start+.05,c.end)).toFixed(3);
-   filters.push('['+last+']['+(i+1)+':v]overlay=(W-w)/2:H-h-'+Math.max(50,Math.round(h*.045))+":enable='between(t,"+start+','+end+")'["+next+']');last=next
+   const c=timeline[i],blob=await canvasSubtitlePng(c.text,w,h);
+   if(!blob)throw new Error('字幕画布生成失败');
+   const name='sub_'+i+'.png';
+   await ffmpeg.writeFile(name,new Uint8Array(await blob.arrayBuffer()));
+   args.push('-loop','1','-framerate','1','-t',String(duration),'-i',name);
+   const next='vsub'+i;
+   const st=Math.max(0,Number(c.start)-trimStart).toFixed(3);
+   const en=Math.min(duration,Math.max(Number(c.start)+.05,Number(c.end))-trimStart).toFixed(3);
+   filters.push('['+last+']['+(i+1)+':v]overlay=(W-w)/2:H-h-'+Math.max(50,Math.round(h*.045))+":enable='between(t,"+st+','+en+")'["+next+']');
+   last=next
  }
  return{args,filters,last,count:timeline.length}
 }
@@ -1940,7 +1948,7 @@ async function exportStudio(){
    await ffmpeg.writeFile(inputName,new Uint8Array(await STUDIO.file.arrayBuffer()));setProgress(20);
    const [ow,oh]=studioOutputSize(),vf=studioAspectFilter();
    let args=['-ss',String(start),'-t',String(duration),'-i',inputName];
-   const sub=await buildSubtitleInputs(ffmpeg,args,duration,ow,oh);
+   const sub=await buildSubtitleInputs(ffmpeg,args,duration,ow,oh,start);
    let voiceIndex=1+sub.count;
    if(STUDIO.voiceBlob){const voiceExt=STUDIO.voiceMime.includes('webm')?'webm':'m4a';await ffmpeg.writeFile('voice.'+voiceExt,new Uint8Array(await STUDIO.voiceBlob.arrayBuffer()));args.push('-i','voice.'+voiceExt)}
    const filters=[];filters.push('[0:v]'+vf+',setsar=1[vbase]');filters.push(...sub.filters);
@@ -1957,13 +1965,13 @@ async function exportStudio(){
    args.push('-c:v','libx264','-preset',preset,'-crf',crf);
    if(audioMap)args.push('-c:a','aac','-b:a','160k');
    args.push('-movflags','+faststart','-shortest','SAGI_MOBILE_EDIT.mp4');
-   studioStatus('正在手机本地合成成片，请保持页面打开…','good');await ffmpeg.exec(args);
-   const data=await ffmpeg.readFile('SAGI_MOBILE_EDIT.mp4');STUDIO.resultBlob=new Blob([data.buffer],{type:'video/mp4'});
+   studioStatus('正在手机本地合成成片，请保持页面打开…','good');const exitCode=await ffmpeg.exec(args);if(exitCode!==0)throw new Error('FFmpeg 编码退出码 '+exitCode+' · '+(STUDIO.ffmpegLastError?.()||'请尝试快速模式'));
+   const data=await ffmpeg.readFile('SAGI_MOBILE_EDIT.mp4');if(!data?.byteLength||data.byteLength<1024)throw new Error('输出文件为空');STUDIO.resultBlob=new Blob([data.buffer],{type:'video/mp4'});
    if(STUDIO.resultUrl)URL.revokeObjectURL(STUDIO.resultUrl);STUDIO.resultUrl=URL.createObjectURL(STUDIO.resultBlob);
    q('resultVideo').src=STUDIO.resultUrl;q('resultVideo').classList.add('show');q('saveResultBtn').href=STUDIO.resultUrl;q('resultActions').classList.add('show');
    setProgress(100);studioStatus('成片已生成 · '+fmtBytes(STUDIO.resultBlob.size)+'。可以保存到手机或直接分享。','good');toast('成片已生成')
  }catch(e){
-   console.error(e);studioStatus('手机导出失败：'+(e.message||e)+'。已保留素材；优先使用云端快速成片。若云端未升级，可把质量设为“快速”并控制在30秒内重试。','bad');setProgress(0)
+   console.error(e);studioStatus('手机导出失败：'+(e.message||e)+'。已保留素材。建议先试15秒、快速质量、关闭字幕烧录；如仍失败请截图此错误。','bad');setProgress(0)
  }finally{STUDIO.exporting=false;q('exportStudioBtn').disabled=false}
 }
 function cancelExport(){
