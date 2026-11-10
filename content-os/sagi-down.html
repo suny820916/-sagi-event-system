@@ -493,7 +493,11 @@ async function pollCloudDownload(jobId,handoff){
       return
     }
     if(job.status==='failed'){
-      const msg=job.errorCode==='cloud_download_rate_limit'
+      const msg=job.errorCode==='instagram_source_timeout'
+        ?'Instagram 服务器未响应云端请求（45秒超时）。不是手机故障；可点「原链接」查看，或换一个公开帖子重试。'
+        :job.errorCode==='instagram_access_restricted'
+        ?'Instagram 限制了云端服务器访问，可能需要登录或该帖子不公开。请点「原链接」查看；目前不能保证云端直接下载。'
+        :job.errorCode==='cloud_download_rate_limit'
         ?'源平台暂时限制了云端访问，请稍后重试。'
         :(job.error||'云端解析失败');
       throw new Error(msg)
