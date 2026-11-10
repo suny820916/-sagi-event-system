@@ -2691,8 +2691,9 @@ function sdIntelTopicSignals(ocr,keywords,news,visual,faces,meta){
   const add=(label,hot=false,live=false)=>signals.push({label,hot,live});
   if(meta.mode==='SOCIAL SCREENSHOT')add('社交截图 · 已去UI',false,false);
   if(meta.source?.name)add('来源 '+meta.source.name,false,true);
+  const reconciledCount=Math.max(meta.scores.length,meta.verifiedStreak||0);
   if(meta.scores.length>=2)add(meta.scores.length+'组比分',true,false);else if(meta.scores.length===1)add('比分 '+meta.scores[0],true,false);
-  if(meta.verifiedStreak)add('已验证 '+meta.verifiedStreak+'连胜',true,true);
+  if(meta.verifiedStreak){add('已验证 '+meta.verifiedStreak+'连胜',true,true);if(meta.scores.length&&meta.scores.length<meta.verifiedStreak)add('OCR '+meta.scores.length+'组 / 联网校准 '+meta.verifiedStreak+'场',true,true)}
   if(meta.location)add(meta.location,false,true);
   if(faces>=1)add(faces+'个人物主体',faces===1,false);
   if(/冠军|夺冠|champion|title|final/.test(text))add('冠军 / 决赛',true,news.length>0);
@@ -2754,11 +2755,14 @@ function sdIntelRender(){
   if(!q('sdImgAnalyzeStatus'))return;
   const v=SDINTEL.visual||{},facts=q('sdImgAnalyzeFacts'),ocr=q('sdImgAnalyzeOcr'),signals=q('sdImgAnalyzeSignals'),grid=q('sdImgTrendGrid'),newsBox=q('sdImgNewsList');
   if(SDINTEL.analyzedAt){
+    const coachName=(typeof sdOrigCoachName==='function'?sdOrigCoachName():'')||'未验证',matchCount=Math.max((SDINTEL.scores||[]).length,Number(SDINTEL.verifiedStreak)||0);
     facts.style.display='grid';facts.innerHTML=[
       ['HOT INDEX',SDINTEL.score+'/100'],
       ['图片类型',SDINTEL.mode==='SOCIAL SCREENSHOT'?'社交截图':'普通图片'],
-      ['比分组',(SDINTEL.scores||[]).length?((SDINTEL.scores||[]).length+'组'):'未识别'],
-      ['核心事实',SDINTEL.verifiedStreak?(SDINTEL.verifiedStreak+'连胜'):(SDINTEL.source?.subject||'待核对')]
+      ['比赛数',matchCount?(matchCount+'场'):'未识别'],
+      ['主教练 · 来源验证',coachName],
+      ['核心事实',SDINTEL.verifiedStreak?(SDINTEL.verifiedStreak+'连胜'):(SDINTEL.source?.subject||'待核对')],
+      ['来源',SDINTEL.source?.name||'未识别']
     ].map(x=>'<div class="imgIntelFact"><span>'+x[0]+'</span><b>'+escapeHtml(x[1])+'</b></div>').join('');
     if(SDINTEL.ocr){ocr.style.display='block';q('sdImgOcrText').textContent='主体：'+SDINTEL.ocr+(SDINTEL.sourceOcr?(' ｜ 来源区：'+SDINTEL.sourceOcr):'')}else ocr.style.display='none';
     signals.innerHTML=(SDINTEL.signals||[]).map(x=>'<span class="imgSignal '+(x.hot?'hot ':'')+(x.live?'live':'')+'">'+escapeHtml(x.label)+'</span>').join('');
@@ -2829,11 +2833,11 @@ function sdOrigCoachName(){
 }
 function sdOrigContext(){
   const subject=sdIntelSubjectName(SDINTEL.keywords||[],SDINTEL.ocr||'',SDINTEL.source||null);
-  const streak=Number(SDINTEL.verifiedStreak)||0,scores=SDINTEL.scores||[],coach=sdOrigCoachName(),source=SDINTEL.source?.name||'',location=SDINTEL.location||'';
+  const streak=Number(SDINTEL.verifiedStreak)||0,scores=SDINTEL.scores||[],matchCount=Math.max(scores.length,streak||0),coach=sdOrigCoachName(),source=SDINTEL.source?.name||'',location=SDINTEL.location||'';
   const person=coach?(coach+' · 主教练'):(subject?(subject+' · 核心人物/球队'):'足球热点');
-  const fact=streak?(subject+' '+streak+'连胜'):(scores.length?('近期 '+scores.length+' 场走势'):(SDINTEL.signals?.find(x=>x.hot)?.label||'足球热点'));
+  const fact=streak?(subject+' '+streak+'连胜'):(matchCount?('近期 '+matchCount+' 场走势'):(SDINTEL.signals?.find(x=>x.hot)?.label||'足球热点'));
   const hook=streak?(streak+'连胜'):(scores.length?(scores.length+'场走势'):(SDINTEL.angles?.[0]?.type||'热点'));
-  return{subject,streak,scores,coach,source,location,person,fact,hook}
+  return{subject,streak,scores,matchCount,coach,source,location,person,fact,hook}
 }
 function sdOrigBuildVariants(){
   const c=sdOrigContext(),a=SDINTEL.angles||[],tags=a[0]?.tags||SDIMG.tags||'#足球 #足球热点 #SAGI';
@@ -2841,7 +2845,7 @@ function sdOrigBuildVariants(){
   const coachTitle=c.coach?(c.coach+'带队'+(c.streak?c.streak+'连胜':'状态回升')+'：真正变化在哪？'):(c.subject+'这波走势，真正改变了什么？');
   const debateTitle=c.streak?(c.streak+'连胜之后，'+c.subject+'已经回到冠军级了吗？'):(c.subject+'这波走势，你给几分？');
   return[
-    {name:'A · 大数字热点',title:baseTitle,sub:c.streak?('不是一场赢球，而是连续'+c.streak+'场赢球。'):('把最近'+Math.max(1,c.scores.length)+'场放在一起，趋势比单场更重要。'),person:c.person,template:'number',structure:'大数字 + 趋势 + 结论',caption:(a[0]?.hook||'')+'\n\n'+(a[0]?.cta||''),tags},
+    {name:'A · 大数字热点',title:baseTitle,sub:c.streak?('不是一场赢球，而是连续'+c.streak+'场赢球。'):('把最近'+Math.max(1,c.matchCount||c.scores.length)+'场放在一起，趋势比单场更重要。'),person:c.person,template:'number',structure:'大数字 + 趋势 + 结论',caption:(a[0]?.hook||'')+'\n\n'+(a[0]?.cta||''),tags},
     {name:'B · 主教练观点',title:coachTitle,sub:c.coach?(c.coach+'的价值，不只是赢球，而是让球队开始稳定赢球。'):'从比赛结果看趋势，从趋势再看教练和球队的变化。',person:c.person,template:'coach',structure:'教练观点 + 战绩趋势 + 判断',caption:(a[1]?.hook||'')+'\n\n'+(a[1]?.cta||''),tags},
     {name:'C · 强评论问题',title:debateTitle,sub:'先别急着看答案，评论区先给出你的判断。',person:c.person,template:'question',structure:'大问句 + 事实证据 + 评论入口',caption:(a[2]?.hook||'')+'\n\n'+(a[2]?.cta||''),tags}
   ]
