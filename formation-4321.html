@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07110c">
+<title>SAGI 4-3-2-1 Tactical Animation</title>
+<style>
+:root{
+  --bg:#050807;
+  --panel:#0b100d;
+  --line:rgba(255,255,255,.76);
+  --muted:rgba(255,255,255,.58);
+  --green1:#0d4f2a;
+  --green2:#126735;
+  --green3:#0d5930;
+  --gold:#d7b866;
+  --blue:#58baff;
+  --cyan:#7ef2ff;
+  --white:#f7f7f2;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:#050807;color:#fff;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+body{min-height:100%;padding:16px 12px 32px;background:
+  radial-gradient(circle at 50% 0%,rgba(34,100,61,.18),transparent 38%),
+  linear-gradient(180deg,#07100b 0%,#040605 100%)}
+.wrap{width:min(100%,760px);margin:0 auto}
+.top{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin:2px 2px 12px}
+.brand{font-size:12px;letter-spacing:.24em;color:var(--gold);font-weight:800}
+.title{font-size:clamp(22px,6vw,34px);font-weight:900;line-height:1;margin:5px 0 0;letter-spacing:-.04em}
+.version{font-size:11px;color:#9f9f9f;border:1px solid #29322d;padding:6px 9px;border-radius:999px;white-space:nowrap}
+.stage{
+  position:relative;
+  margin:auto;
+  width:min(100%,540px);
+  aspect-ratio:9/16;
+  overflow:hidden;
+  border-radius:26px;
+  background:#08120c;
+  border:1px solid rgba(255,255,255,.08);
+  box-shadow:0 22px 80px rgba(0,0,0,.35);
+  isolation:isolate;
+}
+.stage::before{
+  content:"";
+  position:absolute;inset:0;z-index:0;
+  background:
+    linear-gradient(180deg,rgba(0,0,0,.38) 0%,transparent 23%,transparent 78%,rgba(0,0,0,.42) 100%),
+    repeating-linear-gradient(0deg,rgba(255,255,255,.018) 0 1px,transparent 1px 6.25%),
+    linear-gradient(90deg,var(--green1) 0 12.5%,var(--green2) 12.5% 25%,var(--green1) 25% 37.5%,var(--green2) 37.5% 50%,var(--green1) 50% 62.5%,var(--green2) 62.5% 75%,var(--green1) 75% 87.5%,var(--green2) 87.5% 100%);
+}
+.stage::after{
+  content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:radial-gradient(circle at 50% 47%,transparent 0 32%,rgba(0,0,0,.12) 72%,rgba(0,0,0,.38) 100%);
+}
+.hud{position:absolute;left:0;right:0;top:0;padding:20px 20px 0;z-index:20;display:flex;justify-content:space-between;align-items:flex-start}
+.hud .kicker{font-size:10px;letter-spacing:.2em;color:rgba(255,255,255,.65)}
+.hud h2{font-size:42px;line-height:.95;margin:5px 0 0;font-weight:950;letter-spacing:-.06em}
+.hud .badge{border:1px solid rgba(255,255,255,.18);background:rgba(0,0,0,.22);backdrop-filter:blur(8px);padding:8px 10px;border-radius:12px;font-size:10px;color:#d6ded9}
+.pitch{position:absolute;inset:11.5% 8% 8%;z-index:3;border:2px solid var(--line);border-radius:3px}
+.half{position:absolute;left:0;right:0;top:50%;height:2px;background:var(--line)}
+.circle{position:absolute;width:33%;aspect-ratio:1;left:33.5%;top:50%;transform:translateY(-50%);border:2px solid var(--line);border-radius:50%}
+.dot{position:absolute;width:5px;height:5px;background:var(--white);border-radius:50%;left:50%;top:50%;transform:translate(-50%,-50%)}
+.box{position:absolute;left:25%;width:50%;height:12%;border:2px solid var(--line)}
+.box.top{top:-2px;border-top:0}.box.bottom{bottom:-2px;border-bottom:0}
+.goal{position:absolute;left:38%;width:24%;height:3.6%;border:2px solid var(--line)}
+.goal.top{top:-3.6%}.goal.bottom{bottom:-3.6%}
+.arc{position:absolute;left:39%;width:22%;height:6%;border:2px solid var(--line);border-radius:50%}
+.arc.top{top:8.7%;clip-path:inset(45% 0 0 0)}.arc.bottom{bottom:8.7%;clip-path:inset(0 0 45% 0)}
+.routes{position:absolute;inset:11.5% 8% 8%;z-index:5;overflow:visible;pointer-events:none}
+.routes path{fill:none;stroke-linecap:round;stroke-linejoin:round}
+.routes .shape{stroke:rgba(126,242,255,.26);stroke-width:1.2;stroke-dasharray:4 7;opacity:0;animation:shapeIn .9s ease 5.1s forwards}
+.routes .attack{stroke:var(--cyan);stroke-width:2;stroke-dasharray:9 9;opacity:0;filter:drop-shadow(0 0 4px rgba(126,242,255,.55));animation:routeIn .8s ease 5.7s forwards, dash 1.2s linear 6.4s infinite}
+.routes .arrowHead{fill:var(--cyan);opacity:0;animation:routeIn .8s ease 5.7s forwards}
+.zone{position:absolute;z-index:2;left:8%;right:8%;height:14%;border-radius:18px;opacity:0;filter:blur(.2px);pointer-events:none}
+.zone.z1{bottom:17%;background:linear-gradient(90deg,transparent,rgba(88,186,255,.11),transparent);animation:zoneIn 1s ease 1.25s forwards}
+.zone.z2{bottom:39%;background:linear-gradient(90deg,transparent,rgba(126,242,255,.12),transparent);animation:zoneIn 1s ease 2.25s forwards}
+.zone.z3{top:29%;background:linear-gradient(90deg,transparent,rgba(215,184,102,.12),transparent);animation:zoneIn 1s ease 3.15s forwards}
+.player{
+  position:absolute;z-index:12;
+  width:52px;height:52px;
+  margin:-26px 0 0 -26px;
+  display:grid;place-items:center;
+  opacity:0;transform:translateY(26px) scale(.56);
+  animation:enter .72s cubic-bezier(.2,.86,.25,1.14) var(--delay) forwards;
+}
+.player::before{
+  content:"";position:absolute;inset:5px;border-radius:50%;
+  background:radial-gradient(circle at 35% 28%,#fff 0 4%,#64c8ff 5% 12%,#117fd1 42%,#0757a0 76%,#063f78 100%);
+  border:2px solid rgba(255,255,255,.95);
+  box-shadow:0 0 0 4px rgba(7,87,160,.26),0 6px 14px rgba(0,0,0,.32),0 0 18px rgba(88,186,255,.2);
+}
+.player.gk::before{background:radial-gradient(circle at 35% 28%,#fff 0 4%,#ffe990 5% 12%,#d5a82a 42%,#9e7615 76%,#664905 100%);box-shadow:0 0 0 4px rgba(215,184,102,.2),0 6px 14px rgba(0,0,0,.32),0 0 18px rgba(215,184,102,.18)}
+.player.st::before{background:radial-gradient(circle at 35% 28%,#fff 0 4%,#c7fbff 5% 12%,#2ebed0 42%,#147482 78%,#0c4d57 100%);box-shadow:0 0 0 4px rgba(126,242,255,.2),0 6px 14px rgba(0,0,0,.32),0 0 20px rgba(126,242,255,.2)}
+.player .num{position:relative;z-index:2;font-size:12px;font-weight:900;text-shadow:0 1px 3px #000}
+.player .role{position:absolute;top:47px;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:8px;letter-spacing:.09em;color:rgba(255,255,255,.72);font-weight:800}
+.player::after{
+  content:"";position:absolute;inset:-8px;border:1px solid rgba(126,242,255,.24);border-radius:50%;opacity:0;
+  animation:pulse 1.4s ease var(--pulse) 1;
+}
+.gk{left:50%;top:85%}
+.lb{left:18%;top:71%}.lcb{left:39%;top:75%}.rcb{left:61%;top:75%}.rb{left:82%;top:71%}
+.lcm{left:27%;top:54%}.cm{left:50%;top:50%}.rcm{left:73%;top:54%}
+.lam{left:37%;top:36%}.ram{left:63%;top:36%}
+.st{left:50%;top:22%}
+.caption{
+  position:absolute;z-index:21;left:20px;right:20px;bottom:21px;
+  display:flex;justify-content:space-between;align-items:flex-end;gap:10px;
+}
+.caption .step{font-size:10px;color:rgba(255,255,255,.58);letter-spacing:.08em}
+.caption .desc{margin-top:4px;font-size:13px;font-weight:800}
+.caption .mark{font-size:9px;color:var(--gold);border:1px solid rgba(215,184,102,.28);padding:6px 8px;border-radius:999px;background:rgba(0,0,0,.22)}
+.scan{position:absolute;z-index:6;left:8%;right:8%;height:1px;top:18%;background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:.42;box-shadow:0 0 12px rgba(126,242,255,.45);animation:scan 5.4s ease-in-out 1s infinite alternate;pointer-events:none}
+.controls{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:13px auto 0;width:min(100%,540px)}
+button{appearance:none;border:1px solid #2a332e;background:#111713;color:#f5f5f2;border-radius:13px;padding:11px 14px;font:700 13px inherit;min-height:44px}
+button.primary{background:linear-gradient(135deg,#e3cb85,#b18f3e);border:0;color:#17130a}
+button:active{transform:scale(.98)}
+.note{width:min(100%,540px);margin:10px auto 0;color:#7f8b84;font-size:11px;line-height:1.6;text-align:center}
+.paused *{animation-play-state:paused!important}
+@keyframes enter{0%{opacity:0;transform:translateY(28px) scale(.5);filter:blur(6px)}60%{opacity:1;filter:blur(0)}100%{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}}
+@keyframes pulse{0%{opacity:0;transform:scale(.7)}40%{opacity:.85}100%{opacity:0;transform:scale(1.55)}}
+@keyframes zoneIn{to{opacity:1}}
+@keyframes shapeIn{to{opacity:1}}
+@keyframes routeIn{to{opacity:.92}}
+@keyframes dash{to{stroke-dashoffset:-36}}
+@keyframes scan{0%{top:20%}100%{top:78%}}
+@media(max-width:420px){
+  body{padding:10px 8px 24px}
+  .top{margin:2px 4px 9px}
+  .stage{border-radius:20px}
+  .hud{padding:17px 16px 0}.hud h2{font-size:36px}
+  .player{width:44px;height:44px;margin:-22px 0 0 -22px}.player .role{top:41px;font-size:7px}
+  .caption{left:16px;right:16px;bottom:17px}
+}
+@media(prefers-reduced-motion:reduce){
+  .player,.routes path,.routes .arrowHead,.zone,.scan{animation:none!important;opacity:1!important;transform:none!important}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div>
+      <div class="brand">SAGI TACTICAL LAB</div>
+      <div class="title">足球阵型动画</div>
+    </div>
+    <div class="version">FORMATION · 4-3-2-1</div>
+  </div>
+
+  <div id="stage" class="stage" aria-label="4-3-2-1足球阵型动画">
+    <div class="hud">
+      <div><div class="kicker">TACTICAL STRUCTURE</div><h2>4·3·2·1</h2></div>
+      <div class="badge">11 PLAYERS<br>VERTICAL COMPACT</div>
+    </div>
+
+    <div class="zone z1"></div>
+    <div class="zone z2"></div>
+    <div class="zone z3"></div>
+    <div class="scan"></div>
+
+    <div class="pitch">
+      <div class="half"></div><div class="circle"></div><div class="dot"></div>
+      <div class="box top"></div><div class="box bottom"></div>
+      <div class="goal top"></div><div class="goal bottom"></div>
+      <div class="arc top"></div><div class="arc bottom"></div>
+    </div>
+
+    <svg class="routes" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+      <defs>
+        <marker id="arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+          <path class="arrowHead" d="M0,0 L6,3 L0,6 Z"/>
+        </marker>
+      </defs>
+      <path class="shape" d="M18 71 L39 75 L61 75 L82 71 M27 54 L50 50 L73 54 M37 36 L63 36 M50 22 L37 36 L27 54 L18 71 M50 22 L63 36 L73 54 L82 71"/>
+      <path class="attack" marker-end="url(#arrow)" d="M50 84 C50 72 50 64 50 53"/>
+      <path class="attack" marker-end="url(#arrow)" d="M50 50 C50 44 45 40 39 36"/>
+      <path class="attack" marker-end="url(#arrow)" d="M50 50 C50 44 55 40 61 36"/>
+      <path class="attack" marker-end="url(#arrow)" d="M38 35 C42 29 46 25 49 22"/>
+      <path class="attack" marker-end="url(#arrow)" d="M62 35 C58 29 54 25 51 22"/>
+    </svg>
+
+    <div class="player gk" style="--delay:.55s;--pulse:1.05s"><span class="num">1</span><span class="role">GK</span></div>
+
+    <div class="player lb" style="--delay:1.25s;--pulse:1.75s"><span class="num">3</span><span class="role">LB</span></div>
+    <div class="player lcb" style="--delay:1.38s;--pulse:1.88s"><span class="num">4</span><span class="role">LCB</span></div>
+    <div class="player rcb" style="--delay:1.51s;--pulse:2.01s"><span class="num">5</span><span class="role">RCB</span></div>
+    <div class="player rb" style="--delay:1.64s;--pulse:2.14s"><span class="num">2</span><span class="role">RB</span></div>
+
+    <div class="player lcm" style="--delay:2.25s;--pulse:2.75s"><span class="num">8</span><span class="role">LCM</span></div>
+    <div class="player cm" style="--delay:2.39s;--pulse:2.89s"><span class="num">6</span><span class="role">CM</span></div>
+    <div class="player rcm" style="--delay:2.53s;--pulse:3.03s"><span class="num">7</span><span class="role">RCM</span></div>
+
+    <div class="player lam" style="--delay:3.15s;--pulse:3.65s"><span class="num">10</span><span class="role">LAM</span></div>
+    <div class="player ram" style="--delay:3.32s;--pulse:3.82s"><span class="num">11</span><span class="role">RAM</span></div>
+
+    <div class="player st" style="--delay:4.05s;--pulse:4.55s"><span class="num">9</span><span class="role">ST</span></div>
+
+    <div class="caption">
+      <div>
+        <div class="step">BUILD → CONNECT → ATTACK</div>
+        <div class="desc">四后卫 · 三中场 · 双前腰 · 单前锋</div>
+      </div>
+      <div class="mark">SAGI</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button id="replay" class="primary" type="button">↻ 重播动画</button>
+    <button id="pause" type="button">Ⅱ 暂停</button>
+    <button id="clean" type="button">◫ 纯画面模式</button>
+  </div>
+  <div id="note" class="note">9:16 竖屏战术动画 · 网页原生 SVG/CSS · 可直接用于手机演示或录屏做抖音素材</div>
+</div>
+
+<script>
+(function(){
+  const stage=document.getElementById('stage');
+  const replay=document.getElementById('replay');
+  const pause=document.getElementById('pause');
+  const clean=document.getElementById('clean');
+  const top=document.querySelector('.top');
+  const controls=document.querySelector('.controls');
+  const note=document.getElementById('note');
+  let paused=false,cleanMode=false,timer=null;
+
+  function restart(){
+    paused=false;
+    pause.textContent='Ⅱ 暂停';
+    stage.classList.remove('paused');
+    const parent=stage.parentNode;
+    const clone=stage.cloneNode(true);
+    parent.replaceChild(clone,stage);
+    stage=clone;
+    bindStage();
+    schedule();
+  }
+
+  function schedule(){
+    clearTimeout(timer);
+    timer=setTimeout(function(){ if(!paused && !cleanMode) restart(); },9000);
+  }
+
+  function bindStage(){}
+
+  replay.addEventListener('click',restart);
+  pause.addEventListener('click',function(){
+    paused=!paused;
+    stage.classList.toggle('paused',paused);
+    pause.textContent=paused?'▶ 继续':'Ⅱ 暂停';
+    if(paused) clearTimeout(timer); else schedule();
+  });
+  clean.addEventListener('click',function(){
+    cleanMode=!cleanMode;
+    top.style.display=cleanMode?'none':'flex';
+    controls.style.marginTop=cleanMode?'8px':'13px';
+    note.style.display=cleanMode?'none':'block';
+    clean.textContent=cleanMode?'退出纯画面':'◫ 纯画面模式';
+  });
+  schedule();
+})();
+</script>
+</body>
+</html>
