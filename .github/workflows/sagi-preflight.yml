@@ -166,7 +166,7 @@ jobs:
           c = mod.app.test_client()
           health = c.get("/health").get_json()
           print("health", health)
-          assert health["version"] == "1.6.13"
+          assert health["version"] == "1.6.14"
           assert health["captionMedia"] is True
           assert health["contextTranslate"] is True
           assert health["smartTranslate"] is True
@@ -243,6 +243,37 @@ jobs:
           print("AI Voice API smoke OK")
           PY
 
+      - name: Real keyless Edge Neural TTS smoke test
+        run: |
+          cd sagi-cloud-bridge
+          python - <<'PY'
+          import tempfile
+          from pathlib import Path
+          import app as mod
+          mod.ELEVENLABS_API_KEY = ""
+          out = Path(tempfile.mkdtemp()) / "edge.mp3"
+          mod.synthesize_voice("这是萨吉体育AI配音真实测试。", "ai_male", "", out, 1.0)
+          assert out.exists() and out.stat().st_size > 1000, out.stat().st_size if out.exists() else 0
+          print("EDGE TTS OK", out.stat().st_size)
+          PY
+
+      - name: Verify ffmpeg.wasm CDN assets used by iPhone fallback
+        run: |
+          python - <<'PY'
+          import urllib.request
+          urls=[
+            "https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.15/dist/umd/ffmpeg.js",
+            "https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.15/dist/umd/814.ffmpeg.js",
+            "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd/ffmpeg-core.js",
+            "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd/ffmpeg-core.wasm",
+          ]
+          for u in urls:
+            req=urllib.request.Request(u,method="HEAD",headers={"User-Agent":"SAGI-preflight"})
+            with urllib.request.urlopen(req,timeout=30) as r:
+              print(r.status,u,r.headers.get("content-length"))
+              assert r.status == 200
+          PY
+
       - name: Frontend JavaScript syntax and wiring
         run: |
           python - <<'PY'
@@ -264,7 +295,7 @@ jobs:
               "cloneMyVoice",
               "cloudCaptionMedia",
               "runAiCaption(true)",
-              "V1.9.3 · CLOUD RENDER GATE",
+              "V1.9.4 · ONE-SHOT STABILITY",
           ]
           for x in required:
               assert x in s, x
