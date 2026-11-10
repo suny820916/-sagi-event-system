@@ -29,6 +29,9 @@ jobs = {}
 jobs_lock = Lock()
 rate_hits = {}
 rate_lock = Lock()
+pair_codes = {}
+pair_lock = Lock()
+worker_presence = {"last_seen": 0, "worker_id": ""}
 
 def now():
     return datetime.now(timezone.utc)
@@ -44,6 +47,31 @@ def client_token():
         b"sagi-content-os-instagram-cloud-client-v1",
         hashlib.sha256,
     ).hexdigest()
+
+def worker_token():
+    if not SERVER_SECRET:
+        return ""
+    return hmac.new(
+        SERVER_SECRET.encode("utf-8"),
+        b"sagi-content-os-instagram-worker-v1",
+        hashlib.sha256,
+    ).hexdigest()
+
+def worker_authorized():
+    token = worker_token()
+    if not token:
+        return False
+    header = request.headers.get("Authorization", "")
+    supplied = header[7:] if header.startswith("Bearer ") else ""
+    return bool(supplied) and hmac.compare_digest(supplied, token)
+
+def touch_worker(worker_id=""):
+    worker_presence["last_seen"] = time.time()
+    if worker_id:
+        worker_presence["worker_id"] = worker_id[:80]
+
+def worker_online():
+    return (time.time() - float(worker_presence.get("last_seen") or 0)) < 45
 
 def origin_allowed():
     origin = (request.headers.get("Origin") or "").rstrip("/")
@@ -94,6 +122,7 @@ def public_job(job):
         "error": job.get("error", ""),
         "errorCode": job.get("errorCode", ""),
         "strategy": job.get("strategy", ""),
+        "worker": job.get("worker", ""),
         "size": job.get("size", 0),
     }
     if job["status"] == "ready":
@@ -276,8 +305,10 @@ def health():
     return jsonify({
         "ok": True,
         "service": "SAGI CLOUD BRIDGE",
-        "version": "1.1.0",
+        "version": "1.2.0",
         "instagram": True,
+        "hybridWorker": True,
+        "workerOnline": worker_online(),
         "activation": True,
         "maxFileMB": MAX_FILE_MB,
         "jobTTLMinutes": JOB_TTL_MIN,
@@ -295,7 +326,7 @@ def activate():
         "ok": True,
         "service": "SAGI CLOUD BRIDGE",
         "token": token,
-        "version": "1.1.0",
+        "version": "1.2.0",
     })
 
 @app.post("/api/jobs")
@@ -315,12 +346,16 @@ def create_job():
     job_id = secrets.token_urlsafe(9)
     job = {
         "id": job_id,
-        "status": "queued",
+        "status": "waiting_worker",
         "created_at": iso(),
         "updated_at": iso(),
         "title": name,
+        "source_url": url,
+        "requested_name": name,
         "error": "",
+        "errorCode": "",
         "size": 0,
+        "worker": "",
         "download_key": secrets.token_urlsafe(18),
         "path": "",
         "workdir": "",
@@ -329,8 +364,156 @@ def create_job():
     with jobs_lock:
         jobs[job_id] = job
 
-    Thread(target=run_download, args=(job_id, url, name), daemon=True).start()
-    return jsonify({"ok": True, "job": public_job(job)}), 202
+    return jsonify({
+        "ok": True,
+        "job": public_job(job),
+        "workerOnline": worker_online()
+    }), 202
+
+
+@app.post("/api/worker/pair/start")
+def worker_pair_start():
+    if not authorized():
+        return jsonify({"ok": False, "error": "Unauthorized"}), 401
+    code = f"{secrets.randbelow(1000000):06d}"
+    with pair_lock:
+        pair_codes.clear()
+        pair_codes[code] = time.time() + 600
+    return jsonify({"ok": True, "code": code, "expiresIn": 600})
+
+@app.post("/api/worker/pair/claim")
+def worker_pair_claim():
+    data = request.get_json(silent=True) or {}
+    code = str(data.get("code") or "").strip()
+    worker_id = str(data.get("workerId") or "").strip()[:80]
+    if not code:
+        return jsonify({"ok": False, "error": "Pair code required"}), 400
+    with pair_lock:
+        expires = pair_codes.get(code)
+        if not expires or expires < time.time():
+            pair_codes.pop(code, None)
+            return jsonify({"ok": False, "error": "Pair code invalid or expired"}), 403
+        pair_codes.pop(code, None)
+    token = worker_token()
+    if not token:
+        return jsonify({"ok": False, "error": "Worker secret unavailable"}), 503
+    touch_worker(worker_id)
+    return jsonify({
+        "ok": True,
+        "token": token,
+        "cloud": request.host_url.rstrip("/"),
+        "workerId": worker_id,
+    })
+
+@app.get("/api/worker/status")
+def worker_status():
+    if not authorized():
+        return jsonify({"ok": False, "error": "Unauthorized"}), 401
+    age = None
+    if worker_presence["last_seen"]:
+        age = max(0, int(time.time() - worker_presence["last_seen"]))
+    return jsonify({
+        "ok": True,
+        "online": worker_online(),
+        "lastSeenSeconds": age,
+        "workerId": worker_presence.get("worker_id") or "",
+    })
+
+@app.get("/api/worker/jobs/next")
+def worker_job_next():
+    if not worker_authorized():
+        return jsonify({"ok": False, "error": "Unauthorized worker"}), 401
+    worker_id = (request.headers.get("X-SAGI-Worker") or "SAGI-PC").strip()[:80]
+    touch_worker(worker_id)
+    chosen = None
+    with jobs_lock:
+        waiting = sorted(
+            [j for j in jobs.values() if j.get("status") == "waiting_worker"],
+            key=lambda x: x.get("created_at", "")
+        )
+        if waiting:
+            chosen = waiting[0]
+            chosen["status"] = "worker_downloading"
+            chosen["worker"] = worker_id
+            chosen["updated_at"] = iso()
+    if not chosen:
+        return jsonify({"ok": True, "job": None})
+    return jsonify({
+        "ok": True,
+        "job": {
+            "id": chosen["id"],
+            "url": chosen["source_url"],
+            "name": chosen["requested_name"],
+        }
+    })
+
+@app.post("/api/worker/jobs/<job_id>/complete")
+def worker_job_complete(job_id):
+    if not worker_authorized():
+        return jsonify({"ok": False, "error": "Unauthorized worker"}), 401
+    worker_id = (request.headers.get("X-SAGI-Worker") or "SAGI-PC").strip()[:80]
+    touch_worker(worker_id)
+    upload = request.files.get("file")
+    if not upload:
+        return jsonify({"ok": False, "error": "file is required"}), 400
+
+    with jobs_lock:
+        job = jobs.get(job_id)
+        if not job:
+            return jsonify({"ok": False, "error": "Job not found"}), 404
+
+    work = tempfile.mkdtemp(prefix=f"sagi_worker_{job_id}_")
+    filename = safe_name(request.form.get("name") or job.get("requested_name") or "SAGI_INS_VIDEO.mp4")
+    if "." not in filename:
+        filename += ".mp4"
+    path = Path(work) / filename
+    upload.save(path)
+    size = path.stat().st_size
+    if size > MAX_FILE_MB * 1024 * 1024:
+        shutil.rmtree(work, ignore_errors=True)
+        return jsonify({"ok": False, "error": f"File exceeds {MAX_FILE_MB}MB"}), 413
+
+    with jobs_lock:
+        job = jobs.get(job_id)
+        if not job:
+            shutil.rmtree(work, ignore_errors=True)
+            return jsonify({"ok": False, "error": "Job expired"}), 410
+        if job.get("workdir"):
+            shutil.rmtree(job["workdir"], ignore_errors=True)
+        job.update({
+            "status": "ready",
+            "updated_at": iso(),
+            "path": str(path),
+            "workdir": work,
+            "filename": filename,
+            "title": request.form.get("title") or filename,
+            "size": size,
+            "worker": worker_id,
+            "error": "",
+            "errorCode": "",
+        })
+    return jsonify({"ok": True, "job": public_job(job)})
+
+@app.post("/api/worker/jobs/<job_id>/fail")
+def worker_job_fail(job_id):
+    if not worker_authorized():
+        return jsonify({"ok": False, "error": "Unauthorized worker"}), 401
+    worker_id = (request.headers.get("X-SAGI-Worker") or "SAGI-PC").strip()[:80]
+    touch_worker(worker_id)
+    data = request.get_json(silent=True) or {}
+    msg = str(data.get("error") or "Worker download failed")[:700]
+    with jobs_lock:
+        job = jobs.get(job_id)
+        if not job:
+            return jsonify({"ok": False, "error": "Job not found"}), 404
+        job.update({
+            "status": "failed",
+            "updated_at": iso(),
+            "worker": worker_id,
+            "error": msg,
+            "errorCode": "worker_download_failed",
+        })
+    return jsonify({"ok": True})
 
 @app.get("/api/jobs/<job_id>")
 def job_status(job_id):
