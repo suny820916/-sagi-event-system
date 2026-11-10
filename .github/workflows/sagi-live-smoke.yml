@@ -51,7 +51,7 @@ jobs:
               time.sleep(8)
           if not health:
               raise SystemExit("LIVE_HEALTH_FAILED")
-          expected="1.7.0"
+          expected="1.7.1"
           if str(health.get("version"))!=expected:
               print("waiting for expected live version",expected)
               health=None
