@@ -103,10 +103,12 @@ jobs:
           c = mod.app.test_client()
           health = c.get("/health").get_json()
           print("health", health)
-          assert health["version"] == "1.6.11"
+          assert health["version"] == "1.6.12"
           assert health["captionMedia"] is True
           assert health["contextTranslate"] is True
           assert health["smartTranslate"] is True
+          assert health["aiVoice"] is True
+          assert health["cloudRender"] is True
 
           token = mod.client_token()
           headers = {"Authorization": "Bearer " + token, "Origin": "https://suny820916.github.io"}
@@ -152,9 +154,12 @@ jobs:
               "redistributeParagraphToTimeline",
               "chooseSmartWindow",
               "cloudSmartTranslate",
+              "startCloudRender",
+              "previewAIVoice",
+              "cloneMyVoice",
               "cloudCaptionMedia",
               "runAiCaption(true)",
-              "V1.8 · SMART RECREATE",
+              "V1.9 · AI VOICE + CLOUD RENDER",
           ]
           for x in required:
               assert x in s, x
