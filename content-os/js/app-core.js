@@ -18,6 +18,7 @@ const VIEW_META={
  calendar:['CALENDAR · 内容排期','跨球队、赛事、品牌统一安排内容。'],
  assets:['ASSETS · 素材库','把球队、赛事和品牌素材集中起来。'],
  video:['AI FOOTBALL VIDEO DIRECTOR · 足球视频导演','真实比赛镜头 + 中文热点资料 + 自动镜头编排，生成专业竖屏短片。'],
+ image:['IMAGE STUDIO · 图片编辑与发布','比赛照片、热点海报、赛果、MVP、球衣发布，一张图完成编辑、导出和分享。'],
  create:['CREATE · 内容制作','导演方案进入故事板和制作执行。'],
  publish:['PUBLISH · 发布中心','管理待发布、已发布和发布后数据。'],
  learning:['LEARNING · 内容学习','让系统从真实发布结果中越来越懂 SAGI。'],
@@ -1584,12 +1585,12 @@ function openContent(id,view='create'){
  const c=state.contents.find(x=>x.id===id);if(!c)return;state.currentContentId=id;state.currentProjectId=c.projectId;state.director={goal:c.goal,format:c.format,requested:c.format,style:c.style,platform:c.platform,theme:c.title,hooks:c.hooks||[c.hook],hook:c.hook,shots:c.shots||shotsFor(c.format),music:c.music,cta:c.cta,scheduleAt:c.scheduleAt,cover:c.cover,generatedAt:c.createdAt,score:scoreDirector(c.format,c.hook,c.goal,allProjects().find(p=>p.id===c.projectId))};save();renderAll();switchView(view)
 }
 function autoCalendar(){const p=project();if(!p){note('请先选择项目');return}const names=['品牌','人物故事','产品','足球热点','比赛预热','MATCH DAY','赛果 / MVP'];note('已生成7天内容结构建议');renderWeek(q('calendarFull'))}
-function switchView(v){if(!VIEW_META[v])return;activeView=v;if(isMobileRuntime())localStorage.setItem('sagi_mobile_view',v);document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===v));document.querySelectorAll('[data-view-panel]').forEach(p=>p.classList.toggle('active',p.dataset.viewPanel===v));q('viewTitle').textContent=VIEW_META[v][0];q('viewDesc').textContent=VIEW_META[v][1];if(v==='matchday')window.SAGI_MOBILE?.renderMatchday?.();if(v==='videojobs')window.SAGI_MOBILE?.renderVideoJobs?.();if(v==='downloader')window.SAGI_DOWNLOADER?.render?.();if(v==='review')window.SAGI_MOBILE?.renderReview?.();if(v==='daily'){if(dailyCommandNeedsRefresh()&&!state.dailyCommandLoading)runDailyViralCommand(true);else renderDailyCommand()}if(v==='trends')renderTrends();if(v==='flow')renderFlow();if(v==='viralgen')renderViralGenerator();if(v==='viral')renderViralModel();if(v==='account')renderAccountData();if(v==='assets')renderAssets();if(v==='video')renderVideoEngine();if(v==='create')renderCreate();if(v==='publish')renderPublish();if(v==='learning')renderLearning();if(v==='performance')renderPerformance();if(v==='projects')renderProjects();if(v==='calendar')renderCalendar()}
+function switchView(v){if(!VIEW_META[v])return;activeView=v;if(isMobileRuntime())localStorage.setItem('sagi_mobile_view',v);document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===v));document.querySelectorAll('[data-view-panel]').forEach(p=>p.classList.toggle('active',p.dataset.viewPanel===v));q('viewTitle').textContent=VIEW_META[v][0];q('viewDesc').textContent=VIEW_META[v][1];if(v==='matchday')window.SAGI_MOBILE?.renderMatchday?.();if(v==='videojobs')window.SAGI_MOBILE?.renderVideoJobs?.();if(v==='downloader')window.SAGI_DOWNLOADER?.render?.();if(v==='review')window.SAGI_MOBILE?.renderReview?.();if(v==='daily'){if(dailyCommandNeedsRefresh()&&!state.dailyCommandLoading)runDailyViralCommand(true);else renderDailyCommand()}if(v==='trends')renderTrends();if(v==='flow')renderFlow();if(v==='viralgen')renderViralGenerator();if(v==='viral')renderViralModel();if(v==='account')renderAccountData();if(v==='assets')renderAssets();if(v==='video')renderVideoEngine();if(v==='image')window.SAGI_IMAGE?.render?.();if(v==='create')renderCreate();if(v==='publish')renderPublish();if(v==='learning')renderLearning();if(v==='performance')renderPerformance();if(v==='projects')renderProjects();if(v==='calendar')renderCalendar()}
 let activeView='';
 function isMobileRuntime(){return typeof matchMedia==='function'&&matchMedia('(max-width:900px)').matches}
 function currentView(){return activeView||localStorage.getItem('sagi_mobile_view')||'daily'}
 function renderAll(){
- window.SAGI_MOBILE?.renderAll?.();window.SAGI_DOWNLOADER?.render?.();
+ window.SAGI_MOBILE?.renderAll?.();window.SAGI_DOWNLOADER?.render?.();window.SAGI_IMAGE?.render?.();
  renderProjectSelect();renderKpis();renderTodayRecommendation();renderToday();renderDailyCommand();renderPublish();
  if(isMobileRuntime())return;
  renderTrends();renderFlow();renderDirector();renderCalendar();renderAssets();renderVideoEngine();renderCreate();renderLearning();renderViralGenerator();renderViralModel();renderAccountData();renderAccountTrend();renderPerformance();renderProjects()
