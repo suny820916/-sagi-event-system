@@ -663,40 +663,59 @@ def _decode_ig_media_url(raw):
     return value.strip()
 
 def _extract_instagram_media_urls(text):
-    """Extract public media URLs from Instagram page/embed HTML without executing JS."""
+    """Extract only post media; avoid generic page/recommendation <img> assets."""
     if not text:
         return []
-    found = []
-    patterns = [
+
+    def collect(patterns, limit=24):
+        rows, seen = [], set()
+        for kind, pattern in patterns:
+            for match in re.finditer(pattern, text, flags=re.I):
+                media_url = _decode_ig_media_url(match.group(1))
+                low = media_url.lower()
+                if not media_url.startswith("http"):
+                    continue
+                if not ("cdninstagram.com" in low or "fbcdn.net" in low):
+                    continue
+                if any(x in low for x in ("/profile", "s150x150", "s320x320")):
+                    continue
+                key = re.sub(r"[?&](?:_nc_ohc|ccb|oh|oe|stp|efg)=[^&]+", "", media_url)
+                if key in seen:
+                    continue
+                seen.add(key)
+                rows.append((kind, media_url))
+                if len(rows) >= limit:
+                    return rows
+        return rows
+
+    meta = collect([
         ("video", r'<meta[^>]+property=["\']og:video(?::secure_url)?["\'][^>]+content=["\']([^"\']+)'),
         ("video", r'<meta[^>]+content=["\']([^"\']+)["\'][^>]+property=["\']og:video(?::secure_url)?["\']'),
-        ("video", r'"video_url"\s*:\s*"([^"]+)"'),
         ("video", r'<source[^>]+src=["\']([^"\']+)'),
         ("image", r'<meta[^>]+property=["\']og:image(?::secure_url)?["\'][^>]+content=["\']([^"\']+)'),
         ("image", r'<meta[^>]+content=["\']([^"\']+)["\'][^>]+property=["\']og:image(?::secure_url)?["\']'),
+    ], limit=6)
+
+    # A normal single post should return one media item. If video is present,
+    # do not also download its poster image.
+    carousel = any(marker in text for marker in (
+        "edge_sidecar_to_children", '"carousel_media"', '"product_type":"carousel"',
+        '"product_type": "carousel"', "GraphSidecar",
+    ))
+    if not carousel:
+        videos = [row for row in meta if row[0] == "video"]
+        if videos:
+            return videos[:1]
+        images = [row for row in meta if row[0] == "image"]
+        return images[:1]
+
+    # Carousel JSON contains one display_url/video_url per item. Generic img tags
+    # are intentionally excluded so recommendations/login assets are never packed.
+    structured = collect([
+        ("video", r'"video_url"\s*:\s*"([^"]+)"'),
         ("image", r'"display_url"\s*:\s*"([^"]+)"'),
-        ("image", r'<img[^>]+(?:src|data-src)=["\']([^"\']+)'),
-    ]
-    seen = set()
-    for kind, pattern in patterns:
-        for match in re.finditer(pattern, text, flags=re.I):
-            media_url = _decode_ig_media_url(match.group(1))
-            low = media_url.lower()
-            if not media_url.startswith("http"):
-                continue
-            if not ("cdninstagram.com" in low or "fbcdn.net" in low):
-                continue
-            # Ignore obvious profile/icon assets; public post media is usually much larger.
-            if any(x in low for x in ("/profile", "s150x150", "s320x320")):
-                continue
-            key = re.sub(r"[?&](?:_nc_ohc|ccb|oh|oe|stp|efg)=[^&]+", "", media_url)
-            if key in seen:
-                continue
-            seen.add(key)
-            found.append((kind, media_url))
-            if len(found) >= 24:
-                return found
-    return found
+    ], limit=20)
+    return structured or meta[:1]
 
 def _save_remote_media(media, work, wanted_name, strategy):
     if not media:
