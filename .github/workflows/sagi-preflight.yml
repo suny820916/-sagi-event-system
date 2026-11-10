@@ -214,5 +214,19 @@ jobs:
           PY
           node /tmp/semantic-regression.js
 
+      - name: Cloud FFmpeg codec and subtitle capability
+        run: |
+          python - <<'PY'
+          import imageio_ffmpeg, subprocess
+          exe=imageio_ffmpeg.get_ffmpeg_exe()
+          print("ffmpeg", exe)
+          enc=subprocess.check_output([exe,"-hide_banner","-encoders"],text=True,stderr=subprocess.STDOUT)
+          filters=subprocess.check_output([exe,"-hide_banner","-filters"],text=True,stderr=subprocess.STDOUT)
+          assert "libx264" in enc or " h264 " in enc, "H.264 encoder missing"
+          assert " aac " in enc, "AAC encoder missing"
+          assert "subtitles" in filters, "libass subtitles filter missing"
+          print("cloud ffmpeg capabilities OK")
+          PY
+
       - name: Python compile check
         run: python -m compileall -q sagi-cloud-bridge
