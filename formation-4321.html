@@ -30,7 +30,7 @@ body{padding:12px 10px 30px;background:radial-gradient(circle at 50% 0%,rgba(28,
 </head>
 <body>
 <div class="wrap">
-  <div class="top"><div><div class="brand">SAGI TACTICAL LAB</div><div class="title">4-3-2-1 战术动画</div></div><div class="ver">V1.1 · BROADCAST MOTION</div></div>
+  <div class="top"><div><div class="brand">SAGI TACTICAL LAB</div><div class="title">4-3-2-1 战术动画</div></div><div class="ver">V1.2 · TACTICAL LAB</div></div>
 
   <div id="stage" class="stage">
     <div class="hud"><div><small>FORMATION ENGINE</small><h2>4·3·2·1</h2></div><div id="sceneTag" class="sceneTag">SCENE 01<br>FORMATION</div></div>
@@ -78,9 +78,9 @@ body{padding:12px 10px 30px;background:radial-gradient(circle at 50% 0%,rgba(28,
   <div class="controls">
     <button id="auto" class="controlBtn primary">▶ 自动演示</button>
     <button id="replay" class="controlBtn">↻ 重播当前</button>
-    <button id="clean" class="controlBtn">◫ 纯画面</button>
+    <button id="clean" class="controlBtn">◫ 纯画面</button>\n    <button id="no9" class="controlBtn">9号位专题 →</button>
   </div>
-  <div class="note">V1.1：三段式转播战术动画 · 球员真实位移 · 传球线路 · 边后卫前插 · 双前腰内收 · 9:16 手机端</div>
+  <div class="note">V1.2：三段式4321战术动画 + 9号位专题 · 中文解说 · 9:16 手机端</div>
 </div>
 
 <script>
@@ -145,7 +145,7 @@ body{padding:12px 10px 30px;background:radial-gradient(circle at 50% 0%,rgba(28,
     next();
   }
   $$('.sceneBtn').forEach(b=>b.addEventListener('click',()=>setScene(b.dataset.scene,false)));
-  $('#replay').addEventListener('click',replay);
+  $('#replay').addEventListener('click',replay);\n  $('#no9').addEventListener('click',()=>{location.href='no9-role.html'});
   $('#auto').addEventListener('click',()=>{if(autoRun){autoRun=false;clearTimers();$('#auto').textContent='▶ 自动演示'}else startAuto()});
   $('#clean').addEventListener('click',()=>{
     clean=!clean; $('.top').style.display=clean?'none':'flex'; $('.toolbar').style.display=clean?'none':'grid'; $('.note').style.display=clean?'none':'block';
