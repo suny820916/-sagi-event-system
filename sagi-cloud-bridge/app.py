@@ -21,6 +21,7 @@ app = Flask(__name__)
 ALLOWED_ORIGIN = (os.getenv("SAGI_ALLOWED_ORIGIN") or "https://suny820916.github.io").rstrip("/")
 SERVER_SECRET = (os.getenv("SAGI_SERVER_SECRET") or os.getenv("SAGI_BRIDGE_TOKEN") or "").strip()
 PORT = int(os.getenv("PORT") or "10000")
+DEPLOY_REVISION = "2026-11-10-v169"
 MAX_FILE_MB = int(os.getenv("SAGI_MAX_FILE_MB") or "300")
 JOB_TTL_MIN = int(os.getenv("SAGI_JOB_TTL_MIN") or "30")
 RATE_LIMIT_PER_HOUR = int(os.getenv("SAGI_RATE_LIMIT_PER_HOUR") or "20")
@@ -310,7 +311,7 @@ def get_caption_model():
         if caption_model is not None:
             return caption_model
         try:
-            source = CAPTION_MODEL_DIR if Path(CAPTION_MODEL_DIR).exists() else "tiny"
+            source = CAPTION_MODEL_DIR if Path(CAPTION_MODEL_DIR).exists() else "Systran/faster-whisper-tiny"
             caption_model = WhisperModel(
                 source,
                 device="cpu",
@@ -364,7 +365,8 @@ def health():
     return jsonify({
         "ok": True,
         "service": "SAGI CLOUD BRIDGE",
-        "version": "1.6.8",
+        "deployRevision": DEPLOY_REVISION,
+        "version": "1.6.9",
         "instagram": True,
         "hybridWorker": True,
         "workerOnline": worker_online(),
