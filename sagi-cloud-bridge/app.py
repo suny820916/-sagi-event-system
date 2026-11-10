@@ -117,7 +117,6 @@ def run_download(job_id, url, wanted_name):
         "quiet": True,
         "no_warnings": True,
         "restrictfilenames": True,
-        "merge_output_format": "mp4",
         "retries": 3,
         "fragment_retries": 3,
         "max_filesize": MAX_FILE_MB * 1024 * 1024,
