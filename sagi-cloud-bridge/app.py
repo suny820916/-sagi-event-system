@@ -30,8 +30,8 @@ app = Flask(__name__)
 ALLOWED_ORIGIN = (os.getenv("SAGI_ALLOWED_ORIGIN") or "https://suny820916.github.io").rstrip("/")
 SERVER_SECRET = (os.getenv("SAGI_SERVER_SECRET") or os.getenv("SAGI_BRIDGE_TOKEN") or "").strip()
 PORT = int(os.getenv("PORT") or "10000")
-DEPLOY_REVISION = "2026-11-10-v1740-instagram-egress"
-APP_VERSION = "1.7.4"
+DEPLOY_REVISION = "2026-11-10-v2000-cobalt-core"
+APP_VERSION = "2.0.0"
 MAX_FILE_MB = int(os.getenv("SAGI_MAX_FILE_MB") or "300")
 JOB_TTL_MIN = int(os.getenv("SAGI_JOB_TTL_MIN") or "30")
 RATE_LIMIT_PER_HOUR = int(os.getenv("SAGI_RATE_LIMIT_PER_HOUR") or "20")
@@ -1017,7 +1017,14 @@ def run_download(job_id, url, wanted_name):
             return
         job["status"] = "downloading"
         job["updated_at"] = iso()
-        job["strategy"] = "web"
+        job["strategy"] = "cobalt" if cobalt_base() else "web"
+
+    # V2.0: self-hosted Cobalt is the primary download engine.
+    # If Cobalt cannot resolve a source, SAGI falls back automatically.
+    if cobalt_base():
+        ok, _ = run_cobalt_download(job_id, url, wanted_name, terminal=False)
+        if ok:
+            return
 
     work = tempfile.mkdtemp(prefix=f"sagi_cloud_{job_id}_")
     strategies = ["web", "ios", "android"] if is_instagram_url(url) else ["direct"]
@@ -1079,11 +1086,6 @@ def run_download(job_id, url, wanted_name):
                     errors.append("gallery-dl: timeout")
                 except Exception as e:
                     errors.append("gallery-dl: " + str(e)[:220])
-            # Optional self-hosted Cobalt remains a fallback, never the primary path.
-            if cobalt_base():
-                shutil.rmtree(work, ignore_errors=True)
-                run_cobalt_download(job_id, url, wanted_name)
-                return
             if saw_429:
                 raise RuntimeError(
                     "SAGI_DOWNLOAD_RATE_LIMIT: source platform temporarily rejected the cloud IP."
@@ -1220,7 +1222,10 @@ def health():
         "version": APP_VERSION,
         "instagram": True,
         "cloudDownload": True,
-        "cloudDownloadVersion": "1.3",
+        "cloudDownloadVersion": "2.0",
+        "downloadPrimary": "cobalt",
+        "cobaltConfigured": bool(cobalt_base()),
+        "cobaltMode": "self-hosted",
         "downloadPlatforms": ["Instagram", "YouTube", "TikTok", "X"],
         "instagramPostFallback": "html-fast -> gallery-dl-short",
         "instagramProxyConfigured": bool(INSTAGRAM_PROXY),
@@ -1870,21 +1875,27 @@ def activate():
 def cobalt_base():
     if not COBALT_HOSTPORT:
         return ""
-    if COBALT_HOSTPORT.startswith("http://") or COBALT_HOSTPORT.startswith("https://"):
-        return COBALT_HOSTPORT.rstrip("/")
-    return "http://" + COBALT_HOSTPORT.rstrip("/")
+    raw = COBALT_HOSTPORT.strip().rstrip("/")
+    if raw.startswith("http://") or raw.startswith("https://"):
+        return raw
+    # Render injects RENDER_EXTERNAL_HOSTNAME without a scheme.
+    if raw.endswith(".onrender.com"):
+        return "https://" + raw
+    return "http://" + raw
 
-def _cobalt_pick_media(payload):
-    status = payload.get("status")
+def _cobalt_items(payload):
+    status = str(payload.get("status") or "")
     if status in ("tunnel", "redirect"):
-        return payload.get("url"), payload.get("filename") or ""
+        url = payload.get("url")
+        return ([{"type": "video", "url": url}] if url else []), payload.get("filename") or ""
     if status == "picker":
-        items = payload.get("picker") or []
-        videos = [x for x in items if x.get("type") in ("video", "gif") and x.get("url")]
-        chosen = (videos or [x for x in items if x.get("url")])
-        if chosen:
-            item = chosen[0]
-            return item.get("url"), ""
+        rows = []
+        for item in payload.get("picker") or []:
+            url = item.get("url")
+            kind = str(item.get("type") or "photo")
+            if url and kind in ("photo", "video", "gif"):
+                rows.append({"type": kind, "url": url})
+        return rows, payload.get("filename") or ""
     if status == "error":
         err = payload.get("error") or {}
         code = err.get("code") or "cobalt_error"
@@ -1893,11 +1904,12 @@ def _cobalt_pick_media(payload):
         raise RuntimeError("COBALT_LOCAL_PROCESSING_UNSUPPORTED")
     raise RuntimeError("COBALT_INVALID_RESPONSE")
 
-def run_cobalt_download(job_id, url, wanted_name):
+
+def run_cobalt_download(job_id, url, wanted_name, terminal=True):
     with jobs_lock:
         job = jobs.get(job_id)
         if not job:
-            return
+            return False, "JOB_MISSING"
         job["status"] = "cobalt_processing"
         job["updated_at"] = iso()
         job["strategy"] = "cobalt"
@@ -1918,15 +1930,17 @@ def run_cobalt_download(job_id, url, wanted_name):
                 "filenameStyle": "basic",
                 "alwaysProxy": True,
                 "localProcessing": "disabled",
+                "youtubeVideoCodec": "h264",
+                "youtubeVideoContainer": "mp4",
             },
-            timeout=90,
+            timeout=(8, 45),
         )
         if r.status_code == 429:
             raise RuntimeError("COBALT_RATE_LIMIT")
         r.raise_for_status()
         payload = r.json()
-        media_url, cobalt_name = _cobalt_pick_media(payload)
-        if not media_url:
+        items, cobalt_name = _cobalt_items(payload)
+        if not items:
             raise RuntimeError("COBALT_NO_MEDIA")
 
         with jobs_lock:
@@ -1935,49 +1949,83 @@ def run_cobalt_download(job_id, url, wanted_name):
                 job["status"] = "cobalt_fetching"
                 job["updated_at"] = iso()
 
-        media_resp = requests.get(media_url, stream=True, timeout=180)
-        media_resp.raise_for_status()
-        content_type = (media_resp.headers.get("Content-Type") or "").lower()
-
-        name = safe_name(wanted_name or cobalt_name or "SAGI_INS_VIDEO")
-        if "." not in name:
-            if "image/" in content_type:
-                name += ".jpg"
-            else:
-                name += ".mp4"
-        path = Path(work) / name
-
-        total = 0
         max_bytes = MAX_FILE_MB * 1024 * 1024
-        with path.open("wb") as f:
-            for chunk in media_resp.iter_content(chunk_size=1024 * 256):
-                if not chunk:
-                    continue
-                total += len(chunk)
-                if total > max_bytes:
-                    raise RuntimeError(f"视频超过云端限制 {MAX_FILE_MB}MB")
-                f.write(chunk)
+        total = 0
+        saved = []
+        for idx, item in enumerate(items, start=1):
+            media_url = item["url"]
+            kind = item.get("type") or "photo"
+            media_resp = requests.get(media_url, stream=True, timeout=(8, 60))
+            media_resp.raise_for_status()
+            content_type = (media_resp.headers.get("Content-Type") or "").lower()
+            if kind in ("video", "gif") or "video/" in content_type:
+                ext = ".mp4"
+            elif "png" in content_type:
+                ext = ".png"
+            elif "webp" in content_type:
+                ext = ".webp"
+            else:
+                ext = ".jpg"
+            path = Path(work) / f"{idx:02d}{ext}"
+            size = 0
+            with path.open("wb") as out:
+                for chunk in media_resp.iter_content(chunk_size=256 * 1024):
+                    if not chunk:
+                        continue
+                    size += len(chunk)
+                    total += len(chunk)
+                    if total > max_bytes:
+                        raise RuntimeError(f"媒体超过云端限制 {MAX_FILE_MB}MB")
+                    out.write(chunk)
+            if size > 0:
+                saved.append((kind, path))
 
-        if not path.exists() or path.stat().st_size == 0:
+        if not saved:
             raise RuntimeError("COBALT_EMPTY_FILE")
+
+        base_name = safe_name(wanted_name or cobalt_name or "SAGI_VIDEO")
+        if len(saved) == 1:
+            kind, src = saved[0]
+            filename = base_name
+            if "." not in filename:
+                filename += src.suffix
+            dst = Path(work) / filename
+            if src.resolve() != dst.resolve():
+                src.replace(dst)
+            media_path = dst
+            media_kind = "video" if kind in ("video", "gif") else "image"
+            count = 1
+        else:
+            filename = base_name + "_CAROUSEL.zip"
+            media_path = Path(work) / filename
+            with zipfile.ZipFile(media_path, "w", compression=zipfile.ZIP_STORED) as zf:
+                for idx, (_, src) in enumerate(saved, start=1):
+                    zf.write(src, arcname=f"{idx:02d}{src.suffix}")
+            for _, src in saved:
+                src.unlink(missing_ok=True)
+            media_kind = "carousel"
+            count = len(saved)
 
         with jobs_lock:
             job = jobs.get(job_id)
             if not job:
                 shutil.rmtree(work, ignore_errors=True)
-                return
+                return False, "JOB_MISSING"
             job.update({
                 "status": "ready",
                 "updated_at": iso(),
-                "path": str(path),
+                "path": str(media_path),
                 "workdir": work,
-                "filename": name,
-                "title": cobalt_name or name,
-                "size": path.stat().st_size,
+                "filename": filename,
+                "title": cobalt_name or filename,
+                "size": media_path.stat().st_size,
                 "strategy": "cobalt",
+                "mediaKind": media_kind,
+                "fileCount": count,
                 "error": "",
                 "errorCode": "",
             })
+        return True, ""
     except Exception as e:
         shutil.rmtree(work, ignore_errors=True)
         msg = str(e)
@@ -1989,13 +2037,24 @@ def run_cobalt_download(job_id, url, wanted_name):
         with jobs_lock:
             job = jobs.get(job_id)
             if job:
-                job.update({
-                    "status": "failed",
-                    "updated_at": iso(),
-                    "strategy": "cobalt",
-                    "error": msg[:700],
-                    "errorCode": code,
-                })
+                if terminal:
+                    job.update({
+                        "status": "failed",
+                        "updated_at": iso(),
+                        "strategy": "cobalt",
+                        "error": msg[:700],
+                        "errorCode": code,
+                    })
+                else:
+                    job.update({
+                        "status": "downloading",
+                        "updated_at": iso(),
+                        "strategy": "sagi_fallback",
+                        "error": "",
+                        "errorCode": "",
+                        "cobaltError": msg[:300],
+                    })
+        return False, msg
 
 @app.post("/api/jobs")
 def create_job():
