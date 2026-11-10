@@ -22,36 +22,5 @@ services:
         value: "30"
       - key: SAGI_RATE_LIMIT_PER_HOUR
         value: "20"
-      - key: SAGI_COBALT_HOSTPORT
-        fromService:
-          name: sagi-cobalt-8f2c9-suny820916
-          type: web
-          property: hostport
-
-  - type: web
-    name: sagi-cobalt-8f2c9-suny820916
-    runtime: image
-    plan: free
-    region: singapore
-    image:
-      url: ghcr.io/imputnet/cobalt:11
-    healthCheckPath: /
-    envVars:
-      - key: API_URL
-        value: "https://sagi-cobalt-8f2c9-suny820916.onrender.com/"
-      - key: API_PORT
-        value: "10000"
-      - key: API_LISTEN_ADDRESS
-        value: "0.0.0.0"
-      - key: CORS_WILDCARD
-        value: "0"
-      - key: CORS_URL
-        value: "https://sagi-cloud-bridge-suny820916.onrender.com"
-      - key: RATELIMIT_WINDOW
-        value: "60"
-      - key: RATELIMIT_MAX
-        value: "6"
-      - key: DURATION_LIMIT
-        value: "7200"
-      - key: DISABLED_SERVICES
-        value: "bilibili,bluesky,dailymotion,facebook,loom,ok.ru,pinterest,reddit,rutube,snapchat,soundcloud,streamable,tiktok,tumblr,twitch,twitter,vimeo,vk,youtube,xiaohongshu"
+      - key: SAGI_INSTAGRAM_PROXY
+        sync: false
