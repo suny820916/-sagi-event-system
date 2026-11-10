@@ -458,10 +458,14 @@ function clearInput(){input.value='';updateDetect();setStatus('已清空，等�
 async function download(){
   const v=currentUrl();if(!v){setStatus('请先粘贴有效的视频链接。','warn');return}
   const d=detect(v);
-  await copyText(v);
+  // iPhone Safari requires window.open to happen inside the original tap event.
+  // Do not await clipboard work before opening the download page.
+  const popup=window.open(COBALT,'_blank');
+  if(popup){try{popup.opener=null}catch(e){}}
+  else setTimeout(()=>{location.href=COBALT},0);
+  copyText(v).catch(()=>{});
   saveHistory(v);
-  setStatus(d[0]+' 链接已准备好，正在打开下载页。','good');
-  window.open(COBALT,'_blank','noopener')
+  setStatus(d[0]+' 链接已复制，下载页已打开。','good')
 }
 function openOriginal(){const v=currentUrl();if(!v){setStatus('请先粘贴有效链接。','warn');return}window.open(v,'_blank','noopener')}
 
@@ -2060,7 +2064,7 @@ if(q('captionSpeed'))q('captionSpeed').value='fast';
 if(q('captionRange'))q('captionRange').value='trim';
 setTimeout(async()=>{await wakeCaptionCloud();refreshAIVoiceStatus(false)},180);
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=194',{updateViaCache:'none'}).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=195',{updateViaCache:'none'}).catch(()=>{})}
 })();
 </script>
 </body>
