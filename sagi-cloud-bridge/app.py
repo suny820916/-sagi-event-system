@@ -53,6 +53,8 @@ caption_ready_at = 0.0
 CAPTION_MAX_MB = int(os.getenv("SAGI_CAPTION_MAX_MB") or "16")
 CAPTION_MEDIA_MAX_MB = int(os.getenv("SAGI_CAPTION_MEDIA_MAX_MB") or "180")
 ELEVENLABS_API_KEY = (os.getenv("ELEVENLABS_API_KEY") or "").strip()
+ELEVENLABS_MALE_VOICE_ID = (os.getenv("ELEVENLABS_MALE_VOICE_ID") or "").strip()
+ELEVENLABS_FEMALE_VOICE_ID = (os.getenv("ELEVENLABS_FEMALE_VOICE_ID") or "").strip()
 ELEVENLABS_BASE = "https://api.elevenlabs.io"
 VOICE_SAMPLE_MAX_MB = int(os.getenv("SAGI_VOICE_SAMPLE_MAX_MB") or "25")
 RENDER_MAX_MB = int(os.getenv("SAGI_RENDER_MAX_MB") or "300")
@@ -169,7 +171,9 @@ def public_render_job(job):
         "size": int(job.get("size", 0) or 0),
     }
     if job.get("status") == "ready":
-        data["downloadUrl"] = request.host_url.rstrip("/") + f"/api/render-jobs/{job['id']}/file?key={job['download_key']}"
+        base = request.host_url.rstrip("/") + f"/api/render-jobs/{job['id']}/file?key={job['download_key']}"
+        data["previewUrl"] = base
+        data["downloadUrl"] = base + "&download=1"
     return data
 
 def ensure_cjk_font():
@@ -226,6 +230,9 @@ def list_eleven_voices(force=False):
 def resolve_voice_id(mode, explicit=""):
     if explicit:
         return explicit
+    configured_default = ELEVENLABS_MALE_VOICE_ID if mode == "ai_male" else ELEVENLABS_FEMALE_VOICE_ID
+    if configured_default:
+        return configured_default
     voices = list_eleven_voices()
     wanted = "male" if mode == "ai_male" else "female"
     for v in voices:
@@ -418,7 +425,7 @@ def run_cloud_render(job_id, options):
             ]
             if audio_map:
                 cmd += ["-c:a", "aac", "-b:a", "128k"]
-            cmd += ["-movflags", "+faststart", "-shortest", "-progress", "pipe:1", "-nostats", str(out)]
+            cmd += ["-movflags", "+faststart", "-t", str(duration), "-progress", "pipe:1", "-nostats", str(out)]
 
             with render_jobs_lock:
                 render_jobs[job_id].update({"stage": "云端编码成片", "progress": 34, "updated_at": iso()})
@@ -1291,7 +1298,8 @@ def get_render_file(job_id):
         path = job["path"]
     if not Path(path).exists():
         return jsonify({"ok": False, "error": "Render expired"}), 410
-    return send_file(path, as_attachment=True, download_name="SAGI_CLOUD_RENDER.mp4", conditional=True)
+    as_download = str(request.args.get("download") or "").lower() in ("1", "true", "yes")
+    return send_file(path, as_attachment=as_download, download_name="SAGI_CLOUD_RENDER.mp4", mimetype="video/mp4", conditional=True)
 
 
 @app.post("/api/activate")
