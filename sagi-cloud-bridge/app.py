@@ -50,12 +50,17 @@ API_FOOTBALL_KEY = (os.getenv("API_FOOTBALL_KEY") or "").strip()
 SPORTMONKS_TOKEN = (os.getenv("SPORTMONKS_TOKEN") or "").strip()
 FOOTBALL_CACHE_SECONDS = max(30, min(900, int(os.getenv("SAGI_FOOTBALL_CACHE_SECONDS") or "180")))
 FOOTBALL_COMPETITIONS = {
-    "PL": {"name": "英超", "football_data": "PL", "espn": "eng.1", "api_football": "Premier League", "official": "https://www.premierleague.com/en/matches/premier-league/2026-27"},
-    "PD": {"name": "西甲", "football_data": "PD", "espn": "esp.1", "api_football": "La Liga", "official": "https://www.laliga.com/en-US/laliga-easports/results"},
-    "BL1": {"name": "德甲", "football_data": "BL1", "espn": "ger.1", "api_football": "Bundesliga", "official": "https://www.bundesliga.com/en/bundesliga/matchday"},
-    "SA": {"name": "意甲", "football_data": "SA", "espn": "ita.1", "api_football": "Serie A", "official": "https://en.legaseriea.it/serie-a/fixtures-results"},
-    "FL1": {"name": "法甲", "football_data": "FL1", "espn": "fra.1", "api_football": "Ligue 1", "official": "https://ligue1.com/en/competitions/ligue1mcdonalds/results?season=2026"},
-    "CL": {"name": "欧冠", "football_data": "CL", "espn": "uefa.champions", "api_football": "UEFA Champions League", "official": "https://www.uefa.com/uefachampionsleague/fixtures-results/"},
+    "PL": {"name": "英超", "football_data": "PL", "espn": "eng.1", "api_football": "Premier League", "official": "https://www.premierleague.com/en/matches/premier-league/2026-27", "primary": True},
+    "PD": {"name": "西甲", "football_data": "PD", "espn": "esp.1", "api_football": "La Liga", "official": "https://www.laliga.com/en-US/laliga-easports/results", "primary": True},
+    "BL1": {"name": "德甲", "football_data": "BL1", "espn": "ger.1", "api_football": "Bundesliga", "official": "https://www.bundesliga.com/en/bundesliga/matchday", "primary": True},
+    "SA": {"name": "意甲", "football_data": "SA", "espn": "ita.1", "api_football": "Serie A", "official": "https://en.legaseriea.it/serie-a/fixtures-results", "primary": True},
+    "FL1": {"name": "法甲", "football_data": "FL1", "espn": "fra.1", "api_football": "Ligue 1", "official": "https://ligue1.com/en/competitions/ligue1mcdonalds/results?season=2026", "primary": True},
+    "CL": {"name": "欧冠", "football_data": "CL", "espn": "uefa.champions", "api_football": "UEFA Champions League", "official": "https://www.uefa.com/uefachampionsleague/fixtures-results/", "primary": True},
+    "FAC": {"name": "足总杯", "football_data": "FAC", "espn": "eng.fa", "api_football": "FA Cup", "official": "https://www.thefa.com/competitions/thefacup/fixtures", "primary": False},
+    "CDR": {"name": "国王杯", "football_data": "CDR", "espn": "esp.copa_del_rey", "api_football": "Copa del Rey", "official": "https://rfef.es/es/competiciones/copa-del-rey", "primary": False},
+    "DFB": {"name": "德国杯", "football_data": "DFB", "espn": "ger.dfb_pokal", "api_football": "DFB Pokal", "official": "https://www.dfb.de/maenner/wettbewerbe/dfb-pokal", "primary": False},
+    "CI": {"name": "意大利杯", "football_data": "", "espn": "ita.coppa_italia", "api_football": "Coppa Italia", "official": "https://en.legaseriea.it/coppa-italia/fixtures-results", "primary": False},
+    "CDF": {"name": "法国杯", "football_data": "", "espn": "fra.coupe_de_france", "api_football": "Coupe de France", "official": "https://www.fff.fr/competition/engagement/425352-coupe-de-france/phase/1/index.html", "primary": False},
 }
 football_cache = {}
 football_cache_lock = Lock()
@@ -1067,6 +1072,8 @@ def _football_data_matches(team, competition, season):
     if not FOOTBALL_DATA_TOKEN:
         return []
     cfg = FOOTBALL_COMPETITIONS[competition]
+    if not cfg.get("football_data"):
+        return []
     url = f"https://api.football-data.org/v4/competitions/{cfg['football_data']}/matches"
     r = requests.get(url, params={"season": season, "status": "FINISHED"}, headers={"X-Auth-Token": FOOTBALL_DATA_TOKEN, "User-Agent": "SAGI-MATCH-DATA/3.7"}, timeout=(5, 18))
     r.raise_for_status()
@@ -1931,7 +1938,7 @@ def football_status():
     return jsonify({
         "ok": True,
         "version": "1.0",
-        "competitions": [{"code": code, "name": cfg["name"], "official": cfg["official"]} for code, cfg in FOOTBALL_COMPETITIONS.items()],
+        "competitions": [{"code": code, "name": cfg["name"], "official": cfg["official"]} for code, cfg in FOOTBALL_COMPETITIONS.items() if cfg.get("primary")],
         "providers": {
             "priority": ["official competition websites", "football-data.org", "API-Football", "ESPN public feed", "news cross-check", "OCR"],
             "footballDataConfigured": bool(FOOTBALL_DATA_TOKEN),
