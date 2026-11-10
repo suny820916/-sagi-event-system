@@ -51,9 +51,25 @@ jobs:
               time.sleep(8)
           if not health:
               raise SystemExit("LIVE_HEALTH_FAILED")
+          expected="1.7.0"
+          if str(health.get("version"))!=expected:
+              print("waiting for expected live version",expected)
+              health=None
+              for i in range(24):
+                  try:
+                      r=requests.get(BASE+"/health",headers={"Origin":ORIGIN},timeout=70)
+                      if r.ok:
+                          candidate=r.json()
+                          print("deploy check",i+1,"version",candidate.get("version"),"rev",candidate.get("deployRevision"))
+                          if str(candidate.get("version"))==expected:
+                              health=candidate
+                              break
+                  except Exception as e:
+                      print("deploy check",i+1,"error",repr(e))
+                  time.sleep(10)
+              if not health:
+                  raise SystemExit("STALE_LIVE_VERSION")
           print("LIVE_VERSION",health.get("version"),"REV",health.get("deployRevision"))
-          if str(health.get("version"))!="1.6.12":
-              raise SystemExit("STALE_LIVE_VERSION="+str(health.get("version")))
 
           print("2) activating...")
           r=requests.post(BASE+"/api/activate",headers={"Origin":ORIGIN,"Content-Type":"application/json"},json={},timeout=70)
