@@ -896,172 +896,26 @@ def _google_translate_text(text, source, target):
     return "".join((x[0] or "") for x in chunks if isinstance(x, list) and x)
 
 def _football_zh_polish(text):
+    # Longest/specific phrases first; generic “转换” is handled with a guarded regex
+    # so already-correct “攻防转换” never becomes “攻防攻防转换”.
     replacements = [
-        ("双轴", "双后腰"),
-        ("双支点", "双后腰"),
-        ("后四", "四后卫防线"),
-        ("后四人", "四后卫防线"),
-        ("半空间", "肋部"),
-        ("高压", "高位逼抢"),
-        ("反压迫", "丢球后反抢"),
-        ("转换阶段", "攻防转换阶段"),
-        ("转换", "攻防转换"),
-        ("过载", "局部人数优势"),
         ("低位封锁", "低位防守"),
         ("低位块", "低位防守阵型"),
+        ("转换阶段", "攻防转换阶段"),
+        ("双支点", "双后腰"),
+        ("后四人", "四后卫防线"),
+        ("半空间", "肋部"),
+        ("反压迫", "丢球后反抢"),
+        ("过载", "局部人数优势"),
+        ("高压", "高位逼抢"),
+        ("双轴", "双后腰"),
+        ("后四", "四后卫防线"),
     ]
-    out = text
+    out = text or ""
     for a, b in replacements:
         out = out.replace(a, b)
+    out = re.sub(r"(?<!攻防)转换", "攻防转换", out)
     return out
-
-FOOTBALL_GLOSSARY_EN_ZH = {
-    "back four": "四后卫防线",
-    "double pivot": "双后腰",
-    "half-space": "肋部",
-    "half space": "肋部",
-    "high press": "高位逼抢",
-    "high pressing": "高位逼抢",
-    "counter-press": "丢球后反抢",
-    "counterpress": "丢球后反抢",
-    "low block": "低位防守",
-    "mid block": "中位防守",
-    "build-up": "后场组织",
-    "build up": "后场组织",
-    "transition": "攻防转换",
-    "overload": "局部人数优势",
-    "third-man run": "第三人跑动",
-    "third man run": "第三人跑动",
-    "rest defence": "进攻保障防守",
-    "rest defense": "进攻保障防守",
-    "inverted full-back": "内收边后卫",
-    "inverted fullback": "内收边后卫",
-}
-
-def _normalize_words(text):
-    import re
-    return [x for x in re.findall(r"[a-z0-9']+", (text or "").lower()) if len(x) > 1]
-
-def _back_translation_score(source, back, translated, target):
-    src = _normalize_words(source)
-    rev = _normalize_words(back)
-    if src:
-        a, b = set(src), set(rev)
-        overlap = len(a & b) / max(1, len(a))
-    else:
-        overlap = 0.72
-    src_len = max(1, len(source or ""))
-    back_len = max(1, len(back or ""))
-    length_ratio = min(src_len, back_len) / max(src_len, back_len)
-    zh_ratio = 1.0
-    if str(target).lower().startswith("zh"):
-        import re
-        compact = re.sub(r"\s+", "", translated or "")
-        zh_ratio = len(re.findall(r"[\u3400-\u9fff]", compact)) / max(1, len(compact))
-        zh_ratio = min(1.0, zh_ratio / 0.25)
-    return round(max(0.0, min(1.0, overlap * 0.58 + length_ratio * 0.22 + zh_ratio * 0.20)) * 100, 1)
-
-def _protect_football_terms(text, source, target):
-    if not str(target).lower().startswith("zh"):
-        return text, {}
-    if not str(source).lower().startswith("en"):
-        return text, {}
-    import re
-    protected = text
-    restore = {}
-    items = sorted(FOOTBALL_GLOSSARY_EN_ZH.items(), key=lambda x: len(x[0]), reverse=True)
-    idx = 0
-    for term, zh in items:
-        pattern = re.compile(r"\b" + re.escape(term) + r"\b", re.I)
-        if pattern.search(protected):
-            token = f"SAGITERM{idx:02d}X"
-            protected = pattern.sub(token, protected)
-            restore[token] = zh
-            idx += 1
-    return protected, restore
-
-def _restore_football_terms(text, restore):
-    out = text or ""
-    for token, value in restore.items():
-        out = out.replace(token, value).replace(token.lower(), value)
-    return out
-
-def _mymemory_translate_text(text, source, target):
-    src = "en" if source in ("", "auto") else source
-    if src == "zh-CN":
-        src = "zh"
-    params = {"q": text, "langpair": f"{src}|{target}"}
-    r = requests.get("https://api.mymemory.translated.net/get", params=params, timeout=30)
-    r.raise_for_status()
-    data = r.json()
-    out = str(((data.get("responseData") or {}).get("translatedText") or "")).strip()
-    if not out:
-        raise RuntimeError("MyMemory empty result")
-    return out
-
-def _smart_translate_paragraph(text, source, target, mode):
-    protected, restore = _protect_football_terms(text, source, target)
-    primary = _google_translate_text(protected, source, target).strip()
-    primary = _restore_football_terms(primary, restore)
-    if mode == "football" and str(target).lower().startswith("zh"):
-        primary = _football_zh_polish(primary)
-
-    back_source = "en" if source in ("", "auto") else source
-    try:
-        back = _google_translate_text(primary, target, back_source).strip()
-        score = _back_translation_score(text, back, primary, target)
-    except Exception:
-        back, score = "", 72.0
-
-    engine = "google-smart"
-    issues = []
-    if score < 68:
-        issues.append("low_back_translation_score")
-        try:
-            alt = _mymemory_translate_text(protected, source, target).strip()
-            alt = _restore_football_terms(alt, restore)
-            if mode == "football" and str(target).lower().startswith("zh"):
-                alt = _football_zh_polish(alt)
-            alt_back = _google_translate_text(alt, target, back_source).strip()
-            alt_score = _back_translation_score(text, alt_back, alt, target)
-            if alt_score > score:
-                primary, back, score, engine = alt, alt_back, alt_score, "mymemory-smart"
-        except Exception:
-            pass
-
-    return {"text": primary, "back": back, "score": score, "engine": engine, "issues": issues}
-
-@app.post("/api/translate-smart")
-def translate_smart():
-    if not authorized():
-        return jsonify({"ok": False, "error": "Unauthorized"}), 401
-    if not caption_rate_allowed():
-        return jsonify({"ok": False, "error": "Translation hourly limit reached", "errorCode": "caption_rate_limit"}), 429
-    data = request.get_json(silent=True) or {}
-    source = str(data.get("source") or "auto").strip()
-    target = str(data.get("target") or "zh-CN").strip()
-    mode = str(data.get("mode") or "faithful").strip()
-    paragraphs = data.get("paragraphs") or []
-    if not isinstance(paragraphs, list) or not paragraphs:
-        return jsonify({"ok": False, "error": "paragraphs required"}), 400
-    paragraphs = [str(x or "").strip() for x in paragraphs[:80]]
-    started = time.time()
-    try:
-        results = [_smart_translate_paragraph(x, source, target, mode) for x in paragraphs]
-        scores = [float(x.get("score") or 0) for x in results]
-        return jsonify({
-            "ok": True,
-            "engine": "sagi-smart-translate-v1",
-            "source": source,
-            "target": target,
-            "mode": mode,
-            "results": results,
-            "averageScore": round(sum(scores) / max(1, len(scores)), 1),
-            "elapsedMs": int((time.time() - started) * 1000),
-        })
-    except Exception as e:
-        return jsonify({"ok": False, "error": str(e)[:700], "errorCode": "smart_translate_failed"}), 500
-
 
 @app.post("/api/translate-context")
 def translate_context():
