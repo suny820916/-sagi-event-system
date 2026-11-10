@@ -20,10 +20,47 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Install Instagram extractor
+        run: python -m pip install --quiet "parth-dl>=1.2.1,<2"
+
       - name: Verify public platform engines
         run: |
           python - <<'PY'
           import json, urllib.request, urllib.parse, urllib.error
+
+          # Instagram: real public Reel through the same parth-dl library used
+          # by the backend router. Failure here means anonymous cloud Instagram
+          # extraction is not reliable enough to call "verified".
+          import subprocess, sys
+          ig_url="https://www.instagram.com/reel/DeIXf9SNQVO/"
+          ig_script=r"""
+import json, sys
+from parth_dl import get_info
+print(json.dumps(get_info(sys.argv[1], verbose=False), ensure_ascii=False))
+"""
+          try:
+              igp=subprocess.run(
+                  [sys.executable,"-c",ig_script,ig_url],
+                  text=True,capture_output=True,timeout=22,check=False
+              )
+          except subprocess.TimeoutExpired:
+              raise AssertionError("PARTH_DL_TIMEOUT")
+          print("PARTH_RETURN",igp.returncode)
+          if igp.stderr:
+              print("PARTH_STDERR",igp.stderr[-800:])
+          assert igp.returncode == 0, "PARTH_DL_FAILED"
+          try:
+              ig=json.loads((igp.stdout or "").strip())
+          except Exception:
+              raise AssertionError("PARTH_DL_BAD_JSON")
+          ig_entries=ig.get("entries") or []
+          ig_formats=[
+              x for entry in ig_entries
+              for x in (entry.get("formats") or [])
+              if str(x.get("url") or "").startswith("http")
+          ]
+          assert ig_entries and ig_formats, "PARTH_DL_NO_MEDIA"
+          print("PARTH_DL_REAL_REEL_OK",len(ig_entries),len(ig_formats))
 
           # BTCH: opportunistic only. Basic HTTP/CORS should work; deep upstream
           # degradation is recorded but does not fail the release.
