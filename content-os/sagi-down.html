@@ -85,7 +85,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 <div class="wrap">
   <div class="top">
     <div class="brand"><b>SAGI DOWN</b><span>VIDEO LINK SHORTCUT</span></div>
-    <span class="badge">V1.9.2 · VERIFIED CLOUD</span>
+    <span class="badge">V1.9.3 · CLOUD RENDER GATE</span>
   </div>
 
   <section class="hero">
@@ -334,7 +334,7 @@ Unbelievable finish."></textarea>
     </div>
 
     <div class="studioStep">
-      <div class="studioStepHead"><b>07 · 导出成片</b><span>云端快速合成优先 · 手机本地备用</span></div>
+      <div class="studioStepHead"><b>07 · 导出成片</b><span>云端快速合成优先 · 自动检测后端能力</span></div>
       <div class="trimGrid">
         <div><label>原声</label><select id="originalAudio"><option value="0.25">25% 保留</option><option value="0.5">50% 保留</option><option value="1">100% 保留</option><option value="0">静音</option></select></div>
         <div><label>字幕</label><select id="burnSubtitle"><option value="yes">烧录到画面</option><option value="no">不烧录</option></select></div>
@@ -620,6 +620,24 @@ function cloudRenderCaptions(){
 async function startCloudRender(){
  if(!STUDIO.file){studioStatus('请先选择视频。','warn');return}
  if(STUDIO.cloudRenderJobId){setCloudRenderStatus('已有云端任务正在处理。');return}
+
+ // 每次提交前强制刷新一次线上能力，避免旧缓存把按钮误判为可用。
+ const ready=await wakeCaptionCloud(true);
+ const health=STUDIO.cloudHealth||{};
+ if(!ready){
+   setCloudRenderProgress(0);
+   setCloudRenderStatus('云端连接失败：'+(STUDIO.cloudLastError||'无法连接'));
+   studioStatus('云端当前不可用，本地导出仍可使用。','warn');
+   return
+ }
+ if(!health.cloudRender){
+   const v=health.version||'未知';
+   setCloudRenderProgress(0);
+   setCloudRenderStatus('当前云端 V'+v+' 尚未部署 Cloud Render。不会再提交404请求。请先升级云端，或使用“手机本地导出”。');
+   studioStatus('Cloud Render 尚未上线到当前 Render 服务；字幕仍可正常使用。','warn');
+   return
+ }
+
  const [start,end,duration]=studioRange();
  const mode=q('aiVoiceMode')?.value||'none';
  if(mode==='clone'&&!STUDIO.cloneVoiceId){studioStatus('请选择AI男声/女声，或先创建你的声音克隆。','warn');return}
@@ -627,8 +645,18 @@ async function startCloudRender(){
  if((mode==='ai_male'||mode==='ai_female'||mode==='clone')&&!String(q('narrationText')?.value||'').trim()){
    studioStatus('AI配音需要解说稿，请先生成解说稿。','warn');return
  }
+
  try{
-   await voiceApiReady();
+   // AI Voice 是可选能力；不加解说时不要求 ElevenLabs。
+   if(mode!=='none'&&mode!=='recorded'){
+     if(!health.aiVoice){
+       setCloudRenderStatus('当前云端不支持 AI Voice；请先升级云端或改为“不加解说/使用我的录音”。');
+       studioStatus('AI Voice 尚未部署到当前云端。','warn');
+       return
+     }
+     await voiceApiReady();
+   }
+
    const fd=new FormData();
    fd.append('media',STUDIO.file,STUDIO.file.name||'video.mp4');
    fd.append('start',String(start));fd.append('duration',String(duration));
@@ -648,16 +676,37 @@ async function startCloudRender(){
    xhr.open('POST',CAPTION_CLOUD+'/api/render');
    xhr.setRequestHeader('Authorization','Bearer '+STUDIO.cloudCaptionToken);
    xhr.timeout=240000;
-   xhr.upload.onprogress=e=>{if(e.lengthComputable){const p=Math.round(e.loaded/e.total*100);setCloudRenderProgress(Math.min(28,p*.28));setCloudRenderStatus('上传视频 '+p+'%')}};
+   xhr.upload.onprogress=e=>{
+     if(e.lengthComputable){
+       const p=Math.round(e.loaded/e.total*100);
+       setCloudRenderProgress(Math.min(28,p*.28));
+       setCloudRenderStatus('上传视频 '+p+'%')
+     }
+   };
    xhr.onload=()=>{
      let d={};try{d=JSON.parse(xhr.responseText||'{}')}catch(e){}
-     if(xhr.status<200||xhr.status>=300||!d?.ok||!d?.job?.id){setCloudRenderProgress(0);setCloudRenderStatus('提交失败：'+(d?.error||xhr.status));return}
-     STUDIO.cloudRenderJobId=d.job.id;setCloudRenderStatus('云端任务已创建 · '+(d.job.stage||'处理中'));pollCloudRender()
+     if(xhr.status===404){
+       setCloudRenderProgress(0);
+       setCloudRenderStatus('Cloud Render 路由不存在：线上云端仍是旧版。请升级 Render 后再试。');
+       return
+     }
+     if(xhr.status<200||xhr.status>=300||!d?.ok||!d?.job?.id){
+       setCloudRenderProgress(0);
+       setCloudRenderStatus('提交失败：'+(d?.error||('HTTP '+xhr.status)));
+       return
+     }
+     STUDIO.cloudRenderJobId=d.job.id;
+     setCloudRenderProgress(d.job.progress||8);
+     setCloudRenderStatus(d.job.stage||'云端任务已创建');
+     pollCloudRender()
    };
-   xhr.onerror=()=>{setCloudRenderProgress(0);setCloudRenderStatus('上传失败，请检查网络。')};
+   xhr.onerror=()=>{setCloudRenderProgress(0);setCloudRenderStatus('上传失败：网络错误。')};
    xhr.ontimeout=()=>{setCloudRenderProgress(0);setCloudRenderStatus('上传超时。')};
    xhr.send(fd)
- }catch(e){setCloudRenderProgress(0);setCloudRenderStatus('云端出片失败：'+(e.message||e))}
+ }catch(e){
+   setCloudRenderProgress(0);
+   setCloudRenderStatus('云端出片失败：'+(e.message||e))
+ }
 }
 async function pollCloudRender(){
  if(!STUDIO.cloudRenderJobId)return;
@@ -1921,7 +1970,7 @@ if(q('captionSpeed'))q('captionSpeed').value='fast';
 if(q('captionRange'))q('captionRange').value='trim';
 setTimeout(async()=>{await wakeCaptionCloud();refreshAIVoiceStatus(false)},180);
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=192',{updateViaCache:'none'}).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=193',{updateViaCache:'none'}).catch(()=>{})}
 })();
 </script>
 </body>
