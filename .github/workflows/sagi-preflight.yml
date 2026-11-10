@@ -470,6 +470,29 @@ jobs:
               body=json.loads(r.read().decode("utf-8"))
           keys={x.get("key") for x in body.get("platforms",[])}
           assert {"instagram","tiktok","twitter","youtube"} <= keys, keys
+
+          # Deep health exercises the upstream downloader rather than only the HTTP shell.
+          req=urllib.request.Request(base+"/api/health?deep=1",headers={"User-Agent":"SAGI-preflight"})
+          with urllib.request.urlopen(req,timeout=45) as r:
+              deep=json.loads(r.read().decode("utf-8"))
+          assert deep.get("success") is True and deep.get("status") == "ok", deep
+          upstream=deep.get("upstream") or {}
+          assert upstream.get("ok") is True, deep
+          print("BTCH DEEP HEALTH OK",upstream)
+
+          # Real resolver smoke using youtube-dl's purpose-built public test video.
+          import urllib.parse
+          test_url="https://www.youtube.com/watch?v=BaW_jenozKc"
+          resolve=base+"/api/download/youtube?"+urllib.parse.urlencode({"url":test_url})
+          req=urllib.request.Request(resolve,headers={"Origin":"https://suny820916.github.io","User-Agent":"SAGI-preflight"})
+          with urllib.request.urlopen(req,timeout=45) as r:
+              resolved=json.loads(r.read().decode("utf-8"))
+          assert resolved.get("success") is True, resolved
+          norm=resolved.get("normalized") or {}
+          media=norm.get("media") or []
+          assert norm.get("kind") == "media" and any(str(x.get("url") or "").startswith("http") for x in media), norm
+          print("BTCH REAL YOUTUBE RESOLVE OK",norm.get("title"),len(media))
+
           print("BTCH PUBLIC NODE OK",sorted(keys))
           PY
 
