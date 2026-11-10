@@ -38,6 +38,10 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 .studioHero{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px}.studioHero b{font-size:12px}.studioHero span{font-size:8px;color:#748890}
 
 
+
+.smartResult{display:none;margin-top:9px;border:1px solid #453d28;border-radius:12px;background:#0b0d0b;padding:10px}.smartResult.show{display:block}
+.smartResultGrid{display:grid;grid-template-columns:1fr 1fr;gap:7px}.smartResult small{display:block;color:#756e59;font-size:8px;margin-bottom:3px}.smartResult b{font-size:10px;line-height:1.45}
+.smartCuts{margin-top:8px;font-size:9px;color:#9b8d65;line-height:1.55}.qualityScore{font-variant-numeric:tabular-nums}
 .directorStep{border-color:#66562f;background:linear-gradient(180deg,#17150e,#0a0f12)}
 .directorHead{display:flex;justify-content:space-between;gap:10px;align-items:center}.directorHead b{font-size:12px}.directorHead span{font-size:8px;color:#9c8c61}
 .directorGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:9px}.directorGrid label{font-size:8px;color:#887c5a}.directorGrid select{width:100%;margin-top:4px;border:1px solid #4a422b;background:#0a0b08;color:#fff;border-radius:10px;padding:10px;font-size:10px}
@@ -72,7 +76,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 <div class="wrap">
   <div class="top">
     <div class="brand"><b>SAGI DOWN</b><span>VIDEO LINK SHORTCUT</span></div>
-    <span class="badge">V1.7.1 · SEMANTIC TRANSLATE</span>
+    <span class="badge">V1.8 · SMART RECREATE</span>
   </div>
 
   <section class="hero">
@@ -191,20 +195,21 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
     <div class="studioStep directorStep" id="oneTapDirector">
       <div class="directorHead">
         <div><b>03 · ONE TAP · 一键再创作</b><span>识别 → 中文 → 解说 → 字幕 → 导出准备</span></div>
-        <span class="badge">V1.7</span>
+        <span class="badge">V1.8</span>
       </div>
       <div class="directorGrid">
         <label>内容模式
           <select id="directorMode">
             <option value="faithful" selected>忠实原意</option>
-            <option value="football">足球解说</option>
+            <option value="football">足球专业解说</option>
+            <option value="viral">抖音高留存</option>
           </select>
         </label>
         <label>处理范围
           <select id="directorRange">
             <option value="trim" selected>当前入点 → 出点</option>
-            <option value="15">当前开始后 15 秒</option>
-            <option value="30">当前开始后 30 秒</option>
+            <option value="smart15">智能找最强15秒</option>
+            <option value="smart30">智能找最强30秒</option>
             <option value="full">整段 · 最长3分钟</option>
           </select>
         </label>
@@ -215,9 +220,18 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
           </select>
         </label>
       </div>
-      <button class="btn gold directorBtn" id="oneTapRecreateBtn" type="button">一键识别 · 翻中文 · 生成解说</button>
+      <button class="btn gold directorBtn" id="oneTapRecreateBtn" type="button">智能再创作 · 自动找重点</button>
+      <div class="smartResult" id="smartResult">
+        <div class="smartResultGrid">
+          <div><small>HOOK</small><b id="smartHook">—</b></div>
+          <div><small>标题</small><b id="smartTitle">—</b></div>
+          <div><small>翻译质量</small><b id="smartQuality" class="qualityScore">—</b></div>
+          <div><small>智能剪辑</small><b id="smartWindow">—</b></div>
+        </div>
+        <div class="smartCuts" id="smartCuts">识别后自动生成。</div>
+      </div>
       <div class="directorProgress"><i id="directorProgressBar"></i></div>
-      <div id="directorStatus" class="directorStatus">推荐先用“忠实原意”。云端字幕与翻译成功后，再自动生成中文解说初稿并准备烧录字幕。</div>
+      <div id="directorStatus" class="directorStatus">SMART RECREATE 会先理解整段内容，再做高质量翻译、重点窗口、Hook、标题和解说稿。</div>
     </div>
 
     <div class="studioStep aiCaptionStep">
@@ -250,6 +264,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
         <span id="captionCacheStatus">本地模型：仅备用</span>
         <span id="captionCloudStatus">云端：连接中</span>
         <span id="captionCloudVersion">版本：—</span>
+        <span id="translationQuality">翻译质量：—</span>
       </div>
       <div id="aiCaptionTimeline" class="aiCaptionTimeline"></div>
     </div>
@@ -265,7 +280,7 @@ Unbelievable finish."></textarea>
         <label>翻译模式<select id="translationMode"><option value="faithful" selected>忠实原意</option><option value="football">足球中文化</option></select></label>
         <button class="btn blue" id="translateSubtitleBtn" type="button">上下文翻译</button>
       </div>
-      <div class="subHint">新版先把碎字幕合成完整语义段落再翻译，译文完成后按原时间轴比例重新拆回每一条字幕。即使10句被译成6句，也不会丢失时间轴。</div>
+      <div class="subHint">SMART TRANSLATE：语义段翻译 + 足球术语保护 + 回译校验 + 质量评分；低分自动尝试备用翻译，最后再完整回填原时间轴。</div>
     </div>
 
     <div class="studioStep">
@@ -473,7 +488,7 @@ const STUDIO={
  captions:[],captionLanguage:'',captionRangeKey:'',captionModel:null,captionModelKey:'',captionModule:null,captionBusy:false,
  translator:null,translatorKey:'',moduleWarm:false,
  cloudCaptionToken:'',cloudCaptionReady:false,cloudCaptionWaking:false,cloudCaptionError:'',cloudHealthVersion:'',cloudVersion:'',cloudHealth:null,
- captionVisibleCount:40,oneTapBusy:false,
+ captionVisibleCount:40,oneTapBusy:false,translationScore:0,recreatePlan:null,
  pendingTranslateZh:false,
  cloudHealth:null,cloudLastError:''
 };
@@ -606,6 +621,7 @@ async function wakeCaptionCloud(force=false){
    if(!health.captionMedia)missing.push('captionMedia');
    if(!health.captionFast)missing.push('captionFast');
    if(!health.contextTranslate)missing.push('contextTranslate');
+   if(!health.smartTranslate)missing.push('smartTranslate');
    if(missing.length){
      STUDIO.cloudCaptionReady=false;
      throw new Error('云端版本过旧：缺少 '+missing.join(', '))
@@ -1046,32 +1062,58 @@ function redistributeParagraphToTimeline(translated,group){
    return {...c,text:part||String(c.text||'')}
  })
 }
-async function translateSemanticTimeline(caps,source,target,mode='faithful'){
- const groups=buildSemanticParagraphs(caps),out=[];
- let done=0;
- for(const group of groups){
-   const paragraph=joinSemanticParagraph(group);
-   let translated='';
-   // 云端可用时，把“完整语义段”作为一个翻译单元；失败则浏览器直连。
-   if(STUDIO.cloudCaptionReady){
-     try{
-       const data=await cloudTranslateContext([{start:group[0].start,end:group[group.length-1].end,text:paragraph}],source,target,mode);
-       translated=String(data?.segments?.[0]||'').trim()
-     }catch(e){console.warn('semantic cloud translate fallback',e)}
-   }
-   if(!translated)translated=await translateTextHard(paragraph,source,target);
-   if(mode==='football'&&String(target).toLowerCase().startsWith('zh'))translated=footballPolishZh(translated);
-   const redistributed=redistributeParagraphToTimeline(translated,group);
-   out.push(...redistributed);
-   done+=group.length;
-   aiCaptionProgress(80+Math.min(18,done/Math.max(1,caps.length)*18));
-   aiCaptionStatus('语义段落翻译 '+done+' / '+caps.length+' · 时间轴完整保留')
- }
- if(out.length!==caps.length)throw new Error('语义翻译时间轴数量不一致');
- if(!translationLooksValid(out,target))throw new Error('语义翻译未产生有效中文');
- return out
+async function cloudSmartTranslate(paragraphs,source,target,mode){
+ const ready=await wakeCaptionCloud();
+ if(!ready||!STUDIO.cloudCaptionToken)throw new Error('SMART_TRANSLATE_CLOUD_NOT_READY');
+ const r=await fetch(CAPTION_CLOUD+'/api/translate-smart',{
+   method:'POST',
+   headers:{'Content-Type':'application/json',Authorization:'Bearer '+STUDIO.cloudCaptionToken},
+   body:JSON.stringify({source:source||'auto',target:target||'zh-CN',mode:mode==='viral'?'football':mode,paragraphs})
+ });
+ const data=await r.json().catch(()=>({}));
+ if(!r.ok||!data?.ok||!Array.isArray(data.results))throw new Error(data?.error||('smart translate '+r.status));
+ return data
+}
+function setTranslationQuality(score){
+ STUDIO.translationScore=Math.max(0,Math.min(100,Number(score)||0));
+ const e=q('translationQuality');if(e)e.textContent='翻译质量：'+(STUDIO.translationScore?Math.round(STUDIO.translationScore)+'分':'—');
+ const s=q('smartQuality');if(s)s.textContent=STUDIO.translationScore?Math.round(STUDIO.translationScore)+' / 100':'—'
 }
 
+async function translateSemanticTimeline(caps,source,target,mode='faithful'){
+ const groups=buildSemanticParagraphs(caps),out=[];
+ let smartData=null,smartResults=[];
+ try{
+   smartData=await cloudSmartTranslate(groups.map(joinSemanticParagraph),source,target,mode);
+   smartResults=smartData.results||[];
+   setTranslationQuality(smartData.averageScore||0)
+ }catch(e){
+   console.warn('smart translate unavailable, semantic fallback',e);
+   setTranslationQuality(0)
+ }
+ let done=0;
+ for(let gi=0;gi<groups.length;gi++){
+   const group=groups[gi],paragraph=joinSemanticParagraph(group);
+   let translated=String(smartResults[gi]?.text||'').trim();
+   if(!translated){
+     if(STUDIO.cloudCaptionReady){
+       try{
+         const data=await cloudTranslateContext([{start:group[0].start,end:group[group.length-1].end,text:paragraph}],source,target,mode==='viral'?'football':mode);
+         translated=String(data?.segments?.[0]||'').trim()
+       }catch(e){}
+     }
+     if(!translated)translated=await translateTextHard(paragraph,source,target)
+   }
+   if((mode==='football'||mode==='viral')&&String(target).toLowerCase().startsWith('zh'))translated=footballPolishZh(translated);
+   out.push(...redistributeParagraphToTimeline(translated,group));
+   done+=group.length;
+   aiCaptionProgress(80+Math.min(18,done/Math.max(1,caps.length)*18));
+   aiCaptionStatus('智能翻译 '+done+' / '+caps.length+(STUDIO.translationScore?' · 质量 '+Math.round(STUDIO.translationScore)+'分':''))
+ }
+ if(out.length!==caps.length)throw new Error('智能翻译时间轴数量不一致');
+ if(!translationLooksValid(out,target))throw new Error('智能翻译未产生有效中文');
+ return out
+}
 async function browserTranslateContext(caps,source,target,mode='faithful'){
  const blocks=groupCaptionBlocks(caps),out=new Array(caps.length);
  let baseIndex=0,done=0;
@@ -1207,6 +1249,68 @@ function setDirectorStatus(t){const e=q('directorStatus');if(e)e.textContent=t}
 function cleanNarrationLine(s){
  return String(s||'').replace(/^[\s·•—-]+/,'').replace(/\s+/g,' ').trim()
 }
+function scoreCaptionForRecreate(c){
+ const t=String(c?.text||'').toLowerCase();
+ let score=Math.min(5,t.length/18);
+ const keywords=['关键','为什么','危险','进球','射门','空间','机会','防守','压迫','反击','转换','肋部','后腰','goal','why','key','danger','press','counter','space','finish','transition','overload','because'];
+ for(const k of keywords)if(t.includes(k))score+=2.2;
+ if(/[!?！？]/.test(t))score+=1.5;
+ if(/\d/.test(t))score+=.6;
+ return score
+}
+function chooseSmartWindow(caps,seconds){
+ if(!caps.length)return{start:0,end:seconds,score:0};
+ const maxEnd=Math.max(...caps.map(c=>Number(c.end)||0)),span=Math.min(seconds,maxEnd||seconds);
+ let best={start:0,end:span,score:-1};
+ const points=[0,...caps.map(c=>Math.max(0,Number(c.start)||0))];
+ for(const start of points){
+   const end=Math.min(maxEnd,start+span);let score=0;
+   for(const c of caps){
+     const cs=Number(c.start)||0,ce=Number(c.end)||0;
+     if(ce>start&&cs<end)score+=scoreCaptionForRecreate(c)
+   }
+   if(score>best.score)best={start,end,score}
+ }
+ return best
+}
+function trimCaptionsToWindow(caps,start,end){
+ return caps.filter(c=>(Number(c.end)||0)>start&&(Number(c.start)||0)<end).map(c=>({
+   ...c,start:Math.max(0,(Number(c.start)||0)-start),end:Math.max(.05,Math.min(end,Number(c.end)||0)-start)
+ }))
+}
+function makeSmartHook(mode,caps){
+ const ranked=caps.map(c=>({text:cleanNarrationLine(c.text),score:scoreCaptionForRecreate(c)})).filter(x=>x.text).sort((a,b)=>b.score-a.score);
+ const key=ranked[0]?.text||cleanNarrationLine(caps[0]?.text)||'';
+ if(mode==='viral')return key?('为什么这一点最关键？'+key.replace(/[。！？!?]+$/,'')):'这段内容真正关键的地方是什么？';
+ if(mode==='football')return key?('看懂这一点，你就看懂了这段战术：'+key.replace(/[。！？!?]+$/,'')):'这段战术真正的关键在哪里？';
+ return key||'这段内容的核心是什么？'
+}
+function makeSmartTitle(mode,caps){
+ const key=cleanNarrationLine(caps.map(c=>c.text).find(t=>String(t||'').length>=8)||caps[0]?.text||'');
+ const short=Array.from(key.replace(/[。！？!?]+$/,'')).slice(0,22).join('');
+ if(mode==='viral')return short?'别只看结果｜'+short:'这段视频真正值得看的地方';
+ if(mode==='football')return short?'战术拆解｜'+short:'足球战术拆解';
+ return short||'视频要点'
+}
+function renderRecreatePlan(plan){
+ STUDIO.recreatePlan=plan;
+ q('smartResult')?.classList.add('show');
+ if(q('smartHook'))q('smartHook').textContent=plan.hook||'—';
+ if(q('smartTitle'))q('smartTitle').textContent=plan.title||'—';
+ if(q('smartWindow'))q('smartWindow').textContent=plan.window?plan.window.start.toFixed(1)+'–'+plan.window.end.toFixed(1)+'秒':'当前范围';
+ if(q('smartCuts'))q('smartCuts').textContent=plan.summary||'';
+ setTranslationQuality(STUDIO.translationScore)
+}
+function applySmartWindow(seconds){
+ const original=STUDIO.captions.slice(),window=chooseSmartWindow(original,seconds);
+ const selected=trimCaptionsToWindow(original,window.start,window.end);
+ if(selected.length){
+   q('trimStart').value=window.start.toFixed(1);q('trimEnd').value=window.end.toFixed(1);q('captionRange').value='trim';
+   STUDIO.captions=selected;STUDIO.captionRangeKey=captionKey();syncCaptionText();renderCaptionTimeline()
+ }
+ return window
+}
+
 function buildNarrationFromCaptions(mode='faithful'){
  const lines=(STUDIO.captions||[]).map(x=>cleanNarrationLine(x.text)).filter(Boolean);
  if(!lines.length)return'';
@@ -1218,67 +1322,69 @@ function buildNarrationFromCaptions(mode='faithful'){
    if(chars+normalized.length>maxChars&&picked.length>=3)break;
    picked.push(normalized);chars+=normalized.length
  }
- if(mode==='faithful'){
-   return picked.map(x=>/[。！？!?]$/.test(x)?x:x+'。').join('')
- }
+ if(mode==='faithful')return picked.map(x=>/[。！？!?]$/.test(x)?x:x+'。').join('');
  const lead=picked[0]||'',body=picked.slice(1,-1).join('，'),tail=picked.length>1?picked[picked.length-1]:'';
+ if(mode==='viral'){
+   let out='先别急着看结果。'+(lead?lead+'。':'');
+   if(body)out+='真正关键的是，'+body+'。';
+   if(tail&&tail!==lead)out+='所以最后你会发现，'+tail+'。';
+   return out.replace(/。。+/g,'。')
+ }
  let out='先看这段内容。'+lead+'。';
  if(body)out+='这里的关键在于，'+body+'。';
  if(tail&&tail!==lead)out+='最后，'+tail+'。';
  return out.replace(/。。+/g,'。')
 }
 async function runOneTapRecreate(){
- if(!STUDIO.file){studioStatus('请先在 01 导入视频。','warn');setDirectorStatus('还没有视频，先选择要处理的素材。');return}
+ if(!STUDIO.file){studioStatus('请先在 01 导入视频。','warn');setDirectorStatus('还没有视频，先选择素材。');return}
  if(STUDIO.oneTapBusy||STUDIO.captionBusy||STUDIO.exporting)return;
  STUDIO.oneTapBusy=true;
- const btn=q('oneTapRecreateBtn');btn.disabled=true;btn.textContent='正在一键处理…';setDirectorProgress(3);
+ const btn=q('oneTapRecreateBtn');btn.disabled=true;btn.textContent='SMART RECREATE 处理中…';setDirectorProgress(3);
  try{
    const mode=q('directorMode')?.value||'faithful',range=q('directorRange')?.value||'trim';
-   q('translationMode').value=mode;
-   q('subtitleTargetLang').value='zh-CN';
-   q('burnSubtitle').value='yes';
-   q('studioAspect').value='9:16';
-   q('originalAudio').value='0.25';
+   q('translationMode').value=mode==='viral'?'football':mode;q('subtitleTargetLang').value='zh-CN';
+   q('burnSubtitle').value='yes';q('studioAspect').value='9:16';q('originalAudio').value=mode==='viral'?'0.5':'0.25';
 
-   if(range==='full')q('captionRange').value='full';
-   else{
-     q('captionRange').value='trim';
-     if(range==='15'||range==='30'){
-       const start=Math.max(0,Number(q('trimStart').value)||0),span=Number(range);
-       q('trimEnd').value=Math.min(STUDIO.duration||start+span,start+span).toFixed(1)
-     }
+   // 智能15/30秒需要先理解整段，再决定最值得剪的位置。
+   q('captionRange').value=(range==='smart15'||range==='smart30'||range==='full')?'full':'trim';
+
+   setDirectorStatus('① 理解视频：云端识别完整语义和时间轴…');setDirectorProgress(10);
+   const ok=await runAiCaption(true);
+   if(!ok||!STUDIO.captions.length)throw new Error('字幕/翻译没有完成');
+
+   let window=null;
+   if(range==='smart15'||range==='smart30'){
+     setDirectorStatus('② 导演分析：正在寻找信息密度最高的'+(range==='smart15'?'15':'30')+'秒…');setDirectorProgress(68);
+     window=applySmartWindow(range==='smart15'?15:30)
    }
 
-   setDirectorStatus('① 正在云端识别语音和时间轴…');setDirectorProgress(10);
-   const ok=await runAiCaption(true);
-   if(!ok||!(STUDIO.captions||[]).length)throw new Error('字幕/翻译没有完成，请查看 AI CAPTION 状态');
-
-   setDirectorStatus('② 语义中文字幕完成 · 时间轴已完整回填 · 正在生成解说初稿…');setDirectorProgress(72);
+   const hook=makeSmartHook(mode,STUDIO.captions),title=makeSmartTitle(mode,STUDIO.captions);
    const narration=buildNarrationFromCaptions(mode);
    if(!narration)throw new Error('没有可生成解说的中文字幕');
-   q('narrationText').value=narration;
+   q('narrationText').value=(mode==='viral'?hook+'。':'')+narration;
+   renderRecreatePlan({
+     hook,title,window,
+     summary:(window?'已自动把视频裁到重点窗口；':'保留当前范围；')+'中文字幕 '+STUDIO.captions.length+' 条 · 翻译质量 '+(STUDIO.translationScore?Math.round(STUDIO.translationScore)+'分':'备用模式')
+   });
 
-   setDirectorStatus('③ 解说稿和字幕已准备 · 正在整理导出参数…');setDirectorProgress(88);
-   q('voiceMeta').textContent='解说稿已自动生成。可先“手机朗读试听”，也可直接录制你的声音。';
+   setDirectorStatus('③ SMART PLAN 完成：Hook、标题、重点窗口、中文字幕和解说稿已生成。');setDirectorProgress(88);
+   q('voiceMeta').textContent='SMART RECREATE 已生成解说稿。可试听、录你的声音，或直接保留原声。';
 
    if(q('directorFinish').value==='export'){
-     setDirectorStatus('④ 正在自动导出成片…');setDirectorProgress(94);
-     await exportStudio();
-     if(!STUDIO.resultBlob)throw new Error('自动导出没有生成成片');
-     setDirectorStatus('完成 · 中文字幕、解说稿、9:16成片均已生成。');setDirectorProgress(100)
+     setDirectorStatus('④ 正在自动导出9:16成片…');setDirectorProgress(94);
+     await exportStudio();if(!STUDIO.resultBlob)throw new Error('自动导出没有生成成片');
+     setDirectorStatus('完成 · SMART RECREATE 成片已生成。');setDirectorProgress(100)
    }else{
-     setDirectorStatus('完成 · 中文字幕 + 解说稿已准备。建议先试听/检查，然后点“导出手机成片”。');
-     setDirectorProgress(100);
-     q('narrationText').scrollIntoView({behavior:'smooth',block:'center'})
+     setDirectorStatus('完成 · 建议检查 Hook / 翻译 / 解说稿，然后导出成片。');setDirectorProgress(100);
+     q('smartResult')?.scrollIntoView({behavior:'smooth',block:'center'})
    }
-   toast('一键再创作完成')
+   toast('SMART RECREATE 完成')
  }catch(e){
-   console.error(e);setDirectorStatus('停在当前步骤：'+(e.message||e));studioStatus('一键再创作未完成：'+(e.message||e),'warn');setDirectorProgress(0)
+   console.error(e);setDirectorStatus('停在当前步骤：'+(e.message||e));studioStatus('SMART RECREATE 未完成：'+(e.message||e),'warn');setDirectorProgress(0)
  }finally{
-   STUDIO.oneTapBusy=false;btn.disabled=false;btn.textContent='一键识别 · 翻中文 · 生成解说'
+   STUDIO.oneTapBusy=false;btn.disabled=false;btn.textContent='智能再创作 · 自动找重点'
  }
 }
-
 async function runAiCaption(translateZh=false){
  if(!STUDIO.file){studioStatus('请先在 01 导入视频。','warn');return false}
  if(STUDIO.captionBusy)return false;
@@ -1593,7 +1699,7 @@ if(q('captionSpeed'))q('captionSpeed').value='fast';
 if(q('captionRange'))q('captionRange').value='trim';
 setTimeout(()=>wakeCaptionCloud(),180);
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=171',{updateViaCache:'none'}).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=180',{updateViaCache:'none'}).catch(()=>{})}
 })();
 </script>
 </body>
