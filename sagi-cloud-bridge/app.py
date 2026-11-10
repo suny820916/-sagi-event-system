@@ -14,6 +14,7 @@ import time
 import requests
 import yt_dlp
 from yt_dlp.utils import DownloadError
+from faster_whisper import WhisperModel
 
 app = Flask(__name__)
 
@@ -35,6 +36,13 @@ rate_lock = Lock()
 pair_codes = {}
 pair_lock = Lock()
 worker_presence = {"last_seen": 0, "worker_id": ""}
+
+CAPTION_MODEL_DIR = str(Path(__file__).resolve().parent / "model_cache" / "tiny")
+caption_model = None
+caption_model_error = ""
+caption_model_lock = Lock()
+caption_ready_at = 0.0
+CAPTION_MAX_MB = int(os.getenv("SAGI_CAPTION_MAX_MB") or "12")
 
 def now():
     return datetime.now(timezone.utc)
@@ -278,6 +286,35 @@ def run_download(job_id, url, wanted_name):
                     "errorCode": code,
                 })
 
+def get_caption_model():
+    global caption_model, caption_model_error, caption_ready_at
+    if caption_model is not None:
+        return caption_model
+    with caption_model_lock:
+        if caption_model is not None:
+            return caption_model
+        try:
+            source = CAPTION_MODEL_DIR if Path(CAPTION_MODEL_DIR).exists() else "tiny"
+            caption_model = WhisperModel(
+                source,
+                device="cpu",
+                compute_type="int8",
+                cpu_threads=max(1, min(4, os.cpu_count() or 2)),
+                num_workers=1,
+            )
+            caption_model_error = ""
+            caption_ready_at = time.time()
+            return caption_model
+        except Exception as e:
+            caption_model_error = str(e)[:500]
+            raise
+
+def warm_caption_model():
+    try:
+        get_caption_model()
+    except Exception:
+        pass
+
 def cleanup_loop():
     while True:
         cutoff = now() - timedelta(minutes=JOB_TTL_MIN)
@@ -297,6 +334,7 @@ def cleanup_loop():
         time.sleep(60)
 
 Thread(target=cleanup_loop, daemon=True).start()
+Thread(target=warm_caption_model, daemon=True).start()
 
 @app.after_request
 def security_headers(resp):
@@ -310,15 +348,88 @@ def health():
     return jsonify({
         "ok": True,
         "service": "SAGI CLOUD BRIDGE",
-        "version": "1.4.0",
+        "version": "1.6.0",
         "instagram": True,
         "hybridWorker": True,
         "workerOnline": worker_online(),
         "activation": True,
+        "captionFast": True,
+        "captionModel": "faster-whisper-tiny-int8",
+        "captionReady": caption_model is not None,
+        "captionError": caption_model_error,
         "maxFileMB": MAX_FILE_MB,
         "jobTTLMinutes": JOB_TTL_MIN,
         "configured": bool(SERVER_SECRET),
     })
+
+@app.post("/api/caption")
+def caption_fast():
+    if not authorized():
+        return jsonify({"ok": False, "error": "Unauthorized"}), 401
+    if not rate_allowed():
+        return jsonify({"ok": False, "error": "Hourly limit reached"}), 429
+
+    upload = request.files.get("audio")
+    if not upload:
+        return jsonify({"ok": False, "error": "Audio file required"}), 400
+
+    raw_lang = (request.form.get("language") or "").strip().lower()
+    language = None if raw_lang in ("", "auto") else raw_lang
+    if language == "zh-cn":
+        language = "zh"
+
+    work = tempfile.mkdtemp(prefix="sagi_caption_")
+    path = Path(work) / "caption.wav"
+    started = time.time()
+    try:
+        upload.save(path)
+        size = path.stat().st_size if path.exists() else 0
+        if size <= 0:
+            return jsonify({"ok": False, "error": "Empty audio"}), 400
+        if size > CAPTION_MAX_MB * 1024 * 1024:
+            return jsonify({"ok": False, "error": f"Audio exceeds {CAPTION_MAX_MB}MB"}), 413
+
+        model = get_caption_model()
+        segments, info = model.transcribe(
+            str(path),
+            language=language,
+            task="transcribe",
+            beam_size=1,
+            best_of=1,
+            temperature=0.0,
+            vad_filter=True,
+            vad_parameters={"min_silence_duration_ms": 350},
+            word_timestamps=False,
+            condition_on_previous_text=False,
+        )
+        items = []
+        for seg in segments:
+            text = (seg.text or "").strip()
+            if not text:
+                continue
+            items.append({
+                "start": round(float(seg.start), 3),
+                "end": round(float(seg.end), 3),
+                "text": text,
+            })
+
+        return jsonify({
+            "ok": True,
+            "engine": "faster-whisper-tiny-int8",
+            "language": getattr(info, "language", language or ""),
+            "languageProbability": round(float(getattr(info, "language_probability", 0.0) or 0.0), 4),
+            "segments": items,
+            "elapsedMs": int((time.time() - started) * 1000),
+        })
+    except Exception as e:
+        return jsonify({
+            "ok": False,
+            "error": str(e)[:700],
+            "errorCode": "caption_failed",
+        }), 500
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
+
 
 @app.post("/api/activate")
 def activate():
