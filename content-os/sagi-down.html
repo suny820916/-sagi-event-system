@@ -39,7 +39,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 
 .aiCaptionStep{border-color:#3a4c68;background:linear-gradient(180deg,#101621,#0a1016)}
 .aiCaptionTop{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}.aiCaptionTop b{font-size:11px}.aiCaptionTop span{font-size:8px;color:#738796}
-.aiCaptionActions{display:grid;grid-template-columns:1.1fr 1fr .72fr;gap:7px;margin-top:8px}
+.aiCaptionActions{display:grid;grid-template-columns:1fr 1fr 1fr .72fr;gap:7px;margin-top:8px}
 .aiCaptionProgress{height:7px;background:#080d10;border:1px solid #293a43;border-radius:99px;overflow:hidden;margin-top:9px}.aiCaptionProgress i{display:block;height:100%;width:0;background:linear-gradient(90deg,#718eaa,#d7b568);transition:.2s}
 .aiCaptionStatus{font-size:9px;color:#81949b;line-height:1.5;margin-top:7px}
 .aiCaptionTimeline{display:grid;gap:5px;margin-top:8px;max-height:180px;overflow:auto}.capRow{display:grid;grid-template-columns:58px 1fr;gap:7px;border:1px solid #243640;border-radius:9px;background:#091014;padding:7px}.capRow time{font-size:8px;color:#b7a268}.capRow span{font-size:9px;color:#c9d2d5;line-height:1.4}
@@ -64,7 +64,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 <div class="wrap">
   <div class="top">
     <div class="brand"><b>SAGI DOWN</b><span>VIDEO LINK SHORTCUT</span></div>
-    <span class="badge">V1.5.2 · TURBO CAPTION</span>
+    <span class="badge">V1.5.3 · INSTANT CACHE</span>
   </div>
 
   <section class="hero">
@@ -194,16 +194,18 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 
       <div class="aiCaptionActions">
         <button class="btn primary" id="aiCaptionBtn" type="button">AI 识别字幕</button>
+        <button class="btn gold" id="instant15Btn" type="button">INSTANT 15S</button>
         <button class="btn blue" id="aiCaptionZhBtn" type="button">识别并翻成中文</button>
         <button class="btn" id="downloadSrtBtn" type="button">导出 SRT</button>
       </div>
 
       <div class="aiCaptionProgress"><i id="aiCaptionProgress"></i></div>
-      <div id="aiCaptionStatus" class="aiCaptionStatus">默认“TURBO”模式：30秒内单次 Whisper，不再分块；Web Audio 直读 + q4；首次模型缓存后更快。</div>
+      <div id="aiCaptionStatus" class="aiCaptionStatus">INSTANT CACHE：打开页面即后台预热 Whisper；TURBO 默认只识别裁剪区间；15秒可直接点 INSTANT 15S。</div>
       <div class="aiCaptionMeta">
         <span id="captionEngine">引擎：FAST 待载入</span>
         <span id="captionDetectedLang">语言：—</span>
         <span id="captionCount">字幕：0</span>
+        <span id="captionCacheStatus">模型：后台预热</span>
       </div>
       <div id="aiCaptionTimeline" class="aiCaptionTimeline"></div>
     </div>
@@ -464,8 +466,17 @@ function handleStudioFile(e){
    STUDIO.duration=v.duration||0;STUDIO.width=v.videoWidth||0;STUDIO.height=v.videoHeight||0;
    q('trimStart').value='0';q('trimEnd').value=Math.min(STUDIO.duration,15).toFixed(1);
    q('studioFileHint').textContent=fmtDuration(STUDIO.duration)+' · '+STUDIO.width+'×'+STUDIO.height+' · '+fmtBytes(file.size||0);
-   studioStatus('视频已载入。先设置入点和出点，再处理字幕与解说。','good');
-   setTimeout(()=>{if(!STUDIO.captionModel&&!STUDIO.captionBusy)ensureCaptionModel().then(()=>aiCaptionStatus('极速字幕引擎已预热，点 AI 识别即可。')).catch(()=>{})},600)
+   if(q('captionSpeed')?.value==='fast')q('captionRange').value='trim';
+   studioStatus('视频已载入。TURBO 默认只识别当前裁剪区间。','good');
+   setTimeout(()=>{
+     if(!STUDIO.captionModel&&!STUDIO.captionBusy){
+       if(q('captionCacheStatus'))q('captionCacheStatus').textContent='模型：后台预热中';
+       ensureCaptionModel().then(()=>{
+         aiCaptionStatus('Whisper 已预热并缓存，点 AI 识别即可。');
+         if(q('captionCacheStatus'))q('captionCacheStatus').textContent='模型：已就绪'
+       }).catch(()=>{if(q('captionCacheStatus'))q('captionCacheStatus').textContent='模型：点识别时载入'})
+     }
+   },120)
  }
 }
 function setTrimPoint(which){
@@ -504,8 +515,14 @@ function renderCaptionTimeline(){
 }
 async function ensureCaptionModule(){
  if(STUDIO.captionModule)return STUDIO.captionModule;
- aiCaptionStatus('正在载入 Transformers.js…');aiCaptionProgress(3);
- STUDIO.captionModule=await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3/+esm');
+ aiCaptionStatus('正在载入字幕运行库…');aiCaptionProgress(3);
+ const mod=await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3/+esm');
+ try{
+   mod.env.useBrowserCache=true;
+   mod.env.useWasmCache=true;
+   mod.env.allowLocalModels=false;
+ }catch(e){}
+ STUDIO.captionModule=mod;
  return STUDIO.captionModule
 }
 function captionSpeedConfig(){
@@ -543,7 +560,11 @@ async function ensureCaptionModel(){
    device:useGPU?'webgpu':'wasm',
    dtype:useGPU?'fp16':cfg.dtype,
    progress_callback:(x)=>{
-     if(x?.status==='progress'&&Number.isFinite(x.progress)){aiCaptionProgress(38+Math.min(35,x.progress*.35));aiCaptionStatus('正在载入 '+cfg.label+' Whisper · '+Math.round(x.progress)+'%')}
+     if(x?.status==='progress'&&Number.isFinite(x.progress)){
+       aiCaptionProgress(38+Math.min(35,x.progress*.35));
+       aiCaptionStatus('首次模型载入 · '+Math.round(x.progress)+'% · 完成后会缓存');
+       if(q('captionCacheStatus'))q('captionCacheStatus').textContent='模型：'+Math.round(x.progress)+'%'
+     }
      else if(x?.status==='ready')aiCaptionStatus(cfg.label+' Whisper 已就绪')
    }
  };
@@ -559,7 +580,8 @@ async function ensureCaptionModel(){
    }else throw e
  }
  STUDIO.captionModelKey=key;
- if(q('captionEngine'))q('captionEngine').textContent='引擎：'+cfg.label+' · '+(useGPU?'WebGPU':'WASM')+' · '+(base.dtype||cfg.dtype);
+ if(q('captionEngine'))q('captionEngine').textContent='引擎：'+(cfg.mode==='fast'?'TURBO':cfg.label)+' · '+(useGPU?'WebGPU':'WASM')+' · '+(base.dtype||cfg.dtype);
+ if(q('captionCacheStatus'))q('captionCacheStatus').textContent='模型：已就绪 / 已缓存';
  return STUDIO.captionModel
 }
 async function extractCaptionWaveformFast(){
@@ -671,6 +693,15 @@ async function translateCaptionTimeline(target='zh-CN'){
  STUDIO.captions=out;STUDIO.captionLanguage=target;syncCaptionText();
  if(q('subtitleSourceLang'))q('subtitleSourceLang').value=target==='zh-CN'?'zh-CN':target;
  if(q('captionDetectedLang'))q('captionDetectedLang').textContent='语言：中文';
+}
+function instant15Caption(){
+ if(!STUDIO.file){studioStatus('请先导入视频。','warn');return}
+ const v=q('studioVideo'),start=Math.max(0,Number(v?.currentTime)||Number(q('trimStart')?.value)||0);
+ q('trimStart').value=start.toFixed(1);
+ q('trimEnd').value=Math.min(STUDIO.duration||start+15,start+15).toFixed(1);
+ q('captionRange').value='trim';q('captionSpeed').value='fast';
+ aiCaptionStatus('INSTANT 15S · 只识别当前 15 秒。');
+ runAiCaption(false)
 }
 async function runAiCaption(translateZh=false){
  if(!STUDIO.file){studioStatus('请先在 01 导入视频。','warn');return}
@@ -890,6 +921,7 @@ q('captionSpeed').onchange=async()=>{
  aiCaptionStatus(cfg.label+'模式已选择。'+(cfg.mode==='fast'?'默认最多先识别30秒，30秒内不分块，速度最快。':''));
 };
 q('aiCaptionBtn').onclick=()=>runAiCaption(false);
+q('instant15Btn').onclick=instant15Caption;
 q('aiCaptionZhBtn').onclick=()=>runAiCaption(true);
 q('downloadSrtBtn').onclick=downloadSrt;
 q('captionToNarrationBtn').onclick=captionToNarration;
@@ -902,10 +934,23 @@ q('cancelExportBtn').onclick=cancelExport;
 q('shareResultBtn').onclick=shareResult;
 input.addEventListener('input',updateDetect);
 renderHistory();updateDetect();renderRecreatePreset();renderCapabilities();
-const warmCaptionModule=()=>{if(!STUDIO.moduleWarm){STUDIO.moduleWarm=true;ensureCaptionModule().then(()=>{if(!STUDIO.captionModel)aiCaptionStatus('字幕运行库已预载；选择视频后自动预热 Whisper。')}).catch(()=>{STUDIO.moduleWarm=false})}};
-if('requestIdleCallback' in window)requestIdleCallback(warmCaptionModule,{timeout:2200});else setTimeout(warmCaptionModule,1200);
+if(q('captionSpeed'))q('captionSpeed').value='fast';
+if(q('captionRange'))q('captionRange').value='trim';
+const warmCaptionEngine=()=>{
+ if(STUDIO.moduleWarm||STUDIO.captionModel||STUDIO.captionBusy)return;
+ STUDIO.moduleWarm=true;
+ if(q('captionCacheStatus'))q('captionCacheStatus').textContent='模型：后台预热中';
+ ensureCaptionModel().then(()=>{
+   aiCaptionStatus('Whisper 已提前载入并进入浏览器缓存。');
+   if(q('captionCacheStatus'))q('captionCacheStatus').textContent='模型：已就绪'
+ }).catch(()=>{
+   STUDIO.moduleWarm=false;
+   if(q('captionCacheStatus'))q('captionCacheStatus').textContent='模型：点识别时载入'
+ })
+};
+setTimeout(warmCaptionEngine,250);
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=152',{updateViaCache:'none'}).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=153',{updateViaCache:'none'}).catch(()=>{})}
 })();
 </script>
 </body>
