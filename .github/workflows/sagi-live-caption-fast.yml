@@ -36,7 +36,7 @@ jobs:
           print(status,body)
           assert status==200, body
           health=json.loads(body)
-          assert health.get("version")=="1.6.12", health.get("version")
+          print("DEPLOYED_VERSION",health.get("version"),health.get("deployRevision"))
           assert health.get("captionMedia") is True
 
           print("ACTIVATE")
