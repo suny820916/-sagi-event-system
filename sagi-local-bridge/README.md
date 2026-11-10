@@ -1,20 +1,27 @@
-# SAGI LOCAL BRIDGE · Instagram Direct Download
+# SAGI REMOTE WORKER
 
-用于 SAGI CONTENT OS 手机端“下载 INS 视频”。
+用于解决 Render 云出口被 Instagram 429 限流的问题。
 
-## Windows 一键启动
+## 原理
 
-1. 电脑安装 Python 3。
-2. 双击 `START_SAGI_BRIDGE.bat`。
-3. 窗口会显示类似：`Phone Bridge URL: http://192.168.1.8:8765`
-4. 手机与电脑连接同一个 Wi-Fi。
-5. 在 CONTENT OS → DOWN → “电脑 Bridge 地址”填入该地址并保存。
-6. 粘贴 Instagram Reel / Post 链接，点“下载 INS 视频”。
+手机仍然使用 SAGI CLOUD 创建任务，但 Instagram 下载不再由 Render 执行。
+电脑上的 Remote Worker 会从 SAGI CLOUD 领取任务，用你自己的网络出口下载，再把 MP4 上传回 SAGI CLOUD，手机随后直接下载。
 
-Bridge 使用 yt-dlp 获取 Instagram 媒体并以附件方式返回给手机。只用于你拥有或获授权保存/使用的内容。
+## 第一次使用
 
-## 说明
+1. 双击 `START_SAGI_REMOTE_WORKER.bat`
+2. CONTENT OS → DOWN → SAGI CLOUD → 生成 6 位配对码
+3. 在电脑窗口输入配对码
+4. 成功后 `worker-config.json` 会保存身份，以后不再输入
 
-- 电脑必须保持 Bridge 窗口开启。
-- 当前版本只允许 instagram.com 域名。
-- 公开 Reel / Post 最适合；Instagram 登录限制或私密内容可能仍需要额外认证。
+## 日常使用
+
+只要电脑上的 Worker 窗口保持开启：
+
+手机 5G → CONTENT OS → 粘贴 Instagram → 下载 INS 视频
+
+## 可选 cookies.txt
+
+如果 Instagram 在你的本地网络也要求登录，可在本目录放置 Netscape 格式 `cookies.txt`。Remote Worker 会自动读取。
+
+只用于你拥有或已获授权保存/使用的内容。
