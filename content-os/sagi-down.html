@@ -526,7 +526,16 @@ async function pollCloudDownload(jobId,handoff,sourceUrl,maxCloudWaitMs=7000){
 async function download(){
   const v=currentUrl();if(!v){setStatus('请先粘贴有效的视频链接。','warn');return}
   const d=detect(v),handoff=cloudDownloadWindow();
-  saveHistory(v);copyText(v).catch(()=>{});
+  saveHistory(v);
+
+  // Instagram is the platform most frequently blocked from cloud datacenter IPs.
+  // V2.0.2 skips Render entirely and hands the original URL straight to cobalt.tools.
+  if(d[0]==='Instagram'){
+    setStatus('Instagram · Cobalt Direct 已启动，正在直接解析…','good');
+    handoffToOfficialCobalt(v,handoff,'Instagram 直连模式');
+    return
+  }
+
   setStatus(d[0]+' · SAGI 正在选择最快下载通道…','good');
   try{
     const ready=await Promise.race([
@@ -549,8 +558,7 @@ async function download(){
       return
     }
     setStatus('SAGI Cloud 已接收链接 · 优先解析，超时自动切 Cobalt 官方通道…','good');
-    const waitMs=d[0]==='Instagram'?5500:7500;
-    await pollCloudDownload(data.job.id,handoff,v,waitMs)
+    await pollCloudDownload(data.job.id,handoff,v,7500)
   }catch(e){
     handoffToOfficialCobalt(v,handoff,'SAGI 自动兜底')
   }
@@ -2152,7 +2160,7 @@ if(q('captionSpeed'))q('captionSpeed').value='fast';
 if(q('captionRange'))q('captionRange').value='trim';
 setTimeout(async()=>{await wakeCaptionCloud();refreshAIVoiceStatus(false)},180);
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=201',{updateViaCache:'none'}).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=202',{updateViaCache:'none'}).catch(()=>{})}
 })();
 </script>
 </body>
