@@ -1,14 +1,17 @@
 services:
   - type: web
     name: sagi-cloud-bridge-suny820916
-    runtime: docker
+    runtime: python
     plan: free
     region: singapore
-    dockerfilePath: ./sagi-cloud-bridge/Dockerfile
-    dockerContext: ./sagi-cloud-bridge
+    rootDir: sagi-cloud-bridge
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn -w 1 -k gthread --threads 4 -b 0.0.0.0:$PORT --timeout 300 app:app
     healthCheckPath: /health
     autoDeployTrigger: commit
     envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.8"
       - key: SAGI_SERVER_SECRET
         generateValue: true
       - key: SAGI_ALLOWED_ORIGIN
