@@ -364,7 +364,7 @@ def health():
     return jsonify({
         "ok": True,
         "service": "SAGI CLOUD BRIDGE",
-        "version": "1.6.7",
+        "version": "1.6.8",
         "instagram": True,
         "hybridWorker": True,
         "workerOnline": worker_online(),
