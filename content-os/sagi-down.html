@@ -64,7 +64,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 <div class="wrap">
   <div class="top">
     <div class="brand"><b>SAGI DOWN</b><span>VIDEO LINK SHORTCUT</span></div>
-    <span class="badge">V1.6.5 · CONTEXT TRANSLATE</span>
+    <span class="badge">V1.6.6 · LOCAL TRANSLATE FALLBACK</span>
   </div>
 
   <section class="hero">
@@ -201,7 +201,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
       </div>
 
       <div class="aiCaptionProgress"><i id="aiCaptionProgress"></i></div>
-      <div id="aiCaptionStatus" class="aiCaptionStatus">CONTEXT TRANSLATE：字幕识别后按上下文成组翻译，优先保留原意；时间轴不变。3分钟云端识别与 SMOOTH MODE 继续保留。</div>
+      <div id="aiCaptionStatus" class="aiCaptionStatus">LOCAL FALLBACK：云端失败后若原任务是“识别并翻中文”，本地 Whisper 完成识别后会自动继续翻译成中文；时间轴保持不变。</div>
       <div class="aiCaptionMeta">
         <span id="captionEngine">引擎：SAGI CLOUD 优先</span>
         <span id="captionDetectedLang">语言：—</span>
@@ -431,7 +431,8 @@ const STUDIO={
  captions:[],captionLanguage:'',captionRangeKey:'',captionModel:null,captionModelKey:'',captionModule:null,captionBusy:false,
  translator:null,translatorKey:'',moduleWarm:false,
  cloudCaptionToken:'',cloudCaptionReady:false,cloudCaptionWaking:false,
- captionVisibleCount:40
+ captionVisibleCount:40,
+ pendingTranslateZh:false
 };
 
 function studioStatus(t,k=''){const e=q('studioStatus');if(e){e.textContent=t;e.className='status '+k}}
@@ -891,6 +892,7 @@ async function runAiCaption(translateZh=false){
  if(!STUDIO.file){studioStatus('请先在 01 导入视频。','warn');return}
  if(STUDIO.captionBusy)return;
  STUDIO.captionBusy=true;q('aiCaptionBtn').disabled=true;q('aiCaptionZhBtn').disabled=true;
+ STUDIO.pendingTranslateZh=!!translateZh;
  q('localCaptionBtn').style.display='none';
  aiCaptionProgress(1);STUDIO.captionVisibleCount=40;
  try{
@@ -912,13 +914,15 @@ async function runAiCaption(translateZh=false){
    aiCaptionStatus('云端字幕完成 · '+STUDIO.captions.length+' 条'+(translateZh?' · 正在生成中文…':''));
    studioStatus('字幕已经可以查看。','good');
    if(translateZh){await translateCaptionTimeline('zh-CN');q('subtitleTargetLang').value='zh-CN'}
+   STUDIO.pendingTranslateZh=false;
    aiCaptionProgress(100);aiCaptionStatus('完成 · '+STUDIO.captions.length+' 条时间轴字幕');
    toast('AI字幕完成')
  }catch(e){
    console.error(e);
    setCloudCaptionStatus('失败');
    q('localCaptionBtn').style.display='';
-   aiCaptionStatus('云端字幕失败：'+(e.message||e)+'。页面不会自动启动本地 Whisper；需要时可点“本地备用识别”。');
+   q('localCaptionBtn').textContent=STUDIO.pendingTranslateZh?'本地备用 + 翻中文':'本地备用识别';
+   aiCaptionStatus('云端字幕失败：'+(e.message||e)+'。'+(STUDIO.pendingTranslateZh?'点“本地备用 + 翻中文”，识别完成后会自动继续翻译。':'需要时可点“本地备用识别”。'));
    studioStatus('云端失败，但已阻止本地模型自动启动，避免手机卡顿。','warn');
    aiCaptionProgress(0)
  }finally{
@@ -929,6 +933,7 @@ async function runAiCaption(translateZh=false){
 async function runLocalCaption(){
  if(!STUDIO.file){studioStatus('请先导入视频。','warn');return}
  if(STUDIO.captionBusy)return;
+ const wantZh=!!STUDIO.pendingTranslateZh;
  STUDIO.captionBusy=true;q('localCaptionBtn').disabled=true;aiCaptionProgress(2);
  try{
    const cfg=captionSpeedConfig(),lang=q('captionLanguage')?.value||'auto';
@@ -942,14 +947,36 @@ async function runLocalCaption(){
    STUDIO.captionLanguage=result?.language||lang;STUDIO.captionRangeKey=audio.key;STUDIO.captionVisibleCount=40;
    if(q('captionEngine'))q('captionEngine').textContent='引擎：手机本地 Whisper · 手动备用';
    syncCaptionText();
+
    let resolved=String(STUDIO.captionLanguage||'').toLowerCase();
    if(!resolved||resolved==='auto')resolved=inferTranscriptLanguage();
    STUDIO.captionLanguage=resolved;syncDetectedLanguageUi(resolved);
-   aiCaptionProgress(100);aiCaptionStatus('本地备用识别完成 · '+STUDIO.captions.length+' 条');
-   studioStatus('本地字幕已完成。','good')
+
+   if(!STUDIO.captions.length)throw new Error('没有识别到清晰语音');
+
+   if(wantZh){
+     aiCaptionStatus('本地识别完成 · 正在继续翻成中文…');
+     q('subtitleTargetLang').value='zh-CN';
+     await translateCaptionTimeline('zh-CN');
+     STUDIO.pendingTranslateZh=false;
+     aiCaptionProgress(100);
+     aiCaptionStatus('本地备用完成 · '+STUDIO.captions.length+' 条 · 中文完成');
+     studioStatus('本地识别 + 中文翻译已完成。','good');
+     q('localCaptionBtn').textContent='本地备用识别';
+   }else{
+     aiCaptionProgress(100);
+     aiCaptionStatus('本地备用识别完成 · '+STUDIO.captions.length+' 条');
+     studioStatus('本地字幕已完成。','good')
+   }
  }catch(e){
-   aiCaptionStatus('本地备用失败：'+(e.message||e));studioStatus('本地备用失败。','bad');aiCaptionProgress(0)
- }finally{STUDIO.captionBusy=false;q('localCaptionBtn').disabled=false}
+   console.error(e);
+   aiCaptionStatus('本地备用失败：'+(e.message||e));
+   studioStatus('本地备用失败：'+(e.message||e),'bad');
+   aiCaptionProgress(0)
+ }finally{
+   STUDIO.captionBusy=false;
+   q('localCaptionBtn').disabled=false
+ }
 }
 function srtTime(sec){
  const ms=Math.max(0,Math.round((Number(sec)||0)*1000)),h=Math.floor(ms/3600000),m=Math.floor(ms%3600000/60000),s=Math.floor(ms%60000/1000),x=ms%1000;
@@ -1172,7 +1199,7 @@ if(q('captionSpeed'))q('captionSpeed').value='fast';
 if(q('captionRange'))q('captionRange').value='trim';
 setTimeout(()=>wakeCaptionCloud(),180);
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=165',{updateViaCache:'none'}).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=166',{updateViaCache:'none'}).catch(()=>{})}
 })();
 </script>
 </body>
