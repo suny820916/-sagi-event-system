@@ -103,9 +103,10 @@ jobs:
           c = mod.app.test_client()
           health = c.get("/health").get_json()
           print("health", health)
-          assert health["version"] == "1.6.10"
+          assert health["version"] == "1.6.11"
           assert health["captionMedia"] is True
           assert health["contextTranslate"] is True
+          assert health["smartTranslate"] is True
 
           token = mod.client_token()
           headers = {"Authorization": "Bearer " + token, "Origin": "https://suny820916.github.io"}
@@ -127,6 +128,13 @@ jobs:
           assert d["ok"] and len(d["segments"]) == 20, len(d.get("segments", []))
           assert all(str(x).strip() for x in d["segments"])
           print("Flask API smoke OK", len(d["segments"]), "translated segments")
+          r = c.post("/api/translate-smart", headers={**headers, "Content-Type": "application/json"}, json={"source":"en","target":"zh-CN","mode":"football","paragraphs":["The double pivot protects the back four during transition."]})
+          assert r.status_code == 200, (r.status_code, r.get_data(as_text=True))
+          sd = r.get_json()
+          assert sd["ok"] and len(sd["results"]) == 1
+          assert "双后腰" in sd["results"][0]["text"] or "四后卫" in sd["results"][0]["text"]
+          assert 0 <= float(sd["averageScore"]) <= 100
+          print("Smart translate smoke OK", sd["averageScore"], sd["results"][0]["text"])
           PY
 
       - name: Frontend JavaScript syntax and wiring
@@ -142,9 +150,11 @@ jobs:
               "runOneTapRecreate",
               "translateSemanticTimeline",
               "redistributeParagraphToTimeline",
+              "chooseSmartWindow",
+              "cloudSmartTranslate",
               "cloudCaptionMedia",
               "runAiCaption(true)",
-              "V1.7.1 · SEMANTIC TRANSLATE",
+              "V1.8 · SMART RECREATE",
           ]
           for x in required:
               assert x in s, x
