@@ -495,7 +495,39 @@ jobs:
       - name: Verify external download engines
         run: |
           python - <<'PY'
-          import json, urllib.request, urllib.parse, urllib.error
+          import json, urllib.request, urllib.parse, urllib.error, subprocess, sys
+
+          # Instagram: exercise the exact specialized extractor used by the
+          # router against a recent public NASA Reel.
+          ig_url="https://www.instagram.com/reel/DeIXf9SNQVO/"
+          ig_script=r"""
+import json, sys
+from parth_dl import get_info
+print(json.dumps(get_info(sys.argv[1], verbose=False), ensure_ascii=False))
+"""
+          try:
+              igp=subprocess.run(
+                  [sys.executable,"-c",ig_script,ig_url],
+                  text=True,capture_output=True,timeout=22,check=False
+              )
+          except subprocess.TimeoutExpired:
+              raise AssertionError("PARTH_DL_TIMEOUT")
+          print("PARTH_RETURN",igp.returncode)
+          if igp.stderr:
+              print("PARTH_STDERR",igp.stderr[-1000:])
+          assert igp.returncode == 0, "PARTH_DL_FAILED"
+          try:
+              ig=json.loads((igp.stdout or "").strip())
+          except Exception:
+              raise AssertionError("PARTH_DL_BAD_JSON")
+          ig_entries=ig.get("entries") or []
+          ig_formats=[
+              x for entry in ig_entries
+              for x in (entry.get("formats") or [])
+              if str(x.get("url") or "").startswith("http")
+          ]
+          assert ig_entries and ig_formats, "PARTH_DL_NO_PUBLIC_MEDIA"
+          print("PARTH_DL_REAL_REEL_OK",len(ig_entries),len(ig_formats))
 
           # BTCH is opportunistic only: shell/CORS must be reachable, but a
           # degraded upstream must not block the whole SAGI release.
