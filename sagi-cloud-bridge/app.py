@@ -1068,7 +1068,7 @@ def _football_team_in_text(query, text):
     aliases = [k for k,v in FOOTBALL_TEAM_ALIASES.items() if v == q]
     return any(_football_norm(a) and _football_norm(a) in body for a in aliases + [raw])
 
-def _football_cache_getdef _football_cache_get(key):
+def _football_cache_get(key):
     with football_cache_lock:
         row = football_cache.get(key)
         if not row:
@@ -1289,7 +1289,7 @@ def _football_merge(rows, limit, official=None):
     cap = max(1, min(20, int(limit or 8)))
     return verified_rows[:cap], candidate_rows[:cap]
 
-def football_form_payloaddef football_form_payload(team, competition="AUTO", season=2026, limit=8):
+def football_form_payload(team, competition="AUTO", season=2026, limit=8):
     all_codes = list(FOOTBALL_COMPETITIONS.keys())
     requested = all_codes if competition == "AUTO" else [competition]
     cache_key = json.dumps(["v2", team, requested, season, limit], ensure_ascii=False)
@@ -1391,7 +1391,7 @@ def football_form_payloaddef football_form_payload(team, competition="AUTO", sea
         "generatedAt": iso(),
     })
 
-def public_jobdef public_job(job):
+def public_job(job):
     data = {
         "id": job["id"],
         "status": job["status"],
