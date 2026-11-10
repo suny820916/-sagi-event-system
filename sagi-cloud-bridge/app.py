@@ -25,7 +25,7 @@ app = Flask(__name__)
 ALLOWED_ORIGIN = (os.getenv("SAGI_ALLOWED_ORIGIN") or "https://suny820916.github.io").rstrip("/")
 SERVER_SECRET = (os.getenv("SAGI_SERVER_SECRET") or os.getenv("SAGI_BRIDGE_TOKEN") or "").strip()
 PORT = int(os.getenv("PORT") or "10000")
-DEPLOY_REVISION = "2026-11-10-v1613"
+DEPLOY_REVISION = "2026-11-10-v1614"
 MAX_FILE_MB = int(os.getenv("SAGI_MAX_FILE_MB") or "300")
 JOB_TTL_MIN = int(os.getenv("SAGI_JOB_TTL_MIN") or "30")
 RATE_LIMIT_PER_HOUR = int(os.getenv("SAGI_RATE_LIMIT_PER_HOUR") or "20")
@@ -276,6 +276,44 @@ def synthesize_eleven(text, voice_id, output_path, speed=1.0):
         raise RuntimeError("ELEVENLABS_EMPTY_AUDIO")
     return str(output_path)
 
+
+def synthesize_edge_tts(text, mode, output_path, speed=1.0):
+    if not str(text or "").strip():
+        raise RuntimeError("EMPTY_NARRATION")
+    try:
+        import asyncio
+        import edge_tts
+        voice = "zh-CN-YunjianNeural" if mode == "ai_male" else "zh-CN-XiaoxiaoNeural"
+        rate = int(round((max(0.75, min(1.25, float(speed or 1.0))) - 1.0) * 100))
+        async def _save():
+            communicate = edge_tts.Communicate(str(text)[:10000], voice=voice, rate=f"{rate:+d}%")
+            await communicate.save(str(output_path))
+        asyncio.run(_save())
+        if not Path(output_path).exists() or Path(output_path).stat().st_size < 1000:
+            raise RuntimeError("EDGE_TTS_EMPTY_AUDIO")
+        return str(output_path)
+    except Exception as e:
+        raise RuntimeError("EDGE_TTS: " + str(e)[:500])
+
+def synthesize_voice(text, mode, voice_id, output_path, speed=1.0):
+    mode = str(mode or "ai_male")
+    voice_id = str(voice_id or "").strip()
+    if mode == "clone":
+        if not ELEVENLABS_API_KEY:
+            raise RuntimeError("VOICE_CLONE_REQUIRES_ELEVENLABS")
+        selected = resolve_voice_id(mode, voice_id)
+        return synthesize_eleven(text, selected, output_path, speed)
+
+    # Premium path first; generic AI voices fall back automatically to keyless Edge Neural.
+    if ELEVENLABS_API_KEY:
+        try:
+            selected = resolve_voice_id(mode, voice_id)
+            return synthesize_eleven(text, selected, output_path, speed)
+        except Exception as e:
+            print("ElevenLabs generic TTS fallback:", str(e)[:300], flush=True)
+
+    return synthesize_edge_tts(text, mode, output_path, speed)
+
 def media_has_audio(path):
     try:
         import av
@@ -367,9 +405,8 @@ def run_cloud_render(job_id, options):
             elif voice_mode in ("ai_male", "ai_female", "clone") and narration:
                 with render_jobs_lock:
                     render_jobs[job_id].update({"stage": "生成 AI 配音", "progress": 20, "updated_at": iso()})
-                selected_voice = resolve_voice_id(voice_mode, voice_id if voice_mode == "clone" else voice_id)
                 narration_path = work / "narration.mp3"
-                synthesize_eleven(narration, selected_voice, narration_path, voice_speed)
+                synthesize_voice(narration, voice_mode, voice_id, narration_path, voice_speed)
 
             width, height = render_dimensions(aspect, quality)
             vf = f"scale={width}:{height}:force_original_aspect_ratio=increase,crop={width}:{height},setsar=1"
@@ -703,7 +740,7 @@ def health():
         "ok": True,
         "service": "SAGI CLOUD BRIDGE",
         "deployRevision": DEPLOY_REVISION,
-        "version": "1.6.13",
+        "version": "1.6.14",
         "instagram": True,
         "hybridWorker": True,
         "workerOnline": worker_online(),
@@ -713,6 +750,8 @@ def health():
         "contextTranslate": True,
         "smartTranslate": True,
         "aiVoice": True,
+        "aiVoiceFallback": True,
+        "voiceClone": bool(ELEVENLABS_API_KEY),
         "cloudRender": True,
         "elevenLabsConfigured": bool(ELEVENLABS_API_KEY),
         "captionModel": "faster-whisper-tiny-int8",
@@ -1143,13 +1182,19 @@ def voice_status():
             voices = list_eleven_voices()
         except Exception as e:
             error = str(e)[:400]
+    fallback_voices = [
+        {"voice_id": "edge-zh-male", "name": "Microsoft 云健", "category": "fallback", "gender": "male", "accent": "zh-CN", "language": "zh-CN", "preview_url": ""},
+        {"voice_id": "edge-zh-female", "name": "Microsoft 晓晓", "category": "fallback", "gender": "female", "accent": "zh-CN", "language": "zh-CN", "preview_url": ""},
+    ]
     return jsonify({
         "ok": True,
-        "configured": bool(ELEVENLABS_API_KEY),
-        "provider": "ElevenLabs",
-        "model": "eleven_flash_v2_5",
-        "voiceCount": len(voices),
-        "voices": voices[:30],
+        "configured": True,
+        "premiumConfigured": bool(ELEVENLABS_API_KEY),
+        "cloneConfigured": bool(ELEVENLABS_API_KEY),
+        "provider": "ElevenLabs + Microsoft Edge" if ELEVENLABS_API_KEY else "Microsoft Edge Neural",
+        "model": "eleven_flash_v2_5" if ELEVENLABS_API_KEY else "edge-neural",
+        "voiceCount": len(voices) + len(fallback_voices),
+        "voices": (voices[:28] + fallback_voices) if ELEVENLABS_API_KEY else fallback_voices,
         "error": error,
     })
 
@@ -1204,8 +1249,7 @@ def voice_preview():
     work = tempfile.mkdtemp(prefix="sagi_voice_preview_")
     path = Path(work) / "preview.mp3"
     try:
-        selected = resolve_voice_id(mode, voice_id)
-        synthesize_eleven(text[:500], selected, path, speed)
+        synthesize_voice(text[:500], mode, voice_id, path, speed)
         resp = send_file(path, mimetype="audio/mpeg", as_attachment=False)
         resp.call_on_close(lambda: shutil.rmtree(work, ignore_errors=True))
         return resp
@@ -1312,7 +1356,7 @@ def activate():
         "ok": True,
         "service": "SAGI CLOUD BRIDGE",
         "token": token,
-        "version": "1.6.13",
+        "version": "1.6.14",
     })
 
 def cobalt_base():
