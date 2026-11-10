@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07110c">
+<title>SAGI TACTICAL LAB · NO.9 ROLE V1.2</title>
+<style>
+:root{--bg:#050807;--panel:#0d1410;--line:rgba(255,255,255,.78);--gold:#d7b866;--cyan:#7af3ff;--blue:#2f9bec;--red:#d95f62;--muted:#829089}
+*{box-sizing:border-box}html,body{margin:0;background:#050807;color:#fff;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+body{padding:12px 10px 30px;background:radial-gradient(circle at 50% 0%,rgba(38,112,66,.18),transparent 36%),#050807}
+.wrap{width:min(100%,760px);margin:auto}.top{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;margin:4px 2px 10px}
+.brand{font-size:10px;letter-spacing:.22em;color:var(--gold);font-weight:900}.title{font-size:clamp(22px,6vw,34px);font-weight:950;letter-spacing:-.05em;margin-top:4px}.ver{font-size:10px;color:#999;border:1px solid #2c3530;padding:6px 9px;border-radius:999px;white-space:nowrap}
+.stage{position:relative;width:min(100%,540px);aspect-ratio:9/16;margin:auto;overflow:hidden;border-radius:24px;background:#0d512d;border:1px solid rgba(255,255,255,.08);isolation:isolate}
+.stage:before{content:"";position:absolute;inset:0;z-index:0;background:linear-gradient(180deg,rgba(0,0,0,.34),transparent 26%,transparent 75%,rgba(0,0,0,.4)),repeating-linear-gradient(90deg,#0e542f 0 12.5%,#12653a 12.5% 25%)}
+.stage:after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:radial-gradient(circle at 50% 46%,transparent 0 30%,rgba(0,0,0,.07) 66%,rgba(0,0,0,.35) 100%)}
+.hud{position:absolute;z-index:30;left:16px;right:16px;top:16px;display:flex;justify-content:space-between;align-items:flex-start}.hud small{font-size:8px;letter-spacing:.16em;color:#c8d1cc}.hud h2{font-size:38px;line-height:.9;margin:5px 0 0;letter-spacing:-.06em}.badge{font-size:9px;text-align:right;color:#d5ddd8;border:1px solid rgba(255,255,255,.17);padding:7px 9px;border-radius:11px;background:rgba(0,0,0,.24);backdrop-filter:blur(8px)}
+.pitch{position:absolute;inset:11.5% 8% 8%;z-index:3;border:2px solid var(--line)}.half{position:absolute;left:0;right:0;top:50%;height:2px;background:var(--line)}.circle{position:absolute;width:33%;aspect-ratio:1;left:33.5%;top:50%;transform:translateY(-50%);border:2px solid var(--line);border-radius:50%}.dot{position:absolute;width:5px;height:5px;border-radius:50%;background:#fff;left:50%;top:50%;transform:translate(-50%,-50%)}.box{position:absolute;left:25%;width:50%;height:12%;border:2px solid var(--line)}.box.top{top:-2px;border-top:0}.box.bottom{bottom:-2px;border-bottom:0}.goal{position:absolute;left:38%;width:24%;height:3.5%;border:2px solid var(--line)}.goal.top{top:-3.5%}.goal.bottom{bottom:-3.5%}
+.overlay{position:absolute;inset:11.5% 8% 8%;z-index:7;pointer-events:none}.overlay path,.overlay line{fill:none;stroke-linecap:round;stroke-linejoin:round}.run{stroke:var(--cyan);stroke-width:2.1;stroke-dasharray:8 7;filter:drop-shadow(0 0 4px rgba(122,243,255,.5));animation:dash .9s linear infinite}.pass{stroke:var(--gold);stroke-width:2;stroke-dasharray:5 7;filter:drop-shadow(0 0 3px rgba(215,184,102,.4));animation:dash 1s linear infinite}.press{stroke:rgba(217,95,98,.8);stroke-width:1.6;stroke-dasharray:3 6}.ghost{stroke:rgba(255,255,255,.18);stroke-width:1.1;stroke-dasharray:3 6}
+.zone{position:absolute;z-index:5;border:1px solid rgba(122,243,255,.42);background:rgba(122,243,255,.1);border-radius:18px;opacity:0;transition:all .45s ease}.zone.on{opacity:1;box-shadow:0 0 24px rgba(122,243,255,.08)}
+.player,.opp{position:absolute;z-index:14;width:48px;height:48px;margin:-24px 0 0 -24px;display:grid;place-items:center;left:var(--x);top:var(--y);transition:left .72s cubic-bezier(.2,.78,.2,1),top .72s cubic-bezier(.2,.78,.2,1),transform .3s ease,filter .3s ease,opacity .3s ease}
+.player:before,.opp:before{content:"";position:absolute;inset:5px;border-radius:50%;border:2px solid #fff;background:radial-gradient(circle at 35% 28%,#fff 0 4%,#68caff 5% 12%,#1789dd 42%,#075ca7 76%,#043f77 100%);box-shadow:0 0 0 4px rgba(10,96,165,.22),0 5px 12px rgba(0,0,0,.32)}
+.player.no9:before{background:radial-gradient(circle at 35% 28%,#fff 0 4%,#d7fdff 5% 12%,#43d4e3 42%,#16818e 78%,#0b5059 100%);box-shadow:0 0 0 5px rgba(122,243,255,.24),0 0 22px rgba(122,243,255,.3),0 5px 12px rgba(0,0,0,.32)}
+.opp:before{background:radial-gradient(circle at 35% 28%,#fff 0 4%,#f0a2a4 5% 12%,#c34d51 42%,#8e292d 76%,#5a1518 100%);box-shadow:0 0 0 4px rgba(217,95,98,.18),0 5px 12px rgba(0,0,0,.32)}
+.num{position:relative;z-index:2;font-size:11px;font-weight:950;text-shadow:0 1px 3px #000}.role{position:absolute;top:43px;left:50%;transform:translateX(-50%);font-size:7px;font-weight:900;letter-spacing:.08em;white-space:nowrap;color:rgba(255,255,255,.75)}
+.hot{transform:scale(1.13);filter:drop-shadow(0 0 9px rgba(122,243,255,.5))}.dim{opacity:.42}
+.ball{position:absolute;z-index:20;width:14px;height:14px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff 0 16%,#d9d9d9 17% 43%,#222 44% 57%,#f6f6f6 58% 100%);box-shadow:0 0 0 2px rgba(255,255,255,.45),0 0 14px rgba(255,255,255,.58);left:50%;top:28%;transform:translate(-50%,-50%);transition:left .58s cubic-bezier(.2,.78,.2,1),top .58s cubic-bezier(.2,.78,.2,1),opacity .2s}
+.caption{position:absolute;z-index:30;left:16px;right:16px;bottom:17px;display:flex;justify-content:space-between;align-items:flex-end;gap:12px}.caption small{display:block;font-size:8px;letter-spacing:.12em;color:rgba(255,255,255,.55)}.caption b{display:block;margin-top:3px;font-size:12px;max-width:330px}.sagi{font-size:9px;color:var(--gold);border:1px solid rgba(215,184,102,.3);padding:6px 8px;border-radius:999px;background:rgba(0,0,0,.22)}
+.sceneBar{width:min(100%,540px);margin:12px auto 0;display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.sceneBtn,.control{appearance:none;border:1px solid #2c3530;background:#101612;color:#eee;border-radius:11px;min-height:44px;padding:8px 5px;font:850 10px inherit}.sceneBtn.on{background:linear-gradient(135deg,#e3cb85,#b18f3e);color:#17130a;border:0}.controls{width:min(100%,540px);margin:8px auto 0;display:flex;gap:7px;justify-content:center;flex-wrap:wrap}.control.primary{background:#17392c}.subBox{width:min(100%,540px);margin:9px auto 0;background:#0d1310;border:1px solid #29322d;border-radius:14px;padding:11px 12px}.subTitle{font-size:9px;letter-spacing:.12em;color:var(--gold);font-weight:900}.subText{font-size:13px;line-height:1.65;margin-top:5px;color:#e9eee9}.status{font-size:10px;color:#76817b;text-align:center;margin-top:8px}
+@keyframes dash{to{stroke-dashoffset:-30}}@media(max-width:420px){.stage{border-radius:18px}.player,.opp{width:42px;height:42px;margin:-21px 0 0 -21px}.role{top:38px}.hud h2{font-size:34px}.sceneBar{gap:4px}.sceneBtn{font-size:9px;padding:7px 2px}}@media(prefers-reduced-motion:reduce){.player,.opp,.ball{transition:none}.run,.pass{animation:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><div><div class="brand">SAGI TACTICAL LAB</div><div class="title">4321里的9号</div></div><div class="ver">V1.2 · NO.9 ROLE</div></div>
+
+  <div id="stage" class="stage">
+    <div class="hud"><div><small>STRIKER ROLE</small><h2>NO.9</h2></div><div id="badge" class="badge">01<br>拉开纵深</div></div>
+    <div class="pitch"><div class="half"></div><div class="circle"></div><div class="dot"></div><div class="box top"></div><div class="box bottom"></div><div class="goal top"></div><div class="goal bottom"></div></div>
+
+    <div id="zone" class="zone"></div>
+
+    <svg id="overlay" class="overlay" viewBox="0 0 100 100" preserveAspectRatio="none">
+      <g id="routes"></g>
+    </svg>
+
+    <div id="cbL" class="opp"><span class="num">4</span><span class="role">CB</span></div>
+    <div id="cbR" class="opp"><span class="num">5</span><span class="role">CB</span></div>
+    <div id="p10" class="player"><span class="num">10</span><span class="role">LAM</span></div>
+    <div id="p11" class="player"><span class="num">11</span><span class="role">RAM</span></div>
+    <div id="p9" class="player no9"><span class="num">9</span><span class="role">ST</span></div>
+    <div id="ball" class="ball"></div>
+
+    <div class="caption"><div><small id="capKicker">DEPTH</small><b id="capText">9号攻击中卫身后，把防线向后压</b></div><div class="sagi">SAGI</div></div>
+  </div>
+
+  <div class="sceneBar">
+    <button class="sceneBtn on" data-scene="depth">01 纵深</button>
+    <button class="sceneBtn" data-scene="drop">02 做球</button>
+    <button class="sceneBtn" data-scene="drag">03 牵制</button>
+    <button class="sceneBtn" data-scene="finish">04 终结</button>
+  </div>
+
+  <div class="controls">
+    <button id="playAll" class="control primary">▶ 连续播放 + 中文解说</button>
+    <button id="speak" class="control">🔊 解说当前段</button>
+    <button id="replay" class="control">↻ 重播当前</button>
+    <button id="clean" class="control">◫ 纯画面</button>
+  </div>
+
+  <div class="subBox">
+    <div class="subTitle">中文解说</div>
+    <div id="subtitle" class="subText">第一种作用，是拉开纵深。9号不断攻击中卫身后，逼迫防线后退，也给身后的两个前腰留下接球空间。</div>
+  </div>
+  <div id="status" class="status">点击“连续播放 + 中文解说”开始完整演示</div>
+</div>
+
+<script>
+(function(){
+  const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+  const p=id=>document.getElementById(id), routes=p('routes'), ball=p('ball'), zone=p('zone');
+  const meta={
+    depth:{badge:'01<br>拉开纵深',kick:'DEPTH',cap:'9号攻击中卫身后，把防线向后压',text:'第一种作用，是拉开纵深。9号不断攻击中卫身后，逼迫防线后退，也给身后的两个前腰留下接球空间。'},
+    drop:{badge:'02<br>回撤做球',kick:'LINK PLAY',cap:'回撤接球，形成10号—9号—10号的连接',text:'第二种作用，是回撤接应。9号可以背身拿球，给前腰做墙，把中场和锋线重新连接起来。'},
+    drag:{badge:'03<br>牵制中卫',kick:'DRAG DEFENDER',cap:'横向移动带走中卫，打开肋部空间',text:'第三种作用，是牵制中卫。9号横向移动，把一名中卫带走，原本拥挤的肋部空间就会被打开。'},
+    finish:{badge:'04<br>反跑终结',kick:'DROP & RUN',cap:'先回撤再反跑，接直塞进入禁区完成终结',text:'最关键的一点，是回撤之后再次前插。9号先靠近中场，再突然反跑，接前腰直塞进入禁区完成终结。'}
+  };
+  let current='depth', timers=[], all=false, clean=false;
+  function later(fn,ms){timers.push(setTimeout(fn,ms))}
+  function stopTimers(){timers.forEach(clearTimeout);timers=[]}
+  function xy(id,x,y){const e=p(id);e.style.left=x+'%';e.style.top=y+'%'}
+  function resetVisual(){
+    stopTimers(); if('speechSynthesis' in window) speechSynthesis.cancel();
+    [p('p9'),p('p10'),p('p11'),p('cbL'),p('cbR')].forEach(e=>{e.classList.remove('hot','dim')});
+    routes.innerHTML=''; zone.classList.remove('on'); zone.style.cssText='';
+    ball.style.opacity=1;
+  }
+  function line(cls,d){routes.insertAdjacentHTML('beforeend','<path class="'+cls+'" d="'+d+'"></path>')}
+  function zoneAt(left,top,w,h){zone.style.left=left+'%';zone.style.top=top+'%';zone.style.width=w+'%';zone.style.height=h+'%';zone.classList.add('on')}
+  function ballTo(x,y,ms){later(()=>{ball.style.left=x+'%';ball.style.top=y+'%'},ms)}
+  function sceneBase(){
+    xy('p10',37,36);xy('p11',63,36);xy('p9',50,22);xy('cbL',42,18);xy('cbR',58,18);ball.style.left='37%';ball.style.top='36%';
+  }
+  function animate(scene){
+    resetVisual(); sceneBase(); current=scene;
+    const m=meta[scene]; p('badge').innerHTML=m.badge;p('capKicker').textContent=m.kick;p('capText').textContent=m.cap;p('subtitle').textContent=m.text;
+    $$('.sceneBtn').forEach(b=>b.classList.toggle('on',b.dataset.scene===scene));
+    if(scene==='depth'){
+      p('p9').classList.add('hot'); p('p10').classList.add('dim'); p('p11').classList.add('dim');
+      line('run','M50 22 C50 18 50 13 50 8'); line('press','M42 18 C44 14 47 11 49 9'); line('press','M58 18 C56 14 53 11 51 9');
+      zoneAt(38,7,24,16);
+      ball.style.opacity=.35;
+      later(()=>{xy('p9',50,11);xy('cbL',42,11);xy('cbR',58,11)},500);
+    }
+    if(scene==='drop'){
+      p('p9').classList.add('hot'); line('pass','M37 36 L50 33 L63 36'); line('ghost','M50 22 L50 33');
+      ball.style.left='37%';ball.style.top='36%'; ballTo(50,33,650); ballTo(63,36,1450);
+      later(()=>{xy('p9',50,33);xy('p10',40,38);xy('p11',60,38)},350);
+    }
+    if(scene==='drag'){
+      p('p9').classList.add('hot'); p('cbL').classList.add('hot'); p('p11').classList.add('hot');
+      line('run','M50 22 C44 22 39 22 33 22'); line('press','M42 18 C39 19 36 20 34 21');
+      zoneAt(54,22,22,24); ball.style.opacity=.25;
+      later(()=>{xy('p9',34,22);xy('cbL',35,18);xy('p11',60,31)},500);
+    }
+    if(scene==='finish'){
+      p('p9').classList.add('hot'); p('p10').classList.add('hot');
+      line('ghost','M50 22 L50 33'); line('run','M50 33 C49 27 50 20 50 11'); line('pass','M37 36 C42 30 47 20 50 11');
+      ball.style.left='37%';ball.style.top='36%';
+      later(()=>xy('p9',50,33),350);
+      later(()=>{xy('p9',50,11);xy('cbL',41,16);xy('cbR',59,16)},1150);
+      ballTo(50,12,1250); ballTo(50,6,2150);
+    }
+  }
+  function speak(scene){
+    if(!('speechSynthesis' in window)){p('status').textContent='当前浏览器不支持系统中文语音';return}
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(meta[scene].text);
+    u.lang='zh-CN';u.rate=1.08;u.pitch=1;u.volume=1;
+    const voices=speechSynthesis.getVoices(); const zh=voices.find(v=>/^zh(-|_)/i.test(v.lang)); if(zh)u.voice=zh;
+    speechSynthesis.speak(u);
+  }
+  function playScene(scene,withVoice){
+    animate(scene); if(withVoice) later(()=>speak(scene),260);
+  }
+  function playAll(){
+    stopTimers();all=true;p('playAll').textContent='■ 停止连续播放';p('status').textContent='正在播放：4321里的9号位';
+    const seq=['depth','drop','drag','finish']; let i=0;
+    function next(){
+      if(!all)return;
+      playScene(seq[i],true); i++;
+      if(i<seq.length){timers.push(setTimeout(next,4300))}
+      else{timers.push(setTimeout(()=>{all=false;p('playAll').textContent='▶ 连续播放 + 中文解说';p('status').textContent='完整演示结束：纵深 · 做球 · 牵制 · 终结'},4300))}
+    }
+    next();
+  }
+  $$('.sceneBtn').forEach(b=>b.addEventListener('click',()=>{all=false;p('playAll').textContent='▶ 连续播放 + 中文解说';playScene(b.dataset.scene,false)}));
+  p('replay').addEventListener('click',()=>playScene(current,false));
+  p('speak').addEventListener('click',()=>speak(current));
+  p('playAll').addEventListener('click',()=>{if(all){all=false;stopTimers();if('speechSynthesis'in window)speechSynthesis.cancel();p('playAll').textContent='▶ 连续播放 + 中文解说';p('status').textContent='已停止'}else playAll()});
+  p('clean').addEventListener('click',()=>{clean=!clean;$('.top').style.display=clean?'none':'flex';$('.sceneBar').style.display=clean?'none':'grid';$('.subBox').style.display=clean?'none':'block';$('.status').style.display=clean?'none':'block';p('clean').textContent=clean?'退出纯画面':'◫ 纯画面'});
+  sceneBase(); animate('depth');
+})();
+</script>
+</body>
+</html>
