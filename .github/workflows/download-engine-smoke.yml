@@ -33,11 +33,7 @@ jobs:
           # extraction is not reliable enough to call "verified".
           import subprocess, sys
           ig_url="https://www.instagram.com/reel/DeIXf9SNQVO/"
-          ig_script=r"""
-import json, sys
-from parth_dl import get_info
-print(json.dumps(get_info(sys.argv[1], verbose=False), ensure_ascii=False))
-"""
+          ig_script="import json,sys; from parth_dl import get_info; print(json.dumps(get_info(sys.argv[1], verbose=False), ensure_ascii=False))"
           try:
               igp=subprocess.run(
                   [sys.executable,"-c",ig_script,ig_url],
