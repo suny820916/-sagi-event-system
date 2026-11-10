@@ -145,7 +145,7 @@ body{padding:12px 10px 30px;background:radial-gradient(circle at 50% 0%,rgba(28,
     next();
   }
   $$('.sceneBtn').forEach(b=>b.addEventListener('click',()=>setScene(b.dataset.scene,false)));
-  $('#replay').addEventListener('click',replay);\n  $('#no9').addEventListener('click',()=>{location.href='no9-role.html'});
+  $('#replay').addEventListener('click',replay);\n  $('#classic').addEventListener('click',()=>{location.href='acmilan-4321-classic.html'});
   $('#auto').addEventListener('click',()=>{if(autoRun){autoRun=false;clearTimers();$('#auto').textContent='▶ 自动演示'}else startAuto()});
   $('#clean').addEventListener('click',()=>{
     clean=!clean; $('.top').style.display=clean?'none':'flex'; $('.toolbar').style.display=clean?'none':'grid'; $('.note').style.display=clean?'none':'block';
