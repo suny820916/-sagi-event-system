@@ -479,9 +479,25 @@ function cloudDownloadStatusLabel(job){
   if(s==='worker_downloading')return '下载节点正在处理';
   return s||'处理中'
 }
-async function pollCloudDownload(jobId,handoff){
+function cobaltOfficialUrl(sourceUrl){
+  return 'https://cobalt.tools/?u='+encodeURIComponent(sourceUrl)
+}
+function handoffToOfficialCobalt(sourceUrl,handoff,reason=''){
+  const target=cobaltOfficialUrl(sourceUrl);
+  setStatus((reason?reason+' · ':'')+'已自动切换 Cobalt 官方下载，无需再次粘贴链接。','good');
+  try{
+    if(handoff&&!handoff.closed){handoff.location.replace(target);return true}
+  }catch(e){}
+  location.href=target;
+  return true
+}
+async function pollCloudDownload(jobId,handoff,sourceUrl,maxCloudWaitMs=7000){
   const started=Date.now();
   while(Date.now()-started<180000){
+    if(Date.now()-started>maxCloudWaitMs){
+      handoffToOfficialCobalt(sourceUrl,handoff,'SAGI 云端响应较慢');
+      return
+    }
     await new Promise(r=>setTimeout(r,1200));
     const r=await fetch(CAPTION_CLOUD+'/api/jobs/'+encodeURIComponent(jobId),{
       headers:{Authorization:'Bearer '+STUDIO.cloudCaptionToken},cache:'no-store'
@@ -497,20 +513,11 @@ async function pollCloudDownload(jobId,handoff){
       return
     }
     if(job.status==='failed'){
-      let msg='云端解析失败，请稍后重试。';
-      if(job.errorCode==='cloud_download_rate_limit'){
-        msg='源平台暂时限制了云端访问，请稍后重试。';
-      }else if(job.errorCode==='instagram_cloud_blocked'){
-        const proxyOn=!!STUDIO.cloudHealth?.instagramProxyConfigured;
-        msg=proxyOn
-          ?'Instagram 仍限制当前代理出口。请更换可用的 Instagram 代理出口后重试。'
-          :'Instagram 限制了 Render 云端 IP。当前尚未配置 Instagram 专用代理；请在 Render 环境变量中设置 SAGI_INSTAGRAM_PROXY 后重试。';
-      }else if(job.errorCode==='unsupported_source'){
-        msg='当前链接暂不支持。';
-      }else if(job.error&&String(job.error).length<160){
-        msg=String(job.error).replace(/^INSTAGRAM_CLOUD_BLOCKED:\s*/,'');
+      if(job.errorCode==='unsupported_source'){
+        throw new Error('当前链接暂不支持。')
       }
-      throw new Error(msg)
+      handoffToOfficialCobalt(sourceUrl,handoff,'SAGI 云端未能完成解析');
+      return
     }
     setStatus(cloudDownloadStatusLabel(job)+'…','good')
   }
@@ -520,14 +527,16 @@ async function download(){
   const v=currentUrl();if(!v){setStatus('请先粘贴有效的视频链接。','warn');return}
   const d=detect(v),handoff=cloudDownloadWindow();
   saveHistory(v);copyText(v).catch(()=>{});
-  setStatus(d[0]+' · 正在连接 SAGI Cloud…','good');
+  setStatus(d[0]+' · SAGI 正在选择最快下载通道…','good');
   try{
-    const ready=await wakeCaptionCloud(true);
+    const ready=await Promise.race([
+      wakeCaptionCloud(true),
+      new Promise(resolve=>setTimeout(()=>resolve(false),3500))
+    ]);
     const health=STUDIO.cloudHealth||{};
-    if(!ready||!STUDIO.cloudCaptionToken)throw new Error(STUDIO.cloudLastError||'SAGI Cloud 未连接');
-    if(!health.cloudDownload)throw new Error('当前云端下载引擎不可用');
-    if(health.downloadPrimary==='cobalt'&&!health.cobaltConfigured){
-      setStatus('Cobalt 服务正在启动 · SAGI 会自动使用备用解析…','good');
+    if(!ready||!STUDIO.cloudCaptionToken||!health.cloudDownload){
+      handoffToOfficialCobalt(v,handoff,'SAGI Cloud 当前不可用');
+      return
     }
     const r=await fetch(CAPTION_CLOUD+'/api/jobs',{
       method:'POST',
@@ -535,12 +544,15 @@ async function download(){
       body:JSON.stringify({url:v,name:'SAGI_VIDEO'})
     });
     const data=await r.json().catch(()=>({}));
-    if(!r.ok||!data?.ok||!data?.job?.id)throw new Error(data?.error||('HTTP '+r.status));
-    setStatus('SAGI Cloud 已接收链接 · 正在解析…','good');
-    await pollCloudDownload(data.job.id,handoff)
+    if(!r.ok||!data?.ok||!data?.job?.id){
+      handoffToOfficialCobalt(v,handoff,'SAGI Cloud 未接收任务');
+      return
+    }
+    setStatus('SAGI Cloud 已接收链接 · 优先解析，超时自动切 Cobalt 官方通道…','good');
+    const waitMs=d[0]==='Instagram'?5500:7500;
+    await pollCloudDownload(data.job.id,handoff,v,waitMs)
   }catch(e){
-    try{if(handoff&&!handoff.closed)handoff.close()}catch(_){}
-    setStatus('下载失败：'+(e.message||e),'warn')
+    handoffToOfficialCobalt(v,handoff,'SAGI 自动兜底')
   }
 }
 function openOriginal(){const v=currentUrl();if(!v){setStatus('请先粘贴有效链接。','warn');return}window.open(v,'_blank','noopener')}
@@ -2140,7 +2152,7 @@ if(q('captionSpeed'))q('captionSpeed').value='fast';
 if(q('captionRange'))q('captionRange').value='trim';
 setTimeout(async()=>{await wakeCaptionCloud();refreshAIVoiceStatus(false)},180);
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=200',{updateViaCache:'none'}).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=201',{updateViaCache:'none'}).catch(()=>{})}
 })();
 </script>
 </body>
