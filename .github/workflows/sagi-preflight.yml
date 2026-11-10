@@ -176,7 +176,7 @@ jobs:
           c = mod.app.test_client()
           health = c.get("/health").get_json()
           print("health", health)
-          assert health["version"] == "3.0.0"
+          assert health["version"] == "3.7.0"
           assert health["captionMedia"] is True
           assert health["contextTranslate"] is True
           assert health["smartTranslate"] is True
@@ -195,6 +195,9 @@ jobs:
           assert health["galleryFallbackTimeoutSeconds"] == 25
           assert health["cloudDownloadVersion"] == "3.0"
           assert health["downloadPrimary"] == "multi-engine-router"
+          assert health["footballDataHub"] is True
+          assert health["footballDataHubVersion"] == "1.0"
+          assert set(health["footballCompetitions"]) >= {"PL","PD","BL1","SA","FL1","CL"}
           assert health["cobaltMode"] == "legacy-fallback-only"
           assert health["cobaltConfigured"] is False
           assert health["instagramProxyConfigured"] is False
@@ -502,7 +505,9 @@ jobs:
               "智能一键下载",
               "MULTI ENGINE ROUTER",
               "runAiCaption(true)",
-              "V3.0 · MULTI ENGINE ROUTER",
+              "V3.7 · MATCH INTELLIGENCE HUB",
+              "MATCH DATA HUB · 五大联赛 + 欧冠",
+              "IMAGE RECREATE · 图片二次创作",
           ]
           for x in required:
               assert x in s, x
