@@ -64,7 +64,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 <div class="wrap">
   <div class="top">
     <div class="brand"><b>SAGI DOWN</b><span>VIDEO LINK SHORTCUT</span></div>
-    <span class="badge">V1.6.2 · 3 MIN FULL TIMELINE</span>
+    <span class="badge">V1.6.3 · AUTO LANGUAGE</span>
   </div>
 
   <section class="hero">
@@ -200,7 +200,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
       </div>
 
       <div class="aiCaptionProgress"><i id="aiCaptionProgress"></i></div>
-      <div id="aiCaptionStatus" class="aiCaptionStatus">3 MIN FULL TIMELINE：单次最多180秒，时间轴条数不限制；云端返回多少自然分段就保留多少，手机 Whisper 仅作备用。</div>
+      <div id="aiCaptionStatus" class="aiCaptionStatus">AUTO LANGUAGE：最多180秒完整时间轴；AUTO 自动判断中文/俄文/阿拉伯文等，识别结果已是中文时直接跳过翻译，不再报错。</div>
       <div class="aiCaptionMeta">
         <span id="captionEngine">引擎：SAGI CLOUD 优先</span>
         <span id="captionDetectedLang">语言：—</span>
@@ -709,12 +709,40 @@ function syncCaptionText(){
  q('subtitleText').value=(STUDIO.captions||[]).map(x=>x.text).join('\n');
  renderCaptionTimeline()
 }
+function inferTranscriptLanguage(){
+ const text=(STUDIO.captions||[]).map(x=>String(x.text||'')).join(' ').trim();
+ if(!text)return'auto';
+ const count=re=>(text.match(re)||[]).length,total=Math.max(1,text.replace(/\s/g,'').length);
+ const zh=count(/[\u3400-\u9fff]/g)/total;
+ const cyr=count(/[\u0400-\u04FF]/g)/total;
+ const ar=count(/[\u0600-\u06FF]/g)/total;
+ const ja=count(/[\u3040-\u30ff]/g)/total;
+ const ko=count(/[\uac00-\ud7af]/g)/total;
+ if(zh>.18)return'zh-CN';
+ if(ja>.12)return'ja';
+ if(ko>.12)return'ko';
+ if(cyr>.18)return'ru';
+ if(ar>.18)return'ar';
+ // 拉丁字母无法可靠区分英语/西语/葡语，优先使用“原语言”下拉当前选择。
+ const manual=q('subtitleSourceLang')?.value||'en';
+ return manual||'en'
+}
+function syncDetectedLanguageUi(lang){
+ const normalized=String(lang||'').toLowerCase();
+ const map={zh:'zh-CN','zh-cn':'zh-CN',chinese:'zh-CN',mandarin:'zh-CN',en:'en',english:'en',pt:'pt',portuguese:'pt',es:'es',spanish:'es',ru:'ru',russian:'ru',fr:'fr',french:'fr',de:'de',german:'de',ar:'ar',arabic:'ar',tr:'tr',turkish:'tr'};
+ const value=map[normalized]||lang||'';
+ if(q('captionDetectedLang'))q('captionDetectedLang').textContent='语言：'+(value==='zh-CN'?'中文':value||'AUTO');
+ if(q('subtitleSourceLang')&&Array.from(q('subtitleSourceLang').options).some(o=>o.value===value))q('subtitleSourceLang').value=value;
+ return value
+}
+
 function sourceLangForTranslation(){
  const selected=q('captionLanguage')?.value||'auto';
  const detected=String(STUDIO.captionLanguage||'').toLowerCase();
- const map={english:'en',chinese:'zh-CN',mandarin:'zh-CN',portuguese:'pt',spanish:'es',russian:'ru',french:'fr',german:'de',arabic:'ar',turkish:'tr'};
+ const map={english:'en',chinese:'zh-CN',mandarin:'zh-CN',portuguese:'pt',spanish:'es',russian:'ru',french:'fr',german:'de',arabic:'ar',turkish:'tr','zh':'zh-CN','zh-cn':'zh-CN'};
  if(selected!=='auto')return selected==='zh'?'zh-CN':selected;
- return map[detected]||detected||'auto'
+ const known=map[detected]||((detected&&detected!=='auto')?detected:'');
+ return known||inferTranscriptLanguage()
 }
 async function getTranslatorSession(source,target){
  const key=source+'>'+target;
@@ -730,8 +758,16 @@ async function getTranslatorSession(source,target){
 }
 async function translateCaptionTimeline(target='zh-CN'){
  if(!(STUDIO.captions||[]).length)throw new Error('请先识别字幕');
- const source=sourceLangForTranslation();
- if(source==='auto'&&!window.Translator?.create)throw new Error('Whisper 未返回可用语言代码，请手动选择“识别语言”后再翻译');
+ let source=sourceLangForTranslation();
+ if(source==='auto')source=inferTranscriptLanguage();
+ syncDetectedLanguageUi(source);
+ if(source===target || (source==='zh'&&target==='zh-CN')){
+   STUDIO.captionLanguage=target;
+   syncDetectedLanguageUi(target);
+   aiCaptionStatus('识别结果已经是中文，无需再次翻译。');
+   studioStatus('字幕已是中文，可以直接进入解说或导出。','good');
+   return
+ }
  const session=await getTranslatorSession(source,target);
  const caps=STUDIO.captions.slice(),out=new Array(caps.length),limit=3;
  let cursor=0,done=0;
@@ -747,8 +783,7 @@ async function translateCaptionTimeline(target='zh-CN'){
  }
  await Promise.all(Array.from({length:Math.min(limit,caps.length)},worker));
  STUDIO.captions=out;STUDIO.captionLanguage=target;syncCaptionText();
- if(q('subtitleSourceLang'))q('subtitleSourceLang').value=target==='zh-CN'?'zh-CN':target;
- if(q('captionDetectedLang'))q('captionDetectedLang').textContent='语言：中文';
+ syncDetectedLanguageUi(target);
 }
 function instant15Caption(){
  if(!STUDIO.file){studioStatus('请先导入视频。','warn');return}
@@ -787,13 +822,16 @@ async function runAiCaption(translateZh=false){
      if(q('captionEngine'))q('captionEngine').textContent='引擎：手机本地 Whisper · 备用';
      aiCaptionProgress(76);
    }
-   if(q('captionDetectedLang'))q('captionDetectedLang').textContent='语言：'+(STUDIO.captionLanguage||'AUTO');
    syncCaptionText();
+   let resolvedLang=String(STUDIO.captionLanguage||'').toLowerCase();
+   if(!resolvedLang||resolvedLang==='auto')resolvedLang=inferTranscriptLanguage();
+   STUDIO.captionLanguage=resolvedLang;
+   syncDetectedLanguageUi(resolvedLang);
    if(!STUDIO.captions.length)throw new Error('没有识别到清晰语音');
    aiCaptionStatus((usedCloud?'云端极速字幕':'本地字幕')+'已完成 · '+STUDIO.captions.length+' 条'+(translateZh?' · 正在生成中文…':''));
    studioStatus('字幕已经可以查看。','good');
    if(translateZh){await translateCaptionTimeline('zh-CN');q('subtitleTargetLang').value='zh-CN'}
-   aiCaptionProgress(100);aiCaptionStatus('完成 · '+STUDIO.captions.length+' 条时间轴字幕'+(translateZh?' · 已翻译中文':''));
+   aiCaptionProgress(100);aiCaptionStatus('完成 · '+STUDIO.captions.length+' 条时间轴字幕'+(translateZh?(sourceLangForTranslation()==='zh-CN'?' · 原文已是中文':' · 中文完成'):''));
    toast('AI字幕完成')
  }catch(e){
    console.error(e);aiCaptionStatus('AI字幕失败：'+(e.message||e));studioStatus('AI字幕失败：'+(e.message||e),'bad');aiCaptionProgress(0)
@@ -1010,7 +1048,7 @@ if(q('captionSpeed'))q('captionSpeed').value='fast';
 if(q('captionRange'))q('captionRange').value='trim';
 setTimeout(()=>wakeCaptionCloud(),180);
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=162',{updateViaCache:'none'}).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=163',{updateViaCache:'none'}).catch(()=>{})}
 })();
 </script>
 </body>
