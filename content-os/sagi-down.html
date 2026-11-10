@@ -507,6 +507,32 @@ async function ensureCaptionModule(){
  STUDIO.captionModule=await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3/+esm');
  return STUDIO.captionModule
 }
+function captionSpeedConfig(){
+ const mode=q('captionSpeed')?.value||'fast';
+ if(mode==='precise')return{mode,label:'精准',dtype:'q8',chunk:30,stride:5,maxSeconds:180};
+ if(mode==='standard')return{mode,label:'标准',dtype:'q8',chunk:20,stride:3,maxSeconds:90};
+ return{mode:'fast',label:'极速',dtype:'q4',chunk:15,stride:2,maxSeconds:45}
+}
+function mixChannels(buffer,startFrame,endFrame){
+ const channels=buffer.numberOfChannels,length=Math.max(0,endFrame-startFrame),out=new Float32Array(length);
+ if(!channels||!length)return out;
+ for(let c=0;c<channels;c++){
+   const data=buffer.getChannelData(c);
+   for(let i=0;i<length;i++)out[i]+=data[startFrame+i]/channels
+ }
+ return out
+}
+function resampleLinear(input,sourceRate,targetRate=16000){
+ if(!input.length)return new Float32Array(0);
+ if(sourceRate===targetRate)return input;
+ const ratio=sourceRate/targetRate,length=Math.max(1,Math.floor(input.length/ratio)),out=new Float32Array(length);
+ for(let i=0;i<length;i++){
+   const p=i*ratio,j=Math.floor(p),frac=p-j,a=input[j]||0,b=input[Math.min(j+1,input.length-1)]||a;
+   out[i]=a+(b-a)*frac
+ }
+ return out
+}
+
 async function ensureCaptionModel(){
  const mod=await ensureCaptionModule(),cfg=captionSpeedConfig(),useGPU=cfg.mode!=='fast'&&!!navigator.gpu;
  const key=cfg.mode+'|'+(useGPU?'webgpu':'wasm')+'|'+cfg.dtype;
