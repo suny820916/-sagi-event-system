@@ -702,6 +702,31 @@ jobs:
           print("LAYER CORE INDEPENDENT ASSETS OK")
           PY
 
+      - name: Layer asset persistence regression
+        run: |
+          python - <<'PY'
+          import pathlib
+          html=pathlib.Path("content-os/sagi-down.html").read_text(encoding="utf-8")
+          required=[
+              "const SDORIG_ASSET_DB='sagi_down_layer_assets_v1'",
+              "function sdOrigOpenAssetDb",
+              "function sdOrigPersistLayerAsset",
+              "function sdOrigDeletePersistedAsset",
+              "function sdOrigReadPersistedAssets",
+              "function sdOrigRestoreLayerAssets",
+              "indexedDB.open(SDORIG_ASSET_DB,1)",
+              "sdOrigPersistLayerAsset(id,asset)",
+              "sdOrigPersistLayerAsset(dstId,asset)",
+              "sdOrigDeletePersistedAsset(id)",
+              "sdOrigRestoreLayerAssets().then",
+          ]
+          for x in required:
+              assert x in html,x
+          assert "persist=false" in html
+          assert "sdOrigSetLayerAsset(rec.id,rec.type,decoded.img,decoded.url,rec.fileName,rec.blob,false)" in html
+          print("LAYER ASSET PERSISTENCE OK")
+          PY
+
       - name: Semantic translation timeline regression
         run: |
           python - <<'PY'
