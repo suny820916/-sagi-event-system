@@ -80,23 +80,39 @@ jobs:
           except Exception as e:
               print("TIKWM_DEGRADED",repr(e))
 
-          # FxTwitter: use a currently public football video post and verify that its
-          # returned Twitter CDN media is actually readable.
-          fx_id="2063712819434975668"
-          req=urllib.request.Request("https://api.fxtwitter.com/2/status/"+fx_id,headers={
-              "Origin":"https://suny820916.github.io",
-              "User-Agent":"SAGI-engine-smoke","Accept":"application/json",
-          })
-          with urllib.request.urlopen(req,timeout=20) as r:
-              fx=json.loads(r.read().decode())
-              print("FX_HTTP",r.status,"CORS",r.headers.get("access-control-allow-origin",""))
-          assert int(fx.get("code") or 0) == 200 and isinstance(fx.get("status"),dict), fx
-          media=(fx.get("status") or {}).get("media") or {}
-          videos=media.get("videos") or []
-          assert videos and str(videos[0].get("url") or "").startswith("http"), media
-          fx_media=videos[0]["url"]
+          # FxTwitter: discover a current video dynamically instead of relying
+          # on a hard-coded post that can be deleted.
+          fx=None
+          fx_video=None
+          for handle in ("FIFAWorldCup","UEFA","ESPNFC","ChampionsLeague"):
+              try:
+                  url="https://api.fxtwitter.com/2/profile/"+handle+"/media?count=20"
+                  req=urllib.request.Request(url,headers={
+                      "Origin":"https://suny820916.github.io",
+                      "User-Agent":"SAGI-engine-smoke","Accept":"application/json",
+                  })
+                  with urllib.request.urlopen(req,timeout=25) as r:
+                      candidate=json.loads(r.read().decode())
+                      print("FX_PROFILE",handle,r.status,"CORS",r.headers.get("access-control-allow-origin",""))
+                  if int(candidate.get("code") or 0) != 200:
+                      continue
+                  for status in candidate.get("results") or []:
+                      media=(status or {}).get("media") or {}
+                      videos=media.get("videos") or []
+                      if videos and str(videos[0].get("url") or "").startswith("http"):
+                          fx=candidate
+                          fx_video=videos[0]["url"]
+                          print("FX_VIDEO_FOUND",handle,(status or {}).get("id"))
+                          break
+                  if fx_video:
+                      break
+              except urllib.error.HTTPError as e:
+                  print("FX_PROFILE_DEGRADED",handle,e.code)
+              except Exception as e:
+                  print("FX_PROFILE_DEGRADED",handle,repr(e))
+          assert fx_video, "FxTwitter returned no current public video across test profiles"
           try:
-              req=urllib.request.Request(fx_media,headers={
+              req=urllib.request.Request(fx_video,headers={
                   "User-Agent":"Mozilla/5.0","Referer":"https://x.com/","Range":"bytes=0-2047"
               })
               with urllib.request.urlopen(req,timeout=25) as r:
@@ -106,6 +122,9 @@ jobs:
               assert len(sample) > 128
               print("FXTWITTER_MEDIA_OK")
           except urllib.error.HTTPError as e:
+              # X video CDN can deny datacenter Range requests even while the
+              # browser-facing resolver is healthy, so API resolution is the
+              # required signal and CDN byte fetch is additional telemetry.
               print("FX_MEDIA_CLOUD_RESTRICTED",e.code)
           print("FXTWITTER_OK")
           PY
