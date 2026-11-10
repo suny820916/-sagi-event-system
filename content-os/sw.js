@@ -1,7 +1,6 @@
-const CACHE='sagi-content-os-shell-v36';
-const SHELL=['./','./index.html','./manifest.webmanifest','./icon.svg','./css/mobile.css','./css/mobile.css?v=250','./js/app-core.js','./js/app-core.js?v=251','./js/mobile-matchday.js','./js/video-download.js','./js/video-download.js?v=253','./js/video-jobs.js','./js/review.js','./js/mobile-shell.js','./js/mobile-shell.js?v=251'];
+const CACHE='sagi-content-os-shell-v37';
+const SHELL=['./','./index.html','./manifest.webmanifest','./icon.svg','./css/mobile.css','./css/mobile.css?v=250','./js/app-core.js','./js/app-core.js?v=254','./js/mobile-matchday.js','./js/video-download.js','./js/video-download.js?v=254','./js/video-jobs.js','./js/review.js','./js/mobile-shell.js','./js/mobile-shell.js?v=251'];
 self.addEventListener('install',e=>{
-  self.skipWaiting();
   e.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL)).catch(()=>{}));
 });
 self.addEventListener('activate',e=>{
@@ -11,7 +10,6 @@ self.addEventListener('activate',e=>{
     await self.clients.claim();
   })());
 });
-self.addEventListener('message',e=>{if(e.data&&e.data.type==='SKIP_WAITING')self.skipWaiting()});
 self.addEventListener('fetch',e=>{
   if(e.request.method!=='GET')return;
   const u=new URL(e.request.url);
