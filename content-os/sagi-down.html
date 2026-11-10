@@ -488,14 +488,17 @@ function btchPlatform(sourceUrl){
   if(d[2]==='YT')return'youtube';
   return''
 }
-function chooseBtchMedia(data){
+function btchMediaRows(data){
   const n=data?.normalized||{};
   let rows=[];
   if(n.kind==='media')rows=Array.isArray(n.media)?n.media:[];
   else if(n.kind==='list'&&Array.isArray(n.items)){
     rows=n.items.flatMap(x=>Array.isArray(x?.media)?x.media:[]);
   }
-  const valid=rows.filter(x=>x&&/^https?:\/\//i.test(String(x.url||'')));
+  return rows.filter(x=>x&&/^https?:\/\//i.test(String(x.url||'')))
+}
+function chooseBtchMedia(data){
+  const valid=btchMediaRows(data);
   if(!valid.length)return null;
   const score=x=>{
     const label=String(x.label||'').toLowerCase(),type=String(x.type||'').toLowerCase();
@@ -519,6 +522,13 @@ async function tryBtchBrowser(sourceUrl,handoff,timeoutMs=7000){
     if(!r.ok)return false;
     const data=await r.json().catch(()=>null);
     if(!data?.success)return false;
+    const allMedia=btchMediaRows(data);
+    // Browser direct-download is safe only for one media item. Multi-item
+    // posts must fall through to SAGI Cloud so every item can be packaged.
+    if(allMedia.length>1){
+      setStatus('检测到 '+allMedia.length+' 个媒体 · 切换 SAGI Router 完整打包…','good');
+      return false
+    }
     const media=chooseBtchMedia(data);
     if(!media?.url)return false;
     const ext=String(media.type||'').toLowerCase()==='image'?'.jpg':'.mp4';
