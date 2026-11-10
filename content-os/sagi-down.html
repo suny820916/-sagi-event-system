@@ -3374,7 +3374,7 @@ function sdOrigNewLayerId(type){
 function sdOrigWithLayer(ctx,w,h,id,fn){
   const l=sdOrigLayer(id);if(!l||l.visible===false)return;
   const s=(Number(l.scale)||100)/100,opacity=Math.max(0,Math.min(1,(Number(l.opacity)??100)/100));
-  ctx.save();ctx.globalAlpha*=opacity;
+  ctx.save();
   ctx.translate(w/2+(Number(l.x)||0)/100*w,h/2+(Number(l.y)||0)/100*h);
   ctx.scale(s,s);ctx.translate(-w/2,-h/2);fn(l);ctx.restore()
 }
@@ -3382,6 +3382,7 @@ function sdOrigAddLayer(type,silent=false){
   sdOrigEnsureLayers();type=SDORIG_LAYER_DEFAULTS[type]?type:'title';
   if(SDORIG.layerOrder.length>=16){toast('最多保留16个图层');return''}
   const id=sdOrigNewLayerId(type),same=SDORIG.layerOrder.filter(x=>sdOrigLayerType(x)===type).length;
+  if(type==='number'&&!['number','coach','question'].includes(SDORIG.template))SDORIG.template='number';
   const base=sdOrigLayerBase(type);
   SDORIG.layers[id]={...base,name:SDORIG_LAYER_LABELS[type]+(same?(' '+(same+1)):'新图层'),x:(Number(base.x)||0)+Math.min(12,same*3),y:(Number(base.y)||0)+Math.min(12,same*3)};
   SDORIG.layerOrder.push(id);SDORIG.activeLayer=id;SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigSyncLayerControls();sdOrigDraw();
@@ -3555,7 +3556,7 @@ async function sdOrigLoadPerson(file){
     if(sameName||similarity>=.985){
       URL.revokeObjectURL(url);q('sdOrigPersonFile').value='';q('sdOrigPersonHint').textContent='已拒绝：人物素材与下载原图过于接近。请选择另一张教练/球员照片，保证原创视觉不复刻来源图。';toast('人物素材与原图过于相似，已拒绝');return
     }
-    SDORIG_PERSON_URL=url;SDORIG_PERSON_IMAGE=img;SDORIG.personFileName=file.name;if(!sdOrigFindFirstType('person'))SDORIG.activeLayer=sdOrigAddLayer('person',true);SDORIG.generatedAt=Date.now();sdOrigSave();
+    SDORIG_PERSON_URL=url;SDORIG_PERSON_IMAGE=img;SDORIG.personFileName=file.name;SDORIG.activeLayer=sdOrigFindFirstType('person')||sdOrigAddLayer('person',true);SDORIG.generatedAt=Date.now();sdOrigSave();
     q('sdOrigPersonPreview').src=url;q('sdOrigPersonPreview').classList.add('show');q('sdOrigPersonFileTitle').textContent=file.name;
     q('sdOrigPersonHint').textContent='人物素材已加入原创画布 · 与下载原图相似度 '+Math.round(similarity*100)+'% · 来源原图像素仍为 0%。';
     sdOrigRender();toast('人物素材已加入原创海报')
@@ -3654,7 +3655,7 @@ function sdOrigHeader(ctx,w,h,c){
 
 function sdOrigDrawPhoto(ctx,w,h,id){
   if(!SDORIG_PHOTO_IMAGE)return;
-  const l=sdOrigLayer(id)||{},img=SDORIG_PHOTO_IMAGE,background=!!l.background,opacity=Math.max(.2,Math.min(1,(Number(l.opacity)||100)/100));
+  const l=sdOrigLayer(id)||{},img=SDORIG_PHOTO_IMAGE,background=!!l.background;
   const box=background?{x:0,y:0,w,h}:{x:w*.12,y:h*.16,w:w*.76,h:h*.52};
   const fit=background?Math.max(box.w/img.naturalWidth,box.h/img.naturalHeight):Math.min(box.w/img.naturalWidth,box.h/img.naturalHeight);
   const iw=img.naturalWidth*fit,ih=img.naturalHeight*fit,cx=box.x+box.w/2,cy=box.y+box.h/2;
