@@ -17,7 +17,9 @@ import re
 import gc
 import sys
 import zipfile
+import html as html_lib
 import requests
+from curl_cffi import requests as curl_requests
 import yt_dlp
 from yt_dlp.utils import DownloadError
 from faster_whisper import WhisperModel
@@ -28,8 +30,8 @@ app = Flask(__name__)
 ALLOWED_ORIGIN = (os.getenv("SAGI_ALLOWED_ORIGIN") or "https://suny820916.github.io").rstrip("/")
 SERVER_SECRET = (os.getenv("SAGI_SERVER_SECRET") or os.getenv("SAGI_BRIDGE_TOKEN") or "").strip()
 PORT = int(os.getenv("PORT") or "10000")
-DEPLOY_REVISION = "2026-11-10-v1720-instagram-post-fallback"
-APP_VERSION = "1.7.2"
+DEPLOY_REVISION = "2026-11-10-v1730-instagram-fast-post"
+APP_VERSION = "1.7.3"
 MAX_FILE_MB = int(os.getenv("SAGI_MAX_FILE_MB") or "300")
 JOB_TTL_MIN = int(os.getenv("SAGI_JOB_TTL_MIN") or "30")
 RATE_LIMIT_PER_HOUR = int(os.getenv("SAGI_RATE_LIMIT_PER_HOUR") or "20")
@@ -642,6 +644,196 @@ def _looks_like_no_video(message):
         or "no video found" in text
     )
 
+def _instagram_shortcode(url):
+    try:
+        path = (urlparse(url).path or "").strip("/")
+        parts = path.split("/")
+        if len(parts) >= 2 and parts[0] in ("p", "reel", "tv"):
+            return re.sub(r"[^A-Za-z0-9_-]", "", parts[1])
+    except Exception:
+        pass
+    return ""
+
+def _decode_ig_media_url(raw):
+    if not raw:
+        return ""
+    value = html_lib.unescape(str(raw))
+    value = value.replace("\\u0026", "&").replace("\\u002F", "/").replace("\\/", "/")
+    value = value.replace("\\u003D", "=").replace("\\u003F", "?")
+    return value.strip()
+
+def _extract_instagram_media_urls(text):
+    """Extract public media URLs from Instagram page/embed HTML without executing JS."""
+    if not text:
+        return []
+    found = []
+    patterns = [
+        ("video", r'<meta[^>]+property=["\']og:video(?::secure_url)?["\'][^>]+content=["\']([^"\']+)'),
+        ("video", r'<meta[^>]+content=["\']([^"\']+)["\'][^>]+property=["\']og:video(?::secure_url)?["\']'),
+        ("video", r'"video_url"\s*:\s*"([^"]+)"'),
+        ("video", r'<source[^>]+src=["\']([^"\']+)'),
+        ("image", r'<meta[^>]+property=["\']og:image(?::secure_url)?["\'][^>]+content=["\']([^"\']+)'),
+        ("image", r'<meta[^>]+content=["\']([^"\']+)["\'][^>]+property=["\']og:image(?::secure_url)?["\']'),
+        ("image", r'"display_url"\s*:\s*"([^"]+)"'),
+        ("image", r'<img[^>]+(?:src|data-src)=["\']([^"\']+)'),
+    ]
+    seen = set()
+    for kind, pattern in patterns:
+        for match in re.finditer(pattern, text, flags=re.I):
+            media_url = _decode_ig_media_url(match.group(1))
+            low = media_url.lower()
+            if not media_url.startswith("http"):
+                continue
+            if not ("cdninstagram.com" in low or "fbcdn.net" in low):
+                continue
+            # Ignore obvious profile/icon assets; public post media is usually much larger.
+            if any(x in low for x in ("/profile", "s150x150", "s320x320")):
+                continue
+            key = re.sub(r"[?&](?:_nc_ohc|ccb|oh|oe|stp|efg)=[^&]+", "", media_url)
+            if key in seen:
+                continue
+            seen.add(key)
+            found.append((kind, media_url))
+            if len(found) >= 24:
+                return found
+    return found
+
+def _save_remote_media(media, work, wanted_name, strategy):
+    if not media:
+        raise RuntimeError("INSTAGRAM_FAST_NO_MEDIA")
+    base = safe_name(wanted_name or "SAGI_INSTAGRAM_POST")
+    saved = []
+    total = 0
+    max_bytes = MAX_FILE_MB * 1024 * 1024
+    headers = {
+        "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 Version/18.5 Mobile/15E148 Safari/604.1",
+        "Referer": "https://www.instagram.com/",
+    }
+    for idx, (kind, media_url) in enumerate(media, start=1):
+        try:
+            resp = requests.get(media_url, headers=headers, stream=True, timeout=(5, 20))
+            resp.raise_for_status()
+            ctype = (resp.headers.get("Content-Type") or "").lower()
+            ext = ".mp4" if kind == "video" or "video/" in ctype else ".jpg"
+            path = Path(work) / f"{idx:02d}{ext}"
+            size = 0
+            with path.open("wb") as out:
+                for chunk in resp.iter_content(chunk_size=256 * 1024):
+                    if not chunk:
+                        continue
+                    size += len(chunk)
+                    total += len(chunk)
+                    if total > max_bytes:
+                        raise RuntimeError(f"帖子媒体总大小超过云端限制 {MAX_FILE_MB}MB")
+                    out.write(chunk)
+            if size > 1500:
+                saved.append((kind, path))
+            else:
+                path.unlink(missing_ok=True)
+        except Exception:
+            continue
+
+    if not saved:
+        raise RuntimeError("INSTAGRAM_FAST_MEDIA_FETCH_FAILED")
+
+    if len(saved) == 1:
+        kind, src = saved[0]
+        ext = src.suffix
+        filename = base + ext
+        dst = Path(work) / filename
+        if src.resolve() != dst.resolve():
+            src.replace(dst)
+        media_path = dst
+        media_kind = "video" if kind == "video" else "image"
+        count = 1
+    else:
+        filename = base + "_CAROUSEL.zip"
+        media_path = Path(work) / filename
+        with zipfile.ZipFile(media_path, "w", compression=zipfile.ZIP_STORED) as zf:
+            for idx, (_, src) in enumerate(saved, start=1):
+                zf.write(src, arcname=f"{idx:02d}{src.suffix}")
+        for _, src in saved:
+            src.unlink(missing_ok=True)
+        media_kind = "carousel"
+        count = len(saved)
+
+    return media_path, filename, media_kind, count
+
+def run_instagram_fast_post(job_id, url, wanted_name):
+    """Fast public-page fallback. It must finish quickly on cloud IPs."""
+    with jobs_lock:
+        job = jobs.get(job_id)
+        if not job:
+            return
+        job.update({
+            "status": "instagram_fast",
+            "updated_at": iso(),
+            "strategy": "instagram-html",
+            "error": "",
+            "errorCode": "",
+        })
+
+    shortcode = _instagram_shortcode(url)
+    if not shortcode:
+        raise RuntimeError("INSTAGRAM_FAST_BAD_URL")
+    work = tempfile.mkdtemp(prefix=f"sagi_ig_fast_{job_id}_")
+    try:
+        pages = [
+            f"https://www.instagram.com/p/{shortcode}/",
+            f"https://www.instagram.com/p/{shortcode}/embed/",
+        ]
+        media = []
+        headers = {
+            "Accept-Language": "en-US,en;q=0.9",
+            "Referer": "https://www.instagram.com/",
+        }
+        for page in pages:
+            try:
+                r = curl_requests.get(
+                    page,
+                    headers=headers,
+                    impersonate="chrome",
+                    timeout=8,
+                    allow_redirects=True,
+                )
+                if int(getattr(r, "status_code", 0) or 0) >= 400:
+                    continue
+                media = _extract_instagram_media_urls(getattr(r, "text", "") or "")
+                if media:
+                    break
+            except Exception:
+                continue
+        if not media:
+            raise RuntimeError("INSTAGRAM_FAST_NO_MEDIA")
+
+        with jobs_lock:
+            current = jobs.get(job_id)
+            if current:
+                current.update({"status": "instagram_fetching", "updated_at": iso()})
+        media_path, filename, kind, count = _save_remote_media(media, work, wanted_name, "instagram-html")
+        with jobs_lock:
+            job = jobs.get(job_id)
+            if not job:
+                shutil.rmtree(work, ignore_errors=True)
+                return
+            job.update({
+                "status": "ready",
+                "updated_at": iso(),
+                "path": str(media_path),
+                "workdir": work,
+                "filename": filename,
+                "title": filename,
+                "size": media_path.stat().st_size,
+                "strategy": "instagram-html",
+                "mediaKind": kind,
+                "fileCount": count,
+                "error": "",
+                "errorCode": "",
+            })
+    except Exception:
+        shutil.rmtree(work, ignore_errors=True)
+        raise
+
 def run_gallery_download(job_id, url, wanted_name):
     """Instagram photo/carousel fallback. Streams media to disk and packages carousels as ZIP."""
     with jobs_lock:
@@ -668,7 +860,7 @@ def run_gallery_download(job_id, url, wanted_name):
         if INSTAGRAM_PROXY:
             cmd += ["--proxy", INSTAGRAM_PROXY]
         cmd += [url]
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=150)
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=25)
         if proc.returncode != 0:
             detail = (proc.stderr or proc.stdout or "gallery-dl failed").strip()
             raise RuntimeError("INSTAGRAM_POST_FALLBACK_FAILED: " + detail[-900:])
@@ -846,10 +1038,17 @@ def run_download(job_id, url, wanted_name):
             if needs_gallery:
                 shutil.rmtree(work, ignore_errors=True)
                 try:
-                    run_gallery_download(job_id, url, wanted_name)
+                    run_instagram_fast_post(job_id, url, wanted_name)
                     return
                 except Exception as e:
-                    errors.append("gallery-dl: " + str(e))
+                    errors.append("instagram-html: " + str(e))
+                try:
+                    run_gallery_download(job_id, url, wanted_name)
+                    return
+                except subprocess.TimeoutExpired:
+                    errors.append("gallery-dl: timeout")
+                except Exception as e:
+                    errors.append("gallery-dl: " + str(e)[:220])
             # Optional self-hosted Cobalt remains a fallback, never the primary path.
             if cobalt_base():
                 shutil.rmtree(work, ignore_errors=True)
@@ -859,6 +1058,8 @@ def run_download(job_id, url, wanted_name):
                 raise RuntimeError(
                     "SAGI_DOWNLOAD_RATE_LIMIT: source platform temporarily rejected the cloud IP."
                 )
+            if needs_gallery:
+                raise RuntimeError("INSTAGRAM_CLOUD_BLOCKED: Instagram 当前限制了云端访问，请稍后重试。")
             raise RuntimeError("SAGI cloud extraction failed: " + " | ".join(errors[-2:]))
 
         files = [
@@ -893,7 +1094,12 @@ def run_download(job_id, url, wanted_name):
     except Exception as e:
         shutil.rmtree(work, ignore_errors=True)
         msg = str(e)
-        code = "cloud_download_rate_limit" if "SAGI_DOWNLOAD_RATE_LIMIT" in msg else "cloud_download_failed"
+        if "SAGI_DOWNLOAD_RATE_LIMIT" in msg:
+            code = "cloud_download_rate_limit"
+        elif "INSTAGRAM_CLOUD_BLOCKED" in msg:
+            code = "instagram_cloud_blocked"
+        else:
+            code = "cloud_download_failed"
         with jobs_lock:
             job = jobs.get(job_id)
             if job:
@@ -984,9 +1190,11 @@ def health():
         "version": APP_VERSION,
         "instagram": True,
         "cloudDownload": True,
-        "cloudDownloadVersion": "1.1",
+        "cloudDownloadVersion": "1.2",
         "downloadPlatforms": ["Instagram", "YouTube", "TikTok", "X"],
-        "instagramPostFallback": "gallery-dl",
+        "instagramPostFallback": "html-fast -> gallery-dl-short",
+        "instagramFastTimeoutSeconds": 16,
+        "galleryFallbackTimeoutSeconds": 25,
         "downloadMediaKinds": ["video", "image", "carousel-zip"],
         "hybridWorker": True,
         "workerOnline": worker_online(),
