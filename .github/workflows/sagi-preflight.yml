@@ -538,6 +538,101 @@ jobs:
           PY
           node --check /tmp/sagi-down.js
 
+      - name: Person image import regression
+        run: |
+          python - <<'PY'
+          import pathlib
+
+          html = pathlib.Path("content-os/sagi-down.html").read_text(encoding="utf-8")
+
+          def extract_function(signature):
+              start = html.index(signature)
+              brace = html.index("{", start)
+              depth = 0
+              quote = None
+              escape = False
+              i = brace
+              while i < len(html):
+                  ch = html[i]
+                  if quote:
+                      if escape:
+                          escape = False
+                      elif ch == "\\":
+                          escape = True
+                      elif ch == quote:
+                          quote = None
+                  else:
+                      if ch in ("'", '"', "`"):
+                          quote = ch
+                      elif ch == "{":
+                          depth += 1
+                      elif ch == "}":
+                          depth -= 1
+                          if depth == 0:
+                              return html[start:i+1]
+                  i += 1
+              raise RuntimeError(signature)
+
+          fn = extract_function("async function sdOrigLoadPerson(file)")
+          assert "sameName" not in fn
+          assert "layer.visible=true" in fn
+          assert "layer.locked=false" in fn
+          assert "sdOrigRender()" in fn
+
+          harness = r"""
+          const elements = {};
+          function q(id){
+            if(!elements[id]) elements[id]={
+              value:'',textContent:'',src:'',
+              classList:{add(){},remove(){}},
+              removeAttribute(){}
+            };
+            return elements[id];
+          }
+          let toastText='';
+          function toast(v){ toastText=v; }
+          let saved=false, rendered=false;
+          function sdOrigSave(){ saved=true; }
+          function sdOrigRender(){ rendered=true; }
+          function sdOrigSimilarity(){ return 1; }
+          function sdOrigFingerprint(){ return [1,2,3]; }
+          let SDIMG_IMAGE=null;
+          let SDORIG_PERSON_URL='';
+          let SDORIG_PERSON_IMAGE=null;
+          let SDORIG={personFileName:'',activeLayer:'',generatedAt:0};
+          const layers={person_1:{type:'person',visible:false,locked:true,scale:88}};
+          function sdOrigFindFirstType(type){ return type==='person'?'person_1':''; }
+          function sdOrigAddLayer(){ throw new Error('should reuse existing person layer'); }
+          function sdOrigLayer(id){ return layers[id]||null; }
+          let revoked=[];
+          global.URL={
+            createObjectURL(){return 'blob:test-person';},
+            revokeObjectURL(v){revoked.push(v);}
+          };
+          class FakeImage{
+            constructor(){this.naturalWidth=1200;this.naturalHeight=1600;this.decoding='';this.onload=null;this.onerror=null;}
+            set src(v){this._src=v;}
+            get src(){return this._src;}
+            decode(){return Promise.resolve();}
+          }
+          global.Image=FakeImage;
+          """ + "\n" + fn + r"""
+          ;(async()=>{
+            await sdOrigLoadPerson({name:'same-name.jpg',type:'image/jpeg'});
+            if(!SDORIG_PERSON_IMAGE) throw new Error('person image not stored');
+            if(SDORIG.activeLayer!=='person_1') throw new Error('person layer not selected');
+            if(layers.person_1.visible!==true) throw new Error('hidden person layer not restored');
+            if(layers.person_1.locked!==false) throw new Error('locked person layer not unlocked');
+            if(!saved||!rendered) throw new Error('person import did not save/render');
+            if(elements.sdOrigPersonFileTitle.textContent!=='same-name.jpg') throw new Error('file title not updated');
+            if(toastText!=='人物图片导入成功') throw new Error('success toast missing');
+            console.log('PERSON IMPORT OK');
+          })().catch(e=>{console.error(e);process.exit(1)});
+          """
+          pathlib.Path("/tmp/person-import-smoke.js").write_text(harness, encoding="utf-8")
+          PY
+          node /tmp/person-import-smoke.js
+
       - name: Semantic translation timeline regression
         run: |
           python - <<'PY'
