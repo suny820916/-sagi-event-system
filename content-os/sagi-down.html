@@ -129,7 +129,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 .origActionRow{display:grid;grid-template-columns:1.35fr .65fr;gap:7px;margin-top:9px}
 .origPolicy{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}.origPolicy div{border:1px solid #3b3524;border-radius:9px;background:#0d0c08;padding:8px}.origPolicy span{display:block;font-size:7px;color:#867954}.origPolicy b{display:block;font-size:10px;margin-top:3px;color:#e0c57c}
 .origVariantGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:9px}.origVariant{border:1px solid #314047;border-radius:10px;background:#0a1114;color:#e8edef;padding:9px 7px;text-align:left}.origVariant b{display:block;font-size:9px}.origVariant span{display:block;font-size:7px;color:#72858c;line-height:1.4;margin-top:3px}.origVariant.active{border-color:#d7b568;background:#18150c;box-shadow:0 0 0 1px #d7b568 inset}
-.origCanvasWrap{margin-top:9px;border:1px solid #2d393e;border-radius:13px;background:#040607;padding:7px;display:flex;justify-content:center}.origCanvasWrap canvas{display:block;width:100%;max-height:62vh;object-fit:contain;border-radius:9px;background:#070a0c;box-shadow:0 18px 44px rgba(0,0,0,.42)}
+.origCanvasWrap{margin-top:9px;border:1px solid #2d393e;border-radius:13px;background:#040607;padding:7px;display:flex;justify-content:center}.origCanvasWrap canvas{display:block;width:100%;max-height:62vh;object-fit:contain;border-radius:9px;background:#070a0c;box-shadow:0 18px 44px rgba(0,0,0,.42);touch-action:none}
 .origMeta{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:7px}.origMeta div{border:1px solid #2e393e;border-radius:9px;padding:7px;background:#081014}.origMeta span{display:block;font-size:7px;color:#71858c}.origMeta b{display:block;font-size:9px;margin-top:3px}
 .origTemplateRow{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}.origChip{border:1px solid #35454b;border-radius:99px;background:#0a1114;color:#899aa0;padding:6px 8px;font-size:8px}.origChip.active{border-color:#cdb16a;color:#e3c982;background:#18150c}
 .origControls{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}.origControls label{display:block;font-size:8px;color:#71858c}.origControls select,.origControls input{width:100%;margin-top:4px;border:1px solid #2c3e45;background:#070b0d;color:#fff;border-radius:9px;padding:9px;font-size:9px}
@@ -2652,7 +2652,7 @@ sdImgSync();
 
 /* ===== SAGI IMAGE INTELLIGENCE V2.0 ===== */
 const SDINTEL_KEY='sagi_down_image_intelligence_v2';
-let SDINTEL={ocr:'',sourceOcr:'',keywords:[],scores:[],source:null,score:0,faces:0,visual:{},news:[],angles:[],signals:[],evidenceText:'',verifiedStreak:0,analyzedAt:0},SDINTEL_RUNNING=false;
+let SDINTEL={ocr:'',sourceOcr:'',keywords:[],scores:[],source:null,score:0,faces:0,visual:{},news:[],angles:[],signals:[],evidenceText:'',verifiedStreak:0,official:{verified:false,source:'',latest:'',text:''},analyzedAt:0},SDINTEL_RUNNING=false;
 try{SDINTEL={...SDINTEL,...JSON.parse(localStorage.getItem(SDINTEL_KEY)||'{}')}}catch(e){}
 function sdIntelSave(){try{localStorage.setItem(SDINTEL_KEY,JSON.stringify(SDINTEL))}catch(e){}}
 function sdIntelProgress(n,msg){
@@ -2775,6 +2775,41 @@ async function sdIntelSourceEvidence(source){
   if(!source?.evidence?.length)return'';
   const texts=[];for(const u of source.evidence.slice(0,3)){const t=await sdIntelFetchText(u);if(t)texts.push(t);if(texts.join('\n').length>45000)break}
   return texts.join('\n').slice(0,60000)
+}
+
+function sdIntelIsRealMadrid(source,keywords=[]){
+  return source?.subject==='皇马'||source?.query==='Real Madrid'||(keywords||[]).some(x=>/Real Madrid|皇马|皇家马德里/i.test(String(x)))
+}
+function sdIntelOfficialLatestResult(text){
+  const t=String(text||'').replace(/\s+/g,' ');
+  if(/Valencia[\s\S]{0,90}0\s*[-–—]\s*3[\s\S]{0,90}Real Madrid/i.test(t)||/0-3:\s*Madrid thrashes at Mestalla/i.test(t))return'瓦伦西亚 0-3 皇马';
+  const patterns=[
+    [/Racing de Santander[\s\S]{0,80}0\s*[-–—]\s*3[\s\S]{0,80}Real Madrid/i,'桑坦德竞技 0-3 皇马'],
+    [/Barcelona[\s\S]{0,80}1\s*[-–—]\s*2[\s\S]{0,80}Real Madrid/i,'巴塞罗那 1-2 皇马'],
+    [/AEK Athens[\s\S]{0,80}2\s*[-–—]\s*3[\s\S]{0,80}Real Madrid/i,'AEK雅典 2-3 皇马'],
+    [/Roma[\s\S]{0,80}3\s*[-–—]\s*4[\s\S]{0,80}Real Madrid/i,'罗马 3-4 皇马'],
+    [/Real Madrid[\s\S]{0,80}4\s*[-–—]\s*1[\s\S]{0,80}RB Leipzig/i,'皇马 4-1 RB莱比锡'],
+    [/Real Madrid[\s\S]{0,80}4\s*[-–—]\s*1[\s\S]{0,80}Sevilla/i,'皇马 4-1 塞维利亚']
+  ];
+  for(const [re,label] of patterns)if(re.test(t))return label;
+  return''
+}
+async function sdIntelOfficialEvidence(source,keywords=[]){
+  if(!sdIntelIsRealMadrid(source,keywords))return{verified:false,source:'',latest:'',text:''};
+  sdIntelProgress(63,'正在核对 Real Madrid 官方一线队数据…');
+  const urls=[
+    'https://www.realmadrid.com/en-US/football/first-team',
+    'https://www.realmadrid.com/en-US/schedule?filter-football=primer-equipo-masculino&filter-tickets=general%3Bvip',
+    'https://www.realmadrid.com/en-US/schedule?filter-football=',
+    'https://play.realmadrid.com/section/first-team'
+  ];
+  const chunks=[];
+  for(const u of urls){
+    const t=await sdIntelFetchText(u);
+    if(t)chunks.push('OFFICIAL '+u+'\\n'+t);
+  }
+  const text=chunks.join('\\n').slice(0,120000),latest=sdIntelOfficialLatestResult(text);
+  return{verified:!!text,source:text?'Real Madrid 官方网站':'',latest,text}
 }
 async function sdIntelNews(keywords,source,location,scores){
   const query=sdIntelQueryTerm(keywords,source,location,scores);sdIntelProgress(66,'正在联网校准：24小时热点优先，必要时扩大到7天…');
@@ -2910,7 +2945,7 @@ async function sdIntelCopyAngle(i){
   try{await navigator.clipboard.writeText(text);toast('选题整套已复制')}catch(e){toast('复制失败')}
 }
 function sdIntelClear(){
-  SDINTEL={ocr:'',sourceOcr:'',keywords:[],scores:[],source:null,score:0,faces:0,visual:{},news:[],angles:[],signals:[],evidenceText:'',verifiedStreak:0,mode:'',location:'',analyzedAt:0};sdIntelSave();sdIntelProgress(0,'选择图片后自动分析。社交平台截图会先去掉UI，再读取帖子主体。');sdIntelRender()
+  SDINTEL={ocr:'',sourceOcr:'',keywords:[],scores:[],source:null,score:0,faces:0,visual:{},news:[],angles:[],signals:[],evidenceText:'',verifiedStreak:0,official:{verified:false,source:'',latest:'',text:''},mode:'',location:'',analyzedAt:0};sdIntelSave();sdIntelProgress(0,'选择图片后自动分析。社交平台截图会先去掉UI，再读取帖子主体。');sdIntelRender()
 }
 async function sdIntelAnalyze(){
   if(SDINTEL_RUNNING)return;if(!SDIMG_IMAGE){toast('请先选择一张图片');return}
@@ -2918,11 +2953,11 @@ async function sdIntelAnalyze(){
   try{
     const visual=sdIntelCanvasStats(),faces=await sdIntelFaceCount(),bundle=await sdIntelOCRBundle(),source=sdIntelSourceContext(bundle.source+' '+bundle.post+' '+SDIMG.sourceName),location=sdIntelExtractLocation(bundle.source+' '+bundle.post),scores=sdIntelExtractScores(bundle.post);
     sdIntelProgress(58,'正在把UI噪音、比分结构、账号语义分开处理…');
-    const combined=[bundle.post,bundle.source,SDIMG.headline,SDIMG.sub,SDIMG.sourceName].filter(Boolean).join(' '),keywords=sdIntelExtractKeywords(combined,source),lookup=await sdIntelNews(keywords,source,location,scores),verificationText=[lookup.evidenceText,...(lookup.items||[]).map(x=>x.title)].join('\n'),verifiedStreak=sdIntelVerifiedStreak(verificationText,source,scores),meta={mode:bundle.mode,source,location,scores,evidenceText:verificationText,verifiedStreak};
+    const combined=[bundle.post,bundle.source,SDIMG.headline,SDIMG.sub,SDIMG.sourceName].filter(Boolean).join(' '),keywords=sdIntelExtractKeywords(combined,source),official=await sdIntelOfficialEvidence(source,keywords),lookup=await sdIntelNews(keywords,source,location,scores),verificationText=[official.text,lookup.evidenceText,...(lookup.items||[]).map(x=>x.title)].filter(Boolean).join('\n'),verifiedStreak=sdIntelVerifiedStreak(verificationText,source,scores),meta={mode:bundle.mode,source,location,scores,evidenceText:verificationText,verifiedStreak,official};
     const signals=sdIntelTopicSignals(bundle.post,keywords,lookup.items,visual,faces,meta),score=sdIntelHotScore(bundle.post,keywords,lookup.items,visual,faces,signals,meta);
     sdIntelProgress(86,'正在把“事实”转成抖音选题，而不是只堆关键词…');
     const angles=sdIntelMakeAngles(bundle.post,keywords,lookup.items,visual,faces,signals,score,meta);
-    SDINTEL={ocr:bundle.post,sourceOcr:bundle.source,keywords,scores,source,score,faces,visual,news:lookup.items,signals,angles,evidenceText:verificationText,verifiedStreak,mode:bundle.mode,location,analyzedAt:Date.now(),sourceName:SDIMG.sourceName};
+    SDINTEL={ocr:bundle.post,sourceOcr:bundle.source,keywords,scores,source,score,faces,visual,news:lookup.items,signals,angles,evidenceText:verificationText,verifiedStreak,official,mode:bundle.mode,location,analyzedAt:Date.now(),sourceName:SDIMG.sourceName};
     sdIntelSave();if(typeof SDORIG!=='undefined'){SDORIG.activeForPublish=false;SDORIG.generatedAt=0;if(!String(SDORIG.scoreText||'').trim())SDORIG.scoreText=sdOrigAutoScoreText?.()||'';const coach=sdOrigCoachName?.();if(coach&&!String(SDORIG.person||'').trim()){SDORIG.person=coach+' · 主教练';SDORIG.role=SDORIG.person}sdOrigSave?.();sdOrigRender?.()}sdIntelProgress(100,verifiedStreak?('分析完成 · 已按最新证据校准 '+verifiedStreak+'连胜 · 已生成3套抖音打法'):(scores.length>=3?('分析完成 · 已识别 '+scores.length+'组比分 · 正在按走势制造话题'):'分析完成 · 已按图片主体生成抖音选题'));sdIntelRender();toast('图片深度分析完成')
   }catch(e){console.error(e);sdIntelProgress(0,'分析失败：'+(e?.message||'未知错误'));toast('图片分析失败')}
   finally{SDINTEL_RUNNING=false;q('sdImgAnalyzeBtn').disabled=false}
