@@ -82,6 +82,69 @@ jobs:
           print("real Whisper transcribe OK", "lang=", getattr(info, "language", ""), "segments=", len(rows))
           PY
 
+      - name: Real caption-media endpoint smoke test
+        run: |
+          cd sagi-cloud-bridge
+          if ! command -v espeak >/dev/null 2>&1; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq espeak
+          fi
+          python - <<'PY'
+          import io, os, subprocess, tempfile
+          from pathlib import Path
+          import imageio_ffmpeg
+          import app as mod
+
+          work = Path(tempfile.mkdtemp(prefix="sagi_real_caption_"))
+          wav = work / "speech.wav"
+          mp4 = work / "speech.mp4"
+
+          subprocess.run([
+              "espeak","-s","145","-w",str(wav),
+              "This is a football test. The double pivot protects the back four."
+          ], check=True)
+
+          ffmpeg = imageio_ffmpeg.get_ffmpeg_exe()
+          subprocess.run([
+              ffmpeg,"-hide_banner","-loglevel","error","-y",
+              "-f","lavfi","-i","color=c=black:s=640x360:r=25:d=5",
+              "-i",str(wav),
+              "-c:v","libx264","-pix_fmt","yuv420p",
+              "-c:a","aac","-b:a","96k","-shortest",str(mp4)
+          ], check=True)
+
+          assert mp4.exists() and mp4.stat().st_size > 1000, mp4.stat().st_size if mp4.exists() else 0
+
+          c = mod.app.test_client()
+          token = mod.client_token()
+          headers = {
+              "Authorization": "Bearer " + token,
+              "Origin": "https://suny820916.github.io",
+          }
+          with mp4.open("rb") as fh:
+              r = c.post(
+                  "/api/caption-media",
+                  headers=headers,
+                  data={
+                      "media": (io.BytesIO(fh.read()), "speech.mp4"),
+                      "start": "0",
+                      "duration": "5",
+                      "language": "en",
+                  },
+                  content_type="multipart/form-data",
+              )
+
+          print("caption-media status", r.status_code)
+          print("caption-media body", r.get_data(as_text=True)[:2000])
+          assert r.status_code == 200, (r.status_code, r.get_data(as_text=True))
+          d = r.get_json()
+          assert d["ok"] is True
+          assert isinstance(d.get("segments"), list) and len(d["segments"]) >= 1, d
+          assert any(str(x.get("text") or "").strip() for x in d["segments"]), d
+          assert all(float(x["end"]) >= float(x["start"]) for x in d["segments"])
+          print("REAL caption-media OK", len(d["segments"]), "segments", [x["text"] for x in d["segments"]])
+          PY
+
       - name: Flask API smoke test
         run: |
           cd sagi-cloud-bridge
