@@ -7,108 +7,302 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="SAGI DOWN">
-
-
-
+<link rel="manifest" href="./content-os/sagi-down-manifest.webmanifest">
+<link rel="icon" href="./content-os/sagi-down-icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="./content-os/sagi-down-icon.svg">
 <title>SAGI DOWN</title>
 <style>
-:root{color-scheme:dark;--bg:#080b0d;--card:#0e1417;--line:#24343a;--text:#edf2f3;--muted:#788b92;--gold:#d7b568;--good:#6ca17a}
+:root{color-scheme:dark;--bg:#080b0d;--card:#0f1518;--card2:#111a1e;--line:#24363e;--text:#f0f4f5;--muted:#788b92;--gold:#d7b568;--blue:#6f9fb2;--good:#71a77f;--warn:#d0b16e;--danger:#b36f6f}
 *{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","PingFang SC",sans-serif}
-body{min-height:100vh;padding:calc(18px + env(safe-area-inset-top)) 16px calc(26px + env(safe-area-inset-bottom))}
-.wrap{max-width:640px;margin:0 auto}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}.brand b{font-size:20px;letter-spacing:.5px}.brand span{display:block;color:var(--muted);font-size:11px;margin-top:3px}.badge{font-size:10px;border:1px solid #4f5c38;color:#d7c58d;border-radius:99px;padding:6px 9px}
-.hero{padding:22px;border:1px solid #2d424a;border-radius:18px;background:radial-gradient(circle at 90% 0,rgba(70,125,143,.18),transparent 35%),var(--card);margin-bottom:12px}.hero small{color:#8ba0a8;font-size:10px;letter-spacing:1px}.hero h1{font-size:27px;line-height:1.12;margin:10px 0 8px}.hero p{margin:0;color:#83959b;font-size:12px;line-height:1.6}
-.card{border:1px solid var(--line);border-radius:16px;background:var(--card);padding:14px;margin-top:10px}.label{font-size:10px;color:#8fa1a7;margin-bottom:7px}.inputWrap{display:flex;gap:7px}.inputWrap input{flex:1;min-width:0;border:1px solid #2c3e45;background:#070b0d;color:#fff;border-radius:12px;padding:14px;font-size:14px;outline:none}.inputWrap input:focus{border-color:#6a7d84}.btn{border:1px solid #32434a;background:#121b1f;color:#eaf0f2;border-radius:12px;padding:12px 13px;font-weight:650;font-size:12px}.btn.primary{background:#eee;color:#0b0c0d;border-color:#eee}.btn.blue{border-color:#405b66;background:#102027}.btn:active{transform:scale(.985)}
-.actions{display:grid;grid-template-columns:1.25fr .75fr;gap:8px;margin-top:10px}.status{margin-top:10px;border:1px solid #2b3b42;border-radius:11px;padding:10px 11px;color:#87999f;font-size:11px;line-height:1.5}.status.good{border-color:#355741;color:#9fc0a7}.status.warn{border-color:#665438;color:#d3bb7b}.platform{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px}.platform b{font-size:11px}.platform span{font-size:9px;color:#74868d}
-.history{display:grid;gap:7px}.row{border:1px solid #24343a;border-radius:11px;padding:10px;display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}.row b{font-size:11px;display:block}.row span{font-size:8px;color:#6f8288;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:67vw;margin-top:3px}.row button{padding:8px 10px}.empty{text-align:center;color:#60747b;font-size:10px;padding:14px}
-.install{font-size:10px;color:#72858b;text-align:center;line-height:1.55;margin:18px 10px 0}
-@media(max-width:390px){.actions{grid-template-columns:1fr}.hero h1{font-size:24px}.inputWrap{grid-template-columns:1fr}.inputWrap .btn{padding-left:10px;padding-right:10px}}
+body{min-height:100vh;padding:calc(16px + env(safe-area-inset-top)) 14px calc(26px + env(safe-area-inset-bottom));background:radial-gradient(circle at 50% -10%,#14232a 0,transparent 38%),var(--bg)}
+button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;justify-content:space-between;align-items:center;margin:2px 2px 18px}.brand b{font-size:20px;letter-spacing:.7px}.brand span{display:block;color:var(--muted);font-size:10px;margin-top:3px;letter-spacing:.4px}.badge{font-size:9px;border:1px solid #5b5033;color:#d8c280;border-radius:99px;padding:6px 9px}
+.hero{padding:19px;border:1px solid #2b414a;border-radius:18px;background:linear-gradient(145deg,rgba(21,36,42,.96),rgba(12,17,20,.98));box-shadow:0 20px 45px rgba(0,0,0,.18)}.heroTop{display:flex;align-items:center;justify-content:space-between;gap:12px}.hero small{color:#94a9b1;font-size:9px;letter-spacing:1.2px}.hero h1{font-size:25px;line-height:1.15;margin:9px 0 7px}.hero p{margin:0;color:#82969d;font-size:11px;line-height:1.55}
+.platformStrip{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:12px}.platformChip{border:1px solid #26373e;background:#0d1417;border-radius:10px;padding:8px 5px;text-align:center;font-size:9px;color:#82969c}.platformChip b{display:block;color:#dce4e7;font-size:10px;margin-bottom:2px}
+.card{border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,var(--card),#0b1013);padding:14px;margin-top:10px}.sectionHead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:9px}.label{font-size:10px;color:#8fa1a7}.mini{font-size:8px;color:#63767d}
+.inputWrap{display:grid;grid-template-columns:1fr auto;gap:7px}.inputWrap textarea{width:100%;min-height:78px;resize:none;border:1px solid #2c3e45;background:#070b0d;color:#fff;border-radius:12px;padding:13px;font-size:13px;line-height:1.45;outline:none}.inputWrap textarea:focus{border-color:#607985}.sideBtns{display:grid;gap:7px;align-content:start}.btn{border:1px solid #32434a;background:#121b1f;color:#eaf0f2;border-radius:11px;padding:11px 12px;font-weight:650;font-size:11px}.btn.primary{background:#f0f2f2;color:#0a0c0d;border-color:#f0f2f2}.btn.blue{border-color:#405d68;background:#102027}.btn.gold{border-color:#5b5033;background:#1a1710;color:#d8c280}.btn.ghost{background:#0b1114}.btn.danger{border-color:#5a3434;color:#c98888}.btn:active{transform:scale(.985)}
+.detect{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:9px;padding:9px 10px;border-radius:10px;background:#0a1013;border:1px solid #22323a}.detect b{font-size:11px}.detect span{font-size:8px;color:#6f838a}.detectTag{font-size:8px!important;border:1px solid #344952;border-radius:99px;padding:4px 7px;color:#9eb2b9!important;white-space:nowrap}
+.actions{display:grid;grid-template-columns:1.2fr .8fr .8fr;gap:7px;margin-top:9px}.status{margin-top:9px;border:1px solid #2b3b42;border-radius:10px;padding:9px 10px;color:#87999f;font-size:10px;line-height:1.5}.status.good{border-color:#355741;color:#9fc0a7}.status.warn{border-color:#665438;color:#d3bb7b}.status.bad{border-color:#623b3b;color:#cf9292}
+.historyTools{display:flex;gap:6px}.history{display:grid;gap:7px}.row{border:1px solid #24343a;border-radius:11px;padding:10px}.rowTop{display:flex;justify-content:space-between;gap:10px;align-items:center}.row b{font-size:10px}.row time{font-size:8px;color:#61767d}.rowUrl{font-size:8px;color:#6f8288;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:4px}.rowActions{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:8px}.rowActions .btn{padding:7px 5px;font-size:9px}.empty{text-align:center;color:#60747b;font-size:10px;padding:16px}.install{font-size:9px;color:#657981;text-align:center;line-height:1.55;margin:16px 10px 0}
+.toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom));transform:translate(-50%,18px);background:#e9eeee;color:#0b0d0e;border-radius:99px;padding:9px 13px;font-size:10px;font-weight:700;opacity:0;pointer-events:none;transition:.2s;z-index:20}.toast.show{opacity:1;transform:translate(-50%,0)}
+.recreateCard{border-color:#374d57;background:linear-gradient(180deg,#101a1e,#0a0f12)}
+.recreateIntro{font-size:10px;color:#7d9198;line-height:1.55;margin:-2px 0 10px}
+.filePick{position:relative;border:1px dashed #40545d;border-radius:12px;padding:13px;background:#0a1114;text-align:center}.filePick input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}.filePick b{display:block;font-size:11px}.filePick span{display:block;font-size:8px;color:#70848b;margin-top:4px}
+.mediaMeta{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}.mediaMeta div{border:1px solid #263840;background:#0a1114;border-radius:10px;padding:8px;text-align:center}.mediaMeta b{font-size:11px;display:block}.mediaMeta span{font-size:8px;color:#6f838a}
+.recreatePreview{display:none;width:100%;max-height:260px;margin-top:9px;border-radius:12px;background:#000}.recreatePreview.show{display:block}
+.recreateGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin-top:9px}.recreatePreset{border:1px solid #2d4149;background:#0d1518;border-radius:11px;padding:10px;text-align:left;color:#dfe6e8}.recreatePreset.active{border-color:#c9ae68;background:#19170f}.recreatePreset b{display:block;font-size:10px}.recreatePreset span{display:block;font-size:8px;color:#71858c;margin-top:3px;line-height:1.35}.recreatePreset.active span{color:#ae9a67}
+.recreateFields{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px}.recreateFields input,.recreateFields select{width:100%;border:1px solid #2c3e45;background:#070b0d;color:#fff;border-radius:10px;padding:10px;font-size:10px;outline:none}.recreateFields label{display:block;font-size:8px;color:#71858c;margin-bottom:4px}
+.recreatePlan{margin-top:9px;border:1px solid #2a3c43;border-radius:11px;padding:10px;background:#0a1114}.recreatePlan b{font-size:10px}.recreatePlan pre{white-space:pre-wrap;margin:7px 0 0;font-family:inherit;color:#83979e;font-size:9px;line-height:1.55}
+.recreateActions{display:grid;grid-template-columns:1fr .65fr;gap:7px;margin-top:9px}
+@media(max-width:420px){.actions{grid-template-columns:1fr 1fr}.actions .primary{grid-column:1/-1}.platformStrip{grid-template-columns:repeat(2,1fr)}.rowActions{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="top">
-    <div class="brand"><b>SAGI DOWN</b><span>视频链接快捷下载</span></div>
-    <span class="badge">V1.0</span>
+    <div class="brand"><b>SAGI DOWN</b><span>VIDEO LINK SHORTCUT</span></div>
+    <span class="badge">V1.3 · RECREATE</span>
   </div>
 
   <section class="hero">
-    <small>ONE TAP DOWNLOAD</small>
-    <h1>粘贴链接，直接去下载。</h1>
-    <p>独立快捷方式，不进入 CONTENT OS。支持识别 Instagram / YouTube / TikTok / X 等常见视频链接。</p>
+    <div class="heroTop"><small>ONE TAP DOWNLOAD</small><span class="badge">MOBILE FIRST</span></div>
+    <h1>复制视频链接，回来直接下。</h1>
+    <p>支持直接粘贴链接，也支持把“抖音/INS/YouTube 分享文案”整段粘贴进来，SAGI DOWN 会自动提取其中的网址。</p>
+    <div class="platformStrip">
+      <div class="platformChip"><b>Instagram</b>Reel / Post</div>
+      <div class="platformChip"><b>YouTube</b>Video / Shorts</div>
+      <div class="platformChip"><b>TikTok</b>Video</div>
+      <div class="platformChip"><b>X</b>Video</div>
+    </div>
   </section>
 
   <section class="card">
-    <div class="label">视频链接</div>
+    <div class="sectionHead"><div class="label">视频链接 / 分享文案</div><div class="mini">自动提取 URL</div></div>
     <div class="inputWrap">
-      <input id="url" inputmode="url" autocapitalize="off" autocomplete="off" placeholder="https://...">
-      <button class="btn" id="pasteBtn" type="button">粘贴</button>
+      <textarea id="url" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="粘贴链接，或直接粘贴整段分享文案…"></textarea>
+      <div class="sideBtns">
+        <button class="btn gold" id="pasteBtn" type="button">粘贴</button>
+        <button class="btn ghost" id="clearBtn" type="button">清空</button>
+      </div>
     </div>
-    <div class="platform"><div><b id="platformName">等待链接</b><span id="platformHint">粘贴后自动识别平台</span></div></div>
+
+    <div class="detect">
+      <div><b id="platformName">等待链接</b><span id="platformHint">粘贴后自动识别平台</span></div>
+      <span class="detectTag" id="platformType">READY</span>
+    </div>
+
     <div class="actions">
-      <button class="btn primary" id="downloadBtn" type="button">下载视频</button>
-      <button class="btn blue" id="openBtn" type="button">打开原链接</button>
+      <button class="btn primary" id="downloadBtn" type="button">去下载视频</button>
+      <button class="btn blue" id="copyBtn" type="button">复制链接</button>
+      <button class="btn" id="openBtn" type="button">原链接</button>
     </div>
     <div id="status" class="status">等待粘贴视频链接。</div>
   </section>
 
+  <section class="card recreateCard" id="recreateCard">
+    <div class="sectionHead">
+      <div><div class="label">RECREATE · 视频再创作</div><div class="mini">下载回来，直接变成 AI VIDEO JOB</div></div>
+      <span class="badge">V1.3</span>
+    </div>
+    <div class="recreateIntro">选择刚下载的视频。SAGI DOWN 会读取素材参数，并生成适合抖音 9:16 的再创作任务。仅用于你拥有或已获授权使用的素材。</div>
+
+    <div class="filePick">
+      <input id="recreateFile" type="file" accept="video/*">
+      <b id="recreateFileTitle">选择刚下载的视频</b>
+      <span id="recreateFileHint">支持 iPhone“文件”或“照片”中的视频</span>
+    </div>
+
+    <video id="recreatePreview" class="recreatePreview" controls playsinline muted></video>
+
+    <div class="mediaMeta">
+      <div><b id="metaDuration">—</b><span>时长</span></div>
+      <div><b id="metaSize">—</b><span>文件大小</span></div>
+      <div><b id="metaResolution">—</b><span>分辨率</span></div>
+    </div>
+
+    <div class="recreateGrid">
+      <button class="recreatePreset active" data-preset="hot15" type="button"><b>15秒热点版</b><span>前1秒强Hook · 高节奏 · 双高潮</span></button>
+      <button class="recreatePreset" data-preset="emotion25" type="button"><b>25秒情绪版</b><span>人物/现场情绪 · 节奏起伏</span></button>
+      <button class="recreatePreset" data-preset="top5" type="button"><b>TOP5高光</b><span>5个最强瞬间 · 强度排序</span></button>
+      <button class="recreatePreset" data-preset="commentary30" type="button"><b>30秒解说版</b><span>重构信息 · 中文解说 · 观点输出</span></button>
+    </div>
+
+    <div class="recreateFields">
+      <div><label>内容标题</label><input id="recreateTitle" placeholder="例如：这脚射门为什么这么难防"></div>
+      <div><label>输出画幅</label><select id="recreateAspect"><option value="9:16">9:16 抖音竖屏</option><option value="16:9">16:9 横屏</option><option value="1:1">1:1 方形</option></select></div>
+    </div>
+
+    <div class="recreatePlan">
+      <b id="recreatePlanTitle">15秒热点版 · 剪辑结构</b>
+      <pre id="recreatePlanText">0–1秒：最强画面先出
+1–6秒：快速建立事件
+6–12秒：第二高潮 / 关键动作
+12–15秒：结果 + SAGI收尾</pre>
+    </div>
+
+    <div class="recreateActions">
+      <button class="btn primary" id="createRecreateJobBtn" type="button">创建 AI 再创作任务</button>
+      <button class="btn gold" id="recreateFromLinkBtn" type="button">只用链接创建</button>
+    </div>
+    <div id="recreateStatus" class="status">可以先下载，再回来选择视频；也可以只用当前链接创建任务。</div>
+  </section>
+
   <section class="card">
-    <div class="label">最近下载</div>
+    <div class="sectionHead">
+      <div><div class="label">最近下载</div><div class="mini" id="historyCount">0 条记录</div></div>
+      <div class="historyTools"><button class="btn danger" id="clearHistoryBtn" type="button">清空记录</button></div>
+    </div>
     <div id="history" class="history"><div class="empty">还没有记录</div></div>
   </section>
 
-  <div class="install">iPhone：Safari 打开本页 → 分享 →「添加到主屏幕」，以后桌面直接点 SAGI DOWN。</div>
+  <div class="install">iPhone：Safari 打开本页 → 分享 →「添加到主屏幕」。以后桌面直接打开 SAGI DOWN。</div>
 </div>
+<div class="toast" id="toast">已复制</div>
 
 <script>
 (()=>{'use strict';
 const COBALT='https://cobalt.tools/';
-const KEY='sagi_down_history_v1';
+const KEY='sagi_down_history_v2';
+const OLD_KEY='sagi_down_history_v1';
 const q=id=>document.getElementById(id);
-const url=q('url'),status=q('status'),platformName=q('platformName'),platformHint=q('platformHint');
+const input=q('url'),status=q('status'),platformName=q('platformName'),platformHint=q('platformHint'),platformType=q('platformType');
 
-function normalize(v){
-  const s=String(v||'').trim(); if(!s)return'';
-  try{const u=new URL(s); return /^https?:$/.test(u.protocol)?u.toString():''}catch(e){return''}
+function extractUrl(v){
+  const s=String(v||'').trim();
+  if(!s)return'';
+  const m=s.match(/https?:\/\/[^\s<>”"']+/i);
+  const raw=(m?m[0]:s).replace(/[，。；;！!？?、）)\]}]+$/,'');
+  try{const u=new URL(raw);return /^https?:$/.test(u.protocol)?u.toString():''}catch(e){return''}
 }
 function detect(v){
   try{
-    const h=new URL(v).hostname.toLowerCase();
-    if(/instagram\.com$/.test(h)||/\.instagram\.com$/.test(h))return['Instagram','Reel / Post'];
-    if(/youtube\.com$/.test(h)||/youtu\.be$/.test(h)||/\.youtube\.com$/.test(h))return['YouTube','Video / Shorts'];
-    if(/tiktok\.com$/.test(h)||/\.tiktok\.com$/.test(h))return['TikTok','Video'];
-    if(/x\.com$/.test(h)||/twitter\.com$/.test(h))return['X / Twitter','Video'];
-    if(/bilibili\.com$/.test(h)||/b23\.tv$/.test(h))return['Bilibili','Video'];
-    return['视频链接','将交给下载页处理'];
-  }catch(e){return['等待链接','粘贴后自动识别平台']}
+    const u=new URL(v),h=u.hostname.toLowerCase().replace(/^www\./,'');
+    if(h==='instagram.com'||h.endsWith('.instagram.com'))return['Instagram','Reel / Post','INS'];
+    if(h==='youtube.com'||h.endsWith('.youtube.com')||h==='youtu.be')return['YouTube','Video / Shorts','YT'];
+    if(h==='tiktok.com'||h.endsWith('.tiktok.com'))return['TikTok','Video','TT'];
+    if(h==='x.com'||h.endsWith('.x.com')||h==='twitter.com'||h.endsWith('.twitter.com'))return['X / Twitter','Video','X'];
+    if(h==='bilibili.com'||h.endsWith('.bilibili.com')||h==='b23.tv')return['Bilibili','Video','BILI'];
+    return['视频链接',h||'将交给下载页处理','URL'];
+  }catch(e){return['等待链接','粘贴后自动识别平台','READY']}
 }
 function setStatus(t,k=''){status.textContent=t;status.className='status '+k}
+function toast(t='已复制'){const el=q('toast');el.textContent=t;el.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('show'),1300)}
+function currentUrl(){return extractUrl(input.value)}
 function updateDetect(){
-  const v=normalize(url.value),d=detect(v);platformName.textContent=d[0];platformHint.textContent=d[1]
+  const v=currentUrl(),d=detect(v);
+  platformName.textContent=d[0];platformHint.textContent=d[1];platformType.textContent=d[2];
+  if(v&&input.value.trim()!==v){setStatus('已从分享文案中识别出 '+d[0]+' 链接。','good')}
 }
-function history(){try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){return[]}}
+function getHistory(){
+  try{
+    const now=JSON.parse(localStorage.getItem(KEY)||'null');
+    if(Array.isArray(now))return now;
+    const old=JSON.parse(localStorage.getItem(OLD_KEY)||'[]');
+    if(Array.isArray(old)&&old.length){localStorage.setItem(KEY,JSON.stringify(old));return old}
+  }catch(e){}
+  return[]
+}
 function saveHistory(v){
-  let list=history().filter(x=>x.url!==v);
-  list.unshift({url:v,at:Date.now(),platform:detect(v)[0]});
+  let list=getHistory().filter(x=>x.url!==v);
+  const d=detect(v);
+  list.unshift({url:v,at:Date.now(),platform:d[0]});
   localStorage.setItem(KEY,JSON.stringify(list.slice(0,20)));renderHistory()
 }
-function renderHistory(){
-  const host=q('history'),list=history();
-  host.innerHTML=list.length?list.map((x,i)=>'<div class="row"><div><b>'+escapeHtml(x.platform||'视频')+'</b><span>'+escapeHtml(x.url)+'</span></div><button class="btn" data-use="'+i+'" type="button">再下</button></div>').join(''):'<div class="empty">还没有记录</div>';
-  host.querySelectorAll('[data-use]').forEach(b=>b.onclick=()=>{const x=list[Number(b.dataset.use)];if(!x)return;url.value=x.url;updateDetect();download()})
-}
+function removeHistory(i){const list=getHistory();list.splice(i,1);localStorage.setItem(KEY,JSON.stringify(list));renderHistory()}
+function clearHistory(){localStorage.removeItem(KEY);renderHistory();toast('记录已清空')}
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function fmt(t){
+  const d=new Date(t||Date.now()),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0'),h=String(d.getHours()).padStart(2,'0'),mi=String(d.getMinutes()).padStart(2,'0');
+  return m+'/'+day+' '+h+':'+mi
+}
+function renderHistory(){
+  const host=q('history'),list=getHistory();q('historyCount').textContent=list.length+' 条记录';
+  host.innerHTML=list.length?list.map((x,i)=>'<div class="row"><div class="rowTop"><b>'+escapeHtml(x.platform||'视频')+'</b><time>'+fmt(x.at)+'</time></div><div class="rowUrl">'+escapeHtml(x.url)+'</div><div class="rowActions"><button class="btn blue" data-redownload="'+i+'" type="button">再下载</button><button class="btn" data-copy="'+i+'" type="button">复制</button><button class="btn" data-open="'+i+'" type="button">原链接</button><button class="btn gold" data-recreate="'+i+'" type="button">再创作</button><button class="btn danger" data-del="'+i+'" type="button">删除</button></div></div>').join(''):'<div class="empty">还没有记录</div>';
+  host.querySelectorAll('[data-redownload]').forEach(b=>b.onclick=()=>{const x=list[+b.dataset.redownload];if(!x)return;input.value=x.url;updateDetect();download()});
+  host.querySelectorAll('[data-copy]').forEach(b=>b.onclick=()=>copyText(list[+b.dataset.copy]?.url));
+  host.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{const x=list[+b.dataset.open];if(x)window.open(x.url,'_blank','noopener')});
+  host.querySelectorAll('[data-recreate]').forEach(b=>b.onclick=()=>{const x=list[+b.dataset.recreate];if(!x)return;input.value=x.url;updateDetect();scrollToRecreate()});
+  host.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>removeHistory(+b.dataset.del))
+}
+async function copyText(v){
+  const t=v||currentUrl();if(!t){setStatus('没有可复制的链接。','warn');return false}
+  try{await navigator.clipboard.writeText(t);toast('链接已复制');setStatus('链接已复制。','good');return true}
+  catch(e){setStatus('系统未允许复制，请长按输入框手动复制。','warn');return false}
+}
 async function paste(){
-  try{const t=await navigator.clipboard.readText();if(t){url.value=t.trim();updateDetect();setStatus('链接已粘贴。','good')}}catch(e){setStatus('iPhone 未允许读取剪贴板，请长按输入框粘贴。','warn')}
+  try{
+    const t=await navigator.clipboard.readText();
+    if(!t){setStatus('剪贴板里没有内容。','warn');return}
+    input.value=t.trim();updateDetect();
+    const v=currentUrl();setStatus(v?'已粘贴并识别链接。':'已粘贴，但没有识别到有效网址。',v?'good':'warn')
+  }catch(e){setStatus('iPhone 未允许读取剪贴板，请长按输入框粘贴。','warn')}
 }
+function clearInput(){input.value='';updateDetect();setStatus('已清空，等待新链接。');input.focus()}
 async function download(){
-  const v=normalize(url.value);if(!v){setStatus('请先粘贴有效链接。','warn');return}
-  try{await navigator.clipboard.writeText(v);setStatus('链接已复制，正在打开 Cobalt。进入后直接粘贴即可。','good')}catch(e){setStatus('正在打开 Cobalt，请在页面中粘贴当前链接。','good')}
-  saveHistory(v);window.open(COBALT,'_blank','noopener')
+  const v=currentUrl();if(!v){setStatus('请先粘贴有效的视频链接。','warn');return}
+  const d=detect(v);
+  await copyText(v);
+  saveHistory(v);
+  setStatus(d[0]+' 链接已准备好，正在打开下载页。','good');
+  window.open(COBALT,'_blank','noopener')
 }
-function openOriginal(){const v=normalize(url.value);if(!v){setStatus('请先粘贴有效链接。','warn');return}window.open(v,'_blank','noopener')}
-q('pasteBtn').onclick=paste;q('downloadBtn').onclick=download;q('openBtn').onclick=openOriginal;url.addEventListener('input',updateDetect);url.addEventListener('keydown',e=>{if(e.key==='Enter')download()});renderHistory();
+function openOriginal(){const v=currentUrl();if(!v){setStatus('请先粘贴有效链接。','warn');return}window.open(v,'_blank','noopener')}
 
 
+const OS_KEY='sagi_content_os_v10';
+const RECREATE_PRESETS={
+  hot15:{label:'15秒热点版',duration:15,tags:['highlight','goal','save','celebration','crowd'],brief:'前1秒最强镜头；6秒前必须出现第一次高潮；9:16优先；高节奏；删除无效停顿',plan:'0–1秒：最强画面先出\n1–6秒：快速建立事件\n6–12秒：第二高潮 / 关键动作\n12–15秒：结果 + SAGI收尾'},
+  emotion25:{label:'25秒情绪版',duration:25,tags:['celebration','crowd','reaction','highlight'],brief:'人物和现场情绪优先；允许节奏起伏；保留关键原声；结尾形成情绪落点',plan:'0–3秒：情绪Hook\n3–10秒：事件铺垫\n10–20秒：高潮与反应\n20–25秒：情绪收束 + SAGI'},
+  top5:{label:'TOP5高光',duration:25,tags:['goal','save','shot','skill','duel','highlight'],brief:'从素材中挑5个最强瞬间；按视觉冲击排序；每段只保留必要前后动作',plan:'TOP5 → TOP1 递进\n每段约3–5秒\n动作前留0.5秒建立预期\n动作后保留庆祝/反应'},
+  commentary30:{label:'30秒解说版',duration:30,tags:['context','highlight','reaction'],brief:'不照搬原视频结构；重新组织事实与观点；中文解说为主；原声只做氛围；9:16信息密度优先',plan:'0–2秒：观点Hook\n2–8秒：交代背景\n8–22秒：关键画面 + 中文解说\n22–28秒：结论/观点\n28–30秒：SAGI署名'}
+};
+let recreatePreset='hot15',recreateFile=null,recreateMeta={duration:0,width:0,height:0,size:0,name:''},recreateObjectUrl='';
+
+function fmtBytes(n){const v=Number(n)||0;if(v>=1024*1024)return(v/1024/1024).toFixed(v>20*1024*1024?0:1)+' MB';if(v>=1024)return(v/1024).toFixed(0)+' KB';return v+' B'}
+function fmtDuration(s){const n=Math.max(0,Math.round(Number(s)||0)),m=Math.floor(n/60),x=String(n%60).padStart(2,'0');return m+':'+x}
+function renderRecreatePreset(){
+  const p=RECREATE_PRESETS[recreatePreset]||RECREATE_PRESETS.hot15;
+  document.querySelectorAll('[data-preset]').forEach(b=>b.classList.toggle('active',b.dataset.preset===recreatePreset));
+  q('recreatePlanTitle').textContent=p.label+' · 剪辑结构';q('recreatePlanText').textContent=p.plan
+}
+function scrollToRecreate(){q('recreateCard')?.scrollIntoView({behavior:'smooth',block:'start'});q('recreateTitle')?.focus({preventScroll:true})}
+function setRecreateStatus(t,k=''){const e=q('recreateStatus');if(e){e.textContent=t;e.className='status '+k}}
+function handleRecreateFile(e){
+  const file=e.target.files?.[0];if(!file)return;
+  if(!String(file.type||'').startsWith('video/')){setRecreateStatus('请选择视频文件。','warn');return}
+  recreateFile=file;recreateMeta={duration:0,width:0,height:0,size:file.size||0,name:file.name||'视频'};
+  q('recreateFileTitle').textContent=file.name||'已选择视频';q('recreateFileHint').textContent='正在读取素材参数…';
+  q('metaSize').textContent=fmtBytes(file.size);
+  if(recreateObjectUrl)URL.revokeObjectURL(recreateObjectUrl);
+  recreateObjectUrl=URL.createObjectURL(file);const v=q('recreatePreview');v.src=recreateObjectUrl;v.classList.add('show');
+  v.onloadedmetadata=()=>{
+    recreateMeta.duration=v.duration||0;recreateMeta.width=v.videoWidth||0;recreateMeta.height=v.videoHeight||0;
+    q('metaDuration').textContent=fmtDuration(recreateMeta.duration);
+    q('metaResolution').textContent=(recreateMeta.width&&recreateMeta.height)?recreateMeta.width+'×'+recreateMeta.height:'—';
+    q('recreateFileHint').textContent='素材已读取 · 可以创建再创作任务';
+    if(!q('recreateTitle').value)q('recreateTitle').value=(file.name||'视频').replace(/\.[^.]+$/,'');
+    setRecreateStatus('素材已准备好。选择模板后创建 AI VIDEO JOB。','good')
+  }
+}
+function makeJob(useFile){
+  const source=currentUrl(),p=RECREATE_PRESETS[recreatePreset]||RECREATE_PRESETS.hot15;
+  if(useFile&&!recreateFile){setRecreateStatus('请先选择刚下载的视频，或点“只用链接创建”。','warn');return}
+  if(!useFile&&!source){setRecreateStatus('当前没有可用的视频链接。','warn');return}
+  let os={};try{os=JSON.parse(localStorage.getItem(OS_KEY)||'{}')||{}}catch(e){}
+  os.videoJobs=Array.isArray(os.videoJobs)?os.videoJobs:[];
+  const title=(q('recreateTitle').value||'').trim()||((detect(source)[0]||'视频')+' · '+p.label);
+  const id='job_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7);
+  const job={
+    id,title,type:recreatePreset==='commentary30'?'recap':recreatePreset,typeLabel:p.label,duration:p.duration,status:'WAITING_FOR_SOURCE',createdAt:Date.now(),
+    source:'download_recreate',brief:p.brief,requiredTags:p.tags,
+    output:{aspect:q('recreateAspect').value||'9:16',resolution:(q('recreateAspect').value==='9:16'?'1080x1920':'1920x1080')},
+    sourcePayload:{
+      download:{url:source||'',platform:detect(source)[0]||'',authorized:true},
+      footage:useFile?[{name:recreateMeta.name,size:recreateMeta.size,duration:recreateMeta.duration,width:recreateMeta.width,height:recreateMeta.height,localSelected:true}]:[]
+    },
+    recreate:{preset:recreatePreset,plan:p.plan,sourceMode:useFile?'local_file':'link'},
+    revisions:[],resultUrl:'',approvedAt:0
+  };
+  os.videoJobs.unshift(job);os.jobType=job.type==='recap'?'recap':job.type;
+  localStorage.setItem(OS_KEY,JSON.stringify(os));localStorage.setItem('sagi_mobile_view','videojobs');
+  if(source)saveHistory(source);
+  setRecreateStatus('AI 再创作任务已创建，正在进入 CONTENT OS。','good');toast('任务已创建');
+  setTimeout(()=>{location.href='./content-os/index.html'},350)
+}
+
+q('pasteBtn').onclick=paste;
+q('clearBtn').onclick=clearInput;
+q('downloadBtn').onclick=download;
+q('copyBtn').onclick=()=>copyText();
+q('openBtn').onclick=openOriginal;
+q('clearHistoryBtn').onclick=clearHistory;
+q('recreateFile').onchange=handleRecreateFile;
+document.querySelectorAll('[data-preset]').forEach(b=>b.onclick=()=>{recreatePreset=b.dataset.preset;renderRecreatePreset()});
+q('createRecreateJobBtn').onclick=()=>makeJob(true);
+q('recreateFromLinkBtn').onclick=()=>makeJob(false);
+input.addEventListener('input',updateDetect);
+renderHistory();updateDetect();renderRecreatePreset();
+
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./content-os/sagi-down-sw.js?v=13',{updateViaCache:'none'}).catch(()=>{})}
 })();
 </script>
 </body>
