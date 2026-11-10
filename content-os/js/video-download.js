@@ -53,7 +53,7 @@ function setCloudState(state,msg=''){
  if(!badge||!title||!desc||!btn)return;
  badge.className='pill '+(state==='active'?'good':state==='checking'?'warn':'warn');
  if(state==='active'){
-   badge.textContent='已激活';title.textContent='SAGI CLOUD 已连接';desc.textContent='5G / Wi‑Fi 都可以直接下载 INS 视频，不需要电脑地址、Cloud URL 或 Token。';btn.textContent='检测云端';
+   badge.textContent='已激活';title.textContent='SAGI CLOUD 已连接';desc.textContent='云端中转已激活。电脑 Worker 在线时，Instagram 会从你的电脑网络下载，避免 Render 429。';btn.textContent='检测云端';
  }else if(state==='checking'){
    badge.textContent='检测中';title.textContent='正在连接 SAGI CLOUD';desc.textContent=msg||'正在检测云端服务和自动绑定凭证…';btn.textContent='检测中…';
  }else{
@@ -83,6 +83,7 @@ async function activateCloud(openDeploy=true){
    setCloudState('active');
    setStatus('SAGI CLOUD 激活成功。以后直接粘贴 INS 链接 → 下载。','good');
    note('SAGI CLOUD 已激活');
+   fetchWorkerStatus(true);
    return true
  }catch(e){
    localStorage.removeItem(KEYS.cloudToken);
@@ -93,6 +94,41 @@ async function activateCloud(openDeploy=true){
  }
 }
 
+async function fetchWorkerStatus(silent=false){
+ const token=cloudToken();
+ if(!token){renderWorker(false,'SAGI CLOUD 未激活');return{online:false}}
+ try{
+   const r=await fetch(CLOUD_URL+'/api/worker/status',{headers:{'Authorization':'Bearer '+token},cache:'no-store'});
+   const data=await r.json().catch(()=>({}));
+   if(!r.ok||!data.ok)throw new Error(data.error||('HTTP '+r.status));
+   renderWorker(!!data.online,data.online?'电脑 Worker 在线':'电脑 Worker 未在线');
+   return data
+ }catch(e){
+   if(!silent)setStatus('无法读取 Worker 状态：'+(e.message||e),'warn');
+   renderWorker(false,'Worker 状态未知');
+   return{online:false}
+ }
+}
+function renderWorker(online,text){
+ const dot=q('workerDot'),label=q('workerStatusText');
+ if(dot)dot.className=online?'online':'';
+ if(label)label.textContent=text|| (online?'在线':'离线')
+}
+async function startWorkerPair(){
+ if(!(await ensureCloud())){setStatus('请先激活 SAGI CLOUD。','warn');return}
+ try{
+   const r=await fetch(CLOUD_URL+'/api/worker/pair/start',{
+     method:'POST',
+     headers:{'Content-Type':'application/json','Authorization':'Bearer '+cloudToken()},
+     body:'{}'
+   });
+   const data=await r.json().catch(()=>({}));
+   if(!r.ok||!data.ok)throw new Error(data.error||('HTTP '+r.status));
+   if(q('workerPairCode'))q('workerPairCode').textContent=data.code;
+   if(q('workerPairBox'))q('workerPairBox').hidden=false;
+   setStatus('已生成电脑配对码。电脑运行 START_SAGI_REMOTE_WORKER.bat 后输入这 6 位数字。','good');
+ }catch(e){setStatus('生成配对码失败：'+(e.message||e),'bad')}
+}
 function setEngine(v,announce=true){
  if(!['cloud','local'].includes(v))return;
  localStorage.setItem(KEYS.engine,v);
@@ -176,6 +212,16 @@ async function pollCloud(id,token,attempt){
    if(r.status===401){localStorage.removeItem(KEYS.cloudToken);setCloudState('inactive','云端凭证需要重新激活。');throw new Error('请重新激活 SAGI CLOUD')}
    if(!r.ok||!j.ok)throw new Error(j.error||('HTTP '+r.status));
    const job=j.job||{};
+   if(job.status==='waiting_worker'){
+     setProgress(true,'等待电脑 Worker',18);
+     setStatus('任务已进入 SAGI CLOUD 队列，正在等待你的电脑 Worker 上线…','warn');
+     activePoll=setTimeout(()=>pollCloud(id,token,attempt+1),1800);return
+   }
+   if(job.status==='worker_downloading'){
+     setProgress(true,'电脑正在下载 Instagram',55);
+     setStatus('电脑 Worker 已接单，正在通过你的网络下载 Instagram…','good');
+     activePoll=setTimeout(()=>pollCloud(id,token,attempt+1),1500);return
+   }
    if(job.status==='ready'&&job.downloadUrl){
      setProgress(true,'视频已就绪',100);setStatus('解析完成，正在直接下载 MP4…','good');
      const a=document.createElement('a');a.href=job.downloadUrl;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
@@ -183,10 +229,10 @@ async function pollCloud(id,token,attempt){
    }
    if(job.status==='failed'){
      setProgress(false);
-     if(job.errorCode==='instagram_rate_limit'||/429|too many requests|rate.limit/i.test(job.error||'')){
-       setStatus('Instagram 暂时限制了当前云端出口 IP（429）。SAGI CLOUD 已正常上线；请稍后重试，或切到 LOCAL 备用模式。','warn');
+     if(job.errorCode==='worker_download_failed'){
+       setStatus('电脑 Worker 下载失败：'+(job.error||'Instagram 未返回视频'),'bad');
      }else{
-       setStatus('云端解析失败：'+(job.error||'Instagram 未返回视频'),'bad');
+       setStatus('任务失败：'+(job.error||'Instagram 未返回视频'),'bad');
      }
      return
    }
@@ -236,12 +282,13 @@ function renderHistory(){
 }
 function render(){
  if(q('downloadBridgeUrl')&&!q('downloadBridgeUrl').value)q('downloadBridgeUrl').value=localStorage.getItem(KEYS.localUrl)||'';
- setEngine(engine(),false);renderHistory();setCloudState(cloudToken()?'active':'inactive');
+ setEngine(engine(),false);renderHistory();setCloudState(cloudToken()?'active':'inactive');if(cloudToken())fetchWorkerStatus(true);else renderWorker(false,'SAGI CLOUD 未激活');
  const s=q('downloadStatus');if(s&&!s.textContent.trim())setStatus(currentStatus)
 }
 
 document.querySelectorAll('[data-download-engine]').forEach(b=>b.onclick=()=>setEngine(b.dataset.downloadEngine));
 if(q('cloudActivateBtn'))q('cloudActivateBtn').onclick=()=>activateCloud(true);
+if(q('workerPairBtn'))q('workerPairBtn').onclick=startWorkerPair;
 if(q('cloudDeployBtn'))q('cloudDeployBtn').onclick=()=>window.open(DEPLOY_URL,'_blank','noopener');
 if(q('downloadPreviewBtn'))q('downloadPreviewBtn').onclick=preview;
 if(q('downloadStartBtn'))q('downloadStartBtn').onclick=download;
@@ -251,6 +298,6 @@ if(q('downloadCommandBtn'))q('downloadCommandBtn').onclick=saveLocal;
 if(q('downloadTestBtn'))q('downloadTestBtn').onclick=testLocal;
 if(q('downloadUrl'))q('downloadUrl').addEventListener('keydown',e=>{if(e.key==='Enter')preview()});
 
-window.SAGI_DOWNLOADER={render,preview,download,setEngine,activateCloud,sendToJob};
+window.SAGI_DOWNLOADER={render,preview,download,setEngine,activateCloud,startWorkerPair,fetchWorkerStatus,sendToJob};
 render();
 })();
