@@ -3945,7 +3945,7 @@ function sdOrigDrawPerson(ctx,w,h,c,id){
   const g=ctx.createLinearGradient(box.x,0,box.x+box.w,0);g.addColorStop(0,'rgba(5,7,8,.82)');g.addColorStop(.35,'rgba(5,7,8,.22)');g.addColorStop(1,'rgba(5,7,8,.02)');ctx.fillStyle=g;ctx.fillRect(box.x,box.y,box.w,box.h);
   const bottom=ctx.createLinearGradient(0,box.y+box.h*.58,0,box.y+box.h);bottom.addColorStop(0,'rgba(5,7,8,0)');bottom.addColorStop(1,'rgba(5,7,8,.86)');ctx.fillStyle=bottom;ctx.fillRect(box.x,box.y,box.w,box.h);ctx.restore()
 }
-function sdOrigMatchBoardRows(){return (typeof SDDATA!=='undefined'?(SDDATA.matches||[]):[]).filter(m=>m&&m.verified!==false).slice(0,8)}
+function sdOrigMatchBoardRows(){return (typeof SDDATA!=='undefined'?(SDDATA.matches||[]):[]).filter(m=>m&&m.verified===true).slice(0,8)}
 function sdOrigMatchBoardTeam(rows){
   const t=String(SDDATA.teamOverride||SDDATA.team||'').trim();if(t)return t;
   const r=rows?.[0];return r?(r.home||r.away||'TEAM'):'TEAM'
