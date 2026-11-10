@@ -7,6 +7,8 @@ on:
       - "sagi-cloud-bridge/**"
       - "content-os/sagi-down.html"
       - "content-os/sagi-down-sw.js"
+      - "sagi-cobalt/**"
+      - "render.yaml"
       - ".github/workflows/sagi-preflight.yml"
   pull_request:
     branches: [main]
@@ -174,7 +176,7 @@ jobs:
           c = mod.app.test_client()
           health = c.get("/health").get_json()
           print("health", health)
-          assert health["version"] == "1.7.4"
+          assert health["version"] == "2.0.0"
           assert health["captionMedia"] is True
           assert health["contextTranslate"] is True
           assert health["smartTranslate"] is True
@@ -185,7 +187,10 @@ jobs:
           assert health["instagramPostFallback"] == "html-fast -> gallery-dl-short"
           assert "carousel-zip" in health["downloadMediaKinds"]
           assert health["galleryFallbackTimeoutSeconds"] == 25
-          assert health["cloudDownloadVersion"] == "1.3"
+          assert health["cloudDownloadVersion"] == "2.0"
+          assert health["downloadPrimary"] == "cobalt"
+          assert health["cobaltMode"] == "self-hosted"
+          assert health["cobaltConfigured"] is False
           assert health["instagramProxyConfigured"] is False
           assert health["instagramEgress"] == "render-direct"
 
@@ -199,6 +204,49 @@ jobs:
           assert proxied_health["instagramEgress"] == "proxy"
           assert "proxy.test" not in str(proxied_health)
           mod.INSTAGRAM_PROXY = ""
+
+          # Cobalt hostname from Render must automatically use HTTPS.
+          mod.COBALT_HOSTPORT = "sagi-cobalt-suny820916.onrender.com"
+          assert mod.cobalt_base() == "https://sagi-cobalt-suny820916.onrender.com"
+          mod.COBALT_HOSTPORT = ""
+
+          # Cobalt must be the first engine when configured. If it succeeds,
+          # direct yt-dlp must not run at all.
+          original_cobalt_base = mod.cobalt_base
+          original_cobalt_run = mod.run_cobalt_download
+          original_direct = mod._download_with_strategy
+          cobalt_calls = []
+          def fake_cobalt(job_id, url, wanted_name, terminal=True):
+              cobalt_calls.append((url, terminal))
+              with mod.jobs_lock:
+                  mod.jobs[job_id].update({
+                      "status":"ready","strategy":"cobalt","mediaKind":"video",
+                      "fileCount":1,"size":123,"path":__file__,"workdir":"",
+                      "filename":"SAGI_TEST.mp4","error":"","errorCode":""
+                  })
+              return True, ""
+          mod.cobalt_base = lambda: "https://sagi-cobalt.example"
+          mod.run_cobalt_download = fake_cobalt
+          mod._download_with_strategy = lambda *a, **k: (_ for _ in ()).throw(RuntimeError("DIRECT_SHOULD_NOT_RUN"))
+          cid = "cobalt-primary-smoke"
+          with mod.jobs_lock:
+              mod.jobs[cid] = {
+                  "id":cid,"status":"queued","created_at":mod.iso(),"updated_at":mod.iso(),
+                  "title":"SAGI_TEST","source_url":"https://www.instagram.com/reel/TEST/",
+                  "requested_name":"SAGI_TEST","error":"","errorCode":"","size":0,
+                  "worker":"","strategy":"sagi_cloud","download_key":"k","path":"","workdir":"","filename":""
+              }
+          try:
+              mod.run_download(cid, "https://www.instagram.com/reel/TEST/", "SAGI_TEST")
+              with mod.jobs_lock:
+                  cj = dict(mod.jobs[cid])
+              assert cj["status"] == "ready" and cj["strategy"] == "cobalt", cj
+              assert cobalt_calls and cobalt_calls[0][1] is False
+              print("Cobalt-primary routing smoke OK")
+          finally:
+              mod.cobalt_base = original_cobalt_base
+              mod.run_cobalt_download = original_cobalt_run
+              mod._download_with_strategy = original_direct
 
           token = mod.client_token()
           headers = {"Authorization": "Bearer " + token, "Origin": "https://suny820916.github.io"}

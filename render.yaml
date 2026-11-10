@@ -22,6 +22,11 @@ services:
         value: "30"
       - key: SAGI_RATE_LIMIT_PER_HOUR
         value: "20"
+      - key: SAGI_COBALT_HOSTPORT
+        fromService:
+          type: web
+          name: sagi-cobalt-suny820916
+          envVarKey: RENDER_EXTERNAL_HOSTNAME
       - key: SAGI_INSTAGRAM_PROXY
         sync: false
       - key: ELEVENLABS_API_KEY
@@ -44,3 +49,45 @@ services:
         value: "1"
       - key: OPENBLAS_NUM_THREADS
         value: "1"
+
+
+  - type: web
+    name: sagi-cobalt-suny820916
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./sagi-cobalt/Dockerfile
+    dockerContext: ./sagi-cobalt
+    healthCheckPath: /
+    autoDeployTrigger: commit
+    envVars:
+      - key: API_PORT
+        value: "10000"
+      - key: API_LISTEN_ADDRESS
+        value: "0.0.0.0"
+      - key: API_URL
+        value: "https://sagi-cobalt-suny820916.onrender.com/"
+      - key: API_NAME
+        value: "SAGI-COBALT-SG"
+      - key: CORS_WILDCARD
+        value: "0"
+      - key: CORS_URL
+        value: "https://suny820916.github.io"
+      - key: RATELIMIT_WINDOW
+        value: "60"
+      - key: RATELIMIT_MAX
+        value: "12"
+      - key: DURATION_LIMIT
+        value: "600"
+      - key: TUNNEL_LIFESPAN
+        value: "180"
+      - key: HTTP_PROXY
+        fromService:
+          type: web
+          name: sagi-cloud-bridge-suny820916
+          envVarKey: SAGI_INSTAGRAM_PROXY
+      - key: HTTPS_PROXY
+        fromService:
+          type: web
+          name: sagi-cloud-bridge-suny820916
+          envVarKey: SAGI_INSTAGRAM_PROXY
