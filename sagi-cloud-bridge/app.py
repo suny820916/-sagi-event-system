@@ -349,13 +349,14 @@ def health():
     return jsonify({
         "ok": True,
         "service": "SAGI CLOUD BRIDGE",
-        "version": "1.6.4",
+        "version": "1.6.5",
         "instagram": True,
         "hybridWorker": True,
         "workerOnline": worker_online(),
         "activation": True,
         "captionFast": True,
         "captionMedia": True,
+        "contextTranslate": True,
         "captionModel": "faster-whisper-tiny-int8",
         "captionMaxSeconds": 180,
         "captionReady": caption_model is not None,
@@ -512,6 +513,115 @@ def caption_fast():
         }), 500
     finally:
         shutil.rmtree(work, ignore_errors=True)
+
+
+def _google_translate_text(text, source, target):
+    params = {
+        "client": "gtx",
+        "sl": source or "auto",
+        "tl": target or "zh-CN",
+        "dt": "t",
+        "q": text,
+    }
+    r = requests.get(
+        "https://translate.googleapis.com/translate_a/single",
+        params=params,
+        headers={"User-Agent": "Mozilla/5.0"},
+        timeout=30,
+    )
+    r.raise_for_status()
+    data = r.json()
+    chunks = data[0] if isinstance(data, list) and data else []
+    return "".join((x[0] or "") for x in chunks if isinstance(x, list) and x)
+
+def _football_zh_polish(text):
+    replacements = [
+        ("双轴", "双后腰"),
+        ("双支点", "双后腰"),
+        ("后四", "四后卫防线"),
+        ("后四人", "四后卫防线"),
+        ("半空间", "肋部"),
+        ("高压", "高位逼抢"),
+        ("反压迫", "丢球后反抢"),
+        ("转换阶段", "攻防转换阶段"),
+        ("转换", "攻防转换"),
+        ("过载", "局部人数优势"),
+        ("低位封锁", "低位防守"),
+        ("低位块", "低位防守阵型"),
+    ]
+    out = text
+    for a, b in replacements:
+        out = out.replace(a, b)
+    return out
+
+@app.post("/api/translate-context")
+def translate_context():
+    if not authorized():
+        return jsonify({"ok": False, "error": "Unauthorized"}), 401
+    if not rate_allowed():
+        return jsonify({"ok": False, "error": "Hourly limit reached"}), 429
+
+    data = request.get_json(silent=True) or {}
+    source = str(data.get("source") or "auto").strip()
+    target = str(data.get("target") or "zh-CN").strip()
+    mode = str(data.get("mode") or "faithful").strip()
+    segments = data.get("segments") or []
+    if not isinstance(segments, list) or not segments:
+        return jsonify({"ok": False, "error": "segments required"}), 400
+    segments = [str(x or "").strip() for x in segments[:240]]
+    if not any(segments):
+        return jsonify({"ok": False, "error": "empty segments"}), 400
+
+    started = time.time()
+    translated = [""] * len(segments)
+    block_size = 6
+
+    try:
+        for block_start in range(0, len(segments), block_size):
+            block = segments[block_start:block_start + block_size]
+            marked = "\n".join(
+                f"[[SAGI_{block_start + i:03d}]] {line}"
+                for i, line in enumerate(block)
+            )
+            out = _google_translate_text(marked, source, target)
+
+            import re
+            pattern = re.compile(r"\[\[SAGI_(\d{3})\]\]\s*")
+            matches = list(pattern.finditer(out))
+            if matches:
+                for j, m in enumerate(matches):
+                    idx = int(m.group(1))
+                    end = matches[j + 1].start() if j + 1 < len(matches) else len(out)
+                    text = out[m.end():end].strip()
+                    if 0 <= idx < len(translated):
+                        translated[idx] = text
+            else:
+                # Marker preservation failed: translate each line separately for this small block.
+                for i, line in enumerate(block):
+                    translated[block_start + i] = _google_translate_text(line, source, target).strip()
+
+        for i, original in enumerate(segments):
+            if not translated[i]:
+                translated[i] = _google_translate_text(original, source, target).strip()
+
+        if mode == "football" and target.lower().startswith("zh"):
+            translated = [_football_zh_polish(x) for x in translated]
+
+        return jsonify({
+            "ok": True,
+            "engine": "google-context",
+            "mode": mode,
+            "source": source,
+            "target": target,
+            "segments": translated,
+            "elapsedMs": int((time.time() - started) * 1000),
+        })
+    except Exception as e:
+        return jsonify({
+            "ok": False,
+            "error": str(e)[:700],
+            "errorCode": "context_translate_failed",
+        }), 500
 
 
 @app.post("/api/activate")
