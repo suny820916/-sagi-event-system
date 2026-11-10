@@ -85,7 +85,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 <div class="wrap">
   <div class="top">
     <div class="brand"><b>SAGI DOWN</b><span>VIDEO LINK SHORTCUT</span></div>
-    <span class="badge">V1.9.1 · CLOUD COMPAT FIX</span>
+    <span class="badge">V1.9.2 · VERIFIED CLOUD</span>
   </div>
 
   <section class="hero">
@@ -1221,8 +1221,17 @@ function joinSemanticParagraph(group){
 }
 function footballPolishZh(text){
  let out=String(text||'');
- const map=[['双轴','双后腰'],['后四','四后卫防线'],['后四人','四后卫防线'],['高压','高位逼抢'],['反压迫','丢球后反抢'],['转换阶段','攻防转换阶段'],['转换','攻防转换'],['过载','局部人数优势'],['半空间','肋部']];
+ const protectedTransition='__SAGI_TRANSITION__';
+ out=out.replaceAll('攻防转换',protectedTransition);
+ const map=[
+   ['转换阶段','攻防转换阶段'],['后四人','四后卫防线'],['双支点','双后腰'],
+   ['半空间','肋部'],['反压迫','丢球后反抢'],['过载','局部人数优势'],
+   ['高压','高位逼抢'],['双轴','双后腰'],['后四','四后卫防线']
+ ];
  for(const [a,b] of map)out=out.replaceAll(a,b);
+ out=out.replaceAll('转换','攻防转换');
+ out=out.replaceAll(protectedTransition,'攻防转换');
+ out=out.replaceAll('攻防攻防转换','攻防转换');
  return out
 }
 function pickSemanticCut(chars,target,min,max){
@@ -1912,7 +1921,7 @@ if(q('captionSpeed'))q('captionSpeed').value='fast';
 if(q('captionRange'))q('captionRange').value='trim';
 setTimeout(async()=>{await wakeCaptionCloud();refreshAIVoiceStatus(false)},180);
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=191',{updateViaCache:'none'}).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=192',{updateViaCache:'none'}).catch(()=>{})}
 })();
 </script>
 </body>
