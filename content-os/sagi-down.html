@@ -64,7 +64,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 <div class="wrap">
   <div class="top">
     <div class="brand"><b>SAGI DOWN</b><span>VIDEO LINK SHORTCUT</span></div>
-    <span class="badge">V1.6.7 · CLOUD DIAGNOSTIC</span>
+    <span class="badge">V1.6.8 · VERIFIED TRANSLATE</span>
   </div>
 
   <section class="hero">
@@ -202,7 +202,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
       </div>
 
       <div class="aiCaptionProgress"><i id="aiCaptionProgress"></i></div>
-      <div id="aiCaptionStatus" class="aiCaptionStatus">RESILIENT TRANSLATE：SAGI Cloud 翻译失败时自动改走浏览器直连上下文翻译；再失败才用最后备用，不再“看起来完成其实还是原文”。</div>
+      <div id="aiCaptionStatus" class="aiCaptionStatus">VERIFIED TRANSLATE：云端会显示实际版本和缺失接口；备用翻译必须检测到有效中文才算成功，不再“看起来完成其实还是原文”。</div>
       <div class="aiCaptionMeta">
         <span id="captionEngine">引擎：SAGI CLOUD 优先</span>
         <span id="captionDetectedLang">语言：—</span>
@@ -562,9 +562,13 @@ async function wakeCaptionCloud(force=false){
    STUDIO.cloudHealth=health;
    if(q('captionCloudVersion'))q('captionCloudVersion').textContent='版本：'+(health.version||'未知');
 
-   if(!health.captionMedia){
+   const missing=[];
+   if(!health.captionMedia)missing.push('captionMedia');
+   if(!health.captionFast)missing.push('captionFast');
+   if(!health.contextTranslate)missing.push('contextTranslate');
+   if(missing.length){
      STUDIO.cloudCaptionReady=false;
-     throw new Error('云端版本过旧：缺少 captionMedia 接口')
+     throw new Error('云端版本过旧：缺少 '+missing.join(', '))
    }
 
    const a=await fetch(CAPTION_CLOUD+'/api/activate',{
@@ -595,7 +599,7 @@ async function runCloudSelfTest(){
  const ok=await wakeCaptionCloud(true);
  const h=STUDIO.cloudHealth||{};
  if(ok){
-   aiCaptionStatus('云端自检通过 · V'+(h.version||'?')+' · '+(h.captionModelCached?'模型已缓存':'模型未预缓存')+' · 最大媒体 '+(h.captionMediaMaxMB||'?')+'MB');
+   aiCaptionStatus('云端自检通过 · V'+(h.version||'?')+' · captionMedia ✓ · contextTranslate ✓ · '+(h.captionReady?'模型已载入':'模型待载入'));
    studioStatus('SAGI Cloud 可用。','good')
  }else{
    aiCaptionStatus('云端自检失败：'+(STUDIO.cloudLastError||'未知错误'));
@@ -924,6 +928,16 @@ async function translateTextHard(text,source,target){
  try{return await googleTranslateDirect(text,source,target)}
  catch(e){return await myMemoryTranslateDirect(text,source,target)}
 }
+function chineseRatio(text){
+ const s=String(text||'').replace(/\s/g,'');
+ if(!s)return 0;
+ return (s.match(/[\u3400-\u9fff]/g)||[]).length/Math.max(1,s.length)
+}
+function translationLooksValid(caps,target){
+ if(!String(target||'').toLowerCase().startsWith('zh'))return true;
+ const text=(caps||[]).map(x=>String(x?.text||x||'')).join('');
+ return chineseRatio(text)>=0.08
+}
 async function browserTranslateContext(caps,source,target,mode='faithful'){
  const blocks=groupCaptionBlocks(caps),out=new Array(caps.length);
  let baseIndex=0,done=0;
@@ -954,6 +968,7 @@ async function browserTranslateContext(caps,source,target,mode='faithful'){
    const map=[['双轴','双后腰'],['后四','四后卫防线'],['高压','高位逼抢'],['反压迫','丢球后反抢'],['转换阶段','攻防转换阶段'],['过载','局部人数优势']];
    for(const c of out)for(const [a,b] of map)c.text=String(c.text||'').replaceAll(a,b)
  }
+ if(!translationLooksValid(out,target))throw new Error('备用翻译返回的不是有效中文');
  return out
 }
 
@@ -1024,7 +1039,8 @@ async function translateCaptionTimeline(target='zh-CN'){
    if(STUDIO.cloudCaptionReady){
      try{
        const data=await cloudTranslateContext(caps,source,target,mode);
-       outCaps=caps.map((c,i)=>({...c,text:String(data.segments?.[i]??c.text).trim()||c.text}))
+       outCaps=caps.map((c,i)=>({...c,text:String(data.segments?.[i]??c.text).trim()||c.text}));
+       if(!translationLooksValid(outCaps,target))throw new Error('云端翻译结果未生成有效中文')
      }catch(e){console.warn('cloud translate unavailable, browser direct fallback',e)}
    }
    if(!outCaps)outCaps=await browserTranslateContext(caps,source,target,mode);
@@ -1083,7 +1099,7 @@ async function runAiCaption(translateZh=false){
    setCloudCaptionStatus('失败');
    q('localCaptionBtn').style.display='';
    q('localCaptionBtn').textContent=STUDIO.pendingTranslateZh?'本地备用 + 翻中文':'本地备用识别';
-   aiCaptionStatus('云端字幕失败：'+(e.message||e)+'。'+(STUDIO.pendingTranslateZh?'点“本地备用 + 翻中文”，识别完成后会自动继续翻译。':'需要时可点“本地备用识别”。'));
+   aiCaptionStatus('云端字幕失败：'+(STUDIO.cloudLastError||e.message||e)+'。'+(STUDIO.pendingTranslateZh?'点“本地备用 + 翻中文”，识别后会继续执行已验证中文翻译。':'需要时可点“本地备用识别”。'));
    studioStatus('云端失败，但已阻止本地模型自动启动，避免手机卡顿。','warn');
    aiCaptionProgress(0)
  }finally{
@@ -1190,6 +1206,7 @@ async function translateSubtitles(){
      ? STUDIO.captions.map((c,i)=>({...c,text:lines[i]}))
      : lines.map((text,i)=>({start:i,end:i+1,text}));
    const outCaps=await browserTranslateContext(base,source,target,mode);
+   if(!translationLooksValid(outCaps,target))throw new Error('翻译结果不是有效中文');
    const out=outCaps.map(x=>x.text);
    q('subtitleText').value=out.join('\n');
    if((STUDIO.captions||[]).length===out.length){
@@ -1358,7 +1375,7 @@ if(q('captionSpeed'))q('captionSpeed').value='fast';
 if(q('captionRange'))q('captionRange').value='trim';
 setTimeout(()=>wakeCaptionCloud(),180);
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=167',{updateViaCache:'none'}).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=168',{updateViaCache:'none'}).catch(()=>{})}
 })();
 </script>
 </body>
