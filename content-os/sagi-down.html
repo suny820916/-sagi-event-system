@@ -64,7 +64,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 <div class="wrap">
   <div class="top">
     <div class="brand"><b>SAGI DOWN</b><span>VIDEO LINK SHORTCUT</span></div>
-    <span class="badge">V1.6.6 · LOCAL TRANSLATE FALLBACK</span>
+    <span class="badge">V1.6.7 · RESILIENT TRANSLATE</span>
   </div>
 
   <section class="hero">
@@ -201,7 +201,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
       </div>
 
       <div class="aiCaptionProgress"><i id="aiCaptionProgress"></i></div>
-      <div id="aiCaptionStatus" class="aiCaptionStatus">LOCAL FALLBACK：云端失败后若原任务是“识别并翻中文”，本地 Whisper 完成识别后会自动继续翻译成中文；时间轴保持不变。</div>
+      <div id="aiCaptionStatus" class="aiCaptionStatus">RESILIENT TRANSLATE：SAGI Cloud 翻译失败时自动改走浏览器直连上下文翻译；再失败才用最后备用，不再“看起来完成其实还是原文”。</div>
       <div class="aiCaptionMeta">
         <span id="captionEngine">引擎：SAGI CLOUD 优先</span>
         <span id="captionDetectedLang">语言：—</span>
@@ -430,7 +430,7 @@ const STUDIO={
  ffmpeg:null,ffmpegLoaded:false,exporting:false,resultBlob:null,resultUrl:'',
  captions:[],captionLanguage:'',captionRangeKey:'',captionModel:null,captionModelKey:'',captionModule:null,captionBusy:false,
  translator:null,translatorKey:'',moduleWarm:false,
- cloudCaptionToken:'',cloudCaptionReady:false,cloudCaptionWaking:false,
+ cloudCaptionToken:'',cloudCaptionReady:false,cloudCaptionWaking:false,cloudVersion:'',cloudHealth:null,
  captionVisibleCount:40,
  pendingTranslateZh:false
 };
@@ -542,26 +542,31 @@ function setCloudCaptionStatus(t){const e=q('captionCloudStatus');if(e)e.textCon
 
 async function wakeCaptionCloud(){
  if(STUDIO.cloudCaptionReady||STUDIO.cloudCaptionWaking)return STUDIO.cloudCaptionReady;
- STUDIO.cloudCaptionWaking=true;setCloudCaptionStatus('唤醒中');
+ STUDIO.cloudCaptionWaking=true;setCloudCaptionStatus('检测中');
  try{
    const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),45000);
-   const h=await fetch(CAPTION_CLOUD+'/health',{cache:'no-store',signal:ctl.signal});
+   const hr=await fetch(CAPTION_CLOUD+'/health',{cache:'no-store',signal:ctl.signal});
    clearTimeout(timer);
-   if(!h.ok)throw new Error('health '+h.status);
-   const health=await h.json();
+   if(!hr.ok)throw new Error('health '+hr.status);
+   const health=await hr.json();
+   STUDIO.cloudHealth=health;STUDIO.cloudVersion=String(health.version||'unknown');
+   if(!health.captionFast||!health.captionMedia){
+     setCloudCaptionStatus('版本 '+STUDIO.cloudVersion+' · 缺少字幕接口');
+     STUDIO.cloudCaptionReady=false;
+     return false
+   }
    const a=await fetch(CAPTION_CLOUD+'/api/activate',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
    if(!a.ok)throw new Error('activate '+a.status);
    const data=await a.json();
    if(!data?.token)throw new Error('no token');
-   STUDIO.cloudCaptionToken=data.token;STUDIO.cloudCaptionReady=!!health.captionFast;
-   setCloudCaptionStatus(STUDIO.cloudCaptionReady?(health.captionReady?'已就绪':'服务已醒'):'不可用');
-   return STUDIO.cloudCaptionReady
+   STUDIO.cloudCaptionToken=data.token;STUDIO.cloudCaptionReady=true;
+   setCloudCaptionStatus('v'+STUDIO.cloudVersion+' · '+(health.captionReady?'已就绪':'已唤醒'));
+   return true
  }catch(e){
    console.warn('caption cloud wake failed',e);
-   STUDIO.cloudCaptionReady=false;setCloudCaptionStatus('本地备用');return false
+   STUDIO.cloudCaptionReady=false;setCloudCaptionStatus('不可用 · '+(e.name==='AbortError'?'超时':String(e.message||e).slice(0,36)));return false
  }finally{STUDIO.cloudCaptionWaking=false}
 }
-
 function waveformToWavBlob(samples,sampleRate=16000){
  const len=samples.length,buf=new ArrayBuffer(44+len*2),v=new DataView(buf);
  const ws=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i))};
@@ -805,6 +810,49 @@ async function getTranslatorSession(source,target){
  }
  return null
 }
+async function directGoogleTranslateText(text,source,target){
+ const params=new URLSearchParams({
+   client:'gtx',
+   sl:source||'auto',
+   tl:target||'zh-CN',
+   dt:'t',
+   q:text
+ });
+ const r=await fetch('https://translate.googleapis.com/translate_a/single?'+params.toString(),{cache:'no-store'});
+ if(!r.ok)throw new Error('direct translate '+r.status);
+ const d=await r.json();
+ const arr=Array.isArray(d?.[0])?d[0]:[];
+ const out=arr.map(x=>Array.isArray(x)?String(x[0]||''):'').join('').trim();
+ if(!out)throw new Error('direct translate empty');
+ return out
+}
+
+async function directContextTranslate(caps,source,target,mode='faithful'){
+ const out=new Array(caps.length);
+ const blockSize=5;
+ for(let start=0;start<caps.length;start+=blockSize){
+   const block=caps.slice(start,start+blockSize);
+   const markerText=block.map((c,i)=>'[[SAGI_'+String(start+i).padStart(3,'0')+']] '+String(c.text||'')).join('\n');
+   let translated='';
+   try{translated=await directGoogleTranslateText(markerText,source,target)}catch(e){translated=''}
+   const re=/\[\[SAGI_(\d{3})\]\]\s*/g,matches=[...translated.matchAll(re)];
+   if(matches.length){
+     for(let j=0;j<matches.length;j++){
+       const idx=Number(matches[j][1]),from=matches[j].index+matches[j][0].length,to=j+1<matches.length?matches[j+1].index:translated.length;
+       if(idx>=0&&idx<out.length)out[idx]=translated.slice(from,to).trim()
+     }
+   }
+   for(let i=0;i<block.length;i++){
+     const idx=start+i;
+     if(!out[idx]){
+       try{out[idx]=await directGoogleTranslateText(String(block[i].text||''),source,target)}
+       catch(e){out[idx]=String(block[i].text||'')}
+     }
+   }
+ }
+ return out
+}
+
 async function cloudTranslateContext(caps,source,target,mode='faithful'){
  const ready=await wakeCaptionCloud();
  if(!ready||!STUDIO.cloudCaptionToken)throw new Error('CLOUD_TRANSLATE_NOT_READY');
@@ -833,51 +881,53 @@ async function translateCaptionTimeline(target='zh-CN'){
  syncDetectedLanguageUi(source);
 
  if(source===target || (source==='zh'&&target==='zh-CN')){
-   STUDIO.captionLanguage=target;
-   syncDetectedLanguageUi(target);
+   STUDIO.captionLanguage=target;syncDetectedLanguageUi(target);
    aiCaptionStatus('识别结果已经是中文，无需再次翻译。');
    studioStatus('字幕已是中文，可以直接进入解说或导出。','good');
    return
  }
 
- const caps=STUDIO.captions.slice();
- const mode=q('translationMode')?.value||'faithful';
- aiCaptionStatus('正在做上下文翻译 · '+caps.length+' 条时间轴…');
- aiCaptionProgress(80);
+ const caps=STUDIO.captions.slice(),mode=q('translationMode')?.value||'faithful';
+ aiCaptionStatus('正在翻成中文 · 优先上下文翻译…');aiCaptionProgress(80);
 
+ // 1) SAGI Cloud context translation
  try{
    const data=await cloudTranslateContext(caps,source,target,mode);
-   const out=data.segments;
-   STUDIO.captions=caps.map((c,i)=>({...c,text:String(out[i]??c.text).trim()||c.text}));
-   STUDIO.captionLanguage=target;
-   syncCaptionText();
-   syncDetectedLanguageUi(target);
-   aiCaptionProgress(98);
-   aiCaptionStatus((mode==='football'?'足球中文化':'忠实原意')+'翻译完成 · '+caps.length+' 条 · 上下文保留');
-   studioStatus('翻译完成，时间轴保持不变。','good');
-   return
- }catch(e){
-   console.warn('context translate failed, fallback line mode',e);
-   aiCaptionStatus('上下文翻译暂不可用，正在用逐句备用模式…');
- }
+   STUDIO.captions=caps.map((c,i)=>({...c,text:String(data.segments[i]??c.text).trim()||c.text}));
+   STUDIO.captionLanguage=target;syncCaptionText();syncDetectedLanguageUi(target);
+   aiCaptionProgress(98);aiCaptionStatus('云端上下文翻译完成 · '+caps.length+' 条');
+   studioStatus('中文字幕完成，时间轴保持不变。','good');return
+ }catch(e){console.warn('cloud context translate failed',e)}
 
- // 最后备用：浏览器 Translator / MyMemory。仅云端上下文失败时启用。
- const session=await getTranslatorSession(source,target);
- const out=new Array(caps.length),limit=3;
- let cursor=0,done=0;
+ // 2) Browser-direct Google context translation (works even when SAGI Cloud is down)
+ try{
+   aiCaptionStatus('SAGI Cloud 不可用 · 正在浏览器直连翻译…');
+   const translated=await directContextTranslate(caps,source,target,mode);
+   const changed=translated.filter((x,i)=>String(x||'').trim()&&String(x).trim()!==String(caps[i].text||'').trim()).length;
+   if(!changed)throw new Error('direct translation produced no changes');
+   STUDIO.captions=caps.map((c,i)=>({...c,text:String(translated[i]||c.text).trim()}));
+   STUDIO.captionLanguage=target;syncCaptionText();syncDetectedLanguageUi(target);
+   aiCaptionProgress(98);aiCaptionStatus('浏览器直连翻译完成 · '+caps.length+' 条');
+   studioStatus('中文字幕完成，未依赖 SAGI Cloud。','good');return
+ }catch(e){console.warn('direct context translate failed',e)}
+
+ // 3) Last fallback: browser Translator / MyMemory, but never silently claim success if unchanged
+ const session=await getTranslatorSession(source,target),out=new Array(caps.length),limit=3;
+ let cursor=0,done=0,changed=0;
  async function worker(){
    while(cursor<caps.length){
      const i=cursor++,c=caps[i];
-     try{
-       const text=session?await session.translate(c.text):await translateLine(c.text,source,target);
-       out[i]={...c,text}
-     }catch(e){out[i]=c}
-     done++;aiCaptionProgress(80+done/caps.length*18)
+     let text=c.text;
+     try{text=session?await session.translate(c.text):await translateLine(c.text,source,target)}catch(e){}
+     if(String(text||'').trim()!==String(c.text||'').trim())changed++;
+     out[i]={...c,text:String(text||c.text).trim()};
+     done++;aiCaptionProgress(82+done/caps.length*16)
    }
  }
  await Promise.all(Array.from({length:Math.min(limit,caps.length)},worker));
+ if(!changed)throw new Error('翻译服务均不可用，字幕仍是原文');
  STUDIO.captions=out;STUDIO.captionLanguage=target;syncCaptionText();syncDetectedLanguageUi(target);
- aiCaptionStatus('备用翻译完成 · 建议云端恢复后使用“忠实原意”重新翻译。');
+ aiCaptionStatus('备用翻译完成 · '+changed+' 条已转换');
 }
 function instant15Caption(){
  if(!STUDIO.file){studioStatus('请先导入视频。','warn');return}
@@ -1022,24 +1072,26 @@ async function translateLine(text,source,target){
 async function translateSubtitles(){
  const lines=subtitleLines();if(!lines.length){studioStatus('请先输入字幕文本。','warn');return}
  const source=q('subtitleSourceLang').value,target=q('subtitleTargetLang').value,mode=q('translationMode')?.value||'faithful';
- const btn=q('translateSubtitleBtn');btn.disabled=true;btn.textContent='上下文翻译中…';studioStatus('正在结合前后文翻译整段字幕…','good');
+ const btn=q('translateSubtitleBtn');btn.disabled=true;btn.textContent='翻译中…';
  try{
-   if(source===target){
-     studioStatus('原语言和目标语言相同，无需翻译。','good');return
+   if(source===target){studioStatus('原语言和目标语言相同，无需翻译。','good');return}
+   if((STUDIO.captions||[]).length===lines.length){
+     STUDIO.captions=STUDIO.captions.map((c,i)=>({...c,text:lines[i]}));
+     STUDIO.captionLanguage=source;
+     await translateCaptionTimeline(target);
+     return
    }
-   const base=(STUDIO.captions||[]).length===lines.length
-     ? STUDIO.captions.map((c,i)=>({...c,text:lines[i]}))
-     : lines.map((text,i)=>({start:i,end:i+1,text}));
-   const data=await cloudTranslateContext(base,source,target,mode);
-   const out=data.segments.map(x=>String(x||'').trim());
+   const fake=lines.map((text,i)=>({start:i,end:i+1,text}));
+   let out;
+   try{
+     const data=await cloudTranslateContext(fake,source,target,mode);out=data.segments
+   }catch(e){
+     out=await directContextTranslate(fake,source,target,mode)
+   }
    q('subtitleText').value=out.join('\n');
-   if((STUDIO.captions||[]).length===out.length){
-     STUDIO.captions=STUDIO.captions.map((c,i)=>({...c,text:out[i]||c.text}));
-     renderCaptionTimeline()
-   }
-   studioStatus((mode==='football'?'足球中文化':'忠实原意')+'翻译完成。','good');toast('上下文翻译完成')
+   studioStatus('上下文翻译完成。','good');toast('翻译完成')
  }catch(e){
-   studioStatus('上下文翻译失败：'+(e.message||e),'warn')
+   studioStatus('翻译失败：'+(e.message||e),'bad')
  }finally{btn.disabled=false;btn.textContent='上下文翻译'}
 }
 function speakNarration(){
@@ -1199,7 +1251,7 @@ if(q('captionSpeed'))q('captionSpeed').value='fast';
 if(q('captionRange'))q('captionRange').value='trim';
 setTimeout(()=>wakeCaptionCloud(),180);
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=166',{updateViaCache:'none'}).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=167',{updateViaCache:'none'}).catch(()=>{})}
 })();
 </script>
 </body>
