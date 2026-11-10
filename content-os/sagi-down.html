@@ -37,6 +37,14 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 .studioCard{border-color:#455766;background:linear-gradient(180deg,#101820,#090e12)}
 .studioHero{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px}.studioHero b{font-size:12px}.studioHero span{font-size:8px;color:#748890}
 
+
+.directorStep{border-color:#66562f;background:linear-gradient(180deg,#17150e,#0a0f12)}
+.directorHead{display:flex;justify-content:space-between;gap:10px;align-items:center}.directorHead b{font-size:12px}.directorHead span{font-size:8px;color:#9c8c61}
+.directorGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:9px}.directorGrid label{font-size:8px;color:#887c5a}.directorGrid select{width:100%;margin-top:4px;border:1px solid #4a422b;background:#0a0b08;color:#fff;border-radius:10px;padding:10px;font-size:10px}
+.directorBtn{width:100%;margin-top:9px;padding:14px!important;font-size:12px!important}
+.directorProgress{height:7px;background:#090b0c;border:1px solid #4a422b;border-radius:99px;overflow:hidden;margin-top:9px}.directorProgress i{display:block;height:100%;width:0;background:linear-gradient(90deg,#7e6c3b,#d7b568);transition:.25s}
+.directorStatus{margin-top:8px;font-size:9px;color:#a9986a;line-height:1.55}
+@media(max-width:420px){.directorGrid{grid-template-columns:1fr 1fr}.directorGrid label:last-child{grid-column:1/-1}}
 .aiCaptionStep{border-color:#3a4c68;background:linear-gradient(180deg,#101621,#0a1016)}
 .aiCaptionTop{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}.aiCaptionTop b{font-size:11px}.aiCaptionTop span{font-size:8px;color:#738796}
 .aiCaptionActions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:8px}
@@ -64,7 +72,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 <div class="wrap">
   <div class="top">
     <div class="brand"><b>SAGI DOWN</b><span>VIDEO LINK SHORTCUT</span></div>
-    <span class="badge">V1.6.8 · VERIFIED TRANSLATE</span>
+    <span class="badge">V1.7 · ONE TAP RECREATE</span>
   </div>
 
   <section class="hero">
@@ -152,7 +160,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 
   <section class="card studioCard" id="mobileStudio">
     <div class="studioHero">
-      <div><b>MOBILE STUDIO · 手机直接剪</b><span>本地视频处理，不上传原素材</span></div>
+      <div><b>MOBILE STUDIO · 手机再创作</b><span>云端识别翻译 · 本地剪辑导出</span></div>
       <span class="badge">BETA</span>
     </div>
 
@@ -180,9 +188,41 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
       </div>
     </div>
 
+    <div class="studioStep directorStep" id="oneTapDirector">
+      <div class="directorHead">
+        <div><b>03 · ONE TAP · 一键再创作</b><span>识别 → 中文 → 解说 → 字幕 → 导出准备</span></div>
+        <span class="badge">V1.7</span>
+      </div>
+      <div class="directorGrid">
+        <label>内容模式
+          <select id="directorMode">
+            <option value="faithful" selected>忠实原意</option>
+            <option value="football">足球解说</option>
+          </select>
+        </label>
+        <label>处理范围
+          <select id="directorRange">
+            <option value="trim" selected>当前入点 → 出点</option>
+            <option value="15">当前开始后 15 秒</option>
+            <option value="30">当前开始后 30 秒</option>
+            <option value="full">整段 · 最长3分钟</option>
+          </select>
+        </label>
+        <label>完成后
+          <select id="directorFinish">
+            <option value="prepare" selected>停在导出前检查</option>
+            <option value="export">自动导出成片</option>
+          </select>
+        </label>
+      </div>
+      <button class="btn gold directorBtn" id="oneTapRecreateBtn" type="button">一键识别 · 翻中文 · 生成解说</button>
+      <div class="directorProgress"><i id="directorProgressBar"></i></div>
+      <div id="directorStatus" class="directorStatus">推荐先用“忠实原意”。云端字幕与翻译成功后，再自动生成中文解说初稿并准备烧录字幕。</div>
+    </div>
+
     <div class="studioStep aiCaptionStep">
       <div class="aiCaptionTop">
-        <div><b>03 · AI CAPTION · 自动字幕</b><span>Whisper 浏览器内识别 · 原视频不上传</span></div>
+        <div><b>04 · AI CAPTION · 自动字幕</b><span>Whisper 浏览器内识别 · 原视频不上传</span></div>
         <span class="badge">WHISPER</span>
       </div>
 
@@ -215,7 +255,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
     </div>
 
     <div class="studioStep">
-      <div class="studioStepHead"><b>04 · 字幕 + 翻译</b><span>AI时间轴可继续手动修改</span></div>
+      <div class="studioStepHead"><b>05 · 字幕 + 翻译</b><span>AI时间轴可继续手动修改</span></div>
       <textarea id="subtitleText" class="subtitleBox" placeholder="每行一句字幕，例如：
 What a goal!
 Unbelievable finish."></textarea>
@@ -229,7 +269,7 @@ Unbelievable finish."></textarea>
     </div>
 
     <div class="studioStep">
-      <div class="studioStepHead"><b>05 · 解说</b><span>字幕转初稿 / 朗读 / 录音</span></div>
+      <div class="studioStepHead"><b>06 · 解说</b><span>字幕转初稿 / 朗读 / 录音</span></div>
       <textarea id="narrationText" class="narrationBox" placeholder="写中文解说文案，例如：
 这次进攻真正厉害的地方，不是最后这一脚，而是前面连续两次拉扯防线。"></textarea>
       <div class="narrationActions">
@@ -242,7 +282,7 @@ Unbelievable finish."></textarea>
     </div>
 
     <div class="studioStep">
-      <div class="studioStepHead"><b>06 · 导出成片</b><span>FFmpeg WASM 本地合成</span></div>
+      <div class="studioStepHead"><b>07 · 导出成片</b><span>FFmpeg WASM 本地合成</span></div>
       <div class="trimGrid">
         <div><label>原声</label><select id="originalAudio"><option value="0.25">25% 保留</option><option value="0.5">50% 保留</option><option value="1">100% 保留</option><option value="0">静音</option></select></div>
         <div><label>字幕</label><select id="burnSubtitle"><option value="yes">烧录到画面</option><option value="no">不烧录</option></select></div>
@@ -433,7 +473,7 @@ const STUDIO={
  captions:[],captionLanguage:'',captionRangeKey:'',captionModel:null,captionModelKey:'',captionModule:null,captionBusy:false,
  translator:null,translatorKey:'',moduleWarm:false,
  cloudCaptionToken:'',cloudCaptionReady:false,cloudCaptionWaking:false,cloudCaptionError:'',cloudHealthVersion:'',cloudVersion:'',cloudHealth:null,
- captionVisibleCount:40,
+ captionVisibleCount:40,oneTapBusy:false,
  pendingTranslateZh:false,
  cloudHealth:null,cloudLastError:''
 };
@@ -1065,9 +1105,86 @@ function instant15Caption(){
  aiCaptionStatus('INSTANT 15S · 只识别当前 15 秒。');
  runAiCaption(false)
 }
+function setDirectorProgress(v){const e=q('directorProgressBar');if(e)e.style.width=Math.max(0,Math.min(100,Number(v)||0))+'%'}
+function setDirectorStatus(t){const e=q('directorStatus');if(e)e.textContent=t}
+function cleanNarrationLine(s){
+ return String(s||'').replace(/^[\s·•—-]+/,'').replace(/\s+/g,' ').trim()
+}
+function buildNarrationFromCaptions(mode='faithful'){
+ const lines=(STUDIO.captions||[]).map(x=>cleanNarrationLine(x.text)).filter(Boolean);
+ if(!lines.length)return'';
+ const [,,duration]=captionRangeValues(),maxChars=duration<=20?150:duration<=45?280:duration<=90?480:760;
+ let picked=[],chars=0;
+ for(const line of lines){
+   const normalized=line.replace(/[。！？!?]+$/,'');
+   if(!normalized||picked.includes(normalized))continue;
+   if(chars+normalized.length>maxChars&&picked.length>=3)break;
+   picked.push(normalized);chars+=normalized.length
+ }
+ if(mode==='faithful'){
+   return picked.map(x=>/[。！？!?]$/.test(x)?x:x+'。').join('')
+ }
+ const lead=picked[0]||'',body=picked.slice(1,-1).join('，'),tail=picked.length>1?picked[picked.length-1]:'';
+ let out='先看这段内容。'+lead+'。';
+ if(body)out+='这里的关键在于，'+body+'。';
+ if(tail&&tail!==lead)out+='最后，'+tail+'。';
+ return out.replace(/。。+/g,'。')
+}
+async function runOneTapRecreate(){
+ if(!STUDIO.file){studioStatus('请先在 01 导入视频。','warn');setDirectorStatus('还没有视频，先选择要处理的素材。');return}
+ if(STUDIO.oneTapBusy||STUDIO.captionBusy||STUDIO.exporting)return;
+ STUDIO.oneTapBusy=true;
+ const btn=q('oneTapRecreateBtn');btn.disabled=true;btn.textContent='正在一键处理…';setDirectorProgress(3);
+ try{
+   const mode=q('directorMode')?.value||'faithful',range=q('directorRange')?.value||'trim';
+   q('translationMode').value=mode;
+   q('subtitleTargetLang').value='zh-CN';
+   q('burnSubtitle').value='yes';
+   q('studioAspect').value='9:16';
+   q('originalAudio').value='0.25';
+
+   if(range==='full')q('captionRange').value='full';
+   else{
+     q('captionRange').value='trim';
+     if(range==='15'||range==='30'){
+       const start=Math.max(0,Number(q('trimStart').value)||0),span=Number(range);
+       q('trimEnd').value=Math.min(STUDIO.duration||start+span,start+span).toFixed(1)
+     }
+   }
+
+   setDirectorStatus('① 正在云端识别语音和时间轴…');setDirectorProgress(10);
+   const ok=await runAiCaption(true);
+   if(!ok||!(STUDIO.captions||[]).length)throw new Error('字幕/翻译没有完成，请查看 AI CAPTION 状态');
+
+   setDirectorStatus('② 中文字幕完成 · 正在生成解说初稿…');setDirectorProgress(72);
+   const narration=buildNarrationFromCaptions(mode);
+   if(!narration)throw new Error('没有可生成解说的中文字幕');
+   q('narrationText').value=narration;
+
+   setDirectorStatus('③ 解说稿和字幕已准备 · 正在整理导出参数…');setDirectorProgress(88);
+   q('voiceMeta').textContent='解说稿已自动生成。可先“手机朗读试听”，也可直接录制你的声音。';
+
+   if(q('directorFinish').value==='export'){
+     setDirectorStatus('④ 正在自动导出成片…');setDirectorProgress(94);
+     await exportStudio();
+     if(!STUDIO.resultBlob)throw new Error('自动导出没有生成成片');
+     setDirectorStatus('完成 · 中文字幕、解说稿、9:16成片均已生成。');setDirectorProgress(100)
+   }else{
+     setDirectorStatus('完成 · 中文字幕 + 解说稿已准备。建议先试听/检查，然后点“导出手机成片”。');
+     setDirectorProgress(100);
+     q('narrationText').scrollIntoView({behavior:'smooth',block:'center'})
+   }
+   toast('一键再创作完成')
+ }catch(e){
+   console.error(e);setDirectorStatus('停在当前步骤：'+(e.message||e));studioStatus('一键再创作未完成：'+(e.message||e),'warn');setDirectorProgress(0)
+ }finally{
+   STUDIO.oneTapBusy=false;btn.disabled=false;btn.textContent='一键识别 · 翻中文 · 生成解说'
+ }
+}
+
 async function runAiCaption(translateZh=false){
- if(!STUDIO.file){studioStatus('请先在 01 导入视频。','warn');return}
- if(STUDIO.captionBusy)return;
+ if(!STUDIO.file){studioStatus('请先在 01 导入视频。','warn');return false}
+ if(STUDIO.captionBusy)return false;
  STUDIO.captionBusy=true;q('aiCaptionBtn').disabled=true;q('aiCaptionZhBtn').disabled=true;
  STUDIO.pendingTranslateZh=!!translateZh;
  q('localCaptionBtn').style.display='none';
@@ -1093,7 +1210,8 @@ async function runAiCaption(translateZh=false){
    if(translateZh){await translateCaptionTimeline('zh-CN');q('subtitleTargetLang').value='zh-CN'}
    STUDIO.pendingTranslateZh=false;
    aiCaptionProgress(100);aiCaptionStatus('完成 · '+STUDIO.captions.length+' 条时间轴字幕');
-   toast('AI字幕完成')
+   toast('AI字幕完成');
+   return true
  }catch(e){
    console.error(e);
    setCloudCaptionStatus('失败');
@@ -1101,7 +1219,8 @@ async function runAiCaption(translateZh=false){
    q('localCaptionBtn').textContent=STUDIO.pendingTranslateZh?'本地备用 + 翻中文':'本地备用识别';
    aiCaptionStatus('云端字幕失败：'+(STUDIO.cloudLastError||e.message||e)+'。'+(STUDIO.pendingTranslateZh?'点“本地备用 + 翻中文”，识别后会继续执行已验证中文翻译。':'需要时可点“本地备用识别”。'));
    studioStatus('云端失败，但已阻止本地模型自动启动，避免手机卡顿。','warn');
-   aiCaptionProgress(0)
+   aiCaptionProgress(0);
+   return false
  }finally{
    STUDIO.captionBusy=false;q('aiCaptionBtn').disabled=false;q('aiCaptionZhBtn').disabled=false
  }
@@ -1355,6 +1474,7 @@ q('captionSpeed').onchange=async()=>{
  if(q('captionEngine'))q('captionEngine').textContent='引擎：Safari TURBO 待载入';
  aiCaptionStatus(cfg.label+'模式已选择。'+(cfg.mode==='fast'?'默认最多先识别30秒，30秒内不分块，速度最快。':''));
 };
+q('oneTapRecreateBtn').onclick=runOneTapRecreate;
 q('aiCaptionBtn').onclick=()=>runAiCaption(false);
 q('instant15Btn').onclick=instant15Caption;
 q('aiCaptionZhBtn').onclick=()=>runAiCaption(true);
@@ -1375,7 +1495,7 @@ if(q('captionSpeed'))q('captionSpeed').value='fast';
 if(q('captionRange'))q('captionRange').value='trim';
 setTimeout(()=>wakeCaptionCloud(),180);
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=168',{updateViaCache:'none'}).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=170',{updateViaCache:'none'}).catch(()=>{})}
 })();
 </script>
 </body>
