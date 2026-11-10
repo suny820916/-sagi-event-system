@@ -2969,10 +2969,43 @@ q('sdImgAnalyzeBtn').onclick=sdIntelAnalyze;q('sdImgAnalyzeClearBtn').onclick=sd
 /* ===== SAGI ORIGINAL POSTER ENGINE V1.0 ===== */
 const SDORIG_KEY='sagi_down_original_poster_v1';
 const SDORIG_RATIOS={'3:4':{w:1080,h:1440},'9:16':{w:1080,h:1920},'1:1':{w:1080,h:1080}};
-let SDORIG={variant:0,template:'number',ratio:'3:4',title:'',sub:'',person:'',subject:'',fact:'',role:'',structure:'',hook:'',generatedAt:0,activeForPublish:false,personFileName:'',personScale:100,personX:0,personMode:'hero',scoreText:''};
+let SDORIG={variant:0,template:'number',ratio:'3:4',title:'',sub:'',person:'',subject:'',fact:'',role:'',structure:'',hook:'',generatedAt:0,activeForPublish:false,personFileName:'',personScale:100,personX:0,personMode:'hero',scoreText:'',activeLayer:'person',layers:{person:{x:8,y:-6,scale:88},number:{x:-8,y:-8,scale:86},scores:{x:0,y:3,scale:90},title:{x:0,y:14,scale:90}}};
 let SDORIG_PERSON_IMAGE=null,SDORIG_PERSON_URL='';
 try{SDORIG={...SDORIG,...JSON.parse(localStorage.getItem(SDORIG_KEY)||'{}')}}catch(e){}
+
 function sdOrigSave(){try{localStorage.setItem(SDORIG_KEY,JSON.stringify(SDORIG))}catch(e){}}
+const SDORIG_LAYER_DEFAULTS={person:{x:8,y:-6,scale:88},number:{x:-8,y:-8,scale:86},scores:{x:0,y:3,scale:90},title:{x:0,y:14,scale:90}};
+function sdOrigEnsureLayers(){
+  SDORIG.layers=SDORIG.layers&&typeof SDORIG.layers==='object'?SDORIG.layers:{};
+  for(const k of Object.keys(SDORIG_LAYER_DEFAULTS))SDORIG.layers[k]={...SDORIG_LAYER_DEFAULTS[k],...(SDORIG.layers[k]||{})};
+  if(!SDORIG.activeLayer||!SDORIG_LAYER_DEFAULTS[SDORIG.activeLayer])SDORIG.activeLayer='person'
+}
+function sdOrigLayer(name){sdOrigEnsureLayers();return SDORIG.layers[name]||SDORIG.layers.person}
+function sdOrigWithLayer(ctx,w,h,name,fn){
+  const l=sdOrigLayer(name),s=(Number(l.scale)||100)/100;
+  ctx.save();
+  ctx.translate(w/2+(Number(l.x)||0)/100*w,h/2+(Number(l.y)||0)/100*h);
+  ctx.scale(s,s);ctx.translate(-w/2,-h/2);fn();ctx.restore()
+}
+function sdOrigSyncLayerControls(){
+  if(!q('sdOrigLayerX'))return;const l=sdOrigLayer(SDORIG.activeLayer);
+  q('sdOrigLayerX').value=l.x;q('sdOrigLayerY').value=l.y;q('sdOrigLayerScale').value=l.scale;
+  document.querySelectorAll('[data-orig-layer]').forEach(b=>b.classList.toggle('active',b.dataset.origLayer===SDORIG.activeLayer))
+}
+function sdOrigAutoLayout(){
+  sdOrigEnsureLayers();
+  const hasPerson=!!SDORIG_PERSON_IMAGE;
+  SDORIG.layers.person={x:hasPerson?8:0,y:hasPerson?-8:0,scale:hasPerson?84:100};
+  SDORIG.layers.number={x:-10,y:-10,scale:82};
+  SDORIG.layers.scores={x:0,y:5,scale:86};
+  SDORIG.layers.title={x:0,y:16,scale:88};
+  SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigSyncLayerControls();sdOrigDraw();toast('已自动避让排版')
+}
+function sdOrigResetActiveLayer(){
+  sdOrigEnsureLayers();SDORIG.layers[SDORIG.activeLayer]={...SDORIG_LAYER_DEFAULTS[SDORIG.activeLayer]};SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigSyncLayerControls();sdOrigDraw();toast('当前图层已重置')
+}
+sdOrigEnsureLayers();
+
 
 function sdOrigCanvas(){return q('sdOrigCanvas')}
 function sdOrigScoreRows(){
@@ -3109,7 +3142,7 @@ function sdOrigHeader(ctx,w,h,c){
 function sdOrigDrawPerson(ctx,w,h,c){
   if(!SDORIG_PERSON_IMAGE)return;
   const img=SDORIG_PERSON_IMAGE,mode=SDORIG.personMode||'hero',scale=(Number(SDORIG.personScale)||100)/100,xShift=(Number(SDORIG.personX)||0)/100*w;
-  const box={x:w*.49+xShift,y:h*.15,w:w*.47,h:h*.47};
+  const box={x:w*.53+xShift,y:h*.15,w:w*.41,h:h*.38};
   const fit=Math.max(box.w/img.naturalWidth,box.h/img.naturalHeight)*scale,iw=img.naturalWidth*fit,ih=img.naturalHeight*fit,cx=box.x+box.w*.52,cy=box.y+box.h*.53;
   ctx.save();
   if(mode==='cut'){
@@ -3123,7 +3156,7 @@ function sdOrigDrawPerson(ctx,w,h,c){
 }
 function sdOrigScoreStrip(ctx,w,h,c){
   const rows=(c.scoreRows||[]).slice(-8);if(!rows.length)return;
-  const pad=w*.065,cols=4,gap=w*.012,cardW=(w-pad*2-gap*(cols-1))/cols,cardH=h*.055,startY=h*.515;
+  const pad=w*.065,cols=4,gap=w*.012,cardW=(w-pad*2-gap*(cols-1))/cols,cardH=h*.050,startY=h*.505;
   rows.forEach((r,i)=>{
     const x=pad+(i%cols)*(cardW+gap),y=startY+Math.floor(i/cols)*(cardH+h*.012);
     ctx.fillStyle=i===rows.length-1?'rgba(215,181,104,.14)':'rgba(255,255,255,.045)';sdOrigRound(ctx,x,y,cardW,cardH,w*.012);ctx.fill();
@@ -3166,7 +3199,7 @@ function sdOrigDataCard(ctx,w,h,c){
   vals.forEach((v,i)=>{const x=pad+(i%2)*w*.44,y=h*.24+Math.floor(i/2)*h*.14;ctx.fillStyle='rgba(255,255,255,.035)';sdOrigRound(ctx,x,y,w*.39,h*.105,w*.02);ctx.fill();ctx.fillStyle='#6f8289';ctx.font='700 '+Math.round(w*.018)+'px -apple-system,sans-serif';ctx.fillText(v[0],x+w*.025,y+h*.032);ctx.fillStyle=i===1?'#d7b568':'#f3f5f5';ctx.font='1000 '+Math.round(w*.055)+'px -apple-system,sans-serif';ctx.fillText(v[1],x+w*.025,y+h*.078)})
 }
 function sdOrigMainText(ctx,w,h,c){
-  const pad=w*.065,max=w-pad*2,title=SDORIG.title||'热点标题',sub=SDORIG.sub||'',startY=h*(SDORIG.template==='minimal'?.46:.62);
+  const pad=w*.065,max=w-pad*2,title=SDORIG.title||'热点标题',sub=SDORIG.sub||'',startY=h*(SDORIG.template==='minimal'?.48:.64);
   ctx.fillStyle='#d7b568';ctx.font='900 '+Math.round(w*.032)+'px -apple-system,"PingFang SC",sans-serif';ctx.fillText((SDORIG.person||c.person||'足球热点').toUpperCase(),pad,startY);
   let fs=Math.round(w*.075);ctx.fillStyle='#f4f6f7';const lines=sdOrigWrap(ctx,title,max,fs,4),lh=fs*1.18;ctx.font='1000 '+fs+'px -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif';lines.forEach((line,i)=>ctx.fillText(line,pad,startY+w*.07+i*lh));
   const sy=startY+w*.07+lines.length*lh+w*.025;if(sub){ctx.fillStyle='#9eaaae';ctx.font='650 '+Math.round(w*.027)+'px -apple-system,"PingFang SC",sans-serif';sdOrigWrap(ctx,sub,max,Math.round(w*.027),3).forEach((line,i)=>ctx.fillText(line,pad,sy+i*w*.042))}
@@ -3175,14 +3208,19 @@ function sdOrigFooter(ctx,w,h,c){
   const pad=w*.065;ctx.fillStyle='rgba(255,255,255,.12)';ctx.fillRect(pad,h*.91,w-pad*2,2);ctx.fillStyle='#7d8d93';ctx.font='650 '+Math.round(w*.020)+'px -apple-system,"PingFang SC",sans-serif';ctx.fillText('热点来自事实 · 视觉重新创作 · 不复用原图像素',pad,h*.95);ctx.textAlign='right';ctx.fillStyle='#d7b568';ctx.fillText('SAGI',w-pad,h*.95);ctx.textAlign='left'
 }
 function sdOrigDraw(){
-  const cv=sdOrigCanvas();if(!cv)return;sdOrigSetup();const ctx=cv.getContext('2d'),w=cv.width,h=cv.height,c=sdOrigContext();ctx.clearRect(0,0,w,h);sdOrigGradient(ctx,w,h);sdOrigPitch(ctx,w,h);sdOrigDrawPerson(ctx,w,h,c);sdOrigHeader(ctx,w,h,c);
-  if(SDORIG.template==='number')sdOrigBigNumber(ctx,w,h,c);
-  else if(SDORIG.template==='coach')sdOrigCoachThesis(ctx,w,h,c);
-  else if(SDORIG.template==='timeline')sdOrigTimeline(ctx,w,h,c);
-  else if(SDORIG.template==='question')sdOrigQuestion(ctx,w,h,c);
-  else if(SDORIG.template==='data')sdOrigDataCard(ctx,w,h,c);
-  if(SDORIG.template!=='timeline'&&SDORIG.template!=='data')sdOrigScoreStrip(ctx,w,h,c);
-  sdOrigMainText(ctx,w,h,c);sdOrigFooter(ctx,w,h,c)
+  const cv=sdOrigCanvas();if(!cv)return;sdOrigSetup();sdOrigEnsureLayers();const ctx=cv.getContext('2d'),w=cv.width,h=cv.height,c=sdOrigContext();ctx.clearRect(0,0,w,h);sdOrigGradient(ctx,w,h);sdOrigPitch(ctx,w,h);
+  sdOrigWithLayer(ctx,w,h,'person',()=>sdOrigDrawPerson(ctx,w,h,c));sdOrigHeader(ctx,w,h,c);
+  sdOrigWithLayer(ctx,w,h,'number',()=>{
+    if(SDORIG.template==='number')sdOrigBigNumber(ctx,w,h,c);
+    else if(SDORIG.template==='coach')sdOrigCoachThesis(ctx,w,h,c);
+    else if(SDORIG.template==='question')sdOrigQuestion(ctx,w,h,c);
+  });
+  sdOrigWithLayer(ctx,w,h,'scores',()=>{
+    if(SDORIG.template==='timeline')sdOrigTimeline(ctx,w,h,c);
+    else if(SDORIG.template==='data')sdOrigDataCard(ctx,w,h,c);
+    else sdOrigScoreStrip(ctx,w,h,c)
+  });
+  sdOrigWithLayer(ctx,w,h,'title',()=>sdOrigMainText(ctx,w,h,c));sdOrigFooter(ctx,w,h,c)
 }
 function sdOrigRender(){
   if(!q('sdOriginalPoster'))return;
@@ -3192,6 +3230,15 @@ function sdOrigRender(){
   document.querySelectorAll('[data-orig-variant]').forEach(b=>b.classList.toggle('active',Number(b.dataset.origVariant)===Number(SDORIG.variant)));
   document.querySelectorAll('[data-orig-template]').forEach(b=>b.classList.toggle('active',b.dataset.origTemplate===SDORIG.template));
   const coach=c.coach?('主教练上下文：'+c.coach+'。系统依据来源账号与联网文章中的教练身份判断，不使用人脸身份识别。'):('暂未从来源/新闻上下文验证主教练姓名，海报将以球队趋势为主。');
+  sdOrigSyncLayerControls();
+  const off=SDINTEL.official||{};
+  if(q('sdOfficialTier')){
+    q('sdOfficialTier').textContent=off.verified?'官方优先 · 已核验':'媒体交叉验证';
+    q('sdOfficialTier').className=off.verified?'officialOk':'officialWarn';
+    q('sdOfficialSource').textContent=off.source||'—';
+    q('sdOfficialLatest').textContent=off.latest||'—';
+    q('sdOfficialStreak').textContent=SDINTEL.verifiedStreak?(SDINTEL.verifiedStreak+'连胜'):'—'
+  }
   q('sdOrigInsight').textContent=(SDINTEL.analyzedAt?coach:'先完成上方图片分析。')+' 原图仅作为事实输入，新画布不会绘制原图像素。';sdOrigDraw()
 }
 function sdOrigGenerate(force=true){
@@ -3231,6 +3278,18 @@ q('sdOrigPersonMode').onchange=e=>{SDORIG.personMode=e.target.value;SDORIG.gener
 q('sdOrigScoreText').oninput=e=>{SDORIG.scoreText=e.target.value;SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigRenderScores();sdOrigDraw()};
 q('sdOrigScoreAutoBtn').onclick=sdOrigSyncScores;
 q('sdOrigScoreClearBtn').onclick=()=>{SDORIG.scoreText='';sdOrigSave();q('sdOrigScoreText').value='';sdOrigRenderScores();sdOrigDraw();toast('比分素材已清空')};
+
+document.querySelectorAll('[data-orig-layer]').forEach(b=>b.onclick=()=>{SDORIG.activeLayer=b.dataset.origLayer;sdOrigSave();sdOrigSyncLayerControls()});
+q('sdOrigLayerX').oninput=e=>{const l=sdOrigLayer(SDORIG.activeLayer);l.x=Number(e.target.value);SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigDraw()};
+q('sdOrigLayerY').oninput=e=>{const l=sdOrigLayer(SDORIG.activeLayer);l.y=Number(e.target.value);SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigDraw()};
+q('sdOrigLayerScale').oninput=e=>{const l=sdOrigLayer(SDORIG.activeLayer);l.scale=Number(e.target.value);SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigDraw()};
+q('sdOrigAutoLayoutBtn').onclick=sdOrigAutoLayout;q('sdOrigResetLayerBtn').onclick=sdOrigResetActiveLayer;
+{
+  const c=sdOrigCanvas();let drag=null;
+  c.onpointerdown=e=>{const l=sdOrigLayer(SDORIG.activeLayer);drag={x:e.clientX,y:e.clientY,lx:Number(l.x)||0,ly:Number(l.y)||0};c.setPointerCapture?.(e.pointerId)};
+  c.onpointermove=e=>{if(!drag)return;const r=c.getBoundingClientRect(),l=sdOrigLayer(SDORIG.activeLayer);l.x=Math.max(-35,Math.min(35,drag.lx+(e.clientX-drag.x)/Math.max(1,r.width)*100));l.y=Math.max(-35,Math.min(35,drag.ly+(e.clientY-drag.y)/Math.max(1,r.height)*100));q('sdOrigLayerX').value=l.x;q('sdOrigLayerY').value=l.y;sdOrigDraw()};
+  const end=()=>{if(drag){drag=null;SDORIG.generatedAt=Date.now();sdOrigSave()}};c.onpointerup=end;c.onpointercancel=end
+}
 q('sdOrigExportBtn').onclick=sdOrigExport;q('sdOrigShareBtn').onclick=sdOrigShare;q('sdOrigUsePublishBtn').onclick=sdOrigUsePublish;
 sdOrigRender();
 /* ===== END SAGI ORIGINAL POSTER ENGINE ===== */
