@@ -64,7 +64,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 <div class="wrap">
   <div class="top">
     <div class="brand"><b>SAGI DOWN</b><span>VIDEO LINK SHORTCUT</span></div>
-    <span class="badge">V1.6.4 · SMOOTH MODE</span>
+    <span class="badge">V1.6.5 · CONTEXT TRANSLATE</span>
   </div>
 
   <section class="hero">
@@ -201,7 +201,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
       </div>
 
       <div class="aiCaptionProgress"><i id="aiCaptionProgress"></i></div>
-      <div id="aiCaptionStatus" class="aiCaptionStatus">SMOOTH MODE：3分钟视频默认整段交给 SAGI Cloud；手机不再解码音频、不自动启动本地 Whisper。云端失败时只提示，不让页面卡住。</div>
+      <div id="aiCaptionStatus" class="aiCaptionStatus">CONTEXT TRANSLATE：字幕识别后按上下文成组翻译，优先保留原意；时间轴不变。3分钟云端识别与 SMOOTH MODE 继续保留。</div>
       <div class="aiCaptionMeta">
         <span id="captionEngine">引擎：SAGI CLOUD 优先</span>
         <span id="captionDetectedLang">语言：—</span>
@@ -220,9 +220,10 @@ Unbelievable finish."></textarea>
       <div class="langRow">
         <label>原语言<select id="subtitleSourceLang"><option value="en">English</option><option value="pt">Português</option><option value="es">Español</option><option value="ru">Русский</option><option value="fr">Français</option><option value="de">Deutsch</option><option value="zh-CN">中文</option></select></label>
         <label>翻译为<select id="subtitleTargetLang"><option value="zh-CN">中文</option><option value="en">English</option><option value="pt">Português</option><option value="es">Español</option></select></label>
-        <button class="btn blue" id="translateSubtitleBtn" type="button">翻译字幕</button>
+        <label>翻译模式<select id="translationMode"><option value="faithful" selected>忠实原意</option><option value="football">足球中文化</option></select></label>
+        <button class="btn blue" id="translateSubtitleBtn" type="button">上下文翻译</button>
       </div>
-      <div class="subHint">翻译优先使用浏览器自带 Translator；不支持时使用 MyMemory 免费翻译接口。每行字幕会平均分布在裁剪区间内。</div>
+      <div class="subHint">新版按 4–6 条字幕组成上下文块翻译，再对齐回原时间轴。默认“忠实原意”；“足球中文化”会进一步优化阵型、逼抢、攻防转换等术语。</div>
     </div>
 
     <div class="studioStep">
@@ -803,11 +804,33 @@ async function getTranslatorSession(source,target){
  }
  return null
 }
+async function cloudTranslateContext(caps,source,target,mode='faithful'){
+ const ready=await wakeCaptionCloud();
+ if(!ready||!STUDIO.cloudCaptionToken)throw new Error('CLOUD_TRANSLATE_NOT_READY');
+ const r=await fetch(CAPTION_CLOUD+'/api/translate-context',{
+   method:'POST',
+   headers:{
+     'Content-Type':'application/json',
+     Authorization:'Bearer '+STUDIO.cloudCaptionToken
+   },
+   body:JSON.stringify({
+     source:source||'auto',
+     target:target||'zh-CN',
+     mode,
+     segments:caps.map(x=>String(x.text||''))
+   })
+ });
+ const data=await r.json().catch(()=>({}));
+ if(!r.ok||!data?.ok||!Array.isArray(data.segments))throw new Error(data?.error||('translate '+r.status));
+ return data
+}
+
 async function translateCaptionTimeline(target='zh-CN'){
  if(!(STUDIO.captions||[]).length)throw new Error('请先识别字幕');
  let source=sourceLangForTranslation();
  if(source==='auto')source=inferTranscriptLanguage();
  syncDetectedLanguageUi(source);
+
  if(source===target || (source==='zh'&&target==='zh-CN')){
    STUDIO.captionLanguage=target;
    syncDetectedLanguageUi(target);
@@ -815,8 +838,31 @@ async function translateCaptionTimeline(target='zh-CN'){
    studioStatus('字幕已是中文，可以直接进入解说或导出。','good');
    return
  }
+
+ const caps=STUDIO.captions.slice();
+ const mode=q('translationMode')?.value||'faithful';
+ aiCaptionStatus('正在做上下文翻译 · '+caps.length+' 条时间轴…');
+ aiCaptionProgress(80);
+
+ try{
+   const data=await cloudTranslateContext(caps,source,target,mode);
+   const out=data.segments;
+   STUDIO.captions=caps.map((c,i)=>({...c,text:String(out[i]??c.text).trim()||c.text}));
+   STUDIO.captionLanguage=target;
+   syncCaptionText();
+   syncDetectedLanguageUi(target);
+   aiCaptionProgress(98);
+   aiCaptionStatus((mode==='football'?'足球中文化':'忠实原意')+'翻译完成 · '+caps.length+' 条 · 上下文保留');
+   studioStatus('翻译完成，时间轴保持不变。','good');
+   return
+ }catch(e){
+   console.warn('context translate failed, fallback line mode',e);
+   aiCaptionStatus('上下文翻译暂不可用，正在用逐句备用模式…');
+ }
+
+ // 最后备用：浏览器 Translator / MyMemory。仅云端上下文失败时启用。
  const session=await getTranslatorSession(source,target);
- const caps=STUDIO.captions.slice(),out=new Array(caps.length),limit=3;
+ const out=new Array(caps.length),limit=3;
  let cursor=0,done=0;
  async function worker(){
    while(cursor<caps.length){
@@ -825,12 +871,12 @@ async function translateCaptionTimeline(target='zh-CN'){
        const text=session?await session.translate(c.text):await translateLine(c.text,source,target);
        out[i]={...c,text}
      }catch(e){out[i]=c}
-     done++;aiCaptionProgress(78+done/caps.length*20);aiCaptionStatus('中文字幕生成 '+done+' / '+caps.length)
+     done++;aiCaptionProgress(80+done/caps.length*18)
    }
  }
  await Promise.all(Array.from({length:Math.min(limit,caps.length)},worker));
- STUDIO.captions=out;STUDIO.captionLanguage=target;syncCaptionText();
- syncDetectedLanguageUi(target);
+ STUDIO.captions=out;STUDIO.captionLanguage=target;syncCaptionText();syncDetectedLanguageUi(target);
+ aiCaptionStatus('备用翻译完成 · 建议云端恢复后使用“忠实原意”重新翻译。');
 }
 function instant15Caption(){
  if(!STUDIO.file){studioStatus('请先导入视频。','warn');return}
@@ -948,15 +994,26 @@ async function translateLine(text,source,target){
 }
 async function translateSubtitles(){
  const lines=subtitleLines();if(!lines.length){studioStatus('请先输入字幕文本。','warn');return}
- const source=q('subtitleSourceLang').value,target=q('subtitleTargetLang').value;
- const btn=q('translateSubtitleBtn');btn.disabled=true;btn.textContent='翻译中…';studioStatus('正在逐行翻译字幕…','good');
+ const source=q('subtitleSourceLang').value,target=q('subtitleTargetLang').value,mode=q('translationMode')?.value||'faithful';
+ const btn=q('translateSubtitleBtn');btn.disabled=true;btn.textContent='上下文翻译中…';studioStatus('正在结合前后文翻译整段字幕…','good');
  try{
-   const out=[];for(let i=0;i<lines.length;i++){out.push(await translateLine(lines[i],source,target));setProgress((i+1)/lines.length*18)}
+   if(source===target){
+     studioStatus('原语言和目标语言相同，无需翻译。','good');return
+   }
+   const base=(STUDIO.captions||[]).length===lines.length
+     ? STUDIO.captions.map((c,i)=>({...c,text:lines[i]}))
+     : lines.map((text,i)=>({start:i,end:i+1,text}));
+   const data=await cloudTranslateContext(base,source,target,mode);
+   const out=data.segments.map(x=>String(x||'').trim());
    q('subtitleText').value=out.join('\n');
-   if((STUDIO.captions||[]).length===out.length){STUDIO.captions=STUDIO.captions.map((c,i)=>({...c,text:out[i]}));renderCaptionTimeline()}
-   studioStatus('字幕翻译完成。','good');toast('字幕已翻译')
- }catch(e){studioStatus('翻译失败：'+(e.message||e),'warn')}
- finally{btn.disabled=false;btn.textContent='翻译字幕';setProgress(0)}
+   if((STUDIO.captions||[]).length===out.length){
+     STUDIO.captions=STUDIO.captions.map((c,i)=>({...c,text:out[i]||c.text}));
+     renderCaptionTimeline()
+   }
+   studioStatus((mode==='football'?'足球中文化':'忠实原意')+'翻译完成。','good');toast('上下文翻译完成')
+ }catch(e){
+   studioStatus('上下文翻译失败：'+(e.message||e),'warn')
+ }finally{btn.disabled=false;btn.textContent='上下文翻译'}
 }
 function speakNarration(){
  const text=String(q('narrationText')?.value||'').trim();if(!text){studioStatus('请先填写解说文案。','warn');return}
@@ -1115,7 +1172,7 @@ if(q('captionSpeed'))q('captionSpeed').value='fast';
 if(q('captionRange'))q('captionRange').value='trim';
 setTimeout(()=>wakeCaptionCloud(),180);
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=164',{updateViaCache:'none'}).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=165',{updateViaCache:'none'}).catch(()=>{})}
 })();
 </script>
 </body>
