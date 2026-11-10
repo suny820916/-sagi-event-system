@@ -667,8 +667,8 @@ async function pollCloudRender(){
    if(!r.ok||!d?.ok)throw new Error(d?.error||('HTTP '+r.status));
    const j=d.job||{};setCloudRenderProgress(j.progress||0);setCloudRenderStatus((j.stage||j.status||'处理中')+(j.progress?' · '+j.progress+'%':''));
    if(j.status==='ready'&&j.downloadUrl){
-     STUDIO.cloudResultUrl=j.downloadUrl;STUDIO.cloudRenderJobId='';
-     q('resultVideo').src=j.downloadUrl;q('resultVideo').classList.add('show');
+     STUDIO.cloudResultUrl=j.previewUrl||j.downloadUrl;STUDIO.cloudRenderJobId='';
+     q('resultVideo').src=j.previewUrl||j.downloadUrl;q('resultVideo').classList.add('show');
      q('saveResultBtn').href=j.downloadUrl;q('saveResultBtn').download='SAGI_CLOUD_RENDER.mp4';q('resultActions').classList.add('show');
      setCloudRenderProgress(100);setCloudRenderStatus('云端成片完成 · 可以直接保存或分享。');toast('云端成片完成');return
    }
