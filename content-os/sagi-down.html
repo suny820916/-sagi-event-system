@@ -64,7 +64,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 <div class="wrap">
   <div class="top">
     <div class="brand"><b>SAGI DOWN</b><span>VIDEO LINK SHORTCUT</span></div>
-    <span class="badge">V1.5.3 · INSTANT CACHE</span>
+    <span class="badge">V1.5.4 · SAFARI TURBO</span>
   </div>
 
   <section class="hero">
@@ -200,12 +200,12 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
       </div>
 
       <div class="aiCaptionProgress"><i id="aiCaptionProgress"></i></div>
-      <div id="aiCaptionStatus" class="aiCaptionStatus">INSTANT CACHE：打开页面即后台预热 Whisper；TURBO 默认只识别裁剪区间；15秒可直接点 INSTANT 15S。</div>
+      <div id="aiCaptionStatus" class="aiCaptionStatus">SAFARI TURBO：选择视频即加载浏览器专用 Whisper Tiny；音频解码与模型载入并行；15秒可直接点 INSTANT 15S。</div>
       <div class="aiCaptionMeta">
-        <span id="captionEngine">引擎：FAST 待载入</span>
+        <span id="captionEngine">引擎：Safari TURBO 待载入</span>
         <span id="captionDetectedLang">语言：—</span>
         <span id="captionCount">字幕：0</span>
-        <span id="captionCacheStatus">模型：后台预热</span>
+        <span id="captionCacheStatus">模型：等待选择视频</span>
       </div>
       <div id="aiCaptionTimeline" class="aiCaptionTimeline"></div>
     </div>
@@ -457,6 +457,16 @@ function handleStudioFile(e){
  const file=e.target.files?.[0];if(!file)return;
  if(!String(file.type||'').startsWith('video/')){studioStatus('请选择视频文件。','warn');return}
  STUDIO.file=file;
+ if(!STUDIO.captionModel&&!STUDIO.captionBusy){
+   if(q('captionCacheStatus'))q('captionCacheStatus').textContent='模型：选择视频后预载中';
+   ensureCaptionModel().then(()=>{
+     aiCaptionStatus('Whisper Tiny 已就绪，字幕可以立即开始。');
+     if(q('captionCacheStatus'))q('captionCacheStatus').textContent='模型：已就绪'
+   }).catch(e=>{
+     console.warn('model preload failed',e);
+     if(q('captionCacheStatus'))q('captionCacheStatus').textContent='模型：点击识别时重试'
+   })
+ }
  if(STUDIO.url)URL.revokeObjectURL(STUDIO.url);
  STUDIO.url=URL.createObjectURL(file);
  const v=q('studioVideo');v.src=STUDIO.url;v.classList.add('show');
@@ -467,16 +477,7 @@ function handleStudioFile(e){
    q('trimStart').value='0';q('trimEnd').value=Math.min(STUDIO.duration,15).toFixed(1);
    q('studioFileHint').textContent=fmtDuration(STUDIO.duration)+' · '+STUDIO.width+'×'+STUDIO.height+' · '+fmtBytes(file.size||0);
    if(q('captionSpeed')?.value==='fast')q('captionRange').value='trim';
-   studioStatus('视频已载入。TURBO 默认只识别当前裁剪区间。','good');
-   setTimeout(()=>{
-     if(!STUDIO.captionModel&&!STUDIO.captionBusy){
-       if(q('captionCacheStatus'))q('captionCacheStatus').textContent='模型：后台预热中';
-       ensureCaptionModel().then(()=>{
-         aiCaptionStatus('Whisper 已预热并缓存，点 AI 识别即可。');
-         if(q('captionCacheStatus'))q('captionCacheStatus').textContent='模型：已就绪'
-       }).catch(()=>{if(q('captionCacheStatus'))q('captionCacheStatus').textContent='模型：点识别时载入'})
-     }
-   },120)
+   studioStatus('视频已载入。Safari TURBO 默认只识别当前裁剪区间。','good');
  }
 }
 function setTrimPoint(which){
@@ -529,7 +530,7 @@ function captionSpeedConfig(){
  const mode=q('captionSpeed')?.value||'fast';
  if(mode==='precise')return{mode,label:'精准',dtype:'q8',chunk:30,stride:5,maxSeconds:180};
  if(mode==='standard')return{mode,label:'标准',dtype:'q8',chunk:20,stride:3,maxSeconds:90};
- return{mode:'fast',label:'极速',dtype:'q4',chunk:0,stride:0,maxSeconds:30}
+ return{mode:'fast',label:'TURBO',dtype:'auto',chunk:0,stride:0,maxSeconds:30}
 }
 function mixChannels(buffer,startFrame,endFrame){
  const channels=buffer.numberOfChannels,length=Math.max(0,endFrame-startFrame),out=new Float32Array(length);
@@ -552,35 +553,36 @@ function resampleLinear(input,sourceRate,targetRate=16000){
 }
 
 async function ensureCaptionModel(){
- const mod=await ensureCaptionModule(),cfg=captionSpeedConfig(),useGPU=cfg.mode!=='fast'&&!!navigator.gpu;
- const key=cfg.mode+'|'+(useGPU?'webgpu':'wasm')+'|'+cfg.dtype;
+ const mod=await ensureCaptionModule(),cfg=captionSpeedConfig();
+ const modelId='Xenova/whisper-tiny';
+ const useGPU=cfg.mode!=='fast'&&!!navigator.gpu;
+ const key=modelId+'|'+cfg.mode+'|'+(useGPU?'webgpu':'wasm');
  if(STUDIO.captionModel&&STUDIO.captionModelKey===key)return STUDIO.captionModel;
  if(STUDIO.captionModel){try{await STUDIO.captionModel.dispose?.()}catch(e){}STUDIO.captionModel=null}
  const base={
    device:useGPU?'webgpu':'wasm',
-   dtype:useGPU?'fp16':cfg.dtype,
    progress_callback:(x)=>{
      if(x?.status==='progress'&&Number.isFinite(x.progress)){
-       aiCaptionProgress(38+Math.min(35,x.progress*.35));
-       aiCaptionStatus('首次模型载入 · '+Math.round(x.progress)+'% · 完成后会缓存');
-       if(q('captionCacheStatus'))q('captionCacheStatus').textContent='模型：'+Math.round(x.progress)+'%'
+       const p=Math.round(x.progress);
+       aiCaptionProgress(12+Math.min(55,x.progress*.55));
+       aiCaptionStatus('Whisper Tiny 首次载入 · '+p+'% · 完成后浏览器会缓存');
+       if(q('captionCacheStatus'))q('captionCacheStatus').textContent='模型：'+p+'%'
+     }else if(x?.status==='ready'){
+       aiCaptionStatus('Whisper Tiny 已就绪');
      }
-     else if(x?.status==='ready')aiCaptionStatus(cfg.label+' Whisper 已就绪')
    }
  };
+ // 浏览器默认使用量化模型，Safari TURBO 不再强制 q4，避免多 session / dtype 兼容问题。
  try{
-   STUDIO.captionModel=await mod.pipeline('automatic-speech-recognition','onnx-community/whisper-tiny',base)
+   STUDIO.captionModel=await mod.pipeline('automatic-speech-recognition',modelId,base)
  }catch(e){
-   if(base.dtype==='q4'){
-     aiCaptionStatus('q4 不兼容，自动切换 q8…');
-     STUDIO.captionModel=await mod.pipeline('automatic-speech-recognition','onnx-community/whisper-tiny',{device:'wasm',dtype:'q8'})
-   }else if(useGPU){
-     aiCaptionStatus('WebGPU 初始化失败，正在切换 WASM q8…');
-     STUDIO.captionModel=await mod.pipeline('automatic-speech-recognition','onnx-community/whisper-tiny',{device:'wasm',dtype:'q8'})
+   if(useGPU){
+     aiCaptionStatus('WebGPU 初始化失败，切换 Safari WASM…');
+     STUDIO.captionModel=await mod.pipeline('automatic-speech-recognition',modelId,{device:'wasm'})
    }else throw e
  }
  STUDIO.captionModelKey=key;
- if(q('captionEngine'))q('captionEngine').textContent='引擎：'+(cfg.mode==='fast'?'TURBO':cfg.label)+' · '+(useGPU?'WebGPU':'WASM')+' · '+(base.dtype||cfg.dtype);
+ if(q('captionEngine'))q('captionEngine').textContent='引擎：Safari TURBO · Whisper Tiny · '+(useGPU?'WebGPU':'WASM');
  if(q('captionCacheStatus'))q('captionCacheStatus').textContent='模型：已就绪 / 已缓存';
  return STUDIO.captionModel
 }
@@ -708,7 +710,9 @@ async function runAiCaption(translateZh=false){
  if(STUDIO.captionBusy)return;
  STUDIO.captionBusy=true;q('aiCaptionBtn').disabled=true;q('aiCaptionZhBtn').disabled=true;aiCaptionProgress(1);
  try{
-   const audio=await extractCaptionWaveform(),model=await ensureCaptionModel(),cfg=captionSpeedConfig();
+   aiCaptionStatus('正在并行准备音频与 Whisper…');
+   const cfg=captionSpeedConfig();
+   const [audio,model]=await Promise.all([extractCaptionWaveform(),ensureCaptionModel()]);
    aiCaptionStatus('正在'+cfg.label+'识别语音并生成时间轴…');aiCaptionProgress(74);
    const lang=q('captionLanguage')?.value||'auto',options={return_timestamps:true,task:'transcribe'};
    if(cfg.chunk>0&&audio.duration>30){options.chunk_length_s=cfg.chunk;options.stride_length_s=cfg.stride}
@@ -917,7 +921,7 @@ q('trimEnd').addEventListener('change',()=>{if(STUDIO.captions.length&&STUDIO.ca
 q('captionSpeed').onchange=async()=>{
  const cfg=captionSpeedConfig();
  if(STUDIO.captionModel){try{await STUDIO.captionModel.dispose?.()}catch(e){}STUDIO.captionModel=null;STUDIO.captionModelKey=''}
- if(q('captionEngine'))q('captionEngine').textContent='引擎：'+(cfg.mode==='fast'?'TURBO':cfg.label)+' 待载入';
+ if(q('captionEngine'))q('captionEngine').textContent='引擎：Safari TURBO 待载入';
  aiCaptionStatus(cfg.label+'模式已选择。'+(cfg.mode==='fast'?'默认最多先识别30秒，30秒内不分块，速度最快。':''));
 };
 q('aiCaptionBtn').onclick=()=>runAiCaption(false);
@@ -936,21 +940,17 @@ input.addEventListener('input',updateDetect);
 renderHistory();updateDetect();renderRecreatePreset();renderCapabilities();
 if(q('captionSpeed'))q('captionSpeed').value='fast';
 if(q('captionRange'))q('captionRange').value='trim';
-const warmCaptionEngine=()=>{
- if(STUDIO.moduleWarm||STUDIO.captionModel||STUDIO.captionBusy)return;
+const warmCaptionModule=()=>{
+ if(STUDIO.moduleWarm)return;
  STUDIO.moduleWarm=true;
- if(q('captionCacheStatus'))q('captionCacheStatus').textContent='模型：后台预热中';
- ensureCaptionModel().then(()=>{
-   aiCaptionStatus('Whisper 已提前载入并进入浏览器缓存。');
-   if(q('captionCacheStatus'))q('captionCacheStatus').textContent='模型：已就绪'
- }).catch(()=>{
-   STUDIO.moduleWarm=false;
-   if(q('captionCacheStatus'))q('captionCacheStatus').textContent='模型：点识别时载入'
- })
+ ensureCaptionModule().then(()=>{
+   aiCaptionStatus('字幕运行库已就绪；选择视频时立即加载 Whisper Tiny。');
+   if(q('captionCacheStatus'))q('captionCacheStatus').textContent='模型：等待选择视频'
+ }).catch(()=>{STUDIO.moduleWarm=false})
 };
-setTimeout(warmCaptionEngine,250);
+setTimeout(warmCaptionModule,180);
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=153',{updateViaCache:'none'}).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=154',{updateViaCache:'none'}).catch(()=>{})}
 })();
 </script>
 </body>
