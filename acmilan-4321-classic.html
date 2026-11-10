@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#120806">
+<title>SAGI TACTICAL LAB · AC MILAN 4-3-2-1 CLASSIC</title>
+<style>
+:root{--bg:#060504;--milan:#9d171b;--milan2:#511014;--gold:#d8b866;--cyan:#7ceeff;--white:#f7f4ec;--line:rgba(255,255,255,.76);--muted:#8d938f}
+*{box-sizing:border-box}html,body{margin:0;background:#050505;color:#fff;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+body{padding:12px 10px 30px;background:radial-gradient(circle at 50% 0%,rgba(157,23,27,.18),transparent 38%),#050505}
+.wrap{width:min(100%,760px);margin:auto}.top{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;margin:4px 2px 10px}
+.brand{font-size:10px;letter-spacing:.22em;color:var(--gold);font-weight:900}.title{font-size:clamp(22px,6vw,34px);font-weight:950;letter-spacing:-.05em;margin-top:4px}.ver{font-size:10px;color:#aaa;border:1px solid #352a28;padding:6px 9px;border-radius:999px}
+.stage{position:relative;width:min(100%,540px);aspect-ratio:9/16;margin:auto;overflow:hidden;border-radius:24px;background:#0c4d2a;border:1px solid rgba(255,255,255,.08);isolation:isolate}
+.stage:before{content:"";position:absolute;inset:0;z-index:0;background:linear-gradient(180deg,rgba(8,0,0,.55),transparent 28%,transparent 73%,rgba(0,0,0,.42)),repeating-linear-gradient(90deg,#0d512d 0 12.5%,#126439 12.5% 25%)}
+.stage:after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,rgba(157,23,27,.22),transparent 20%,transparent 80%,rgba(0,0,0,.2))}
+.hud{position:absolute;z-index:30;left:16px;right:16px;top:16px;display:flex;justify-content:space-between;align-items:flex-start}.hud small{font-size:8px;letter-spacing:.15em;color:#d8d1cb}.hud h2{font-size:35px;line-height:.92;margin:5px 0 0;letter-spacing:-.05em}.badge{font-size:9px;text-align:right;color:#eee;border:1px solid rgba(255,255,255,.18);padding:7px 9px;border-radius:11px;background:rgba(0,0,0,.27)}
+.pitch{position:absolute;inset:11.5% 8% 8%;z-index:3;border:2px solid var(--line)}.half{position:absolute;left:0;right:0;top:50%;height:2px;background:var(--line)}.circle{position:absolute;width:33%;aspect-ratio:1;left:33.5%;top:50%;transform:translateY(-50%);border:2px solid var(--line);border-radius:50%}.dot{position:absolute;width:5px;height:5px;border-radius:50%;background:#fff;left:50%;top:50%;transform:translate(-50%,-50%)}.box{position:absolute;left:25%;width:50%;height:12%;border:2px solid var(--line)}.box.top{top:-2px;border-top:0}.box.bottom{bottom:-2px;border-bottom:0}.goal{position:absolute;left:38%;width:24%;height:3.5%;border:2px solid var(--line)}.goal.top{top:-3.5%}.goal.bottom{bottom:-3.5%}
+.overlay{position:absolute;inset:11.5% 8% 8%;z-index:7;pointer-events:none}.overlay path{fill:none;stroke-linecap:round;stroke-linejoin:round}.shape{stroke:rgba(255,255,255,.18);stroke-width:1.1;stroke-dasharray:4 7}.pass{stroke:var(--gold);stroke-width:2;stroke-dasharray:7 7;filter:drop-shadow(0 0 4px rgba(216,184,102,.4));animation:dash 1s linear infinite}.run{stroke:var(--cyan);stroke-width:2.1;stroke-dasharray:8 7;filter:drop-shadow(0 0 4px rgba(124,238,255,.45));animation:dash .85s linear infinite}.cover{stroke:rgba(225,90,94,.9);stroke-width:1.6;stroke-dasharray:3 6}
+.player{position:absolute;z-index:14;width:48px;height:48px;margin:-24px 0 0 -24px;display:grid;place-items:center;left:var(--x);top:var(--y);transition:left .75s cubic-bezier(.2,.78,.2,1),top .75s cubic-bezier(.2,.78,.2,1),transform .28s,filter .28s,opacity .28s}
+.player:before{content:"";position:absolute;inset:5px;border-radius:50%;border:2px solid #fff;background:radial-gradient(circle at 35% 28%,#fff 0 4%,#e86366 5% 12%,#a31a1f 42%,#681116 78%,#35070a 100%);box-shadow:0 0 0 4px rgba(157,23,27,.24),0 5px 12px rgba(0,0,0,.35)}
+.player.pirlo:before{background:radial-gradient(circle at 35% 28%,#fff 0 4%,#ffe89a 5% 12%,#cfaa3d 42%,#896b18 78%,#4d3908 100%);box-shadow:0 0 0 5px rgba(216,184,102,.2),0 0 20px rgba(216,184,102,.18),0 5px 12px rgba(0,0,0,.35)}
+.player.kaka:before{background:radial-gradient(circle at 35% 28%,#fff 0 4%,#d7fcff 5% 12%,#40c9d7 42%,#167b86 78%,#0b4d54 100%);box-shadow:0 0 0 5px rgba(124,238,255,.2),0 0 20px rgba(124,238,255,.18),0 5px 12px rgba(0,0,0,.35)}
+.num{position:relative;z-index:2;font-size:11px;font-weight:950;text-shadow:0 1px 3px #000}.name{position:absolute;top:43px;left:50%;transform:translateX(-50%);font-size:6.7px;font-weight:900;letter-spacing:.04em;white-space:nowrap;color:rgba(255,255,255,.78)}
+.hot{transform:scale(1.15);filter:drop-shadow(0 0 9px rgba(255,255,255,.25))}.dim{opacity:.42}
+.ball{position:absolute;z-index:19;width:14px;height:14px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff 0 16%,#ddd 17% 43%,#222 44% 57%,#f6f6f6 58% 100%);box-shadow:0 0 0 2px rgba(255,255,255,.45),0 0 14px rgba(255,255,255,.6);left:50%;top:55%;transform:translate(-50%,-50%);transition:left .55s cubic-bezier(.2,.78,.2,1),top .55s cubic-bezier(.2,.78,.2,1),opacity .2s}
+.caption{position:absolute;z-index:30;left:16px;right:16px;bottom:17px;display:flex;justify-content:space-between;align-items:flex-end;gap:12px}.caption small{display:block;font-size:8px;letter-spacing:.12em;color:rgba(255,255,255,.55)}.caption b{display:block;margin-top:3px;font-size:12px;max-width:330px}.sagi{font-size:9px;color:var(--gold);border:1px solid rgba(216,184,102,.3);padding:6px 8px;border-radius:999px;background:rgba(0,0,0,.22)}
+.sceneBar{width:min(100%,540px);margin:12px auto 0;display:grid;grid-template-columns:repeat(5,1fr);gap:5px}.sceneBtn,.control{appearance:none;border:1px solid #302c29;background:#11100f;color:#eee;border-radius:11px;min-height:44px;padding:7px 3px;font:850 9.5px inherit}.sceneBtn.on{background:linear-gradient(135deg,#d24b4f,#7e1117);border:0;color:#fff}.controls{width:min(100%,540px);margin:8px auto 0;display:flex;gap:7px;justify-content:center;flex-wrap:wrap}.control.primary{background:linear-gradient(135deg,#e0c77b,#aa8738);color:#18130a;border:0}.subBox{width:min(100%,540px);margin:9px auto 0;background:#0f0e0d;border:1px solid #302b28;border-radius:14px;padding:11px 12px}.subTitle{font-size:9px;letter-spacing:.12em;color:var(--gold);font-weight:900}.subText{font-size:13px;line-height:1.65;margin-top:5px;color:#ece8e2}.status{text-align:center;font-size:10px;color:#7d817e;margin-top:8px}
+@keyframes dash{to{stroke-dashoffset:-30}}@media(max-width:420px){.stage{border-radius:18px}.player{width:42px;height:42px;margin:-21px 0 0 -21px}.name{top:38px;font-size:6px}.hud h2{font-size:31px}.sceneBar{gap:3px}.sceneBtn{font-size:8.7px}}@media(prefers-reduced-motion:reduce){.player,.ball{transition:none}.pass,.run{animation:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="top"><div><div class="brand">SAGI TACTICAL LAB</div><div class="title">为什么安切洛蒂的AC米兰成为经典</div></div><div class="ver">4-3-2-1 · CHRISTMAS TREE</div></div>
+
+<div id="stage" class="stage">
+  <div class="hud"><div><small>ANCELOTTI · AC MILAN</small><h2>4·3·2·1</h2></div><div id="badge" class="badge">01<br>圣诞树成型</div></div>
+  <div class="pitch"><div class="half"></div><div class="circle"></div><div class="dot"></div><div class="box top"></div><div class="box bottom"></div><div class="goal top"></div><div class="goal bottom"></div></div>
+  <svg class="overlay" viewBox="0 0 100 100" preserveAspectRatio="none"><g id="routes"></g></svg>
+
+  <div id="dida" class="player"><span class="num">1</span><span class="name">DIDA</span></div>
+  <div id="janku" class="player"><span class="num">18</span><span class="name">JANKULOVSKI</span></div>
+  <div id="maldini" class="player"><span class="num">3</span><span class="name">MALDINI</span></div>
+  <div id="nesta" class="player"><span class="num">13</span><span class="name">NESTA</span></div>
+  <div id="oddo" class="player"><span class="num">44</span><span class="name">ODDO</span></div>
+  <div id="ambro" class="player"><span class="num">23</span><span class="name">AMBROSINI</span></div>
+  <div id="pirlo" class="player pirlo"><span class="num">21</span><span class="name">PIRLO</span></div>
+  <div id="gattuso" class="player"><span class="num">8</span><span class="name">GATTUSO</span></div>
+  <div id="seedorf" class="player"><span class="num">10</span><span class="name">SEEDORF</span></div>
+  <div id="kaka" class="player kaka"><span class="num">22</span><span class="name">KAKÁ</span></div>
+  <div id="inzaghi" class="player"><span class="num">9</span><span class="name">INZAGHI</span></div>
+  <div id="ball" class="ball"></div>
+
+  <div class="caption"><div><small id="capKicker">STRUCTURE</small><b id="capText">中路堆叠，形成经典“圣诞树”</b></div><div class="sagi">SAGI</div></div>
+</div>
+
+<div class="sceneBar">
+  <button class="sceneBtn on" data-scene="shape">01 阵型</button>
+  <button class="sceneBtn" data-scene="pirlo">02 皮尔洛</button>
+  <button class="sceneBtn" data-scene="shield">03 保护</button>
+  <button class="sceneBtn" data-scene="kaka">04 卡卡</button>
+  <button class="sceneBtn" data-scene="finish">05 终结</button>
+</div>
+<div class="controls">
+  <button id="playAll" class="control primary">▶ 连续播放 + 中文解说</button>
+  <button id="speak" class="control">🔊 解说当前段</button>
+  <button id="replay" class="control">↻ 重播当前</button>
+  <button id="back" class="control">← 返回4321</button>
+</div>
+<div class="subBox"><div class="subTitle">中文解说</div><div id="subtitle" class="subText"></div></div>
+<div id="status" class="status">以2007欧冠冠军阶段的经典人员结构演示</div>
+</div>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s),$$=s=>Array.from(document.querySelectorAll(s)),p=id=>document.getElementById(id);
+const routes=p('routes'),ball=p('ball');
+const base={dida:[50,86],janku:[16,72],maldini:[38,75],nesta:[62,75],oddo:[84,72],ambro:[27,55],pirlo:[50,56],gattuso:[73,55],seedorf:[38,37],kaka:[62,34],inzaghi:[50,19]};
+const meta={
+shape:{badge:'01<br>圣诞树成型',kick:'STRUCTURE',cap:'中路堆叠，形成经典“圣诞树”',text:'安切洛蒂的米兰把大量技术和跑动能力集中在中路。三名中场、两名攻击型球员，再加一名前锋，形成极具辨识度的四三二一圣诞树结构。'},
+pirlo:{badge:'02<br>皮尔洛掌舵',kick:'PIRLO',cap:'皮尔洛在中场底部控制方向和节奏',text:'这套体系的第一把钥匙，是皮尔洛。安切洛蒂让他处在中场三人组的核心位置，负责接应后卫、转换方向，并用长传直接把球送到前场。'},
+shield:{badge:'03<br>两侧保护',kick:'BALANCE',cap:'加图索与安布罗西尼覆盖、对抗、保护皮尔洛',text:'皮尔洛身边需要有人替他完成大量防守工作。加图索和安布罗西尼负责压迫、对抗和横向覆盖，让皮尔洛能够更自由地组织进攻。'},
+kaka:{badge:'04<br>自由攻击',kick:'KAKÁ + SEEDORF',cap:'西多夫连接，卡卡从两线之间高速向前',text:'再往前，是西多夫和卡卡。西多夫负责连接和控球，卡卡则是最具爆发力的攻击出口。他可以在两线之间接球，也可以直接带球冲击对方防线。'},
+finish:{badge:'05<br>因扎吉终结',kick:'VERTICAL THREAT',cap:'前场自由创造空间，因扎吉持续攻击身后',text:'最前面的因扎吉不断攻击最后一道防线。当前腰吸引防守、皮尔洛找到传球角度之后，因扎吉的反跑就成为最后一击。这套体系因此把控制、保护、创造和终结连接在了一起。'}
+};
+let current='shape',timers=[],playing=false;
+function later(fn,ms){timers.push(setTimeout(fn,ms))} function clear(){timers.forEach(clearTimeout);timers=[];if('speechSynthesis'in window)speechSynthesis.cancel()}
+function xy(id,x,y){const e=p(id);e.style.left=x+'%';e.style.top=y+'%'} function reset(){clear();Object.entries(base).forEach(([id,v])=>xy(id,v[0],v[1]));$$('.player').forEach(e=>e.classList.remove('hot','dim'));routes.innerHTML='';ball.style.left='50%';ball.style.top='56%';ball.style.opacity=1}
+function line(cls,d){routes.insertAdjacentHTML('beforeend','<path class="'+cls+'" d="'+d+'"></path>')} function ballTo(x,y,ms){later(()=>{ball.style.left=x+'%';ball.style.top=y+'%'},ms)}
+function show(scene){reset();current=scene;const m=meta[scene];p('badge').innerHTML=m.badge;p('capKicker').textContent=m.kick;p('capText').textContent=m.cap;p('subtitle').textContent=m.text;$$('.sceneBtn').forEach(b=>b.classList.toggle('on',b.dataset.scene===scene));
+ if(scene==='shape'){line('shape','M16 72 L38 75 L62 75 L84 72 M27 55 L50 56 L73 55 M38 37 L62 34 M50 19 L38 37 L27 55 M50 19 L62 34 L73 55');$$('.player').forEach(e=>e.classList.add('hot'));later(()=>$$('.player').forEach(e=>e.classList.remove('hot')),900)}
+ if(scene==='pirlo'){['pirlo','maldini','nesta','seedorf','kaka'].forEach(id=>p(id).classList.add('hot'));line('pass','M38 75 L50 56 L62 34');line('pass','M62 75 L50 56 L38 37');ballTo(38,75,10);ballTo(50,56,650);ballTo(62,34,1400);ballTo(50,56,2200);ballTo(38,37,2900)}
+ if(scene==='shield'){['pirlo','gattuso','ambro'].forEach(id=>p(id).classList.add('hot'));line('cover','M27 55 C22 48 21 42 23 35');line('cover','M73 55 C78 48 79 42 77 35');line('shape','M27 55 L50 56 L73 55');ball.style.opacity=.35;later(()=>{xy('ambro',23,48);xy('gattuso',77,48)},600)}
+ if(scene==='kaka'){['seedorf','kaka','inzaghi'].forEach(id=>p(id).classList.add('hot'));line('pass','M50 56 L38 37 L62 34');line('run','M62 34 C63 28 60 23 53 19');ballTo(50,56,10);ballTo(38,37,650);ballTo(62,34,1350);later(()=>xy('kaka',54,23),1450)}
+ if(scene==='finish'){['pirlo','kaka','inzaghi'].forEach(id=>p(id).classList.add('hot'));line('pass','M50 56 C54 44 58 34 57 26');line('run','M50 19 C49 14 50 10 50 6');ballTo(50,56,10);ballTo(57,27,800);later(()=>xy('inzaghi',50,8),900);ballTo(50,8,1550);ballTo(50,4,2200)}
+}
+function speak(scene){if(!('speechSynthesis'in window)){p('status').textContent='当前浏览器不支持系统中文语音';return}speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(meta[scene].text);u.lang='zh-CN';u.rate=1.04;u.pitch=1;const v=speechSynthesis.getVoices().find(v=>/^zh(-|_)/i.test(v.lang));if(v)u.voice=v;speechSynthesis.speak(u)}
+function playScene(s,voice){show(s);if(voice)later(()=>speak(s),260)}
+function playAll(){clear();playing=true;p('playAll').textContent='■ 停止播放';p('status').textContent='正在播放：安切洛蒂AC米兰经典4-3-2-1';const seq=['shape','pirlo','shield','kaka','finish'];let i=0;function next(){if(!playing)return;playScene(seq[i],true);i++;if(i<seq.length)timers.push(setTimeout(next,5200));else timers.push(setTimeout(()=>{playing=false;p('playAll').textContent='▶ 连续播放 + 中文解说';p('status').textContent='经典逻辑：皮尔洛掌控 · 两侧保护 · 卡卡推进 · 因扎吉终结'},5200))}next()}
+$$('.sceneBtn').forEach(b=>b.addEventListener('click',()=>{playing=false;p('playAll').textContent='▶ 连续播放 + 中文解说';playScene(b.dataset.scene,false)}));p('speak').addEventListener('click',()=>speak(current));p('replay').addEventListener('click',()=>show(current));p('playAll').addEventListener('click',()=>{if(playing){playing=false;clear();p('playAll').textContent='▶ 连续播放 + 中文解说';p('status').textContent='已停止'}else playAll()});p('back').addEventListener('click',()=>location.href='formation-4321.html');show('shape');
+})();
+</script>
+</body>
+</html>
