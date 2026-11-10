@@ -57,7 +57,7 @@ jobs:
           with urllib.request.urlopen(req,timeout=35) as r:
               tik=json.loads(r.read().decode())
               print("TIKWM_HTTP",r.status,"CORS",r.headers.get("access-control-allow-origin",""))
-          assert int(tik.get("code") or -1) == 0, tik
+          assert int(tik.get("code", -1)) == 0, tik
           td=tik.get("data") or {}
           assert td.get("play") or td.get("hdplay") or (td.get("images") or []), td
           print("TIKWM_OK")
