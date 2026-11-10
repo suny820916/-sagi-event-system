@@ -79,19 +79,33 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 .resultActions{display:none;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}.resultActions.show{display:grid}
 .capability{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}.capability span{font-size:8px;border:1px solid #2c414a;border-radius:99px;padding:5px 7px;color:#789099}.capability span.ok{border-color:#355741;color:#94bd9e}.capability span.warn{border-color:#665438;color:#d0b16e}
 @media(max-width:420px){.actions{grid-template-columns:1fr 1fr}.actions .primary{grid-column:1/-1}.platformStrip{grid-template-columns:repeat(2,1fr)}.rowActions{grid-template-columns:repeat(2,1fr)}}
+
+/* SAGI DOWN V3.1 · IMAGE STUDIO */
+.imageEditCard{border-color:#5b5033;background:linear-gradient(180deg,#15130d,#0a0f12)}
+.imageEditHead{display:flex;justify-content:space-between;gap:10px;align-items:center}.imageEditHead b{font-size:12px}.imageEditHead span{font-size:8px;color:#9c8c61}
+.imgPick{position:relative;border:1px dashed #665a37;border-radius:12px;padding:13px;background:#0e0d09;text-align:center;margin-top:9px}.imgPick input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}.imgPick b{display:block;font-size:11px}.imgPick span{display:block;font-size:8px;color:#8d8161;margin-top:4px}
+.imgCanvasWrap{margin-top:9px;border:1px solid #2e393d;border-radius:13px;background:#050708;padding:7px;display:flex;justify-content:center;align-items:center;overflow:hidden}.imgCanvasWrap canvas{display:block;max-width:100%;max-height:58vh;border-radius:9px;background:#090d0f;box-shadow:0 16px 36px rgba(0,0,0,.35);touch-action:none}
+.imgCanvasMeta{display:flex;justify-content:space-between;gap:8px;font-size:8px;color:#6e8188;margin-top:6px}
+.imgPresetGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:9px}.imgPreset{border:1px solid #2b3a40;border-radius:10px;background:#0a1114;color:#e8edef;padding:9px 7px;text-align:left}.imgPreset b{display:block;font-size:9px}.imgPreset span{display:block;font-size:7px;color:#74858b;line-height:1.4;margin-top:3px}.imgPreset.active{border-color:#d7b568;background:#1a170f;box-shadow:0 0 0 1px #d7b568 inset}
+.imgChipRow{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}.imgChip{border:1px solid #34454b;border-radius:99px;background:#0b1114;color:#8fa0a6;padding:6px 8px;font-size:8px}.imgChip.active{border-color:#cdb16a;color:#e1c980;background:#18150c}
+.imgAdjustGrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:9px}.imgAdjust{border:1px solid #27373d;border-radius:10px;background:#091013;padding:8px}.imgAdjust label{display:flex;justify-content:space-between;gap:6px;font-size:8px;color:#7d9097}.imgAdjust label b{color:#d6ba73}.imgAdjust input{width:100%;padding:0;margin:7px 0 0;accent-color:#d7b568}
+.imgTextGrid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px}.imgTextGrid label{display:block;font-size:8px;color:#71858c;margin-bottom:4px}.imgTextGrid input,.imgTextGrid textarea{width:100%;border:1px solid #2c3e45;background:#070b0d;color:#fff;border-radius:10px;padding:10px;font-size:10px;outline:none}.imgTextGrid textarea{resize:vertical;min-height:62px;line-height:1.45}.imgTextGrid .wide{grid-column:1/-1}
+.imgPublish{margin-top:9px;border:1px solid #365742;border-radius:12px;background:#0a120d;padding:10px}.imgPublish textarea,.imgPublish input{width:100%;border:1px solid #294334;background:#07100a;color:#fff;border-radius:10px;padding:10px;font-size:10px;outline:none}.imgPublish textarea{min-height:78px;resize:vertical;line-height:1.5}.imgPublishActions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}.imgPublishActions .btn:last-child{grid-column:1/-1}.imgHint{font-size:8px;color:#71827a;line-height:1.5;margin-top:7px}
+@media(max-width:420px){.imgPresetGrid{grid-template-columns:1fr 1fr}.imgAdjustGrid,.imgTextGrid{grid-template-columns:1fr}.imgTextGrid .wide{grid-column:auto}}
+
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="top">
-    <div class="brand"><b>SAGI DOWN</b><span>VIDEO LINK SHORTCUT</span></div>
-    <span class="badge">V3.0 · MULTI ENGINE ROUTER</span>
+    <div class="brand"><b>SAGI DOWN</b><span>DOWNLOAD · IMAGE · VIDEO</span></div>
+    <span class="badge">V3.1 · IMAGE + VIDEO</span>
   </div>
 
   <section class="hero">
     <div class="heroTop"><small>ONE TAP DOWNLOAD</small><span class="badge">MOBILE FIRST</span></div>
-    <h1>复制视频链接，回来直接下。</h1>
-    <p>粘贴链接即可下载。SAGI 会按平台自动切换 btch、parth-dl、TikWM、FxTwitter、yt-dlp 等下载引擎；一个节点失败会自动换下一个，不需要配置代理、API 或 Token。</p>
+    <h1>视频下载、图片编辑、再创作，都在这里。</h1>
+    <p>粘贴链接即可下载；照片可以直接做海报并分享发布；视频下载回来继续再创作。SAGI DOWN 保持手机优先，不需要来回切换多个工具。</p>
     <div class="platformStrip">
       <div class="platformChip"><b>Instagram</b>Reel / Post</div>
       <div class="platformChip"><b>YouTube</b>Video / Shorts</div>
@@ -122,6 +136,73 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
     </div>
     <div id="status" class="status">等待粘贴视频链接。</div>
   </section>
+
+
+  <section class="card imageEditCard" id="imageStudioCard">
+    <div class="imageEditHead">
+      <div><b>IMAGE STUDIO · 图片编辑发布</b><span>照片 → 海报 → 高清导出 → 手机分享</span></div>
+      <span class="badge">V1.0</span>
+    </div>
+
+    <div class="imgPick">
+      <input id="sdImgFile" type="file" accept="image/*">
+      <b id="sdImgFileTitle">选择一张照片</b>
+      <span>比赛照 / 球员照 / 球衣图 / 热点人物图 · 支持 iPhone 相册</span>
+    </div>
+
+    <div class="imgCanvasWrap"><canvas id="sdImgCanvas" width="1080" height="1440"></canvas></div>
+    <div class="imgCanvasMeta"><span id="sdImgRatioMeta">抖音图文 3:4</span><span id="sdImgSizeMeta">1080 × 1440 · PNG</span></div>
+
+    <div class="imgPresetGrid">
+      <button class="imgPreset active" data-img-template="breaking" type="button"><b>热点重击</b><span>大标题 · 强情绪</span></button>
+      <button class="imgPreset" data-img-template="matchday" type="button"><b>MATCH DAY</b><span>比赛预告</span></button>
+      <button class="imgPreset" data-img-template="result" type="button"><b>赛果</b><span>比分 · 晋级</span></button>
+      <button class="imgPreset" data-img-template="mvp" type="button"><b>MVP</b><span>人物英雄图</span></button>
+      <button class="imgPreset" data-img-template="jersey" type="button"><b>球衣发布</b><span>SAGI 产品图</span></button>
+      <button class="imgPreset" data-img-template="minimal" type="button"><b>极简</b><span>摄影优先</span></button>
+    </div>
+
+    <div class="imgChipRow">
+      <button class="imgChip active" data-img-ratio="3:4" type="button">3:4 抖音图文</button>
+      <button class="imgChip" data-img-ratio="9:16" type="button">9:16 竖屏</button>
+      <button class="imgChip" data-img-ratio="1:1" type="button">1:1 方图</button>
+      <button class="imgChip" data-img-ratio="16:9" type="button">16:9 横图</button>
+    </div>
+    <div class="imgChipRow">
+      <button class="imgChip active" data-img-theme="gold" type="button">SAGI 黑金</button>
+      <button class="imgChip" data-img-theme="ice" type="button">赛事冰蓝</button>
+      <button class="imgChip" data-img-theme="red" type="button">热点红</button>
+    </div>
+
+    <div class="imgAdjustGrid">
+      <div class="imgAdjust"><label>亮度 <b id="sdImgBrightnessVal">100%</b></label><input id="sdImgBrightness" type="range" min="60" max="140" value="100"></div>
+      <div class="imgAdjust"><label>对比度 <b id="sdImgContrastVal">105%</b></label><input id="sdImgContrast" type="range" min="70" max="150" value="105"></div>
+      <div class="imgAdjust"><label>饱和度 <b id="sdImgSaturationVal">100%</b></label><input id="sdImgSaturation" type="range" min="0" max="180" value="100"></div>
+      <div class="imgAdjust"><label>缩放 <b id="sdImgZoomVal">100%</b></label><input id="sdImgZoom" type="range" min="100" max="260" value="100"></div>
+      <div class="imgAdjust"><label>旋转 <b id="sdImgRotateVal">0°</b></label><input id="sdImgRotate" type="range" min="-12" max="12" value="0"></div>
+    </div>
+
+    <div class="imgTextGrid">
+      <div><label>KICKER</label><input id="sdImgKicker" value="BREAKING"></div>
+      <div><label>页脚</label><input id="sdImgFooter" value="SAGI SPORTS · 为身边的足球加油"></div>
+      <div class="wide"><label>主标题</label><textarea id="sdImgHeadline" placeholder="例如：领先18分，冠军还是丢了"></textarea></div>
+      <div class="wide"><label>副标题</label><textarea id="sdImgSub" placeholder="比分、事实、人物信息或情绪补充"></textarea></div>
+    </div>
+
+    <div class="imgPublish">
+      <div class="sectionHead"><div class="label">PUBLISH · 发布包</div><div class="mini">图片 + 文案 + 标签</div></div>
+      <textarea id="sdImgCaption" placeholder="发布正文 / 观点 / CTA"></textarea>
+      <input id="sdImgTags" value="#新疆足球 #足球 #SAGI" style="margin-top:7px">
+      <div class="imgPublishActions">
+        <button class="btn gold" id="sdImgExportBtn" type="button">导出高清 PNG</button>
+        <button class="btn blue" id="sdImgCopyBtn" type="button">复制发布文案</button>
+        <button class="btn primary" id="sdImgShareBtn" type="button">分享 / 发布图片</button>
+        <button class="btn" id="sdImgToPublishBtn" type="button">送入 CONTENT OS · PUBLISH</button>
+      </div>
+      <div class="imgHint">画布可直接用手指拖动照片。分享按钮优先调用手机系统分享面板；“送入 PUBLISH”会建立待发布任务，但不会把大图塞进浏览器缓存。</div>
+    </div>
+  </section>
+
 
   <section class="card recreateCard" id="recreateCard">
     <div class="sectionHead">
@@ -2197,6 +2278,156 @@ q('translateSubtitleBtn').onclick=translateSubtitles;
 q('speakNarrationBtn').onclick=speakNarration;
 q('recordNarrationBtn').onclick=startVoiceRecord;
 q('stopNarrationBtn').onclick=stopVoiceRecord;
+
+/* ===== SAGI DOWN IMAGE STUDIO V1.0 ===== */
+const SDIMG_KEY='sagi_down_image_studio_v1';
+const SDIMG_OS_KEY='sagi_content_os_v10';
+const SDIMG_RATIOS={
+  '3:4':{w:1080,h:1440,label:'抖音图文 3:4'},
+  '9:16':{w:1080,h:1920,label:'竖屏 9:16'},
+  '1:1':{w:1080,h:1080,label:'方图 1:1'},
+  '16:9':{w:1920,h:1080,label:'横图 16:9'}
+};
+const SDIMG_TEMPLATES={
+  breaking:{kicker:'BREAKING',footer:'SAGI SPORTS · 为身边的足球加油'},
+  matchday:{kicker:'MATCH DAY',footer:'SAGI SPORTS · FOOTBALL'},
+  result:{kicker:'FULL TIME',footer:'SAGI SPORTS · MATCH RESULT'},
+  mvp:{kicker:'PLAYER OF THE MATCH',footer:'SAGI SPORTS · MVP'},
+  jersey:{kicker:'NEW SEASON',footer:'SAGI SPORTS · TEAMWEAR'},
+  minimal:{kicker:'SAGI SPORTS',footer:'为身边的足球加油'}
+};
+const SDIMG_THEMES={
+  gold:{accent:'#d7b568',text:'#f4f6f7',muted:'#aab4b8',overlay:'rgba(3,6,7,.78)'},
+  ice:{accent:'#9ed8e8',text:'#f5f8f9',muted:'#a8bac0',overlay:'rgba(4,12,16,.74)'},
+  red:{accent:'#ff625d',text:'#ffffff',muted:'#c8b7b6',overlay:'rgba(10,4,5,.76)'}
+};
+let SDIMG={ratio:'3:4',template:'breaking',theme:'gold',brightness:100,contrast:105,saturation:100,zoom:100,rotate:0,panX:0,panY:0,kicker:'BREAKING',headline:'',sub:'',footer:'SAGI SPORTS · 为身边的足球加油',caption:'',tags:'#新疆足球 #足球 #SAGI',sourceName:''};
+let SDIMG_IMAGE=null,SDIMG_URL='',SDIMG_DRAG=null;
+try{SDIMG={...SDIMG,...JSON.parse(localStorage.getItem(SDIMG_KEY)||'{}')}}catch(e){}
+function sdImgSave(){try{localStorage.setItem(SDIMG_KEY,JSON.stringify(SDIMG))}catch(e){}}
+function sdImgClamp(v,a,b){return Math.max(a,Math.min(b,v))}
+function sdImgCanvas(){return q('sdImgCanvas')}
+function sdImgSetupCanvas(){
+  const c=sdImgCanvas(),r=SDIMG_RATIOS[SDIMG.ratio]||SDIMG_RATIOS['3:4'];
+  if(c.width!==r.w||c.height!==r.h){c.width=r.w;c.height=r.h}
+  q('sdImgRatioMeta').textContent=r.label;q('sdImgSizeMeta').textContent=r.w+' × '+r.h+' · PNG'
+}
+function sdImgWrap(ctx,text,maxWidth,fontSize,maxLines){
+  const chars=Array.from(String(text||'')),lines=[];let line='';
+  ctx.font='900 '+fontSize+'px -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif';
+  for(const ch of chars){
+    if(ch==='\n'){if(line)lines.push(line);line='';if(lines.length>=maxLines)break;continue}
+    const test=line+ch;
+    if(line&&ctx.measureText(test).width>maxWidth){lines.push(line);line=ch;if(lines.length>=maxLines)break}else line=test
+  }
+  if(line&&lines.length<maxLines)lines.push(line);
+  if(lines.length===maxLines&&chars.length>lines.join('').length)lines[maxLines-1]=lines[maxLines-1].replace(/[，。；：、\s]*$/,'')+'…';
+  return lines
+}
+function sdImgFitFont(ctx,text,maxWidth,start,min){
+  let size=start;while(size>min){ctx.font='900 '+size+'px -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif';if(ctx.measureText(text).width<=maxWidth)break;size-=4}return size
+}
+function sdImgDrawPhoto(ctx,w,h){
+  if(!SDIMG_IMAGE)return false;
+  const base=Math.max(w/SDIMG_IMAGE.naturalWidth,h/SDIMG_IMAGE.naturalHeight),scale=base*(Number(SDIMG.zoom)||100)/100,iw=SDIMG_IMAGE.naturalWidth*scale,ih=SDIMG_IMAGE.naturalHeight*scale,cx=w/2+(Number(SDIMG.panX)||0)*w,cy=h/2+(Number(SDIMG.panY)||0)*h;
+  ctx.save();ctx.translate(cx,cy);ctx.rotate((Number(SDIMG.rotate)||0)*Math.PI/180);ctx.filter='brightness('+(Number(SDIMG.brightness)||100)+'%) contrast('+(Number(SDIMG.contrast)||100)+'%) saturate('+(Number(SDIMG.saturation)||100)+'%)';ctx.drawImage(SDIMG_IMAGE,-iw/2,-ih/2,iw,ih);ctx.restore();ctx.filter='none';return true
+}
+function sdImgDrawEmpty(ctx,w,h,t){
+  const g=ctx.createLinearGradient(0,0,w,h);g.addColorStop(0,'#071014');g.addColorStop(.55,'#0e1518');g.addColorStop(1,'#251d0b');ctx.fillStyle=g;ctx.fillRect(0,0,w,h);
+  ctx.save();ctx.globalAlpha=.14;ctx.strokeStyle=t.accent;ctx.lineWidth=3;for(let i=-4;i<12;i++){ctx.beginPath();ctx.moveTo(i*180,-80);ctx.lineTo(i*180+680,h+100);ctx.stroke()}ctx.restore();
+  ctx.textAlign='center';ctx.fillStyle='rgba(255,255,255,.20)';ctx.font='700 '+Math.max(24,Math.round(w*.026))+'px -apple-system,"PingFang SC",sans-serif';ctx.fillText('选择照片后开始编辑',w/2,h/2);ctx.textAlign='left'
+}
+function sdImgOverlay(ctx,w,h,t){
+  const g=ctx.createLinearGradient(0,0,0,h);g.addColorStop(0,'rgba(0,0,0,.08)');g.addColorStop(.47,'rgba(0,0,0,.20)');g.addColorStop(1,t.overlay);ctx.fillStyle=g;ctx.fillRect(0,0,w,h);
+  const glow=ctx.createRadialGradient(w*.82,h*.16,10,w*.82,h*.16,w*.68);glow.addColorStop(0,t.accent+'38');glow.addColorStop(1,t.accent+'00');ctx.fillStyle=glow;ctx.fillRect(0,0,w,h)
+}
+function sdImgBrand(ctx,w,h,t){
+  const pad=Math.round(w*.065);ctx.fillStyle=t.accent;ctx.fillRect(pad,Math.round(h*.055),Math.round(w*.12),Math.max(5,Math.round(w*.006)));
+  ctx.fillStyle=t.text;ctx.font='900 '+Math.max(25,Math.round(w*.032))+'px -apple-system,"PingFang SC",sans-serif';ctx.fillText('SAGI SPORTS',pad,Math.round(h*.105));
+  ctx.fillStyle=t.muted;ctx.font='650 '+Math.max(18,Math.round(w*.020))+'px -apple-system,"PingFang SC",sans-serif';ctx.fillText('FOOTBALL CONTENT',pad,Math.round(h*.135))
+}
+function sdImgDefaultText(ctx,w,h,t){
+  const pad=Math.round(w*.065),max=w-pad*2,kicker=String(SDIMG.kicker||'').trim(),headline=String(SDIMG.headline||'').trim()||'你的主标题',sub=String(SDIMG.sub||'').trim(),baseY=Math.round(h*(SDIMG.template==='minimal'?.64:.58));
+  ctx.fillStyle=t.accent;ctx.font='900 '+Math.max(24,Math.round(w*.034))+'px -apple-system,"PingFang SC",sans-serif';ctx.fillText(kicker.toUpperCase(),pad,baseY);
+  const start=Math.round(w*(SDIMG.template==='breaking'?.09:.074)),fs=Math.max(48,sdImgFitFont(ctx,headline,max,start,44)),lines=sdImgWrap(ctx,headline,max,fs,4),lh=fs*1.13;
+  ctx.fillStyle=t.text;ctx.font='900 '+fs+'px -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif';lines.forEach((line,i)=>ctx.fillText(line,pad,baseY+Math.round(w*.08)+i*lh));
+  const sy=baseY+Math.round(w*.08)+lines.length*lh+Math.round(w*.03);
+  if(sub){ctx.fillStyle=t.muted;ctx.font='650 '+Math.max(25,Math.round(w*.029))+'px -apple-system,"PingFang SC",sans-serif';sdImgWrap(ctx,sub,max,Math.max(25,Math.round(w*.029)),3).forEach((line,i)=>ctx.fillText(line,pad,sy+i*Math.round(w*.043)))}
+}
+function sdImgResultText(ctx,w,h,t){
+  const pad=Math.round(w*.065),max=w-pad*2,headline=String(SDIMG.headline||'3 : 2').trim(),score=(headline.match(/\d+\s*[:：-]\s*\d+/)||[])[0];
+  ctx.fillStyle=t.accent;ctx.font='900 '+Math.max(25,Math.round(w*.035))+'px -apple-system,"PingFang SC",sans-serif';ctx.fillText(String(SDIMG.kicker||'FULL TIME').toUpperCase(),pad,Math.round(h*.54));
+  if(!score){sdImgDefaultText(ctx,w,h,t);return}
+  ctx.fillStyle=t.text;ctx.font='1000 '+Math.max(130,Math.round(w*.19))+'px -apple-system,"PingFang SC",sans-serif';ctx.fillText(score.replace(/-/g,':'),pad,Math.round(h*.70));
+  const before=headline.replace(score,'').trim();if(before){ctx.font='900 '+Math.max(42,Math.round(w*.056))+'px -apple-system,"PingFang SC",sans-serif';sdImgWrap(ctx,before,max,Math.max(42,Math.round(w*.056)),2).forEach((line,i)=>ctx.fillText(line,pad,Math.round(h*.79)+i*Math.round(w*.068)))}
+  if(SDIMG.sub){ctx.fillStyle=t.muted;ctx.font='650 '+Math.max(24,Math.round(w*.028))+'px -apple-system,"PingFang SC",sans-serif';sdImgWrap(ctx,SDIMG.sub,max,Math.max(24,Math.round(w*.028)),2).forEach((line,i)=>ctx.fillText(line,pad,Math.round(h*.88)+i*Math.round(w*.041)))}
+}
+function sdImgFooter(ctx,w,h,t){
+  const pad=Math.round(w*.065);ctx.fillStyle='rgba(255,255,255,.13)';ctx.fillRect(pad,h-Math.round(h*.09),w-pad*2,2);
+  ctx.fillStyle=t.muted;ctx.font='650 '+Math.max(18,Math.round(w*.020))+'px -apple-system,"PingFang SC",sans-serif';ctx.fillText(String(SDIMG.footer||''),pad,h-Math.round(h*.052));ctx.textAlign='right';ctx.fillStyle=t.accent;ctx.fillText('SAGI',w-pad,h-Math.round(h*.052));ctx.textAlign='left'
+}
+function sdImgDraw(){
+  const c=sdImgCanvas();if(!c)return;sdImgSetupCanvas();const ctx=c.getContext('2d'),w=c.width,h=c.height,t=SDIMG_THEMES[SDIMG.theme]||SDIMG_THEMES.gold;ctx.clearRect(0,0,w,h);
+  if(!sdImgDrawPhoto(ctx,w,h))sdImgDrawEmpty(ctx,w,h,t);sdImgOverlay(ctx,w,h,t);sdImgBrand(ctx,w,h,t);
+  if(SDIMG.template==='result')sdImgResultText(ctx,w,h,t);else{if(SDIMG.template==='mvp'){ctx.save();ctx.globalAlpha=.13;ctx.fillStyle=t.accent;ctx.font='1000 '+Math.round(w*.34)+'px -apple-system,sans-serif';ctx.fillText('MVP',Math.round(w*.15),Math.round(h*.57));ctx.restore()}sdImgDefaultText(ctx,w,h,t)}
+  sdImgFooter(ctx,w,h,t)
+}
+function sdImgSync(){
+  document.querySelectorAll('[data-img-template]').forEach(b=>b.classList.toggle('active',b.dataset.imgTemplate===SDIMG.template));
+  document.querySelectorAll('[data-img-ratio]').forEach(b=>b.classList.toggle('active',b.dataset.imgRatio===SDIMG.ratio));
+  document.querySelectorAll('[data-img-theme]').forEach(b=>b.classList.toggle('active',b.dataset.imgTheme===SDIMG.theme));
+  const vals={sdImgBrightness:SDIMG.brightness,sdImgContrast:SDIMG.contrast,sdImgSaturation:SDIMG.saturation,sdImgZoom:SDIMG.zoom,sdImgRotate:SDIMG.rotate};Object.entries(vals).forEach(([id,v])=>{if(q(id))q(id).value=v});
+  q('sdImgBrightnessVal').textContent=SDIMG.brightness+'%';q('sdImgContrastVal').textContent=SDIMG.contrast+'%';q('sdImgSaturationVal').textContent=SDIMG.saturation+'%';q('sdImgZoomVal').textContent=SDIMG.zoom+'%';q('sdImgRotateVal').textContent=SDIMG.rotate+'°';
+  q('sdImgKicker').value=SDIMG.kicker||'';q('sdImgHeadline').value=SDIMG.headline||'';q('sdImgSub').value=SDIMG.sub||'';q('sdImgFooter').value=SDIMG.footer||'';q('sdImgCaption').value=SDIMG.caption||'';q('sdImgTags').value=SDIMG.tags||'';
+  q('sdImgFileTitle').textContent=SDIMG.sourceName||'选择一张照片';sdImgSetupCanvas();sdImgDraw()
+}
+function sdImgTemplate(name){
+  if(!SDIMG_TEMPLATES[name])return;SDIMG.template=name;SDIMG.kicker=SDIMG_TEMPLATES[name].kicker;SDIMG.footer=SDIMG_TEMPLATES[name].footer;
+  if(name==='matchday'&&!SDIMG.headline)SDIMG.headline='MATCH DAY';if(name==='result'&&!SDIMG.headline)SDIMG.headline='3 : 2';if(name==='mvp'&&!SDIMG.headline)SDIMG.headline='本场最佳球员';if(name==='jersey'&&!SDIMG.headline)SDIMG.headline='新赛季战袍';sdImgSave();sdImgSync()
+}
+function sdImgLoad(file){
+  if(!file)return;if(SDIMG_URL)URL.revokeObjectURL(SDIMG_URL);SDIMG_URL=URL.createObjectURL(file);const im=new Image();
+  im.onload=()=>{SDIMG_IMAGE=im;SDIMG.sourceName=file.name;SDIMG.panX=0;SDIMG.panY=0;SDIMG.zoom=100;SDIMG.rotate=0;sdImgSave();sdImgSync();toast('图片已载入 · 可拖动构图')};
+  im.onerror=()=>toast('图片读取失败');im.src=SDIMG_URL
+}
+function sdImgBlob(){return new Promise(resolve=>sdImgCanvas().toBlob(resolve,'image/png',.96))}
+function sdImgSafeName(v){return String(v||'SAGI').replace(/[\\/:*?"<>|]/g,'_').slice(0,48)}
+async function sdImgExport(){
+  const blob=await sdImgBlob();if(!blob){toast('导出失败');return}const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='SAGI_'+sdImgSafeName(SDIMG.headline||SDIMG.template)+'_'+SDIMG.ratio.replace(':','x')+'.png';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1200);toast('高清 PNG 已生成')
+}
+function sdImgPublishText(){return (SDIMG.caption||SDIMG.headline||'')+(SDIMG.tags?'\n\n'+SDIMG.tags:'')}
+async function sdImgCopy(){const text=sdImgPublishText();if(!text){toast('先填写发布文案');return}try{await navigator.clipboard.writeText(text);toast('发布文案已复制')}catch(e){toast('复制失败')}}
+async function sdImgShare(){
+  const blob=await sdImgBlob();if(!blob){toast('图片生成失败');return}const file=new File([blob],'SAGI_'+sdImgSafeName(SDIMG.headline||'POST')+'.png',{type:'image/png'});
+  try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],text:sdImgPublishText()});return}}catch(e){if(e?.name==='AbortError')return}
+  await sdImgExport();await sdImgCopy();toast('已导出图片并复制文案')
+}
+function sdImgToContentPublish(){
+  let os={};try{os=JSON.parse(localStorage.getItem(SDIMG_OS_KEY)||'{}')||{}}catch(e){}
+  os.projects=Array.isArray(os.projects)?os.projects:[];os.contents=Array.isArray(os.contents)?os.contents:[];
+  const projectId='sagidown_image';if(!os.projects.some(x=>x.id===projectId))os.projects.unshift({id:projectId,type:'brand',name:'SAGI DOWN 图片内容',tag:'IMAGE STUDIO',desc:'由 SAGI DOWN 图片编辑器生成的待发布内容',assets:{},createdAt:Date.now(),updatedAt:Date.now()});
+  const title=(SDIMG.headline||'SAGI 图片内容').trim(),id='content_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,6);
+  os.contents.unshift({id,projectId:'local:'+projectId,title,format:'poster',goal:'reach',style:'premium',platform:'douyin',hook:SDIMG.sub||title,cover:title,cta:SDIMG.footer||'',tags:SDIMG.tags||'',caption:SDIMG.caption||'',status:'ready',scheduleAt:new Date(Date.now()+8*3600000).toISOString().slice(0,10)+'T20:00',createdAt:Date.now(),updatedAt:Date.now(),imageDraft:{ratio:SDIMG.ratio,template:SDIMG.template,theme:SDIMG.theme,sourceName:SDIMG.sourceName}});
+  os.currentProjectId='local:'+projectId;os.currentContentId=id;localStorage.setItem(SDIMG_OS_KEY,JSON.stringify(os));toast('已送入 CONTENT OS · PUBLISH')
+}
+function sdImgBindRange(id,key,suffix){const el=q(id);if(!el)return;el.oninput=()=>{SDIMG[key]=Number(el.value);q(id+'Val').textContent=SDIMG[key]+suffix;sdImgSave();sdImgDraw()}}
+function sdImgBindText(id,key){const el=q(id);if(!el)return;el.oninput=()=>{SDIMG[key]=el.value;sdImgSave();sdImgDraw()}}
+q('sdImgFile').onchange=e=>{const f=e.target.files?.[0];if(f)sdImgLoad(f);e.target.value=''};
+document.querySelectorAll('[data-img-template]').forEach(b=>b.onclick=()=>sdImgTemplate(b.dataset.imgTemplate));
+document.querySelectorAll('[data-img-ratio]').forEach(b=>b.onclick=()=>{SDIMG.ratio=b.dataset.imgRatio;sdImgSave();sdImgSync()});
+document.querySelectorAll('[data-img-theme]').forEach(b=>b.onclick=()=>{SDIMG.theme=b.dataset.imgTheme;sdImgSave();sdImgSync()});
+sdImgBindRange('sdImgBrightness','brightness','%');sdImgBindRange('sdImgContrast','contrast','%');sdImgBindRange('sdImgSaturation','saturation','%');sdImgBindRange('sdImgZoom','zoom','%');sdImgBindRange('sdImgRotate','rotate','°');
+sdImgBindText('sdImgKicker','kicker');sdImgBindText('sdImgHeadline','headline');sdImgBindText('sdImgSub','sub');sdImgBindText('sdImgFooter','footer');sdImgBindText('sdImgCaption','caption');sdImgBindText('sdImgTags','tags');
+q('sdImgExportBtn').onclick=sdImgExport;q('sdImgCopyBtn').onclick=sdImgCopy;q('sdImgShareBtn').onclick=sdImgShare;q('sdImgToPublishBtn').onclick=sdImgToContentPublish;
+{
+  const c=sdImgCanvas();
+  c.onpointerdown=e=>{SDIMG_DRAG={x:e.clientX,y:e.clientY,px:Number(SDIMG.panX)||0,py:Number(SDIMG.panY)||0};c.setPointerCapture?.(e.pointerId)};
+  c.onpointermove=e=>{if(!SDIMG_DRAG||!SDIMG_IMAGE)return;const r=c.getBoundingClientRect();SDIMG.panX=sdImgClamp(SDIMG_DRAG.px+(e.clientX-SDIMG_DRAG.x)/Math.max(1,r.width),-.8,.8);SDIMG.panY=sdImgClamp(SDIMG_DRAG.py+(e.clientY-SDIMG_DRAG.y)/Math.max(1,r.height),-.8,.8);sdImgDraw()};
+  const end=()=>{if(SDIMG_DRAG){SDIMG_DRAG=null;sdImgSave()}};c.onpointerup=end;c.onpointercancel=end
+}
+sdImgSync();
+/* ===== END IMAGE STUDIO ===== */
+
 q('exportStudioBtn').onclick=exportStudio;
 q('cancelExportBtn').onclick=cancelExport;
 q('shareResultBtn').onclick=shareResult;
@@ -2206,7 +2437,7 @@ if(q('captionSpeed'))q('captionSpeed').value='fast';
 if(q('captionRange'))q('captionRange').value='trim';
 setTimeout(async()=>{await wakeCaptionCloud();refreshAIVoiceStatus(false)},180);
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=203',{updateViaCache:'none'}).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=310',{updateViaCache:'none'}).catch(()=>{})}
 })();
 </script>
 </body>
