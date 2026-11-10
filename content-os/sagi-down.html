@@ -97,6 +97,16 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 
 
 
+
+/* SAGI POSTER LAYER EDITOR V1.0 */
+.origLayerEditor{margin-top:9px;border:1px solid #33434a;border-radius:12px;background:#081013;padding:10px}
+.origLayerHead{display:flex;justify-content:space-between;gap:8px;align-items:center}.origLayerHead b{font-size:10px}.origLayerHead span{font-size:8px;color:#72858c}
+.origLayerTabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}.origLayerBtn{border:1px solid #314149;border-radius:9px;background:#091114;color:#94a4a9;padding:8px 5px;font-size:8px}.origLayerBtn.active{border-color:#d7b568;color:#e4ca84;background:#18150c;box-shadow:0 0 0 1px #d7b568 inset}
+.origLayerControls{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}.origLayerControls label{font-size:7px;color:#71858c}.origLayerControls input{width:100%;margin-top:4px;padding:0;accent-color:#d7b568}
+.origLayerActions{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}.origDragHint{font-size:7px;color:#6f8289;line-height:1.45;margin-top:7px}
+.origOfficial{margin-top:9px;border:1px solid #345744;border-radius:11px;background:#08120c;padding:9px}.origOfficialTop{display:flex;justify-content:space-between;gap:8px;align-items:center}.origOfficialTop b{font-size:9px}.origOfficialTop span{font-size:7px;color:#79a185}.origOfficialRows{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:7px}.origOfficialRows div{border:1px solid #294133;border-radius:8px;padding:7px;background:#06100a}.origOfficialRows span{display:block;font-size:7px;color:#6f8b78}.origOfficialRows b{display:block;font-size:9px;margin-top:3px}.officialOk{color:#9fd2ad!important}.officialWarn{color:#d7b568!important}
+@media(max-width:520px){.origLayerControls{grid-template-columns:1fr}.origOfficialRows{grid-template-columns:1fr 1fr}}
+
 /* SAGI MATERIAL KIT V1.0 */
 .origMaterial{margin-top:9px;border:1px solid #334247;border-radius:12px;background:#081013;padding:10px}
 .origMaterialHead{display:flex;justify-content:space-between;gap:9px;align-items:center}.origMaterialHead b{font-size:10px}.origMaterialHead span{font-size:8px;color:#71858c}
@@ -146,7 +156,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 <div class="wrap">
   <div class="top">
     <div class="brand"><b>SAGI DOWN</b><span>DOWNLOAD · IMAGE AI · VIDEO</span></div>
-    <span class="badge">V3.4.2 · STREAK VERIFY HOTFIX</span>
+    <span class="badge">V3.5 · LAYER EDITOR + OFFICIAL VERIFY</span>
   </div>
 
   <section class="hero">
@@ -327,6 +337,44 @@ AEK 2-3 皇马
       </div>
 
       <div class="origCanvasWrap"><canvas id="sdOrigCanvas" width="1080" height="1440"></canvas></div>
+
+
+      <div class="origLayerEditor" id="sdOrigLayerEditor">
+        <div class="origLayerHead">
+          <div><b>LAYER EDITOR · 图层排版</b><span>点选图层后，可直接在画布拖动，也可用滑杆微调。</span></div>
+          <span class="badge">DRAG</span>
+        </div>
+        <div class="origLayerTabs">
+          <button class="origLayerBtn active" data-orig-layer="person" type="button">人物</button>
+          <button class="origLayerBtn" data-orig-layer="number" type="button">大数字</button>
+          <button class="origLayerBtn" data-orig-layer="scores" type="button">比分</button>
+          <button class="origLayerBtn" data-orig-layer="title" type="button">标题</button>
+        </div>
+        <div class="origLayerControls">
+          <label>水平位置 X<input id="sdOrigLayerX" type="range" min="-35" max="35" value="0"></label>
+          <label>垂直位置 Y<input id="sdOrigLayerY" type="range" min="-35" max="35" value="0"></label>
+          <label>图层缩放<input id="sdOrigLayerScale" type="range" min="60" max="160" value="100"></label>
+        </div>
+        <div class="origLayerActions">
+          <button class="btn gold" id="sdOrigAutoLayoutBtn" type="button">自动避让排版</button>
+          <button class="btn" id="sdOrigResetLayerBtn" type="button">重置当前图层</button>
+        </div>
+        <div class="origDragHint">画布拖动只移动当前选中的图层。人物、数字、比分、标题互不绑定，避免再次全部挤在一起。</div>
+      </div>
+
+      <div class="origOfficial" id="sdOrigOfficialVerify">
+        <div class="origOfficialTop">
+          <div><b>OFFICIAL DATA VERIFY · 官方数据核验</b><span>皇马内容优先核对 Real Madrid 官方网站，一般媒体只作为补充。</span></div>
+          <span class="badge">OFFICIAL FIRST</span>
+        </div>
+        <div class="origOfficialRows">
+          <div><span>数据级别</span><b id="sdOfficialTier">等待分析</b></div>
+          <div><span>官方来源</span><b id="sdOfficialSource">—</b></div>
+          <div><span>最新赛果</span><b id="sdOfficialLatest">—</b></div>
+          <div><span>连胜结论</span><b id="sdOfficialStreak">—</b></div>
+        </div>
+      </div>
+
 
       <div class="origMeta">
         <div><span>主题</span><b id="sdOrigSubject">—</b></div>
@@ -631,7 +679,7 @@ Unbelievable finish."></textarea>
 
 <script>
 (()=>{'use strict';
-const SAGI_DOWN_BUILD='V3.4.2';
+const SAGI_DOWN_BUILD='V3.5.0';
 document.documentElement.dataset.sagiDownBuild=SAGI_DOWN_BUILD;
 const BTCH_PUBLIC='https://btch-downloader-api-green.vercel.app';
 const DOWNLOAD_ROUTER_VERSION='3.0';
@@ -3163,7 +3211,7 @@ if(q('captionSpeed'))q('captionSpeed').value='fast';
 if(q('captionRange'))q('captionRange').value='trim';
 setTimeout(async()=>{await wakeCaptionCloud();refreshAIVoiceStatus(false)},180);
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=342',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=350',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})}
 })();
 </script>
 </body>
