@@ -85,7 +85,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 <div class="wrap">
   <div class="top">
     <div class="brand"><b>SAGI DOWN</b><span>VIDEO LINK SHORTCUT</span></div>
-    <span class="badge">V1.9.3 · CLOUD RENDER GATE</span>
+    <span class="badge">V1.9.4 · ONE-SHOT STABILITY</span>
   </div>
 
   <section class="hero">
@@ -556,16 +556,21 @@ async function voiceApiReady(){
 async function refreshAIVoiceStatus(showToast=false){
  try{
    await voiceApiReady();
+   const health=STUDIO.cloudHealth||{};
+   if(!health.aiVoice){
+     STUDIO.aiVoiceReady=false;
+     setVoiceState('当前云端 V'+(health.version||'?')+' 尚未部署 AI Voice。按钮不会再请求404；可先用“手机朗读试听”。');
+     return null
+   }
    const r=await fetch(CAPTION_CLOUD+'/api/voice/status',{headers:{Authorization:'Bearer '+STUDIO.cloudCaptionToken},cache:'no-store'});
    const d=await r.json().catch(()=>({}));
    if(!r.ok||!d?.ok)throw new Error(d?.error||('HTTP '+r.status));
    STUDIO.aiVoiceReady=!!d.configured;STUDIO.aiVoiceVoices=d.voices||[];
    if(d.configured){
-     setVoiceState('AI Voice 已连接 · '+d.voiceCount+' 个可用音色 · '+d.model+(STUDIO.cloneVoiceId?' · 我的克隆声音已保存':''));
+     const clone=d.cloneConfigured?' · 克隆声音可用':' · 克隆声音需 ElevenLabs Key';
+     setVoiceState('AI Voice 已连接 · '+d.provider+' · '+d.voiceCount+' 个音色'+clone+(STUDIO.cloneVoiceId?' · 已保存我的声音':''));
      if(showToast)toast('AI Voice 已连接')
-   }else{
-     setVoiceState('AI Voice 尚未配置 ElevenLabs API Key。录音/手机朗读仍可使用。')
-   }
+   }else setVoiceState('AI Voice 当前不可用，手机朗读仍可试听。');
    return d
  }catch(e){
    STUDIO.aiVoiceReady=false;setVoiceState('AI Voice 不可用：'+(e.message||e));return null
@@ -581,26 +586,46 @@ async function previewAIVoice(){
  }
  if(mode==='none'){studioStatus('当前选择“不加解说”。','warn');return}
  if(mode==='clone'&&!STUDIO.cloneVoiceId){studioStatus('还没有克隆声音，请先录一段自己的声音再克隆。','warn');return}
+
  try{
-   await voiceApiReady();setVoiceState('正在生成 AI 配音试听…');
+   await voiceApiReady();
+   const health=STUDIO.cloudHealth||{};
+   if(!health.aiVoice){
+     setVoiceState('云端 AI Voice 尚未上线，已自动改用手机系统朗读试听。');
+     speakNarration();
+     return
+   }
+   setVoiceState('正在生成 AI 配音试听…');
    const r=await fetch(CAPTION_CLOUD+'/api/voice/preview',{
      method:'POST',
      headers:{'Content-Type':'application/json',Authorization:'Bearer '+STUDIO.cloudCaptionToken},
-     body:JSON.stringify({text:text.slice(0,180),mode,voice_id:mode==='clone'?STUDIO.cloneVoiceId:'',speed:Number(q('aiVoiceSpeed')?.value)||1})
+     body:JSON.stringify({text:text.slice(0,500),mode,voice_id:mode==='clone'?STUDIO.cloneVoiceId:'',speed:Number(q('aiVoiceSpeed')?.value)||1})
    });
-   if(!r.ok){const d=await r.json().catch(()=>({}));throw new Error(d?.error||('HTTP '+r.status))}
+   if(!r.ok){
+     const d=await r.json().catch(()=>({}));
+     if(r.status===404){setVoiceState('云端还是旧版本，已切到手机朗读试听。');speakNarration();return}
+     throw new Error(d?.error||('HTTP '+r.status))
+   }
    const blob=await r.blob();
    if(STUDIO.voicePreviewUrl)URL.revokeObjectURL(STUDIO.voicePreviewUrl);
    STUDIO.voicePreviewUrl=URL.createObjectURL(blob);
    const a=q('aiVoicePreview');a.src=STUDIO.voicePreviewUrl;a.classList.add('show');await a.play().catch(()=>{});
    setVoiceState('AI配音试听已生成。')
- }catch(e){setVoiceState('AI配音失败：'+(e.message||e));studioStatus('AI配音失败：'+(e.message||e),'warn')}
+ }catch(e){
+   setVoiceState('AI配音云端暂不可用，已改用手机朗读试听。');
+   try{speakNarration()}catch(_){}
+ }
 }
 async function cloneMyVoice(){
  if(!STUDIO.voiceBlob){studioStatus('请先用“录制我的解说”录一段干净人声。','warn');return}
  if(!confirm('确认这是你自己的声音，或你已获得声音所有者明确授权用于克隆？'))return;
  try{
-   await voiceApiReady();setVoiceState('正在创建我的声音克隆…');
+   await voiceApiReady();
+   const health=STUDIO.cloudHealth||{};
+   if(!health.aiVoice){setVoiceState('当前云端版本尚未部署声音克隆，不再提交404请求。');return}
+   const voiceStatus=await refreshAIVoiceStatus(false);
+   if(!voiceStatus?.cloneConfigured){setVoiceState('克隆我的声音需要在 Render 配置 ElevenLabs API Key；AI男/女声无需配置即可使用。');return}
+   setVoiceState('正在创建我的声音克隆…');
    const fd=new FormData();
    fd.append('sample',STUDIO.voiceBlob,'sagi-my-voice.'+(STUDIO.voiceMime.includes('webm')?'webm':'m4a'));
    fd.append('name','SAGI My Voice');
@@ -745,16 +770,21 @@ function renderCapabilities(){
  ];
  e.innerHTML=items.map(x=>'<span class="'+(x[1]?'ok':'warn')+'">'+x[0]+' '+(x[1]?'✓':'△')+'</span>').join('')
 }
-function studioAspectFilter(){
- const a=q('studioAspect')?.value||'9:16';
- if(a==='9:16')return 'scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920';
- if(a==='16:9')return 'scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080';
- if(a==='1:1')return 'scale=1080:1080:force_original_aspect_ratio=increase,crop=1080:1080';
- return 'null'
-}
 function studioOutputSize(){
- const a=q('studioAspect')?.value||'9:16';
- if(a==='16:9')return[1920,1080];if(a==='1:1')return[1080,1080];if(a==='source'&&STUDIO.width&&STUDIO.height)return[STUDIO.width,STUDIO.height];return[1080,1920]
+ const a=q('studioAspect')?.value||'9:16',quality=q('exportQuality')?.value||'fast',fast=quality==='fast';
+ if(a==='16:9')return fast?[1280,720]:[1920,1080];
+ if(a==='1:1')return fast?[720,720]:[1080,1080];
+ if(a==='source'&&STUDIO.width&&STUDIO.height){
+   if(!fast)return[STUDIO.width,STUDIO.height];
+   const scale=Math.min(1,1280/Math.max(STUDIO.width,STUDIO.height));
+   return[Math.max(2,Math.round(STUDIO.width*scale/2)*2),Math.max(2,Math.round(STUDIO.height*scale/2)*2)]
+ }
+ return fast?[720,1280]:[1080,1920]
+}
+function studioAspectFilter(){
+ const [w,h]=studioOutputSize(),a=q('studioAspect')?.value||'9:16';
+ if(a==='source')return 'scale='+w+':'+h+':force_original_aspect_ratio=decrease';
+ return 'scale='+w+':'+h+':force_original_aspect_ratio=increase,crop='+w+':'+h
 }
 function handleStudioFile(e){
  const file=e.target.files?.[0];if(!file)return;
@@ -1829,22 +1859,51 @@ async function startVoiceRecord(){
 }
 function stopVoiceRecord(){if(STUDIO.recorder&&STUDIO.recorder.state!=='inactive')STUDIO.recorder.stop()}
 async function loadScript(src){
- return new Promise((resolve,reject)=>{if(window.FFmpegWASM?.FFmpeg)return resolve();const s=document.createElement('script');s.src=src;s.onload=resolve;s.onerror=()=>reject(new Error('FFmpeg 脚本加载失败'));document.head.appendChild(s)})
+ const urls=Array.isArray(src)?src:[src];
+ let last;
+ for(const url of urls){
+   try{
+     await new Promise((resolve,reject)=>{
+       if(window.FFmpegWASM?.FFmpeg)return resolve();
+       const s=document.createElement('script');s.src=url;s.crossOrigin='anonymous';
+       s.onload=resolve;s.onerror=()=>reject(new Error('加载失败 '+url));document.head.appendChild(s)
+     });
+     if(window.FFmpegWASM?.FFmpeg)return
+   }catch(e){last=e}
+ }
+ throw last||new Error('FFmpeg 主脚本加载失败')
 }
 async function toBlobURLRemote(url,mime){
- const r=await fetch(url);if(!r.ok)throw new Error('资源加载失败 '+r.status);const b=await r.blob();return URL.createObjectURL(new Blob([b],{type:mime}))
+ const urls=Array.isArray(url)?url:[url];let last;
+ for(const u of urls){
+   try{
+     const r=await fetch(u,{cache:'force-cache'});if(!r.ok)throw new Error('HTTP '+r.status);
+     const b=await r.blob();return URL.createObjectURL(new Blob([b],{type:mime}))
+   }catch(e){last=e}
+ }
+ throw new Error('剪辑引擎资源加载失败：'+(last?.message||last))
 }
 async function ensureFFmpeg(){
  if(STUDIO.ffmpegLoaded&&STUDIO.ffmpeg)return STUDIO.ffmpeg;
  studioStatus('首次使用正在载入手机剪辑引擎（约30MB）…','good');setProgress(3);
- await loadScript('https://cdnjs.cloudflare.com/ajax/libs/ffmpeg/0.12.15/umd/ffmpeg.min.js');
+ const main=[
+   'https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.15/dist/umd/ffmpeg.js',
+   'https://unpkg.com/@ffmpeg/ffmpeg@0.12.15/dist/umd/ffmpeg.js'
+ ];
+ await loadScript(main);
+ if(!window.FFmpegWASM?.FFmpeg)throw new Error('FFmpeg 主模块未加载');
  const ffmpeg=new window.FFmpegWASM.FFmpeg();STUDIO.ffmpeg=ffmpeg;
  ffmpeg.on('progress',({progress})=>{if(STUDIO.exporting&&Number.isFinite(progress))setProgress(20+Math.max(0,Math.min(.78,progress))*75)});
- const workerLoadURL=await toBlobURLRemote('https://cdnjs.cloudflare.com/ajax/libs/ffmpeg/0.12.15/umd/814.ffmpeg.min.js','text/javascript');
+ const classWorkerURL=await toBlobURLRemote([
+   'https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.15/dist/umd/814.ffmpeg.js',
+   'https://unpkg.com/@ffmpeg/ffmpeg@0.12.15/dist/umd/814.ffmpeg.js'
+ ],'text/javascript');
  const core='https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd';
- const coreURL=await toBlobURLRemote(core+'/ffmpeg-core.js','text/javascript');
- const wasmURL=await toBlobURLRemote(core+'/ffmpeg-core.wasm','application/wasm');
- await ffmpeg.load({workerLoadURL,coreURL,wasmURL});STUDIO.ffmpegLoaded=true;setProgress(18);return ffmpeg
+ const coreURL=await toBlobURLRemote([core+'/ffmpeg-core.js','https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd/ffmpeg-core.js'],'text/javascript');
+ const wasmURL=await toBlobURLRemote([core+'/ffmpeg-core.wasm','https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd/ffmpeg-core.wasm'],'application/wasm');
+ // 0.12.15 expects classWorkerURL; the old workerLoadURL key was ignored on iPhone.
+ await ffmpeg.load({classWorkerURL,coreURL,wasmURL});
+ STUDIO.ffmpegLoaded=true;setProgress(18);return ffmpeg
 }
 function canvasSubtitlePng(text,w,h){
  const c=document.createElement('canvas');c.width=Math.min(1000,Math.max(700,Math.round(w*.84)));c.height=Math.min(240,Math.max(150,Math.round(h*.12)));
@@ -1904,7 +1963,7 @@ async function exportStudio(){
    q('resultVideo').src=STUDIO.resultUrl;q('resultVideo').classList.add('show');q('saveResultBtn').href=STUDIO.resultUrl;q('resultActions').classList.add('show');
    setProgress(100);studioStatus('成片已生成 · '+fmtBytes(STUDIO.resultBlob.size)+'。可以保存到手机或直接分享。','good');toast('成片已生成')
  }catch(e){
-   console.error(e);studioStatus('手机导出失败：'+(e.message||e)+ '。建议先用15–30秒短片测试。','bad');setProgress(0)
+   console.error(e);studioStatus('手机导出失败：'+(e.message||e)+'。已保留素材；优先使用云端快速成片。若云端未升级，可把质量设为“快速”并控制在30秒内重试。','bad');setProgress(0)
  }finally{STUDIO.exporting=false;q('exportStudioBtn').disabled=false}
 }
 function cancelExport(){
@@ -1970,7 +2029,7 @@ if(q('captionSpeed'))q('captionSpeed').value='fast';
 if(q('captionRange'))q('captionRange').value='trim';
 setTimeout(async()=>{await wakeCaptionCloud();refreshAIVoiceStatus(false)},180);
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=193',{updateViaCache:'none'}).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=194',{updateViaCache:'none'}).catch(()=>{})}
 })();
 </script>
 </body>
