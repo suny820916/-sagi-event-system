@@ -369,6 +369,8 @@ def _btch_media(payload):
             continue
         u = row.get("url")
         kind = str(row.get("type") or "video").lower()
+        if kind not in ("video", "image", "photo", "gif"):
+            continue
         if u:
             items.append({"url": u, "type": "image" if kind in ("image", "photo") else kind})
     return items, str(normalized.get("title") or (payload or {}).get("title") or "")
@@ -395,8 +397,30 @@ def run_btch_download(job_id, url, wanted_name):
 
 
 def run_parth_download(job_id, url, wanted_name):
-    from parth_dl import get_info
-    info = get_info(url, verbose=False)
+    # Keep this extractor hard-bounded. Instagram can make logged-out clients
+    # retry several endpoints; a subprocess lets us kill the attempt cleanly.
+    script = r"""
+import json, sys
+from parth_dl import get_info
+print(json.dumps(get_info(sys.argv[1], verbose=False), ensure_ascii=False))
+"""
+    try:
+        proc = subprocess.run(
+            [sys.executable, "-c", script, url],
+            capture_output=True,
+            text=True,
+            timeout=16,
+            check=False,
+        )
+    except subprocess.TimeoutExpired:
+        raise RuntimeError("PARTH_DL_TIMEOUT")
+    if proc.returncode != 0:
+        raise RuntimeError("PARTH_DL_FAILED: " + (proc.stderr or "")[-300:])
+    try:
+        info = json.loads((proc.stdout or "").strip())
+    except Exception:
+        raise RuntimeError("PARTH_DL_INVALID_JSON")
+
     items = []
     for entry in info.get("entries") or []:
         formats = [x for x in (entry.get("formats") or []) if x.get("url")]
@@ -408,7 +432,6 @@ def run_parth_download(job_id, url, wanted_name):
         best = max(formats, key=score)
         items.append({"url": best["url"], "type": entry.get("kind") or "video"})
     return _save_remote_items(job_id, items, wanted_name, "parth-dl", info.get("title") or "")
-
 
 def run_tikwm_download(job_id, url, wanted_name):
     r = requests.post(
@@ -501,7 +524,11 @@ def _router_engines(platform):
 def run_router_engine(job_id, engine, url, wanted_name):
     _set_job_engine(job_id, engine, switching=True)
     if not _engine_can_try(engine):
-        raise RuntimeError(engine.upper() + "_CIRCUIT_OPEN")
+        with jobs_lock:
+            job = jobs.get(job_id)
+            if job:
+                job["lastEngineError"] = engine.upper() + "_CIRCUIT_OPEN"
+        return False
     try:
         if engine == "btch":
             ok = run_btch_download(job_id, url, wanted_name)
@@ -1428,13 +1455,17 @@ def run_download(job_id, url, wanted_name):
                 if run_router_engine(job_id, "btch", url, wanted_name):
                     return
                 work = tempfile.mkdtemp(prefix=f"sagi_cloud_{job_id}_")
-            if needs_gallery:
+
+            # Instagram always gets both dedicated post extractors after native
+            # yt-dlp fails, regardless of whether the native error was 429,
+            # no-video, or a changed extractor response.
+            if is_instagram_url(url):
                 shutil.rmtree(work, ignore_errors=True)
                 try:
                     run_instagram_fast_post(job_id, url, wanted_name)
                     return
                 except Exception as e:
-                    errors.append("instagram-html: " + str(e))
+                    errors.append("instagram-html: " + str(e)[:220])
                 try:
                     run_gallery_download(job_id, url, wanted_name)
                     return
