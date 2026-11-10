@@ -26,8 +26,8 @@ app = Flask(__name__)
 ALLOWED_ORIGIN = (os.getenv("SAGI_ALLOWED_ORIGIN") or "https://suny820916.github.io").rstrip("/")
 SERVER_SECRET = (os.getenv("SAGI_SERVER_SECRET") or os.getenv("SAGI_BRIDGE_TOKEN") or "").strip()
 PORT = int(os.getenv("PORT") or "10000")
-DEPLOY_REVISION = "2026-11-10-v1700-cloud-render-stable"
-APP_VERSION = "1.7.0"
+DEPLOY_REVISION = "2026-11-10-v1710-cloud-download"
+APP_VERSION = "1.7.1"
 MAX_FILE_MB = int(os.getenv("SAGI_MAX_FILE_MB") or "300")
 JOB_TTL_MIN = int(os.getenv("SAGI_JOB_TTL_MIN") or "30")
 RATE_LIMIT_PER_HOUR = int(os.getenv("SAGI_RATE_LIMIT_PER_HOUR") or "20")
@@ -151,15 +151,29 @@ def caption_rate_allowed():
         caption_rate_hits[key] = arr
     return True
 
-def allowed_instagram(url):
+SOCIAL_DOWNLOAD_HOSTS = (
+    "instagram.com", "youtube.com", "youtu.be",
+    "tiktok.com", "x.com", "twitter.com",
+)
+
+def _url_host(url):
     try:
         u = urlparse(url)
         if u.scheme not in ("http", "https"):
-            return False
-        host = (u.hostname or "").lower().strip(".")
-        return host == "instagram.com" or host.endswith(".instagram.com")
+            return ""
+        return (u.hostname or "").lower().strip(".")
     except Exception:
+        return ""
+
+def allowed_social_url(url):
+    host = _url_host(url)
+    if not host:
         return False
+    return any(host == root or host.endswith("." + root) for root in SOCIAL_DOWNLOAD_HOSTS)
+
+def is_instagram_url(url):
+    host = _url_host(url)
+    return host == "instagram.com" or host.endswith(".instagram.com")
 
 def safe_name(name):
     raw = (name or "SAGI_INS_VIDEO").strip()
@@ -619,6 +633,7 @@ def _looks_like_429(message):
 def _download_with_strategy(url, work, strategy):
     outtmpl = str(Path(work) / "%(title).80s_%(id)s.%(ext)s")
     common = {
+        # Prefer one-file MP4 to avoid memory/CPU-heavy FFmpeg merges on Render.
         "format": "best[ext=mp4]/best",
         "outtmpl": outtmpl,
         "noplaylist": True,
@@ -627,32 +642,33 @@ def _download_with_strategy(url, work, strategy):
         "restrictfilenames": True,
         "retries": 2,
         "fragment_retries": 2,
-        "socket_timeout": 20,
+        "socket_timeout": 25,
         "sleep_interval_requests": 1,
         "max_sleep_interval": 3,
         "max_filesize": MAX_FILE_MB * 1024 * 1024,
+        "http_headers": {
+            "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 Version/18.5 Mobile/15E148 Safari/604.1",
+            "Accept-Language": "en-US,en;q=0.9",
+        },
     }
     if INSTAGRAM_PROXY:
         common["proxy"] = INSTAGRAM_PROXY
 
-    if strategy == "ios":
-        common["extractor_args"] = {"instagram": {"app_id": ["ios"]}}
-        common["http_headers"] = {
-            "User-Agent": "Instagram 402.0.0.0.0 iOS (18_5; iPhone17,1; en_US)",
-            "Accept-Language": "en-US,en;q=0.9",
-        }
-    elif strategy == "android":
-        common["extractor_args"] = {"instagram": {"app_id": ["567067343352427"]}}
-        common["http_headers"] = {
-            "User-Agent": "Instagram 435.0.0.37.76 Android (35/15; 480dpi; 1080x2400; Google; Pixel 9; tokay; en_US; 700000000)",
-            "Accept-Language": "en-US,en;q=0.9",
-        }
-    else:
-        common["extractor_args"] = {"instagram": {"app_id": ["web"]}}
-        common["http_headers"] = {
-            "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 Version/18.5 Mobile/15E148 Safari/604.1",
-            "Accept-Language": "en-US,en;q=0.9",
-        }
+    if is_instagram_url(url):
+        if strategy == "ios":
+            common["extractor_args"] = {"instagram": {"app_id": ["ios"]}}
+            common["http_headers"] = {
+                "User-Agent": "Instagram 402.0.0.0.0 iOS (18_5; iPhone17,1; en_US)",
+                "Accept-Language": "en-US,en;q=0.9",
+            }
+        elif strategy == "android":
+            common["extractor_args"] = {"instagram": {"app_id": ["567067343352427"]}}
+            common["http_headers"] = {
+                "User-Agent": "Instagram 435.0.0.37.76 Android (35/15; 480dpi; 1080x2400; Google; Pixel 9; tokay; en_US; 700000000)",
+                "Accept-Language": "en-US,en;q=0.9",
+            }
+        elif strategy == "web":
+            common["extractor_args"] = {"instagram": {"app_id": ["web"]}}
 
     with yt_dlp.YoutubeDL(common) as ydl:
         return ydl.extract_info(url, download=True)
@@ -667,7 +683,7 @@ def run_download(job_id, url, wanted_name):
         job["strategy"] = "web"
 
     work = tempfile.mkdtemp(prefix=f"sagi_cloud_{job_id}_")
-    strategies = ["web", "ios", "android"]
+    strategies = ["web", "ios", "android"] if is_instagram_url(url) else ["direct"]
     info = None
     errors = []
     saw_429 = False
@@ -705,19 +721,23 @@ def run_download(job_id, url, wanted_name):
                 time.sleep(1)
 
         if not info:
+            # Optional self-hosted Cobalt remains a fallback, never the primary path.
+            if cobalt_base():
+                shutil.rmtree(work, ignore_errors=True)
+                run_cobalt_download(job_id, url, wanted_name)
+                return
             if saw_429:
                 raise RuntimeError(
-                    "INSTAGRAM_RATE_LIMIT: Instagram rejected the cloud outbound IP with HTTP 429. "
-                    "The SAGI cloud service is online, but this Render IP is temporarily rate-limited."
+                    "SAGI_DOWNLOAD_RATE_LIMIT: source platform temporarily rejected the cloud IP."
                 )
-            raise RuntimeError("Instagram extraction failed: " + " | ".join(errors[-2:]))
+            raise RuntimeError("SAGI cloud extraction failed: " + " | ".join(errors[-2:]))
 
         files = [
             p for p in Path(work).iterdir()
             if p.is_file() and not p.name.endswith((".part", ".ytdl", ".json"))
         ]
         if not files:
-            raise RuntimeError("Instagram 未返回可下载的视频文件")
+            raise RuntimeError("源平台未返回可下载的视频文件")
 
         media = max(files, key=lambda p: p.stat().st_size)
         size = media.stat().st_size
@@ -744,7 +764,7 @@ def run_download(job_id, url, wanted_name):
     except Exception as e:
         shutil.rmtree(work, ignore_errors=True)
         msg = str(e)
-        code = "instagram_rate_limit" if "INSTAGRAM_RATE_LIMIT" in msg else "instagram_extract_failed"
+        code = "cloud_download_rate_limit" if "SAGI_DOWNLOAD_RATE_LIMIT" in msg else "cloud_download_failed"
         with jobs_lock:
             job = jobs.get(job_id)
             if job:
@@ -834,6 +854,9 @@ def health():
         "deployRevision": DEPLOY_REVISION,
         "version": APP_VERSION,
         "instagram": True,
+        "cloudDownload": True,
+        "cloudDownloadVersion": "1.0",
+        "downloadPlatforms": ["Instagram", "YouTube", "TikTok", "X"],
         "hybridWorker": True,
         "workerOnline": worker_online(),
         "activation": True,
@@ -1609,19 +1632,17 @@ def create_job():
         return jsonify({"ok": False, "error": "Unauthorized"}), 401
     if not rate_allowed():
         return jsonify({"ok": False, "error": "Hourly download limit reached"}), 429
-    if not INSTAGRAM_PROXY:
-        return jsonify({
-            "ok": False,
-            "error": "PHONE_DIRECT_NOT_READY",
-            "errorCode": "proxy_required"
-        }), 503
 
     data = request.get_json(silent=True) or {}
     url = (data.get("url") or "").strip()
-    name = safe_name(data.get("name") or "SAGI_INS_VIDEO")
+    name = safe_name(data.get("name") or "SAGI_VIDEO")
 
-    if not allowed_instagram(url):
-        return jsonify({"ok": False, "error": "Only Instagram URLs are enabled."}), 400
+    if not allowed_social_url(url):
+        return jsonify({
+            "ok": False,
+            "error": "当前仅支持 Instagram / YouTube / TikTok / X 链接。",
+            "errorCode": "unsupported_source",
+        }), 400
 
     job_id = secrets.token_urlsafe(9)
     job = {
@@ -1636,7 +1657,7 @@ def create_job():
         "errorCode": "",
         "size": 0,
         "worker": "",
-        "strategy": "residential_proxy",
+        "strategy": "sagi_cloud",
         "download_key": secrets.token_urlsafe(18),
         "path": "",
         "workdir": "",
@@ -1646,7 +1667,7 @@ def create_job():
         jobs[job_id] = job
 
     Thread(target=run_download, args=(job_id, url, name), daemon=True).start()
-    return jsonify({"ok": True, "job": public_job(job), "phoneOnly": True}), 202
+    return jsonify({"ok": True, "job": public_job(job), "phoneOnly": True, "engine": "sagi-cloud-download"}), 202
 
 
 @app.post("/api/worker/pair/start")

@@ -116,7 +116,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
     </div>
 
     <div class="actions">
-      <button class="btn primary" id="downloadBtn" type="button">去下载视频</button>
+      <button class="btn primary" id="downloadBtn" type="button">SAGI 云端下载</button>
       <button class="btn blue" id="copyBtn" type="button">复制链接</button>
       <button class="btn" id="openBtn" type="button">原链接</button>
     </div>
@@ -455,17 +455,73 @@ async function paste(){
   }catch(e){setStatus('iPhone 未允许读取剪贴板，请长按输入框粘贴。','warn')}
 }
 function clearInput(){input.value='';updateDetect();setStatus('已清空，等待新链接。');input.focus()}
+function cloudDownloadWindow(){
+  const w=window.open('about:blank','_blank');
+  if(!w)return null;
+  try{
+    w.document.open();
+    w.document.write('<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><title>SAGI CLOUD DOWNLOAD</title><style>body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#0c0c0e;color:#fff;display:grid;place-items:center;min-height:100vh;margin:0;text-align:center}.box{padding:28px}.spin{font-size:44px}.sub{opacity:.65;margin-top:12px}</style><div class="box"><div class="spin">⚽</div><h2>SAGI CLOUD DOWNLOAD</h2><div>正在准备视频文件…</div><div class="sub">完成后会自动进入下载</div></div>');
+    w.document.close();
+    try{w.opener=null}catch(e){}
+  }catch(e){}
+  return w
+}
+function cloudDownloadStatusLabel(job){
+  const s=String(job?.status||'');
+  if(s==='queued')return '已进入云端队列';
+  if(s==='downloading'||s==='cobalt_processing'||s==='cobalt_fetching')return '云端正在解析并下载源视频';
+  if(s==='worker_downloading')return '下载节点正在处理';
+  return s||'处理中'
+}
+async function pollCloudDownload(jobId,handoff){
+  const started=Date.now();
+  while(Date.now()-started<180000){
+    await new Promise(r=>setTimeout(r,1200));
+    const r=await fetch(CAPTION_CLOUD+'/api/jobs/'+encodeURIComponent(jobId),{
+      headers:{Authorization:'Bearer '+STUDIO.cloudCaptionToken},cache:'no-store'
+    });
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok||!d?.ok)throw new Error(d?.error||('HTTP '+r.status));
+    const job=d.job||{};
+    if(job.status==='ready'&&job.downloadUrl){
+      setStatus('SAGI Cloud 已准备好视频，正在开始下载。','good');
+      if(handoff&&!handoff.closed)handoff.location.replace(job.downloadUrl);
+      else location.href=job.downloadUrl;
+      return
+    }
+    if(job.status==='failed'){
+      const msg=job.errorCode==='cloud_download_rate_limit'
+        ?'源平台暂时限制了云端访问，请稍后重试。'
+        :(job.error||'云端解析失败');
+      throw new Error(msg)
+    }
+    setStatus(cloudDownloadStatusLabel(job)+'…','good')
+  }
+  throw new Error('云端下载准备超时，请重新尝试。')
+}
 async function download(){
   const v=currentUrl();if(!v){setStatus('请先粘贴有效的视频链接。','warn');return}
-  const d=detect(v);
-  // iPhone Safari requires window.open to happen inside the original tap event.
-  // Do not await clipboard work before opening the download page.
-  const popup=window.open(COBALT,'_blank');
-  if(popup){try{popup.opener=null}catch(e){}}
-  else setTimeout(()=>{location.href=COBALT},0);
-  copyText(v).catch(()=>{});
-  saveHistory(v);
-  setStatus(d[0]+' 链接已复制，下载页已打开。','good')
+  const d=detect(v),handoff=cloudDownloadWindow();
+  saveHistory(v);copyText(v).catch(()=>{});
+  setStatus(d[0]+' · 正在连接 SAGI Cloud…','good');
+  try{
+    const ready=await wakeCaptionCloud(true);
+    const health=STUDIO.cloudHealth||{};
+    if(!ready||!STUDIO.cloudCaptionToken)throw new Error(STUDIO.cloudLastError||'SAGI Cloud 未连接');
+    if(!health.cloudDownload)throw new Error('当前云端还是旧版本，尚未部署 SAGI Cloud Download 1.0');
+    const r=await fetch(CAPTION_CLOUD+'/api/jobs',{
+      method:'POST',
+      headers:{'Content-Type':'application/json',Authorization:'Bearer '+STUDIO.cloudCaptionToken},
+      body:JSON.stringify({url:v,name:'SAGI_VIDEO'})
+    });
+    const data=await r.json().catch(()=>({}));
+    if(!r.ok||!data?.ok||!data?.job?.id)throw new Error(data?.error||('HTTP '+r.status));
+    setStatus('SAGI Cloud 已接收链接 · 正在解析…','good');
+    await pollCloudDownload(data.job.id,handoff)
+  }catch(e){
+    try{if(handoff&&!handoff.closed)handoff.close()}catch(_){}
+    setStatus('下载失败：'+(e.message||e),'warn')
+  }
 }
 function openOriginal(){const v=currentUrl();if(!v){setStatus('请先粘贴有效链接。','warn');return}window.open(v,'_blank','noopener')}
 
@@ -2064,7 +2120,7 @@ if(q('captionSpeed'))q('captionSpeed').value='fast';
 if(q('captionRange'))q('captionRange').value='trim';
 setTimeout(async()=>{await wakeCaptionCloud();refreshAIVoiceStatus(false)},180);
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=195',{updateViaCache:'none'}).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=196',{updateViaCache:'none'}).catch(()=>{})}
 })();
 </script>
 </body>
