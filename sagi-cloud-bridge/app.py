@@ -43,6 +43,7 @@ caption_model_error = ""
 caption_model_lock = Lock()
 caption_ready_at = 0.0
 CAPTION_MAX_MB = int(os.getenv("SAGI_CAPTION_MAX_MB") or "16")
+CAPTION_MEDIA_MAX_MB = int(os.getenv("SAGI_CAPTION_MEDIA_MAX_MB") or "180")
 
 def now():
     return datetime.now(timezone.utc)
@@ -348,12 +349,13 @@ def health():
     return jsonify({
         "ok": True,
         "service": "SAGI CLOUD BRIDGE",
-        "version": "1.6.2",
+        "version": "1.6.4",
         "instagram": True,
         "hybridWorker": True,
         "workerOnline": worker_online(),
         "activation": True,
         "captionFast": True,
+        "captionMedia": True,
         "captionModel": "faster-whisper-tiny-int8",
         "captionMaxSeconds": 180,
         "captionReady": caption_model is not None,
@@ -362,6 +364,86 @@ def health():
         "jobTTLMinutes": JOB_TTL_MIN,
         "configured": bool(SERVER_SECRET),
     })
+
+@app.post("/api/caption-media")
+def caption_media_fast():
+    if not authorized():
+        return jsonify({"ok": False, "error": "Unauthorized"}), 401
+    if not rate_allowed():
+        return jsonify({"ok": False, "error": "Hourly limit reached"}), 429
+
+    upload = request.files.get("media")
+    if not upload:
+        return jsonify({"ok": False, "error": "Media file required"}), 400
+
+    raw_lang = (request.form.get("language") or "").strip().lower()
+    language = None if raw_lang in ("", "auto") else raw_lang
+    if language == "zh-cn":
+        language = "zh"
+
+    try:
+        start = max(0.0, float(request.form.get("start") or 0))
+        duration = max(0.1, min(180.0, float(request.form.get("duration") or 180)))
+    except Exception:
+        start, duration = 0.0, 180.0
+    end = start + duration
+
+    work = tempfile.mkdtemp(prefix="sagi_caption_media_")
+    suffix = Path(upload.filename or "media.mp4").suffix or ".mp4"
+    path = Path(work) / ("source" + suffix)
+    started = time.time()
+
+    try:
+        upload.save(path)
+        size = path.stat().st_size if path.exists() else 0
+        if size <= 0:
+            return jsonify({"ok": False, "error": "Empty media"}), 400
+        if size > CAPTION_MEDIA_MAX_MB * 1024 * 1024:
+            return jsonify({"ok": False, "error": f"Media exceeds {CAPTION_MEDIA_MAX_MB}MB"}), 413
+
+        model = get_caption_model()
+        segments, info = model.transcribe(
+            str(path),
+            language=language,
+            task="transcribe",
+            beam_size=1,
+            best_of=1,
+            temperature=0.0,
+            vad_filter=False,
+            clip_timestamps=f"{start},{end}",
+            word_timestamps=False,
+            condition_on_previous_text=False,
+        )
+
+        items = []
+        for seg in segments:
+            text = (seg.text or "").strip()
+            if not text:
+                continue
+            items.append({
+                "start": round(max(0.0, float(seg.start) - start), 3),
+                "end": round(max(0.0, float(seg.end) - start), 3),
+                "text": text,
+            })
+
+        return jsonify({
+            "ok": True,
+            "engine": "faster-whisper-tiny-int8-media",
+            "language": getattr(info, "language", language or ""),
+            "languageProbability": round(float(getattr(info, "language_probability", 0.0) or 0.0), 4),
+            "segments": items,
+            "elapsedMs": int((time.time() - started) * 1000),
+            "processedSeconds": round(duration, 2),
+        })
+    except Exception as e:
+        return jsonify({
+            "ok": False,
+            "error": str(e)[:700],
+            "errorCode": "caption_media_failed",
+        }), 500
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
+
 
 @app.post("/api/caption")
 def caption_fast():
