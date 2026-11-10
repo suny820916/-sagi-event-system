@@ -64,7 +64,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 <div class="wrap">
   <div class="top">
     <div class="brand"><b>SAGI DOWN</b><span>VIDEO LINK SHORTCUT</span></div>
-    <span class="badge">V1.6 · CLOUD CAPTION FAST</span>
+    <span class="badge">V1.6.1 · 10 TIMELINE</span>
   </div>
 
   <section class="hero">
@@ -204,7 +204,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
       <div class="aiCaptionMeta">
         <span id="captionEngine">引擎：SAGI CLOUD 优先</span>
         <span id="captionDetectedLang">语言：—</span>
-        <span id="captionCount">字幕：0</span>
+        <span id="captionCount">字幕：0 / 10</span>
         <span id="captionCacheStatus">本地模型：仅备用</span>
         <span id="captionCloudStatus">云端：连接中</span>
       </div>
@@ -486,7 +486,7 @@ function studioRange(){
  return[s,e,Math.max(.1,e-s)]
 }
 function subtitleLines(){
- return String(q('subtitleText')?.value||'').split(/\n+/).map(x=>x.trim()).filter(Boolean).slice(0,30)
+ return String(q('subtitleText')?.value||'').split(/\n+/).map(x=>x.trim()).filter(Boolean).slice(0,10)
 }
 
 function aiCaptionProgress(v){const e=q('aiCaptionProgress');if(e)e.style.width=Math.max(0,Math.min(100,Number(v)||0))+'%'}
@@ -503,9 +503,9 @@ function captionTime(t){
 }
 function renderCaptionTimeline(){
  const host=q('aiCaptionTimeline'),list=STUDIO.captions||[];
- if(q('captionCount'))q('captionCount').textContent='字幕：'+list.length;
+ if(q('captionCount'))q('captionCount').textContent='字幕：'+Math.min(list.length,10)+' / 10';
  if(!host)return;
- host.innerHTML=list.length?list.slice(0,30).map(x=>'<div class="capRow"><time>'+captionTime(x.start)+'<br>→ '+captionTime(x.end)+'</time><span>'+escapeHtml(x.text)+'</span></div>').join(''):''
+ host.innerHTML=list.length?list.slice(0,10).map(x=>'<div class="capRow"><time>'+captionTime(x.start)+'<br>→ '+captionTime(x.end)+'</time><span>'+escapeHtml(x.text)+'</span></div>').join(''):''
 }
 async function ensureCaptionModule(){
  if(STUDIO.captionModule)return STUDIO.captionModule;
@@ -588,7 +588,7 @@ function mixChannels(buffer,startFrame,endFrame){
    const data=buffer.getChannelData(c);
    for(let i=0;i<length;i++)out[i]+=data[startFrame+i]/channels
  }
- return out
+ return compactTimeline(out,10)
 }
 function resampleLinear(input,sourceRate,targetRate=16000){
  if(!input.length)return new Float32Array(0);
@@ -687,6 +687,23 @@ async function extractCaptionAudio(){
  const blob=new Blob([data.buffer],{type:'audio/wav'});
  return{blob,start,duration,key:captionKey()}
 }
+function compactTimeline(items,max=10){
+ const src=(items||[]).filter(x=>x&&String(x.text||'').trim());
+ if(src.length<=max)return src;
+ const out=[];
+ for(let i=0;i<max;i++){
+   const a=Math.floor(i*src.length/max),b=Math.floor((i+1)*src.length/max);
+   const group=src.slice(a,Math.max(a+1,b));
+   if(!group.length)continue;
+   out.push({
+     start:Number(group[0].start)||0,
+     end:Number(group[group.length-1].end)||Number(group[0].end)||0,
+     text:group.map(x=>String(x.text||'').trim()).filter(Boolean).join(' ')
+   });
+ }
+ return out
+}
+
 function normalizeCaptionChunks(result,duration){
  const chunks=Array.isArray(result?.chunks)?result.chunks:[];
  const out=[];
@@ -766,7 +783,7 @@ async function runAiCaption(translateZh=false){
    try{
      aiCaptionStatus('正在发送 '+Math.round(audio.duration)+' 秒音频到 SAGI Cloud…');aiCaptionProgress(28);
      const cloud=await cloudCaption(audio,lang);
-     STUDIO.captions=(cloud.segments||[]).map(x=>({start:Number(x.start)||0,end:Number(x.end)||0,text:String(x.text||'').trim()})).filter(x=>x.text);
+     STUDIO.captions=compactTimeline((cloud.segments||[]).map(x=>({start:Number(x.start)||0,end:Number(x.end)||0,text:String(x.text||'').trim()})).filter(x=>x.text),10);
      STUDIO.captionLanguage=cloud.language||lang;STUDIO.captionRangeKey=audio.key;usedCloud=true;
      if(q('captionEngine'))q('captionEngine').textContent='引擎：SAGI CLOUD · faster-whisper tiny INT8';
      aiCaptionProgress(76);
@@ -778,7 +795,7 @@ async function runAiCaption(translateZh=false){
      if(cfg.chunk>0&&audio.duration>30){options.chunk_length_s=cfg.chunk;options.stride_length_s=cfg.stride}
      if(lang!=='auto')options.language=lang;
      result=await model(audio.waveform,options);
-     STUDIO.captions=normalizeCaptionChunks(result,audio.duration);STUDIO.captionLanguage=result?.language||lang;STUDIO.captionRangeKey=audio.key;
+     STUDIO.captions=compactTimeline(normalizeCaptionChunks(result,audio.duration),10);STUDIO.captionLanguage=result?.language||lang;STUDIO.captionRangeKey=audio.key;
      if(q('captionEngine'))q('captionEngine').textContent='引擎：手机本地 Whisper · 备用';
      aiCaptionProgress(76);
    }
@@ -810,7 +827,7 @@ function captionTimeline(){
  const lines=subtitleLines(),duration=studioRange()[2];
  if(!lines.length)return[];
  const exact=(STUDIO.captions||[]).length===lines.length&&STUDIO.captionRangeKey===captionKey();
- if(exact)return STUDIO.captions.map((c,i)=>({...c,text:lines[i]}));
+ if(exact)return STUDIO.captions.slice(0,10).map((c,i)=>({...c,text:lines[i]}));
  const step=duration/lines.length;return lines.map((text,i)=>({start:i*step,end:(i+1)*step,text}))
 }
 function captionToNarration(){
@@ -1005,7 +1022,7 @@ if(q('captionSpeed'))q('captionSpeed').value='fast';
 if(q('captionRange'))q('captionRange').value='trim';
 setTimeout(()=>wakeCaptionCloud(),180);
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=160',{updateViaCache:'none'}).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=161',{updateViaCache:'none'}).catch(()=>{})}
 })();
 </script>
 </body>
