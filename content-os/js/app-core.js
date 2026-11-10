@@ -1601,21 +1601,4 @@ q('generatorRunBtn').onclick=()=>generateViralVariants();q('generatorSaveBestBtn
 window.SAGI_CORE={q,uid,today,esc,note,save,switchView,renderAll,currentView,get state(){return state}};
 load();renderAll();if(!isMobileRuntime()&&dailyCommandNeedsRefresh())setTimeout(()=>runDailyViralCommand(true),150);
 
-function registerContentOSApp(){
- if(!('serviceWorker' in navigator))return;
- let refreshing=false;
- navigator.serviceWorker.addEventListener('controllerchange',()=>{
-   if(refreshing)return;refreshing=true;location.reload();
- });
- navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).then(reg=>{
-   const activate=worker=>{if(worker&&worker.state==='installed'&&navigator.serviceWorker.controller)worker.postMessage({type:'SKIP_WAITING'})};
-   if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});
-   reg.addEventListener('updatefound',()=>{const w=reg.installing;if(w)w.addEventListener('statechange',()=>activate(w))});
-   const check=()=>reg.update().catch(()=>{});
-   check();
-   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')check()});
-   setInterval(check,30*60*1000);
- }).catch(()=>{});
-}
-registerContentOSApp();
 })();
