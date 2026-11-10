@@ -668,10 +668,18 @@ def run_gallery_download(job_id, url, wanted_name):
         if INSTAGRAM_PROXY:
             cmd += ["--proxy", INSTAGRAM_PROXY]
         cmd += [url]
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=150)
+        # An inaccessible Instagram origin must not hold the Render worker for
+        # 150 seconds. Limit retries and report a classified error to the client.
+        cmd[3:3] = ["--retries", "1", "--http-timeout", "12"]
+        try:
+            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=45)
+        except subprocess.TimeoutExpired as exc:
+            raise RuntimeError("INSTAGRAM_SOURCE_TIMEOUT: Instagram did not respond to the cloud server within 45 seconds") from exc
         if proc.returncode != 0:
             detail = (proc.stderr or proc.stdout or "gallery-dl failed").strip()
-            raise RuntimeError("INSTAGRAM_POST_FALLBACK_FAILED: " + detail[-900:])
+            if any(x in detail.lower() for x in ("login required", "login to", "authentication", "401", "403", "429")):
+                raise RuntimeError("INSTAGRAM_ACCESS_RESTRICTED: Instagram requires login or blocked this cloud IP")
+            raise RuntimeError("INSTAGRAM_POST_FALLBACK_FAILED: " + detail[-300:])
 
         allowed = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".mp4", ".mov", ".m4v", ".webm"}
         files = [
@@ -893,7 +901,12 @@ def run_download(job_id, url, wanted_name):
     except Exception as e:
         shutil.rmtree(work, ignore_errors=True)
         msg = str(e)
-        code = "cloud_download_rate_limit" if "SAGI_DOWNLOAD_RATE_LIMIT" in msg else "cloud_download_failed"
+        code = (
+            "instagram_source_timeout" if "INSTAGRAM_SOURCE_TIMEOUT" in msg
+            else "instagram_access_restricted" if "INSTAGRAM_ACCESS_RESTRICTED" in msg
+            else "cloud_download_rate_limit" if "SAGI_DOWNLOAD_RATE_LIMIT" in msg
+            else "cloud_download_failed"
+        )
         with jobs_lock:
             job = jobs.get(job_id)
             if job:
