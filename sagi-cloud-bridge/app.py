@@ -965,6 +965,7 @@ def public_job(job):
         "size": job.get("size", 0),
         "mediaKind": job.get("mediaKind", ""),
         "fileCount": int(job.get("fileCount", 0) or 0),
+        "engineTrace": list(job.get("engineTrace") or []),
     }
     if job["status"] == "ready":
         data["downloadUrl"] = (
@@ -1352,19 +1353,20 @@ def _download_with_strategy(url, work, strategy):
         return ydl.extract_info(url, download=True)
 
 def run_download(job_id, url, wanted_name):
+    platform = source_platform(url)
     with jobs_lock:
         job = jobs.get(job_id)
         if not job:
             return
-        job["status"] = "downloading"
+        job["status"] = "router_trying"
         job["updated_at"] = iso()
-        job["strategy"] = "cobalt" if cobalt_base() else "web"
+        job["strategy"] = "router"
+        job["engineTrace"] = []
 
-    # V2.0: self-hosted Cobalt is the primary download engine.
-    # If Cobalt cannot resolve a source, SAGI falls back automatically.
-    if cobalt_base():
-        ok, _ = run_cobalt_download(job_id, url, wanted_name, terminal=False)
-        if ok:
+    # V3.0: platform-aware engines first. Each engine is bounded and has a
+    # small circuit breaker, so one broken upstream cannot stall the whole job.
+    for engine in _router_engines(platform):
+        if run_router_engine(job_id, engine, url, wanted_name):
             return
 
     work = tempfile.mkdtemp(prefix=f"sagi_cloud_{job_id}_")
@@ -1379,7 +1381,13 @@ def run_download(job_id, url, wanted_name):
             with jobs_lock:
                 job = jobs.get(job_id)
                 if job:
-                    job["strategy"] = strategy
+                    trace = list(job.get("engineTrace") or [])
+                    native_name = "yt-dlp-" + strategy
+                    if not trace or trace[-1] != native_name:
+                        trace.append(native_name)
+                    job["engineTrace"] = trace[-8:]
+                    job["status"] = "router_trying"
+                    job["strategy"] = native_name
                     job["updated_at"] = iso()
 
             try:
@@ -1413,6 +1421,13 @@ def run_download(job_id, url, wanted_name):
                 time.sleep(1)
 
         if not info:
+            # YouTube keeps yt-dlp first for quality/format reliability; btch is
+            # only its fallback. Other platforms already tried btch above.
+            if platform == "youtube" and _engine_can_try("btch"):
+                shutil.rmtree(work, ignore_errors=True)
+                if run_router_engine(job_id, "btch", url, wanted_name):
+                    return
+                work = tempfile.mkdtemp(prefix=f"sagi_cloud_{job_id}_")
             if needs_gallery:
                 shutil.rmtree(work, ignore_errors=True)
                 try:
@@ -1462,7 +1477,9 @@ def run_download(job_id, url, wanted_name):
                 "filename": desired,
                 "title": info.get("title") or desired,
                 "size": size,
+                "strategy": "yt-dlp",
                 "error": "",
+                "errorCode": "",
             })
     except Exception as e:
         shutil.rmtree(work, ignore_errors=True)
@@ -1563,12 +1580,25 @@ def health():
         "version": APP_VERSION,
         "instagram": True,
         "cloudDownload": True,
-        "cloudDownloadVersion": "2.0",
-        "downloadPrimary": "cobalt",
+        "cloudDownloadVersion": "3.0",
+        "downloadPrimary": "multi-engine-router",
+        "downloadRouter": True,
+        "downloadRouterVersion": "3.0",
+        "btchEnabled": bool(BTCH_BASE),
+        "btchBaseMode": "configurable-public-fallback",
+        "parthDlEnabled": True,
+        "tikwmEnabled": True,
+        "fxtwitterEnabled": True,
         "cobaltConfigured": bool(cobalt_base()),
-        "cobaltMode": "self-hosted",
+        "cobaltMode": "legacy-fallback-only",
         "downloadPlatforms": ["Instagram", "YouTube", "TikTok", "X"],
-        "instagramPostFallback": "html-fast -> gallery-dl-short",
+        "downloadEngineOrder": {
+            "Instagram": ["btch", "parth-dl", "yt-dlp", "instagram-html", "gallery-dl"],
+            "TikTok": ["btch", "tikwm", "yt-dlp"],
+            "X": ["fxtwitter", "btch", "yt-dlp"],
+            "YouTube": ["yt-dlp", "btch"],
+        },
+        "instagramPostFallback": "btch -> parth-dl -> yt-dlp -> html-fast -> gallery-dl-short",
         "instagramProxyConfigured": bool(INSTAGRAM_PROXY),
         "instagramEgress": "proxy" if INSTAGRAM_PROXY else "render-direct",
         "instagramFastTimeoutSeconds": 16,
