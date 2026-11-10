@@ -402,7 +402,7 @@ div>
             <h4>人物素材</h4>
             <p>单独上传教练 / 球员素材。建议使用另一张照片或透明 PNG，不使用下载原图人物裁切。</p>
             <div class="origMaterialPick">
-              <input id="sdOrigPersonFile" type="file" accept="image/*">
+              <input id="sdOrigPersonFile" type="file" accept="image/*,.heic,.heif">
               <b id="sdOrigPersonFileTitle">选择人物素材</b>
               <span>透明 PNG 最佳 · JPG / HEIC 转换后也可使用</span>
             </div>
@@ -868,7 +868,7 @@ Unbelievable finish."></textarea>
 
 <script>
 (()=>{'use strict';
-const SAGI_DOWN_BUILD='V3.9.1';
+const SAGI_DOWN_BUILD='V3.9.1.1';
 document.documentElement.dataset.sagiDownBuild=SAGI_DOWN_BUILD;
 const BTCH_PUBLIC='https://btch-downloader-api-green.vercel.app';
 const DOWNLOAD_ROUTER_VERSION='3.0';
@@ -3547,25 +3547,75 @@ function sdOrigRemovePhoto(){
 }
 async function sdOrigLoadPerson(file){
   if(!file)return;
-  if(SDORIG_PERSON_URL)URL.revokeObjectURL(SDORIG_PERSON_URL);
-  const url=URL.createObjectURL(file),img=new Image();
-  img.onload=()=>{
-    const sameName=!!(SDIMG.sourceName&&file.name===SDIMG.sourceName);
+  const title=q('sdOrigPersonFileTitle'),hint=q('sdOrigPersonHint');
+  if(title)title.textContent='正在读取 '+(file.name||'人物图片')+'…';
+  if(hint)hint.textContent='正在解码人物图片并加入画布。';
+  let url='',img=new Image();
+  const fail=msg=>{
+    try{if(url)URL.revokeObjectURL(url)}catch(e){}
+    if(title)title.textContent='选择人物素材';
+    if(hint)hint.textContent=msg;
+    toast(msg)
+  };
+  try{
+    url=URL.createObjectURL(file);
+    img.decoding='async';
+    const loaded=new Promise((resolve,reject)=>{
+      img.onload=()=>resolve(true);
+      img.onerror=()=>reject(new Error('图片格式无法直接解码'));
+    });
+    img.src=url;
+    try{
+      if(typeof img.decode==='function')await img.decode();
+      else await loaded;
+    }catch(e){
+      // Some iOS Safari builds reject decode() although onload still succeeds.
+      await loaded;
+    }
+
     let similarity=0;
     try{if(SDIMG_IMAGE)similarity=sdOrigSimilarity(sdOrigFingerprint(SDIMG_IMAGE),sdOrigFingerprint(img))}catch(e){}
-    if(sameName||similarity>=.985){
-      URL.revokeObjectURL(url);q('sdOrigPersonFile').value='';q('sdOrigPersonHint').textContent='已拒绝：人物素材与下载原图过于接近。请选择另一张教练/球员照片，保证原创视觉不复刻来源图。';toast('人物素材与原图过于相似，已拒绝');return
+
+    if(SDORIG_PERSON_URL&&SDORIG_PERSON_URL!==url){
+      try{URL.revokeObjectURL(SDORIG_PERSON_URL)}catch(e){}
     }
-    SDORIG_PERSON_URL=url;SDORIG_PERSON_IMAGE=img;SDORIG.personFileName=file.name;SDORIG.activeLayer=sdOrigFindFirstType('person')||sdOrigAddLayer('person',true);SDORIG.generatedAt=Date.now();sdOrigSave();
-    q('sdOrigPersonPreview').src=url;q('sdOrigPersonPreview').classList.add('show');q('sdOrigPersonFileTitle').textContent=file.name;
-    q('sdOrigPersonHint').textContent='人物素材已加入原创画布 · 与下载原图相似度 '+Math.round(similarity*100)+'% · 来源原图像素仍为 0%。';
-    sdOrigRender();toast('人物素材已加入原创海报')
-  };
-  img.onerror=()=>{URL.revokeObjectURL(url);toast('人物素材读取失败')};img.src=url
+    SDORIG_PERSON_URL=url;
+    SDORIG_PERSON_IMAGE=img;
+    SDORIG.personFileName=file.name||'人物图片';
+
+    let personId=sdOrigFindFirstType('person')||sdOrigAddLayer('person',true);
+    const layer=sdOrigLayer(personId);
+    if(layer){
+      layer.visible=true;
+      layer.locked=false;
+      if(!Number.isFinite(Number(layer.scale)))layer.scale=88;
+    }
+    SDORIG.activeLayer=personId;
+    SDORIG.generatedAt=Date.now();
+    sdOrigSave();
+
+    const preview=q('sdOrigPersonPreview');
+    if(preview){preview.src=url;preview.classList.add('show')}
+    if(title)title.textContent=SDORIG.personFileName;
+    if(hint){
+      hint.textContent=similarity>=.985
+        ?'人物素材已加入画布。它与来源图较相似，但不会再被系统强制拒绝；你可以继续移动、缩放、调色和重新排版。'
+        :'人物素材已加入画布 · 可直接拖动、缩放与调层级。';
+    }
+    sdOrigRender();
+    toast('人物图片导入成功');
+  }catch(e){
+    console.warn('PERSON IMPORT',e);
+    fail('人物图片读取失败，请换 JPG / PNG 或重新选择照片');
+  }
 }
 function sdOrigRemovePerson(){
-  if(SDORIG_PERSON_URL)URL.revokeObjectURL(SDORIG_PERSON_URL);SDORIG_PERSON_URL='';SDORIG_PERSON_IMAGE=null;SDORIG.personFileName='';sdOrigSave();
-  q('sdOrigPersonPreview').removeAttribute('src');q('sdOrigPersonPreview').classList.remove('show');q('sdOrigPersonFileTitle').textContent='选择人物素材';q('sdOrigPersonHint').textContent='人物素材已移除。原创海报仍可使用纯数据版式。';sdOrigDraw()
+  try{if(SDORIG_PERSON_URL)URL.revokeObjectURL(SDORIG_PERSON_URL)}catch(e){}
+  SDORIG_PERSON_URL='';SDORIG_PERSON_IMAGE=null;SDORIG.personFileName='';sdOrigSave();
+  const preview=q('sdOrigPersonPreview');if(preview){preview.removeAttribute('src');preview.classList.remove('show')}
+  if(q('sdOrigPersonFileTitle'))q('sdOrigPersonFileTitle').textContent='选择人物素材';
+  if(q('sdOrigPersonHint'))q('sdOrigPersonHint').textContent='人物素材已移除。人物图层保留，可重新导入图片。';
+  sdOrigSyncLayerControls();sdOrigDraw()
 }
 function sdOrigSyncScores(){
   SDORIG.scoreText=sdOrigAutoScoreText();sdOrigSave();q('sdOrigScoreText').value=SDORIG.scoreText;sdOrigRenderScores();sdOrigDraw();toast('已从分析结果填入比分素材')
@@ -3659,7 +3709,7 @@ function sdOrigDrawPhoto(ctx,w,h,id){
   const box=background?{x:0,y:0,w,h}:{x:w*.12,y:h*.16,w:w*.76,h:h*.52};
   const fit=background?Math.max(box.w/img.naturalWidth,box.h/img.naturalHeight):Math.min(box.w/img.naturalWidth,box.h/img.naturalHeight);
   const iw=img.naturalWidth*fit,ih=img.naturalHeight*fit,cx=box.x+box.w/2,cy=box.y+box.h/2;
-  ctx.save();ctx.globalAlpha*=opacity;
+  ctx.save();
   if(background){ctx.beginPath();ctx.rect(0,0,w,h);ctx.clip()}else{sdOrigRound(ctx,box.x,box.y,box.w,box.h,w*.025);ctx.clip()}
   ctx.filter='brightness('+(Number(SDORIG.bgBright)||100)+'%) saturate('+(Number(SDORIG.bgSat)||100)+'%)';
   ctx.drawImage(img,cx-iw/2,cy-ih/2,iw,ih);ctx.filter='none';ctx.restore();
@@ -3844,7 +3894,7 @@ q('sdOrigPhotoSelectBtn').onclick=()=>{const id=sdOrigFindFirstType('photo')||sd
 q('sdOrigPhotoMode').onchange=e=>{let id=(sdOrigLayerType(SDORIG.activeLayer)==='photo'&&SDORIG.activeLayer)||sdOrigFindFirstType('photo')||sdOrigAddLayer('photo',true);const l=sdOrigLayer(id);if(!l)return;SDORIG.activeLayer=id;l.background=e.target.value==='background';SDORIG.photoMode=e.target.value;if(l.background&&!l.locked){SDORIG.layerOrder=SDORIG.layerOrder.filter(x=>x!==id);SDORIG.layerOrder.unshift(id)}SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigSyncLayerControls();sdOrigDraw()};
 q('sdOrigPhotoOpacity').oninput=e=>{const id=(sdOrigLayerType(SDORIG.activeLayer)==='photo'&&SDORIG.activeLayer)||sdOrigFindFirstType('photo');const l=id&&sdOrigLayer(id);if(l&&!l.locked){l.opacity=Number(e.target.value);SDORIG.photoOpacity=l.opacity;SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigDraw()}};
 
-q('sdOrigPersonFile').onchange=e=>{const file=e.target.files?.[0];if(file)sdOrigLoadPerson(file);e.target.value=''};
+q('sdOrigPersonFile').onchange=async e=>{const file=e.target.files?.[0];if(file)await sdOrigLoadPerson(file);e.target.value=''};
 q('sdOrigPersonRemoveBtn').onclick=sdOrigRemovePerson;
 q('sdOrigPersonUseCoachBtn').onclick=()=>{const coach=sdOrigCoachName();if(coach){SDORIG.person=coach+' · 主教练';SDORIG.role=SDORIG.person;q('sdOrigPerson').value=SDORIG.person;sdOrigSave();sdOrigRender();toast('已套用主教练角色')}else toast('暂未验证主教练姓名')};
 q('sdOrigPersonScale').oninput=e=>{SDORIG.personScale=Number(e.target.value);SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigDraw()};
@@ -3920,7 +3970,7 @@ if(q('captionSpeed'))q('captionSpeed').value='fast';
 if(q('captionRange'))q('captionRange').value='trim';
 setTimeout(async()=>{await wakeCaptionCloud();refreshAIVoiceStatus(false)},180);
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=391',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=3911',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})}
 })();
 </script>
 </body>
