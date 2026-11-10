@@ -137,6 +137,46 @@ jobs:
           assert "双后腰" in sd["results"][0]["text"] or "四后卫" in sd["results"][0]["text"]
           assert 0 <= float(sd["averageScore"]) <= 100
           print("Smart translate smoke OK", sd["averageScore"], sd["results"][0]["text"])
+          # AI Voice endpoint smoke with provider mocked locally.
+          class FakeResp:
+              def __init__(self, status=200, payload=None, content=b""):
+                  self.status_code=status; self._payload=payload or {}; self.content=content; self.text=""
+              def json(self): return self._payload
+              def raise_for_status(self):
+                  if self.status_code >= 400: raise RuntimeError(self.status_code)
+
+          mod.ELEVENLABS_API_KEY = "test-key"
+          mod.list_eleven_voices = lambda force=False: [
+              {"voice_id":"male-test","name":"Male","category":"premade","gender":"male","accent":"","language":"","preview_url":""},
+              {"voice_id":"female-test","name":"Female","category":"premade","gender":"female","accent":"","language":"","preview_url":""},
+          ]
+          original_post = mod.requests.post
+          def fake_post(url, *args, **kwargs):
+              if "/v1/voices/add" in url:
+                  return FakeResp(payload={"voice_id":"clone-test","requires_verification":False})
+              if "/v1/text-to-speech/" in url:
+                  return FakeResp(content=b"ID3" + b"x"*5000)
+              return original_post(url, *args, **kwargs)
+          mod.requests.post = fake_post
+
+          r = c.get("/api/voice/status", headers=headers)
+          assert r.status_code == 200, r.get_data(as_text=True)
+          vd = r.get_json()
+          assert vd["configured"] is True and vd["voiceCount"] == 2
+
+          r = c.post("/api/voice/clone", headers=headers, data={
+              "sample": (io.BytesIO(b"voice"*1000), "voice.m4a"),
+              "name": "SAGI Test Voice", "consent": "true"
+          }, content_type="multipart/form-data")
+          assert r.status_code == 200, (r.status_code, r.get_data(as_text=True))
+          assert r.get_json()["voice_id"] == "clone-test"
+
+          r = c.post("/api/voice/preview", headers={**headers, "Content-Type":"application/json"},
+                     json={"text":"测试AI配音","mode":"ai_male","speed":1.0})
+          assert r.status_code == 200, (r.status_code, r.get_data(as_text=True))
+          assert len(r.data) > 1000
+          mod.requests.post = original_post
+          print("AI Voice API smoke OK")
           PY
 
       - name: Frontend JavaScript syntax and wiring
