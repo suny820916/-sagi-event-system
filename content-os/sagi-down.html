@@ -868,7 +868,7 @@ Unbelievable finish."></textarea>
 
 <script>
 (()=>{'use strict';
-const SAGI_DOWN_BUILD='V3.9.1.3';
+const SAGI_DOWN_BUILD='V3.9.1.4';
 document.documentElement.dataset.sagiDownBuild=SAGI_DOWN_BUILD;
 const BTCH_PUBLIC='https://btch-downloader-api-green.vercel.app';
 const DOWNLOAD_ROUTER_VERSION='3.0';
@@ -3325,7 +3325,7 @@ sdDataRender();sdFlowSet(SDIMG_IMAGE?'verify':'source',false);
 const SDORIG_KEY='sagi_down_original_poster_v1';
 const SDORIG_RATIOS={'3:4':{w:1080,h:1440},'9:16':{w:1080,h:1920},'1:1':{w:1080,h:1080}};
 let SDORIG={variant:0,template:'number',ratio:'3:4',title:'',sub:'',person:'',subject:'',fact:'',role:'',structure:'',hook:'',generatedAt:0,activeForPublish:false,personFileName:'',personScale:100,personX:0,personMode:'hero',photoFileName:'',photoMode:'layer',photoOpacity:100,scoreText:'',activeLayer:'person',layerOrder:['photo','person','number','scores','title'],filterPreset:'editorial',outputMode:'edit',personBright:100,personContrast:108,personSat:96,bgBright:92,bgSat:82,vignette:12,layers:{photo:{x:0,y:0,scale:100},person:{x:8,y:-6,scale:88},number:{x:-8,y:-8,scale:86},scores:{x:0,y:3,scale:90},title:{x:0,y:14,scale:90}}};
-let SDORIG_PERSON_IMAGE=null,SDORIG_PERSON_URL='',SDORIG_PHOTO_IMAGE=null,SDORIG_PHOTO_URL='';
+const SDORIG_LAYER_ASSETS={};
 try{SDORIG={...SDORIG,...JSON.parse(localStorage.getItem(SDORIG_KEY)||'{}')}}catch(e){}
 SDORIG.personFileName='';
 SDORIG.photoFileName='';
@@ -3333,7 +3333,7 @@ SDORIG.photoFileName='';
 function sdOrigSave(){try{localStorage.setItem(SDORIG_KEY,JSON.stringify(SDORIG))}catch(e){}}
 const SDORIG_LAYER_DEFAULTS={
   photo:{type:'photo',name:'图片',x:0,y:0,scale:100,visible:true,locked:false,opacity:100,background:false},
-  person:{type:'person',name:'人物',x:8,y:-6,scale:88,visible:true,locked:false,opacity:100},
+  person:{type:'person',name:'人物',x:8,y:-6,scale:88,visible:true,locked:false,opacity:100,cropScale:100,cropX:0,personMode:'hero'},
   number:{type:'number',name:'大数字 / 观点',x:-8,y:-8,scale:86,visible:true,locked:false,opacity:100},
   scores:{type:'scores',name:'比分',x:0,y:3,scale:90,visible:true,locked:false,opacity:100},
   title:{type:'title',name:'标题',x:0,y:14,scale:90,visible:true,locked:false,opacity:100}
@@ -3361,7 +3361,12 @@ function sdOrigEnsureLayers(){
   }
   for(const [id,raw] of Object.entries(SDORIG.layers)){
     const type=raw?.type||((SDORIG_LAYER_DEFAULTS[id]&&id)||'title');
-    SDORIG.layers[id]={...sdOrigLayerBase(type),...raw,type,visible:raw?.visible!==false,locked:raw?.locked===true}
+    SDORIG.layers[id]={...sdOrigLayerBase(type),...raw,type,visible:raw?.visible!==false,locked:raw?.locked===true};
+    if(type==='person'){
+      if(raw?.cropScale==null)SDORIG.layers[id].cropScale=Number(SDORIG.personScale)||100;
+      if(raw?.cropX==null)SDORIG.layers[id].cropX=Number(SDORIG.personX)||0;
+      if(raw?.personMode==null)SDORIG.layers[id].personMode=SDORIG.personMode||'hero';
+    }
   }
   const ids=Object.keys(SDORIG.layers);
   const current=Array.isArray(SDORIG.layerOrder)?SDORIG.layerOrder.filter(id=>ids.includes(id)):[];
@@ -3369,6 +3374,63 @@ function sdOrigEnsureLayers(){
   if(!SDORIG.activeLayer||!SDORIG.layers[SDORIG.activeLayer])SDORIG.activeLayer=SDORIG.layerOrder.slice().reverse().find(id=>SDORIG.layers[id]?.visible!==false)||SDORIG.layerOrder.at(-1)||''
 }
 function sdOrigLayer(id){sdOrigEnsureLayers();return SDORIG.layers[id]||null}
+function sdOrigLayerAsset(id){return id?SDORIG_LAYER_ASSETS[id]||null:null}
+function sdOrigLayerAssetImage(id){return sdOrigLayerAsset(id)?.image||null}
+function sdOrigSetLayerAsset(id,type,img,url,fileName,blob=null){
+  if(!id||!img)return null;
+  const old=SDORIG_LAYER_ASSETS[id];
+  if(old)delete SDORIG_LAYER_ASSETS[id];
+  if(old&&old.url&&!Object.values(SDORIG_LAYER_ASSETS).includes(old)){try{URL.revokeObjectURL(old.url)}catch(e){}}
+  const asset={type,image:img,url,fileName:fileName||'图片',blob:blob||null};
+  SDORIG_LAYER_ASSETS[id]=asset;return asset
+}
+function sdOrigCloneLayerAsset(srcId,dstId){
+  const asset=sdOrigLayerAsset(srcId);if(asset)SDORIG_LAYER_ASSETS[dstId]=asset
+}
+function sdOrigDropLayerAsset(id){
+  const asset=sdOrigLayerAsset(id);if(!asset)return;
+  delete SDORIG_LAYER_ASSETS[id];
+  if(asset.url&&!Object.values(SDORIG_LAYER_ASSETS).includes(asset)){try{URL.revokeObjectURL(asset.url)}catch(e){}}
+}
+function sdOrigFindAssetLayer(type){
+  sdOrigEnsureLayers();
+  if(SDORIG.activeLayer&&sdOrigLayerType(SDORIG.activeLayer)===type)return SDORIG.activeLayer;
+  return SDORIG.layerOrder.slice().reverse().find(id=>sdOrigLayerType(id)===type&&!!sdOrigLayerAsset(id))||
+    SDORIG.layerOrder.find(id=>sdOrigLayerType(id)===type)||''
+}
+function sdOrigSyncMaterialPanels(){
+  const personId=sdOrigFindAssetLayer('person'),personLayer=personId&&sdOrigLayer(personId),personAsset=personId&&sdOrigLayerAsset(personId);
+  const pp=q('sdOrigPersonPreview');
+  if(personAsset){
+    if(pp){pp.src=personAsset.url;pp.classList.add('show')}
+    if(q('sdOrigPersonFileTitle'))q('sdOrigPersonFileTitle').textContent=personAsset.fileName||'人物图片';
+    SDORIG.personFileName=personAsset.fileName||''
+  }else{
+    if(pp){pp.removeAttribute('src');pp.classList.remove('show')}
+    if(q('sdOrigPersonFileTitle'))q('sdOrigPersonFileTitle').textContent='选择人物素材';
+    SDORIG.personFileName=''
+  }
+  if(personLayer){
+    if(q('sdOrigPersonScale')){q('sdOrigPersonScale').value=Number(personLayer.cropScale)||100;q('sdOrigPersonScale').disabled=!!personLayer.locked}
+    if(q('sdOrigPersonX')){q('sdOrigPersonX').value=Number(personLayer.cropX)||0;q('sdOrigPersonX').disabled=!!personLayer.locked}
+    if(q('sdOrigPersonMode')){q('sdOrigPersonMode').value=personLayer.personMode||'hero';q('sdOrigPersonMode').disabled=!!personLayer.locked}
+  }
+  const photoId=sdOrigFindAssetLayer('photo'),photoLayer=photoId&&sdOrigLayer(photoId),photoAsset=photoId&&sdOrigLayerAsset(photoId);
+  const pv=q('sdOrigPhotoPreview');
+  if(photoAsset){
+    if(pv){pv.src=photoAsset.url;pv.classList.add('show')}
+    if(q('sdOrigPhotoFileTitle'))q('sdOrigPhotoFileTitle').textContent=photoAsset.fileName||'图片';
+    SDORIG.photoFileName=photoAsset.fileName||''
+  }else{
+    if(pv){pv.removeAttribute('src');pv.classList.remove('show')}
+    if(q('sdOrigPhotoFileTitle'))q('sdOrigPhotoFileTitle').textContent='选择图片图层';
+    SDORIG.photoFileName=''
+  }
+  if(photoLayer){
+    if(q('sdOrigPhotoMode'))q('sdOrigPhotoMode').value=photoLayer.background?'background':'layer';
+    if(q('sdOrigPhotoOpacity')){q('sdOrigPhotoOpacity').value=Number(photoLayer.opacity)||100;q('sdOrigPhotoOpacity').disabled=!!photoLayer.locked}
+  }
+}
 function sdOrigFindFirstType(type){sdOrigEnsureLayers();return SDORIG.layerOrder.find(id=>sdOrigLayerType(id)===type)||''}
 function sdOrigNewLayerId(type){
   let id='';do{id=type+'_'+Date.now().toString(36)+'_'+(++SDORIG_LAYER_SEQ)}while(SDORIG.layers[id]);return id
@@ -3394,13 +3456,13 @@ function sdOrigDuplicateLayer(){
   const src=sdOrigLayer(SDORIG.activeLayer);if(!src)return;
   if(SDORIG.layerOrder.length>=16){toast('最多保留16个图层');return}
   const id=sdOrigNewLayerId(src.type),copy={...src,name:sdOrigLayerLabel(SDORIG.activeLayer)+' 副本',x:Math.min(55,(Number(src.x)||0)+4),y:Math.min(55,(Number(src.y)||0)+4),locked:false};
-  SDORIG.layers[id]=copy;const i=SDORIG.layerOrder.indexOf(SDORIG.activeLayer);SDORIG.layerOrder.splice(i+1,0,id);SDORIG.activeLayer=id;
+  SDORIG.layers[id]=copy;sdOrigCloneLayerAsset(SDORIG.activeLayer,id);const i=SDORIG.layerOrder.indexOf(SDORIG.activeLayer);SDORIG.layerOrder.splice(i+1,0,id);SDORIG.activeLayer=id;
   SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigSyncLayerControls();sdOrigDraw();toast('已复制当前图层')
 }
 function sdOrigDeleteLayer(){
   const id=SDORIG.activeLayer,l=sdOrigLayer(id);if(!l)return;
   if(l.locked){toast('图层已锁定，请先解锁');return}
-  delete SDORIG.layers[id];SDORIG.layerOrder=SDORIG.layerOrder.filter(x=>x!==id);
+  sdOrigDropLayerAsset(id);delete SDORIG.layers[id];SDORIG.layerOrder=SDORIG.layerOrder.filter(x=>x!==id);
   SDORIG.activeLayer=SDORIG.layerOrder.slice().reverse().find(x=>SDORIG.layers[x]?.visible!==false)||SDORIG.layerOrder.at(-1)||'';
   SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigSyncLayerControls();sdOrigDraw();toast('图层已删除')
 }
@@ -3455,7 +3517,7 @@ function sdOrigSyncLayerControls(){
   const photoType=l&&sdOrigLayerType(SDORIG.activeLayer)==='photo';
   if(photoType&&q('sdOrigPhotoMode'))q('sdOrigPhotoMode').value=l.background?'background':'layer';
   if(photoType&&q('sdOrigPhotoOpacity'))q('sdOrigPhotoOpacity').value=Number(l.opacity)||100;
-  sdOrigRenderLayerList()
+  sdOrigRenderLayerList();sdOrigSyncMaterialPanels()
 }
 function sdOrigAutoLayout(){
   sdOrigEnsureLayers();const counts={};
@@ -3536,128 +3598,69 @@ async function sdOrigLoadPhoto(file){
   if(!file)return;
   const title=q('sdOrigPhotoFileTitle'),hint=q('sdOrigPhotoHint');
   if(title)title.textContent='正在读取 '+(file.name||'图片')+'…';
-  if(hint)hint.textContent='正在解码图片并加入画布。';
+  if(hint)hint.textContent='正在解码图片并加入当前图片图层。';
   let url='',img=new Image();
   const fail=msg=>{
     try{if(url)URL.revokeObjectURL(url)}catch(e){}
-    if(title)title.textContent=SDORIG.photoFileName||'选择图片图层';
-    if(hint)hint.textContent=msg+'；原有图片不会被覆盖。';
+    sdOrigSyncMaterialPanels();
+    if(hint)hint.textContent=msg+'；当前图层原有图片不会被覆盖。';
     toast(msg)
   };
   try{
-    url=URL.createObjectURL(file);
-    img.decoding='async';
-    const loaded=new Promise((resolve,reject)=>{
-      img.onload=()=>resolve(true);
-      img.onerror=()=>reject(new Error('图片格式无法直接解码'));
-    });
+    url=URL.createObjectURL(file);img.decoding='async';
+    const loaded=new Promise((resolve,reject)=>{img.onload=()=>resolve(true);img.onerror=()=>reject(new Error('图片格式无法直接解码'))});
     img.src=url;
-    try{
-      if(typeof img.decode==='function')await img.decode();
-      else await loaded;
-    }catch(e){
-      await loaded;
-    }
-
-    const oldUrl=SDORIG_PHOTO_URL;
-    let photoId=(sdOrigLayerType(SDORIG.activeLayer)==='photo'&&SDORIG.activeLayer)||sdOrigFindFirstType('photo')||sdOrigAddLayer('photo',true);
-    const layer=sdOrigLayer(photoId);
-    if(layer){
-      layer.visible=true;
-      layer.locked=false;
-      if(!Number.isFinite(Number(layer.scale)))layer.scale=100;
-      if(!Number.isFinite(Number(layer.opacity)))layer.opacity=100;
-    }
-
-    SDORIG_PHOTO_URL=url;
-    SDORIG_PHOTO_IMAGE=img;
-    SDORIG.photoFileName=file.name||'图片';
-    SDORIG.activeLayer=photoId;
-    SDORIG.generatedAt=Date.now();
-    sdOrigSave();
-
-    if(oldUrl&&oldUrl!==url){try{URL.revokeObjectURL(oldUrl)}catch(e){}}
-    const preview=q('sdOrigPhotoPreview');
-    if(preview){preview.src=url;preview.classList.add('show')}
-    if(title)title.textContent=SDORIG.photoFileName;
-    if(hint)hint.textContent='图片已加入画布 · 当前图片层已自动显示并解锁。';
-    sdOrigRender();
-    toast('图片图层导入成功');
-  }catch(e){
-    console.warn('PHOTO IMPORT',e);
-    fail('图片读取失败，请换 JPG / PNG 或重新选择照片');
-  }
+    try{if(typeof img.decode==='function')await img.decode();else await loaded}catch(e){await loaded}
+    let photoId=(sdOrigLayerType(SDORIG.activeLayer)==='photo'&&SDORIG.activeLayer)||
+      SDORIG.layerOrder.find(id=>sdOrigLayerType(id)==='photo'&&!sdOrigLayerAsset(id))||
+      sdOrigFindFirstType('photo')||sdOrigAddLayer('photo',true);
+    const layer=sdOrigLayer(photoId);if(!layer)throw new Error('图片图层创建失败');
+    layer.visible=true;layer.locked=false;if(!Number.isFinite(Number(layer.scale)))layer.scale=100;if(!Number.isFinite(Number(layer.opacity)))layer.opacity=100;
+    sdOrigSetLayerAsset(photoId,'photo',img,url,file.name||'图片',file);
+    SDORIG.activeLayer=photoId;SDORIG.photoFileName=file.name||'图片';SDORIG.generatedAt=Date.now();sdOrigSave();
+    sdOrigSyncLayerControls();sdOrigRender();if(hint)hint.textContent='图片已加入当前图层 · 不会替换其他图片图层。';toast('图片图层导入成功')
+  }catch(e){console.warn('PHOTO IMPORT',e);fail('图片读取失败，请换 JPG / PNG 或重新选择照片')}
 }
 function sdOrigRemovePhoto(){
-  try{if(SDORIG_PHOTO_URL)URL.revokeObjectURL(SDORIG_PHOTO_URL)}catch(e){}
-  SDORIG_PHOTO_URL='';SDORIG_PHOTO_IMAGE=null;SDORIG.photoFileName='';sdOrigSave();
-  const preview=q('sdOrigPhotoPreview');if(preview){preview.removeAttribute('src');preview.classList.remove('show')}
-  if(q('sdOrigPhotoFileTitle'))q('sdOrigPhotoFileTitle').textContent='选择图片图层';
-  if(q('sdOrigPhotoHint'))q('sdOrigPhotoHint').textContent='图片素材已移除。图片图层保留，可重新导入。';
+  const id=sdOrigFindAssetLayer('photo');if(!id){toast('当前没有图片素材');return}
+  sdOrigDropLayerAsset(id);SDORIG.photoFileName='';sdOrigSave();
+  if(q('sdOrigPhotoHint'))q('sdOrigPhotoHint').textContent='当前图片图层的素材已移除，图层本身保留。';
   sdOrigSyncLayerControls();sdOrigDraw()
 }
 async function sdOrigLoadPerson(file){
   if(!file)return;
   const title=q('sdOrigPersonFileTitle'),hint=q('sdOrigPersonHint');
   if(title)title.textContent='正在读取 '+(file.name||'人物图片')+'…';
-  if(hint)hint.textContent='正在解码人物图片并加入画布。';
+  if(hint)hint.textContent='正在解码人物图片并加入当前人物图层。';
   let url='',img=new Image();
   const fail=msg=>{
     try{if(url)URL.revokeObjectURL(url)}catch(e){}
-    if(title)title.textContent='选择人物素材';
-    if(hint)hint.textContent=msg;
+    sdOrigSyncMaterialPanels();
+    if(hint)hint.textContent=msg+'；当前人物图层原有素材不会被覆盖。';
     toast(msg)
   };
   try{
-    url=URL.createObjectURL(file);
-    img.decoding='async';
-    const loaded=new Promise((resolve,reject)=>{
-      img.onload=()=>resolve(true);
-      img.onerror=()=>reject(new Error('图片格式无法直接解码'));
-    });
+    url=URL.createObjectURL(file);img.decoding='async';
+    const loaded=new Promise((resolve,reject)=>{img.onload=()=>resolve(true);img.onerror=()=>reject(new Error('图片格式无法直接解码'))});
     img.src=url;
-    try{
-      if(typeof img.decode==='function')await img.decode();
-      else await loaded;
-    }catch(e){
-      // Some iOS Safari builds reject decode() although onload still succeeds.
-      await loaded;
-    }
-    if(SDORIG_PERSON_URL&&SDORIG_PERSON_URL!==url){
-      try{URL.revokeObjectURL(SDORIG_PERSON_URL)}catch(e){}
-    }
-    SDORIG_PERSON_URL=url;
-    SDORIG_PERSON_IMAGE=img;
-    SDORIG.personFileName=file.name||'人物图片';
-
-    let personId=sdOrigFindFirstType('person')||sdOrigAddLayer('person',true);
-    const layer=sdOrigLayer(personId);
-    if(layer){
-      layer.visible=true;
-      layer.locked=false;
-      if(!Number.isFinite(Number(layer.scale)))layer.scale=88;
-    }
-    SDORIG.activeLayer=personId;
-    SDORIG.generatedAt=Date.now();
-    sdOrigSave();
-
-    const preview=q('sdOrigPersonPreview');
-    if(preview){preview.src=url;preview.classList.add('show')}
-    if(title)title.textContent=SDORIG.personFileName;
-    if(hint)hint.textContent='人物素材已加入画布 · 当前人物层已自动显示并解锁，可直接拖动、缩放、调色和调层级。';
-    sdOrigRender();
-    toast('人物图片导入成功');
-  }catch(e){
-    console.warn('PERSON IMPORT',e);
-    fail('人物图片读取失败，请换 JPG / PNG 或重新选择照片');
-  }
+    try{if(typeof img.decode==='function')await img.decode();else await loaded}catch(e){await loaded}
+    let personId=(sdOrigLayerType(SDORIG.activeLayer)==='person'&&SDORIG.activeLayer)||
+      SDORIG.layerOrder.find(id=>sdOrigLayerType(id)==='person'&&!sdOrigLayerAsset(id))||
+      sdOrigFindFirstType('person')||sdOrigAddLayer('person',true);
+    const layer=sdOrigLayer(personId);if(!layer)throw new Error('人物图层创建失败');
+    layer.visible=true;layer.locked=false;if(!Number.isFinite(Number(layer.scale)))layer.scale=88;
+    if(!Number.isFinite(Number(layer.cropScale)))layer.cropScale=100;
+    if(!Number.isFinite(Number(layer.cropX)))layer.cropX=0;
+    if(!layer.personMode)layer.personMode='hero';
+    sdOrigSetLayerAsset(personId,'person',img,url,file.name||'人物图片',file);
+    SDORIG.activeLayer=personId;SDORIG.personFileName=file.name||'人物图片';SDORIG.generatedAt=Date.now();sdOrigSave();
+    sdOrigSyncLayerControls();sdOrigRender();if(hint)hint.textContent='人物已加入当前图层 · 每个人物图层现在可以使用不同图片和独立裁切。';toast('人物图片导入成功')
+  }catch(e){console.warn('PERSON IMPORT',e);fail('人物图片读取失败，请换 JPG / PNG 或重新选择照片')}
 }
 function sdOrigRemovePerson(){
-  try{if(SDORIG_PERSON_URL)URL.revokeObjectURL(SDORIG_PERSON_URL)}catch(e){}
-  SDORIG_PERSON_URL='';SDORIG_PERSON_IMAGE=null;SDORIG.personFileName='';sdOrigSave();
-  const preview=q('sdOrigPersonPreview');if(preview){preview.removeAttribute('src');preview.classList.remove('show')}
-  if(q('sdOrigPersonFileTitle'))q('sdOrigPersonFileTitle').textContent='选择人物素材';
-  if(q('sdOrigPersonHint'))q('sdOrigPersonHint').textContent='人物素材已移除。人物图层保留，可重新导入图片。';
+  const id=sdOrigFindAssetLayer('person');if(!id){toast('当前没有人物素材');return}
+  sdOrigDropLayerAsset(id);SDORIG.personFileName='';sdOrigSave();
+  if(q('sdOrigPersonHint'))q('sdOrigPersonHint').textContent='当前人物图层的素材已移除，图层本身保留。';
   sdOrigSyncLayerControls();sdOrigDraw()
 }
 function sdOrigSyncScores(){
@@ -3747,8 +3750,8 @@ function sdOrigHeader(ctx,w,h,c){
 }
 
 function sdOrigDrawPhoto(ctx,w,h,id){
-  if(!SDORIG_PHOTO_IMAGE)return;
-  const l=sdOrigLayer(id)||{},img=SDORIG_PHOTO_IMAGE,background=!!l.background;
+  const asset=sdOrigLayerAsset(id);if(!asset?.image)return;
+  const l=sdOrigLayer(id)||{},img=asset.image,background=!!l.background;
   const box=background?{x:0,y:0,w,h}:{x:w*.12,y:h*.16,w:w*.76,h:h*.52};
   const fit=background?Math.max(box.w/img.naturalWidth,box.h/img.naturalHeight):Math.min(box.w/img.naturalWidth,box.h/img.naturalHeight);
   const iw=img.naturalWidth*fit,ih=img.naturalHeight*fit,cx=box.x+box.w/2,cy=box.y+box.h/2;
@@ -3760,8 +3763,7 @@ function sdOrigDrawPhoto(ctx,w,h,id){
 }
 function sdOrigLayerVisible(id){
   const l=sdOrigLayer(id);if(!l||l.visible===false)return false;const type=sdOrigLayerType(id);
-  if(type==='photo')return !!SDORIG_PHOTO_IMAGE;
-  if(type==='person')return !!SDORIG_PERSON_IMAGE;
+  if(type==='photo'||type==='person')return !!sdOrigLayerAssetImage(id);
   if(type==='scores')return sdOrigScoreRows().length>0;
   if(type==='number')return ['number','coach','question'].includes(SDORIG.template);
   if(type==='title')return true;
@@ -3794,9 +3796,9 @@ function sdOrigDrawSelection(ctx,w,h){
   ctx.fillStyle='rgba(5,8,9,.88)';sdOrigRound(ctx,b.x,Math.max(4,b.y-r*3.2),Math.max(w*.17,140),r*2.2,r*.5);ctx.fill();ctx.fillStyle=l.locked?'#a8b4b8':'#f0d58e';ctx.font='800 '+Math.max(14,w*.016)+'px -apple-system,"PingFang SC",sans-serif';ctx.fillText((l.locked?'🔒 ':'')+sdOrigLayerLabel(SDORIG.activeLayer),b.x+r*.6,Math.max(r*1.5,b.y-r*1.65));ctx.restore()
 }
 
-function sdOrigDrawPerson(ctx,w,h,c){
-  if(!SDORIG_PERSON_IMAGE)return;
-  const img=SDORIG_PERSON_IMAGE,mode=SDORIG.personMode||'hero',scale=(Number(SDORIG.personScale)||100)/100,xShift=(Number(SDORIG.personX)||0)/100*w;
+function sdOrigDrawPerson(ctx,w,h,c,id){
+  const asset=sdOrigLayerAsset(id),layer=sdOrigLayer(id);if(!asset?.image||!layer)return;
+  const img=asset.image,mode=layer.personMode||'hero',scale=(Number(layer.cropScale)||100)/100,xShift=(Number(layer.cropX)||0)/100*w;
   const box={x:w*.53,y:h*.15,w:w*.41,h:h*.38};
   const fit=Math.max(box.w/img.naturalWidth,box.h/img.naturalHeight)*scale,iw=img.naturalWidth*fit,ih=img.naturalHeight*fit,cx=box.x+box.w*.52+xShift,cy=box.y+box.h*.53;
   ctx.save();
@@ -3871,7 +3873,7 @@ function sdOrigDraw(){
     if(!sdOrigLayerVisible(id))continue;const type=sdOrigLayerType(id);
     sdOrigWithLayer(ctx,w,h,id,()=>{
       if(type==='photo')sdOrigDrawPhoto(ctx,w,h,id);
-      else if(type==='person')sdOrigDrawPerson(ctx,w,h,cx);
+      else if(type==='person')sdOrigDrawPerson(ctx,w,h,cx,id);
       else if(type==='number'){if(SDORIG.template==='number')sdOrigBigNumber(ctx,w,h,cx);else if(SDORIG.template==='coach')sdOrigCoachThesis(ctx,w,h,cx);else if(SDORIG.template==='question')sdOrigQuestion(ctx,w,h,cx)}
       else if(type==='scores'){if(SDORIG.template==='timeline')sdOrigTimeline(ctx,w,h,cx);else if(SDORIG.template==='data')sdOrigDataCard(ctx,w,h,cx);else sdOrigScoreStrip(ctx,w,h,cx)}
       else if(type==='title')sdOrigMainText(ctx,w,h,cx)
@@ -3883,7 +3885,7 @@ function sdOrigRender(){
   if(!q('sdOriginalPoster'))return;
   const c=sdOrigContext();q('sdOrigPixelUse').textContent='仅分析';q('sdOrigOriginality').textContent='已启用';q('sdOrigHook').textContent=c.hook||'等待分析';q('sdOrigSubject').textContent=SDORIG.subject||c.subject||'—';q('sdOrigRole').textContent=SDORIG.role||c.person||'—';q('sdOrigFact').textContent=SDORIG.fact||c.fact||'—';q('sdOrigStructure').textContent=SDORIG.structure||'—';
   q('sdOrigTitle').value=SDORIG.title||'';q('sdOrigSub').value=SDORIG.sub||'';q('sdOrigPerson').value=SDORIG.person||'';q('sdOrigRatio').value=SDORIG.ratio||'3:4';
-  q('sdOrigPersonScale').value=SDORIG.personScale||100;q('sdOrigPersonX').value=SDORIG.personX||0;q('sdOrigPersonMode').value=SDORIG.personMode||'hero';q('sdOrigScoreText').value=SDORIG.scoreText||'';if(SDORIG.personFileName)q('sdOrigPersonFileTitle').textContent=SDORIG.personFileName;if(SDORIG.photoFileName)q('sdOrigPhotoFileTitle').textContent=SDORIG.photoFileName;sdOrigRenderScores();
+  q('sdOrigScoreText').value=SDORIG.scoreText||'';sdOrigRenderScores();
   document.querySelectorAll('[data-orig-variant]').forEach(b=>b.classList.toggle('active',Number(b.dataset.origVariant)===Number(SDORIG.variant)));
   document.querySelectorAll('[data-orig-template]').forEach(b=>b.classList.toggle('active',b.dataset.origTemplate===SDORIG.template));
   const coach=c.coach?('主教练上下文：'+c.coach+'。系统依据来源账号与联网文章中的教练身份判断，不使用人脸身份识别。'):('暂未从来源/新闻上下文验证主教练姓名，海报将以球队趋势为主。');
@@ -3933,16 +3935,16 @@ q('sdOrigRatio').onchange=e=>{SDORIG.ratio=e.target.value;SDORIG.generatedAt=Dat
 
 q('sdOrigPhotoFile').onchange=async e=>{const file=e.target.files?.[0];if(file)await sdOrigLoadPhoto(file);e.target.value=''};
 q('sdOrigPhotoRemoveBtn').onclick=sdOrigRemovePhoto;
-q('sdOrigPhotoSelectBtn').onclick=()=>{const id=sdOrigFindFirstType('photo')||sdOrigAddLayer('photo',true),l=sdOrigLayer(id);if(l)l.visible=true;SDORIG.activeLayer=id;sdOrigSave();sdOrigSyncLayerControls();sdOrigDraw()};
-q('sdOrigPhotoMode').onchange=e=>{let id=(sdOrigLayerType(SDORIG.activeLayer)==='photo'&&SDORIG.activeLayer)||sdOrigFindFirstType('photo')||sdOrigAddLayer('photo',true);const l=sdOrigLayer(id);if(!l)return;SDORIG.activeLayer=id;l.background=e.target.value==='background';SDORIG.photoMode=e.target.value;if(l.background&&!l.locked){SDORIG.layerOrder=SDORIG.layerOrder.filter(x=>x!==id);SDORIG.layerOrder.unshift(id)}SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigSyncLayerControls();sdOrigDraw()};
-q('sdOrigPhotoOpacity').oninput=e=>{const id=(sdOrigLayerType(SDORIG.activeLayer)==='photo'&&SDORIG.activeLayer)||sdOrigFindFirstType('photo');const l=id&&sdOrigLayer(id);if(l&&!l.locked){l.opacity=Number(e.target.value);SDORIG.photoOpacity=l.opacity;SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigDraw()}};
+q('sdOrigPhotoSelectBtn').onclick=()=>{const id=sdOrigFindAssetLayer('photo')||sdOrigAddLayer('photo',true),l=sdOrigLayer(id);if(l)l.visible=true;SDORIG.activeLayer=id;sdOrigSave();sdOrigSyncLayerControls();sdOrigDraw()};
+q('sdOrigPhotoMode').onchange=e=>{let id=(sdOrigLayerType(SDORIG.activeLayer)==='photo'&&SDORIG.activeLayer)||sdOrigFindAssetLayer('photo')||sdOrigAddLayer('photo',true);const l=sdOrigLayer(id);if(!l)return;SDORIG.activeLayer=id;l.background=e.target.value==='background';SDORIG.photoMode=e.target.value;if(l.background&&!l.locked){SDORIG.layerOrder=SDORIG.layerOrder.filter(x=>x!==id);SDORIG.layerOrder.unshift(id)}SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigSyncLayerControls();sdOrigDraw()};
+q('sdOrigPhotoOpacity').oninput=e=>{const id=(sdOrigLayerType(SDORIG.activeLayer)==='photo'&&SDORIG.activeLayer)||sdOrigFindAssetLayer('photo');const l=id&&sdOrigLayer(id);if(l&&!l.locked){l.opacity=Number(e.target.value);SDORIG.photoOpacity=l.opacity;SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigDraw()}};
 
 q('sdOrigPersonFile').onchange=async e=>{const file=e.target.files?.[0];if(file)await sdOrigLoadPerson(file);e.target.value=''};
 q('sdOrigPersonRemoveBtn').onclick=sdOrigRemovePerson;
 q('sdOrigPersonUseCoachBtn').onclick=()=>{const coach=sdOrigCoachName();if(coach){SDORIG.person=coach+' · 主教练';SDORIG.role=SDORIG.person;q('sdOrigPerson').value=SDORIG.person;sdOrigSave();sdOrigRender();toast('已套用主教练角色')}else toast('暂未验证主教练姓名')};
-q('sdOrigPersonScale').oninput=e=>{SDORIG.personScale=Number(e.target.value);SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigDraw()};
-q('sdOrigPersonX').oninput=e=>{SDORIG.personX=Number(e.target.value);SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigDraw()};
-q('sdOrigPersonMode').onchange=e=>{SDORIG.personMode=e.target.value;SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigDraw()};
+q('sdOrigPersonScale').oninput=e=>{const id=sdOrigFindAssetLayer('person'),l=id&&sdOrigLayer(id);if(!l||l.locked)return;l.cropScale=Number(e.target.value);SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigDraw()};
+q('sdOrigPersonX').oninput=e=>{const id=sdOrigFindAssetLayer('person'),l=id&&sdOrigLayer(id);if(!l||l.locked)return;l.cropX=Number(e.target.value);SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigDraw()};
+q('sdOrigPersonMode').onchange=e=>{const id=sdOrigFindAssetLayer('person'),l=id&&sdOrigLayer(id);if(!l||l.locked)return;l.personMode=e.target.value;SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigDraw()};
 q('sdOrigScoreText').oninput=e=>{SDORIG.scoreText=e.target.value;SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigRenderScores();sdOrigDraw()};
 q('sdOrigScoreAutoBtn').onclick=sdOrigSyncScores;
 q('sdOrigScoreClearBtn').onclick=()=>{SDORIG.scoreText='';sdOrigSave();q('sdOrigScoreText').value='';sdOrigRenderScores();sdOrigDraw();toast('比分素材已清空')};
@@ -4013,7 +4015,7 @@ if(q('captionSpeed'))q('captionSpeed').value='fast';
 if(q('captionRange'))q('captionRange').value='trim';
 setTimeout(async()=>{await wakeCaptionCloud();refreshAIVoiceStatus(false)},180);
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=3913',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=3914',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})}
 })();
 </script>
 </body>
