@@ -36,6 +36,14 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 
 .studioCard{border-color:#455766;background:linear-gradient(180deg,#101820,#090e12)}
 .studioHero{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px}.studioHero b{font-size:12px}.studioHero span{font-size:8px;color:#748890}
+
+.aiCaptionStep{border-color:#3a4c68;background:linear-gradient(180deg,#101621,#0a1016)}
+.aiCaptionTop{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}.aiCaptionTop b{font-size:11px}.aiCaptionTop span{font-size:8px;color:#738796}
+.aiCaptionActions{display:grid;grid-template-columns:1.1fr 1fr .72fr;gap:7px;margin-top:8px}
+.aiCaptionProgress{height:7px;background:#080d10;border:1px solid #293a43;border-radius:99px;overflow:hidden;margin-top:9px}.aiCaptionProgress i{display:block;height:100%;width:0;background:linear-gradient(90deg,#718eaa,#d7b568);transition:.2s}
+.aiCaptionStatus{font-size:9px;color:#81949b;line-height:1.5;margin-top:7px}
+.aiCaptionTimeline{display:grid;gap:5px;margin-top:8px;max-height:180px;overflow:auto}.capRow{display:grid;grid-template-columns:58px 1fr;gap:7px;border:1px solid #243640;border-radius:9px;background:#091014;padding:7px}.capRow time{font-size:8px;color:#b7a268}.capRow span{font-size:9px;color:#c9d2d5;line-height:1.4}
+.aiCaptionMeta{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}.aiCaptionMeta span{font-size:8px;border:1px solid #2c414b;border-radius:99px;padding:4px 7px;color:#789099}
 .studioStep{border:1px solid #263a43;border-radius:12px;background:#0a1115;padding:11px;margin-top:8px}.studioStepHead{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:8px}.studioStepHead b{font-size:10px}.studioStepHead span{font-size:8px;color:#6e838b}
 .studioVideo{display:none;width:100%;max-height:330px;border-radius:12px;background:#000;margin-top:8px}.studioVideo.show{display:block}
 .trimGrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}.trimGrid label{font-size:8px;color:#71858c;display:block;margin-bottom:4px}.trimGrid input,.trimGrid select,.studioSelect{width:100%;border:1px solid #2c3e45;background:#070b0d;color:#fff;border-radius:10px;padding:10px;font-size:10px;outline:none}
@@ -43,7 +51,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 .subtitleBox,.narrationBox{width:100%;min-height:115px;border:1px solid #2c3e45;background:#070b0d;color:#fff;border-radius:10px;padding:10px;font-size:11px;line-height:1.55;resize:vertical;outline:none}
 .langRow{display:grid;grid-template-columns:1fr 1fr auto;gap:7px;margin-top:7px;align-items:end}.langRow label{font-size:8px;color:#71858c}.langRow select{width:100%;border:1px solid #2c3e45;background:#070b0d;color:#fff;border-radius:10px;padding:10px;font-size:10px}
 .subHint{font-size:8px;color:#647980;line-height:1.45;margin-top:6px}
-.narrationActions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-top:7px}.recording{border-color:#7b4a4a!important;color:#e1a2a2!important}
+.narrationActions{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:7px}.recording{border-color:#7b4a4a!important;color:#e1a2a2!important}
 .voiceMeta{font-size:8px;color:#6e838b;margin-top:7px}
 .exportRow{display:grid;grid-template-columns:1fr .7fr;gap:7px;margin-top:9px}.exportProgress{height:7px;background:#0a0f12;border:1px solid #26373e;border-radius:99px;overflow:hidden;margin-top:9px}.exportProgress i{display:block;height:100%;width:0;background:#d7b568;transition:.2s}
 .resultVideo{display:none;width:100%;border-radius:12px;background:#000;margin-top:10px}.resultVideo.show{display:block}
@@ -56,7 +64,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 <div class="wrap">
   <div class="top">
     <div class="brand"><b>SAGI DOWN</b><span>VIDEO LINK SHORTCUT</span></div>
-    <span class="badge">V1.4 · MOBILE STUDIO</span>
+    <span class="badge">V1.5 · AI CAPTION</span>
   </div>
 
   <section class="hero">
@@ -172,8 +180,35 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
       </div>
     </div>
 
+    <div class="studioStep aiCaptionStep">
+      <div class="aiCaptionTop">
+        <div><b>03 · AI CAPTION · 自动字幕</b><span>Whisper 浏览器内识别 · 原视频不上传</span></div>
+        <span class="badge">WHISPER</span>
+      </div>
+
+      <div class="recreateFields">
+        <div><label>识别语言</label><select id="captionLanguage"><option value="auto">AUTO 自动识别</option><option value="zh">中文</option><option value="en">English</option><option value="pt">Português</option><option value="es">Español</option><option value="ru">Русский</option><option value="fr">Français</option><option value="de">Deutsch</option><option value="ar">العربية</option><option value="tr">Türkçe</option></select></div>
+        <div><label>识别范围</label><select id="captionRange"><option value="trim">当前入点 → 出点</option><option value="full">整段视频</option></select></div>
+      </div>
+
+      <div class="aiCaptionActions">
+        <button class="btn primary" id="aiCaptionBtn" type="button">AI 识别字幕</button>
+        <button class="btn blue" id="aiCaptionZhBtn" type="button">识别并翻成中文</button>
+        <button class="btn" id="downloadSrtBtn" type="button">导出 SRT</button>
+      </div>
+
+      <div class="aiCaptionProgress"><i id="aiCaptionProgress"></i></div>
+      <div id="aiCaptionStatus" class="aiCaptionStatus">首次使用会下载 Whisper Tiny 多语言模型；后续浏览器缓存复用。</div>
+      <div class="aiCaptionMeta">
+        <span id="captionEngine">引擎：待载入</span>
+        <span id="captionDetectedLang">语言：—</span>
+        <span id="captionCount">字幕：0</span>
+      </div>
+      <div id="aiCaptionTimeline" class="aiCaptionTimeline"></div>
+    </div>
+
     <div class="studioStep">
-      <div class="studioStepHead"><b>03 · 字幕 + 翻译</b><span>一行一句，自动分配时间</span></div>
+      <div class="studioStepHead"><b>04 · 字幕 + 翻译</b><span>AI时间轴可继续手动修改</span></div>
       <textarea id="subtitleText" class="subtitleBox" placeholder="每行一句字幕，例如：
 What a goal!
 Unbelievable finish."></textarea>
@@ -186,10 +221,11 @@ Unbelievable finish."></textarea>
     </div>
 
     <div class="studioStep">
-      <div class="studioStepHead"><b>04 · 解说</b><span>朗读试听 / 麦克风录制</span></div>
+      <div class="studioStepHead"><b>05 · 解说</b><span>字幕转初稿 / 朗读 / 录音</span></div>
       <textarea id="narrationText" class="narrationBox" placeholder="写中文解说文案，例如：
 这次进攻真正厉害的地方，不是最后这一脚，而是前面连续两次拉扯防线。"></textarea>
       <div class="narrationActions">
+        <button class="btn" id="captionToNarrationBtn" type="button">字幕→解说初稿</button>
         <button class="btn blue" id="speakNarrationBtn" type="button">手机朗读试听</button>
         <button class="btn gold" id="recordNarrationBtn" type="button">录制我的解说</button>
         <button class="btn" id="stopNarrationBtn" type="button">停止录音</button>
@@ -198,7 +234,7 @@ Unbelievable finish."></textarea>
     </div>
 
     <div class="studioStep">
-      <div class="studioStepHead"><b>05 · 导出成片</b><span>FFmpeg WASM 本地合成</span></div>
+      <div class="studioStepHead"><b>06 · 导出成片</b><span>FFmpeg WASM 本地合成</span></div>
       <div class="trimGrid">
         <div><label>原声</label><select id="originalAudio"><option value="0.25">25% 保留</option><option value="0.5">50% 保留</option><option value="1">100% 保留</option><option value="0">静音</option></select></div>
         <div><label>字幕</label><select id="burnSubtitle"><option value="yes">烧录到画面</option><option value="no">不烧录</option></select></div>
@@ -385,7 +421,8 @@ function makeJob(useFile){
 const STUDIO={
  file:null,url:'',duration:0,width:0,height:0,
  voiceBlob:null,voiceMime:'',voiceUrl:'',recorder:null,voiceStream:null,chunks:[],
- ffmpeg:null,ffmpegLoaded:false,exporting:false,resultBlob:null,resultUrl:''
+ ffmpeg:null,ffmpegLoaded:false,exporting:false,resultBlob:null,resultUrl:'',
+ captions:[],captionLanguage:'',captionRangeKey:'',captionModel:null,captionModule:null,captionBusy:false
 };
 
 function studioStatus(t,k=''){const e=q('studioStatus');if(e){e.textContent=t;e.className='status '+k}}
@@ -440,8 +477,160 @@ function studioRange(){
  return[s,e,Math.max(.1,e-s)]
 }
 function subtitleLines(){
- return String(q('subtitleText')?.value||'').split(/\n+/).map(x=>x.trim()).filter(Boolean).slice(0,12)
+ return String(q('subtitleText')?.value||'').split(/\n+/).map(x=>x.trim()).filter(Boolean).slice(0,30)
 }
+
+function aiCaptionProgress(v){const e=q('aiCaptionProgress');if(e)e.style.width=Math.max(0,Math.min(100,Number(v)||0))+'%'}
+function aiCaptionStatus(t){const e=q('aiCaptionStatus');if(e)e.textContent=t}
+function captionRangeValues(){
+ if(q('captionRange')?.value==='full')return[0,STUDIO.duration||0,STUDIO.duration||0];
+ return studioRange()
+}
+function captionKey(){
+ const [s,e]=captionRangeValues();return s.toFixed(2)+'-'+e.toFixed(2)
+}
+function captionTime(t){
+ const n=Math.max(0,Number(t)||0),m=Math.floor(n/60),s=(n%60).toFixed(2).padStart(5,'0');return String(m).padStart(2,'0')+':'+s
+}
+function renderCaptionTimeline(){
+ const host=q('aiCaptionTimeline'),list=STUDIO.captions||[];
+ if(q('captionCount'))q('captionCount').textContent='字幕：'+list.length;
+ if(!host)return;
+ host.innerHTML=list.length?list.slice(0,30).map(x=>'<div class="capRow"><time>'+captionTime(x.start)+'<br>→ '+captionTime(x.end)+'</time><span>'+escapeHtml(x.text)+'</span></div>').join(''):''
+}
+async function ensureCaptionModule(){
+ if(STUDIO.captionModule)return STUDIO.captionModule;
+ aiCaptionStatus('正在载入 Transformers.js…');aiCaptionProgress(3);
+ STUDIO.captionModule=await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3/+esm');
+ return STUDIO.captionModule
+}
+async function ensureCaptionModel(){
+ if(STUDIO.captionModel)return STUDIO.captionModel;
+ const mod=await ensureCaptionModule(),useGPU=!!navigator.gpu;
+ const opts={
+   device:useGPU?'webgpu':'wasm',
+   dtype:useGPU?'fp16':'q8',
+   progress_callback:(x)=>{
+     if(x?.status==='progress'&&Number.isFinite(x.progress)){aiCaptionProgress(8+Math.min(45,x.progress*.45));aiCaptionStatus('正在下载/载入 Whisper 模型 · '+Math.round(x.progress)+'%')}
+     else if(x?.status==='ready')aiCaptionStatus('Whisper 模型已就绪')
+   }
+ };
+ try{
+   STUDIO.captionModel=await mod.pipeline('automatic-speech-recognition','onnx-community/whisper-tiny',opts)
+ }catch(e){
+   if(useGPU){
+     aiCaptionStatus('WebGPU 初始化失败，正在切换 WASM…');
+     STUDIO.captionModel=await mod.pipeline('automatic-speech-recognition','onnx-community/whisper-tiny',{device:'wasm',dtype:'q8'})
+   }else throw e
+ }
+ if(q('captionEngine'))q('captionEngine').textContent='引擎：Whisper Tiny · '+(navigator.gpu?'WebGPU/WASM':'WASM');
+ return STUDIO.captionModel
+}
+async function extractCaptionAudio(){
+ if(!STUDIO.file)throw new Error('请先选择视频');
+ const ffmpeg=await ensureFFmpeg(),range=captionRangeValues(),start=range[0],duration=range[2];
+ if(duration<=0)throw new Error('视频时长无效');
+ aiCaptionStatus('正在本地提取 16kHz 单声道音频…');aiCaptionProgress(54);
+ const ext=(STUDIO.file.name.split('.').pop()||'mp4').replace(/[^a-z0-9]/ig,'').toLowerCase()||'mp4';
+ const inputName='caption_input.'+ext;
+ await ffmpeg.writeFile(inputName,new Uint8Array(await STUDIO.file.arrayBuffer()));
+ try{await ffmpeg.deleteFile('caption.wav')}catch(e){}
+ const args=[];if(start>0)args.push('-ss',String(start));args.push('-t',String(duration),'-i',inputName,'-vn','-ac','1','-ar','16000','-c:a','pcm_s16le','caption.wav');
+ await ffmpeg.exec(args);
+ const data=await ffmpeg.readFile('caption.wav');
+ const blob=new Blob([data.buffer],{type:'audio/wav'});
+ return{blob,start,duration,key:captionKey()}
+}
+function normalizeCaptionChunks(result,duration){
+ const chunks=Array.isArray(result?.chunks)?result.chunks:[];
+ const out=[];
+ for(let i=0;i<chunks.length;i++){
+   const c=chunks[i]||{},ts=Array.isArray(c.timestamp)?c.timestamp:[0,null];
+   let start=Math.max(0,Number(ts[0])||0),end=ts[1]==null?null:Math.max(start,Number(ts[1])||start),text=String(c.text||'').trim();
+   if(!text)continue;
+   if(end==null)end=(chunks[i+1]?.timestamp?.[0]!=null?Number(chunks[i+1].timestamp[0]):duration);
+   out.push({start:Math.min(duration,start),end:Math.min(duration,Math.max(start+.08,end||duration)),text})
+ }
+ if(!out.length&&String(result?.text||'').trim())out.push({start:0,end:duration,text:String(result.text).trim()});
+ return out
+}
+function syncCaptionText(){
+ q('subtitleText').value=(STUDIO.captions||[]).map(x=>x.text).join('\n');
+ renderCaptionTimeline()
+}
+function sourceLangForTranslation(){
+ const selected=q('captionLanguage')?.value||'auto';
+ const detected=String(STUDIO.captionLanguage||'').toLowerCase();
+ const map={english:'en',chinese:'zh-CN',mandarin:'zh-CN',portuguese:'pt',spanish:'es',russian:'ru',french:'fr',german:'de',arabic:'ar',turkish:'tr'};
+ if(selected!=='auto')return selected==='zh'?'zh-CN':selected;
+ return map[detected]||detected||'auto'
+}
+async function translateCaptionTimeline(target='zh-CN'){
+ if(!(STUDIO.captions||[]).length)throw new Error('请先识别字幕');
+ const source=sourceLangForTranslation();
+ if(source==='auto'&&!window.Translator?.create)throw new Error('Whisper 未返回可用语言代码，请手动选择“识别语言”后再翻译');
+ const out=[];
+ for(let i=0;i<STUDIO.captions.length;i++){
+   const c=STUDIO.captions[i];out.push({...c,text:await translateLine(c.text,source,target)});
+   aiCaptionProgress(72+(i+1)/STUDIO.captions.length*24);aiCaptionStatus('正在翻译字幕 '+(i+1)+' / '+STUDIO.captions.length)
+ }
+ STUDIO.captions=out;STUDIO.captionLanguage=target;syncCaptionText();
+ if(q('subtitleSourceLang'))q('subtitleSourceLang').value=target==='zh-CN'?'zh-CN':target;
+ if(q('captionDetectedLang'))q('captionDetectedLang').textContent='语言：中文';
+}
+async function runAiCaption(translateZh=false){
+ if(!STUDIO.file){studioStatus('请先在 01 导入视频。','warn');return}
+ if(STUDIO.captionBusy)return;
+ STUDIO.captionBusy=true;q('aiCaptionBtn').disabled=true;q('aiCaptionZhBtn').disabled=true;aiCaptionProgress(1);
+ try{
+   const audio=await extractCaptionAudio(),model=await ensureCaptionModel();
+   aiCaptionStatus('正在本机识别语音并生成时间轴…');aiCaptionProgress(60);
+   const audioUrl=URL.createObjectURL(audio.blob);
+   const lang=q('captionLanguage')?.value||'auto',options={return_timestamps:true,chunk_length_s:30,stride_length_s:5,task:'transcribe'};
+   if(lang!=='auto')options.language=lang;
+   let result;
+   try{result=await model(audioUrl,options)}finally{URL.revokeObjectURL(audioUrl)}
+   STUDIO.captions=normalizeCaptionChunks(result,audio.duration);STUDIO.captionLanguage=result?.language||lang;STUDIO.captionRangeKey=audio.key;
+   if(q('captionDetectedLang'))q('captionDetectedLang').textContent='语言：'+(result?.language|| (lang==='auto'?'AUTO':' '+lang));
+   syncCaptionText();aiCaptionProgress(72);
+   if(!STUDIO.captions.length)throw new Error('没有识别到清晰语音');
+   if(translateZh){await translateCaptionTimeline('zh-CN');q('subtitleTargetLang').value='zh-CN'}
+   aiCaptionProgress(100);aiCaptionStatus('完成 · '+STUDIO.captions.length+' 条时间轴字幕'+(translateZh?' · 已翻译中文':''));
+   studioStatus('AI字幕已写入字幕编辑区，可继续修改后直接烧录导出。','good');toast('AI字幕完成')
+ }catch(e){
+   console.error(e);aiCaptionStatus('AI字幕失败：'+(e.message||e));studioStatus('AI字幕失败：'+(e.message||e),'bad');aiCaptionProgress(0)
+ }finally{
+   STUDIO.captionBusy=false;q('aiCaptionBtn').disabled=false;q('aiCaptionZhBtn').disabled=false
+ }
+}
+function srtTime(sec){
+ const ms=Math.max(0,Math.round((Number(sec)||0)*1000)),h=Math.floor(ms/3600000),m=Math.floor(ms%3600000/60000),s=Math.floor(ms%60000/1000),x=ms%1000;
+ return [h,m,s].map((v,i)=>String(v).padStart(2,'0')).join(':')+','+String(x).padStart(3,'0')
+}
+function downloadSrt(){
+ const caps=captionTimeline();
+ if(!caps.length){studioStatus('还没有可导出的字幕时间轴。','warn');return}
+ const body=caps.map((c,i)=>(i+1)+'\n'+srtTime(c.start)+' --> '+srtTime(c.end)+'\n'+c.text+'\n').join('\n');
+ const blob=new Blob(['\ufeff'+body],{type:'text/plain;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='SAGI_AI_CAPTION.srt';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500);toast('SRT 已导出')
+}
+function captionTimeline(){
+ const lines=subtitleLines(),duration=studioRange()[2];
+ if(!lines.length)return[];
+ const exact=(STUDIO.captions||[]).length===lines.length&&STUDIO.captionRangeKey===captionKey();
+ if(exact)return STUDIO.captions.map((c,i)=>({...c,text:lines[i]}));
+ const step=duration/lines.length;return lines.map((text,i)=>({start:i*step,end:(i+1)*step,text}))
+}
+function captionToNarration(){
+ const lines=subtitleLines();if(!lines.length){studioStatus('请先生成或输入字幕。','warn');return}
+ const clean=lines.map(x=>x.replace(/[。！？!?]+$/,'')).filter(Boolean);
+ const lead=clean[0]||'',middle=clean.slice(1,Math.min(clean.length,5)).join('，'),tail=clean.at(-1)||'';
+ let text='先看这个瞬间。'+lead+'。';
+ if(middle)text+='真正值得注意的是，'+middle+'。';
+ if(tail&&tail!==lead)text+='最后再看一遍：'+tail+'。';
+ text+='这就是这段画面最值得记住的地方。';
+ q('narrationText').value=text;studioStatus('已根据字幕生成中文解说初稿，可以继续改写后朗读或录音。','good');toast('解说初稿已生成')
+}
+
 async function translateLine(text,source,target){
  if(!text||source===target)return text;
  try{
@@ -461,7 +650,9 @@ async function translateSubtitles(){
  const btn=q('translateSubtitleBtn');btn.disabled=true;btn.textContent='翻译中…';studioStatus('正在逐行翻译字幕…','good');
  try{
    const out=[];for(let i=0;i<lines.length;i++){out.push(await translateLine(lines[i],source,target));setProgress((i+1)/lines.length*18)}
-   q('subtitleText').value=out.join('\n');studioStatus('字幕翻译完成。','good');toast('字幕已翻译')
+   q('subtitleText').value=out.join('\n');
+   if((STUDIO.captions||[]).length===out.length){STUDIO.captions=STUDIO.captions.map((c,i)=>({...c,text:out[i]}));renderCaptionTimeline()}
+   studioStatus('字幕翻译完成。','good');toast('字幕已翻译')
  }catch(e){studioStatus('翻译失败：'+(e.message||e),'warn')}
  finally{btn.disabled=false;btn.textContent='翻译字幕';setProgress(0)}
 }
@@ -525,15 +716,15 @@ function canvasSubtitlePng(text,w,h){
  return new Promise(resolve=>c.toBlob(resolve,'image/png'))
 }
 async function buildSubtitleInputs(ffmpeg,args,duration,w,h){
- const lines=subtitleLines();if(!lines.length||q('burnSubtitle').value!=='yes')return{args,filters:[],last:'vbase',count:0};
- const step=duration/lines.length,filters=[];let last='vbase';
- for(let i=0;i<lines.length;i++){
-   const blob=await canvasSubtitlePng(lines[i],w,h);const name='sub_'+i+'.png';await ffmpeg.writeFile(name,new Uint8Array(await blob.arrayBuffer()));
+ const timeline=captionTimeline();if(!timeline.length||q('burnSubtitle').value!=='yes')return{args,filters:[],last:'vbase',count:0};
+ const filters=[];let last='vbase';
+ for(let i=0;i<timeline.length;i++){
+   const c=timeline[i],blob=await canvasSubtitlePng(c.text,w,h),name='sub_'+i+'.png';await ffmpeg.writeFile(name,new Uint8Array(await blob.arrayBuffer()));
    args.push('-loop','1','-i',name);
-   const next='vsub'+i,start=(i*step).toFixed(3),end=((i+1)*step).toFixed(3);
+   const next='vsub'+i,start=Math.max(0,c.start).toFixed(3),end=Math.min(duration,Math.max(c.start+.05,c.end)).toFixed(3);
    filters.push('['+last+']['+(i+1)+':v]overlay=(W-w)/2:H-h-'+Math.max(50,Math.round(h*.045))+":enable='between(t,"+start+','+end+")'["+next+']');last=next
  }
- return{args,filters,last,count:lines.length}
+ return{args,filters,last,count:timeline.length}
 }
 async function exportStudio(){
  if(!STUDIO.file){studioStatus('请先选择要剪的视频。','warn');return}
@@ -595,6 +786,12 @@ q('recreateFromLinkBtn').onclick=()=>makeJob(false);
 q('studioFile').onchange=handleStudioFile;
 q('setInBtn').onclick=()=>setTrimPoint('in');
 q('setOutBtn').onclick=()=>setTrimPoint('out');
+q('trimStart').addEventListener('change',()=>{if(STUDIO.captions.length&&STUDIO.captionRangeKey!==captionKey())aiCaptionStatus('裁剪区间已变化；重新识别可恢复精确时间轴。')});
+q('trimEnd').addEventListener('change',()=>{if(STUDIO.captions.length&&STUDIO.captionRangeKey!==captionKey())aiCaptionStatus('裁剪区间已变化；重新识别可恢复精确时间轴。')});
+q('aiCaptionBtn').onclick=()=>runAiCaption(false);
+q('aiCaptionZhBtn').onclick=()=>runAiCaption(true);
+q('downloadSrtBtn').onclick=downloadSrt;
+q('captionToNarrationBtn').onclick=captionToNarration;
 q('translateSubtitleBtn').onclick=translateSubtitles;
 q('speakNarrationBtn').onclick=speakNarration;
 q('recordNarrationBtn').onclick=startVoiceRecord;
@@ -605,7 +802,7 @@ q('shareResultBtn').onclick=shareResult;
 input.addEventListener('input',updateDetect);
 renderHistory();updateDetect();renderRecreatePreset();renderCapabilities();
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=14',{updateViaCache:'none'}).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=15',{updateViaCache:'none'}).catch(()=>{})}
 })();
 </script>
 </body>
