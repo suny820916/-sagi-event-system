@@ -11,6 +11,7 @@ import hashlib
 import hmac
 import os
 import time
+import requests
 import yt_dlp
 from yt_dlp.utils import DownloadError
 
@@ -22,6 +23,7 @@ PORT = int(os.getenv("PORT") or "10000")
 MAX_FILE_MB = int(os.getenv("SAGI_MAX_FILE_MB") or "300")
 JOB_TTL_MIN = int(os.getenv("SAGI_JOB_TTL_MIN") or "30")
 RATE_LIMIT_PER_HOUR = int(os.getenv("SAGI_RATE_LIMIT_PER_HOUR") or "20")
+COBALT_HOSTPORT = (os.getenv("SAGI_COBALT_HOSTPORT") or "").strip()
 
 CORS(app, resources={r"/api/*": {"origins": [ALLOWED_ORIGIN]}, r"/health": {"origins": [ALLOWED_ORIGIN]}, r"/": {"origins": [ALLOWED_ORIGIN]}})
 
@@ -305,7 +307,7 @@ def health():
     return jsonify({
         "ok": True,
         "service": "SAGI CLOUD BRIDGE",
-        "version": "1.2.0",
+        "version": "1.3.0",
         "instagram": True,
         "hybridWorker": True,
         "workerOnline": worker_online(),
@@ -329,6 +331,136 @@ def activate():
         "version": "1.2.0",
     })
 
+def cobalt_base():
+    if not COBALT_HOSTPORT:
+        return ""
+    if COBALT_HOSTPORT.startswith("http://") or COBALT_HOSTPORT.startswith("https://"):
+        return COBALT_HOSTPORT.rstrip("/")
+    return "http://" + COBALT_HOSTPORT.rstrip("/")
+
+def _cobalt_pick_media(payload):
+    status = payload.get("status")
+    if status in ("tunnel", "redirect"):
+        return payload.get("url"), payload.get("filename") or ""
+    if status == "picker":
+        items = payload.get("picker") or []
+        videos = [x for x in items if x.get("type") in ("video", "gif") and x.get("url")]
+        chosen = (videos or [x for x in items if x.get("url")])
+        if chosen:
+            item = chosen[0]
+            return item.get("url"), ""
+    if status == "error":
+        err = payload.get("error") or {}
+        code = err.get("code") or "cobalt_error"
+        raise RuntimeError("COBALT_ERROR: " + str(code))
+    if status == "local-processing":
+        raise RuntimeError("COBALT_LOCAL_PROCESSING_UNSUPPORTED")
+    raise RuntimeError("COBALT_INVALID_RESPONSE")
+
+def run_cobalt_download(job_id, url, wanted_name):
+    with jobs_lock:
+        job = jobs.get(job_id)
+        if not job:
+            return
+        job["status"] = "cobalt_processing"
+        job["updated_at"] = iso()
+        job["strategy"] = "cobalt"
+
+    work = tempfile.mkdtemp(prefix=f"sagi_cobalt_{job_id}_")
+    try:
+        base = cobalt_base()
+        if not base:
+            raise RuntimeError("COBALT_NOT_CONFIGURED")
+
+        r = requests.post(
+            base + "/",
+            headers={"Accept": "application/json", "Content-Type": "application/json"},
+            json={
+                "url": url,
+                "videoQuality": "1080",
+                "downloadMode": "auto",
+                "filenameStyle": "basic",
+                "alwaysProxy": True,
+                "localProcessing": "disabled",
+            },
+            timeout=90,
+        )
+        if r.status_code == 429:
+            raise RuntimeError("COBALT_RATE_LIMIT")
+        r.raise_for_status()
+        payload = r.json()
+        media_url, cobalt_name = _cobalt_pick_media(payload)
+        if not media_url:
+            raise RuntimeError("COBALT_NO_MEDIA")
+
+        with jobs_lock:
+            job = jobs.get(job_id)
+            if job:
+                job["status"] = "cobalt_fetching"
+                job["updated_at"] = iso()
+
+        media_resp = requests.get(media_url, stream=True, timeout=180)
+        media_resp.raise_for_status()
+        content_type = (media_resp.headers.get("Content-Type") or "").lower()
+
+        name = safe_name(wanted_name or cobalt_name or "SAGI_INS_VIDEO")
+        if "." not in name:
+            if "image/" in content_type:
+                name += ".jpg"
+            else:
+                name += ".mp4"
+        path = Path(work) / name
+
+        total = 0
+        max_bytes = MAX_FILE_MB * 1024 * 1024
+        with path.open("wb") as f:
+            for chunk in media_resp.iter_content(chunk_size=1024 * 256):
+                if not chunk:
+                    continue
+                total += len(chunk)
+                if total > max_bytes:
+                    raise RuntimeError(f"视频超过云端限制 {MAX_FILE_MB}MB")
+                f.write(chunk)
+
+        if not path.exists() or path.stat().st_size == 0:
+            raise RuntimeError("COBALT_EMPTY_FILE")
+
+        with jobs_lock:
+            job = jobs.get(job_id)
+            if not job:
+                shutil.rmtree(work, ignore_errors=True)
+                return
+            job.update({
+                "status": "ready",
+                "updated_at": iso(),
+                "path": str(path),
+                "workdir": work,
+                "filename": name,
+                "title": cobalt_name or name,
+                "size": path.stat().st_size,
+                "strategy": "cobalt",
+                "error": "",
+                "errorCode": "",
+            })
+    except Exception as e:
+        shutil.rmtree(work, ignore_errors=True)
+        msg = str(e)
+        code = "cobalt_failed"
+        if "COBALT_RATE_LIMIT" in msg:
+            code = "cobalt_rate_limit"
+        elif "COBALT_NOT_CONFIGURED" in msg:
+            code = "cobalt_not_ready"
+        with jobs_lock:
+            job = jobs.get(job_id)
+            if job:
+                job.update({
+                    "status": "failed",
+                    "updated_at": iso(),
+                    "strategy": "cobalt",
+                    "error": msg[:700],
+                    "errorCode": code,
+                })
+
 @app.post("/api/jobs")
 def create_job():
     if not authorized():
@@ -346,7 +478,7 @@ def create_job():
     job_id = secrets.token_urlsafe(9)
     job = {
         "id": job_id,
-        "status": "waiting_worker",
+        "status": "queued",
         "created_at": iso(),
         "updated_at": iso(),
         "title": name,
@@ -356,6 +488,7 @@ def create_job():
         "errorCode": "",
         "size": 0,
         "worker": "",
+        "strategy": "cobalt",
         "download_key": secrets.token_urlsafe(18),
         "path": "",
         "workdir": "",
@@ -364,11 +497,8 @@ def create_job():
     with jobs_lock:
         jobs[job_id] = job
 
-    return jsonify({
-        "ok": True,
-        "job": public_job(job),
-        "workerOnline": worker_online()
-    }), 202
+    Thread(target=run_cobalt_download, args=(job_id, url, name), daemon=True).start()
+    return jsonify({"ok": True, "job": public_job(job), "phoneOnly": True}), 202
 
 
 @app.post("/api/worker/pair/start")
