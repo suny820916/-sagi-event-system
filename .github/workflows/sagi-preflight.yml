@@ -176,7 +176,7 @@ jobs:
           c = mod.app.test_client()
           health = c.get("/health").get_json()
           print("health", health)
-          assert health["version"] == "3.7.0"
+          assert health["version"] == "3.8.0"
           assert health["captionMedia"] is True
           assert health["contextTranslate"] is True
           assert health["smartTranslate"] is True
@@ -196,8 +196,18 @@ jobs:
           assert health["cloudDownloadVersion"] == "3.0"
           assert health["downloadPrimary"] == "multi-engine-router"
           assert health["footballDataHub"] is True
-          assert health["footballDataHubVersion"] == "1.0"
+          assert health["footballDataHubVersion"] == "2.0"
           assert set(health["footballCompetitions"]) >= {"PL","PD","BL1","SA","FL1","CL"}
+          # MATCH DATA HUB V2: Chinese aliases must resolve exactly and a
+          # single structured source must remain a candidate.
+          assert mod._football_team_match("皇马", "Real Madrid CF") is True
+          assert mod._football_team_match("皇马", "Real Madrid Castilla") is False
+          base = mod._football_match_row("ESPN public feed", "PD", "2026-11-01T20:00:00Z", "Valencia", "Real Madrid", 0, 3)
+          verified2 = mod._football_match_row("football-data.org", "PD", "2026-11-01T20:00:00Z", "Valencia CF", "Real Madrid CF", 0, 3)
+          yes, no = mod._football_merge([base, verified2], 8, {})
+          assert len(yes) == 1 and yes[0]["verified"] is True and yes[0]["providerCount"] == 2
+          yes, no = mod._football_merge([base], 8, {})
+          assert len(yes) == 0 and len(no) == 1 and no[0]["verificationTier"] == "candidate"
           assert health["cobaltMode"] == "legacy-fallback-only"
           assert health["cobaltConfigured"] is False
           assert health["instagramProxyConfigured"] is False
