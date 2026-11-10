@@ -85,13 +85,13 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 <div class="wrap">
   <div class="top">
     <div class="brand"><b>SAGI DOWN</b><span>VIDEO LINK SHORTCUT</span></div>
-    <span class="badge">V1.9.4 · ONE-SHOT STABILITY</span>
+    <span class="badge">V2.0 · COBALT ENGINE</span>
   </div>
 
   <section class="hero">
     <div class="heroTop"><small>ONE TAP DOWNLOAD</small><span class="badge">MOBILE FIRST</span></div>
     <h1>复制视频链接，回来直接下。</h1>
-    <p>支持直接粘贴链接，也支持把“抖音/INS/YouTube 分享文案”整段粘贴进来，SAGI DOWN 会自动提取其中的网址。</p>
+    <p>粘贴链接即可下载。优先使用 SAGI Cobalt；云端未就绪或解析失败时自动切换 Cobalt 官方直连，不需要配置代理、API 或 Token。</p>
     <div class="platformStrip">
       <div class="platformChip"><b>Instagram</b>Reel / Post</div>
       <div class="platformChip"><b>YouTube</b>Video / Shorts</div>
@@ -116,7 +116,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
     </div>
 
     <div class="actions">
-      <button class="btn primary" id="downloadBtn" type="button">SAGI 云端下载</button>
+      <button class="btn primary" id="downloadBtn" type="button">COBALT 一键下载</button>
       <button class="btn blue" id="copyBtn" type="button">复制链接</button>
       <button class="btn" id="openBtn" type="button">原链接</button>
     </div>
@@ -480,7 +480,8 @@ function cloudDownloadStatusLabel(job){
   return s||'处理中'
 }
 function cobaltOfficialUrl(sourceUrl){
-  return 'https://cobalt.tools/?u='+encodeURIComponent(sourceUrl)
+  const clean=extractUrl(sourceUrl);
+  return clean?COBALT+'#'+encodeURIComponent(clean):COBALT
 }
 function handoffToOfficialCobalt(sourceUrl,handoff,reason=''){
   const target=cobaltOfficialUrl(sourceUrl);
@@ -488,16 +489,41 @@ function handoffToOfficialCobalt(sourceUrl,handoff,reason=''){
   try{
     if(handoff&&!handoff.closed){handoff.location.replace(target);return true}
   }catch(e){}
+  try{
+    const w=window.open(target,'_blank','noopener');
+    if(w)return true
+  }catch(e){}
   location.href=target;
   return true
 }
+async function probeDownloadCloud(timeoutMs=4500){
+  const healthCtl=new AbortController(),healthTimer=setTimeout(()=>healthCtl.abort(),timeoutMs);
+  try{
+    const r=await fetch(CAPTION_CLOUD+'/health',{cache:'no-store',signal:healthCtl.signal});
+    if(!r.ok)return{ready:false,reason:'health_'+r.status};
+    const health=await r.json();
+    STUDIO.cloudHealth=health;
+    if(!(health.cloudDownload&&health.downloadPrimary==='cobalt'&&health.cobaltConfigured)){
+      return{ready:false,health,reason:'cobalt_not_live'}
+    }
+    if(STUDIO.cloudCaptionToken)return{ready:true,health,token:STUDIO.cloudCaptionToken};
+    const actCtl=new AbortController(),actTimer=setTimeout(()=>actCtl.abort(),timeoutMs);
+    try{
+      const a=await fetch(CAPTION_CLOUD+'/api/activate',{
+        method:'POST',headers:{'Content-Type':'application/json'},body:'{}',signal:actCtl.signal
+      });
+      const data=await a.json().catch(()=>({}));
+      if(!a.ok||!data?.token)return{ready:false,health,reason:'activate_failed'};
+      STUDIO.cloudCaptionToken=data.token;
+      return{ready:true,health,token:data.token}
+    }finally{clearTimeout(actTimer)}
+  }catch(e){
+    return{ready:false,reason:e?.name==='AbortError'?'timeout':'offline'}
+  }finally{clearTimeout(healthTimer)}
+}
 async function pollCloudDownload(jobId,handoff,sourceUrl,maxCloudWaitMs=7000){
   const started=Date.now();
-  while(Date.now()-started<180000){
-    if(Date.now()-started>maxCloudWaitMs){
-      handoffToOfficialCobalt(sourceUrl,handoff,'SAGI 云端响应较慢');
-      return
-    }
+  while(Date.now()-started<maxCloudWaitMs){
     await new Promise(r=>setTimeout(r,1200));
     const r=await fetch(CAPTION_CLOUD+'/api/jobs/'+encodeURIComponent(jobId),{
       headers:{Authorization:'Bearer '+STUDIO.cloudCaptionToken},cache:'no-store'
@@ -521,35 +547,37 @@ async function pollCloudDownload(jobId,handoff,sourceUrl,maxCloudWaitMs=7000){
     }
     setStatus(cloudDownloadStatusLabel(job)+'…','good')
   }
-  throw new Error('云端下载准备超时，请重新尝试。')
+  handoffToOfficialCobalt(sourceUrl,handoff,'SAGI 云端响应较慢')
 }
 async function download(){
   const v=currentUrl();if(!v){setStatus('请先粘贴有效的视频链接。','warn');return}
   const d=detect(v),handoff=cloudDownloadWindow();
   saveHistory(v);copyText(v).catch(()=>{});
-  setStatus(d[0]+' · SAGI 正在选择最快下载通道…','good');
+  setStatus(d[0]+' · 正在选择最快 Cobalt 通道…','good');
   try{
-    const ready=await Promise.race([
-      wakeCaptionCloud(true),
-      new Promise(resolve=>setTimeout(()=>resolve(false),3500))
-    ]);
-    const health=STUDIO.cloudHealth||{};
-    if(!ready||!STUDIO.cloudCaptionToken||!health.cloudDownload){
-      handoffToOfficialCobalt(v,handoff,'SAGI Cloud 当前不可用');
+    const cloud=await probeDownloadCloud(4500);
+    if(!cloud.ready){
+      handoffToOfficialCobalt(v,handoff,'SAGI Cobalt 云端未就绪');
       return
     }
-    const r=await fetch(CAPTION_CLOUD+'/api/jobs',{
-      method:'POST',
-      headers:{'Content-Type':'application/json',Authorization:'Bearer '+STUDIO.cloudCaptionToken},
-      body:JSON.stringify({url:v,name:'SAGI_VIDEO'})
-    });
+    setStatus('SAGI Cobalt 已连接 · 正在解析链接…','good');
+    const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),7000);
+    let r;
+    try{
+      r=await fetch(CAPTION_CLOUD+'/api/jobs',{
+        method:'POST',
+        headers:{'Content-Type':'application/json',Authorization:'Bearer '+cloud.token},
+        body:JSON.stringify({url:v,name:'SAGI_VIDEO'}),
+        signal:ctl.signal
+      })
+    }finally{clearTimeout(timer)}
     const data=await r.json().catch(()=>({}));
     if(!r.ok||!data?.ok||!data?.job?.id){
-      handoffToOfficialCobalt(v,handoff,'SAGI Cloud 未接收任务');
+      handoffToOfficialCobalt(v,handoff,'SAGI Cobalt 未接收任务');
       return
     }
-    setStatus('SAGI Cloud 已接收链接 · 优先解析，超时自动切 Cobalt 官方通道…','good');
-    const waitMs=d[0]==='Instagram'?5500:7500;
+    setStatus('SAGI Cobalt 已接收链接 · 超时会自动切换官方直连…','good');
+    const waitMs=d[0]==='Instagram'?5500:8000;
     await pollCloudDownload(data.job.id,handoff,v,waitMs)
   }catch(e){
     handoffToOfficialCobalt(v,handoff,'SAGI 自动兜底')
@@ -2152,7 +2180,7 @@ if(q('captionSpeed'))q('captionSpeed').value='fast';
 if(q('captionRange'))q('captionRange').value='trim';
 setTimeout(async()=>{await wakeCaptionCloud();refreshAIVoiceStatus(false)},180);
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=201',{updateViaCache:'none'}).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=202',{updateViaCache:'none'}).catch(()=>{})}
 })();
 </script>
 </body>
