@@ -1120,11 +1120,27 @@ def _espn_matches(team, competition):
             rows.append(row)
     return rows
 
+
+def _football_provider_team_query(team):
+    raw = str(team or "").strip()
+    aliases = {
+        "皇马": "Real Madrid", "皇家马德里": "Real Madrid",
+        "巴萨": "Barcelona", "巴塞罗那": "Barcelona",
+        "曼城": "Manchester City", "曼联": "Manchester United",
+        "利物浦": "Liverpool", "阿森纳": "Arsenal", "切尔西": "Chelsea",
+        "拜仁": "Bayern Munich", "多特": "Borussia Dortmund",
+        "巴黎": "Paris Saint Germain", "巴黎圣日耳曼": "Paris Saint Germain",
+        "国际米兰": "Inter", "国米": "Inter", "AC米兰": "AC Milan",
+        "尤文": "Juventus", "马竞": "Atletico Madrid",
+    }
+    return aliases.get(raw, raw)
+
 def _api_football_matches(team, competition, season):
     if not API_FOOTBALL_KEY:
         return []
     headers = {"x-apisports-key": API_FOOTBALL_KEY, "User-Agent": "SAGI-MATCH-DATA/3.7"}
-    team_resp = requests.get("https://v3.football.api-sports.io/teams", params={"search": team}, headers=headers, timeout=(5, 18))
+    provider_team = _football_provider_team_query(team)
+    team_resp = requests.get("https://v3.football.api-sports.io/teams", params={"search": provider_team}, headers=headers, timeout=(5, 18))
     team_resp.raise_for_status()
     team_rows = (team_resp.json() or {}).get("response") or []
     if not team_rows:
