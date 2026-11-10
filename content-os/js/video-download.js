@@ -68,6 +68,9 @@ async function activateCloud(openDeploy=true){
    const h=await fetch(CLOUD_URL+'/health',{cache:'no-store'});
    const hj=await h.json().catch(()=>({}));
    if(!h.ok||!hj.ok||!hj.configured)throw new Error('CLOUD_NOT_READY');
+   const major=String(hj.version||'0').split('.').map(Number);
+   if((major[0]||0)<1||((major[0]||0)===1&&(major[1]||0)<4))throw new Error('CLOUD_BACKEND_OUTDATED');
+   if(!hj.phoneDirectReady)throw new Error('PHONE_DIRECT_NOT_READY');
 
    const r=await fetch(CLOUD_URL+'/api/activate',{
      method:'POST',
@@ -86,9 +89,18 @@ async function activateCloud(openDeploy=true){
    return true
  }catch(e){
    localStorage.removeItem(KEYS.cloudToken);
-   setCloudState('inactive','云端还未部署或尚未就绪。先完成一次部署，之后 CONTENT OS 会自动绑定。');
-   setStatus('SAGI CLOUD 尚未上线。点“激活 SAGI CLOUD”进入一键部署；部署完成后回来再点一次。','warn');
-   if(openDeploy)window.open(DEPLOY_URL,'_blank','noopener');
+   const code=String(e?.message||e||'');
+   if(code==='PHONE_DIRECT_NOT_READY'){
+     setCloudState('inactive','手机独立下载出口尚未配置。需要在 Render 为 SAGI_INSTAGRAM_PROXY 配置一次住宅代理地址。');
+     setStatus('PHONE DIRECT 尚未就绪：云端缺少住宅网络出口。','warn');
+   }else if(code==='CLOUD_BACKEND_OUTDATED'){
+     setCloudState('inactive','Render 仍在运行旧后端，请先同步/部署最新版本。');
+     setStatus('SAGI CLOUD 后端版本过旧，尚未切到 PHONE DIRECT。','warn');
+   }else{
+     setCloudState('inactive','云端还未部署或尚未就绪。');
+     setStatus('SAGI CLOUD 尚未上线或正在部署。','warn');
+     if(openDeploy)window.open(DEPLOY_URL,'_blank','noopener');
+   }
    return false
  }
 }
@@ -162,9 +174,15 @@ async function cloudInstagram(x){
    });
    const j=await r.json().catch(()=>({}));
    if(r.status===401){localStorage.removeItem(KEYS.cloudToken);setCloudState('inactive','云端凭证需要重新激活。');throw new Error('请重新激活 SAGI CLOUD')}
+   if(r.status===503&&j.errorCode==='proxy_required')throw new Error('PHONE_DIRECT_NOT_READY');
    if(!r.ok||!j.ok)throw new Error(j.error||('HTTP '+r.status));
    remember(x);setProgress(true,'云端解析 Instagram',20);pollCloud(j.job.id,token,0)
- }catch(e){setProgress(false);setStatus('CLOUD 下载任务失败：'+(e.message||e),'bad')}
+ }catch(e){
+   setProgress(false);
+   const code=String(e?.message||e||'');
+   if(code==='PHONE_DIRECT_NOT_READY')setStatus('手机独立下载尚未配置住宅网络出口。完成一次云端出口配置后即可直接下载。','warn');
+   else setStatus('CLOUD 下载任务失败：'+code,'bad')
+ }
 }
 async function pollCloud(id,token,attempt){
  if(attempt>180){setProgress(false);setStatus('云端解析超时，请稍后重试。','bad');return}
