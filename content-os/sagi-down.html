@@ -95,6 +95,21 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 .imgNewsList{display:grid;gap:5px;margin-top:8px}.imgNews{border-top:1px solid #202c25;padding-top:6px}.imgNews:first-child{border-top:0;padding-top:0}.imgNews b{display:block;font-size:8px;line-height:1.45}.imgNews span{display:block;font-size:7px;color:#6f8376;margin-top:3px}
 @media(max-width:420px){.imgIntelFacts{grid-template-columns:1fr 1fr}.imgIntelActions{grid-template-columns:1fr}.imgTrendActions{display:grid;grid-template-columns:1fr 1fr}}
 
+
+/* SAGI ORIGINAL POSTER V1.0 */
+.origPoster{margin-top:10px;border:1px solid #63512e;border-radius:14px;background:linear-gradient(180deg,#15130d,#090d0f);padding:11px}
+.origHead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.origHead b{font-size:12px}.origHead span{display:block;font-size:8px;color:#9b8a61;line-height:1.5;margin-top:3px}.origHead .badge{white-space:nowrap}
+.origActionRow{display:grid;grid-template-columns:1.35fr .65fr;gap:7px;margin-top:9px}
+.origPolicy{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}.origPolicy div{border:1px solid #3b3524;border-radius:9px;background:#0d0c08;padding:8px}.origPolicy span{display:block;font-size:7px;color:#867954}.origPolicy b{display:block;font-size:10px;margin-top:3px;color:#e0c57c}
+.origVariantGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:9px}.origVariant{border:1px solid #314047;border-radius:10px;background:#0a1114;color:#e8edef;padding:9px 7px;text-align:left}.origVariant b{display:block;font-size:9px}.origVariant span{display:block;font-size:7px;color:#72858c;line-height:1.4;margin-top:3px}.origVariant.active{border-color:#d7b568;background:#18150c;box-shadow:0 0 0 1px #d7b568 inset}
+.origCanvasWrap{margin-top:9px;border:1px solid #2d393e;border-radius:13px;background:#040607;padding:7px;display:flex;justify-content:center}.origCanvasWrap canvas{display:block;width:100%;max-height:62vh;object-fit:contain;border-radius:9px;background:#070a0c;box-shadow:0 18px 44px rgba(0,0,0,.42)}
+.origMeta{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:7px}.origMeta div{border:1px solid #2e393e;border-radius:9px;padding:7px;background:#081014}.origMeta span{display:block;font-size:7px;color:#71858c}.origMeta b{display:block;font-size:9px;margin-top:3px}
+.origTemplateRow{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}.origChip{border:1px solid #35454b;border-radius:99px;background:#0a1114;color:#899aa0;padding:6px 8px;font-size:8px}.origChip.active{border-color:#cdb16a;color:#e3c982;background:#18150c}
+.origControls{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}.origControls label{display:block;font-size:8px;color:#71858c}.origControls select,.origControls input{width:100%;margin-top:4px;border:1px solid #2c3e45;background:#070b0d;color:#fff;border-radius:9px;padding:9px;font-size:9px}
+.origOutActions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}.origOutActions .btn:last-child{grid-column:1/-1}
+.origInsight{margin-top:8px;border:1px solid #2f3e34;border-radius:9px;padding:8px;background:#08100b;font-size:8px;color:#8fa091;line-height:1.55}
+@media(max-width:420px){.origPolicy,.origVariantGrid{grid-template-columns:1fr}.origControls{grid-template-columns:1fr}.origActionRow{grid-template-columns:1fr}}
+
 /* SAGI DOWN V3.1 · IMAGE STUDIO */
 .imageEditCard{border-color:#5b5033;background:linear-gradient(180deg,#15130d,#0a0f12)}
 .imageEditHead{display:flex;justify-content:space-between;gap:10px;align-items:center}.imageEditHead b{font-size:12px}.imageEditHead span{font-size:8px;color:#9c8c61}
@@ -114,7 +129,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 <div class="wrap">
   <div class="top">
     <div class="brand"><b>SAGI DOWN</b><span>DOWNLOAD · IMAGE AI · VIDEO</span></div>
-    <span class="badge">V3.3 · IMAGE INTELLIGENCE 2.0</span>
+    <span class="badge">V3.4 · HOT HOOK → ORIGINAL POSTER</span>
   </div>
 
   <section class="hero">
@@ -221,6 +236,65 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
       <div id="sdImgAnalyzeSignals" class="imgIntelSignals"></div>
       <div id="sdImgTrendGrid" class="imgTrendGrid"></div>
       <div id="sdImgNewsList" class="imgNewsList"></div>
+    </div>
+
+
+
+    <div class="origPoster" id="sdOriginalPoster">
+      <div class="origHead">
+        <div><b>ORIGINAL POSTER · HOT HOOK → NEW IMAGE</b><span>原图只提供事实与热点线索；新图不复用原图像素，不照搬原构图，直接生成适合抖音的原创视觉。</span></div>
+        <span class="badge">V1.0 · SOURCE PIXELS 0%</span>
+      </div>
+
+      <div class="origActionRow">
+        <button class="btn gold" id="sdOrigGenerateBtn" type="button">根据热点生成3张原创海报</button>
+        <button class="btn ghost" id="sdOrigRefreshBtn" type="button">重新组合</button>
+      </div>
+
+      <div class="origPolicy">
+        <div><span>原图像素复用</span><b id="sdOrigPixelUse">0%</b></div>
+        <div><span>原创结构</span><b id="sdOrigOriginality">100%</b></div>
+        <div><span>热点入口</span><b id="sdOrigHook">等待分析</b></div>
+      </div>
+
+      <div class="origVariantGrid">
+        <button class="origVariant active" data-orig-variant="0" type="button"><b>A · 大数字热点</b><span>数字先抓眼球 · 适合第一张封面</span></button>
+        <button class="origVariant" data-orig-variant="1" type="button"><b>B · 主教练观点</b><span>人物角色 + 带队趋势 + 战术结论</span></button>
+        <button class="origVariant" data-orig-variant="2" type="button"><b>C · 强评论问题</b><span>争议问句 · 抖音评论入口</span></button>
+      </div>
+
+      <div class="origCanvasWrap"><canvas id="sdOrigCanvas" width="1080" height="1440"></canvas></div>
+
+      <div class="origMeta">
+        <div><span>主题</span><b id="sdOrigSubject">—</b></div>
+        <div><span>人物角色</span><b id="sdOrigRole">—</b></div>
+        <div><span>核心事实</span><b id="sdOrigFact">—</b></div>
+        <div><span>视觉结构</span><b id="sdOrigStructure">—</b></div>
+      </div>
+
+      <div class="origTemplateRow">
+        <button class="origChip active" data-orig-template="number" type="button">BIG NUMBER</button>
+        <button class="origChip" data-orig-template="coach" type="button">COACH THESIS</button>
+        <button class="origChip" data-orig-template="timeline" type="button">TREND LINE</button>
+        <button class="origChip" data-orig-template="question" type="button">BIG QUESTION</button>
+        <button class="origChip" data-orig-template="minimal" type="button">MINIMAL</button>
+        <button class="origChip" data-orig-template="data" type="button">DATA CARD</button>
+      </div>
+
+      <div class="origControls">
+        <label>主标题<input id="sdOrigTitle" placeholder="分析后自动生成"></label>
+        <label>副标题<input id="sdOrigSub" placeholder="趋势 / 事实 / 评论入口"></label>
+        <label>人物角色<input id="sdOrigPerson" placeholder="例如：穆里尼奥 · 主教练"></label>
+        <label>发布比例<select id="sdOrigRatio"><option value="3:4" selected>3:4 抖音图文</option><option value="9:16">9:16 竖屏</option><option value="1:1">1:1 方图</option></select></label>
+      </div>
+
+      <div class="origInsight" id="sdOrigInsight">先完成上方图片分析。系统会把“事实”转成新的视觉命题，而不是复制原图。</div>
+
+      <div class="origOutActions">
+        <button class="btn gold" id="sdOrigExportBtn" type="button">导出原创 PNG</button>
+        <button class="btn blue" id="sdOrigShareBtn" type="button">分享原创海报</button>
+        <button class="btn primary" id="sdOrigUsePublishBtn" type="button">用这张图进入发布包</button>
+      </div>
     </div>
 
 
@@ -494,7 +568,7 @@ Unbelievable finish."></textarea>
 
 <script>
 (()=>{'use strict';
-const SAGI_DOWN_BUILD='V3.3.1';
+const SAGI_DOWN_BUILD='V3.4.0';
 document.documentElement.dataset.sagiDownBuild=SAGI_DOWN_BUILD;
 const BTCH_PUBLIC='https://btch-downloader-api-green.vercel.app';
 const DOWNLOAD_ROUTER_VERSION='3.0';
@@ -2736,7 +2810,7 @@ if(q('captionSpeed'))q('captionSpeed').value='fast';
 if(q('captionRange'))q('captionRange').value='trim';
 setTimeout(async()=>{await wakeCaptionCloud();refreshAIVoiceStatus(false)},180);
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=331',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=340',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})}
 })();
 </script>
 </body>
