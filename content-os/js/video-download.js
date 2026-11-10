@@ -181,7 +181,15 @@ async function pollCloud(id,token,attempt){
      const a=document.createElement('a');a.href=job.downloadUrl;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
      setTimeout(()=>setProgress(false),5000);note('INS 视频已解析完成');return
    }
-   if(job.status==='failed'){setProgress(false);setStatus('云端解析失败：'+(job.error||'Instagram 未返回视频'),'bad');return}
+   if(job.status==='failed'){
+     setProgress(false);
+     if(job.errorCode==='instagram_rate_limit'||/429|too many requests|rate.limit/i.test(job.error||'')){
+       setStatus('Instagram 暂时限制了当前云端出口 IP（429）。SAGI CLOUD 已正常上线；请稍后重试，或切到 LOCAL 备用模式。','warn');
+     }else{
+       setStatus('云端解析失败：'+(job.error||'Instagram 未返回视频'),'bad');
+     }
+     return
+   }
    const pct=Math.min(92,20+attempt*2);
    setProgress(true,job.status==='queued'?'云端排队':'正在下载 Instagram 视频',pct);
    activePoll=setTimeout(()=>pollCloud(id,token,attempt+1),1500)
