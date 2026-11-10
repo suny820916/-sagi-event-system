@@ -350,7 +350,7 @@ def cleanup_loop():
         time.sleep(60)
 
 Thread(target=cleanup_loop, daemon=True).start()
-Thread(target=warm_caption_model, daemon=True).start()
+# Caption model is loaded lazily on first caption request to keep health checks responsive.
 
 @app.after_request
 def security_headers(resp):
@@ -376,6 +376,8 @@ def health():
         "captionMaxSeconds": 180,
         "captionRateLimitPerHour": CAPTION_RATE_LIMIT_PER_HOUR,
         "captionReady": caption_model is not None,
+        "captionModelCached": Path(CAPTION_MODEL_DIR).exists(),
+        "captionMediaMaxMB": CAPTION_MEDIA_MAX_MB,
         "captionError": caption_model_error,
         "maxFileMB": MAX_FILE_MB,
         "jobTTLMinutes": JOB_TTL_MIN,
