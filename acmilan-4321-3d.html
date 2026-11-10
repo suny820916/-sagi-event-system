@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#080808">
+<title>SAGI TACTICAL LAB · AC MILAN 4-3-2-1 3D</title>
+<style>
+:root{--gold:#d7b866;--red:#a6191f;--panel:#111211;--border:#303330;--muted:#858b87}
+*{box-sizing:border-box}html,body{margin:0;background:#050505;color:#fff;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+body{padding:12px 10px 30px;background:radial-gradient(circle at 50% 0%,rgba(166,25,31,.18),transparent 36%),#050505}
+.wrap{width:min(100%,820px);margin:auto}.top{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;margin:4px 2px 10px}.brand{font-size:10px;letter-spacing:.22em;color:var(--gold);font-weight:900}.title{font-size:clamp(22px,6vw,34px);font-weight:950;letter-spacing:-.05em;margin-top:4px}.ver{font-size:10px;color:#aaa;border:1px solid #38302e;padding:6px 9px;border-radius:999px;white-space:nowrap}
+.viewport{position:relative;width:min(100%,600px);aspect-ratio:9/16;margin:auto;border-radius:24px;overflow:hidden;border:1px solid rgba(255,255,255,.09);background:#07110b}.viewport canvas{display:block;width:100%;height:100%;touch-action:none}
+.hud{position:absolute;z-index:5;left:14px;right:14px;top:14px;display:flex;justify-content:space-between;pointer-events:none}.hud small{font-size:8px;letter-spacing:.16em;color:#ddd}.hud h2{font-size:31px;line-height:.95;margin:4px 0 0;letter-spacing:-.05em}.badge{font-size:9px;text-align:right;padding:7px 9px;border:1px solid rgba(255,255,255,.18);border-radius:11px;background:rgba(0,0,0,.34);backdrop-filter:blur(8px)}
+.caption{position:absolute;z-index:5;left:14px;right:14px;bottom:14px;display:flex;justify-content:space-between;gap:12px;align-items:flex-end;pointer-events:none}.caption small{display:block;font-size:8px;letter-spacing:.12em;color:rgba(255,255,255,.6)}.caption b{display:block;font-size:12px;margin-top:3px;max-width:360px}.sagi{font-size:9px;color:var(--gold);border:1px solid rgba(215,184,102,.32);padding:6px 8px;border-radius:999px;background:rgba(0,0,0,.26)}
+.loading{position:absolute;z-index:10;inset:0;display:grid;place-items:center;background:#07110b;color:#cfd7d1;font-size:12px}.loading.hide{display:none}
+.sceneBar{width:min(100%,600px);margin:12px auto 0;display:grid;grid-template-columns:repeat(5,1fr);gap:5px}.sceneBtn,.control{appearance:none;border:1px solid var(--border);background:#111311;color:#eee;border-radius:11px;min-height:44px;padding:7px 3px;font:850 9.5px inherit}.sceneBtn.on{background:linear-gradient(135deg,#d24b4f,#761116);border:0}.controls{width:min(100%,600px);margin:8px auto 0;display:flex;gap:7px;justify-content:center;flex-wrap:wrap}.control.primary{background:linear-gradient(135deg,#e0c77b,#a98739);color:#17130a;border:0}.subBox{width:min(100%,600px);margin:9px auto 0;background:#101110;border:1px solid #2d302d;border-radius:14px;padding:11px 12px}.subTitle{font-size:9px;letter-spacing:.12em;color:var(--gold);font-weight:900}.subText{font-size:13px;line-height:1.65;margin-top:5px;color:#ece9e3}.status{text-align:center;font-size:10px;color:#7f8781;margin-top:8px}
+@media(max-width:420px){.viewport{border-radius:18px}.hud h2{font-size:28px}.sceneBar{gap:3px}.sceneBtn{font-size:8.5px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><div><div class="brand">SAGI TACTICAL LAB</div><div class="title">安切洛蒂AC米兰 · 3D战术版</div></div><div class="ver">V2.0 · 3D BROADCAST</div></div>
+  <div id="viewport" class="viewport">
+    <div class="hud"><div><small>ANCELOTTI · AC MILAN</small><h2>4·3·2·1</h2></div><div id="badge" class="badge">01<br>圣诞树成型</div></div>
+    <div id="loading" class="loading">正在载入 3D 战术引擎…</div>
+    <div class="caption"><div><small id="capKicker">STRUCTURE</small><b id="capText">3D视角展示中路堆叠与圣诞树结构</b></div><div class="sagi">SAGI</div></div>
+  </div>
+
+  <div class="sceneBar">
+    <button class="sceneBtn on" data-scene="shape">01 阵型</button>
+    <button class="sceneBtn" data-scene="pirlo">02 皮尔洛</button>
+    <button class="sceneBtn" data-scene="shield">03 保护</button>
+    <button class="sceneBtn" data-scene="kaka">04 卡卡</button>
+    <button class="sceneBtn" data-scene="finish">05 终结</button>
+  </div>
+  <div class="controls">
+    <button id="playAll" class="control primary">▶ 连续播放 + 中文解说</button>
+    <button id="speak" class="control">🔊 解说当前段</button>
+    <button id="view" class="control">🎥 切换视角</button>
+    <button id="back" class="control">← 返回2D版</button>
+  </div>
+  <div class="subBox"><div class="subTitle">中文解说</div><div id="subtitle" class="subText"></div></div>
+  <div id="status" class="status">手机可直接拖动画面轻微调整镜头角度</div>
+</div>
+
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.187.0/build/three.module.js';
+
+const root=document.getElementById('viewport');
+const loading=document.getElementById('loading');
+const badge=document.getElementById('badge');
+const capKicker=document.getElementById('capKicker');
+const capText=document.getElementById('capText');
+const subtitle=document.getElementById('subtitle');
+const status=document.getElementById('status');
+const sceneButtons=[...document.querySelectorAll('.sceneBtn')];
+
+let renderer;
+try{
+  renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:'high-performance'});
+}catch(e){
+  loading.textContent='当前浏览器无法启动 WebGL 3D，请使用 Safari / Chrome 最新版。';
+  throw e;
+}
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.8));
+renderer.setSize(root.clientWidth,root.clientHeight,false);
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.setClearColor(0x050706,1);
+root.insertBefore(renderer.domElement,root.firstChild);
+
+const scene=new THREE.Scene();
+scene.fog=new THREE.Fog(0x050706,85,165);
+const camera=new THREE.PerspectiveCamera(44,root.clientWidth/root.clientHeight,.1,300);
+camera.position.set(0,70,82);
+const lookNow=new THREE.Vector3(0,0,0),lookGoal=new THREE.Vector3(0,0,0),camGoal=new THREE.Vector3(0,70,82);
+
+scene.add(new THREE.HemisphereLight(0xddebdc,0x182018,2.1));
+const key=new THREE.DirectionalLight(0xffffff,2.4);key.position.set(-24,48,34);key.castShadow=true;key.shadow.mapSize.set(1024,1024);scene.add(key);
+const rim=new THREE.DirectionalLight(0xa51c22,1.6);rim.position.set(28,30,-24);scene.add(rim);
+
+const field=new THREE.Group();scene.add(field);
+const grassMat=[new THREE.MeshStandardMaterial({color:0x0b4f2b,roughness:.86}),new THREE.MeshStandardMaterial({color:0x0f6135,roughness:.86})];
+for(let i=0;i<10;i++){const s=new THREE.Mesh(new THREE.PlaneGeometry(6.8,105),grassMat[i%2]);s.rotation.x=-Math.PI/2;s.position.set(-30.6+i*6.8,0,0);s.receiveShadow=true;field.add(s)}
+const lineMat=new THREE.LineBasicMaterial({color:0xf4f1e8,transparent:true,opacity:.82});
+function line(points,mat=lineMat){const g=new THREE.BufferGeometry().setFromPoints(points.map(p=>new THREE.Vector3(p[0],.07,p[1])));const l=new THREE.Line(g,mat);field.add(l);return l}
+line([[-34,-52.5],[34,-52.5],[34,52.5],[-34,52.5],[-34,-52.5]]);
+line([[-34,0],[34,0]]);
+function rect(x1,z1,x2,z2){line([[x1,z1],[x2,z1],[x2,z2],[x1,z2],[x1,z1]])}
+rect(-20.16,-52.5,20.16,-36);rect(-9.16,-52.5,9.16,-47);
+rect(-20.16,36,20.16,52.5);rect(-9.16,47,9.16,52.5);
+const circlePts=[];for(let i=0;i<=64;i++){const a=i/64*Math.PI*2;circlePts.push([9.15*Math.cos(a),9.15*Math.sin(a)])}line(circlePts);
+const centerDot=new THREE.Mesh(new THREE.CircleGeometry(.32,18),new THREE.MeshBasicMaterial({color:0xffffff}));centerDot.rotation.x=-Math.PI/2;centerDot.position.y=.08;field.add(centerDot);
+
+function makeGoal(z,flip=1){
+ const m=new THREE.LineBasicMaterial({color:0xffffff,transparent:true,opacity:.8});
+ line([[-3.66,z],[3.66,z]],m);line([[-3.66,z],[-3.66,z+flip*2.2],[3.66,z+flip*2.2],[3.66,z]],m);
+}
+makeGoal(-52.5,-1);makeGoal(52.5,1);
+
+function labelSprite(text){
+ const c=document.createElement('canvas');c.width=512;c.height=96;const x=c.getContext('2d');x.clearRect(0,0,c.width,c.height);x.fillStyle='rgba(0,0,0,.66)';x.roundRect(8,8,496,80,18);x.fill();x.fillStyle='#fff';x.font='700 34px Arial';x.textAlign='center';x.textBaseline='middle';x.fillText(text,256,48);
+ const tex=new THREE.CanvasTexture(c);tex.colorSpace=THREE.SRGBColorSpace;const s=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false}));s.scale.set(10,1.9,1);s.position.y=4.8;return s;
+}
+function player(name,num,accent=0xa6191f){
+ const g=new THREE.Group();
+ const base=new THREE.Mesh(new THREE.CylinderGeometry(1.8,1.8,.18,32),new THREE.MeshStandardMaterial({color:accent,metalness:.25,roughness:.42,emissive:accent,emissiveIntensity:.08}));base.position.y=.1;base.castShadow=true;g.add(base);
+ const legsMat=new THREE.MeshStandardMaterial({color:0x151515,roughness:.75});
+ const body=new THREE.Mesh(new THREE.CylinderGeometry(.72,.9,2.3,18),new THREE.MeshStandardMaterial({color:0x9e171d,roughness:.6}));body.position.y=1.55;body.castShadow=true;g.add(body);
+ const head=new THREE.Mesh(new THREE.SphereGeometry(.48,18,14),new THREE.MeshStandardMaterial({color:0xd6aa87,roughness:.82}));head.position.y=3.1;head.castShadow=true;g.add(head);
+ const leg1=new THREE.Mesh(new THREE.CylinderGeometry(.19,.2,1.3,10),legsMat);leg1.position.set(-.3,.55,0);leg1.castShadow=true;g.add(leg1);const leg2=leg1.clone();leg2.position.x=.3;g.add(leg2);
+ const disc=new THREE.Mesh(new THREE.RingGeometry(1.9,2.2,36),new THREE.MeshBasicMaterial({color:accent,side:THREE.DoubleSide,transparent:true,opacity:.95}));disc.rotation.x=-Math.PI/2;disc.position.y=.11;g.add(disc);
+ const lbl=labelSprite(name+'  '+num);g.add(lbl);
+ g.userData={name,target:new THREE.Vector3(),accent,baseScale:1};
+ scene.add(g);return g;
+}
+const players={
+ dida:player('DIDA','1'),janku:player('JANKULOVSKI','18'),maldini:player('MALDINI','3'),nesta:player('NESTA','13'),oddo:player('ODDO','44'),
+ ambro:player('AMBROSINI','23'),pirlo:player('PIRLO','21',0xd7b866),gattuso:player('GATTUSO','8'),seedorf:player('SEEDORF','10'),kaka:player('KAKÁ','22',0x61dbe7),inzaghi:player('INZAGHI','9')
+};
+const opponents=[];
+for(let i=0;i<4;i++){const g=player('DEF '+(i+1),'',0x777777);g.children.forEach(o=>{if(o.material&&o.material.color&&o!==g.children[0]){} });opponents.push(g)}
+
+const base={dida:[0,43],janku:[-25,25],maldini:[-8,30],nesta:[8,30],oddo:[25,25],ambro:[-18,7],pirlo:[0,9],gattuso:[18,7],seedorf:[-10,-9],kaka:[10,-12],inzaghi:[0,-30]};
+for(const [id,v] of Object.entries(base)){players[id].position.set(v[0],0,v[1]);players[id].userData.target.copy(players[id].position)}
+const oppBase=[[-20,-36],[-7,-39],[7,-39],[20,-36]];opponents.forEach((o,i)=>{o.position.set(oppBase[i][0],0,oppBase[i][1]);o.userData.target.copy(o.position);o.scale.setScalar(.86);o.traverse(x=>{if(x.material)x.material.transparent=true});});
+
+const ball=new THREE.Mesh(new THREE.SphereGeometry(.55,18,14),new THREE.MeshStandardMaterial({color:0xffffff,roughness:.55}));ball.castShadow=true;ball.position.set(0,.62,9);scene.add(ball);
+
+const routeGroup=new THREE.Group();scene.add(routeGroup);
+function clearRoutes(){while(routeGroup.children.length){const o=routeGroup.children.pop();o.geometry?.dispose?.();o.material?.dispose?.()}}
+function route(points,color=0x7ceeff){
+ const pts=points.map(p=>new THREE.Vector3(p[0],.35,p[1]));
+ const geo=new THREE.BufferGeometry().setFromPoints(pts);
+ const mat=new THREE.LineDashedMaterial({color,dashSize:2.1,gapSize:1.25,transparent:true,opacity:.95});
+ const l=new THREE.Line(geo,mat);l.computeLineDistances();routeGroup.add(l);
+ const end=pts[pts.length-1],prev=pts[pts.length-2],dir=end.clone().sub(prev).normalize();
+ const cone=new THREE.Mesh(new THREE.ConeGeometry(.75,2,12),new THREE.MeshBasicMaterial({color}));
+ cone.position.copy(end).add(new THREE.Vector3(0,.35,0));cone.rotation.x=Math.PI/2;cone.rotation.z=-Math.atan2(dir.z,dir.x)+Math.PI/2;routeGroup.add(cone);
+}
+function highlight(ids){
+ Object.values(players).forEach(g=>{g.scale.setScalar(.92);g.traverse(o=>{if(o.material&&'opacity'in o.material){o.material.transparent=true;o.material.opacity=.66}})});
+ ids.forEach(id=>{const g=players[id];g.scale.setScalar(1.16);g.traverse(o=>{if(o.material&&'opacity'in o.material)o.material.opacity=1}});
+}
+function setTarget(id,x,z){players[id].userData.target.set(x,0,z)}
+function resetTargets(){for(const [id,v] of Object.entries(base))setTarget(id,v[0],v[1]);opponents.forEach((o,i)=>o.userData.target.set(oppBase[i][0],0,oppBase[i][1]))}
+
+const meta={
+ shape:{badge:'01<br>圣诞树成型',kick:'STRUCTURE',cap:'3D视角展示中路堆叠与圣诞树结构',text:'安切洛蒂的米兰把大量技术和跑动能力集中在中路。三名中场、两名攻击型球员，再加一名前锋，形成极具辨识度的四三二一圣诞树结构。'},
+ pirlo:{badge:'02<br>皮尔洛掌舵',kick:'PIRLO',cap:'皮尔洛在中场底部控制方向和节奏',text:'这套体系的第一把钥匙，是皮尔洛。他在中场底部接应后卫、转换方向，并用长传把球快速送到前场。'},
+ shield:{badge:'03<br>两侧保护',kick:'BALANCE',cap:'加图索与安布罗西尼为皮尔洛提供覆盖',text:'皮尔洛身边需要有人替他完成大量防守工作。加图索和安布罗西尼负责压迫、对抗和横向覆盖，让皮尔洛能够更自由地组织。'},
+ kaka:{badge:'04<br>卡卡冲击',kick:'KAKÁ + SEEDORF',cap:'西多夫负责连接，卡卡从两线之间高速向前',text:'再往前是西多夫和卡卡。西多夫负责连接和控球，卡卡则利用速度和持球能力，从两线之间直接冲击后卫线。'},
+ finish:{badge:'05<br>因扎吉终结',kick:'VERTICAL THREAT',cap:'因扎吉持续攻击身后，把创造变成终结',text:'最前面的因扎吉不断攻击最后一道防线。当前腰吸引防守、皮尔洛找到传球角度之后，因扎吉的反跑就成为最后一击。'}
+};
+const cams={
+ shape:[[0,70,82],[0,0,0]],pirlo:[[-2,54,58],[0,0,8]],shield:[[0,50,55],[0,0,7]],kaka:[[17,42,42],[5,0,-11]],finish:[[0,35,25],[0,0,-30]]
+};
+let current='shape',sceneStart=performance.now(),ballSeq=[],timeouts=[],playing=false,viewMode=0;
+function clearTimers(){timeouts.forEach(clearTimeout);timeouts=[];if('speechSynthesis'in window)speechSynthesis.cancel()}
+function setBallSeq(arr){ballSeq=arr.map(x=>({t:x[0],p:new THREE.Vector3(x[1],.7,x[2])}));sceneStart=performance.now()}
+function applyScene(name){
+ current=name;resetTargets();clearRoutes();const m=meta[name];badge.innerHTML=m.badge;capKicker.textContent=m.kick;capText.textContent=m.cap;subtitle.textContent=m.text;sceneButtons.forEach(b=>b.classList.toggle('on',b.dataset.scene===name));
+ const c=cams[name];camGoal.set(...c[0]);lookGoal.set(...c[1]);opponents.forEach(o=>o.visible=name==='kaka'||name==='finish');
+ if(name==='shape'){highlight(Object.keys(players));setBallSeq([[0,0,9]]);route([[-25,25],[-18,7],[-10,-9],[0,-30]],0xffffff);route([[25,25],[18,7],[10,-12],[0,-30]],0xffffff)}
+ if(name==='pirlo'){highlight(['pirlo','maldini','nesta','seedorf','kaka']);route([[-8,30],[0,9],[10,-12]],0xd7b866);route([[8,30],[0,9],[-10,-9]],0xd7b866);setBallSeq([[0,-8,30],[900,0,9],[1900,10,-12],[2900,0,9],[3900,-10,-9]])}
+ if(name==='shield'){highlight(['pirlo','ambro','gattuso']);setTarget('ambro',-23,2);setTarget('gattuso',23,2);route([[-18,7],[-23,2],[-25,-8]],0xe25d61);route([[18,7],[23,2],[25,-8]],0xe25d61);setBallSeq([[0,0,9]])}
+ if(name==='kaka'){highlight(['seedorf','kaka','inzaghi']);setTarget('kaka',4,-28);setTarget('seedorf',-13,-15);setTarget('inzaghi',-4,-35);opponents[2].userData.target.set(12,0,-35);route([[0,9],[-10,-9],[10,-12],[4,-28]],0xd7b866);route([[10,-12],[4,-28],[-2,-36]],0x7ceeff);setBallSeq([[0,0,9],[850,-10,-9],[1700,10,-12],[2600,4,-28]])}
+ if(name==='finish'){highlight(['pirlo','kaka','inzaghi']);setTarget('kaka',7,-24);setTarget('inzaghi',0,-47);route([[0,9],[7,-24],[0,-47]],0xd7b866);route([[0,-30],[0,-47]],0x7ceeff);setBallSeq([[0,0,9],[1100,7,-24],[2100,0,-43],[3000,0,-50]])}
+}
+function ballUpdate(now){
+ if(!ballSeq.length)return;const t=now-sceneStart;
+ if(ballSeq.length===1){ball.position.copy(ballSeq[0].p);return}
+ let a=ballSeq[0],b=ballSeq[ballSeq.length-1];
+ for(let i=0;i<ballSeq.length-1;i++){if(t>=ballSeq[i].t&&t<=ballSeq[i+1].t){a=ballSeq[i];b=ballSeq[i+1];break}if(t>ballSeq[ballSeq.length-1].t){a=b=ballSeq[ballSeq.length-1]}}
+ const d=Math.max(1,b.t-a.t),u=Math.max(0,Math.min(1,(t-a.t)/d));ball.position.lerpVectors(a.p,b.p,u);ball.position.y=.65+Math.sin(u*Math.PI)*1.15;
+}
+function speak(name){if(!('speechSynthesis'in window)){status.textContent='当前浏览器不支持系统中文语音';return}speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(meta[name].text);u.lang='zh-CN';u.rate=1.03;const v=speechSynthesis.getVoices().find(v=>/^zh(-|_)/i.test(v.lang));if(v)u.voice=v;speechSynthesis.speak(u)}
+function playAll(){clearTimers();playing=true;document.getElementById('playAll').textContent='■ 停止播放';const seq=['shape','pirlo','shield','kaka','finish'];let i=0;function next(){if(!playing)return;applyScene(seq[i]);setTimeout(()=>speak(seq[i]),250);i++;if(i<seq.length)timeouts.push(setTimeout(next,5200));else timeouts.push(setTimeout(()=>{playing=false;document.getElementById('playAll').textContent='▶ 连续播放 + 中文解说';status.textContent='3D演示结束：皮尔洛掌控 · 两侧保护 · 卡卡推进 · 因扎吉终结'},5200))}next()}
+sceneButtons.forEach(b=>b.addEventListener('click',()=>{playing=false;document.getElementById('playAll').textContent='▶ 连续播放 + 中文解说';applyScene(b.dataset.scene)}));
+document.getElementById('speak').addEventListener('click',()=>speak(current));
+document.getElementById('playAll').addEventListener('click',()=>{if(playing){playing=false;clearTimers();document.getElementById('playAll').textContent='▶ 连续播放 + 中文解说';status.textContent='已停止'}else playAll()});
+document.getElementById('view').addEventListener('click',()=>{viewMode=(viewMode+1)%2;if(viewMode===1){camGoal.set(0,105,2);lookGoal.set(0,0,0);status.textContent='顶视角：更适合观察阵型结构'}else{const c=cams[current];camGoal.set(...c[0]);lookGoal.set(...c[1]);status.textContent='45°转播视角'}});
+document.getElementById('back').addEventListener('click',()=>location.href='acmilan-4321-classic.html');
+
+let drag=false,lastX=0,yaw=0;
+renderer.domElement.addEventListener('pointerdown',e=>{drag=true;lastX=e.clientX;renderer.domElement.setPointerCapture?.(e.pointerId)});
+renderer.domElement.addEventListener('pointermove',e=>{if(!drag||viewMode===1)return;const dx=e.clientX-lastX;lastX=e.clientX;yaw=Math.max(-.45,Math.min(.45,yaw+dx*.0035));const c=cams[current][0];const r=Math.hypot(c[0],c[2]);camGoal.x=Math.sin(yaw)*r;camGoal.z=Math.cos(yaw)*r});
+renderer.domElement.addEventListener('pointerup',()=>drag=false);renderer.domElement.addEventListener('pointercancel',()=>drag=false);
+
+function resize(){const w=root.clientWidth,h=root.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}
+new ResizeObserver(resize).observe(root);
+
+const clock=new THREE.Clock();
+function tick(now){
+ const dt=Math.min(.05,clock.getDelta());for(const g of [...Object.values(players),...opponents])g.position.lerp(g.userData.target,1-Math.pow(.015,dt));
+ camera.position.lerp(camGoal,1-Math.pow(.025,dt));lookNow.lerp(lookGoal,1-Math.pow(.025,dt));camera.lookAt(lookNow);ballUpdate(now);renderer.render(scene,camera)
+}
+renderer.setAnimationLoop(tick);
+applyScene('shape');loading.classList.add('hide');
+</script>
+</body>
+</html>
