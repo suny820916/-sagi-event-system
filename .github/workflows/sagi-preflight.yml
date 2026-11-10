@@ -198,6 +198,7 @@ jobs:
           sd = r.get_json()
           assert sd["ok"] and len(sd["results"]) == 1
           assert "双后腰" in sd["results"][0]["text"] or "四后卫" in sd["results"][0]["text"]
+          assert "攻防攻防转换" not in sd["results"][0]["text"]
           assert 0 <= float(sd["averageScore"]) <= 100
           print("Smart translate smoke OK", sd["averageScore"], sd["results"][0]["text"])
           # AI Voice endpoint smoke with provider mocked locally.
@@ -262,7 +263,7 @@ jobs:
               "cloneMyVoice",
               "cloudCaptionMedia",
               "runAiCaption(true)",
-              "V1.9 · AI VOICE + CLOUD RENDER",
+              "V1.9.1 · CLOUD COMPAT FIX",
           ]
           for x in required:
               assert x in s, x
