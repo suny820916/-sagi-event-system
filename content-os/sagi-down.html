@@ -198,6 +198,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
         <button class="btn blue" id="aiCaptionZhBtn" type="button">识别并翻成中文</button>
         <button class="btn" id="downloadSrtBtn" type="button">导出 SRT</button>
         <button class="btn danger" id="localCaptionBtn" type="button" style="display:none">本地备用识别</button>
+        <button class="btn" id="cloudTestBtn" type="button">云端自检</button>
       </div>
 
       <div class="aiCaptionProgress"><i id="aiCaptionProgress"></i></div>
@@ -208,6 +209,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
         <span id="captionCount">字幕：0</span>
         <span id="captionCacheStatus">本地模型：仅备用</span>
         <span id="captionCloudStatus">云端：连接中</span>
+        <span id="captionCloudVersion">版本：—</span>
       </div>
       <div id="aiCaptionTimeline" class="aiCaptionTimeline"></div>
     </div>
@@ -432,7 +434,8 @@ const STUDIO={
  translator:null,translatorKey:'',moduleWarm:false,
  cloudCaptionToken:'',cloudCaptionReady:false,cloudCaptionWaking:false,cloudCaptionError:'',cloudHealthVersion:'',cloudVersion:'',cloudHealth:null,
  captionVisibleCount:40,
- pendingTranslateZh:false
+ pendingTranslateZh:false,
+ cloudHealth:null,cloudLastError:''
 };
 
 function studioStatus(t,k=''){const e=q('studioStatus');if(e){e.textContent=t;e.className='status '+k}}
@@ -540,35 +543,65 @@ const CAPTION_CLOUD='https://sagi-cloud-bridge-suny820916.onrender.com';
 
 function setCloudCaptionStatus(t){const e=q('captionCloudStatus');if(e)e.textContent='云端：'+t}
 
-async function wakeCaptionCloud(){
- if(STUDIO.cloudCaptionReady||STUDIO.cloudCaptionWaking)return STUDIO.cloudCaptionReady;
- STUDIO.cloudCaptionWaking=true;STUDIO.cloudCaptionError='';setCloudCaptionStatus('检测中');
+async function wakeCaptionCloud(force=false){
+ if(STUDIO.cloudCaptionReady&&!force)return true;
+ if(STUDIO.cloudCaptionWaking)return false;
+ STUDIO.cloudCaptionWaking=true;STUDIO.cloudLastError='';setCloudCaptionStatus('唤醒中');
  try{
-   const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),45000);
+   const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),90000);
    let healthResp;
    try{
-     healthResp=await fetch(CAPTION_CLOUD+'/health',{cache:'no-store',signal:ctl.signal})
+     healthResp=await fetch(CAPTION_CLOUD+'/health',{cache:'no-store',signal:ctl.signal});
    }catch(e){
-     throw new Error('health 网络失败')
-   }finally{clearTimeout(timer)}
-   if(!healthResp.ok)throw new Error('health HTTP '+healthResp.status);
-   const health=await healthResp.json();
-   STUDIO.cloudHealthVersion=health?.version||'unknown';
-   if(!health?.captionFast||!health?.captionMedia){
-     throw new Error('线上版本过旧 '+STUDIO.cloudHealthVersion)
+     clearTimeout(timer);
+     throw new Error(e?.name==='AbortError'?'云端唤醒超时':'无法连接 Render 服务')
    }
-   const a=await fetch(CAPTION_CLOUD+'/api/activate',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
-   if(!a.ok)throw new Error('activate HTTP '+a.status);
-   const data=await a.json();
-   if(!data?.token)throw new Error('activate 无 token');
-   STUDIO.cloudCaptionToken=data.token;STUDIO.cloudCaptionReady=true;
-   setCloudCaptionStatus((health.captionReady?'已就绪':'服务已醒')+' · '+STUDIO.cloudHealthVersion);
+   clearTimeout(timer);
+   if(!healthResp.ok)throw new Error('健康检查 HTTP '+healthResp.status);
+   const health=await healthResp.json();
+   STUDIO.cloudHealth=health;
+   if(q('captionCloudVersion'))q('captionCloudVersion').textContent='版本：'+(health.version||'未知');
+
+   if(!health.captionMedia){
+     STUDIO.cloudCaptionReady=false;
+     throw new Error('云端版本过旧：缺少 captionMedia 接口')
+   }
+
+   const a=await fetch(CAPTION_CLOUD+'/api/activate',{
+     method:'POST',headers:{'Content-Type':'application/json'},body:'{}'
+   });
+   const data=await a.json().catch(()=>({}));
+   if(a.status===403)throw new Error('鉴权失败：Origin 未允许');
+   if(a.status===503)throw new Error('鉴权失败：SERVER_SECRET 未配置');
+   if(!a.ok)throw new Error('激活失败 HTTP '+a.status);
+   if(!data?.token)throw new Error('激活成功但未返回 Token');
+
+   STUDIO.cloudCaptionToken=data.token;
+   STUDIO.cloudCaptionReady=true;
+   const ready=health.captionReady?'模型已载入':(health.captionModelCached?'模型已缓存':'模型待加载');
+   setCloudCaptionStatus('已连接 · '+ready);
+   STUDIO.cloudLastError='';
    return true
  }catch(e){
-   STUDIO.cloudCaptionReady=false;STUDIO.cloudCaptionError=String(e?.message||e);
-   setCloudCaptionStatus('失败 · '+STUDIO.cloudCaptionError);
+   STUDIO.cloudCaptionReady=false;
+   STUDIO.cloudLastError=String(e?.message||e);
+   setCloudCaptionStatus('失败 · '+STUDIO.cloudLastError);
    return false
  }finally{STUDIO.cloudCaptionWaking=false}
+}
+
+async function runCloudSelfTest(){
+ const b=q('cloudTestBtn');if(b){b.disabled=true;b.textContent='检测中…'}
+ const ok=await wakeCaptionCloud(true);
+ const h=STUDIO.cloudHealth||{};
+ if(ok){
+   aiCaptionStatus('云端自检通过 · V'+(h.version||'?')+' · '+(h.captionModelCached?'模型已缓存':'模型未预缓存')+' · 最大媒体 '+(h.captionMediaMaxMB||'?')+'MB');
+   studioStatus('SAGI Cloud 可用。','good')
+ }else{
+   aiCaptionStatus('云端自检失败：'+(STUDIO.cloudLastError||'未知错误'));
+   studioStatus('云端当前不可用；本地识别和独立翻译仍可继续。','warn')
+ }
+ if(b){b.disabled=false;b.textContent='云端自检'}
 }
 function waveformToWavBlob(samples,sampleRate=16000){
  const len=samples.length,buf=new ArrayBuffer(44+len*2),v=new DataView(buf);
@@ -626,7 +659,10 @@ function cloudCaptionMedia(file,start,duration,lang){
      };
      xhr.onload=()=>{
        let data={};try{data=JSON.parse(xhr.responseText||'{}')}catch(e){}
-       if(xhr.status<200||xhr.status>=300||!data?.ok)return reject(new Error(data?.error||('cloud '+xhr.status)));
+       if(xhr.status<200||xhr.status>=300||!data?.ok){
+       const map={404:'接口不存在/云端版本旧',401:'Token失效',403:'跨域或权限被拒绝',413:'视频文件超过云端限制',500:'云端模型或处理异常',503:'云端服务未就绪'};
+       return reject(new Error((map[xhr.status]||('HTTP '+xhr.status))+(data?.error?' · '+data.error:'')))
+     }
        setCloudCaptionStatus('完成 '+Math.max(1,Math.round((data.elapsedMs||0)/1000))+'s');
        resolve(data)
      };
@@ -921,6 +957,30 @@ async function browserTranslateContext(caps,source,target,mode='faithful'){
  return out
 }
 
+async function independentTranslateSegments(caps,source,target){
+ const session=await getTranslatorSession(source,target);
+ const out=new Array(caps.length);
+ let cursor=0,done=0;
+ const limit=3;
+ async function worker(){
+   while(cursor<caps.length){
+     const i=cursor++,c=caps[i];
+     let translated='';
+     try{
+       translated=session?await session.translate(c.text):await translateLine(c.text,source,target)
+     }catch(e){
+       translated=c.text
+     }
+     out[i]=String(translated||c.text).trim();
+     done++;
+     aiCaptionProgress(80+done/Math.max(1,caps.length)*18);
+     aiCaptionStatus('独立中文翻译 '+done+' / '+caps.length)
+   }
+ }
+ await Promise.all(Array.from({length:Math.min(limit,caps.length)},worker));
+ return out
+}
+
 async function cloudTranslateContext(caps,source,target,mode='faithful'){
  const ready=await wakeCaptionCloud();
  if(!ready||!STUDIO.cloudCaptionToken)throw new Error('CLOUD_TRANSLATE_NOT_READY');
@@ -1040,7 +1100,7 @@ async function runLocalCaption(){
    const cfg=captionSpeedConfig(),lang=q('captionLanguage')?.value||'auto';
    aiCaptionStatus('正在启动手机本地 Whisper · 备用模式…');
    const [audio,model]=await Promise.all([extractCaptionWaveform(),ensureCaptionModel()]);
-   const options={return_timestamps:true,task:'transcribe'};
+   const options={return_timestamps:true,return_language:true,task:'transcribe'};
    if(cfg.chunk>0&&audio.duration>30){options.chunk_length_s=cfg.chunk;options.stride_length_s=cfg.stride}
    if(lang!=='auto')options.language=lang;
    const result=await model(audio.waveform,options);
@@ -1283,6 +1343,7 @@ q('instant15Btn').onclick=instant15Caption;
 q('aiCaptionZhBtn').onclick=()=>runAiCaption(true);
 q('downloadSrtBtn').onclick=downloadSrt;
 q('localCaptionBtn').onclick=runLocalCaption;
+q('cloudTestBtn').onclick=runCloudSelfTest;
 q('captionToNarrationBtn').onclick=captionToNarration;
 q('translateSubtitleBtn').onclick=translateSubtitles;
 q('speakNarrationBtn').onclick=speakNarration;
