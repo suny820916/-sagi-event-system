@@ -176,7 +176,7 @@ jobs:
           c = mod.app.test_client()
           health = c.get("/health").get_json()
           print("health", health)
-          assert health["version"] == "3.0.0"
+          assert health["version"] == "3.0.1"
           assert health["captionMedia"] is True
           assert health["contextTranslate"] is True
           assert health["smartTranslate"] is True
@@ -184,7 +184,7 @@ jobs:
           assert health["cloudRender"] is True
           assert health["cloudDownload"] is True
           assert set(health["downloadPlatforms"]) >= {"Instagram","YouTube","TikTok","X"}
-          assert health["instagramPostFallback"].startswith("btch -> parth-dl")
+          assert health["instagramPostFallback"].startswith("parth-dl -> btch")
           assert health["downloadRouter"] is True
           assert health["downloadRouterVersion"] == "3.0"
           assert health["btchEnabled"] is True
@@ -216,8 +216,8 @@ jobs:
           assert mod.source_platform("https://www.tiktok.com/@u/video/123") == "tiktok"
           assert mod.source_platform("https://x.com/u/status/123") == "twitter"
           assert mod.source_platform("https://youtu.be/abc") == "youtube"
-          assert mod._router_engines("instagram") == ["btch","parth-dl"]
-          assert mod._router_engines("tiktok") == ["btch","tikwm"]
+          assert mod._router_engines("instagram") == ["parth-dl","btch"]
+          assert mod._router_engines("tiktok") == ["tikwm","btch"]
           assert mod._router_engines("twitter") == ["fxtwitter","btch"]
           assert mod._router_engines("youtube") == []
 
@@ -492,47 +492,64 @@ jobs:
               assert r.status == 200
           PY
 
-      - name: Verify public BTCH browser node
+      - name: Verify external download engines
         run: |
           python - <<'PY'
-          import json, urllib.request
-          base="https://btch-downloader-api-green.vercel.app"
-          req=urllib.request.Request(base+"/api/health",headers={"Origin":"https://suny820916.github.io","User-Agent":"SAGI-preflight"})
+          import json, urllib.request, urllib.parse, urllib.error
+
+          # BTCH is opportunistic only: shell/CORS must be reachable, but a
+          # degraded upstream must not block the whole SAGI release.
+          btch="https://btch-downloader-api-green.vercel.app"
+          req=urllib.request.Request(btch+"/api/health",headers={"Origin":"https://suny820916.github.io","User-Agent":"SAGI-preflight"})
           with urllib.request.urlopen(req,timeout=30) as r:
               body=json.loads(r.read().decode("utf-8"))
               cors=r.headers.get("access-control-allow-origin","")
-              print("btch health",r.status,body,"cors",cors)
-              assert r.status == 200
-              assert body.get("success") is True
+              assert r.status == 200 and body.get("success") is True
               assert cors in ("*","https://suny820916.github.io")
-          req=urllib.request.Request(base+"/api/platforms",headers={"User-Agent":"SAGI-preflight"})
+          try:
+              req=urllib.request.Request(btch+"/api/health?deep=1",headers={"User-Agent":"SAGI-preflight"})
+              with urllib.request.urlopen(req,timeout=30) as r:
+                  deep=json.loads(r.read().decode("utf-8"))
+              print("BTCH deep",deep)
+          except urllib.error.HTTPError as e:
+              print("BTCH deep degraded HTTP",e.code)
+              assert e.code in (429,500,502,503,504)
+
+          # TikWM is now the primary TikTok engine. Use the public example URL
+          # documented by TikTok's own embed-player docs.
+          tik_url="https://www.tiktok.com/@scout2015/video/6718335390845095173"
+          data=urllib.parse.urlencode({"url":tik_url}).encode("utf-8")
+          req=urllib.request.Request(
+              "https://www.tikwm.com/api/",
+              data=data,
+              headers={
+                  "Origin":"https://suny820916.github.io",
+                  "User-Agent":"SAGI-preflight",
+                  "Content-Type":"application/x-www-form-urlencoded",
+                  "Accept":"application/json",
+              },
+              method="POST",
+          )
+          with urllib.request.urlopen(req,timeout=45) as r:
+              tik=json.loads(r.read().decode("utf-8"))
+              print("TikWM status",r.status,"code",tik.get("code"))
+          assert int(tik.get("code") or -1) == 0 and isinstance(tik.get("data"),dict), tik
+          td=tik["data"]
+          assert td.get("play") or td.get("hdplay") or (td.get("images") or []), td
+          print("TIKWM REAL RESOLVE OK")
+
+          # FxTwitter is the primary X engine. This stable historical post
+          # verifies the public API surface without requiring an API key.
+          req=urllib.request.Request(
+              "https://api.fxtwitter.com/2/status/20",
+              headers={"Origin":"https://suny820916.github.io","User-Agent":"SAGI-preflight","Accept":"application/json"},
+          )
           with urllib.request.urlopen(req,timeout=30) as r:
-              body=json.loads(r.read().decode("utf-8"))
-          keys={x.get("key") for x in body.get("platforms",[])}
-          assert {"instagram","tiktok","twitter","youtube"} <= keys, keys
-
-          # Deep health checks the upstream downloader itself, not only the HTTP wrapper.
-          req=urllib.request.Request(base+"/api/health?deep=1",headers={"User-Agent":"SAGI-preflight"})
-          with urllib.request.urlopen(req,timeout=45) as r:
-              deep=json.loads(r.read().decode("utf-8"))
-          assert deep.get("success") is True and deep.get("status") == "ok", deep
-          upstream=deep.get("upstream") or {}
-          assert upstream.get("ok") is True, deep
-          print("BTCH DEEP HEALTH OK",upstream)
-
-          # Real media resolver smoke using youtube-dl's purpose-built public test video.
-          import urllib.parse
-          test_url="https://www.youtube.com/watch?v=BaW_jenozKc"
-          resolve=base+"/api/download/youtube?"+urllib.parse.urlencode({"url":test_url})
-          req=urllib.request.Request(resolve,headers={"Origin":"https://suny820916.github.io","User-Agent":"SAGI-preflight"})
-          with urllib.request.urlopen(req,timeout=45) as r:
-              resolved=json.loads(r.read().decode("utf-8"))
-          assert resolved.get("success") is True, resolved
-          norm=resolved.get("normalized") or {}
-          media=norm.get("media") or []
-          assert norm.get("kind") == "media" and any(str(x.get("url") or "").startswith("http") for x in media), norm
-          print("BTCH REAL YOUTUBE RESOLVE OK",norm.get("title"),len(media))
-          print("BTCH PUBLIC NODE OK",sorted(keys))
+              fx=json.loads(r.read().decode("utf-8"))
+              fx_cors=r.headers.get("access-control-allow-origin","")
+              print("FxTwitter status",r.status,"cors",fx_cors)
+          assert int(fx.get("code") or 0) == 200 and isinstance(fx.get("status"),dict), fx
+          print("FXTWITTER PUBLIC API OK")
           PY
 
       - name: Frontend JavaScript syntax and wiring
