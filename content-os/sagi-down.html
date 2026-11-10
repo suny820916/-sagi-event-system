@@ -469,7 +469,9 @@ function cloudDownloadWindow(){
 function cloudDownloadStatusLabel(job){
   const s=String(job?.status||'');
   if(s==='queued')return '已进入云端队列';
-  if(s==='gallery_processing')return '检测到 Instagram Post · 正在解析图片/轮播';
+  if(s==='instagram_fast')return '检测到 Instagram Post · 正在快速解析';
+  if(s==='instagram_fetching')return '已找到帖子媒体 · 正在下载';
+  if(s==='gallery_processing')return '快速解析未命中 · 正在尝试短时备用解析';
   if(s==='gallery_packaging')return '正在打包轮播内容';
   if(s==='downloading'||s==='cobalt_processing'||s==='cobalt_fetching')return '云端正在解析并下载源内容';
   if(s==='worker_downloading')return '下载节点正在处理';
@@ -493,9 +495,16 @@ async function pollCloudDownload(jobId,handoff){
       return
     }
     if(job.status==='failed'){
-      const msg=job.errorCode==='cloud_download_rate_limit'
-        ?'源平台暂时限制了云端访问，请稍后重试。'
-        :(job.error||'云端解析失败');
+      let msg='云端解析失败，请稍后重试。';
+      if(job.errorCode==='cloud_download_rate_limit'){
+        msg='源平台暂时限制了云端访问，请稍后重试。';
+      }else if(job.errorCode==='instagram_cloud_blocked'){
+        msg='Instagram 当前限制了云端访问。本次已停止等待，不会再卡住 150 秒；请稍后重试或换一个公开帖子链接。';
+      }else if(job.errorCode==='unsupported_source'){
+        msg='当前链接暂不支持。';
+      }else if(job.error&&String(job.error).length<160){
+        msg=String(job.error).replace(/^INSTAGRAM_CLOUD_BLOCKED:\s*/,'');
+      }
       throw new Error(msg)
     }
     setStatus(cloudDownloadStatusLabel(job)+'…','good')
@@ -2123,7 +2132,7 @@ if(q('captionSpeed'))q('captionSpeed').value='fast';
 if(q('captionRange'))q('captionRange').value='trim';
 setTimeout(async()=>{await wakeCaptionCloud();refreshAIVoiceStatus(false)},180);
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=197',{updateViaCache:'none'}).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=198',{updateViaCache:'none'}).catch(()=>{})}
 })();
 </script>
 </body>

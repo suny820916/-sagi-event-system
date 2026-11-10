@@ -33,12 +33,12 @@ jobs:
         run: |
           curl --fail --show-error --silent --retry 3 "$RENDER_DEPLOY_HOOK_URL"
 
-      - name: Wait for SAGI Cloud 1.7.2
+      - name: Wait for SAGI Cloud 1.7.3
         run: |
           python - <<'PY'
           import json, time, urllib.request, sys
           url = "https://sagi-cloud-bridge-suny820916.onrender.com/health"
-          expected = "1.7.2"
+          expected = "1.7.3"
           for i in range(36):
               try:
                   with urllib.request.urlopen(url, timeout=15) as r:
@@ -51,6 +51,6 @@ jobs:
               except Exception as e:
                   print(f"check {i+1}/36 failed: {e}")
               time.sleep(10)
-          print("Expected SAGI Cloud version 1.7.2 was not observed.")
+          print("Expected SAGI Cloud version 1.7.3 was not observed.")
           sys.exit(1)
           PY
