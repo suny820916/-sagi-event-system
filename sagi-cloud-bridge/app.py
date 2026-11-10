@@ -24,6 +24,9 @@ PORT = int(os.getenv("PORT") or "10000")
 MAX_FILE_MB = int(os.getenv("SAGI_MAX_FILE_MB") or "300")
 JOB_TTL_MIN = int(os.getenv("SAGI_JOB_TTL_MIN") or "30")
 RATE_LIMIT_PER_HOUR = int(os.getenv("SAGI_RATE_LIMIT_PER_HOUR") or "20")
+CAPTION_RATE_LIMIT_PER_HOUR = int(os.getenv("SAGI_CAPTION_RATE_LIMIT_PER_HOUR") or "180")
+caption_rate_hits = {}
+caption_rate_lock = Lock()
 COBALT_HOSTPORT = (os.getenv("SAGI_COBALT_HOSTPORT") or "").strip()
 INSTAGRAM_PROXY = (os.getenv("SAGI_INSTAGRAM_PROXY") or "").strip()
 
@@ -107,6 +110,18 @@ def rate_allowed():
             return False
         arr.append(time.time())
         rate_hits[key] = arr
+    return True
+
+def caption_rate_allowed():
+    key = request.headers.get("X-Forwarded-For", request.remote_addr or "unknown").split(",")[0].strip()
+    cutoff = time.time() - 3600
+    with caption_rate_lock:
+        arr = [t for t in caption_rate_hits.get(key, []) if t >= cutoff]
+        if len(arr) >= CAPTION_RATE_LIMIT_PER_HOUR:
+            caption_rate_hits[key] = arr
+            return False
+        arr.append(time.time())
+        caption_rate_hits[key] = arr
     return True
 
 def allowed_instagram(url):
@@ -349,7 +364,7 @@ def health():
     return jsonify({
         "ok": True,
         "service": "SAGI CLOUD BRIDGE",
-        "version": "1.6.5",
+        "version": "1.6.7",
         "instagram": True,
         "hybridWorker": True,
         "workerOnline": worker_online(),
@@ -359,6 +374,7 @@ def health():
         "contextTranslate": True,
         "captionModel": "faster-whisper-tiny-int8",
         "captionMaxSeconds": 180,
+        "captionRateLimitPerHour": CAPTION_RATE_LIMIT_PER_HOUR,
         "captionReady": caption_model is not None,
         "captionError": caption_model_error,
         "maxFileMB": MAX_FILE_MB,
@@ -370,8 +386,8 @@ def health():
 def caption_media_fast():
     if not authorized():
         return jsonify({"ok": False, "error": "Unauthorized"}), 401
-    if not rate_allowed():
-        return jsonify({"ok": False, "error": "Hourly limit reached"}), 429
+    if not caption_rate_allowed():
+        return jsonify({"ok": False, "error": "Caption hourly limit reached", "errorCode": "caption_rate_limit"}), 429
 
     upload = request.files.get("media")
     if not upload:
@@ -450,8 +466,8 @@ def caption_media_fast():
 def caption_fast():
     if not authorized():
         return jsonify({"ok": False, "error": "Unauthorized"}), 401
-    if not rate_allowed():
-        return jsonify({"ok": False, "error": "Hourly limit reached"}), 429
+    if not caption_rate_allowed():
+        return jsonify({"ok": False, "error": "Caption hourly limit reached", "errorCode": "caption_rate_limit"}), 429
 
     upload = request.files.get("audio")
     if not upload:
@@ -558,8 +574,8 @@ def _football_zh_polish(text):
 def translate_context():
     if not authorized():
         return jsonify({"ok": False, "error": "Unauthorized"}), 401
-    if not rate_allowed():
-        return jsonify({"ok": False, "error": "Hourly limit reached"}), 429
+    if not caption_rate_allowed():
+        return jsonify({"ok": False, "error": "Translation hourly limit reached", "errorCode": "caption_rate_limit"}), 429
 
     data = request.get_json(silent=True) or {}
     source = str(data.get("source") or "auto").strip()
