@@ -80,6 +80,21 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 .capability{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}.capability span{font-size:8px;border:1px solid #2c414a;border-radius:99px;padding:5px 7px;color:#789099}.capability span.ok{border-color:#355741;color:#94bd9e}.capability span.warn{border-color:#665438;color:#d0b16e}
 @media(max-width:420px){.actions{grid-template-columns:1fr 1fr}.actions .primary{grid-column:1/-1}.platformStrip{grid-template-columns:repeat(2,1fr)}.rowActions{grid-template-columns:repeat(2,1fr)}}
 
+
+/* SAGI IMAGE INTELLIGENCE V1.0 */
+.imgIntel{margin-top:10px;border:1px solid #4b5c37;border-radius:13px;background:linear-gradient(180deg,#11150c,#090e0b);padding:11px}
+.imgIntelHead{display:flex;justify-content:space-between;gap:9px;align-items:flex-start}.imgIntelHead b{font-size:11px}.imgIntelHead span{display:block;font-size:8px;color:#81906b;line-height:1.45;margin-top:3px}.imgIntelHead .badge{white-space:nowrap}
+.imgIntelActions{display:grid;grid-template-columns:1.35fr .65fr;gap:7px;margin-top:9px}
+.imgIntelStatus{margin-top:8px;border:1px solid #33402a;border-radius:10px;padding:9px;font-size:9px;color:#91a279;line-height:1.5;background:#0b1008}
+.imgIntelProgress{height:6px;border:1px solid #36402d;background:#070a06;border-radius:99px;overflow:hidden;margin-top:7px}.imgIntelProgress i{display:block;width:0;height:100%;background:linear-gradient(90deg,#77854b,#d7b568);transition:width .22s}
+.imgIntelFacts{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}.imgIntelFact{border:1px solid #293426;border-radius:9px;background:#0a0e08;padding:7px}.imgIntelFact span{display:block;font-size:7px;color:#6f8062}.imgIntelFact b{display:block;font-size:10px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.imgIntelOcr{margin-top:8px;border:1px solid #29382d;border-radius:9px;padding:8px;background:#08100b}.imgIntelOcr span{display:block;font-size:7px;color:#6e8172}.imgIntelOcr p{margin:5px 0 0;font-size:9px;color:#a8b5ab;line-height:1.55;word-break:break-word}
+.imgIntelSignals{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}.imgSignal{font-size:7px;border:1px solid #3e4d35;border-radius:99px;padding:4px 6px;color:#9dae8a;background:#0c1209}.imgSignal.hot{border-color:#6a5730;color:#dbbf79;background:#17130a}.imgSignal.live{border-color:#3e6550;color:#a5d1b1;background:#0b1710}
+.imgTrendGrid{display:grid;gap:7px;margin-top:9px}.imgTrendCard{border:1px solid #304038;border-radius:11px;background:#09100d;padding:9px}.imgTrendCard.best{border-color:#725d32;background:linear-gradient(145deg,#171309,#09100d)}
+.imgTrendTop{display:flex;justify-content:space-between;gap:8px;align-items:center}.imgTrendTop strong{font-size:8px;color:#d8bc77}.imgTrendScore{font-size:16px;font-weight:900;color:#e6ca82}.imgTrendCard h4{font-size:12px;line-height:1.4;margin:7px 0 0}.imgTrendCard p{font-size:8px;color:#83958b;line-height:1.55;margin:5px 0 0}.imgTrendTags{font-size:8px;color:#91a88f;line-height:1.55;margin-top:6px}.imgTrendActions{display:flex;gap:6px;margin-top:8px}.imgTrendActions .btn{padding:8px 9px;font-size:9px;flex:1}
+.imgNewsList{display:grid;gap:5px;margin-top:8px}.imgNews{border-top:1px solid #202c25;padding-top:6px}.imgNews:first-child{border-top:0;padding-top:0}.imgNews b{display:block;font-size:8px;line-height:1.45}.imgNews span{display:block;font-size:7px;color:#6f8376;margin-top:3px}
+@media(max-width:420px){.imgIntelFacts{grid-template-columns:1fr 1fr}.imgIntelActions{grid-template-columns:1fr}.imgTrendActions{display:grid;grid-template-columns:1fr 1fr}}
+
 /* SAGI DOWN V3.1 · IMAGE STUDIO */
 .imageEditCard{border-color:#5b5033;background:linear-gradient(180deg,#15130d,#0a0f12)}
 .imageEditHead{display:flex;justify-content:space-between;gap:10px;align-items:center}.imageEditHead b{font-size:12px}.imageEditHead span{font-size:8px;color:#9c8c61}
@@ -98,8 +113,8 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 <body>
 <div class="wrap">
   <div class="top">
-    <div class="brand"><b>SAGI DOWN</b><span>DOWNLOAD · IMAGE · VIDEO</span></div>
-    <span class="badge">V3.1 · IMAGE + VIDEO</span>
+    <div class="brand"><b>SAGI DOWN</b><span>DOWNLOAD · IMAGE AI · VIDEO</span></div>
+    <span class="badge">V3.2 · IMAGE INTELLIGENCE</span>
   </div>
 
   <section class="hero">
@@ -188,6 +203,26 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
       <div class="wide"><label>主标题</label><textarea id="sdImgHeadline" placeholder="例如：领先18分，冠军还是丢了"></textarea></div>
       <div class="wide"><label>副标题</label><textarea id="sdImgSub" placeholder="比分、事实、人物信息或情绪补充"></textarea></div>
     </div>
+
+
+    <div class="imgIntel" id="sdImgIntel">
+      <div class="imgIntelHead">
+        <div><b>AI IMAGE ANALYSIS · 图片热点分析</b><span>识别画面文字 / 人物数量 / 比分线索，再联网匹配最近24小时足球新闻，生成抖音热门候选。</span></div>
+        <span class="badge">V1.0</span>
+      </div>
+      <div class="imgIntelActions">
+        <button class="btn gold" id="sdImgAnalyzeBtn" type="button">分析图片 + 提取热点</button>
+        <button class="btn ghost" id="sdImgAnalyzeClearBtn" type="button">清除分析</button>
+      </div>
+      <div class="imgIntelProgress"><i id="sdImgAnalyzeProgress"></i></div>
+      <div id="sdImgAnalyzeStatus" class="imgIntelStatus">选择图片后点击分析。首次识别画面文字时会加载轻量文字识别组件。</div>
+      <div id="sdImgAnalyzeFacts" class="imgIntelFacts" style="display:none"></div>
+      <div id="sdImgAnalyzeOcr" class="imgIntelOcr" style="display:none"><span>画面文字 / OCR</span><p id="sdImgOcrText"></p></div>
+      <div id="sdImgAnalyzeSignals" class="imgIntelSignals"></div>
+      <div id="sdImgTrendGrid" class="imgTrendGrid"></div>
+      <div id="sdImgNewsList" class="imgNewsList"></div>
+    </div>
+
 
     <div class="imgPublish">
       <div class="sectionHead"><div class="label">PUBLISH · 发布包</div><div class="mini">图片 + 文案 + 标签</div></div>
@@ -2428,6 +2463,174 @@ q('sdImgExportBtn').onclick=sdImgExport;q('sdImgCopyBtn').onclick=sdImgCopy;q('s
 sdImgSync();
 /* ===== END IMAGE STUDIO ===== */
 
+/* ===== SAGI IMAGE INTELLIGENCE V1.0 ===== */
+const SDINTEL_KEY='sagi_down_image_intelligence_v1';
+let SDINTEL={ocr:'',keywords:[],score:0,faces:0,visual:{},news:[],angles:[],analyzedAt:0},SDINTEL_RUNNING=false;
+try{SDINTEL={...SDINTEL,...JSON.parse(localStorage.getItem(SDINTEL_KEY)||'{}')}}catch(e){}
+function sdIntelSave(){try{localStorage.setItem(SDINTEL_KEY,JSON.stringify(SDINTEL))}catch(e){}}
+function sdIntelProgress(n,msg){
+  const bar=q('sdImgAnalyzeProgress');if(bar)bar.style.width=Math.max(0,Math.min(100,n))+'%';
+  if(msg&&q('sdImgAnalyzeStatus'))q('sdImgAnalyzeStatus').textContent=msg
+}
+function sdIntelCleanText(s){
+  return String(s||'').replace(/[|｜]/g,' ').replace(/\s+/g,' ').replace(/[^\u3400-\u9fffA-Za-z0-9:%：\-·._ ]/g,' ').replace(/\s+/g,' ').trim().slice(0,600)
+}
+function sdIntelScoreMatch(text){
+  const m=String(text||'').match(/(?:^|\s)(\d{1,2})\s*[:：\-]\s*(\d{1,2})(?:\s|$)/);return m?m[1]+':'+m[2]:''
+}
+function sdIntelExtractKeywords(text){
+  const raw=sdIntelCleanText(text),out=[],push=x=>{x=String(x||'').trim();if(x.length>=2&&!out.includes(x))out.push(x)};
+  const aliases=[
+   ['C罗','Cristiano Ronaldo'],['罗纳尔多','Cristiano Ronaldo'],['CR7','Cristiano Ronaldo'],['Ronaldo','Cristiano Ronaldo'],
+   ['梅西','Lionel Messi'],['Messi','Lionel Messi'],['姆巴佩','Kylian Mbappe'],['Mbappe','Kylian Mbappe'],
+   ['哈兰德','Erling Haaland'],['Haaland','Erling Haaland'],['亚马尔','Lamine Yamal'],['Yamal','Lamine Yamal'],
+   ['皇马','Real Madrid'],['皇家马德里','Real Madrid'],['巴萨','Barcelona'],['巴塞罗那','Barcelona'],
+   ['曼城','Manchester City'],['曼联','Manchester United'],['利物浦','Liverpool'],['阿森纳','Arsenal'],
+   ['切尔西','Chelsea'],['拜仁','Bayern Munich'],['巴黎','PSG'],['巴黎圣日耳曼','PSG'],
+   ['尤文','Juventus'],['国际米兰','Inter Milan'],['AC米兰','AC Milan'],['多特','Borussia Dortmund'],
+   ['葡萄牙','Portugal football'],['阿根廷','Argentina football'],['中国女足','China women football'],['国足','China football']
+  ];
+  aliases.forEach(([a,b])=>{if(raw.toLowerCase().includes(a.toLowerCase()))push(b)});
+  const en=[...raw.matchAll(/\b[A-Z][A-Za-zÀ-ÿ.'-]{2,}(?:\s+[A-Z][A-Za-zÀ-ÿ.'-]{2,}){0,2}\b/g)].map(m=>m[0]);
+  en.forEach(push);
+  const cn=[...raw.matchAll(/[\u3400-\u9fff]{2,8}(?:队|杯|联赛|冠军|决赛|足球|俱乐部)?/g)].map(m=>m[0]).filter(x=>!/图片|发布|足球内容|为身边|选择照片|热点|主标题/.test(x));
+  cn.slice(0,8).forEach(push);
+  return out.slice(0,8)
+}
+function sdIntelCanvasStats(){
+  if(!SDIMG_IMAGE)return{brightness:0,saturation:0,contrast:0,orientation:'',energy:0};
+  const cv=document.createElement('canvas'),max=320,scale=Math.min(1,max/Math.max(SDIMG_IMAGE.naturalWidth,SDIMG_IMAGE.naturalHeight));cv.width=Math.max(1,Math.round(SDIMG_IMAGE.naturalWidth*scale));cv.height=Math.max(1,Math.round(SDIMG_IMAGE.naturalHeight*scale));
+  const ctx=cv.getContext('2d',{willReadFrequently:true});ctx.drawImage(SDIMG_IMAGE,0,0,cv.width,cv.height);const data=ctx.getImageData(0,0,cv.width,cv.height).data;
+  let lum=0,lum2=0,sat=0,n=0,edges=0,prev=0;
+  for(let i=0;i<data.length;i+=16){
+    const r=data[i],g=data[i+1],b=data[i+2],mx=Math.max(r,g,b),mn=Math.min(r,g,b),l=.2126*r+.7152*g+.0722*b;
+    lum+=l;lum2+=l*l;sat+=(mx-mn)/(mx||1)*100;if(n&&Math.abs(l-prev)>42)edges++;prev=l;n++
+  }
+  const avg=lum/Math.max(1,n),variance=Math.max(0,lum2/Math.max(1,n)-avg*avg),contrast=Math.sqrt(variance),energy=Math.min(100,Math.round((contrast*.9)+(edges/Math.max(1,n)*180)));
+  return{brightness:Math.round(avg/255*100),saturation:Math.round(sat/Math.max(1,n)),contrast:Math.round(contrast/128*100),orientation:cv.width>cv.height?'横图':cv.width===cv.height?'方图':'竖图',energy}
+}
+async function sdIntelFaceCount(){
+  if(!SDIMG_IMAGE||!('FaceDetector' in window))return 0;
+  try{const detector=new FaceDetector({fastMode:true,maxDetectedFaces:20}),faces=await detector.detect(SDIMG_IMAGE);return faces.length}catch(e){return 0}
+}
+function sdIntelLoadScript(src,globalName){
+  if(globalName&&window[globalName])return Promise.resolve(window[globalName]);
+  return new Promise((resolve,reject)=>{const old=document.querySelector('script[data-sdintel="'+globalName+'"]');if(old){old.addEventListener('load',()=>resolve(window[globalName]));old.addEventListener('error',reject);return}
+    const s=document.createElement('script');s.src=src;s.async=true;s.dataset.sdintel=globalName||'script';s.onload=()=>resolve(globalName?window[globalName]:true);s.onerror=()=>reject(new Error('组件加载失败'));document.head.appendChild(s)
+  })
+}
+async function sdIntelOCR(){
+  if(!SDIMG_IMAGE)return'';
+  sdIntelProgress(18,'正在识别画面里的球队名、比分、球员名等文字…');
+  try{
+    await sdIntelLoadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js','Tesseract');
+    const work=document.createElement('canvas'),max=1600,scale=Math.min(1,max/Math.max(SDIMG_IMAGE.naturalWidth,SDIMG_IMAGE.naturalHeight));work.width=Math.max(1,Math.round(SDIMG_IMAGE.naturalWidth*scale));work.height=Math.max(1,Math.round(SDIMG_IMAGE.naturalHeight*scale));work.getContext('2d').drawImage(SDIMG_IMAGE,0,0,work.width,work.height);
+    const result=await window.Tesseract.recognize(work,'chi_sim+eng',{logger:m=>{if(m.status==='recognizing text')sdIntelProgress(18+Math.round((m.progress||0)*36),'正在读取画面文字 · '+Math.round((m.progress||0)*100)+'%')}});
+    return sdIntelCleanText(result?.data?.text||'')
+  }catch(e){
+    console.warn('OCR unavailable',e);return''
+  }
+}
+function sdIntelQueryTerm(keywords,ocr){
+  const kws=(keywords||[]).filter(Boolean).slice(0,4);
+  if(kws.length)return kws.map(x=>x.includes(' ')?'"'+x.replace(/"/g,'')+'"':x).join(' OR ');
+  const words=sdIntelCleanText(ocr).split(/\s+/).filter(x=>x.length>=3).slice(0,4);return words.join(' OR ')
+}
+async function sdIntelNews(keywords,ocr){
+  const query=sdIntelQueryTerm(keywords,ocr);if(!query)return[];
+  sdIntelProgress(62,'正在联网核对最近24小时足球新闻…');
+  const u='https://api.gdeltproject.org/api/v2/doc/doc?query='+encodeURIComponent('('+query+') (football OR soccer)')+'&mode=ArtList&maxrecords=20&format=json&timespan=24h&sort=HybridRel';
+  try{
+    const r=await fetch(u,{cache:'no-store'});if(!r.ok)throw new Error('GDELT '+r.status);const d=await r.json(),rows=Array.isArray(d?.articles)?d.articles:[];
+    return rows.filter(x=>x?.title&&x?.url).slice(0,12).map(x=>({title:String(x.title||''),url:String(x.url||''),domain:String(x.domain||''),seendate:String(x.seendate||''),language:String(x.language||''),socialimage:String(x.socialimage||'')}))
+  }catch(e){console.warn('news lookup failed',e);return[]}
+}
+function sdIntelTopicSignals(ocr,keywords,news,visual,faces){
+  const text=(ocr+' '+keywords.join(' ')+' '+news.slice(0,5).map(x=>x.title).join(' ')).toLowerCase(),signals=[];
+  const add=(label,hot=false,live=false)=>signals.push({label,hot,live});
+  const score=sdIntelScoreMatch(ocr);
+  if(score)add('比分 '+score,true,false);
+  if(faces>=1)add(faces+'个人物',faces===1,false);
+  if(/冠军|夺冠|champion|title|final/.test(text))add('冠军 / 决赛',true,news.length>0);
+  if(/退役|retire|farewell|告别/.test(text))add('告别 / 退役',true,news.length>0);
+  if(/纪录|record|历史/.test(text))add('纪录 / 历史',true,news.length>0);
+  if(/逆转|comeback/.test(text))add('逆转',true,news.length>0);
+  if(/绝杀|winner|last.minute|stoppage/.test(text))add('绝杀 / 最后时刻',true,news.length>0);
+  if(/受伤|injur|red card|红牌|争议|controvers/.test(text))add('争议 / 意外',true,news.length>0);
+  if(news.length>=3)add('24h多源新闻',true,true);else if(news.length)add('24h新闻匹配',false,true);
+  if(visual.energy>=60)add('高动感画面',true,false);
+  if(visual.contrast>=45)add('强对比画面',false,false);
+  if(!signals.length)add('人物 / 足球视觉',false,false);
+  return signals.slice(0,8)
+}
+function sdIntelHotScore(ocr,keywords,news,visual,faces,signals){
+  let s=28;s+=Math.min(22,news.length*5);s+=Math.min(14,keywords.length*3);s+=sdIntelScoreMatch(ocr)?12:0;s+=Math.min(8,faces*2);s+=visual.energy>=60?8:visual.energy>=40?4:0;s+=signals.filter(x=>x.hot).length*3;return Math.max(1,Math.min(96,Math.round(s)))
+}
+function sdIntelShortSubject(keywords,ocr){
+  if(keywords?.length)return keywords[0];
+  const s=sdIntelCleanText(ocr).split(/\s+/).filter(x=>x.length>=2).slice(0,2).join(' ');return s||'这张足球照片'
+}
+function sdIntelMakeAngles(ocr,keywords,news,visual,faces,signals,base){
+  const subject=sdIntelShortSubject(keywords,ocr),score=sdIntelScoreMatch(ocr),live=news.length>0,hasRecord=signals.some(x=>/纪录|历史/.test(x.label)),hasFinal=signals.some(x=>/冠军|决赛/.test(x.label)),hasControversy=signals.some(x=>/争议|意外/.test(x.label)),hasComeback=signals.some(x=>/逆转|绝杀/.test(x.label));
+  const factual=score?(subject+' '+score+'，这场比赛真正的转折点是什么？'):(hasFinal?subject+'，冠军这一刻背后发生了什么？':subject+'，这张图里最值得注意的不是表面');
+  const emotional=hasRecord?(subject+'，这一刻已经写进历史'):hasComeback?(subject+'，足球最疯狂的剧情就在这一刻'):faces===1?(subject+'，所有情绪都写在这一张脸上'):(subject+'，这一幕为什么让球迷停下来多看一眼');
+  const debate=hasControversy?(subject+'，这个瞬间你认为该怎么判？'):(score?(score+'之后，你认为谁才是决定比赛的人？'):(subject+'，你同意这是今天最值得讨论的足球瞬间吗？'));
+  const hashtags=['#足球','#足球热点','#萨吉体育'];
+  keywords.slice(0,3).forEach(k=>hashtags.unshift('#'+String(k).replace(/\s+/g,'')));
+  if(hasFinal)hashtags.unshift('#冠军');if(hasRecord)hashtags.unshift('#足球历史');if(hasComeback)hashtags.unshift('#逆转');
+  const tags=[...new Set(hashtags)].slice(0,7).join(' ');
+  const angles=[
+    {type:'A · 抢时效',title:factual,hook:score?('先别只看 '+score+'，真正决定比赛的是这个瞬间。'):'刚刚发生的足球热点，用一张图讲清楚。',cta:'你觉得这场比赛最大的转折点是什么？',tags,score:Math.min(99,base+(live?6:0)+(score?4:0)),template:score?'result':'breaking'},
+    {type:'B · 强情绪',title:emotional,hook:hasRecord?'有些数字会被打破，但有些瞬间只属于一个时代。':'一张图，可能比整场比赛更能说明足球的情绪。',cta:'如果你在现场，这一刻你会是什么反应？',tags,score:Math.min(99,base+(visual.energy>=55?6:2)+(faces?3:0)),template:'breaking'},
+    {type:'C · 强评论',title:debate,hook:'不要急着看答案，先说你的第一判断。',cta:'评论区站队：你同意吗？',tags,score:Math.min(99,base+(hasControversy?10:5)),template:'breaking'}
+  ];
+  return angles.sort((a,b)=>b.score-a.score)
+}
+function sdIntelRender(){
+  if(!q('sdImgAnalyzeStatus'))return;
+  const v=SDINTEL.visual||{},facts=q('sdImgAnalyzeFacts'),ocr=q('sdImgAnalyzeOcr'),signals=q('sdImgAnalyzeSignals'),grid=q('sdImgTrendGrid'),newsBox=q('sdImgNewsList');
+  if(SDINTEL.analyzedAt){
+    facts.style.display='grid';facts.innerHTML=[
+      ['HOT INDEX',SDINTEL.score+'/100'],['人物',SDINTEL.faces?SDINTEL.faces+'人':'未检测'],['画面动感',v.energy!=null?v.energy+'/100':'—'],['新闻匹配',(SDINTEL.news||[]).length+'条']
+    ].map(x=>'<div class="imgIntelFact"><span>'+x[0]+'</span><b>'+x[1]+'</b></div>').join('');
+    if(SDINTEL.ocr){ocr.style.display='block';q('sdImgOcrText').textContent=SDINTEL.ocr}else ocr.style.display='none';
+    signals.innerHTML=(SDINTEL.signals||[]).map(x=>'<span class="imgSignal '+(x.hot?'hot ':'')+(x.live?'live':'')+'">'+x.label+'</span>').join('');
+    grid.innerHTML=(SDINTEL.angles||[]).map((a,i)=>'<article class="imgTrendCard '+(i===0?'best':'')+'"><div class="imgTrendTop"><strong>'+a.type+(i===0?' · TODAY PICK':'')+'</strong><span class="imgTrendScore">'+a.score+'</span></div><h4>'+escapeHtml(a.title)+'</h4><p>'+escapeHtml(a.hook)+'<br>'+escapeHtml(a.cta)+'</p><div class="imgTrendTags">'+escapeHtml(a.tags)+'</div><div class="imgTrendActions"><button class="btn '+(i===0?'primary':'gold')+'" data-sdintel-use="'+i+'" type="button">采用这套</button><button class="btn" data-sdintel-copy="'+i+'" type="button">复制整套</button></div></article>').join('');
+    grid.querySelectorAll('[data-sdintel-use]').forEach(b=>b.onclick=()=>sdIntelUseAngle(Number(b.dataset.sdintelUse)));
+    grid.querySelectorAll('[data-sdintel-copy]').forEach(b=>b.onclick=()=>sdIntelCopyAngle(Number(b.dataset.sdintelCopy)));
+    newsBox.innerHTML=(SDINTEL.news||[]).length?'<div class="mini">最近24小时互联网匹配</div>'+SDINTEL.news.slice(0,4).map(x=>'<div class="imgNews"><b>'+escapeHtml(x.title)+'</b><span>'+escapeHtml(x.domain||'互联网')+' · '+escapeHtml(x.seendate||'')</span></div>').join(''):'<div class="mini">没有找到足够近期新闻：以下选题按图片内容潜力生成，不标记为实时热点。</div>';
+  }else{
+    facts.style.display='none';ocr.style.display='none';signals.innerHTML='';grid.innerHTML='';newsBox.innerHTML=''
+  }
+}
+function sdIntelUseAngle(i){
+  const a=SDINTEL.angles?.[i];if(!a)return;
+  SDIMG.headline=a.title;SDIMG.sub=a.hook;SDIMG.caption=a.hook+'\n\n'+a.cta;SDIMG.tags=a.tags;sdImgTemplate(a.template||'breaking');sdImgSave();sdImgSync();toast('已采用 '+a.type+' · 标题与话题已填入')
+}
+async function sdIntelCopyAngle(i){
+  const a=SDINTEL.angles?.[i];if(!a)return;const text=a.title+'\n\n'+a.hook+'\n'+a.cta+'\n\n'+a.tags;
+  try{await navigator.clipboard.writeText(text);toast('选题整套已复制')}catch(e){toast('复制失败')}
+}
+function sdIntelClear(){
+  SDINTEL={ocr:'',keywords:[],score:0,faces:0,visual:{},news:[],angles:[],signals:[],analyzedAt:0};sdIntelSave();sdIntelProgress(0,'选择图片后点击分析。首次识别画面文字时会加载轻量文字识别组件。');sdIntelRender()
+}
+async function sdIntelAnalyze(){
+  if(SDINTEL_RUNNING)return;if(!SDIMG_IMAGE){toast('请先选择一张图片');return}
+  SDINTEL_RUNNING=true;q('sdImgAnalyzeBtn').disabled=true;sdIntelProgress(5,'正在分析画面构图、亮度、动感与人物线索…');
+  try{
+    const visual=sdIntelCanvasStats(),faces=await sdIntelFaceCount(),ocr=await sdIntelOCR();
+    sdIntelProgress(56,'正在提取球员、球队、比分和事件关键词…');
+    const combined=[ocr,SDIMG.headline,SDIMG.sub,SDIMG.sourceName].filter(Boolean).join(' '),keywords=sdIntelExtractKeywords(combined),news=await sdIntelNews(keywords,ocr),signals=sdIntelTopicSignals(ocr,keywords,news,visual,faces),score=sdIntelHotScore(ocr,keywords,news,visual,faces,signals);
+    sdIntelProgress(84,'正在生成抖音三套传播角度…');
+    const angles=sdIntelMakeAngles(ocr,keywords,news,visual,faces,signals,score);
+    SDINTEL={ocr,keywords,score,faces,visual,news,signals,angles,analyzedAt:Date.now(),sourceName:SDIMG.sourceName};sdIntelSave();sdIntelProgress(100,news.length?'分析完成 · 已结合最近24小时互联网新闻生成热门候选':'分析完成 · 暂无近期新闻匹配，已按图片内容潜力生成选题');sdIntelRender();toast('图片热点分析完成')
+  }catch(e){console.error(e);sdIntelProgress(0,'分析失败：'+(e?.message||'未知错误'));toast('图片分析失败')}
+  finally{SDINTEL_RUNNING=false;q('sdImgAnalyzeBtn').disabled=false}
+}
+q('sdImgAnalyzeBtn').onclick=sdIntelAnalyze;q('sdImgAnalyzeClearBtn').onclick=sdIntelClear;sdIntelRender();
+/* ===== END IMAGE INTELLIGENCE ===== */
+
+
 q('exportStudioBtn').onclick=exportStudio;
 q('cancelExportBtn').onclick=cancelExport;
 q('shareResultBtn').onclick=shareResult;
@@ -2437,7 +2640,7 @@ if(q('captionSpeed'))q('captionSpeed').value='fast';
 if(q('captionRange'))q('captionRange').value='trim';
 setTimeout(async()=>{await wakeCaptionCloud();refreshAIVoiceStatus(false)},180);
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=310',{updateViaCache:'none'}).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=320',{updateViaCache:'none'}).catch(()=>{})}
 })();
 </script>
 </body>
