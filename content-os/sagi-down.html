@@ -72,7 +72,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 <div class="wrap">
   <div class="top">
     <div class="brand"><b>SAGI DOWN</b><span>VIDEO LINK SHORTCUT</span></div>
-    <span class="badge">V1.7 · ONE TAP RECREATE</span>
+    <span class="badge">V1.7.1 · SEMANTIC TRANSLATE</span>
   </div>
 
   <section class="hero">
@@ -265,7 +265,7 @@ Unbelievable finish."></textarea>
         <label>翻译模式<select id="translationMode"><option value="faithful" selected>忠实原意</option><option value="football">足球中文化</option></select></label>
         <button class="btn blue" id="translateSubtitleBtn" type="button">上下文翻译</button>
       </div>
-      <div class="subHint">新版按 4–6 条字幕组成上下文块翻译，再对齐回原时间轴。默认“忠实原意”；“足球中文化”会进一步优化阵型、逼抢、攻防转换等术语。</div>
+      <div class="subHint">新版先把碎字幕合成完整语义段落再翻译，译文完成后按原时间轴比例重新拆回每一条字幕。即使10句被译成6句，也不会丢失时间轴。</div>
     </div>
 
     <div class="studioStep">
@@ -978,6 +978,100 @@ function translationLooksValid(caps,target){
  const text=(caps||[]).map(x=>String(x?.text||x||'')).join('');
  return chineseRatio(text)>=0.08
 }
+function endsSemanticSentence(text){
+ return /[.!?。！？…]["'”’)]?$/.test(String(text||'').trim())
+}
+function buildSemanticParagraphs(caps){
+ const groups=[];let group=[],chars=0;
+ for(let i=0;i<caps.length;i++){
+   const c=caps[i],text=String(c?.text||'').trim();
+   if(!text)continue;
+   const prev=group[group.length-1];
+   const gap=prev?Math.max(0,(Number(c.start)||0)-(Number(prev.end)||0)):0;
+   if(group.length&&(gap>1.35||group.length>=8||chars+text.length>320)){
+     groups.push(group);group=[];chars=0
+   }
+   group.push(c);chars+=text.length;
+   if(endsSemanticSentence(text)&&group.length>=2){
+     groups.push(group);group=[];chars=0
+   }
+ }
+ if(group.length)groups.push(group);
+ return groups
+}
+function joinSemanticParagraph(group){
+ return group.map(c=>String(c.text||'').trim()).filter(Boolean).join(' ').replace(/\s+/g,' ').trim()
+}
+function footballPolishZh(text){
+ let out=String(text||'');
+ const map=[['双轴','双后腰'],['后四','四后卫防线'],['后四人','四后卫防线'],['高压','高位逼抢'],['反压迫','丢球后反抢'],['转换阶段','攻防转换阶段'],['转换','攻防转换'],['过载','局部人数优势'],['半空间','肋部']];
+ for(const [a,b] of map)out=out.replaceAll(a,b);
+ return out
+}
+function pickSemanticCut(chars,target,min,max){
+ const punct=/[，。！？；：、,.!?;:]/;
+ const lo=Math.max(min+1,target-22),hi=Math.min(max-1,target+22);
+ let best=-1,bestDist=Infinity;
+ for(let i=lo;i<=hi;i++){
+   if(punct.test(chars[i]||'')){
+     const d=Math.abs(i+1-target);
+     if(d<bestDist){best=i+1;bestDist=d}
+   }
+ }
+ return best>min&&best<max?best:Math.max(min+1,Math.min(max-1,target))
+}
+function redistributeParagraphToTimeline(translated,group){
+ const text=String(translated||'').replace(/\s+/g,' ').trim();
+ if(group.length<=1)return [{...group[0],text:text||String(group[0]?.text||'')}];
+ const chars=Array.from(text);
+ if(!chars.length)return group.map(c=>({...c,text:String(c.text||'')}));
+ const weights=group.map(c=>{
+   const dur=Math.max(.15,(Number(c.end)||0)-(Number(c.start)||0));
+   const src=Math.max(1,Array.from(String(c.text||'').trim()).length);
+   return Math.max(1,src*.75+dur*4)
+ });
+ const total=weights.reduce((a,b)=>a+b,0);
+ const cuts=[0];let acc=0;
+ for(let i=0;i<group.length-1;i++){
+   acc+=weights[i];
+   let target=Math.round(chars.length*acc/total);
+   const remain=group.length-i-1;
+   target=Math.max(cuts[cuts.length-1]+1,Math.min(chars.length-remain,target));
+   cuts.push(pickSemanticCut(chars,target,cuts[cuts.length-1],chars.length-remain+1))
+ }
+ cuts.push(chars.length);
+ return group.map((c,i)=>{
+   let part=chars.slice(cuts[i],cuts[i+1]).join('').trim();
+   if(!part&&chars.length>=group.length)part=chars[Math.min(chars.length-1,cuts[i])]||'';
+   return {...c,text:part||String(c.text||'')}
+ })
+}
+async function translateSemanticTimeline(caps,source,target,mode='faithful'){
+ const groups=buildSemanticParagraphs(caps),out=[];
+ let done=0;
+ for(const group of groups){
+   const paragraph=joinSemanticParagraph(group);
+   let translated='';
+   // 云端可用时，把“完整语义段”作为一个翻译单元；失败则浏览器直连。
+   if(STUDIO.cloudCaptionReady){
+     try{
+       const data=await cloudTranslateContext([{start:group[0].start,end:group[group.length-1].end,text:paragraph}],source,target,mode);
+       translated=String(data?.segments?.[0]||'').trim()
+     }catch(e){console.warn('semantic cloud translate fallback',e)}
+   }
+   if(!translated)translated=await translateTextHard(paragraph,source,target);
+   if(mode==='football'&&String(target).toLowerCase().startsWith('zh'))translated=footballPolishZh(translated);
+   const redistributed=redistributeParagraphToTimeline(translated,group);
+   out.push(...redistributed);
+   done+=group.length;
+   aiCaptionProgress(80+Math.min(18,done/Math.max(1,caps.length)*18));
+   aiCaptionStatus('语义段落翻译 '+done+' / '+caps.length+' · 时间轴完整保留')
+ }
+ if(out.length!==caps.length)throw new Error('语义翻译时间轴数量不一致');
+ if(!translationLooksValid(out,target))throw new Error('语义翻译未产生有效中文');
+ return out
+}
+
 async function browserTranslateContext(caps,source,target,mode='faithful'){
  const blocks=groupCaptionBlocks(caps),out=new Array(caps.length);
  let baseIndex=0,done=0;
@@ -1071,29 +1165,32 @@ async function translateCaptionTimeline(target='zh-CN'){
  }
 
  const caps=STUDIO.captions.slice(),mode=q('translationMode')?.value||'faithful';
- aiCaptionStatus('正在翻译成中文 · 不依赖 SAGI Cloud…');aiCaptionProgress(80);
+ aiCaptionStatus('正在整理完整语义段落…');aiCaptionProgress(79);
 
  try{
-   // 云端翻译仅在云端已明确可用时尝试；否则直接走浏览器直连翻译。
-   let outCaps=null;
-   if(STUDIO.cloudCaptionReady){
-     try{
-       const data=await cloudTranslateContext(caps,source,target,mode);
-       outCaps=caps.map((c,i)=>({...c,text:String(data.segments?.[i]??c.text).trim()||c.text}));
-       if(!translationLooksValid(outCaps,target))throw new Error('云端翻译结果未生成有效中文')
-     }catch(e){console.warn('cloud translate unavailable, browser direct fallback',e)}
-   }
-   if(!outCaps)outCaps=await browserTranslateContext(caps,source,target,mode);
+   const groups=buildSemanticParagraphs(caps);
+   aiCaptionStatus('已整理 '+groups.length+' 个语义段 · 正在翻译并回填 '+caps.length+' 条时间轴…');
+   const outCaps=await translateSemanticTimeline(caps,source,target,mode);
 
    STUDIO.captions=outCaps;STUDIO.captionLanguage=target;
    syncCaptionText();syncDetectedLanguageUi(target);aiCaptionProgress(100);
-   aiCaptionStatus((mode==='football'?'足球中文化':'忠实原意')+'翻译完成 · '+caps.length+' 条 · 不依赖字幕云端');
-   studioStatus('中文翻译完成，时间轴保持不变。','good')
+   aiCaptionStatus((mode==='football'?'足球中文化':'忠实原意')+'完成 · '+groups.length+' 个语义段 → '+caps.length+' 条完整时间轴');
+   studioStatus('中文翻译完成：先按语义段翻译，再完整回填原时间轴。','good')
  }catch(e){
    console.error(e);
-   aiCaptionStatus('中文翻译失败：'+(e.message||e));
-   studioStatus('翻译服务暂不可用。原字幕已保留。','warn');
-   throw e
+   aiCaptionStatus('语义翻译失败：'+(e.message||e)+' · 正在尝试逐条备用…');
+   try{
+     const fallback=await browserTranslateContext(caps,source,target,mode);
+     if(fallback.length!==caps.length)throw new Error('备用翻译时间轴数量不一致');
+     STUDIO.captions=fallback;STUDIO.captionLanguage=target;
+     syncCaptionText();syncDetectedLanguageUi(target);aiCaptionProgress(100);
+     aiCaptionStatus('语义翻译失败，但逐条备用已完成 · '+caps.length+' 条时间轴全部保留');
+     studioStatus('备用中文翻译完成，时间轴未丢失。','good')
+   }catch(fallbackErr){
+     aiCaptionStatus('中文翻译失败：'+(fallbackErr.message||fallbackErr));
+     studioStatus('翻译服务暂不可用。原字幕已保留。','warn');
+     throw fallbackErr
+   }
  }
 }
 function instant15Caption(){
@@ -1156,7 +1253,7 @@ async function runOneTapRecreate(){
    const ok=await runAiCaption(true);
    if(!ok||!(STUDIO.captions||[]).length)throw new Error('字幕/翻译没有完成，请查看 AI CAPTION 状态');
 
-   setDirectorStatus('② 中文字幕完成 · 正在生成解说初稿…');setDirectorProgress(72);
+   setDirectorStatus('② 语义中文字幕完成 · 时间轴已完整回填 · 正在生成解说初稿…');setDirectorProgress(72);
    const narration=buildNarrationFromCaptions(mode);
    if(!narration)throw new Error('没有可生成解说的中文字幕');
    q('narrationText').value=narration;
@@ -1318,21 +1415,22 @@ async function translateLine(text,source,target){
 async function translateSubtitles(){
  const lines=subtitleLines();if(!lines.length){studioStatus('请先输入字幕文本。','warn');return}
  const source=q('subtitleSourceLang').value,target=q('subtitleTargetLang').value,mode=q('translationMode')?.value||'faithful';
- const btn=q('translateSubtitleBtn');btn.disabled=true;btn.textContent='翻译中…';
+ const btn=q('translateSubtitleBtn');btn.disabled=true;btn.textContent='语义翻译中…';
  try{
    if(source===target){studioStatus('原语言和目标语言相同，无需翻译。','good');return}
    const base=(STUDIO.captions||[]).length===lines.length
      ? STUDIO.captions.map((c,i)=>({...c,text:lines[i]}))
      : lines.map((text,i)=>({start:i,end:i+1,text}));
-   const outCaps=await browserTranslateContext(base,source,target,mode);
-   if(!translationLooksValid(outCaps,target))throw new Error('翻译结果不是有效中文');
+   const outCaps=await translateSemanticTimeline(base,source,target,mode);
+   if(outCaps.length!==base.length)throw new Error('翻译后时间轴数量不一致');
    const out=outCaps.map(x=>x.text);
    q('subtitleText').value=out.join('\n');
    if((STUDIO.captions||[]).length===out.length){
      STUDIO.captions=STUDIO.captions.map((c,i)=>({...c,text:out[i]||c.text}));
-     renderCaptionTimeline()
+     STUDIO.captionLanguage=target;renderCaptionTimeline()
    }
-   studioStatus((mode==='football'?'足球中文化':'忠实原意')+'翻译完成。','good');toast('中文翻译完成')
+   studioStatus((mode==='football'?'足球中文化':'忠实原意')+'语义翻译完成 · '+out.length+' 条时间轴完整保留。','good');
+   toast('语义翻译完成')
  }catch(e){studioStatus('翻译失败：'+(e.message||e),'warn')}
  finally{btn.disabled=false;btn.textContent='上下文翻译'}
 }
@@ -1495,7 +1593,7 @@ if(q('captionSpeed'))q('captionSpeed').value='fast';
 if(q('captionRange'))q('captionRange').value='trim';
 setTimeout(()=>wakeCaptionCloud(),180);
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=170',{updateViaCache:'none'}).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=171',{updateViaCache:'none'}).catch(()=>{})}
 })();
 </script>
 </body>
