@@ -2501,7 +2501,7 @@ function sdImgLoad(file){
   im.onload=()=>{SDIMG_IMAGE=im;SDIMG.sourceName=file.name;SDIMG.panX=0;SDIMG.panY=0;SDIMG.zoom=100;SDIMG.rotate=0;sdImgSave();sdImgSync();if(typeof sdIntelClear==='function')sdIntelClear();toast('图片已载入 · 正在自动分析热点');if(typeof sdIntelAnalyze==='function')setTimeout(()=>sdIntelAnalyze(),260)};
   im.onerror=()=>toast('图片读取失败');im.src=SDIMG_URL
 }
-function sdImgBlob(){return new Promise(resolve=>sdImgCanvas().toBlob(resolve,'image/png',.96))}
+function sdImgBlob(){if(typeof SDORIG!=='undefined'&&SDORIG.activeForPublish&&SDORIG.generatedAt&&typeof sdOrigCanvas==='function')return new Promise(resolve=>sdOrigCanvas().toBlob(resolve,'image/png',.96));return new Promise(resolve=>sdImgCanvas().toBlob(resolve,'image/png',.96))}
 function sdImgSafeName(v){return String(v||'SAGI').replace(/[\\/:*?"<>|]/g,'_').slice(0,48)}
 async function sdImgExport(){
   const blob=await sdImgBlob();if(!blob){toast('导出失败');return}const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='SAGI_'+sdImgSafeName(SDIMG.headline||SDIMG.template)+'_'+SDIMG.ratio.replace(':','x')+'.png';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1200);toast('高清 PNG 已生成')
@@ -2518,7 +2518,7 @@ function sdImgToContentPublish(){
   os.projects=Array.isArray(os.projects)?os.projects:[];os.contents=Array.isArray(os.contents)?os.contents:[];
   const projectId='sagidown_image';if(!os.projects.some(x=>x.id===projectId))os.projects.unshift({id:projectId,type:'brand',name:'SAGI DOWN 图片内容',tag:'IMAGE STUDIO',desc:'由 SAGI DOWN 图片编辑器生成的待发布内容',assets:{},createdAt:Date.now(),updatedAt:Date.now()});
   const title=(SDIMG.headline||'SAGI 图片内容').trim(),id='content_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,6);
-  os.contents.unshift({id,projectId:'local:'+projectId,title,format:'poster',goal:'reach',style:'premium',platform:'douyin',hook:SDIMG.sub||title,cover:title,cta:SDIMG.footer||'',tags:SDIMG.tags||'',caption:SDIMG.caption||'',status:'ready',scheduleAt:new Date(Date.now()+8*3600000).toISOString().slice(0,10)+'T20:00',createdAt:Date.now(),updatedAt:Date.now(),imageDraft:{ratio:SDIMG.ratio,template:SDIMG.template,theme:SDIMG.theme,sourceName:SDIMG.sourceName}});
+  os.contents.unshift({id,projectId:'local:'+projectId,title,format:'poster',goal:'reach',style:'premium',platform:'douyin',hook:SDIMG.sub||title,cover:title,cta:SDIMG.footer||'',tags:SDIMG.tags||'',caption:SDIMG.caption||'',status:'ready',scheduleAt:new Date(Date.now()+8*3600000).toISOString().slice(0,10)+'T20:00',createdAt:Date.now(),updatedAt:Date.now(),imageDraft:{ratio:(typeof SDORIG!=='undefined'&&SDORIG.activeForPublish?SDORIG.ratio:SDIMG.ratio),template:(typeof SDORIG!=='undefined'&&SDORIG.activeForPublish?'original-'+SDORIG.template:SDIMG.template),theme:SDIMG.theme,sourceName:SDIMG.sourceName,originalPoster:!!(typeof SDORIG!=='undefined'&&SDORIG.activeForPublish),sourcePixelsUsed:(typeof SDORIG!=='undefined'&&SDORIG.activeForPublish?0:null)}});
   os.currentProjectId='local:'+projectId;os.currentContentId=id;localStorage.setItem(SDIMG_OS_KEY,JSON.stringify(os));toast('已送入 CONTENT OS · PUBLISH')
 }
 function sdImgBindRange(id,key,suffix){const el=q(id);if(!el)return;el.oninput=()=>{SDIMG[key]=Number(el.value);q(id+'Val').textContent=SDIMG[key]+suffix;sdImgSave();sdImgDraw()}}
@@ -2793,12 +2793,182 @@ async function sdIntelAnalyze(){
     sdIntelProgress(86,'正在把“事实”转成抖音选题，而不是只堆关键词…');
     const angles=sdIntelMakeAngles(bundle.post,keywords,lookup.items,visual,faces,signals,score,meta);
     SDINTEL={ocr:bundle.post,sourceOcr:bundle.source,keywords,scores,source,score,faces,visual,news:lookup.items,signals,angles,evidenceText:lookup.evidenceText,verifiedStreak,mode:bundle.mode,location,analyzedAt:Date.now(),sourceName:SDIMG.sourceName};
-    sdIntelSave();sdIntelProgress(100,verifiedStreak?('分析完成 · 已联网验证 '+verifiedStreak+'连胜 · 已生成3套抖音打法'):(scores.length>=3?('分析完成 · 已识别 '+scores.length+'组比分 · 正在按走势制造话题'):'分析完成 · 已按图片主体生成抖音选题'));sdIntelRender();toast('图片深度分析完成')
+    sdIntelSave();if(typeof SDORIG!=='undefined'){SDORIG.activeForPublish=false;SDORIG.generatedAt=0;sdOrigSave?.();sdOrigRender?.()}sdIntelProgress(100,verifiedStreak?('分析完成 · 已联网验证 '+verifiedStreak+'连胜 · 已生成3套抖音打法'):(scores.length>=3?('分析完成 · 已识别 '+scores.length+'组比分 · 正在按走势制造话题'):'分析完成 · 已按图片主体生成抖音选题'));sdIntelRender();toast('图片深度分析完成')
   }catch(e){console.error(e);sdIntelProgress(0,'分析失败：'+(e?.message||'未知错误'));toast('图片分析失败')}
   finally{SDINTEL_RUNNING=false;q('sdImgAnalyzeBtn').disabled=false}
 }
 q('sdImgAnalyzeBtn').onclick=sdIntelAnalyze;q('sdImgAnalyzeClearBtn').onclick=sdIntelClear;sdIntelRender();
 /* ===== END IMAGE INTELLIGENCE ===== */
+
+
+/* ===== SAGI ORIGINAL POSTER ENGINE V1.0 ===== */
+const SDORIG_KEY='sagi_down_original_poster_v1';
+const SDORIG_RATIOS={'3:4':{w:1080,h:1440},'9:16':{w:1080,h:1920},'1:1':{w:1080,h:1080}};
+let SDORIG={variant:0,template:'number',ratio:'3:4',title:'',sub:'',person:'',subject:'',fact:'',role:'',structure:'',hook:'',generatedAt:0,activeForPublish:false};
+try{SDORIG={...SDORIG,...JSON.parse(localStorage.getItem(SDORIG_KEY)||'{}')}}catch(e){}
+function sdOrigSave(){try{localStorage.setItem(SDORIG_KEY,JSON.stringify(SDORIG))}catch(e){}}
+function sdOrigCanvas(){return q('sdOrigCanvas')}
+function sdOrigCoachName(){
+  const t=String(SDINTEL.evidenceText||'');
+  const known=[
+    [/José Mourinho|Jose Mourinho/i,'穆里尼奥'],
+    [/Pep Guardiola/i,'瓜迪奥拉'],
+    [/Mikel Arteta/i,'阿尔特塔'],
+    [/Arne Slot/i,'斯洛特'],
+    [/Xabi Alonso/i,'哈维·阿隆索'],
+    [/Hansi Flick/i,'弗里克'],
+    [/Luis Enrique/i,'路易斯·恩里克'],
+    [/Diego Simeone/i,'西蒙尼'],
+    [/Carlo Ancelotti/i,'安切洛蒂']
+  ];
+  for(const [re,name] of known)if(re.test(t))return name;
+  const m=t.match(/([A-ZÁÉÍÓÚÑÀ-ÖØ-Þ][A-Za-zÀ-ÿ.'-]+(?:\s+[A-ZÁÉÍÓÚÑÀ-ÖØ-Þ][A-Za-zÀ-ÿ.'-]+){1,2}),?\s+(?:Head Coach|head coach|manager)\b/);
+  if(m)return m[1];
+  const m2=t.match(/\bunder\s+([A-ZÁÉÍÓÚÑÀ-ÖØ-Þ][A-Za-zÀ-ÿ.'-]+(?:\s+[A-ZÁÉÍÓÚÑÀ-ÖØ-Þ][A-Za-zÀ-ÿ.'-]+){1,2})/i);
+  return m2?m2[1]:''
+}
+function sdOrigContext(){
+  const subject=sdIntelSubjectName(SDINTEL.keywords||[],SDINTEL.ocr||'',SDINTEL.source||null);
+  const streak=Number(SDINTEL.verifiedStreak)||0,scores=SDINTEL.scores||[],coach=sdOrigCoachName(),source=SDINTEL.source?.name||'',location=SDINTEL.location||'';
+  const person=coach?(coach+' · 主教练'):(subject?(subject+' · 核心人物/球队'):'足球热点');
+  const fact=streak?(subject+' '+streak+'连胜'):(scores.length?('近期 '+scores.length+' 场走势'):(SDINTEL.signals?.find(x=>x.hot)?.label||'足球热点'));
+  const hook=streak?(streak+'连胜'):(scores.length?(scores.length+'场走势'):(SDINTEL.angles?.[0]?.type||'热点'));
+  return{subject,streak,scores,coach,source,location,person,fact,hook}
+}
+function sdOrigBuildVariants(){
+  const c=sdOrigContext(),a=SDINTEL.angles||[],tags=a[0]?.tags||SDIMG.tags||'#足球 #足球热点 #SAGI';
+  const baseTitle=a[0]?.title||((c.streak?c.streak+'连胜！':'')+c.subject+'现在到底有多强？');
+  const coachTitle=c.coach?(c.coach+'带队'+(c.streak?c.streak+'连胜':'状态回升')+'：真正变化在哪？'):(c.subject+'这波走势，真正改变了什么？');
+  const debateTitle=c.streak?(c.streak+'连胜之后，'+c.subject+'已经回到冠军级了吗？'):(c.subject+'这波走势，你给几分？');
+  return[
+    {name:'A · 大数字热点',title:baseTitle,sub:c.streak?('不是一场赢球，而是连续'+c.streak+'场赢球。'):('把最近'+Math.max(1,c.scores.length)+'场放在一起，趋势比单场更重要。'),person:c.person,template:'number',structure:'大数字 + 趋势 + 结论',caption:(a[0]?.hook||'')+'\n\n'+(a[0]?.cta||''),tags},
+    {name:'B · 主教练观点',title:coachTitle,sub:c.coach?(c.coach+'的价值，不只是赢球，而是让球队开始稳定赢球。'):'从比赛结果看趋势，从趋势再看教练和球队的变化。',person:c.person,template:'coach',structure:'教练观点 + 战绩趋势 + 判断',caption:(a[1]?.hook||'')+'\n\n'+(a[1]?.cta||''),tags},
+    {name:'C · 强评论问题',title:debateTitle,sub:'先别急着看答案，评论区先给出你的判断。',person:c.person,template:'question',structure:'大问句 + 事实证据 + 评论入口',caption:(a[2]?.hook||'')+'\n\n'+(a[2]?.cta||''),tags}
+  ]
+}
+function sdOrigSyncFromVariant(force=false){
+  const variants=sdOrigBuildVariants(),v=variants[Math.max(0,Math.min(2,Number(SDORIG.variant)||0))];
+  if(force||!SDORIG.generatedAt){
+    SDORIG.title=v.title;SDORIG.sub=v.sub;SDORIG.person=v.person;SDORIG.template=v.template;SDORIG.structure=v.structure;
+    const c=sdOrigContext();SDORIG.subject=c.subject;SDORIG.fact=c.fact;SDORIG.role=c.person;SDORIG.hook=c.hook;SDORIG.generatedAt=Date.now()
+  }
+  sdOrigSave()
+}
+function sdOrigSetup(){
+  const c=sdOrigCanvas(),r=SDORIG_RATIOS[SDORIG.ratio]||SDORIG_RATIOS['3:4'];if(c.width!==r.w||c.height!==r.h){c.width=r.w;c.height=r.h}
+}
+function sdOrigRound(ctx,x,y,w,h,r){
+  const rr=Math.min(r,w/2,h/2);ctx.beginPath();ctx.moveTo(x+rr,y);ctx.arcTo(x+w,y,x+w,y+h,rr);ctx.arcTo(x+w,y+h,x,y+h,rr);ctx.arcTo(x,y+h,x,y,rr);ctx.arcTo(x,y,x+w,y,rr);ctx.closePath()
+}
+function sdOrigWrap(ctx,text,maxWidth,size,maxLines){
+  const chars=Array.from(String(text||'')),lines=[];let line='';ctx.font='900 '+size+'px -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif';
+  for(const ch of chars){if(ch==='\n'){if(line)lines.push(line);line='';if(lines.length>=maxLines)break;continue}const t=line+ch;if(line&&ctx.measureText(t).width>maxWidth){lines.push(line);line=ch;if(lines.length>=maxLines)break}else line=t}
+  if(line&&lines.length<maxLines)lines.push(line);if(lines.length===maxLines&&chars.length>lines.join('').length)lines[maxLines-1]=lines[maxLines-1].replace(/[，。；：、\s]*$/,'')+'…';return lines
+}
+function sdOrigGradient(ctx,w,h){
+  const g=ctx.createLinearGradient(0,0,w,h);g.addColorStop(0,'#050708');g.addColorStop(.46,'#0c1114');g.addColorStop(1,'#181306');ctx.fillStyle=g;ctx.fillRect(0,0,w,h);
+  const rg=ctx.createRadialGradient(w*.78,h*.14,20,w*.78,h*.14,w*.68);rg.addColorStop(0,'rgba(215,181,104,.22)');rg.addColorStop(1,'rgba(215,181,104,0)');ctx.fillStyle=rg;ctx.fillRect(0,0,w,h)
+}
+function sdOrigPitch(ctx,w,h){
+  ctx.save();ctx.strokeStyle='rgba(215,181,104,.10)';ctx.lineWidth=Math.max(2,w*.002);
+  for(let i=-2;i<8;i++){ctx.beginPath();ctx.moveTo(i*w*.22,-h*.08);ctx.lineTo(i*w*.22+w*.42,h*1.06);ctx.stroke()}
+  ctx.strokeStyle='rgba(255,255,255,.075)';ctx.beginPath();ctx.arc(w*.75,h*.28,w*.24,Math.PI*.1,Math.PI*1.45);ctx.stroke();ctx.restore()
+}
+function sdOrigHeader(ctx,w,h,c){
+  const pad=w*.065;ctx.fillStyle='#d7b568';ctx.fillRect(pad,h*.055,w*.13,Math.max(5,w*.006));
+  ctx.fillStyle='#f4f6f7';ctx.font='900 '+Math.max(25,w*.032)+'px -apple-system,"PingFang SC",sans-serif';ctx.fillText('SAGI SPORTS',pad,h*.104);
+  ctx.fillStyle='#788b92';ctx.font='650 '+Math.max(18,w*.019)+'px -apple-system,"PingFang SC",sans-serif';ctx.fillText('ORIGINAL FOOTBALL POSTER · SOURCE PIXELS 0%',pad,h*.136)
+}
+function sdOrigBigNumber(ctx,w,h,c){
+  const n=c.streak||c.scores.length||8,pad=w*.065;
+  ctx.save();ctx.globalAlpha=.18;ctx.fillStyle='#d7b568';ctx.font='1000 '+Math.round(w*.62)+'px -apple-system,sans-serif';ctx.fillText(String(n),w*.48,h*.50);ctx.restore();
+  ctx.fillStyle='#d7b568';ctx.font='900 '+Math.round(w*.045)+'px -apple-system,"PingFang SC",sans-serif';ctx.fillText(c.streak?'连胜':'场走势',pad,h*.40);
+  ctx.fillStyle='#f3f5f5';ctx.font='1000 '+Math.round(w*.20)+'px -apple-system,sans-serif';ctx.fillText(String(n),pad,h*.58)
+}
+function sdOrigCoachThesis(ctx,w,h,c){
+  const pad=w*.065;
+  ctx.fillStyle='rgba(215,181,104,.12)';sdOrigRound(ctx,w*.56,h*.22,w*.34,h*.31,w*.04);ctx.fill();
+  ctx.fillStyle='#d7b568';ctx.font='900 '+Math.round(w*.035)+'px -apple-system,"PingFang SC",sans-serif';ctx.fillText('COACH THESIS',w*.60,h*.29);
+  ctx.fillStyle='#f3f5f5';ctx.font='1000 '+Math.round(w*.085)+'px -apple-system,"PingFang SC",sans-serif';
+  const name=(c.coach||'主教练').slice(0,12);sdOrigWrap(ctx,name,w*.28,Math.round(w*.085),3).forEach((line,i)=>ctx.fillText(line,w*.60,h*.37+i*w*.092));
+  ctx.strokeStyle='rgba(215,181,104,.26)';ctx.lineWidth=Math.max(3,w*.004);ctx.beginPath();ctx.moveTo(pad,h*.33);ctx.lineTo(w*.50,h*.33);ctx.stroke()
+}
+function sdOrigTimeline(ctx,w,h,c){
+  const pad=w*.08,top=h*.27,rows=Math.min(8,Math.max(4,c.scores.length||8)),gap=(h*.34)/Math.max(1,rows-1);
+  ctx.strokeStyle='rgba(215,181,104,.25)';ctx.lineWidth=Math.max(3,w*.004);ctx.beginPath();ctx.moveTo(pad,top);ctx.lineTo(pad,top+gap*(rows-1));ctx.stroke();
+  for(let i=0;i<rows;i++){const y=top+i*gap;ctx.fillStyle=i===rows-1?'#d7b568':'#516069';ctx.beginPath();ctx.arc(pad,y,w*.012,0,Math.PI*2);ctx.fill();ctx.fillStyle='#aab5b9';ctx.font='800 '+Math.round(w*.027)+'px -apple-system,sans-serif';ctx.fillText(c.scores[i]||('W '+(i+1)),pad+w*.035,y+w*.009)}
+}
+function sdOrigQuestion(ctx,w,h,c){
+  ctx.save();ctx.globalAlpha=.10;ctx.fillStyle='#d7b568';ctx.font='1000 '+Math.round(w*.72)+'px -apple-system,sans-serif';ctx.fillText('?',w*.50,h*.56);ctx.restore();
+  ctx.strokeStyle='rgba(215,181,104,.28)';ctx.lineWidth=Math.max(3,w*.004);ctx.strokeRect(w*.065,h*.22,w*.87,h*.37)
+}
+function sdOrigDataCard(ctx,w,h,c){
+  const pad=w*.065,vals=[
+    ['HOT',String(SDINTEL.score||'—')],
+    ['STREAK',c.streak?String(c.streak):'—'],
+    ['MATCHES',String(c.scores.length||'—')],
+    ['NEWS',String((SDINTEL.news||[]).length)]
+  ];
+  vals.forEach((v,i)=>{const x=pad+(i%2)*w*.44,y=h*.24+Math.floor(i/2)*h*.14;ctx.fillStyle='rgba(255,255,255,.035)';sdOrigRound(ctx,x,y,w*.39,h*.105,w*.02);ctx.fill();ctx.fillStyle='#6f8289';ctx.font='700 '+Math.round(w*.018)+'px -apple-system,sans-serif';ctx.fillText(v[0],x+w*.025,y+h*.032);ctx.fillStyle=i===1?'#d7b568':'#f3f5f5';ctx.font='1000 '+Math.round(w*.055)+'px -apple-system,sans-serif';ctx.fillText(v[1],x+w*.025,y+h*.078)})
+}
+function sdOrigMainText(ctx,w,h,c){
+  const pad=w*.065,max=w-pad*2,title=SDORIG.title||'热点标题',sub=SDORIG.sub||'',startY=h*(SDORIG.template==='minimal'?.46:.62);
+  ctx.fillStyle='#d7b568';ctx.font='900 '+Math.round(w*.032)+'px -apple-system,"PingFang SC",sans-serif';ctx.fillText((SDORIG.person||c.person||'足球热点').toUpperCase(),pad,startY);
+  let fs=Math.round(w*.075);ctx.fillStyle='#f4f6f7';const lines=sdOrigWrap(ctx,title,max,fs,4),lh=fs*1.18;ctx.font='1000 '+fs+'px -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif';lines.forEach((line,i)=>ctx.fillText(line,pad,startY+w*.07+i*lh));
+  const sy=startY+w*.07+lines.length*lh+w*.025;if(sub){ctx.fillStyle='#9eaaae';ctx.font='650 '+Math.round(w*.027)+'px -apple-system,"PingFang SC",sans-serif';sdOrigWrap(ctx,sub,max,Math.round(w*.027),3).forEach((line,i)=>ctx.fillText(line,pad,sy+i*w*.042))}
+}
+function sdOrigFooter(ctx,w,h,c){
+  const pad=w*.065;ctx.fillStyle='rgba(255,255,255,.12)';ctx.fillRect(pad,h*.91,w-pad*2,2);ctx.fillStyle='#7d8d93';ctx.font='650 '+Math.round(w*.020)+'px -apple-system,"PingFang SC",sans-serif';ctx.fillText('热点来自事实 · 视觉重新创作 · 不复用原图像素',pad,h*.95);ctx.textAlign='right';ctx.fillStyle='#d7b568';ctx.fillText('SAGI',w-pad,h*.95);ctx.textAlign='left'
+}
+function sdOrigDraw(){
+  const cv=sdOrigCanvas();if(!cv)return;sdOrigSetup();const ctx=cv.getContext('2d'),w=cv.width,h=cv.height,c=sdOrigContext();ctx.clearRect(0,0,w,h);sdOrigGradient(ctx,w,h);sdOrigPitch(ctx,w,h);sdOrigHeader(ctx,w,h,c);
+  if(SDORIG.template==='number')sdOrigBigNumber(ctx,w,h,c);
+  else if(SDORIG.template==='coach')sdOrigCoachThesis(ctx,w,h,c);
+  else if(SDORIG.template==='timeline')sdOrigTimeline(ctx,w,h,c);
+  else if(SDORIG.template==='question')sdOrigQuestion(ctx,w,h,c);
+  else if(SDORIG.template==='data')sdOrigDataCard(ctx,w,h,c);
+  sdOrigMainText(ctx,w,h,c);sdOrigFooter(ctx,w,h,c)
+}
+function sdOrigRender(){
+  if(!q('sdOriginalPoster'))return;
+  const c=sdOrigContext();q('sdOrigPixelUse').textContent='0%';q('sdOrigOriginality').textContent='100%';q('sdOrigHook').textContent=c.hook||'等待分析';q('sdOrigSubject').textContent=SDORIG.subject||c.subject||'—';q('sdOrigRole').textContent=SDORIG.role||c.person||'—';q('sdOrigFact').textContent=SDORIG.fact||c.fact||'—';q('sdOrigStructure').textContent=SDORIG.structure||'—';
+  q('sdOrigTitle').value=SDORIG.title||'';q('sdOrigSub').value=SDORIG.sub||'';q('sdOrigPerson').value=SDORIG.person||'';q('sdOrigRatio').value=SDORIG.ratio||'3:4';
+  document.querySelectorAll('[data-orig-variant]').forEach(b=>b.classList.toggle('active',Number(b.dataset.origVariant)===Number(SDORIG.variant)));
+  document.querySelectorAll('[data-orig-template]').forEach(b=>b.classList.toggle('active',b.dataset.origTemplate===SDORIG.template));
+  const coach=c.coach?('主教练上下文：'+c.coach+'。系统依据来源账号与联网文章中的教练身份判断，不使用人脸身份识别。'):('暂未从来源/新闻上下文验证主教练姓名，海报将以球队趋势为主。');
+  q('sdOrigInsight').textContent=(SDINTEL.analyzedAt?coach:'先完成上方图片分析。')+' 原图仅作为事实输入，新画布不会绘制原图像素。';sdOrigDraw()
+}
+function sdOrigGenerate(force=true){
+  if(!SDINTEL.analyzedAt){toast('请先完成图片热点分析');q('sdImgAnalyzeBtn')?.scrollIntoView({behavior:'smooth',block:'center'});return}
+  SDORIG.variant=0;SDORIG.activeForPublish=false;sdOrigSyncFromVariant(force);sdOrigRender();toast('已生成3套原创海报方向')
+}
+function sdOrigSelectVariant(i){
+  SDORIG.variant=Math.max(0,Math.min(2,Number(i)||0));const v=sdOrigBuildVariants()[SDORIG.variant];SDORIG.title=v.title;SDORIG.sub=v.sub;SDORIG.person=v.person;SDORIG.template=v.template;SDORIG.structure=v.structure;SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigRender()
+}
+function sdOrigBlob(){return new Promise(resolve=>sdOrigCanvas().toBlob(resolve,'image/png',.96))}
+function sdOrigSafeName(s){return String(s||'SAGI_ORIGINAL').replace(/[\\/:*?"<>|]/g,'_').slice(0,52)}
+async function sdOrigExport(){
+  if(!SDORIG.generatedAt)sdOrigGenerate(true);if(!SDORIG.generatedAt)return;const blob=await sdOrigBlob();if(!blob){toast('原创海报导出失败');return}const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='SAGI_ORIGINAL_'+sdOrigSafeName(SDORIG.title)+'.png';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1200);toast('原创 PNG 已生成')
+}
+async function sdOrigShare(){
+  if(!SDORIG.generatedAt)sdOrigGenerate(true);if(!SDORIG.generatedAt)return;const blob=await sdOrigBlob(),v=sdOrigBuildVariants()[SDORIG.variant],file=new File([blob],'SAGI_ORIGINAL_'+sdOrigSafeName(SDORIG.title)+'.png',{type:'image/png'}),text=(v.caption||SDORIG.sub||'')+'\n\n'+(v.tags||'');
+  try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],text});return}}catch(e){if(e?.name==='AbortError')return}
+  await sdOrigExport();try{await navigator.clipboard.writeText(text);toast('已导出原创图并复制文案')}catch(e){toast('已导出原创图')}
+}
+function sdOrigUsePublish(){
+  if(!SDORIG.generatedAt)sdOrigGenerate(true);if(!SDORIG.generatedAt)return;const v=sdOrigBuildVariants()[SDORIG.variant];SDORIG.activeForPublish=true;SDIMG.headline=SDORIG.title;SDIMG.sub=SDORIG.sub;SDIMG.caption=v.caption||SDORIG.sub;SDIMG.tags=v.tags||SDIMG.tags;sdOrigSave();sdImgSave();sdImgSync();q('sdImgCaption').value=SDIMG.caption;q('sdImgTags').value=SDIMG.tags;q('sdImgHeadline').value=SDIMG.headline;q('sdImgSub').value=SDIMG.sub;q('sdImgCaption').scrollIntoView({behavior:'smooth',block:'center'});toast('发布包已切换为原创海报')
+}
+q('sdOrigGenerateBtn').onclick=()=>sdOrigGenerate(true);q('sdOrigRefreshBtn').onclick=()=>{SDORIG.template=['number','coach','timeline','question','minimal','data'][Math.floor(Date.now()/1000)%6];SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigRender();toast('已重新组合原创视觉')};
+document.querySelectorAll('[data-orig-variant]').forEach(b=>b.onclick=()=>sdOrigSelectVariant(b.dataset.origVariant));
+document.querySelectorAll('[data-orig-template]').forEach(b=>b.onclick=()=>{SDORIG.template=b.dataset.origTemplate;SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigRender()});
+q('sdOrigTitle').oninput=e=>{SDORIG.title=e.target.value;SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigDraw()};
+q('sdOrigSub').oninput=e=>{SDORIG.sub=e.target.value;SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigDraw()};
+q('sdOrigPerson').oninput=e=>{SDORIG.person=e.target.value;SDORIG.role=e.target.value;SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigRender()};
+q('sdOrigRatio').onchange=e=>{SDORIG.ratio=e.target.value;SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigRender()};
+q('sdOrigExportBtn').onclick=sdOrigExport;q('sdOrigShareBtn').onclick=sdOrigShare;q('sdOrigUsePublishBtn').onclick=sdOrigUsePublish;
+sdOrigRender();
+/* ===== END SAGI ORIGINAL POSTER ENGINE ===== */
+
 
 
 q('exportStudioBtn').onclick=exportStudio;
