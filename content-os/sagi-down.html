@@ -207,8 +207,8 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 
     <div class="imgIntel" id="sdImgIntel">
       <div class="imgIntelHead">
-        <div><b>AI IMAGE ANALYSIS · 图片热点分析</b><span>识别画面文字 / 人物数量 / 比分线索，再联网匹配最近24小时足球新闻，生成抖音热门候选。</span></div>
-        <span class="badge">V1.0</span>
+        <div><b>AI IMAGE ANALYSIS · 图片热点分析</b><span>先识别普通照片 / 社交平台截图；截图会分离平台UI、账号来源和帖子主体，再读取多组比分、走势和最近24小时新闻。</span></div>
+        <span class="badge">V2.0 · SOCIAL SCREENSHOT</span>
       </div>
       <div class="imgIntelActions">
         <button class="btn gold" id="sdImgAnalyzeBtn" type="button">分析图片 + 提取热点</button>
@@ -494,6 +494,8 @@ Unbelievable finish."></textarea>
 
 <script>
 (()=>{'use strict';
+const SAGI_DOWN_BUILD='V3.3.1';
+document.documentElement.dataset.sagiDownBuild=SAGI_DOWN_BUILD;
 const BTCH_PUBLIC='https://btch-downloader-api-green.vercel.app';
 const DOWNLOAD_ROUTER_VERSION='3.0';
 const KEY='sagi_down_history_v2';
@@ -2727,7 +2729,7 @@ if(q('captionSpeed'))q('captionSpeed').value='fast';
 if(q('captionRange'))q('captionRange').value='trim';
 setTimeout(async()=>{await wakeCaptionCloud();refreshAIVoiceStatus(false)},180);
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=330',{updateViaCache:'none'}).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=331',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})}
 })();
 </script>
 </body>
