@@ -39,7 +39,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 
 .aiCaptionStep{border-color:#3a4c68;background:linear-gradient(180deg,#101621,#0a1016)}
 .aiCaptionTop{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}.aiCaptionTop b{font-size:11px}.aiCaptionTop span{font-size:8px;color:#738796}
-.aiCaptionActions{display:grid;grid-template-columns:1fr 1fr 1fr .72fr;gap:7px;margin-top:8px}
+.aiCaptionActions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:8px}
 .aiCaptionProgress{height:7px;background:#080d10;border:1px solid #293a43;border-radius:99px;overflow:hidden;margin-top:9px}.aiCaptionProgress i{display:block;height:100%;width:0;background:linear-gradient(90deg,#718eaa,#d7b568);transition:.2s}
 .aiCaptionStatus{font-size:9px;color:#81949b;line-height:1.5;margin-top:7px}
 .aiCaptionTimeline{display:grid;gap:5px;margin-top:8px;max-height:180px;overflow:auto}.capRow{display:grid;grid-template-columns:58px 1fr;gap:7px;border:1px solid #243640;border-radius:9px;background:#091014;padding:7px}.capRow time{font-size:8px;color:#b7a268}.capRow span{font-size:9px;color:#c9d2d5;line-height:1.4}
@@ -64,7 +64,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 <div class="wrap">
   <div class="top">
     <div class="brand"><b>SAGI DOWN</b><span>VIDEO LINK SHORTCUT</span></div>
-    <span class="badge">V1.6.3 · AUTO LANGUAGE</span>
+    <span class="badge">V1.6.4 · SMOOTH MODE</span>
   </div>
 
   <section class="hero">
@@ -197,10 +197,11 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
         <button class="btn gold" id="instant15Btn" type="button">INSTANT 15S</button>
         <button class="btn blue" id="aiCaptionZhBtn" type="button">识别并翻成中文</button>
         <button class="btn" id="downloadSrtBtn" type="button">导出 SRT</button>
+        <button class="btn danger" id="localCaptionBtn" type="button" style="display:none">本地备用识别</button>
       </div>
 
       <div class="aiCaptionProgress"><i id="aiCaptionProgress"></i></div>
-      <div id="aiCaptionStatus" class="aiCaptionStatus">AUTO LANGUAGE：最多180秒完整时间轴；AUTO 自动判断中文/俄文/阿拉伯文等，识别结果已是中文时直接跳过翻译，不再报错。</div>
+      <div id="aiCaptionStatus" class="aiCaptionStatus">SMOOTH MODE：3分钟视频默认整段交给 SAGI Cloud；手机不再解码音频、不自动启动本地 Whisper。云端失败时只提示，不让页面卡住。</div>
       <div class="aiCaptionMeta">
         <span id="captionEngine">引擎：SAGI CLOUD 优先</span>
         <span id="captionDetectedLang">语言：—</span>
@@ -428,7 +429,8 @@ const STUDIO={
  ffmpeg:null,ffmpegLoaded:false,exporting:false,resultBlob:null,resultUrl:'',
  captions:[],captionLanguage:'',captionRangeKey:'',captionModel:null,captionModelKey:'',captionModule:null,captionBusy:false,
  translator:null,translatorKey:'',moduleWarm:false,
- cloudCaptionToken:'',cloudCaptionReady:false,cloudCaptionWaking:false
+ cloudCaptionToken:'',cloudCaptionReady:false,cloudCaptionWaking:false,
+ captionVisibleCount:40
 };
 
 function studioStatus(t,k=''){const e=q('studioStatus');if(e){e.textContent=t;e.className='status '+k}}
@@ -510,7 +512,15 @@ function renderCaptionTimeline(){
  const host=q('aiCaptionTimeline'),list=STUDIO.captions||[];
  if(q('captionCount'))q('captionCount').textContent='字幕：'+list.length;
  if(!host)return;
- host.innerHTML=list.length?list.map(x=>'<div class="capRow"><time>'+captionTime(x.start)+'<br>→ '+captionTime(x.end)+'</time><span>'+escapeHtml(x.text)+'</span></div>').join(''):''
+ const visible=Math.max(20,STUDIO.captionVisibleCount||40),shown=list.slice(0,visible);
+ host.innerHTML=shown.length?shown.map(x=>'<div class="capRow"><time>'+captionTime(x.start)+'<br>→ '+captionTime(x.end)+'</time><span>'+escapeHtml(x.text)+'</span></div>').join(''):'';
+ if(list.length>visible){
+   const more=document.createElement('button');
+   more.className='btn';more.type='button';
+   more.textContent='显示更多 '+Math.min(40,list.length-visible)+' 条';
+   more.onclick=()=>{STUDIO.captionVisibleCount=visible+40;renderCaptionTimeline()};
+   host.appendChild(more)
+ }
 }
 async function ensureCaptionModule(){
  if(STUDIO.captionModule)return STUDIO.captionModule;
@@ -578,6 +588,43 @@ async function cloudCaption(audio,lang){
    setCloudCaptionStatus('完成 '+Math.max(1,Math.round((data.elapsedMs||0)/1000))+'s');
    return data
  }finally{clearTimeout(timer)}
+}
+
+function cloudCaptionMedia(file,start,duration,lang){
+ return new Promise(async(resolve,reject)=>{
+   try{
+     const ready=await wakeCaptionCloud();
+     if(!ready||!STUDIO.cloudCaptionToken)throw new Error('CLOUD_NOT_READY');
+     const fd=new FormData();
+     fd.append('media',file,file.name||'video.mp4');
+     fd.append('start',String(start||0));
+     fd.append('duration',String(Math.min(180,duration||180)));
+     fd.append('language',lang||'auto');
+
+     const xhr=new XMLHttpRequest();
+     xhr.open('POST',CAPTION_CLOUD+'/api/caption-media');
+     xhr.setRequestHeader('Authorization','Bearer '+STUDIO.cloudCaptionToken);
+     xhr.timeout=240000;
+
+     xhr.upload.onprogress=e=>{
+       if(e.lengthComputable){
+         const p=Math.round(e.loaded/e.total*100);
+         aiCaptionProgress(8+Math.min(42,p*.42));
+         aiCaptionStatus('正在上传视频到 SAGI Cloud · '+p+'%');
+         setCloudCaptionStatus('上传 '+p+'%')
+       }
+     };
+     xhr.onload=()=>{
+       let data={};try{data=JSON.parse(xhr.responseText||'{}')}catch(e){}
+       if(xhr.status<200||xhr.status>=300||!data?.ok)return reject(new Error(data?.error||('cloud '+xhr.status)));
+       setCloudCaptionStatus('完成 '+Math.max(1,Math.round((data.elapsedMs||0)/1000))+'s');
+       resolve(data)
+     };
+     xhr.onerror=()=>reject(new Error('云端网络错误'));
+     xhr.ontimeout=()=>reject(new Error('云端处理超时'));
+     xhr.send(fd)
+   }catch(e){reject(e)}
+ })
 }
 
 function captionSpeedConfig(){
@@ -797,47 +844,66 @@ function instant15Caption(){
 async function runAiCaption(translateZh=false){
  if(!STUDIO.file){studioStatus('请先在 01 导入视频。','warn');return}
  if(STUDIO.captionBusy)return;
- STUDIO.captionBusy=true;q('aiCaptionBtn').disabled=true;q('aiCaptionZhBtn').disabled=true;aiCaptionProgress(1);
+ STUDIO.captionBusy=true;q('aiCaptionBtn').disabled=true;q('aiCaptionZhBtn').disabled=true;
+ q('localCaptionBtn').style.display='none';
+ aiCaptionProgress(1);STUDIO.captionVisibleCount=40;
  try{
-   const cfg=captionSpeedConfig(),lang=q('captionLanguage')?.value||'auto';
-   aiCaptionStatus('正在快速读取当前音频…');aiCaptionProgress(10);
-   const audio=await extractCaptionWaveform();
-   let result=null,usedCloud=false;
-   try{
-     aiCaptionStatus('正在发送 '+Math.round(audio.duration)+' 秒音频到 SAGI Cloud…');aiCaptionProgress(28);
-     const cloud=await cloudCaption(audio,lang);
-     STUDIO.captions=(cloud.segments||[]).map(x=>({start:Number(x.start)||0,end:Number(x.end)||0,text:String(x.text||'').trim()})).filter(x=>x.text);
-     STUDIO.captionLanguage=cloud.language||lang;STUDIO.captionRangeKey=audio.key;usedCloud=true;
-     if(q('captionEngine'))q('captionEngine').textContent='引擎：SAGI CLOUD · faster-whisper tiny INT8';
-     aiCaptionProgress(76);
-   }catch(cloudErr){
-     console.warn('cloud caption failed, fallback local',cloudErr);
-     setCloudCaptionStatus('失败 · 本地备用');
-     aiCaptionStatus('云端暂不可用，自动切换手机本地 Whisper…');aiCaptionProgress(32);
-     const model=await ensureCaptionModel(),options={return_timestamps:true,task:'transcribe'};
-     if(cfg.chunk>0&&audio.duration>30){options.chunk_length_s=cfg.chunk;options.stride_length_s=cfg.stride}
-     if(lang!=='auto')options.language=lang;
-     result=await model(audio.waveform,options);
-     STUDIO.captions=normalizeCaptionChunks(result,audio.duration);STUDIO.captionLanguage=result?.language||lang;STUDIO.captionRangeKey=audio.key;
-     if(q('captionEngine'))q('captionEngine').textContent='引擎：手机本地 Whisper · 备用';
-     aiCaptionProgress(76);
-   }
+   const lang=q('captionLanguage')?.value||'auto';
+   const [start,,duration]=captionRangeValues();
+   aiCaptionStatus('正在连接 SAGI Cloud…');
+   const cloud=await cloudCaptionMedia(STUDIO.file,start,duration,lang);
+   STUDIO.captions=(cloud.segments||[]).map(x=>({
+     start:Number(x.start)||0,end:Number(x.end)||0,text:String(x.text||'').trim()
+   })).filter(x=>x.text);
+   STUDIO.captionLanguage=cloud.language||lang;STUDIO.captionRangeKey=captionKey();
+   if(q('captionEngine'))q('captionEngine').textContent='引擎：SAGI CLOUD · SMOOTH';
+   aiCaptionProgress(78);
    syncCaptionText();
+   if(!STUDIO.captions.length)throw new Error('没有识别到清晰语音');
    let resolvedLang=String(STUDIO.captionLanguage||'').toLowerCase();
    if(!resolvedLang||resolvedLang==='auto')resolvedLang=inferTranscriptLanguage();
-   STUDIO.captionLanguage=resolvedLang;
-   syncDetectedLanguageUi(resolvedLang);
-   if(!STUDIO.captions.length)throw new Error('没有识别到清晰语音');
-   aiCaptionStatus((usedCloud?'云端极速字幕':'本地字幕')+'已完成 · '+STUDIO.captions.length+' 条'+(translateZh?' · 正在生成中文…':''));
+   STUDIO.captionLanguage=resolvedLang;syncDetectedLanguageUi(resolvedLang);
+   aiCaptionStatus('云端字幕完成 · '+STUDIO.captions.length+' 条'+(translateZh?' · 正在生成中文…':''));
    studioStatus('字幕已经可以查看。','good');
    if(translateZh){await translateCaptionTimeline('zh-CN');q('subtitleTargetLang').value='zh-CN'}
-   aiCaptionProgress(100);aiCaptionStatus('完成 · '+STUDIO.captions.length+' 条时间轴字幕'+(translateZh?(sourceLangForTranslation()==='zh-CN'?' · 原文已是中文':' · 中文完成'):''));
+   aiCaptionProgress(100);aiCaptionStatus('完成 · '+STUDIO.captions.length+' 条时间轴字幕');
    toast('AI字幕完成')
  }catch(e){
-   console.error(e);aiCaptionStatus('AI字幕失败：'+(e.message||e));studioStatus('AI字幕失败：'+(e.message||e),'bad');aiCaptionProgress(0)
+   console.error(e);
+   setCloudCaptionStatus('失败');
+   q('localCaptionBtn').style.display='';
+   aiCaptionStatus('云端字幕失败：'+(e.message||e)+'。页面不会自动启动本地 Whisper；需要时可点“本地备用识别”。');
+   studioStatus('云端失败，但已阻止本地模型自动启动，避免手机卡顿。','warn');
+   aiCaptionProgress(0)
  }finally{
    STUDIO.captionBusy=false;q('aiCaptionBtn').disabled=false;q('aiCaptionZhBtn').disabled=false
  }
+}
+
+async function runLocalCaption(){
+ if(!STUDIO.file){studioStatus('请先导入视频。','warn');return}
+ if(STUDIO.captionBusy)return;
+ STUDIO.captionBusy=true;q('localCaptionBtn').disabled=true;aiCaptionProgress(2);
+ try{
+   const cfg=captionSpeedConfig(),lang=q('captionLanguage')?.value||'auto';
+   aiCaptionStatus('正在启动手机本地 Whisper · 备用模式…');
+   const [audio,model]=await Promise.all([extractCaptionWaveform(),ensureCaptionModel()]);
+   const options={return_timestamps:true,task:'transcribe'};
+   if(cfg.chunk>0&&audio.duration>30){options.chunk_length_s=cfg.chunk;options.stride_length_s=cfg.stride}
+   if(lang!=='auto')options.language=lang;
+   const result=await model(audio.waveform,options);
+   STUDIO.captions=normalizeCaptionChunks(result,audio.duration);
+   STUDIO.captionLanguage=result?.language||lang;STUDIO.captionRangeKey=audio.key;STUDIO.captionVisibleCount=40;
+   if(q('captionEngine'))q('captionEngine').textContent='引擎：手机本地 Whisper · 手动备用';
+   syncCaptionText();
+   let resolved=String(STUDIO.captionLanguage||'').toLowerCase();
+   if(!resolved||resolved==='auto')resolved=inferTranscriptLanguage();
+   STUDIO.captionLanguage=resolved;syncDetectedLanguageUi(resolved);
+   aiCaptionProgress(100);aiCaptionStatus('本地备用识别完成 · '+STUDIO.captions.length+' 条');
+   studioStatus('本地字幕已完成。','good')
+ }catch(e){
+   aiCaptionStatus('本地备用失败：'+(e.message||e));studioStatus('本地备用失败。','bad');aiCaptionProgress(0)
+ }finally{STUDIO.captionBusy=false;q('localCaptionBtn').disabled=false}
 }
 function srtTime(sec){
  const ms=Math.max(0,Math.round((Number(sec)||0)*1000)),h=Math.floor(ms/3600000),m=Math.floor(ms%3600000/60000),s=Math.floor(ms%60000/1000),x=ms%1000;
@@ -1034,6 +1100,7 @@ q('aiCaptionBtn').onclick=()=>runAiCaption(false);
 q('instant15Btn').onclick=instant15Caption;
 q('aiCaptionZhBtn').onclick=()=>runAiCaption(true);
 q('downloadSrtBtn').onclick=downloadSrt;
+q('localCaptionBtn').onclick=runLocalCaption;
 q('captionToNarrationBtn').onclick=captionToNarration;
 q('translateSubtitleBtn').onclick=translateSubtitles;
 q('speakNarrationBtn').onclick=speakNarration;
@@ -1048,7 +1115,7 @@ if(q('captionSpeed'))q('captionSpeed').value='fast';
 if(q('captionRange'))q('captionRange').value='trim';
 setTimeout(()=>wakeCaptionCloud(),180);
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=163',{updateViaCache:'none'}).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=164',{updateViaCache:'none'}).catch(()=>{})}
 })();
 </script>
 </body>
