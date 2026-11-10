@@ -3288,7 +3288,7 @@ async function sdDataVerify(auto=false){
 }
 /* ===== END MATCH DATA HUB ===== */
 
-/* ===== SAGI IMAGE FLOW V1.0 ===== *//* ===== SAGI IMAGE FLOW V1.0 ===== */
+/* ===== SAGI IMAGE FLOW V1.0 ===== */
 const SDFLOW_LABELS={source:['参考图','导入 / 下载后自动分析'],verify:['数据核验','官方源优先核验热点与赛果'],create:['图片二次创作','人物 / 背景 / 比分 / 排版'],publish:['发布','导出图片 / 文案 / 分享']};
 function sdFlowSet(stage='source',scroll=false){
   const card=q('imageStudioCard');if(!card)return;stage=SDFLOW_LABELS[stage]?stage:'source';card.dataset.flow=stage;
@@ -3363,7 +3363,7 @@ function sdOrigResetActiveLayer(){
 }
 sdOrigEnsureLayers();
 
-const SDORIG_FILTER_PRESETS=const SDORIG_FILTER_PRESETS={
+const SDORIG_FILTER_PRESETS={
   editorial:{personBright:100,personContrast:114,personSat:92,bgBright:88,bgSat:76,vignette:14},
   matchday:{personBright:103,personContrast:108,personSat:100,bgBright:96,bgSat:92,vignette:8},
   hero:{personBright:105,personContrast:120,personSat:96,bgBright:82,bgSat:68,vignette:18},
@@ -3410,7 +3410,7 @@ function sdOrigAutoScoreText(){
   if(typeof SDDATA!=='undefined'&&(SDDATA.matches||[]).length)return sdDataScoreText(SDDATA.matches.slice(0,12));
   return'';
 }
-function sdOrigFingerprintfunction sdOrigFingerprint(img){
+function sdOrigFingerprint(img){
   const cv=document.createElement('canvas'),n=12;cv.width=n;cv.height=n;const ctx=cv.getContext('2d',{willReadFrequently:true});
   ctx.drawImage(img,0,0,n,n);const d=ctx.getImageData(0,0,n,n).data,out=[];
   for(let i=0;i<d.length;i+=4)out.push(d[i],d[i+1],d[i+2]);
