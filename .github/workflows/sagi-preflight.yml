@@ -233,5 +233,56 @@ jobs:
           print("cloud ffmpeg capabilities OK")
           PY
 
+      - name: Real cloud render smoke test
+        run: |
+          cd sagi-cloud-bridge
+          python - <<'PY'
+          import tempfile, pathlib, subprocess
+          import imageio_ffmpeg
+          import app as mod
+
+          work = pathlib.Path(tempfile.mkdtemp(prefix="sagi_render_test_"))
+          exe = imageio_ffmpeg.get_ffmpeg_exe()
+          source = work / "source.mp4"
+          voice = work / "voice.m4a"
+
+          subprocess.run([
+              exe, "-hide_banner", "-y",
+              "-f", "lavfi", "-i", "color=c=black:s=640x360:d=2",
+              "-f", "lavfi", "-i", "sine=frequency=440:duration=2",
+              "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p",
+              "-c:a", "aac", "-shortest", str(source)
+          ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+          subprocess.run([
+              exe, "-hide_banner", "-y",
+              "-f", "lavfi", "-i", "sine=frequency=660:duration=1.1",
+              "-c:a", "aac", str(voice)
+          ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+          # Avoid external font network in CI while still exercising ASS and cloud render.
+          mod.ensure_cjk_font = lambda: "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+          mod.FONT_DIR = pathlib.Path("/usr/share/fonts/truetype/dejavu")
+
+          job_id = "smoke"
+          mod.render_jobs[job_id] = {
+              "id": job_id, "status": "queued", "stage": "", "progress": 0,
+              "created_at": mod.iso(), "updated_at": mod.iso(),
+              "workdir": str(work), "source": str(source), "path": "",
+              "download_key": "smoke-key", "size": 0, "error": "",
+          }
+          mod.run_cloud_render(job_id, {
+              "start": 0, "duration": 2, "aspect": "9:16", "quality": "fast",
+              "captions": [{"start":0.1,"end":1.8,"text":"SAGI subtitle test"}],
+              "narration": "", "voice_mode": "recorded", "voice_id": "",
+              "voice_speed": 1, "original_volume": 0.25, "burn_subtitles": True,
+              "uploaded_voice": str(voice),
+          })
+          job = mod.render_jobs[job_id]
+          assert job["status"] == "ready", job
+          out = pathlib.Path(job["path"])
+          assert out.exists() and out.stat().st_size > 5000
+          print("real cloud render OK", out.stat().st_size, "bytes")
+          PY
+
       - name: Python compile check
         run: python -m compileall -q sagi-cloud-bridge
