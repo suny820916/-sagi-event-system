@@ -48,7 +48,8 @@ jobs:
           import av, faster_whisper, gallery_dl, sys
           print("python", sys.version)
           print("av", av.__version__)
-          print("faster_whisper", getattr(faster_whisper, "__version__", "unknown"))\n          print("gallery_dl", getattr(gallery_dl, "__version__", "unknown"))
+          print("faster_whisper", getattr(faster_whisper, "__version__", "unknown"))
+          print("gallery_dl", getattr(gallery_dl, "__version__", "unknown"))
           major = int(av.__version__.split(".")[0])
           assert major < 19, f"PyAV must stay <19 with released faster-whisper, got {av.__version__}"
           PY
