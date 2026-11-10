@@ -51,7 +51,7 @@ jobs:
               time.sleep(8)
           if not health:
               raise SystemExit("LIVE_HEALTH_FAILED")
-          expected="1.7.4"
+          expected="2.0.0"
           if str(health.get("version"))!=expected:
               print("waiting for expected live version",expected)
               health=None
@@ -75,6 +75,9 @@ jobs:
           if "carousel-zip" not in (health.get("downloadMediaKinds") or []):
               raise SystemExit("CAROUSEL_DOWNLOAD_MISSING")
           print("INSTAGRAM_EGRESS",health.get("instagramEgress"),"PROXY_CONFIGURED",health.get("instagramProxyConfigured"))
+          if health.get("downloadPrimary")!="cobalt":
+              raise SystemExit("COBALT_NOT_PRIMARY")
+          print("COBALT_CONFIGURED",health.get("cobaltConfigured"),"MODE",health.get("cobaltMode"))
 
           print("2) activating...")
           r=requests.post(BASE+"/api/activate",headers={"Origin":ORIGIN,"Content-Type":"application/json"},json={},timeout=70)
