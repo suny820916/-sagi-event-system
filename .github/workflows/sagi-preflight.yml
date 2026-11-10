@@ -787,7 +787,7 @@ jobs:
           ]
           for x in required:
               assert x in html,x
-          assert "persist=false" in html
+          assert "persist=true" in html
           assert "sdOrigSetLayerAsset(rec.id,rec.type,decoded.img,decoded.url,rec.fileName,rec.blob,false)" in html
           print("LAYER ASSET PERSISTENCE OK")
           PY
