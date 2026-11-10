@@ -11,17 +11,21 @@ import hashlib
 import hmac
 import os
 import time
+import subprocess
+import json
+import re
 import requests
 import yt_dlp
 from yt_dlp.utils import DownloadError
 from faster_whisper import WhisperModel
+import imageio_ffmpeg
 
 app = Flask(__name__)
 
 ALLOWED_ORIGIN = (os.getenv("SAGI_ALLOWED_ORIGIN") or "https://suny820916.github.io").rstrip("/")
 SERVER_SECRET = (os.getenv("SAGI_SERVER_SECRET") or os.getenv("SAGI_BRIDGE_TOKEN") or "").strip()
 PORT = int(os.getenv("PORT") or "10000")
-DEPLOY_REVISION = "2026-11-10-v1611"
+DEPLOY_REVISION = "2026-11-10-v1612"
 MAX_FILE_MB = int(os.getenv("SAGI_MAX_FILE_MB") or "300")
 JOB_TTL_MIN = int(os.getenv("SAGI_JOB_TTL_MIN") or "30")
 RATE_LIMIT_PER_HOUR = int(os.getenv("SAGI_RATE_LIMIT_PER_HOUR") or "20")
@@ -48,6 +52,18 @@ caption_model_lock = Lock()
 caption_ready_at = 0.0
 CAPTION_MAX_MB = int(os.getenv("SAGI_CAPTION_MAX_MB") or "16")
 CAPTION_MEDIA_MAX_MB = int(os.getenv("SAGI_CAPTION_MEDIA_MAX_MB") or "180")
+ELEVENLABS_API_KEY = (os.getenv("ELEVENLABS_API_KEY") or "").strip()
+ELEVENLABS_BASE = "https://api.elevenlabs.io"
+VOICE_SAMPLE_MAX_MB = int(os.getenv("SAGI_VOICE_SAMPLE_MAX_MB") or "25")
+RENDER_MAX_MB = int(os.getenv("SAGI_RENDER_MAX_MB") or "300")
+FONT_URL = os.getenv("SAGI_CJK_FONT_URL") or "https://raw.githubusercontent.com/notofonts/noto-cjk/main/Sans/OTF/SimplifiedChinese/NotoSansCJKsc-Regular.otf"
+FONT_DIR = Path(tempfile.gettempdir()) / "sagi_fonts"
+FONT_PATH = FONT_DIR / "NotoSansCJKsc-Regular.otf"
+
+render_jobs = {}
+render_jobs_lock = Lock()
+render_slot = Lock()
+voice_cache = {"at": 0.0, "voices": []}
 
 def now():
     return datetime.now(timezone.utc)
@@ -139,6 +155,307 @@ def safe_name(name):
     raw = (name or "SAGI_INS_VIDEO").strip()
     clean = "".join(c for c in raw if c not in '\\/:*?"<>|').strip()
     return (clean or "SAGI_INS_VIDEO")[:100]
+
+
+def public_render_job(job):
+    data = {
+        "id": job["id"],
+        "status": job.get("status", "queued"),
+        "stage": job.get("stage", ""),
+        "progress": int(job.get("progress", 0) or 0),
+        "createdAt": job.get("created_at", ""),
+        "updatedAt": job.get("updated_at", ""),
+        "error": job.get("error", ""),
+        "size": int(job.get("size", 0) or 0),
+    }
+    if job.get("status") == "ready":
+        data["downloadUrl"] = request.host_url.rstrip("/") + f"/api/render-jobs/{job['id']}/file?key={job['download_key']}"
+    return data
+
+def ensure_cjk_font():
+    FONT_DIR.mkdir(parents=True, exist_ok=True)
+    if FONT_PATH.exists() and FONT_PATH.stat().st_size > 1_000_000:
+        return str(FONT_PATH)
+    tmp = FONT_PATH.with_suffix(".part")
+    r = requests.get(FONT_URL, stream=True, timeout=90)
+    r.raise_for_status()
+    with tmp.open("wb") as f:
+        for chunk in r.iter_content(1024 * 256):
+            if chunk:
+                f.write(chunk)
+    if tmp.stat().st_size < 1_000_000:
+        tmp.unlink(missing_ok=True)
+        raise RuntimeError("CJK font download incomplete")
+    tmp.replace(FONT_PATH)
+    return str(FONT_PATH)
+
+def _eleven_headers():
+    if not ELEVENLABS_API_KEY:
+        raise RuntimeError("ELEVENLABS_NOT_CONFIGURED")
+    return {"xi-api-key": ELEVENLABS_API_KEY}
+
+def list_eleven_voices(force=False):
+    if not ELEVENLABS_API_KEY:
+        return []
+    if not force and voice_cache["voices"] and time.time() - voice_cache["at"] < 600:
+        return voice_cache["voices"]
+    r = requests.get(
+        ELEVENLABS_BASE + "/v2/voices",
+        headers=_eleven_headers(),
+        params={"page_size": 100, "include_total_count": "false"},
+        timeout=30,
+    )
+    r.raise_for_status()
+    raw = (r.json() or {}).get("voices") or []
+    voices = []
+    for v in raw:
+        labels = v.get("labels") or {}
+        voices.append({
+            "voice_id": str(v.get("voice_id") or ""),
+            "name": str(v.get("name") or "Voice"),
+            "category": str(v.get("category") or ""),
+            "gender": str(labels.get("gender") or "").lower(),
+            "accent": str(labels.get("accent") or ""),
+            "language": str(labels.get("language") or ""),
+            "preview_url": v.get("preview_url") or "",
+        })
+    voice_cache["voices"] = [x for x in voices if x["voice_id"]]
+    voice_cache["at"] = time.time()
+    return voice_cache["voices"]
+
+def resolve_voice_id(mode, explicit=""):
+    if explicit:
+        return explicit
+    voices = list_eleven_voices()
+    wanted = "male" if mode == "ai_male" else "female"
+    for v in voices:
+        if v.get("gender") == wanted and v.get("category") in ("premade", "generated", "cloned", ""):
+            return v["voice_id"]
+    for v in voices:
+        if v.get("gender") == wanted:
+            return v["voice_id"]
+    if voices:
+        return voices[0]["voice_id"]
+    raise RuntimeError("NO_ELEVENLABS_VOICE_AVAILABLE")
+
+def synthesize_eleven(text, voice_id, output_path, speed=1.0):
+    if not text.strip():
+        raise RuntimeError("EMPTY_NARRATION")
+    voice_id = voice_id.strip()
+    if not voice_id:
+        raise RuntimeError("VOICE_ID_REQUIRED")
+    payload = {
+        "text": text[:10000],
+        "model_id": "eleven_flash_v2_5",
+        "voice_settings": {
+            "stability": 0.46,
+            "similarity_boost": 0.78,
+            "style": 0.12,
+            "use_speaker_boost": True,
+            "speed": max(0.75, min(1.25, float(speed or 1.0))),
+        },
+    }
+    r = requests.post(
+        ELEVENLABS_BASE + f"/v1/text-to-speech/{voice_id}",
+        headers={**_eleven_headers(), "Content-Type": "application/json", "Accept": "audio/mpeg"},
+        params={"output_format": "mp3_44100_128"},
+        json=payload,
+        timeout=120,
+    )
+    if r.status_code >= 400:
+        raise RuntimeError("ELEVENLABS_TTS: " + r.text[:400])
+    Path(output_path).write_bytes(r.content)
+    if Path(output_path).stat().st_size < 1000:
+        raise RuntimeError("ELEVENLABS_EMPTY_AUDIO")
+    return str(output_path)
+
+def media_has_audio(path):
+    try:
+        import av
+        with av.open(str(path), metadata_errors="ignore") as container:
+            return any(getattr(s, "type", "") == "audio" for s in container.streams)
+    except TypeError:
+        import av
+        with av.open(str(path)) as container:
+            return any(getattr(s, "type", "") == "audio" for s in container.streams)
+    except Exception:
+        return True
+
+def ass_time(sec):
+    n = max(0.0, float(sec or 0))
+    h = int(n // 3600)
+    m = int((n % 3600) // 60)
+    s = n % 60
+    return f"{h}:{m:02d}:{s:05.2f}"
+
+def ass_escape(text):
+    return str(text or "").replace("\\", r"\\").replace("{", r"\{").replace("}", r"\}").replace("\n", r"\N")
+
+def write_ass(captions, path, width, height):
+    font_size = 46 if width <= 720 else 64
+    margin_v = 105 if height <= 1280 else 155
+    header = f"""[Script Info]
+ScriptType: v4.00+
+PlayResX: {width}
+PlayResY: {height}
+ScaledBorderAndShadow: yes
+WrapStyle: 2
+
+[V4+ Styles]
+Format: Name,Fontname,Fontsize,PrimaryColour,SecondaryColour,OutlineColour,BackColour,Bold,Italic,Underline,StrikeOut,ScaleX,ScaleY,Spacing,Angle,BorderStyle,Outline,Shadow,Alignment,MarginL,MarginR,MarginV,Encoding
+Style: Default,Noto Sans CJK SC,{font_size},&H00FFFFFF,&H000000FF,&HCC000000,&H66000000,-1,0,0,0,100,100,0,0,1,4,0,2,60,60,{margin_v},1
+
+[Events]
+Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
+"""
+    lines = [header]
+    for c in captions or []:
+        start = max(0.0, float(c.get("start") or 0))
+        end = max(start + 0.05, float(c.get("end") or start + 1))
+        text = ass_escape(c.get("text") or "")
+        if text:
+            lines.append(f"Dialogue: 0,{ass_time(start)},{ass_time(end)},Default,,0,0,0,,{text}\n")
+    Path(path).write_text("".join(lines), encoding="utf-8")
+    return str(path)
+
+def render_dimensions(aspect, quality):
+    if quality == "high":
+        if aspect == "16:9":
+            return 1920, 1080
+        if aspect == "1:1":
+            return 1080, 1080
+        return 1080, 1920
+    if aspect == "16:9":
+        return 1280, 720
+    if aspect == "1:1":
+        return 720, 720
+    return 720, 1280
+
+def run_cloud_render(job_id, options):
+    with render_slot:
+        with render_jobs_lock:
+            job = render_jobs.get(job_id)
+            if not job:
+                return
+            job.update({"status": "processing", "stage": "准备云端渲染", "progress": 12, "updated_at": iso()})
+            work = Path(job["workdir"])
+            source = Path(job["source"])
+        try:
+            duration = max(0.2, min(180.0, float(options.get("duration") or 15)))
+            start = max(0.0, float(options.get("start") or 0))
+            aspect = str(options.get("aspect") or "9:16")
+            quality = str(options.get("quality") or "fast")
+            captions = options.get("captions") or []
+            narration = str(options.get("narration") or "").strip()
+            voice_mode = str(options.get("voice_mode") or "none")
+            voice_id = str(options.get("voice_id") or "").strip()
+            voice_speed = float(options.get("voice_speed") or 1.0)
+            original_volume = max(0.0, min(1.0, float(options.get("original_volume") or 0.25)))
+            burn_subtitles = bool(options.get("burn_subtitles", True))
+
+            narration_path = None
+            uploaded_voice = options.get("uploaded_voice")
+            if uploaded_voice and Path(uploaded_voice).exists():
+                narration_path = Path(uploaded_voice)
+            elif voice_mode in ("ai_male", "ai_female", "clone") and narration:
+                with render_jobs_lock:
+                    render_jobs[job_id].update({"stage": "生成 AI 配音", "progress": 20, "updated_at": iso()})
+                selected_voice = resolve_voice_id(voice_mode, voice_id if voice_mode == "clone" else voice_id)
+                narration_path = work / "narration.mp3"
+                synthesize_eleven(narration, selected_voice, narration_path, voice_speed)
+
+            width, height = render_dimensions(aspect, quality)
+            vf = f"scale={width}:{height}:force_original_aspect_ratio=increase,crop={width}:{height},setsar=1"
+            ass_path = None
+            if burn_subtitles and captions:
+                ensure_cjk_font()
+                ass_path = work / "captions.ass"
+                write_ass(captions, ass_path, width, height)
+                ass_escaped = str(ass_path).replace("\\", "/").replace(":", r"\:").replace("'", r"\'")
+                font_escaped = str(FONT_DIR).replace("\\", "/").replace(":", r"\:").replace("'", r"\'")
+                vf += f",subtitles='{ass_escaped}':fontsdir='{font_escaped}'"
+
+            exe = imageio_ffmpeg.get_ffmpeg_exe()
+            out = work / "SAGI_CLOUD_RENDER.mp4"
+            cmd = [exe, "-hide_banner", "-y", "-ss", str(start), "-t", str(duration), "-i", str(source)]
+            if narration_path:
+                cmd += ["-i", str(narration_path)]
+
+            filters = [f"[0:v]{vf}[vout]"]
+            has_audio = media_has_audio(source)
+            audio_map = None
+            if narration_path and has_audio and original_volume > 0:
+                filters += [
+                    f"[0:a]volume={original_volume}[a0]",
+                    "[1:a]volume=1[a1]",
+                    "[a0][a1]amix=inputs=2:duration=first:dropout_transition=1[aout]",
+                ]
+                audio_map = "[aout]"
+            elif narration_path:
+                filters += ["[1:a]volume=1[aout]"]
+                audio_map = "[aout]"
+            elif has_audio and original_volume > 0:
+                if original_volume != 1:
+                    filters += [f"[0:a]volume={original_volume}[aout]"]
+                    audio_map = "[aout]"
+                else:
+                    audio_map = "0:a?"
+            cmd += ["-filter_complex", ";".join(filters), "-map", "[vout]"]
+            if audio_map:
+                cmd += ["-map", audio_map]
+            else:
+                cmd += ["-an"]
+
+            if quality == "high":
+                preset, crf = "veryfast", "21"
+            elif quality == "balanced":
+                preset, crf = "veryfast", "23"
+            else:
+                preset, crf = "ultrafast", "26"
+            cmd += [
+                "-c:v", "libx264", "-preset", preset, "-crf", crf,
+                "-pix_fmt", "yuv420p", "-r", "30",
+            ]
+            if audio_map:
+                cmd += ["-c:a", "aac", "-b:a", "128k"]
+            cmd += ["-movflags", "+faststart", "-shortest", "-progress", "pipe:1", "-nostats", str(out)]
+
+            with render_jobs_lock:
+                render_jobs[job_id].update({"stage": "云端编码成片", "progress": 34, "updated_at": iso()})
+            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+            logs = []
+            for line in proc.stdout or []:
+                line = line.strip()
+                if line:
+                    logs.append(line)
+                    if len(logs) > 80:
+                        logs = logs[-80:]
+                if line.startswith("out_time_ms="):
+                    try:
+                        sec = float(line.split("=", 1)[1]) / 1_000_000.0
+                        pct = 34 + int(min(60, max(0, sec / duration * 60)))
+                        with render_jobs_lock:
+                            if job_id in render_jobs:
+                                render_jobs[job_id].update({"progress": pct, "updated_at": iso()})
+                    except Exception:
+                        pass
+            code = proc.wait()
+            if code != 0 or not out.exists() or out.stat().st_size < 5000:
+                raise RuntimeError("FFMPEG_RENDER_FAILED: " + " | ".join(logs[-12:]))
+
+            with render_jobs_lock:
+                render_jobs[job_id].update({
+                    "status": "ready", "stage": "成片完成", "progress": 100,
+                    "updated_at": iso(), "path": str(out), "size": out.stat().st_size,
+                    "filename": "SAGI_CLOUD_RENDER.mp4", "error": "",
+                })
+        except Exception as e:
+            with render_jobs_lock:
+                if job_id in render_jobs:
+                    render_jobs[job_id].update({
+                        "status": "failed", "stage": "失败", "progress": 0,
+                        "updated_at": iso(), "error": str(e)[:1200],
+                    })
 
 def public_job(job):
     data = {
@@ -348,6 +665,19 @@ def cleanup_loop():
                 job = jobs.pop(job_id, None)
                 if job and job.get("workdir"):
                     shutil.rmtree(job["workdir"], ignore_errors=True)
+        render_remove = []
+        with render_jobs_lock:
+            for job_id, job in render_jobs.items():
+                try:
+                    created = datetime.fromisoformat(job["created_at"])
+                except Exception:
+                    created = now()
+                if created < cutoff:
+                    render_remove.append(job_id)
+            for job_id in render_remove:
+                job = render_jobs.pop(job_id, None)
+                if job and job.get("workdir"):
+                    shutil.rmtree(job["workdir"], ignore_errors=True)
         time.sleep(60)
 
 Thread(target=cleanup_loop, daemon=True).start()
@@ -366,7 +696,7 @@ def health():
         "ok": True,
         "service": "SAGI CLOUD BRIDGE",
         "deployRevision": DEPLOY_REVISION,
-        "version": "1.6.11",
+        "version": "1.6.12",
         "instagram": True,
         "hybridWorker": True,
         "workerOnline": worker_online(),
@@ -375,6 +705,9 @@ def health():
         "captionMedia": True,
         "contextTranslate": True,
         "smartTranslate": True,
+        "aiVoice": True,
+        "cloudRender": True,
+        "elevenLabsConfigured": bool(ELEVENLABS_API_KEY),
         "captionModel": "faster-whisper-tiny-int8",
         "captionMaxSeconds": 180,
         "captionRateLimitPerHour": CAPTION_RATE_LIMIT_PER_HOUR,
@@ -793,6 +1126,174 @@ def translate_context():
         }), 500
 
 
+@app.get("/api/voice/status")
+def voice_status():
+    if not authorized():
+        return jsonify({"ok": False, "error": "Unauthorized"}), 401
+    voices = []
+    error = ""
+    if ELEVENLABS_API_KEY:
+        try:
+            voices = list_eleven_voices()
+        except Exception as e:
+            error = str(e)[:400]
+    return jsonify({
+        "ok": True,
+        "configured": bool(ELEVENLABS_API_KEY),
+        "provider": "ElevenLabs",
+        "model": "eleven_flash_v2_5",
+        "voiceCount": len(voices),
+        "voices": voices[:30],
+        "error": error,
+    })
+
+@app.post("/api/voice/clone")
+def voice_clone():
+    if not authorized():
+        return jsonify({"ok": False, "error": "Unauthorized"}), 401
+    if not ELEVENLABS_API_KEY:
+        return jsonify({"ok": False, "error": "ELEVENLABS_NOT_CONFIGURED"}), 503
+    if str(request.form.get("consent") or "").lower() not in ("1", "true", "yes"):
+        return jsonify({"ok": False, "error": "Voice owner consent required"}), 400
+    sample = request.files.get("sample")
+    if not sample:
+        return jsonify({"ok": False, "error": "Voice sample required"}), 400
+    data = sample.read()
+    if not data:
+        return jsonify({"ok": False, "error": "Empty voice sample"}), 400
+    if len(data) > VOICE_SAMPLE_MAX_MB * 1024 * 1024:
+        return jsonify({"ok": False, "error": f"Voice sample exceeds {VOICE_SAMPLE_MAX_MB}MB"}), 413
+    name = safe_name(request.form.get("name") or "SAGI My Voice")
+    files = {"files": (sample.filename or "voice.m4a", data, sample.mimetype or "audio/mp4")}
+    form = {
+        "name": name,
+        "description": "SAGI mobile voice clone",
+        "remove_background_noise": "false",
+    }
+    try:
+        r = requests.post(ELEVENLABS_BASE + "/v1/voices/add", headers=_eleven_headers(), data=form, files=files, timeout=120)
+        if r.status_code >= 400:
+            return jsonify({"ok": False, "error": "ELEVENLABS_CLONE: " + r.text[:500]}), 502
+        out = r.json() or {}
+        return jsonify({
+            "ok": True,
+            "voice_id": out.get("voice_id") or "",
+            "requires_verification": bool(out.get("requires_verification")),
+            "name": name,
+        })
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)[:700]}), 500
+
+@app.post("/api/voice/preview")
+def voice_preview():
+    if not authorized():
+        return jsonify({"ok": False, "error": "Unauthorized"}), 401
+    data = request.get_json(silent=True) or {}
+    text = str(data.get("text") or "").strip()
+    mode = str(data.get("mode") or "ai_male")
+    voice_id = str(data.get("voice_id") or "").strip()
+    speed = float(data.get("speed") or 1.0)
+    if not text:
+        return jsonify({"ok": False, "error": "Text required"}), 400
+    work = tempfile.mkdtemp(prefix="sagi_voice_preview_")
+    path = Path(work) / "preview.mp3"
+    try:
+        selected = resolve_voice_id(mode, voice_id)
+        synthesize_eleven(text[:500], selected, path, speed)
+        resp = send_file(path, mimetype="audio/mpeg", as_attachment=False)
+        resp.call_on_close(lambda: shutil.rmtree(work, ignore_errors=True))
+        return resp
+    except Exception as e:
+        shutil.rmtree(work, ignore_errors=True)
+        return jsonify({"ok": False, "error": str(e)[:700]}), 500
+
+@app.post("/api/render")
+def create_render_job():
+    if not authorized():
+        return jsonify({"ok": False, "error": "Unauthorized"}), 401
+    upload = request.files.get("media")
+    if not upload:
+        return jsonify({"ok": False, "error": "Media file required"}), 400
+    work = tempfile.mkdtemp(prefix="sagi_render_")
+    suffix = Path(upload.filename or "source.mp4").suffix or ".mp4"
+    source = Path(work) / ("source" + suffix)
+    upload.save(source)
+    size = source.stat().st_size if source.exists() else 0
+    if size <= 0:
+        shutil.rmtree(work, ignore_errors=True)
+        return jsonify({"ok": False, "error": "Empty media"}), 400
+    if size > RENDER_MAX_MB * 1024 * 1024:
+        shutil.rmtree(work, ignore_errors=True)
+        return jsonify({"ok": False, "error": f"Media exceeds {RENDER_MAX_MB}MB"}), 413
+
+    try:
+        captions = json.loads(request.form.get("captions") or "[]")
+        if not isinstance(captions, list):
+            captions = []
+    except Exception:
+        captions = []
+
+    voice_upload = request.files.get("voice_audio")
+    uploaded_voice = ""
+    if voice_upload:
+        vp = Path(work) / ("voice" + (Path(voice_upload.filename or "voice.m4a").suffix or ".m4a"))
+        voice_upload.save(vp)
+        uploaded_voice = str(vp)
+
+    options = {
+        "start": request.form.get("start") or "0",
+        "duration": request.form.get("duration") or "15",
+        "aspect": request.form.get("aspect") or "9:16",
+        "quality": request.form.get("quality") or "fast",
+        "captions": captions[:300],
+        "narration": request.form.get("narration") or "",
+        "voice_mode": request.form.get("voice_mode") or "none",
+        "voice_id": request.form.get("voice_id") or "",
+        "voice_speed": request.form.get("voice_speed") or "1",
+        "original_volume": request.form.get("original_volume") or "0.25",
+        "burn_subtitles": str(request.form.get("burn_subtitles") or "true").lower() in ("1", "true", "yes"),
+        "uploaded_voice": uploaded_voice,
+    }
+    job_id = secrets.token_urlsafe(10)
+    job = {
+        "id": job_id, "status": "queued", "stage": "已上传 · 等待云端",
+        "progress": 8, "created_at": iso(), "updated_at": iso(),
+        "workdir": work, "source": str(source), "path": "",
+        "download_key": secrets.token_urlsafe(18), "filename": "SAGI_CLOUD_RENDER.mp4",
+        "size": 0, "error": "",
+    }
+    with render_jobs_lock:
+        render_jobs[job_id] = job
+    Thread(target=run_cloud_render, args=(job_id, options), daemon=True).start()
+    return jsonify({"ok": True, "job": public_render_job(job)})
+
+@app.get("/api/render-jobs/<job_id>")
+def get_render_job(job_id):
+    if not authorized():
+        return jsonify({"ok": False, "error": "Unauthorized"}), 401
+    with render_jobs_lock:
+        job = render_jobs.get(job_id)
+        if not job:
+            return jsonify({"ok": False, "error": "Render job not found"}), 404
+        return jsonify({"ok": True, "job": public_render_job(job)})
+
+@app.get("/api/render-jobs/<job_id>/file")
+def get_render_file(job_id):
+    key = request.args.get("key") or ""
+    with render_jobs_lock:
+        job = render_jobs.get(job_id)
+        if not job:
+            return jsonify({"ok": False, "error": "Render job not found"}), 404
+        if not key or key != job.get("download_key"):
+            return jsonify({"ok": False, "error": "Invalid download key"}), 403
+        if job.get("status") != "ready" or not job.get("path"):
+            return jsonify({"ok": False, "error": "Render not ready"}), 409
+        path = job["path"]
+    if not Path(path).exists():
+        return jsonify({"ok": False, "error": "Render expired"}), 410
+    return send_file(path, as_attachment=True, download_name="SAGI_CLOUD_RENDER.mp4", conditional=True)
+
+
 @app.post("/api/activate")
 def activate():
     if not origin_allowed():
@@ -804,7 +1305,7 @@ def activate():
         "ok": True,
         "service": "SAGI CLOUD BRIDGE",
         "token": token,
-        "version": "1.6.11",
+        "version": "1.6.12",
     })
 
 def cobalt_base():
