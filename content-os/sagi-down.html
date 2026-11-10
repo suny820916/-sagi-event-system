@@ -99,7 +99,24 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 
 
 
-/* SAGI V3.6 · UNIFIED IMAGE RECREATE */
+
+/* SAGI V3.7 · MATCH INTELLIGENCE HUB */
+.imageFlowNav{position:sticky;top:8px;z-index:20;display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin:10px 0;padding:6px;border:1px solid #314149;border-radius:12px;background:rgba(5,10,12,.94);backdrop-filter:blur(14px)}
+.imageFlowStep{border:1px solid transparent;border-radius:9px;background:transparent;color:#71858c;padding:8px 4px;font-size:7px}.imageFlowStep b{display:block;font-size:9px;color:#a7b2b6;margin-bottom:2px}.imageFlowStep.active{border-color:#d7b568;background:#19160d;color:#d8bd77}.imageFlowStep.active b{color:#f0d48b}
+.imageFlowStatus{display:flex;justify-content:space-between;gap:8px;align-items:center;margin:7px 0 2px;font-size:7px;color:#71858c}.imageFlowStatus strong{color:#d7b568}
+.imageFlowCompact #sdImgAnalyzeOcr{display:none!important}
+.imageFlowCompact .imgNewsList{display:none!important}
+.dataHub{margin-top:9px;border:1px solid #345844;border-radius:12px;background:linear-gradient(180deg,#08130d,#07100b);padding:10px}
+.dataHubHead{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.dataHubHead b{font-size:10px}.dataHubHead span{display:block;font-size:7px;color:#75917d;line-height:1.45;margin-top:3px}
+.dataCompRow{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}.dataComp{border:1px solid #345344;border-radius:99px;background:#07100a;color:#89a492;padding:6px 8px;font-size:7px}.dataComp.active{border-color:#79b68c;color:#bde2c7;background:#0a1910}
+.dataHubGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}.dataHubGrid div{border:1px solid #263b30;border-radius:9px;background:#06100a;padding:7px}.dataHubGrid span{display:block;font-size:7px;color:#6d8875}.dataHubGrid b{display:block;font-size:9px;margin-top:3px}
+.dataMatches{display:grid;gap:5px;margin-top:8px}.dataMatch{display:grid;grid-template-columns:1fr auto 1fr;gap:6px;align-items:center;border:1px solid #26382f;border-radius:9px;background:#08100b;padding:7px;font-size:8px}.dataMatch .away{text-align:right}.dataMatch strong{font-size:11px;color:#e3ca84}.dataMatch small{grid-column:1/-1;color:#627b69;font-size:6px}
+.dataProviderRow{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}.dataProvider{font-size:6px;border:1px solid #2c4437;border-radius:99px;padding:4px 6px;color:#7f9b88}.dataProvider.live{border-color:#4f7a5f;color:#a6d4b4}.dataProvider.off{opacity:.55}
+.dataHubActions{display:grid;grid-template-columns:1.4fr .6fr;gap:6px;margin-top:8px}
+.dataConfidence{margin-top:7px;font-size:7px;color:#718a79;line-height:1.5}
+@media(max-width:520px){.dataHubGrid{grid-template-columns:1fr 1fr}.dataHubActions{grid-template-columns:1fr}.imageFlowNav{top:4px}}
+
+/* SAGI V3.7 · MATCH INTELLIGENCE HUB */
 #imageStudioCard>.imgPresetGrid,
 #imageStudioCard>.imgChipRow,
 #imageStudioCard>.imgAdjustGrid,
@@ -173,7 +190,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 <div class="wrap">
   <div class="top">
     <div class="brand"><b>SAGI DOWN</b><span>DOWNLOAD · IMAGE AI · VIDEO</span></div>
-    <span class="badge">V3.6 · UNIFIED IMAGE RECREATE</span>
+    <span class="badge">V3.7 · MATCH INTELLIGENCE HUB</span>
   </div>
 
   <section class="hero">
@@ -216,7 +233,15 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
     <div class="imageEditHead">
       <div><b>SOURCE REFERENCE · 参考图片</b><span>导入 / 下载图片 → 仅用于分析、提取人物、比分和热点</span></div>
       <span class="badge">REFERENCE ONLY</span>
+    </
+    <div class="imageFlowNav" id="sdImageFlowNav">
+      <button class="imageFlowStep active" data-image-flow="source" type="button"><b>01 参考图</b>导入 / 下载</button>
+      <button class="imageFlowStep" data-image-flow="verify" type="button"><b>02 数据核验</b>热点 / 赛果</button>
+      <button class="imageFlowStep" data-image-flow="create" type="button"><b>03 二次创作</b>人物 / 排版</button>
+      <button class="imageFlowStep" data-image-flow="publish" type="button"><b>04 发布</b>导出 / 文案</button>
     </div>
+    <div class="imageFlowStatus"><span>当前流程：<strong id="sdImageFlowLabel">参考图</strong></span><span id="sdImageFlowHint">导入图片后自动进入数据核验</span></div>
+div>
 
     <div class="imgPick">
       <input id="sdImgFile" type="file" accept="image/*">
@@ -279,6 +304,38 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
       </div>
       <div class="imgIntelProgress"><i id="sdImgAnalyzeProgress"></i></div>
       <div id="sdImgAnalyzeStatus" class="imgIntelStatus">选择图片后点击分析。首次识别画面文字时会加载轻量文字识别组件。</div>
+
+      <div class="dataHub" id="sdDataHub">
+        <div class="dataHubHead">
+          <div><b>MATCH DATA HUB · 五大联赛 + 欧冠</b><span>官方赛事源优先；专业足球 API 交叉验证；公共赛事源补充；OCR 只做最后兜底。</span></div>
+          <span class="badge">V1.0</span>
+        </div>
+        <div class="dataCompRow">
+          <button class="dataComp active" data-data-comp="AUTO" type="button">AUTO</button>
+          <button class="dataComp" data-data-comp="PL" type="button">英超</button>
+          <button class="dataComp" data-data-comp="PD" type="button">西甲</button>
+          <button class="dataComp" data-data-comp="BL1" type="button">德甲</button>
+          <button class="dataComp" data-data-comp="SA" type="button">意甲</button>
+          <button class="dataComp" data-data-comp="FL1" type="button">法甲</button>
+          <button class="dataComp" data-data-comp="CL" type="button">欧冠</button>
+        </div>
+        <div class="dataHubGrid">
+          <div><span>识别球队</span><b id="sdDataTeam">—</b></div>
+          <div><span>数据置信度</span><b id="sdDataConfidence">—</b></div>
+          <div><span>连续状态</span><b id="sdDataStreak">—</b></div>
+          <div><span>已核验比赛</span><b id="sdDataMatchCount">0场</b></div>
+          <div><span>官方命中</span><b id="sdDataOfficial">—</b></div>
+          <div><span>更新时间</span><b id="sdDataUpdated">—</b></div>
+        </div>
+        <div id="sdDataProviders" class="dataProviderRow"></div>
+        <div id="sdDataMatches" class="dataMatches"></div>
+        <div class="dataHubActions">
+          <button class="btn gold" id="sdDataVerifyBtn" type="button">重新核验比赛数据</button>
+          <button class="btn" id="sdDataApplyBtn" type="button">应用到海报</button>
+        </div>
+        <div class="dataConfidence" id="sdDataStatus">导入并分析图片后，自动根据球队核验最近比赛。AUTO 会同时检查五大联赛和欧冠。</div>
+      </div>
+
       <div id="sdImgAnalyzeFacts" class="imgIntelFacts" style="display:none"></div>
       <div id="sdImgAnalyzeOcr" class="imgIntelOcr" style="display:none"><span>画面文字 / OCR</span><p id="sdImgOcrText"></p></div>
       <div id="sdImgAnalyzeSignals" class="imgIntelSignals"></div>
@@ -733,7 +790,7 @@ Unbelievable finish."></textarea>
 
 <script>
 (()=>{'use strict';
-const SAGI_DOWN_BUILD='V3.6.0';
+const SAGI_DOWN_BUILD='V3.7.0';
 document.documentElement.dataset.sagiDownBuild=SAGI_DOWN_BUILD;
 const BTCH_PUBLIC='https://btch-downloader-api-green.vercel.app';
 const DOWNLOAD_ROUTER_VERSION='3.0';
@@ -3427,7 +3484,7 @@ if(q('captionSpeed'))q('captionSpeed').value='fast';
 if(q('captionRange'))q('captionRange').value='trim';
 setTimeout(async()=>{await wakeCaptionCloud();refreshAIVoiceStatus(false)},180);
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=360',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=370',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})}
 })();
 </script>
 </body>
