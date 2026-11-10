@@ -59,11 +59,23 @@ jobs:
               print("TIKWM_HTTP",r.status,"CORS",r.headers.get("access-control-allow-origin",""))
           assert int(tik.get("code", -1)) == 0, tik
           td=tik.get("data") or {}
-          assert td.get("play") or td.get("hdplay") or (td.get("images") or []), td
+          tik_media=td.get("hdplay") or td.get("play") or ((td.get("images") or [None])[0])
+          assert tik_media, td
+          # Verify the actual CDN object, not only the resolver response.
+          req=urllib.request.Request(tik_media,headers={
+              "User-Agent":"Mozilla/5.0","Range":"bytes=0-2047"
+          })
+          with urllib.request.urlopen(req,timeout=25) as r:
+              sample=r.read(2048)
+              ctype=(r.headers.get("content-type") or "").lower()
+              print("TIKWM_MEDIA",r.status,ctype,len(sample))
+          assert len(sample) > 128
           print("TIKWM_OK")
 
-          # FxTwitter: public API, no key.
-          req=urllib.request.Request("https://api.fxtwitter.com/2/status/20",headers={
+          # FxTwitter: use the documented video-post example and verify that its
+          # returned Twitter CDN media is actually readable.
+          fx_id="1548602399862013953"
+          req=urllib.request.Request("https://api.fxtwitter.com/2/status/"+fx_id,headers={
               "Origin":"https://suny820916.github.io",
               "User-Agent":"SAGI-engine-smoke","Accept":"application/json",
           })
@@ -71,6 +83,18 @@ jobs:
               fx=json.loads(r.read().decode())
               print("FX_HTTP",r.status,"CORS",r.headers.get("access-control-allow-origin",""))
           assert int(fx.get("code") or 0) == 200 and isinstance(fx.get("status"),dict), fx
+          media=(fx.get("status") or {}).get("media") or {}
+          videos=media.get("videos") or []
+          assert videos and str(videos[0].get("url") or "").startswith("http"), media
+          fx_media=videos[0]["url"]
+          req=urllib.request.Request(fx_media,headers={
+              "User-Agent":"Mozilla/5.0","Range":"bytes=0-2047"
+          })
+          with urllib.request.urlopen(req,timeout=25) as r:
+              sample=r.read(2048)
+              ctype=(r.headers.get("content-type") or "").lower()
+              print("FX_MEDIA",r.status,ctype,len(sample))
+          assert len(sample) > 128
           print("FXTWITTER_OK")
           PY
 
