@@ -39,6 +39,15 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 
 
 
+
+.voicePanel{margin-top:10px;border:1px solid #324d57;border-radius:13px;padding:10px;background:#081014}
+.voiceGrid{display:grid;grid-template-columns:1.2fr .8fr;gap:8px}.voiceGrid label{font-size:8px;color:#77909a}.voiceGrid select{width:100%;margin-top:4px;border:1px solid #35515d;background:#081014;color:#fff;border-radius:10px;padding:10px;font-size:10px}
+.voiceActions{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:8px}.voiceActions .btn{padding:11px 6px}
+.voiceState{margin-top:8px;font-size:9px;color:#7f9aa5;line-height:1.5}.voicePreview{display:none;width:100%;margin-top:8px;height:34px}.voicePreview.show{display:block}
+.cloudRenderBox{margin-top:10px;border:1px solid #594b2b;border-radius:13px;padding:10px;background:#0f0d08}.cloudRenderBox .heroMini{font-size:11px;font-weight:800;color:#d6b86f}.cloudRenderBox .mini{margin-top:4px;color:#8d8161;font-size:8px;line-height:1.5}
+.cloudRenderActions{display:grid;grid-template-columns:1.5fr 1fr;gap:7px;margin-top:9px}.cloudRenderProgress{height:7px;background:#080909;border:1px solid #4e4328;border-radius:99px;overflow:hidden;margin-top:9px}.cloudRenderProgress i{display:block;width:0;height:100%;background:linear-gradient(90deg,#86703a,#e4bf69);transition:.25s}
+.cloudRenderStatus{margin-top:7px;font-size:9px;color:#aa9560;line-height:1.5}
+@media(max-width:420px){.voiceActions{grid-template-columns:1fr 1fr}.voiceActions .btn:last-child{grid-column:1/-1}.cloudRenderActions{grid-template-columns:1fr}}
 .smartResult{display:none;margin-top:9px;border:1px solid #453d28;border-radius:12px;background:#0b0d0b;padding:10px}.smartResult.show{display:block}
 .smartResultGrid{display:grid;grid-template-columns:1fr 1fr;gap:7px}.smartResult small{display:block;color:#756e59;font-size:8px;margin-bottom:3px}.smartResult b{font-size:10px;line-height:1.45}
 .smartCuts{margin-top:8px;font-size:9px;color:#9b8d65;line-height:1.55}.qualityScore{font-variant-numeric:tabular-nums}
@@ -76,7 +85,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 <div class="wrap">
   <div class="top">
     <div class="brand"><b>SAGI DOWN</b><span>VIDEO LINK SHORTCUT</span></div>
-    <span class="badge">V1.8 · SMART RECREATE</span>
+    <span class="badge">V1.9 · AI VOICE + CLOUD RENDER</span>
   </div>
 
   <section class="hero">
@@ -195,7 +204,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
     <div class="studioStep directorStep" id="oneTapDirector">
       <div class="directorHead">
         <div><b>03 · ONE TAP · 一键再创作</b><span>识别 → 中文 → 解说 → 字幕 → 导出准备</span></div>
-        <span class="badge">V1.8</span>
+        <span class="badge">V1.9</span>
       </div>
       <div class="directorGrid">
         <label>内容模式
@@ -231,7 +240,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
         <div class="smartCuts" id="smartCuts">识别后自动生成。</div>
       </div>
       <div class="directorProgress"><i id="directorProgressBar"></i></div>
-      <div id="directorStatus" class="directorStatus">SMART RECREATE 会先理解整段内容，再做高质量翻译、重点窗口、Hook、标题和解说稿。</div>
+      <div id="directorStatus" class="directorStatus">V1.9：理解内容后自动翻译、找重点、生成Hook与解说；可直接用AI声音/我的克隆声音，并交给云端快速出片。</div>
     </div>
 
     <div class="studioStep aiCaptionStep">
@@ -293,19 +302,57 @@ Unbelievable finish."></textarea>
         <button class="btn gold" id="recordNarrationBtn" type="button">录制我的解说</button>
         <button class="btn" id="stopNarrationBtn" type="button">停止录音</button>
       </div>
-      <div class="voiceMeta" id="voiceMeta">尚未录制解说。导出时可只保留原声。</div>
+      <div class="voicePanel">
+        <div class="voiceGrid">
+          <label>AI配音
+            <select id="aiVoiceMode">
+              <option value="ai_male" selected>AI专业男声</option>
+              <option value="ai_female">AI专业女声</option>
+              <option value="clone">我的克隆声音</option>
+              <option value="recorded">使用我的录音</option>
+              <option value="none">不加解说</option>
+            </select>
+          </label>
+          <label>语速
+            <select id="aiVoiceSpeed">
+              <option value="0.92">沉稳 0.92×</option>
+              <option value="1" selected>自然 1.00×</option>
+              <option value="1.08">短视频 1.08×</option>
+              <option value="1.15">快速 1.15×</option>
+            </select>
+          </label>
+        </div>
+        <div class="voiceActions">
+          <button class="btn blue" id="aiVoicePreviewBtn" type="button">AI配音试听</button>
+          <button class="btn gold" id="cloneVoiceBtn" type="button">用当前录音克隆我的声音</button>
+          <button class="btn" id="aiVoiceStatusBtn" type="button">AI Voice 状态</button>
+        </div>
+        <audio id="aiVoicePreview" class="voicePreview" controls></audio>
+        <div class="voiceState" id="aiVoiceState">AI Voice 检测中。克隆声音前请先录制一段你自己的干净人声。</div>
+      </div>
+      <div class="voiceMeta" id="voiceMeta">尚未录制解说。V1.9 默认可使用云端 AI 配音，不需要手机实时朗读。</div>
     </div>
 
     <div class="studioStep">
-      <div class="studioStepHead"><b>07 · 导出成片</b><span>FFmpeg WASM 本地合成</span></div>
+      <div class="studioStepHead"><b>07 · 导出成片</b><span>云端快速合成优先 · 手机本地备用</span></div>
       <div class="trimGrid">
         <div><label>原声</label><select id="originalAudio"><option value="0.25">25% 保留</option><option value="0.5">50% 保留</option><option value="1">100% 保留</option><option value="0">静音</option></select></div>
         <div><label>字幕</label><select id="burnSubtitle"><option value="yes">烧录到画面</option><option value="no">不烧录</option></select></div>
         <div><label>质量</label><select id="exportQuality"><option value="fast">快速</option><option value="balanced">均衡</option><option value="high">高质量</option></select></div>
       </div>
+      <div class="cloudRenderBox">
+        <div class="heroMini">CLOUD RENDER · 推荐</div>
+        <div class="mini">视频上传一次，云端完成字幕烧录、AI配音、原声混音和H.264编码。默认720×1280快速模式，明显减轻iPhone负担。</div>
+        <div class="cloudRenderActions">
+          <button class="btn gold" id="cloudRenderBtn" type="button">云端快速成片</button>
+          <button class="btn" id="cloudRenderCancelBtn" type="button">停止查询</button>
+        </div>
+        <div class="cloudRenderProgress"><i id="cloudRenderProgress"></i></div>
+        <div class="cloudRenderStatus" id="cloudRenderStatus">等待开始。</div>
+      </div>
       <div class="exportRow">
-        <button class="btn primary" id="exportStudioBtn" type="button">导出手机成片</button>
-        <button class="btn" id="cancelExportBtn" type="button">取消</button>
+        <button class="btn" id="exportStudioBtn" type="button">手机本地导出 · 备用</button>
+        <button class="btn" id="cancelExportBtn" type="button">取消本地导出</button>
       </div>
       <div class="exportProgress"><i id="exportProgressBar"></i></div>
       <div id="studioStatus" class="status">选择视频后即可直接在手机上剪辑。</div>
@@ -489,12 +536,155 @@ const STUDIO={
  translator:null,translatorKey:'',moduleWarm:false,
  cloudCaptionToken:'',cloudCaptionReady:false,cloudCaptionWaking:false,cloudCaptionError:'',cloudHealthVersion:'',cloudVersion:'',cloudHealth:null,
  captionVisibleCount:40,oneTapBusy:false,translationScore:0,recreatePlan:null,
+ cloneVoiceId:localStorage.getItem('sagi_clone_voice_id')||'',aiVoiceReady:false,aiVoiceVoices:[],voicePreviewUrl:'',
+ cloudRenderJobId:'',cloudRenderTimer:null,cloudResultUrl:'',
  pendingTranslateZh:false,
  cloudHealth:null,cloudLastError:''
 };
 
 function studioStatus(t,k=''){const e=q('studioStatus');if(e){e.textContent=t;e.className='status '+k}}
 function setProgress(v){const e=q('exportProgressBar');if(e)e.style.width=Math.max(0,Math.min(100,Number(v)||0))+'%'}
+
+function setCloudRenderProgress(v){const e=q('cloudRenderProgress');if(e)e.style.width=Math.max(0,Math.min(100,Number(v)||0))+'%'}
+function setCloudRenderStatus(t){const e=q('cloudRenderStatus');if(e)e.textContent=t}
+function setVoiceState(t){const e=q('aiVoiceState');if(e)e.textContent=t}
+async function voiceApiReady(){
+ const ready=await wakeCaptionCloud();
+ if(!ready||!STUDIO.cloudCaptionToken)throw new Error('SAGI Cloud 未连接');
+ return true
+}
+async function refreshAIVoiceStatus(showToast=false){
+ try{
+   await voiceApiReady();
+   const r=await fetch(CAPTION_CLOUD+'/api/voice/status',{headers:{Authorization:'Bearer '+STUDIO.cloudCaptionToken},cache:'no-store'});
+   const d=await r.json().catch(()=>({}));
+   if(!r.ok||!d?.ok)throw new Error(d?.error||('HTTP '+r.status));
+   STUDIO.aiVoiceReady=!!d.configured;STUDIO.aiVoiceVoices=d.voices||[];
+   if(d.configured){
+     setVoiceState('AI Voice 已连接 · '+d.voiceCount+' 个可用音色 · '+d.model+(STUDIO.cloneVoiceId?' · 我的克隆声音已保存':''));
+     if(showToast)toast('AI Voice 已连接')
+   }else{
+     setVoiceState('AI Voice 尚未配置 ElevenLabs API Key。录音/手机朗读仍可使用。')
+   }
+   return d
+ }catch(e){
+   STUDIO.aiVoiceReady=false;setVoiceState('AI Voice 不可用：'+(e.message||e));return null
+ }
+}
+async function previewAIVoice(){
+ const text=String(q('narrationText')?.value||'').trim();
+ if(!text){studioStatus('请先生成解说稿。','warn');return}
+ const mode=q('aiVoiceMode')?.value||'ai_male';
+ if(mode==='recorded'){
+   if(!STUDIO.voiceUrl){studioStatus('请先录制你的解说。','warn');return}
+   const a=q('aiVoicePreview');a.src=STUDIO.voiceUrl;a.classList.add('show');a.play().catch(()=>{});return
+ }
+ if(mode==='none'){studioStatus('当前选择“不加解说”。','warn');return}
+ if(mode==='clone'&&!STUDIO.cloneVoiceId){studioStatus('还没有克隆声音，请先录一段自己的声音再克隆。','warn');return}
+ try{
+   await voiceApiReady();setVoiceState('正在生成 AI 配音试听…');
+   const r=await fetch(CAPTION_CLOUD+'/api/voice/preview',{
+     method:'POST',
+     headers:{'Content-Type':'application/json',Authorization:'Bearer '+STUDIO.cloudCaptionToken},
+     body:JSON.stringify({text:text.slice(0,180),mode,voice_id:mode==='clone'?STUDIO.cloneVoiceId:'',speed:Number(q('aiVoiceSpeed')?.value)||1})
+   });
+   if(!r.ok){const d=await r.json().catch(()=>({}));throw new Error(d?.error||('HTTP '+r.status))}
+   const blob=await r.blob();
+   if(STUDIO.voicePreviewUrl)URL.revokeObjectURL(STUDIO.voicePreviewUrl);
+   STUDIO.voicePreviewUrl=URL.createObjectURL(blob);
+   const a=q('aiVoicePreview');a.src=STUDIO.voicePreviewUrl;a.classList.add('show');await a.play().catch(()=>{});
+   setVoiceState('AI配音试听已生成。')
+ }catch(e){setVoiceState('AI配音失败：'+(e.message||e));studioStatus('AI配音失败：'+(e.message||e),'warn')}
+}
+async function cloneMyVoice(){
+ if(!STUDIO.voiceBlob){studioStatus('请先用“录制我的解说”录一段干净人声。','warn');return}
+ if(!confirm('确认这是你自己的声音，或你已获得声音所有者明确授权用于克隆？'))return;
+ try{
+   await voiceApiReady();setVoiceState('正在创建我的声音克隆…');
+   const fd=new FormData();
+   fd.append('sample',STUDIO.voiceBlob,'sagi-my-voice.'+(STUDIO.voiceMime.includes('webm')?'webm':'m4a'));
+   fd.append('name','SAGI My Voice');
+   fd.append('consent','true');
+   const r=await fetch(CAPTION_CLOUD+'/api/voice/clone',{method:'POST',headers:{Authorization:'Bearer '+STUDIO.cloudCaptionToken},body:fd});
+   const d=await r.json().catch(()=>({}));
+   if(!r.ok||!d?.ok||!d.voice_id)throw new Error(d?.error||('HTTP '+r.status));
+   STUDIO.cloneVoiceId=d.voice_id;localStorage.setItem('sagi_clone_voice_id',d.voice_id);
+   q('aiVoiceMode').value='clone';
+   setVoiceState('我的声音克隆已创建 · '+(d.requires_verification?'需要在 ElevenLabs 完成验证':'可以直接使用'));
+   toast('我的声音已保存')
+ }catch(e){setVoiceState('声音克隆失败：'+(e.message||e));studioStatus('声音克隆失败：'+(e.message||e),'warn')}
+}
+function cloudRenderCaptions(){
+ return captionTimeline().map(c=>({start:Number(c.start)||0,end:Number(c.end)||0,text:String(c.text||'')}));
+}
+async function startCloudRender(){
+ if(!STUDIO.file){studioStatus('请先选择视频。','warn');return}
+ if(STUDIO.cloudRenderJobId){setCloudRenderStatus('已有云端任务正在处理。');return}
+ const [start,end,duration]=studioRange();
+ const mode=q('aiVoiceMode')?.value||'none';
+ if(mode==='clone'&&!STUDIO.cloneVoiceId){studioStatus('请选择AI男声/女声，或先创建你的声音克隆。','warn');return}
+ if(mode==='recorded'&&!STUDIO.voiceBlob){studioStatus('当前选择“使用我的录音”，请先录音。','warn');return}
+ if((mode==='ai_male'||mode==='ai_female'||mode==='clone')&&!String(q('narrationText')?.value||'').trim()){
+   studioStatus('AI配音需要解说稿，请先生成解说稿。','warn');return
+ }
+ try{
+   await voiceApiReady();
+   const fd=new FormData();
+   fd.append('media',STUDIO.file,STUDIO.file.name||'video.mp4');
+   fd.append('start',String(start));fd.append('duration',String(duration));
+   fd.append('aspect',q('studioAspect')?.value||'9:16');
+   fd.append('quality',q('exportQuality')?.value||'fast');
+   fd.append('captions',JSON.stringify(cloudRenderCaptions()));
+   fd.append('narration',String(q('narrationText')?.value||''));
+   fd.append('voice_mode',mode);
+   fd.append('voice_id',mode==='clone'?STUDIO.cloneVoiceId:'');
+   fd.append('voice_speed',q('aiVoiceSpeed')?.value||'1');
+   fd.append('original_volume',q('originalAudio')?.value||'0.25');
+   fd.append('burn_subtitles',(q('burnSubtitle')?.value||'yes')==='yes'?'true':'false');
+   if(mode==='recorded'&&STUDIO.voiceBlob)fd.append('voice_audio',STUDIO.voiceBlob,'voice.'+(STUDIO.voiceMime.includes('webm')?'webm':'m4a'));
+
+   setCloudRenderProgress(3);setCloudRenderStatus('正在上传视频到 SAGI Cloud…');
+   const xhr=new XMLHttpRequest();
+   xhr.open('POST',CAPTION_CLOUD+'/api/render');
+   xhr.setRequestHeader('Authorization','Bearer '+STUDIO.cloudCaptionToken);
+   xhr.timeout=240000;
+   xhr.upload.onprogress=e=>{if(e.lengthComputable){const p=Math.round(e.loaded/e.total*100);setCloudRenderProgress(Math.min(28,p*.28));setCloudRenderStatus('上传视频 '+p+'%')}};
+   xhr.onload=()=>{
+     let d={};try{d=JSON.parse(xhr.responseText||'{}')}catch(e){}
+     if(xhr.status<200||xhr.status>=300||!d?.ok||!d?.job?.id){setCloudRenderProgress(0);setCloudRenderStatus('提交失败：'+(d?.error||xhr.status));return}
+     STUDIO.cloudRenderJobId=d.job.id;setCloudRenderStatus('云端任务已创建 · '+(d.job.stage||'处理中'));pollCloudRender()
+   };
+   xhr.onerror=()=>{setCloudRenderProgress(0);setCloudRenderStatus('上传失败，请检查网络。')};
+   xhr.ontimeout=()=>{setCloudRenderProgress(0);setCloudRenderStatus('上传超时。')};
+   xhr.send(fd)
+ }catch(e){setCloudRenderProgress(0);setCloudRenderStatus('云端出片失败：'+(e.message||e))}
+}
+async function pollCloudRender(){
+ if(!STUDIO.cloudRenderJobId)return;
+ try{
+   const r=await fetch(CAPTION_CLOUD+'/api/render-jobs/'+encodeURIComponent(STUDIO.cloudRenderJobId),{headers:{Authorization:'Bearer '+STUDIO.cloudCaptionToken},cache:'no-store'});
+   const d=await r.json().catch(()=>({}));
+   if(!r.ok||!d?.ok)throw new Error(d?.error||('HTTP '+r.status));
+   const j=d.job||{};setCloudRenderProgress(j.progress||0);setCloudRenderStatus((j.stage||j.status||'处理中')+(j.progress?' · '+j.progress+'%':''));
+   if(j.status==='ready'&&j.downloadUrl){
+     STUDIO.cloudResultUrl=j.downloadUrl;STUDIO.cloudRenderJobId='';
+     q('resultVideo').src=j.downloadUrl;q('resultVideo').classList.add('show');
+     q('saveResultBtn').href=j.downloadUrl;q('saveResultBtn').download='SAGI_CLOUD_RENDER.mp4';q('resultActions').classList.add('show');
+     setCloudRenderProgress(100);setCloudRenderStatus('云端成片完成 · 可以直接保存或分享。');toast('云端成片完成');return
+   }
+   if(j.status==='failed'){
+     STUDIO.cloudRenderJobId='';setCloudRenderProgress(0);setCloudRenderStatus('云端出片失败：'+(j.error||'未知错误'));return
+   }
+   clearTimeout(STUDIO.cloudRenderTimer);STUDIO.cloudRenderTimer=setTimeout(pollCloudRender,1600)
+ }catch(e){
+   setCloudRenderStatus('查询云端进度失败：'+(e.message||e));
+   clearTimeout(STUDIO.cloudRenderTimer);STUDIO.cloudRenderTimer=setTimeout(pollCloudRender,3000)
+ }
+}
+function stopCloudRenderPolling(){
+ clearTimeout(STUDIO.cloudRenderTimer);STUDIO.cloudRenderTimer=null;
+ if(STUDIO.cloudRenderJobId)setCloudRenderStatus('已停止查询。云端任务可能仍在继续。')
+}
 function renderCapabilities(){
  const e=q('studioCapabilities');if(!e)return;
  const items=[
@@ -1344,6 +1534,7 @@ async function runOneTapRecreate(){
    const mode=q('directorMode')?.value||'faithful',range=q('directorRange')?.value||'trim';
    q('translationMode').value=mode==='viral'?'football':mode;q('subtitleTargetLang').value='zh-CN';
    q('burnSubtitle').value='yes';q('studioAspect').value='9:16';q('originalAudio').value=mode==='viral'?'0.5':'0.25';
+   if(q('aiVoiceMode')&&q('aiVoiceMode').value==='none')q('aiVoiceMode').value='ai_male';
 
    // 智能15/30秒需要先理解整段，再决定最值得剪的位置。
    q('captionRange').value=(range==='smart15'||range==='smart30'||range==='full')?'full':'trim';
@@ -1371,9 +1562,9 @@ async function runOneTapRecreate(){
    q('voiceMeta').textContent='SMART RECREATE 已生成解说稿。可试听、录你的声音，或直接保留原声。';
 
    if(q('directorFinish').value==='export'){
-     setDirectorStatus('④ 正在自动导出9:16成片…');setDirectorProgress(94);
-     await exportStudio();if(!STUDIO.resultBlob)throw new Error('自动导出没有生成成片');
-     setDirectorStatus('完成 · SMART RECREATE 成片已生成。');setDirectorProgress(100)
+     setDirectorStatus('④ 正在提交云端快速成片…');setDirectorProgress(94);
+     await startCloudRender();
+     setDirectorStatus('云端成片任务已提交 · 可继续留在页面查看进度。');setDirectorProgress(100)
    }else{
      setDirectorStatus('完成 · 建议检查 Hook / 翻译 / 解说稿，然后导出成片。');setDirectorProgress(100);
      q('smartResult')?.scrollIntoView({behavior:'smooth',block:'center'})
@@ -1651,12 +1842,18 @@ function cancelExport(){
  if(STUDIO.exporting&&STUDIO.ffmpeg){try{STUDIO.ffmpeg.terminate()}catch(e){}STUDIO.ffmpeg=null;STUDIO.ffmpegLoaded=false;STUDIO.exporting=false;setProgress(0);q('exportStudioBtn').disabled=false;studioStatus('已取消导出。')}
 }
 async function shareResult(){
- if(!STUDIO.resultBlob)return;
- const file=new File([STUDIO.resultBlob],'SAGI_MOBILE_EDIT.mp4',{type:'video/mp4'});
- try{if(navigator.canShare?.({files:[file]}))await navigator.share({files:[file],title:'SAGI MOBILE EDIT'});else await navigator.share({title:'SAGI MOBILE EDIT',url:STUDIO.resultUrl})}
- catch(e){if(e.name!=='AbortError')studioStatus('无法直接分享，请点“保存成片”。','warn')}
+ try{
+   let blob=STUDIO.resultBlob;
+   if(!blob&&STUDIO.cloudResultUrl){
+     const r=await fetch(STUDIO.cloudResultUrl);if(!r.ok)throw new Error('云端成片读取失败 '+r.status);blob=await r.blob()
+   }
+   if(!blob){studioStatus('还没有可分享的成片。','warn');return}
+   const file=new File([blob],'SAGI_VIDEO.mp4',{type:'video/mp4'});
+   if(navigator.canShare?.({files:[file]}))await navigator.share({files:[file],title:'SAGI VIDEO'});
+   else if(STUDIO.cloudResultUrl)window.open(STUDIO.cloudResultUrl,'_blank');
+   else await navigator.share({title:'SAGI VIDEO',url:STUDIO.resultUrl})
+ }catch(e){if(e.name!=='AbortError')studioStatus('无法直接分享：'+(e.message||e),'warn')}
 }
-
 q('pasteBtn').onclick=paste;
 q('clearBtn').onclick=clearInput;
 q('downloadBtn').onclick=download;
@@ -1686,6 +1883,11 @@ q('downloadSrtBtn').onclick=downloadSrt;
 q('localCaptionBtn').onclick=runLocalCaption;
 q('cloudTestBtn').onclick=runCloudSelfTest;
 q('captionToNarrationBtn').onclick=captionToNarration;
+q('aiVoicePreviewBtn').onclick=previewAIVoice;
+q('cloneVoiceBtn').onclick=cloneMyVoice;
+q('aiVoiceStatusBtn').onclick=()=>refreshAIVoiceStatus(true);
+q('cloudRenderBtn').onclick=startCloudRender;
+q('cloudRenderCancelBtn').onclick=stopCloudRenderPolling;
 q('translateSubtitleBtn').onclick=translateSubtitles;
 q('speakNarrationBtn').onclick=speakNarration;
 q('recordNarrationBtn').onclick=startVoiceRecord;
@@ -1697,9 +1899,9 @@ input.addEventListener('input',updateDetect);
 renderHistory();updateDetect();renderRecreatePreset();renderCapabilities();
 if(q('captionSpeed'))q('captionSpeed').value='fast';
 if(q('captionRange'))q('captionRange').value='trim';
-setTimeout(()=>wakeCaptionCloud(),180);
+setTimeout(async()=>{await wakeCaptionCloud();refreshAIVoiceStatus(false)},180);
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=180',{updateViaCache:'none'}).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=190',{updateViaCache:'none'}).catch(()=>{})}
 })();
 </script>
 </body>
