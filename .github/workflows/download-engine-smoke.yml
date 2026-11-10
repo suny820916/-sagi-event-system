@@ -1,0 +1,87 @@
+name: SAGI Download Engine Smoke
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "sagi-cloud-bridge/**"
+      - "content-os/sagi-down.html"
+      - ".github/workflows/download-engine-smoke.yml"
+  workflow_dispatch:
+
+jobs:
+  download-engines:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Verify public platform engines
+        run: |
+          python - <<'PY'
+          import json, urllib.request, urllib.parse, urllib.error
+
+          # BTCH: opportunistic only. Basic HTTP/CORS should work; deep upstream
+          # degradation is recorded but does not fail the release.
+          btch="https://btch-downloader-api-green.vercel.app"
+          req=urllib.request.Request(btch+"/api/health",headers={
+              "Origin":"https://suny820916.github.io","User-Agent":"SAGI-engine-smoke"
+          })
+          with urllib.request.urlopen(req,timeout=20) as r:
+              body=json.loads(r.read().decode())
+              cors=r.headers.get("access-control-allow-origin","")
+              assert r.status == 200 and body.get("success") is True
+              assert cors in ("*","https://suny820916.github.io")
+          try:
+              req=urllib.request.Request(btch+"/api/health?deep=1",headers={"User-Agent":"SAGI-engine-smoke"})
+              with urllib.request.urlopen(req,timeout=20) as r:
+                  deep=json.loads(r.read().decode())
+              print("BTCH_DEEP",deep)
+          except urllib.error.HTTPError as e:
+              print("BTCH_DEGRADED",e.code)
+              assert e.code in (429,500,502,503,504)
+
+          # TikWM: real public TikTok resolver.
+          tik_url="https://www.tiktok.com/@scout2015/video/6718335390845095173"
+          data=urllib.parse.urlencode({"url":tik_url}).encode()
+          req=urllib.request.Request("https://www.tikwm.com/api/",data=data,headers={
+              "Origin":"https://suny820916.github.io",
+              "User-Agent":"SAGI-engine-smoke",
+              "Content-Type":"application/x-www-form-urlencoded",
+              "Accept":"application/json",
+          },method="POST")
+          with urllib.request.urlopen(req,timeout=35) as r:
+              tik=json.loads(r.read().decode())
+              print("TIKWM_HTTP",r.status,"CORS",r.headers.get("access-control-allow-origin",""))
+          assert int(tik.get("code") or -1) == 0, tik
+          td=tik.get("data") or {}
+          assert td.get("play") or td.get("hdplay") or (td.get("images") or []), td
+          print("TIKWM_OK")
+
+          # FxTwitter: public API, no key.
+          req=urllib.request.Request("https://api.fxtwitter.com/2/status/20",headers={
+              "Origin":"https://suny820916.github.io",
+              "User-Agent":"SAGI-engine-smoke","Accept":"application/json",
+          })
+          with urllib.request.urlopen(req,timeout=20) as r:
+              fx=json.loads(r.read().decode())
+              print("FX_HTTP",r.status,"CORS",r.headers.get("access-control-allow-origin",""))
+          assert int(fx.get("code") or 0) == 200 and isinstance(fx.get("status"),dict), fx
+          print("FXTWITTER_OK")
+          PY
+
+      - name: Verify router source order
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s=Path("sagi-cloud-bridge/app.py").read_text(encoding="utf-8")
+          assert '"instagram": ["parth-dl", "btch"]' in s
+          assert '"tiktok": ["tikwm", "btch"]' in s
+          assert '"twitter": ["fxtwitter", "btch"]' in s
+          assert 'platform == "youtube"' in s and 'run_router_engine(job_id, "btch"' in s
+          print("ROUTER_ORDER_OK")
+          PY
