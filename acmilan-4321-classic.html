@@ -65,7 +65,7 @@ body{padding:12px 10px 30px;background:radial-gradient(circle at 50% 0%,rgba(157
   <button id="playAll" class="control primary">▶ 连续播放 + 中文解说</button>
   <button id="speak" class="control">🔊 解说当前段</button>
   <button id="replay" class="control">↻ 重播当前</button>
-  <button id="back" class="control">← 返回4321</button>
+  <button id="go3d" class="control">3D版本 →</button>\n  <button id="back" class="control">← 返回4321</button>
 </div>
 <div class="subBox"><div class="subTitle">中文解说</div><div id="subtitle" class="subText"></div></div>
 <div id="status" class="status">以2007欧冠冠军阶段的经典人员结构演示</div>
@@ -97,7 +97,7 @@ function show(scene){reset();current=scene;const m=meta[scene];p('badge').innerH
 function speak(scene){if(!('speechSynthesis'in window)){p('status').textContent='当前浏览器不支持系统中文语音';return}speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(meta[scene].text);u.lang='zh-CN';u.rate=1.04;u.pitch=1;const v=speechSynthesis.getVoices().find(v=>/^zh(-|_)/i.test(v.lang));if(v)u.voice=v;speechSynthesis.speak(u)}
 function playScene(s,voice){show(s);if(voice)later(()=>speak(s),260)}
 function playAll(){clear();playing=true;p('playAll').textContent='■ 停止播放';p('status').textContent='正在播放：安切洛蒂AC米兰经典4-3-2-1';const seq=['shape','pirlo','shield','kaka','finish'];let i=0;function next(){if(!playing)return;playScene(seq[i],true);i++;if(i<seq.length)timers.push(setTimeout(next,5200));else timers.push(setTimeout(()=>{playing=false;p('playAll').textContent='▶ 连续播放 + 中文解说';p('status').textContent='经典逻辑：皮尔洛掌控 · 两侧保护 · 卡卡推进 · 因扎吉终结'},5200))}next()}
-$$('.sceneBtn').forEach(b=>b.addEventListener('click',()=>{playing=false;p('playAll').textContent='▶ 连续播放 + 中文解说';playScene(b.dataset.scene,false)}));p('speak').addEventListener('click',()=>speak(current));p('replay').addEventListener('click',()=>show(current));p('playAll').addEventListener('click',()=>{if(playing){playing=false;clear();p('playAll').textContent='▶ 连续播放 + 中文解说';p('status').textContent='已停止'}else playAll()});p('back').addEventListener('click',()=>location.href='formation-4321.html');show('shape');
+$$('.sceneBtn').forEach(b=>b.addEventListener('click',()=>{playing=false;p('playAll').textContent='▶ 连续播放 + 中文解说';playScene(b.dataset.scene,false)}));p('speak').addEventListener('click',()=>speak(current));p('replay').addEventListener('click',()=>show(current));p('playAll').addEventListener('click',()=>{if(playing){playing=false;clear();p('playAll').textContent='▶ 连续播放 + 中文解说';p('status').textContent='已停止'}else playAll()});p('go3d').addEventListener('click',()=>location.href='acmilan-4321-3d.html');p('back').addEventListener('click',()=>location.href='formation-4321.html');show('shape');
 })();
 </script>
 </body>
