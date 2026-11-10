@@ -174,7 +174,7 @@ jobs:
           c = mod.app.test_client()
           health = c.get("/health").get_json()
           print("health", health)
-          assert health["version"] == "1.7.2"
+          assert health["version"] == "1.7.3"
           assert health["captionMedia"] is True
           assert health["contextTranslate"] is True
           assert health["smartTranslate"] is True
@@ -182,8 +182,8 @@ jobs:
           assert health["cloudRender"] is True
           assert health["cloudDownload"] is True
           assert set(health["downloadPlatforms"]) >= {"Instagram","YouTube","TikTok","X"}
-          assert health["instagramPostFallback"] == "gallery-dl"
-          assert "carousel-zip" in health["downloadMediaKinds"]
+          assert health["instagramPostFallback"] == "html-fast -> gallery-dl-short"
+          assert "carousel-zip" in health["downloadMediaKinds"]\n          assert health["galleryFallbackTimeoutSeconds"] == 25
 
           token = mod.client_token()
           headers = {"Authorization": "Bearer " + token, "Origin": "https://suny820916.github.io"}
@@ -209,6 +209,19 @@ jobs:
               print("SAGI Cloud Download API smoke OK")
           finally:
               mod.Thread = original_thread
+
+          # Fast Instagram page parser must extract public media without waiting
+          # on a 150-second gallery subprocess.
+          sample_html = '''
+          <meta property="og:image" content="https://scontent.cdninstagram.com/v/t51/sample1.jpg?x=1">
+          <script>{"display_url":"https:\\/\\/scontent.cdninstagram.com\\/v\\/t51\\/sample2.jpg?x=2","video_url":"https:\\/\\/scontent.cdninstagram.com\\/v\\/t50\\/clip.mp4?x=3"}</script>
+          '''
+          media = mod._extract_instagram_media_urls(sample_html)
+          assert any(k=="image" and "sample1.jpg" in u for k,u in media), media
+          assert any(k=="image" and "sample2.jpg" in u for k,u in media), media
+          assert any(k=="video" and "clip.mp4" in u for k,u in media), media
+          assert mod._instagram_shortcode("https://www.instagram.com/p/ABC_123/?foo=1") == "ABC_123"
+          print("Instagram fast HTML parser smoke OK", len(media))
 
           # Instagram /p/ posts that contain no video must switch to gallery-dl
           # instead of surfacing yt-dlp's "There is no video in this post".
