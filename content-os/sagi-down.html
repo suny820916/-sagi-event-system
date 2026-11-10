@@ -100,6 +100,27 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 
 
 
+
+#imageStudioCard[data-flow="source"] #sdImgIntel,
+#imageStudioCard[data-flow="source"] #sdOriginalPoster{display:none!important}
+#imageStudioCard[data-flow="verify"]>.imgPick,
+#imageStudioCard[data-flow="verify"]>.imgCanvasWrap,
+#imageStudioCard[data-flow="verify"]>.imgCanvasMeta,
+#imageStudioCard[data-flow="verify"]>.referenceOnlyBar,
+#imageStudioCard[data-flow="verify"] #sdOriginalPoster{display:none!important}
+#imageStudioCard[data-flow="create"]>.imgPick,
+#imageStudioCard[data-flow="create"]>.imgCanvasWrap,
+#imageStudioCard[data-flow="create"]>.imgCanvasMeta,
+#imageStudioCard[data-flow="create"]>.referenceOnlyBar,
+#imageStudioCard[data-flow="create"] #sdImgIntel{display:none!important}
+#imageStudioCard[data-flow="publish"]>.imgPick,
+#imageStudioCard[data-flow="publish"]>.imgCanvasWrap,
+#imageStudioCard[data-flow="publish"]>.imgCanvasMeta,
+#imageStudioCard[data-flow="publish"]>.referenceOnlyBar,
+#imageStudioCard[data-flow="publish"] #sdImgIntel{display:none!important}
+#imageStudioCard[data-flow="publish"] #sdOriginalPoster> :not(.origHead):not(.imgPublish){display:none!important}
+#imageStudioCard[data-flow="publish"] #sdOriginalPoster .imgPublish{display:block!important}
+
 /* SAGI V3.7 · MATCH INTELLIGENCE HUB */
 .imageFlowNav{position:sticky;top:8px;z-index:20;display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin:10px 0;padding:6px;border:1px solid #314149;border-radius:12px;background:rgba(5,10,12,.94);backdrop-filter:blur(14px)}
 .imageFlowStep{border:1px solid transparent;border-radius:9px;background:transparent;color:#71858c;padding:8px 4px;font-size:7px}.imageFlowStep b{display:block;font-size:9px;color:#a7b2b6;margin-bottom:2px}.imageFlowStep.active{border-color:#d7b568;background:#19160d;color:#d8bd77}.imageFlowStep.active b{color:#f0d48b}
@@ -2721,7 +2742,7 @@ function sdImgTemplate(name){
 }
 function sdImgLoad(file){
   if(!file)return;if(SDIMG_URL)URL.revokeObjectURL(SDIMG_URL);SDIMG_URL=URL.createObjectURL(file);const im=new Image();
-  im.onload=()=>{SDIMG_IMAGE=im;SDIMG.sourceName=file.name;SDIMG.panX=0;SDIMG.panY=0;SDIMG.zoom=100;SDIMG.rotate=0;sdImgSave();sdImgSync();if(typeof sdIntelClear==='function')sdIntelClear();toast('图片已载入 · 正在自动分析热点');if(typeof sdIntelAnalyze==='function')setTimeout(()=>sdIntelAnalyze(),260)};
+  im.onload=()=>{SDIMG_IMAGE=im;SDIMG.sourceName=file.name;SDIMG.panX=0;SDIMG.panY=0;SDIMG.zoom=100;SDIMG.rotate=0;sdImgSave();sdImgSync();if(typeof sdIntelClear==='function')sdIntelClear();if(typeof sdFlowSet==='function')sdFlowSet('verify',true);toast('图片已载入 · 正在自动分析并核验比赛数据');if(typeof sdIntelAnalyze==='function')setTimeout(()=>sdIntelAnalyze(),260)};
   im.onerror=()=>toast('图片读取失败');im.src=SDIMG_URL
 }
 function sdImgBlob(){if(typeof SDORIG!=='undefined'&&SDORIG.generatedAt&&typeof sdOrigBlob==='function')return sdOrigBlob();return new Promise(resolve=>sdImgCanvas().toBlob(resolve,'image/png',.96))}
@@ -3092,12 +3113,139 @@ async function sdIntelAnalyze(){
     sdIntelProgress(86,'正在把“事实”转成抖音选题，而不是只堆关键词…');
     const angles=sdIntelMakeAngles(bundle.post,keywords,lookup.items,visual,faces,signals,score,meta);
     SDINTEL={ocr:bundle.post,sourceOcr:bundle.source,keywords,scores:evidenceScores,source,score,faces,visual,news:lookup.items,signals,angles,evidenceText:verificationText,verifiedStreak,official,mode:bundle.mode,location,analyzedAt:Date.now(),sourceName:SDIMG.sourceName};
-    sdIntelSave();if(typeof SDORIG!=='undefined'){SDORIG.activeForPublish=false;SDORIG.generatedAt=0;if((official.scoreRows||[]).length)SDORIG.scoreText=sdIntelOfficialScoreText(official.scoreRows);else if(!String(SDORIG.scoreText||'').trim())SDORIG.scoreText=sdOrigAutoScoreText?.()||'';const coach=sdOrigCoachName?.();if(coach&&!String(SDORIG.person||'').trim()){SDORIG.person=coach+' · 主教练';SDORIG.role=SDORIG.person}sdOrigSave?.();sdOrigRender?.()}sdIntelProgress(100,verifiedStreak?('分析完成 · 已按最新证据校准 '+verifiedStreak+'连胜 · 已生成3套抖音打法'):(scores.length>=3?('分析完成 · 已识别 '+scores.length+'组比分 · 正在按走势制造话题'):'分析完成 · 已按图片主体生成抖音选题'));sdIntelRender();toast('图片深度分析完成')
+    sdIntelSave();if(typeof SDORIG!=='undefined'){SDORIG.activeForPublish=false;SDORIG.generatedAt=0;if((official.scoreRows||[]).length)SDORIG.scoreText=sdIntelOfficialScoreText(official.scoreRows);else if(!String(SDORIG.scoreText||'').trim())SDORIG.scoreText=sdOrigAutoScoreText?.()||'';const coach=sdOrigCoachName?.();if(coach&&!String(SDORIG.person||'').trim()){SDORIG.person=coach+' · 主教练';SDORIG.role=SDORIG.person}sdOrigSave?.();sdOrigRender?.()}sdIntelProgress(94,'图片分析完成 · 正在进入结构化比赛数据核验…');sdIntelRender();if(typeof sdDataVerify==='function')await sdDataVerify(true);sdIntelProgress(100,'分析 + 比赛数据核验完成 · 可以进入二次创作');if(typeof sdFlowSet==='function')sdFlowSet('create',false);toast('图片分析与比赛数据核验完成')
   }catch(e){console.error(e);sdIntelProgress(0,'分析失败：'+(e?.message||'未知错误'));toast('图片分析失败')}
   finally{SDINTEL_RUNNING=false;q('sdImgAnalyzeBtn').disabled=false}
 }
 q('sdImgAnalyzeBtn').onclick=sdIntelAnalyze;q('sdImgAnalyzeClearBtn').onclick=sdIntelClear;sdIntelRender();
 /* ===== END IMAGE INTELLIGENCE ===== */
+
+
+/* ===== SAGI MATCH DATA HUB V1.0 ===== */
+const SDDATA_KEY='sagi_down_match_data_hub_v1';
+let SDDATA={competition:'AUTO',team:'',matches:[],officialHits:0,providers:{},confidence:0,streak:0,updatedAt:'',status:'idle'};
+try{SDDATA={...SDDATA,...JSON.parse(localStorage.getItem(SDDATA_KEY)||'{}')}}catch(e){}
+function sdDataSave(){try{localStorage.setItem(SDDATA_KEY,JSON.stringify(SDDATA))}catch(e){}}
+function sdDataNorm(v){return String(v||'').toLowerCase().replace(/[^a-z0-9\u3400-\u9fff]+/g,'')}
+function sdDataCanonicalTeam(v){
+  const raw=String(v||'').trim(),map={
+    '皇马':'realmadrid','皇家马德里':'realmadrid','Real Madrid':'realmadrid',
+    '巴萨':'barcelona','巴塞罗那':'barcelona','Barcelona':'barcelona',
+    '曼城':'manchestercity','Manchester City':'manchestercity',
+    '曼联':'manchesterunited','Manchester United':'manchesterunited',
+    '利物浦':'liverpool','Liverpool':'liverpool',
+    '阿森纳':'arsenal','Arsenal':'arsenal',
+    '切尔西':'chelsea','Chelsea':'chelsea',
+    '拜仁':'bayernmunich','Bayern Munich':'bayernmunich',
+    '巴黎':'parissaintgermain','巴黎圣日耳曼':'parissaintgermain','PSG':'parissaintgermain',
+    '国际米兰':'intermilan','国米':'intermilan','Inter Milan':'intermilan',
+    'AC米兰':'acmilan','AC Milan':'acmilan'
+  };
+  return map[raw]||sdDataNorm(raw)
+}
+function sdDataTeamSide(team,name){
+  const a=sdDataCanonicalTeam(team),b=sdDataCanonicalTeam(name);
+  return !!a&&!!b&&(a===b||a.includes(b)||b.includes(a))
+}
+function sdDataWinStreak(team,matches){
+  let streak=0;
+  for(const m of (matches||[])){
+    const home=sdDataTeamSide(team,m.home),away=sdDataTeamSide(team,m.away);
+    if(!home&&!away)continue;
+    const hs=Number(m.homeScore),as=Number(m.awayScore);
+    const win=(home&&hs>as)||(away&&as>hs);
+    if(win)streak++;else break
+  }
+  return streak
+}
+function sdDataScoreText(matches){
+  return (matches||[]).slice().reverse().map(m=>(m.home||'主队')+' '+m.homeScore+'-'+m.awayScore+' '+(m.away||'客队')).join('\n')
+}
+function sdDataCompetitionLabel(code){
+  return({AUTO:'AUTO',PL:'英超',PD:'西甲',BL1:'德甲',SA:'意甲',FL1:'法甲',CL:'欧冠',FAC:'足总杯',CDR:'国王杯',DFB:'德国杯',CI:'意大利杯',CDF:'法国杯'})[code]||code
+}
+function sdDataRender(){
+  if(!q('sdDataHub'))return;
+  document.querySelectorAll('[data-data-comp]').forEach(b=>b.classList.toggle('active',b.dataset.dataComp===SDDATA.competition));
+  q('sdDataTeam').textContent=SDDATA.team||'—';
+  q('sdDataConfidence').textContent=SDDATA.confidence?SDDATA.confidence+'/100':'—';
+  q('sdDataStreak').textContent=SDDATA.streak?SDDATA.streak+'连胜':'—';
+  q('sdDataMatchCount').textContent=(SDDATA.matches||[]).length+'场';
+  q('sdDataOfficial').textContent=SDDATA.officialHits?('命中 '+SDDATA.officialHits+' 条'):'待核验';
+  q('sdDataUpdated').textContent=SDDATA.updatedAt?new Date(SDDATA.updatedAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}):'—';
+  const p=SDDATA.providers||{},active=p.active||[];
+  const providerDefs=[
+    ['官方赛事源','official competition websites',true],
+    ['football-data','football-data.org',!!p.footballDataConfigured],
+    ['API-Football','API-Football',!!p.apiFootballConfigured],
+    ['ESPN Feed','ESPN public feed',true],
+    ['Sportmonks','Sportmonks',!!p.sportmonksConfigured]
+  ];
+  q('sdDataProviders').innerHTML=providerDefs.map(([label,key,on])=>'<span class="dataProvider '+(active.includes(key)||on?'live':'off')+'">'+label+(active.includes(key)?' ✓':'')+'</span>').join('');
+  q('sdDataMatches').innerHTML=(SDDATA.matches||[]).slice(0,8).map(m=>'<div class="dataMatch"><span>'+escapeHtml(m.home)+'</span><strong>'+m.homeScore+'-'+m.awayScore+'</strong><span class="away">'+escapeHtml(m.away)+'</span><small>'+escapeHtml(sdDataCompetitionLabel(m.competition))+' · '+escapeHtml((m.providers||[m.provider]).join(' + '))+' · 可信度 '+(m.confidence||72)+'</small></div>').join('')||'<div class="mini">暂无结构化赛果。</div>';
+}
+function sdDataRebuildIntel(){
+  if(!(SDDATA.matches||[]).length)return;
+  const matches=SDDATA.matches.slice(0,12),scores=matches.map(m=>m.homeScore+':'+m.awayScore),verifiedStreak=SDDATA.streak||0;
+  SDINTEL.scores=scores;SDINTEL.verifiedStreak=verifiedStreak;
+  SDINTEL.official={...(SDINTEL.official||{}),verified:SDDATA.officialHits>0,source:'MATCH DATA HUB · 官方赛事源优先',latest:matches[0]?(matches[0].home+' '+matches[0].homeScore+'-'+matches[0].awayScore+' '+matches[0].away):'',scoreRows:matches.map(m=>({left:m.home,score:m.homeScore+'-'+m.awayScore,right:m.away,official:SDDATA.officialHits>0}))};
+  const meta={mode:SDINTEL.mode,source:SDINTEL.source,location:SDINTEL.location,scores,evidenceText:SDINTEL.evidenceText||'',verifiedStreak,official:SDINTEL.official};
+  SDINTEL.signals=sdIntelTopicSignals(SDINTEL.ocr||'',SDINTEL.keywords||[],SDINTEL.news||[],SDINTEL.visual||{},SDINTEL.faces||0,meta);
+  SDINTEL.score=sdIntelHotScore(SDINTEL.ocr||'',SDINTEL.keywords||[],SDINTEL.news||[],SDINTEL.visual||{},SDINTEL.faces||0,SDINTEL.signals,meta);
+  SDINTEL.angles=sdIntelMakeAngles(SDINTEL.ocr||'',SDINTEL.keywords||[],SDINTEL.news||[],SDINTEL.visual||{},SDINTEL.faces||0,SDINTEL.signals,SDINTEL.score,meta);
+  sdIntelSave();sdIntelRender()
+}
+function sdDataApply(){
+  if(!(SDDATA.matches||[]).length){toast('暂无可应用的核验赛果');return}
+  SDORIG.scoreText=sdDataScoreText(SDDATA.matches.slice(0,8));SDORIG.generatedAt=0;
+  sdDataRebuildIntel();sdOrigSave();sdOrigRender();toast('已用核验数据更新海报');sdFlowSet('create',true)
+}
+async function sdDataVerify(auto=false){
+  if(!SDINTEL.analyzedAt){if(!auto)toast('请先分析图片');return false}
+  const team=sdIntelSubjectName(SDINTEL.keywords||[],SDINTEL.ocr||'',SDINTEL.source||null);
+  if(!team||/这张足球图|足球热点/.test(team)){q('sdDataStatus').textContent='暂未识别出明确球队，保留图片分析结果。';return false}
+  SDDATA.team=team;SDDATA.status='loading';sdDataSave();sdDataRender();
+  q('sdDataStatus').textContent='正在连接 MATCH DATA HUB · 官方赛事源优先核验…';
+  try{
+    const ready=await wakeCaptionCloud();if(!ready||!STUDIO.cloudCaptionToken)throw new Error('SAGI Cloud 未连接');
+    const season=(new Date().getMonth()<6?new Date().getFullYear()-1:new Date().getFullYear());
+    const r=await fetch(CAPTION_CLOUD+'/api/football/form',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+STUDIO.cloudCaptionToken},body:JSON.stringify({team,competition:SDDATA.competition||'AUTO',season,limit:12}),cache:'no-store'});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok||!d?.ok)throw new Error(d?.error||('HTTP '+r.status));
+    SDDATA.matches=Array.isArray(d.matches)?d.matches:[];
+    SDDATA.officialHits=Number(d.officialHits)||0;SDDATA.providers=d.providers||{};SDDATA.updatedAt=d.generatedAt||new Date().toISOString();SDDATA.status='ready';
+    SDDATA.streak=sdDataWinStreak(team,SDDATA.matches);
+    const avg=SDDATA.matches.length?SDDATA.matches.reduce((a,m)=>a+(Number(m.confidence)||72),0)/SDDATA.matches.length:0;
+    SDDATA.confidence=Math.min(99,Math.round(avg+(SDDATA.officialHits?7:0)+(SDDATA.providers?.footballDataConfigured?4:0)+(SDDATA.providers?.apiFootballConfigured?4:0)));
+    sdDataSave();sdDataRender();
+    q('sdDataStatus').textContent=(d.relevantCompetitions?.length?('已识别赛事：'+d.relevantCompetitions.map(sdDataCompetitionLabel).join(' / ')+'。'):'')+' 数据已按官方源 → 专业API → 公共赛事源完成交叉核验。';
+    if(SDDATA.matches.length){sdDataApply();return true}
+    return false
+  }catch(e){
+    console.warn('MATCH DATA HUB',e);SDDATA.status='failed';sdDataSave();sdDataRender();
+    q('sdDataStatus').textContent='数据中心暂不可用：'+(e?.message||e)+'。当前仍保留官方网页核验 + 新闻 + OCR 结果。';
+    return false
+  }
+}
+/* ===== END MATCH DATA HUB ===== */
+
+/* ===== SAGI IMAGE FLOW V1.0 ===== */
+const SDFLOW_LABELS={source:['参考图','导入 / 下载后自动分析'],verify:['数据核验','官方源优先核验热点与赛果'],create:['图片二次创作','人物 / 背景 / 比分 / 排版'],publish:['发布','导出图片 / 文案 / 分享']};
+function sdFlowSet(stage='source',scroll=false){
+  const card=q('imageStudioCard');if(!card)return;stage=SDFLOW_LABELS[stage]?stage:'source';card.dataset.flow=stage;
+  document.querySelectorAll('[data-image-flow]').forEach(b=>b.classList.toggle('active',b.dataset.imageFlow===stage));
+  q('sdImageFlowLabel').textContent=SDFLOW_LABELS[stage][0];q('sdImageFlowHint').textContent=SDFLOW_LABELS[stage][1];
+  if(scroll){
+    const target=stage==='verify'?q('sdImgIntel'):stage==='create'?q('sdOriginalPoster'):stage==='publish'?q('sdImgCaption'):q('sdImgFile');
+    target?.scrollIntoView({behavior:'smooth',block:'start'})
+  }
+}
+document.querySelectorAll('[data-image-flow]').forEach(b=>b.onclick=()=>sdFlowSet(b.dataset.imageFlow,true));
+document.querySelectorAll('[data-data-comp]').forEach(b=>b.onclick=()=>{SDDATA.competition=b.dataset.dataComp;sdDataSave();sdDataRender();if(SDINTEL.analyzedAt)sdDataVerify(false)});
+q('sdDataVerifyBtn').onclick=()=>sdDataVerify(false);q('sdDataApplyBtn').onclick=sdDataApply;
+sdDataRender();sdFlowSet(SDIMG_IMAGE?'verify':'source',false);
+/* ===== END SAGI IMAGE FLOW ===== */
+
 
 
 /* ===== SAGI ORIGINAL POSTER ENGINE V1.0 ===== */
@@ -3433,7 +3581,7 @@ async function sdOrigShare(){
   await sdOrigExport();try{await navigator.clipboard.writeText(text);toast('已导出原创图并复制文案')}catch(e){toast('已导出原创图')}
 }
 function sdOrigUsePublish(){
-  if(!SDORIG.generatedAt)sdOrigGenerate(true);if(!SDORIG.generatedAt)return;const v=sdOrigBuildVariants()[SDORIG.variant];SDORIG.activeForPublish=true;SDIMG.headline=SDORIG.title;SDIMG.sub=SDORIG.sub;SDIMG.caption=v.caption||SDORIG.sub;SDIMG.tags=v.tags||SDIMG.tags;sdOrigSave();sdImgSave();sdImgSync();q('sdImgCaption').value=SDIMG.caption;q('sdImgTags').value=SDIMG.tags;q('sdImgHeadline').value=SDIMG.headline;q('sdImgSub').value=SDIMG.sub;q('sdImgCaption').scrollIntoView({behavior:'smooth',block:'center'});toast('发布包已切换为原创海报')
+  if(!SDORIG.generatedAt)sdOrigGenerate(true);if(!SDORIG.generatedAt)return;const v=sdOrigBuildVariants()[SDORIG.variant];SDORIG.activeForPublish=true;SDIMG.headline=SDORIG.title;SDIMG.sub=SDORIG.sub;SDIMG.caption=v.caption||SDORIG.sub;SDIMG.tags=v.tags||SDIMG.tags;sdOrigSave();sdImgSave();sdImgSync();q('sdImgCaption').value=SDIMG.caption;q('sdImgTags').value=SDIMG.tags;q('sdImgHeadline').value=SDIMG.headline;q('sdImgSub').value=SDIMG.sub;if(typeof sdFlowSet==='function')sdFlowSet('publish',true);toast('发布包已切换为原创海报')
 }
 q('sdOrigGenerateBtn').onclick=()=>sdOrigGenerate(true);q('sdOrigRefreshBtn').onclick=()=>{SDORIG.template=['number','coach','timeline','question','minimal','data'][Math.floor(Date.now()/1000)%6];SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigRender();toast('已重新组合原创视觉')};
 document.querySelectorAll('[data-orig-variant]').forEach(b=>b.onclick=()=>sdOrigSelectVariant(b.dataset.origVariant));
