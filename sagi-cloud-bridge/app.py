@@ -513,6 +513,8 @@ def run_fxtwitter_download(job_id, url, wanted_name):
 
 
 def _router_engines(platform):
+    # V3.0.1 verified routing: specialized platform engines first; generic
+    # public aggregators are opportunistic fallbacks only.
     return {
         "instagram": ["parth-dl", "btch"],
         "tiktok": ["tikwm", "btch"],
