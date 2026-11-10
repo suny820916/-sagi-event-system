@@ -98,6 +98,23 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 
 
 
+
+/* SAGI V3.6 · UNIFIED IMAGE RECREATE */
+#imageStudioCard>.imgPresetGrid,
+#imageStudioCard>.imgChipRow,
+#imageStudioCard>.imgAdjustGrid,
+#imageStudioCard>.imgTextGrid{display:none!important}
+.referenceOnlyBar{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin-top:8px;border:1px solid #304047;border-radius:10px;background:#071014;padding:9px}
+.referenceOnlyBar b{font-size:9px;color:#dbe2e4}.referenceOnlyBar span{display:block;font-size:7px;color:#71858c;line-height:1.45;margin-top:3px}.referenceOnlyBar .badge{margin:0}
+.origVisualTune{margin-top:10px;border:1px solid #3a4750;border-radius:12px;background:#081014;padding:10px}
+.origVisualHead{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.origVisualHead b{font-size:10px}.origVisualHead span{display:block;font-size:8px;color:#74868c;line-height:1.45;margin-top:3px}
+.origFilterPresets{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}.origFilterBtn{border:1px solid #314149;border-radius:9px;background:#091114;color:#92a3a8;padding:8px 5px;font-size:7px}.origFilterBtn b{display:block;font-size:8px;color:#dce3e5}.origFilterBtn.active{border-color:#d7b568;background:#18150c;color:#e4ca84;box-shadow:0 0 0 1px #d7b568 inset}
+.origTuneGrid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}.origTuneGroup{border:1px solid #293940;border-radius:10px;background:#071013;padding:8px}.origTuneGroup h4{font-size:8px;margin:0 0 6px;color:#d7b568}.origTuneGroup label{display:block;font-size:7px;color:#71858c;margin-top:6px}.origTuneGroup input{width:100%;padding:0;margin-top:4px;accent-color:#d7b568}.origTuneValue{float:right;color:#d8bd77;font-weight:800}
+.origOutputMode{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}.origOutputMode button{border:1px solid #314149;border-radius:9px;background:#091114;color:#93a3a8;padding:9px;font-size:8px}.origOutputMode button.active{border-color:#d7b568;color:#e4ca84;background:#18150c}
+.origPoster .imgPublish{margin-top:10px}
+.origPoster .origControls{margin-top:9px}
+@media(max-width:520px){.origFilterPresets{grid-template-columns:1fr 1fr}.origTuneGrid{grid-template-columns:1fr}}
+
 /* SAGI POSTER LAYER EDITOR V1.0 */
 .origLayerEditor{margin-top:9px;border:1px solid #33434a;border-radius:12px;background:#081013;padding:10px}
 .origLayerHead{display:flex;justify-content:space-between;gap:8px;align-items:center}.origLayerHead b{font-size:10px}.origLayerHead span{font-size:8px;color:#72858c}
@@ -156,7 +173,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 <div class="wrap">
   <div class="top">
     <div class="brand"><b>SAGI DOWN</b><span>DOWNLOAD · IMAGE AI · VIDEO</span></div>
-    <span class="badge">V3.5.1 · OFFICIAL SCORE FIX</span>
+    <span class="badge">V3.6 · UNIFIED IMAGE RECREATE</span>
   </div>
 
   <section class="hero">
@@ -197,18 +214,22 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 
   <section class="card imageEditCard" id="imageStudioCard">
     <div class="imageEditHead">
-      <div><b>IMAGE STUDIO · 图片编辑发布</b><span>照片 → 海报 → 高清导出 → 手机分享</span></div>
-      <span class="badge">V1.0</span>
+      <div><b>SOURCE REFERENCE · 参考图片</b><span>导入 / 下载图片 → 仅用于分析、提取人物、比分和热点</span></div>
+      <span class="badge">REFERENCE ONLY</span>
     </div>
 
     <div class="imgPick">
       <input id="sdImgFile" type="file" accept="image/*">
       <b id="sdImgFileTitle">选择一张照片</b>
-      <span>比赛照 / 球员照 / 球衣图 / 热点人物图 · 支持 iPhone 相册</span>
+      <span>下载图 / 比赛照 / 球员照 / 热点截图 · 导入后直接进入图片二次创作流程</span>
     </div>
 
     <div class="imgCanvasWrap"><canvas id="sdImgCanvas" width="1080" height="1440"></canvas></div>
     <div class="imgCanvasMeta"><span id="sdImgRatioMeta">抖音图文 3:4</span><span id="sdImgSizeMeta">1080 × 1440 · PNG</span></div>
+    <div class="referenceOnlyBar">
+      <div><b>REFERENCE ONLY · 不参与最终导出</b><span>这张图只负责提供事实、人物、比分和热点入口。最终海报只从下面“图片二次创作”工作区导出。</span></div>
+      <span class="badge">SOURCE</span>
+    </div>
 
     <div class="imgPresetGrid">
       <button class="imgPreset active" data-img-template="breaking" type="button"><b>热点重击</b><span>大标题 · 强情绪</span></button>
@@ -269,8 +290,8 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 
     <div class="origPoster" id="sdOriginalPoster">
       <div class="origHead">
-        <div><b>ORIGINAL POSTER · HOT HOOK → NEW IMAGE</b><span>原图只提供事实与热点线索；新图不复用原图像素，不照搬原构图，直接生成适合抖音的原创视觉。</span></div>
-        <span class="badge">V1.0 · SOURCE PIXELS 0%</span>
+        <div><b>IMAGE RECREATE · 图片二次创作</b><span>唯一创作工作区：热点 → 人物 → 比分 → 滤镜 → 排版 → 标题 → 导出 / 发布。</span></div>
+        <span class="badge">V2.0 · ONE WORKSPACE</span>
       </div>
 
       <div class="origActionRow">
@@ -337,6 +358,38 @@ AEK 2-3 皇马
       </div>
 
       <div class="origCanvasWrap"><canvas id="sdOrigCanvas" width="1080" height="1440"></canvas></div>
+
+      <div class="origVisualTune" id="sdOrigVisualTune">
+        <div class="origVisualHead">
+          <div><b>VISUAL TUNE · 原创图视觉微调</b><span>这里才是正式海报的滤镜。人物与背景分开处理，不再修改上面的参考图。</span></div>
+          <span class="badge">EDITORIAL</span>
+        </div>
+        <div class="origFilterPresets">
+          <button class="origFilterBtn active" data-orig-filter="editorial" type="button"><b>BLACK GOLD</b>杂志黑金</button>
+          <button class="origFilterBtn" data-orig-filter="matchday" type="button"><b>MATCHDAY</b>干净赛事</button>
+          <button class="origFilterBtn" data-orig-filter="hero" type="button"><b>HERO</b>人物英雄</button>
+          <button class="origFilterBtn" data-orig-filter="campaign" type="button"><b>CAMPAIGN</b>品牌广告</button>
+        </div>
+        <div class="origTuneGrid">
+          <div class="origTuneGroup">
+            <h4>人物调色</h4>
+            <label>亮度 <span class="origTuneValue" id="sdOrigPersonBrightVal">100%</span><input id="sdOrigPersonBright" type="range" min="70" max="135" value="100"></label>
+            <label>对比 <span class="origTuneValue" id="sdOrigPersonContrastVal">108%</span><input id="sdOrigPersonContrast" type="range" min="70" max="145" value="108"></label>
+            <label>饱和 <span class="origTuneValue" id="sdOrigPersonSatVal">96%</span><input id="sdOrigPersonSat" type="range" min="60" max="140" value="96"></label>
+          </div>
+          <div class="origTuneGroup">
+            <h4>背景调色</h4>
+            <label>亮度 <span class="origTuneValue" id="sdOrigBgBrightVal">92%</span><input id="sdOrigBgBright" type="range" min="65" max="120" value="92"></label>
+            <label>饱和 <span class="origTuneValue" id="sdOrigBgSatVal">82%</span><input id="sdOrigBgSat" type="range" min="40" max="125" value="82"></label>
+            <label>暗角 <span class="origTuneValue" id="sdOrigVignetteVal">12%</span><input id="sdOrigVignette" type="range" min="0" max="35" value="12"></label>
+          </div>
+        </div>
+        <div class="origOutputMode">
+          <button class="active" data-orig-output="edit" type="button">编辑预览</button>
+          <button data-orig-output="final" type="button">正式导出预览</button>
+        </div>
+      </div>
+
 
 
       <div class="origLayerEditor" id="sdOrigLayerEditor">
@@ -406,21 +459,22 @@ AEK 2-3 皇马
         <button class="btn blue" id="sdOrigShareBtn" type="button">分享原创海报</button>
         <button class="btn primary" id="sdOrigUsePublishBtn" type="button">用这张图进入发布包</button>
       </div>
+      <div class="imgPublish">
+            <div class="sectionHead"><div class="label">PUBLISH · 发布包</div><div class="mini">图片 + 文案 + 标签</div></div>
+            <textarea id="sdImgCaption" placeholder="发布正文 / 观点 / CTA"></textarea>
+            <input id="sdImgTags" value="#新疆足球 #足球 #SAGI" style="margin-top:7px">
+            <div class="imgPublishActions">
+              <button class="btn gold" id="sdImgExportBtn" type="button">导出高清 PNG</button>
+              <button class="btn blue" id="sdImgCopyBtn" type="button">复制发布文案</button>
+              <button class="btn primary" id="sdImgShareBtn" type="button">分享 / 发布图片</button>
+              <button class="btn" id="sdImgToPublishBtn" type="button">送入 CONTENT OS · PUBLISH</button>
+            </div>
+            <div class="imgHint">画布可直接用手指拖动照片。分享按钮优先调用手机系统分享面板；“送入 PUBLISH”会建立待发布任务，但不会把大图塞进浏览器缓存。</div>
+          </div>
     </div>
 
 
-    <div class="imgPublish">
-      <div class="sectionHead"><div class="label">PUBLISH · 发布包</div><div class="mini">图片 + 文案 + 标签</div></div>
-      <textarea id="sdImgCaption" placeholder="发布正文 / 观点 / CTA"></textarea>
-      <input id="sdImgTags" value="#新疆足球 #足球 #SAGI" style="margin-top:7px">
-      <div class="imgPublishActions">
-        <button class="btn gold" id="sdImgExportBtn" type="button">导出高清 PNG</button>
-        <button class="btn blue" id="sdImgCopyBtn" type="button">复制发布文案</button>
-        <button class="btn primary" id="sdImgShareBtn" type="button">分享 / 发布图片</button>
-        <button class="btn" id="sdImgToPublishBtn" type="button">送入 CONTENT OS · PUBLISH</button>
-      </div>
-      <div class="imgHint">画布可直接用手指拖动照片。分享按钮优先调用手机系统分享面板；“送入 PUBLISH”会建立待发布任务，但不会把大图塞进浏览器缓存。</div>
-    </div>
+
   </section>
 
 
@@ -679,7 +733,7 @@ Unbelievable finish."></textarea>
 
 <script>
 (()=>{'use strict';
-const SAGI_DOWN_BUILD='V3.5.1';
+const SAGI_DOWN_BUILD='V3.6.0';
 document.documentElement.dataset.sagiDownBuild=SAGI_DOWN_BUILD;
 const BTCH_PUBLIC='https://btch-downloader-api-green.vercel.app';
 const DOWNLOAD_ROUTER_VERSION='3.0';
@@ -3329,7 +3383,7 @@ if(q('captionSpeed'))q('captionSpeed').value='fast';
 if(q('captionRange'))q('captionRange').value='trim';
 setTimeout(async()=>{await wakeCaptionCloud();refreshAIVoiceStatus(false)},180);
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=351',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=360',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})}
 })();
 </script>
 </body>
