@@ -633,6 +633,125 @@ jobs:
           PY
           node /tmp/person-import-smoke.js
 
+      - name: Photo layer import regression
+        run: |
+          python - <<'PY'
+          import pathlib
+
+          html = pathlib.Path("content-os/sagi-down.html").read_text(encoding="utf-8")
+
+          def extract_function(signature):
+              start = html.index(signature)
+              brace = html.index("{", start)
+              depth = 0
+              quote = None
+              escape = False
+              i = brace
+              while i < len(html):
+                  ch = html[i]
+                  if quote:
+                      if escape:
+                          escape = False
+                      elif ch == "\\":
+                          escape = True
+                      elif ch == quote:
+                          quote = None
+                  else:
+                      if ch in ("'", '"', "`"):
+                          quote = ch
+                      elif ch == "{":
+                          depth += 1
+                      elif ch == "}":
+                          depth -= 1
+                          if depth == 0:
+                              return html[start:i+1]
+                  i += 1
+              raise RuntimeError(signature)
+
+          fn = extract_function("async function sdOrigLoadPhoto(file)")
+          assert "layer.visible=true" in fn
+          assert "layer.locked=false" in fn
+          assert "oldUrl" in fn
+          assert "原有图片不会被覆盖" in fn
+          assert "sdOrigRender()" in fn
+
+          harness = r"""
+          const elements={};
+          function q(id){
+            if(!elements[id]) elements[id]={
+              value:'',textContent:'',src:'',
+              classList:{add(){},remove(){}},
+              removeAttribute(){}
+            };
+            return elements[id];
+          }
+          let toastText='',saved=false,rendered=false;
+          function toast(v){toastText=v}
+          function sdOrigSave(){saved=true}
+          function sdOrigRender(){rendered=true}
+          let SDORIG={photoFileName:'old.jpg',activeLayer:'photo_1',generatedAt:0};
+          let SDORIG_PHOTO_URL='blob:old';
+          let SDORIG_PHOTO_IMAGE={old:true};
+          const layers={photo_1:{type:'photo',visible:false,locked:true,scale:100,opacity:100}};
+          function sdOrigLayerType(id){return layers[id]?.type||''}
+          function sdOrigFindFirstType(type){return type==='photo'?'photo_1':''}
+          function sdOrigAddLayer(){throw new Error('should reuse existing photo layer')}
+          function sdOrigLayer(id){return layers[id]||null}
+          let revoked=[];
+          global.URL={
+            createObjectURL(){return 'blob:new';},
+            revokeObjectURL(v){revoked.push(v)}
+          };
+          class FakeImage{
+            constructor(){this.naturalWidth=1200;this.naturalHeight=800;this.onload=null;this.onerror=null;this.decoding=''}
+            set src(v){this._src=v}
+            get src(){return this._src}
+            decode(){return Promise.resolve()}
+          }
+          global.Image=FakeImage;
+          """ + "\n" + fn + r"""
+          ;(async()=>{
+            await sdOrigLoadPhoto({name:'new.jpg',type:'image/jpeg'});
+            if(SDORIG_PHOTO_URL!=='blob:new') throw new Error('new photo URL not stored');
+            if(!SDORIG_PHOTO_IMAGE) throw new Error('new photo image missing');
+            if(layers.photo_1.visible!==true) throw new Error('hidden photo layer not restored');
+            if(layers.photo_1.locked!==false) throw new Error('locked photo layer not unlocked');
+            if(SDORIG.activeLayer!=='photo_1') throw new Error('photo layer not selected');
+            if(!saved||!rendered) throw new Error('photo import did not save/render');
+            if(!revoked.includes('blob:old')) throw new Error('old URL not revoked after success');
+            if(toastText!=='图片图层导入成功') throw new Error('success toast missing');
+            console.log('PHOTO IMPORT OK');
+          })().catch(e=>{console.error(e);process.exit(1)});
+          """
+          pathlib.Path("/tmp/photo-import-smoke.js").write_text(harness, encoding="utf-8")
+          PY
+          node /tmp/photo-import-smoke.js
+
+      - name: Layer Core state regression
+        run: |
+          python - <<'PY'
+          import pathlib
+          html=pathlib.Path("content-os/sagi-down.html").read_text(encoding="utf-8")
+          required=[
+              "function sdOrigAddLayer",
+              "function sdOrigDuplicateLayer",
+              "function sdOrigDeleteLayer",
+              "function sdOrigToggleLayerVisible",
+              "function sdOrigToggleLayerLock",
+              "function sdOrigMoveLayerEdge",
+              "function sdOrigMoveLayer",
+              "if(l.locked){toast('图层已锁定，请先解锁');return}",
+              "SDORIG.layerOrder.push(id)",
+              "SDORIG.layerOrder=SDORIG.layerOrder.filter(x=>x!==id)",
+          ]
+          for x in required:
+              assert x in html, x
+          assert "ctx.globalAlpha*=opacity" not in html[html.index("function sdOrigDrawPhoto"):html.index("function sdOrigLayerVisible")]
+          assert "const box={x:w*.53,y:h*.15" in html
+          assert "cx=box.x+box.w*.52+xShift" in html
+          print("LAYER CORE STATE OK")
+          PY
+
       - name: Semantic translation timeline regression
         run: |
           python - <<'PY'
