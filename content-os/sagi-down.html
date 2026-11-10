@@ -2860,7 +2860,7 @@ async function sdIntelAnalyze(){
     sdIntelProgress(86,'正在把“事实”转成抖音选题，而不是只堆关键词…');
     const angles=sdIntelMakeAngles(bundle.post,keywords,lookup.items,visual,faces,signals,score,meta);
     SDINTEL={ocr:bundle.post,sourceOcr:bundle.source,keywords,scores,source,score,faces,visual,news:lookup.items,signals,angles,evidenceText:lookup.evidenceText,verifiedStreak,mode:bundle.mode,location,analyzedAt:Date.now(),sourceName:SDIMG.sourceName};
-    sdIntelSave();if(typeof SDORIG!=='undefined'){SDORIG.activeForPublish=false;SDORIG.generatedAt=0;sdOrigSave?.();sdOrigRender?.()}sdIntelProgress(100,verifiedStreak?('分析完成 · 已联网验证 '+verifiedStreak+'连胜 · 已生成3套抖音打法'):(scores.length>=3?('分析完成 · 已识别 '+scores.length+'组比分 · 正在按走势制造话题'):'分析完成 · 已按图片主体生成抖音选题'));sdIntelRender();toast('图片深度分析完成')
+    sdIntelSave();if(typeof SDORIG!=='undefined'){SDORIG.activeForPublish=false;SDORIG.generatedAt=0;if(!String(SDORIG.scoreText||'').trim())SDORIG.scoreText=sdOrigAutoScoreText?.()||'';const coach=sdOrigCoachName?.();if(coach&&!String(SDORIG.person||'').trim()){SDORIG.person=coach+' · 主教练';SDORIG.role=SDORIG.person}sdOrigSave?.();sdOrigRender?.()}sdIntelProgress(100,verifiedStreak?('分析完成 · 已联网验证 '+verifiedStreak+'连胜 · 已生成3套抖音打法'):(scores.length>=3?('分析完成 · 已识别 '+scores.length+'组比分 · 正在按走势制造话题'):'分析完成 · 已按图片主体生成抖音选题'));sdIntelRender();toast('图片深度分析完成')
   }catch(e){console.error(e);sdIntelProgress(0,'分析失败：'+(e?.message||'未知错误'));toast('图片分析失败')}
   finally{SDINTEL_RUNNING=false;q('sdImgAnalyzeBtn').disabled=false}
 }
