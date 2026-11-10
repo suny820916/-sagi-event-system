@@ -30,8 +30,8 @@ app = Flask(__name__)
 ALLOWED_ORIGIN = (os.getenv("SAGI_ALLOWED_ORIGIN") or "https://suny820916.github.io").rstrip("/")
 SERVER_SECRET = (os.getenv("SAGI_SERVER_SECRET") or os.getenv("SAGI_BRIDGE_TOKEN") or "").strip()
 PORT = int(os.getenv("PORT") or "10000")
-DEPLOY_REVISION = "2026-11-10-v3000-multi-engine-router"
-APP_VERSION = "3.0.0"
+DEPLOY_REVISION = "2026-11-11-v370-match-intelligence-hub"
+APP_VERSION = "3.7.0"
 MAX_FILE_MB = int(os.getenv("SAGI_MAX_FILE_MB") or "300")
 JOB_TTL_MIN = int(os.getenv("SAGI_JOB_TTL_MIN") or "30")
 RATE_LIMIT_PER_HOUR = int(os.getenv("SAGI_RATE_LIMIT_PER_HOUR") or "20")
@@ -45,6 +45,20 @@ BTCH_TIMEOUT_SECONDS = max(5, min(25, int(os.getenv("SAGI_BTCH_TIMEOUT_SECONDS")
 TIKWM_BASE = "https://www.tikwm.com/api/"
 FXTWITTER_BASE = "https://api.fxtwitter.com/2"
 ENGINE_COOLDOWN_SECONDS = max(10, min(180, int(os.getenv("SAGI_ENGINE_COOLDOWN_SECONDS") or "45")))
+FOOTBALL_DATA_TOKEN = (os.getenv("FOOTBALL_DATA_TOKEN") or "").strip()
+API_FOOTBALL_KEY = (os.getenv("API_FOOTBALL_KEY") or "").strip()
+SPORTMONKS_TOKEN = (os.getenv("SPORTMONKS_TOKEN") or "").strip()
+FOOTBALL_CACHE_SECONDS = max(30, min(900, int(os.getenv("SAGI_FOOTBALL_CACHE_SECONDS") or "180")))
+FOOTBALL_COMPETITIONS = {
+    "PL": {"name": "英超", "football_data": "PL", "espn": "eng.1", "api_football": "Premier League", "official": "https://www.premierleague.com/en/matches/premier-league/2026-27"},
+    "PD": {"name": "西甲", "football_data": "PD", "espn": "esp.1", "api_football": "La Liga", "official": "https://www.laliga.com/en-US/laliga-easports/results"},
+    "BL1": {"name": "德甲", "football_data": "BL1", "espn": "ger.1", "api_football": "Bundesliga", "official": "https://www.bundesliga.com/en/bundesliga/matchday"},
+    "SA": {"name": "意甲", "football_data": "SA", "espn": "ita.1", "api_football": "Serie A", "official": "https://en.legaseriea.it/serie-a/fixtures-results"},
+    "FL1": {"name": "法甲", "football_data": "FL1", "espn": "fra.1", "api_football": "Ligue 1", "official": "https://ligue1.com/en/competitions/ligue1mcdonalds/results?season=2026"},
+    "CL": {"name": "欧冠", "football_data": "CL", "espn": "uefa.champions", "api_football": "UEFA Champions League", "official": "https://www.uefa.com/uefachampionsleague/fixtures-results/"},
+}
+football_cache = {}
+football_cache_lock = Lock()
 
 CORS(app, resources={r"/api/*": {"origins": [ALLOWED_ORIGIN]}, r"/health": {"origins": [ALLOWED_ORIGIN]}, r"/": {"origins": [ALLOWED_ORIGIN]}})
 
@@ -978,6 +992,246 @@ def run_cloud_render(job_id, options):
         finally:
             gc.collect()
 
+
+def _football_norm(value):
+    text = re.sub(r"[^a-z0-9]+", "", str(value or "").lower())
+    for token in ("footballclub", "futbolclub", "clubdefutbol", "club", "fc", "cf", "afc"):
+        text = text.replace(token, "")
+    return text
+
+def _football_team_match(query, *values):
+    q = _football_norm(query)
+    if not q:
+        return False
+    aliases = {
+        "皇马": ["realmadrid", "realmadridcf", "rma"],
+        "皇家马德里": ["realmadrid", "realmadridcf", "rma"],
+        "巴萨": ["barcelona", "fcbarcelona", "bar"],
+        "拜仁": ["bayernmunich", "bayernmunchen", "fcb"],
+        "曼城": ["manchestercity", "mancity"],
+        "曼联": ["manchesterunited", "manutd"],
+        "巴黎": ["parissaintgermain", "psg"],
+        "巴黎圣日耳曼": ["parissaintgermain", "psg"],
+        "国米": ["intermilan", "internazionale", "inter"],
+        "国际米兰": ["intermilan", "internazionale", "inter"],
+        "AC米兰": ["acmilan", "milan"],
+    }
+    acceptable = {q}
+    for key, vals in aliases.items():
+        if str(query or "").strip().lower() == key.lower():
+            acceptable.update(vals)
+    for value in values:
+        n = _football_norm(value)
+        if not n:
+            continue
+        if any(a == n or a in n or n in a for a in acceptable if len(a) >= 3):
+            return True
+    return False
+
+def _football_cache_get(key):
+    with football_cache_lock:
+        row = football_cache.get(key)
+        if not row:
+            return None
+        if time.time() - float(row.get("at") or 0) > FOOTBALL_CACHE_SECONDS:
+            football_cache.pop(key, None)
+            return None
+        return row.get("data")
+
+def _football_cache_set(key, data):
+    with football_cache_lock:
+        football_cache[key] = {"at": time.time(), "data": data}
+    return data
+
+def _football_match_row(provider, competition, date_value, home, away, hs, aas, status="FINISHED", source_url=""):
+    try:
+        home_score = int(hs)
+        away_score = int(aas)
+    except Exception:
+        return None
+    return {
+        "provider": provider,
+        "competition": competition,
+        "competitionName": FOOTBALL_COMPETITIONS.get(competition, {}).get("name", competition),
+        "date": str(date_value or ""),
+        "home": str(home or "").strip(),
+        "away": str(away or "").strip(),
+        "homeScore": home_score,
+        "awayScore": away_score,
+        "score": f"{home_score}-{away_score}",
+        "status": str(status or "FINISHED"),
+        "sourceUrl": source_url,
+    }
+
+def _football_data_matches(team, competition, season):
+    if not FOOTBALL_DATA_TOKEN:
+        return []
+    cfg = FOOTBALL_COMPETITIONS[competition]
+    url = f"https://api.football-data.org/v4/competitions/{cfg['football_data']}/matches"
+    r = requests.get(url, params={"season": season, "status": "FINISHED"}, headers={"X-Auth-Token": FOOTBALL_DATA_TOKEN, "User-Agent": "SAGI-MATCH-DATA/3.7"}, timeout=(5, 18))
+    r.raise_for_status()
+    rows = []
+    for m in (r.json() or {}).get("matches") or []:
+        home = m.get("homeTeam") or {}
+        away = m.get("awayTeam") or {}
+        if not _football_team_match(team, home.get("name"), home.get("shortName"), home.get("tla"), away.get("name"), away.get("shortName"), away.get("tla")):
+            continue
+        score = ((m.get("score") or {}).get("fullTime") or {})
+        row = _football_match_row("football-data.org", competition, m.get("utcDate"), home.get("name"), away.get("name"), score.get("home"), score.get("away"), m.get("status"), url)
+        if row:
+            rows.append(row)
+    return rows
+
+def _espn_matches(team, competition):
+    cfg = FOOTBALL_COMPETITIONS[competition]
+    end = now().date()
+    start = end - timedelta(days=120)
+    dates = start.strftime("%Y%m%d") + "-" + end.strftime("%Y%m%d")
+    url = f"https://site.api.espn.com/apis/site/v2/sports/soccer/{cfg['espn']}/scoreboard"
+    r = requests.get(url, params={"dates": dates, "limit": 1000}, headers={"User-Agent": "SAGI-MATCH-DATA/3.7"}, timeout=(5, 18))
+    r.raise_for_status()
+    rows = []
+    for event in (r.json() or {}).get("events") or []:
+        comps = event.get("competitions") or []
+        if not comps:
+            continue
+        competitors = comps[0].get("competitors") or []
+        home = next((x for x in competitors if x.get("homeAway") == "home"), None)
+        away = next((x for x in competitors if x.get("homeAway") == "away"), None)
+        if not home or not away:
+            continue
+        hn = ((home.get("team") or {}).get("displayName") or (home.get("team") or {}).get("shortDisplayName") or "")
+        an = ((away.get("team") or {}).get("displayName") or (away.get("team") or {}).get("shortDisplayName") or "")
+        if not _football_team_match(team, hn, an):
+            continue
+        state = (((event.get("status") or {}).get("type") or {}).get("state") or "")
+        if state not in ("post",):
+            continue
+        row = _football_match_row("ESPN public feed", competition, event.get("date"), hn, an, home.get("score"), away.get("score"), "FINISHED", url)
+        if row:
+            rows.append(row)
+    return rows
+
+def _api_football_matches(team, competition, season):
+    if not API_FOOTBALL_KEY:
+        return []
+    headers = {"x-apisports-key": API_FOOTBALL_KEY, "User-Agent": "SAGI-MATCH-DATA/3.7"}
+    team_resp = requests.get("https://v3.football.api-sports.io/teams", params={"search": team}, headers=headers, timeout=(5, 18))
+    team_resp.raise_for_status()
+    team_rows = (team_resp.json() or {}).get("response") or []
+    if not team_rows:
+        return []
+    team_id = ((team_rows[0] or {}).get("team") or {}).get("id")
+    if not team_id:
+        return []
+    cfg = FOOTBALL_COMPETITIONS[competition]
+    league_resp = requests.get("https://v3.football.api-sports.io/leagues", params={"name": cfg["api_football"], "season": season}, headers=headers, timeout=(5, 18))
+    league_resp.raise_for_status()
+    leagues = (league_resp.json() or {}).get("response") or []
+    if not leagues:
+        return []
+    league_id = ((leagues[0] or {}).get("league") or {}).get("id")
+    if not league_id:
+        return []
+    fixture_resp = requests.get("https://v3.football.api-sports.io/fixtures", params={"team": team_id, "league": league_id, "season": season, "status": "FT"}, headers=headers, timeout=(5, 18))
+    fixture_resp.raise_for_status()
+    rows = []
+    for item in (fixture_resp.json() or {}).get("response") or []:
+        teams = item.get("teams") or {}
+        goals = item.get("goals") or {}
+        fixture = item.get("fixture") or {}
+        row = _football_match_row("API-Football", competition, fixture.get("date"), (teams.get("home") or {}).get("name"), (teams.get("away") or {}).get("name"), goals.get("home"), goals.get("away"), "FINISHED", "https://www.api-football.com/")
+        if row:
+            rows.append(row)
+    return rows
+
+def _official_football_evidence(team, competition):
+    cfg = FOOTBALL_COMPETITIONS[competition]
+    url = cfg["official"]
+    try:
+        r = requests.get("https://r.jina.ai/" + url, headers={"Accept": "text/plain", "User-Agent": "SAGI-MATCH-DATA/3.7"}, timeout=(5, 18))
+        if not r.ok:
+            return {"checked": False, "url": url, "hits": []}
+        text = (r.text or "")[:120000]
+        lines = []
+        for line in text.splitlines():
+            if not _football_team_match(team, line):
+                continue
+            if re.search(r"\b\d{1,2}\s*[-–—:]\s*\d{1,2}\b", line):
+                lines.append(re.sub(r"\s+", " ", line).strip()[:260])
+            if len(lines) >= 12:
+                break
+        return {"checked": True, "url": url, "hits": lines}
+    except Exception:
+        return {"checked": False, "url": url, "hits": []}
+
+def _football_merge(rows, limit):
+    buckets = {}
+    for row in rows:
+        key = "|".join([
+            str(row.get("date") or "")[:10],
+            _football_norm(row.get("home")),
+            _football_norm(row.get("away")),
+            str(row.get("score") or ""),
+        ])
+        if not key.strip("|"):
+            continue
+        b = buckets.setdefault(key, dict(row))
+        providers = set(b.get("providers") or [b.get("provider")])
+        providers.add(row.get("provider"))
+        providers.discard(None)
+        b["providers"] = sorted(providers)
+        b["confidence"] = min(99, 72 + max(0, len(providers) - 1) * 12)
+    merged = list(buckets.values())
+    merged.sort(key=lambda x: str(x.get("date") or ""), reverse=True)
+    return merged[:max(1, min(20, int(limit or 8)))]
+
+def football_form_payload(team, competition="AUTO", season=2026, limit=8):
+    comps = list(FOOTBALL_COMPETITIONS.keys()) if competition == "AUTO" else [competition]
+    cache_key = json.dumps([team, comps, season, limit], ensure_ascii=False)
+    cached = _football_cache_get(cache_key)
+    if cached is not None:
+        return cached
+    all_rows = []
+    provider_errors = {}
+    official = {}
+    for comp in comps:
+        official[comp] = _official_football_evidence(team, comp)
+        for name, fn in (
+            ("football-data.org", lambda c=comp: _football_data_matches(team, c, season)),
+            ("ESPN public feed", lambda c=comp: _espn_matches(team, c)),
+            ("API-Football", lambda c=comp: _api_football_matches(team, c, season)),
+        ):
+            try:
+                all_rows.extend(fn())
+            except Exception as e:
+                provider_errors[f"{name}:{comp}"] = str(e)[:180]
+    matches = _football_merge(all_rows, limit)
+    official_hits = sum(len((official.get(c) or {}).get("hits") or []) for c in comps)
+    active = ["ESPN public feed"]
+    if FOOTBALL_DATA_TOKEN:
+        active.insert(0, "football-data.org")
+    if API_FOOTBALL_KEY:
+        active.append("API-Football")
+    return _football_cache_set(cache_key, {
+        "ok": True,
+        "team": team,
+        "competition": competition,
+        "season": season,
+        "matches": matches,
+        "official": official,
+        "officialHits": official_hits,
+        "providers": {
+            "priority": ["official competition websites", "football-data.org", "API-Football", "ESPN public feed", "news cross-check", "OCR"],
+            "active": active,
+            "footballDataConfigured": bool(FOOTBALL_DATA_TOKEN),
+            "apiFootballConfigured": bool(API_FOOTBALL_KEY),
+            "sportmonksConfigured": bool(SPORTMONKS_TOKEN),
+        },
+        "errors": provider_errors,
+        "generatedAt": iso(),
+    })
+
 def public_job(job):
     data = {
         "id": job["id"],
@@ -1660,8 +1914,50 @@ def health():
         "captionError": caption_model_error,
         "maxFileMB": MAX_FILE_MB,
         "jobTTLMinutes": JOB_TTL_MIN,
+        "footballDataHub": True,
+        "footballDataHubVersion": "1.0",
+        "footballCompetitions": list(FOOTBALL_COMPETITIONS.keys()),
+        "footballDataConfigured": bool(FOOTBALL_DATA_TOKEN),
+        "apiFootballConfigured": bool(API_FOOTBALL_KEY),
+        "sportmonksConfigured": bool(SPORTMONKS_TOKEN),
         "configured": bool(SERVER_SECRET),
     })
+
+
+@app.get("/api/football/status")
+def football_status():
+    if not authorized():
+        return jsonify({"ok": False, "error": "Unauthorized"}), 401
+    return jsonify({
+        "ok": True,
+        "version": "1.0",
+        "competitions": [{"code": code, "name": cfg["name"], "official": cfg["official"]} for code, cfg in FOOTBALL_COMPETITIONS.items()],
+        "providers": {
+            "priority": ["official competition websites", "football-data.org", "API-Football", "ESPN public feed", "news cross-check", "OCR"],
+            "footballDataConfigured": bool(FOOTBALL_DATA_TOKEN),
+            "apiFootballConfigured": bool(API_FOOTBALL_KEY),
+            "sportmonksConfigured": bool(SPORTMONKS_TOKEN),
+            "espnPublicFeed": True,
+        },
+    })
+
+@app.post("/api/football/form")
+def football_form():
+    if not authorized():
+        return jsonify({"ok": False, "error": "Unauthorized"}), 401
+    data = request.get_json(silent=True) or {}
+    team = str(data.get("team") or "").strip()
+    competition = str(data.get("competition") or "AUTO").strip().upper()
+    season = int(data.get("season") or 2026)
+    limit = int(data.get("limit") or 8)
+    if len(team) < 2:
+        return jsonify({"ok": False, "error": "team required"}), 400
+    if competition != "AUTO" and competition not in FOOTBALL_COMPETITIONS:
+        return jsonify({"ok": False, "error": "unsupported competition"}), 400
+    try:
+        return jsonify(football_form_payload(team, competition, season, limit))
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)[:500]}), 502
 
 @app.post("/api/caption-media")
 def caption_media_fast():
