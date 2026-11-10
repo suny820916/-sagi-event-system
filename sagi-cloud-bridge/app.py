@@ -24,6 +24,7 @@ MAX_FILE_MB = int(os.getenv("SAGI_MAX_FILE_MB") or "300")
 JOB_TTL_MIN = int(os.getenv("SAGI_JOB_TTL_MIN") or "30")
 RATE_LIMIT_PER_HOUR = int(os.getenv("SAGI_RATE_LIMIT_PER_HOUR") or "20")
 COBALT_HOSTPORT = (os.getenv("SAGI_COBALT_HOSTPORT") or "").strip()
+INSTAGRAM_PROXY = (os.getenv("SAGI_INSTAGRAM_PROXY") or "").strip()
 
 CORS(app, resources={r"/api/*": {"origins": [ALLOWED_ORIGIN]}, r"/health": {"origins": [ALLOWED_ORIGIN]}, r"/": {"origins": [ALLOWED_ORIGIN]}})
 
@@ -154,6 +155,8 @@ def _download_with_strategy(url, work, strategy):
         "max_sleep_interval": 3,
         "max_filesize": MAX_FILE_MB * 1024 * 1024,
     }
+    if INSTAGRAM_PROXY:
+        common["proxy"] = INSTAGRAM_PROXY
 
     if strategy == "ios":
         common["extractor_args"] = {"instagram": {"app_id": ["ios"]}}
@@ -307,7 +310,7 @@ def health():
     return jsonify({
         "ok": True,
         "service": "SAGI CLOUD BRIDGE",
-        "version": "1.3.0",
+        "version": "1.4.0",
         "instagram": True,
         "hybridWorker": True,
         "workerOnline": worker_online(),
@@ -467,6 +470,12 @@ def create_job():
         return jsonify({"ok": False, "error": "Unauthorized"}), 401
     if not rate_allowed():
         return jsonify({"ok": False, "error": "Hourly download limit reached"}), 429
+    if not INSTAGRAM_PROXY:
+        return jsonify({
+            "ok": False,
+            "error": "PHONE_DIRECT_NOT_READY",
+            "errorCode": "proxy_required"
+        }), 503
 
     data = request.get_json(silent=True) or {}
     url = (data.get("url") or "").strip()
@@ -488,7 +497,7 @@ def create_job():
         "errorCode": "",
         "size": 0,
         "worker": "",
-        "strategy": "cobalt",
+        "strategy": "residential_proxy",
         "download_key": secrets.token_urlsafe(18),
         "path": "",
         "workdir": "",
@@ -497,7 +506,7 @@ def create_job():
     with jobs_lock:
         jobs[job_id] = job
 
-    Thread(target=run_cobalt_download, args=(job_id, url, name), daemon=True).start()
+    Thread(target=run_download, args=(job_id, url, name), daemon=True).start()
     return jsonify({"ok": True, "job": public_job(job), "phoneOnly": True}), 202
 
 
