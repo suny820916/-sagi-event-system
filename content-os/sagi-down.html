@@ -2598,7 +2598,7 @@ function sdIntelRender(){
     grid.innerHTML=(SDINTEL.angles||[]).map((a,i)=>'<article class="imgTrendCard '+(i===0?'best':'')+'"><div class="imgTrendTop"><strong>'+a.type+(i===0?' · TODAY PICK':'')+'</strong><span class="imgTrendScore">'+a.score+'</span></div><h4>'+escapeHtml(a.title)+'</h4><p>'+escapeHtml(a.hook)+'<br>'+escapeHtml(a.cta)+'</p><div class="imgTrendTags">'+escapeHtml(a.tags)+'</div><div class="imgTrendActions"><button class="btn '+(i===0?'primary':'gold')+'" data-sdintel-use="'+i+'" type="button">采用这套</button><button class="btn" data-sdintel-copy="'+i+'" type="button">复制整套</button></div></article>').join('');
     grid.querySelectorAll('[data-sdintel-use]').forEach(b=>b.onclick=()=>sdIntelUseAngle(Number(b.dataset.sdintelUse)));
     grid.querySelectorAll('[data-sdintel-copy]').forEach(b=>b.onclick=()=>sdIntelCopyAngle(Number(b.dataset.sdintelCopy)));
-    newsBox.innerHTML=(SDINTEL.news||[]).length?'<div class="mini">最近24小时互联网匹配</div>'+SDINTEL.news.slice(0,4).map(x=>'<div class="imgNews"><b>'+escapeHtml(x.title)+'</b><span>'+escapeHtml(x.domain||'互联网')+' · '+escapeHtml(x.seendate||'')</span></div>').join(''):'<div class="mini">没有找到足够近期新闻：以下选题按图片内容潜力生成，不标记为实时热点。</div>';
+    newsBox.innerHTML=(SDINTEL.news||[]).length?'<div class="mini">最近24小时互联网匹配</div>'+SDINTEL.news.slice(0,4).map(x=>'<div class="imgNews"><b>'+escapeHtml(x.title)+'</b><span>'+escapeHtml(x.domain||'互联网')+' · '+escapeHtml(x.seendate||'')+'</span></div>').join(''):'<div class="mini">没有找到足够近期新闻：以下选题按图片内容潜力生成，不标记为实时热点。</div>';
   }else{
     facts.style.display='none';ocr.style.display='none';signals.innerHTML='';grid.innerHTML='';newsBox.innerHTML=''
   }
