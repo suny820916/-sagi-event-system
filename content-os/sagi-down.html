@@ -85,7 +85,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 <div class="wrap">
   <div class="top">
     <div class="brand"><b>SAGI DOWN</b><span>VIDEO LINK SHORTCUT</span></div>
-    <span class="badge">V1.9 · AI VOICE + CLOUD RENDER</span>
+    <span class="badge">V1.9.1 · CLOUD COMPAT FIX</span>
   </div>
 
   <section class="hero">
@@ -265,7 +265,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
       </div>
 
       <div class="aiCaptionProgress"><i id="aiCaptionProgress"></i></div>
-      <div id="aiCaptionStatus" class="aiCaptionStatus">VERIFIED TRANSLATE：云端会显示实际版本和缺失接口；备用翻译必须检测到有效中文才算成功，不再“看起来完成其实还是原文”。</div>
+      <div id="aiCaptionStatus" class="aiCaptionStatus">CLOUD COMPAT：字幕只依赖 captionMedia，不再被 AI Voice / 智能翻译 / Cloud Render 的版本差异连带阻断。</div>
       <div class="aiCaptionMeta">
         <span id="captionEngine">引擎：SAGI CLOUD 优先</span>
         <span id="captionDetectedLang">语言：—</span>
@@ -534,7 +534,7 @@ const STUDIO={
  ffmpeg:null,ffmpegLoaded:false,exporting:false,resultBlob:null,resultUrl:'',
  captions:[],captionLanguage:'',captionRangeKey:'',captionModel:null,captionModelKey:'',captionModule:null,captionBusy:false,
  translator:null,translatorKey:'',moduleWarm:false,
- cloudCaptionToken:'',cloudCaptionReady:false,cloudCaptionWaking:false,cloudCaptionError:'',cloudHealthVersion:'',cloudVersion:'',cloudHealth:null,
+ cloudCaptionToken:'',cloudCaptionReady:false,cloudCaptionWaking:false,cloudCaptionError:'',cloudHealthVersion:'',cloudVersion:'',cloudHealth:null,cloudOptionalMissing:[],
  captionVisibleCount:40,oneTapBusy:false,translationScore:0,recreatePlan:null,
  cloneVoiceId:localStorage.getItem('sagi_clone_voice_id')||'',aiVoiceReady:false,aiVoiceVoices:[],voicePreviewUrl:'',
  cloudRenderJobId:'',cloudRenderTimer:null,cloudResultUrl:'',
@@ -810,12 +810,18 @@ async function wakeCaptionCloud(force=false){
    const missing=[];
    if(!health.captionMedia)missing.push('captionMedia');
    if(!health.captionFast)missing.push('captionFast');
-   if(!health.contextTranslate)missing.push('contextTranslate');
-   if(!health.smartTranslate)missing.push('smartTranslate');
    if(missing.length){
      STUDIO.cloudCaptionReady=false;
-     throw new Error('云端版本过旧：缺少 '+missing.join(', '))
+     throw new Error('字幕云端不可用：缺少 '+missing.join(', '))
    }
+   // 字幕、翻译、AI Voice、Cloud Render 分开做能力判断。
+   // 老云端只要 captionMedia/captionFast 正常，就绝不能阻断字幕。
+   const optional=[];
+   if(!health.contextTranslate)optional.push('contextTranslate');
+   if(!health.smartTranslate)optional.push('smartTranslate');
+   if(!health.aiVoice)optional.push('aiVoice');
+   if(!health.cloudRender)optional.push('cloudRender');
+   STUDIO.cloudOptionalMissing=optional;
 
    const a=await fetch(CAPTION_CLOUD+'/api/activate',{
      method:'POST',headers:{'Content-Type':'application/json'},body:'{}'
@@ -845,8 +851,13 @@ async function runCloudSelfTest(){
  const ok=await wakeCaptionCloud(true);
  const h=STUDIO.cloudHealth||{};
  if(ok){
-   aiCaptionStatus('云端自检通过 · V'+(h.version||'?')+' · captionMedia ✓ · contextTranslate ✓ · '+(h.captionReady?'模型已载入':'模型待载入'));
-   studioStatus('SAGI Cloud 可用。','good')
+   const caps=['字幕 ✓'];
+   caps.push(h.contextTranslate?'翻译 ✓':'翻译兼容模式');
+   caps.push(h.smartTranslate?'智能翻译 ✓':'智能翻译待升级');
+   caps.push(h.aiVoice?'AI Voice ✓':'AI Voice 待升级');
+   caps.push(h.cloudRender?'Cloud Render ✓':'Cloud Render 待升级');
+   aiCaptionStatus('云端自检通过 · V'+(h.version||'?')+' · '+caps.join(' · ')+' · '+(h.captionReady?'模型已载入':'模型待载入'));
+   studioStatus('字幕云端可用。其他功能按当前云端版本自动降级，不再拖垮字幕。','good')
  }else{
    aiCaptionStatus('云端自检失败：'+(STUDIO.cloudLastError||'未知错误'));
    studioStatus('云端当前不可用；本地识别和独立翻译仍可继续。','warn')
@@ -1901,7 +1912,7 @@ if(q('captionSpeed'))q('captionSpeed').value='fast';
 if(q('captionRange'))q('captionRange').value='trim';
 setTimeout(async()=>{await wakeCaptionCloud();refreshAIVoiceStatus(false)},180);
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=190',{updateViaCache:'none'}).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=191',{updateViaCache:'none'}).catch(()=>{})}
 })();
 </script>
 </body>
