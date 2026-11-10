@@ -8,6 +8,13 @@ on:
       - "content-os/sagi-down.html"
       - "content-os/sagi-down-sw.js"
       - ".github/workflows/sagi-preflight.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "sagi-cloud-bridge/**"
+      - "content-os/sagi-down.html"
+      - "content-os/sagi-down-sw.js"
+      - ".github/workflows/sagi-preflight.yml"
   workflow_dispatch:
 
 jobs:
@@ -166,7 +173,7 @@ jobs:
           c = mod.app.test_client()
           health = c.get("/health").get_json()
           print("health", health)
-          assert health["version"] == "1.6.14"
+          assert health["version"] == "1.7.0"
           assert health["captionMedia"] is True
           assert health["contextTranslate"] is True
           assert health["smartTranslate"] is True
@@ -206,6 +213,10 @@ jobs:
               def __init__(self, status=200, payload=None, content=b""):
                   self.status_code=status; self._payload=payload or {}; self.content=content; self.text=""
               def json(self): return self._payload
+              def iter_content(self, chunk_size=65536):
+                  data=self.content or b""
+                  for i in range(0,len(data),chunk_size):
+                      yield data[i:i+chunk_size]
               def raise_for_status(self):
                   if self.status_code >= 400: raise RuntimeError(self.status_code)
 

@@ -341,8 +341,8 @@ Unbelievable finish."></textarea>
         <div><label>质量</label><select id="exportQuality"><option value="fast">快速</option><option value="balanced">均衡</option><option value="high">高质量</option></select></div>
       </div>
       <div class="cloudRenderBox">
-        <div class="heroMini">CLOUD RENDER · 需云端 V1.6.13+</div>
-        <div class="mini">视频上传一次，云端完成字幕烧录、AI配音、原声混音和H.264编码。默认720×1280快速模式，明显减轻iPhone负担。</div>
+        <div class="heroMini">CLOUD RENDER STABLE · V1.9.1</div>
+        <div class="mini">低内存单任务队列：字幕、AI配音与FFmpeg不再同时抢内存；云端重启后会自动恢复或重新提交一次当前视频。</div>
         <div class="cloudRenderActions">
           <button class="btn gold" id="cloudRenderBtn" type="button">云端快速成片</button>
           <button class="btn" id="cloudRenderCancelBtn" type="button">停止查询</button>
@@ -537,7 +537,7 @@ const STUDIO={
  cloudCaptionToken:'',cloudCaptionReady:false,cloudCaptionWaking:false,cloudCaptionError:'',cloudHealthVersion:'',cloudVersion:'',cloudHealth:null,cloudOptionalMissing:[],
  captionVisibleCount:40,oneTapBusy:false,translationScore:0,recreatePlan:null,
  cloneVoiceId:localStorage.getItem('sagi_clone_voice_id')||'',aiVoiceReady:false,aiVoiceVoices:[],voicePreviewUrl:'',
- cloudRenderJobId:'',cloudRenderTimer:null,cloudResultUrl:'',
+ cloudRenderJobId:'',cloudRenderTimer:null,cloudResultUrl:'',cloudRenderRecoveries:0,cloudRenderRecovering:false,
  pendingTranslateZh:false,
  cloudHealth:null,cloudLastError:''
 };
@@ -642,8 +642,10 @@ async function cloneMyVoice(){
 function cloudRenderCaptions(){
  return captionTimeline().map(c=>({start:Number(c.start)||0,end:Number(c.end)||0,text:String(c.text||'')}));
 }
-async function startCloudRender(){
+async function startCloudRender(recovering=false){
  if(!STUDIO.file){studioStatus('请先选择视频。','warn');return}
+ if(!recovering){STUDIO.cloudRenderRecoveries=0}
+ STUDIO.cloudRenderRecovering=!!recovering;
  if(STUDIO.cloudRenderJobId){setCloudRenderStatus('已有云端任务正在处理。');return}
 
  // 每次提交前强制刷新一次线上能力，避免旧缓存把按钮误判为可用。
@@ -696,7 +698,7 @@ async function startCloudRender(){
    fd.append('burn_subtitles',(q('burnSubtitle')?.value||'yes')==='yes'?'true':'false');
    if(mode==='recorded'&&STUDIO.voiceBlob)fd.append('voice_audio',STUDIO.voiceBlob,'voice.'+(STUDIO.voiceMime.includes('webm')?'webm':'m4a'));
 
-   setCloudRenderProgress(3);setCloudRenderStatus('正在上传视频到 SAGI Cloud…');
+   setCloudRenderProgress(3);setCloudRenderStatus(recovering?'云端刚刚重启 · 正在自动重新上传视频…':'正在上传视频到 SAGI Cloud…');
    const xhr=new XMLHttpRequest();
    xhr.open('POST',CAPTION_CLOUD+'/api/render');
    xhr.setRequestHeader('Authorization','Bearer '+STUDIO.cloudCaptionToken);
@@ -721,8 +723,9 @@ async function startCloudRender(){
        return
      }
      STUDIO.cloudRenderJobId=d.job.id;
+     STUDIO.cloudRenderRecovering=false;
      setCloudRenderProgress(d.job.progress||8);
-     setCloudRenderStatus(d.job.stage||'云端任务已创建');
+     setCloudRenderStatus((recovering?'自动恢复成功 · ':'')+(d.job.stage||'云端任务已创建'));
      pollCloudRender()
    };
    xhr.onerror=()=>{setCloudRenderProgress(0);setCloudRenderStatus('上传失败：网络错误。')};
@@ -733,11 +736,29 @@ async function startCloudRender(){
    setCloudRenderStatus('云端出片失败：'+(e.message||e))
  }
 }
+function autoRecoverCloudRender(reason='云端服务已重启'){
+ if(!STUDIO.file||Number(STUDIO.cloudRenderRecoveries||0)>=1)return false;
+ STUDIO.cloudRenderRecoveries=Number(STUDIO.cloudRenderRecoveries||0)+1;
+ STUDIO.cloudRenderJobId='';
+ STUDIO.cloudRenderRecovering=true;
+ clearTimeout(STUDIO.cloudRenderTimer);
+ setCloudRenderProgress(2);
+ setCloudRenderStatus(reason+' · 正在自动重新提交当前视频…');
+ STUDIO.cloudRenderTimer=setTimeout(()=>startCloudRender(true),1200);
+ return true
+}
 async function pollCloudRender(){
  if(!STUDIO.cloudRenderJobId)return;
  try{
    const r=await fetch(CAPTION_CLOUD+'/api/render-jobs/'+encodeURIComponent(STUDIO.cloudRenderJobId),{headers:{Authorization:'Bearer '+STUDIO.cloudCaptionToken},cache:'no-store'});
    const d=await r.json().catch(()=>({}));
+   if(r.status===404){
+     if(autoRecoverCloudRender('检测到云端任务因服务重启丢失'))return;
+     STUDIO.cloudRenderJobId='';
+     setCloudRenderProgress(0);
+     setCloudRenderStatus('云端任务已失效。自动恢复已尝试一次，请重新点击“云端快速成片”。');
+     return
+   }
    if(!r.ok||!d?.ok)throw new Error(d?.error||('HTTP '+r.status));
    const j=d.job||{};setCloudRenderProgress(j.progress||0);setCloudRenderStatus((j.stage||j.status||'处理中')+(j.progress?' · '+j.progress+'%':''));
    if(j.status==='ready'&&j.downloadUrl){
@@ -747,7 +768,9 @@ async function pollCloudRender(){
      setCloudRenderProgress(100);setCloudRenderStatus('云端成片完成 · 可以直接保存或分享。');toast('云端成片完成');return
    }
    if(j.status==='failed'){
-     STUDIO.cloudRenderJobId='';setCloudRenderProgress(0);setCloudRenderStatus('云端出片失败：'+(j.error||'未知错误'));return
+     const err=String(j.error||'未知错误');
+     if(/重启|不可恢复|临时文件/.test(err)&&autoRecoverCloudRender('云端实例已重启'))return;
+     STUDIO.cloudRenderJobId='';setCloudRenderProgress(0);setCloudRenderStatus('云端出片失败：'+err);return
    }
    clearTimeout(STUDIO.cloudRenderTimer);STUDIO.cloudRenderTimer=setTimeout(pollCloudRender,1600)
  }catch(e){

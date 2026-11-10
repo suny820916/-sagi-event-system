@@ -9,5 +9,9 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app.py .
-ENV PYTHONUNBUFFERED=1
-CMD ["sh","-c","gunicorn -w 1 -k gthread --threads 4 -b 0.0.0.0:$PORT --timeout 300 app:app"]
+ENV PYTHONUNBUFFERED=1 \
+    MALLOC_ARENA_MAX=2 \
+    OMP_NUM_THREADS=1 \
+    OPENBLAS_NUM_THREADS=1 \
+    SAGI_FFMPEG_THREADS=1
+CMD ["sh","-c","gunicorn -w 1 -k gthread --threads 2 -b 0.0.0.0:$PORT --timeout 300 app:app"]

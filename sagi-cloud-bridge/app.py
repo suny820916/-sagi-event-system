@@ -14,6 +14,7 @@ import time
 import subprocess
 import json
 import re
+import gc
 import requests
 import yt_dlp
 from yt_dlp.utils import DownloadError
@@ -25,7 +26,8 @@ app = Flask(__name__)
 ALLOWED_ORIGIN = (os.getenv("SAGI_ALLOWED_ORIGIN") or "https://suny820916.github.io").rstrip("/")
 SERVER_SECRET = (os.getenv("SAGI_SERVER_SECRET") or os.getenv("SAGI_BRIDGE_TOKEN") or "").strip()
 PORT = int(os.getenv("PORT") or "10000")
-DEPLOY_REVISION = "2026-11-10-v1614"
+DEPLOY_REVISION = "2026-11-10-v1700-cloud-render-stable"
+APP_VERSION = "1.7.0"
 MAX_FILE_MB = int(os.getenv("SAGI_MAX_FILE_MB") or "300")
 JOB_TTL_MIN = int(os.getenv("SAGI_JOB_TTL_MIN") or "30")
 RATE_LIMIT_PER_HOUR = int(os.getenv("SAGI_RATE_LIMIT_PER_HOUR") or "20")
@@ -65,6 +67,12 @@ FONT_PATH = FONT_DIR / "NotoSansCJKsc-Regular.otf"
 render_jobs = {}
 render_jobs_lock = Lock()
 render_slot = Lock()
+# All memory-heavy work shares one slot. This prevents Whisper + FFmpeg from
+# peaking at the same time on small Render instances.
+heavy_slot = Lock()
+FFMPEG_THREADS = max(1, min(2, int(os.getenv("SAGI_FFMPEG_THREADS") or "1")))
+STATE_DIR = Path(os.getenv("SAGI_STATE_DIR") or (Path(tempfile.gettempdir()) / "sagi_cloud_state"))
+RENDER_STATE_FILE = STATE_DIR / "render_jobs.json"
 voice_cache = {"at": 0.0, "voices": []}
 
 def now():
@@ -157,6 +165,75 @@ def safe_name(name):
     raw = (name or "SAGI_INS_VIDEO").strip()
     clean = "".join(c for c in raw if c not in '\\/:*?"<>|').strip()
     return (clean or "SAGI_INS_VIDEO")[:100]
+
+
+def _persist_render_jobs_locked():
+    """Persist render metadata so a gunicorn/process restart does not become a blind 404."""
+    try:
+        STATE_DIR.mkdir(parents=True, exist_ok=True)
+        payload = {jid: dict(job) for jid, job in render_jobs.items()}
+        tmp = RENDER_STATE_FILE.with_suffix(".tmp")
+        tmp.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+        tmp.replace(RENDER_STATE_FILE)
+    except Exception as e:
+        print("render state persist failed:", str(e)[:300], flush=True)
+
+
+def _restore_render_jobs():
+    if not RENDER_STATE_FILE.exists():
+        return
+    try:
+        payload = json.loads(RENDER_STATE_FILE.read_text(encoding="utf-8") or "{}")
+    except Exception as e:
+        print("render state restore failed:", str(e)[:300], flush=True)
+        return
+    if not isinstance(payload, dict):
+        return
+
+    resume = []
+    with render_jobs_lock:
+        for jid, raw in payload.items():
+            if not isinstance(raw, dict):
+                continue
+            job = dict(raw)
+            job["id"] = str(job.get("id") or jid)
+            status = str(job.get("status") or "failed")
+            source = Path(str(job.get("source") or ""))
+            if status in ("queued", "processing"):
+                if source.exists():
+                    job.update({
+                        "status": "queued",
+                        "stage": "服务重启 · 自动恢复任务",
+                        "progress": max(5, min(15, int(job.get("progress") or 8))),
+                        "updated_at": iso(),
+                        "error": "",
+                    })
+                    resume.append((job["id"], job.get("options") or {}))
+                else:
+                    # Keep the record so the phone receives a recoverable failure instead of 404.
+                    job.update({
+                        "status": "failed",
+                        "stage": "服务已重启",
+                        "progress": 0,
+                        "updated_at": iso(),
+                        "error": "云端实例已重启，源视频临时文件不可恢复，请自动重新提交。",
+                    })
+            render_jobs[job["id"]] = job
+        _persist_render_jobs_locked()
+
+    for jid, options in resume:
+        Thread(target=run_cloud_render, args=(jid, options), daemon=True).start()
+
+
+def release_caption_model():
+    global caption_model
+    if caption_model is not None:
+        try:
+            del caption_model
+        except Exception:
+            pass
+        caption_model = None
+    gc.collect()
 
 
 def public_render_job(job):
@@ -268,10 +345,14 @@ def synthesize_eleven(text, voice_id, output_path, speed=1.0):
         params={"output_format": "mp3_44100_128"},
         json=payload,
         timeout=120,
+        stream=True,
     )
     if r.status_code >= 400:
         raise RuntimeError("ELEVENLABS_TTS: " + r.text[:400])
-    Path(output_path).write_bytes(r.content)
+    with Path(output_path).open("wb") as out:
+        for chunk in r.iter_content(chunk_size=64 * 1024):
+            if chunk:
+                out.write(chunk)
     if Path(output_path).stat().st_size < 1000:
         raise RuntimeError("ELEVENLABS_EMPTY_AUDIO")
     return str(output_path)
@@ -377,12 +458,14 @@ def render_dimensions(aspect, quality):
     return 720, 1280
 
 def run_cloud_render(job_id, options):
-    with render_slot:
+    # Cloud render is intentionally serialized with caption transcription.
+    with heavy_slot:
         with render_jobs_lock:
             job = render_jobs.get(job_id)
             if not job:
                 return
             job.update({"status": "processing", "stage": "准备云端渲染", "progress": 12, "updated_at": iso()})
+            _persist_render_jobs_locked()
             work = Path(job["workdir"])
             source = Path(job["source"])
         try:
@@ -405,6 +488,7 @@ def run_cloud_render(job_id, options):
             elif voice_mode in ("ai_male", "ai_female", "clone") and narration:
                 with render_jobs_lock:
                     render_jobs[job_id].update({"stage": "生成 AI 配音", "progress": 20, "updated_at": iso()})
+                    _persist_render_jobs_locked()
                 narration_path = work / "narration.mp3"
                 synthesize_voice(narration, voice_mode, voice_id, narration_path, voice_speed)
 
@@ -457,7 +541,9 @@ def run_cloud_render(job_id, options):
             else:
                 preset, crf = "ultrafast", "26"
             cmd += [
-                "-c:v", "libx264", "-preset", preset, "-crf", crf,
+                "-c:v", "libx264", "-preset", preset, "-tune", "zerolatency", "-crf", crf,
+                "-threads", str(FFMPEG_THREADS),
+                "-filter_threads", "1", "-filter_complex_threads", "1",
                 "-pix_fmt", "yuv420p", "-r", "30",
             ]
             if audio_map:
@@ -466,6 +552,7 @@ def run_cloud_render(job_id, options):
 
             with render_jobs_lock:
                 render_jobs[job_id].update({"stage": "云端编码成片", "progress": 34, "updated_at": iso()})
+                _persist_render_jobs_locked()
             proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
             logs = []
             for line in proc.stdout or []:
@@ -493,6 +580,7 @@ def run_cloud_render(job_id, options):
                     "updated_at": iso(), "path": str(out), "size": out.stat().st_size,
                     "filename": "SAGI_CLOUD_RENDER.mp4", "error": "",
                 })
+                _persist_render_jobs_locked()
         except Exception as e:
             with render_jobs_lock:
                 if job_id in render_jobs:
@@ -500,6 +588,9 @@ def run_cloud_render(job_id, options):
                         "status": "failed", "stage": "失败", "progress": 0,
                         "updated_at": iso(), "error": str(e)[:1200],
                     })
+                    _persist_render_jobs_locked()
+        finally:
+            gc.collect()
 
 def public_job(job):
     data = {
@@ -725,6 +816,7 @@ def cleanup_loop():
         time.sleep(60)
 
 Thread(target=cleanup_loop, daemon=True).start()
+_restore_render_jobs()
 # Caption model is loaded lazily on first caption request to keep health checks responsive.
 
 @app.after_request
@@ -740,7 +832,7 @@ def health():
         "ok": True,
         "service": "SAGI CLOUD BRIDGE",
         "deployRevision": DEPLOY_REVISION,
-        "version": "1.6.14",
+        "version": APP_VERSION,
         "instagram": True,
         "hybridWorker": True,
         "workerOnline": worker_online(),
@@ -753,6 +845,10 @@ def health():
         "aiVoiceFallback": True,
         "voiceClone": bool(ELEVENLABS_API_KEY),
         "cloudRender": True,
+        "cloudRenderStable": True,
+        "heavyTaskConcurrency": 1,
+        "ffmpegThreads": FFMPEG_THREADS,
+        "renderStateRecovery": True,
         "elevenLabsConfigured": bool(ELEVENLABS_API_KEY),
         "captionModel": "faster-whisper-tiny-int8",
         "captionMaxSeconds": 180,
@@ -802,30 +898,34 @@ def caption_media_fast():
         if size > CAPTION_MEDIA_MAX_MB * 1024 * 1024:
             return jsonify({"ok": False, "error": f"Media exceeds {CAPTION_MEDIA_MAX_MB}MB"}), 413
 
-        model = get_caption_model()
-        segments, info = model.transcribe(
-            str(path),
-            language=language,
-            task="transcribe",
-            beam_size=1,
-            best_of=1,
-            temperature=0.0,
-            vad_filter=False,
-            clip_timestamps=f"{start},{end}",
-            word_timestamps=False,
-            condition_on_previous_text=False,
-        )
+        with heavy_slot:
+            model = get_caption_model()
+            try:
+                segments, info = model.transcribe(
+                    str(path),
+                    language=language,
+                    task="transcribe",
+                    beam_size=1,
+                    best_of=1,
+                    temperature=0.0,
+                    vad_filter=False,
+                    clip_timestamps=f"{start},{end}",
+                    word_timestamps=False,
+                    condition_on_previous_text=False,
+                )
 
-        items = []
-        for seg in segments:
-            text = (seg.text or "").strip()
-            if not text:
-                continue
-            items.append({
-                "start": round(max(0.0, float(seg.start) - start), 3),
-                "end": round(max(0.0, float(seg.end) - start), 3),
-                "text": text,
-            })
+                items = []
+                for seg in segments:
+                    text = (seg.text or "").strip()
+                    if not text:
+                        continue
+                    items.append({
+                        "start": round(max(0.0, float(seg.start) - start), 3),
+                        "end": round(max(0.0, float(seg.end) - start), 3),
+                        "text": text,
+                    })
+            finally:
+                release_caption_model()
 
         return jsonify({
             "ok": True,
@@ -873,29 +973,33 @@ def caption_fast():
         if size > CAPTION_MAX_MB * 1024 * 1024:
             return jsonify({"ok": False, "error": f"Audio exceeds {CAPTION_MAX_MB}MB"}), 413
 
-        model = get_caption_model()
-        segments, info = model.transcribe(
-            str(path),
-            language=language,
-            task="transcribe",
-            beam_size=1,
-            best_of=1,
-            temperature=0.0,
-            vad_filter=True,
-            vad_parameters={"min_silence_duration_ms": 350},
-            word_timestamps=False,
-            condition_on_previous_text=False,
-        )
-        items = []
-        for seg in segments:
-            text = (seg.text or "").strip()
-            if not text:
-                continue
-            items.append({
-                "start": round(float(seg.start), 3),
-                "end": round(float(seg.end), 3),
-                "text": text,
-            })
+        with heavy_slot:
+            model = get_caption_model()
+            try:
+                segments, info = model.transcribe(
+                    str(path),
+                    language=language,
+                    task="transcribe",
+                    beam_size=1,
+                    best_of=1,
+                    temperature=0.0,
+                    vad_filter=True,
+                    vad_parameters={"min_silence_duration_ms": 350},
+                    word_timestamps=False,
+                    condition_on_previous_text=False,
+                )
+                items = []
+                for seg in segments:
+                    text = (seg.text or "").strip()
+                    if not text:
+                        continue
+                    items.append({
+                        "start": round(float(seg.start), 3),
+                        "end": round(float(seg.end), 3),
+                        "text": text,
+                    })
+            finally:
+                release_caption_model()
 
         return jsonify({
             "ok": True,
@@ -1209,20 +1313,26 @@ def voice_clone():
     sample = request.files.get("sample")
     if not sample:
         return jsonify({"ok": False, "error": "Voice sample required"}), 400
-    data = sample.read()
-    if not data:
+    work = tempfile.mkdtemp(prefix="sagi_voice_clone_")
+    suffix = Path(sample.filename or "voice.m4a").suffix or ".m4a"
+    sample_path = Path(work) / ("sample" + suffix)
+    sample.save(sample_path)
+    if not sample_path.exists() or sample_path.stat().st_size <= 0:
+        shutil.rmtree(work, ignore_errors=True)
         return jsonify({"ok": False, "error": "Empty voice sample"}), 400
-    if len(data) > VOICE_SAMPLE_MAX_MB * 1024 * 1024:
+    if sample_path.stat().st_size > VOICE_SAMPLE_MAX_MB * 1024 * 1024:
+        shutil.rmtree(work, ignore_errors=True)
         return jsonify({"ok": False, "error": f"Voice sample exceeds {VOICE_SAMPLE_MAX_MB}MB"}), 413
     name = safe_name(request.form.get("name") or "SAGI My Voice")
-    files = {"files": (sample.filename or "voice.m4a", data, sample.mimetype or "audio/mp4")}
     form = {
         "name": name,
         "description": "SAGI mobile voice clone",
         "remove_background_noise": "false",
     }
     try:
-        r = requests.post(ELEVENLABS_BASE + "/v1/voices/add", headers=_eleven_headers(), data=form, files=files, timeout=120)
+        with sample_path.open("rb") as fh:
+            files = {"files": (sample.filename or "voice.m4a", fh, sample.mimetype or "audio/mp4")}
+            r = requests.post(ELEVENLABS_BASE + "/v1/voices/add", headers=_eleven_headers(), data=form, files=files, timeout=120)
         if r.status_code >= 400:
             return jsonify({"ok": False, "error": "ELEVENLABS_CLONE: " + r.text[:500]}), 502
         out = r.json() or {}
@@ -1234,6 +1344,9 @@ def voice_clone():
         })
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)[:700]}), 500
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
+        gc.collect()
 
 @app.post("/api/voice/preview")
 def voice_preview():
@@ -1310,10 +1423,11 @@ def create_render_job():
         "progress": 8, "created_at": iso(), "updated_at": iso(),
         "workdir": work, "source": str(source), "path": "",
         "download_key": secrets.token_urlsafe(18), "filename": "SAGI_CLOUD_RENDER.mp4",
-        "size": 0, "error": "",
+        "size": 0, "error": "", "options": options,
     }
     with render_jobs_lock:
         render_jobs[job_id] = job
+        _persist_render_jobs_locked()
     Thread(target=run_cloud_render, args=(job_id, options), daemon=True).start()
     return jsonify({"ok": True, "job": public_render_job(job)})
 
@@ -1356,7 +1470,7 @@ def activate():
         "ok": True,
         "service": "SAGI CLOUD BRIDGE",
         "token": token,
-        "version": "1.6.14",
+        "version": APP_VERSION,
     })
 
 def cobalt_base():

@@ -6,7 +6,7 @@ services:
     region: singapore
     rootDir: sagi-cloud-bridge
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn -w 1 -k gthread --threads 4 -b 0.0.0.0:$PORT --timeout 300 app:app
+    startCommand: gunicorn -w 1 -k gthread --threads 2 -b 0.0.0.0:$PORT --timeout 300 app:app
     healthCheckPath: /health
     autoDeployTrigger: commit
     envVars:
@@ -34,3 +34,13 @@ services:
         value: "25"
       - key: SAGI_RENDER_MAX_MB
         value: "300"
+      - key: SAGI_FFMPEG_THREADS
+        value: "1"
+      - key: SAGI_STATE_DIR
+        value: "/tmp/sagi_cloud_state"
+      - key: MALLOC_ARENA_MAX
+        value: "2"
+      - key: OMP_NUM_THREADS
+        value: "1"
+      - key: OPENBLAS_NUM_THREADS
+        value: "1"
