@@ -2551,8 +2551,15 @@ function sdIntelLoadScript(src,globalName){
     const s=document.createElement('script');s.src=src;s.async=true;s.dataset.sdintel=globalName||'script';s.onload=()=>resolve(globalName?window[globalName]:true);s.onerror=()=>reject(new Error('组件加载失败'));document.head.appendChild(s)
   })
 }
-async function sdIntelRecognizeCanvas(cv,label,base=15,span=25){
-  const result=await window.Tesseract.recognize(cv,'chi_sim+eng',{logger:m=>{if(m.status==='recognizing text')sdIntelProgress(base+Math.round((m.progress||0)*span),label+' · '+Math.round((m.progress||0)*100)+'%')}});
+function sdIntelPreprocess(cv,mode='post'){
+  const out=document.createElement('canvas'),scale=mode==='source'?2.2:1.55;out.width=Math.max(1,Math.round(cv.width*scale));out.height=Math.max(1,Math.round(cv.height*scale));
+  const ctx=out.getContext('2d',{willReadFrequently:true});ctx.imageSmoothingEnabled=true;ctx.drawImage(cv,0,0,out.width,out.height);
+  const im=ctx.getImageData(0,0,out.width,out.height),d=im.data;
+  for(let i=0;i<d.length;i+=4){const y=.299*d[i]+.587*d[i+1]+.114*d[i+2];const v=mode==='source'?(y>145?255:0):Math.max(0,Math.min(255,(y-118)*1.5+128));d[i]=d[i+1]=d[i+2]=v}
+  ctx.putImageData(im,0,0);return out
+}
+async function sdIntelRecognizeCanvas(cv,label,base=15,span=25,mode='post'){
+  const prepared=sdIntelPreprocess(cv,mode);const langs=mode==='source'?'eng':'chi_sim+eng';const result=await window.Tesseract.recognize(prepared,langs,{logger:m=>{if(m.status==='recognizing text')sdIntelProgress(base+Math.round((m.progress||0)*span),label+' · '+Math.round((m.progress||0)*100)+'%')}});
   return sdIntelCleanText(result?.data?.text||'')
 }
 async function sdIntelOCRBundle(){
@@ -2562,7 +2569,7 @@ async function sdIntelOCRBundle(){
     await sdIntelLoadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js','Tesseract');
     if(sdIntelIsScreenshot()){
       const sourceCv=sdIntelCrop(.22,.36,1000),postCv=sdIntelCrop(.30,.93,1600);
-      const source=await sdIntelRecognizeCanvas(sourceCv,'正在读取账号 / 地点',16,18);
+      const source=await sdIntelRecognizeCanvas(sourceCv,'正在读取账号 / 地点',16,18,'source');
       const post=await sdIntelRecognizeCanvas(postCv,'正在读取帖子主体 / 多组比分',34,28);
       return{post:sdIntelStripUiNoise(post),source:sdIntelStripUiNoise(source),mode:'SOCIAL SCREENSHOT'}
     }
@@ -2707,7 +2714,7 @@ async function sdIntelAnalyze(){
   try{
     const visual=sdIntelCanvasStats(),faces=await sdIntelFaceCount(),bundle=await sdIntelOCRBundle(),source=sdIntelSourceContext(bundle.source+' '+bundle.post+' '+SDIMG.sourceName),location=sdIntelExtractLocation(bundle.source+' '+bundle.post),scores=sdIntelExtractScores(bundle.post);
     sdIntelProgress(58,'正在把UI噪音、比分结构、账号语义分开处理…');
-    const combined=[bundle.post,bundle.source,SDIMG.headline,SDIMG.sub,SDIMG.sourceName].filter(Boolean).join(' '),keywords=sdIntelExtractKeywords(combined,source),lookup=await sdIntelNews(keywords,source,location,scores),verifiedStreak=sdIntelVerifiedStreak(lookup.evidenceText,source,scores),meta={mode:bundle.mode,source,location,scores,evidenceText:lookup.evidenceText,verifiedStreak};
+    const combined=[bundle.post,bundle.source,SDIMG.headline,SDIMG.sub,SDIMG.sourceName].filter(Boolean).join(' '),keywords=sdIntelExtractKeywords(combined,source),lookup=await sdIntelNews(keywords,source,location,scores),verificationText=[lookup.evidenceText,...(lookup.items||[]).map(x=>x.title)].join('\n'),verifiedStreak=sdIntelVerifiedStreak(verificationText,source,scores),meta={mode:bundle.mode,source,location,scores,evidenceText:verificationText,verifiedStreak};
     const signals=sdIntelTopicSignals(bundle.post,keywords,lookup.items,visual,faces,meta),score=sdIntelHotScore(bundle.post,keywords,lookup.items,visual,faces,signals,meta);
     sdIntelProgress(86,'正在把“事实”转成抖音选题，而不是只堆关键词…');
     const angles=sdIntelMakeAngles(bundle.post,keywords,lookup.items,visual,faces,signals,score,meta);
