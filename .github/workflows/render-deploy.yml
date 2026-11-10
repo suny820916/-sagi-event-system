@@ -13,17 +13,21 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Check deploy hook secret
+      - name: Detect deploy hook
+        id: hook
         env:
           RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
         run: |
-          if [ -z "$RENDER_DEPLOY_HOOK_URL" ]; then
-            echo "::error::Missing repository secret RENDER_DEPLOY_HOOK_URL"
-            echo "Open Render service > Settings > Deploy Hook, then save that URL in GitHub repository secret RENDER_DEPLOY_HOOK_URL."
-            exit 1
+          if [ -n "$RENDER_DEPLOY_HOOK_URL" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+            echo "Render deploy hook configured."
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "No deploy hook configured; relying on Render autoDeployTrigger=commit."
           fi
 
       - name: Trigger Render deploy
+        if: steps.hook.outputs.available == 'true'
         env:
           RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
         run: |
