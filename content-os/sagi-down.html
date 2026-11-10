@@ -2643,10 +2643,11 @@ function sdImgFooter(ctx,w,h,t){
   ctx.fillStyle=t.muted;ctx.font='650 '+Math.max(18,Math.round(w*.020))+'px -apple-system,"PingFang SC",sans-serif';ctx.fillText(String(SDIMG.footer||''),pad,h-Math.round(h*.052));ctx.textAlign='right';ctx.fillStyle=t.accent;ctx.fillText('SAGI',w-pad,h-Math.round(h*.052));ctx.textAlign='left'
 }
 function sdImgDraw(){
-  const c=sdImgCanvas();if(!c)return;sdImgSetupCanvas();const ctx=c.getContext('2d'),w=c.width,h=c.height,t=SDIMG_THEMES[SDIMG.theme]||SDIMG_THEMES.gold;ctx.clearRect(0,0,w,h);
-  if(!sdImgDrawPhoto(ctx,w,h))sdImgDrawEmpty(ctx,w,h,t);sdImgOverlay(ctx,w,h,t);sdImgBrand(ctx,w,h,t);
-  if(SDIMG.template==='result')sdImgResultText(ctx,w,h,t);else{if(SDIMG.template==='mvp'){ctx.save();ctx.globalAlpha=.13;ctx.fillStyle=t.accent;ctx.font='1000 '+Math.round(w*.34)+'px -apple-system,sans-serif';ctx.fillText('MVP',Math.round(w*.15),Math.round(h*.57));ctx.restore()}sdImgDefaultText(ctx,w,h,t)}
-  sdImgFooter(ctx,w,h,t)
+  const c=sdImgCanvas();if(!c)return;sdImgSetupCanvas();const ctx=c.getContext('2d'),w=c.width,h=c.height,t=SDIMG_THEMES.gold;ctx.clearRect(0,0,w,h);
+  if(!sdImgDrawPhoto(ctx,w,h))sdImgDrawEmpty(ctx,w,h,t);
+  ctx.save();ctx.fillStyle='rgba(0,0,0,.58)';ctx.fillRect(0,h-Math.round(h*.075),w,Math.round(h*.075));
+  ctx.fillStyle='#d7b568';ctx.font='900 '+Math.max(20,Math.round(w*.024))+'px -apple-system,"PingFang SC",sans-serif';ctx.fillText('REFERENCE ONLY',Math.round(w*.055),h-Math.round(h*.038));
+  ctx.textAlign='right';ctx.fillStyle='#a6b0b3';ctx.font='650 '+Math.max(16,Math.round(w*.017))+'px -apple-system,"PingFang SC",sans-serif';ctx.fillText('仅用于分析 · 不参与最终导出',w-Math.round(w*.055),h-Math.round(h*.038));ctx.restore()
 }
 function sdImgSync(){
   document.querySelectorAll('[data-img-template]').forEach(b=>b.classList.toggle('active',b.dataset.imgTemplate===SDIMG.template));
@@ -2666,7 +2667,7 @@ function sdImgLoad(file){
   im.onload=()=>{SDIMG_IMAGE=im;SDIMG.sourceName=file.name;SDIMG.panX=0;SDIMG.panY=0;SDIMG.zoom=100;SDIMG.rotate=0;sdImgSave();sdImgSync();if(typeof sdIntelClear==='function')sdIntelClear();toast('图片已载入 · 正在自动分析热点');if(typeof sdIntelAnalyze==='function')setTimeout(()=>sdIntelAnalyze(),260)};
   im.onerror=()=>toast('图片读取失败');im.src=SDIMG_URL
 }
-function sdImgBlob(){if(typeof SDORIG!=='undefined'&&SDORIG.activeForPublish&&SDORIG.generatedAt&&typeof sdOrigCanvas==='function')return new Promise(resolve=>sdOrigCanvas().toBlob(resolve,'image/png',.96));return new Promise(resolve=>sdImgCanvas().toBlob(resolve,'image/png',.96))}
+function sdImgBlob(){if(typeof SDORIG!=='undefined'&&SDORIG.generatedAt&&typeof sdOrigBlob==='function')return sdOrigBlob();return new Promise(resolve=>sdImgCanvas().toBlob(resolve,'image/png',.96))}
 function sdImgSafeName(v){return String(v||'SAGI').replace(/[\\/:*?"<>|]/g,'_').slice(0,48)}
 async function sdImgExport(){
   const blob=await sdImgBlob();if(!blob){toast('导出失败');return}const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='SAGI_'+sdImgSafeName(SDIMG.headline||SDIMG.template)+'_'+SDIMG.ratio.replace(':','x')+'.png';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1200);toast('高清 PNG 已生成')
@@ -3045,7 +3046,7 @@ q('sdImgAnalyzeBtn').onclick=sdIntelAnalyze;q('sdImgAnalyzeClearBtn').onclick=sd
 /* ===== SAGI ORIGINAL POSTER ENGINE V1.0 ===== */
 const SDORIG_KEY='sagi_down_original_poster_v1';
 const SDORIG_RATIOS={'3:4':{w:1080,h:1440},'9:16':{w:1080,h:1920},'1:1':{w:1080,h:1080}};
-let SDORIG={variant:0,template:'number',ratio:'3:4',title:'',sub:'',person:'',subject:'',fact:'',role:'',structure:'',hook:'',generatedAt:0,activeForPublish:false,personFileName:'',personScale:100,personX:0,personMode:'hero',scoreText:'',activeLayer:'person',layers:{person:{x:8,y:-6,scale:88},number:{x:-8,y:-8,scale:86},scores:{x:0,y:3,scale:90},title:{x:0,y:14,scale:90}}};
+let SDORIG={variant:0,template:'number',ratio:'3:4',title:'',sub:'',person:'',subject:'',fact:'',role:'',structure:'',hook:'',generatedAt:0,activeForPublish:false,personFileName:'',personScale:100,personX:0,personMode:'hero',scoreText:'',activeLayer:'person',filterPreset:'editorial',outputMode:'edit',personBright:100,personContrast:108,personSat:96,bgBright:92,bgSat:82,vignette:12,layers:{person:{x:8,y:-6,scale:88},number:{x:-8,y:-8,scale:86},scores:{x:0,y:3,scale:90},title:{x:0,y:14,scale:90}}};
 let SDORIG_PERSON_IMAGE=null,SDORIG_PERSON_URL='';
 try{SDORIG={...SDORIG,...JSON.parse(localStorage.getItem(SDORIG_KEY)||'{}')}}catch(e){}
 
@@ -3082,6 +3083,31 @@ function sdOrigResetActiveLayer(){
 }
 sdOrigEnsureLayers();
 
+const SDORIG_FILTER_PRESETS={
+  editorial:{personBright:100,personContrast:114,personSat:92,bgBright:88,bgSat:76,vignette:14},
+  matchday:{personBright:103,personContrast:108,personSat:100,bgBright:96,bgSat:92,vignette:8},
+  hero:{personBright:105,personContrast:120,personSat:96,bgBright:82,bgSat:68,vignette:18},
+  campaign:{personBright:101,personContrast:112,personSat:86,bgBright:86,bgSat:66,vignette:20}
+};
+function sdOrigApplyFilterPreset(name){
+  const p=SDORIG_FILTER_PRESETS[name]||SDORIG_FILTER_PRESETS.editorial;
+  SDORIG.filterPreset=name;Object.assign(SDORIG,p);SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigRender();toast('已应用原创海报滤镜')
+}
+function sdOrigTuneSync(){
+  const map={
+    sdOrigPersonBright:['personBright','%'],sdOrigPersonContrast:['personContrast','%'],sdOrigPersonSat:['personSat','%'],
+    sdOrigBgBright:['bgBright','%'],sdOrigBgSat:['bgSat','%'],sdOrigVignette:['vignette','%']
+  };
+  Object.entries(map).forEach(([id,[key,suffix]])=>{const el=q(id),out=q(id+'Val');if(el)el.value=Number(SDORIG[key])||0;if(out)out.textContent=(Number(SDORIG[key])||0)+suffix});
+  document.querySelectorAll('[data-orig-filter]').forEach(b=>b.classList.toggle('active',b.dataset.origFilter===SDORIG.filterPreset));
+  document.querySelectorAll('[data-orig-output]').forEach(b=>b.classList.toggle('active',b.dataset.origOutput===SDORIG.outputMode))
+}
+function sdOrigSetOutputMode(mode){
+  SDORIG.outputMode=mode==='final'?'final':'edit';sdOrigSave();sdOrigTuneSync();sdOrigDraw()
+}
+function sdOrigBindTune(id,key){
+  const el=q(id);if(!el)return;el.oninput=()=>{SDORIG[key]=Number(el.value);SDORIG.filterPreset='custom';const out=q(id+'Val');if(out)out.textContent=SDORIG[key]+'%';sdOrigSave();sdOrigDraw();document.querySelectorAll('[data-orig-filter]').forEach(b=>b.classList.remove('active'))}
+}
 
 function sdOrigCanvas(){return q('sdOrigCanvas')}
 function sdOrigScoreRows(){
@@ -3203,8 +3229,14 @@ function sdOrigWrap(ctx,text,maxWidth,size,maxLines){
   if(line&&lines.length<maxLines)lines.push(line);if(lines.length===maxLines&&chars.length>lines.join('').length)lines[maxLines-1]=lines[maxLines-1].replace(/[，。；：、\s]*$/,'')+'…';return lines
 }
 function sdOrigGradient(ctx,w,h){
+  ctx.save();ctx.filter='brightness('+(Number(SDORIG.bgBright)||100)+'%) saturate('+(Number(SDORIG.bgSat)||100)+'%)';
   const g=ctx.createLinearGradient(0,0,w,h);g.addColorStop(0,'#050708');g.addColorStop(.46,'#0c1114');g.addColorStop(1,'#181306');ctx.fillStyle=g;ctx.fillRect(0,0,w,h);
-  const rg=ctx.createRadialGradient(w*.78,h*.14,20,w*.78,h*.14,w*.68);rg.addColorStop(0,'rgba(215,181,104,.22)');rg.addColorStop(1,'rgba(215,181,104,0)');ctx.fillStyle=rg;ctx.fillRect(0,0,w,h)
+  const rg=ctx.createRadialGradient(w*.78,h*.14,20,w*.78,h*.14,w*.68);rg.addColorStop(0,'rgba(215,181,104,.22)');rg.addColorStop(1,'rgba(215,181,104,0)');ctx.fillStyle=rg;ctx.fillRect(0,0,w,h);ctx.restore()
+}
+function sdOrigDrawVignette(ctx,w,h){
+  const strength=(Number(SDORIG.vignette)||0)/100;if(strength<=0)return;
+  const g=ctx.createRadialGradient(w*.5,h*.45,Math.min(w,h)*.16,w*.5,h*.45,Math.max(w,h)*.68);
+  g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(.72,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,'+Math.min(.65,strength*.022)+')');ctx.fillStyle=g;ctx.fillRect(0,0,w,h)
 }
 function sdOrigPitch(ctx,w,h){
   ctx.save();ctx.strokeStyle='rgba(215,181,104,.10)';ctx.lineWidth=Math.max(2,w*.002);
@@ -3214,7 +3246,7 @@ function sdOrigPitch(ctx,w,h){
 function sdOrigHeader(ctx,w,h,c){
   const pad=w*.065;ctx.fillStyle='#d7b568';ctx.fillRect(pad,h*.055,w*.13,Math.max(5,w*.006));
   ctx.fillStyle='#f4f6f7';ctx.font='900 '+Math.max(25,w*.032)+'px -apple-system,"PingFang SC",sans-serif';ctx.fillText('SAGI SPORTS',pad,h*.104);
-  ctx.fillStyle='#788b92';ctx.font='650 '+Math.max(18,w*.019)+'px -apple-system,"PingFang SC",sans-serif';ctx.fillText('ORIGINAL FOOTBALL POSTER · SOURCE PIXELS 0%',pad,h*.136)
+  if(SDORIG.outputMode!=='final'){ctx.fillStyle='#788b92';ctx.font='650 '+Math.max(18,w*.019)+'px -apple-system,"PingFang SC",sans-serif';ctx.fillText('EDIT PREVIEW · ORIGINAL WORKSPACE',pad,h*.136)}
 }
 
 function sdOrigDrawPerson(ctx,w,h,c){
@@ -3228,7 +3260,7 @@ function sdOrigDrawPerson(ctx,w,h,c){
   }else{
     sdOrigRound(ctx,box.x,box.y,box.w,box.h,w*.035);ctx.clip()
   }
-  ctx.globalAlpha=mode==='soft'?.78:1;ctx.drawImage(img,cx-iw/2,cy-ih/2,iw,ih);
+  ctx.globalAlpha=mode==='soft'?.78:1;ctx.filter='brightness('+(Number(SDORIG.personBright)||100)+'%) contrast('+(Number(SDORIG.personContrast)||100)+'%) saturate('+(Number(SDORIG.personSat)||100)+'%)';ctx.drawImage(img,cx-iw/2,cy-ih/2,iw,ih);ctx.filter='none';
   const g=ctx.createLinearGradient(box.x,0,box.x+box.w,0);g.addColorStop(0,'rgba(5,7,8,.82)');g.addColorStop(.35,'rgba(5,7,8,.22)');g.addColorStop(1,'rgba(5,7,8,.02)');ctx.fillStyle=g;ctx.fillRect(box.x,box.y,box.w,box.h);
   const bottom=ctx.createLinearGradient(0,box.y+box.h*.58,0,box.y+box.h);bottom.addColorStop(0,'rgba(5,7,8,0)');bottom.addColorStop(1,'rgba(5,7,8,.86)');ctx.fillStyle=bottom;ctx.fillRect(box.x,box.y,box.w,box.h);ctx.restore()
 }
@@ -3283,10 +3315,12 @@ function sdOrigMainText(ctx,w,h,c){
   const sy=startY+w*.07+lines.length*lh+w*.025;if(sub){ctx.fillStyle='#9eaaae';ctx.font='650 '+Math.round(w*.027)+'px -apple-system,"PingFang SC",sans-serif';sdOrigWrap(ctx,sub,max,Math.round(w*.027),3).forEach((line,i)=>ctx.fillText(line,pad,sy+i*w*.042))}
 }
 function sdOrigFooter(ctx,w,h,c){
-  const pad=w*.065;ctx.fillStyle='rgba(255,255,255,.12)';ctx.fillRect(pad,h*.91,w-pad*2,2);ctx.fillStyle='#7d8d93';ctx.font='650 '+Math.round(w*.020)+'px -apple-system,"PingFang SC",sans-serif';ctx.fillText('热点来自事实 · 视觉重新创作 · 不复用原图像素',pad,h*.95);ctx.textAlign='right';ctx.fillStyle='#d7b568';ctx.fillText('SAGI',w-pad,h*.95);ctx.textAlign='left'
+  const pad=w*.065;ctx.fillStyle='rgba(255,255,255,.12)';ctx.fillRect(pad,h*.91,w-pad*2,2);
+  if(SDORIG.outputMode!=='final'){ctx.fillStyle='#7d8d93';ctx.font='650 '+Math.round(w*.020)+'px -apple-system,"PingFang SC",sans-serif';ctx.fillText('编辑预览 · 数据核验与图层信息不进入正式导出',pad,h*.95)}
+  ctx.textAlign='right';ctx.fillStyle='#d7b568';ctx.font='800 '+Math.round(w*.020)+'px -apple-system,"PingFang SC",sans-serif';ctx.fillText('SAGI',w-pad,h*.95);ctx.textAlign='left'
 }
 function sdOrigDraw(){
-  const cv=sdOrigCanvas();if(!cv)return;sdOrigSetup();sdOrigEnsureLayers();const ctx=cv.getContext('2d'),w=cv.width,h=cv.height,c=sdOrigContext();ctx.clearRect(0,0,w,h);sdOrigGradient(ctx,w,h);sdOrigPitch(ctx,w,h);
+  const cv=sdOrigCanvas();if(!cv)return;sdOrigSetup();sdOrigEnsureLayers();const ctx=cv.getContext('2d'),w=cv.width,h=cv.height,c=sdOrigContext();ctx.clearRect(0,0,w,h);sdOrigGradient(ctx,w,h);sdOrigPitch(ctx,w,h);sdOrigDrawVignette(ctx,w,h);
   sdOrigWithLayer(ctx,w,h,'person',()=>sdOrigDrawPerson(ctx,w,h,c));sdOrigHeader(ctx,w,h,c);
   sdOrigWithLayer(ctx,w,h,'number',()=>{
     if(SDORIG.template==='number')sdOrigBigNumber(ctx,w,h,c);
@@ -3308,7 +3342,7 @@ function sdOrigRender(){
   document.querySelectorAll('[data-orig-variant]').forEach(b=>b.classList.toggle('active',Number(b.dataset.origVariant)===Number(SDORIG.variant)));
   document.querySelectorAll('[data-orig-template]').forEach(b=>b.classList.toggle('active',b.dataset.origTemplate===SDORIG.template));
   const coach=c.coach?('主教练上下文：'+c.coach+'。系统依据来源账号与联网文章中的教练身份判断，不使用人脸身份识别。'):('暂未从来源/新闻上下文验证主教练姓名，海报将以球队趋势为主。');
-  sdOrigSyncLayerControls();
+  sdOrigSyncLayerControls();sdOrigTuneSync();
   const off=SDINTEL.official||{};
   if(q('sdOfficialTier')){
     q('sdOfficialTier').textContent=off.verified?'官方优先 · 已核验':'媒体交叉验证';
@@ -3326,7 +3360,12 @@ function sdOrigGenerate(force=true){
 function sdOrigSelectVariant(i){
   SDORIG.variant=Math.max(0,Math.min(2,Number(i)||0));const v=sdOrigBuildVariants()[SDORIG.variant];SDORIG.title=v.title;SDORIG.sub=v.sub;SDORIG.person=v.person;SDORIG.template=v.template;SDORIG.structure=v.structure;SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigRender()
 }
-function sdOrigBlob(){return new Promise(resolve=>sdOrigCanvas().toBlob(resolve,'image/png',.96))}
+function sdOrigBlob(){
+  return new Promise(resolve=>{
+    const prev=SDORIG.outputMode;SDORIG.outputMode='final';sdOrigDraw();
+    sdOrigCanvas().toBlob(blob=>{SDORIG.outputMode=prev;sdOrigDraw();sdOrigTuneSync();resolve(blob)},'image/png',.96)
+  })
+}
 function sdOrigSafeName(s){return String(s||'SAGI_ORIGINAL').replace(/[\\/:*?"<>|]/g,'_').slice(0,52)}
 async function sdOrigExport(){
   if(!SDORIG.generatedAt)sdOrigGenerate(true);if(!SDORIG.generatedAt)return;const blob=await sdOrigBlob();if(!blob){toast('原创海报导出失败');return}const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='SAGI_ORIGINAL_'+sdOrigSafeName(SDORIG.title)+'.png';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1200);toast('原创 PNG 已生成')
@@ -3368,6 +3407,11 @@ q('sdOrigAutoLayoutBtn').onclick=sdOrigAutoLayout;q('sdOrigResetLayerBtn').oncli
   c.onpointermove=e=>{if(!drag)return;const r=c.getBoundingClientRect(),l=sdOrigLayer(SDORIG.activeLayer);l.x=Math.max(-35,Math.min(35,drag.lx+(e.clientX-drag.x)/Math.max(1,r.width)*100));l.y=Math.max(-35,Math.min(35,drag.ly+(e.clientY-drag.y)/Math.max(1,r.height)*100));q('sdOrigLayerX').value=l.x;q('sdOrigLayerY').value=l.y;sdOrigDraw()};
   const end=()=>{if(drag){drag=null;SDORIG.generatedAt=Date.now();sdOrigSave()}};c.onpointerup=end;c.onpointercancel=end
 }
+
+document.querySelectorAll('[data-orig-filter]').forEach(b=>b.onclick=()=>sdOrigApplyFilterPreset(b.dataset.origFilter));
+document.querySelectorAll('[data-orig-output]').forEach(b=>b.onclick=()=>sdOrigSetOutputMode(b.dataset.origOutput));
+sdOrigBindTune('sdOrigPersonBright','personBright');sdOrigBindTune('sdOrigPersonContrast','personContrast');sdOrigBindTune('sdOrigPersonSat','personSat');
+sdOrigBindTune('sdOrigBgBright','bgBright');sdOrigBindTune('sdOrigBgSat','bgSat');sdOrigBindTune('sdOrigVignette','vignette');
 q('sdOrigExportBtn').onclick=sdOrigExport;q('sdOrigShareBtn').onclick=sdOrigShare;q('sdOrigUsePublishBtn').onclick=sdOrigUsePublish;
 sdOrigRender();
 /* ===== END SAGI ORIGINAL POSTER ENGINE ===== */
