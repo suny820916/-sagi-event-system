@@ -499,7 +499,10 @@ async function pollCloudDownload(jobId,handoff){
       if(job.errorCode==='cloud_download_rate_limit'){
         msg='源平台暂时限制了云端访问，请稍后重试。';
       }else if(job.errorCode==='instagram_cloud_blocked'){
-        msg='Instagram 当前限制了云端访问。本次已停止等待，不会再卡住 150 秒；请稍后重试或换一个公开帖子链接。';
+        const proxyOn=!!STUDIO.cloudHealth?.instagramProxyConfigured;
+        msg=proxyOn
+          ?'Instagram 仍限制当前代理出口。请更换可用的 Instagram 代理出口后重试。'
+          :'Instagram 限制了 Render 云端 IP。当前尚未配置 Instagram 专用代理；请在 Render 环境变量中设置 SAGI_INSTAGRAM_PROXY 后重试。';
       }else if(job.errorCode==='unsupported_source'){
         msg='当前链接暂不支持。';
       }else if(job.error&&String(job.error).length<160){
@@ -2132,7 +2135,7 @@ if(q('captionSpeed'))q('captionSpeed').value='fast';
 if(q('captionRange'))q('captionRange').value='trim';
 setTimeout(async()=>{await wakeCaptionCloud();refreshAIVoiceStatus(false)},180);
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=198',{updateViaCache:'none'}).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=199',{updateViaCache:'none'}).catch(()=>{})}
 })();
 </script>
 </body>

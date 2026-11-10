@@ -30,8 +30,8 @@ app = Flask(__name__)
 ALLOWED_ORIGIN = (os.getenv("SAGI_ALLOWED_ORIGIN") or "https://suny820916.github.io").rstrip("/")
 SERVER_SECRET = (os.getenv("SAGI_SERVER_SECRET") or os.getenv("SAGI_BRIDGE_TOKEN") or "").strip()
 PORT = int(os.getenv("PORT") or "10000")
-DEPLOY_REVISION = "2026-11-10-v1730-instagram-fast-post"
-APP_VERSION = "1.7.3"
+DEPLOY_REVISION = "2026-11-10-v1740-instagram-egress"
+APP_VERSION = "1.7.4"
 MAX_FILE_MB = int(os.getenv("SAGI_MAX_FILE_MB") or "300")
 JOB_TTL_MIN = int(os.getenv("SAGI_JOB_TTL_MIN") or "30")
 RATE_LIMIT_PER_HOUR = int(os.getenv("SAGI_RATE_LIMIT_PER_HOUR") or "20")
@@ -717,6 +717,16 @@ def _extract_instagram_media_urls(text):
     ], limit=20)
     return structured or meta[:1]
 
+def _requests_proxy_kwargs():
+    if not INSTAGRAM_PROXY:
+        return {}
+    return {"proxies": {"http": INSTAGRAM_PROXY, "https": INSTAGRAM_PROXY}}
+
+def _curl_proxy_kwargs():
+    if not INSTAGRAM_PROXY:
+        return {}
+    return {"proxy": INSTAGRAM_PROXY}
+
 def _save_remote_media(media, work, wanted_name, strategy):
     if not media:
         raise RuntimeError("INSTAGRAM_FAST_NO_MEDIA")
@@ -730,7 +740,7 @@ def _save_remote_media(media, work, wanted_name, strategy):
     }
     for idx, (kind, media_url) in enumerate(media, start=1):
         try:
-            resp = requests.get(media_url, headers=headers, stream=True, timeout=(5, 20))
+            resp = requests.get(media_url, headers=headers, stream=True, timeout=(5, 20), **_requests_proxy_kwargs())
             resp.raise_for_status()
             ctype = (resp.headers.get("Content-Type") or "").lower()
             ext = ".mp4" if kind == "video" or "video/" in ctype else ".jpg"
@@ -814,6 +824,7 @@ def run_instagram_fast_post(job_id, url, wanted_name):
                     impersonate="chrome",
                     timeout=8,
                     allow_redirects=True,
+                    **_curl_proxy_kwargs(),
                 )
                 if int(getattr(r, "status_code", 0) or 0) >= 400:
                     continue
@@ -1209,9 +1220,11 @@ def health():
         "version": APP_VERSION,
         "instagram": True,
         "cloudDownload": True,
-        "cloudDownloadVersion": "1.2",
+        "cloudDownloadVersion": "1.3",
         "downloadPlatforms": ["Instagram", "YouTube", "TikTok", "X"],
         "instagramPostFallback": "html-fast -> gallery-dl-short",
+        "instagramProxyConfigured": bool(INSTAGRAM_PROXY),
+        "instagramEgress": "proxy" if INSTAGRAM_PROXY else "render-direct",
         "instagramFastTimeoutSeconds": 16,
         "galleryFallbackTimeoutSeconds": 25,
         "downloadMediaKinds": ["video", "image", "carousel-zip"],
