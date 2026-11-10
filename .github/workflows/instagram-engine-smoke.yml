@@ -1,0 +1,69 @@
+name: SAGI Instagram Engine Smoke
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "sagi-cloud-bridge/**"
+      - ".github/workflows/instagram-engine-smoke.yml"
+  workflow_dispatch:
+
+jobs:
+  instagram-engine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Instagram-specific extractor only
+        run: |
+          python -m pip install --quiet "parth-dl>=1.2.1,<2"
+
+      - name: Verify parth-dl against a recent public reel
+        run: |
+          python - <<'PY'
+          import json, subprocess, sys
+
+          # Recent public NASA reel independently indexed in October 2026.
+          url="https://www.instagram.com/reel/DeIXf9SNQVO/"
+          script=r"""
+import json, sys
+from parth_dl import get_info
+print(json.dumps(get_info(sys.argv[1], verbose=False), ensure_ascii=False))
+"""
+          try:
+              p=subprocess.run(
+                  [sys.executable,"-c",script,url],
+                  text=True,capture_output=True,timeout=22,check=False
+              )
+          except subprocess.TimeoutExpired:
+              print("PARTH_DL_TIMEOUT")
+              raise SystemExit(2)
+
+          print("PARTH_RETURN",p.returncode)
+          if p.stderr:
+              print("PARTH_STDERR",p.stderr[-1200:])
+          if p.returncode != 0:
+              print("PARTH_DL_FAILED")
+              raise SystemExit(3)
+
+          raw=(p.stdout or "").strip()
+          try:
+              info=json.loads(raw)
+          except Exception:
+              print("PARTH_BAD_JSON",raw[-1500:])
+              raise SystemExit(4)
+
+          entries=info.get("entries") or []
+          formats=[]
+          for entry in entries:
+              formats.extend([x for x in (entry.get("formats") or []) if str(x.get("url") or "").startswith("http")])
+          print("PARTH_ENTRIES",len(entries),"FORMATS",len(formats),"TITLE",str(info.get("title") or "")[:120])
+          if not entries or not formats:
+              print("PARTH_NO_PUBLIC_MEDIA")
+              raise SystemExit(5)
+          print("PARTH_DL_REAL_REEL_OK")
+          PY
