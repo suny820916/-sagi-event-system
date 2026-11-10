@@ -2422,7 +2422,7 @@ function sdImgTemplate(name){
 }
 function sdImgLoad(file){
   if(!file)return;if(SDIMG_URL)URL.revokeObjectURL(SDIMG_URL);SDIMG_URL=URL.createObjectURL(file);const im=new Image();
-  im.onload=()=>{SDIMG_IMAGE=im;SDIMG.sourceName=file.name;SDIMG.panX=0;SDIMG.panY=0;SDIMG.zoom=100;SDIMG.rotate=0;sdImgSave();sdImgSync();toast('图片已载入 · 可拖动构图')};
+  im.onload=()=>{SDIMG_IMAGE=im;SDIMG.sourceName=file.name;SDIMG.panX=0;SDIMG.panY=0;SDIMG.zoom=100;SDIMG.rotate=0;sdImgSave();sdImgSync();if(typeof sdIntelClear==='function')sdIntelClear();toast('图片已载入 · 正在自动分析热点');if(typeof sdIntelAnalyze==='function')setTimeout(()=>sdIntelAnalyze(),260)};
   im.onerror=()=>toast('图片读取失败');im.src=SDIMG_URL
 }
 function sdImgBlob(){return new Promise(resolve=>sdImgCanvas().toBlob(resolve,'image/png',.96))}
@@ -2567,7 +2567,8 @@ function sdIntelHotScore(ocr,keywords,news,visual,faces,signals){
   let s=28;s+=Math.min(22,news.length*5);s+=Math.min(14,keywords.length*3);s+=sdIntelScoreMatch(ocr)?12:0;s+=Math.min(8,faces*2);s+=visual.energy>=60?8:visual.energy>=40?4:0;s+=signals.filter(x=>x.hot).length*3;return Math.max(1,Math.min(96,Math.round(s)))
 }
 function sdIntelShortSubject(keywords,ocr){
-  if(keywords?.length)return keywords[0];
+  const map={'Cristiano Ronaldo':'C罗','Lionel Messi':'梅西','Kylian Mbappe':'姆巴佩','Erling Haaland':'哈兰德','Lamine Yamal':'亚马尔','Real Madrid':'皇马','Barcelona':'巴萨','Manchester City':'曼城','Manchester United':'曼联','Liverpool':'利物浦','Arsenal':'阿森纳','Chelsea':'切尔西','Bayern Munich':'拜仁','PSG':'巴黎圣日耳曼','Juventus':'尤文','Inter Milan':'国际米兰','AC Milan':'AC米兰','Portugal football':'葡萄牙','Argentina football':'阿根廷','China women football':'中国女足','China football':'国足'};
+  if(keywords?.length)return map[keywords[0]]||keywords[0];
   const s=sdIntelCleanText(ocr).split(/\s+/).filter(x=>x.length>=2).slice(0,2).join(' ');return s||'这张足球照片'
 }
 function sdIntelMakeAngles(ocr,keywords,news,visual,faces,signals,base){
@@ -2576,7 +2577,7 @@ function sdIntelMakeAngles(ocr,keywords,news,visual,faces,signals,base){
   const emotional=hasRecord?(subject+'，这一刻已经写进历史'):hasComeback?(subject+'，足球最疯狂的剧情就在这一刻'):faces===1?(subject+'，所有情绪都写在这一张脸上'):(subject+'，这一幕为什么让球迷停下来多看一眼');
   const debate=hasControversy?(subject+'，这个瞬间你认为该怎么判？'):(score?(score+'之后，你认为谁才是决定比赛的人？'):(subject+'，你同意这是今天最值得讨论的足球瞬间吗？'));
   const hashtags=['#足球','#足球热点','#萨吉体育'];
-  keywords.slice(0,3).forEach(k=>hashtags.unshift('#'+String(k).replace(/\s+/g,'')));
+  keywords.slice(0,3).forEach(k=>{const subjectMap={'Cristiano Ronaldo':'C罗','Lionel Messi':'梅西','Kylian Mbappe':'姆巴佩','Erling Haaland':'哈兰德','Lamine Yamal':'亚马尔','Real Madrid':'皇马','Barcelona':'巴萨','Manchester City':'曼城','Manchester United':'曼联','Liverpool':'利物浦','Arsenal':'阿森纳','Chelsea':'切尔西','Bayern Munich':'拜仁','PSG':'巴黎圣日耳曼','Juventus':'尤文','Inter Milan':'国际米兰','AC Milan':'AC米兰'};hashtags.unshift('#'+String(subjectMap[k]||k).replace(/\s+/g,''))});
   if(hasFinal)hashtags.unshift('#冠军');if(hasRecord)hashtags.unshift('#足球历史');if(hasComeback)hashtags.unshift('#逆转');
   const tags=[...new Set(hashtags)].slice(0,7).join(' ');
   const angles=[
