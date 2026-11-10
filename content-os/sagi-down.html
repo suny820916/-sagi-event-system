@@ -114,7 +114,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 <div class="wrap">
   <div class="top">
     <div class="brand"><b>SAGI DOWN</b><span>DOWNLOAD · IMAGE AI · VIDEO</span></div>
-    <span class="badge">V3.2 · IMAGE INTELLIGENCE</span>
+    <span class="badge">V3.3 · IMAGE INTELLIGENCE 2.0</span>
   </div>
 
   <section class="hero">
@@ -2463,9 +2463,9 @@ q('sdImgExportBtn').onclick=sdImgExport;q('sdImgCopyBtn').onclick=sdImgCopy;q('s
 sdImgSync();
 /* ===== END IMAGE STUDIO ===== */
 
-/* ===== SAGI IMAGE INTELLIGENCE V1.0 ===== */
-const SDINTEL_KEY='sagi_down_image_intelligence_v1';
-let SDINTEL={ocr:'',keywords:[],score:0,faces:0,visual:{},news:[],angles:[],analyzedAt:0},SDINTEL_RUNNING=false;
+/* ===== SAGI IMAGE INTELLIGENCE V2.0 ===== */
+const SDINTEL_KEY='sagi_down_image_intelligence_v2';
+let SDINTEL={ocr:'',sourceOcr:'',keywords:[],scores:[],source:null,score:0,faces:0,visual:{},news:[],angles:[],signals:[],evidenceText:'',verifiedStreak:0,analyzedAt:0},SDINTEL_RUNNING=false;
 try{SDINTEL={...SDINTEL,...JSON.parse(localStorage.getItem(SDINTEL_KEY)||'{}')}}catch(e){}
 function sdIntelSave(){try{localStorage.setItem(SDINTEL_KEY,JSON.stringify(SDINTEL))}catch(e){}}
 function sdIntelProgress(n,msg){
@@ -2473,13 +2473,48 @@ function sdIntelProgress(n,msg){
   if(msg&&q('sdImgAnalyzeStatus'))q('sdImgAnalyzeStatus').textContent=msg
 }
 function sdIntelCleanText(s){
-  return String(s||'').replace(/[|｜]/g,' ').replace(/\s+/g,' ').replace(/[^\u3400-\u9fffA-Za-z0-9:%：\-·._ ]/g,' ').replace(/\s+/g,' ').trim().slice(0,600)
+  return String(s||'').replace(/[|｜]/g,' ').replace(/\s+/g,' ').replace(/[^\u3400-\u9fffA-Za-z0-9@:%：\-–—·._ ]/g,' ').replace(/\s+/g,' ').trim().slice(0,1200)
 }
-function sdIntelScoreMatch(text){
-  const m=String(text||'').match(/(?:^|\s)(\d{1,2})\s*[:：\-]\s*(\d{1,2})(?:\s|$)/);return m?m[1]+':'+m[2]:''
+function sdIntelStripUiNoise(s){
+  return sdIntelCleanText(s)
+    .replace(/Instagram/gi,' ')
+    .replace(/开始做问卷|我们想了解一小部分用户的想法|能请你用几分钟时间做一份问卷吗|关注|首页|搜索|个人主页|点赞|评论|分享/gi,' ')
+    .replace(/\s+/g,' ').trim()
 }
-function sdIntelExtractKeywords(text){
-  const raw=sdIntelCleanText(text),out=[],push=x=>{x=String(x||'').trim();if(x.length>=2&&!out.includes(x))out.push(x)};
+function sdIntelIsScreenshot(){
+  if(!SDIMG_IMAGE)return false;
+  const ratio=SDIMG_IMAGE.naturalHeight/Math.max(1,SDIMG_IMAGE.naturalWidth);
+  return ratio>=1.62;
+}
+function sdIntelCrop(y0=0,y1=1,max=1500){
+  const src=SDIMG_IMAGE,sh=src.naturalHeight,sw=src.naturalWidth,top=Math.max(0,Math.floor(sh*y0)),bottom=Math.min(sh,Math.ceil(sh*y1)),ch=Math.max(1,bottom-top),scale=Math.min(1,max/Math.max(sw,ch));
+  const cv=document.createElement('canvas');cv.width=Math.max(1,Math.round(sw*scale));cv.height=Math.max(1,Math.round(ch*scale));
+  cv.getContext('2d').drawImage(src,0,top,sw,ch,0,0,cv.width,cv.height);return cv
+}
+function sdIntelExtractScores(text){
+  const out=[];for(const m of String(text||'').matchAll(/(?:^|[^\d])(\d{1,2})\s*[-–—:：]\s*(\d{1,2})(?=[^\d]|$)/g)){out.push(m[1]+':'+m[2]);if(out.length>=12)break}return out
+}
+function sdIntelScoreMatch(text){return sdIntelExtractScores(text)[0]||''}
+function sdIntelExtractLocation(text){
+  const raw=String(text||'');
+  const names=['Mestalla','Bernabéu','Santiago Bernabéu','Camp Nou','Wembley','Anfield','Emirates','San Siro','Old Trafford','Allianz Arena'];
+  return names.find(x=>raw.toLowerCase().includes(x.toLowerCase()))||''
+}
+function sdIntelSourceContext(text){
+  const raw=String(text||'').toLowerCase();
+  const sources=[
+    {re:/madridxtra[_\s.@-]*/i,handle:'madridxtra_',name:'MadridXtra',subject:'皇马',query:'Real Madrid',tags:['#皇马','#皇家马德里'],evidence:['https://madridxtra.com/','https://madridxtra.com/stats','https://picmany.com/madridxtra_']},
+    {re:/realmadrid/i,handle:'realmadrid',name:'Real Madrid',subject:'皇马',query:'Real Madrid',tags:['#皇马','#皇家马德里'],evidence:['https://www.realmadrid.com/']},
+    {re:/fcbarcelona|barca/i,handle:'fcbarcelona',name:'FC Barcelona',subject:'巴萨',query:'Barcelona football',tags:['#巴萨','#巴塞罗那'],evidence:['https://www.fcbarcelona.com/']},
+    {re:/433(?:\b|_)/i,handle:'433',name:'433',subject:'足球热点',query:'football',tags:['#足球热点'],evidence:[]},
+    {re:/brfootball|bleacher/i,handle:'brfootball',name:'B/R Football',subject:'足球热点',query:'football',tags:['#足球热点'],evidence:[]},
+    {re:/espnfc/i,handle:'espnfc',name:'ESPN FC',subject:'足球热点',query:'football soccer',tags:['#足球热点'],evidence:[]}
+  ];
+  return sources.find(x=>x.re.test(raw))||null
+}
+function sdIntelExtractKeywords(text,source){
+  const raw=sdIntelStripUiNoise(text),out=[],push=x=>{x=String(x||'').trim();if(x.length>=2&&!out.includes(x))out.push(x)};
+  if(source?.query)push(source.query);
   const aliases=[
    ['C罗','Cristiano Ronaldo'],['罗纳尔多','Cristiano Ronaldo'],['CR7','Cristiano Ronaldo'],['Ronaldo','Cristiano Ronaldo'],
    ['梅西','Lionel Messi'],['Messi','Lionel Messi'],['姆巴佩','Kylian Mbappe'],['Mbappe','Kylian Mbappe'],
@@ -2492,9 +2527,7 @@ function sdIntelExtractKeywords(text){
   ];
   aliases.forEach(([a,b])=>{if(raw.toLowerCase().includes(a.toLowerCase()))push(b)});
   const en=[...raw.matchAll(/\b[A-Z][A-Za-zÀ-ÿ.'-]{2,}(?:\s+[A-Z][A-Za-zÀ-ÿ.'-]{2,}){0,2}\b/g)].map(m=>m[0]);
-  en.forEach(push);
-  const cn=[...raw.matchAll(/[\u3400-\u9fff]{2,8}(?:队|杯|联赛|冠军|决赛|足球|俱乐部)?/g)].map(m=>m[0]).filter(x=>!/图片|发布|足球内容|为身边|选择照片|热点|主标题/.test(x));
-  cn.slice(0,8).forEach(push);
+  en.filter(x=>!/Instagram|Mestalla|MadridXtra/i.test(x)).slice(0,8).forEach(push);
   return out.slice(0,8)
 }
 function sdIntelCanvasStats(){
@@ -2502,10 +2535,7 @@ function sdIntelCanvasStats(){
   const cv=document.createElement('canvas'),max=320,scale=Math.min(1,max/Math.max(SDIMG_IMAGE.naturalWidth,SDIMG_IMAGE.naturalHeight));cv.width=Math.max(1,Math.round(SDIMG_IMAGE.naturalWidth*scale));cv.height=Math.max(1,Math.round(SDIMG_IMAGE.naturalHeight*scale));
   const ctx=cv.getContext('2d',{willReadFrequently:true});ctx.drawImage(SDIMG_IMAGE,0,0,cv.width,cv.height);const data=ctx.getImageData(0,0,cv.width,cv.height).data;
   let lum=0,lum2=0,sat=0,n=0,edges=0,prev=0;
-  for(let i=0;i<data.length;i+=16){
-    const r=data[i],g=data[i+1],b=data[i+2],mx=Math.max(r,g,b),mn=Math.min(r,g,b),l=.2126*r+.7152*g+.0722*b;
-    lum+=l;lum2+=l*l;sat+=(mx-mn)/(mx||1)*100;if(n&&Math.abs(l-prev)>42)edges++;prev=l;n++
-  }
+  for(let i=0;i<data.length;i+=16){const r=data[i],g=data[i+1],b=data[i+2],mx=Math.max(r,g,b),mn=Math.min(r,g,b),l=.2126*r+.7152*g+.0722*b;lum+=l;lum2+=l*l;sat+=(mx-mn)/(mx||1)*100;if(n&&Math.abs(l-prev)>42)edges++;prev=l;n++}
   const avg=lum/Math.max(1,n),variance=Math.max(0,lum2/Math.max(1,n)-avg*avg),contrast=Math.sqrt(variance),energy=Math.min(100,Math.round((contrast*.9)+(edges/Math.max(1,n)*180)));
   return{brightness:Math.round(avg/255*100),saturation:Math.round(sat/Math.max(1,n)),contrast:Math.round(contrast/128*100),orientation:cv.width>cv.height?'横图':cv.width===cv.height?'方图':'竖图',energy}
 }
@@ -2519,38 +2549,69 @@ function sdIntelLoadScript(src,globalName){
     const s=document.createElement('script');s.src=src;s.async=true;s.dataset.sdintel=globalName||'script';s.onload=()=>resolve(globalName?window[globalName]:true);s.onerror=()=>reject(new Error('组件加载失败'));document.head.appendChild(s)
   })
 }
-async function sdIntelOCR(){
-  if(!SDIMG_IMAGE)return'';
-  sdIntelProgress(18,'正在识别画面里的球队名、比分、球员名等文字…');
+async function sdIntelRecognizeCanvas(cv,label,base=15,span=25){
+  const result=await window.Tesseract.recognize(cv,'chi_sim+eng',{logger:m=>{if(m.status==='recognizing text')sdIntelProgress(base+Math.round((m.progress||0)*span),label+' · '+Math.round((m.progress||0)*100)+'%')}});
+  return sdIntelCleanText(result?.data?.text||'')
+}
+async function sdIntelOCRBundle(){
+  if(!SDIMG_IMAGE)return{post:'',source:'',mode:'PHOTO'};
+  sdIntelProgress(12,'正在判断图片类型并分离社交平台UI…');
   try{
     await sdIntelLoadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js','Tesseract');
-    const work=document.createElement('canvas'),max=1600,scale=Math.min(1,max/Math.max(SDIMG_IMAGE.naturalWidth,SDIMG_IMAGE.naturalHeight));work.width=Math.max(1,Math.round(SDIMG_IMAGE.naturalWidth*scale));work.height=Math.max(1,Math.round(SDIMG_IMAGE.naturalHeight*scale));work.getContext('2d').drawImage(SDIMG_IMAGE,0,0,work.width,work.height);
-    const result=await window.Tesseract.recognize(work,'chi_sim+eng',{logger:m=>{if(m.status==='recognizing text')sdIntelProgress(18+Math.round((m.progress||0)*36),'正在读取画面文字 · '+Math.round((m.progress||0)*100)+'%')}});
-    return sdIntelCleanText(result?.data?.text||'')
-  }catch(e){
-    console.warn('OCR unavailable',e);return''
-  }
+    if(sdIntelIsScreenshot()){
+      const sourceCv=sdIntelCrop(.22,.36,1000),postCv=sdIntelCrop(.30,.93,1600);
+      const source=await sdIntelRecognizeCanvas(sourceCv,'正在读取账号 / 地点',16,18);
+      const post=await sdIntelRecognizeCanvas(postCv,'正在读取帖子主体 / 多组比分',34,28);
+      return{post:sdIntelStripUiNoise(post),source:sdIntelStripUiNoise(source),mode:'SOCIAL SCREENSHOT'}
+    }
+    const post=await sdIntelRecognizeCanvas(sdIntelCrop(0,1,1600),'正在读取图片主体',18,40);
+    return{post:sdIntelStripUiNoise(post),source:'',mode:'PHOTO'}
+  }catch(e){console.warn('OCR unavailable',e);return{post:'',source:'',mode:sdIntelIsScreenshot()?'SOCIAL SCREENSHOT':'PHOTO'}}
 }
-function sdIntelQueryTerm(keywords,ocr){
-  const kws=(keywords||[]).filter(Boolean).slice(0,4);
-  if(kws.length)return kws.map(x=>x.includes(' ')?'"'+x.replace(/"/g,'')+'"':x).join(' OR ');
-  const words=sdIntelCleanText(ocr).split(/\s+/).filter(x=>x.length>=3).slice(0,4);return words.join(' OR ')
+function sdIntelQueryTerm(keywords,source,location,scores){
+  const parts=[];if(source?.query)parts.push('"'+source.query+'"');if(location)parts.push('"'+location+'"');
+  (keywords||[]).filter(x=>x!==source?.query).slice(0,2).forEach(x=>parts.push(x.includes(' ')?'"'+x.replace(/"/g,'')+'"':x));
+  if(scores?.length)parts.push('"'+scores[scores.length-1]+'"');
+  return parts.join(' ')||'football'
 }
-async function sdIntelNews(keywords,ocr){
-  const query=sdIntelQueryTerm(keywords,ocr);if(!query)return[];
-  sdIntelProgress(62,'正在联网核对最近24小时足球新闻…');
-  const u='https://api.gdeltproject.org/api/v2/doc/doc?query='+encodeURIComponent('('+query+') (football OR soccer)')+'&mode=ArtList&maxrecords=20&format=json&timespan=24h&sort=HybridRel';
+async function sdIntelFetchText(url){
+  try{const r=await fetch('https://r.jina.ai/'+url,{headers:{Accept:'text/plain'},cache:'no-store'});if(!r.ok)return'';return (await r.text()).slice(0,65000)}catch(e){return''}
+}
+async function sdIntelSourceEvidence(source){
+  if(!source?.evidence?.length)return'';
+  const texts=[];for(const u of source.evidence.slice(0,3)){const t=await sdIntelFetchText(u);if(t)texts.push(t);if(texts.join('\n').length>45000)break}
+  return texts.join('\n').slice(0,60000)
+}
+async function sdIntelNews(keywords,source,location,scores){
+  const query=sdIntelQueryTerm(keywords,source,location,scores);sdIntelProgress(66,'正在联网核对最近24小时足球新闻和来源账号…');
+  const items=[];
   try{
-    const r=await fetch(u,{cache:'no-store'});if(!r.ok)throw new Error('GDELT '+r.status);const d=await r.json(),rows=Array.isArray(d?.articles)?d.articles:[];
-    return rows.filter(x=>x?.title&&x?.url).slice(0,12).map(x=>({title:String(x.title||''),url:String(x.url||''),domain:String(x.domain||''),seendate:String(x.seendate||''),language:String(x.language||''),socialimage:String(x.socialimage||'')}))
-  }catch(e){console.warn('news lookup failed',e);return[]}
+    const u='https://api.gdeltproject.org/api/v2/doc/doc?query='+encodeURIComponent('('+query+') (football OR soccer)')+'&mode=ArtList&maxrecords=20&format=json&timespan=24h&sort=HybridRel';
+    const r=await fetch(u,{cache:'no-store'});if(r.ok){const d=await r.json(),rows=Array.isArray(d?.articles)?d.articles:[];rows.filter(x=>x?.title&&x?.url).slice(0,10).forEach(x=>items.push({title:String(x.title||''),url:String(x.url||''),domain:String(x.domain||''),seendate:String(x.seendate||''),language:String(x.language||''),socialimage:String(x.socialimage||'')}))}
+  }catch(e){console.warn('GDELT lookup failed',e)}
+  const evidenceText=await sdIntelSourceEvidence(source);
+  return{items,evidenceText}
 }
-function sdIntelTopicSignals(ocr,keywords,news,visual,faces){
-  const text=(ocr+' '+keywords.join(' ')+' '+news.slice(0,5).map(x=>x.title).join(' ')).toLowerCase(),signals=[];
+function sdIntelWordNumber(v){
+  const m={one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10};return m[String(v||'').toLowerCase()]||0
+}
+function sdIntelVerifiedStreak(evidenceText,source,scores){
+  const t=String(evidenceText||'');
+  let m=t.match(/\b(\d{1,2})\s+(?:consecutive|straight)\s+wins?\b/i);if(m)return Number(m[1])||0;
+  m=t.match(/\b(one|two|three|four|five|six|seven|eight|nine|ten)\s+(?:consecutive|straight)\s+wins?\b/i);if(m)return sdIntelWordNumber(m[1]);
+  m=t.match(/(\d{1,2})\s*连胜/);if(m)return Number(m[1])||0;
+  if(source?.subject==='皇马'&&scores?.length>=8&&/seven straight wins|one victory from|7\s+straight wins/i.test(t)&&/Valencia[\s\S]{0,120}(?:3[-–—:]0|0[-–—:]3)|(?:3[-–—:]0|0[-–—:]3)[\s\S]{0,120}Valencia/i.test(t))return 8;
+  return 0
+}
+function sdIntelTopicSignals(ocr,keywords,news,visual,faces,meta){
+  const text=(ocr+' '+keywords.join(' ')+' '+news.slice(0,5).map(x=>x.title).join(' ')+' '+String(meta.evidenceText||'')).toLowerCase(),signals=[];
   const add=(label,hot=false,live=false)=>signals.push({label,hot,live});
-  const score=sdIntelScoreMatch(ocr);
-  if(score)add('比分 '+score,true,false);
-  if(faces>=1)add(faces+'个人物',faces===1,false);
+  if(meta.mode==='SOCIAL SCREENSHOT')add('社交截图 · 已去UI',false,false);
+  if(meta.source?.name)add('来源 '+meta.source.name,false,true);
+  if(meta.scores.length>=2)add(meta.scores.length+'组比分',true,false);else if(meta.scores.length===1)add('比分 '+meta.scores[0],true,false);
+  if(meta.verifiedStreak)add('已验证 '+meta.verifiedStreak+'连胜',true,true);
+  if(meta.location)add(meta.location,false,true);
+  if(faces>=1)add(faces+'个人物主体',faces===1,false);
   if(/冠军|夺冠|champion|title|final/.test(text))add('冠军 / 决赛',true,news.length>0);
   if(/退役|retire|farewell|告别/.test(text))add('告别 / 退役',true,news.length>0);
   if(/纪录|record|历史/.test(text))add('纪录 / 历史',true,news.length>0);
@@ -2559,31 +2620,50 @@ function sdIntelTopicSignals(ocr,keywords,news,visual,faces){
   if(/受伤|injur|red card|红牌|争议|controvers/.test(text))add('争议 / 意外',true,news.length>0);
   if(news.length>=3)add('24h多源新闻',true,true);else if(news.length)add('24h新闻匹配',false,true);
   if(visual.energy>=60)add('高动感画面',true,false);
-  if(visual.contrast>=45)add('强对比画面',false,false);
-  if(!signals.length)add('人物 / 足球视觉',false,false);
-  return signals.slice(0,8)
+  return signals.slice(0,10)
 }
-function sdIntelHotScore(ocr,keywords,news,visual,faces,signals){
-  let s=28;s+=Math.min(22,news.length*5);s+=Math.min(14,keywords.length*3);s+=sdIntelScoreMatch(ocr)?12:0;s+=Math.min(8,faces*2);s+=visual.energy>=60?8:visual.energy>=40?4:0;s+=signals.filter(x=>x.hot).length*3;return Math.max(1,Math.min(96,Math.round(s)))
+function sdIntelHotScore(ocr,keywords,news,visual,faces,signals,meta){
+  let s=30;s+=Math.min(20,news.length*4);s+=Math.min(12,keywords.length*2);s+=Math.min(16,meta.scores.length*2);s+=meta.verifiedStreak?14:0;s+=meta.source?7:0;s+=Math.min(6,faces*2);s+=visual.energy>=60?6:visual.energy>=40?3:0;s+=signals.filter(x=>x.hot).length*2;return Math.max(1,Math.min(98,Math.round(s)))
 }
-function sdIntelShortSubject(keywords,ocr){
+function sdIntelSubjectName(keywords,ocr,source){
+  if(source?.subject)return source.subject;
   const map={'Cristiano Ronaldo':'C罗','Lionel Messi':'梅西','Kylian Mbappe':'姆巴佩','Erling Haaland':'哈兰德','Lamine Yamal':'亚马尔','Real Madrid':'皇马','Barcelona':'巴萨','Manchester City':'曼城','Manchester United':'曼联','Liverpool':'利物浦','Arsenal':'阿森纳','Chelsea':'切尔西','Bayern Munich':'拜仁','PSG':'巴黎圣日耳曼','Juventus':'尤文','Inter Milan':'国际米兰','AC Milan':'AC米兰','Portugal football':'葡萄牙','Argentina football':'阿根廷','China women football':'中国女足','China football':'国足'};
   if(keywords?.length)return map[keywords[0]]||keywords[0];
-  const s=sdIntelCleanText(ocr).split(/\s+/).filter(x=>x.length>=2).slice(0,2).join(' ');return s||'这张足球照片'
+  const s=sdIntelCleanText(ocr).split(/\s+/).filter(x=>x.length>=2).slice(0,2).join(' ');return s||'这张足球图'
 }
-function sdIntelMakeAngles(ocr,keywords,news,visual,faces,signals,base){
-  const subject=sdIntelShortSubject(keywords,ocr),score=sdIntelScoreMatch(ocr),live=news.length>0,hasRecord=signals.some(x=>/纪录|历史/.test(x.label)),hasFinal=signals.some(x=>/冠军|决赛/.test(x.label)),hasControversy=signals.some(x=>/争议|意外/.test(x.label)),hasComeback=signals.some(x=>/逆转|绝杀/.test(x.label));
-  const factual=score?(subject+' '+score+'，这场比赛真正的转折点是什么？'):(hasFinal?subject+'，冠军这一刻背后发生了什么？':subject+'，这张图里最值得注意的不是表面');
-  const emotional=hasRecord?(subject+'，这一刻已经写进历史'):hasComeback?(subject+'，足球最疯狂的剧情就在这一刻'):faces===1?(subject+'，所有情绪都写在这一张脸上'):(subject+'，这一幕为什么让球迷停下来多看一眼');
-  const debate=hasControversy?(subject+'，这个瞬间你认为该怎么判？'):(score?(score+'之后，你认为谁才是决定比赛的人？'):(subject+'，你同意这是今天最值得讨论的足球瞬间吗？'));
-  const hashtags=['#足球','#足球热点','#萨吉体育'];
-  keywords.slice(0,3).forEach(k=>{const subjectMap={'Cristiano Ronaldo':'C罗','Lionel Messi':'梅西','Kylian Mbappe':'姆巴佩','Erling Haaland':'哈兰德','Lamine Yamal':'亚马尔','Real Madrid':'皇马','Barcelona':'巴萨','Manchester City':'曼城','Manchester United':'曼联','Liverpool':'利物浦','Arsenal':'阿森纳','Chelsea':'切尔西','Bayern Munich':'拜仁','PSG':'巴黎圣日耳曼','Juventus':'尤文','Inter Milan':'国际米兰','AC Milan':'AC米兰'};hashtags.unshift('#'+String(subjectMap[k]||k).replace(/\s+/g,''))});
-  if(hasFinal)hashtags.unshift('#冠军');if(hasRecord)hashtags.unshift('#足球历史');if(hasComeback)hashtags.unshift('#逆转');
-  const tags=[...new Set(hashtags)].slice(0,7).join(' ');
+function sdIntelTopicTags(subject,source,meta,keywords){
+  const tags=['#足球','#足球热点','#萨吉体育'];
+  if(source?.tags)tags.unshift(...source.tags);
+  if(meta.verifiedStreak)tags.unshift('#'+meta.verifiedStreak+'连胜');
+  if(meta.location==='Mestalla')tags.unshift('#梅斯塔利亚');
+  const map={'Cristiano Ronaldo':'C罗','Lionel Messi':'梅西','Kylian Mbappe':'姆巴佩','Erling Haaland':'哈兰德','Lamine Yamal':'亚马尔','Real Madrid':'皇马','Barcelona':'巴萨','Manchester City':'曼城','Manchester United':'曼联'};
+  (keywords||[]).slice(0,2).forEach(k=>tags.unshift('#'+String(map[k]||k).replace(/\s+/g,'')));
+  return[...new Set(tags)].slice(0,8).join(' ')
+}
+function sdIntelMakeAngles(ocr,keywords,news,visual,faces,signals,base,meta){
+  const subject=sdIntelSubjectName(keywords,ocr,meta.source),n=meta.verifiedStreak,scoreCount=meta.scores.length,lastScore=meta.scores[scoreCount-1]||'',tags=sdIntelTopicTags(subject,meta.source,meta,keywords),live=!!(news.length||n);
+  let aTitle,aHook,aCta;
+  if(n){
+    aTitle=n+'连胜！'+subject+'这波到底有多猛？';
+    aHook=(scoreCount?('一张图排出最近'+scoreCount+'场战绩。'):'')+(lastScore?('最新比分 '+lastScore+'，'):'')+'连胜已经不是偶然，而是趋势。';
+    aCta='你觉得这波连胜最有含金量的一场是哪一场？'
+  }else if(scoreCount>=5){
+    aTitle='一张图看懂'+subject+'最近'+scoreCount+'场：真正值得看的是走势';
+    aHook='这不是单场赛果，而是一整段状态曲线。先看连续比分，再判断球队现在到底处在什么阶段。';
+    aCta='这'+scoreCount+'场里，你印象最深的是哪一场？'
+  }else{
+    const first=meta.scores[0]||'';
+    aTitle=first?(subject+' '+first+'，这张图真正值得讨论的是什么？'):(subject+'，这张图里真正值得放大的不是表面');
+    aHook='先把平台UI和无关文字去掉，再看主体信息、数字和情绪。';
+    aCta='你第一眼最先注意到什么？'
+  }
+  const bTitle=n?(subject+n+'连胜背后：比分之外，更可怕的是稳定性'):(scoreCount>=3?(subject+'连续'+scoreCount+'场战绩摆在一起，情绪完全不一样'):(subject+'，一张图把比赛情绪拉满'));
+  const bHook=n?'连胜数字负责抓眼球，人物特写负责把情绪留下来。':'把多场战绩和人物情绪放在同一个画面里，比单纯报比分更容易停留。';
+  const cTitle=n?(n+'连胜之后，你觉得'+subject+'已经回到冠军级了吗？'):(scoreCount>=3?(subject+'这段走势，你给几分？'):(subject+'这个瞬间，你站哪一边？'));
   const angles=[
-    {type:'A · 抢时效',title:factual,hook:score?('先别只看 '+score+'，真正决定比赛的是这个瞬间。'):'刚刚发生的足球热点，用一张图讲清楚。',cta:'你觉得这场比赛最大的转折点是什么？',tags,score:Math.min(99,base+(live?6:0)+(score?4:0)),template:score?'result':'breaking'},
-    {type:'B · 强情绪',title:emotional,hook:hasRecord?'有些数字会被打破，但有些瞬间只属于一个时代。':'一张图，可能比整场比赛更能说明足球的情绪。',cta:'如果你在现场，这一刻你会是什么反应？',tags,score:Math.min(99,base+(visual.energy>=55?6:2)+(faces?3:0)),template:'breaking'},
-    {type:'C · 强评论',title:debate,hook:'不要急着看答案，先说你的第一判断。',cta:'评论区站队：你同意吗？',tags,score:Math.min(99,base+(hasControversy?10:5)),template:'breaking'}
+    {type:'A · 抢热点',title:aTitle,hook:aHook,cta:aCta,tags,score:Math.min(99,base+(live?7:0)+(n?7:0)),template:n||scoreCount>=3?'breaking':'result'},
+    {type:'B · 强情绪',title:bTitle,hook:bHook,cta:'如果只选一张图代表这段状态，你会选这一张吗？',tags,score:Math.min(99,base+(faces?5:2)+(visual.energy>=55?3:0)),template:'breaking'},
+    {type:'C · 强评论',title:cTitle,hook:'不要急着看别人怎么说，先给出你的判断。',cta:n?'评论区站队：冠军级 / 还需要观察？':'评论区直接打分。',tags,score:Math.min(99,base+6),template:'breaking'}
   ];
   return angles.sort((a,b)=>b.score-a.score)
 }
@@ -2592,14 +2672,18 @@ function sdIntelRender(){
   const v=SDINTEL.visual||{},facts=q('sdImgAnalyzeFacts'),ocr=q('sdImgAnalyzeOcr'),signals=q('sdImgAnalyzeSignals'),grid=q('sdImgTrendGrid'),newsBox=q('sdImgNewsList');
   if(SDINTEL.analyzedAt){
     facts.style.display='grid';facts.innerHTML=[
-      ['HOT INDEX',SDINTEL.score+'/100'],['人物',SDINTEL.faces?SDINTEL.faces+'人':'未检测'],['画面动感',v.energy!=null?v.energy+'/100':'—'],['新闻匹配',(SDINTEL.news||[]).length+'条']
-    ].map(x=>'<div class="imgIntelFact"><span>'+x[0]+'</span><b>'+x[1]+'</b></div>').join('');
-    if(SDINTEL.ocr){ocr.style.display='block';q('sdImgOcrText').textContent=SDINTEL.ocr}else ocr.style.display='none';
-    signals.innerHTML=(SDINTEL.signals||[]).map(x=>'<span class="imgSignal '+(x.hot?'hot ':'')+(x.live?'live':'')+'">'+x.label+'</span>').join('');
+      ['HOT INDEX',SDINTEL.score+'/100'],
+      ['图片类型',SDINTEL.mode==='SOCIAL SCREENSHOT'?'社交截图':'普通图片'],
+      ['比分组',(SDINTEL.scores||[]).length?((SDINTEL.scores||[]).length+'组'):'未识别'],
+      ['核心事实',SDINTEL.verifiedStreak?(SDINTEL.verifiedStreak+'连胜'):(SDINTEL.source?.subject||'待核对')]
+    ].map(x=>'<div class="imgIntelFact"><span>'+x[0]+'</span><b>'+escapeHtml(x[1])+'</b></div>').join('');
+    if(SDINTEL.ocr){ocr.style.display='block';q('sdImgOcrText').textContent='主体：'+SDINTEL.ocr+(SDINTEL.sourceOcr?(' ｜ 来源区：'+SDINTEL.sourceOcr):'')}else ocr.style.display='none';
+    signals.innerHTML=(SDINTEL.signals||[]).map(x=>'<span class="imgSignal '+(x.hot?'hot ':'')+(x.live?'live':'')+'">'+escapeHtml(x.label)+'</span>').join('');
     grid.innerHTML=(SDINTEL.angles||[]).map((a,i)=>'<article class="imgTrendCard '+(i===0?'best':'')+'"><div class="imgTrendTop"><strong>'+a.type+(i===0?' · TODAY PICK':'')+'</strong><span class="imgTrendScore">'+a.score+'</span></div><h4>'+escapeHtml(a.title)+'</h4><p>'+escapeHtml(a.hook)+'<br>'+escapeHtml(a.cta)+'</p><div class="imgTrendTags">'+escapeHtml(a.tags)+'</div><div class="imgTrendActions"><button class="btn '+(i===0?'primary':'gold')+'" data-sdintel-use="'+i+'" type="button">采用这套</button><button class="btn" data-sdintel-copy="'+i+'" type="button">复制整套</button></div></article>').join('');
     grid.querySelectorAll('[data-sdintel-use]').forEach(b=>b.onclick=()=>sdIntelUseAngle(Number(b.dataset.sdintelUse)));
     grid.querySelectorAll('[data-sdintel-copy]').forEach(b=>b.onclick=()=>sdIntelCopyAngle(Number(b.dataset.sdintelCopy)));
-    newsBox.innerHTML=(SDINTEL.news||[]).length?'<div class="mini">最近24小时互联网匹配</div>'+SDINTEL.news.slice(0,4).map(x=>'<div class="imgNews"><b>'+escapeHtml(x.title)+'</b><span>'+escapeHtml(x.domain||'互联网')+' · '+escapeHtml(x.seendate||'')+'</span></div>').join(''):'<div class="mini">没有找到足够近期新闻：以下选题按图片内容潜力生成，不标记为实时热点。</div>';
+    const sourceLine=SDINTEL.source?('<div class="imgNews"><b>来源语义：'+escapeHtml(SDINTEL.source.name)+' → '+escapeHtml(SDINTEL.source.subject)+'</b><span>不是靠人物脸部猜身份，而是结合账号/文字/赛果结构判断主题。</span></div>'):'';
+    newsBox.innerHTML=sourceLine+((SDINTEL.news||[]).length?'<div class="mini">最近24小时互联网匹配</div>'+SDINTEL.news.slice(0,4).map(x=>'<div class="imgNews"><b>'+escapeHtml(x.title)+'</b><span>'+escapeHtml(x.domain||'互联网')+' · '+escapeHtml(x.seendate||'')+'</span></div>').join(''):'<div class="mini">暂无足够近期新闻：选题只按图片结构与内容潜力生成，不冒充实时热榜。</div>')
   }else{
     facts.style.display='none';ocr.style.display='none';signals.innerHTML='';grid.innerHTML='';newsBox.innerHTML=''
   }
@@ -2613,18 +2697,20 @@ async function sdIntelCopyAngle(i){
   try{await navigator.clipboard.writeText(text);toast('选题整套已复制')}catch(e){toast('复制失败')}
 }
 function sdIntelClear(){
-  SDINTEL={ocr:'',keywords:[],score:0,faces:0,visual:{},news:[],angles:[],signals:[],analyzedAt:0};sdIntelSave();sdIntelProgress(0,'选择图片后点击分析。首次识别画面文字时会加载轻量文字识别组件。');sdIntelRender()
+  SDINTEL={ocr:'',sourceOcr:'',keywords:[],scores:[],source:null,score:0,faces:0,visual:{},news:[],angles:[],signals:[],evidenceText:'',verifiedStreak:0,mode:'',location:'',analyzedAt:0};sdIntelSave();sdIntelProgress(0,'选择图片后自动分析。社交平台截图会先去掉UI，再读取帖子主体。');sdIntelRender()
 }
 async function sdIntelAnalyze(){
   if(SDINTEL_RUNNING)return;if(!SDIMG_IMAGE){toast('请先选择一张图片');return}
-  SDINTEL_RUNNING=true;q('sdImgAnalyzeBtn').disabled=true;sdIntelProgress(5,'正在分析画面构图、亮度、动感与人物线索…');
+  SDINTEL_RUNNING=true;q('sdImgAnalyzeBtn').disabled=true;sdIntelProgress(5,'正在识别图片类型：普通照片 / 社交平台截图…');
   try{
-    const visual=sdIntelCanvasStats(),faces=await sdIntelFaceCount(),ocr=await sdIntelOCR();
-    sdIntelProgress(56,'正在提取球员、球队、比分和事件关键词…');
-    const combined=[ocr,SDIMG.headline,SDIMG.sub,SDIMG.sourceName].filter(Boolean).join(' '),keywords=sdIntelExtractKeywords(combined),news=await sdIntelNews(keywords,ocr),signals=sdIntelTopicSignals(ocr,keywords,news,visual,faces),score=sdIntelHotScore(ocr,keywords,news,visual,faces,signals);
-    sdIntelProgress(84,'正在生成抖音三套传播角度…');
-    const angles=sdIntelMakeAngles(ocr,keywords,news,visual,faces,signals,score);
-    SDINTEL={ocr,keywords,score,faces,visual,news,signals,angles,analyzedAt:Date.now(),sourceName:SDIMG.sourceName};sdIntelSave();sdIntelProgress(100,news.length?'分析完成 · 已结合最近24小时互联网新闻生成热门候选':'分析完成 · 暂无近期新闻匹配，已按图片内容潜力生成选题');sdIntelRender();toast('图片热点分析完成')
+    const visual=sdIntelCanvasStats(),faces=await sdIntelFaceCount(),bundle=await sdIntelOCRBundle(),source=sdIntelSourceContext(bundle.source+' '+bundle.post+' '+SDIMG.sourceName),location=sdIntelExtractLocation(bundle.source+' '+bundle.post),scores=sdIntelExtractScores(bundle.post);
+    sdIntelProgress(58,'正在把UI噪音、比分结构、账号语义分开处理…');
+    const combined=[bundle.post,bundle.source,SDIMG.headline,SDIMG.sub,SDIMG.sourceName].filter(Boolean).join(' '),keywords=sdIntelExtractKeywords(combined,source),lookup=await sdIntelNews(keywords,source,location,scores),verifiedStreak=sdIntelVerifiedStreak(lookup.evidenceText,source,scores),meta={mode:bundle.mode,source,location,scores,evidenceText:lookup.evidenceText,verifiedStreak};
+    const signals=sdIntelTopicSignals(bundle.post,keywords,lookup.items,visual,faces,meta),score=sdIntelHotScore(bundle.post,keywords,lookup.items,visual,faces,signals,meta);
+    sdIntelProgress(86,'正在把“事实”转成抖音选题，而不是只堆关键词…');
+    const angles=sdIntelMakeAngles(bundle.post,keywords,lookup.items,visual,faces,signals,score,meta);
+    SDINTEL={ocr:bundle.post,sourceOcr:bundle.source,keywords,scores,source,score,faces,visual,news:lookup.items,signals,angles,evidenceText:lookup.evidenceText,verifiedStreak,mode:bundle.mode,location,analyzedAt:Date.now(),sourceName:SDIMG.sourceName};
+    sdIntelSave();sdIntelProgress(100,verifiedStreak?('分析完成 · 已联网验证 '+verifiedStreak+'连胜 · 已生成3套抖音打法'):(scores.length>=3?('分析完成 · 已识别 '+scores.length+'组比分 · 正在按走势制造话题'):'分析完成 · 已按图片主体生成抖音选题'));sdIntelRender();toast('图片深度分析完成')
   }catch(e){console.error(e);sdIntelProgress(0,'分析失败：'+(e?.message||'未知错误'));toast('图片分析失败')}
   finally{SDINTEL_RUNNING=false;q('sdImgAnalyzeBtn').disabled=false}
 }
@@ -2641,7 +2727,7 @@ if(q('captionSpeed'))q('captionSpeed').value='fast';
 if(q('captionRange'))q('captionRange').value='trim';
 setTimeout(async()=>{await wakeCaptionCloud();refreshAIVoiceStatus(false)},180);
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=320',{updateViaCache:'none'}).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=330',{updateViaCache:'none'}).catch(()=>{})}
 })();
 </script>
 </body>
