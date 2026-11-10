@@ -488,14 +488,17 @@ function btchPlatform(sourceUrl){
   if(d[2]==='YT')return'youtube';
   return''
 }
-function chooseBtchMedia(data){
+function btchMediaRows(data){
   const n=data?.normalized||{};
   let rows=[];
   if(n.kind==='media')rows=Array.isArray(n.media)?n.media:[];
   else if(n.kind==='list'&&Array.isArray(n.items)){
     rows=n.items.flatMap(x=>Array.isArray(x?.media)?x.media:[]);
   }
-  const valid=rows.filter(x=>x&&/^https?:\/\//i.test(String(x.url||'')));
+  return rows.filter(x=>x&&/^https?:\/\//i.test(String(x.url||'')))
+}
+function chooseBtchMedia(data){
+  const valid=btchMediaRows(data);
   if(!valid.length)return null;
   const score=x=>{
     const label=String(x.label||'').toLowerCase(),type=String(x.type||'').toLowerCase();
@@ -513,17 +516,24 @@ async function tryBtchBrowser(sourceUrl,handoff,timeoutMs=7000){
   if(!platform)return false;
   const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),timeoutMs);
   try{
-    setStatus('下载节点 1 · 正在解析 '+detect(sourceUrl)[0]+'…','good');
+    setStatus('快速公共节点 · 正在解析 '+detect(sourceUrl)[0]+'…','good');
     const endpoint=BTCH_PUBLIC+'/api/download/'+platform+'?url='+encodeURIComponent(sourceUrl);
     const r=await fetch(endpoint,{headers:{Accept:'application/json'},cache:'no-store',signal:ctl.signal});
     if(!r.ok)return false;
     const data=await r.json().catch(()=>null);
     if(!data?.success)return false;
+    const allMedia=btchMediaRows(data);
+    // Browser direct-download is safe only for one media item. Multi-item
+    // posts must fall through to SAGI Cloud so every item can be packaged.
+    if(allMedia.length>1){
+      setStatus('检测到 '+allMedia.length+' 个媒体 · 切换 SAGI Router 完整打包…','good');
+      return false
+    }
     const media=chooseBtchMedia(data);
     if(!media?.url)return false;
     const ext=String(media.type||'').toLowerCase()==='image'?'.jpg':'.mp4';
     const fileUrl=BTCH_PUBLIC+'/api/fetch-media?url='+encodeURIComponent(media.url)+'&filename='+encodeURIComponent('SAGI_VIDEO'+ext);
-    setStatus('下载节点 1 已找到媒体 · 正在开始下载。','good');
+    setStatus('快速公共节点已找到媒体 · 正在开始下载。','good');
     if(handoff&&!handoff.closed)handoff.location.replace(fileUrl);
     else location.href=fileUrl;
     return true
@@ -591,7 +601,7 @@ async function download(){
   saveHistory(v);
   setStatus(d[0]+' · MULTI ENGINE ROUTER 正在启动…','good');
   try{
-    if(await tryBtchBrowser(v,handoff,6500))return;
+    if(await tryBtchBrowser(v,handoff,3500))return;
     setStatus('下载节点 1 未命中 · 正在切换 SAGI Router…','good');
     const cloud=await probeDownloadCloud(4500);
     if(!cloud.ready)throw new Error('当前可用下载节点均未连接');

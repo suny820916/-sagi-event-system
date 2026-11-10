@@ -176,7 +176,7 @@ jobs:
           c = mod.app.test_client()
           health = c.get("/health").get_json()
           print("health", health)
-          assert health["version"] == "3.0.0"
+          assert health["version"] == "3.0.1"
           assert health["captionMedia"] is True
           assert health["contextTranslate"] is True
           assert health["smartTranslate"] is True
@@ -184,7 +184,7 @@ jobs:
           assert health["cloudRender"] is True
           assert health["cloudDownload"] is True
           assert set(health["downloadPlatforms"]) >= {"Instagram","YouTube","TikTok","X"}
-          assert health["instagramPostFallback"].startswith("btch -> parth-dl")
+          assert health["instagramPostFallback"].startswith("parth-dl -> btch")
           assert health["downloadRouter"] is True
           assert health["downloadRouterVersion"] == "3.0"
           assert health["btchEnabled"] is True
@@ -216,9 +216,49 @@ jobs:
           assert mod.source_platform("https://www.tiktok.com/@u/video/123") == "tiktok"
           assert mod.source_platform("https://x.com/u/status/123") == "twitter"
           assert mod.source_platform("https://youtu.be/abc") == "youtube"
-          assert mod._router_engines("instagram") == ["btch","parth-dl"]
-          assert mod._router_engines("tiktok") == ["btch","tikwm"]
+          assert mod._router_engines("instagram") == ["parth-dl","btch"]
+          assert mod._router_engines("tiktok") == ["tikwm","btch"]
           assert mod._router_engines("twitter") == ["fxtwitter","btch"]
+          assert mod._router_engines("youtube") == []
+
+          # YouTube cloud path: yt-dlp is primary, BTCH must run only after native failure.
+          original_router = mod._router_engines
+          original_btch = mod.run_btch_download
+          original_direct = mod._download_with_strategy
+          yt_calls = []
+          def fail_native(*args, **kwargs):
+              yt_calls.append("yt-dlp")
+              raise mod.DownloadError("forced native failure")
+          def fallback_btch(job_id, url, wanted_name):
+              yt_calls.append("btch")
+              with mod.jobs_lock:
+                  mod.jobs[job_id].update({
+                      "status":"ready","strategy":"btch","mediaKind":"video",
+                      "fileCount":1,"size":123,"path":__file__,"workdir":"",
+                      "filename":"SAGI_YT_TEST.mp4","error":"","errorCode":""
+                  })
+              return True
+          yid = "youtube-fallback-smoke"
+          with mod.jobs_lock:
+              mod.jobs[yid] = {
+                  "id":yid,"status":"queued","created_at":mod.iso(),"updated_at":mod.iso(),
+                  "title":"SAGI_YT_TEST","source_url":"https://youtu.be/BaW_jenozKc",
+                  "requested_name":"SAGI_YT_TEST","error":"","errorCode":"","size":0,
+                  "worker":"","strategy":"sagi_cloud","download_key":"k","path":"","workdir":"","filename":""
+              }
+          mod._download_with_strategy = fail_native
+          mod.run_btch_download = fallback_btch
+          try:
+              mod.run_download(yid, "https://youtu.be/BaW_jenozKc", "SAGI_YT_TEST")
+              with mod.jobs_lock:
+                  yj = dict(mod.jobs[yid])
+              assert yt_calls == ["yt-dlp","btch"], yt_calls
+              assert yj["status"] == "ready" and yj["strategy"] == "btch", yj
+              print("YouTube yt-dlp -> BTCH fallback smoke OK", yt_calls)
+          finally:
+              mod._router_engines = original_router
+              mod.run_btch_download = original_btch
+              mod._download_with_strategy = original_direct
 
           # First successful router engine must stop native yt-dlp immediately.
           original_router = mod._router_engines
@@ -452,25 +492,92 @@ jobs:
               assert r.status == 200
           PY
 
-      - name: Verify public BTCH browser node
+      - name: Verify external download engines
         run: |
           python - <<'PY'
-          import json, urllib.request
-          base="https://btch-downloader-api-green.vercel.app"
-          req=urllib.request.Request(base+"/api/health",headers={"Origin":"https://suny820916.github.io","User-Agent":"SAGI-preflight"})
+          import json, urllib.request, urllib.parse, urllib.error, subprocess, sys
+
+          # Instagram: exercise the exact specialized extractor used by the
+          # router against a recent public NASA Reel.
+          ig_url="https://www.instagram.com/reel/DeIXf9SNQVO/"
+          ig_script="import json,sys; from parth_dl import get_info; print(json.dumps(get_info(sys.argv[1], verbose=False), ensure_ascii=False))"
+          try:
+              igp=subprocess.run(
+                  [sys.executable,"-c",ig_script,ig_url],
+                  text=True,capture_output=True,timeout=22,check=False
+              )
+          except subprocess.TimeoutExpired:
+              raise AssertionError("PARTH_DL_TIMEOUT")
+          print("PARTH_RETURN",igp.returncode)
+          if igp.stderr:
+              print("PARTH_STDERR",igp.stderr[-1000:])
+          assert igp.returncode == 0, "PARTH_DL_FAILED"
+          try:
+              ig=json.loads((igp.stdout or "").strip())
+          except Exception:
+              raise AssertionError("PARTH_DL_BAD_JSON")
+          ig_entries=ig.get("entries") or []
+          ig_formats=[
+              x for entry in ig_entries
+              for x in (entry.get("formats") or [])
+              if str(x.get("url") or "").startswith("http")
+          ]
+          assert ig_entries and ig_formats, "PARTH_DL_NO_PUBLIC_MEDIA"
+          print("PARTH_DL_REAL_REEL_OK",len(ig_entries),len(ig_formats))
+
+          # BTCH is opportunistic only: shell/CORS must be reachable, but a
+          # degraded upstream must not block the whole SAGI release.
+          btch="https://btch-downloader-api-green.vercel.app"
+          req=urllib.request.Request(btch+"/api/health",headers={"Origin":"https://suny820916.github.io","User-Agent":"SAGI-preflight"})
           with urllib.request.urlopen(req,timeout=30) as r:
               body=json.loads(r.read().decode("utf-8"))
               cors=r.headers.get("access-control-allow-origin","")
-              print("btch health",r.status,body,"cors",cors)
-              assert r.status == 200
-              assert body.get("success") is True
+              assert r.status == 200 and body.get("success") is True
               assert cors in ("*","https://suny820916.github.io")
-          req=urllib.request.Request(base+"/api/platforms",headers={"User-Agent":"SAGI-preflight"})
+          try:
+              req=urllib.request.Request(btch+"/api/health?deep=1",headers={"User-Agent":"SAGI-preflight"})
+              with urllib.request.urlopen(req,timeout=30) as r:
+                  deep=json.loads(r.read().decode("utf-8"))
+              print("BTCH deep",deep)
+          except urllib.error.HTTPError as e:
+              print("BTCH deep degraded HTTP",e.code)
+              assert e.code in (429,500,502,503,504)
+
+          # TikWM is now the primary TikTok engine. Use the public example URL
+          # documented by TikTok's own embed-player docs.
+          tik_url="https://www.tiktok.com/@scout2015/video/6718335390845095173"
+          data=urllib.parse.urlencode({"url":tik_url}).encode("utf-8")
+          req=urllib.request.Request(
+              "https://www.tikwm.com/api/",
+              data=data,
+              headers={
+                  "Origin":"https://suny820916.github.io",
+                  "User-Agent":"SAGI-preflight",
+                  "Content-Type":"application/x-www-form-urlencoded",
+                  "Accept":"application/json",
+              },
+              method="POST",
+          )
+          with urllib.request.urlopen(req,timeout=45) as r:
+              tik=json.loads(r.read().decode("utf-8"))
+              print("TikWM status",r.status,"code",tik.get("code"))
+          assert int(tik.get("code", -1)) == 0 and isinstance(tik.get("data"),dict), tik
+          td=tik["data"]
+          assert td.get("play") or td.get("hdplay") or (td.get("images") or []), td
+          print("TIKWM REAL RESOLVE OK")
+
+          # FxTwitter is the primary X engine. This stable historical post
+          # verifies the public API surface without requiring an API key.
+          req=urllib.request.Request(
+              "https://api.fxtwitter.com/2/status/20",
+              headers={"Origin":"https://suny820916.github.io","User-Agent":"SAGI-preflight","Accept":"application/json"},
+          )
           with urllib.request.urlopen(req,timeout=30) as r:
-              body=json.loads(r.read().decode("utf-8"))
-          keys={x.get("key") for x in body.get("platforms",[])}
-          assert {"instagram","tiktok","twitter","youtube"} <= keys, keys
-          print("BTCH PUBLIC NODE OK",sorted(keys))
+              fx=json.loads(r.read().decode("utf-8"))
+              fx_cors=r.headers.get("access-control-allow-origin","")
+              print("FxTwitter status",r.status,"cors",fx_cors)
+          assert int(fx.get("code") or 0) == 200 and isinstance(fx.get("status"),dict), fx
+          print("FXTWITTER PUBLIC API OK")
           PY
 
       - name: Frontend JavaScript syntax and wiring
@@ -497,6 +604,8 @@ jobs:
               "tryBtchBrowser",
               "BTCH_PUBLIC",
               "chooseBtchMedia",
+              "btchMediaRows",
+              "检测到 '+allMedia.length+' 个媒体",
               "async function probeDownloadCloud",
               "health.cloudDownload",
               "智能一键下载",

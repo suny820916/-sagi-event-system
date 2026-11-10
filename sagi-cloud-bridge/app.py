@@ -30,8 +30,8 @@ app = Flask(__name__)
 ALLOWED_ORIGIN = (os.getenv("SAGI_ALLOWED_ORIGIN") or "https://suny820916.github.io").rstrip("/")
 SERVER_SECRET = (os.getenv("SAGI_SERVER_SECRET") or os.getenv("SAGI_BRIDGE_TOKEN") or "").strip()
 PORT = int(os.getenv("PORT") or "10000")
-DEPLOY_REVISION = "2026-11-10-v3000-multi-engine-router"
-APP_VERSION = "3.0.0"
+DEPLOY_REVISION = "2026-11-10-v301-router-verified-fallback"
+APP_VERSION = "3.0.1"
 MAX_FILE_MB = int(os.getenv("SAGI_MAX_FILE_MB") or "300")
 JOB_TTL_MIN = int(os.getenv("SAGI_JOB_TTL_MIN") or "30")
 RATE_LIMIT_PER_HOUR = int(os.getenv("SAGI_RATE_LIMIT_PER_HOUR") or "20")
@@ -442,7 +442,7 @@ def run_tikwm_download(job_id, url, wanted_name):
     )
     r.raise_for_status()
     payload = r.json() or {}
-    if int(payload.get("code") or -1) != 0 or not payload.get("data"):
+    if int(payload.get("code", -1)) != 0 or not payload.get("data"):
         raise RuntimeError("TIKWM_FAILED: " + str(payload.get("msg") or "unknown"))
     data = payload["data"]
     items = []
@@ -513,9 +513,11 @@ def run_fxtwitter_download(job_id, url, wanted_name):
 
 
 def _router_engines(platform):
+    # V3.0.1 verified routing: specialized platform engines first; generic
+    # public aggregators are opportunistic fallbacks only.
     return {
-        "instagram": ["btch", "parth-dl"],
-        "tiktok": ["btch", "tikwm"],
+        "instagram": ["parth-dl", "btch"],
+        "tiktok": ["tikwm", "btch"],
         "twitter": ["fxtwitter", "btch"],
         "youtube": [],
     }.get(platform, [])
@@ -1616,7 +1618,7 @@ def health():
         "downloadRouter": True,
         "downloadRouterVersion": "3.0",
         "btchEnabled": bool(BTCH_BASE),
-        "btchBaseMode": "configurable-public-fallback",
+        "btchBaseMode": "opportunistic-fallback",
         "parthDlEnabled": True,
         "tikwmEnabled": True,
         "fxtwitterEnabled": True,
@@ -1624,12 +1626,12 @@ def health():
         "cobaltMode": "legacy-fallback-only",
         "downloadPlatforms": ["Instagram", "YouTube", "TikTok", "X"],
         "downloadEngineOrder": {
-            "Instagram": ["btch", "parth-dl", "yt-dlp", "instagram-html", "gallery-dl"],
-            "TikTok": ["btch", "tikwm", "yt-dlp"],
+            "Instagram": ["parth-dl", "btch", "yt-dlp", "instagram-html", "gallery-dl"],
+            "TikTok": ["tikwm", "btch", "yt-dlp"],
             "X": ["fxtwitter", "btch", "yt-dlp"],
             "YouTube": ["yt-dlp", "btch"],
         },
-        "instagramPostFallback": "btch -> parth-dl -> yt-dlp -> html-fast -> gallery-dl-short",
+        "instagramPostFallback": "parth-dl -> btch -> yt-dlp -> html-fast -> gallery-dl-short",
         "instagramProxyConfigured": bool(INSTAGRAM_PROXY),
         "instagramEgress": "proxy" if INSTAGRAM_PROXY else "render-direct",
         "instagramFastTimeoutSeconds": 16,
