@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify, send_file, Response
 from flask_cors import CORS
 from urllib.parse import urlparse
 from pathlib import Path
@@ -1083,7 +1083,7 @@ def _football_cache_set(key, data):
         football_cache[key] = {"at": time.time(), "data": data}
     return data
 
-def _football_match_row(provider, competition, date_value, home, away, hs, aas, status="FINISHED", source_url=""):
+def _football_match_row(provider, competition, date_value, home, away, hs, aas, status="FINISHED", source_url="", home_logo="", away_logo=""):
     try:
         home_score = int(hs)
         away_score = int(aas)
@@ -1101,6 +1101,8 @@ def _football_match_row(provider, competition, date_value, home, away, hs, aas, 
         "score": f"{home_score}-{away_score}",
         "status": str(status or "FINISHED"),
         "sourceUrl": source_url,
+        "homeLogo": str(home_logo or "").strip(),
+        "awayLogo": str(away_logo or "").strip(),
     }
 
 def _football_data_matches(team, competition, season):
@@ -1119,7 +1121,7 @@ def _football_data_matches(team, competition, season):
         if not _football_team_match(team, home.get("name"), home.get("shortName"), home.get("tla"), away.get("name"), away.get("shortName"), away.get("tla")):
             continue
         score = ((m.get("score") or {}).get("fullTime") or {})
-        row = _football_match_row("football-data.org", competition, m.get("utcDate"), home.get("name"), away.get("name"), score.get("home"), score.get("away"), m.get("status"), url)
+        row = _football_match_row("football-data.org", competition, m.get("utcDate"), home.get("name"), away.get("name"), score.get("home"), score.get("away"), m.get("status"), url, home.get("crest"), away.get("crest"))
         if row:
             rows.append(row)
     return rows
@@ -1142,14 +1144,20 @@ def _espn_matches(team, competition):
         away = next((x for x in competitors if x.get("homeAway") == "away"), None)
         if not home or not away:
             continue
-        hn = ((home.get("team") or {}).get("displayName") or (home.get("team") or {}).get("shortDisplayName") or "")
-        an = ((away.get("team") or {}).get("displayName") or (away.get("team") or {}).get("shortDisplayName") or "")
+        home_team = home.get("team") or {}
+        away_team = away.get("team") or {}
+        hn = (home_team.get("displayName") or home_team.get("shortDisplayName") or "")
+        an = (away_team.get("displayName") or away_team.get("shortDisplayName") or "")
+        home_logos = home_team.get("logos") or []
+        away_logos = away_team.get("logos") or []
+        home_logo = home_team.get("logo") or ((home_logos[0] or {}).get("href") if home_logos else "")
+        away_logo = away_team.get("logo") or ((away_logos[0] or {}).get("href") if away_logos else "")
         if not _football_team_match(team, hn, an):
             continue
         state = (((event.get("status") or {}).get("type") or {}).get("state") or "")
         if state not in ("post",):
             continue
-        row = _football_match_row("ESPN public feed", competition, event.get("date"), hn, an, home.get("score"), away.get("score"), "FINISHED", url)
+        row = _football_match_row("ESPN public feed", competition, event.get("date"), hn, an, home.get("score"), away.get("score"), "FINISHED", url, home_logo, away_logo)
         if row:
             rows.append(row)
     return rows
@@ -1198,7 +1206,7 @@ def _api_football_matches(team, competition, season):
         teams = item.get("teams") or {}
         goals = item.get("goals") or {}
         fixture = item.get("fixture") or {}
-        row = _football_match_row("API-Football", competition, fixture.get("date"), (teams.get("home") or {}).get("name"), (teams.get("away") or {}).get("name"), goals.get("home"), goals.get("away"), "FINISHED", "https://www.api-football.com/")
+        row = _football_match_row("API-Football", competition, fixture.get("date"), (teams.get("home") or {}).get("name"), (teams.get("away") or {}).get("name"), goals.get("home"), goals.get("away"), "FINISHED", "https://www.api-football.com/", (teams.get("home") or {}).get("logo"), (teams.get("away") or {}).get("logo"))
         if row:
             rows.append(row)
     return rows
@@ -1257,6 +1265,10 @@ def _football_merge(rows, limit, official=None):
         providers.add(row.get("provider"))
         providers.discard(None)
         b["providers"] = sorted(providers)
+        if not b.get("homeLogo") and row.get("homeLogo"):
+            b["homeLogo"] = row.get("homeLogo")
+        if not b.get("awayLogo") and row.get("awayLogo"):
+            b["awayLogo"] = row.get("awayLogo")
 
     merged = []
     for b in buckets.values():
@@ -2082,6 +2094,31 @@ def health():
         "configured": bool(SERVER_SECRET),
     })
 
+
+FOOTBALL_CREST_HOST_SUFFIXES = ("espncdn.com", "football-data.org", "api-sports.io")
+
+@app.get("/api/football/crest")
+def football_crest():
+    if not authorized():
+        return jsonify({"ok": False, "error": "Unauthorized"}), 401
+    raw = (request.args.get("url") or "").strip()
+    try:
+        parsed = urlparse(raw)
+    except Exception:
+        parsed = None
+    host = (parsed.hostname or "").lower() if parsed else ""
+    if not parsed or parsed.scheme != "https" or not host or not any(host == suffix or host.endswith("." + suffix) for suffix in FOOTBALL_CREST_HOST_SUFFIXES):
+        return jsonify({"ok": False, "error": "crest host not allowed"}), 400
+    try:
+        r = requests.get(raw, headers={"User-Agent": "SAGI-MATCH-DATA/3.9"}, timeout=(4, 12))
+        r.raise_for_status()
+        body = r.content or b""
+        ctype = (r.headers.get("Content-Type") or "").split(";")[0].strip().lower()
+        if not ctype.startswith("image/") or not body or len(body) > 2 * 1024 * 1024:
+            return jsonify({"ok": False, "error": "invalid crest response"}), 502
+        return Response(body, mimetype=ctype)
+    except Exception as e:
+        return jsonify({"ok": False, "error": "crest fetch failed", "detail": str(e)[:120]}), 502
 
 @app.get("/api/football/status")
 def football_status():
