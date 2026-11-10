@@ -64,7 +64,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 <div class="wrap">
   <div class="top">
     <div class="brand"><b>SAGI DOWN</b><span>VIDEO LINK SHORTCUT</span></div>
-    <span class="badge">V1.5 · AI CAPTION</span>
+    <span class="badge">V1.5.1 · FAST CAPTION</span>
   </div>
 
   <section class="hero">
@@ -189,6 +189,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
       <div class="recreateFields">
         <div><label>识别语言</label><select id="captionLanguage"><option value="auto">AUTO 自动识别</option><option value="zh">中文</option><option value="en">English</option><option value="pt">Português</option><option value="es">Español</option><option value="ru">Русский</option><option value="fr">Français</option><option value="de">Deutsch</option><option value="ar">العربية</option><option value="tr">Türkçe</option></select></div>
         <div><label>识别范围</label><select id="captionRange"><option value="trim">当前入点 → 出点</option><option value="full">整段视频</option></select></div>
+        <div><label>速度模式</label><select id="captionSpeed"><option value="fast" selected>极速 · 推荐</option><option value="standard">标准</option><option value="precise">精准</option></select></div>
       </div>
 
       <div class="aiCaptionActions">
@@ -198,9 +199,9 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
       </div>
 
       <div class="aiCaptionProgress"><i id="aiCaptionProgress"></i></div>
-      <div id="aiCaptionStatus" class="aiCaptionStatus">首次使用会下载 Whisper Tiny 多语言模型；后续浏览器缓存复用。</div>
+      <div id="aiCaptionStatus" class="aiCaptionStatus">默认“极速”模式：优先 Web Audio 直读音频 + q4 Whisper；首次载入模型后浏览器缓存复用。</div>
       <div class="aiCaptionMeta">
-        <span id="captionEngine">引擎：待载入</span>
+        <span id="captionEngine">引擎：FAST 待载入</span>
         <span id="captionDetectedLang">语言：—</span>
         <span id="captionCount">字幕：0</span>
       </div>
@@ -422,7 +423,7 @@ const STUDIO={
  file:null,url:'',duration:0,width:0,height:0,
  voiceBlob:null,voiceMime:'',voiceUrl:'',recorder:null,voiceStream:null,chunks:[],
  ffmpeg:null,ffmpegLoaded:false,exporting:false,resultBlob:null,resultUrl:'',
- captions:[],captionLanguage:'',captionRangeKey:'',captionModel:null,captionModule:null,captionBusy:false
+ captions:[],captionLanguage:'',captionRangeKey:'',captionModel:null,captionModelKey:'',captionModule:null,captionBusy:false
 };
 
 function studioStatus(t,k=''){const e=q('studioStatus');if(e){e.textContent=t;e.className='status '+k}}
@@ -430,6 +431,7 @@ function setProgress(v){const e=q('exportProgressBar');if(e)e.style.width=Math.m
 function renderCapabilities(){
  const e=q('studioCapabilities');if(!e)return;
  const items=[
+   ['Web Audio',!!(window.AudioContext||window.webkitAudioContext)],
    ['WASM',typeof WebAssembly!=='undefined'],
    ['语音合成','speechSynthesis' in window],
    ['麦克风录音',!!(navigator.mediaDevices&&window.MediaRecorder)],
@@ -461,7 +463,8 @@ function handleStudioFile(e){
    STUDIO.duration=v.duration||0;STUDIO.width=v.videoWidth||0;STUDIO.height=v.videoHeight||0;
    q('trimStart').value='0';q('trimEnd').value=Math.min(STUDIO.duration,15).toFixed(1);
    q('studioFileHint').textContent=fmtDuration(STUDIO.duration)+' · '+STUDIO.width+'×'+STUDIO.height+' · '+fmtBytes(file.size||0);
-   studioStatus('视频已载入。先设置入点和出点，再处理字幕与解说。','good')
+   studioStatus('视频已载入。先设置入点和出点，再处理字幕与解说。','good');
+   setTimeout(()=>{if(!STUDIO.captionModel&&!STUDIO.captionBusy)ensureCaptionModel().then(()=>aiCaptionStatus('极速字幕引擎已预热，点 AI 识别即可。')).catch(()=>{})},600)
  }
 }
 function setTrimPoint(which){
@@ -505,27 +508,70 @@ async function ensureCaptionModule(){
  return STUDIO.captionModule
 }
 async function ensureCaptionModel(){
- if(STUDIO.captionModel)return STUDIO.captionModel;
- const mod=await ensureCaptionModule(),useGPU=!!navigator.gpu;
- const opts={
+ const mod=await ensureCaptionModule(),cfg=captionSpeedConfig(),useGPU=cfg.mode!=='fast'&&!!navigator.gpu;
+ const key=cfg.mode+'|'+(useGPU?'webgpu':'wasm')+'|'+cfg.dtype;
+ if(STUDIO.captionModel&&STUDIO.captionModelKey===key)return STUDIO.captionModel;
+ if(STUDIO.captionModel){try{await STUDIO.captionModel.dispose?.()}catch(e){}STUDIO.captionModel=null}
+ const base={
    device:useGPU?'webgpu':'wasm',
-   dtype:useGPU?'fp16':'q8',
+   dtype:useGPU?'fp16':cfg.dtype,
    progress_callback:(x)=>{
-     if(x?.status==='progress'&&Number.isFinite(x.progress)){aiCaptionProgress(8+Math.min(45,x.progress*.45));aiCaptionStatus('正在下载/载入 Whisper 模型 · '+Math.round(x.progress)+'%')}
-     else if(x?.status==='ready')aiCaptionStatus('Whisper 模型已就绪')
+     if(x?.status==='progress'&&Number.isFinite(x.progress)){aiCaptionProgress(38+Math.min(35,x.progress*.35));aiCaptionStatus('正在载入 '+cfg.label+' Whisper · '+Math.round(x.progress)+'%')}
+     else if(x?.status==='ready')aiCaptionStatus(cfg.label+' Whisper 已就绪')
    }
  };
  try{
-   STUDIO.captionModel=await mod.pipeline('automatic-speech-recognition','onnx-community/whisper-tiny',opts)
+   STUDIO.captionModel=await mod.pipeline('automatic-speech-recognition','onnx-community/whisper-tiny',base)
  }catch(e){
-   if(useGPU){
-     aiCaptionStatus('WebGPU 初始化失败，正在切换 WASM…');
+   if(base.dtype==='q4'){
+     aiCaptionStatus('q4 不兼容，自动切换 q8…');
+     STUDIO.captionModel=await mod.pipeline('automatic-speech-recognition','onnx-community/whisper-tiny',{device:'wasm',dtype:'q8'})
+   }else if(useGPU){
+     aiCaptionStatus('WebGPU 初始化失败，正在切换 WASM q8…');
      STUDIO.captionModel=await mod.pipeline('automatic-speech-recognition','onnx-community/whisper-tiny',{device:'wasm',dtype:'q8'})
    }else throw e
  }
- if(q('captionEngine'))q('captionEngine').textContent='引擎：Whisper Tiny · '+(navigator.gpu?'WebGPU/WASM':'WASM');
+ STUDIO.captionModelKey=key;
+ if(q('captionEngine'))q('captionEngine').textContent='引擎：'+cfg.label+' · '+(useGPU?'WebGPU':'WASM')+' · '+(base.dtype||cfg.dtype);
  return STUDIO.captionModel
 }
+async function extractCaptionWaveformFast(){
+ if(!STUDIO.file)throw new Error('请先选择视频');
+ const [start,,durationRaw]=captionRangeValues(),cfg=captionSpeedConfig(),duration=Math.min(durationRaw,cfg.maxSeconds);
+ if(durationRaw>cfg.maxSeconds)aiCaptionStatus(cfg.label+'模式先识别前 '+cfg.maxSeconds+' 秒；需要更长请切换标准/精准');
+ const Ctx=window.AudioContext||window.webkitAudioContext;
+ if(!Ctx)throw new Error('WEB_AUDIO_UNAVAILABLE');
+ const ctx=new Ctx();
+ try{
+   aiCaptionStatus('正在用 Web Audio 快速读取视频声音…');aiCaptionProgress(12);
+   const ab=await STUDIO.file.arrayBuffer();
+   const decoded=await ctx.decodeAudioData(ab.slice(0));
+   const sr=decoded.sampleRate,startFrame=Math.max(0,Math.floor(start*sr)),endFrame=Math.min(decoded.length,Math.ceil((start+duration)*sr));
+   if(endFrame<=startFrame)throw new Error('音频范围无效');
+   const mono=mixChannels(decoded,startFrame,endFrame);
+   aiCaptionProgress(36);aiCaptionStatus('正在快速重采样到 16kHz…');
+   const waveform=resampleLinear(mono,sr,16000);
+   if(!waveform.length)throw new Error('没有读取到音频');
+   return{waveform,start,duration:keyDuration(waveform.length),key:captionKey(),engine:'Web Audio'}
+ }finally{try{await ctx.close()}catch(e){}}
+}
+function keyDuration(samples){return Math.max(.1,samples/16000)}
+async function extractCaptionWaveform(){
+ try{return await extractCaptionWaveformFast()}
+ catch(e){
+   console.warn('Web Audio fast path failed, fallback to FFmpeg',e);
+   aiCaptionStatus('快速解码不兼容当前视频，自动切换 FFmpeg 备用模式…');aiCaptionProgress(8);
+   const audio=await extractCaptionAudio();
+   const Ctx=window.AudioContext||window.webkitAudioContext;
+   if(!Ctx)throw e;
+   const ctx=new Ctx();
+   try{
+     const decoded=await ctx.decodeAudioData(await audio.blob.arrayBuffer()),mono=mixChannels(decoded,0,decoded.length),waveform=resampleLinear(mono,decoded.sampleRate,16000);
+     return{waveform,start:audio.start,duration:keyDuration(waveform.length),key:audio.key,engine:'FFmpeg fallback'}
+   }finally{try{await ctx.close()}catch(_){}}
+ }
+}
+
 async function extractCaptionAudio(){
  if(!STUDIO.file)throw new Error('请先选择视频');
  const ffmpeg=await ensureFFmpeg(),range=captionRangeValues(),start=range[0],duration=range[2];
@@ -583,13 +629,11 @@ async function runAiCaption(translateZh=false){
  if(STUDIO.captionBusy)return;
  STUDIO.captionBusy=true;q('aiCaptionBtn').disabled=true;q('aiCaptionZhBtn').disabled=true;aiCaptionProgress(1);
  try{
-   const audio=await extractCaptionAudio(),model=await ensureCaptionModel();
-   aiCaptionStatus('正在本机识别语音并生成时间轴…');aiCaptionProgress(60);
-   const audioUrl=URL.createObjectURL(audio.blob);
-   const lang=q('captionLanguage')?.value||'auto',options={return_timestamps:true,chunk_length_s:30,stride_length_s:5,task:'transcribe'};
+   const audio=await extractCaptionWaveform(),model=await ensureCaptionModel(),cfg=captionSpeedConfig();
+   aiCaptionStatus('正在'+cfg.label+'识别语音并生成时间轴…');aiCaptionProgress(74);
+   const lang=q('captionLanguage')?.value||'auto',options={return_timestamps:true,chunk_length_s:cfg.chunk,stride_length_s:cfg.stride,task:'transcribe'};
    if(lang!=='auto')options.language=lang;
-   let result;
-   try{result=await model(audioUrl,options)}finally{URL.revokeObjectURL(audioUrl)}
+   const result=await model(audio.waveform,options);
    STUDIO.captions=normalizeCaptionChunks(result,audio.duration);STUDIO.captionLanguage=result?.language||lang;STUDIO.captionRangeKey=audio.key;
    if(q('captionDetectedLang'))q('captionDetectedLang').textContent='语言：'+(result?.language|| (lang==='auto'?'AUTO':' '+lang));
    syncCaptionText();aiCaptionProgress(72);
@@ -788,6 +832,12 @@ q('setInBtn').onclick=()=>setTrimPoint('in');
 q('setOutBtn').onclick=()=>setTrimPoint('out');
 q('trimStart').addEventListener('change',()=>{if(STUDIO.captions.length&&STUDIO.captionRangeKey!==captionKey())aiCaptionStatus('裁剪区间已变化；重新识别可恢复精确时间轴。')});
 q('trimEnd').addEventListener('change',()=>{if(STUDIO.captions.length&&STUDIO.captionRangeKey!==captionKey())aiCaptionStatus('裁剪区间已变化；重新识别可恢复精确时间轴。')});
+q('captionSpeed').onchange=async()=>{
+ const cfg=captionSpeedConfig();
+ if(STUDIO.captionModel){try{await STUDIO.captionModel.dispose?.()}catch(e){}STUDIO.captionModel=null;STUDIO.captionModelKey=''}
+ if(q('captionEngine'))q('captionEngine').textContent='引擎：'+cfg.label+' 待载入';
+ aiCaptionStatus(cfg.label+'模式已选择。'+(cfg.mode==='fast'?'默认最多先识别45秒，速度最快。':''));
+};
 q('aiCaptionBtn').onclick=()=>runAiCaption(false);
 q('aiCaptionZhBtn').onclick=()=>runAiCaption(true);
 q('downloadSrtBtn').onclick=downloadSrt;
@@ -802,7 +852,7 @@ q('shareResultBtn').onclick=shareResult;
 input.addEventListener('input',updateDetect);
 renderHistory();updateDetect();renderRecreatePreset();renderCapabilities();
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=15',{updateViaCache:'none'}).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=151',{updateViaCache:'none'}).catch(()=>{})}
 })();
 </script>
 </body>
