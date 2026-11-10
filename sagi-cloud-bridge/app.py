@@ -12,6 +12,7 @@ import hmac
 import os
 import time
 import yt_dlp
+from yt_dlp.utils import DownloadError
 
 app = Flask(__name__)
 
@@ -91,6 +92,8 @@ def public_job(job):
         "updatedAt": job["updated_at"],
         "title": job.get("title", ""),
         "error": job.get("error", ""),
+        "errorCode": job.get("errorCode", ""),
+        "strategy": job.get("strategy", ""),
         "size": job.get("size", 0),
     }
     if job["status"] == "ready":
@@ -100,6 +103,49 @@ def public_job(job):
         )
     return data
 
+def _looks_like_429(message):
+    text = (message or "").lower()
+    return "429" in text or "too many requests" in text or "rate-limit" in text or "rate limit" in text
+
+def _download_with_strategy(url, work, strategy):
+    outtmpl = str(Path(work) / "%(title).80s_%(id)s.%(ext)s")
+    common = {
+        "format": "best[ext=mp4]/best",
+        "outtmpl": outtmpl,
+        "noplaylist": True,
+        "quiet": True,
+        "no_warnings": True,
+        "restrictfilenames": True,
+        "retries": 2,
+        "fragment_retries": 2,
+        "socket_timeout": 20,
+        "sleep_interval_requests": 1,
+        "max_sleep_interval": 3,
+        "max_filesize": MAX_FILE_MB * 1024 * 1024,
+    }
+
+    if strategy == "ios":
+        common["extractor_args"] = {"instagram": {"app_id": ["ios"]}}
+        common["http_headers"] = {
+            "User-Agent": "Instagram 402.0.0.0.0 iOS (18_5; iPhone17,1; en_US)",
+            "Accept-Language": "en-US,en;q=0.9",
+        }
+    elif strategy == "android":
+        common["extractor_args"] = {"instagram": {"app_id": ["567067343352427"]}}
+        common["http_headers"] = {
+            "User-Agent": "Instagram 435.0.0.37.76 Android (35/15; 480dpi; 1080x2400; Google; Pixel 9; tokay; en_US; 700000000)",
+            "Accept-Language": "en-US,en;q=0.9",
+        }
+    else:
+        common["extractor_args"] = {"instagram": {"app_id": ["web"]}}
+        common["http_headers"] = {
+            "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 Version/18.5 Mobile/15E148 Safari/604.1",
+            "Accept-Language": "en-US,en;q=0.9",
+        }
+
+    with yt_dlp.YoutubeDL(common) as ydl:
+        return ydl.extract_info(url, download=True)
+
 def run_download(job_id, url, wanted_name):
     with jobs_lock:
         job = jobs.get(job_id)
@@ -107,25 +153,53 @@ def run_download(job_id, url, wanted_name):
             return
         job["status"] = "downloading"
         job["updated_at"] = iso()
+        job["strategy"] = "web"
 
     work = tempfile.mkdtemp(prefix=f"sagi_cloud_{job_id}_")
-    outtmpl = str(Path(work) / "%(title).80s_%(id)s.%(ext)s")
-    opts = {
-        "format": "best[ext=mp4]/best",
-        "outtmpl": outtmpl,
-        "noplaylist": True,
-        "quiet": True,
-        "no_warnings": True,
-        "restrictfilenames": True,
-        "retries": 3,
-        "fragment_retries": 3,
-        "max_filesize": MAX_FILE_MB * 1024 * 1024,
-        "socket_timeout": 20,
-    }
+    strategies = ["web", "ios", "android"]
+    info = None
+    errors = []
+    saw_429 = False
 
     try:
-        with yt_dlp.YoutubeDL(opts) as ydl:
-            info = ydl.extract_info(url, download=True)
+        for strategy in strategies:
+            with jobs_lock:
+                job = jobs.get(job_id)
+                if job:
+                    job["strategy"] = strategy
+                    job["updated_at"] = iso()
+
+            try:
+                info = _download_with_strategy(url, work, strategy)
+                if info:
+                    break
+            except DownloadError as e:
+                msg = str(e)
+                errors.append(f"{strategy}: {msg}")
+                if _looks_like_429(msg):
+                    saw_429 = True
+                # clear partial files before trying the next extractor profile
+                for p in Path(work).iterdir():
+                    if p.is_file():
+                        try:
+                            p.unlink()
+                        except Exception:
+                            pass
+                time.sleep(2 if saw_429 else 1)
+            except Exception as e:
+                msg = str(e)
+                errors.append(f"{strategy}: {msg}")
+                if _looks_like_429(msg):
+                    saw_429 = True
+                time.sleep(1)
+
+        if not info:
+            if saw_429:
+                raise RuntimeError(
+                    "INSTAGRAM_RATE_LIMIT: Instagram rejected the cloud outbound IP with HTTP 429. "
+                    "The SAGI cloud service is online, but this Render IP is temporarily rate-limited."
+                )
+            raise RuntimeError("Instagram extraction failed: " + " | ".join(errors[-2:]))
 
         files = [
             p for p in Path(work).iterdir()
@@ -154,16 +228,20 @@ def run_download(job_id, url, wanted_name):
                 "filename": desired,
                 "title": info.get("title") or desired,
                 "size": size,
+                "error": "",
             })
     except Exception as e:
         shutil.rmtree(work, ignore_errors=True)
+        msg = str(e)
+        code = "instagram_rate_limit" if "INSTAGRAM_RATE_LIMIT" in msg else "instagram_extract_failed"
         with jobs_lock:
             job = jobs.get(job_id)
             if job:
                 job.update({
                     "status": "failed",
                     "updated_at": iso(),
-                    "error": str(e)[:500],
+                    "error": msg[:700],
+                    "errorCode": code,
                 })
 
 def cleanup_loop():
