@@ -1,0 +1,78 @@
+name: V1.9.1 Cloud Render Stable Check
+
+on:
+  push:
+    branches: [v191-cloud-render-stable]
+    paths:
+      - "sagi-cloud-bridge/**"
+      - "content-os/sagi-down.html"
+      - "render.yaml"
+      - ".github/workflows/v191-cloud-render-stable-check.yml"
+
+jobs:
+  stable-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      SAGI_SERVER_SECRET: smoke-secret
+      SAGI_ALLOWED_ORIGIN: https://suny820916.github.io
+      SAGI_FFMPEG_THREADS: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: "sagi-cloud-bridge/requirements.txt"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install backend dependencies
+        run: pip install -r sagi-cloud-bridge/requirements.txt
+
+      - name: Python syntax and import
+        run: |
+          python -m compileall -q sagi-cloud-bridge
+          cd sagi-cloud-bridge
+          python - <<'PY'
+          import app
+          c=app.app.test_client()
+          h=c.get("/health").get_json()
+          assert h["version"]=="1.7.0", h
+          assert h["cloudRenderStable"] is True, h
+          assert h["heavyTaskConcurrency"]==1, h
+          assert h["ffmpegThreads"]==1, h
+          assert h["renderStateRecovery"] is True, h
+          print("BACKEND_OK", h["version"], h["deployRevision"])
+          PY
+
+      - name: Frontend JavaScript syntax
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path("content-os/sagi-down.html").read_text(encoding="utf-8")
+          m=re.search(r"<script>([\s\S]*?)</script>",s)
+          assert m
+          Path("/tmp/sagi-down.js").write_text(m.group(1),encoding="utf-8")
+          for required in [
+              "CLOUD RENDER STABLE · V1.9.1",
+              "autoRecoverCloudRender",
+              "cloudRenderRecoveries",
+              "startCloudRender(true)",
+          ]:
+              assert required in s, required
+          print("FRONTEND_WIRING_OK")
+          PY
+          node --check /tmp/sagi-down.js
+
+      - name: Deployment config guards
+        run: |
+          grep -q -- "--threads 2" render.yaml
+          grep -q 'SAGI_FFMPEG_THREADS' render.yaml
+          grep -q 'MALLOC_ARENA_MAX' render.yaml
+          grep -q -- "--threads 2" sagi-cloud-bridge/Dockerfile
+          echo CONFIG_OK
