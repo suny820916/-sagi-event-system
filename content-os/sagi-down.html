@@ -2581,7 +2581,7 @@ function sdImgToContentPublish(){
   os.projects=Array.isArray(os.projects)?os.projects:[];os.contents=Array.isArray(os.contents)?os.contents:[];
   const projectId='sagidown_image';if(!os.projects.some(x=>x.id===projectId))os.projects.unshift({id:projectId,type:'brand',name:'SAGI DOWN 图片内容',tag:'IMAGE STUDIO',desc:'由 SAGI DOWN 图片编辑器生成的待发布内容',assets:{},createdAt:Date.now(),updatedAt:Date.now()});
   const title=(SDIMG.headline||'SAGI 图片内容').trim(),id='content_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,6);
-  os.contents.unshift({id,projectId:'local:'+projectId,title,format:'poster',goal:'reach',style:'premium',platform:'douyin',hook:SDIMG.sub||title,cover:title,cta:SDIMG.footer||'',tags:SDIMG.tags||'',caption:SDIMG.caption||'',status:'ready',scheduleAt:new Date(Date.now()+8*3600000).toISOString().slice(0,10)+'T20:00',createdAt:Date.now(),updatedAt:Date.now(),imageDraft:{ratio:(typeof SDORIG!=='undefined'&&SDORIG.activeForPublish?SDORIG.ratio:SDIMG.ratio),template:(typeof SDORIG!=='undefined'&&SDORIG.activeForPublish?'original-'+SDORIG.template:SDIMG.template),theme:SDIMG.theme,sourceName:SDIMG.sourceName,originalPoster:!!(typeof SDORIG!=='undefined'&&SDORIG.activeForPublish),sourcePixelsUsed:(typeof SDORIG!=='undefined'&&SDORIG.activeForPublish?0:null)}});
+  os.contents.unshift({id,projectId:'local:'+projectId,title,format:'poster',goal:'reach',style:'premium',platform:'douyin',hook:SDIMG.sub||title,cover:title,cta:SDIMG.footer||'',tags:SDIMG.tags||'',caption:SDIMG.caption||'',status:'ready',scheduleAt:new Date(Date.now()+8*3600000).toISOString().slice(0,10)+'T20:00',createdAt:Date.now(),updatedAt:Date.now(),imageDraft:{ratio:(typeof SDORIG!=='undefined'&&SDORIG.activeForPublish?SDORIG.ratio:SDIMG.ratio),template:(typeof SDORIG!=='undefined'&&SDORIG.activeForPublish?'original-'+SDORIG.template:SDIMG.template),theme:SDIMG.theme,sourceName:SDIMG.sourceName,originalPoster:!!(typeof SDORIG!=='undefined'&&SDORIG.activeForPublish),sourcePixelsUsed:(typeof SDORIG!=='undefined'&&SDORIG.activeForPublish?0:null),personMaterial:(typeof SDORIG!=='undefined'&&SDORIG.activeForPublish?SDORIG.personFileName:''),scoreMaterialCount:(typeof SDORIG!=='undefined'&&SDORIG.activeForPublish?sdOrigScoreRows().length:0)}});
   os.currentProjectId='local:'+projectId;os.currentContentId=id;localStorage.setItem(SDIMG_OS_KEY,JSON.stringify(os));toast('已送入 CONTENT OS · PUBLISH')
 }
 function sdImgBindRange(id,key,suffix){const el=q(id);if(!el)return;el.oninput=()=>{SDIMG[key]=Number(el.value);q(id+'Val').textContent=SDIMG[key]+suffix;sdImgSave();sdImgDraw()}}
@@ -2871,10 +2871,71 @@ q('sdImgAnalyzeBtn').onclick=sdIntelAnalyze;q('sdImgAnalyzeClearBtn').onclick=sd
 /* ===== SAGI ORIGINAL POSTER ENGINE V1.0 ===== */
 const SDORIG_KEY='sagi_down_original_poster_v1';
 const SDORIG_RATIOS={'3:4':{w:1080,h:1440},'9:16':{w:1080,h:1920},'1:1':{w:1080,h:1080}};
-let SDORIG={variant:0,template:'number',ratio:'3:4',title:'',sub:'',person:'',subject:'',fact:'',role:'',structure:'',hook:'',generatedAt:0,activeForPublish:false};
+let SDORIG={variant:0,template:'number',ratio:'3:4',title:'',sub:'',person:'',subject:'',fact:'',role:'',structure:'',hook:'',generatedAt:0,activeForPublish:false,personFileName:'',personScale:100,personX:0,personMode:'hero',scoreText:''};
+let SDORIG_PERSON_IMAGE=null,SDORIG_PERSON_URL='';
 try{SDORIG={...SDORIG,...JSON.parse(localStorage.getItem(SDORIG_KEY)||'{}')}}catch(e){}
 function sdOrigSave(){try{localStorage.setItem(SDORIG_KEY,JSON.stringify(SDORIG))}catch(e){}}
+
 function sdOrigCanvas(){return q('sdOrigCanvas')}
+function sdOrigScoreRows(){
+  const raw=String(SDORIG.scoreText||'').trim();
+  const lines=raw?raw.split(/\n+/).map(x=>x.trim()).filter(Boolean):[];
+  const rows=lines.map((line,i)=>{
+    const m=line.match(/^(.*?)\s*(\d{1,2})\s*[-–—:：]\s*(\d{1,2})\s*(.*?)$/);
+    if(m){
+      const left=String(m[1]||'').replace(/[·|｜-]+$/,'').trim(),right=String(m[4]||'').replace(/^[·|｜-]+/,'').trim();
+      return{left:left||('MATCH '+String(i+1).padStart(2,'0')),score:m[2]+'-'+m[3],right,raw:line}
+    }
+    const score=(line.match(/(\d{1,2})\s*[-–—:：]\s*(\d{1,2})/)||[]);
+    return{left:'MATCH '+String(i+1).padStart(2,'0'),score:score.length?score[1]+'-'+score[2]:line,right:'',raw:line}
+  });
+  if(rows.length)return rows.slice(0,12);
+  return (SDINTEL.scores||[]).slice(0,12).map((score,i)=>({left:'MATCH '+String(i+1).padStart(2,'0'),score:String(score).replace(':','-'),right:'',raw:String(score)}))
+}
+function sdOrigAutoScoreText(){
+  const scores=(SDINTEL.scores||[]).slice(0,12);
+  if(!scores.length)return'';
+  return scores.map((s,i)=>'MATCH '+String(i+1).padStart(2,'0')+' · '+String(s).replace(':','-')).join('\n')
+}
+function sdOrigFingerprint(img){
+  const cv=document.createElement('canvas'),n=12;cv.width=n;cv.height=n;const ctx=cv.getContext('2d',{willReadFrequently:true});
+  ctx.drawImage(img,0,0,n,n);const d=ctx.getImageData(0,0,n,n).data,out=[];
+  for(let i=0;i<d.length;i+=4)out.push(d[i],d[i+1],d[i+2]);
+  return out
+}
+function sdOrigSimilarity(a,b){
+  if(!a||!b||a.length!==b.length)return 0;let diff=0;for(let i=0;i<a.length;i++)diff+=Math.abs(a[i]-b[i]);return 1-diff/(a.length*255)
+}
+async function sdOrigLoadPerson(file){
+  if(!file)return;
+  if(SDORIG_PERSON_URL)URL.revokeObjectURL(SDORIG_PERSON_URL);
+  const url=URL.createObjectURL(file),img=new Image();
+  img.onload=()=>{
+    const sameName=!!(SDIMG.sourceName&&file.name===SDIMG.sourceName);
+    let similarity=0;
+    try{if(SDIMG_IMAGE)similarity=sdOrigSimilarity(sdOrigFingerprint(SDIMG_IMAGE),sdOrigFingerprint(img))}catch(e){}
+    if(sameName||similarity>=.985){
+      URL.revokeObjectURL(url);q('sdOrigPersonFile').value='';q('sdOrigPersonHint').textContent='已拒绝：人物素材与下载原图过于接近。请选择另一张教练/球员照片，保证原创视觉不复刻来源图。';toast('人物素材与原图过于相似，已拒绝');return
+    }
+    SDORIG_PERSON_URL=url;SDORIG_PERSON_IMAGE=img;SDORIG.personFileName=file.name;SDORIG.generatedAt=Date.now();sdOrigSave();
+    q('sdOrigPersonPreview').src=url;q('sdOrigPersonPreview').classList.add('show');q('sdOrigPersonFileTitle').textContent=file.name;
+    q('sdOrigPersonHint').textContent='人物素材已加入原创画布 · 与下载原图相似度 '+Math.round(similarity*100)+'% · 来源原图像素仍为 0%。';
+    sdOrigRender();toast('人物素材已加入原创海报')
+  };
+  img.onerror=()=>{URL.revokeObjectURL(url);toast('人物素材读取失败')};img.src=url
+}
+function sdOrigRemovePerson(){
+  if(SDORIG_PERSON_URL)URL.revokeObjectURL(SDORIG_PERSON_URL);SDORIG_PERSON_URL='';SDORIG_PERSON_IMAGE=null;SDORIG.personFileName='';sdOrigSave();
+  q('sdOrigPersonPreview').removeAttribute('src');q('sdOrigPersonPreview').classList.remove('show');q('sdOrigPersonFileTitle').textContent='选择人物素材';q('sdOrigPersonHint').textContent='人物素材已移除。原创海报仍可使用纯数据版式。';sdOrigDraw()
+}
+function sdOrigSyncScores(){
+  SDORIG.scoreText=sdOrigAutoScoreText();sdOrigSave();q('sdOrigScoreText').value=SDORIG.scoreText;sdOrigRenderScores();sdOrigDraw();toast('已从分析结果填入比分素材')
+}
+function sdOrigRenderScores(){
+  const host=q('sdOrigScoreChips');if(!host)return;const rows=sdOrigScoreRows();
+  host.innerHTML=rows.length?rows.map((r,i)=>'<span class="origScoreChip '+(i===rows.length-1?'latest':'')+'">'+escapeHtml(r.left+(r.left?' ':'')+r.score+(r.right?' '+r.right:''))+'</span>').join(''):'<span class="origScoreChip">暂无比分素材</span>'
+}
+
 function sdOrigCoachName(){
   const t=String(SDINTEL.evidenceText||'');
   const known=[
@@ -2896,11 +2957,11 @@ function sdOrigCoachName(){
 }
 function sdOrigContext(){
   const subject=sdIntelSubjectName(SDINTEL.keywords||[],SDINTEL.ocr||'',SDINTEL.source||null);
-  const streak=Number(SDINTEL.verifiedStreak)||0,scores=SDINTEL.scores||[],matchCount=Math.max(scores.length,streak||0),coach=sdOrigCoachName(),source=SDINTEL.source?.name||'',location=SDINTEL.location||'';
+  const streak=Number(SDINTEL.verifiedStreak)||0,scoreRows=sdOrigScoreRows(),scores=scoreRows.map(x=>x.score),matchCount=Math.max(scoreRows.length,streak||0),coach=sdOrigCoachName(),source=SDINTEL.source?.name||'',location=SDINTEL.location||'';
   const person=coach?(coach+' · 主教练'):(subject?(subject+' · 核心人物/球队'):'足球热点');
   const fact=streak?(subject+' '+streak+'连胜'):(matchCount?('近期 '+matchCount+' 场走势'):(SDINTEL.signals?.find(x=>x.hot)?.label||'足球热点'));
   const hook=streak?(streak+'连胜'):(scores.length?(scores.length+'场走势'):(SDINTEL.angles?.[0]?.type||'热点'));
-  return{subject,streak,scores,matchCount,coach,source,location,person,fact,hook}
+  return{subject,streak,scores,scoreRows,matchCount,coach,source,location,person,fact,hook}
 }
 function sdOrigBuildVariants(){
   const c=sdOrigContext(),a=SDINTEL.angles||[],tags=a[0]?.tags||SDIMG.tags||'#足球 #足球热点 #SAGI';
@@ -2946,6 +3007,34 @@ function sdOrigHeader(ctx,w,h,c){
   ctx.fillStyle='#f4f6f7';ctx.font='900 '+Math.max(25,w*.032)+'px -apple-system,"PingFang SC",sans-serif';ctx.fillText('SAGI SPORTS',pad,h*.104);
   ctx.fillStyle='#788b92';ctx.font='650 '+Math.max(18,w*.019)+'px -apple-system,"PingFang SC",sans-serif';ctx.fillText('ORIGINAL FOOTBALL POSTER · SOURCE PIXELS 0%',pad,h*.136)
 }
+
+function sdOrigDrawPerson(ctx,w,h,c){
+  if(!SDORIG_PERSON_IMAGE)return;
+  const img=SDORIG_PERSON_IMAGE,mode=SDORIG.personMode||'hero',scale=(Number(SDORIG.personScale)||100)/100,xShift=(Number(SDORIG.personX)||0)/100*w;
+  const box={x:w*.49+xShift,y:h*.15,w:w*.47,h:h*.47};
+  const fit=Math.max(box.w/img.naturalWidth,box.h/img.naturalHeight)*scale,iw=img.naturalWidth*fit,ih=img.naturalHeight*fit,cx=box.x+box.w*.52,cy=box.y+box.h*.53;
+  ctx.save();
+  if(mode==='cut'){
+    ctx.beginPath();ctx.moveTo(box.x+w*.05,box.y);ctx.lineTo(box.x+box.w,box.y);ctx.lineTo(box.x+box.w,box.y+box.h);ctx.lineTo(box.x,box.y+box.h);ctx.closePath();ctx.clip()
+  }else{
+    sdOrigRound(ctx,box.x,box.y,box.w,box.h,w*.035);ctx.clip()
+  }
+  ctx.globalAlpha=mode==='soft'?.78:1;ctx.drawImage(img,cx-iw/2,cy-ih/2,iw,ih);
+  const g=ctx.createLinearGradient(box.x,0,box.x+box.w,0);g.addColorStop(0,'rgba(5,7,8,.82)');g.addColorStop(.35,'rgba(5,7,8,.22)');g.addColorStop(1,'rgba(5,7,8,.02)');ctx.fillStyle=g;ctx.fillRect(box.x,box.y,box.w,box.h);
+  const bottom=ctx.createLinearGradient(0,box.y+box.h*.58,0,box.y+box.h);bottom.addColorStop(0,'rgba(5,7,8,0)');bottom.addColorStop(1,'rgba(5,7,8,.86)');ctx.fillStyle=bottom;ctx.fillRect(box.x,box.y,box.w,box.h);ctx.restore()
+}
+function sdOrigScoreStrip(ctx,w,h,c){
+  const rows=(c.scoreRows||[]).slice(-8);if(!rows.length)return;
+  const pad=w*.065,cols=4,gap=w*.012,cardW=(w-pad*2-gap*(cols-1))/cols,cardH=h*.055,startY=h*.515;
+  rows.forEach((r,i)=>{
+    const x=pad+(i%cols)*(cardW+gap),y=startY+Math.floor(i/cols)*(cardH+h*.012);
+    ctx.fillStyle=i===rows.length-1?'rgba(215,181,104,.14)':'rgba(255,255,255,.045)';sdOrigRound(ctx,x,y,cardW,cardH,w*.012);ctx.fill();
+    ctx.strokeStyle=i===rows.length-1?'rgba(215,181,104,.50)':'rgba(255,255,255,.10)';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle='#71838a';ctx.font='700 '+Math.max(12,Math.round(w*.012))+'px -apple-system,"PingFang SC",sans-serif';ctx.fillText((r.left||'MATCH').slice(0,13),x+w*.012,y+cardH*.32);
+    ctx.fillStyle=i===rows.length-1?'#e2c982':'#f3f5f5';ctx.font='1000 '+Math.max(20,Math.round(w*.027))+'px -apple-system,sans-serif';ctx.fillText(r.score,x+w*.012,y+cardH*.76);
+    if(r.right){ctx.textAlign='right';ctx.fillStyle='#91a0a5';ctx.font='700 '+Math.max(11,Math.round(w*.011))+'px -apple-system,"PingFang SC",sans-serif';ctx.fillText(r.right.slice(0,11),x+cardW-w*.010,y+cardH*.75);ctx.textAlign='left'}
+  })
+}
 function sdOrigBigNumber(ctx,w,h,c){
   const n=c.streak||c.scores.length||8,pad=w*.065;
   ctx.save();ctx.globalAlpha=.18;ctx.fillStyle='#d7b568';ctx.font='1000 '+Math.round(w*.62)+'px -apple-system,sans-serif';ctx.fillText(String(n),w*.48,h*.50);ctx.restore();
@@ -2961,9 +3050,9 @@ function sdOrigCoachThesis(ctx,w,h,c){
   ctx.strokeStyle='rgba(215,181,104,.26)';ctx.lineWidth=Math.max(3,w*.004);ctx.beginPath();ctx.moveTo(pad,h*.33);ctx.lineTo(w*.50,h*.33);ctx.stroke()
 }
 function sdOrigTimeline(ctx,w,h,c){
-  const pad=w*.08,top=h*.27,rows=Math.min(8,Math.max(4,c.scores.length||8)),gap=(h*.34)/Math.max(1,rows-1);
+  const items=(c.scoreRows||[]).slice(-8),pad=w*.08,top=h*.24,rows=Math.min(8,Math.max(4,items.length||8)),gap=(h*.30)/Math.max(1,rows-1);
   ctx.strokeStyle='rgba(215,181,104,.25)';ctx.lineWidth=Math.max(3,w*.004);ctx.beginPath();ctx.moveTo(pad,top);ctx.lineTo(pad,top+gap*(rows-1));ctx.stroke();
-  for(let i=0;i<rows;i++){const y=top+i*gap;ctx.fillStyle=i===rows-1?'#d7b568':'#516069';ctx.beginPath();ctx.arc(pad,y,w*.012,0,Math.PI*2);ctx.fill();ctx.fillStyle='#aab5b9';ctx.font='800 '+Math.round(w*.027)+'px -apple-system,sans-serif';ctx.fillText(c.scores[i]||('W '+(i+1)),pad+w*.035,y+w*.009)}
+  for(let i=0;i<rows;i++){const y=top+i*gap,item=items[i]||{left:'MATCH '+String(i+1).padStart(2,'0'),score:'W',right:''};ctx.fillStyle=i===rows-1?'#d7b568':'#516069';ctx.beginPath();ctx.arc(pad,y,w*.012,0,Math.PI*2);ctx.fill();ctx.fillStyle='#aab5b9';ctx.font='750 '+Math.round(w*.021)+'px -apple-system,"PingFang SC",sans-serif';ctx.fillText((item.left||'MATCH').slice(0,18),pad+w*.035,y-w*.004);ctx.fillStyle=i===rows-1?'#e2c982':'#f3f5f5';ctx.font='1000 '+Math.round(w*.031)+'px -apple-system,sans-serif';ctx.fillText(item.score,pad+w*.035,y+w*.028);if(item.right){ctx.fillStyle='#82949a';ctx.font='700 '+Math.round(w*.018)+'px -apple-system,"PingFang SC",sans-serif';ctx.fillText(item.right.slice(0,18),pad+w*.16,y+w*.026)}}
 }
 function sdOrigQuestion(ctx,w,h,c){
   ctx.save();ctx.globalAlpha=.10;ctx.fillStyle='#d7b568';ctx.font='1000 '+Math.round(w*.72)+'px -apple-system,sans-serif';ctx.fillText('?',w*.50,h*.56);ctx.restore();
@@ -2973,7 +3062,7 @@ function sdOrigDataCard(ctx,w,h,c){
   const pad=w*.065,vals=[
     ['HOT',String(SDINTEL.score||'—')],
     ['STREAK',c.streak?String(c.streak):'—'],
-    ['MATCHES',String(c.scores.length||'—')],
+    ['MATCHES',String(c.matchCount||c.scores.length||'—')],
     ['NEWS',String((SDINTEL.news||[]).length)]
   ];
   vals.forEach((v,i)=>{const x=pad+(i%2)*w*.44,y=h*.24+Math.floor(i/2)*h*.14;ctx.fillStyle='rgba(255,255,255,.035)';sdOrigRound(ctx,x,y,w*.39,h*.105,w*.02);ctx.fill();ctx.fillStyle='#6f8289';ctx.font='700 '+Math.round(w*.018)+'px -apple-system,sans-serif';ctx.fillText(v[0],x+w*.025,y+h*.032);ctx.fillStyle=i===1?'#d7b568':'#f3f5f5';ctx.font='1000 '+Math.round(w*.055)+'px -apple-system,sans-serif';ctx.fillText(v[1],x+w*.025,y+h*.078)})
@@ -2988,18 +3077,20 @@ function sdOrigFooter(ctx,w,h,c){
   const pad=w*.065;ctx.fillStyle='rgba(255,255,255,.12)';ctx.fillRect(pad,h*.91,w-pad*2,2);ctx.fillStyle='#7d8d93';ctx.font='650 '+Math.round(w*.020)+'px -apple-system,"PingFang SC",sans-serif';ctx.fillText('热点来自事实 · 视觉重新创作 · 不复用原图像素',pad,h*.95);ctx.textAlign='right';ctx.fillStyle='#d7b568';ctx.fillText('SAGI',w-pad,h*.95);ctx.textAlign='left'
 }
 function sdOrigDraw(){
-  const cv=sdOrigCanvas();if(!cv)return;sdOrigSetup();const ctx=cv.getContext('2d'),w=cv.width,h=cv.height,c=sdOrigContext();ctx.clearRect(0,0,w,h);sdOrigGradient(ctx,w,h);sdOrigPitch(ctx,w,h);sdOrigHeader(ctx,w,h,c);
+  const cv=sdOrigCanvas();if(!cv)return;sdOrigSetup();const ctx=cv.getContext('2d'),w=cv.width,h=cv.height,c=sdOrigContext();ctx.clearRect(0,0,w,h);sdOrigGradient(ctx,w,h);sdOrigPitch(ctx,w,h);sdOrigDrawPerson(ctx,w,h,c);sdOrigHeader(ctx,w,h,c);
   if(SDORIG.template==='number')sdOrigBigNumber(ctx,w,h,c);
   else if(SDORIG.template==='coach')sdOrigCoachThesis(ctx,w,h,c);
   else if(SDORIG.template==='timeline')sdOrigTimeline(ctx,w,h,c);
   else if(SDORIG.template==='question')sdOrigQuestion(ctx,w,h,c);
   else if(SDORIG.template==='data')sdOrigDataCard(ctx,w,h,c);
+  if(SDORIG.template!=='timeline'&&SDORIG.template!=='data')sdOrigScoreStrip(ctx,w,h,c);
   sdOrigMainText(ctx,w,h,c);sdOrigFooter(ctx,w,h,c)
 }
 function sdOrigRender(){
   if(!q('sdOriginalPoster'))return;
   const c=sdOrigContext();q('sdOrigPixelUse').textContent='0%';q('sdOrigOriginality').textContent='100%';q('sdOrigHook').textContent=c.hook||'等待分析';q('sdOrigSubject').textContent=SDORIG.subject||c.subject||'—';q('sdOrigRole').textContent=SDORIG.role||c.person||'—';q('sdOrigFact').textContent=SDORIG.fact||c.fact||'—';q('sdOrigStructure').textContent=SDORIG.structure||'—';
   q('sdOrigTitle').value=SDORIG.title||'';q('sdOrigSub').value=SDORIG.sub||'';q('sdOrigPerson').value=SDORIG.person||'';q('sdOrigRatio').value=SDORIG.ratio||'3:4';
+  q('sdOrigPersonScale').value=SDORIG.personScale||100;q('sdOrigPersonX').value=SDORIG.personX||0;q('sdOrigPersonMode').value=SDORIG.personMode||'hero';q('sdOrigScoreText').value=SDORIG.scoreText||'';if(SDORIG.personFileName)q('sdOrigPersonFileTitle').textContent=SDORIG.personFileName;sdOrigRenderScores();
   document.querySelectorAll('[data-orig-variant]').forEach(b=>b.classList.toggle('active',Number(b.dataset.origVariant)===Number(SDORIG.variant)));
   document.querySelectorAll('[data-orig-template]').forEach(b=>b.classList.toggle('active',b.dataset.origTemplate===SDORIG.template));
   const coach=c.coach?('主教练上下文：'+c.coach+'。系统依据来源账号与联网文章中的教练身份判断，不使用人脸身份识别。'):('暂未从来源/新闻上下文验证主教练姓名，海报将以球队趋势为主。');
@@ -3007,7 +3098,7 @@ function sdOrigRender(){
 }
 function sdOrigGenerate(force=true){
   if(!SDINTEL.analyzedAt){toast('请先完成图片热点分析');q('sdImgAnalyzeBtn')?.scrollIntoView({behavior:'smooth',block:'center'});return}
-  SDORIG.variant=0;SDORIG.activeForPublish=false;sdOrigSyncFromVariant(force);sdOrigRender();toast('已生成3套原创海报方向')
+  SDORIG.variant=0;SDORIG.activeForPublish=false;if(!String(SDORIG.scoreText||'').trim())SDORIG.scoreText=sdOrigAutoScoreText();sdOrigSyncFromVariant(force);sdOrigRender();toast('已生成3套原创海报方向')
 }
 function sdOrigSelectVariant(i){
   SDORIG.variant=Math.max(0,Math.min(2,Number(i)||0));const v=sdOrigBuildVariants()[SDORIG.variant];SDORIG.title=v.title;SDORIG.sub=v.sub;SDORIG.person=v.person;SDORIG.template=v.template;SDORIG.structure=v.structure;SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigRender()
@@ -3032,6 +3123,16 @@ q('sdOrigTitle').oninput=e=>{SDORIG.title=e.target.value;SDORIG.generatedAt=Date
 q('sdOrigSub').oninput=e=>{SDORIG.sub=e.target.value;SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigDraw()};
 q('sdOrigPerson').oninput=e=>{SDORIG.person=e.target.value;SDORIG.role=e.target.value;SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigRender()};
 q('sdOrigRatio').onchange=e=>{SDORIG.ratio=e.target.value;SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigRender()};
+
+q('sdOrigPersonFile').onchange=e=>{const file=e.target.files?.[0];if(file)sdOrigLoadPerson(file);e.target.value=''};
+q('sdOrigPersonRemoveBtn').onclick=sdOrigRemovePerson;
+q('sdOrigPersonUseCoachBtn').onclick=()=>{const coach=sdOrigCoachName();if(coach){SDORIG.person=coach+' · 主教练';SDORIG.role=SDORIG.person;q('sdOrigPerson').value=SDORIG.person;sdOrigSave();sdOrigRender();toast('已套用主教练角色')}else toast('暂未验证主教练姓名')};
+q('sdOrigPersonScale').oninput=e=>{SDORIG.personScale=Number(e.target.value);SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigDraw()};
+q('sdOrigPersonX').oninput=e=>{SDORIG.personX=Number(e.target.value);SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigDraw()};
+q('sdOrigPersonMode').onchange=e=>{SDORIG.personMode=e.target.value;SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigDraw()};
+q('sdOrigScoreText').oninput=e=>{SDORIG.scoreText=e.target.value;SDORIG.generatedAt=Date.now();sdOrigSave();sdOrigRenderScores();sdOrigDraw()};
+q('sdOrigScoreAutoBtn').onclick=sdOrigSyncScores;
+q('sdOrigScoreClearBtn').onclick=()=>{SDORIG.scoreText='';sdOrigSave();q('sdOrigScoreText').value='';sdOrigRenderScores();sdOrigDraw();toast('比分素材已清空')};
 q('sdOrigExportBtn').onclick=sdOrigExport;q('sdOrigShareBtn').onclick=sdOrigShare;q('sdOrigUsePublishBtn').onclick=sdOrigUsePublish;
 sdOrigRender();
 /* ===== END SAGI ORIGINAL POSTER ENGINE ===== */
