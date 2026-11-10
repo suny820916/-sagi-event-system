@@ -416,7 +416,7 @@ div>
               <button class="btn" id="sdOrigPersonRemoveBtn" type="button">移除人物</button>
               <button class="btn gold" id="sdOrigPersonUseCoachBtn" type="button">套用主教练角色</button>
             </div>
-            <div class="origMaterialHint" id="sdOrigPersonHint">导入后自动成为人物图层。图层工作室负责整体位置/大小；这里的缩放与横移只调整人物在框内的裁切。</div>
+            <div class="origMaterialHint" id="sdOrigPersonHint">导入后自动成为人物图层，并保存在本机浏览器中。图层工作室负责整体位置/大小；这里的缩放与横移只调整人物在框内的裁切。</div>
           </div>
 
           <div class="origMaterialBox">
@@ -436,7 +436,7 @@ div>
               <button class="btn" id="sdOrigPhotoRemoveBtn" type="button">移除图片</button>
               <button class="btn gold" id="sdOrigPhotoSelectBtn" type="button">选中图片图层</button>
             </div>
-            <div class="origMaterialHint" id="sdOrigPhotoHint">图片是独立图层，不会和人物、比分、标题绑在一起。重新导入会自动显示并解锁图片层。</div>
+            <div class="origMaterialHint" id="sdOrigPhotoHint">图片是独立图层，并保存在本机浏览器中。重新导入会自动显示并解锁当前图片层。</div>
           </div>
 
           <div class="origMaterialBox">
@@ -868,7 +868,7 @@ Unbelievable finish."></textarea>
 
 <script>
 (()=>{'use strict';
-const SAGI_DOWN_BUILD='V3.9.1.4';
+const SAGI_DOWN_BUILD='V3.9.1.5';
 document.documentElement.dataset.sagiDownBuild=SAGI_DOWN_BUILD;
 const BTCH_PUBLIC='https://btch-downloader-api-green.vercel.app';
 const DOWNLOAD_ROUTER_VERSION='3.0';
@@ -3326,6 +3326,8 @@ const SDORIG_KEY='sagi_down_original_poster_v1';
 const SDORIG_RATIOS={'3:4':{w:1080,h:1440},'9:16':{w:1080,h:1920},'1:1':{w:1080,h:1080}};
 let SDORIG={variant:0,template:'number',ratio:'3:4',title:'',sub:'',person:'',subject:'',fact:'',role:'',structure:'',hook:'',generatedAt:0,activeForPublish:false,personFileName:'',personScale:100,personX:0,personMode:'hero',photoFileName:'',photoMode:'layer',photoOpacity:100,scoreText:'',activeLayer:'person',layerOrder:['photo','person','number','scores','title'],filterPreset:'editorial',outputMode:'edit',personBright:100,personContrast:108,personSat:96,bgBright:92,bgSat:82,vignette:12,layers:{photo:{x:0,y:0,scale:100},person:{x:8,y:-6,scale:88},number:{x:-8,y:-8,scale:86},scores:{x:0,y:3,scale:90},title:{x:0,y:14,scale:90}}};
 const SDORIG_LAYER_ASSETS={};
+const SDORIG_ASSET_DB='sagi_down_layer_assets_v1';
+const SDORIG_ASSET_STORE='assets';
 try{SDORIG={...SDORIG,...JSON.parse(localStorage.getItem(SDORIG_KEY)||'{}')}}catch(e){}
 SDORIG.personFileName='';
 SDORIG.photoFileName='';
@@ -3374,23 +3376,90 @@ function sdOrigEnsureLayers(){
   if(!SDORIG.activeLayer||!SDORIG.layers[SDORIG.activeLayer])SDORIG.activeLayer=SDORIG.layerOrder.slice().reverse().find(id=>SDORIG.layers[id]?.visible!==false)||SDORIG.layerOrder.at(-1)||''
 }
 function sdOrigLayer(id){sdOrigEnsureLayers();return SDORIG.layers[id]||null}
+function sdOrigOpenAssetDb(){
+  if(typeof indexedDB==='undefined')return Promise.resolve(null);
+  return new Promise(resolve=>{
+    try{
+      const req=indexedDB.open(SDORIG_ASSET_DB,1);
+      req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains(SDORIG_ASSET_STORE))db.createObjectStore(SDORIG_ASSET_STORE,{keyPath:'id'})};
+      req.onsuccess=()=>resolve(req.result);
+      req.onerror=()=>resolve(null)
+    }catch(e){resolve(null)}
+  })
+}
+async function sdOrigPersistLayerAsset(id,asset){
+  if(!id||!asset?.blob)return false;
+  const db=await sdOrigOpenAssetDb();if(!db)return false;
+  return new Promise(resolve=>{
+    try{
+      const tx=db.transaction(SDORIG_ASSET_STORE,'readwrite');
+      tx.objectStore(SDORIG_ASSET_STORE).put({id,type:asset.type,fileName:asset.fileName||'图片',blob:asset.blob,updatedAt:Date.now()});
+      tx.oncomplete=()=>{try{db.close()}catch(e){}resolve(true)};
+      tx.onerror=tx.onabort=()=>{try{db.close()}catch(e){}resolve(false)}
+    }catch(e){try{db.close()}catch(_){}resolve(false)}
+  })
+}
+async function sdOrigDeletePersistedAsset(id){
+  const db=await sdOrigOpenAssetDb();if(!db)return false;
+  return new Promise(resolve=>{
+    try{
+      const tx=db.transaction(SDORIG_ASSET_STORE,'readwrite');tx.objectStore(SDORIG_ASSET_STORE).delete(id);
+      tx.oncomplete=()=>{try{db.close()}catch(e){}resolve(true)};
+      tx.onerror=tx.onabort=()=>{try{db.close()}catch(e){}resolve(false)}
+    }catch(e){try{db.close()}catch(_){}resolve(false)}
+  })
+}
+async function sdOrigReadPersistedAssets(){
+  const db=await sdOrigOpenAssetDb();if(!db)return[];
+  return new Promise(resolve=>{
+    try{
+      const tx=db.transaction(SDORIG_ASSET_STORE,'readonly'),req=tx.objectStore(SDORIG_ASSET_STORE).getAll();
+      req.onsuccess=()=>resolve(Array.isArray(req.result)?req.result:[]);
+      req.onerror=()=>resolve([]);
+      tx.oncomplete=()=>{try{db.close()}catch(e){}}
+    }catch(e){try{db.close()}catch(_){}resolve([])}
+  })
+}
+async function sdOrigDecodeAssetBlob(blob){
+  if(!blob)return null;const url=URL.createObjectURL(blob),img=new Image();img.decoding='async';
+  const loaded=new Promise((resolve,reject)=>{img.onload=()=>resolve(true);img.onerror=()=>reject(new Error('asset decode failed'))});
+  img.src=url;
+  try{if(typeof img.decode==='function')await img.decode();else await loaded}catch(e){try{await loaded}catch(_){try{URL.revokeObjectURL(url)}catch(__){};return null}}
+  return{img,url}
+}
+async function sdOrigRestoreLayerAssets(){
+  const records=await sdOrigReadPersistedAssets();if(!records.length)return 0;
+  let restored=0;
+  for(const rec of records){
+    const layer=SDORIG.layers?.[rec.id];
+    if(!layer||sdOrigLayerType(rec.id)!==rec.type){sdOrigDeletePersistedAsset(rec.id);continue}
+    const decoded=await sdOrigDecodeAssetBlob(rec.blob);if(!decoded){sdOrigDeletePersistedAsset(rec.id);continue}
+    sdOrigSetLayerAsset(rec.id,rec.type,decoded.img,decoded.url,rec.fileName,rec.blob,false);restored++
+  }
+  if(restored){sdOrigSyncLayerControls();sdOrigDraw()}
+  return restored
+}
 function sdOrigLayerAsset(id){return id?SDORIG_LAYER_ASSETS[id]||null:null}
 function sdOrigLayerAssetImage(id){return sdOrigLayerAsset(id)?.image||null}
-function sdOrigSetLayerAsset(id,type,img,url,fileName,blob=null){
+function sdOrigSetLayerAsset(id,type,img,url,fileName,blob=null,persist=true){
   if(!id||!img)return null;
   const old=SDORIG_LAYER_ASSETS[id];
   if(old)delete SDORIG_LAYER_ASSETS[id];
   if(old&&old.url&&!Object.values(SDORIG_LAYER_ASSETS).includes(old)){try{URL.revokeObjectURL(old.url)}catch(e){}}
   const asset={type,image:img,url,fileName:fileName||'图片',blob:blob||null};
-  SDORIG_LAYER_ASSETS[id]=asset;return asset
+  SDORIG_LAYER_ASSETS[id]=asset;
+  if(persist&&asset.blob)sdOrigPersistLayerAsset(id,asset).then(ok=>{if(!ok)console.warn('LAYER ASSET PERSIST FAILED',id)});
+  return asset
 }
 function sdOrigCloneLayerAsset(srcId,dstId){
-  const asset=sdOrigLayerAsset(srcId);if(asset)SDORIG_LAYER_ASSETS[dstId]=asset
+  const asset=sdOrigLayerAsset(srcId);if(asset){SDORIG_LAYER_ASSETS[dstId]=asset;if(asset.blob)sdOrigPersistLayerAsset(dstId,asset)}
 }
 function sdOrigDropLayerAsset(id){
-  const asset=sdOrigLayerAsset(id);if(!asset)return;
-  delete SDORIG_LAYER_ASSETS[id];
-  if(asset.url&&!Object.values(SDORIG_LAYER_ASSETS).includes(asset)){try{URL.revokeObjectURL(asset.url)}catch(e){}}
+  const asset=sdOrigLayerAsset(id);if(asset){
+    delete SDORIG_LAYER_ASSETS[id];
+    if(asset.url&&!Object.values(SDORIG_LAYER_ASSETS).includes(asset)){try{URL.revokeObjectURL(asset.url)}catch(e){}}
+  }
+  sdOrigDeletePersistedAsset(id)
 }
 function sdOrigFindAssetLayer(type){
   sdOrigEnsureLayers();
@@ -4002,6 +4071,7 @@ sdOrigBindTune('sdOrigPersonBright','personBright');sdOrigBindTune('sdOrigPerson
 sdOrigBindTune('sdOrigBgBright','bgBright');sdOrigBindTune('sdOrigBgSat','bgSat');sdOrigBindTune('sdOrigVignette','vignette');
 q('sdOrigExportBtn').onclick=sdOrigExport;q('sdOrigShareBtn').onclick=sdOrigShare;q('sdOrigUsePublishBtn').onclick=sdOrigUsePublish;
 sdOrigRender();
+sdOrigRestoreLayerAssets().then(n=>{if(n)console.log('SAGI layer assets restored',n)}).catch(e=>console.warn('ASSET RESTORE',e));
 /* ===== END SAGI ORIGINAL POSTER ENGINE ===== */
 
 
@@ -4015,7 +4085,7 @@ if(q('captionSpeed'))q('captionSpeed').value='fast';
 if(q('captionRange'))q('captionRange').value='trim';
 setTimeout(async()=>{await wakeCaptionCloud();refreshAIVoiceStatus(false)},180);
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=3914',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=3915',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})}
 })();
 </script>
 </body>
