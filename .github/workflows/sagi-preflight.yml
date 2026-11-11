@@ -1018,6 +1018,74 @@ jobs:
           PY
           node /tmp/narration-meaning-regression.js
 
+      - name: LOCKSTEP voice-to-video regression
+        run: |
+          python - <<'PY'
+          import pathlib
+          html=pathlib.Path("content-os/sagi-down.html").read_text(encoding="utf-8")
+
+          def extract(name):
+              token="function "+name+"("
+              start=html.index(token);brace=html.index("{",start)
+              depth=0;quote=None;escape=False;i=brace
+              while i<len(html):
+                  ch=html[i]
+                  if quote:
+                      if escape: escape=False
+                      elif ch=="\\": escape=True
+                      elif ch==quote: quote=None
+                  else:
+                      if ch in ("'",'"',"`"): quote=ch
+                      elif ch=="{": depth+=1
+                      elif ch=="}":
+                          depth-=1
+                          if depth==0:return html[start:i+1]
+                  i+=1
+              raise RuntimeError(name)
+
+          assert 'id="lockstepVoiceBtn"' in html
+          assert 'value="voice_to_video" selected' in html
+          assert "basis:'lockstep'" in html
+          assert "visualMode==='voice_to_video'?'off':visualMode" in html
+          assert "JSON.stringify(visualMode==='auto'?(STUDIO.scenePlan||[]):[])" in html
+          assert "q('narrationText').value=fitted" not in html
+
+          js="\n".join([
+              extract("lockstepUnitSceneScore"),
+              extract("buildLockstepVoicePlan"),
+          ])
+          harness=r"""
+          const STUDIO={sceneAnalysis:{
+            clipDuration:82,
+            scenes:[
+              {id:0,start:0,end:12,label:'阵型全景',tags:['formation'],tokens:['4321'],motion:.01},
+              {id:1,start:12,end:30,label:'中场推进',tags:['midfield','attack','movement'],tokens:['中场','推进'],motion:.06},
+              {id:2,start:30,end:50,label:'边路压迫',tags:['flank','defense','movement'],tokens:['边路','压迫'],motion:.07},
+              {id:3,start:50,end:68,label:'回撤保护',tags:['defense','movement'],tokens:['回撤','保护'],motion:.05},
+              {id:4,start:68,end:82,label:'优缺点总结',tags:[],tokens:['优势','缺点'],motion:.01}
+            ]
+          }};
+          function narrationLogicUnits(){return ['4321圣诞树阵型。','三中场进攻推进。','球到边路后边后卫压迫。','中场回撤保护。','优势是中路控制，缺点是边路空间。']}
+          function sceneSemanticTags(text){
+            const out=[];if(/4321|阵型/.test(text))out.push('formation');if(/中场/.test(text))out.push('midfield');
+            if(/进攻|推进/.test(text))out.push('attack');if(/边路|边后卫/.test(text))out.push('flank');
+            if(/防守|压迫|回撤|保护/.test(text))out.push('defense');if(/推进|压迫|回撤/.test(text))out.push('movement');return out
+          }
+          function sceneWordTokens(text){return new Set((String(text).match(/[\u3400-\u9fff]{2,4}|[A-Za-z0-9]{2,}/g)||[]))}
+          function studioRange(){return [0,82,82]}
+          const plan=buildLockstepVoicePlan('x');
+          if(!plan.length)throw new Error('empty plan');
+          if(plan[0].start!==0)throw new Error('plan does not start at zero');
+          if(Math.abs(plan.at(-1).end-82)>.001)throw new Error('plan does not end at video duration');
+          for(let i=1;i<plan.length;i++)if(plan[i].start<plan[i-1].start)throw new Error('non-monotonic scene mapping');
+          const joined=plan.map(x=>x.sourceText).join('');
+          for(const term of ['4321','中场','边后卫','回撤','优势','缺点'])if(!joined.includes(term))throw new Error('lost source logic '+term);
+          console.log('LOCKSTEP PLAN OK',plan.map(x=>[x.sceneId,x.start,x.end]));
+          """
+          pathlib.Path("/tmp/lockstep-regression.js").write_text(js+"\n"+harness,encoding="utf-8")
+          PY
+          node /tmp/lockstep-regression.js
+
       - name: Cloud FFmpeg codec and subtitle capability
         run: |
           python - <<'PY'
