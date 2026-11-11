@@ -1,5 +1,5 @@
-const CACHE='sagi-local-china-v140';
-const CORE=['/','/index.html','/styles.css','/api.js','/poster.js','/app.js','/manifest.webmanifest'];
+const CACHE='sagi-local-china-v141';
+const CORE=['/','/index.html','/styles.css','/api.js','/poster.js','/app.js','/manifest.webmanifest','/admin.html','/admin.js'];
 self.addEventListener('install',function(e){
   e.waitUntil(caches.open(CACHE).then(function(c){return c.addAll(CORE)}).then(function(){return self.skipWaiting()}));
 });
