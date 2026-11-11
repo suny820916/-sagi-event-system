@@ -1056,7 +1056,12 @@ jobs:
           assert "q('narrationText').value=fitted" not in html
 
           js="\n".join([
+              extract("splitVoiceSentences"),
+              extract("narrationCharCount"),
+              extract("estimateSceneLockSpeech"),
+              extract("rebalanceSceneLockPlan"),
               extract("lockstepUnitSceneScore"),
+              extract("voiceExactSignature"),
               extract("buildLockstepVoicePlan"),
           ])
           harness=r"""
@@ -1070,7 +1075,6 @@ jobs:
               {id:4,start:68,end:82,label:'优缺点总结',tags:[],tokens:['优势','缺点'],motion:.01}
             ]
           }};
-          function narrationLogicUnits(){return ['4321圣诞树阵型。','三中场进攻推进。','球到边路后边后卫压迫。','中场回撤保护。','优势是中路控制，缺点是边路空间。']}
           function sceneSemanticTags(text){
             const out=[];if(/4321|阵型/.test(text))out.push('formation');if(/中场/.test(text))out.push('midfield');
             if(/进攻|推进/.test(text))out.push('attack');if(/边路|边后卫/.test(text))out.push('flank');
@@ -1078,7 +1082,8 @@ jobs:
           }
           function sceneWordTokens(text){return new Set((String(text).match(/[\u3400-\u9fff]{2,4}|[A-Za-z0-9]{2,}/g)||[]))}
           function studioRange(){return [0,82,82]}
-          const plan=buildLockstepVoicePlan('x');
+          const source='4321圣诞树阵型。三中场进攻推进。球到边路后边后卫压迫。中场回撤保护。优势是中路控制，缺点是边路空间。';
+          const plan=buildLockstepVoicePlan(source);
           if(!plan.length)throw new Error('empty plan');
           if(plan[0].start!==0)throw new Error('plan does not start at zero');
           if(Math.abs(plan.at(-1).end-82)>.001)throw new Error('plan does not end at video duration');
