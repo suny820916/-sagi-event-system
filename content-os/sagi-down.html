@@ -1346,18 +1346,20 @@ async function previewAIVoice(){
    const r=await fetch(CAPTION_CLOUD+'/api/voice/preview',{
      method:'POST',
      headers:{'Content-Type':'application/json',Authorization:'Bearer '+STUDIO.cloudCaptionToken},
-     body:JSON.stringify({text:text.slice(0,10000),mode,voice_id:mode==='clone'?STUDIO.cloneVoiceId:(q('aiVoiceVoice')?.value||''),speed:Number(q('aiVoiceSpeed')?.value)||1,style:q('aiVoiceStyle')?.value||'football'})
+     body:JSON.stringify({text,mode,voice_id:mode==='clone'?STUDIO.cloneVoiceId:(q('aiVoiceVoice')?.value||''),speed:Number(q('aiVoiceSpeed')?.value)||1,style:q('aiVoiceStyle')?.value||'football'})
    });
    if(!r.ok){
      const d=await r.json().catch(()=>({}));
      if(r.status===404){setVoiceState('云端还是旧版本，已切到手机朗读试听。');speakNarration();return}
      throw new Error(d?.error||('HTTP '+r.status))
    }
-   const blob=await r.blob();
-   if(STUDIO.voicePreviewUrl)URL.revokeObjectURL(STUDIO.voicePreviewUrl);
-   STUDIO.voicePreviewUrl=URL.createObjectURL(blob);
-   const a=q('aiVoicePreview');a.src=STUDIO.voicePreviewUrl;a.classList.add('show');await a.play().catch(()=>{});
-   setVoiceState('完整 AI 配音试听已生成，不再只试听前500字。')
+    const complete=r.headers.get('X-SAGI-Voice-Complete')==='1',segments=Number(r.headers.get('X-SAGI-Voice-Segments')||0),coverage=Number(r.headers.get('X-SAGI-Voice-Coverage')||0);
+    const blob=await r.blob();
+    if(STUDIO.voicePreviewUrl)URL.revokeObjectURL(STUDIO.voicePreviewUrl);
+    STUDIO.voicePreviewUrl=URL.createObjectURL(blob);
+    const a=q('aiVoicePreview');a.src=STUDIO.voicePreviewUrl;a.classList.add('show');await a.play().catch(()=>{});
+    if(complete)markVoiceCoverage(true,segments,coverage||100);
+    setVoiceState(complete?('完整 AI 配音试听已生成 · '+segments+'句 · 完整性100%'):'完整 AI 配音试听已生成 · 云端成片时会再次逐句校验。')
  }catch(e){
    setVoiceState('AI配音云端暂不可用，已改用手机朗读试听。');
    try{speakNarration()}catch(_){}
@@ -1438,6 +1440,8 @@ async function startCloudRender(recovering=false){
    fd.append('quality',q('exportQuality')?.value||'fast');
    fd.append('captions',JSON.stringify(cloudRenderCaptions()));
    fd.append('narration',String(q('narrationText')?.value||''));
+   const voiceTimeline=buildVoiceTimeline(true);
+   fd.append('voice_timeline',JSON.stringify(voiceTimeline));
    fd.append('voice_mode',mode);
    fd.append('voice_id',mode==='clone'?STUDIO.cloneVoiceId:(q('aiVoiceVoice')?.value||''));
    fd.append('voice_speed',q('aiVoiceSpeed')?.value||'1');
@@ -1511,11 +1515,17 @@ async function pollCloudRender(){
    }
    if(!r.ok||!d?.ok)throw new Error(d?.error||('HTTP '+r.status));
    const j=d.job||{};setCloudRenderProgress(j.progress||0);setCloudRenderStatus((j.stage||j.status||'处理中')+(j.progress?' · '+j.progress+'%':''));
+    if(j.voiceSegments>0&&j.voiceComplete)markVoiceCoverage(true,j.voiceSegments,j.voiceCoverage||100);
    if(j.status==='ready'&&j.downloadUrl){
      STUDIO.cloudResultUrl=j.previewUrl||j.downloadUrl;STUDIO.cloudRenderJobId='';
      q('resultVideo').src=j.previewUrl||j.downloadUrl;q('resultVideo').classList.add('show');
      q('saveResultBtn').href=j.downloadUrl;q('saveResultBtn').download='SAGI_CLOUD_RENDER.mp4';q('resultActions').classList.add('show');
-     setCloudRenderProgress(100);setCloudRenderStatus('云端成片完成 · 可以直接保存或分享。');toast('云端成片完成');return
+     setCloudRenderProgress(100);
+      if(j.voiceSegments>0&&j.voiceComplete){
+        markVoiceCoverage(true,j.voiceSegments,j.voiceCoverage||100);
+        setCloudRenderStatus('云端成片完成 · 解说完整性100% · '+j.voiceSegments+'句全部保留 · 可以直接保存或分享。')
+      }else setCloudRenderStatus('云端成片完成 · 可以直接保存或分享。');
+      toast('云端成片完成');return
    }
    if(j.status==='failed'){
      const err=String(j.error||'未知错误');
@@ -2795,6 +2805,7 @@ q('captionToNarrationBtn').onclick=captionToNarration;
 q('aiVoicePreviewBtn').onclick=previewAIVoice;
 q('cloneVoiceBtn').onclick=cloneMyVoice;
 q('aiVoiceStatusBtn').onclick=()=>refreshAIVoiceStatus(true);
+q('voiceTimelineBtn').onclick=()=>{buildVoiceTimeline(true);toast('句级时间轴已重建')};
 ['narrationText','aiVoiceSpeed','aiVoiceStyle','aiVoiceVoice','aiVoiceMode','aiVoiceSync'].forEach(id=>{
  const e=q(id);if(e)e.addEventListener(id==='narrationText'?'input':'change',voiceTimingHint)
 });
