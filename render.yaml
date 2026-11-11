@@ -1,83 +1,11 @@
 services:
   - type: web
-    name: sagi-cloud-bridge-suny820916
-    runtime: python
-    plan: free
-    region: singapore
-    rootDir: sagi-cloud-bridge
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn -w 1 -k gthread --threads 2 -b 0.0.0.0:$PORT --timeout 300 app:app
-    healthCheckPath: /health
-    autoDeployTrigger: commit
-    envVars:
-      - key: PYTHON_VERSION
-        value: "3.12.8"
-      - key: SAGI_SERVER_SECRET
-        generateValue: true
-      - key: SAGI_ALLOWED_ORIGIN
-        value: "https://suny820916.github.io"
-      - key: SAGI_MAX_FILE_MB
-        value: "300"
-      - key: SAGI_JOB_TTL_MIN
-        value: "30"
-      - key: SAGI_RATE_LIMIT_PER_HOUR
-        value: "20"
-      - key: SAGI_BTCH_BASE
-        value: "https://btch-downloader-api-green.vercel.app"
-      - key: SAGI_BTCH_TIMEOUT_SECONDS
-        value: "12"
-      - key: SAGI_ENGINE_COOLDOWN_SECONDS
-        value: "45"
-      - key: SAGI_INSTAGRAM_PROXY
-        sync: false
-      - key: ELEVENLABS_API_KEY
-        sync: false
-      - key: ELEVENLABS_MALE_VOICE_ID
-        sync: false
-      - key: ELEVENLABS_FEMALE_VOICE_ID
-        sync: false
-      - key: OPENAI_API_KEY
-        sync: false
-      - key: SAGI_LOCAL_AI_MODEL
-        value: "gpt-6-luna"
-      - key: SAGI_LOCAL_AI_TIMEOUT
-        value: "35"
-      - key: SAGI_LOCAL_AI_RATE_LIMIT_PER_HOUR
-        value: "60"
-      - key: SAGI_LOCAL_VISUAL_MAX_MB
-        value: "8"
-      - key: SAGI_LOCAL_IMAGE_MODEL
-        value: "gpt-image-2.6-flare"
-      - key: SAGI_LOCAL_IMAGE_QUALITY
-        value: "medium"
-      - key: SAGI_MARKET_WRITE_TOKEN
-        generateValue: true
-      - key: SAGI_SUPABASE_URL
-        value: "https://zgqrjuwltbnkgovtsccb.supabase.co"
-      - key: SAGI_SUPABASE_KEY
-        value: "sb_publishable_bqROSu6ZQRdDW3DLazUCfg_4aYxldN8"
-      - key: SAGI_MARKET_RATE_LIMIT_PER_HOUR
-        value: "12"
-      - key: SAGI_VOICE_SAMPLE_MAX_MB
-        value: "25"
-      - key: SAGI_RENDER_MAX_MB
-        value: "300"
-      - key: SAGI_FFMPEG_THREADS
-        value: "1"
-      - key: SAGI_STATE_DIR
-        value: "/tmp/sagi_cloud_state"
-      - key: MALLOC_ARENA_MAX
-        value: "2"
-      - key: OMP_NUM_THREADS
-        value: "1"
-      - key: OPENBLAS_NUM_THREADS
-        value: "1"
-
-  - type: web
     name: sagi-match-intelligence-suny820916
     runtime: docker
     plan: free
     region: singapore
+    repo: https://github.com/suny820916/-sagi-event-system
+    branch: main
     rootDir: sagi-match-intelligence
     dockerfilePath: ./Dockerfile
     dockerContext: .
@@ -104,4 +32,3 @@ services:
         value: "1"
       - key: OPENBLAS_NUM_THREADS
         value: "1"
-
