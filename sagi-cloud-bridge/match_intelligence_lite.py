@@ -13,7 +13,6 @@ from threading import Lock, Thread
 
 import imageio_ffmpeg
 import numpy as np
-import onnxruntime as ort
 import requests
 from flask import Blueprint, jsonify, request, send_file
 
@@ -57,6 +56,7 @@ def _ensure_model() -> Path:
 
 def _get_session():
     global _session, _input_name, _input_h, _input_w
+    import onnxruntime as ort
     with _model_lock:
         if _session is not None:
             return _session
