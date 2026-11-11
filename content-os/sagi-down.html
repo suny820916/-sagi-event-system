@@ -1878,6 +1878,7 @@ function handleStudioFile(e){
  const file=e.target.files?.[0];if(!file)return;
  if(!String(file.type||'').startsWith('video/')){studioStatus('请选择视频文件。','warn');return}
  STUDIO.file=file;
+ STUDIO.sceneAnalysis=null;STUDIO.scenePlan=[];STUDIO.visualSyncPlan=null;renderSceneAnalysis();
  wakeCaptionCloud();
  if(STUDIO.url)URL.revokeObjectURL(STUDIO.url);
  STUDIO.url=URL.createObjectURL(file);
@@ -3091,8 +3092,8 @@ q('recreateFromLinkBtn').onclick=()=>makeJob(false);
 q('studioFile').onchange=handleStudioFile;
 q('setInBtn').onclick=()=>setTrimPoint('in');
 q('setOutBtn').onclick=()=>setTrimPoint('out');
-q('trimStart').addEventListener('change',()=>{if(STUDIO.captions.length&&STUDIO.captionRangeKey!==captionKey())aiCaptionStatus('裁剪区间已变化；重新识别可恢复精确时间轴。')});
-q('trimEnd').addEventListener('change',()=>{if(STUDIO.captions.length&&STUDIO.captionRangeKey!==captionKey())aiCaptionStatus('裁剪区间已变化；重新识别可恢复精确时间轴。')});
+q('trimStart').addEventListener('change',()=>{STUDIO.sceneAnalysis=null;STUDIO.scenePlan=[];renderSceneAnalysis();if(STUDIO.captions.length&&STUDIO.captionRangeKey!==captionKey())aiCaptionStatus('裁剪区间已变化；重新识别可恢复精确时间轴。')});
+q('trimEnd').addEventListener('change',()=>{STUDIO.sceneAnalysis=null;STUDIO.scenePlan=[];renderSceneAnalysis();if(STUDIO.captions.length&&STUDIO.captionRangeKey!==captionKey())aiCaptionStatus('裁剪区间已变化；重新识别可恢复精确时间轴。')});
 q('captionSpeed').onchange=async()=>{
  const cfg=captionSpeedConfig();
  if(STUDIO.captionModel){try{await STUDIO.captionModel.dispose?.()}catch(e){}STUDIO.captionModel=null;STUDIO.captionModelKey=''}
@@ -3111,9 +3112,12 @@ q('aiVoicePreviewBtn').onclick=previewAIVoice;
 q('cloneVoiceBtn').onclick=cloneMyVoice;
 q('aiVoiceStatusBtn').onclick=()=>refreshAIVoiceStatus(true);
 q('voiceTimelineBtn').onclick=()=>{buildVoiceTimeline(true);toast('句级时间轴已重建')};
+q('sceneAnalyzeBtn').onclick=()=>analyzeVideoScenes(false);
 ['narrationText','aiVoiceSpeed','aiVoiceStyle','aiVoiceVoice','aiVoiceMode','aiVoiceSync','aiVisualSync'].forEach(id=>{
  const e=q(id);if(e)e.addEventListener(id==='narrationText'?'input':'change',()=>{
-  STUDIO.generatedVoiceKey='';voiceTimingHint()
+  if(id!=='aiVisualSync')STUDIO.generatedVoiceKey='';
+  voiceTimingHint();
+  if(STUDIO.sceneAnalysis?.scenes?.length){matchVoiceTimelineToScenes();renderVoiceTimeline()}
  })
 });
 q('cloudRenderBtn').onclick=startCloudRender;
