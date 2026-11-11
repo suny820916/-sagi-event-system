@@ -200,6 +200,7 @@ def analyze_match(
             tracker="bytetrack.yaml",
             classes=[0, 32],  # COCO: person, sports ball
             conf=settings.conf,
+            imgsz=settings.imgsz,
             device=settings.device,
             verbose=False,
         )[0]
