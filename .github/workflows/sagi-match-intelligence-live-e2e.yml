@@ -18,6 +18,11 @@ jobs:
     steps:
       - name: Verify test tools
         run: |
+          set -euo pipefail
+          if ! command -v ffmpeg >/dev/null 2>&1; then
+            sudo apt-get update -qq
+            sudo apt-get install -y ffmpeg
+          fi
           ffmpeg -version | head -1
           jq --version
           curl --version | head -1
