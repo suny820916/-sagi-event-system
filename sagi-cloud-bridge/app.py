@@ -1255,6 +1255,59 @@ def remap_captions_to_scene_plan(captions, scene_plan):
     return mapped[:500]
 
 
+def build_semantic_video_filters(instances, width, height):
+    parts, labels = [], []
+    zw = max(width + 2, int(round(width * 1.05 / 2.0) * 2))
+    zh = max(height + 2, int(round(height * 1.05 / 2.0) * 2))
+    for i, inst in enumerate(instances):
+        ss, se = inst["sourceStart"], inst["sourceEnd"]
+        factor = max(0.08, float(inst.get("factor") or 1))
+        chain = (
+            f"[0:v]trim=start={ss:.4f}:end={se:.4f},setpts=PTS-STARTPTS,"
+            f"scale={width}:{height}:force_original_aspect_ratio=increase,"
+            f"crop={width}:{height},setsar=1"
+        )
+        if abs(factor - 1.0) > 0.005:
+            chain += f",setpts={factor:.8f}*PTS"
+        if factor > 1.03:
+            phase = i % 4
+            if phase == 0:
+                xexpr, yexpr = "(iw-ow)/2*(1+sin(t*0.25))", "(ih-oh)/2"
+            elif phase == 1:
+                xexpr, yexpr = "(iw-ow)/2", "(ih-oh)/2*(1+cos(t*0.21))"
+            elif phase == 2:
+                xexpr, yexpr = "(iw-ow)/2*(1+cos(t*0.19))", "(ih-oh)/2*(1+sin(t*0.17))"
+            else:
+                xexpr, yexpr = "(iw-ow)/2*(1+sin(t*0.16))", "(ih-oh)/2*(1+cos(t*0.14))"
+            chain += f",scale={zw}:{zh},crop={width}:{height}:x='{xexpr}':y='{yexpr}'"
+        label = f"sv{i}"
+        parts.append(chain + f"[{label}]")
+        labels.append(f"[{label}]")
+    if not labels:
+        return [], ""
+    parts.append("".join(labels) + f"concat=n={len(labels)}:v=1:a=0[vscene]")
+    return parts, "[vscene]"
+
+
+def build_semantic_audio_filters(instances, original_volume):
+    parts, labels = [], []
+    for i, inst in enumerate(instances):
+        ss, se = inst["sourceStart"], inst["sourceEnd"]
+        factor = max(0.08, float(inst.get("factor") or 1))
+        rate = 1.0 / factor
+        chain = (
+            f"[0:a]atrim=start={ss:.4f}:end={se:.4f},asetpts=PTS-STARTPTS,"
+            f"volume={original_volume},{_atempo_chain(rate)}"
+        )
+        label = f"sa{i}"
+        parts.append(chain + f"[{label}]")
+        labels.append(f"[{label}]")
+    if not labels:
+        return [], ""
+    parts.append("".join(labels) + f"concat=n={len(labels)}:v=0:a=1[aorig]")
+    return parts, "[aorig]"
+
+
 def run_cloud_render(job_id, options):
     # Cloud render is intentionally serialized with caption transcription.
     with heavy_slot:
