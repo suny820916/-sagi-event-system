@@ -1780,6 +1780,145 @@ async function mergeVoiceChunks(blobs,texts){
   return{blob:waveformToWavBlob(all,rate),duration:all.length/rate}
  }finally{try{await ctx.close()}catch(e){}}
 }
+function lockstepUnitSceneScore(text,scene,index,total,lastIndex){
+ const tags=sceneSemanticTags(text),sceneTags=new Set(scene.tags||[]),tokens=sceneWordTokens(text),sceneTokens=new Set(scene.tokens||[]);
+ let score=0;
+ for(const tag of tags)if(sceneTags.has(tag))score+=18;
+ let direct=0;for(const tok of tokens)if(sceneTokens.has(tok)){direct++;score+=2.5}
+ const positionTarget=Math.max(0,total-1);
+ score+=Math.max(0,8-Math.abs(index-positionTarget)*.8);
+ if(/横移|移动|推进|前插|反击|压迫|逼抢|回撤/.test(text))score+=Math.min(7,(Number(scene.motion)||0)*120);
+ if(/阵型|站位|结构|空间/.test(text))score+=Math.max(0,5-(Number(scene.motion)||0)*50);
+ if(index<lastIndex)score-=50;
+ return score
+}
+function buildLockstepVoicePlan(source){
+ const scenes=STUDIO.sceneAnalysis?.scenes||[],units=narrationLogicUnits(source);
+ if(!scenes.length||!units.length)return[];
+ let last=0,rows=[];
+ for(let i=0;i<units.length;i++){
+  const unit=units[i],pos=units.length<=1?0:(i/(units.length-1))*(scenes.length-1);
+  let best={index:last,score:-1e9};
+  for(let si=last;si<scenes.length;si++){
+   let score=lockstepUnitSceneScore(unit,scenes[si],si,scenes.length,last)-Math.abs(si-pos)*1.8;
+   if(score>best.score)best={index:si,score}
+  }
+  last=best.index;
+  const prev=rows.at(-1);
+  if(prev&&prev.sceneIndex===best.index){prev.sourceText+=unit;prev.units.push(unit)}
+  else rows.push({sceneIndex:best.index,sceneId:scenes[best.index].id,sourceText:unit,units:[unit],label:scenes[best.index].label||('场景'+(best.index+1))})
+ }
+ // Use the matched scene as an anchor, then borrow otherwise-unused time until the next matched topic.
+ for(let i=0;i<rows.length;i++){
+  const scene=scenes[rows[i].sceneIndex];
+  rows[i].start=i===0?0:Number(scene.start)||0;
+  const next=rows[i+1],end=next?Number(scenes[next.sceneIndex].start)||0:Number(STUDIO.sceneAnalysis.clipDuration)||Number(studioRange()[2])||0;
+  rows[i].end=Math.max(rows[i].start+.35,end);
+  rows[i].target=Math.max(.3,rows[i].end-rows[i].start-.08)
+ }
+ return rows
+}
+async function requestLockstepVoice(text,mode,speed){
+ const chunks=groupVoiceText(text,72),blobs=[];if(!chunks.length)throw new Error('EMPTY_LOCKSTEP_SEGMENT');
+ for(let i=0;i<chunks.length;i++){
+  const r=await fetch(CAPTION_CLOUD+'/api/voice/preview',{
+   method:'POST',
+   headers:{'Content-Type':'application/json',Authorization:'Bearer '+STUDIO.cloudCaptionToken},
+   body:JSON.stringify({text:chunks[i],mode,voice_id:mode==='clone'?STUDIO.cloneVoiceId:(q('aiVoiceVoice')?.value||''),speed,style:q('aiVoiceStyle')?.value||'football'})
+  });
+  if(!r.ok){const d=await r.json().catch(()=>({}));throw new Error(d?.error||('HTTP '+r.status))}
+  const blob=await r.blob();if(blob.size<1000)throw new Error('配音返回为空');
+  blobs.push(blob)
+ }
+ return await mergeVoiceChunks(blobs,chunks)
+}
+async function decodeVoiceMono(blob,rate=24000){
+ const Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)throw new Error('WEB_AUDIO_UNAVAILABLE');
+ const ctx=new Ctx();
+ try{
+  const ab=await blob.arrayBuffer(),decoded=await ctx.decodeAudioData(ab.slice(0));
+  let mono=mixChannels(decoded,0,decoded.length);return resampleLinear(mono,decoded.sampleRate,rate)
+ }finally{try{await ctx.close()}catch(e){}}
+}
+async function assembleLockstepVoice(segments,clipSeconds){
+ const rate=24000,total=Math.max(1,Math.round(clipSeconds*rate)),out=new Float32Array(total);
+ for(const seg of segments){
+  const mono=await decodeVoiceMono(seg.blob,rate),start=Math.max(0,Math.round(seg.start*rate)),slot=Math.max(0,Math.round((seg.end-seg.start)*rate));
+  if(mono.length>slot+Math.round(rate*.03))throw new Error('第'+(seg.index+1)+'段音频超过对应画面时间窗');
+  out.set(mono.subarray(0,Math.min(mono.length,slot,total-start)),start)
+ }
+ return{blob:waveformToWavBlob(out,rate),duration:out.length/rate}
+}
+function renderLockstepPlan(){
+ const host=q('lockstepList'),status=q('lockstepStatus'),badge=q('lockstepBadge'),rows=STUDIO.lockstepSegments||[];
+ if(!host||!status||!badge)return;
+ badge.textContent=STUDIO.lockstepReady?'已锁定':(rows.length?'校准中':'待开始');
+ badge.classList.toggle('ok',!!STUDIO.lockstepReady);
+ if(!rows.length){host.innerHTML='';return}
+ host.innerHTML=rows.map((r,i)=>'<div class="sceneSyncRow"><time>'+voiceTimeLabel(r.start)+'–'+voiceTimeLabel(r.end)+'</time><span>#'+(i+1)+' '+escapeHtml(r.text||r.sourceText||'')+'<br>'+escapeHtml(r.label||'')+'</span><em>'+(r.actualDuration?Number(r.actualDuration).toFixed(1)+'s':'待配音')+'</em></div>').join('')
+}
+async function runLockstepVoice(autoPreview=true){
+ const source=String(q('narrationText')?.value||'').trim(),mode=q('aiVoiceMode')?.value||'ai_male';
+ if(!STUDIO.file)throw new Error('请先导入视频');
+ if(!source)throw new Error('请先填写解说原稿');
+ if(mode==='none'||mode==='recorded')throw new Error('请选择AI男声、AI女声或克隆声音');
+ if(mode==='clone'&&!STUDIO.cloneVoiceId)throw new Error('请先创建你的声音克隆');
+ await voiceApiReady();
+ if(!(STUDIO.cloudHealth||{}).aiVoice)throw new Error('当前云端AI Voice不可用');
+
+ STUDIO.lockstepReady=false;STUDIO.lockstepSegments=[];renderLockstepPlan();
+ const clip=Math.max(.5,Number(studioRange()[2])||0);
+ q('lockstepStatus').textContent='1/4 · 正在读取原视频场景…';
+ if(!STUDIO.sceneAnalysis?.scenes?.length)await analyzeVideoScenes(true);
+ if(!STUDIO.sceneAnalysis?.scenes?.length)throw new Error('视频场景分析失败');
+
+ q('lockstepStatus').textContent='2/4 · 正在把原稿逻辑匹配到对应画面…';
+ const plan=buildLockstepVoicePlan(source);
+ if(!plan.length)throw new Error('没有建立可用的场景配音计划');
+ const sourceAudit=meaningAuditStrict(source,plan.map(x=>x.sourceText).join(''));
+ if(!sourceAudit.pass)throw new Error('原稿逻辑映射不完整，已停止生成');
+ STUDIO.lockstepSegments=plan;renderLockstepPlan();
+
+ const baseUserSpeed=Math.max(.90,Math.min(1.10,Number(q('aiVoiceSpeed')?.value)||1)),done=[];
+ for(let i=0;i<plan.length;i++){
+  const row=plan[i],original=row.sourceText;
+  let text=fitNarrationTextToClip(original,row.target),speed=baseUserSpeed,result=null;
+  const audit=meaningAuditStrict(original,text);if(!audit.pass)throw new Error('第'+(i+1)+'段压缩会破坏原意，已停止');
+  for(let pass=0;pass<4;pass++){
+   q('lockstepStatus').textContent='3/4 · 场景 '+(i+1)+'/'+plan.length+' 配音校准 · 目标 '+row.target.toFixed(1)+'秒';
+   result=await requestLockstepVoice(text,mode,speed);
+   if(result.duration<=row.target+.03)break;
+   const ratio=result.duration/row.target;
+   if(speed<1.16&&ratio<=1.24){speed=Math.min(1.16,speed*ratio*1.004);continue}
+   const nextBudget=Math.max(16,Math.floor(narrationCharCount(text)*(row.target/result.duration)*.985));
+   const next=fitNarrationTextToClip(original,row.target,nextBudget);
+   const nextAudit=meaningAuditStrict(original,next);
+   if(!nextAudit.pass||next===text)break;
+   text=next
+  }
+  if(!result||result.duration>row.target+.03)throw new Error('第'+(i+1)+'段需要 '+(result?.duration||0).toFixed(1)+'秒，但对应画面只有 '+row.target.toFixed(1)+'秒；为保护原意已停止');
+  done.push({...row,index:i,text,speed,blob:result.blob,actualDuration:result.duration});
+  STUDIO.lockstepSegments=done.concat(plan.slice(i+1));renderLockstepPlan()
+ }
+ const finalText=done.map(x=>x.text).join(''),finalAudit=meaningAuditStrict(source,finalText);
+ if(!finalAudit.pass)throw new Error('最终原意完整性校验未通过，已停止生成');
+
+ q('lockstepStatus').textContent='4/4 · 正在拼装精确 '+clip.toFixed(2)+' 秒音轨…';
+ const assembled=await assembleLockstepVoice(done,clip);
+ if(Math.abs(assembled.duration-clip)>.01)throw new Error('最终音轨与视频时长不一致');
+
+ if(STUDIO.lockstepVoiceUrl)URL.revokeObjectURL(STUDIO.lockstepVoiceUrl);
+ if(STUDIO.generatedVoiceUrl)URL.revokeObjectURL(STUDIO.generatedVoiceUrl);
+ STUDIO.lockstepVoiceBlob=assembled.blob;STUDIO.lockstepVoiceUrl=URL.createObjectURL(assembled.blob);STUDIO.lockstepDuration=clip;STUDIO.lockstepSegments=done;STUDIO.lockstepReady=true;
+ STUDIO.generatedVoiceBlob=assembled.blob;STUDIO.generatedVoiceUrl=STUDIO.lockstepVoiceUrl;STUDIO.generatedVoiceDuration=clip;STUDIO.generatedVoiceParts=done.length;
+ STUDIO.sourceNarration=source;STUDIO.clipLockedOriginal=source;STUDIO.clipLockedNarration=finalText;STUDIO.clipLockedTarget=clip;STUDIO.meaningAudit=finalAudit;STUDIO.meaningCoverage=100;
+
+ STUDIO.voiceTimeline=done.map((x,i)=>({index:i,text:x.text,start:Number(x.start.toFixed(3)),end:Number((x.start+x.actualDuration).toFixed(3)),visualStart:x.start,visualEnd:x.end,basis:'lockstep',sceneId:x.sceneId,sceneReason:'原视频场景锁定'}));
+ renderVoiceTimeline();renderClipLockedScript();renderLockstepPlan();markVoiceCoverage(true,done.length,100);
+ q('lockstepStatus').textContent='完成 · 原意100% · 原视频不动 · 配音 '+assembled.duration.toFixed(2)+'秒 = 视频 '+clip.toFixed(2)+'秒';
+ if(autoPreview){const a=q('aiVoicePreview');a.src=STUDIO.lockstepVoiceUrl;a.classList.add('show');await a.play().catch(()=>{})}
+ return{blob:assembled.blob,duration:clip,segments:done,text:finalText,audit:finalAudit}
+}
 async function generateCompleteAIVoice(text,mode,force=false,speedOverride=null){
  const actualSpeed=speedOverride==null?(Number(q('aiVoiceSpeed')?.value)||1):Number(speedOverride);
  const key=voiceGenerationKey(text,mode,actualSpeed);
