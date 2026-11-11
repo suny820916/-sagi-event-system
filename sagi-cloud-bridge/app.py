@@ -33,7 +33,7 @@ app = Flask(__name__)
 ALLOWED_ORIGIN = (os.getenv("SAGI_ALLOWED_ORIGIN") or "https://suny820916.github.io").rstrip("/")
 SERVER_SECRET = (os.getenv("SAGI_SERVER_SECRET") or os.getenv("SAGI_BRIDGE_TOKEN") or "").strip()
 PORT = int(os.getenv("PORT") or "10000")
-DEPLOY_REVISION = "2026-11-12-sagi-house-v110"
+DEPLOY_REVISION = "2026-11-12-sagi-house-v120-pro-shoot"
 APP_VERSION = "3.9.4"
 MAX_FILE_MB = int(os.getenv("SAGI_MAX_FILE_MB") or "300")
 JOB_TTL_MIN = int(os.getenv("SAGI_JOB_TTL_MIN") or "30")
@@ -71,6 +71,7 @@ market_rate_lock = Lock()
 SAGI_HOUSE_WRITE_TOKEN = (os.getenv("SAGI_HOUSE_WRITE_TOKEN") or (hmac.new(SERVER_SECRET.encode("utf-8"), b"sagi-house-inbox-v1", hashlib.sha256).hexdigest() if SERVER_SECRET else "")).strip()
 SAGI_HOUSE_INBOX_SLUG = ("house-inbox-" + hmac.new(SERVER_SECRET.encode("utf-8"), b"sagi-house-inbox-slug-v1", hashlib.sha256).hexdigest()[:24]) if SERVER_SECRET else ""
 SAGI_HOUSE_LEADS_SLUG = ("house-leads-" + hmac.new(SERVER_SECRET.encode("utf-8"), b"sagi-house-leads-slug-v1", hashlib.sha256).hexdigest()[:24]) if SERVER_SECRET else ""
+SAGI_HOUSE_SERVICE_SLUG = ("house-service-" + hmac.new(SERVER_SECRET.encode("utf-8"), b"sagi-house-service-slug-v1", hashlib.sha256).hexdigest()[:24]) if SERVER_SECRET else ""
 SAGI_HOUSE_RATE_LIMIT_PER_HOUR = max(3, min(40, int(os.getenv("SAGI_HOUSE_RATE_LIMIT_PER_HOUR") or "10")))
 house_rate_hits = {}
 house_rate_lock = Lock()
@@ -362,7 +363,7 @@ def house_rate_allowed():
 
 
 def house_cloud_ready():
-    return bool(SAGI_SUPABASE_URL and SAGI_SUPABASE_KEY and SAGI_HOUSE_WRITE_TOKEN and SAGI_HOUSE_INBOX_SLUG and SAGI_HOUSE_LEADS_SLUG)
+    return bool(SAGI_SUPABASE_URL and SAGI_SUPABASE_KEY and SAGI_HOUSE_WRITE_TOKEN and SAGI_HOUSE_INBOX_SLUG and SAGI_HOUSE_LEADS_SLUG and SAGI_HOUSE_SERVICE_SLUG)
 
 
 def _house_ensure_index(slug, kind):
@@ -4654,6 +4655,101 @@ def house_lead():
         return jsonify({"ok": True, "leadId": lead["id"]})
     except Exception as exc:
         return jsonify({"ok": False, "error": "提交咨询失败", "detail": str(exc)[:180]}), 503
+
+
+@app.post("/api/house/service-order")
+def house_service_order():
+    if not origin_allowed():
+        return jsonify({"ok": False, "error": "Origin not allowed"}), 403
+    if not house_cloud_ready():
+        return jsonify({"ok": False, "error": "HOUSE 云端尚未配置"}), 503
+    if not house_rate_allowed():
+        return jsonify({"ok": False, "error": "提交过于频繁，请稍后再试"}), 429
+
+    body = request.get_json(silent=True) or {}
+    owner_name = _house_text(body.get("ownerName"), 60)
+    contact = _house_text(body.get("contact"), 80)
+    community = _house_text(body.get("community"), 120)
+    preferred_time = _house_text(body.get("preferredTime"), 120)
+    note = _house_text(body.get("note"), 600)
+    if not owner_name or not contact or not community:
+        return jsonify({"ok": False, "error": "联系人、联系方式和房源区域不能为空"}), 400
+
+    order = {
+        "id": secrets.token_hex(12),
+        "service": "专业拍摄发布房源",
+        "price": 100,
+        "currency": "CNY",
+        "unit": "1条房源",
+        "includes": ["现场专业拍摄", "基础后期", "房源信息整理", "文案整理", "SAGI HOUSE 上架发布"],
+        "ownerName": owner_name,
+        "contact": contact,
+        "community": community,
+        "preferredTime": preferred_time,
+        "note": note,
+        "status": "new",
+        "createdAt": iso(),
+        "source": "pro-shoot-v1.2",
+    }
+    try:
+        def append_order(items):
+            rows = [x for x in items if isinstance(x, dict)]
+            rows.append(order)
+            return rows
+        _house_update_index(SAGI_HOUSE_SERVICE_SLUG, "house-service-orders", append_order, 500)
+        return jsonify({
+            "ok": True,
+            "orderId": order["id"],
+            "price": 100,
+            "message": "预约成功，SAGI HOUSE 会联系您确认拍摄时间",
+        })
+    except Exception as exc:
+        return jsonify({"ok": False, "error": "预约提交失败", "detail": str(exc)[:180]}), 503
+
+
+@app.get("/api/house/service-orders")
+def house_service_orders():
+    if not authorized():
+        return jsonify({"ok": False, "error": "Unauthorized"}), 401
+    if not house_cloud_ready():
+        return jsonify({"ok": False, "error": "HOUSE 云端尚未配置"}), 503
+    try:
+        row = _house_ensure_index(SAGI_HOUSE_SERVICE_SLUG, "house-service-orders")
+        items = [x for x in list(((row or {}).get("payload") or {}).get("items") or []) if isinstance(x, dict)]
+        items = sorted(items, key=lambda x: str(x.get("createdAt") or ""), reverse=True)[:120]
+        return jsonify({"ok": True, "items": items, "count": len(items)})
+    except Exception as exc:
+        return jsonify({"ok": False, "error": "读取拍摄订单失败", "detail": str(exc)[:180]}), 503
+
+
+@app.post("/api/house/service-order/status")
+def house_service_order_status():
+    if not authorized():
+        return jsonify({"ok": False, "error": "Unauthorized"}), 401
+    body = request.get_json(silent=True) or {}
+    order_id = _house_text(body.get("id"), 40)
+    status = _house_text(body.get("status"), 30)
+    allowed = ("new", "contacted", "scheduled", "shot", "published", "cancelled")
+    if not order_id or status not in allowed:
+        return jsonify({"ok": False, "error": "Invalid status"}), 400
+    try:
+        changed = {"ok": False}
+        def update_order(items):
+            rows = []
+            for raw in items:
+                item = dict(raw) if isinstance(raw, dict) else {}
+                if item.get("id") == order_id:
+                    item["status"] = status
+                    item["updatedAt"] = iso()
+                    changed["ok"] = True
+                rows.append(item)
+            return rows
+        _house_update_index(SAGI_HOUSE_SERVICE_SLUG, "house-service-orders", update_order, 500)
+        if not changed["ok"]:
+            return jsonify({"ok": False, "error": "Order not found"}), 404
+        return jsonify({"ok": True, "id": order_id, "status": status})
+    except Exception as exc:
+        return jsonify({"ok": False, "error": "更新拍摄订单失败", "detail": str(exc)[:180]}), 503
 
 
 @app.get("/api/house/leads")
