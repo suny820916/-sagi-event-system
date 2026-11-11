@@ -50,6 +50,13 @@ ENGINE_COOLDOWN_SECONDS = max(10, min(180, int(os.getenv("SAGI_ENGINE_COOLDOWN_S
 FOOTBALL_DATA_TOKEN = (os.getenv("FOOTBALL_DATA_TOKEN") or "").strip()
 API_FOOTBALL_KEY = (os.getenv("API_FOOTBALL_KEY") or "").strip()
 SPORTMONKS_TOKEN = (os.getenv("SPORTMONKS_TOKEN") or "").strip()
+OPENAI_API_KEY = (os.getenv("OPENAI_API_KEY") or "").strip()
+OPENAI_BASE_URL = (os.getenv("OPENAI_BASE_URL") or "https://api.openai.com").strip().rstrip("/")
+SAGI_LOCAL_AI_MODEL = (os.getenv("SAGI_LOCAL_AI_MODEL") or "gpt-6-luna").strip()
+SAGI_LOCAL_AI_TIMEOUT = max(10, min(60, int(os.getenv("SAGI_LOCAL_AI_TIMEOUT") or "35")))
+SAGI_LOCAL_AI_RATE_LIMIT_PER_HOUR = max(10, min(300, int(os.getenv("SAGI_LOCAL_AI_RATE_LIMIT_PER_HOUR") or "60")))
+local_ai_hits = {}
+local_ai_rate_lock = Lock()
 FOOTBALL_CACHE_SECONDS = max(30, min(900, int(os.getenv("SAGI_FOOTBALL_CACHE_SECONDS") or "180")))
 FOOTBALL_COMPETITIONS = {
     "PL": {"name": "英超", "football_data": "PL", "espn": "eng.1", "api_football": "Premier League", "official": "https://www.premierleague.com/en/matches/premier-league/2026-27", "primary": True},
@@ -2710,8 +2717,202 @@ def health():
         "footballDataConfigured": bool(FOOTBALL_DATA_TOKEN),
         "apiFootballConfigured": bool(API_FOOTBALL_KEY),
         "sportmonksConfigured": bool(SPORTMONKS_TOKEN),
+        "localAI": True,
+        "localAIVersion": "1.1",
+        "localAIConfigured": bool(OPENAI_API_KEY),
+        "localAIModel": SAGI_LOCAL_AI_MODEL if OPENAI_API_KEY else "",
+        "localAIRateLimitPerHour": SAGI_LOCAL_AI_RATE_LIMIT_PER_HOUR,
         "configured": bool(SERVER_SECRET),
     })
+
+
+
+def _local_ai_rate_allowed():
+    forwarded = (request.headers.get("X-Forwarded-For") or "").split(",")[0].strip()
+    key = forwarded or request.remote_addr or "unknown"
+    cutoff = time.time() - 3600
+    with local_ai_rate_lock:
+        arr = [t for t in local_ai_hits.get(key, []) if t >= cutoff]
+        if len(arr) >= SAGI_LOCAL_AI_RATE_LIMIT_PER_HOUR:
+            local_ai_hits[key] = arr
+            return False
+        arr.append(time.time())
+        local_ai_hits[key] = arr
+    return True
+
+def _responses_output_text(payload):
+    chunks = []
+    for item in (payload or {}).get("output") or []:
+        if not isinstance(item, dict) or item.get("type") != "message":
+            continue
+        for part in item.get("content") or []:
+            if isinstance(part, dict) and part.get("type") == "output_text":
+                text = str(part.get("text") or "").strip()
+                if text:
+                    chunks.append(text)
+    return "\n".join(chunks).strip()
+
+SAGI_LOCAL_PACK_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "headline": {"type": "string"},
+        "poster": {"type": "string"},
+        "video": {"type": "string"},
+        "douyin": {"type": "string"},
+        "moments": {"type": "string"},
+        "variants": {
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 3,
+            "items": {
+                "type": "object",
+                "properties": {
+                    "angle": {"type": "string"},
+                    "headline": {"type": "string"},
+                    "hook": {"type": "string"}
+                },
+                "required": ["angle", "headline", "hook"],
+                "additionalProperties": False
+            }
+        },
+        "score": {
+            "type": "object",
+            "properties": {
+                "clarity": {"type": "integer", "minimum": 0, "maximum": 100},
+                "conversion": {"type": "integer", "minimum": 0, "maximum": 100},
+                "brand": {"type": "integer", "minimum": 0, "maximum": 100},
+                "overall": {"type": "integer", "minimum": 0, "maximum": 100},
+                "reason": {"type": "string"}
+            },
+            "required": ["clarity", "conversion", "brand", "overall", "reason"],
+            "additionalProperties": False
+        }
+    },
+    "required": ["headline", "poster", "video", "douyin", "moments", "variants", "score"],
+    "additionalProperties": False
+}
+
+@app.post("/api/local-ai/generate")
+def sagi_local_ai_generate():
+    if not _local_ai_rate_allowed():
+        return jsonify({"ok": False, "error": "AI hourly limit reached", "errorCode": "local_ai_rate_limit"}), 429
+    if not OPENAI_API_KEY:
+        return jsonify({
+            "ok": False,
+            "error": "AI provider is not configured",
+            "errorCode": "local_ai_unconfigured",
+            "fallback": True
+        }), 503
+
+    data = request.get_json(silent=True) or {}
+    brief = str(data.get("brief") or "").strip()
+    if not brief:
+        return jsonify({"ok": False, "error": "brief is required"}), 400
+    if len(brief) > 1200:
+        return jsonify({"ok": False, "error": "brief is too long"}), 413
+
+    profile = data.get("profile") if isinstance(data.get("profile"), dict) else {}
+    safe_profile = {
+        "name": str(profile.get("name") or "")[:120],
+        "industry": str(profile.get("industry") or "")[:120],
+        "product": str(profile.get("product") or "")[:300],
+        "audience": str(profile.get("audience") or "")[:300],
+        "brandTone": str(profile.get("brandTone") or "")[:300],
+    }
+    context = {
+        "merchant": safe_profile,
+        "brief": brief,
+        "goal": str(data.get("goal") or "到店消费")[:80],
+        "tone": str(data.get("tone") or "高级直接")[:80],
+        "channel": "本地生活商家，中文内容，移动端",
+    }
+
+    system_prompt = """你是 SAGI AI LOCAL 的本地商业内容导演。
+你的任务是把商家提供的真实信息，转换成可以直接发布的中文宣传内容。
+原则：
+1. 不编造价格、折扣、地址、销量、奖项、顾客评价、稀缺性或任何用户未提供的事实。
+2. 不使用低俗、夸大、虚假承诺；标题要像真实本地商家，而不是AI套话。
+3. 优先表达一个明确卖点、一个使用/到店场景、一个行动指令。
+4. 海报方向必须可执行：说明3:4主视觉的主体、标题、利益点和CTA布局。
+5. 15秒视频按时间段写，画面和字幕要能直接交给剪辑人员。
+6. 抖音文案要短、自然、有本地生活感；朋友圈更像老板本人说话。
+7. 给出3个明显不同的创意方向，不只是换同义词。
+8. 质量评分要严格，低于80分也允许，reason用一句话解释最该优化什么。
+只返回符合指定JSON结构的数据。"""
+
+    body = {
+        "model": SAGI_LOCAL_AI_MODEL,
+        "input": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": json.dumps(context, ensure_ascii=False)}
+        ],
+        "text": {
+            "format": {
+                "type": "json_schema",
+                "name": "sagi_local_marketing_pack",
+                "strict": True,
+                "schema": SAGI_LOCAL_PACK_SCHEMA
+            }
+        },
+        "max_output_tokens": 2200,
+        "store": False
+    }
+
+    started = time.time()
+    try:
+        r = requests.post(
+            OPENAI_BASE_URL + "/v1/responses",
+            headers={
+                "Authorization": "Bearer " + OPENAI_API_KEY,
+                "Content-Type": "application/json",
+                "User-Agent": "SAGI-AI-LOCAL/1.1"
+            },
+            json=body,
+            timeout=(6, SAGI_LOCAL_AI_TIMEOUT)
+        )
+        if r.status_code >= 400:
+            detail = (r.text or "")[:500]
+            return jsonify({
+                "ok": False,
+                "error": "AI provider request failed",
+                "errorCode": "local_ai_provider_error",
+                "status": r.status_code,
+                "detail": detail,
+                "fallback": True
+            }), 502
+        raw = r.json()
+        text = _responses_output_text(raw)
+        if not text:
+            return jsonify({
+                "ok": False,
+                "error": "AI returned no usable content",
+                "errorCode": "local_ai_empty",
+                "fallback": True
+            }), 502
+        pack = json.loads(text)
+        return jsonify({
+            "ok": True,
+            "engine": "openai-responses",
+            "model": SAGI_LOCAL_AI_MODEL,
+            "version": "1.1",
+            "latencyMs": int((time.time() - started) * 1000),
+            "pack": pack
+        })
+    except requests.Timeout:
+        return jsonify({
+            "ok": False,
+            "error": "AI request timed out",
+            "errorCode": "local_ai_timeout",
+            "fallback": True
+        }), 504
+    except Exception as e:
+        return jsonify({
+            "ok": False,
+            "error": "AI generation failed",
+            "errorCode": "local_ai_failed",
+            "detail": str(e)[:240],
+            "fallback": True
+        }), 502
 
 
 FOOTBALL_CREST_HOST_SUFFIXES = ("espncdn.com", "football-data.org", "api-sports.io")
