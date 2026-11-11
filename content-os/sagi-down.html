@@ -2057,36 +2057,35 @@ function lockstepTotalAudioSeconds(rows,gap=.08){
  const list=rows||[];if(!list.length)return 0;
  return list.reduce((n,r)=>n+Math.max(0,Number(r.actualDuration)||0),0)+gap*Math.max(0,list.length-1)
 }
-function adaptiveReflowLockstep(rows,clipSeconds,gap=.08){
+function adaptiveReflowLockstep(rows,clipSeconds,gap=.08,maxAnchorWait=.35){
  const list=(rows||[]).map((r,i)=>({...r,index:i}));
  const clip=Math.max(.1,Number(clipSeconds)||0);if(!list.length)return list;
- const speech=list.reduce((n,r)=>n+Math.max(.05,Number(r.actualDuration)||0),0);
- const minTotal=speech+gap*Math.max(0,list.length-1);
+ const durations=list.map(r=>Math.max(.05,Number(r.actualDuration)||0));
+ const speech=durations.reduce((a,b)=>a+b,0),minTotal=speech+gap*Math.max(0,list.length-1);
  if(minTotal>clip+.03)throw new Error('ADAPTIVE_TOTAL_OVERFLOW:'+minTotal.toFixed(2));
 
- // Scene times are soft anchors only. First make a continuous audio-safe timeline.
- const spare=Math.max(0,clip-minTotal),weights=[];
- for(let i=0;i<=list.length;i++){
-   if(i===0||i===list.length){weights.push(.45);continue}
-   const prev=list[i-1],cur=list[i];
-   const plannedGap=Math.max(0,(Number(cur.start)||0)-(Number(prev.end)||0));
-   const boundaryImportance=((cur.sceneId!==prev.sceneId)?1.15:.65)+(plannedGap>0?Math.min(1,plannedGap/3):0);
-   weights.push(boundaryImportance)
- }
- const weightSum=Math.max(.01,weights.reduce((a,b)=>a+b,0));
- const pauses=weights.map(w=>spare*w/weightSum);
- let cursor=pauses[0];
+ // Scene boundaries are soft anchors. Start immediately at 0; never create a dead-air hook.
+ // Between segments we may wait briefly for the intended visual event, but at most 350ms.
+ let cursor=0;
  for(let i=0;i<list.length;i++){
-   const r=list[i],dur=Math.max(.05,Number(r.actualDuration)||0);
+   const r=list[i],dur=durations[i];
    r.plannedStart=Number(r.start)||0;r.plannedEnd=Number(r.end)||0;
+   if(i>0){
+     cursor+=gap;
+     const remainingSpeech=durations.slice(i).reduce((a,b)=>a+b,0);
+     const remainingGaps=gap*Math.max(0,list.length-i-1);
+     const slack=Math.max(0,clip-cursor-remainingSpeech-remainingGaps);
+     const desiredWait=Math.max(0,r.plannedStart-cursor);
+     cursor+=Math.min(maxAnchorWait,desiredWait,slack)
+   }
    r.start=Number(cursor.toFixed(3));
-   r.end=Number(Math.min(clip,cursor+dur).toFixed(3));
+   r.end=Number((cursor+dur).toFixed(3));
    r.target=dur;
    r.borrowed=Number(Math.max(0,r.end-r.plannedEnd).toFixed(3));
-   cursor=r.end+(i<list.length-1?gap+pauses[i+1]:0)
+   cursor=r.end
  }
- // Put any rounding residue at the end, never stretch speech.
  list[list.length-1].timelineEnd=Number(clip.toFixed(3));
+ list[list.length-1].tailSilence=Number(Math.max(0,clip-cursor).toFixed(3));
  return list
 }
 function adaptivePlanNeedsGlobalRetry(rows,clipSeconds,gap=.08){
@@ -2144,7 +2143,20 @@ async function runLockstepVoice(autoPreview=true){
    }
 
    const fit=adaptivePlanNeedsGlobalRetry(done,clip,.08);
-   if(fit.pass)break;
+   if(fit.pass){
+     const shortBy=clip-fit.total;
+     if(shortBy>1.2&&globalPass<2){
+       // Prefer natural slower delivery before inserting silence.
+       const slower=Math.max(.94,requested*(fit.total/Math.max(1,clip-.55)));
+       if(slower<requested-.012){requested=slower;continue}
+       // If already at natural slow limit, restore useful information from the untouched source.
+       const currentChars=narrationCharCount(fitted),sourceChars=narrationCharCount(source);
+       const richerBudget=Math.min(sourceChars,Math.max(currentChars+8,Math.floor(currentChars*((clip-.55)/Math.max(1,fit.total))*.975)));
+       const richer=semanticFitNarrationToClip(source,clip,richerBudget),richerAudit=meaningAuditStrict(source,richer);
+       if(richerAudit.pass&&narrationCharCount(richer)>currentChars+5){fitted=richer;audit=richerAudit;continue}
+     }
+     break
+   }
 
    // Only global overflow matters. First use a small global speed correction.
    const ratio=fit.total/clip;
