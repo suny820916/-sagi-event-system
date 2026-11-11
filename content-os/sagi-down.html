@@ -860,7 +860,7 @@ Unbelievable finish."></textarea>
             <button class="btn" id="voiceTimelineBtn" type="button">重建时间轴</button>
           </div>
           <div class="voiceTimelineList" id="voiceTimelineList"></div>
-          <div class="voiceTimelineHint">V2.1 SEMANTIC LOCK：原视频是唯一主时钟。FAST SCAN先建立场景骨架；解说锁定原意而不是锁死字数，可压缩重复与口语赘词；句子按画面事件匹配，最终音轨精确等于视频时长。</div>
+          <div class="voiceTimelineHint">V2.2 ADAPTIVE LOCK：原视频是唯一主时钟。FAST SCAN先建立场景骨架；解说锁定原意而不是锁死字数；场景边界作为软锚点，单段超时自动向相邻场景借时，只有整条配音超出视频才重新压缩。</div>
           <div class="voiceTiming" id="visualSyncStatus">AI SCENE SYNC：等待视频内容分析。</div>
           <div class="sceneSyncBox">
             <div class="sceneSyncHead"><b>视频内容场景</b><button class="btn" id="sceneAnalyzeBtn" type="button">分析视频内容</button></div>
@@ -1867,7 +1867,7 @@ function buildLockstepVoicePlan(source){
   rows[i].end=Math.min(clip,Math.max(rows[i].start+.35,anchorEnd));
   rows[i].target=Math.max(.3,rows[i].end-rows[i].start-.08)
  }
- rows=rebalanceSceneLockPlan(rows,1.24);
+ // V2.2 keeps scene granularity. Local overflow is solved later by adaptive borrowing, not by swallowing neighboring scenes.
  const sourceSig=voiceExactSignature(source),planSig=voiceExactSignature(rows.map(x=>x.sourceText).join(''));
  if(sourceSig!==planSig)throw new Error('SCENE_LOCK_TEXT_MISMATCH');
  return rows
