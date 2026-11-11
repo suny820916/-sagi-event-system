@@ -63,7 +63,7 @@ SAGI_LOCAL_IMAGE_QUALITY = (os.getenv("SAGI_LOCAL_IMAGE_QUALITY") or "medium").s
 SAGI_SUPABASE_URL = (os.getenv("SAGI_SUPABASE_URL") or "https://zgqrjuwltbnkgovtsccb.supabase.co").strip().rstrip("/")
 SAGI_SUPABASE_KEY = (os.getenv("SAGI_SUPABASE_KEY") or "sb_publishable_bqROSu6ZQRdDW3DLazUCfg_4aYxldN8").strip()
 SAGI_MARKET_WRITE_TOKEN = (os.getenv("SAGI_MARKET_WRITE_TOKEN") or (hmac.new(SERVER_SECRET.encode("utf-8"), b"sagi-market-inbox-v1", hashlib.sha256).hexdigest() if SERVER_SECRET else "")).strip()
-SAGI_MARKET_INBOX_SLUG = (os.getenv("SAGI_MARKET_INBOX_SLUG") or "sagi-market-inbox-v1").strip()
+SAGI_MARKET_INBOX_SLUG = ("market-inbox-" + hmac.new(SERVER_SECRET.encode("utf-8"), b"sagi-market-inbox-slug-v1", hashlib.sha256).hexdigest()[:24]) if SERVER_SECRET else ""
 SAGI_MARKET_RATE_LIMIT_PER_HOUR = max(3, min(60, int(os.getenv("SAGI_MARKET_RATE_LIMIT_PER_HOUR") or "12")))
 market_rate_hits = {}
 market_rate_lock = Lock()
@@ -4168,7 +4168,7 @@ def market_submit():
 
     body = request.get_json(silent=True) or {}
     photo = str(body.get("photo") or "")
-    if photo and (not photo.startswith("data:image/jpeg;base64,") or len(photo) > 950000):
+    if photo and (not photo.startswith("data:image/jpeg;base64,") or len(photo) > 650000):
         return jsonify({"ok": False, "error": "照片格式或大小不符合要求"}), 400
 
     name = _market_clean_text(body.get("name"), 80)
@@ -4177,7 +4177,7 @@ def market_submit():
     if not name or not seller or not contact:
         return jsonify({"ok": False, "error": "商品名称、卖家和联系方式不能为空"}), 400
 
-    submission_id = secrets.token_hex(8)
+    submission_id = secrets.token_hex(16)
     slug = "market-sub-" + submission_id
     payload = {
         "id": submission_id,
@@ -4189,7 +4189,7 @@ def market_submit():
         "size": _market_clean_text(body.get("size"), 30),
         "condition": _market_clean_text(body.get("condition"), 30),
         "city": _market_clean_text(body.get("city"), 40),
-        "price": max(0, min(999999, float(body.get("price") or 0))),
+        "price": max(0, min(999999, float(body.get("price") or 0))) if str(body.get("price") or "0").replace(".", "", 1).isdigit() else 0,
         "notes": _market_clean_text(body.get("notes"), 800),
         "photo": photo,
         "createdAt": iso(),
@@ -4240,7 +4240,7 @@ def market_inbox():
         row = _market_ensure_inbox()
         index_items = list(((row or {}).get("payload") or {}).get("items") or [])
         pending = [x for x in index_items if isinstance(x, dict) and x.get("status") == "pending"]
-        pending = sorted(pending, key=lambda x: str(x.get("createdAt") or ""), reverse=True)[:50]
+        pending = sorted(pending, key=lambda x: str(x.get("createdAt") or ""), reverse=True)[:20]
         result = []
         for item in pending:
             sub = _market_get(str(item.get("slug") or ""))
