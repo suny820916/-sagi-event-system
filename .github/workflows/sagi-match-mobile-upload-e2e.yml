@@ -1,0 +1,40 @@
+name: SAGI Match Mobile Upload E2E
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "sagi-match-intelligence/frontend/app.js"
+      - "sagi-match-intelligence/frontend/index.html"
+      - ".github/workflows/sagi-match-mobile-upload-e2e.yml"
+  workflow_dispatch:
+
+jobs:
+  upload-30mb-mov:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Prepare ~30MB MOV payload
+        run: |
+          set -euo pipefail
+          if ! command -v ffmpeg >/dev/null 2>&1; then
+            sudo apt-get update -qq
+            sudo apt-get install -y ffmpeg
+          fi
+          curl -L --fail --retry 3 -o bus.jpg https://ultralytics.com/images/bus.jpg
+          ffmpeg -v error -loop 1 -i bus.jpg -t 3 -r 12 -vf "scale=640:-2" -pix_fmt yuv420p base.mov
+          cp base.mov mobile-test.mov
+          truncate -s 30000000 mobile-test.mov
+          ls -lh mobile-test.mov
+
+      - name: Upload to live Match Intelligence
+        run: |
+          set -euo pipefail
+          BASE="https://sagi-cloud-bridge-suny820916.onrender.com"
+          START="$(date +%s)"
+          RESP="$(curl -L --fail --show-error --max-time 180             -F "video=@mobile-test.mov;type=video/quicktime"             -F "home_team=塔尔兰"             -F "away_team=对手"             -F "match_format=7v7"             "$BASE/api/match-intelligence/jobs")"
+          END="$(date +%s)"
+          echo "$RESP" | jq .
+          echo "upload_seconds=$((END-START))"
+          JOB_ID="$(echo "$RESP" | jq -r '.job_id')"
+          test -n "$JOB_ID"
+          test "$JOB_ID" != "null"
