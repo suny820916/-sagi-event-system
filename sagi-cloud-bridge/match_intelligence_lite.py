@@ -476,7 +476,7 @@ def _update(job_id, **changes):
         job["updated_at"] = time.time()
 
 
-def _run_job(job_id, video_path: Path, workdir: Path, heavy_slot: Lock, home_team: str, away_team: str):
+def _run_job(job_id, video_path: Path, workdir: Path, heavy_slot: Lock, home_team: str, away_team: str, match_format: str):
     proc = None
     try:
         _update(job_id, status="running", progress=3, message="正在加载足球 AI 模型")
@@ -776,7 +776,7 @@ def create_match_intelligence_blueprint(heavy_slot: Lock, allowed_origin: str):
 
         Thread(
             target=_run_job,
-            args=(job_id, source, workdir, heavy_slot, home_team, away_team),
+            args=(job_id, source, workdir, heavy_slot, home_team, away_team, match_format),
             daemon=True,
         ).start()
         return jsonify({"job_id": job_id, "status": "queued"}), 202
