@@ -1855,7 +1855,7 @@ async function generateClipLockedAIVoice(originalText,mode,force=false){
   const ratio=result.duration/clip,nextSpeed=Math.min(1.18,baseSpeed*ratio*1.005);
   if(nextSpeed>baseSpeed+.005){baseSpeed=nextSpeed;result=await generateCompleteAIVoice(fitted,mode,true,baseSpeed)}
  }
- if(result.duration>clip+.25)throw new Error('在不破坏原意的前提下无法压进视频时长，已停止生成');
+ if(result.duration>clip+.25)throw new Error('保真稿实际需要 '+result.duration.toFixed(1)+' 秒，视频只有 '+clip.toFixed(1)+' 秒；为保护原意已停止生成')
  // If the first compression was conservative, restore useful scene-matched lines
  // before resorting to a long silent tail.
  if(result.duration<clip*.90){
@@ -1870,7 +1870,7 @@ async function generateClipLockedAIVoice(originalText,mode,force=false){
   const slower=Math.max(.85,Math.min(baseSpeed,baseSpeed*(result.duration/Math.max(1,clip-.18))));
   if(slower<baseSpeed-.008){baseSpeed=slower;result=await generateCompleteAIVoice(fitted,mode,true,baseSpeed)}
  }
- if(result.duration>clip+.25)throw new Error('配音微调后仍超过视频时长，系统已阻止延长视频');
+ if(result.duration>clip+.25)throw new Error('保真稿微调后仍需 '+result.duration.toFixed(1)+' 秒，超过视频 '+clip.toFixed(1)+' 秒；不会删掉战术内容，也不会延长视频')
  const finalAudit=meaningAuditStrict(source,fitted);STUDIO.meaningAudit=finalAudit;STUDIO.meaningCoverage=finalAudit.coverage;
  if(!finalAudit.pass)throw new Error('原意完整性不是100%，已停止生成；不会为凑时长删掉任何独立战术观点');
  // If speech finishes slightly early, keep the audio file exactly as long as the video
@@ -1910,7 +1910,7 @@ async function previewAIVoice(){
    setVoiceState('VIDEO FIRST · 正在读取视频并把解说锁定到当前片段时长…');
    const locked=await generateClipLockedAIVoice(text,mode,true);
    const a=q('aiVoicePreview');a.src=STUDIO.generatedVoiceUrl;a.classList.add('show');await a.play().catch(()=>{});
-   setVoiceState('视频时长锁定成功 · '+locked.duration.toFixed(1)+'秒 · '+locked.originalChars+'字→'+locked.fittedChars+'字 · 原意覆盖 '+Math.max(0,STUDIO.meaningCoverage||0)+'% · 场景已匹配');
+   setVoiceState('MEANING FIRST · '+locked.duration.toFixed(1)+'秒 · '+locked.originalChars+'字→'+locked.fittedChars+'字 · 原意100% · 场景已匹配');
  }catch(e){
    setVoiceState('AI配音失败：'+(e.message||e));
    studioStatus('VIDEO FIRST 配音失败：'+(e.message||e),'warn')
@@ -1967,10 +1967,10 @@ async function startCloudRender(recovering=false){
 
  const [start,end,duration]=studioRange();
  const mode=q('aiVoiceMode')?.value||'none';
- if((mode==='ai_male'||mode==='ai_female'||mode==='clone')&&health.voiceVideoDurationLock!==true){
+ if((mode==='ai_male'||mode==='ai_female'||mode==='clone')&&(health.voiceVideoDurationLock!==true||health.voiceMeaningFirst!==true)){
    setCloudRenderProgress(0);
-   setCloudRenderStatus('当前云端尚未启用 VIDEO FIRST V1.5 时长硬锁；已阻止旧版延长视频。');
-   studioStatus('云端未确认“视频多长配音就多长”，本次不会提交错误成片。','warn');
+   setCloudRenderStatus('当前云端尚未启用 MEANING FIRST V1.6；已阻止旧版删意/延长视频。');
+   studioStatus('云端未确认“原意100% + 视频时长硬锁”，本次不会提交错误成片。','warn');
    return
  }
  if(mode==='clone'&&!STUDIO.cloneVoiceId){studioStatus('请选择AI男声/女声，或先创建你的声音克隆。','warn');return}
@@ -1997,7 +1997,7 @@ async function startCloudRender(recovering=false){
      setCloudRenderStatus('VIDEO FIRST · 正在把AI解说锁定到 '+duration.toFixed(1)+' 秒…');
      const locked=await generateClipLockedAIVoice(String(q('narrationText')?.value||''),mode,false);
      submitMode='recorded';submitVoiceBlob=locked.blob;submitVoiceName='sagi-clip-locked-voice.wav';submitSync='clip_locked';submitDuration=duration;
-     setCloudRenderStatus('配音已锁定 '+locked.duration.toFixed(1)+'秒 · '+locked.originalChars+'字→'+locked.fittedChars+'字 · 原意覆盖 '+Math.max(0,STUDIO.meaningCoverage||0)+'% · 正在按视频场景出片')
+     setCloudRenderStatus('MEANING FIRST · 配音 '+locked.duration.toFixed(1)+'秒 · '+locked.originalChars+'字→'+locked.fittedChars+'字 · 原意100% · 正在按视频场景出片')
    }
 
    const visualMode=q('aiVisualSync')?.value||'auto';
