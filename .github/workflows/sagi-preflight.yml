@@ -644,7 +644,7 @@ jobs:
           import re, pathlib
           p=pathlib.Path("sagi-local/index.html")
           s=p.read_text(encoding="utf-8")
-          assert "V1.3 · DESIGN SYSTEM" in s
+          assert "V1.3.1 · DESIGN SYSTEM" in s
           assert "/api/local-ai/generate" in s
           assert "/api/local-ai/visual" in s
           assert "/api/local-ai/poster" in s
@@ -661,6 +661,8 @@ jobs:
           assert "drawEditorialPoster" in s
           assert "drawSplitPoster" in s
           assert "drawImpactPoster" in s
+          assert "is916?." not in s
+          assert "document.querySelectorAll('.templateBtn').forEach" in s
           assert "LOCAL POSTER" in s
           assert "async function cloudPoster" in s
           assert "$('##photoGen')" not in s
