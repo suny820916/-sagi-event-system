@@ -1304,6 +1304,134 @@ function rebuildVoiceTimelineToDuration(duration,source='actual'){
  renderVoiceTimeline();
  return STUDIO.voiceTimeline
 }
+const SCENE_SEMANTIC_TERMS={
+ flank:['边路','边后卫','边锋','侧翼','拉边','宽度','wing','flank','fullback','touchline'],
+ midfield:['中场','三中场','后腰','前腰','中路','双后腰','midfield','pivot'],
+ defense:['防守','回防','落位','保护','封堵','压迫','逼抢','低位','defend','defense','press'],
+ attack:['进攻','推进','前插','套边','控球','组织','attack','build up','build-up'],
+ transition:['转换','反击','丢球','抢断','由攻转守','由守转攻','transition','counter'],
+ formation:['阵型','站位','结构','四后卫','三后卫','圣诞树','433','4321','formation','shape'],
+ movement:['移动','横移','跑动','轮转','拉扯','回撤','前压','movement','shift','move'],
+ pass:['传球','出球','转移','直塞','回传','倒脚','pass','passing'],
+ shot:['射门','打门','远射','禁区','shot','finish','finishing'],
+ keeper:['门将','守门员','扑救','keeper','goalkeeper'],
+ left:['左路','左侧','左边','left'],
+ right:['右路','右侧','右边','right'],
+ setpiece:['角球','任意球','定位球','点球','corner','free kick','penalty']
+};
+function sceneSemanticTags(text){
+ const t=String(text||'').toLowerCase(),tags=[];
+ for(const [key,terms] of Object.entries(SCENE_SEMANTIC_TERMS))if(terms.some(x=>t.includes(String(x).toLowerCase())))tags.push(key);
+ return tags
+}
+function sceneWordTokens(text){
+ const t=String(text||'').toLowerCase(),out=new Set();
+ (t.match(/[a-z]{3,}|[\u3400-\u9fff]{2,4}/g)||[]).forEach(x=>out.add(x));
+ return out
+}
+function waitStudioSeek(v,time){
+ return new Promise(resolve=>{
+  const target=Math.max(0,Math.min(Number(v.duration)||time,Number(time)||0));
+  if(Math.abs((v.currentTime||0)-target)<.025){resolve();return}
+  let done=false;const finish=()=>{if(done)return;done=true;v.removeEventListener('seeked',finish);clearTimeout(timer);resolve()};
+  const timer=setTimeout(finish,900);v.addEventListener('seeked',finish,{once:true});
+  try{if(typeof v.fastSeek==='function')v.fastSeek(target);else v.currentTime=target}catch(e){finish()}
+ })
+}
+function frameDescriptor(ctx,w,h,prev){
+ const d=ctx.getImageData(0,0,w,h).data,gray=new Uint8Array(w*h);let bright=0,green=0,edge=0,diff=0;
+ for(let p=0,i=0;p<gray.length;p++,i+=4){
+  const r=d[i],g=d[i+1],b=d[i+2],y=(r*30+g*59+b*11)/100;gray[p]=y;bright+=y;
+  if(g>r*1.08&&g>b*1.08&&g>55)green++
+  if(prev)diff+=Math.abs(y-prev[p])
+ }
+ for(let y=1;y<h;y++)for(let x=1;x<w;x++){const p=y*w+x;edge+=Math.abs(gray[p]-gray[p-1])+Math.abs(gray[p]-gray[p-w])}
+ return{gray,brightness:bright/(gray.length*255),green:green/gray.length,diff:prev?diff/(gray.length*255):0,edge:edge/(Math.max(1,(w-1)*(h-1))*510)}
+}
+function renderSceneAnalysis(){
+ const host=q('sceneSyncList'),status=q('sceneSyncStatus'),a=STUDIO.sceneAnalysis;
+ if(!host||!status)return;
+ if(!a?.scenes?.length){host.innerHTML='';status.textContent=STUDIO.sceneAnalyzing?'正在读取视频画面…':'尚未读取视频。会在本机抽帧分析场景变化，并结合原字幕做语义匹配。';return}
+ status.textContent='已读取 '+a.samples+' 个画面采样 · 拆出 '+a.scenes.length+' 个场景 · '+(a.captionHits?'原字幕语义已参与匹配':'无原字幕时使用画面运动/场景顺序匹配');
+ host.innerHTML=a.scenes.map((s,i)=>'<div class="sceneSyncRow"><time>'+voiceTimeLabel(s.start)+'–'+voiceTimeLabel(s.end)+'</time><span>#'+(i+1)+' '+escapeHtml(s.label)+(s.text?'<br>'+escapeHtml(s.text.slice(0,54)):'')+'</span><em>'+Math.round(s.motion*100)+'%</em></div>').join('')
+}
+async function analyzeVideoScenes(silent=false){
+ if(STUDIO.sceneAnalyzing)return STUDIO.sceneAnalysis;
+ const v=q('studioVideo');if(!STUDIO.file||!v||!Number(v.duration)){if(!silent)studioStatus('请先导入视频。','warn');return null}
+ STUDIO.sceneAnalyzing=true;renderSceneAnalysis();
+ const oldTime=v.currentTime||0,wasPaused=v.paused;try{v.pause()}catch(e){}
+ try{
+  const [clipStart,,clipDuration]=studioRange(),count=Math.max(12,Math.min(72,Math.ceil(clipDuration/1.15)+1)),step=clipDuration/Math.max(1,count-1);
+  const canvas=document.createElement('canvas'),w=64,h=36;canvas.width=w;canvas.height=h;const ctx=canvas.getContext('2d',{willReadFrequently:true});
+  const samples=[];let prev=null;
+  for(let i=0;i<count;i++){
+   const rel=Math.min(clipDuration,i*step),abs=clipStart+rel;
+   await waitStudioSeek(v,abs);ctx.drawImage(v,0,0,w,h);
+   const d=frameDescriptor(ctx,w,h,prev);prev=d.gray;
+   samples.push({t:rel,diff:d.diff,green:d.green,brightness:d.brightness,edge:d.edge});
+   if(i%6===0&&q('sceneSyncStatus'))q('sceneSyncStatus').textContent='正在读取视频内容 · '+Math.round((i+1)/count*100)+'%'
+  }
+  const diffs=samples.slice(1).map(x=>x.diff).sort((a,b)=>a-b),p75=diffs.length?diffs[Math.min(diffs.length-1,Math.floor(diffs.length*.75))]:.08,cutThreshold=Math.max(.07,p75*1.35);
+  const bounds=[0];let last=0;
+  for(let i=1;i<samples.length;i++){
+   const t=samples[i].t,elapsed=t-last;
+   if((samples[i].diff>=cutThreshold&&elapsed>=1.25)||elapsed>=11){bounds.push(t);last=t}
+  }
+  if(bounds[bounds.length-1]<clipDuration-.25)bounds.push(clipDuration);else bounds[bounds.length-1]=clipDuration;
+  const caps=captionTimeline(),scenes=[];
+  for(let bi=0;bi<bounds.length-1;bi++){
+   const start=bounds[bi],end=bounds[bi+1],inside=samples.filter(x=>x.t>=start-.001&&x.t<=end+.001);
+   const motion=inside.length?inside.reduce((n,x)=>n+x.diff,0)/inside.length:0,green=inside.length?inside.reduce((n,x)=>n+x.green,0)/inside.length:0;
+   const capRows=caps.filter(x=>Number(x.end)>start&&Number(x.start)<end),text=capRows.map(x=>x.text).join(' ').trim(),tags=sceneSemanticTags(text);
+   let label=tags.length?tags.slice(0,3).map(x=>({flank:'边路',midfield:'中场',defense:'防守',attack:'进攻',transition:'攻防转换',formation:'阵型/站位',movement:'移动/跑动',pass:'传球',shot:'射门',keeper:'门将',left:'左侧',right:'右侧',setpiece:'定位球'}[x]||x)).join(' · '):(green>.16?'球场/战术画面':(motion>.055?'高运动场景':motion>.025?'运动场景':'稳定讲解画面'));
+   scenes.push({id:bi,start:Number(start.toFixed(3)),end:Number(end.toFixed(3)),motion:Number(motion.toFixed(4)),green:Number(green.toFixed(4)),text,tags,label,tokens:[...sceneWordTokens(text)]})
+  }
+  STUDIO.sceneAnalysis={scenes,samples:count,captionHits:scenes.filter(x=>x.text).length,cutThreshold:Number(cutThreshold.toFixed(4)),clipDuration,analyzedAt:Date.now()};
+  matchVoiceTimelineToScenes();renderSceneAnalysis();renderVoiceTimeline();
+  if(!silent)toast('视频内容分析完成 · '+scenes.length+' 个场景');
+  return STUDIO.sceneAnalysis
+ }catch(e){
+  console.error('SCENE_SYNC',e);STUDIO.sceneAnalysis=null;if(!silent)studioStatus('视频内容分析失败：'+(e.message||e),'warn');return null
+ }finally{
+  STUDIO.sceneAnalyzing=false;try{await waitStudioSeek(v,oldTime);if(!wasPaused)await v.play().catch(()=>{})}catch(e){}renderSceneAnalysis()
+ }
+}
+function sceneMatchScore(row,scene,index,total,lastIndex){
+ const text=String(row.text||''),tags=sceneSemanticTags(text),sceneTags=new Set(scene.tags||[]),tokens=sceneWordTokens(text),sceneTokens=new Set(scene.tokens||[]);
+ let score=0,reason=[];
+ for(const tag of tags)if(sceneTags.has(tag)){score+=14;reason.push(tag)}
+ let direct=0;for(const tok of tokens)if(sceneTokens.has(tok)){direct++;score+=2.5}
+ if(direct)reason.push('字幕语义');
+ const final=Math.max(.1,Number((STUDIO.voiceTimeline||[]).at(-1)?.end)||1),target=(Number(row.start||0)+Number(row.end||0))/2/final*(total-1);
+ score+=Math.max(0,7-Math.abs(index-target)*1.15);
+ if(/移动|横移|跑动|推进|反击|压迫|逼抢|前插/.test(text))score+=Math.min(7,(Number(scene.motion)||0)*110);
+ if(/阵型|站位|结构|位置|空间/.test(text))score+=Math.max(0,4-(Number(scene.motion)||0)*45);
+ if(index<lastIndex)score-=30;
+ return{score,reason:reason.slice(0,3).join('+')||'画面顺序'}
+}
+function matchVoiceTimelineToScenes(){
+ const rows=STUDIO.voiceTimeline||[],scenes=STUDIO.sceneAnalysis?.scenes||[];if(!rows.length||!scenes.length){STUDIO.scenePlan=[];return[]}
+ let last=0;
+ for(let ri=0;ri<rows.length;ri++){
+  const row=rows[ri],final=Math.max(.1,Number(rows.at(-1)?.end)||1),target=Math.round(((Number(row.start)||0)/final)*(scenes.length-1));
+  const maxCandidate=Math.min(scenes.length-1,Math.max(last+7,target+2));let best=null;
+  for(let si=last;si<=maxCandidate;si++){
+   const m=sceneMatchScore(row,scenes[si],si,scenes.length,last);
+   if(!best||m.score>best.score)best={scene:scenes[si],index:si,...m}
+  }
+  if(!best)best={scene:scenes[Math.min(last,scenes.length-1)],index:last,score:0,reason:'画面顺序'};
+  last=best.index;row.sceneId=best.scene.id;row.visualStart=best.scene.start;row.visualEnd=best.scene.end;row.sceneScore=Number(best.score.toFixed(1));row.sceneReason=best.reason
+ }
+ const plan=[];
+ for(const row of rows){
+  const scene=scenes.find(s=>s.id===row.sceneId);if(!scene)continue;
+  const prev=plan.at(-1);
+  if(prev&&prev.sceneId===scene.id&&Math.abs(prev.outputEnd-(Number(row.start)||0))<.25){
+   prev.outputEnd=Number(row.end)||prev.outputEnd;prev.text=(prev.text+' '+row.text).trim()
+  }else plan.push({sceneId:scene.id,sourceStart:scene.start,sourceEnd:scene.end,outputStart:Number(row.start)||0,outputEnd:Number(row.end)||0,label:scene.label,text:String(row.text||''),matchScore:Number(row.sceneScore)||0})
+ }
+ STUDIO.scenePlan=plan;return plan
+}
 function buildVisualSyncPlan(){
  let clip=0;try{clip=Number(studioRange()[2])||0}catch(e){}
  const mode=q('aiVisualSync')?.value||'auto',voice=Number(STUDIO.generatedVoiceDuration)||0;
@@ -1311,13 +1439,15 @@ function buildVisualSyncPlan(){
  if(!clip||!finalDuration){STUDIO.visualSyncPlan=null;renderVisualSyncStatus();return null}
  const gap=Math.max(0,finalDuration-clip),ratio=finalDuration/clip;
  let strategy='native',label='原画面自然播放';
- if(gap>3){
+ if(mode==='auto'&&STUDIO.sceneAnalysis?.scenes?.length){
+  matchVoiceTimelineToScenes();strategy='semantic';label='AI内容语义匹配';
+ }else if(gap>3){
   if(mode==='off'){strategy='blocked';label='画面不足超过3秒 · 已禁止长尾帧定格'}
   else if(mode==='stretch'){strategy='stretch';label='全程均匀匹配'}
   else{strategy='dynamic';label=ratio<=1.18?'轻量动态匹配':'AI动态节奏匹配'}
  }
- const plan={mode,strategy,label,clip,finalDuration,gap,ratio,maxHold:3};
- rows.forEach(r=>{
+ const plan={mode,strategy,label,clip,finalDuration,gap,ratio,maxHold:3,sceneCount:STUDIO.sceneAnalysis?.scenes?.length||0,sceneSegments:STUDIO.scenePlan?.length||0};
+ if(strategy!=='semantic')rows.forEach(r=>{
   r.visualStart=Math.max(0,Math.min(clip,(Number(r.start)||0)/finalDuration*clip));
   r.visualEnd=Math.max(r.visualStart,Math.min(clip,(Number(r.end)||0)/finalDuration*clip))
  });
@@ -1325,12 +1455,12 @@ function buildVisualSyncPlan(){
 }
 function renderVisualSyncStatus(){
  const e=q('visualSyncStatus'),p=STUDIO.visualSyncPlan;if(!e)return;
- if(!p){e.textContent='AI VISUAL SYNC：等待完整配音时长。';return}
+ if(!p){e.textContent='AI SCENE SYNC：等待视频内容分析与完整配音时长。';return}
  if(p.strategy==='blocked'){
   e.innerHTML='<b>画面不足 '+p.gap.toFixed(1)+'秒</b> · 已禁止长尾帧定格。请选择“AI动态匹配”。';return
  }
  const speed=p.finalDuration>p.clip?(p.clip/p.finalDuration):1;
- e.innerHTML='<b>'+p.label+'</b> · 原画面 '+p.clip.toFixed(1)+'秒 → 最终 '+p.finalDuration.toFixed(1)+'秒 · 视觉速度约 '+speed.toFixed(2)+'× · 尾帧保护≤3秒';
+ e.innerHTML='<b>'+p.label+'</b> · 原画面 '+p.clip.toFixed(1)+'秒 → 最终 '+p.finalDuration.toFixed(1)+'秒'+(p.strategy==='semantic'?(' · '+p.sceneCount+'场景 / '+p.sceneSegments+'匹配段'):(' · 视觉速度约 '+speed.toFixed(2)+'×'))+' · 尾帧保护≤3秒';
 }
 function renderVoiceTimeline(){
  const box=q('voiceTimelineList'),state=q('voiceCoverageState'),rows=STUDIO.voiceTimeline||[];
@@ -1342,7 +1472,7 @@ function renderVoiceTimeline(){
  if(!box)return;
  if(!rows.length){box.innerHTML='<div class="voiceTimelineHint">输入解说词后自动拆分为句级时间轴。</div>';return}
  buildVisualSyncPlan();
- box.innerHTML=rows.map((r,i)=>'<div class="voiceSentenceRow"><time>'+voiceTimeLabel(r.start)+'–'+voiceTimeLabel(r.end)+'</time><span><em>#'+String(i+1).padStart(2,'0')+'</em>'+escapeHtml(r.text)+(Number.isFinite(r.visualStart)?'<br><em>画面 '+voiceTimeLabel(r.visualStart)+'–'+voiceTimeLabel(r.visualEnd)+'</em>':'')+'</span></div>').join('')
+ box.innerHTML=rows.map((r,i)=>'<div class="voiceSentenceRow"><time>'+voiceTimeLabel(r.start)+'–'+voiceTimeLabel(r.end)+'</time><span><em>#'+String(i+1).padStart(2,'0')+'</em>'+escapeHtml(r.text)+(Number.isFinite(r.visualStart)?'<br><em>画面 '+voiceTimeLabel(r.visualStart)+'–'+voiceTimeLabel(r.visualEnd)+(r.sceneReason?' · '+escapeHtml(r.sceneReason):'')+'</em>':'')+'</span></div>').join('')
 }
 function markVoiceCoverage(complete,segments,coverage=100){
  const e=q('voiceCoverageState');if(!e)return;
