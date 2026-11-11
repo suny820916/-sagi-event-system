@@ -19,7 +19,7 @@ FRONTEND_DIR = APP_ROOT / "frontend"
 app = FastAPI(
     title="SAGI MATCH INTELLIGENCE",
     version="1.0.0-alpha",
-    description="AI football match analysis for grassroots football.",
+    description="萨吉体育基层足球 AI 比赛分析系统。",
 )
 
 
@@ -31,7 +31,7 @@ def _run_analysis(job_id: str) -> None:
         if not job:
             return
 
-        patch_job(job_id, status="running", progress=2.0, message="Loading AI model")
+        patch_job(job_id, status="running", progress=2.0, message="正在加载 AI 分析模型")
 
         def update(progress: float, message: str) -> None:
             patch_job(job_id, progress=round(progress, 1), message=message)
@@ -49,7 +49,7 @@ def _run_analysis(job_id: str) -> None:
             job_id,
             status="completed",
             progress=100.0,
-            message="Analysis complete",
+            message="比赛分析完成",
             result=result,
         )
     except Exception as exc:
@@ -66,7 +66,7 @@ def _run_analysis(job_id: str) -> None:
 def health() -> dict:
     return {
         "ok": True,
-        "service": "SAGI MATCH INTELLIGENCE",
+        "service": "SAGI 比赛智能分析",
         "version": "1.0.0-alpha",
         "device": settings.device,
         "model": settings.model,
@@ -83,7 +83,7 @@ async def create_job(
 ) -> dict:
     suffix = Path(video.filename or "match.mp4").suffix.lower()
     if suffix not in {".mp4", ".mov", ".mkv", ".avi", ".m4v"}:
-        raise HTTPException(status_code=400, detail="Unsupported video format.")
+        raise HTTPException(status_code=400, detail="不支持这个视频格式，请上传 MP4、MOV、MKV、AVI 或 M4V。")
 
     job_id = uuid.uuid4().hex[:12]
     directory = job_dir(job_id)
@@ -103,7 +103,7 @@ async def create_job(
                     input_path.unlink(missing_ok=True)
                     raise HTTPException(
                         status_code=413,
-                        detail=f"Video exceeds {settings.max_upload_mb} MB limit.",
+                        detail=f"视频超过最大上传限制：{settings.max_upload_mb} MB。",
                     )
                 target.write(chunk)
     finally:
@@ -113,7 +113,7 @@ async def create_job(
         "job_id": job_id,
         "status": "queued",
         "progress": 0.0,
-        "message": "Queued",
+        "message": "等待 AI 分析",
         "home_team": home_team.strip() or "主队",
         "away_team": away_team.strip() or "客队",
         "match_format": match_format,
@@ -137,7 +137,7 @@ async def create_job(
 def get_job(job_id: str) -> dict:
     job = load_job(job_id)
     if not job:
-        raise HTTPException(status_code=404, detail="Job not found.")
+        raise HTTPException(status_code=404, detail="没有找到这个分析任务。")
     public = dict(job)
     public.pop("video_path", None)
     return public
@@ -150,7 +150,7 @@ def get_result(job_id: str) -> dict:
         raise HTTPException(status_code=404, detail="Job not found.")
     result_path = job_dir(job_id) / "artifacts" / "result.json"
     if not result_path.exists():
-        raise HTTPException(status_code=409, detail="Result is not ready.")
+        raise HTTPException(status_code=409, detail="分析结果还没有生成完成。")
     return json.loads(result_path.read_text(encoding="utf-8"))
 
 
@@ -158,10 +158,10 @@ def get_result(job_id: str) -> dict:
 def get_artifact(job_id: str, filename: str) -> FileResponse:
     safe_name = Path(filename).name
     if safe_name != filename:
-        raise HTTPException(status_code=400, detail="Invalid filename.")
+        raise HTTPException(status_code=400, detail="文件名称无效。")
     path = job_dir(job_id) / "artifacts" / safe_name
     if not path.exists() or not path.is_file():
-        raise HTTPException(status_code=404, detail="Artifact not found.")
+        raise HTTPException(status_code=404, detail="没有找到这个分析文件。")
     return FileResponse(path)
 
 
