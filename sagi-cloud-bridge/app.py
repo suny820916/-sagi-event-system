@@ -1155,6 +1155,106 @@ def render_dimensions(aspect, quality):
         return 720, 720
     return 720, 1280
 
+def normalize_scene_plan(raw_plan, clip_duration, output_duration):
+    rows = []
+    if not isinstance(raw_plan, list):
+        return rows
+    for item in raw_plan[:60]:
+        if not isinstance(item, dict):
+            continue
+        try:
+            ss = max(0.0, min(float(clip_duration), float(item.get("sourceStart") or 0)))
+            se = max(ss + 0.08, min(float(clip_duration), float(item.get("sourceEnd") or ss + 0.08)))
+            os_ = max(0.0, float(item.get("outputStart") or 0))
+            oe = max(os_ + 0.08, float(item.get("outputEnd") or os_ + 0.08))
+        except Exception:
+            continue
+        if se - ss < 0.08:
+            continue
+        rows.append({
+            "sceneId": int(item.get("sceneId") or 0),
+            "sourceStart": ss,
+            "sourceEnd": se,
+            "outputStart": os_,
+            "outputEnd": oe,
+            "label": str(item.get("label") or "")[:80],
+            "matchScore": float(item.get("matchScore") or 0),
+        })
+    if not rows:
+        return []
+    rows.sort(key=lambda x: (x["outputStart"], x["outputEnd"]))
+    plan_end = max(x["outputEnd"] for x in rows)
+    if plan_end <= 0.05:
+        return []
+    scale = max(0.01, float(output_duration) / plan_end)
+    out = []
+    cursor = 0.0
+    for i, row in enumerate(rows):
+        start = max(cursor, row["outputStart"] * scale)
+        end = max(start + 0.08, row["outputEnd"] * scale)
+        if i == len(rows) - 1:
+            end = float(output_duration)
+        if start >= output_duration - 0.02:
+            break
+        end = min(float(output_duration), end)
+        x = dict(row)
+        x["outputStart"] = start
+        x["outputEnd"] = end
+        out.append(x)
+        cursor = end
+    return out
+
+
+def expand_scene_instances(scene_plan, max_stretch=1.65, max_instances=80):
+    instances = []
+    for row in scene_plan:
+        src_dur = max(0.08, row["sourceEnd"] - row["sourceStart"])
+        out_dur = max(0.08, row["outputEnd"] - row["outputStart"])
+        repeats = max(1, int(math.ceil(out_dur / max(0.08, src_dur * max_stretch))))
+        repeats = min(6, repeats)
+        per_out = out_dur / repeats
+        factor = max(0.08, per_out / src_dur)
+        for r in range(repeats):
+            instances.append({
+                "sceneId": row["sceneId"],
+                "sourceStart": row["sourceStart"],
+                "sourceEnd": row["sourceEnd"],
+                "duration": per_out,
+                "factor": factor,
+                "repeatIndex": r,
+                "repeatCount": repeats,
+            })
+            if len(instances) >= max_instances:
+                return instances
+    return instances
+
+
+def remap_captions_to_scene_plan(captions, scene_plan):
+    mapped = []
+    for row in scene_plan:
+        ss, se = row["sourceStart"], row["sourceEnd"]
+        os_, oe = row["outputStart"], row["outputEnd"]
+        src_dur = max(0.08, se - ss)
+        out_dur = max(0.08, oe - os_)
+        for cap in captions or []:
+            try:
+                cs = float(cap.get("start") or 0)
+                ce = float(cap.get("end") or cs + 0.5)
+            except Exception:
+                continue
+            if ce <= ss or cs >= se:
+                continue
+            start_ratio = max(0.0, min(1.0, (max(cs, ss) - ss) / src_dur))
+            end_ratio = max(start_ratio + 0.01, min(1.0, (min(ce, se) - ss) / src_dur))
+            mapped.append({
+                "start": os_ + start_ratio * out_dur,
+                "end": min(oe, os_ + end_ratio * out_dur),
+                "text": str(cap.get("text") or ""),
+            })
+    mapped.sort(key=lambda x: (x["start"], x["end"]))
+    return mapped[:500]
+
+
 def run_cloud_render(job_id, options):
     # Cloud render is intentionally serialized with caption transcription.
     with heavy_slot:
