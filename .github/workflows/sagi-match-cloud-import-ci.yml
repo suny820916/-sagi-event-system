@@ -52,6 +52,18 @@ jobs:
               assert data["ok"] is True
               assert data["version"] == "1.1.2-tracking-core"
           PY
+      - name: Run job signature smoke
+        run: |
+          cd sagi-cloud-bridge
+          python - <<'PY'
+          import inspect
+          import match_intelligence_lite as m
+          sig = inspect.signature(m._run_job)
+          assert "match_format" in sig.parameters, sig
+          src = inspect.getsource(m.create_match_intelligence_blueprint)
+          assert "home_team, away_team, match_format" in src, src
+          print("run job match_format wiring passed")
+          PY
       - name: Tracking core synthetic smoke
         run: |
           cd sagi-cloud-bridge
