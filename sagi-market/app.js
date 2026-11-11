@@ -1,9 +1,10 @@
 (function(){
 const $=s=>document.querySelector(s),$$=s=>Array.from(document.querySelectorAll(s));
 const DK='sagiMarketItemsV100',SK='sagiMarketSettingsV100',DB='sagiMarketMedia',STORE='photos';
+const CLOUD='https://sagi-cloud-bridge-suny820916.onrender.com',FALLBACK_KEY='sagiMarketFallbackInboxV110';
 const defaults={feeLow:10,feeMid:15,feeHigh:10},typeNames={secondhand:'闲置寄售',team_buy:'球队拼团',deal:'限时好价'},prefix={secondhand:'S',team_buy:'T',deal:'D'},statusNames={pending:'待审核',listed:'在售',sold:'已成交',shipped:'已发货',settled:'已结算',cancelled:'已取消'};
-let settings=get(SK,defaults),items=get(DK,[]),photoData=null,photoId=null;
-function get(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}} function save(){localStorage.setItem(DK,JSON.stringify(items));localStorage.setItem(SK,JSON.stringify(settings))}
+let settings=get(SK,defaults),items=get(DK,[]),photoData=null,photoId=null,cloudToken='',cloudInbox=[],fallbackInbox=get(FALLBACK_KEY,[]);
+function get(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}} function save(){localStorage.setItem(DK,JSON.stringify(items));localStorage.setItem(SK,JSON.stringify(settings));localStorage.setItem(FALLBACK_KEY,JSON.stringify(fallbackInbox))}
 function n(v){v=Number(v);return Number.isFinite(v)?v:0} function ts(){return Math.floor(Date.now()/1000)} function money(v){return '¥'+n(v).toFixed(0)} function uid(){return'm'+Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
 function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),1400)}
 function db(){return new Promise((res,rej)=>{const r=indexedDB.open(DB,1);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains(STORE))r.result.createObjectStore(STORE)};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
@@ -14,7 +15,7 @@ async function imageData(file){const img=await new Promise((res,rej)=>{const u=U
 function nextCode(type){const p=prefix[type]||'X',nums=items.filter(x=>x.type===type).map(x=>parseInt(String(x.code||'').split(p)[1],10)||0);return'SG-'+p+String((nums.length?Math.max.apply(null,nums):0)+1).padStart(3,'0')}
 function commission(x){if(x.type==='team_buy')return Math.max(0,(n(x.price)-n(x.unitCost||x.cost))*n(x.joinedQty));const p=n(x.price);if(p<=0)return 0;if(p<100)return Math.min(p,n(settings.feeLow));if(p<300)return p*n(settings.feeMid)/100;return p*n(settings.feeHigh)/100}
 function payable(x){return x.type==='team_buy'?0:Math.max(0,n(x.price)-commission(x))} function sold(s){return['sold','shipped','settled'].includes(s)}
-function page(name){$$('.page').forEach(p=>p.classList.toggle('active',p.id==='page'+name));$$('.navBtn').forEach(b=>b.classList.toggle('active',b.dataset.page===name));if(name==='Home')home();if(name==='Items')list();if(name==='TeamBuy')teams();if(name==='Finance')finance();window.scrollTo({top:0,behavior:'smooth'})}
+function page(name){$('.page').forEach(p=>p.classList.toggle('active',p.id==='page'+name));$('.navBtn').forEach(b=>b.classList.toggle('active',b.dataset.page===name));if(name==='Home'){home();loadInbox();}if(name==='Items')list();if(name==='TeamBuy')teams();if(name==='Finance')finance();window.scrollTo({top:0,behavior:'smooth'})}
 async function thumb(host,x){const d=await photoGet(x.photoId).catch(()=>null);if(d){const im=document.createElement('img');im.className='thumb';im.src=d;host.replaceChildren(im)}else{const z=document.createElement('div');z.className='thumb noimg';z.textContent='NO PHOTO';host.replaceChildren(z)}}
 function home(){const start=Math.floor(new Date(new Date().getFullYear(),new Date().getMonth(),1).getTime()/1000),month=items.filter(x=>sold(x.status)&&x.updatedAt>=start);$('#kpiActive').textContent=items.filter(x=>x.status==='listed').length;$('#kpiPending').textContent=items.filter(x=>['pending','sold','shipped'].includes(x.status)).length;$('#kpiSold').textContent=month.length;$('#kpiRevenue').textContent=money(month.reduce((a,x)=>a+commission(x),0));const box=$('#todayList');box.innerHTML='';const todo=items.filter(x=>['pending','sold','shipped'].includes(x.status)).sort((a,b)=>b.updatedAt-a.updatedAt).slice(0,6);if(!todo.length){box.innerHTML='<div class="empty">今天没有待处理任务。</div>';return}todo.forEach(x=>{const el=document.createElement('div');el.className='task';const l=document.createElement('div');l.innerHTML='<b></b><small></small>';l.querySelector('b').textContent=x.code+' · '+x.name;l.querySelector('small').textContent=typeNames[x.type]+' · '+(x.status==='pending'?'需要审核上架':x.status==='sold'?'已成交，等待发货':'已发货，等待结算');const b=document.createElement('button');b.className='badge '+x.status;b.textContent=statusNames[x.status];b.onclick=()=>detail(x.id);el.append(l,b);box.append(el)})}
 function match(x){const q=$('#searchInput').value.trim().toLowerCase(),t=$('#typeFilter').value,s=$('#statusFilter').value;if(t&&x.type!==t)return false;if(s&&x.status!==s)return false;return!q||[x.code,x.name,x.seller,x.contact,x.city,x.category].join(' ').toLowerCase().includes(q)}
@@ -50,6 +51,97 @@ async function productCard(x){
   toast('商品卡已生成');
 }
 async function copyText(x){let text;if(x.type==='team_buy')text=x.code+'｜'+x.name+'\n拼团价：'+money(x.price)+'/件\n当前：'+n(x.joinedQty)+'/'+n(x.targetQty)+'\n'+(x.notes||'')+'\n\nSAGI FOOTBALL MARKET｜TEAM BUY';else text=x.code+'｜'+x.name+'\n'+[x.category,x.size,x.condition,x.city].filter(Boolean).join('｜')+'\n售价：'+money(x.price)+'\n'+(x.notes||'')+'\n\nSAGI FOOTBALL MARKET｜'+(x.type==='deal'?'SAGI DEAL':'SECOND LIFE');try{await navigator.clipboard.writeText(text);toast('发布文案已复制')}catch{prompt('复制下面文案',text)}}
+async function activateCloud(){
+  if(cloudToken)return cloudToken;
+  const r=await fetch(CLOUD+'/api/activate',{method:'POST'});
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok||!d.ok||!d.token)throw new Error(d.error||'云桥激活失败');
+  cloudToken=d.token;return cloudToken;
+}
+async function cloudRequest(path,options){
+  const token=await activateCloud(),o=Object.assign({},options||{});
+  o.headers=Object.assign({'Authorization':'Bearer '+token},o.headers||{});
+  const r=await fetch(CLOUD+path,o),d=await r.json().catch(()=>({}));
+  if(!r.ok||!d.ok)throw new Error(d.error||('HTTP '+r.status));
+  return d;
+}
+function sellerUrl(){return location.origin+location.pathname.replace(/index\.html$/,'').replace(/\/?$/,'/')+'seller.html?v=110'}
+function submissionCard(sub,source){
+  const el=document.createElement('div');el.className='inboxCard';
+  const top=document.createElement('div');top.className='inboxTop';
+  const info=document.createElement('div');info.innerHTML='<div class="inboxName"></div><div class="inboxMeta"></div>';
+  info.querySelector('.inboxName').textContent=sub.name||'未命名闲置';
+  info.querySelector('.inboxMeta').textContent=[sub.category,sub.size,sub.condition,sub.city,sub.seller].filter(Boolean).join(' · ')+' · '+money(sub.price);
+  const badge=document.createElement('span');badge.className='badge pending';badge.textContent=source==='cloud'?'云端待审核':'离线待审核';top.append(info,badge);el.append(top);
+  if(sub.photo){const im=document.createElement('img');im.className='inboxPhoto';im.src=sub.photo;el.append(im)}
+  const note=document.createElement('div');note.className='detailNotes';note.textContent=(sub.notes||'暂无说明')+'\n联系方式：'+(sub.contact||'未填写');el.append(note);
+  const acts=document.createElement('div');acts.className='inboxActions';
+  const reject=document.createElement('button');reject.className='danger';reject.textContent='拒绝';
+  const approve=document.createElement('button');approve.className='primary';approve.textContent='通过并上架';
+  reject.onclick=()=>rejectSubmission(sub,source);approve.onclick=()=>approveSubmission(sub,source);
+  acts.append(reject,approve);el.append(acts);return el;
+}
+function renderInbox(){
+  const box=$('#cloudInboxList');if(!box)return;
+  box.innerHTML='';
+  const all=cloudInbox.map(x=>({sub:x,source:'cloud'})).concat(fallbackInbox.map(x=>({sub:x.payload||x,source:'offline'})));
+  $('#cloudInboxCount').textContent=all.length;
+  if(!all.length){box.innerHTML='<div class="empty">暂时没有新的卖家提交。</div>';return}
+  all.forEach(x=>box.append(submissionCard(x.sub,x.source)));
+}
+async function loadInbox(){
+  if(!$('#cloudInboxList'))return;
+  $('#cloudInboxState').textContent='正在同步云端收货箱…';
+  try{
+    const d=await cloudRequest('/api/market/inbox');
+    cloudInbox=d.items||[];
+    $('#cloudInboxState').textContent='云端已同步 · '+cloudInbox.length+' 件待审核';
+  }catch(err){
+    $('#cloudInboxState').textContent='云端暂不可用 · 仍可导入离线提交单';
+  }
+  renderInbox();
+}
+async function approveSubmission(sub,source){
+  const sid=sub.id||sub.submissionId||('offline-'+uid());
+  let existing=items.find(x=>x.cloudSubmissionId===sid);
+  if(!existing){
+    const id=uid(),pid=sub.photo?('p'+id):null;
+    if(pid&&sub.photo)await photoPut(pid,sub.photo);
+    existing={id:id,code:nextCode('secondhand'),type:'secondhand',name:String(sub.name||'').trim()||'未命名闲置',category:sub.category||'其他',seller:sub.seller||'',contact:sub.contact||'',size:sub.size||'',condition:sub.condition||'',city:sub.city||'',price:n(sub.price),cost:0,targetQty:0,joinedQty:0,unitCost:0,notes:sub.notes||'',status:'listed',photoId:pid,cloudSubmissionId:sid,createdAt:ts(),updatedAt:ts()};
+    items.push(existing);save();
+  }
+  if(source==='cloud'){
+    try{await cloudRequest('/api/market/decision',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:sid,decision:'approved'})})}
+    catch(err){toast('已本地上架，云端标记稍后重试');render();return}
+  }else{
+    fallbackInbox=fallbackInbox.filter(x=>(x.submissionId||(x.payload&&x.payload.id))!==sid);save();
+  }
+  cloudInbox=cloudInbox.filter(x=>x.id!==sid);render();renderInbox();toast('审核通过 · '+existing.code+' 已上架');
+}
+async function rejectSubmission(sub,source){
+  const sid=sub.id||sub.submissionId;
+  if(source==='cloud'){
+    try{await cloudRequest('/api/market/decision',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:sid,decision:'rejected'})})}
+    catch(err){toast('拒绝失败：'+err.message);return}
+    cloudInbox=cloudInbox.filter(x=>x.id!==sid);
+  }else{
+    fallbackInbox=fallbackInbox.filter(x=>(x.submissionId||(x.payload&&x.payload.id))!==sid);save();
+  }
+  renderInbox();toast('已拒绝，不进入商品库');
+}
+async function importSellerPack(file){
+  const d=JSON.parse(await file.text());
+  if(!d.payload||!d.payload.name)throw new Error('不是有效的 SAGI 卖家提交单');
+  const sid=d.submissionId||d.payload.id||('LOCAL-'+Date.now().toString(36).toUpperCase());
+  d.submissionId=sid;d.payload.id=sid;
+  if(!fallbackInbox.some(x=>(x.submissionId||(x.payload&&x.payload.id))===sid))fallbackInbox.push(d);
+  save();renderInbox();toast('已进入离线待审核');
+}
+async function shareSeller(){
+  const url=sellerUrl(),data={title:'SAGI 足球闲置寄售',text:'打开链接，提交你的闲置足球装备给 SAGI 审核。',url:url};
+  if(navigator.share){try{await navigator.share(data);return}catch{}}
+  try{await navigator.clipboard.writeText(url);toast('卖家入口已复制')}catch{prompt('复制卖家入口',url)}
+}
 function render(){home();list();teams();finance()}
 function csv(){const head=['编号','业务','商品','分类','卖家/球队','联系方式','尺码','成色','城市','售价','成本','目标数量','已拼数量','状态','SAGI收入','卖家应得','说明'];const rows=items.map(x=>[x.code,typeNames[x.type],x.name,x.category,x.seller,x.contact,x.size,x.condition,x.city,x.price,x.type==='team_buy'?x.unitCost:x.cost,x.targetQty,x.joinedQty,statusNames[x.status],commission(x),payable(x),x.notes]);const esc=v=>{v=String(v??'');return/[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};download(new Blob(['\ufeff'+[head].concat(rows).map(r=>r.map(esc).join(',')).join('\n')],{type:'text/csv;charset=utf-8'}),'SAGI_MARKET.csv')}
 function download(blob,name){const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),3000)}
@@ -57,7 +149,7 @@ async function backup(){const photos={};for(const x of items)if(x.photoId){const
 async function restore(file){const d=JSON.parse(await file.text());if(!Array.isArray(d.items))throw new Error('备份格式错误');items=d.items;settings=Object.assign({},defaults,d.settings||{});save();for(const k of Object.keys(d.photos||{}))await photoPut(k,d.photos[k]);sync();render();toast('已恢复')}
 function sync(){$('#feeLow').value=settings.feeLow;$('#feeMid').value=settings.feeMid;$('#feeHigh').value=settings.feeHigh}
 function seed(){if(items.length)return;items=[{id:'demo1',code:'SG-S001',type:'secondhand',name:'Nike Tiempo 传奇',category:'球鞋',seller:'示例卖家',contact:'',size:'42',condition:'9成新',city:'塔城',price:199,cost:0,targetQty:0,joinedQty:0,unitCost:0,notes:'示例数据，可删除。鞋面正常，鞋钉轻微使用痕迹。',status:'listed',photoId:null,createdAt:ts()-86400,updatedAt:ts()-3600},{id:'demo2',code:'SG-T001',type:'team_buy',name:'SAGI 定制比赛服拼团',category:'球队装备',seller:'',contact:'',size:'全码',condition:'全新',city:'新疆',price:69,cost:0,targetQty:100,joinedQty:35,unitCost:40,notes:'满100套开团，支持队徽、号码、姓名。',status:'listed',photoId:null,createdAt:ts()-86400,updatedAt:ts()-1800}];save()}
-$$('.navBtn,[data-page]').forEach(b=>b.onclick=()=>page(b.dataset.page));$('#quickAdd').onclick=()=>open('secondhand');$('#addFromItems').onclick=()=>open('secondhand');$$('[data-add-type]').forEach(b=>b.onclick=()=>open(b.dataset.addType));$('#closeModal').onclick=()=>$('#modal').classList.add('hidden');$('#closeDetail').onclick=()=>$('#detailModal').classList.add('hidden');$$('.seg').forEach(b=>b.onclick=()=>typeSet(b.dataset.type));$('#itemForm').onsubmit=submit;$('#deleteBtn').onclick=remove;$('#photoInput').onchange=async e=>{const f=e.target.files&&e.target.files[0];if(!f)return;try{photoData=await imageData(f);$('#photoPreview').src=photoData;$('#photoPreview').classList.remove('hidden');$('#photoHint').classList.add('hidden')}catch(err){toast(err.message)}};['searchInput','typeFilter','statusFilter'].forEach(id=>$('#'+id).addEventListener(id==='searchInput'?'input':'change',list));$('#exportBtn').onclick=csv;$('#backupJson').onclick=backup;$('#restoreInput').onchange=e=>{const f=e.target.files&&e.target.files[0];if(f)restore(f).catch(err=>toast(err.message))};$('#saveSettings').onclick=()=>{settings={feeLow:n($('#feeLow').value),feeMid:n($('#feeMid').value),feeHigh:n($('#feeHigh').value)};save();render();toast('规则已保存')};$$('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.add('hidden')}));
-seed();sync();render();if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+$$('.navBtn,[data-page]').forEach(b=>b.onclick=()=>page(b.dataset.page));$('#quickAdd').onclick=()=>open('secondhand');$('#addFromItems').onclick=()=>open('secondhand');$$('[data-add-type]').forEach(b=>b.onclick=()=>open(b.dataset.addType));$('#closeModal').onclick=()=>$('#modal').classList.add('hidden');$('#closeDetail').onclick=()=>$('#detailModal').classList.add('hidden');$$('.seg').forEach(b=>b.onclick=()=>typeSet(b.dataset.type));$('#itemForm').onsubmit=submit;$('#deleteBtn').onclick=remove;$('#photoInput').onchange=async e=>{const f=e.target.files&&e.target.files[0];if(!f)return;try{photoData=await imageData(f);$('#photoPreview').src=photoData;$('#photoPreview').classList.remove('hidden');$('#photoHint').classList.add('hidden')}catch(err){toast(err.message)}};['searchInput','typeFilter','statusFilter'].forEach(id=>$('#'+id).addEventListener(id==='searchInput'?'input':'change',list));$('#refreshInbox').onclick=loadInbox;$('#openSellerPage').onclick=()=>window.open(sellerUrl(),'_blank');$('#shareSellerPage').onclick=shareSeller;$('#sellerPackInput').onchange=e=>{const f=e.target.files&&e.target.files[0];if(f)importSellerPack(f).catch(err=>toast(err.message))};$('#exportBtn').onclick=csv;$('#backupJson').onclick=backup;$('#restoreInput').onchange=e=>{const f=e.target.files&&e.target.files[0];if(f)restore(f).catch(err=>toast(err.message))};$('#saveSettings').onclick=()=>{settings={feeLow:n($('#feeLow').value),feeMid:n($('#feeMid').value),feeHigh:n($('#feeHigh').value)};save();render();toast('规则已保存')};$$('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.add('hidden')}));
+seed();sync();render();const su=sellerUrl();if($('#sellerQr'))$('#sellerQr').src='https://api.qrserver.com/v1/create-qr-code/?size=220x220&data='+encodeURIComponent(su);loadInbox();if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 if(new URLSearchParams(location.search).has('selftest')){try{document.body.dataset.selftest='running';const test={type:'secondhand',price:199};if(Math.round(commission(test))!==30)throw new Error('commission');if(!nextCode('secondhand').startsWith('SG-S'))throw new Error('code');if(items.length<2)throw new Error('seed');document.body.dataset.selftest='ok'}catch(e){document.body.dataset.selftest='fail:'+String(e.message||e)}}
 })();
