@@ -33,7 +33,7 @@ app = Flask(__name__)
 ALLOWED_ORIGIN = (os.getenv("SAGI_ALLOWED_ORIGIN") or "https://suny820916.github.io").rstrip("/")
 SERVER_SECRET = (os.getenv("SAGI_SERVER_SECRET") or os.getenv("SAGI_BRIDGE_TOKEN") or "").strip()
 PORT = int(os.getenv("PORT") or "10000")
-DEPLOY_REVISION = "2026-11-12-match-intelligence-diag-v101"
+DEPLOY_REVISION = "2026-11-12-match-intelligence-selftest-v101"
 APP_VERSION = "3.9.4"
 MAX_FILE_MB = int(os.getenv("SAGI_MAX_FILE_MB") or "300")
 JOB_TTL_MIN = int(os.getenv("SAGI_JOB_TTL_MIN") or "30")
@@ -136,7 +136,7 @@ try:
     )
     MATCH_INTELLIGENCE_LITE = True
 except Exception as exc:
-    MATCH_INTELLIGENCE_LITE_ERROR = str(exc)[:240]
+    MATCH_INTELLIGENCE_LITE_ERROR = (type(exc).__name__ + ": " + str(exc))[:500]
     print("match intelligence init failed:", MATCH_INTELLIGENCE_LITE_ERROR, flush=True)
 
 FFMPEG_THREADS = max(1, min(2, int(os.getenv("SAGI_FFMPEG_THREADS") or "1")))
@@ -2746,6 +2746,38 @@ def security_headers(resp):
     resp.headers["Cache-Control"] = "no-store"
     resp.headers["X-Content-Type-Options"] = "nosniff"
     return resp
+
+@app.get("/api/match-intelligence/diagnostics")
+def match_intelligence_diagnostics():
+    import importlib.util
+    import importlib.metadata
+    import platform
+
+    def dep(name):
+        try:
+            return {"installed": True, "version": importlib.metadata.version(name)}
+        except Exception as exc:
+            return {"installed": False, "error": type(exc).__name__ + ": " + str(exc)[:160]}
+
+    spec = importlib.util.find_spec("match_intelligence_lite")
+    return jsonify({
+        "ok": True,
+        "service": "SAGI Match Intelligence Diagnostics",
+        "cloudVersion": APP_VERSION,
+        "deployRevision": DEPLOY_REVISION,
+        "moduleRegistered": MATCH_INTELLIGENCE_LITE,
+        "moduleError": MATCH_INTELLIGENCE_LITE_ERROR,
+        "moduleFound": bool(spec),
+        "moduleOrigin": getattr(spec, "origin", "") if spec else "",
+        "pythonVersion": platform.python_version(),
+        "dependencies": {
+            "numpy": dep("numpy"),
+            "imageio-ffmpeg": dep("imageio-ffmpeg"),
+            "onnxruntime": dep("onnxruntime"),
+            "Flask": dep("Flask"),
+            "requests": dep("requests"),
+        },
+    })
 
 @app.get("/")
 @app.get("/health")
