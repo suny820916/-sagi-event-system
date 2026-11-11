@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#09090a"><link rel="manifest" href="./manifest.webmanifest">
-<title>SAGI AI LOCAL V1.2.1</title>
+<title>SAGI AI LOCAL V1.2.2</title>
 <style>
 :root{--bg:#09090a;--card:#151517;--card2:#1d1d20;--line:#2b2b2f;--text:#f7f7f5;--muted:#9a9aa2;--gold:#e8c86b;--green:#72d298;--red:#ff7a7a}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","PingFang SC","Microsoft YaHei",sans-serif}button,input,textarea,select{font:inherit}.app{max-width:760px;margin:auto;min-height:100vh;padding:18px 16px 100px}
@@ -18,9 +18,9 @@ label{display:block;color:#bdbdc4;font-size:12px;margin:12px 0 6px}.field,textar
 @media(max-width:520px){.hero h1{font-size:25px}.grid2{grid-template-columns:1fr}.variants{grid-template-columns:1fr}.score{grid-template-columns:repeat(4,1fr)}.metric strong{font-size:17px}.tabs{gap:5px}.tab{font-size:12px}.posterGrid{grid-template-columns:1fr}.visualMeta{grid-template-columns:1fr 1fr}.score3{grid-template-columns:repeat(4,1fr)}}
 </style>
 </head>
-<body>
+<body data-sagi-local-build="1.2.2">
 <div class="app">
-<header class="top"><div class="brand"><b>SAGI AI LOCAL</b><small>本地商家的 AI 宣传员工</small></div><div class="status"><div class="badge">V1.2.1 · POSTER CORE</div><div id="aiStatus" class="ai">检测AI…</div></div></header>
+<header class="top"><div class="brand"><b>SAGI AI LOCAL</b><small>本地商家的 AI 宣传员工</small></div><div class="status"><div class="badge">V1.2.2 · LIVE FIX</div><div id="aiStatus" class="ai">检测AI…</div></div></header>
 <section class="hero"><h1>一张照片，先出海报，再AI升级。</h1><p>上传后先立即生成可保存的3:4与9:16海报；云端AI在线时，再把原照片重绘成商业广告主视觉并自动替换。</p></section>
 <div class="today"><div class="ico">⚡️</div><div><b id="todayTitle">今天该发什么</b><span id="todayText">建立商家档案后，我会按行业给出今日内容建议。</span></div></div>
 <div class="tabs"><button class="tab active" data-tab="create">AI创作</button><button class="tab" data-tab="photo">图片</button><button class="tab" data-tab="calendar">计划</button><button class="tab" data-tab="profile">商家档案</button></div>
@@ -86,5 +86,39 @@ $('#download34').onclick=()=>saveCanvas('#poster34','SAGI_LOCAL_3x4.png');$('#do
 function renderCalendar(){const ind=profile.industry||'本地商家';const items=[['第1天','真实产品/服务','先让顾客看清你到底卖什么。'],['第2天','顾客问题','回答一个顾客下单前最犹豫的问题。'],['第3天','幕后/老板真人','让品牌出现“人”，建立信任。'],['第4天','案例证明','发一个真实前后对比、评价或使用结果。'],['第5天','主推商品','只推一个产品，一个核心利益点。'],['第6天','周末活动','把优惠写清楚：谁能用、什么时候、怎么获得。'],['第7天','品牌内容','不卖东西，讲一次为什么做这家店。']];$('#calendarList').innerHTML=items.map(x=>'<div class="hist"><b>'+x[0]+' · '+x[1]+'</b><small>'+ind+'｜'+x[2]+'</small></div>').join('')}
 $('#regenCalendar').onclick=()=>{renderCalendar();toast('本周计划已更新')}
 function renderHistory(){const h=store.get('sagiLocalHistory',[]);$('#history').innerHTML=h.length?h.map(x=>'<div class="hist"><b>'+esc(x.title)+'</b><small>'+esc(x.time)+' · '+esc(x.engine||'')+'</small></div>').join(''):'<div class="hint">还没有内容。</div>'}
-syncProfile();renderCalendar();renderHistory();checkAI();if('serviceWorker'in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}))}
+
+async function runLiveSelfTest(){
+  if(!new URLSearchParams(location.search).has('selftest'))return;
+  document.body.dataset.liveSelftest='running';
+  try{
+    openTab('photo');
+    const c=document.createElement('canvas');c.width=720;c.height=1080;
+    const x=c.getContext('2d');
+    const g=x.createLinearGradient(0,0,720,1080);g.addColorStop(0,'#232323');g.addColorStop(1,'#6b5424');x.fillStyle=g;x.fillRect(0,0,720,1080);
+    x.fillStyle='#e5c86d';x.fillRect(120,210,480,590);
+    x.fillStyle='#111';x.font='bold 52px sans-serif';x.fillText('SAGI TEST',180,520);
+    const blob=await new Promise(r=>c.toBlob(r,'image/jpeg',.9));
+    const file=new File([blob],'sagi-live-test.jpg',{type:'image/jpeg'});
+    const input=$('#photoInput');
+    if(typeof DataTransfer!=='undefined'){
+      const dt=new DataTransfer();dt.items.add(file);input.files=dt.files;input.dispatchEvent(new Event('change',{bubbles:true}));
+      await new Promise(r=>setTimeout(r,450));
+    }
+    if(!photoFile){photoFile=await normalizePhoto(file)}
+    if(!photoImage){photoImage=await loadImg(URL.createObjectURL(file))}
+    $('#photoBrief').value='线上自检海报';
+    const pack=localVisualPack('线上自检海报');
+    commercialImage=null;renderVisual(pack,'LIVE SELFTEST',true);
+    await new Promise(r=>setTimeout(r,120));
+    const a=$('#poster34'),b=$('#poster916');
+    const ap=a.getContext('2d').getImageData(20,20,1,1).data;
+    const bp=b.getContext('2d').getImageData(20,20,1,1).data;
+    const ok=a.dataset.rendered==='1'&&b.dataset.rendered==='1'&&
+      (ap[0]+ap[1]+ap[2]+ap[3]>0)&&(bp[0]+bp[1]+bp[2]+bp[3]>0)&&
+      !!$('#download34')&&!!$('#download916');
+    document.body.dataset.liveSelftest=ok?'ok':'fail:blank';
+  }catch(e){document.body.dataset.liveSelftest='fail:'+String(e&&e.message||e)}
+}
+
+syncProfile();renderCalendar();renderHistory();checkAI();runLiveSelfTest();if('serviceWorker'in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}))}
 </script></body></html>
