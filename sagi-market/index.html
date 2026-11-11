@@ -10,12 +10,12 @@
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="stylesheet" href="./styles.css">
 </head>
-<body data-build="1.0.0">
+<body data-build="1.1.0">
 <div class="app">
   <header class="topbar">
     <div>
       <div class="brand">SAGI MARKET</div>
-      <div class="version">工作台 · V1.0</div>
+      <div class="version">工作台 · V1.1</div>
     </div>
     <button id="quickAdd" class="iconBtn">＋</button>
   </header>
@@ -41,6 +41,34 @@
           <button class="textBtn" data-page="Items">全部商品</button>
         </div>
         <div id="todayList" class="taskList"></div>
+      </div>
+
+      <div class="card">
+        <div class="sectionHead">
+          <div>
+            <span class="eyebrow">SELLER INTAKE</span>
+            <h2>云端收货箱 <span id="cloudInboxCount" class="badge pending">0</span></h2>
+          </div>
+          <button id="refreshInbox" class="textBtn">刷新</button>
+        </div>
+        <p class="message">卖家自己提交，审核通过后才会进入正式商品库并自动编号。</p>
+        <div class="sellerEntryBox">
+          <img id="sellerQr" alt="卖家提交二维码">
+          <div>
+            <b>卖家提交入口</b>
+            <small>分享链接或让卖家扫码填写</small>
+            <div class="inlineActions">
+              <button id="openSellerPage" class="ghost small">打开</button>
+              <button id="shareSellerPage" class="primary small">分享入口</button>
+            </div>
+          </div>
+        </div>
+        <div class="inlineActions intakeImport">
+          <label for="sellerPackInput" class="ghost small labelBtn inlineLabel">导入离线提交单</label>
+          <input id="sellerPackInput" type="file" accept="application/json" hidden>
+          <span id="cloudInboxState" class="message">正在连接云端…</span>
+        </div>
+        <div id="cloudInboxList" class="taskList"></div>
       </div>
 
       <div class="card">
