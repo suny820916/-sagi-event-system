@@ -965,6 +965,8 @@ jobs:
 
           map_start=html.index("const NARRATION_CONDENSE_MAP=")
           map_end=html.index("function normalizeNarrationForMeaning(",map_start)
+          critical_start=html.index("const MEANING_CRITICAL_GROUPS=")
+          critical_end=html.index("function criticalMeaningSignature(",critical_start)
           funcs=[
               extract_function("splitVoiceSentences"),
               extract_function("narrationCharCount"),
@@ -1008,7 +1010,7 @@ jobs:
           if(STUDIO.meaningAudit.unitCoverage!==100||STUDIO.meaningAudit.anchorCoverage!==100)throw new Error('strict audit not 100%');
           console.log('MEANING FIRST V1.6 preservation OK',STUDIO.meaningCoverage,out);
           """
-          code=html[map_start:map_end]+"\n"+"\n".join(funcs)+"\n"+harness
+          code=html[map_start:map_end]+"\n"+html[critical_start:critical_end]+"\n"+"\n".join(funcs)+"\n"+harness
           pathlib.Path("/tmp/narration-meaning-regression.js").write_text(code,encoding="utf-8")
           PY
           node /tmp/narration-meaning-regression.js
