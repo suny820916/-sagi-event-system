@@ -40,28 +40,68 @@ function formatSpeed(bytesPerSecond) {
   return Math.max(1, Math.round(bytesPerSecond / 1024)) + " KB/s";
 }
 
+function formatEta(seconds) {
+  if (!Number.isFinite(seconds) || seconds <= 0) return "";
+  if (seconds < 60) return "约 " + Math.max(1, Math.ceil(seconds)) + " 秒";
+  const mins = Math.ceil(seconds / 60);
+  return "约 " + mins + " 分钟";
+}
+
 function uploadMatch(body, attempt = 1) {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     const startedAt = Date.now();
+    let lastProgressAt = Date.now();
+    let lastLoaded = 0;
+    let abortedForStall = false;
+
+    const finishError = (message, early = false) => {
+      const error = new Error(message);
+      error.early = early;
+      reject(error);
+    };
 
     xhr.open("POST", API_ROOT + "/jobs", true);
-    xhr.timeout = 180000;
+    // 慢网允许最长 15 分钟；真正断线由“无进度 90 秒”判断。
+    xhr.timeout = 900000;
     xhr.responseType = "json";
+
+    const stallWatch = setInterval(() => {
+      if (xhr.readyState === 4) return;
+      if (Date.now() - lastProgressAt > 90000) {
+        abortedForStall = true;
+        xhr.abort();
+      }
+    }, 5000);
+
+    const cleanup = () => clearInterval(stallWatch);
 
     xhr.upload.onprogress = (event) => {
       if (!event.lengthComputable) return;
+      if (event.loaded > lastLoaded) {
+        lastLoaded = event.loaded;
+        lastProgressAt = Date.now();
+      }
+
       const pct = Math.max(1, Math.min(99, Math.round(event.loaded / event.total * 100)));
-      const elapsed = Math.max(0.25, (Date.now() - startedAt) / 1000);
-      const speed = formatSpeed(event.loaded / elapsed);
+      const elapsed = Math.max(0.5, (Date.now() - startedAt) / 1000);
+      const bytesPerSecond = event.loaded / elapsed;
+      const speed = formatSpeed(bytesPerSecond);
+      const eta = formatEta((event.total - event.loaded) / Math.max(1, bytesPerSecond));
 
       jobPanel.classList.remove("hidden");
       $("jobId").textContent = "上传中";
-      setProgress(pct, "正在上传比赛" + (speed ? " · " + speed : ""));
+      setProgress(
+        pct,
+        "正在上传比赛" +
+          (speed ? " · " + speed : "") +
+          (eta ? " · 剩余" + eta : "")
+      );
       submitBtn.querySelector("span").textContent = "上传 " + pct + "%";
     };
 
     xhr.onload = () => {
+      cleanup();
       let payload = xhr.response;
       if (!payload) {
         try { payload = JSON.parse(xhr.responseText || "{}"); } catch (_) { payload = {}; }
@@ -69,13 +109,27 @@ function uploadMatch(body, attempt = 1) {
       if (xhr.status >= 200 && xhr.status < 300) {
         resolve(payload || {});
       } else {
-        reject(new Error((payload && (payload.error || payload.detail)) || ("上传失败 · HTTP " + xhr.status)));
+        finishError((payload && (payload.error || payload.detail)) || ("上传失败 · HTTP " + xhr.status));
       }
     };
 
-    xhr.onerror = () => reject(new Error("网络中断，比赛视频没有完整上传。"));
-    xhr.ontimeout = () => reject(new Error("上传超过 3 分钟，网络速度过慢或连接中断。"));
-    xhr.onabort = () => reject(new Error("上传已取消。"));
+    xhr.onerror = () => {
+      cleanup();
+      finishError("网络中断，比赛视频没有完整上传。", Date.now() - startedAt < 15000);
+    };
+    xhr.ontimeout = () => {
+      cleanup();
+      finishError("上传超过 15 分钟仍未完成，请检查网络连接。");
+    };
+    xhr.onabort = () => {
+      cleanup();
+      if (abortedForStall) {
+        finishError("网络连续 90 秒没有上传进度，已停止本次上传。");
+      } else {
+        finishError("上传已取消。");
+      }
+    };
+
     xhr.send(body);
   });
 }
@@ -111,7 +165,8 @@ form.addEventListener("submit", async (event) => {
     try {
       payload = await uploadMatch(buildBody(), 1);
     } catch (firstError) {
-      setProgress(0, "连接波动，正在自动重试一次");
+      if (!firstError.early) throw firstError;
+      setProgress(0, "刚连接就中断，正在自动重试一次");
       submitBtn.querySelector("span").textContent = "自动重试…";
       await new Promise((resolve) => setTimeout(resolve, 1200));
       payload = await uploadMatch(buildBody(), 2);
