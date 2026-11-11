@@ -1,0 +1,106 @@
+name: SAGI MARKET V1.1 Live E2E
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'sagi-market/**'
+      - 'sagi-cloud-bridge/**'
+      - 'render.yaml'
+      - '.github/workflows/sagi-market-live-e2e.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live-intake:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Wait for cloud bridge V1.1
+        env:
+          BRIDGE: https://sagi-cloud-bridge-suny820916.onrender.com
+        run: |
+          set -e
+          for i in $(seq 1 90); do
+            BODY="$(curl -fsS --max-time 12 "$BRIDGE/health" 2>/dev/null || true)"
+            echo "$BODY" | grep -q '"deployRevision":"2026-11-11-market-intake-v110"' && \
+            echo "$BODY" | grep -q '"marketIntake":true' && {
+              echo "SAGI MARKET CLOUD BRIDGE V1.1 READY"
+              exit 0
+            }
+            sleep 10
+          done
+          echo "Timed out waiting for V1.1 cloud bridge"
+          exit 1
+
+      - name: Real seller submit to production
+        env:
+          BRIDGE: https://sagi-cloud-bridge-suny820916.onrender.com
+          ORIGIN: https://suny820916.github.io
+        run: |
+          set -e
+          NAME="SAGI-LIVE-E2E-$(date +%s)"
+          printf '%s' "$NAME" >/tmp/market-e2e-name
+          RESP="$(curl -fsS --max-time 20 \
+            -H "Origin: $ORIGIN" \
+            -H "Content-Type: application/json" \
+            -d "{\"name\":\"$NAME\",\"category\":\"球鞋\",\"seller\":\"E2E卖家\",\"contact\":\"e2e-contact\",\"size\":\"42\",\"condition\":\"9成新\",\"city\":\"塔城\",\"price\":199,\"notes\":\"V1.1 live e2e test\",\"photo\":\"\"}" \
+            "$BRIDGE/api/market/submit")"
+          echo "$RESP"
+          echo "$RESP" | grep -q '"ok":true'
+          python -c 'import json,sys; d=json.load(sys.stdin); print(d["submissionId"])' <<<"$RESP" >/tmp/market-e2e-id
+
+      - name: Activate admin channel
+        env:
+          BRIDGE: https://sagi-cloud-bridge-suny820916.onrender.com
+          ORIGIN: https://suny820916.github.io
+        run: |
+          set -e
+          RESP="$(curl -fsS --max-time 20 -X POST -H "Origin: $ORIGIN" "$BRIDGE/api/activate")"
+          echo "$RESP" | grep -q '"ok":true'
+          python -c 'import json,sys; d=json.load(sys.stdin); print(d["token"])' <<<"$RESP" >/tmp/market-e2e-token
+
+      - name: Verify inbox receives seller submission
+        env:
+          BRIDGE: https://sagi-cloud-bridge-suny820916.onrender.com
+          ORIGIN: https://suny820916.github.io
+        run: |
+          set -e
+          TOKEN="$(cat /tmp/market-e2e-token)"
+          SID="$(cat /tmp/market-e2e-id)"
+          NAME="$(cat /tmp/market-e2e-name)"
+          RESP="$(curl -fsS --max-time 20 \
+            -H "Origin: $ORIGIN" \
+            -H "Authorization: Bearer $TOKEN" \
+            "$BRIDGE/api/market/inbox")"
+          echo "$RESP"
+          python - "$SID" "$NAME" <<'PY' <<<"$RESP"
+          import json,sys
+          data=json.load(sys.stdin)
+          sid=sys.argv[1]; name=sys.argv[2]
+          items=data.get("items") or []
+          assert any(x.get("id")==sid and x.get("name")==name for x in items), items
+          print("SELLER SUBMISSION FOUND IN LIVE INBOX")
+          PY
+
+      - name: Reject E2E submission and clean inbox
+        env:
+          BRIDGE: https://sagi-cloud-bridge-suny820916.onrender.com
+          ORIGIN: https://suny820916.github.io
+        run: |
+          set -e
+          TOKEN="$(cat /tmp/market-e2e-token)"
+          SID="$(cat /tmp/market-e2e-id)"
+          RESP="$(curl -fsS --max-time 20 \
+            -H "Origin: $ORIGIN" \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"id\":\"$SID\",\"decision\":\"rejected\"}" \
+            "$BRIDGE/api/market/decision")"
+          echo "$RESP"
+          echo "$RESP" | grep -q '"ok":true'
+          echo "SAGI MARKET V1.1 LIVE SELLER INTAKE E2E OK"
