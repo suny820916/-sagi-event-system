@@ -676,6 +676,10 @@ def public_render_job(job):
         "voiceSegments": int(job.get("voiceSegments", 0) or 0),
         "voiceDuration": float(job.get("voiceDuration", 0) or 0),
         "voiceTimeline": list(job.get("voiceTimeline") or [])[:120],
+        "visualSyncStrategy": str(job.get("visualSyncStrategy") or ""),
+        "visualStretchFactor": float(job.get("visualStretchFactor", 1) or 1),
+        "visualGap": float(job.get("visualGap", 0) or 0),
+        "visualHoldSeconds": float(job.get("visualHoldSeconds", 0) or 0),
     }
     if job.get("status") == "ready":
         base = request.host_url.rstrip("/") + f"/api/render-jobs/{job['id']}/file?key={job['download_key']}"
