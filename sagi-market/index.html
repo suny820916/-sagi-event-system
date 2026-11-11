@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0a0a0b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>SAGI MARKET 工作台</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body data-build="1.0.0">
+<div class="app">
+  <header class="topbar">
+    <div>
+      <div class="brand">SAGI MARKET</div>
+      <div class="version">工作台 · V1.0</div>
+    </div>
+    <button id="quickAdd" class="iconBtn">＋</button>
+  </header>
+
+  <main>
+    <section id="pageHome" class="page active">
+      <div class="hero">
+        <span>FOOTBALL MARKET CONTROL</span>
+        <h1>闲置、拼团、好价，一台手机管完。</h1>
+        <p>先把交易跑顺，再决定什么时候做消费者商城。</p>
+      </div>
+
+      <div class="kpiGrid">
+        <div class="kpi"><span>在售</span><b id="kpiActive">0</b><small>件商品</small></div>
+        <div class="kpi"><span>待处理</span><b id="kpiPending">0</b><small>件任务</small></div>
+        <div class="kpi"><span>本月成交</span><b id="kpiSold">0</b><small>单</small></div>
+        <div class="kpi"><span>预计收入</span><b id="kpiRevenue">¥0</b><small>佣金+毛利</small></div>
+      </div>
+
+      <div class="card">
+        <div class="sectionHead">
+          <div><span class="eyebrow">TODAY</span><h2>今天先处理这些</h2></div>
+          <button class="textBtn" data-page="Items">全部商品</button>
+        </div>
+        <div id="todayList" class="taskList"></div>
+      </div>
+
+      <div class="card">
+        <div class="sectionHead">
+          <div><span class="eyebrow">QUICK ACTION</span><h2>快速入口</h2></div>
+        </div>
+        <div class="actionGrid">
+          <button class="action" data-add-type="secondhand"><b>SECOND LIFE</b><span>新增闲置寄售</span></button>
+          <button class="action" data-add-type="team_buy"><b>TEAM BUY</b><span>新建球队拼团</span></button>
+          <button class="action" data-add-type="deal"><b>SAGI DEAL</b><span>新增限时好价</span></button>
+          <button class="action" id="exportBtn"><b>EXPORT</b><span>导出交易CSV</span></button>
+        </div>
+      </div>
+    </section>
+
+    <section id="pageItems" class="page">
+      <div class="pageTitle">
+        <div><h1>商品中心</h1><p>从收货源到结算的完整状态。</p></div>
+        <button id="addFromItems" class="primary small">＋ 新增</button>
+      </div>
+      <div class="toolbar">
+        <input id="searchInput" class="field" placeholder="编号 / 商品 / 卖家 / 球队">
+        <select id="typeFilter" class="field compact">
+          <option value="">全部业务</option>
+          <option value="secondhand">闲置寄售</option>
+          <option value="team_buy">球队拼团</option>
+          <option value="deal">限时好价</option>
+        </select>
+        <select id="statusFilter" class="field compact">
+          <option value="">全部状态</option>
+          <option value="pending">待审核</option>
+          <option value="listed">在售</option>
+          <option value="sold">已成交</option>
+          <option value="shipped">已发货</option>
+          <option value="settled">已结算</option>
+          <option value="cancelled">已取消</option>
+        </select>
+      </div>
+      <div id="itemList" class="itemList"></div>
+    </section>
+
+    <section id="pageTeamBuy" class="page">
+      <div class="pageTitle"><div><h1>球队拼团</h1><p>数量、成本、毛利和开团进度。</p></div><button class="primary small" data-add-type="team_buy">＋ 新建拼团</button></div>
+      <div id="teamBuyList" class="itemList"></div>
+    </section>
+
+    <section id="pageFinance" class="page">
+      <div class="pageTitle"><div><h1>结算中心</h1><p>佣金、毛利、待结算一眼看清。</p></div></div>
+      <div class="kpiGrid">
+        <div class="kpi"><span>累计成交额</span><b id="finGMV">¥0</b><small>已成交及以后</small></div>
+        <div class="kpi"><span>SAGI收入</span><b id="finIncome">¥0</b><small>佣金+拼团毛利</small></div>
+        <div class="kpi"><span>待给卖家</span><b id="finPayable">¥0</b><small>尚未结算</small></div>
+        <div class="kpi"><span>已结算</span><b id="finSettled">¥0</b><small>卖家结算额</small></div>
+      </div>
+      <div class="card">
+        <div class="sectionHead"><div><span class="eyebrow">SETTLEMENT</span><h2>待结算订单</h2></div></div>
+        <div id="settleList" class="taskList"></div>
+      </div>
+    </section>
+
+    <section id="pageSettings" class="page">
+      <div class="pageTitle"><div><h1>设置</h1><p>交易规则和工作台数据。</p></div></div>
+      <div class="card">
+        <label>100元以下固定服务费</label>
+        <div class="moneyInput"><span>¥</span><input id="feeLow" type="number" min="0"></div>
+        <label>100–299元佣金比例</label>
+        <div class="moneyInput"><input id="feeMid" type="number" min="0" max="100"><span>%</span></div>
+        <label>300元以上佣金比例</label>
+        <div class="moneyInput"><input id="feeHigh" type="number" min="0" max="100"><span>%</span></div>
+        <button id="saveSettings" class="primary">保存规则</button>
+      </div>
+      <div class="card dangerZone">
+        <div class="sectionHead"><div><span class="eyebrow">DATA</span><h2>数据维护</h2></div></div>
+        <button id="backupJson" class="ghost">导出完整备份 JSON</button>
+        <label for="restoreInput" class="ghost labelBtn">导入备份 JSON</label>
+        <input id="restoreInput" type="file" accept="application/json" hidden>
+      </div>
+    </section>
+  </main>
+
+  <nav class="bottomNav">
+    <button class="navBtn active" data-page="Home"><span>⌂</span>首页</button>
+    <button class="navBtn" data-page="Items"><span>▤</span>商品</button>
+    <button class="navBtn" data-page="TeamBuy"><span>◎</span>拼团</button>
+    <button class="navBtn" data-page="Finance"><span>¥</span>结算</button>
+    <button class="navBtn" data-page="Settings"><span>⚙</span>设置</button>
+  </nav>
+</div>
+
+<div id="modal" class="modal hidden">
+  <div class="sheet">
+    <div class="sheetHead">
+      <div><span class="eyebrow">SAGI MARKET</span><h2 id="formTitle">新增商品</h2></div>
+      <button id="closeModal" class="iconBtn">×</button>
+    </div>
+    <form id="itemForm">
+      <input id="editId" type="hidden">
+      <label>业务类型</label>
+      <div class="segmented">
+        <button type="button" class="seg active" data-type="secondhand">闲置寄售</button>
+        <button type="button" class="seg" data-type="team_buy">球队拼团</button>
+        <button type="button" class="seg" data-type="deal">限时好价</button>
+      </div>
+      <input id="businessType" type="hidden" value="secondhand">
+
+      <label>商品照片</label>
+      <label for="photoInput" class="photoDrop">
+        <img id="photoPreview" class="hidden" alt="">
+        <div id="photoHint"><b>＋ 添加照片</b><span>照片只保存在当前设备</span></div>
+      </label>
+      <input id="photoInput" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+
+      <div class="twoCol">
+        <div><label>商品名称</label><input id="name" class="field" required placeholder="例如 Nike Tiempo 传奇"></div>
+        <div><label>分类</label><select id="category" class="field"><option>球鞋</option><option>球衣</option><option>门将装备</option><option>足球</option><option>训练装备</option><option>球队装备</option><option>其他</option></select></div>
+      </div>
+
+      <div id="sellerFields">
+        <div class="twoCol">
+          <div><label>卖家 / 货主</label><input id="seller" class="field" placeholder="姓名或昵称"></div>
+          <div><label>联系电话</label><input id="contact" class="field" placeholder="微信/电话"></div>
+        </div>
+      </div>
+
+      <div class="threeCol">
+        <div><label>尺码/规格</label><input id="size" class="field" placeholder="42 / XL / 5号"></div>
+        <div><label>成色</label><input id="condition" class="field" placeholder="9成新"></div>
+        <div><label>所在城市</label><input id="city" class="field" placeholder="塔城"></div>
+      </div>
+
+      <div class="twoCol">
+        <div><label>售价</label><div class="moneyInput"><span>¥</span><input id="price" type="number" min="0" step="0.01"></div></div>
+        <div id="costWrap"><label>成本/卖家结算基数</label><div class="moneyInput"><span>¥</span><input id="cost" type="number" min="0" step="0.01"></div></div>
+      </div>
+
+      <div id="teamBuyFields" class="hidden">
+        <div class="threeCol">
+          <div><label>目标数量</label><input id="targetQty" class="field" type="number" min="1" value="100"></div>
+          <div><label>已拼数量</label><input id="joinedQty" class="field" type="number" min="0" value="0"></div>
+          <div><label>每套成本</label><input id="unitCost" class="field" type="number" min="0" step="0.01"></div>
+        </div>
+      </div>
+
+      <label>瑕疵 / 说明</label>
+      <textarea id="notes" class="field textarea" placeholder="例如：鞋钉轻微磨损，无开胶；盒子不在。"></textarea>
+
+      <label>当前状态</label>
+      <select id="status" class="field">
+        <option value="pending">待审核</option>
+        <option value="listed">在售</option>
+        <option value="sold">已成交</option>
+        <option value="shipped">已发货</option>
+        <option value="settled">已结算</option>
+        <option value="cancelled">已取消</option>
+      </select>
+
+      <div class="formActions">
+        <button type="button" id="deleteBtn" class="danger hidden">删除</button>
+        <button type="submit" class="primary">保存</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="detailModal" class="modal hidden">
+  <div class="sheet detailSheet">
+    <div class="sheetHead">
+      <div><span class="eyebrow">PRODUCT CARD</span><h2 id="detailCode"></h2></div>
+      <button id="closeDetail" class="iconBtn">×</button>
+    </div>
+    <div id="detailBody"></div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+<script src="./app.js"></script>
+</body>
+</html>
