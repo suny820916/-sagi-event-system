@@ -1,0 +1,32 @@
+name: SAGI Match Intelligence CI
+
+on:
+  push:
+    branches:
+      - "feature/sagi-match-intelligence-v1"
+    paths:
+      - "sagi-match-intelligence/**"
+      - ".github/workflows/sagi-match-intelligence-ci.yml"
+  pull_request:
+    paths:
+      - "sagi-match-intelligence/**"
+      - ".github/workflows/sagi-match-intelligence-ci.yml"
+
+jobs:
+  api-smoke-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sagi-match-intelligence
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install lightweight CI dependencies
+        run: pip install -r requirements-ci.txt
+      - name: Compile Python sources
+        run: python -m compileall backend
+      - name: Run API smoke tests
+        run: pytest -q

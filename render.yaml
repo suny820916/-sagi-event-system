@@ -72,3 +72,36 @@ services:
         value: "1"
       - key: OPENBLAS_NUM_THREADS
         value: "1"
+
+  - type: web
+    name: sagi-match-intelligence-suny820916
+    runtime: docker
+    plan: free
+    region: singapore
+    rootDir: sagi-match-intelligence
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    autoDeployTrigger: commit
+    envVars:
+      - key: SAGI_MODEL
+        value: yolo11n.pt
+      - key: SAGI_DEVICE
+        value: cpu
+      - key: SAGI_ANALYSIS_FPS
+        value: "1"
+      - key: SAGI_CONF
+        value: "0.25"
+      - key: SAGI_IMGSZ
+        value: "416"
+      - key: SAGI_MAX_UPLOAD_MB
+        value: "200"
+      - key: SAGI_DATA_DIR
+        value: /tmp/sagi-match-data
+      - key: MALLOC_ARENA_MAX
+        value: "2"
+      - key: OMP_NUM_THREADS
+        value: "1"
+      - key: OPENBLAS_NUM_THREADS
+        value: "1"
+
