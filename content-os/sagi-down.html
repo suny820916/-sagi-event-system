@@ -1237,16 +1237,63 @@ function populateVoiceChoices(list){
  }).join('');
  if([...sel.options].some(o=>o.value===current))sel.value=current
 }
+function splitVoiceSentences(text,maxChars=140){
+ const raw=String(text||'').replace(/\r\n?/g,'\n').trim();if(!raw)return[];
+ const chunks=[];let buf='',lastSoft=-1;const strong=new Set(['。','！','？','!','?','；',';','\n']),soft=new Set(['，','、',',',':','：']);
+ for(const ch of raw){
+  buf+=ch;if(soft.has(ch))lastSoft=buf.length;
+  if(buf.length>=maxChars){
+   if(lastSoft>=Math.max(20,Math.floor(maxChars*.55))){
+    const head=buf.slice(0,lastSoft),tail=buf.slice(lastSoft);if(head.trim())chunks.push(head.trim());buf=tail
+   }else{if(buf.trim())chunks.push(buf.trim());buf=''}
+   lastSoft=-1;continue
+  }
+  if(strong.has(ch)&&buf.trim()){chunks.push(buf.trim());buf='';lastSoft=-1}
+ }
+ if(buf.trim())chunks.push(buf.trim());return chunks.filter(Boolean)
+}
+function voiceTimeLabel(sec){
+ sec=Math.max(0,Number(sec)||0);const m=Math.floor(sec/60),s=sec-m*60;
+ return String(m).padStart(2,'0')+':'+s.toFixed(1).padStart(4,'0')
+}
+function buildVoiceTimeline(render=true){
+ const text=String(q('narrationText')?.value||'').trim(),parts=splitVoiceSentences(text);
+ if(!parts.length){STUDIO.voiceTimeline=[];if(render)renderVoiceTimeline();return[]}
+ let clip=0;try{clip=Number(studioRange()[2])||0}catch(e){}
+ const weights=parts.map(p=>Math.max(1,(p.match(/[\u3400-\u9fffA-Za-z0-9]/g)||[]).length+(p.match(/[，。！？；：、,.!?;:]/g)||[]).length*1.8));
+ const chars=parts.reduce((n,p)=>n+(p.match(/[\u3400-\u9fffA-Za-z0-9]/g)||[]).length,0),marks=parts.reduce((n,p)=>n+(p.match(/[，。！？；：、,.!?;:]/g)||[]).length,0);
+ const speed=Math.max(.75,Number(q('aiVoiceSpeed')?.value)||1),natural=Math.max(1,chars/(4.25*speed)+marks*.08);
+ const target=clip>0?clip:natural,gap=.08,usable=Math.max(parts.length*.7,target-gap*Math.max(0,parts.length-1)),sum=Math.max(1,weights.reduce((a,b)=>a+b,0));
+ let cursor=0;
+ STUDIO.voiceTimeline=parts.map((p,i)=>{
+  const slot=Math.max(.7,usable*weights[i]/sum),row={index:i,text:p,start:Number(cursor.toFixed(3)),end:Number((cursor+slot).toFixed(3))};
+  cursor+=slot+(i<parts.length-1?gap:0);return row
+ });
+ if(render)renderVoiceTimeline();return STUDIO.voiceTimeline
+}
+function renderVoiceTimeline(){
+ const box=q('voiceTimelineList'),state=q('voiceCoverageState'),rows=STUDIO.voiceTimeline||[];
+ if(state){state.textContent=rows.length?('待云端校验 · '+rows.length+'句'):'完整性待检查';state.classList.remove('ok')}
+ if(!box)return;
+ if(!rows.length){box.innerHTML='<div class="voiceTimelineHint">输入解说词后自动拆分为句级时间轴。</div>';return}
+ box.innerHTML=rows.map((r,i)=>'<div class="voiceSentenceRow"><time>'+voiceTimeLabel(r.start)+'–'+voiceTimeLabel(r.end)+'</time><span><em>#'+String(i+1).padStart(2,'0')+'</em>'+escapeHtml(r.text)+'</span></div>').join('')
+}
+function markVoiceCoverage(complete,segments,coverage=100){
+ const e=q('voiceCoverageState');if(!e)return;
+ if(complete){e.textContent='完整性 '+Math.max(0,Number(coverage)||100)+'% · '+Math.max(1,Number(segments)||STUDIO.voiceTimeline.length||1)+'句';e.classList.add('ok')}
+ else{e.textContent='完整性校验未通过';e.classList.remove('ok')}
+}
 function voiceTimingHint(){
  const el=q('voiceTiming');if(!el)return;
  const text=String(q('narrationText')?.value||'').trim();
- if(!text){el.textContent='输入解说稿后，会自动估算配音时长并和当前视频片段比较。';return}
+ if(!text){el.textContent='输入解说稿后，会自动估算配音时长并和当前视频片段比较。';STUDIO.voiceTimeline=[];renderVoiceTimeline();return}
  const chars=(text.match(/[\u3400-\u9fffA-Za-z0-9]/g)||[]).length,marks=(text.match(/[，。！？；：,.!?;:]/g)||[]).length;
  const speed=Math.max(.75,Number(q('aiVoiceSpeed')?.value)||1),estimate=Math.max(1,chars/(4.25*speed)+marks*.08);
  let clip=0;try{clip=Number(studioRange()[2])||0}catch(e){}
  let verdict='';
  if(clip>0){const r=estimate/clip;if(r>1.18)verdict=' · <b>稿件偏长</b>，最多自然加速18%，仍超时则自动延长视频尾帧，不截解说';else if(r<.72)verdict=' · <b>稿件偏短</b>，结尾会保留原声/留白';else verdict=' · <b>长度合适</b>，适合智能贴合'}
- el.innerHTML='约 <b>'+chars+' 字</b> · 预计配音 <b>'+estimate.toFixed(1)+'秒</b>'+(clip>0?' · 当前片段 <b>'+clip.toFixed(1)+'秒</b>':'')+verdict
+ el.innerHTML='约 <b>'+chars+' 字</b> · 预计配音 <b>'+estimate.toFixed(1)+'秒</b>'+(clip>0?' · 当前片段 <b>'+clip.toFixed(1)+'秒</b>':'')+verdict;
+ buildVoiceTimeline(true)
 }
 async function voiceApiReady(){
  const ready=await wakeCaptionCloud();
