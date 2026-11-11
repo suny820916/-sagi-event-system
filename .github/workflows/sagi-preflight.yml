@@ -964,7 +964,7 @@ jobs:
           ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
           subprocess.run([
               exe, "-hide_banner", "-y",
-              "-f", "lavfi", "-i", "sine=frequency=660:duration=4.2",
+              "-f", "lavfi", "-i", "sine=frequency=660:duration=5.2",
               "-c:a", "aac", str(voice)
           ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
@@ -989,14 +989,14 @@ jobs:
           job = mod.render_jobs[job_id]
           assert job["status"] == "ready", job
           assert job.get("visualSyncStrategy") == "dynamic", job
-          assert float(job.get("visualStretchFactor") or 0) > 2.0, job
+          assert float(job.get("visualStretchFactor") or 0) > 2.5, job
           assert float(job.get("visualHoldSeconds") or 99) == 0.0, job
           out = pathlib.Path(job["path"])
           assert out.exists() and out.stat().st_size > 5000
           import av
           with av.open(str(out)) as container:
               rendered = float(container.duration or 0) / 1_000_000.0
-          assert rendered >= 4.3, rendered
+          assert rendered >= 5.3, rendered
           print("VISUAL SYNC V1.3 cloud render OK", round(rendered,2), "seconds", out.stat().st_size, "bytes")
           PY
 
