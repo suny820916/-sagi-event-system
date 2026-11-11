@@ -67,6 +67,13 @@ SAGI_MARKET_INBOX_SLUG = ("market-inbox-" + hmac.new(SERVER_SECRET.encode("utf-8
 SAGI_MARKET_RATE_LIMIT_PER_HOUR = max(3, min(60, int(os.getenv("SAGI_MARKET_RATE_LIMIT_PER_HOUR") or "12")))
 market_rate_hits = {}
 market_rate_lock = Lock()
+
+SAGI_HOUSE_WRITE_TOKEN = (os.getenv("SAGI_HOUSE_WRITE_TOKEN") or (hmac.new(SERVER_SECRET.encode("utf-8"), b"sagi-house-inbox-v1", hashlib.sha256).hexdigest() if SERVER_SECRET else "")).strip()
+SAGI_HOUSE_INBOX_SLUG = ("house-inbox-" + hmac.new(SERVER_SECRET.encode("utf-8"), b"sagi-house-inbox-slug-v1", hashlib.sha256).hexdigest()[:24]) if SERVER_SECRET else ""
+SAGI_HOUSE_LEADS_SLUG = ("house-leads-" + hmac.new(SERVER_SECRET.encode("utf-8"), b"sagi-house-leads-slug-v1", hashlib.sha256).hexdigest()[:24]) if SERVER_SECRET else ""
+SAGI_HOUSE_RATE_LIMIT_PER_HOUR = max(3, min(40, int(os.getenv("SAGI_HOUSE_RATE_LIMIT_PER_HOUR") or "10")))
+house_rate_hits = {}
+house_rate_lock = Lock()
 if SAGI_LOCAL_IMAGE_QUALITY not in ("low", "medium", "high"):
     SAGI_LOCAL_IMAGE_QUALITY = "medium"
 local_ai_hits = {}
@@ -338,6 +345,76 @@ def _market_update_inbox(mutator):
 
 def _market_clean_text(value, limit):
     return str(value or "").strip()[:limit]
+
+
+def house_rate_allowed():
+    key = request.headers.get("X-Forwarded-For", request.remote_addr or "unknown").split(",")[0].strip()
+    cutoff = time.time() - 3600
+    with house_rate_lock:
+        arr = [t for t in house_rate_hits.get(key, []) if t >= cutoff]
+        if len(arr) >= SAGI_HOUSE_RATE_LIMIT_PER_HOUR:
+            house_rate_hits[key] = arr
+            return False
+        arr.append(time.time())
+        house_rate_hits[key] = arr
+    return True
+
+
+def house_cloud_ready():
+    return bool(SAGI_SUPABASE_URL and SAGI_SUPABASE_KEY and SAGI_HOUSE_WRITE_TOKEN and SAGI_HOUSE_INBOX_SLUG and SAGI_HOUSE_LEADS_SLUG)
+
+
+def _house_ensure_index(slug, kind):
+    row = _market_get(slug)
+    if row:
+        return row
+    return _market_rpc(
+        "sagi_claim_event",
+        {
+            "p_slug": slug,
+            "p_token": SAGI_HOUSE_WRITE_TOKEN,
+            "p_payload": {"version": 1, "kind": kind, "items": []},
+        },
+    )
+
+
+def _house_update_index(slug, kind, mutator, limit=500):
+    last_error = None
+    for _ in range(5):
+        try:
+            row = _house_ensure_index(slug, kind)
+            payload = dict((row or {}).get("payload") or {})
+            items = list(payload.get("items") or [])
+            payload["version"] = 1
+            payload["kind"] = kind
+            payload["items"] = list(mutator(items))[-limit:]
+            return _market_rpc(
+                "sagi_save_event",
+                {
+                    "p_slug": slug,
+                    "p_token": SAGI_HOUSE_WRITE_TOKEN,
+                    "p_payload": payload,
+                    "p_expected_revision": (row or {}).get("revision"),
+                },
+            )
+        except Exception as exc:
+            last_error = exc
+            if "REVISION_CONFLICT" not in str(exc):
+                break
+            time.sleep(0.08)
+    raise last_error or RuntimeError("HOUSE_INDEX_UPDATE_FAILED")
+
+
+def _house_text(value, limit=120):
+    return str(value or "").strip()[:limit]
+
+
+def _house_public_payload(payload):
+    p = dict(payload or {})
+    for key in ("ownerName", "phone", "wechat", "contact"):
+        p.pop(key, None)
+    p["status"] = "approved"
+    return p
 
 
 def caption_rate_allowed():
@@ -4354,6 +4431,227 @@ def market_decision():
         return jsonify({"ok": True, "id": submission_id, "decision": decision})
     except Exception as exc:
         return jsonify({"ok": False, "error": "更新审核状态失败", "detail": str(exc)[:180]}), 503
+
+
+@app.post("/api/house/submit")
+def house_submit():
+    if not origin_allowed():
+        return jsonify({"ok": False, "error": "Origin not allowed"}), 403
+    if not house_cloud_ready():
+        return jsonify({"ok": False, "error": "HOUSE 云端尚未配置"}), 503
+    if not house_rate_allowed():
+        return jsonify({"ok": False, "error": "提交过于频繁，请稍后再试"}), 429
+
+    body = request.get_json(silent=True) or {}
+    photos = body.get("photos") or []
+    if not isinstance(photos, list):
+        photos = []
+    photos = photos[:3]
+    cleaned_photos = []
+    total_photo_chars = 0
+    for photo in photos:
+        photo = str(photo or "")
+        if not photo:
+            continue
+        if not photo.startswith("data:image/jpeg;base64,") or len(photo) > 520000:
+            return jsonify({"ok": False, "error": "照片格式或大小不符合要求"}), 400
+        total_photo_chars += len(photo)
+        if total_photo_chars > 1450000:
+            return jsonify({"ok": False, "error": "照片总大小过大，请减少照片后重试"}), 400
+        cleaned_photos.append(photo)
+
+    title = _house_text(body.get("title"), 100)
+    community = _house_text(body.get("community"), 100)
+    owner_name = _house_text(body.get("ownerName"), 60)
+    phone = _house_text(body.get("phone"), 40)
+    wechat = _house_text(body.get("wechat"), 80)
+    if not title or not community or not owner_name or not (phone or wechat):
+        return jsonify({"ok": False, "error": "标题、小区/区域、联系人和联系方式不能为空"}), 400
+
+    submission_id = secrets.token_hex(16)
+    slug = "house-sub-" + submission_id
+    payload = {
+        "id": submission_id,
+        "slug": slug,
+        "deal": _house_text(body.get("deal"), 20) or "出售",
+        "propertyType": _house_text(body.get("propertyType"), 30) or "住宅",
+        "title": title,
+        "community": community,
+        "city": _house_text(body.get("city"), 60),
+        "price": _house_text(body.get("price"), 30),
+        "priceUnit": _house_text(body.get("priceUnit"), 20),
+        "rooms": _house_text(body.get("rooms"), 40),
+        "area": _house_text(body.get("area"), 30),
+        "floor": _house_text(body.get("floor"), 40),
+        "orientation": _house_text(body.get("orientation"), 30),
+        "decoration": _house_text(body.get("decoration"), 30),
+        "tags": [_house_text(x, 20) for x in (body.get("tags") or []) if _house_text(x, 20)][:8],
+        "description": _house_text(body.get("description"), 1800),
+        "ownerName": owner_name,
+        "phone": phone,
+        "wechat": wechat,
+        "photos": cleaned_photos,
+        "createdAt": iso(),
+        "source": "owner-publish-v1.1",
+        "status": "pending",
+    }
+
+    try:
+        _market_rpc(
+            "sagi_claim_event",
+            {
+                "p_slug": slug,
+                "p_token": SAGI_HOUSE_WRITE_TOKEN,
+                "p_payload": payload,
+            },
+        )
+        def append_item(items):
+            rows = [x for x in items if isinstance(x, dict) and x.get("id") != submission_id]
+            rows.append({
+                "id": submission_id,
+                "slug": slug,
+                "status": "pending",
+                "title": title,
+                "community": community,
+                "deal": payload["deal"],
+                "propertyType": payload["propertyType"],
+                "price": payload["price"],
+                "priceUnit": payload["priceUnit"],
+                "ownerName": owner_name,
+                "createdAt": payload["createdAt"],
+            })
+            return rows
+        _house_update_index(SAGI_HOUSE_INBOX_SLUG, "house-inbox", append_item)
+    except Exception as exc:
+        return jsonify({"ok": False, "error": "房源云端收件箱暂不可用", "detail": str(exc)[:180]}), 503
+
+    return jsonify({"ok": True, "submissionId": submission_id, "message": "提交成功，等待 SAGI HOUSE 审核"})
+
+
+@app.get("/api/house/listings")
+def house_listings():
+    if not house_cloud_ready():
+        return jsonify({"ok": False, "error": "HOUSE 云端尚未配置"}), 503
+    try:
+        row = _house_ensure_index(SAGI_HOUSE_INBOX_SLUG, "house-inbox")
+        index_items = list(((row or {}).get("payload") or {}).get("items") or [])
+        approved = [x for x in index_items if isinstance(x, dict) and x.get("status") == "approved"]
+        approved = sorted(approved, key=lambda x: str(x.get("createdAt") or ""), reverse=True)[:80]
+        result = []
+        for item in approved:
+            sub = _market_get(str(item.get("slug") or ""))
+            payload = (sub or {}).get("payload")
+            if isinstance(payload, dict):
+                result.append(_house_public_payload(payload))
+        return jsonify({"ok": True, "items": result, "count": len(result)})
+    except Exception as exc:
+        return jsonify({"ok": False, "error": "读取公开房源失败", "detail": str(exc)[:180]}), 503
+
+
+@app.get("/api/house/inbox")
+def house_inbox():
+    if not authorized():
+        return jsonify({"ok": False, "error": "Unauthorized"}), 401
+    if not house_cloud_ready():
+        return jsonify({"ok": False, "error": "HOUSE 云端尚未配置"}), 503
+    wanted = _house_text(request.args.get("status"), 20) or "pending"
+    try:
+        row = _house_ensure_index(SAGI_HOUSE_INBOX_SLUG, "house-inbox")
+        index_items = list(((row or {}).get("payload") or {}).get("items") or [])
+        rows = [x for x in index_items if isinstance(x, dict) and (wanted == "all" or x.get("status") == wanted)]
+        rows = sorted(rows, key=lambda x: str(x.get("createdAt") or ""), reverse=True)[:60]
+        result = []
+        for item in rows:
+            sub = _market_get(str(item.get("slug") or ""))
+            payload = (sub or {}).get("payload")
+            if isinstance(payload, dict):
+                payload = dict(payload)
+                payload["status"] = item.get("status")
+                payload["decidedAt"] = item.get("decidedAt")
+                result.append(payload)
+        return jsonify({"ok": True, "items": result, "count": len(result)})
+    except Exception as exc:
+        return jsonify({"ok": False, "error": "读取房源审核箱失败", "detail": str(exc)[:180]}), 503
+
+
+@app.post("/api/house/decision")
+def house_decision():
+    if not authorized():
+        return jsonify({"ok": False, "error": "Unauthorized"}), 401
+    body = request.get_json(silent=True) or {}
+    submission_id = _house_text(body.get("id"), 40)
+    decision = _house_text(body.get("decision"), 20)
+    if not submission_id or decision not in ("approved", "rejected", "archived", "sold", "rented"):
+        return jsonify({"ok": False, "error": "Invalid decision"}), 400
+    try:
+        changed = {"ok": False}
+        def decide(items):
+            rows = []
+            for raw in items:
+                item = dict(raw) if isinstance(raw, dict) else {}
+                if item.get("id") == submission_id:
+                    item["status"] = decision
+                    item["decidedAt"] = iso()
+                    changed["ok"] = True
+                rows.append(item)
+            return rows
+        _house_update_index(SAGI_HOUSE_INBOX_SLUG, "house-inbox", decide)
+        if not changed["ok"]:
+            return jsonify({"ok": False, "error": "Submission not found"}), 404
+        return jsonify({"ok": True, "id": submission_id, "decision": decision})
+    except Exception as exc:
+        return jsonify({"ok": False, "error": "更新房源审核状态失败", "detail": str(exc)[:180]}), 503
+
+
+@app.post("/api/house/lead")
+def house_lead():
+    if not origin_allowed():
+        return jsonify({"ok": False, "error": "Origin not allowed"}), 403
+    if not house_cloud_ready():
+        return jsonify({"ok": False, "error": "HOUSE 云端尚未配置"}), 503
+    if not house_rate_allowed():
+        return jsonify({"ok": False, "error": "提交过于频繁，请稍后再试"}), 429
+    body = request.get_json(silent=True) or {}
+    listing_id = _house_text(body.get("listingId"), 40)
+    name = _house_text(body.get("name"), 60)
+    contact = _house_text(body.get("contact"), 80)
+    note = _house_text(body.get("note"), 300)
+    if not listing_id or not contact:
+        return jsonify({"ok": False, "error": "房源和联系方式不能为空"}), 400
+    lead = {
+        "id": secrets.token_hex(12),
+        "listingId": listing_id,
+        "listingTitle": _house_text(body.get("listingTitle"), 100),
+        "name": name or "客户",
+        "contact": contact,
+        "note": note,
+        "status": "new",
+        "createdAt": iso(),
+    }
+    try:
+        def append_lead(items):
+            rows = [x for x in items if isinstance(x, dict)]
+            rows.append(lead)
+            return rows
+        _house_update_index(SAGI_HOUSE_LEADS_SLUG, "house-leads", append_lead, 800)
+        return jsonify({"ok": True, "leadId": lead["id"]})
+    except Exception as exc:
+        return jsonify({"ok": False, "error": "提交咨询失败", "detail": str(exc)[:180]}), 503
+
+
+@app.get("/api/house/leads")
+def house_leads():
+    if not authorized():
+        return jsonify({"ok": False, "error": "Unauthorized"}), 401
+    if not house_cloud_ready():
+        return jsonify({"ok": False, "error": "HOUSE 云端尚未配置"}), 503
+    try:
+        row = _house_ensure_index(SAGI_HOUSE_LEADS_SLUG, "house-leads")
+        items = [x for x in list(((row or {}).get("payload") or {}).get("items") or []) if isinstance(x, dict)]
+        items = sorted(items, key=lambda x: str(x.get("createdAt") or ""), reverse=True)[:120]
+        return jsonify({"ok": True, "items": items, "count": len(items)})
+    except Exception as exc:
+        return jsonify({"ok": False, "error": "读取客户线索失败", "detail": str(exc)[:180]}), 503
 
 
 @app.post("/api/activate")
