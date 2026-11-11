@@ -801,8 +801,8 @@ Unbelievable finish."></textarea>
       </div>
       <div class="voicePanel">
         <div class="sectionHead">
-          <div><div class="label">VOICE DIRECTOR V2.3 · SIMPLE SYNC</div><div class="mini">整稿一次生成 · 只锁总时长 · 默认不分析场景</div></div>
-          <span class="badge">V2.3</span>
+          <div><div class="label">VOICE DIRECTOR V2.4 · ANIMATION FIRST</div><div class="mini">先锁动画 · 整稿一次生成 · 最终声音反识别字幕</div></div>
+          <span class="badge">V2.4</span>
         </div>
         <div class="voiceGrid">
           <label>配音方式
@@ -859,7 +859,7 @@ Unbelievable finish."></textarea>
             <button class="btn" id="voiceTimelineBtn" type="button">重建时间轴</button>
           </div>
           <div class="voiceTimelineList" id="voiceTimelineList"></div>
-          <div class="voiceTimelineHint">SIMPLE SYNC：默认不拆场景。整篇解说一次生成，只比较“配音总时长”和“视频总时长”；能放进去就不改原稿，超时才做一次轻微语速或文案修正。</div>
+          <div class="voiceTimelineHint">ANIMATION FIRST：动画是唯一主时间轴。整篇解说只生成一次；生成后的最终音频再由 Whisper 识别时间戳，字幕直接跟最终声音走。</div>
           <div class="voiceTiming" id="visualSyncStatus">AI SCENE SYNC：等待视频内容分析。</div>
           <div class="sceneSyncBox" id="advancedSceneBox" style="display:none">
             <div class="sceneSyncHead"><b>高级画面同步 · 视频内容场景</b><button class="btn" id="sceneAnalyzeBtn" type="button">分析视频内容</button></div>
@@ -867,20 +867,20 @@ Unbelievable finish."></textarea>
             <div class="sceneSyncList" id="sceneSyncList"></div>
           </div>
           <div class="sceneSyncBox" id="clipScriptBox" style="display:none">
-            <div class="sceneSyncHead"><b id="clipScriptTitle">SIMPLE SYNC 最终配音稿</b><span id="meaningCoverageBadge" class="badge">原意待校验</span></div>
+            <div class="sceneSyncHead"><b id="clipScriptTitle">ANIMATION FIRST 最终配音稿</b><span id="meaningCoverageBadge" class="badge">原意待校验</span></div>
             <div class="sceneSyncStatus" id="meaningAuditDetail">关键逻辑尚未校验。</div>
             <div class="sceneSyncStatus" id="clipScriptText"></div>
           </div>
         </div>
         <div class="voiceActions">
-          <button class="btn gold" id="lockstepVoiceBtn" type="button">一键适配视频配音</button>
+          <button class="btn gold" id="lockstepVoiceBtn" type="button">动画锁定 → 一次配音 → 同步字幕</button>
           <button class="btn blue" id="aiVoicePreviewBtn" type="button">试听最终配音</button>
           <button class="btn gold" id="cloneVoiceBtn" type="button">克隆我的声音</button>
           <button class="btn" id="aiVoiceStatusBtn" type="button">刷新音色</button>
         </div>
         <div class="sceneSyncBox" id="lockstepBox">
-          <div class="sceneSyncHead"><b>SIMPLE SYNC · 整稿一次适配</b><span class="badge" id="lockstepBadge">待开始</span></div>
-          <div class="sceneSyncStatus" id="lockstepStatus">导入视频和解说稿后直接一键生成。默认不分析场景，只确保完整配音自然落在视频总时长内。</div>
+          <div class="sceneSyncHead"><b>ANIMATION FIRST · 最终声音主时间轴</b><span class="badge" id="lockstepBadge">待开始</span></div>
+          <div class="sceneSyncStatus" id="lockstepStatus">先完成动画，再输入整篇解说。系统一次性生成完整声音，并用最终声音反识别字幕；不再用文案字数估算字幕时间。</div>
           <div class="sceneSyncList" id="lockstepList"></div>
         </div>
         <audio id="aiVoicePreview" class="voicePreview" controls></audio>
@@ -934,14 +934,14 @@ Unbelievable finish."></textarea>
 
 <script>
 (()=>{'use strict';
-const SAGI_DOWN_BUILD='V3.9.2.6';
+const SAGI_DOWN_BUILD='V3.9.3.0';
 document.documentElement.dataset.sagiDownBuild=SAGI_DOWN_BUILD;
 const BTCH_PUBLIC='https://btch-downloader-api-green.vercel.app';
 const DOWNLOAD_ROUTER_VERSION='3.0';
 const KEY='sagi_down_history_v2';
 const OLD_KEY='sagi_down_history_v1';
 const q=id=>document.getElementById(id);
-const buildBadge=q('sagiBuildBadge');if(buildBadge)buildBadge.textContent=SAGI_DOWN_BUILD+' · SIMPLE SYNC';
+const buildBadge=q('sagiBuildBadge');if(buildBadge)buildBadge.textContent=SAGI_DOWN_BUILD+' · ANIMATION FIRST';
 const input=q('url'),status=q('status'),platformName=q('platformName'),platformHint=q('platformHint'),platformType=q('platformType');
 
 function extractUrl(v){
@@ -1457,7 +1457,7 @@ function buildVisualSyncPlan(){
  let clip=0;try{clip=Number(studioRange()[2])||0}catch(e){}
  const mode=q('aiVisualSync')?.value||'voice_to_video',voice=Number(STUDIO.generatedVoiceDuration)||0;
  const rows=STUDIO.voiceTimeline||[],finalDuration=voice>0?voice:(rows.length?Number(rows[rows.length-1].end)||0:0);
- if(rows.some(r=>r.basis==='lockstep')&&clip>0){
+ if(rows.some(r=>(r.basis==='lockstep'||r.basis==='voice_master'))&&clip>0){
   const plan={mode:'voice_to_video',strategy:'lockstep',label:'LOCKSTEP 配音跟随原视频',clip,finalDuration:clip,gap:0,ratio:1,maxHold:0,sceneCount:STUDIO.sceneAnalysis?.scenes?.length||0,sceneSegments:rows.length};
   STUDIO.visualSyncPlan=plan;renderVisualSyncStatus();return plan
  }
@@ -1494,7 +1494,7 @@ function renderVisualSyncStatus(){
 function renderVoiceTimeline(){
  const box=q('voiceTimelineList'),state=q('voiceCoverageState'),rows=STUDIO.voiceTimeline||[];
  if(state){
-  const actual=rows.length&&rows.some(r=>r.basis==='actual'||r.basis==='server_actual'||r.basis==='clip_locked'||r.basis==='lockstep'),end=rows.length?Number(rows[rows.length-1].end)||0:0;
+  const actual=rows.length&&rows.some(r=>r.basis==='actual'||r.basis==='server_actual'||r.basis==='clip_locked'||(r.basis==='lockstep'||r.basis==='voice_master')),end=rows.length?Number(rows[rows.length-1].end)||0:0;
   state.textContent=rows.length?(actual?('实际音轨 · '+rows.length+'句 · '+voiceTimeLabel(end)):('待云端校验 · '+rows.length+'句')):'完整性待检查';
   state.classList.toggle('ok',!!actual)
  }
@@ -1506,7 +1506,7 @@ function renderVoiceTimeline(){
 function markVoiceCoverage(complete,segments,coverage=100){
  const e=q('voiceCoverageState');if(!e)return;
  if(complete){
-  const rows=STUDIO.voiceTimeline||[],end=rows.length?Number(rows[rows.length-1].end)||0:0,actual=rows.some(r=>r.basis==='actual'||r.basis==='server_actual'||r.basis==='clip_locked'||r.basis==='lockstep');
+  const rows=STUDIO.voiceTimeline||[],end=rows.length?Number(rows[rows.length-1].end)||0:0,actual=rows.some(r=>r.basis==='actual'||r.basis==='server_actual'||r.basis==='clip_locked'||(r.basis==='lockstep'||r.basis==='voice_master'));
   e.textContent='完整性 '+Math.max(0,Number(coverage)||100)+'% · '+Math.max(1,Number(segments)||rows.length||1)+'句'+(actual&&end>0?' · '+voiceTimeLabel(end):'');
   e.classList.add('ok')
  }else{e.textContent='完整性校验未通过';e.classList.remove('ok')}
@@ -2102,6 +2102,124 @@ function renderLockstepPlan(){
 }
 
 
+async function requestOneShotVoice(text,mode,speed){
+ await voiceApiReady();
+ const r=await fetch(CAPTION_CLOUD+'/api/voice/one-shot',{
+  method:'POST',
+  headers:{'Content-Type':'application/json',Authorization:'Bearer '+STUDIO.cloudCaptionToken},
+  body:JSON.stringify({
+   text:String(text||'').trim(),
+   mode,
+   voice_id:mode==='clone'?STUDIO.cloneVoiceId:(q('aiVoiceVoice')?.value||''),
+   speed:Number(speed)||1,
+   style:q('aiVoiceStyle')?.value||'documentary'
+  })
+ });
+ if(!r.ok){const d=await r.json().catch(()=>({}));throw new Error(d?.error||('HTTP '+r.status))}
+ const blob=await r.blob();
+ if(blob.size<1000)throw new Error('ONE_SHOT_EMPTY_AUDIO');
+ let duration=Number(r.headers.get('X-SAGI-Voice-Duration'))||0;
+ if(!duration){
+  const mono=await decodeVoiceMono(blob,24000);duration=mono.length/24000
+ }
+ return{blob,duration}
+}
+function voiceMasterLanguage(text){
+ const s=String(text||'');
+ const zh=(s.match(/[\u3400-\u9fff]/g)||[]).length;
+ const latin=(s.match(/[A-Za-z]/g)||[]).length;
+ return zh>latin*.18?'zh':'en'
+}
+async function syncCaptionsFromFinalVoice(blob,script,clip){
+ q('lockstepStatus').textContent='最终声音已生成 · 正在反识别真实字幕时间戳…';
+ const fd=new FormData();
+ fd.append('audio',blob,'sagi-final-voice.wav');
+ fd.append('language',voiceMasterLanguage(script));
+ const r=await fetch(CAPTION_CLOUD+'/api/caption',{
+  method:'POST',
+  headers:{Authorization:'Bearer '+STUDIO.cloudCaptionToken},
+  body:fd
+ });
+ const d=await r.json().catch(()=>({}));
+ if(!r.ok||!d?.ok)throw new Error(d?.error||('字幕对齐失败 HTTP '+r.status));
+ const rows=(Array.isArray(d.segments)?d.segments:[]).map((x,i)=>({
+  index:i,
+  start:Math.max(0,Number(x.start)||0),
+  end:Math.min(clip,Math.max(Number(x.start)||0,(Number(x.end)||0))),
+  text:String(x.text||'').trim(),
+  basis:'voice_master'
+ })).filter(x=>x.text&&x.end>x.start+.02);
+ if(!rows.length)throw new Error('最终声音识别不到字幕');
+ STUDIO.voiceTimeline=rows;
+ STUDIO.captions=rows.map(x=>({start:x.start,end:x.end,text:x.text}));
+ STUDIO.captionLanguage=d.language||voiceMasterLanguage(script);
+ STUDIO.captionRangeKey=captionKey();
+ q('subtitleText').value=rows.map(x=>x.text).join('\n');
+ syncDetectedLanguageUi(STUDIO.captionLanguage);
+ renderCaptionTimeline();renderVoiceTimeline();markVoiceCoverage(true,rows.length,100);
+ return rows
+}
+async function runAnimationFirstVoice(autoPreview=true){
+ const source=String(q('narrationText')?.value||'').trim(),mode=q('aiVoiceMode')?.value||'ai_male';
+ if(!STUDIO.file)throw new Error('请先导入已经完成的动画视频');
+ if(!source)throw new Error('请先填写完整解说稿');
+ if(mode==='none'||mode==='recorded')throw new Error('请选择AI男声、AI女声或克隆声音');
+ if(mode==='clone'&&!STUDIO.cloneVoiceId)throw new Error('请先创建你的声音克隆');
+ await voiceApiReady();
+ if(!(STUDIO.cloudHealth||{}).aiVoice)throw new Error('当前云端AI Voice不可用');
+
+ const clip=Math.max(.5,Number(studioRange()[2])||0);
+ STUDIO.lockstepReady=false;STUDIO.lockstepSegments=[];renderLockstepPlan();
+ STUDIO.sourceNarration=source;STUDIO.clipLockedOriginal=source;STUDIO.clipLockedNarration=source;STUDIO.clipLockedTarget=clip;
+ STUDIO.meaningAudit=meaningAuditStrict(source,source);STUDIO.meaningCoverage=100;renderClipLockedScript();
+
+ let speed=Math.max(.88,Math.min(1.12,Number(q('aiVoiceSpeed')?.value)||1));
+ q('lockstepStatus').textContent='1/3 · 动画已锁定 '+clip.toFixed(2)+'秒 · 正在整稿一次生成…';
+ let result=await requestOneShotVoice(source,mode,speed);
+
+ // Animation is master: only one natural speed correction is allowed. Never rewrite or split the script here.
+ if(result.duration>clip+.18){
+  const needed=speed*(result.duration/Math.max(.5,clip-.12));
+  const next=Math.min(1.20,Math.max(speed,needed));
+  if(next>speed+.006){
+   speed=next;
+   q('lockstepStatus').textContent='2/3 · 整稿超出动画 · 仅调整整体语速到 '+speed.toFixed(2)+'× 后重新一次生成…';
+   result=await requestOneShotVoice(source,mode,speed)
+  }
+ }
+ if(result.duration>clip+.18)throw new Error('整稿配音 '+result.duration.toFixed(1)+'秒，动画只有 '+clip.toFixed(1)+'秒。请缩短解说稿，不再切句或删原意。');
+
+ // If speech is clearly shorter, slow the entire one-shot once; otherwise keep a natural silent tail.
+ if(result.duration<clip-2.0&&speed>.88){
+  const slower=Math.max(.88,speed*(result.duration/Math.max(1,clip-.45)));
+  if(slower<speed-.012){
+   q('lockstepStatus').textContent='2/3 · 配音偏短 · 整体自然放慢到 '+slower.toFixed(2)+'× 后重新一次生成…';
+   const slowResult=await requestOneShotVoice(source,mode,slower);
+   if(slowResult.duration<=clip+.18){speed=slower;result=slowResult}
+  }
+ }
+
+ q('lockstepStatus').textContent='3/3 · 一次性声音完成 · 正在锁定动画总时长…';
+ const exact=await padVoiceBlobToDuration(result.blob,clip);
+ if(exact.duration>clip+.18)throw new Error('最终声音超过动画时长');
+
+ if(STUDIO.lockstepVoiceUrl)URL.revokeObjectURL(STUDIO.lockstepVoiceUrl);
+ if(STUDIO.generatedVoiceUrl&&STUDIO.generatedVoiceUrl!==STUDIO.lockstepVoiceUrl)URL.revokeObjectURL(STUDIO.generatedVoiceUrl);
+ STUDIO.lockstepVoiceBlob=exact.blob;STUDIO.lockstepVoiceUrl=URL.createObjectURL(exact.blob);
+ STUDIO.lockstepDuration=clip;STUDIO.lockstepReady=true;
+ STUDIO.generatedVoiceBlob=exact.blob;STUDIO.generatedVoiceUrl=STUDIO.lockstepVoiceUrl;
+ STUDIO.generatedVoiceDuration=clip;STUDIO.generatedVoiceParts=1;
+ STUDIO.generatedVoiceKey=voiceGenerationKey(source,mode,speed);
+
+ const rows=await syncCaptionsFromFinalVoice(exact.blob,source,clip);
+ STUDIO.lockstepSegments=rows.map((x,i)=>({...x,index:i,sourceText:x.text,label:'FINAL VOICE → WHISPER 字幕',actualDuration:x.end-x.start,speed}));
+ renderClipLockedScript();renderLockstepPlan();
+ q('lockstepStatus').textContent='完成 · ANIMATION FIRST · 整稿一次配音 · '+rows.length+'条字幕来自最终声音 · 动画 '+clip.toFixed(2)+'秒不变';
+ setVoiceState('ANIMATION FIRST · ONE-SHOT · 字幕已跟最终声音锁定');
+ if(autoPreview){const a=q('aiVoicePreview');a.src=STUDIO.lockstepVoiceUrl;a.classList.add('show');await a.play().catch(()=>{})}
+ return{blob:exact.blob,duration:clip,text:source,speed,segments:rows}
+}
+
 async function runSimpleSyncVoice(autoPreview=true){
  const source=String(q('narrationText')?.value||'').trim(),mode=q('aiVoiceMode')?.value||'ai_male';
  if(!STUDIO.file)throw new Error('请先导入视频');
@@ -2417,9 +2535,9 @@ async function previewAIVoice(){
  }
  if(mode==='none'){studioStatus('当前选择“不加解说”。','warn');return}
  try{
-  if(!STUDIO.lockstepReady||STUDIO.sourceNarration!==text){if((q('aiVisualSync')?.value||'off')==='auto')await runLockstepVoice(false);else await runSimpleSyncVoice(false)}
+  if(!STUDIO.lockstepReady||STUDIO.sourceNarration!==text)await runAnimationFirstVoice(false)
   const a=q('aiVoicePreview');a.src=STUDIO.lockstepVoiceUrl||STUDIO.generatedVoiceUrl;a.classList.add('show');await a.play().catch(()=>{});
-  setVoiceState('SIMPLE SYNC · 完整配音 · 原视频不动 · '+STUDIO.lockstepDuration.toFixed(2)+'秒')
+  setVoiceState('ANIMATION FIRST · ONE-SHOT · 最终声音 + 字幕同一时间轴 · '+STUDIO.lockstepDuration.toFixed(2)+'秒')
  }catch(e){
   setVoiceState('一键适配失败：'+(e.message||e));
   studioStatus('SIMPLE SYNC：'+(e.message||e),'warn')
@@ -2449,7 +2567,9 @@ async function cloneMyVoice(){
  }catch(e){setVoiceState('声音克隆失败：'+(e.message||e));studioStatus('声音克隆失败：'+(e.message||e),'warn')}
 }
 function cloudRenderCaptions(){
- return captionTimeline().map(c=>({start:Number(c.start)||0,end:Number(c.end)||0,text:String(c.text||'')}));
+ const master=(STUDIO.voiceTimeline||[]).filter(x=>x.basis==='voice_master');
+ const rows=master.length?master:captionTimeline();
+ return rows.map(c=>({start:Number(c.start)||0,end:Number(c.end)||0,text:String(c.text||'')}));
 }
 async function startCloudRender(recovering=false){
  if(!STUDIO.file){studioStatus('请先选择视频。','warn');return}
@@ -2505,16 +2625,11 @@ async function startCloudRender(recovering=false){
    }else if(mode==='ai_male'||mode==='ai_female'||mode==='clone'){
      const sourceNow=String(q('narrationText')?.value||'').trim();
      if(!STUDIO.lockstepReady||STUDIO.sourceNarration!==sourceNow){
-       if((q('aiVisualSync')?.value||'off')==='auto'){
-         setCloudRenderStatus('高级画面同步 · 正在分析场景并生成配音…');
-         await runLockstepVoice(false)
-       }else{
-         setCloudRenderStatus('SIMPLE SYNC · 正在生成完整配音并锁定总时长…');
-         await runSimpleSyncVoice(false)
-       }
+       setCloudRenderStatus('ANIMATION FIRST · 正在整稿一次配音并从最终声音生成字幕…');
+       await runAnimationFirstVoice(false)
      }
-     submitMode='recorded';submitVoiceBlob=STUDIO.lockstepVoiceBlob;submitVoiceName='sagi-simple-sync-v23.wav';submitSync='clip_locked';submitDuration=duration;submitMeaningFirst=true;
-     setCloudRenderStatus('SIMPLE SYNC 已完成 · 完整配音 '+STUDIO.lockstepDuration.toFixed(2)+'秒 = 视频 '+duration.toFixed(2)+'秒 · 正在出片')
+     submitMode='recorded';submitVoiceBlob=STUDIO.lockstepVoiceBlob;submitVoiceName='sagi-animation-first-v24.wav';submitSync='clip_locked';submitDuration=duration;submitMeaningFirst=true;
+     setCloudRenderStatus('ANIMATION FIRST 已完成 · 最终声音与字幕同源 · '+STUDIO.lockstepDuration.toFixed(2)+'秒 = 动画 '+duration.toFixed(2)+'秒 · 正在出片')
    }
 
    const selectedVisualMode=q('aiVisualSync')?.value||'off';
@@ -2540,7 +2655,7 @@ async function startCloudRender(recovering=false){
    fd.append('quality',q('exportQuality')?.value||'fast');
    fd.append('captions',JSON.stringify(cloudRenderCaptions()));
    fd.append('narration',submitMeaningFirst?String(STUDIO.clipLockedNarration||''):String(q('narrationText')?.value||''));
-   const hasLockedTimeline=STUDIO.generatedVoiceDuration>0&&(STUDIO.voiceTimeline||[]).some(x=>x.basis==='simple_sync'||x.basis==='clip_locked'||x.basis==='lockstep'||x.basis==='scene_lock_v2');
+   const hasLockedTimeline=STUDIO.generatedVoiceDuration>0&&(STUDIO.voiceTimeline||[]).some(x=>x.basis==='voice_master'||x.basis==='simple_sync'||x.basis==='clip_locked'||x.basis==='lockstep'||x.basis==='scene_lock_v2');
    const voiceTimeline=hasLockedTimeline?STUDIO.voiceTimeline:buildVoiceTimeline(true);
    fd.append('voice_timeline',JSON.stringify(voiceTimeline));
    fd.append('voice_mode',submitMode);
@@ -3681,7 +3796,8 @@ function srtTime(sec){
  return [h,m,s].map((v,i)=>String(v).padStart(2,'0')).join(':')+','+String(x).padStart(3,'0')
 }
 function downloadSrt(){
- const caps=captionTimeline();
+ const master=(STUDIO.voiceTimeline||[]).filter(x=>x.basis==='voice_master');
+ const caps=master.length?master:captionTimeline();
  if(!caps.length){studioStatus('还没有可导出的字幕时间轴。','warn');return}
  const body=caps.map((c,i)=>(i+1)+'\n'+srtTime(c.start)+' --> '+srtTime(c.end)+'\n'+c.text+'\n').join('\n');
  const blob=new Blob(['\ufeff'+body],{type:'text/plain;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='SAGI_AI_CAPTION.srt';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500);toast('SRT 已导出')
@@ -3828,7 +3944,8 @@ function canvasSubtitlePng(text,w,h){
  return new Promise(resolve=>c.toBlob(resolve,'image/png'))
 }
 async function buildSubtitleInputs(ffmpeg,args,duration,w,h,trimStart=0){
- const timeline=captionTimeline().filter(c=>Number(c.end)>trimStart&&Number(c.start)<trimStart+duration&&String(c.text||'').trim());
+ const voiceMaster=(STUDIO.voiceTimeline||[]).filter(x=>x.basis==='voice_master');
+ const timeline=(voiceMaster.length?voiceMaster:captionTimeline()).filter(c=>Number(c.end)>trimStart&&Number(c.start)<trimStart+duration&&String(c.text||'').trim());
  if(!timeline.length||q('burnSubtitle').value!=='yes')return{args,filters:[],last:'vbase',count:0};
  // iPhone 上无限循环 PNG 输入会显著增加内存和编码负担。使用低帧率静态图片并限定时长。
  const filters=[];let last='vbase';
@@ -3933,16 +4050,14 @@ function updateSimpleSyncUi(){
  const advanced=(q('aiVisualSync')?.value||'off')==='auto';
  const box=q('advancedSceneBox');if(box)box.style.display=advanced?'':'none';
  const visual=q('visualSyncStatus');
- if(visual&&!advanced)visual.textContent='SIMPLE SYNC：保持原视频，不分析场景。';
+ if(visual&&!advanced)visual.textContent='ANIMATION FIRST：动画保持不动，声音和字幕跟随最终音轨。';
 }
 
 q('lockstepVoiceBtn').onclick=async()=>{
- const btn=q('lockstepVoiceBtn');btn.disabled=true;btn.textContent='正在生成完整配音…';
- try{
-   if((q('aiVisualSync')?.value||'off')==='auto'){await runLockstepVoice(true);toast('高级画面同步完成')}
-   else{await runSimpleSyncVoice(true);toast('SIMPLE SYNC 完成')}
- }catch(e){setVoiceState('一键适配失败：'+(e.message||e));studioStatus('SIMPLE SYNC：'+(e.message||e),'warn')}
- finally{btn.disabled=false;btn.textContent='一键适配视频配音'}
+ const btn=q('lockstepVoiceBtn');btn.disabled=true;btn.textContent='整稿一次配音中…';
+ try{await runAnimationFirstVoice(true);toast('ANIMATION FIRST · 声音与字幕已锁定')}
+ catch(e){setVoiceState('ANIMATION FIRST 失败：'+(e.message||e));studioStatus('ANIMATION FIRST：'+(e.message||e),'warn')}
+ finally{btn.disabled=false;btn.textContent='动画锁定 → 一次配音 → 同步字幕'}
 };
 q('aiVoicePreviewBtn').onclick=previewAIVoice;
 q('cloneVoiceBtn').onclick=cloneMyVoice;
