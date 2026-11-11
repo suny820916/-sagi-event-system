@@ -57,6 +57,10 @@ SAGI_LOCAL_AI_MODEL = (os.getenv("SAGI_LOCAL_AI_MODEL") or "gpt-6-luna").strip()
 SAGI_LOCAL_AI_TIMEOUT = max(10, min(60, int(os.getenv("SAGI_LOCAL_AI_TIMEOUT") or "35")))
 SAGI_LOCAL_AI_RATE_LIMIT_PER_HOUR = max(10, min(300, int(os.getenv("SAGI_LOCAL_AI_RATE_LIMIT_PER_HOUR") or "60")))
 SAGI_LOCAL_VISUAL_MAX_MB = max(2, min(20, int(os.getenv("SAGI_LOCAL_VISUAL_MAX_MB") or "8")))
+SAGI_LOCAL_IMAGE_MODEL = (os.getenv("SAGI_LOCAL_IMAGE_MODEL") or "gpt-image-2.6-flare").strip()
+SAGI_LOCAL_IMAGE_QUALITY = (os.getenv("SAGI_LOCAL_IMAGE_QUALITY") or "medium").strip().lower()
+if SAGI_LOCAL_IMAGE_QUALITY not in ("low", "medium", "high"):
+    SAGI_LOCAL_IMAGE_QUALITY = "medium"
 local_ai_hits = {}
 local_ai_rate_lock = Lock()
 FOOTBALL_CACHE_SECONDS = max(30, min(900, int(os.getenv("SAGI_FOOTBALL_CACHE_SECONDS") or "180")))
@@ -2727,6 +2731,10 @@ def health():
         "localAIModel": SAGI_LOCAL_AI_MODEL if OPENAI_API_KEY else "",
         "localAIRateLimitPerHour": SAGI_LOCAL_AI_RATE_LIMIT_PER_HOUR,
         "localVisualMaxMB": SAGI_LOCAL_VISUAL_MAX_MB,
+        "localPoster": True,
+        "localPosterVersion": "1.2.1",
+        "localImageModel": SAGI_LOCAL_IMAGE_MODEL if OPENAI_API_KEY else "",
+        "localImageQuality": SAGI_LOCAL_IMAGE_QUALITY,
         "configured": bool(SERVER_SECRET),
     })
 
@@ -3140,6 +3148,156 @@ def sagi_local_ai_visual():
             "ok": False,
             "error": "AI visual generation failed",
             "errorCode": "local_visual_failed",
+            "detail": str(e)[:240],
+            "fallback": True
+        }), 502
+
+
+
+@app.post("/api/local-ai/poster")
+def sagi_local_ai_poster():
+    if not _local_ai_rate_allowed():
+        return jsonify({"ok": False, "error": "AI hourly limit reached", "errorCode": "local_ai_rate_limit"}), 429
+    if not OPENAI_API_KEY:
+        return jsonify({
+            "ok": False,
+            "error": "AI image provider is not configured",
+            "errorCode": "local_ai_unconfigured",
+            "fallback": True
+        }), 503
+
+    upload = request.files.get("image")
+    if not upload:
+        return jsonify({"ok": False, "error": "image is required"}), 400
+
+    mime = str(upload.mimetype or "").lower().split(";")[0].strip()
+    allowed = {"image/jpeg", "image/png", "image/webp"}
+    if mime not in allowed:
+        return jsonify({
+            "ok": False,
+            "error": "poster source must be jpg, png or webp",
+            "errorCode": "local_poster_unsupported_type",
+            "supported": sorted(allowed)
+        }), 415
+
+    raw = upload.read(SAGI_LOCAL_VISUAL_MAX_MB * 1024 * 1024 + 1)
+    if not raw:
+        return jsonify({"ok": False, "error": "empty image"}), 400
+    if len(raw) > SAGI_LOCAL_VISUAL_MAX_MB * 1024 * 1024:
+        return jsonify({
+            "ok": False,
+            "error": f"image exceeds {SAGI_LOCAL_VISUAL_MAX_MB}MB",
+            "errorCode": "local_poster_too_large"
+        }), 413
+
+    brief = str(request.form.get("brief") or "").strip()[:1200]
+    profile_raw = str(request.form.get("profile") or "{}")
+    pack_raw = str(request.form.get("pack") or "{}")
+    try:
+        profile = json.loads(profile_raw)
+        if not isinstance(profile, dict):
+            profile = {}
+    except Exception:
+        profile = {}
+    try:
+        visual_pack = json.loads(pack_raw)
+        if not isinstance(visual_pack, dict):
+            visual_pack = {}
+    except Exception:
+        visual_pack = {}
+
+    merchant = str(profile.get("name") or "本地商家")[:120]
+    industry = str(profile.get("industry") or "本地生活")[:120]
+    product = str(profile.get("product") or "")[:300]
+    brand_tone = str(profile.get("brandTone") or "高级、真实、克制")[:300]
+    subject = str(visual_pack.get("subject") or "")[:300]
+    scene = str(visual_pack.get("scene") or "")[:300]
+
+    prompt = f"""把这张真实商家照片编辑成一张高级、可信、可直接用于本地商业宣传的广告主视觉底图。
+商家：{merchant}
+行业：{industry}
+主打产品/服务：{product}
+宣传目标：{brief}
+品牌调性：{brand_tone}
+已识别主体：{subject}
+场景：{scene}
+
+必须遵守：
+- 保留原图核心商品、人物、门店或服务主体的真实外观，不改变品牌标识、产品结构、人物身份特征。
+- 可以改善光线、背景层次、景深、色彩、桌面/环境杂乱，让画面更像真实品牌广告摄影。
+- 不要凭空增加不存在的商品、菜品、价格、折扣、奖项、评价、Logo、二维码或品牌名称。
+- 不要在图片中生成任何文字、数字、价格、Logo或水印；文字由SAGI程序后续精确叠加。
+- 构图为“通用商业主视觉”：主体尽量居中或略偏中心，四周尤其顶部和底部保留足够干净空间，方便同时裁成3:4海报和9:16短视频封面。
+- 画面要高级、真实、克制，不要廉价促销贴纸，不要过度HDR，不要虚假的奢华场景。
+- 优先像真实商业摄影/品牌广告，而不是AI插画。
+"""
+    data_url = "data:" + mime + ";base64," + base64.b64encode(raw).decode("ascii")
+    body = {
+        "images": [{"image_url": data_url}],
+        "prompt": prompt,
+        "model": SAGI_LOCAL_IMAGE_MODEL,
+        "quality": SAGI_LOCAL_IMAGE_QUALITY,
+        "size": "1024x1536",
+        "output_format": "jpeg",
+        "output_compression": 86,
+        "background": "opaque",
+        "complexity": "medium",
+        "n": 1
+    }
+
+    started = time.time()
+    try:
+        r = requests.post(
+            OPENAI_BASE_URL + "/v1/images/edits",
+            headers={
+                "Authorization": "Bearer " + OPENAI_API_KEY,
+                "Content-Type": "application/json",
+                "User-Agent": "SAGI-AI-LOCAL-POSTER/1.2.1"
+            },
+            json=body,
+            timeout=(10, max(60, SAGI_LOCAL_AI_TIMEOUT * 2))
+        )
+        if r.status_code >= 400:
+            return jsonify({
+                "ok": False,
+                "error": "AI poster request failed",
+                "errorCode": "local_poster_provider_error",
+                "status": r.status_code,
+                "detail": (r.text or "")[:600],
+                "fallback": True
+            }), 502
+        payload = r.json()
+        items = payload.get("data") or []
+        b64 = str(items[0].get("b64_json") or "") if items and isinstance(items[0], dict) else ""
+        if not b64:
+            return jsonify({
+                "ok": False,
+                "error": "AI poster returned no image",
+                "errorCode": "local_poster_empty",
+                "fallback": True
+            }), 502
+        return jsonify({
+            "ok": True,
+            "version": "1.2.1",
+            "engine": "openai-image-edit",
+            "model": SAGI_LOCAL_IMAGE_MODEL,
+            "quality": SAGI_LOCAL_IMAGE_QUALITY,
+            "mime": "image/jpeg",
+            "imageBase64": b64,
+            "latencyMs": int((time.time() - started) * 1000)
+        })
+    except requests.Timeout:
+        return jsonify({
+            "ok": False,
+            "error": "AI poster request timed out",
+            "errorCode": "local_poster_timeout",
+            "fallback": True
+        }), 504
+    except Exception as e:
+        return jsonify({
+            "ok": False,
+            "error": "AI poster generation failed",
+            "errorCode": "local_poster_failed",
             "detail": str(e)[:240],
             "fallback": True
         }), 502
