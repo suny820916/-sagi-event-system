@@ -227,6 +227,18 @@ jobs:
           assert health["localAI"] is True
           assert health["localAIVersion"] == "1.1"
           assert isinstance(health["localAIConfigured"], bool)
+          # LOCAL AI must fail safely when no provider secret exists in CI.
+          r = c.post("/api/local-ai/generate", json={
+              "brief":"周末羊排第二份半价，晚上六点开始",
+              "goal":"到店消费",
+              "tone":"高级直接",
+              "profile":{"name":"SAGI TEST","industry":"餐饮 / 烧烤"}
+          })
+          assert r.status_code == 503, (r.status_code, r.get_data(as_text=True))
+          local_ai_fallback = r.get_json()
+          assert local_ai_fallback["errorCode"] == "local_ai_unconfigured"
+          assert local_ai_fallback["fallback"] is True
+          print("LOCAL AI unconfigured fallback smoke OK")
           assert set(health["footballCompetitions"]) >= {"PL","PD","BL1","SA","FL1","CL"}
           # MATCH DATA HUB V2: Chinese aliases must resolve exactly and a
           # single structured source must remain a candidate.
@@ -597,6 +609,25 @@ jobs:
           print("frontend wiring OK")
           PY
           node --check /tmp/sagi-down.js
+
+      - name: SAGI AI LOCAL V1.1 frontend smoke
+        run: |
+          python - <<'PY'
+          import re, pathlib
+          p=pathlib.Path("sagi-local/index.html")
+          s=p.read_text(encoding="utf-8")
+          assert "V1.1 · AI ENGINE" in s
+          assert "/api/local-ai/generate" in s
+          assert "localAIConfigured" in s
+          assert "LOCAL FALLBACK" in s
+          assert "3个创意方向" in s
+          assert "内容质量评分" in s
+          scripts=re.findall(r"<script>([\s\S]*?)</script>",s)
+          assert scripts, "SAGI LOCAL inline script missing"
+          pathlib.Path("/tmp/sagi-local-v11.js").write_text("\n".join(scripts),encoding="utf-8")
+          print("SAGI AI LOCAL V1.1 wiring OK")
+          PY
+          node --check /tmp/sagi-local-v11.js
 
       - name: Headless browser full-page smoke
         run: |
