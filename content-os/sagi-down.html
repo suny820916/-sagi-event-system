@@ -1496,12 +1496,12 @@ function voiceTimingHint(){
  if(!text){el.textContent='输入解说稿后，会自动估算配音时长并和当前视频片段比较。';STUDIO.voiceTimeline=[];renderVoiceTimeline();return}
  const chars=(text.match(/[\u3400-\u9fffA-Za-z0-9]/g)||[]).length,marks=(text.match(/[，。！？；：,.!?;:]/g)||[]).length;
  const speed=Math.max(.75,Number(q('aiVoiceSpeed')?.value)||1),estimate=Math.max(1,chars/(4.25*speed)+marks*.08);
- const mode=q('aiVoiceMode')?.value||'ai_male',actualKey=voiceGenerationKey(text,mode),actual=(STUDIO.generatedVoiceKey===actualKey&&STUDIO.generatedVoiceDuration>0)?STUDIO.generatedVoiceDuration:0;
+ const mode=q('aiVoiceMode')?.value||'ai_male',actualKey=voiceGenerationKey(text,mode),clipLocked=(STUDIO.clipLockedNarration===text&&STUDIO.clipLockedTarget>0),actual=clipLocked?STUDIO.clipLockedTarget:((STUDIO.generatedVoiceKey===actualKey&&STUDIO.generatedVoiceDuration>0)?STUDIO.generatedVoiceDuration:0);
  let clip=0;try{clip=Number(studioRange()[2])||0}catch(e){}
  let verdict='';
  if(clip>0){const r=estimate/clip;if(r>1.03)verdict=' · <b>稿件偏长</b>，生成时会按视频内容自动压缩到 '+clip.toFixed(1)+' 秒';else if(r<.72)verdict=' · <b>稿件偏短</b>，音轨仍锁定视频时长，末尾保留自然留白';else verdict=' · <b>长度合适</b>，最终音轨锁定 '+clip.toFixed(1)+' 秒'}
  el.innerHTML='约 <b>'+chars+' 字</b> · '+(actual?('实际配音 <b>'+actual.toFixed(1)+'秒</b>'):('预计配音 <b>'+estimate.toFixed(1)+'秒</b>'))+(clip>0?' · 当前片段 <b>'+clip.toFixed(1)+'秒</b>':'')+verdict;
- if(actual)rebuildVoiceTimelineToDuration(actual,'actual');else buildVoiceTimeline(true)
+ if(actual)rebuildVoiceTimelineToDuration(actual,clipLocked?'clip_locked':'actual');else buildVoiceTimeline(true)
 }
 async function voiceApiReady(){
  const ready=await wakeCaptionCloud();
