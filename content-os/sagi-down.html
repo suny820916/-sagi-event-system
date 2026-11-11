@@ -1549,7 +1549,12 @@ const NARRATION_CONDENSE_MAP=[
  [/并不是说/g,'并非'],[/并不意味着/g,'不代表'],[/主要的目的就是/g,'目的就是'],
  [/核心的逻辑就是/g,'核心是'],[/最核心的逻辑是/g,'核心是'],[/更重要的是/g,'更重要的是'],
  [/能够/g,'能'],[/可以/g,'可'],[/需要/g,'需'],[/进行/g,''],[/以及/g,'和'],
- [/之后/g,'后'],[/以前/g,'前'],[/的时候/g,'时'],[/的情况下/g,'时'],[/的过程/g,'过程']
+ [/之后/g,'后'],[/以前/g,'前'],[/的时候/g,'时'],[/的情况下/g,'时'],[/的过程/g,'过程'],
+ [/三名中场/g,'三中场'],[/两名前腰/g,'双前腰'],[/中场球员/g,'中场'],
+ [/整体的向前推进/g,'整体前压'],[/整体向前推进/g,'整体前压'],
+ [/边路宽度会相对不足/g,'边路宽度不足'],[/边路宽度相对不足/g,'边路宽度不足'],
+ [/中路控制能力强/g,'中路控制强'],[/边路很容易暴露空间/g,'边路易暴露空间'],
+ [/提供支持/g,'支援'],[/形成局部人数优势/g,'形成人数优势']
 ];
 function normalizeNarrationForMeaning(text){
  let s=String(text||'').trim().replace(/\s+/g,'');
@@ -1558,6 +1563,7 @@ function normalizeNarrationForMeaning(text){
   .replace(/^(其实|事实上|可以看到|我们可以看到|你会发现)[，,：:\s]*/,'')
   .replace(/(其实|非常|本质上|相对来说|一定程度上|从这个角度来看)/g,'')
   .replace(/[，,]{2,}/g,'，')
+  .replace(/^[，,；;：:]+/,'')
   .replace(/。{2,}/g,'。')
 }
 function meaningRelationFlags(text){
@@ -1615,7 +1621,7 @@ function compressLogicUnit(text,budget){
  let s=preserveRelationSkeleton(text);if(narrationCharCount(s)<=budget)return s;
  const clauses=s.split(/(?<=[，；：])/).map(x=>x.trim()).filter(Boolean);
  if(clauses.length<=1)return s; // Never hard-cut a single proposition.
- const relational=/因为|所以|因此|但是|但|而|如果|当|只有|同时|意味着|一旦|进攻|防守|优点|缺点|问题|结果|目的|核心|关键/;
+ const relational=/因为|所以|因此|但是|但|而|如果|当|只有|同时|意味着|一旦|进攻|防守|优点|缺点|问题|结果|目的|核心|关键|中场|边路|边后卫|后腰|前腰|横移|前压|回撤|压迫|逼抢|推进|转换|反击|传球|站位|空间|4321|433|圣诞树/;
  const must=clauses.map((x,i)=>({x,i,must:relational.test(x)||i===0||i===clauses.length-1,chars:narrationCharCount(x)}));
  let keep=must.filter(x=>x.must);
  let total=keep.reduce((n,x)=>n+x.chars,0);
