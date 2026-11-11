@@ -33,7 +33,7 @@ jobs:
       - name: Python syntax
         working-directory: sagi-local-china
         run: |
-          python -m py_compile server/app.py server/db.py server/auth.py server/ai.py
+          python -m py_compile server/app.py server/db.py server/auth.py server/ai.py server/admin.py server/billing.py server/storage.py server/backup.py
 
       - name: Browser JavaScript syntax
         working-directory: sagi-local-china
@@ -41,6 +41,7 @@ jobs:
           node --check web/api.js
           node --check web/poster.js
           node --check web/app.js
+          node --check web/admin.js
           ! grep -R "is916?\\." web/poster.js
 
       - name: Real backend API smoke
@@ -51,6 +52,8 @@ jobs:
           AI_BASE_URL: ''
           AI_API_KEY: ''
           AI_MODEL: ''
+          SAGI_ADMIN_KEY: ci-admin-secret
+          STORAGE_BACKEND: local
         run: |
           rm -rf /tmp/sagi-local-china-test
           python - <<'PY'
@@ -62,10 +65,12 @@ jobs:
           h=c.get('/health')
           assert h.status_code==200, h.text
           health=h.json()
-          assert health['version']=='1.4.0'
+          assert health['version']=='1.4.1'
           assert health['chinaDeploy'] is True
           assert health['basePosterWorksWithoutAI'] is True
           assert health['aiConfigured'] is False
+          assert health['quotaEngine'] is True
+          assert health['storageBackend']=='local'
 
           r=c.post('/api/auth/register',json={'username':'sagi_test','password':'12345678'})
           assert r.status_code==200, r.text
@@ -74,6 +79,12 @@ jobs:
 
           r=c.get('/api/me',headers=headers)
           assert r.status_code==200, r.text
+
+          r=c.get('/api/account/quota',headers=headers)
+          assert r.status_code==200, r.text
+          quota=r.json()['quota']
+          assert quota['subscription']['plan_code']=='free'
+          assert quota['subscription']['limits']['monthly_projects']==10
 
           profile={
             'merchant_name':'SAGI测试烧烤',
@@ -118,8 +129,37 @@ jobs:
           r=c.get('/api/projects',headers=headers)
           assert r.status_code==200, r.text
           assert len(r.json()['projects'])==1
+
+          admin_headers={'X-Admin-Key':'ci-admin-secret'}
+          r=c.get('/api/admin/users',headers=admin_headers)
+          assert r.status_code==200, r.text
+          assert len(r.json()['users'])==1
+          uid=r.json()['users'][0]['id']
+
+          r=c.put(
+            f'/api/admin/users/{uid}/plan',
+            headers=admin_headers,
+            json={'plan_code':'pro','status':'active','expires_at':None}
+          )
+          assert r.status_code==200, r.text
+          assert r.json()['subscription']['plan_code']=='pro'
+
+          r=c.get('/api/account/quota',headers=headers)
+          assert r.status_code==200, r.text
+          assert r.json()['quota']['subscription']['plan_code']=='pro'
+          assert r.json()['quota']['subscription']['limits']['monthly_projects']==200
           print('SAGI LOCAL CHINA API SMOKE OK')
           PY
+
+      - name: Backup smoke
+        working-directory: sagi-local-china
+        env:
+          SAGI_DATA_DIR: /tmp/sagi-local-china-test
+          BACKUP_RETENTION_DAYS: 14
+        run: |
+          python -m server.backup
+          test -n "$(find /tmp/sagi-local-china-test/backups -name 'sagi-local-china-*.tar.gz' -print -quit)"
+          echo "SAGI LOCAL CHINA BACKUP OK"
 
       - name: Real browser poster smoke
         working-directory: sagi-local-china
@@ -150,7 +190,24 @@ jobs:
         run: bash -n deploy.sh
 
       - name: Docker build
-        run: docker build -f sagi-local-china/Dockerfile -t sagi-local-china:v1.4 .
+        run: docker build -f sagi-local-china/Dockerfile -t sagi-local-china:v1.4.1 .
+
+      - name: Docker compose config
+        working-directory: sagi-local-china
+        run: |
+          cp .env.example .env
+          sed -i 's/change-this-to-a-long-random-secret/ci-long-secret/' .env
+          sed -i 's/change-this-admin-key/ci-admin-key/' .env
+          PUBLIC_DOMAIN=localhost docker compose config >/tmp/sagi-china-compose.yml
+          grep -q 'sagi-local-china-backup' /tmp/sagi-china-compose.yml
+          grep -q 'sagi-local-china-caddy' /tmp/sagi-china-compose.yml
+
+      - name: Caddy config
+        working-directory: sagi-local-china
+        run: |
+          docker run --rm -e PUBLIC_DOMAIN=localhost \
+            -v "$PWD/Caddyfile:/etc/caddy/Caddyfile:ro" \
+            caddy:2.9-alpine caddy validate --config /etc/caddy/Caddyfile
 
       - name: Verify China production isolation
         run: |
