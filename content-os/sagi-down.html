@@ -5318,7 +5318,17 @@ if(q('captionSpeed'))q('captionSpeed').value='fast';
 if(q('captionRange'))q('captionRange').value='trim';
 setTimeout(async()=>{await wakeCaptionCloud();refreshAIVoiceStatus(false)},180);
 
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sagi-down-sw.js?v=3921',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})}
+if('serviceWorker' in navigator){
+ let swReloaded=false;
+ navigator.serviceWorker.addEventListener('controllerchange',()=>{
+  if(swReloaded)return;swReloaded=true;
+  try{
+   const key='sagi_sw_reload_v3925';
+   if(sessionStorage.getItem(key)!=='1'){sessionStorage.setItem(key,'1');location.reload()}
+  }catch(e){location.reload()}
+ });
+ navigator.serviceWorker.register('./sagi-down-sw.js?v=3925',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})
+}
 })();
 </script>
 </body>
