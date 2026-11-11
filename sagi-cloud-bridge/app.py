@@ -33,7 +33,7 @@ app = Flask(__name__)
 ALLOWED_ORIGIN = (os.getenv("SAGI_ALLOWED_ORIGIN") or "https://suny820916.github.io").rstrip("/")
 SERVER_SECRET = (os.getenv("SAGI_SERVER_SECRET") or os.getenv("SAGI_BRIDGE_TOKEN") or "").strip()
 PORT = int(os.getenv("PORT") or "10000")
-DEPLOY_REVISION = "2026-11-12-match-intelligence-selftest-v101"
+DEPLOY_REVISION = "2026-11-12-match-intelligence-pathload-v102"
 APP_VERSION = "3.9.4"
 MAX_FILE_MB = int(os.getenv("SAGI_MAX_FILE_MB") or "300")
 JOB_TTL_MIN = int(os.getenv("SAGI_JOB_TTL_MIN") or "30")
@@ -126,8 +126,24 @@ heavy_slot = Lock()
 
 MATCH_INTELLIGENCE_LITE = False
 MATCH_INTELLIGENCE_LITE_ERROR = ""
+MATCH_INTELLIGENCE_MODULE_PATH = Path(__file__).resolve().with_name("match_intelligence_lite.py")
 try:
-    from match_intelligence_lite import create_match_intelligence_blueprint
+    import importlib.util as _importlib_util
+
+    if not MATCH_INTELLIGENCE_MODULE_PATH.exists():
+        raise FileNotFoundError(f"missing module file: {MATCH_INTELLIGENCE_MODULE_PATH}")
+
+    _spec = _importlib_util.spec_from_file_location(
+        "sagi_match_intelligence_lite_runtime",
+        str(MATCH_INTELLIGENCE_MODULE_PATH),
+    )
+    if _spec is None or _spec.loader is None:
+        raise ImportError(f"cannot create module spec: {MATCH_INTELLIGENCE_MODULE_PATH}")
+
+    _match_module = _importlib_util.module_from_spec(_spec)
+    _spec.loader.exec_module(_match_module)
+    create_match_intelligence_blueprint = _match_module.create_match_intelligence_blueprint
+
     app.register_blueprint(
         create_match_intelligence_blueprint(
             heavy_slot=heavy_slot,
@@ -2769,6 +2785,8 @@ def match_intelligence_diagnostics():
         "moduleError": MATCH_INTELLIGENCE_LITE_ERROR,
         "moduleFound": bool(spec),
         "moduleOrigin": getattr(spec, "origin", "") if spec else "",
+        "modulePath": str(MATCH_INTELLIGENCE_MODULE_PATH),
+        "moduleFileExists": MATCH_INTELLIGENCE_MODULE_PATH.exists(),
         "pythonVersion": platform.python_version(),
         "dependencies": {
             "numpy": dep("numpy"),
