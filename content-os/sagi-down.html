@@ -800,8 +800,8 @@ Unbelievable finish."></textarea>
       </div>
       <div class="voicePanel">
         <div class="sectionHead">
-          <div><div class="label">VOICE DIRECTOR · AI配音导演</div><div class="mini">句级时间轴 · 完整性保护 · 音色 · 情绪 · 节奏</div></div>
-          <span class="badge">V1.2</span>
+          <div><div class="label">VOICE DIRECTOR · AI配音导演</div><div class="mini">AI VISUAL SYNC · 句级时间轴 · 完整性保护</div></div>
+          <span class="badge">V1.3</span>
         </div>
         <div class="voiceGrid">
           <label>配音方式
@@ -843,6 +843,13 @@ Unbelievable finish."></textarea>
           <label>时长同步
             <select id="aiVoiceSync"><option value="fit" selected>句级智能同步 · 完整优先（推荐）</option><option value="natural">自然语速 · 自动延长视频</option></select>
           </label>
+          <label>画面同步
+            <select id="aiVisualSync">
+              <option value="auto" selected>AI动态匹配 · 推荐</option>
+              <option value="stretch">全程均匀匹配</option>
+              <option value="off">保持原画面 · 超3秒禁止定格</option>
+            </select>
+          </label>
         </div>
         <div class="voiceTiming" id="voiceTiming">输入解说稿后，会自动估算配音时长并和当前视频片段比较。</div>
         <div class="voiceTimelineBox">
@@ -852,7 +859,8 @@ Unbelievable finish."></textarea>
             <button class="btn" id="voiceTimelineBtn" type="button">重建时间轴</button>
           </div>
           <div class="voiceTimelineList" id="voiceTimelineList"></div>
-          <div class="voiceTimelineHint">V1.2 逐句生成、逐句校验。任何一句失败都会阻止出片；配音超过视频时自动延长尾帧，绝不截掉最后一句。</div>
+          <div class="voiceTimelineHint">V1.3：配音完整后，以实际音轨为总时间轴；每句同步映射到原视频对应区间。画面不足超过3秒时，默认全程动态分配，不再用长尾帧定格。</div>
+          <div class="voiceTiming" id="visualSyncStatus">AI VISUAL SYNC：等待完整配音时长。</div>
         </div>
         <div class="voiceActions">
           <button class="btn blue" id="aiVoicePreviewBtn" type="button">试听当前声音</button>
@@ -1217,7 +1225,7 @@ const STUDIO={
  cloudCaptionToken:'',cloudCaptionReady:false,cloudCaptionWaking:false,cloudCaptionError:'',cloudHealthVersion:'',cloudVersion:'',cloudHealth:null,cloudOptionalMissing:[],
  captionVisibleCount:40,oneTapBusy:false,translationScore:0,recreatePlan:null,
  cloneVoiceId:localStorage.getItem('sagi_clone_voice_id')||'',aiVoiceReady:false,aiVoiceVoices:[],voicePreviewUrl:'',voiceTimeline:[],
- generatedVoiceBlob:null,generatedVoiceUrl:'',generatedVoiceDuration:0,generatedVoiceKey:'',generatedVoiceParts:0,
+ generatedVoiceBlob:null,generatedVoiceUrl:'',generatedVoiceDuration:0,generatedVoiceKey:'',generatedVoiceParts:0,visualSyncPlan:null,
  cloudRenderJobId:'',cloudRenderTimer:null,cloudResultUrl:'',cloudRenderRecoveries:0,cloudRenderRecovering:false,
  pendingTranslateZh:false,
  cloudHealth:null,cloudLastError:''
@@ -1289,6 +1297,34 @@ function rebuildVoiceTimelineToDuration(duration,source='actual'){
  renderVoiceTimeline();
  return STUDIO.voiceTimeline
 }
+function buildVisualSyncPlan(){
+ let clip=0;try{clip=Number(studioRange()[2])||0}catch(e){}
+ const mode=q('aiVisualSync')?.value||'auto',voice=Number(STUDIO.generatedVoiceDuration)||0;
+ const rows=STUDIO.voiceTimeline||[],finalDuration=voice>0?voice:(rows.length?Number(rows[rows.length-1].end)||0:0);
+ if(!clip||!finalDuration){STUDIO.visualSyncPlan=null;renderVisualSyncStatus();return null}
+ const gap=Math.max(0,finalDuration-clip),ratio=finalDuration/clip;
+ let strategy='native',label='原画面自然播放';
+ if(gap>3){
+  if(mode==='off'){strategy='blocked';label='画面不足超过3秒 · 已禁止长尾帧定格'}
+  else if(mode==='stretch'){strategy='stretch';label='全程均匀匹配'}
+  else{strategy='dynamic';label=ratio<=1.18?'轻量动态匹配':'AI动态节奏匹配'}
+ }
+ const plan={mode,strategy,label,clip,finalDuration,gap,ratio,maxHold:3};
+ rows.forEach(r=>{
+  r.visualStart=Math.max(0,Math.min(clip,(Number(r.start)||0)/finalDuration*clip));
+  r.visualEnd=Math.max(r.visualStart,Math.min(clip,(Number(r.end)||0)/finalDuration*clip))
+ });
+ STUDIO.visualSyncPlan=plan;renderVisualSyncStatus();return plan
+}
+function renderVisualSyncStatus(){
+ const e=q('visualSyncStatus'),p=STUDIO.visualSyncPlan;if(!e)return;
+ if(!p){e.textContent='AI VISUAL SYNC：等待完整配音时长。';return}
+ if(p.strategy==='blocked'){
+  e.innerHTML='<b>画面不足 '+p.gap.toFixed(1)+'秒</b> · 已禁止长尾帧定格。请选择“AI动态匹配”。';return
+ }
+ const speed=p.finalDuration>p.clip?(p.clip/p.finalDuration):1;
+ e.innerHTML='<b>'+p.label+'</b> · 原画面 '+p.clip.toFixed(1)+'秒 → 最终 '+p.finalDuration.toFixed(1)+'秒 · 视觉速度约 '+speed.toFixed(2)+'× · 尾帧保护≤3秒';
+}
 function renderVoiceTimeline(){
  const box=q('voiceTimelineList'),state=q('voiceCoverageState'),rows=STUDIO.voiceTimeline||[];
  if(state){
@@ -1298,7 +1334,8 @@ function renderVoiceTimeline(){
  }
  if(!box)return;
  if(!rows.length){box.innerHTML='<div class="voiceTimelineHint">输入解说词后自动拆分为句级时间轴。</div>';return}
- box.innerHTML=rows.map((r,i)=>'<div class="voiceSentenceRow"><time>'+voiceTimeLabel(r.start)+'–'+voiceTimeLabel(r.end)+'</time><span><em>#'+String(i+1).padStart(2,'0')+'</em>'+escapeHtml(r.text)+'</span></div>').join('')
+ buildVisualSyncPlan();
+ box.innerHTML=rows.map((r,i)=>'<div class="voiceSentenceRow"><time>'+voiceTimeLabel(r.start)+'–'+voiceTimeLabel(r.end)+'</time><span><em>#'+String(i+1).padStart(2,'0')+'</em>'+escapeHtml(r.text)+(Number.isFinite(r.visualStart)?'<br><em>画面 '+voiceTimeLabel(r.visualStart)+'–'+voiceTimeLabel(r.visualEnd)+'</em>':'')+'</span></div>').join('')
 }
 function markVoiceCoverage(complete,segments,coverage=100){
  const e=q('voiceCoverageState');if(!e)return;
@@ -1563,7 +1600,11 @@ async function startCloudRender(recovering=false){
    fd.append('voice_id',submitMode==='recorded'?'':(mode==='clone'?STUDIO.cloneVoiceId:(q('aiVoiceVoice')?.value||'')));
    fd.append('voice_speed',q('aiVoiceSpeed')?.value||'1');
    fd.append('voice_style',q('aiVoiceStyle')?.value||'football');
+   const visualPlan=buildVisualSyncPlan();
+   if(visualPlan?.strategy==='blocked')throw new Error('画面比配音短 '+visualPlan.gap.toFixed(1)+' 秒，已禁止长尾帧定格；请选择 AI动态匹配');
    fd.append('voice_sync',submitSync);
+   fd.append('visual_sync',q('aiVisualSync')?.value||'auto');
+   fd.append('visual_sync_max_hold','3');
    fd.append('voice_volume',q('aiVoiceVolume')?.value||'1');
    fd.append('original_volume',q('originalAudio')?.value||'0.25');
    fd.append('burn_subtitles',(q('burnSubtitle')?.value||'yes')==='yes'?'true':'false');
@@ -2927,7 +2968,7 @@ q('aiVoicePreviewBtn').onclick=previewAIVoice;
 q('cloneVoiceBtn').onclick=cloneMyVoice;
 q('aiVoiceStatusBtn').onclick=()=>refreshAIVoiceStatus(true);
 q('voiceTimelineBtn').onclick=()=>{buildVoiceTimeline(true);toast('句级时间轴已重建')};
-['narrationText','aiVoiceSpeed','aiVoiceStyle','aiVoiceVoice','aiVoiceMode','aiVoiceSync'].forEach(id=>{
+['narrationText','aiVoiceSpeed','aiVoiceStyle','aiVoiceVoice','aiVoiceMode','aiVoiceSync','aiVisualSync'].forEach(id=>{
  const e=q(id);if(e)e.addEventListener(id==='narrationText'?'input':'change',()=>{
   STUDIO.generatedVoiceKey='';voiceTimingHint()
  })
