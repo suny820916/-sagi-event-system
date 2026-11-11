@@ -1,0 +1,16 @@
+services:
+  sagi-local-china:
+    build:
+      context: ..
+      dockerfile: sagi-local-china/Dockerfile
+    container_name: sagi-local-china
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "8080:8080"
+    volumes:
+      - sagi_local_data:/data
+
+volumes:
+  sagi_local_data:
