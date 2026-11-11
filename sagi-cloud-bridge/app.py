@@ -33,7 +33,7 @@ app = Flask(__name__)
 ALLOWED_ORIGIN = (os.getenv("SAGI_ALLOWED_ORIGIN") or "https://suny820916.github.io").rstrip("/")
 SERVER_SECRET = (os.getenv("SAGI_SERVER_SECRET") or os.getenv("SAGI_BRIDGE_TOKEN") or "").strip()
 PORT = int(os.getenv("PORT") or "10000")
-DEPLOY_REVISION = "2026-11-12-match-intelligence-v100"
+DEPLOY_REVISION = "2026-11-12-match-intelligence-diag-v101"
 APP_VERSION = "3.9.4"
 MAX_FILE_MB = int(os.getenv("SAGI_MAX_FILE_MB") or "300")
 JOB_TTL_MIN = int(os.getenv("SAGI_JOB_TTL_MIN") or "30")
@@ -2758,6 +2758,7 @@ def health():
         "matchIntelligence": MATCH_INTELLIGENCE_LITE,
         "matchIntelligenceVersion": "1.0-cloud-lite" if MATCH_INTELLIGENCE_LITE else "",
         "matchIntelligenceEngine": "YOLO11 ONNX Runtime" if MATCH_INTELLIGENCE_LITE else "",
+        "matchIntelligenceError": MATCH_INTELLIGENCE_LITE_ERROR if not MATCH_INTELLIGENCE_LITE else "",
         "instagram": True,
         "cloudDownload": True,
         "cloudDownloadVersion": "3.0",
