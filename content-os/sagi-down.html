@@ -1606,7 +1606,7 @@ async function previewAIVoice(){
      speakNarration();
      return
    }
-   const serverV12=health.voiceCompletenessGuard===true&&['1.2','1.3'].includes(String(health.voiceDirectorVersion||''));
+   const serverV12=health.voiceCompletenessGuard===true&&['1.2','1.3','1.4'].includes(String(health.voiceDirectorVersion||''));
    if(!serverV12||text.length>260){
      const merged=await generateCompleteAIVoice(text,mode,false);
      const a=q('aiVoicePreview');a.src=STUDIO.generatedVoiceUrl;a.classList.add('show');await a.play().catch(()=>{});
@@ -1710,7 +1710,7 @@ async function startCloudRender(recovering=false){
    }
 
    let submitMode=mode,submitDuration=duration,submitSync=q('aiVoiceSync')?.value||'fit',submitVoiceBlob=null,submitVoiceName='voice.m4a';
-   const serverV12=health.voiceCompletenessGuard===true&&['1.2','1.3'].includes(String(health.voiceDirectorVersion||''));
+   const serverV12=health.voiceCompletenessGuard===true&&['1.2','1.3','1.4'].includes(String(health.voiceDirectorVersion||''));
    if(mode==='recorded'&&STUDIO.voiceBlob){
      submitVoiceBlob=STUDIO.voiceBlob;submitVoiceName='voice.'+(STUDIO.voiceMime.includes('webm')?'webm':'m4a')
    }else if((mode==='ai_male'||mode==='ai_female'||mode==='clone')&&!serverV12){
@@ -1720,6 +1720,21 @@ async function startCloudRender(recovering=false){
      submitMode='recorded';submitVoiceBlob=merged.blob;submitVoiceName='sagi-complete-ai-voice.wav';submitSync='natural';
      submitDuration=duration;
      setCloudRenderStatus('完整音轨已准备 · '+merged.duration.toFixed(1)+'秒 · 文本覆盖100% · 正在上传成片')
+   }
+
+   const visualMode=q('aiVisualSync')?.value||'auto';
+   if(visualMode==='auto'){
+     if(!STUDIO.sceneAnalysis?.scenes?.length){
+       setCloudRenderStatus('AI SCENE SYNC · 正在读取视频内容…');
+       await analyzeVideoScenes(true)
+     }
+     if(!STUDIO.sceneAnalysis?.scenes?.length){
+       setCloudRenderProgress(0);
+       setCloudRenderStatus('视频内容分析未完成，已阻止机械拉伸成片。');
+       studioStatus('请先完成视频内容分析，再生成语义同步成片。','warn');
+       return
+     }
+     matchVoiceTimelineToScenes()
    }
 
    const fd=new FormData();
@@ -1741,13 +1756,20 @@ async function startCloudRender(recovering=false){
    if(visualPlan?.strategy==='blocked')throw new Error('画面比配音短 '+visualPlan.gap.toFixed(1)+' 秒，已禁止长尾帧定格；请选择 AI动态匹配');
    if(visualPlan&&visualPlan.gap>3&&health.aiVisualSync!==true){
      setCloudRenderProgress(0);
-     setCloudRenderStatus('已阻止旧云端生成长尾定格：当前 Render 尚未上线 VISUAL SYNC V1.3。');
-     studioStatus('VISUAL SYNC V1.3 云端尚未确认上线，本次不提交旧版长尾定格成片。','warn');
+     setCloudRenderStatus('已阻止旧云端生成长尾定格：当前 Render 尚未上线 VISUAL SYNC。');
+     studioStatus('VISUAL SYNC 云端尚未确认上线，本次不提交旧版长尾定格成片。','warn');
+     return
+   }
+   if(visualMode==='auto'&&health.aiSceneSync!==true){
+     setCloudRenderProgress(0);
+     setCloudRenderStatus('已读取视频内容，但当前 Render 尚未上线 AI SCENE SYNC V1.4；已阻止退化成机械拉伸。');
+     studioStatus('AI SCENE SYNC V1.4 云端尚未确认上线。','warn');
      return
    }
    fd.append('voice_sync',submitSync);
-   fd.append('visual_sync',q('aiVisualSync')?.value||'auto');
+   fd.append('visual_sync',visualMode);
    fd.append('visual_sync_max_hold','3');
+   fd.append('scene_plan',JSON.stringify(visualMode==='auto'?(STUDIO.scenePlan||[]):[]));
    fd.append('voice_volume',q('aiVoiceVolume')?.value||'1');
    fd.append('original_volume',q('originalAudio')?.value||'0.25');
    fd.append('burn_subtitles',(q('burnSubtitle')?.value||'yes')==='yes'?'true':'false');
