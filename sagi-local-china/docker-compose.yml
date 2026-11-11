@@ -7,10 +7,47 @@ services:
     restart: unless-stopped
     env_file:
       - .env
+    expose:
+      - "8080"
     ports:
       - "8080:8080"
     volumes:
       - sagi_local_data:/data
 
+  backup:
+    build:
+      context: ..
+      dockerfile: sagi-local-china/Dockerfile
+    container_name: sagi-local-china-backup
+    restart: unless-stopped
+    env_file:
+      - .env
+    command: >
+      sh -c "while true; do python -m server.backup;
+      sleep $${BACKUP_INTERVAL_SECONDS:-86400}; done"
+    volumes:
+      - sagi_local_data:/data
+    depends_on:
+      - sagi-local-china
+
+  caddy:
+    image: caddy:2.9-alpine
+    container_name: sagi-local-china-caddy
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - sagi-local-china
+
 volumes:
   sagi_local_data:
+  caddy_data:
+  caddy_config:
