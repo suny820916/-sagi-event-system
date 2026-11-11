@@ -681,6 +681,8 @@ def public_render_job(job):
         "visualStretchFactor": float(job.get("visualStretchFactor", 1) or 1),
         "visualGap": float(job.get("visualGap", 0) or 0),
         "visualHoldSeconds": float(job.get("visualHoldSeconds", 0) or 0),
+        "meaningFirst": bool(job.get("meaningFirst", False)),
+        "meaningCoverage": int(job.get("meaningCoverage", 0) or 0),
         "sceneSyncSegments": int(job.get("sceneSyncSegments", 0) or 0),
         "sceneSyncInstances": int(job.get("sceneSyncInstances", 0) or 0),
     }
@@ -1333,12 +1335,25 @@ def run_cloud_render(job_id, options):
             voice_speed = float(options.get("voice_speed") or 1.0)
             voice_style = str(options.get("voice_style") or "football")
             voice_sync = str(options.get("voice_sync") or "fit")
+            meaning_first = bool(options.get("meaning_first", False))
+            meaning_audit = options.get("meaning_audit") or {}
             visual_sync = str(options.get("visual_sync") or "auto")
             visual_sync_max_hold = max(0.0, min(3.0, float(options.get("visual_sync_max_hold") or 3.0)))
             scene_plan_raw = options.get("scene_plan") or []
             voice_volume = max(0.25, min(2.0, float(options.get("voice_volume") or 1.0)))
             original_volume = max(0.0, min(1.0, float(options.get("original_volume") or 0.25)))
             burn_subtitles = bool(options.get("burn_subtitles", True))
+
+            if meaning_first:
+                audit_pass = bool(meaning_audit.get("pass"))
+                audit_coverage = int(meaning_audit.get("coverage") or 0)
+                audit_units = int(meaning_audit.get("totalUnits") or 0)
+                if not audit_pass or audit_coverage != 100:
+                    raise RuntimeError(
+                        f"MEANING_FIRST_REQUIRED: pass={audit_pass} coverage={audit_coverage} units={audit_units}"
+                    )
+                if voice_sync != "clip_locked":
+                    raise RuntimeError("MEANING_FIRST_REQUIRES_CLIP_LOCKED")
 
             narration_path = None
             voice_meta = {"complete": False, "coverage": 0, "segments": 0, "duration": 0.0, "timeline": []}
@@ -1514,6 +1529,8 @@ def run_cloud_render(job_id, options):
                     "visualStretchFactor": round(visual_factor, 4),
                     "visualGap": round(visual_gap, 3),
                     "visualHoldSeconds": round(min(visual_gap, visual_sync_max_hold) if visual_strategy == "short_hold" else 0.0, 3),
+                    "meaningFirst": meaning_first,
+                    "meaningCoverage": int(meaning_audit.get("coverage") or 0) if meaning_first else 0,
                     "sceneSyncSegments": len(scene_plan) if visual_strategy == "semantic" else 0,
                     "sceneSyncInstances": len(semantic_instances) if visual_strategy == "semantic" else 0,
                 })
@@ -2639,7 +2656,10 @@ def health():
         "smartTranslate": True,
         "aiVoice": True,
         "aiVoiceFallback": True,
-        "voiceDirectorVersion": "1.5",
+        "voiceDirectorVersion": "1.6",
+        "voiceMeaningFirst": True,
+        "voiceMeaningIntegrityRequired": 100,
+        "voiceMeaningAuditRequiredForAIRender": True,
         "voiceVideoDurationLock": True,
         "voiceAutoCondenseToClip": True,
         "voiceRenderNeverExtendsVideo": True,
@@ -3309,6 +3329,14 @@ def create_render_job():
     except Exception:
         scene_plan = []
 
+    try:
+        meaning_audit = json.loads(request.form.get("meaning_audit") or "{}")
+        if not isinstance(meaning_audit, dict):
+            meaning_audit = {}
+    except Exception:
+        meaning_audit = {}
+    meaning_first = str(request.form.get("meaning_first") or "false").lower() in ("1", "true", "yes")
+
     options = {
         "start": request.form.get("start") or "0",
         "duration": request.form.get("duration") or "15",
@@ -3322,6 +3350,8 @@ def create_render_job():
         "voice_speed": request.form.get("voice_speed") or "1",
         "voice_style": request.form.get("voice_style") or "football",
         "voice_sync": request.form.get("voice_sync") or "fit",
+        "meaning_first": meaning_first,
+        "meaning_audit": meaning_audit,
         "visual_sync": request.form.get("visual_sync") or "auto",
         "visual_sync_max_hold": request.form.get("visual_sync_max_hold") or "3",
         "scene_plan": scene_plan[:60],
