@@ -994,7 +994,10 @@ jobs:
           assert "semanticSentenceScore" not in fit, "ranking deletion returned"
           assert "compressLogicUnit(" not in fit, "clause dropping returned"
           assert "logicSimilarity(prev,unit)" not in fit, "near-duplicate proposition deletion returned"
-          assert "q('narrationText').value=fitted" not in html, "source narration is being overwritten"
+          assert "q('narrationText').value=fitted" not in html
+          assert "let fitted=source" in html, "V2.2 measure-first original-script path missing"
+          assert "先实测TTS，不提前删词" in html, "measure-first UI/status missing"
+          assert "第'+(i+1)+'段在保持原意后仍无法自然落入画面时间窗" not in html, "old local-window failure path returned", "source narration is being overwritten"
           assert "原意完整性不是100%" in html, "100% meaning gate missing"
 
           harness=r"""
@@ -1063,6 +1066,9 @@ jobs:
               extract("lockstepUnitSceneScore"),
               extract("voiceExactSignature"),
               extract("buildLockstepVoicePlan"),
+              extract("lockstepTotalAudioSeconds"),
+              extract("adaptivePlanNeedsGlobalRetry"),
+              extract("adaptiveReflowLockstep"),
           ])
           harness=r"""
           const STUDIO={sceneAnalysis:{
@@ -1091,6 +1097,29 @@ jobs:
           const joined=plan.map(x=>x.sourceText).join('');
           for(const term of ['4321','中场','边后卫','回撤','优势','缺点'])if(!joined.includes(term))throw new Error('lost source logic '+term);
           console.log('LOCKSTEP PLAN OK',plan.map(x=>[x.sceneId,x.start,x.end]));
+
+          // V2.2 regression: a local scene window may be shorter than real TTS.
+          // It must borrow time from neighbors instead of failing the whole narration.
+          const screenshotCase=[
+            {sceneId:0,start:0,end:11.6,actualDuration:14.2,text:'片头与阵型'},
+            {sceneId:1,start:11.6,end:23.4,actualDuration:12.7,text:'进攻组织'},
+            {sceneId:2,start:23.4,end:82,actualDuration:43.8,text:'攻防与总结'}
+          ];
+          const localFit=adaptivePlanNeedsGlobalRetry(screenshotCase,82,.08);
+          if(!localFit.pass)throw new Error('local overflow incorrectly treated as global overflow');
+          const adaptive=adaptiveReflowLockstep(screenshotCase,82,.08,.35);
+          if(adaptive[0].start!==0)throw new Error('adaptive lock inserted dead air before hook');
+          if(adaptive[0].end<=11.6)throw new Error('scene did not borrow time');
+          for(let i=1;i<adaptive.length;i++)if(adaptive[i].start<adaptive[i-1].end)throw new Error('adaptive overlap');
+          if(adaptive.at(-1).end>82.001)throw new Error('adaptive timeline exceeded video');
+
+          const globalOverflow=[
+            {sceneId:0,start:0,end:20,actualDuration:30},
+            {sceneId:1,start:20,end:45,actualDuration:30},
+            {sceneId:2,start:45,end:82,actualDuration:28}
+          ];
+          if(adaptivePlanNeedsGlobalRetry(globalOverflow,82,.08).pass)throw new Error('true global overflow was not detected');
+          console.log('ADAPTIVE LOCK LOCAL BORROW OK');
           """
           pathlib.Path("/tmp/lockstep-regression.js").write_text(js+"\n"+harness,encoding="utf-8")
           PY
