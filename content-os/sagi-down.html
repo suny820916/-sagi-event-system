@@ -1232,7 +1232,7 @@ const STUDIO={
  captionVisibleCount:40,oneTapBusy:false,translationScore:0,recreatePlan:null,
  cloneVoiceId:localStorage.getItem('sagi_clone_voice_id')||'',aiVoiceReady:false,aiVoiceVoices:[],voicePreviewUrl:'',voiceTimeline:[],
  generatedVoiceBlob:null,generatedVoiceUrl:'',generatedVoiceDuration:0,generatedVoiceKey:'',generatedVoiceParts:0,visualSyncPlan:null,
- sceneAnalysis:null,scenePlan:[],sceneAnalyzing:false,clipLockedNarration:'',clipLockedOriginal:'',clipLockedTarget:0,
+ sceneAnalysis:null,scenePlan:[],sceneAnalyzing:false,clipLockedNarration:'',clipLockedOriginal:'',clipLockedTarget:0,sourceNarration:'',meaningCoverage:100,
  cloudRenderJobId:'',cloudRenderTimer:null,cloudResultUrl:'',cloudRenderRecoveries:0,cloudRenderRecovering:false,
  pendingTranslateZh:false,
  cloudHealth:null,cloudLastError:''
@@ -1534,67 +1534,108 @@ async function refreshAIVoiceStatus(showToast=false){
 function narrationCharCount(text){
  return (String(text||'').match(/[\u3400-\u9fffA-Za-z0-9]/g)||[]).length
 }
-function compactNarrationSentence(text,maxChars){
- let s=String(text||'').trim()
-  .replace(/^(其实|事实上|可以看到|我们可以看到|你会发现|这时候|这个时候|也就是说|换句话说|需要注意的是|值得注意的是)[，,：:\s]*/,'')
-  .replace(/(非常|其实|本质上|相对来说|一定程度上|从这个角度来看|在这个过程当中)/g,'')
-  .replace(/[，,]{2,}/g,'，').trim();
- if(!maxChars||narrationCharCount(s)<=maxChars)return s;
- const clauses=s.split(/(?<=[，,；;：:])/).map(x=>x.trim()).filter(Boolean);
- const keep=[],tactical=/阵型|防守|进攻|中场|边路|边后卫|后腰|前腰|横移|移动|压迫|逼抢|转换|反击|传球|站位|空间|左路|右路|左侧|右侧|圣诞树|4321|433/;
- for(const cl of clauses){
-  if(!keep.length||tactical.test(cl))keep.push(cl)
-  if(narrationCharCount(keep.join(''))>=maxChars)break
+function normalizeNarrationForMeaning(text){
+ return String(text||'').trim()
+  .replace(/\s+/g,'')
+  .replace(/^(其实|事实上|可以看到|我们可以看到|你会发现)[，,：:\s]*/,'')
+  .replace(/(其实|非常|本质上|相对来说|一定程度上|从这个角度来看|在这个过程当中)/g,'')
+  .replace(/[，,]{2,}/g,'，')
+  .replace(/。{2,}/g,'。')
+}
+function narrationLogicUnits(text){
+ const raw=splitVoiceSentences(String(text||''),140),units=[];let buf='';
+ const connector=/^(因为|所以|因此|但是|但|而|如果|当|只有|同时|这意味着|也就是说|换句话说|最后|首先|其次|进攻时|防守时|一旦|随后|然后)/;
+ for(const part0 of raw){
+  const part=normalizeNarrationForMeaning(part0);if(!part)continue;
+  const chars=narrationCharCount(part);
+  if(buf&&chars<16&&!connector.test(part)&&narrationCharCount(buf)+chars<=46){buf+=part;continue}
+  if(buf)units.push(buf);buf=part
  }
- s=(keep.join('')||s).slice(0,Math.max(4,maxChars));
- if(!/[。！？!?]$/.test(s))s=s.replace(/[，,；;：:]$/,'')+'。';
+ if(buf)units.push(buf);
+ return units
+}
+function logicFingerprint(text){
+ const t=String(text||'').replace(/[，。！？；：、,.!?;:\s]/g,'');
+ const terms=(t.match(/[\u3400-\u9fff]{2,4}|[A-Za-z0-9]{2,}/g)||[]);
+ return new Set(terms)
+}
+function logicSimilarity(a,b){
+ const A=logicFingerprint(a),B=logicFingerprint(b);if(!A.size||!B.size)return 0;
+ let hit=0;for(const x of A)if(B.has(x))hit++;
+ return hit/Math.max(1,Math.min(A.size,B.size))
+}
+function preserveRelationSkeleton(text){
+ let s=normalizeNarrationForMeaning(text);
+ // Remove spoken padding, never remove logical connectors.
+ s=s.replace(/^(这个时候|这时候|需要注意的是|值得注意的是)[，,：:]*/,'');
+ s=s.replace(/(我们可以把它理解为|可以简单理解为|你可以理解为)/g,'');
+ s=s.replace(/(实际上|也可以说|从某种意义上说)/g,'');
  return s
 }
-function semanticSentenceScore(text,index,total){
- const t=String(text||''),tags=sceneSemanticTags(t),tokens=sceneWordTokens(t),scenes=STUDIO.sceneAnalysis?.scenes||[];
- let score=tags.length*8+(index===0?6:0)+(index===total-1?5:0)+Math.min(5,narrationCharCount(t)/18);
- const tactical=/阵型|防守|进攻|中场|边路|边后卫|后腰|前腰|横移|移动|压迫|逼抢|转换|反击|传球|站位|空间|圣诞树|4321|433/;
- if(tactical.test(t))score+=9;
- for(const s of scenes){
-  const st=new Set(s.tags||[]);let overlap=0;for(const tag of tags)if(st.has(tag))overlap++;
-  if(overlap)score=Math.max(score,score+overlap*5);
-  const sceneTokens=new Set(s.tokens||[]);let direct=0;for(const tok of tokens)if(sceneTokens.has(tok))direct++;
-  if(direct)score+=Math.min(7,direct*1.5)
+function compressLogicUnit(text,budget){
+ let s=preserveRelationSkeleton(text);if(narrationCharCount(s)<=budget)return s;
+ const clauses=s.split(/(?<=[，；：])/).map(x=>x.trim()).filter(Boolean);
+ if(clauses.length<=1)return s; // Never hard-cut a single proposition.
+ const relational=/因为|所以|因此|但是|但|而|如果|当|只有|同时|意味着|一旦|进攻|防守|优点|缺点|问题|结果|目的|核心|关键/;
+ const must=clauses.map((x,i)=>({x,i,must:relational.test(x)||i===0||i===clauses.length-1,chars:narrationCharCount(x)}));
+ let keep=must.filter(x=>x.must);
+ let total=keep.reduce((n,x)=>n+x.chars,0);
+ if(total<budget){
+  for(const row of must.filter(x=>!x.must)){
+   if(total+row.chars<=budget){keep.push(row);total+=row.chars}
+  }
  }
- return score
+ keep.sort((a,b)=>a.i-b.i);
+ return keep.map(x=>x.x).join('')||s
 }
 function fitNarrationTextToClip(text,clipSeconds,budgetOverride=0){
  const original=String(text||'').trim(),speed=Math.max(.85,Math.min(1.15,Number(q('aiVoiceSpeed')?.value)||1));
- const targetChars=Math.max(70,Math.floor(budgetOverride||clipSeconds*3.55*speed*.96));
- if(narrationCharCount(original)<=targetChars)return original;
- const parts=splitVoiceSentences(original,140);
- const scored=parts.map((text,i)=>({i,text,score:semanticSentenceScore(text,i,parts.length),chars:narrationCharCount(text)}));
- const selected=new Set([0,Math.max(0,parts.length-1)]);
- const scenes=STUDIO.sceneAnalysis?.scenes||[];
- for(const scene of scenes){
-  let best=null;
-  for(const row of scored){
-   const tags=sceneSemanticTags(row.text),st=new Set(scene.tags||[]);let overlap=0;for(const tag of tags)if(st.has(tag))overlap++;
-   const s=row.score+overlap*12;
-   if(!best||s>best.score)best={i:row.i,score:s}
+ const targetChars=Math.max(90,Math.floor(budgetOverride||clipSeconds*3.55*speed*.96));
+ if(narrationCharCount(original)<=targetChars){STUDIO.meaningCoverage=100;return original}
+
+ const units=narrationLogicUnits(original);
+ if(!units.length){STUDIO.meaningCoverage=100;return original}
+
+ // Only merge genuinely repetitive neighbouring ideas. Never rank away unique propositions.
+ const unique=[];
+ for(const unit of units){
+  const prev=unique.at(-1);
+  if(prev&&logicSimilarity(prev,unit)>=.72){
+    // Keep the fuller wording when two adjacent units say nearly the same thing.
+    if(narrationCharCount(unit)>narrationCharCount(prev))unique[unique.length-1]=unit;
+  }else unique.push(unit)
+ }
+
+ const totalChars=unique.reduce((n,x)=>n+narrationCharCount(x),0);
+ const minPer=Math.max(8,Math.floor(targetChars/Math.max(1,unique.length)*.52));
+ const budgets=unique.map(x=>Math.max(minPer,Math.floor(targetChars*narrationCharCount(x)/Math.max(1,totalChars))));
+ let used=budgets.reduce((a,b)=>a+b,0);
+ while(used>targetChars){
+  let changed=false;
+  for(let i=budgets.length-1;i>=0&&used>targetChars;i--){
+   if(budgets[i]>minPer){budgets[i]--;used--;changed=true}
   }
-  if(best)selected.add(best.i)
+  if(!changed)break
  }
- let chars=[...selected].reduce((n,i)=>n+(scored[i]?.chars||0),0);
- for(const row of [...scored].sort((a,b)=>b.score-a.score)){
-  if(selected.has(row.i))continue;
-  if(chars+row.chars<=targetChars*1.06){selected.add(row.i);chars+=row.chars}
+
+ const compressed=unique.map((x,i)=>compressLogicUnit(x,budgets[i]));
+ let out=compressed.join('').replace(/。{2,}/g,'。').trim();
+
+ // Never use substring truncation. If still long, remove only exact/near duplicate logic units.
+ if(narrationCharCount(out)>targetChars){
+  const rows=compressed.map((x,i)=>({x,i,chars:narrationCharCount(x)}));
+  const keep=rows.map(()=>true);
+  for(let i=rows.length-1;i>0&&narrationCharCount(rows.filter((_,k)=>keep[k]).map(r=>r.x).join(''))>targetChars;i--){
+   for(let j=0;j<i;j++){
+    if(keep[j]&&logicSimilarity(rows[j].x,rows[i].x)>=.68){keep[i]=false;break}
+   }
+  }
+  out=rows.filter((_,i)=>keep[i]).map(r=>r.x).join('').trim()
  }
- let kept=[...selected].sort((a,b)=>a-b).map(i=>parts[i]).filter(Boolean);
- if(!kept.length)kept=[parts[0]||original];
- let total=narrationCharCount(kept.join(''));
- if(total>targetChars){
-  const ratio=targetChars/Math.max(1,total);
-  kept=kept.map((s,i)=>compactNarrationSentence(s,Math.max(i===0||i===kept.length-1?12:8,Math.floor(narrationCharCount(s)*ratio))));
- }
- let out=kept.join('').replace(/。{2,}/g,'。').trim();
- if(narrationCharCount(out)>targetChars)out=compactNarrationSentence(out,targetChars);
- return out||compactNarrationSentence(original,targetChars)
+
+ const keptUnits=narrationLogicUnits(out),matched=unique.filter(u=>keptUnits.some(k=>logicSimilarity(u,k)>=.28)).length;
+ STUDIO.meaningCoverage=Math.round(matched/Math.max(1,unique.length)*100);
+ return out||original
 }
 async function padVoiceBlobToDuration(blob,targetSeconds){
  const Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)return{blob,duration:targetSeconds};
@@ -1678,6 +1719,7 @@ async function generateClipLockedAIVoice(originalText,mode,force=false){
  const clip=Math.max(.5,Number(studioRange()[2])||0);if(!clip)throw new Error('VIDEO_DURATION_UNAVAILABLE');
  if((q('aiVisualSync')?.value||'auto')==='auto'&&!STUDIO.sceneAnalysis?.scenes?.length)await analyzeVideoScenes(true);
  let source=String(originalText||'').trim();if(!source)throw new Error('EMPTY_NARRATION');
+ if(!STUDIO.sourceNarration||STUDIO.clipLockedOriginal!==source)STUDIO.sourceNarration=source;
  if(STUDIO.clipLockedOriginal!==source){STUDIO.clipLockedOriginal=source;STUDIO.clipLockedNarration=''}
  let fitted=fitNarrationTextToClip(source,clip),baseSpeed=Math.max(.85,Math.min(1.15,Number(q('aiVoiceSpeed')?.value)||1)),result=null;
  for(let pass=0;pass<3;pass++){
@@ -1750,7 +1792,7 @@ async function previewAIVoice(){
    setVoiceState('VIDEO FIRST · 正在读取视频并把解说锁定到当前片段时长…');
    const locked=await generateClipLockedAIVoice(text,mode,true);
    const a=q('aiVoicePreview');a.src=STUDIO.generatedVoiceUrl;a.classList.add('show');await a.play().catch(()=>{});
-   setVoiceState('视频时长锁定成功 · '+locked.duration.toFixed(1)+'秒 · '+locked.originalChars+'字→'+locked.fittedChars+'字 · 文本与场景已重排');
+   setVoiceState('视频时长锁定成功 · '+locked.duration.toFixed(1)+'秒 · '+locked.originalChars+'字→'+locked.fittedChars+'字 · 原意覆盖 '+Math.max(0,STUDIO.meaningCoverage||0)+'% · 场景已匹配');
  }catch(e){
    setVoiceState('AI配音失败：'+(e.message||e));
    studioStatus('VIDEO FIRST 配音失败：'+(e.message||e),'warn')
@@ -1837,7 +1879,7 @@ async function startCloudRender(recovering=false){
      setCloudRenderStatus('VIDEO FIRST · 正在把AI解说锁定到 '+duration.toFixed(1)+' 秒…');
      const locked=await generateClipLockedAIVoice(String(q('narrationText')?.value||''),mode,false);
      submitMode='recorded';submitVoiceBlob=locked.blob;submitVoiceName='sagi-clip-locked-voice.wav';submitSync='clip_locked';submitDuration=duration;
-     setCloudRenderStatus('配音已锁定 '+locked.duration.toFixed(1)+'秒 · '+locked.originalChars+'字→'+locked.fittedChars+'字 · 正在按视频场景出片')
+     setCloudRenderStatus('配音已锁定 '+locked.duration.toFixed(1)+'秒 · '+locked.originalChars+'字→'+locked.fittedChars+'字 · 原意覆盖 '+Math.max(0,STUDIO.meaningCoverage||0)+'% · 正在按视频场景出片')
    }
 
    const visualMode=q('aiVisualSync')?.value||'auto';
