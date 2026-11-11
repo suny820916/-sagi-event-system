@@ -33,7 +33,7 @@ app = Flask(__name__)
 ALLOWED_ORIGIN = (os.getenv("SAGI_ALLOWED_ORIGIN") or "https://suny820916.github.io").rstrip("/")
 SERVER_SECRET = (os.getenv("SAGI_SERVER_SECRET") or os.getenv("SAGI_BRIDGE_TOKEN") or "").strip()
 PORT = int(os.getenv("PORT") or "10000")
-DEPLOY_REVISION = "2026-11-11-animation-first-v240"
+DEPLOY_REVISION = "2026-11-11-market-intake-v110"
 APP_VERSION = "3.9.3"
 MAX_FILE_MB = int(os.getenv("SAGI_MAX_FILE_MB") or "300")
 JOB_TTL_MIN = int(os.getenv("SAGI_JOB_TTL_MIN") or "30")
@@ -59,6 +59,14 @@ SAGI_LOCAL_AI_RATE_LIMIT_PER_HOUR = max(10, min(300, int(os.getenv("SAGI_LOCAL_A
 SAGI_LOCAL_VISUAL_MAX_MB = max(2, min(20, int(os.getenv("SAGI_LOCAL_VISUAL_MAX_MB") or "8")))
 SAGI_LOCAL_IMAGE_MODEL = (os.getenv("SAGI_LOCAL_IMAGE_MODEL") or "gpt-image-2.6-flare").strip()
 SAGI_LOCAL_IMAGE_QUALITY = (os.getenv("SAGI_LOCAL_IMAGE_QUALITY") or "medium").strip().lower()
+
+SAGI_SUPABASE_URL = (os.getenv("SAGI_SUPABASE_URL") or "https://zgqrjuwltbnkgovtsccb.supabase.co").strip().rstrip("/")
+SAGI_SUPABASE_KEY = (os.getenv("SAGI_SUPABASE_KEY") or "sb_publishable_bqROSu6ZQRdDW3DLazUCfg_4aYxldN8").strip()
+SAGI_MARKET_WRITE_TOKEN = (os.getenv("SAGI_MARKET_WRITE_TOKEN") or "").strip()
+SAGI_MARKET_INBOX_SLUG = (os.getenv("SAGI_MARKET_INBOX_SLUG") or "sagi-market-inbox-v1").strip()
+SAGI_MARKET_RATE_LIMIT_PER_HOUR = max(3, min(60, int(os.getenv("SAGI_MARKET_RATE_LIMIT_PER_HOUR") or "12")))
+market_rate_hits = {}
+market_rate_lock = Lock()
 if SAGI_LOCAL_IMAGE_QUALITY not in ("low", "medium", "high"):
     SAGI_LOCAL_IMAGE_QUALITY = "medium"
 local_ai_hits = {}
@@ -202,6 +210,103 @@ def rate_allowed():
         arr.append(time.time())
         rate_hits[key] = arr
     return True
+
+def market_rate_allowed():
+    key = request.headers.get("X-Forwarded-For", request.remote_addr or "unknown").split(",")[0].strip()
+    cutoff = time.time() - 3600
+    with market_rate_lock:
+        arr = [t for t in market_rate_hits.get(key, []) if t >= cutoff]
+        if len(arr) >= SAGI_MARKET_RATE_LIMIT_PER_HOUR:
+            market_rate_hits[key] = arr
+            return False
+        arr.append(time.time())
+        market_rate_hits[key] = arr
+    return True
+
+
+def market_cloud_ready():
+    return bool(SAGI_SUPABASE_URL and SAGI_SUPABASE_KEY and SAGI_MARKET_WRITE_TOKEN)
+
+
+def _market_rpc(name, args):
+    if not market_cloud_ready():
+        raise RuntimeError("MARKET_CLOUD_NOT_CONFIGURED")
+    r = requests.post(
+        SAGI_SUPABASE_URL + "/rest/v1/rpc/" + name,
+        headers={
+            "Content-Type": "application/json",
+            "apikey": SAGI_SUPABASE_KEY,
+        },
+        json=args,
+        timeout=(5, 18),
+    )
+    if not r.ok:
+        text = (r.text or "")[:600]
+        raise RuntimeError("MARKET_RPC_" + str(r.status_code) + ": " + text)
+    return r.json() if r.text else None
+
+
+def _market_get(slug):
+    if not (SAGI_SUPABASE_URL and SAGI_SUPABASE_KEY):
+        raise RuntimeError("MARKET_SUPABASE_NOT_CONFIGURED")
+    r = requests.post(
+        SAGI_SUPABASE_URL + "/rest/v1/rpc/sagi_get_event",
+        headers={
+            "Content-Type": "application/json",
+            "apikey": SAGI_SUPABASE_KEY,
+        },
+        json={"p_slug": slug},
+        timeout=(5, 18),
+    )
+    if not r.ok:
+        raise RuntimeError("MARKET_GET_" + str(r.status_code) + ": " + (r.text or "")[:500])
+    return r.json() if r.text else None
+
+
+def _market_ensure_inbox():
+    row = _market_get(SAGI_MARKET_INBOX_SLUG)
+    if row:
+        return row
+    return _market_rpc(
+        "sagi_claim_event",
+        {
+            "p_slug": SAGI_MARKET_INBOX_SLUG,
+            "p_token": SAGI_MARKET_WRITE_TOKEN,
+            "p_payload": {"version": 1, "items": []},
+        },
+    )
+
+
+def _market_update_inbox(mutator):
+    last_error = None
+    for _ in range(5):
+        try:
+            row = _market_ensure_inbox()
+            payload = dict((row or {}).get("payload") or {})
+            items = list(payload.get("items") or [])
+            new_items = mutator(items)
+            payload["version"] = 1
+            payload["items"] = new_items[-500:]
+            return _market_rpc(
+                "sagi_save_event",
+                {
+                    "p_slug": SAGI_MARKET_INBOX_SLUG,
+                    "p_token": SAGI_MARKET_WRITE_TOKEN,
+                    "p_payload": payload,
+                    "p_expected_revision": (row or {}).get("revision"),
+                },
+            )
+        except Exception as exc:
+            last_error = exc
+            if "REVISION_CONFLICT" not in str(exc):
+                break
+            time.sleep(0.08)
+    raise last_error or RuntimeError("MARKET_INBOX_UPDATE_FAILED")
+
+
+def _market_clean_text(value, limit):
+    return str(value or "").strip()[:limit]
+
 
 def caption_rate_allowed():
     key = request.headers.get("X-Forwarded-For", request.remote_addr or "unknown").split(",")[0].strip()
@@ -2663,6 +2768,8 @@ def health():
         "hybridWorker": True,
         "workerOnline": worker_online(),
         "activation": True,
+        "marketIntake": market_cloud_ready(),
+        "marketIntakeVersion": "1.1",
         "captionFast": True,
         "captionMedia": True,
         "contextTranslate": True,
@@ -4048,6 +4155,135 @@ def get_render_file(job_id):
         return jsonify({"ok": False, "error": "Render expired"}), 410
     as_download = str(request.args.get("download") or "").lower() in ("1", "true", "yes")
     return send_file(path, as_attachment=as_download, download_name="SAGI_CLOUD_RENDER.mp4", mimetype="video/mp4", conditional=True)
+
+
+@app.post("/api/market/submit")
+def market_submit():
+    if not origin_allowed():
+        return jsonify({"ok": False, "error": "Origin not allowed"}), 403
+    if not market_cloud_ready():
+        return jsonify({"ok": False, "error": "Market cloud is not configured"}), 503
+    if not market_rate_allowed():
+        return jsonify({"ok": False, "error": "提交过于频繁，请稍后再试"}), 429
+
+    body = request.get_json(silent=True) or {}
+    photo = str(body.get("photo") or "")
+    if photo and (not photo.startswith("data:image/jpeg;base64,") or len(photo) > 950000):
+        return jsonify({"ok": False, "error": "照片格式或大小不符合要求"}), 400
+
+    name = _market_clean_text(body.get("name"), 80)
+    seller = _market_clean_text(body.get("seller"), 60)
+    contact = _market_clean_text(body.get("contact"), 80)
+    if not name or not seller or not contact:
+        return jsonify({"ok": False, "error": "商品名称、卖家和联系方式不能为空"}), 400
+
+    submission_id = secrets.token_hex(8)
+    slug = "market-sub-" + submission_id
+    payload = {
+        "id": submission_id,
+        "type": "secondhand",
+        "name": name,
+        "category": _market_clean_text(body.get("category"), 30),
+        "seller": seller,
+        "contact": contact,
+        "size": _market_clean_text(body.get("size"), 30),
+        "condition": _market_clean_text(body.get("condition"), 30),
+        "city": _market_clean_text(body.get("city"), 40),
+        "price": max(0, min(999999, float(body.get("price") or 0))),
+        "notes": _market_clean_text(body.get("notes"), 800),
+        "photo": photo,
+        "createdAt": iso(),
+        "source": "seller-intake-v1.1",
+    }
+
+    try:
+        _market_rpc(
+            "sagi_claim_event",
+            {
+                "p_slug": slug,
+                "p_token": SAGI_MARKET_WRITE_TOKEN,
+                "p_payload": payload,
+            },
+        )
+        def append_item(items):
+            rows = [x for x in items if isinstance(x, dict) and x.get("id") != submission_id]
+            rows.append({
+                "id": submission_id,
+                "slug": slug,
+                "status": "pending",
+                "name": name,
+                "category": payload["category"],
+                "seller": seller,
+                "city": payload["city"],
+                "price": payload["price"],
+                "createdAt": payload["createdAt"],
+            })
+            return rows
+        _market_update_inbox(append_item)
+    except Exception as exc:
+        return jsonify({"ok": False, "error": "云端收货箱暂不可用", "detail": str(exc)[:180]}), 503
+
+    return jsonify({
+        "ok": True,
+        "submissionId": submission_id,
+        "message": "提交成功，等待 SAGI 审核",
+    })
+
+
+@app.get("/api/market/inbox")
+def market_inbox():
+    if not authorized():
+        return jsonify({"ok": False, "error": "Unauthorized"}), 401
+    if not market_cloud_ready():
+        return jsonify({"ok": False, "error": "Market cloud is not configured"}), 503
+    try:
+        row = _market_ensure_inbox()
+        index_items = list(((row or {}).get("payload") or {}).get("items") or [])
+        pending = [x for x in index_items if isinstance(x, dict) and x.get("status") == "pending"]
+        pending = sorted(pending, key=lambda x: str(x.get("createdAt") or ""), reverse=True)[:50]
+        result = []
+        for item in pending:
+            sub = _market_get(str(item.get("slug") or ""))
+            if sub and isinstance(sub.get("payload"), dict):
+                result.append(sub["payload"])
+        return jsonify({
+            "ok": True,
+            "items": result,
+            "count": len(result),
+            "revision": (row or {}).get("revision"),
+        })
+    except Exception as exc:
+        return jsonify({"ok": False, "error": "读取收货箱失败", "detail": str(exc)[:180]}), 503
+
+
+@app.post("/api/market/decision")
+def market_decision():
+    if not authorized():
+        return jsonify({"ok": False, "error": "Unauthorized"}), 401
+    body = request.get_json(silent=True) or {}
+    submission_id = _market_clean_text(body.get("id"), 40)
+    decision = _market_clean_text(body.get("decision"), 20)
+    if not submission_id or decision not in ("approved", "rejected"):
+        return jsonify({"ok": False, "error": "Invalid decision"}), 400
+
+    try:
+        changed = {"ok": False}
+        def decide(items):
+            rows = []
+            for raw in items:
+                item = dict(raw) if isinstance(raw, dict) else {}
+                if item.get("id") == submission_id:
+                    item["status"] = decision
+                    item["decidedAt"] = iso()
+                    changed["ok"] = True
+                rows.append(item)
+            return rows
+        _market_update_inbox(decide)
+        if not changed["ok"]:
+            return jsonify({"ok": False, "error": "Submission not found"}), 404
+        return jsonify({"ok": True, "id": submission_id, "decision": decision})
+    except Exception as exc:
+        return jsonify({"ok": False, "error": "更新审核状态失败", "detail": str(exc)[:180]}), 503
 
 
 @app.post("/api/activate")
