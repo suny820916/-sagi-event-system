@@ -801,7 +801,7 @@ Unbelievable finish."></textarea>
       </div>
       <div class="voicePanel">
         <div class="sectionHead">
-          <div><div class="label">VOICE DIRECTOR V2.2 · ADAPTIVE LOCK</div><div class="mini">FAST SCAN · 原意锁定 · 画面优先 · 时长精确</div></div>
+          <div><div class="label">VOICE DIRECTOR V2.2 · ADAPTIVE LOCK</div><div class="mini">FAST SCAN · 原稿优先 · 实测TTS · 场景软锚点</div></div>
           <span class="badge">V2.1</span>
         </div>
         <div class="voiceGrid">
@@ -860,7 +860,7 @@ Unbelievable finish."></textarea>
             <button class="btn" id="voiceTimelineBtn" type="button">重建时间轴</button>
           </div>
           <div class="voiceTimelineList" id="voiceTimelineList"></div>
-          <div class="voiceTimelineHint">V2.2 ADAPTIVE LOCK：原视频是唯一主时钟。FAST SCAN先建立场景骨架；解说锁定原意而不是锁死字数；场景边界作为软锚点，单段超时自动向相邻场景借时，只有整条配音超出视频才重新压缩。</div>
+          <div class="voiceTimelineHint">V2.2 ADAPTIVE LOCK：先用原稿真实TTS试配，不提前删词；场景边界只作为软锚点，单段超时自动向相邻场景借时；只有整条真实配音超过视频时长，才按实测超出比例压缩表达。</div>
           <div class="voiceTiming" id="visualSyncStatus">AI SCENE SYNC：等待视频内容分析。</div>
           <div class="sceneSyncBox">
             <div class="sceneSyncHead"><b>视频内容场景</b><button class="btn" id="sceneAnalyzeBtn" type="button">分析视频内容</button></div>
@@ -2117,26 +2117,23 @@ async function runLockstepVoice(autoPreview=true){
  if(!STUDIO.sceneAnalysis?.scenes?.length)await analyzeVideoScenes(true);
  if(!STUDIO.sceneAnalysis?.scenes?.length)throw new Error('视频场景分析失败');
 
- q('lockstepStatus').textContent='2/5 · ADAPTIVE LOCK 正在按 '+clip.toFixed(1)+' 秒压缩表达 · 保留原意…';
- let fitted=semanticFitNarrationToClip(source,clip);
- let audit=meaningAuditStrict(source,fitted);
- if(!audit.pass){fitted=fitNarrationTextToClip(source,clip);audit=meaningAuditStrict(source,fitted)}
- if(!audit.pass)throw new Error('原意校验未通过，系统已停止生成，避免破坏解说原意');
+ // V2.2 MEASURE FIRST: keep the original wording until real TTS proves it cannot fit.
+ q('lockstepStatus').textContent='2/5 · 原稿优先 · 先实测TTS，不提前删词…';
+ let fitted=source,audit=meaningAuditStrict(source,source);
  STUDIO.sourceNarration=source;STUDIO.clipLockedOriginal=source;STUDIO.clipLockedNarration=fitted;STUDIO.clipLockedTarget=clip;STUDIO.meaningAudit=audit;STUDIO.meaningCoverage=100;
  renderClipLockedScript();
 
- let requested=Math.max(.94,Math.min(1.12,Number(q('aiVoiceSpeed')?.value)||1)),done=[],plan=[];
- for(let globalPass=0;globalPass<3;globalPass++){
-   q('lockstepStatus').textContent='3/5 · 场景是软锚点 · 正在建立自适应时间轴…';
+ let requested=Math.max(.94,Math.min(1.08,Number(q('aiVoiceSpeed')?.value)||1)),done=[],plan=[];
+ let compressed=false;
+ for(let globalPass=0;globalPass<4;globalPass++){
+   q('lockstepStatus').textContent='3/5 · 场景软锚点 · 正在建立自适应时间轴…';
    plan=buildLockstepVoicePlan(fitted);
    if(!plan.length)throw new Error('没有建立可用的场景锁定计划');
 
-   // V2.2: do NOT reject a segment because one scene window is locally short.
-   // Generate all scene audio first, then borrow time between neighboring scenes.
    done=[];
    for(let i=0;i<plan.length;i++){
      const row=plan[i],text=row.sourceText;
-     q('lockstepStatus').textContent='4/5 · 实际TTS '+(i+1)+'/'+plan.length+' · 场景时间窗可自动借时';
+     q('lockstepStatus').textContent='4/5 · 实际TTS '+(i+1)+'/'+plan.length+' · 原稿优先 · 场景可借时';
      const result=await requestLockstepVoice(text,mode,requested);
      done.push({...row,index:i,text,blob:result.blob,actualDuration:result.duration,speed:requested});
      STUDIO.lockstepSegments=done.concat(plan.slice(i+1));renderLockstepPlan()
@@ -2145,41 +2142,51 @@ async function runLockstepVoice(autoPreview=true){
    const fit=adaptivePlanNeedsGlobalRetry(done,clip,.08);
    if(fit.pass){
      const shortBy=clip-fit.total;
-     if(shortBy>1.2&&globalPass<2){
-       // Prefer natural slower delivery before inserting silence.
+     if(shortBy>1.2&&globalPass<3&&requested>.94){
        const slower=Math.max(.94,requested*(fit.total/Math.max(1,clip-.55)));
        if(slower<requested-.012){requested=slower;continue}
-       // If already at natural slow limit, restore useful information from the untouched source.
+     }
+     // Only restore wording if a previous measured-overflow pass compressed it.
+     if(compressed&&shortBy>1.5&&globalPass<3){
        const currentChars=narrationCharCount(fitted),sourceChars=narrationCharCount(source);
-       const richerBudget=Math.min(sourceChars,Math.max(currentChars+8,Math.floor(currentChars*((clip-.55)/Math.max(1,fit.total))*.975)));
+       const richerBudget=Math.min(sourceChars,Math.max(currentChars+8,Math.floor(currentChars*((clip-.55)/Math.max(1,fit.total))*.985)));
        const richer=semanticFitNarrationToClip(source,clip,richerBudget),richerAudit=meaningAuditStrict(source,richer);
        if(richerAudit.pass&&narrationCharCount(richer)>currentChars+5){fitted=richer;audit=richerAudit;continue}
      }
      break
    }
 
-   // Only global overflow matters. First use a small global speed correction.
    const ratio=fit.total/clip;
-   const nextSpeed=Math.min(1.16,Math.max(requested+.015,requested*ratio*1.006));
-   if(nextSpeed>requested+.006){
-     requested=nextSpeed;
-     if(globalPass<2)continue
+   // A small overflow is solved with a small natural speed correction first.
+   if(!compressed&&ratio<=1.08&&requested<1.08&&globalPass<3){
+     const nextSpeed=Math.min(1.08,Math.max(requested+.012,requested*ratio*1.003));
+     if(nextSpeed>requested+.006){requested=nextSpeed;continue}
    }
 
-   // If the whole narration still exceeds the video, condense from the untouched source,
-   // not from one unlucky scene, then rebuild all scene mappings.
-   const currentChars=narrationCharCount(fitted);
-   const nextBudget=Math.max(90,Math.floor(currentChars*(clip/Math.max(.1,fit.total))*.965));
-   const tighter=semanticFitNarrationToClip(source,clip,nextBudget);
-   const tighterAudit=meaningAuditStrict(source,tighter);
-   if(tighterAudit.pass&&tighter!==fitted&&globalPass<2){fitted=tighter;audit=tighterAudit;requested=Math.min(requested,1.12);continue}
+   // Real TTS proved the whole script is too long: now condense only by the measured overflow.
+   const currentChars=narrationCharCount(fitted),sourceChars=narrationCharCount(source);
+   const measuredFactor=Math.max(.72,Math.min(.985,(clip/Math.max(.1,fit.total))*.975));
+   const nextBudget=Math.max(90,Math.min(sourceChars-1,Math.floor(currentChars*measuredFactor)));
+   const tighter=semanticFitNarrationToClip(source,clip,nextBudget),tighterAudit=meaningAuditStrict(source,tighter);
+   if(tighterAudit.pass&&narrationCharCount(tighter)<currentChars-2&&globalPass<3){
+     fitted=tighter;audit=tighterAudit;compressed=true;
+     requested=Math.min(Math.max(.96,Number(q('aiVoiceSpeed')?.value)||1),1.08);
+     STUDIO.clipLockedNarration=fitted;STUDIO.meaningAudit=audit;renderClipLockedScript();
+     continue
+   }
+
+   // Final safety: modest speed ceiling, never jump straight to an unnatural rate.
+   if(requested<1.12&&globalPass<3){
+     requested=Math.min(1.12,Math.max(requested+.015,requested*ratio*1.002));
+     continue
+   }
    throw new Error('整条配音实际需要 '+fit.total.toFixed(1)+' 秒，视频只有 '+clip.toFixed(1)+' 秒；已停止生成，避免破坏原意')
  }
+
  const totalFit=adaptivePlanNeedsGlobalRetry(done,clip,.08);
  if(!totalFit.pass)throw new Error('整条配音仍超过视频时长 '+totalFit.overflow.toFixed(1)+' 秒');
+ done=adaptiveReflowLockstep(done,clip,.08,.35);
 
- // Borrow time across adjacent scene windows and distribute spare time across transitions.
- done=adaptiveReflowLockstep(done,clip,.08);
  const finalText=done.map(x=>x.text).join('');
  const finalAudit=meaningAuditStrict(source,finalText);
  if(!finalAudit.pass)throw new Error('最终原意完整性校验未通过，已停止生成');
@@ -2194,10 +2201,10 @@ async function runLockstepVoice(autoPreview=true){
  STUDIO.generatedVoiceBlob=assembled.blob;STUDIO.generatedVoiceUrl=STUDIO.lockstepVoiceUrl;STUDIO.generatedVoiceDuration=clip;STUDIO.generatedVoiceParts=done.length;
  STUDIO.clipLockedNarration=finalText;STUDIO.meaningAudit=finalAudit;STUDIO.meaningCoverage=100;
 
- STUDIO.voiceTimeline=done.map((x,i)=>({index:i,text:x.text,start:Number(x.start.toFixed(3)),end:Number(x.end.toFixed(3)),visualStart:Number(x.plannedStart||0),visualEnd:Number(x.plannedEnd||0),basis:'lockstep',sceneId:x.sceneId,sceneCluster:x.sceneCluster||[x.sceneId],sceneReason:'ADAPTIVE LOCK V2.2 · 画面软锚点 · 相邻场景可借时'}));
+ STUDIO.voiceTimeline=done.map((x,i)=>({index:i,text:x.text,start:Number(x.start.toFixed(3)),end:Number(x.end.toFixed(3)),visualStart:Number(x.plannedStart||0),visualEnd:Number(x.plannedEnd||0),basis:'lockstep',sceneId:x.sceneId,sceneCluster:x.sceneCluster||[x.sceneId],sceneReason:'ADAPTIVE LOCK V2.2 · 原稿优先 · 实测TTS · 场景软锚点'}));
  renderVoiceTimeline();renderClipLockedScript();renderLockstepPlan();markVoiceCoverage(true,done.length,100);
  const srcChars=narrationCharCount(source),dstChars=narrationCharCount(finalText),rate=srcChars?Math.max(0,Math.round((1-dstChars/srcChars)*100)):0;
- q('lockstepStatus').textContent='完成 · ADAPTIVE LOCK V2.2 · 原意100% · '+done.length+'段自适应借时 · 配音 '+assembled.duration.toFixed(2)+'秒 = 视频 '+clip.toFixed(2)+'秒';
+ q('lockstepStatus').textContent='完成 · ADAPTIVE LOCK V2.2 · '+(compressed?('实测后压缩 '+rate+'%'):'原稿未改')+' · 原意100% · '+done.length+'段自适应借时 · '+assembled.duration.toFixed(2)+'秒 = 视频 '+clip.toFixed(2)+'秒';
  if(autoPreview){const a=q('aiVoicePreview');a.src=STUDIO.lockstepVoiceUrl;a.classList.add('show');await a.play().catch(()=>{})}
  return{blob:assembled.blob,duration:clip,segments:done,text:finalText,audit:finalAudit}
 }
