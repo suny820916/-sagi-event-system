@@ -145,6 +145,10 @@ jobs:
           grep -q 'data-rendered="1"' /tmp/sagi-china-dom.html
           echo "SAGI LOCAL CHINA REAL POSTER SMOKE OK"
 
+      - name: Deployment script syntax
+        working-directory: sagi-local-china
+        run: bash -n deploy.sh
+
       - name: Docker build
         run: docker build -f sagi-local-china/Dockerfile -t sagi-local-china:v1.4 .
 
