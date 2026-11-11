@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#171716">
+
+<title>SAGI HOUSE V1.1</title>
+<style>
+:root{--bg:#f4f1ea;--card:#fff;--ink:#181817;--muted:#77736c;--line:#e5ded2;--gold:#b9914f;--dark:#171716;--red:#a9473f;--green:#276c4c}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}.app{max-width:760px;margin:auto;min-height:100vh;padding-bottom:92px}
+.hero{background:linear-gradient(145deg,#111,#2b2822);color:#fff;padding:25px 17px 18px;position:sticky;top:0;z-index:9;box-shadow:0 8px 24px #0002}.brand{display:flex;justify-content:space-between;align-items:center}.brand small{color:#d5c5a3}.brand h1{font-size:23px;margin:3px 0 0}.v{font-size:11px;border:1px solid #ffffff2f;border-radius:99px;padding:6px 9px;color:#e9dec5}
+.search{display:flex;gap:7px;margin-top:15px;background:#fff;padding:4px;border-radius:14px}.search input{flex:1;min-width:0;border:0;outline:0;padding:12px;border-radius:11px}.search button{border:0;border-radius:10px;background:var(--gold);color:#fff;padding:0 15px;font-weight:800}
+.owner-cta{display:flex;justify-content:space-between;align-items:center;gap:14px;background:#fff8e9;border:1px solid #dfcda9;margin:14px 15px 4px;border-radius:17px;padding:14px;text-decoration:none;color:#2b251c}.owner-cta b{display:block;font-size:16px}.owner-cta small{display:block;color:#7e6f56;margin-top:3px}.owner-cta span{font-size:22px}
+.chips{display:flex;gap:8px;overflow:auto;padding:12px 15px 2px;scrollbar-width:none}.chips::-webkit-scrollbar{display:none}.chip{white-space:nowrap;border:1px solid var(--line);background:#fff;padding:9px 13px;border-radius:999px;color:#5d5952}.chip.active{background:#1c1c1b;color:#fff;border-color:#1c1c1b}
+.section{padding:14px 15px}.head{display:flex;justify-content:space-between;align-items:end;margin-bottom:10px}.head h2{margin:0;font-size:20px}.muted{font-size:12px;color:var(--muted)}
+.grid{display:grid;grid-template-columns:1fr;gap:12px}.card{overflow:hidden;background:#fff;border:1px solid var(--line);border-radius:19px;box-shadow:0 7px 22px #44331c0b}.cover{height:188px;background:linear-gradient(135deg,#ded4c2,#9f9482);position:relative;display:flex;align-items:center;justify-content:center}.cover img{width:100%;height:100%;object-fit:cover}.cover .homeicon{font-size:54px;opacity:.4}.badges{position:absolute;left:10px;top:10px;display:flex;gap:6px;flex-wrap:wrap}.badge{font-size:11px;color:#fff;background:#111d;padding:5px 8px;border-radius:8px}.badge.hot{background:var(--red)}.body{padding:14px}.title{font-size:17px;font-weight:850;line-height:1.35}.meta{font-size:13px;color:var(--muted);margin-top:7px}.price-row{display:flex;justify-content:space-between;align-items:end;margin-top:11px}.price{font-size:22px;font-weight:900;color:#9c4c2a}.price small{font-size:12px}.unit{font-size:11px;color:#888}
+.empty{background:#fff;border:1px dashed #d4cab9;border-radius:18px;padding:30px 18px;text-align:center;color:#777}.empty b{display:block;color:#222;margin-bottom:7px}.empty a{display:inline-block;margin-top:13px;background:#171716;color:#fff;text-decoration:none;padding:11px 15px;border-radius:11px}
+.bottom{position:fixed;left:0;right:0;bottom:0;z-index:10;background:#fffffff0;border-top:1px solid #e6ded2;backdrop-filter:blur(13px);padding:8px 12px calc(8px + env(safe-area-inset-bottom));display:flex;justify-content:center}.nav{width:min(760px,100%);display:grid;grid-template-columns:repeat(3,1fr)}.nav button,.nav a{border:0;background:transparent;text-decoration:none;text-align:center;color:#777;padding:6px}.nav .on{color:#111;font-weight:800}.nav span{display:block;font-size:20px}.nav small{font-size:11px}
+.modal{position:fixed;inset:0;background:#0008;display:none;align-items:flex-end;justify-content:center;z-index:30}.modal.show{display:flex}.sheet{width:min(760px,100%);max-height:92vh;overflow:auto;background:#f8f5ef;border-radius:24px 24px 0 0;padding-bottom:calc(18px + env(safe-area-inset-bottom))}.sheet-cover{height:255px;background:linear-gradient(135deg,#ded4c2,#918878);position:relative}.sheet-cover img{width:100%;height:100%;object-fit:cover}.close{position:absolute;right:12px;top:12px;width:37px;height:37px;border-radius:50%;border:0;background:#111c;color:#fff;font-size:21px}.sheet-content{padding:17px}.sheet-content h2{margin:0}.kv{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:13px 0}.kv div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center}.kv b{display:block}.kv small{font-size:11px;color:var(--muted)}
+.contact{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px;margin-top:15px}.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.contact input,.contact textarea{width:100%;border:1px solid var(--line);border-radius:11px;padding:11px;background:#faf9f6}.contact textarea{min-height:70px;resize:vertical}.primary{width:100%;border:0;background:#171716;color:#fff;border-radius:12px;padding:13px;font-weight:800;margin-top:9px}.toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);background:#111;color:#fff;padding:10px 14px;border-radius:10px;z-index:99;display:none;font-size:13px}.toast.show{display:block}
+.sync{font-size:11px;margin-top:8px;color:#cfc2a6}.sync.ok{color:#a8d7b7}.sync.bad{color:#ffb4ae}
+@media(min-width:680px){.grid{grid-template-columns:1fr 1fr}.hero{border-radius:0 0 24px 24px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="hero">
+<div class="brand"><div><small>SAGI SPORTS · LOCAL LIVING</small><h1>SAGI HOUSE</h1></div><div class="v">V1.1 · CLOUD</div></div>
+<div class="search"><input id="q" placeholder="搜索小区、户型、急售、商铺…"><button id="searchBtn">搜索</button></div>
+<div id="sync" class="sync">正在连接云端房源…</div>
+</header>
+<a class="owner-cta" href="/house-owner"><div><b>房东自己发布房源</b><small>手机填写 · 上传照片 · 提交审核</small></div><span>›</span></a>
+<div id="chips" class="chips"></div>
+<section class="section">
+<div class="head"><div><h2>已审核房源</h2><div class="muted">只有审核通过的房源才会公开展示</div></div><div id="count" class="muted">0 套</div></div>
+<div id="grid" class="grid"></div>
+</section>
+</div>
+<div class="bottom"><div class="nav">
+<button class="on"><span>⌂</span><small>找房</small></button>
+<a href="/house-owner"><span>＋</span><small>发布房源</small></a>
+<a href="#top" onclick="window.scrollTo({top:0,behavior:'smooth'})"><span>⌕</span><small>搜索</small></a>
+</div></div>
+
+<div id="modal" class="modal"><div class="sheet">
+<div id="sheetCover" class="sheet-cover"><button class="close" id="close">×</button></div>
+<div class="sheet-content">
+<h2 id="sheetTitle"></h2><div id="sheetPrice" class="price" style="margin-top:7px"></div><div id="sheetMeta" class="meta"></div>
+<div class="kv"><div><b id="sheetRooms">—</b><small>户型</small></div><div><b id="sheetArea">—</b><small>面积</small></div><div><b id="sheetDeal">—</b><small>类型</small></div></div>
+<div id="sheetDesc" class="muted" style="line-height:1.75;font-size:13px"></div>
+<div class="contact">
+<b>咨询这套房</b><div class="muted" style="margin:4px 0 10px">联系方式只进入 SAGI HOUSE 后台，不公开给其他用户。</div>
+<div class="row"><input id="leadName" placeholder="您的称呼"><input id="leadContact" placeholder="电话 / 微信"></div>
+<textarea id="leadNote" placeholder="例如：想周末看房、预算55万左右"></textarea>
+<button id="leadBtn" class="primary">我要看房 / 咨询</button>
+</div>
+</div></div></div>
+<div id="toast" class="toast"></div>
+<script>
+const CLOUD='https://sagi-cloud-bridge-suny820916.onrender.com';
+const DEMO=[];
+let data=[],filter='全部',current=null;
+const $=s=>document.querySelector(s);
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('show');clearTimeout(window.__tt);window.__tt=setTimeout(()=>e.classList.remove('show'),2200)}
+function renderChips(){const arr=['全部','急售','房东直售','出售','出租','商铺','院子'];$('#chips').innerHTML=arr.map(x=>'<button class="chip '+(x===filter?'active':'')+'" data-x="'+x+'">'+x+'</button>').join('');$('#chips').querySelectorAll('button').forEach(b=>b.onclick=()=>{filter=b.dataset.x;renderChips();render()})}
+function visible(a){const q=$('#q').value.trim().toLowerCase(),hay=[a.title,a.community,a.deal,a.propertyType,(a.tags||[]).join(' ')].join(' ').toLowerCase();if(q&&!hay.includes(q))return false;if(filter==='全部')return true;if(filter==='急售')return (a.tags||[]).includes('急售');if(filter==='房东直售')return (a.tags||[]).some(t=>String(t).includes('房东直'));if(filter==='商铺')return a.propertyType==='商铺';if(filter==='院子')return a.propertyType==='院子';return a.deal===filter}
+function unit(a){const p=Number(a.price),ar=Number(a.area);if(!p||!ar||String(a.priceUnit||'').includes('月'))return'';const mult=String(a.priceUnit||'').includes('万')?10000:1;return Math.round(p*mult/ar)+' 元/㎡'}
+function render(){const rows=data.filter(visible);$('#count').textContent=rows.length+' 套';if(!rows.length){$('#grid').innerHTML='<div class="empty"><b>暂时没有符合条件的已审核房源</b>第一批房源可以直接由房东自己提交。<br><a href="/house-owner">我要发布房源</a></div>';return}$('#grid').innerHTML=rows.map(a=>'<article class="card" data-id="'+a.id+'"><div class="cover">'+(a.photos&&a.photos[0]?'<img src="'+a.photos[0]+'">':'<div class="homeicon">⌂</div>')+'<div class="badges">'+(a.tags||[]).slice(0,3).map(t=>'<span class="badge '+(t==='急售'?'hot':'')+'">'+esc(t)+'</span>').join('')+'</div></div><div class="body"><div class="title">'+esc(a.title)+'</div><div class="meta">'+esc(a.community)+' · '+esc(a.rooms||'户型未填')+(a.area?' · '+esc(a.area)+'㎡':'')+'</div><div class="price-row"><div class="price">'+esc(a.price||'面议')+'<small>'+esc(a.priceUnit||'')+'</small></div><div class="unit">'+unit(a)+'</div></div></div></article>').join('');$('#grid').querySelectorAll('.card').forEach(c=>c.onclick=()=>open(c.dataset.id))}
+function open(id){const a=data.find(x=>x.id===id);if(!a)return;current=a;$('#sheetCover').innerHTML=(a.photos&&a.photos[0]?'<img src="'+a.photos[0]+'">':'')+'<button class="close" id="close2">×</button>';$('#close2').onclick=close;$('#sheetTitle').textContent=a.title;$('#sheetPrice').textContent=(a.price||'面议')+(a.priceUnit||'');$('#sheetMeta').textContent=[a.community,a.city,a.propertyType,a.floor,a.orientation,a.decoration].filter(Boolean).join(' · ');$('#sheetRooms').textContent=a.rooms||'—';$('#sheetArea').textContent=a.area?a.area+'㎡':'—';$('#sheetDeal').textContent=a.deal||'—';$('#sheetDesc').textContent=a.description||'暂无更多描述';$('#modal').classList.add('show')}
+function close(){$('#modal').classList.remove('show')}
+async function load(){try{const r=await fetch(CLOUD+'/api/house/listings',{cache:'no-store'}),o=await r.json().catch(()=>({}));if(!r.ok||!o.ok)throw new Error(o.error||('HTTP '+r.status));data=Array.isArray(o.items)?o.items:[];$('#sync').textContent='云端已连接 · 房源实时同步';$('#sync').className='sync ok'}catch(e){data=DEMO;$('#sync').textContent='云端暂不可用 · 请稍后刷新';$('#sync').className='sync bad'}render()}
+async function lead(){if(!current)return;const contact=$('#leadContact').value.trim();if(!contact)return toast('请填写电话或微信');const btn=$('#leadBtn');btn.disabled=true;btn.textContent='正在提交…';try{const r=await fetch(CLOUD+'/api/house/lead',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({listingId:current.id,listingTitle:current.title,name:$('#leadName').value.trim(),contact,note:$('#leadNote').value.trim()})}),o=await r.json().catch(()=>({}));if(!r.ok||!o.ok)throw new Error(o.error||'提交失败');$('#leadContact').value='';$('#leadName').value='';$('#leadNote').value='';toast('咨询已提交，SAGI HOUSE 会收到这条线索');close()}catch(e){toast(e.message||'提交失败，请稍后再试')}finally{btn.disabled=false;btn.textContent='我要看房 / 咨询'}}
+$('#searchBtn').onclick=render;$('#q').addEventListener('keydown',e=>{if(e.key==='Enter')render()});$('#close').onclick=close;$('#modal').onclick=e=>{if(e.target===e.currentTarget)close()};$('#leadBtn').onclick=lead;renderChips();load();
+</script>
+</body></html>
