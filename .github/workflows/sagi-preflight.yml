@@ -183,13 +183,16 @@ jobs:
           assert health["contextTranslate"] is True
           assert health["smartTranslate"] is True
           assert health["aiVoice"] is True
-          assert health["voiceDirectorVersion"] == "1.4"
+          assert health["voiceDirectorVersion"] == "1.5"
           assert health["voiceNarrationNoCut"] is True
           assert health["voiceSentenceTimeline"] is True
           assert health["voiceCompletenessGuard"] is True
           assert health["aiVisualSync"] is True
           assert health["aiVisualSyncMaxHoldSeconds"] == 3
           assert health["aiVisualSyncSentenceMap"] is True
+          assert health["voiceVideoDurationLock"] is True
+          assert health["voiceAutoCondenseToClip"] is True
+          assert health["voiceRenderNeverExtendsVideo"] is True
           assert health["aiSceneSync"] is True
           assert health["aiSceneSyncVersion"] == "1.4"
           assert health["aiSceneSyncLocalFrameAnalysis"] is True
@@ -971,7 +974,7 @@ jobs:
           ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
           subprocess.run([
               exe, "-hide_banner", "-y",
-              "-f", "lavfi", "-i", "sine=frequency=660:duration=5.8",
+              "-f", "lavfi", "-i", "sine=frequency=660:duration=3.8",
               "-c:a", "aac", str(voice)
           ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
@@ -996,8 +999,8 @@ jobs:
               "voice_speed": 1, "original_volume": 0.25, "burn_subtitles": True,
               "uploaded_voice": str(voice), "visual_sync": "auto", "visual_sync_max_hold": 3,
               "scene_plan": [
-                  {"sceneId":0,"sourceStart":0.0,"sourceEnd":2.0,"outputStart":0.0,"outputEnd":3.0,"label":"左侧防守","matchScore":28},
-                  {"sceneId":1,"sourceStart":2.0,"sourceEnd":4.0,"outputStart":3.0,"outputEnd":6.0,"label":"右侧进攻","matchScore":31},
+                  {"sceneId":0,"sourceStart":0.0,"sourceEnd":2.0,"outputStart":0.0,"outputEnd":2.0,"label":"左侧防守","matchScore":28},
+                  {"sceneId":1,"sourceStart":2.0,"sourceEnd":4.0,"outputStart":2.0,"outputEnd":4.0,"label":"右侧进攻","matchScore":31},
               ],
           })
           job = mod.render_jobs[job_id]
@@ -1011,8 +1014,33 @@ jobs:
           import av
           with av.open(str(out)) as container:
               rendered = float(container.duration or 0) / 1_000_000.0
-          assert rendered >= 6.0, rendered
-          print("AI SCENE SYNC V1.4 semantic render OK", round(rendered,2), "seconds", job.get("sceneSyncInstances"), "instances")
+          assert 3.95 <= rendered <= 4.15, rendered
+          print("VIDEO FIRST V1.5 exact-duration semantic render OK", round(rendered,2), "seconds", job.get("sceneSyncInstances"), "instances")
+
+          # A narration longer than the picture must fail instead of extending video.
+          long_voice = work / "long_voice.m4a"
+          subprocess.run([
+              exe, "-hide_banner", "-y",
+              "-f", "lavfi", "-i", "sine=frequency=550:duration=7.0",
+              "-c:a", "aac", str(long_voice)
+          ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+          long_id = "too-long"
+          mod.render_jobs[long_id] = {
+              "id": long_id, "status": "queued", "stage": "", "progress": 0,
+              "created_at": mod.iso(), "updated_at": mod.iso(),
+              "workdir": str(work), "source": str(source), "path": "",
+              "download_key": "long-key", "size": 0, "error": "",
+          }
+          mod.run_cloud_render(long_id, {
+              "start": 0, "duration": 4, "aspect": "9:16", "quality": "fast",
+              "captions": [], "narration": "", "voice_mode": "recorded",
+              "uploaded_voice": str(long_voice), "visual_sync": "auto",
+              "scene_plan": [], "original_volume": 0, "burn_subtitles": False,
+          })
+          long_job = mod.render_jobs[long_id]
+          assert long_job["status"] == "failed", long_job
+          assert "VOICE_EXCEEDS_VIDEO" in long_job["error"], long_job
+          print("overlong narration correctly blocked")
           PY
 
       - name: Python compile check
