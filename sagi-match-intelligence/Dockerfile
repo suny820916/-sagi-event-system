@@ -10,11 +10,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libglib2.0-0 libgl1 ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
-COPY sagi-match-intelligence/requirements.txt ./requirements.txt
+COPY requirements.txt ./requirements.txt
 RUN pip install -r requirements.txt
 
-COPY sagi-match-intelligence/backend ./backend
-COPY sagi-match-intelligence/frontend ./frontend
+COPY backend ./backend
+COPY frontend ./frontend
 
 RUN mkdir -p /app/data
 
