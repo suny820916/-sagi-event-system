@@ -867,6 +867,10 @@ Unbelievable finish."></textarea>
             <div class="sceneSyncStatus" id="sceneSyncStatus">尚未读取视频。会在本机抽帧分析场景变化，并结合原字幕做语义匹配。</div>
             <div class="sceneSyncList" id="sceneSyncList"></div>
           </div>
+          <div class="sceneSyncBox" id="clipScriptBox" style="display:none">
+            <div class="sceneSyncHead"><b>82秒配音稿 · 原稿不改</b><span id="meaningCoverageBadge" class="badge">原意100%</span></div>
+            <div class="sceneSyncStatus" id="clipScriptText"></div>
+          </div>
         </div>
         <div class="voiceActions">
           <button class="btn blue" id="aiVoicePreviewBtn" type="button">试听当前声音</button>
@@ -1501,7 +1505,7 @@ function voiceTimingHint(){
  let verdict='';
  if(clip>0){const r=estimate/clip;if(r>1.03)verdict=' · <b>稿件偏长</b>，生成时会按视频内容自动压缩到 '+clip.toFixed(1)+' 秒';else if(r<.72)verdict=' · <b>稿件偏短</b>，音轨仍锁定视频时长，末尾保留自然留白';else verdict=' · <b>长度合适</b>，最终音轨锁定 '+clip.toFixed(1)+' 秒'}
  el.innerHTML='约 <b>'+chars+' 字</b> · '+(actual?('实际配音 <b>'+actual.toFixed(1)+'秒</b>'):('预计配音 <b>'+estimate.toFixed(1)+'秒</b>'))+(clip>0?' · 当前片段 <b>'+clip.toFixed(1)+'秒</b>':'')+verdict;
- if(actual)rebuildVoiceTimelineToDuration(actual,clipLocked?'clip_locked':'actual');else buildVoiceTimeline(true)
+ if(clipLocked){renderVoiceTimeline()}else if(actual)rebuildVoiceTimelineToDuration(actual,'actual');else buildVoiceTimeline(true)
 }
 async function voiceApiReady(){
  const ready=await wakeCaptionCloud();
@@ -1715,15 +1719,25 @@ async function generateCompleteAIVoice(text,mode,force=false,speedOverride=null)
  markVoiceCoverage(true,(STUDIO.voiceTimeline||[]).length||chunks.length,100);
  return{blob:merged.blob,duration:merged.duration,parts:chunks.length,cached:false}
 }
+function renderClipLockedScript(){
+ const box=q('clipScriptBox'),txt=q('clipScriptText'),badge=q('meaningCoverageBadge');
+ if(!box||!txt||!badge)return;
+ const script=String(STUDIO.clipLockedNarration||'').trim();
+ box.style.display=script?'':'none';
+ if(!script)return;
+ txt.textContent=script;
+ badge.textContent='原意 '+Math.max(0,Math.min(100,Number(STUDIO.meaningCoverage)||0))+'%'
+}
 async function generateClipLockedAIVoice(originalText,mode,force=false){
  const clip=Math.max(.5,Number(studioRange()[2])||0);if(!clip)throw new Error('VIDEO_DURATION_UNAVAILABLE');
  if((q('aiVisualSync')?.value||'auto')==='auto'&&!STUDIO.sceneAnalysis?.scenes?.length)await analyzeVideoScenes(true);
- let source=String(originalText||'').trim();if(!source)throw new Error('EMPTY_NARRATION');
+ let incoming=String(originalText||'').trim();if(!incoming)throw new Error('EMPTY_NARRATION');
+ let source=(STUDIO.clipLockedNarration&&incoming===STUDIO.clipLockedNarration&&STUDIO.sourceNarration)?STUDIO.sourceNarration:incoming;
  if(!STUDIO.sourceNarration||STUDIO.clipLockedOriginal!==source)STUDIO.sourceNarration=source;
- if(STUDIO.clipLockedOriginal!==source){STUDIO.clipLockedOriginal=source;STUDIO.clipLockedNarration=''}
+ if(STUDIO.clipLockedOriginal!==source){STUDIO.clipLockedOriginal=source;STUDIO.clipLockedNarration='';renderClipLockedScript()}
  let fitted=fitNarrationTextToClip(source,clip),baseSpeed=Math.max(.85,Math.min(1.15,Number(q('aiVoiceSpeed')?.value)||1)),result=null;
  for(let pass=0;pass<3;pass++){
-  q('narrationText').value=fitted;STUDIO.generatedVoiceKey='';
+  STUDIO.generatedVoiceKey='';
   buildVoiceTimeline(false);if(STUDIO.sceneAnalysis?.scenes?.length)matchVoiceTimelineToScenes();
   setVoiceState('VIDEO FIRST · 第'+(pass+1)+'轮 · 正在生成 '+clip.toFixed(1)+'秒内的配音…');
   result=await generateCompleteAIVoice(fitted,mode,true,baseSpeed);
@@ -1747,7 +1761,6 @@ async function generateClipLockedAIVoice(originalText,mode,force=false){
   const richerBudget=Math.min(sourceChars,Math.floor(currentChars*(clip/Math.max(1,result.duration))*.96));
   if(richerBudget>currentChars+10){
    fitted=fitNarrationTextToClip(source,clip,richerBudget);
-   q('narrationText').value=fitted;
    result=await generateCompleteAIVoice(fitted,mode,true,baseSpeed)
   }
  }
@@ -1763,8 +1776,12 @@ async function generateClipLockedAIVoice(originalText,mode,force=false){
  if(STUDIO.generatedVoiceUrl)URL.revokeObjectURL(STUDIO.generatedVoiceUrl);
  STUDIO.generatedVoiceBlob=exact.blob;STUDIO.generatedVoiceDuration=clip;STUDIO.generatedVoiceParts=result.parts;STUDIO.generatedVoiceKey=voiceGenerationKey(fitted,mode,baseSpeed);
  STUDIO.generatedVoiceUrl=URL.createObjectURL(exact.blob);STUDIO.clipLockedNarration=fitted;STUDIO.clipLockedTarget=clip;
- q('narrationText').value=fitted;
+ renderClipLockedScript();
+ // Build the spoken timeline from the condensed voice script without overwriting the user's source script.
+ const sourceField=q('narrationText'),savedSource=sourceField?sourceField.value:'';
+ if(sourceField)sourceField.value=fitted;
  rebuildVoiceTimelineToDuration(clip,'clip_locked');
+ if(sourceField)sourceField.value=savedSource;
  if(STUDIO.sceneAnalysis?.scenes?.length)matchVoiceTimelineToScenes();
  renderVoiceTimeline();markVoiceCoverage(true,(STUDIO.voiceTimeline||[]).length,100);
  voiceTimingHint();
