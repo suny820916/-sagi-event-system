@@ -183,8 +183,9 @@ jobs:
           assert health["contextTranslate"] is True
           assert health["smartTranslate"] is True
           assert health["aiVoice"] is True
-          assert health["voiceDirectorVersion"] == "1.7"
-          assert health["voiceNarrationNoCut"] is True
+          assert health["voiceDirectorVersion"] == "2.1"
+          assert health["voiceNarrationNoCut"] is False
+          assert health["voiceNarrationMeaningProtected"] is True
           assert health["voiceSentenceTimeline"] is True
           assert health["voiceCompletenessGuard"] is True
           assert health["aiVisualSync"] is True
@@ -195,12 +196,16 @@ jobs:
           assert health["voiceLockstep"] is True
           assert health["voiceLockstepExactDuration"] is True
           assert health["voiceLockstepOriginalVideoMaster"] is True
+          assert health["voiceSceneLockExactScript"] is False
+          assert health["voiceSemanticLock"] is True
+          assert health["voiceSemanticCompression"] is True
+          assert health["voiceSemanticMeaningProtected"] is True
           assert health["voiceMeaningAuditRequiredForAIRender"] is True
           assert health["voiceVideoDurationLock"] is True
           assert health["voiceAutoCondenseToClip"] is True
           assert health["voiceRenderNeverExtendsVideo"] is True
           assert health["aiSceneSync"] is True
-          assert health["aiSceneSyncVersion"] == "1.4"
+          assert health["aiSceneSyncVersion"] == "1.5"
           assert health["aiSceneSyncLocalFrameAnalysis"] is True
           assert health["aiSceneSyncSemanticCaptionMatch"] is True
           assert health["cloudRender"] is True
