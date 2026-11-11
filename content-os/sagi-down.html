@@ -801,8 +801,8 @@ Unbelievable finish."></textarea>
       </div>
       <div class="voicePanel">
         <div class="sectionHead">
-          <div><div class="label">VOICE DIRECTOR · AI配音导演</div><div class="mini">VIDEO FIRST · 视频多长配音就多长 · 内容同步</div></div>
-          <span class="badge">V1.5</span>
+          <div><div class="label">VOICE DIRECTOR · AI配音导演</div><div class="mini">MEANING FIRST · 原意优先 · 视频时长硬锁</div></div>
+          <span class="badge">V1.6</span>
         </div>
         <div class="voiceGrid">
           <label>配音方式
@@ -860,7 +860,7 @@ Unbelievable finish."></textarea>
             <button class="btn" id="voiceTimelineBtn" type="button">重建时间轴</button>
           </div>
           <div class="voiceTimelineList" id="voiceTimelineList"></div>
-          <div class="voiceTimelineHint">V1.5：视频时长是硬上限。先读取视频内容，再自动压缩过长解说；82秒视频最终只生成82秒音轨，绝不延长成片。</div>
+          <div class="voiceTimelineHint">V1.6：原意优先。视频时长仍是硬上限，但不再删掉独立战术观点凑时长；关键事实、因果、转折、优缺点、阵型数字和战术动作必须完整保留，达不到100%就停止生成。</div>
           <div class="voiceTiming" id="visualSyncStatus">AI SCENE SYNC：等待视频内容分析。</div>
           <div class="sceneSyncBox">
             <div class="sceneSyncHead"><b>视频内容场景</b><button class="btn" id="sceneAnalyzeBtn" type="button">分析视频内容</button></div>
@@ -868,7 +868,8 @@ Unbelievable finish."></textarea>
             <div class="sceneSyncList" id="sceneSyncList"></div>
           </div>
           <div class="sceneSyncBox" id="clipScriptBox" style="display:none">
-            <div class="sceneSyncHead"><b>82秒配音稿 · 原稿不改</b><span id="meaningCoverageBadge" class="badge">原意100%</span></div>
+            <div class="sceneSyncHead"><b id="clipScriptTitle">保真配音稿 · 原稿不改</b><span id="meaningCoverageBadge" class="badge">原意待校验</span></div>
+            <div class="sceneSyncStatus" id="meaningAuditDetail">关键逻辑尚未校验。</div>
             <div class="sceneSyncStatus" id="clipScriptText"></div>
           </div>
         </div>
@@ -1236,7 +1237,7 @@ const STUDIO={
  captionVisibleCount:40,oneTapBusy:false,translationScore:0,recreatePlan:null,
  cloneVoiceId:localStorage.getItem('sagi_clone_voice_id')||'',aiVoiceReady:false,aiVoiceVoices:[],voicePreviewUrl:'',voiceTimeline:[],
  generatedVoiceBlob:null,generatedVoiceUrl:'',generatedVoiceDuration:0,generatedVoiceKey:'',generatedVoiceParts:0,visualSyncPlan:null,
- sceneAnalysis:null,scenePlan:[],sceneAnalyzing:false,clipLockedNarration:'',clipLockedOriginal:'',clipLockedTarget:0,sourceNarration:'',meaningCoverage:100,
+ sceneAnalysis:null,scenePlan:[],sceneAnalyzing:false,clipLockedNarration:'',clipLockedOriginal:'',clipLockedTarget:0,sourceNarration:'',meaningCoverage:100,meaningAudit:null,
  cloudRenderJobId:'',cloudRenderTimer:null,cloudResultUrl:'',cloudRenderRecoveries:0,cloudRenderRecovering:false,
  pendingTranslateZh:false,
  cloudHealth:null,cloudLastError:''
