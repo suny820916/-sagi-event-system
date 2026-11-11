@@ -1319,12 +1319,12 @@ function rebuildVoiceTimelineToDuration(duration,source='actual',textOverride=''
 const SCENE_SEMANTIC_TERMS={
  flank:['边路','边后卫','边锋','侧翼','拉边','宽度','wing','flank','fullback','touchline'],
  midfield:['中场','三中场','后腰','前腰','中路','双后腰','midfield','pivot'],
- defense:['防守','回防','落位','保护','封堵','压迫','逼抢','低位','defend','defense','press'],
+ defense:['防守','回防','落位','保护','封堵','压迫','外压','逼抢','低位','defend','defense','press'],
  attack:['进攻','推进','前插','套边','控球','组织','attack','build up','build-up'],
  transition:['转换','反击','丢球','抢断','由攻转守','由守转攻','transition','counter'],
  formation:['阵型','站位','结构','四后卫','三后卫','圣诞树','433','4321','formation','shape'],
- movement:['移动','横移','跑动','轮转','拉扯','回撤','前压','movement','shift','move'],
- pass:['传球','出球','转移','直塞','回传','倒脚','pass','passing'],
+ movement:['移动','横移','跑动','轮转','拉扯','回撤','前压','外压','movement','shift','move'],
+ pass:['传球','短传','出球','转移','直塞','回传','倒脚','pass','passing'],
  shot:['射门','打门','远射','禁区','shot','finish','finishing'],
  keeper:['门将','守门员','扑救','keeper','goalkeeper'],
  left:['左路','左侧','左边','left'],
@@ -1616,7 +1616,8 @@ const MEANING_CRITICAL_GROUPS={
  flank:['边路','边后卫','边锋','侧翼','拉边','宽度'],
  transition:['转换','反击','丢球','抢断','由攻转守','由守转攻'],
  movement:['移动','横移','跑动','轮转','拉扯','回撤','前压'],
- pass:['传球','出球','转移','直塞','回传'],
+ pass:['传球','短传','出球','转移','直塞','回传'],
+ principle:['阵型只是数字','只是数字'],
  advantage:['优点','优势','好处','强项'],
  drawback:['缺点','问题','风险','代价','不足']
 };
@@ -1892,12 +1893,12 @@ function semanticTightenPhrase(text){
   [/但它最大的风险同样来自边路[，,]?如果近侧中场横移慢了一步[，,]?边后卫可能面对对方边锋的一打一/g,'但风险在边路；如果中场横移慢，边后卫就可能陷入一对一'],
   [/圣诞树的优势是中路控制力强、球员之间距离短[，,]?而且前腰可更自由地发挥创造力/g,'圣诞树优势是中路控制强、距离短、前腰更自由'],
   [/它的缺点是边路覆盖压力大[，,]?对中场的比赛阅读能力和体能要求都高/g,'缺点是边路覆盖压力大，对中场阅读和体能要求高'],
-  [/所以同样摆一个4321[，,]?不同的球员会踢出完全不同的效果/g,'所以同样4321，球员不同，效果就不同'],
+  [/所以同样摆出?一个4321[，,]?不同的球员会踢出完全不同的效果/g,'所以同样4321，球员不同，效果就不同'],
   [/圣诞树成为经典靠的是球员之间的理解、移动和执行/g,'圣诞树成为经典靠理解、移动和执行'],
   [/近侧边后卫/g,'边后卫'],[/近侧中场/g,'中场'],
   [/迅速向外侧移动压迫/g,'迅速外压'],[/向外侧移动压迫/g,'外压'],
   [/边后卫身后的空间/g,'身后空间'],[/抢下球以后/g,'抢球后'],
-  [/重新组织进攻/g,'重新组织'],[/球员之间距离/g,'球员距离'],
+  [/重新组织进攻/g,'组织进攻'],[/球员之间距离/g,'球员距离'],
   [/发挥创造力/g,'创造'],[/完全不同的效果/g,'不同效果'],
   [/最大的风险也恰恰在/g,'最大风险在'],
   [/最大的风险恰恰在/g,'最大风险在'],
@@ -1925,7 +1926,7 @@ function semanticTightenPhrase(text){
   [/在这一点上/g,'这里'],[/从这一点来看/g,'因此']
  ];
  for(const [re,to] of map)s=s.replace(re,to);
- return s.replace(/[，,]{2,}/g,'，').replace(/^[，,]+|[，,]+$/g,'').trim()
+ return s.replace(/[；;]。/g,'。').replace(/[，,]{2,}/g,'，').replace(/^[，,]+|[，,]+$/g,'').trim()
 }
 function semanticClauseSignature(text){
  const sig=criticalMeaningSignature(text),tags=sceneSemanticTags(text);
