@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#090909" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>SAGI 比赛智能分析 V1.1.1</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <div class="eyebrow">SAGI 足球系统 · AI 比赛分析</div>
+      <h1>比赛<br><span>智能分析</span></h1>
+      <p>上传一场比赛，让比赛留下真正的数据。</p>
+      <div class="version">V1.1.1 · MOBILE UPLOAD FIX</div>
+    </header>
+
+    <section class="panel upload-panel">
+      <div class="section-head">
+        <div>
+          <span class="step">01</span>
+          <h2>新建比赛分析</h2>
+        </div>
+        <span class="status-dot">AI 已就绪</span>
+      </div>
+
+      <form id="uploadForm">
+        <div class="teams">
+          <label>
+            <span>主队</span>
+            <input id="homeTeam" name="home_team" value="塔尔兰" autocomplete="off" />
+          </label>
+          <div class="versus">VS</div>
+          <label>
+            <span>客队</span>
+            <input id="awayTeam" name="away_team" value="对手" autocomplete="off" />
+          </label>
+        </div>
+
+        <label class="field">
+          <span>比赛制式</span>
+          <select id="matchFormat" name="match_format">
+            <option value="6v6">六人制</option>
+            <option value="7v7" selected>七人制</option>
+            <option value="9v9">九人制</option>
+            <option value="11v11">十一人制</option>
+          </select>
+        </label>
+
+        <label class="dropzone" id="dropzone">
+          <input id="videoInput" type="file" name="video" accept="video/*" required />
+          <div class="upload-icon">＋</div>
+          <strong id="fileTitle">选择整场比赛视频</strong>
+          <span id="fileMeta">测试版建议 15–60 秒片段 · 最大 80MB</span>
+        </label>
+
+        <button class="primary" type="submit" id="submitBtn">
+          <span>开始 AI 分析</span>
+          <b>→</b>
+        </button>
+      </form>
+    </section>
+
+    <section class="panel hidden" id="jobPanel">
+      <div class="section-head">
+        <div>
+          <span class="step">02</span>
+          <h2>AI 分析中</h2>
+        </div>
+        <span class="mono" id="jobId"></span>
+      </div>
+      <div class="progress-track"><div id="progressBar" class="progress-bar"></div></div>
+      <div class="progress-row">
+        <strong id="progressText">0%</strong>
+        <span id="jobMessage">等待任务开始</span>
+      </div>
+      <div class="pipeline">
+        <span>球员识别</span><i>→</i><span>球员追踪</span><i>→</i><span>自动分队</span><i>→</i><span>控球估算</span><i>→</i><span>活动热区</span>
+      </div>
+    </section>
+
+    <section class="hidden" id="resultSection">
+      <div class="result-title">
+        <div class="eyebrow">比赛分析报告</div>
+        <h2 id="matchTitle">比赛分析结果</h2>
+      </div>
+
+      <div class="scoreboard">
+        <div>
+          <span id="homeName">主队</span>
+          <strong id="homePoss">0%</strong>
+          <small>估算控球率</small>
+        </div>
+        <div class="divider">:</div>
+        <div>
+          <span id="awayName">客队</span>
+          <strong id="awayPoss">0%</strong>
+          <small>估算控球率</small>
+        </div>
+      </div>
+
+      <div class="metrics">
+        <article><span>主队追踪 ID</span><strong id="homeTracks">0</strong></article>
+        <article><span>客队追踪 ID</span><strong id="awayTracks">0</strong></article>
+        <article><span>分析帧</span><strong id="sampledFrames">0</strong></article>
+        <article><span>识别到足球</span><strong id="ballFrames">0</strong></article>
+      </div>
+
+      <section class="panel">
+        <div class="section-head"><h2>二维球员追踪</h2><span class="tag">AI 轨迹</span></div>
+        <img id="trackingMap" alt="二维球员追踪图" />
+      </section>
+
+      <div class="heatmaps">
+        <section class="panel">
+          <div class="section-head"><h2 id="homeHeatTitle">主队热区</h2><span class="tag">V1 活动热区</span></div>
+          <img id="homeHeatmap" alt="主队热区" />
+        </section>
+        <section class="panel">
+          <div class="section-head"><h2 id="awayHeatTitle">客队热区</h2><span class="tag">V1 活动热区</span></div>
+          <img id="awayHeatmap" alt="客队热区" />
+        </section>
+      </div>
+
+      <div class="notice">
+        <strong>V1.0 说明</strong>
+        <p>当前在线版先分析视频前 90 秒，用于验证真实 AI 识别链路。热区暂时采用画面归一化坐标；下一阶段加入球场标定后升级为真实 2D 战术球场坐标。</p>
+      </div>
+    </section>
+
+    <footer>记录平凡人的足球梦 · 萨吉体育</footer>
+  </main>
+  <script src="./app-v11.js"></script>
+</body>
+</html>
