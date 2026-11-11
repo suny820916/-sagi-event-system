@@ -121,11 +121,11 @@
     ctx.fillText('SAGI LOCAL / '+((profile&&profile.industry)||'LOCAL BUSINESS'),pad,H*.055);
 
     ctx.fillStyle=c.accent;
-    ctx.fillRect(pad,H*(is916?.61:.57),W*.12,Math.max(5,W*.006));
+    ctx.fillRect(pad,H*(is916 ? .61:.57),W*.12,Math.max(5,W*.006));
 
     ctx.fillStyle=c.text;
-    ctx.font='900 '+Math.round(W*(is916?.082:.075))+'px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif';
-    const y=H*(is916?.64:.61);
+    ctx.font='900 '+Math.round(W*(is916 ? .082:.075))+'px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif';
+    const y=H*(is916 ? .64:.61);
     const n=lineText(ctx,headline,pad,y,W*.78,is916?3:2,W*.10);
 
     ctx.fillStyle='rgba(255,255,255,.78)';
@@ -136,7 +136,7 @@
       ctx.textAlign='right';
       ctx.fillStyle=c.accent;
       ctx.font='900 '+Math.round(W*.062)+'px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif';
-      ctx.fillText(offer,W-pad,H*(is916?.835:.84));
+      ctx.fillText(offer,W-pad,H*(is916 ? .835:.84));
       ctx.textAlign='left';
     }
 
@@ -153,7 +153,7 @@
     const brand=((profile&&profile.merchant_name)||'SAGI AI LOCAL').toUpperCase();
     const headline=is916?(pack.coverHeadline||pack.headline):pack.headline;
     const offer=extractOffer((pack.brief||'')+' '+headline);
-    const split=is916?.61:.60;
+    const split=is916 ? .61:.60;
 
     ctx.fillStyle=c.ink;ctx.fillRect(0,0,W,H);
     ctx.save();ctx.beginPath();ctx.rect(0,0,W,H*split);ctx.clip();
@@ -169,7 +169,7 @@
     ctx.fillText(brand,pad,H*.05);
 
     ctx.fillStyle=c.paper;
-    ctx.font='900 '+Math.round(W*(is916?.070:.063))+'px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif';
+    ctx.font='900 '+Math.round(W*(is916 ? .070:.063))+'px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif';
     const y=H*(split+.055);
     const n=lineText(ctx,headline,pad,y,W*.76,is916?3:2,W*.086);
 
@@ -210,7 +210,7 @@
     ctx.fillText(((profile&&profile.industry)||'LOCAL DEAL').toUpperCase(),pad,W*.022);
     ctx.restore();
 
-    const panelY=H*(is916?.59:.56);
+    const panelY=H*(is916 ? .59:.56);
     const g=ctx.createLinearGradient(0,panelY,0,H);
     g.addColorStop(0,'rgba(0,0,0,.08)');
     g.addColorStop(.25,'rgba(0,0,0,.76)');
@@ -219,8 +219,8 @@
 
     ctx.textBaseline='top';
     ctx.fillStyle='#fff';
-    ctx.font='900 '+Math.round(W*(is916?.086:.078))+'px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif';
-    const y=H*(is916?.65:.62);
+    ctx.font='900 '+Math.round(W*(is916 ? .086:.078))+'px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif';
+    const y=H*(is916 ? .65:.62);
     const n=lineText(ctx,headline,pad,y,W*.84,is916?3:2,W*.102);
 
     if(offer){
