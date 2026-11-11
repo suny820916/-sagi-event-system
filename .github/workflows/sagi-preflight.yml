@@ -990,7 +990,7 @@ jobs:
           assert job["status"] == "ready", job
           assert job.get("visualSyncStrategy") == "dynamic", job
           assert float(job.get("visualStretchFactor") or 0) > 2.5, job
-          assert float(job.get("visualHoldSeconds") or 99) == 0.0, job
+          assert float(job.get("visualHoldSeconds", 99)) == 0.0, job
           out = pathlib.Path(job["path"])
           assert out.exists() and out.stat().st_size > 5000
           import av
