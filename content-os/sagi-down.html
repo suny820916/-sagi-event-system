@@ -934,7 +934,7 @@ Unbelievable finish."></textarea>
 
 <script>
 (()=>{'use strict';
-const SAGI_DOWN_BUILD='V3.9.3.0';
+const SAGI_DOWN_BUILD='V3.9.3.1';
 document.documentElement.dataset.sagiDownBuild=SAGI_DOWN_BUILD;
 const BTCH_PUBLIC='https://btch-downloader-api-green.vercel.app';
 const DOWNLOAD_ROUTER_VERSION='3.0';
@@ -1244,7 +1244,7 @@ const STUDIO={
  cloneVoiceId:localStorage.getItem('sagi_clone_voice_id')||'',aiVoiceReady:false,aiVoiceVoices:[],voicePreviewUrl:'',voiceTimeline:[],
  generatedVoiceBlob:null,generatedVoiceUrl:'',generatedVoiceDuration:0,generatedVoiceKey:'',generatedVoiceParts:0,visualSyncPlan:null,
  sceneAnalysis:null,scenePlan:[],sceneAnalyzing:false,clipLockedNarration:'',clipLockedOriginal:'',clipLockedTarget:0,sourceNarration:'',meaningCoverage:100,meaningAudit:null,
- lockstepReady:false,lockstepSegments:[],lockstepVoiceBlob:null,lockstepVoiceUrl:'',lockstepDuration:0,
+ lockstepReady:false,lockstepSegments:[],lockstepVoiceBlob:null,lockstepVoiceUrl:'',lockstepDuration:0,voiceOneShotFallback:false,
  cloudRenderJobId:'',cloudRenderTimer:null,cloudResultUrl:'',cloudRenderRecoveries:0,cloudRenderRecovering:false,
  pendingTranslateZh:false,
  cloudHealth:null,cloudLastError:''
@@ -2104,25 +2104,38 @@ function renderLockstepPlan(){
 
 async function requestOneShotVoice(text,mode,speed){
  await voiceApiReady();
- const r=await fetch(CAPTION_CLOUD+'/api/voice/one-shot',{
-  method:'POST',
-  headers:{'Content-Type':'application/json',Authorization:'Bearer '+STUDIO.cloudCaptionToken},
-  body:JSON.stringify({
-   text:String(text||'').trim(),
-   mode,
-   voice_id:mode==='clone'?STUDIO.cloneVoiceId:(q('aiVoiceVoice')?.value||''),
-   speed:Number(speed)||1,
-   style:q('aiVoiceStyle')?.value||'documentary'
-  })
- });
- if(!r.ok){const d=await r.json().catch(()=>({}));throw new Error(d?.error||('HTTP '+r.status))}
+ const payload={
+  text:String(text||'').trim(),
+  mode,
+  voice_id:mode==='clone'?STUDIO.cloneVoiceId:(q('aiVoiceVoice')?.value||''),
+  speed:Number(speed)||1,
+  style:q('aiVoiceStyle')?.value||'documentary'
+ };
+ const headers={'Content-Type':'application/json',Authorization:'Bearer '+STUDIO.cloudCaptionToken};
+
+ let endpoint='/api/voice/one-shot',fallback=false;
+ let r=await fetch(CAPTION_CLOUD+endpoint,{method:'POST',headers,body:JSON.stringify(payload)});
+
+ // Compatibility guard: old Render revisions do not have /api/voice/one-shot yet.
+ // Do not fail the workflow. Fall back to ONE request against /api/voice/preview.
+ if(r.status===404||r.status===405){
+  fallback=true;endpoint='/api/voice/preview';
+  q('lockstepStatus').textContent='云端正在更新 V2.4 · 已自动切换兼容整稿配音…';
+  r=await fetch(CAPTION_CLOUD+endpoint,{method:'POST',headers,body:JSON.stringify(payload)})
+ }
+ if(!r.ok){
+  const d=await r.json().catch(()=>({}));
+  throw new Error(d?.error||('配音服务 HTTP '+r.status))
+ }
  const blob=await r.blob();
- if(blob.size<1000)throw new Error('ONE_SHOT_EMPTY_AUDIO');
+ if(blob.size<1000)throw new Error('配音返回为空');
+
  let duration=Number(r.headers.get('X-SAGI-Voice-Duration'))||0;
  if(!duration){
   const mono=await decodeVoiceMono(blob,24000);duration=mono.length/24000
  }
- return{blob,duration}
+ STUDIO.voiceOneShotFallback=fallback;
+ return{blob,duration,fallback,endpoint}
 }
 function voiceMasterLanguage(text){
  const s=String(text||'');
@@ -2214,7 +2227,7 @@ async function runAnimationFirstVoice(autoPreview=true){
  const rows=await syncCaptionsFromFinalVoice(exact.blob,source,clip);
  STUDIO.lockstepSegments=rows.map((x,i)=>({...x,index:i,sourceText:x.text,label:'FINAL VOICE → WHISPER 字幕',actualDuration:x.end-x.start,speed}));
  renderClipLockedScript();renderLockstepPlan();
- q('lockstepStatus').textContent='完成 · ANIMATION FIRST · 整稿一次配音 · '+rows.length+'条字幕来自最终声音 · 动画 '+clip.toFixed(2)+'秒不变';
+ q('lockstepStatus').textContent='完成 · ANIMATION FIRST · '+(STUDIO.voiceOneShotFallback?'兼容整稿配音':'ONE-SHOT整稿配音')+' · '+rows.length+'条字幕来自最终声音 · 动画 '+clip.toFixed(2)+'秒不变';
  setVoiceState('ANIMATION FIRST · ONE-SHOT · 字幕已跟最终声音锁定');
  if(autoPreview){const a=q('aiVoicePreview');a.src=STUDIO.lockstepVoiceUrl;a.classList.add('show');await a.play().catch(()=>{})}
  return{blob:exact.blob,duration:clip,text:source,speed,segments:rows}
