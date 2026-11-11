@@ -861,8 +861,8 @@ Unbelievable finish."></textarea>
           <div class="voiceTimelineList" id="voiceTimelineList"></div>
           <div class="voiceTimelineHint">SIMPLE SYNC：默认不拆场景。整篇解说一次生成，只比较“配音总时长”和“视频总时长”；能放进去就不改原稿，超时才做一次轻微语速或文案修正。</div>
           <div class="voiceTiming" id="visualSyncStatus">AI SCENE SYNC：等待视频内容分析。</div>
-          <div class="sceneSyncBox">
-            <div class="sceneSyncHead"><b>视频内容场景</b><button class="btn" id="sceneAnalyzeBtn" type="button">分析视频内容</button></div>
+          <div class="sceneSyncBox" id="advancedSceneBox" style="display:none">
+            <div class="sceneSyncHead"><b>高级画面同步 · 视频内容场景</b><button class="btn" id="sceneAnalyzeBtn" type="button">分析视频内容</button></div>
             <div class="sceneSyncStatus" id="sceneSyncStatus">尚未读取视频。会在本机抽帧分析场景变化，并结合原字幕做语义匹配。</div>
             <div class="sceneSyncList" id="sceneSyncList"></div>
           </div>
@@ -2476,10 +2476,10 @@ async function startCloudRender(recovering=false){
 
  const [start,end,duration]=studioRange();
  const mode=q('aiVoiceMode')?.value||'none';
- if((mode==='ai_male'||mode==='ai_female'||mode==='clone')&&(health.voiceVideoDurationLock!==true||health.voiceMeaningFirst!==true||health.voiceLockstep!==true||health.voiceSemanticLock!==true||health.voiceSemanticMeaningProtected!==true)){
+ if((mode==='ai_male'||mode==='ai_female'||mode==='clone')&&health.voiceVideoDurationLock!==true){
    setCloudRenderProgress(0);
-   setCloudRenderStatus('当前云端尚未启用 ADAPTIVE LOCK V2.2；已阻止旧版错场景/改原意/延长视频。');
-   studioStatus('云端未确认“ADAPTIVE LOCK V2.2 + 原意100% + 视频时长硬锁”，本次不会提交错误成片。','warn');
+   setCloudRenderStatus('当前云端尚未启用视频总时长锁定；已停止提交。');
+   studioStatus('SIMPLE SYNC 只要求云端保证“视频时长不变”。','warn');
    return
  }
  if(mode==='clone'&&!STUDIO.cloneVoiceId){studioStatus('请选择AI男声/女声，或先创建你的声音克隆。','warn');return}
@@ -2499,7 +2499,7 @@ async function startCloudRender(recovering=false){
      await voiceApiReady();
    }
 
-   let submitMode=mode,submitDuration=duration,submitSync='lockstep',submitVoiceBlob=null,submitVoiceName='voice.m4a',submitMeaningFirst=false;
+   let submitMode=mode,submitDuration=duration,submitSync='clip_locked',submitVoiceBlob=null,submitVoiceName='voice.m4a',submitMeaningFirst=false;
    if(mode==='recorded'&&STUDIO.voiceBlob){
      submitVoiceBlob=STUDIO.voiceBlob;submitVoiceName='voice.'+(STUDIO.voiceMime.includes('webm')?'webm':'m4a')
    }else if(mode==='ai_male'||mode==='ai_female'||mode==='clone'){
@@ -2513,11 +2513,11 @@ async function startCloudRender(recovering=false){
          await runSimpleSyncVoice(false)
        }
      }
-     submitMode='recorded';submitVoiceBlob=STUDIO.lockstepVoiceBlob;submitVoiceName='sagi-simple-sync-v23.wav';submitSync='lockstep';submitDuration=duration;submitMeaningFirst=true;
+     submitMode='recorded';submitVoiceBlob=STUDIO.lockstepVoiceBlob;submitVoiceName='sagi-simple-sync-v23.wav';submitSync='clip_locked';submitDuration=duration;submitMeaningFirst=true;
      setCloudRenderStatus('SIMPLE SYNC 已完成 · 完整配音 '+STUDIO.lockstepDuration.toFixed(2)+'秒 = 视频 '+duration.toFixed(2)+'秒 · 正在出片')
    }
 
-   const selectedVisualMode=q('aiVisualSync')?.value||'voice_to_video';
+   const selectedVisualMode=q('aiVisualSync')?.value||'off';
    const visualMode=selectedVisualMode==='auto'?'auto':'off';
    if(visualMode==='auto'){
      if(!STUDIO.sceneAnalysis?.scenes?.length){
@@ -2540,7 +2540,7 @@ async function startCloudRender(recovering=false){
    fd.append('quality',q('exportQuality')?.value||'fast');
    fd.append('captions',JSON.stringify(cloudRenderCaptions()));
    fd.append('narration',submitMeaningFirst?String(STUDIO.clipLockedNarration||''):String(q('narrationText')?.value||''));
-   const hasLockedTimeline=STUDIO.generatedVoiceDuration>0&&(STUDIO.voiceTimeline||[]).some(x=>x.basis==='clip_locked'||x.basis==='lockstep'||x.basis==='scene_lock_v2');
+   const hasLockedTimeline=STUDIO.generatedVoiceDuration>0&&(STUDIO.voiceTimeline||[]).some(x=>x.basis==='simple_sync'||x.basis==='clip_locked'||x.basis==='lockstep'||x.basis==='scene_lock_v2');
    const voiceTimeline=hasLockedTimeline?STUDIO.voiceTimeline:buildVoiceTimeline(true);
    fd.append('voice_timeline',JSON.stringify(voiceTimeline));
    fd.append('voice_mode',submitMode);
@@ -3928,6 +3928,14 @@ q('downloadSrtBtn').onclick=downloadSrt;
 q('localCaptionBtn').onclick=runLocalCaption;
 q('cloudTestBtn').onclick=runCloudSelfTest;
 q('captionToNarrationBtn').onclick=captionToNarration;
+
+function updateSimpleSyncUi(){
+ const advanced=(q('aiVisualSync')?.value||'off')==='auto';
+ const box=q('advancedSceneBox');if(box)box.style.display=advanced?'':'none';
+ const visual=q('visualSyncStatus');
+ if(visual&&!advanced)visual.textContent='SIMPLE SYNC：保持原视频，不分析场景。';
+}
+
 q('lockstepVoiceBtn').onclick=async()=>{
  const btn=q('lockstepVoiceBtn');btn.disabled=true;btn.textContent='正在生成完整配音…';
  try{
@@ -3946,7 +3954,8 @@ q('sceneAnalyzeBtn').onclick=()=>analyzeVideoScenes(false);
   if(id!=='aiVisualSync')STUDIO.generatedVoiceKey='';
   if(id!=='aiVisualSync'){STUDIO.lockstepReady=false;STUDIO.lockstepSegments=[];STUDIO.lockstepVoiceBlob=null;renderLockstepPlan()}
   voiceTimingHint();
-  if(STUDIO.sceneAnalysis?.scenes?.length){matchVoiceTimelineToScenes();renderVoiceTimeline()}
+  if(id==='aiVisualSync')updateSimpleSyncUi();
+  if((q('aiVisualSync')?.value||'off')==='auto'&&STUDIO.sceneAnalysis?.scenes?.length){matchVoiceTimelineToScenes();renderVoiceTimeline()}
  })
 });
 q('cloudRenderBtn').onclick=startCloudRender;
@@ -5464,6 +5473,7 @@ renderHistory();updateDetect();renderRecreatePreset();renderCapabilities();
 if(q('captionSpeed'))q('captionSpeed').value='fast';
 if(q('captionRange'))q('captionRange').value='trim';
 setTimeout(async()=>{await wakeCaptionCloud();refreshAIVoiceStatus(false)},180);
+updateSimpleSyncUi();
 
 if('serviceWorker' in navigator){
  let swReloaded=false;
