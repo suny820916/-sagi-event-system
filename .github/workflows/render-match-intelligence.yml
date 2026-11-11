@@ -1,0 +1,107 @@
+name: Deploy SAGI Match Intelligence to Render
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "sagi-match-intelligence/**"
+      - ".github/workflows/render-match-intelligence.yml"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Render API key
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+        run: |
+          if [ -z "$RENDER_API_KEY" ]; then
+            echo "::error::RENDER_API_KEY secret is not configured."
+            exit 2
+          fi
+
+      - name: Create or deploy Match Intelligence
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          GITHUB_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          API="https://api.render.com/v1"
+          AUTH="Authorization: Bearer $RENDER_API_KEY"
+          NAME="sagi-match-intelligence-suny820916"
+          REPO="https://github.com/suny820916/-sagi-event-system"
+
+          owner_id="$(curl -fsS -H "$AUTH" "$API/owners?limit=1" | jq -r '.[0].owner.id')"
+          if [ -z "$owner_id" ] || [ "$owner_id" = "null" ]; then
+            echo "::error::No Render workspace found."
+            exit 3
+          fi
+
+          existing="$(curl -fsS -G -H "$AUTH" "$API/services" --data-urlencode "name=$NAME" --data-urlencode "limit=20")"
+          service_id="$(echo "$existing" | jq -r '.[0].service.id // empty')"
+
+          if [ -n "$service_id" ]; then
+            echo "Existing service found: $service_id"
+            curl -fsS -X POST               -H "$AUTH"               -H "Content-Type: application/json"               "$API/services/$service_id/deploys"               -d "$(jq -n --arg sha "$GITHUB_SHA" '{commitId:$sha,clearCache:"do_not_clear"}')"               | jq .
+          else
+            echo "Creating new free Render service..."
+            payload="$(jq -n               --arg name "$NAME"               --arg ownerId "$owner_id"               --arg repo "$REPO"               '{
+                type:"web_service",
+                name:$name,
+                ownerId:$ownerId,
+                repo:$repo,
+                branch:"main",
+                autoDeployTrigger:"commit",
+                envVars:[
+                  {key:"SAGI_MODEL",value:"yolo11n.pt"},
+                  {key:"SAGI_DEVICE",value:"cpu"},
+                  {key:"SAGI_ANALYSIS_FPS",value:"1"},
+                  {key:"SAGI_CONF",value:"0.25"},
+                  {key:"SAGI_IMGSZ",value:"416"},
+                  {key:"SAGI_MAX_UPLOAD_MB",value:"200"},
+                  {key:"SAGI_DATA_DIR",value:"/tmp/sagi-match-data"},
+                  {key:"MALLOC_ARENA_MAX",value:"2"},
+                  {key:"OMP_NUM_THREADS",value:"1"},
+                  {key:"OPENBLAS_NUM_THREADS",value:"1"}
+                ],
+                serviceDetails:{
+                  runtime:"docker",
+                  plan:"free",
+                  region:"singapore",
+                  healthCheckPath:"/health",
+                  envSpecificDetails:{
+                    dockerfilePath:"./sagi-match-intelligence/Dockerfile",
+                    dockerContext:"./sagi-match-intelligence"
+                  }
+                }
+              }')"
+
+            created="$(curl -fsS -X POST               -H "$AUTH"               -H "Content-Type: application/json"               "$API/services"               -d "$payload")"
+            echo "$created" | jq .
+            service_id="$(echo "$created" | jq -r '.service.id')"
+          fi
+
+          echo "service_id=$service_id" >> "$GITHUB_ENV"
+
+      - name: Wait for public health check
+        env:
+          SERVICE_NAME: sagi-match-intelligence-suny820916
+        run: |
+          python - <<'PY'
+          import json, time, urllib.request, sys
+          url = f"https://{__import__('os').environ['SERVICE_NAME']}.onrender.com/health"
+          for i in range(48):
+              try:
+                  with urllib.request.urlopen(url, timeout=20) as r:
+                      data = json.loads(r.read().decode("utf-8"))
+                  print(f"check {i+1}/48:", data)
+                  if data.get("ok") is True and str(data.get("version", "")).startswith("1.0."):
+                      print("SAGI Match Intelligence is live:", url)
+                      sys.exit(0)
+              except Exception as e:
+                  print(f"check {i+1}/48 failed:", e)
+              time.sleep(10)
+          print("Render service did not pass health check.")
+          sys.exit(1)
+          PY
