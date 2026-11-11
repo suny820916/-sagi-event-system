@@ -154,7 +154,7 @@ def analyze_match(
 
     cap = cv2.VideoCapture(str(video_path))
     if not cap.isOpened():
-        raise RuntimeError("Could not open uploaded video.")
+        raise RuntimeError("无法读取上传的比赛视频。")
 
     fps = float(cap.get(cv2.CAP_PROP_FPS) or 25.0)
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0)
@@ -174,7 +174,7 @@ def analyze_match(
 
     if not writer.isOpened():
         cap.release()
-        raise RuntimeError("Could not create analysis preview video.")
+        raise RuntimeError("无法生成比赛分析预览视频。")
 
     track_colours: dict[int, list[np.ndarray]] = defaultdict(list)
     track_positions: dict[int, list[tuple[float, float]]] = defaultdict(list)
@@ -278,7 +278,7 @@ def analyze_match(
                 pct = min(95.0, 5.0 + (frame_index / total_frames) * 90.0)
             else:
                 pct = 50.0
-            progress(pct, f"AI analysing frame {frame_index:,}")
+            progress(pct, f"AI 正在分析比赛画面：{frame_index:,}")
 
         frame_index += 1
 
@@ -286,7 +286,7 @@ def analyze_match(
     writer.release()
 
     if progress:
-        progress(95.0, "Optimising mobile preview")
+        progress(95.0, "正在优化手机端分析视频")
 
     try:
         subprocess.run(
@@ -390,10 +390,10 @@ def analyze_match(
             "result.json",
         ],
         "limitations": [
-            "V1 heatmaps use normalized screen coordinates, not calibrated pitch coordinates.",
-            "Home/away colour clusters may need manual swapping.",
-            "Player identity is track-based and may fragment after occlusion.",
-            "Possession is an estimate based on ball proximity.",
+            "V1 热区暂时使用画面坐标，还不是真实球场坐标。",
+            "主客队自动颜色分组可能需要人工交换。",
+            "球员身份目前基于追踪编号，遮挡后可能出现编号变化。",
+            "控球率目前根据足球与最近球员的距离进行估算。",
         ],
     }
 
@@ -403,6 +403,6 @@ def analyze_match(
     )
 
     if progress:
-        progress(100.0, "Analysis complete")
+        progress(100.0, "比赛分析完成")
 
     return result_payload
