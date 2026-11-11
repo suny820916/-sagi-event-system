@@ -1531,6 +1531,83 @@ async function refreshAIVoiceStatus(showToast=false){
    STUDIO.aiVoiceReady=false;setVoiceState('AI Voice 不可用：'+(e.message||e));return null
  }
 }
+function narrationCharCount(text){
+ return (String(text||'').match(/[\u3400-\u9fffA-Za-z0-9]/g)||[]).length
+}
+function compactNarrationSentence(text,maxChars){
+ let s=String(text||'').trim()
+  .replace(/^(其实|事实上|可以看到|我们可以看到|你会发现|这时候|这个时候|也就是说|换句话说|需要注意的是|值得注意的是)[，,：:\s]*/,'')
+  .replace(/(非常|其实|本质上|相对来说|一定程度上|从这个角度来看|在这个过程当中)/g,'')
+  .replace(/[，,]{2,}/g,'，').trim();
+ if(!maxChars||narrationCharCount(s)<=maxChars)return s;
+ const clauses=s.split(/(?<=[，,；;：:])/).map(x=>x.trim()).filter(Boolean);
+ const keep=[],tactical=/阵型|防守|进攻|中场|边路|边后卫|后腰|前腰|横移|移动|压迫|逼抢|转换|反击|传球|站位|空间|左路|右路|左侧|右侧|圣诞树|4321|433/;
+ for(const cl of clauses){
+  if(!keep.length||tactical.test(cl))keep.push(cl)
+  if(narrationCharCount(keep.join(''))>=maxChars)break
+ }
+ s=(keep.join('')||s).slice(0,Math.max(4,maxChars));
+ if(!/[。！？!?]$/.test(s))s=s.replace(/[，,；;：:]$/,'')+'。';
+ return s
+}
+function semanticSentenceScore(text,index,total){
+ const t=String(text||''),tags=sceneSemanticTags(t),tokens=sceneWordTokens(t),scenes=STUDIO.sceneAnalysis?.scenes||[];
+ let score=tags.length*8+(index===0?6:0)+(index===total-1?5:0)+Math.min(5,narrationCharCount(t)/18);
+ const tactical=/阵型|防守|进攻|中场|边路|边后卫|后腰|前腰|横移|移动|压迫|逼抢|转换|反击|传球|站位|空间|圣诞树|4321|433/;
+ if(tactical.test(t))score+=9;
+ for(const s of scenes){
+  const st=new Set(s.tags||[]);let overlap=0;for(const tag of tags)if(st.has(tag))overlap++;
+  if(overlap)score=Math.max(score,score+overlap*5);
+  const sceneTokens=new Set(s.tokens||[]);let direct=0;for(const tok of tokens)if(sceneTokens.has(tok))direct++;
+  if(direct)score+=Math.min(7,direct*1.5)
+ }
+ return score
+}
+function fitNarrationTextToClip(text,clipSeconds,budgetOverride=0){
+ const original=String(text||'').trim(),speed=Math.max(.85,Math.min(1.15,Number(q('aiVoiceSpeed')?.value)||1));
+ const targetChars=Math.max(70,Math.floor(budgetOverride||clipSeconds*3.55*speed*.96));
+ if(narrationCharCount(original)<=targetChars)return original;
+ const parts=splitVoiceSentences(original,140);
+ const scored=parts.map((text,i)=>({i,text,score:semanticSentenceScore(text,i,parts.length),chars:narrationCharCount(text)}));
+ const selected=new Set([0,Math.max(0,parts.length-1)]);
+ const scenes=STUDIO.sceneAnalysis?.scenes||[];
+ for(const scene of scenes){
+  let best=null;
+  for(const row of scored){
+   const tags=sceneSemanticTags(row.text),st=new Set(scene.tags||[]);let overlap=0;for(const tag of tags)if(st.has(tag))overlap++;
+   const s=row.score+overlap*12;
+   if(!best||s>best.score)best={i:row.i,score:s}
+  }
+  if(best)selected.add(best.i)
+ }
+ let chars=[...selected].reduce((n,i)=>n+(scored[i]?.chars||0),0);
+ for(const row of [...scored].sort((a,b)=>b.score-a.score)){
+  if(selected.has(row.i))continue;
+  if(chars+row.chars<=targetChars*1.06){selected.add(row.i);chars+=row.chars}
+ }
+ let kept=[...selected].sort((a,b)=>a-b).map(i=>parts[i]).filter(Boolean);
+ if(!kept.length)kept=[parts[0]||original];
+ let total=narrationCharCount(kept.join(''));
+ if(total>targetChars){
+  const ratio=targetChars/Math.max(1,total);
+  kept=kept.map((s,i)=>compactNarrationSentence(s,Math.max(i===0||i===kept.length-1?12:8,Math.floor(narrationCharCount(s)*ratio))));
+ }
+ let out=kept.join('').replace(/。{2,}/g,'。').trim();
+ if(narrationCharCount(out)>targetChars)out=compactNarrationSentence(out,targetChars);
+ return out||compactNarrationSentence(original,targetChars)
+}
+async function padVoiceBlobToDuration(blob,targetSeconds){
+ const Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)return{blob,duration:targetSeconds};
+ const ctx=new Ctx(),rate=24000;
+ try{
+  const ab=await blob.arrayBuffer(),decoded=await ctx.decodeAudioData(ab.slice(0));
+  let mono=mixChannels(decoded,0,decoded.length);mono=resampleLinear(mono,decoded.sampleRate,rate);
+  const target=Math.max(1,Math.round(targetSeconds*rate));
+  if(mono.length>target)return{blob,duration:mono.length/rate};
+  const out=new Float32Array(target);out.set(mono.subarray(0,Math.min(mono.length,target)));
+  return{blob:waveformToWavBlob(out,rate),duration:target/rate}
+ }finally{try{await ctx.close()}catch(e){}}
+}
 function groupVoiceText(text,maxChars=72){
  const parts=splitVoiceSentences(text,140),out=[];let buf='';
  const push=v=>{v=String(v||'').trim();if(v)out.push(v)};
