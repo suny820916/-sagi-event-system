@@ -1602,6 +1602,12 @@ async function startCloudRender(recovering=false){
    fd.append('voice_style',q('aiVoiceStyle')?.value||'football');
    const visualPlan=buildVisualSyncPlan();
    if(visualPlan?.strategy==='blocked')throw new Error('画面比配音短 '+visualPlan.gap.toFixed(1)+' 秒，已禁止长尾帧定格；请选择 AI动态匹配');
+   if(visualPlan&&visualPlan.gap>3&&health.aiVisualSync!==true){
+     setCloudRenderProgress(0);
+     setCloudRenderStatus('已阻止旧云端生成长尾定格：当前 Render 尚未上线 VISUAL SYNC V1.3。');
+     studioStatus('VISUAL SYNC V1.3 云端尚未确认上线，本次不提交旧版长尾定格成片。','warn');
+     return
+   }
    fd.append('voice_sync',submitSync);
    fd.append('visual_sync',q('aiVisualSync')?.value||'auto');
    fd.append('visual_sync_max_hold','3');
