@@ -399,6 +399,42 @@
     };
   }
 
+  async function runSelfTest(){
+    if(!new URLSearchParams(location.search).has('selftest'))return;
+    document.body.dataset.selftest='running';
+    try{
+      const c=document.createElement('canvas');
+      c.width=720;c.height=1080;
+      const x=c.getContext('2d');
+      const g=x.createLinearGradient(0,0,720,1080);
+      g.addColorStop(0,'#202024');g.addColorStop(1,'#7b6228');
+      x.fillStyle=g;x.fillRect(0,0,720,1080);
+      x.fillStyle='#e7c568';x.fillRect(130,220,460,560);
+      x.fillStyle='#111';x.font='bold 52px sans-serif';x.fillText('SAGI TEST',190,520);
+      const blob=await new Promise(function(resolve){c.toBlob(resolve,'image/jpeg',.9)});
+      if(!blob)throw new Error('test image failed');
+      const file=new File([blob],'selftest.jpg',{type:'image/jpeg'});
+      state.photoFile=file;
+      state.photoImage=await SAGI_POSTER.loadImage(file);
+      state.copy={headline:'周末主推',subheadline:'真实产品 · 真实场景',cta:'立即了解',moments:'测试文案',engine:'local'};
+      state.visual=localVisual();
+      $('#brief').value='周末主推';
+      const signatures=[];
+      ['editorial','split','impact'].forEach(function(style){
+        state.style=style;
+        renderPosters();
+        signatures.push($('#poster34').toDataURL('image/png').slice(-220));
+      });
+      const distinct=new Set(signatures).size===3;
+      const ok=$('#poster34').dataset.rendered==='1'&&
+        $('#poster916').dataset.rendered==='1'&&distinct;
+      document.body.dataset.templateSmoke=distinct?'ok':'fail';
+      document.body.dataset.selftest=ok?'ok':'fail';
+    }catch(err){
+      document.body.dataset.selftest='fail:'+String(err&&err.message||err);
+    }
+  }
+
   async function boot(){
     bind();
     setAuthMode('login');
@@ -421,4 +457,5 @@
   }
 
   boot();
+  runSelfTest();
 })();
