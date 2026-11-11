@@ -222,7 +222,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 <div class="wrap">
   <div class="top">
     <div class="brand"><b>SAGI DOWN</b><span>DOWNLOAD · IMAGE AI · VIDEO</span></div>
-    <span class="badge">V3.9.1 · LAYER CORE</span>
+    <span class="badge" id="sagiBuildBadge">V3.9.2.4 · SEMANTIC LOCK</span>
   </div>
 
   <section class="hero">
@@ -942,6 +942,7 @@ const DOWNLOAD_ROUTER_VERSION='3.0';
 const KEY='sagi_down_history_v2';
 const OLD_KEY='sagi_down_history_v1';
 const q=id=>document.getElementById(id);
+const buildBadge=q('sagiBuildBadge');if(buildBadge)buildBadge.textContent=SAGI_DOWN_BUILD+' · SEMANTIC LOCK';
 const input=q('url'),status=q('status'),platformName=q('platformName'),platformHint=q('platformHint'),platformType=q('platformType');
 
 function extractUrl(v){
