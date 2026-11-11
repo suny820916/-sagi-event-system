@@ -58,6 +58,8 @@
     },
     createProject:(project)=>json('/api/projects','POST',project),
     listProjects:()=>request('/api/projects'),
-    usage:()=>request('/api/usage')
+    usage:()=>request('/api/usage'),
+    quota:()=>request('/api/account/quota'),
+    plans:()=>request('/api/plans')
   };
 })();
