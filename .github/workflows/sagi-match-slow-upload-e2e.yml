@@ -1,0 +1,43 @@
+name: SAGI Match Slow Upload E2E
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "sagi-match-intelligence/frontend/app-v11.js"
+      - "sagi-cloud-bridge/Dockerfile"
+      - "render.yaml"
+      - ".github/workflows/sagi-match-slow-upload-e2e.yml"
+  workflow_dispatch:
+
+jobs:
+  slow-upload:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check mobile upload JavaScript syntax
+        run: node --check sagi-match-intelligence/frontend/app-v11.js
+
+      - name: Prepare 32MB MOV payload
+        run: |
+          set -euo pipefail
+          dd if=/dev/zero of=slow-test.mov bs=1M count=32 status=none
+          ls -lh slow-test.mov
+
+      - name: Simulate 165KB/s mobile upload
+        run: |
+          set -euo pipefail
+          BASE="https://sagi-cloud-bridge-suny820916.onrender.com"
+          START="$(date +%s)"
+          RESP="$(curl -L --fail --show-error --max-time 480 --limit-rate 165k             -F "video=@slow-test.mov;type=video/quicktime;filename=slow-network-test.mov"             -F "home_team=慢网主队"             -F "away_team=慢网客队"             -F "match_format=7v7"             "$BASE/api/match-intelligence/jobs")"
+          END="$(date +%s)"
+          echo "$RESP" | jq .
+          SECONDS_USED=$((END-START))
+          echo "slow_upload_seconds=$SECONDS_USED"
+          JOB_ID="$(echo "$RESP" | jq -r '.job_id')"
+          test -n "$JOB_ID"
+          test "$JOB_ID" != "null"
+          test "$SECONDS_USED" -ge 180
+          echo "SLOW UPLOAD E2E PASSED"
