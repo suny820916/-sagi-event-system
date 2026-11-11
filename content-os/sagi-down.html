@@ -1808,17 +1808,14 @@ async function startCloudRender(recovering=false){
      await voiceApiReady();
    }
 
-   let submitMode=mode,submitDuration=duration,submitSync=q('aiVoiceSync')?.value||'fit',submitVoiceBlob=null,submitVoiceName='voice.m4a';
-   const serverV12=health.voiceCompletenessGuard===true&&['1.2','1.3','1.4'].includes(String(health.voiceDirectorVersion||''));
+   let submitMode=mode,submitDuration=duration,submitSync='clip_locked',submitVoiceBlob=null,submitVoiceName='voice.m4a';
    if(mode==='recorded'&&STUDIO.voiceBlob){
      submitVoiceBlob=STUDIO.voiceBlob;submitVoiceName='voice.'+(STUDIO.voiceMime.includes('webm')?'webm':'m4a')
-   }else if((mode==='ai_male'||mode==='ai_female'||mode==='clone')&&!serverV12){
-     setCloudRenderStatus('检测到旧云端 · 正在先生成完整AI配音，再以完整音轨提交…');
-     const merged=await generateCompleteAIVoice(String(q('narrationText')?.value||''),mode,false);
-     if(merged.duration>179.2)throw new Error('完整配音超过3分钟云端上限，请缩短解说稿');
-     submitMode='recorded';submitVoiceBlob=merged.blob;submitVoiceName='sagi-complete-ai-voice.wav';submitSync='natural';
-     submitDuration=duration;
-     setCloudRenderStatus('完整音轨已准备 · '+merged.duration.toFixed(1)+'秒 · 文本覆盖100% · 正在上传成片')
+   }else if(mode==='ai_male'||mode==='ai_female'||mode==='clone'){
+     setCloudRenderStatus('VIDEO FIRST · 正在把AI解说锁定到 '+duration.toFixed(1)+' 秒…');
+     const locked=await generateClipLockedAIVoice(String(q('narrationText')?.value||''),mode,false);
+     submitMode='recorded';submitVoiceBlob=locked.blob;submitVoiceName='sagi-clip-locked-voice.wav';submitSync='clip_locked';submitDuration=duration;
+     setCloudRenderStatus('配音已锁定 '+locked.duration.toFixed(1)+'秒 · '+locked.originalChars+'字→'+locked.fittedChars+'字 · 正在按视频场景出片')
    }
 
    const visualMode=q('aiVisualSync')?.value||'auto';
@@ -1843,9 +1840,8 @@ async function startCloudRender(recovering=false){
    fd.append('quality',q('exportQuality')?.value||'fast');
    fd.append('captions',JSON.stringify(cloudRenderCaptions()));
    fd.append('narration',String(q('narrationText')?.value||''));
-   const currentVoiceKey=voiceGenerationKey(String(q('narrationText')?.value||''),mode);
-   const hasActualTimeline=STUDIO.generatedVoiceKey===currentVoiceKey&&STUDIO.generatedVoiceDuration>0&&(STUDIO.voiceTimeline||[]).some(x=>x.basis==='actual');
-   const voiceTimeline=hasActualTimeline?STUDIO.voiceTimeline:buildVoiceTimeline(true);
+   const hasLockedTimeline=STUDIO.generatedVoiceDuration>0&&(STUDIO.voiceTimeline||[]).some(x=>x.basis==='clip_locked');
+   const voiceTimeline=hasLockedTimeline?STUDIO.voiceTimeline:buildVoiceTimeline(true);
    fd.append('voice_timeline',JSON.stringify(voiceTimeline));
    fd.append('voice_mode',submitMode);
    fd.append('voice_id',submitMode==='recorded'?'':(mode==='clone'?STUDIO.cloneVoiceId:(q('aiVoiceVoice')?.value||'')));
