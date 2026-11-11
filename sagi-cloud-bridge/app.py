@@ -1373,24 +1373,18 @@ def run_cloud_render(job_id, options):
                     _persist_render_jobs_locked()
 
             narration_duration = audio_duration_seconds(narration_path) if narration_path else 0.0
-            # Complete narration always wins over the original clip boundary.
-            # V1.3 forbids long frozen tails: > max_hold must be visually resynchronised.
-            output_duration = max(duration, narration_duration + 0.35 if narration_duration > 0 else duration)
-            visual_gap = max(0.0, output_duration - duration)
-            visual_factor = max(1.0, output_duration / max(0.2, duration))
+            # V1.5 VIDEO FIRST: picture duration is the hard master clock.
+            # Never extend an 82s clip to fit a longer narration.
+            output_duration = duration
+            if narration_duration > duration + 0.30:
+                raise RuntimeError(
+                    f"VOICE_EXCEEDS_VIDEO: narration {narration_duration:.2f}s > video {duration:.2f}s; "
+                    "client must compress narration before render"
+                )
+            visual_gap = 0.0
+            visual_factor = 1.0
             scene_plan = normalize_scene_plan(scene_plan_raw, duration, output_duration)
-            visual_strategy = "native"
-            if visual_sync == "auto" and scene_plan:
-                visual_strategy = "semantic"
-            elif visual_gap > visual_sync_max_hold + 0.01:
-                if visual_sync == "off":
-                    raise RuntimeError(
-                        f"VISUAL_SYNC_REQUIRED: narration exceeds picture by {visual_gap:.1f}s; "
-                        f"frozen-tail limit is {visual_sync_max_hold:.1f}s"
-                    )
-                visual_strategy = "stretch" if visual_sync == "stretch" else "dynamic"
-            elif visual_gap > 0.04:
-                visual_strategy = "short_hold"
+            visual_strategy = "semantic" if (visual_sync == "auto" and scene_plan) else "native"
 
             width, height = render_dimensions(aspect, quality)
             render_captions = captions
@@ -2645,7 +2639,10 @@ def health():
         "smartTranslate": True,
         "aiVoice": True,
         "aiVoiceFallback": True,
-        "voiceDirectorVersion": "1.4",
+        "voiceDirectorVersion": "1.5",
+        "voiceVideoDurationLock": True,
+        "voiceAutoCondenseToClip": True,
+        "voiceRenderNeverExtendsVideo": True,
         "aiVisualSync": True,
         "aiVisualSyncMaxHoldSeconds": 3,
         "aiVisualSyncSentenceMap": True,
