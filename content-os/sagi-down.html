@@ -1217,6 +1217,7 @@ const STUDIO={
  cloudCaptionToken:'',cloudCaptionReady:false,cloudCaptionWaking:false,cloudCaptionError:'',cloudHealthVersion:'',cloudVersion:'',cloudHealth:null,cloudOptionalMissing:[],
  captionVisibleCount:40,oneTapBusy:false,translationScore:0,recreatePlan:null,
  cloneVoiceId:localStorage.getItem('sagi_clone_voice_id')||'',aiVoiceReady:false,aiVoiceVoices:[],voicePreviewUrl:'',voiceTimeline:[],
+ generatedVoiceBlob:null,generatedVoiceUrl:'',generatedVoiceDuration:0,generatedVoiceKey:'',generatedVoiceParts:0,
  cloudRenderJobId:'',cloudRenderTimer:null,cloudResultUrl:'',cloudRenderRecoveries:0,cloudRenderRecovering:false,
  pendingTranslateZh:false,
  cloudHealth:null,cloudLastError:''
@@ -1322,6 +1323,68 @@ async function refreshAIVoiceStatus(showToast=false){
  }catch(e){
    STUDIO.aiVoiceReady=false;setVoiceState('AI Voice 不可用：'+(e.message||e));return null
  }
+}
+function groupVoiceText(text,maxChars=72){
+ const parts=splitVoiceSentences(text,140),out=[];let buf='';
+ const push=v=>{v=String(v||'').trim();if(v)out.push(v)};
+ for(const part0 of parts){
+  const part=String(part0||'').trim();if(!part)continue;
+  const chars=Array.from(part);
+  if(chars.length>maxChars){
+   if(buf){push(buf);buf=''}
+   for(let i=0;i<chars.length;i+=maxChars)push(chars.slice(i,i+maxChars).join(''));
+   continue
+  }
+  const next=buf+part;
+  if(buf&&Array.from(next).length>maxChars){push(buf);buf=part}else buf=next
+ }
+ if(buf)push(buf);
+ return out
+}
+function voiceGenerationKey(text,mode){
+ return [String(text||'').trim(),mode||'',q('aiVoiceVoice')?.value||'',q('aiVoiceSpeed')?.value||'1',q('aiVoiceStyle')?.value||'football'].join('|')
+}
+async function mergeVoiceChunks(blobs,texts){
+ const Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)throw new Error('WEB_AUDIO_UNAVAILABLE');
+ const ctx=new Ctx(),rate=24000,gapSamples=Math.round(rate*.08),parts=[];let total=0;
+ try{
+  for(let i=0;i<blobs.length;i++){
+   const ab=await blobs[i].arrayBuffer(),decoded=await ctx.decodeAudioData(ab.slice(0));
+   let mono=mixChannels(decoded,0,decoded.length);mono=resampleLinear(mono,decoded.sampleRate,rate);
+   const chars=(String(texts[i]||'').match(/[\u3400-\u9fffA-Za-z0-9]/g)||[]).length,sec=mono.length/rate;
+   if(sec<Math.max(.12,chars/15))throw new Error('第'+(i+1)+'段配音疑似不完整');
+   parts.push(mono);total+=mono.length+(i<blobs.length-1?gapSamples:0)
+  }
+  const all=new Float32Array(total);let pos=0;
+  for(let i=0;i<parts.length;i++){all.set(parts[i],pos);pos+=parts[i].length;if(i<parts.length-1)pos+=gapSamples}
+  return{blob:waveformToWavBlob(all,rate),duration:all.length/rate}
+ }finally{try{await ctx.close()}catch(e){}}
+}
+async function generateCompleteAIVoice(text,mode,force=false){
+ const key=voiceGenerationKey(text,mode);
+ if(!force&&STUDIO.generatedVoiceBlob&&STUDIO.generatedVoiceKey===key){
+  return{blob:STUDIO.generatedVoiceBlob,duration:STUDIO.generatedVoiceDuration,parts:STUDIO.generatedVoiceParts,cached:true}
+ }
+ const chunks=groupVoiceText(text,72);if(!chunks.length)throw new Error('EMPTY_NARRATION');
+ const blobs=[];
+ for(let i=0;i<chunks.length;i++){
+  setVoiceState('完整配音保护 · 正在生成 '+(i+1)+'/'+chunks.length+' 段…');
+  const r=await fetch(CAPTION_CLOUD+'/api/voice/preview',{
+   method:'POST',
+   headers:{'Content-Type':'application/json',Authorization:'Bearer '+STUDIO.cloudCaptionToken},
+   body:JSON.stringify({text:chunks[i],mode,voice_id:mode==='clone'?STUDIO.cloneVoiceId:(q('aiVoiceVoice')?.value||''),speed:Number(q('aiVoiceSpeed')?.value)||1,style:q('aiVoiceStyle')?.value||'football'})
+  });
+  if(!r.ok){const d=await r.json().catch(()=>({}));throw new Error('第'+(i+1)+'段生成失败：'+(d?.error||('HTTP '+r.status)))}
+  const blob=await r.blob();if(blob.size<1000)throw new Error('第'+(i+1)+'段配音为空');
+  blobs.push(blob)
+ }
+ setVoiceState('完整配音保护 · 正在合并 '+chunks.length+' 段音频…');
+ const merged=await mergeVoiceChunks(blobs,chunks);
+ if(STUDIO.generatedVoiceUrl)URL.revokeObjectURL(STUDIO.generatedVoiceUrl);
+ STUDIO.generatedVoiceBlob=merged.blob;STUDIO.generatedVoiceDuration=merged.duration;STUDIO.generatedVoiceParts=chunks.length;STUDIO.generatedVoiceKey=key;
+ STUDIO.generatedVoiceUrl=URL.createObjectURL(merged.blob);
+ markVoiceCoverage(true,(STUDIO.voiceTimeline||[]).length||chunks.length,100);
+ return{blob:merged.blob,duration:merged.duration,parts:chunks.length,cached:false}
 }
 async function previewAIVoice(){
  const text=String(q('narrationText')?.value||'').trim();
