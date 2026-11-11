@@ -1,0 +1,53 @@
+name: SAGI Match Intelligence Engine CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "sagi-cloud-bridge/match_intelligence_lite.py"
+      - ".github/workflows/sagi-match-intelligence-engine-ci.yml"
+  workflow_dispatch:
+
+jobs:
+  real-engine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install lightweight engine dependencies
+        run: |
+          pip install --disable-pip-version-check flask requests "numpy>=1.26,<3" "onnxruntime>=1.20,<2" "imageio-ffmpeg>=0.6,<1"
+      - name: Run real YOLO11 ONNX person detection
+        run: |
+          cd sagi-cloud-bridge
+          python - <<'PY'
+          import subprocess
+          from pathlib import Path
+          import numpy as np
+          import requests
+          import imageio_ffmpeg
+          import match_intelligence_lite as mi
+
+          image_path = Path("/tmp/bus.jpg")
+          image_path.write_bytes(requests.get("https://ultralytics.com/images/bus.jpg", timeout=30).content)
+          session = mi._get_session()
+          assert session is not None
+          ffmpeg = imageio_ffmpeg.get_ffmpeg_exe()
+          raw = subprocess.check_output([
+              ffmpeg, "-v", "error", "-i", str(image_path),
+              "-vf", f"scale={mi._input_w}:{mi._input_h}:force_original_aspect_ratio=decrease,pad={mi._input_w}:{mi._input_h}:(ow-iw)/2:(oh-ih)/2",
+              "-frames:v", "1", "-f", "rawvideo", "-pix_fmt", "rgb24", "pipe:1"
+          ])
+          expected = mi._input_w * mi._input_h * 3
+          assert len(raw) == expected, (len(raw), expected)
+          frame = np.frombuffer(raw, dtype=np.uint8).reshape((mi._input_h, mi._input_w, 3))
+          people, balls = mi._detect(frame)
+          print("input", mi._input_w, mi._input_h)
+          print("people", len(people), "balls", len(balls))
+          print("top people", people[:5])
+          assert len(people) >= 1, people
+          print("SAGI MATCH INTELLIGENCE ENGINE CI PASSED")
+          PY
