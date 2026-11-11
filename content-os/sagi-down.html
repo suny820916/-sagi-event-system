@@ -1865,7 +1865,6 @@ function buildLockstepVoicePlan(source){
  if(sourceSig!==planSig)throw new Error('SCENE_LOCK_TEXT_MISMATCH');
  return rows
 }
-async function requestLockstepVoice
 async function requestLockstepVoice(text,mode,speed){
  const chunks=groupVoiceText(text,72),blobs=[];if(!chunks.length)throw new Error('EMPTY_LOCKSTEP_SEGMENT');
  for(let i=0;i<chunks.length;i++){
@@ -1966,7 +1965,6 @@ async function runLockstepVoice(autoPreview=true){
  if(autoPreview){const a=q('aiVoicePreview');a.src=STUDIO.lockstepVoiceUrl;a.classList.add('show');await a.play().catch(()=>{})}
  return{blob:assembled.blob,duration:clip,segments:done,text:finalText,audit:finalAudit}
 }
-async function generateCompleteAIVoice
 async function generateCompleteAIVoice(text,mode,force=false,speedOverride=null){
  const actualSpeed=speedOverride==null?(Number(q('aiVoiceSpeed')?.value)||1):Number(speedOverride);
  const key=voiceGenerationKey(text,mode,actualSpeed);
