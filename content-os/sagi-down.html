@@ -801,8 +801,8 @@ Unbelievable finish."></textarea>
       </div>
       <div class="voicePanel">
         <div class="sectionHead">
-          <div><div class="label">VOICE DIRECTOR · AI配音导演</div><div class="mini">AI SCENE SYNC · 读取视频内容 · 句级语义匹配</div></div>
-          <span class="badge">V1.4</span>
+          <div><div class="label">VOICE DIRECTOR · AI配音导演</div><div class="mini">VIDEO FIRST · 视频多长配音就多长 · 内容同步</div></div>
+          <span class="badge">V1.5</span>
         </div>
         <div class="voiceGrid">
           <label>配音方式
@@ -842,7 +842,7 @@ Unbelievable finish."></textarea>
             </select>
           </label>
           <label>时长同步
-            <select id="aiVoiceSync"><option value="fit" selected>句级智能同步 · 完整优先（推荐）</option><option value="natural">自然语速 · 自动延长视频</option></select>
+            <select id="aiVoiceSync"><option value="fit" selected>锁定视频时长 · 自动压缩解说（推荐）</option><option value="natural">锁定视频时长 · 保持更自然语速</option></select>
           </label>
           <label>画面同步
             <select id="aiVisualSync">
@@ -860,7 +860,7 @@ Unbelievable finish."></textarea>
             <button class="btn" id="voiceTimelineBtn" type="button">重建时间轴</button>
           </div>
           <div class="voiceTimelineList" id="voiceTimelineList"></div>
-          <div class="voiceTimelineHint">V1.4：先读取原视频的字幕语义、场景切换和运动强度，再把每句解说匹配到对应画面。只有找不到内容依据时才使用节奏补偿。</div>
+          <div class="voiceTimelineHint">V1.5：视频时长是硬上限。先读取视频内容，再自动压缩过长解说；82秒视频最终只生成82秒音轨，绝不延长成片。</div>
           <div class="voiceTiming" id="visualSyncStatus">AI SCENE SYNC：等待视频内容分析。</div>
           <div class="sceneSyncBox">
             <div class="sceneSyncHead"><b>视频内容场景</b><button class="btn" id="sceneAnalyzeBtn" type="button">分析视频内容</button></div>
@@ -1232,7 +1232,7 @@ const STUDIO={
  captionVisibleCount:40,oneTapBusy:false,translationScore:0,recreatePlan:null,
  cloneVoiceId:localStorage.getItem('sagi_clone_voice_id')||'',aiVoiceReady:false,aiVoiceVoices:[],voicePreviewUrl:'',voiceTimeline:[],
  generatedVoiceBlob:null,generatedVoiceUrl:'',generatedVoiceDuration:0,generatedVoiceKey:'',generatedVoiceParts:0,visualSyncPlan:null,
- sceneAnalysis:null,scenePlan:[],sceneAnalyzing:false,
+ sceneAnalysis:null,scenePlan:[],sceneAnalyzing:false,clipLockedNarration:'',clipLockedOriginal:'',clipLockedTarget:0,
  cloudRenderJobId:'',cloudRenderTimer:null,cloudResultUrl:'',cloudRenderRecoveries:0,cloudRenderRecovering:false,
  pendingTranslateZh:false,
  cloudHealth:null,cloudLastError:''
