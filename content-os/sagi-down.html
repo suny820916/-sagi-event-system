@@ -1625,8 +1625,9 @@ function groupVoiceText(text,maxChars=72){
  if(buf)push(buf);
  return out
 }
-function voiceGenerationKey(text,mode){
- return [String(text||'').trim(),mode||'',q('aiVoiceVoice')?.value||'',q('aiVoiceSpeed')?.value||'1',q('aiVoiceStyle')?.value||'football'].join('|')
+function voiceGenerationKey(text,mode,speedOverride=null){
+ const speed=speedOverride==null?(q('aiVoiceSpeed')?.value||'1'):String(speedOverride);
+ return [String(text||'').trim(),mode||'',q('aiVoiceVoice')?.value||'',speed,q('aiVoiceStyle')?.value||'football'].join('|')
 }
 async function mergeVoiceChunks(blobs,texts){
  const Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)throw new Error('WEB_AUDIO_UNAVAILABLE');
@@ -1644,8 +1645,9 @@ async function mergeVoiceChunks(blobs,texts){
   return{blob:waveformToWavBlob(all,rate),duration:all.length/rate}
  }finally{try{await ctx.close()}catch(e){}}
 }
-async function generateCompleteAIVoice(text,mode,force=false){
- const key=voiceGenerationKey(text,mode);
+async function generateCompleteAIVoice(text,mode,force=false,speedOverride=null){
+ const actualSpeed=speedOverride==null?(Number(q('aiVoiceSpeed')?.value)||1):Number(speedOverride);
+ const key=voiceGenerationKey(text,mode,actualSpeed);
  if(!force&&STUDIO.generatedVoiceBlob&&STUDIO.generatedVoiceKey===key){
   rebuildVoiceTimelineToDuration(STUDIO.generatedVoiceDuration,'actual');
   return{blob:STUDIO.generatedVoiceBlob,duration:STUDIO.generatedVoiceDuration,parts:STUDIO.generatedVoiceParts,cached:true}
@@ -1657,7 +1659,7 @@ async function generateCompleteAIVoice(text,mode,force=false){
   const r=await fetch(CAPTION_CLOUD+'/api/voice/preview',{
    method:'POST',
    headers:{'Content-Type':'application/json',Authorization:'Bearer '+STUDIO.cloudCaptionToken},
-   body:JSON.stringify({text:chunks[i],mode,voice_id:mode==='clone'?STUDIO.cloneVoiceId:(q('aiVoiceVoice')?.value||''),speed:Number(q('aiVoiceSpeed')?.value)||1,style:q('aiVoiceStyle')?.value||'football'})
+   body:JSON.stringify({text:chunks[i],mode,voice_id:mode==='clone'?STUDIO.cloneVoiceId:(q('aiVoiceVoice')?.value||''),speed:actualSpeed,style:q('aiVoiceStyle')?.value||'football'})
   });
   if(!r.ok){const d=await r.json().catch(()=>({}));throw new Error('第'+(i+1)+'段生成失败：'+(d?.error||('HTTP '+r.status)))}
   const blob=await r.blob();if(blob.size<1000)throw new Error('第'+(i+1)+'段配音为空');
@@ -1671,6 +1673,44 @@ async function generateCompleteAIVoice(text,mode,force=false){
  rebuildVoiceTimelineToDuration(merged.duration,'actual');
  markVoiceCoverage(true,(STUDIO.voiceTimeline||[]).length||chunks.length,100);
  return{blob:merged.blob,duration:merged.duration,parts:chunks.length,cached:false}
+}
+async function generateClipLockedAIVoice(originalText,mode,force=false){
+ const clip=Math.max(.5,Number(studioRange()[2])||0);if(!clip)throw new Error('VIDEO_DURATION_UNAVAILABLE');
+ if((q('aiVisualSync')?.value||'auto')==='auto'&&!STUDIO.sceneAnalysis?.scenes?.length)await analyzeVideoScenes(true);
+ let source=String(originalText||'').trim();if(!source)throw new Error('EMPTY_NARRATION');
+ if(STUDIO.clipLockedOriginal!==source){STUDIO.clipLockedOriginal=source;STUDIO.clipLockedNarration=''}
+ let fitted=fitNarrationTextToClip(source,clip),baseSpeed=Math.max(.85,Math.min(1.15,Number(q('aiVoiceSpeed')?.value)||1)),result=null;
+ for(let pass=0;pass<3;pass++){
+  q('narrationText').value=fitted;STUDIO.generatedVoiceKey='';
+  buildVoiceTimeline(false);if(STUDIO.sceneAnalysis?.scenes?.length)matchVoiceTimelineToScenes();
+  setVoiceState('VIDEO FIRST · 第'+(pass+1)+'轮 · 正在生成 '+clip.toFixed(1)+'秒内的配音…');
+  result=await generateCompleteAIVoice(fitted,mode,true,baseSpeed);
+  if(result.duration<=clip+.25)break;
+  const currentChars=narrationCharCount(fitted),nextBudget=Math.max(70,Math.floor(currentChars*(clip/result.duration)*.95));
+  fitted=fitNarrationTextToClip(source,clip,nextBudget)
+ }
+ if(!result)throw new Error('VOICE_GENERATION_FAILED');
+ if(result.duration>clip+.25){
+  const ratio=result.duration/clip;
+  if(ratio<=1.14){
+   baseSpeed=Math.min(1.18,baseSpeed*ratio*1.01);
+   result=await generateCompleteAIVoice(fitted,mode,true,baseSpeed)
+  }
+ }
+ if(result.duration>clip+.25)throw new Error('解说仍超过视频时长，系统已阻止延长视频');
+ // If speech finishes slightly early, keep the audio file exactly as long as the video
+ // with clean silence rather than changing the picture duration.
+ const exact=await padVoiceBlobToDuration(result.blob,clip);
+ if(exact.duration>clip+.25)throw new Error('配音时长无法锁定到视频');
+ if(STUDIO.generatedVoiceUrl)URL.revokeObjectURL(STUDIO.generatedVoiceUrl);
+ STUDIO.generatedVoiceBlob=exact.blob;STUDIO.generatedVoiceDuration=clip;STUDIO.generatedVoiceParts=result.parts;STUDIO.generatedVoiceKey=voiceGenerationKey(fitted,mode,baseSpeed);
+ STUDIO.generatedVoiceUrl=URL.createObjectURL(exact.blob);STUDIO.clipLockedNarration=fitted;STUDIO.clipLockedTarget=clip;
+ q('narrationText').value=fitted;
+ rebuildVoiceTimelineToDuration(clip,'clip_locked');
+ if(STUDIO.sceneAnalysis?.scenes?.length)matchVoiceTimelineToScenes();
+ renderVoiceTimeline();markVoiceCoverage(true,(STUDIO.voiceTimeline||[]).length,100);
+ voiceTimingHint();
+ return{blob:exact.blob,duration:clip,parts:result.parts,text:fitted,speed:baseSpeed,originalChars:narrationCharCount(source),fittedChars:narrationCharCount(fitted)}
 }
 async function previewAIVoice(){
  const text=String(q('narrationText')?.value||'').trim();
