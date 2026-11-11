@@ -183,13 +183,16 @@ jobs:
           assert health["contextTranslate"] is True
           assert health["smartTranslate"] is True
           assert health["aiVoice"] is True
-          assert health["voiceDirectorVersion"] == "1.5"
+          assert health["voiceDirectorVersion"] == "1.6"
           assert health["voiceNarrationNoCut"] is True
           assert health["voiceSentenceTimeline"] is True
           assert health["voiceCompletenessGuard"] is True
           assert health["aiVisualSync"] is True
           assert health["aiVisualSyncMaxHoldSeconds"] == 3
           assert health["aiVisualSyncSentenceMap"] is True
+          assert health["voiceMeaningFirst"] is True
+          assert health["voiceMeaningIntegrityRequired"] == 100
+          assert health["voiceMeaningAuditRequiredForAIRender"] is True
           assert health["voiceVideoDurationLock"] is True
           assert health["voiceAutoCondenseToClip"] is True
           assert health["voiceRenderNeverExtendsVideo"] is True
@@ -966,22 +969,26 @@ jobs:
               extract_function("splitVoiceSentences"),
               extract_function("narrationCharCount"),
               extract_function("normalizeNarrationForMeaning"),
+              extract_function("meaningRelationFlags"),
               extract_function("narrationLogicUnits"),
               extract_function("logicFingerprint"),
               extract_function("logicSimilarity"),
-              extract_function("preserveRelationSkeleton"),
-              extract_function("compressLogicUnit"),
-              extract_function("meaningRelationFlags"),
-              extract_function("meaningIntegrity"),
+              extract_function("criticalMeaningSignature"),
+              extract_function("meaningUnitRepresented"),
+              extract_function("meaningAuditStrict"),
+              extract_function("strictCondenseUnit"),
               extract_function("fitNarrationTextToClip"),
           ]
           fit=extract_function("fitNarrationTextToClip")
           assert ".slice(" not in fit, "hard substring truncation returned"
           assert "semanticSentenceScore" not in fit, "ranking deletion returned"
+          assert "compressLogicUnit(" not in fit, "clause dropping returned"
+          assert "logicSimilarity(prev,unit)" not in fit, "near-duplicate proposition deletion returned"
           assert "q('narrationText').value=fitted" not in html, "source narration is being overwritten"
+          assert "原意完整性不是100%" in html, "100% meaning gate missing"
 
           harness=r"""
-          const STUDIO={sceneAnalysis:{scenes:[]},meaningCoverage:100};
+          const STUDIO={sceneAnalysis:{scenes:[]},meaningCoverage:100,meaningAudit:null};
           function q(){return {value:'1'}}
           function sceneSemanticTags(text){
             const t=String(text||''),out=[];
@@ -996,8 +1003,10 @@ jobs:
           }
           if(!(/因为|所以|因此|从而/.test(out)))throw new Error('lost cause relation');
           if(!(/但是|但|而|并非|不代表/.test(out)))throw new Error('lost contrast relation');
-          if(STUDIO.meaningCoverage<95)throw new Error('meaning coverage '+STUDIO.meaningCoverage);
-          console.log('narration meaning preservation OK',STUDIO.meaningCoverage,out);
+          if(STUDIO.meaningCoverage!==100)throw new Error('meaning coverage '+STUDIO.meaningCoverage);
+          if(!STUDIO.meaningAudit?.pass)throw new Error('strict meaning audit did not pass');
+          if(STUDIO.meaningAudit.unitCoverage!==100||STUDIO.meaningAudit.anchorCoverage!==100)throw new Error('strict audit not 100%');
+          console.log('MEANING FIRST V1.6 preservation OK',STUDIO.meaningCoverage,out);
           """
           code=html[map_start:map_end]+"\n"+"\n".join(funcs)+"\n"+harness
           pathlib.Path("/tmp/narration-meaning-regression.js").write_text(code,encoding="utf-8")
