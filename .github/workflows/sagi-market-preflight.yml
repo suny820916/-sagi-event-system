@@ -24,16 +24,23 @@ jobs:
 
       - name: JavaScript syntax
         run: node --check sagi-market/app.js
+          node --check sagi-market/seller.js
+          python -m py_compile sagi-cloud-bridge/app.py
 
       - name: Static wiring
         run: |
-          grep -q 'data-build="1.0.0"' sagi-market/index.html
+          grep -q 'data-build="1.1.0"' sagi-market/index.html
+          grep -q 'data-seller-build="1.1.0"' sagi-market/seller.html
           grep -q 'SECOND LIFE' sagi-market/index.html
           grep -q 'TEAM BUY' sagi-market/index.html
           grep -q 'SAGI DEAL' sagi-market/index.html
           grep -q 'SG-S' sagi-market/app.js
           grep -q 'productCard' sagi-market/app.js
-          grep -q 'sagi-market-v100' sagi-market/sw.js
+          grep -q 'sagi-market-v110' sagi-market/sw.js
+          grep -q 'cloudInboxList' sagi-market/index.html
+          grep -q '/api/market/inbox' sagi-market/app.js
+          grep -q '/api/market/submit' sagi-market/seller.js
+          grep -q 'market_submit' sagi-cloud-bridge/app.py
           ! grep -R 'onrender.com' sagi-market
           ! grep -R 'api.openai.com' sagi-market
           echo "SAGI MARKET STATIC WIRING OK"
