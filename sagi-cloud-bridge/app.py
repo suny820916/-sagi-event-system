@@ -17,6 +17,7 @@ import json
 import re
 import gc
 import sys
+import math
 import zipfile
 import html as html_lib
 import requests
@@ -680,6 +681,8 @@ def public_render_job(job):
         "visualStretchFactor": float(job.get("visualStretchFactor", 1) or 1),
         "visualGap": float(job.get("visualGap", 0) or 0),
         "visualHoldSeconds": float(job.get("visualHoldSeconds", 0) or 0),
+        "sceneSyncSegments": int(job.get("sceneSyncSegments", 0) or 0),
+        "sceneSyncInstances": int(job.get("sceneSyncInstances", 0) or 0),
     }
     if job.get("status") == "ready":
         base = request.host_url.rstrip("/") + f"/api/render-jobs/{job['id']}/file?key={job['download_key']}"
@@ -1513,12 +1516,14 @@ def run_cloud_render(job_id, options):
 
             with render_jobs_lock:
                 render_jobs[job_id].update({
-                    "stage": "VISUAL SYNC V1.3 · 动态画面匹配" if visual_strategy in ("stretch", "dynamic") else "云端编码成片",
+                    "stage": "AI SCENE SYNC V1.4 · 内容匹配渲染" if visual_strategy == "semantic" else ("VISUAL SYNC · 动态画面匹配" if visual_strategy in ("stretch", "dynamic") else "云端编码成片"),
                     "progress": 34, "updated_at": iso(),
                     "visualSyncStrategy": visual_strategy,
                     "visualStretchFactor": round(visual_factor, 4),
                     "visualGap": round(visual_gap, 3),
                     "visualHoldSeconds": round(min(visual_gap, visual_sync_max_hold) if visual_strategy == "short_hold" else 0.0, 3),
+                    "sceneSyncSegments": len(scene_plan) if visual_strategy == "semantic" else 0,
+                    "sceneSyncInstances": len(semantic_instances) if visual_strategy == "semantic" else 0,
                 })
                 _persist_render_jobs_locked()
             proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
@@ -1556,6 +1561,8 @@ def run_cloud_render(job_id, options):
                     "visualStretchFactor": round(visual_factor, 4),
                     "visualGap": round(visual_gap, 3),
                     "visualHoldSeconds": round(min(visual_gap, visual_sync_max_hold) if visual_strategy == "short_hold" else 0.0, 3),
+                    "sceneSyncSegments": len(scene_plan) if visual_strategy == "semantic" else 0,
+                    "sceneSyncInstances": len(semantic_instances) if visual_strategy == "semantic" else 0,
                 })
                 _persist_render_jobs_locked()
         except Exception as e:
@@ -2640,10 +2647,14 @@ def health():
         "smartTranslate": True,
         "aiVoice": True,
         "aiVoiceFallback": True,
-        "voiceDirectorVersion": "1.3",
+        "voiceDirectorVersion": "1.4",
         "aiVisualSync": True,
         "aiVisualSyncMaxHoldSeconds": 3,
         "aiVisualSyncSentenceMap": True,
+        "aiSceneSync": True,
+        "aiSceneSyncVersion": "1.4",
+        "aiSceneSyncLocalFrameAnalysis": True,
+        "aiSceneSyncSemanticCaptionMatch": True,
         "voiceNarrationNoCut": True,
         "voiceSentenceTimeline": True,
         "voiceCompletenessGuard": True,
@@ -3296,6 +3307,13 @@ def create_render_job():
     except Exception:
         voice_timeline = []
 
+    try:
+        scene_plan = json.loads(request.form.get("scene_plan") or "[]")
+        if not isinstance(scene_plan, list):
+            scene_plan = []
+    except Exception:
+        scene_plan = []
+
     options = {
         "start": request.form.get("start") or "0",
         "duration": request.form.get("duration") or "15",
@@ -3311,6 +3329,7 @@ def create_render_job():
         "voice_sync": request.form.get("voice_sync") or "fit",
         "visual_sync": request.form.get("visual_sync") or "auto",
         "visual_sync_max_hold": request.form.get("visual_sync_max_hold") or "3",
+        "scene_plan": scene_plan[:60],
         "voice_volume": request.form.get("voice_volume") or "1",
         "original_volume": request.form.get("original_volume") or "0.25",
         "burn_subtitles": str(request.form.get("burn_subtitles") or "true").lower() in ("1", "true", "yes"),
