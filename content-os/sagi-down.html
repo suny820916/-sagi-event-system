@@ -1586,7 +1586,7 @@ function normalizeNarrationForMeaning(text){
 }
 function meaningRelationFlags(text){
  const t=String(text||'');
- const hasCondition=/如果|只要|当|一旦|只有/.test(t);
+ const hasCondition=/如果|只要|若|当|一旦|只有/.test(t);
  return{
   cause:/因为|所以|因此|从而/.test(t),
   causePair:/因为/.test(t)&&/所以|因此|从而/.test(t),
@@ -1975,12 +1975,12 @@ function semanticCondenseUnit(text,budget=0){
  for(const row of [...selected]){
    const x=row.x;
    if(/^(而是|所以|因此|从而|但是|但|不过)/.test(x))addIndex(row.i-1);
-   if(/如果|只要|一旦|当/.test(x))addIndex(row.i+1);
+   if(/如果|只要|若|一旦|当/.test(x))addIndex(row.i+1);
    if(/因为/.test(x)&&!/所以|因此|从而/.test(x))addIndex(row.i+1);
    if(/不是|并非/.test(x)&&row.i+1<rows.length&&/^(而是|而)/.test(rows[row.i+1].x))addIndex(row.i+1);
  }
  for(let i=0;i<rows.length-1;i++){
-   if(selected.includes(rows[i])&&/如果|只要|一旦|当|因为/.test(rows[i].x))addIndex(i+1);
+   if(selected.includes(rows[i])&&/如果|只要|若|一旦|当|因为/.test(rows[i].x))addIndex(i+1);
    if(selected.includes(rows[i+1])&&/^(而是|所以|因此|从而)/.test(rows[i+1].x))addIndex(i);
  }
  // Keep a representative clause even when the unit has no dictionary anchors.
@@ -1991,8 +1991,8 @@ function semanticCondenseUnit(text,budget=0){
    if(used+row.chars<=limit){selected.push(row);used+=row.chars}
  }
  selected.sort((a,b)=>a.i-b.i);
- let out=selected.map(r=>r.x.replace(/[。！？!?]+$/,'').replace(/[；;]+$/,'，')).join('');
- out=semanticTightenPhrase(out).replace(/[，,]{2,}/g,'，').replace(/[，,]+$/,'');
+ let out=selected.map(r=>r.x).join('');
+ out=semanticTightenPhrase(out).replace(/[；;]。/g,'。').replace(/[，,]{2,}/g,'，').replace(/([。！？!?])[，,]/g,'$1').replace(/[，,]+$/,'');
  if(!/[。！？!?]$/.test(out))out+='。';
  return out
 }
