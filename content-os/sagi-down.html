@@ -838,7 +838,7 @@ Unbelievable finish."></textarea>
             </select>
           </label>
           <label>时长同步
-            <select id="aiVoiceSync"><option value="fit" selected>智能贴合片段</option><option value="natural">保持自然时长</option></select>
+            <select id="aiVoiceSync"><option value="fit" selected>完整解说优先（推荐）</option><option value="natural">保持自然语速</option></select>
           </label>
         </div>
         <div class="voiceTiming" id="voiceTiming">输入解说稿后，会自动估算配音时长并和当前视频片段比较。</div>
@@ -1233,7 +1233,7 @@ function voiceTimingHint(){
  const speed=Math.max(.75,Number(q('aiVoiceSpeed')?.value)||1),estimate=Math.max(1,chars/(4.25*speed)+marks*.08);
  let clip=0;try{clip=Number(studioRange()[2])||0}catch(e){}
  let verdict='';
- if(clip>0){const r=estimate/clip;if(r>1.18)verdict=' · <b>稿件偏长</b>，智能贴合会明显加快，建议精简';else if(r<.72)verdict=' · <b>稿件偏短</b>，结尾会保留原声/留白';else verdict=' · <b>长度合适</b>，适合智能贴合'}
+ if(clip>0){const r=estimate/clip;if(r>1.18)verdict=' · <b>稿件偏长</b>，最多自然加速18%，仍超时则自动延长视频尾帧，不截解说';else if(r<.72)verdict=' · <b>稿件偏短</b>，结尾会保留原声/留白';else verdict=' · <b>长度合适</b>，适合智能贴合'}
  el.innerHTML='约 <b>'+chars+' 字</b> · 预计配音 <b>'+estimate.toFixed(1)+'秒</b>'+(clip>0?' · 当前片段 <b>'+clip.toFixed(1)+'秒</b>':'')+verdict
 }
 async function voiceApiReady(){
@@ -1287,7 +1287,7 @@ async function previewAIVoice(){
    const r=await fetch(CAPTION_CLOUD+'/api/voice/preview',{
      method:'POST',
      headers:{'Content-Type':'application/json',Authorization:'Bearer '+STUDIO.cloudCaptionToken},
-     body:JSON.stringify({text:text.slice(0,500),mode,voice_id:mode==='clone'?STUDIO.cloneVoiceId:(q('aiVoiceVoice')?.value||''),speed:Number(q('aiVoiceSpeed')?.value)||1,style:q('aiVoiceStyle')?.value||'football'})
+     body:JSON.stringify({text:text.slice(0,10000),mode,voice_id:mode==='clone'?STUDIO.cloneVoiceId:(q('aiVoiceVoice')?.value||''),speed:Number(q('aiVoiceSpeed')?.value)||1,style:q('aiVoiceStyle')?.value||'football'})
    });
    if(!r.ok){
      const d=await r.json().catch(()=>({}));
@@ -1298,7 +1298,7 @@ async function previewAIVoice(){
    if(STUDIO.voicePreviewUrl)URL.revokeObjectURL(STUDIO.voicePreviewUrl);
    STUDIO.voicePreviewUrl=URL.createObjectURL(blob);
    const a=q('aiVoicePreview');a.src=STUDIO.voicePreviewUrl;a.classList.add('show');await a.play().catch(()=>{});
-   setVoiceState('AI配音试听已生成。')
+   setVoiceState('完整 AI 配音试听已生成，不再只试听前500字。')
  }catch(e){
    setVoiceState('AI配音云端暂不可用，已改用手机朗读试听。');
    try{speakNarration()}catch(_){}
