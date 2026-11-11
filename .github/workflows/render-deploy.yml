@@ -33,7 +33,7 @@ jobs:
         run: |
           curl --fail --show-error --silent --retry 3 "$RENDER_DEPLOY_HOOK_URL"
 
-      - name: Wait for SAGI Cloud 3.9.2
+      - name: Wait for SAGI Cloud 3.9.2 Semantic Lock V2.1
         run: |
           python - <<'PY'
           import json, time, urllib.request, sys
@@ -45,10 +45,12 @@ jobs:
                       data = json.loads(r.read().decode("utf-8"))
                   version = str(data.get("version", ""))
                   voice = str(data.get("voiceDirectorVersion", ""))
-                  no_cut = bool(data.get("voiceNarrationNoCut"))
-                  print(f"check {i+1}/36: version={version} voiceDirector={voice} noCut={no_cut}")
-                  if version == expected and voice == "1.7" and no_cut and bool(data.get("voiceMeaningFirst")) and int(data.get("voiceMeaningIntegrityRequired") or 0) == 100 and bool(data.get("voiceLockstep")) and bool(data.get("voiceLockstepExactDuration")) and bool(data.get("voiceLockstepOriginalVideoMaster")):
-                      print("SAGI Cloud Voice Director 1.7 / LOCKSTEP exact-duration verified.")
+                  semantic = bool(data.get("voiceSemanticLock"))
+                  protected = bool(data.get("voiceSemanticMeaningProtected"))
+                  exact = bool(data.get("voiceLockstepExactDuration"))
+                  print(f"check {i+1}/36: version={version} voiceDirector={voice} semantic={semantic} protected={protected} exact={exact}")
+                  if version == expected and voice == "2.1" and semantic and protected and exact and bool(data.get("voiceMeaningFirst")) and int(data.get("voiceMeaningIntegrityRequired") or 0) == 100 and bool(data.get("voiceLockstep")) and bool(data.get("voiceLockstepOriginalVideoMaster")) and bool(data.get("voiceVideoDurationLock")):
+                      print("SAGI Cloud Voice Director 2.1 / SEMANTIC LOCK exact-duration verified.")
                       sys.exit(0)
               except Exception as e:
                   print(f"check {i+1}/36 failed: {e}")
