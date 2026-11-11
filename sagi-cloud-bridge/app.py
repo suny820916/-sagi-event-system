@@ -4508,6 +4508,11 @@ def house_admin_page():
     return send_file(Path(__file__).resolve().parent / "house-admin.html", mimetype="text/html")
 
 
+@app.get("/house-my")
+def house_my_page():
+    return send_file(Path(__file__).resolve().parent / "house-my.html", mimetype="text/html")
+
+
 @app.post("/api/house/submit")
 def house_submit():
     if not origin_allowed():
