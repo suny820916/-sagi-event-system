@@ -644,7 +644,7 @@ jobs:
           import re, pathlib
           p=pathlib.Path("sagi-local/index.html")
           s=p.read_text(encoding="utf-8")
-          assert "V1.2.1 · POSTER CORE" in s
+          assert "V1.2.3 · POSTER HOTFIX" in s
           assert "/api/local-ai/generate" in s
           assert "/api/local-ai/visual" in s
           assert "/api/local-ai/poster" in s
@@ -657,6 +657,8 @@ jobs:
           assert "saveCanvas" in s
           assert "LOCAL POSTER" in s
           assert "async function cloudPoster" in s
+          assert "$('##photoGen')" not in s
+          assert "$('#photoGen').onclick=runPhotoVisual" in s
           assert "commercialImage||photoImage" in s
           scripts=re.findall(r"<script>([\s\S]*?)</script>",s)
           assert scripts, "SAGI LOCAL inline script missing"
