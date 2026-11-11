@@ -1888,12 +1888,12 @@ function semanticTightenPhrase(text){
   [/边后卫必须承担大的上下往返任务/g,'边后卫必须频繁往返'],
   [/一旦边后卫没有及时前插[，,]?进攻宽度会明显下降/g,'一旦边后卫不前插，进攻宽度就下降'],
   [/三中场始终守住中路[，,]?他们会随着球的位置整体横移/g,'三中场守住中路并随球横移'],
-  [/当对方转移到边路时[，,]?近侧边后卫迅速外移压迫[，,]?近侧中场同时回撤保护边后卫身后的空间/g,'当球到边路，边后卫外压，中场回撤保护身后'],
+  [/当对方转移到边路时[，,]?近侧边后卫迅速外移压迫[，,]?近侧中场同时回撤保护边后卫身后的空间/g,'当球转移到边路，边后卫外压，中场回撤保护身后'],
   [/这样做的好处是球队在中路很难被轻易打穿[，,]?抢下球以后可很快重新组织进攻/g,'好处是中路难被打穿，抢球后能快速组织'],
   [/但它最大的风险同样来自边路[，,]?如果近侧中场横移慢了一步[，,]?边后卫可能面对对方边锋的一打一/g,'但风险在边路；如果中场横移慢，边后卫就可能陷入一对一'],
   [/圣诞树的优势是中路控制力强、球员之间距离短[，,]?而且前腰可更自由地发挥创造力/g,'圣诞树优势是中路控制强、距离短、前腰更自由'],
   [/它的缺点是边路覆盖压力大[，,]?对中场的比赛阅读能力和体能要求都高/g,'缺点是边路覆盖压力大，对中场阅读和体能要求高'],
-  [/所以同样摆出?一个4321[，,]?不同的球员会踢出完全不同的效果/g,'所以同样4321，球员不同，效果就不同'],
+  [/所以同样摆出?一个4321[，,]?不同的球员会踢出完全不同的效果/g,'所以同样4321会因球员不同产生不同效果'],
   [/圣诞树成为经典靠的是球员之间的理解、移动和执行/g,'圣诞树成为经典靠理解、移动和执行'],
   [/近侧边后卫/g,'边后卫'],[/近侧中场/g,'中场'],
   [/迅速向外侧移动压迫/g,'迅速外压'],[/向外侧移动压迫/g,'外压'],
@@ -2006,14 +2006,14 @@ function semanticFitNarrationToClip(source,clipSeconds,budgetOverride=0){
    const minBudget=Math.min(narrationCharCount(x),Math.max(14,Math.round(target*(narrationCharCount(x)/compactChars))));
    return semanticCondenseUnit(units[i]||x,minBudget)
  });
- let out=outUnits.join('').replace(/。{2,}/g,'。').trim();
+ let out=outUnits.join('').replace(/[；;]。/g,'。').replace(/。{2,}/g,'。').trim();
  let audit=meaningAuditStrict(original,out);
 
  // If a compressed logic unit lost a protected anchor, restore that unit in compact form.
  if(!audit.pass&&audit.missingUnits?.length){
    const missing=new Set(audit.missingUnits.map(x=>normalizeNarrationForMeaning(x)));
    outUnits=units.map((u,i)=>missing.has(normalizeNarrationForMeaning(u))?semanticCondenseUnit(u,Math.max(24,narrationCharCount(semanticTightenPhrase(u)))):outUnits[i]);
-   out=outUnits.join('').replace(/。{2,}/g,'。').trim();
+   out=outUnits.join('').replace(/[；;]。/g,'。').replace(/。{2,}/g,'。').trim();
    audit=meaningAuditStrict(original,out)
  }
  STUDIO.meaningAudit=audit;STUDIO.meaningCoverage=audit.coverage;
