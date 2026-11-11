@@ -1406,7 +1406,8 @@ async function analyzeVideoScenes(silent=false){
 function sceneMatchScore(row,scene,index,total,lastIndex){
  const text=String(row.text||''),tags=sceneSemanticTags(text),sceneTags=new Set(scene.tags||[]),tokens=sceneWordTokens(text),sceneTokens=new Set(scene.tokens||[]);
  let score=0,reason=[];
- for(const tag of tags)if(sceneTags.has(tag)){score+=14;reason.push(tag)}
+ const reasonName={flank:'边路',midfield:'中场',defense:'防守',attack:'进攻',transition:'攻防转换',formation:'阵型',movement:'移动',pass:'传球',shot:'射门',keeper:'门将',left:'左侧',right:'右侧',setpiece:'定位球'};
+ for(const tag of tags)if(sceneTags.has(tag)){score+=14;reason.push(reasonName[tag]||tag)}
  let direct=0;for(const tok of tokens)if(sceneTokens.has(tok)){direct++;score+=2.5}
  if(direct)reason.push('字幕语义');
  const final=Math.max(.1,Number((STUDIO.voiceTimeline||[]).at(-1)?.end)||1),target=(Number(row.start||0)+Number(row.end||0))/2/final*(total-1);
