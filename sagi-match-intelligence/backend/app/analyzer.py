@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import math
+import subprocess
 from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Callable
@@ -162,13 +163,18 @@ def analyze_match(
     sample_every = max(1, int(round(fps / max(settings.analysis_fps, 0.5))))
     preview_fps = max(1.0, fps / sample_every)
 
+    raw_preview_path = output_dir / "analysis-preview-raw.mp4"
     preview_path = output_dir / "analysis-preview.mp4"
     writer = cv2.VideoWriter(
-        str(preview_path),
+        str(raw_preview_path),
         cv2.VideoWriter_fourcc(*"mp4v"),
         preview_fps,
         (frame_width, frame_height),
     )
+
+    if not writer.isOpened():
+        cap.release()
+        raise RuntimeError("Could not create analysis preview video.")
 
     track_colours: dict[int, list[np.ndarray]] = defaultdict(list)
     track_positions: dict[int, list[tuple[float, float]]] = defaultdict(list)
@@ -278,6 +284,37 @@ def analyze_match(
 
     cap.release()
     writer.release()
+
+    if progress:
+        progress(95.0, "Optimising mobile preview")
+
+    try:
+        subprocess.run(
+            [
+                "ffmpeg",
+                "-y",
+                "-i",
+                str(raw_preview_path),
+                "-an",
+                "-c:v",
+                "libx264",
+                "-preset",
+                "veryfast",
+                "-crf",
+                "24",
+                "-pix_fmt",
+                "yuv420p",
+                "-movflags",
+                "+faststart",
+                str(preview_path),
+            ],
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        raw_preview_path.unlink(missing_ok=True)
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        raw_preview_path.replace(preview_path)
 
     track_team, centroids = _classify_tracks(track_colours)
 
