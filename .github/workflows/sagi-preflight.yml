@@ -1075,7 +1075,9 @@ jobs:
               ],
               "narration": "", "voice_mode": "recorded", "voice_id": "",
               "voice_speed": 1, "original_volume": 0.25, "burn_subtitles": True,
-              "uploaded_voice": str(voice), "visual_sync": "auto", "visual_sync_max_hold": 3,
+              "uploaded_voice": str(voice), "voice_sync": "clip_locked",
+              "meaning_first": True, "meaning_audit": {"pass":True,"coverage":100,"totalUnits":2},
+              "visual_sync": "auto", "visual_sync_max_hold": 3,
               "scene_plan": [
                   {"sceneId":0,"sourceStart":0.0,"sourceEnd":2.0,"outputStart":0.0,"outputEnd":2.0,"label":"左侧防守","matchScore":28},
                   {"sceneId":1,"sourceStart":2.0,"sourceEnd":4.0,"outputStart":2.0,"outputEnd":4.0,"label":"右侧进攻","matchScore":31},
@@ -1087,13 +1089,15 @@ jobs:
           assert int(job.get("sceneSyncSegments") or 0) == 2, job
           assert int(job.get("sceneSyncInstances") or 0) >= 2, job
           assert float(job.get("visualHoldSeconds", 99)) == 0.0, job
+          assert job.get("meaningFirst") is True, job
+          assert int(job.get("meaningCoverage") or 0) == 100, job
           out = pathlib.Path(job["path"])
           assert out.exists() and out.stat().st_size > 5000
           import av
           with av.open(str(out)) as container:
               rendered = float(container.duration or 0) / 1_000_000.0
           assert 3.95 <= rendered <= 4.15, rendered
-          print("VIDEO FIRST V1.5 exact-duration semantic render OK", round(rendered,2), "seconds", job.get("sceneSyncInstances"), "instances")
+          print("MEANING FIRST V1.6 exact-duration semantic render OK", round(rendered,2), "seconds", job.get("sceneSyncInstances"), "instances")
 
           # A narration longer than the picture must fail instead of extending video.
           long_voice = work / "long_voice.m4a"
@@ -1119,6 +1123,28 @@ jobs:
           assert long_job["status"] == "failed", long_job
           assert "VOICE_EXCEEDS_VIDEO" in long_job["error"], long_job
           print("overlong narration correctly blocked")
+
+          # Meaning First proof below 100% must be rejected before rendering.
+          bad_id = "meaning-bad"
+          mod.render_jobs[bad_id] = {
+              "id": bad_id, "status": "queued", "stage": "", "progress": 0,
+              "created_at": mod.iso(), "updated_at": mod.iso(),
+              "workdir": str(work), "source": str(source), "path": "",
+              "download_key": "bad-key", "size": 0, "error": "",
+          }
+          mod.run_cloud_render(bad_id, {
+              "start": 0, "duration": 4, "aspect": "9:16", "quality": "fast",
+              "captions": [], "narration": "", "voice_mode": "recorded",
+              "voice_sync": "clip_locked", "uploaded_voice": str(voice),
+              "meaning_first": True,
+              "meaning_audit": {"pass":False,"coverage":99,"totalUnits":2},
+              "visual_sync": "auto", "scene_plan": [], "original_volume": 0,
+              "burn_subtitles": False,
+          })
+          bad_job = mod.render_jobs[bad_id]
+          assert bad_job["status"] == "failed", bad_job
+          assert "MEANING_FIRST_REQUIRED" in bad_job["error"], bad_job
+          print("meaning-first sub-100 render correctly blocked")
           PY
 
       - name: Python compile check
