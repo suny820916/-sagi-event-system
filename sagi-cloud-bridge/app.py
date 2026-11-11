@@ -106,6 +106,25 @@ STATE_DIR = Path(os.getenv("SAGI_STATE_DIR") or (Path(tempfile.gettempdir()) / "
 RENDER_STATE_FILE = STATE_DIR / "render_jobs.json"
 voice_cache = {"at": 0.0, "voices": []}
 
+VOICE_STYLE_PRESETS = {
+    "football": {"stability": 0.34, "similarity": 0.80, "style": 0.42, "pitch": 4, "volume": 5},
+    "natural": {"stability": 0.48, "similarity": 0.78, "style": 0.12, "pitch": 0, "volume": 0},
+    "documentary": {"stability": 0.64, "similarity": 0.77, "style": 0.08, "pitch": -4, "volume": 0},
+    "news": {"stability": 0.72, "similarity": 0.80, "style": 0.04, "pitch": 0, "volume": 2},
+    "warm": {"stability": 0.54, "similarity": 0.82, "style": 0.22, "pitch": 2, "volume": 1},
+}
+
+EDGE_VOICE_MAP = {
+    "edge-zh-yunjian": "zh-CN-YunjianNeural",
+    "edge-zh-yunxi": "zh-CN-YunxiNeural",
+    "edge-zh-yunyang": "zh-CN-YunyangNeural",
+    "edge-zh-xiaoxiao": "zh-CN-XiaoxiaoNeural",
+    "edge-zh-xiaoyi": "zh-CN-XiaoyiNeural",
+}
+
+def voice_style_settings(name):
+    return VOICE_STYLE_PRESETS.get(str(name or "").strip().lower(), VOICE_STYLE_PRESETS["natural"])
+
 def now():
     return datetime.now(timezone.utc)
 
@@ -728,19 +747,20 @@ def resolve_voice_id(mode, explicit=""):
         return voices[0]["voice_id"]
     raise RuntimeError("NO_ELEVENLABS_VOICE_AVAILABLE")
 
-def synthesize_eleven(text, voice_id, output_path, speed=1.0):
+def synthesize_eleven(text, voice_id, output_path, speed=1.0, style="natural"):
     if not text.strip():
         raise RuntimeError("EMPTY_NARRATION")
     voice_id = voice_id.strip()
     if not voice_id:
         raise RuntimeError("VOICE_ID_REQUIRED")
+    cfg = voice_style_settings(style)
     payload = {
         "text": text[:10000],
         "model_id": "eleven_flash_v2_5",
         "voice_settings": {
-            "stability": 0.46,
-            "similarity_boost": 0.78,
-            "style": 0.12,
+            "stability": cfg["stability"],
+            "similarity_boost": cfg["similarity"],
+            "style": cfg["style"],
             "use_speaker_boost": True,
             "speed": max(0.75, min(1.25, float(speed or 1.0))),
         },
@@ -764,16 +784,27 @@ def synthesize_eleven(text, voice_id, output_path, speed=1.0):
     return str(output_path)
 
 
-def synthesize_edge_tts(text, mode, output_path, speed=1.0):
+def synthesize_edge_tts(text, mode, output_path, speed=1.0, style="natural", explicit_voice=""):
     if not str(text or "").strip():
         raise RuntimeError("EMPTY_NARRATION")
     try:
         import asyncio
         import edge_tts
-        voice = "zh-CN-YunjianNeural" if mode == "ai_male" else "zh-CN-XiaoxiaoNeural"
+        cfg = voice_style_settings(style)
+        voice = EDGE_VOICE_MAP.get(str(explicit_voice or "").strip())
+        if not voice:
+            voice = "zh-CN-YunjianNeural" if mode == "ai_male" else "zh-CN-XiaoxiaoNeural"
         rate = int(round((max(0.75, min(1.25, float(speed or 1.0))) - 1.0) * 100))
+        pitch = int(cfg.get("pitch") or 0)
+        volume = int(cfg.get("volume") or 0)
         async def _save():
-            communicate = edge_tts.Communicate(str(text)[:10000], voice=voice, rate=f"{rate:+d}%")
+            communicate = edge_tts.Communicate(
+                str(text)[:10000],
+                voice=voice,
+                rate=f"{rate:+d}%",
+                pitch=f"{pitch:+d}Hz",
+                volume=f"{volume:+d}%",
+            )
             await communicate.save(str(output_path))
         asyncio.run(_save())
         if not Path(output_path).exists() or Path(output_path).stat().st_size < 1000:
@@ -782,24 +813,87 @@ def synthesize_edge_tts(text, mode, output_path, speed=1.0):
     except Exception as e:
         raise RuntimeError("EDGE_TTS: " + str(e)[:500])
 
-def synthesize_voice(text, mode, voice_id, output_path, speed=1.0):
+
+def synthesize_voice(text, mode, voice_id, output_path, speed=1.0, style="natural"):
     mode = str(mode or "ai_male")
     voice_id = str(voice_id or "").strip()
+    if voice_id in EDGE_VOICE_MAP:
+        edge_mode = "ai_female" if voice_id in ("edge-zh-xiaoxiao", "edge-zh-xiaoyi") else "ai_male"
+        return synthesize_edge_tts(text, edge_mode, output_path, speed, style, voice_id)
     if mode == "clone":
         if not ELEVENLABS_API_KEY:
             raise RuntimeError("VOICE_CLONE_REQUIRES_ELEVENLABS")
         selected = resolve_voice_id(mode, voice_id)
-        return synthesize_eleven(text, selected, output_path, speed)
+        return synthesize_eleven(text, selected, output_path, speed, style)
 
     # Premium path first; generic AI voices fall back automatically to keyless Edge Neural.
     if ELEVENLABS_API_KEY:
         try:
             selected = resolve_voice_id(mode, voice_id)
-            return synthesize_eleven(text, selected, output_path, speed)
+            return synthesize_eleven(text, selected, output_path, speed, style)
         except Exception as e:
             print("ElevenLabs generic TTS fallback:", str(e)[:300], flush=True)
 
-    return synthesize_edge_tts(text, mode, output_path, speed)
+    return synthesize_edge_tts(text, mode, output_path, speed, style, voice_id)
+
+
+def audio_duration_seconds(path):
+    try:
+        import av
+        with av.open(str(path), metadata_errors="ignore") as container:
+            if getattr(container, "duration", None):
+                return max(0.0, float(container.duration) / 1000000.0)
+            for stream in container.streams.audio:
+                if stream.duration is not None and stream.time_base is not None:
+                    return max(0.0, float(stream.duration * stream.time_base))
+    except TypeError:
+        try:
+            import av
+            with av.open(str(path)) as container:
+                if getattr(container, "duration", None):
+                    return max(0.0, float(container.duration) / 1000000.0)
+        except Exception:
+            pass
+    except Exception:
+        pass
+    return 0.0
+
+
+def _atempo_chain(rate):
+    rate = max(0.1, min(8.0, float(rate or 1.0)))
+    parts = []
+    while rate > 2.0:
+        parts.append(2.0)
+        rate /= 2.0
+    while rate < 0.5:
+        parts.append(0.5)
+        rate /= 0.5
+    parts.append(rate)
+    return ",".join(f"atempo={x:.5f}" for x in parts)
+
+
+def fit_narration_to_duration(source_path, work, target_duration):
+    target = max(0.8, float(target_duration or 0))
+    actual = audio_duration_seconds(source_path)
+    if actual <= 0.1:
+        return Path(source_path)
+    ratio = actual / target
+    if 0.985 <= ratio <= 1.015:
+        return Path(source_path)
+    out = Path(work) / "narration_fit.m4a"
+    exe = imageio_ffmpeg.get_ffmpeg_exe()
+    af = _atempo_chain(ratio) + f",apad=pad_dur=2,atrim=duration={target:.3f}"
+    cmd = [
+        exe, "-hide_banner", "-loglevel", "error", "-y",
+        "-i", str(source_path), "-vn", "-filter:a", af,
+        "-c:a", "aac", "-b:a", "160k", str(out),
+    ]
+    proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=90)
+    if proc.returncode != 0 or not out.exists() or out.stat().st_size < 1000:
+        print("voice sync fallback:", (proc.stdout or "")[-500:], flush=True)
+        return Path(source_path)
+    return out
+
 
 def media_has_audio(path):
     try:
@@ -884,6 +978,9 @@ def run_cloud_render(job_id, options):
             voice_mode = str(options.get("voice_mode") or "none")
             voice_id = str(options.get("voice_id") or "").strip()
             voice_speed = float(options.get("voice_speed") or 1.0)
+            voice_style = str(options.get("voice_style") or "football")
+            voice_sync = str(options.get("voice_sync") or "fit")
+            voice_volume = max(0.25, min(2.0, float(options.get("voice_volume") or 1.0)))
             original_volume = max(0.0, min(1.0, float(options.get("original_volume") or 0.25)))
             burn_subtitles = bool(options.get("burn_subtitles", True))
 
@@ -896,7 +993,13 @@ def run_cloud_render(job_id, options):
                     render_jobs[job_id].update({"stage": "生成 AI 配音", "progress": 20, "updated_at": iso()})
                     _persist_render_jobs_locked()
                 narration_path = work / "narration.mp3"
-                synthesize_voice(narration, voice_mode, voice_id, narration_path, voice_speed)
+                synthesize_voice(narration, voice_mode, voice_id, narration_path, voice_speed, voice_style)
+
+            if narration_path and voice_sync == "fit":
+                with render_jobs_lock:
+                    render_jobs[job_id].update({"stage": "智能贴合配音时长", "progress": 27, "updated_at": iso()})
+                    _persist_render_jobs_locked()
+                narration_path = fit_narration_to_duration(narration_path, work, max(0.8, duration - 0.22))
 
             width, height = render_dimensions(aspect, quality)
             vf = f"scale={width}:{height}:force_original_aspect_ratio=increase,crop={width}:{height},setsar=1"
@@ -921,12 +1024,12 @@ def run_cloud_render(job_id, options):
             if narration_path and has_audio and original_volume > 0:
                 filters += [
                     f"[0:a]volume={original_volume}[a0]",
-                    "[1:a]volume=1[a1]",
+                    f"[1:a]volume={voice_volume}[a1]",
                     "[a0][a1]amix=inputs=2:duration=first:dropout_transition=1[aout]",
                 ]
                 audio_map = "[aout]"
             elif narration_path:
-                filters += ["[1:a]volume=1[aout]"]
+                filters += [f"[1:a]volume={voice_volume}[aout]"]
                 audio_map = "[aout]"
             elif has_audio and original_volume > 0:
                 if original_volume != 1:
@@ -2581,8 +2684,11 @@ def voice_status():
         except Exception as e:
             error = str(e)[:400]
     fallback_voices = [
-        {"voice_id": "edge-zh-male", "name": "Microsoft 云健", "category": "fallback", "gender": "male", "accent": "zh-CN", "language": "zh-CN", "preview_url": ""},
-        {"voice_id": "edge-zh-female", "name": "Microsoft 晓晓", "category": "fallback", "gender": "female", "accent": "zh-CN", "language": "zh-CN", "preview_url": ""},
+        {"voice_id": "edge-zh-yunjian", "name": "云健 · 体育解说", "category": "fallback", "gender": "male", "accent": "zh-CN", "language": "zh-CN", "preview_url": ""},
+        {"voice_id": "edge-zh-yunxi", "name": "云希 · 年轻动感", "category": "fallback", "gender": "male", "accent": "zh-CN", "language": "zh-CN", "preview_url": ""},
+        {"voice_id": "edge-zh-yunyang", "name": "云扬 · 专业播报", "category": "fallback", "gender": "male", "accent": "zh-CN", "language": "zh-CN", "preview_url": ""},
+        {"voice_id": "edge-zh-xiaoxiao", "name": "晓晓 · 自然女声", "category": "fallback", "gender": "female", "accent": "zh-CN", "language": "zh-CN", "preview_url": ""},
+        {"voice_id": "edge-zh-xiaoyi", "name": "晓伊 · 温暖女声", "category": "fallback", "gender": "female", "accent": "zh-CN", "language": "zh-CN", "preview_url": ""},
     ]
     return jsonify({
         "ok": True,
@@ -2651,12 +2757,13 @@ def voice_preview():
     mode = str(data.get("mode") or "ai_male")
     voice_id = str(data.get("voice_id") or "").strip()
     speed = float(data.get("speed") or 1.0)
+    style = str(data.get("style") or "football")
     if not text:
         return jsonify({"ok": False, "error": "Text required"}), 400
     work = tempfile.mkdtemp(prefix="sagi_voice_preview_")
     path = Path(work) / "preview.mp3"
     try:
-        synthesize_voice(text[:500], mode, voice_id, path, speed)
+        synthesize_voice(text[:500], mode, voice_id, path, speed, style)
         resp = send_file(path, mimetype="audio/mpeg", as_attachment=False)
         resp.call_on_close(lambda: shutil.rmtree(work, ignore_errors=True))
         return resp
@@ -2707,6 +2814,9 @@ def create_render_job():
         "voice_mode": request.form.get("voice_mode") or "none",
         "voice_id": request.form.get("voice_id") or "",
         "voice_speed": request.form.get("voice_speed") or "1",
+        "voice_style": request.form.get("voice_style") or "football",
+        "voice_sync": request.form.get("voice_sync") or "fit",
+        "voice_volume": request.form.get("voice_volume") or "1",
         "original_volume": request.form.get("original_volume") or "0.25",
         "burn_subtitles": str(request.form.get("burn_subtitles") or "true").lower() in ("1", "true", "yes"),
         "uploaded_voice": uploaded_voice,
