@@ -1803,13 +1803,20 @@ async function generateCompleteAIVoice(text,mode,force=false,speedOverride=null)
  return{blob:merged.blob,duration:merged.duration,parts:chunks.length,cached:false}
 }
 function renderClipLockedScript(){
- const box=q('clipScriptBox'),txt=q('clipScriptText'),badge=q('meaningCoverageBadge');
+ const box=q('clipScriptBox'),txt=q('clipScriptText'),badge=q('meaningCoverageBadge'),detail=q('meaningAuditDetail'),title=q('clipScriptTitle');
  if(!box||!txt||!badge)return;
- const script=String(STUDIO.clipLockedNarration||'').trim();
+ const script=String(STUDIO.clipLockedNarration||'').trim(),audit=STUDIO.meaningAudit;
  box.style.display=script?'':'none';
  if(!script)return;
  txt.textContent=script;
- badge.textContent='原意 '+Math.max(0,Math.min(100,Number(STUDIO.meaningCoverage)||0))+'%'
+ if(title)title.textContent=(STUDIO.clipLockedTarget>0?voiceTimeLabel(STUDIO.clipLockedTarget)+' · ':'')+'保真配音稿 · 原稿不改';
+ badge.textContent=audit?.pass?'原意 100%':'原意未通过';
+ badge.classList.toggle('ok',!!audit?.pass);
+ if(detail){
+  if(!audit)detail.textContent='关键逻辑尚未校验。';
+  else if(audit.pass)detail.textContent='校验通过 · '+audit.totalUnits+'个逻辑单元全部保留 · 关键事实/关系/阵型数字 100%';
+  else detail.textContent='校验未通过 · 逻辑单元 '+audit.unitCoverage+'% · 关键锚点 '+audit.anchorCoverage+'% · 缺失 '+audit.missingCount+' 项'+(audit.missingUnits?.length?'：'+audit.missingUnits.slice(0,2).join(' / '):'')
+ }
 }
 async function generateClipLockedAIVoice(originalText,mode,force=false){
  const clip=Math.max(.5,Number(studioRange()[2])||0);if(!clip)throw new Error('VIDEO_DURATION_UNAVAILABLE');
@@ -1819,6 +1826,8 @@ async function generateClipLockedAIVoice(originalText,mode,force=false){
  if(!STUDIO.sourceNarration||STUDIO.clipLockedOriginal!==source)STUDIO.sourceNarration=source;
  if(STUDIO.clipLockedOriginal!==source){STUDIO.clipLockedOriginal=source;STUDIO.clipLockedNarration='';renderClipLockedScript()}
  let fitted=fitNarrationTextToClip(source,clip),baseSpeed=Math.max(.90,Math.min(1.08,Number(q('aiVoiceSpeed')?.value)||1)),result=null;
+ STUDIO.clipLockedNarration=fitted;STUDIO.clipLockedTarget=clip;renderClipLockedScript();
+ if(!STUDIO.meaningAudit?.pass)throw new Error('原意完整性校验未通过，已停止生成');
  for(let pass=0;pass<4;pass++){
   STUDIO.generatedVoiceKey='';
   buildVoiceTimeline(false,fitted);if(STUDIO.sceneAnalysis?.scenes?.length)matchVoiceTimelineToScenes();
@@ -1862,7 +1871,8 @@ async function generateClipLockedAIVoice(originalText,mode,force=false){
   if(slower<baseSpeed-.008){baseSpeed=slower;result=await generateCompleteAIVoice(fitted,mode,true,baseSpeed)}
  }
  if(result.duration>clip+.25)throw new Error('配音微调后仍超过视频时长，系统已阻止延长视频');
- if((Number(STUDIO.meaningCoverage)||0)<90)throw new Error('原意保真度低于90%，已停止生成，不再用删句方式强行压时长');
+ const finalAudit=meaningAuditStrict(source,fitted);STUDIO.meaningAudit=finalAudit;STUDIO.meaningCoverage=finalAudit.coverage;
+ if(!finalAudit.pass)throw new Error('原意完整性不是100%，已停止生成；不会为凑时长删掉任何独立战术观点');
  // If speech finishes slightly early, keep the audio file exactly as long as the video
  // with clean silence rather than changing the picture duration.
  const exact=await padVoiceBlobToDuration(result.blob,clip);
