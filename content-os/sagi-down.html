@@ -1698,6 +1698,22 @@ async function generateClipLockedAIVoice(originalText,mode,force=false){
   }
  }
  if(result.duration>clip+.25)throw new Error('解说仍超过视频时长，系统已阻止延长视频');
+ // If the first compression was conservative, restore useful scene-matched lines
+ // before resorting to a long silent tail.
+ if(result.duration<clip*.90){
+  const currentChars=narrationCharCount(fitted),sourceChars=narrationCharCount(source);
+  const richerBudget=Math.min(sourceChars,Math.floor(currentChars*(clip/Math.max(1,result.duration))*.96));
+  if(richerBudget>currentChars+10){
+   fitted=fitNarrationTextToClip(source,clip,richerBudget);
+   q('narrationText').value=fitted;
+   result=await generateCompleteAIVoice(fitted,mode,true,baseSpeed)
+  }
+ }
+ if(result.duration<clip-.55&&result.duration>=clip*.82){
+  const slower=Math.max(.85,Math.min(baseSpeed,baseSpeed*(result.duration/Math.max(1,clip-.18))));
+  if(slower<baseSpeed-.008){baseSpeed=slower;result=await generateCompleteAIVoice(fitted,mode,true,baseSpeed)}
+ }
+ if(result.duration>clip+.25)throw new Error('配音微调后仍超过视频时长，系统已阻止延长视频');
  // If speech finishes slightly early, keep the audio file exactly as long as the video
  // with clean silence rather than changing the picture duration.
  const exact=await padVoiceBlobToDuration(result.blob,clip);
