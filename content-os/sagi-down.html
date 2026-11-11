@@ -1508,24 +1508,37 @@ async function startCloudRender(recovering=false){
      await voiceApiReady();
    }
 
+   let submitMode=mode,submitDuration=duration,submitSync=q('aiVoiceSync')?.value||'fit',submitVoiceBlob=null,submitVoiceName='voice.m4a';
+   const serverV12=String(health.voiceDirectorVersion||'')==='1.2'&&health.voiceCompletenessGuard===true;
+   if(mode==='recorded'&&STUDIO.voiceBlob){
+     submitVoiceBlob=STUDIO.voiceBlob;submitVoiceName='voice.'+(STUDIO.voiceMime.includes('webm')?'webm':'m4a')
+   }else if((mode==='ai_male'||mode==='ai_female'||mode==='clone')&&!serverV12){
+     setCloudRenderStatus('检测到旧云端 · 正在先生成完整AI配音，再以完整音轨提交…');
+     const merged=await generateCompleteAIVoice(String(q('narrationText')?.value||''),mode,false);
+     if(merged.duration>179.2)throw new Error('完整配音超过3分钟云端上限，请缩短解说稿');
+     submitMode='recorded';submitVoiceBlob=merged.blob;submitVoiceName='sagi-complete-ai-voice.wav';submitSync='natural';
+     submitDuration=Math.max(duration,merged.duration+.5);
+     setCloudRenderStatus('完整音轨已准备 · '+merged.duration.toFixed(1)+'秒 · 文本覆盖100% · 正在上传成片')
+   }
+
    const fd=new FormData();
    fd.append('media',STUDIO.file,STUDIO.file.name||'video.mp4');
-   fd.append('start',String(start));fd.append('duration',String(duration));
+   fd.append('start',String(start));fd.append('duration',String(submitDuration));
    fd.append('aspect',q('studioAspect')?.value||'9:16');
    fd.append('quality',q('exportQuality')?.value||'fast');
    fd.append('captions',JSON.stringify(cloudRenderCaptions()));
    fd.append('narration',String(q('narrationText')?.value||''));
    const voiceTimeline=buildVoiceTimeline(true);
    fd.append('voice_timeline',JSON.stringify(voiceTimeline));
-   fd.append('voice_mode',mode);
-   fd.append('voice_id',mode==='clone'?STUDIO.cloneVoiceId:(q('aiVoiceVoice')?.value||''));
+   fd.append('voice_mode',submitMode);
+   fd.append('voice_id',submitMode==='recorded'?'':(mode==='clone'?STUDIO.cloneVoiceId:(q('aiVoiceVoice')?.value||'')));
    fd.append('voice_speed',q('aiVoiceSpeed')?.value||'1');
    fd.append('voice_style',q('aiVoiceStyle')?.value||'football');
-   fd.append('voice_sync',q('aiVoiceSync')?.value||'fit');
+   fd.append('voice_sync',submitSync);
    fd.append('voice_volume',q('aiVoiceVolume')?.value||'1');
    fd.append('original_volume',q('originalAudio')?.value||'0.25');
    fd.append('burn_subtitles',(q('burnSubtitle')?.value||'yes')==='yes'?'true':'false');
-   if(mode==='recorded'&&STUDIO.voiceBlob)fd.append('voice_audio',STUDIO.voiceBlob,'voice.'+(STUDIO.voiceMime.includes('webm')?'webm':'m4a'));
+   if(submitVoiceBlob)fd.append('voice_audio',submitVoiceBlob,submitVoiceName);
 
    setCloudRenderProgress(3);setCloudRenderStatus(recovering?'云端刚刚重启 · 正在自动重新上传视频…':'正在上传视频到 SAGI Cloud…');
    const xhr=new XMLHttpRequest();
