@@ -1807,6 +1807,12 @@ async function startCloudRender(recovering=false){
 
  const [start,end,duration]=studioRange();
  const mode=q('aiVoiceMode')?.value||'none';
+ if((mode==='ai_male'||mode==='ai_female'||mode==='clone')&&health.voiceVideoDurationLock!==true){
+   setCloudRenderProgress(0);
+   setCloudRenderStatus('当前云端尚未启用 VIDEO FIRST V1.5 时长硬锁；已阻止旧版延长视频。');
+   studioStatus('云端未确认“视频多长配音就多长”，本次不会提交错误成片。','warn');
+   return
+ }
  if(mode==='clone'&&!STUDIO.cloneVoiceId){studioStatus('请选择AI男声/女声，或先创建你的声音克隆。','warn');return}
  if(mode==='recorded'&&!STUDIO.voiceBlob){studioStatus('当前选择“使用我的录音”，请先录音。','warn');return}
  if((mode==='ai_male'||mode==='ai_female'||mode==='clone')&&!String(q('narrationText')?.value||'').trim()){
