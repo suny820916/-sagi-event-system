@@ -1175,6 +1175,8 @@ def run_cloud_render(job_id, options):
             voice_speed = float(options.get("voice_speed") or 1.0)
             voice_style = str(options.get("voice_style") or "football")
             voice_sync = str(options.get("voice_sync") or "fit")
+            visual_sync = str(options.get("visual_sync") or "auto")
+            visual_sync_max_hold = max(0.0, min(3.0, float(options.get("visual_sync_max_hold") or 3.0)))
             voice_volume = max(0.25, min(2.0, float(options.get("voice_volume") or 1.0)))
             original_volume = max(0.0, min(1.0, float(options.get("original_volume") or 0.25)))
             burn_subtitles = bool(options.get("burn_subtitles", True))
@@ -1213,19 +1215,56 @@ def run_cloud_render(job_id, options):
 
             narration_duration = audio_duration_seconds(narration_path) if narration_path else 0.0
             # Complete narration always wins over the original clip boundary.
-            # Leave a small natural tail so the last syllable / AAC padding is never clipped.
+            # V1.3 forbids long frozen tails: > max_hold must be visually resynchronised.
             output_duration = max(duration, narration_duration + 0.35 if narration_duration > 0 else duration)
-            tail_extension = max(0.0, output_duration - duration)
+            visual_gap = max(0.0, output_duration - duration)
+            visual_factor = max(1.0, output_duration / max(0.2, duration))
+            visual_strategy = "native"
+            if visual_gap > visual_sync_max_hold + 0.01:
+                if visual_sync == "off":
+                    raise RuntimeError(
+                        f"VISUAL_SYNC_REQUIRED: narration exceeds picture by {visual_gap:.1f}s; "
+                        f"frozen-tail limit is {visual_sync_max_hold:.1f}s"
+                    )
+                visual_strategy = "stretch" if visual_sync == "stretch" else "dynamic"
+            elif visual_gap > 0.04:
+                visual_strategy = "short_hold"
 
             width, height = render_dimensions(aspect, quality)
             vf = f"scale={width}:{height}:force_original_aspect_ratio=increase,crop={width}:{height},setsar=1"
-            if tail_extension > 0.04:
-                vf += f",tpad=stop_mode=clone:stop_duration={tail_extension:.3f}"
+            if visual_strategy in ("stretch", "dynamic"):
+                vf += f",setpts={visual_factor:.8f}*PTS"
+                if visual_strategy == "dynamic" and visual_factor > 1.08:
+                    # Subtle continuous motion keeps tactical/educational frames alive
+                    # while preserving the original visual order.
+                    zw = max(width + 2, int(round(width * 1.06 / 2.0) * 2))
+                    zh = max(height + 2, int(round(height * 1.06 / 2.0) * 2))
+                    vf += (
+                        f",scale={zw}:{zh},"
+                        f"crop={width}:{height}:"
+                        "x='(iw-ow)/2*(1+sin(t*0.19))':"
+                        "y='(ih-oh)/2*(1+cos(t*0.13))'"
+                    )
+            elif visual_strategy == "short_hold":
+                vf += f",tpad=stop_mode=clone:stop_duration={min(visual_gap, visual_sync_max_hold):.3f}"
+
+            render_captions = captions
+            if visual_strategy in ("stretch", "dynamic") and captions:
+                render_captions = []
+                for cap in captions:
+                    cc = dict(cap)
+                    try:
+                        cc["start"] = float(cap.get("start") or 0) * visual_factor
+                        cc["end"] = float(cap.get("end") or 0) * visual_factor
+                    except Exception:
+                        pass
+                    render_captions.append(cc)
+
             ass_path = None
-            if burn_subtitles and captions:
+            if burn_subtitles and render_captions:
                 ensure_cjk_font()
                 ass_path = work / "captions.ass"
-                write_ass(captions, ass_path, width, height)
+                write_ass(render_captions, ass_path, width, height)
                 ass_escaped = str(ass_path).replace("\\", "/").replace(":", r"\:").replace("'", r"\'")
                 font_escaped = str(FONT_DIR).replace("\\", "/").replace(":", r"\:").replace("'", r"\'")
                 vf += f",subtitles='{ass_escaped}':fontsdir='{font_escaped}'"
@@ -1240,8 +1279,11 @@ def run_cloud_render(job_id, options):
             has_audio = media_has_audio(source)
             audio_map = None
             if narration_path and has_audio and original_volume > 0:
+                original_af = f"volume={original_volume}"
+                if visual_strategy in ("stretch", "dynamic") and visual_factor > 1.001:
+                    original_af += "," + _atempo_chain(1.0 / visual_factor)
                 filters += [
-                    f"[0:a]volume={original_volume}[a0]",
+                    f"[0:a]{original_af}[a0]",
                     f"[1:a]volume={voice_volume}[a1]",
                     "[a0][a1]amix=inputs=2:duration=longest:dropout_transition=1[aout]",
                 ]
@@ -1250,7 +1292,10 @@ def run_cloud_render(job_id, options):
                 filters += [f"[1:a]volume={voice_volume}[aout]"]
                 audio_map = "[aout]"
             elif has_audio and original_volume > 0:
-                if original_volume != 1:
+                if visual_strategy in ("stretch", "dynamic") and visual_factor > 1.001:
+                    filters += [f"[0:a]volume={original_volume},{_atempo_chain(1.0 / visual_factor)}[aout]"]
+                    audio_map = "[aout]"
+                elif original_volume != 1:
                     filters += [f"[0:a]volume={original_volume}[aout]"]
                     audio_map = "[aout]"
                 else:
@@ -1278,7 +1323,14 @@ def run_cloud_render(job_id, options):
             cmd += ["-movflags", "+faststart", "-t", str(output_duration), "-progress", "pipe:1", "-nostats", str(out)]
 
             with render_jobs_lock:
-                render_jobs[job_id].update({"stage": "云端编码成片", "progress": 34, "updated_at": iso()})
+                render_jobs[job_id].update({
+                    "stage": "VISUAL SYNC V1.3 · 动态画面匹配" if visual_strategy in ("stretch", "dynamic") else "云端编码成片",
+                    "progress": 34, "updated_at": iso(),
+                    "visualSyncStrategy": visual_strategy,
+                    "visualStretchFactor": round(visual_factor, 4),
+                    "visualGap": round(visual_gap, 3),
+                    "visualHoldSeconds": round(min(visual_gap, visual_sync_max_hold) if visual_strategy == "short_hold" else 0.0, 3),
+                })
                 _persist_render_jobs_locked()
             proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
             logs = []
@@ -1311,6 +1363,10 @@ def run_cloud_render(job_id, options):
                     "voiceSegments": int(voice_meta.get("segments") or 0),
                     "voiceDuration": round(float(voice_meta.get("duration") or narration_duration or 0), 3),
                     "voiceTimeline": (voice_meta.get("timeline") or [])[:120],
+                    "visualSyncStrategy": visual_strategy,
+                    "visualStretchFactor": round(visual_factor, 4),
+                    "visualGap": round(visual_gap, 3),
+                    "visualHoldSeconds": round(min(visual_gap, visual_sync_max_hold) if visual_strategy == "short_hold" else 0.0, 3),
                 })
                 _persist_render_jobs_locked()
         except Exception as e:
@@ -2395,7 +2451,10 @@ def health():
         "smartTranslate": True,
         "aiVoice": True,
         "aiVoiceFallback": True,
-        "voiceDirectorVersion": "1.2",
+        "voiceDirectorVersion": "1.3",
+        "aiVisualSync": True,
+        "aiVisualSyncMaxHoldSeconds": 3,
+        "aiVisualSyncSentenceMap": True,
         "voiceNarrationNoCut": True,
         "voiceSentenceTimeline": True,
         "voiceCompletenessGuard": True,
@@ -3061,6 +3120,8 @@ def create_render_job():
         "voice_speed": request.form.get("voice_speed") or "1",
         "voice_style": request.form.get("voice_style") or "football",
         "voice_sync": request.form.get("voice_sync") or "fit",
+        "visual_sync": request.form.get("visual_sync") or "auto",
+        "visual_sync_max_hold": request.form.get("visual_sync_max_hold") or "3",
         "voice_volume": request.form.get("voice_volume") or "1",
         "original_volume": request.form.get("original_volume") or "0.25",
         "burn_subtitles": str(request.form.get("burn_subtitles") or "true").lower() in ("1", "true", "yes"),
