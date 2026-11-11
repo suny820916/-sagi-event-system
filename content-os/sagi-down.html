@@ -1339,14 +1339,16 @@ function waitStudioSeek(v,time){
  })
 }
 function frameDescriptor(ctx,w,h,prev){
- const d=ctx.getImageData(0,0,w,h).data,gray=new Uint8Array(w*h);let bright=0,green=0,edge=0,diff=0;
+ const d=ctx.getImageData(0,0,w,h).data,gray=new Uint8Array(w*h);let bright=0,green=0,edge=0,diff=0,active=0,activeX=0;
  for(let p=0,i=0;p<gray.length;p++,i+=4){
   const r=d[i],g=d[i+1],b=d[i+2],y=(r*30+g*59+b*11)/100;gray[p]=y;bright+=y;
-  if(g>r*1.08&&g>b*1.08&&g>55)green++
+  const isGreen=g>r*1.08&&g>b*1.08&&g>55;if(isGreen)green++;
+  const mx=Math.max(r,g,b),mn=Math.min(r,g,b),sat=mx-mn;
+  if(!isGreen&&sat>52&&mx>70){active++;activeX+=(p%w)}
   if(prev)diff+=Math.abs(y-prev[p])
  }
  for(let y=1;y<h;y++)for(let x=1;x<w;x++){const p=y*w+x;edge+=Math.abs(gray[p]-gray[p-1])+Math.abs(gray[p]-gray[p-w])}
- return{gray,brightness:bright/(gray.length*255),green:green/gray.length,diff:prev?diff/(gray.length*255):0,edge:edge/(Math.max(1,(w-1)*(h-1))*510)}
+ return{gray,brightness:bright/(gray.length*255),green:green/gray.length,diff:prev?diff/(gray.length*255):0,edge:edge/(Math.max(1,(w-1)*(h-1))*510),focusX:active?activeX/active/Math.max(1,w-1):.5,colorActivity:active/gray.length}
 }
 function renderSceneAnalysis(){
  const host=q('sceneSyncList'),status=q('sceneSyncStatus'),a=STUDIO.sceneAnalysis;
@@ -1368,7 +1370,7 @@ async function analyzeVideoScenes(silent=false){
    const rel=Math.min(clipDuration,i*step),abs=clipStart+rel;
    await waitStudioSeek(v,abs);ctx.drawImage(v,0,0,w,h);
    const d=frameDescriptor(ctx,w,h,prev);prev=d.gray;
-   samples.push({t:rel,diff:d.diff,green:d.green,brightness:d.brightness,edge:d.edge});
+   samples.push({t:rel,diff:d.diff,green:d.green,brightness:d.brightness,edge:d.edge,focusX:d.focusX,colorActivity:d.colorActivity});
    if(i%6===0&&q('sceneSyncStatus'))q('sceneSyncStatus').textContent='正在读取视频内容 · '+Math.round((i+1)/count*100)+'%'
   }
   const diffs=samples.slice(1).map(x=>x.diff).sort((a,b)=>a-b),p75=diffs.length?diffs[Math.min(diffs.length-1,Math.floor(diffs.length*.75))]:.08,cutThreshold=Math.max(.07,p75*1.35);
@@ -1382,9 +1384,14 @@ async function analyzeVideoScenes(silent=false){
   for(let bi=0;bi<bounds.length-1;bi++){
    const start=bounds[bi],end=bounds[bi+1],inside=samples.filter(x=>x.t>=start-.001&&x.t<=end+.001);
    const motion=inside.length?inside.reduce((n,x)=>n+x.diff,0)/inside.length:0,green=inside.length?inside.reduce((n,x)=>n+x.green,0)/inside.length:0;
+   const activeRows=inside.filter(x=>(Number(x.colorActivity)||0)>.006),focusX=activeRows.length?activeRows.reduce((n,x)=>n+(Number(x.focusX)||.5),0)/activeRows.length:.5;
    const capRows=caps.filter(x=>Number(x.end)>start&&Number(x.start)<end),text=capRows.map(x=>x.text).join(' ').trim(),tags=sceneSemanticTags(text);
+   if(focusX<.43&&!tags.includes('left'))tags.push('left');else if(focusX>.57&&!tags.includes('right'))tags.push('right');
+   if(motion>.035&&!tags.includes('movement'))tags.push('movement');
+   const visualSide=focusX<.43?'重心偏左':focusX>.57?'重心偏右':'重心居中';
    let label=tags.length?tags.slice(0,3).map(x=>({flank:'边路',midfield:'中场',defense:'防守',attack:'进攻',transition:'攻防转换',formation:'阵型/站位',movement:'移动/跑动',pass:'传球',shot:'射门',keeper:'门将',left:'左侧',right:'右侧',setpiece:'定位球'}[x]||x)).join(' · '):(green>.16?'球场/战术画面':(motion>.055?'高运动场景':motion>.025?'运动场景':'稳定讲解画面'));
-   scenes.push({id:bi,start:Number(start.toFixed(3)),end:Number(end.toFixed(3)),motion:Number(motion.toFixed(4)),green:Number(green.toFixed(4)),text,tags,label,tokens:[...sceneWordTokens(text)]})
+   if(green>.12)label+=' · '+visualSide;
+   scenes.push({id:bi,start:Number(start.toFixed(3)),end:Number(end.toFixed(3)),motion:Number(motion.toFixed(4)),green:Number(green.toFixed(4)),focusX:Number(focusX.toFixed(3)),text,tags,label,tokens:[...sceneWordTokens(text)]})
   }
   STUDIO.sceneAnalysis={scenes,samples:count,captionHits:scenes.filter(x=>x.text).length,cutThreshold:Number(cutThreshold.toFixed(4)),clipDuration,analyzedAt:Date.now()};
   matchVoiceTimelineToScenes();renderSceneAnalysis();renderVoiceTimeline();
