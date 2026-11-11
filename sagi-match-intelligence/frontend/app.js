@@ -34,6 +34,52 @@ videoInput.addEventListener("change", () => {
   fileMeta.textContent = (file.size / 1024 / 1024).toFixed(1) + " MB";
 });
 
+function formatSpeed(bytesPerSecond) {
+  if (!Number.isFinite(bytesPerSecond) || bytesPerSecond <= 0) return "";
+  if (bytesPerSecond >= 1024 * 1024) return (bytesPerSecond / 1024 / 1024).toFixed(1) + " MB/s";
+  return Math.max(1, Math.round(bytesPerSecond / 1024)) + " KB/s";
+}
+
+function uploadMatch(body, attempt = 1) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    const startedAt = Date.now();
+
+    xhr.open("POST", API_ROOT + "/jobs", true);
+    xhr.timeout = 180000;
+    xhr.responseType = "json";
+
+    xhr.upload.onprogress = (event) => {
+      if (!event.lengthComputable) return;
+      const pct = Math.max(1, Math.min(99, Math.round(event.loaded / event.total * 100)));
+      const elapsed = Math.max(0.25, (Date.now() - startedAt) / 1000);
+      const speed = formatSpeed(event.loaded / elapsed);
+
+      jobPanel.classList.remove("hidden");
+      $("jobId").textContent = "上传中";
+      setProgress(pct, "正在上传比赛" + (speed ? " · " + speed : ""));
+      submitBtn.querySelector("span").textContent = "上传 " + pct + "%";
+    };
+
+    xhr.onload = () => {
+      let payload = xhr.response;
+      if (!payload) {
+        try { payload = JSON.parse(xhr.responseText || "{}"); } catch (_) { payload = {}; }
+      }
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve(payload || {});
+      } else {
+        reject(new Error((payload && (payload.error || payload.detail)) || ("上传失败 · HTTP " + xhr.status)));
+      }
+    };
+
+    xhr.onerror = () => reject(new Error("网络中断，比赛视频没有完整上传。"));
+    xhr.ontimeout = () => reject(new Error("上传超过 3 分钟，网络速度过慢或连接中断。"));
+    xhr.onabort = () => reject(new Error("上传已取消。"));
+    xhr.send(body);
+  });
+}
+
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   const file = videoInput.files && videoInput.files[0];
@@ -45,28 +91,40 @@ form.addEventListener("submit", async (event) => {
   }
 
   submitBtn.disabled = true;
-  submitBtn.querySelector("span").textContent = "正在上传比赛…";
+  submitBtn.querySelector("span").textContent = "准备上传…";
   resultSection.classList.add("hidden");
+  jobPanel.classList.remove("hidden");
+  $("jobId").textContent = "准备中";
+  setProgress(0, "正在连接 SAGI AI 云端");
 
-  const body = new FormData();
-  body.append("video", file);
-  body.append("home_team", $("homeTeam").value.trim() || "主队");
-  body.append("away_team", $("awayTeam").value.trim() || "客队");
-  body.append("match_format", $("matchFormat").value);
+  const buildBody = () => {
+    const body = new FormData();
+    body.append("video", file, file.name);
+    body.append("home_team", $("homeTeam").value.trim() || "主队");
+    body.append("away_team", $("awayTeam").value.trim() || "客队");
+    body.append("match_format", $("matchFormat").value);
+    return body;
+  };
 
   try {
-    const response = await fetch(API_ROOT + "/jobs", {
-      method: "POST",
-      body: body
-    });
-    const payload = await response.json();
-    if (!response.ok) throw new Error(payload.error || payload.detail || "上传失败");
+    let payload;
+    try {
+      payload = await uploadMatch(buildBody(), 1);
+    } catch (firstError) {
+      setProgress(0, "连接波动，正在自动重试一次");
+      submitBtn.querySelector("span").textContent = "自动重试…";
+      await new Promise((resolve) => setTimeout(resolve, 1200));
+      payload = await uploadMatch(buildBody(), 2);
+    }
 
-    jobPanel.classList.remove("hidden");
+    if (!payload || !payload.job_id) throw new Error("云端没有返回任务编号。");
+
     $("jobId").textContent = payload.job_id;
     setProgress(0, "视频上传完成，AI 排队中");
+    submitBtn.querySelector("span").textContent = "AI 分析中…";
     startPolling(payload.job_id);
   } catch (error) {
+    setProgress(0, "上传未完成");
     alert(error.message || "上传失败");
     resetSubmit();
   }
