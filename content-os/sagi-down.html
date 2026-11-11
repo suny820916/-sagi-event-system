@@ -807,11 +807,11 @@ Unbelievable finish."></textarea>
         <div class="voiceGrid">
           <label>配音方式
             <select id="aiVoiceMode">
-              <option value="ai_male">AI专业男声</option>
+              <option value="ai_male" selected>AI专业男声</option>
               <option value="ai_female">AI专业女声</option>
               <option value="clone">我的克隆声音</option>
               <option value="recorded">使用我的录音</option>
-              <option value="none" selected>不加解说（稳定优先）</option>
+              <option value="none">不加解说</option>
             </select>
           </label>
           <label>具体音色
@@ -873,7 +873,7 @@ Unbelievable finish."></textarea>
           </div>
         </div>
         <div class="voiceActions">
-          <button class="btn gold" id="lockstepVoiceBtn" type="button">一键适配82秒配音</button>
+          <button class="btn gold" id="lockstepVoiceBtn" type="button">一键适配视频配音</button>
           <button class="btn blue" id="aiVoicePreviewBtn" type="button">试听最终配音</button>
           <button class="btn gold" id="cloneVoiceBtn" type="button">克隆我的声音</button>
           <button class="btn" id="aiVoiceStatusBtn" type="button">刷新音色</button>
@@ -3942,7 +3942,7 @@ q('lockstepVoiceBtn').onclick=async()=>{
    if((q('aiVisualSync')?.value||'off')==='auto'){await runLockstepVoice(true);toast('高级画面同步完成')}
    else{await runSimpleSyncVoice(true);toast('SIMPLE SYNC 完成')}
  }catch(e){setVoiceState('一键适配失败：'+(e.message||e));studioStatus('SIMPLE SYNC：'+(e.message||e),'warn')}
- finally{btn.disabled=false;btn.textContent='一键适配82秒配音'}
+ finally{btn.disabled=false;btn.textContent='一键适配视频配音'}
 };
 q('aiVoicePreviewBtn').onclick=previewAIVoice;
 q('cloneVoiceBtn').onclick=cloneMyVoice;
@@ -5480,11 +5480,11 @@ if('serviceWorker' in navigator){
  navigator.serviceWorker.addEventListener('controllerchange',()=>{
   if(swReloaded)return;swReloaded=true;
   try{
-   const key='sagi_sw_reload_v3926';
+   const key='sagi_sw_reload_v3927';
    if(sessionStorage.getItem(key)!=='1'){sessionStorage.setItem(key,'1');location.reload()}
   }catch(e){location.reload()}
  });
- navigator.serviceWorker.register('./sagi-down-sw.js?v=3926',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})
+ navigator.serviceWorker.register('./sagi-down-sw.js?v=3927',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})
 }
 })();
 </script>
