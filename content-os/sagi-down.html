@@ -801,8 +801,8 @@ Unbelievable finish."></textarea>
       </div>
       <div class="voicePanel">
         <div class="sectionHead">
-          <div><div class="label">VOICE DIRECTOR · AI配音导演</div><div class="mini">MEANING FIRST · 原意优先 · 视频时长硬锁</div></div>
-          <span class="badge">V1.6</span>
+          <div><div class="label">VOICE DIRECTOR · AI配音导演</div><div class="mini">LOCKSTEP · 原视频不动 · 配音逐场景锁时</div></div>
+          <span class="badge">V1.7</span>
         </div>
         <div class="voiceGrid">
           <label>配音方式
@@ -846,9 +846,9 @@ Unbelievable finish."></textarea>
           </label>
           <label>画面同步
             <select id="aiVisualSync">
-              <option value="auto" selected>读取视频内容匹配 · 推荐</option>
-              <option value="stretch">全程均匀匹配</option>
-              <option value="off">保持原画面 · 超3秒禁止定格</option>
+              <option value="voice_to_video" selected>配音跟随原视频 · 推荐</option>
+              <option value="auto">AI重排画面 · 备用</option>
+              <option value="off">保持原画面</option>
             </select>
           </label>
         </div>
@@ -860,7 +860,7 @@ Unbelievable finish."></textarea>
             <button class="btn" id="voiceTimelineBtn" type="button">重建时间轴</button>
           </div>
           <div class="voiceTimelineList" id="voiceTimelineList"></div>
-          <div class="voiceTimelineHint">V1.6：原意优先。视频时长仍是硬上限，但不再删掉独立战术观点凑时长；关键事实、因果、转折、优缺点、阵型数字和战术动作必须完整保留，达不到100%就停止生成。</div>
+          <div class="voiceTimelineHint">V1.7：原视频时间轴是唯一主时钟。AI读取场景后，把原稿逻辑逐段放进对应画面；每段独立测时、独立校准，最后音轨精确等于视频时长。原稿不改，画面不拉伸。</div>
           <div class="voiceTiming" id="visualSyncStatus">AI SCENE SYNC：等待视频内容分析。</div>
           <div class="sceneSyncBox">
             <div class="sceneSyncHead"><b>视频内容场景</b><button class="btn" id="sceneAnalyzeBtn" type="button">分析视频内容</button></div>
@@ -874,9 +874,15 @@ Unbelievable finish."></textarea>
           </div>
         </div>
         <div class="voiceActions">
-          <button class="btn blue" id="aiVoicePreviewBtn" type="button">试听当前声音</button>
+          <button class="btn gold" id="lockstepVoiceBtn" type="button">一键适配视频配音</button>
+          <button class="btn blue" id="aiVoicePreviewBtn" type="button">试听最终配音</button>
           <button class="btn gold" id="cloneVoiceBtn" type="button">克隆我的声音</button>
           <button class="btn" id="aiVoiceStatusBtn" type="button">刷新音色</button>
+        </div>
+        <div class="sceneSyncBox" id="lockstepBox">
+          <div class="sceneSyncHead"><b>LOCKSTEP 一次适配</b><span class="badge" id="lockstepBadge">待开始</span></div>
+          <div class="sceneSyncStatus" id="lockstepStatus">导入视频、保留原稿，然后点“一键适配视频配音”。</div>
+          <div class="sceneSyncList" id="lockstepList"></div>
         </div>
         <audio id="aiVoicePreview" class="voicePreview" controls></audio>
         <div class="voiceState" id="aiVoiceState">AI Voice 检测中。克隆声音前请先录制一段你自己的干净人声。</div>
@@ -1238,6 +1244,7 @@ const STUDIO={
  cloneVoiceId:localStorage.getItem('sagi_clone_voice_id')||'',aiVoiceReady:false,aiVoiceVoices:[],voicePreviewUrl:'',voiceTimeline:[],
  generatedVoiceBlob:null,generatedVoiceUrl:'',generatedVoiceDuration:0,generatedVoiceKey:'',generatedVoiceParts:0,visualSyncPlan:null,
  sceneAnalysis:null,scenePlan:[],sceneAnalyzing:false,clipLockedNarration:'',clipLockedOriginal:'',clipLockedTarget:0,sourceNarration:'',meaningCoverage:100,meaningAudit:null,
+ lockstepReady:false,lockstepSegments:[],lockstepVoiceBlob:null,lockstepVoiceUrl:'',lockstepDuration:0,
  cloudRenderJobId:'',cloudRenderTimer:null,cloudResultUrl:'',cloudRenderRecoveries:0,cloudRenderRecovering:false,
  pendingTranslateZh:false,
  cloudHealth:null,cloudLastError:''
