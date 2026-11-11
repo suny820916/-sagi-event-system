@@ -1,25 +1,28 @@
-# SAGI AI LOCAL V1.2 · AI VISUAL
+# SAGI AI LOCAL V1.2.1 · POSTER CORE
 
-手机优先的本地商家 AI 内容与视觉工作台。
+本地商家的 AI 内容与海报工作台。
 
-## V1.2
-- 保留 V1.1 一句话 AI 内容引擎
-- 新增视觉接口：`/api/local-ai/visual`
-- 上传菜品 / 商品 / 门店 / 服务照片后，AI识别主体、场景、优势与问题
-- 输出 3:4 海报方向、9:16 短视频封面方向、15秒视觉脚本、发布文案
-- AI返回可执行的 cropFocus / overlayPosition / contrastOverlay，前端直接用于自动排版
-- 浏览器本地 Canvas 生成 900×1200 与 900×1600 PNG，可直接保存
-- 图片上传前在手机端压缩到最长边约1600px，降低流量与推理成本
-- 云端AI不可用时自动 LOCAL VISUAL FALLBACK，仍能生成可用海报
-- 不把 API Key 写入 GitHub Pages
-- 对上传图片做 MIME / 大小校验，默认上限 8MB
-- PWA 缓存升级到 V1.2
+## 这次修复的核心
+V1.2 的问题是“视觉分析 + 原图叠字”被误当成真正海报生成。V1.2.1 改为两层：
 
-## Cloud
-复用 `sagi-cloud-bridge-suny820916` Render 服务。
-`OPENAI_API_KEY` 存在时启用真实 AI；默认模型 `gpt-6-luna`。
-GPT-6 Luna 支持 Responses API、图片输入和 Structured Outputs，适合高频低成本视觉分析。
+1. **LOCAL POSTER**：上传照片后立即在浏览器生成可保存的 3:4 / 9:16 PNG，不依赖云端、不等 AI。
+2. **AI POSTER**：如果云端 AI 可用，调用 OpenAI Image Edit 把真实照片重新编辑为商业广告主视觉，再由前端叠加准确中文标题、CTA，自动替换本地版本。
 
-## 隐私与安全
-照片只用于当前视觉分析请求，不写入商家 BRAND MEMORY。
-视觉提示词禁止从人物照片推断身份或敏感属性，也禁止编造价格、折扣、销量、评价、奖项或品牌事实。
+## 真实海报链路
+照片 → 本地立即成图 → AI视觉分析 → AI商业重绘 → 准确中文排版 → PNG保存
+
+## AI 图片模型
+默认：`gpt-image-2.6-flare`
+用途：快速商业图片编辑。通过 `POST /v1/images/edits` 编辑用户原图。
+输出采用一张 1024×1536 商业主视觉底图，再由前端分别裁成 3:4 和 9:16，避免每次生成两张造成双倍成本。
+
+## 可靠性
+- AI不可用：海报仍立即生成。
+- iOS / WebView 不支持 `roundRect` 时自动退化为矩形 CTA，不再导致整个Canvas绘制中断。
+- 不填宣传文案也能生成，优先读取商家档案中的主打产品。
+- 保存失败会提示用户，不再静默无反应。
+- PWA缓存：V1.2.1。
+
+## 隐私
+照片仅用于当前请求，不写入 BRAND MEMORY。
+AI编辑提示词要求保留真实主体，不编造价格、折扣、商品、Logo、销量、评价或奖项。
