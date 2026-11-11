@@ -44,9 +44,11 @@ jobs:
                   with urllib.request.urlopen(url, timeout=15) as r:
                       data = json.loads(r.read().decode("utf-8"))
                   version = str(data.get("version", ""))
-                  print(f"check {i+1}/36: version={version}")
-                  if version == expected:
-                      print("SAGI Cloud deployment verified.")
+                  voice = str(data.get("voiceDirectorVersion", ""))
+                  no_cut = bool(data.get("voiceNarrationNoCut"))
+                  print(f"check {i+1}/36: version={version} voiceDirector={voice} noCut={no_cut}")
+                  if version == expected and voice == "1.2" and no_cut:
+                      print("SAGI Cloud Voice Director 1.2 deployment verified.")
                       sys.exit(0)
               except Exception as e:
                   print(f"check {i+1}/36 failed: {e}")
