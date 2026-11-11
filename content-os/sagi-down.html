@@ -1547,7 +1547,9 @@ const NARRATION_CONDENSE_MAP=[
  [/我们可以看到/g,''],[/你会发现/g,''],[/可以看出来/g,''],[/也就是说/g,'也就是'],
  [/从而达到/g,'从而'],[/这样一来/g,'这样'],[/与此同时/g,'同时'],[/在这种情况下/g,'此时'],
  [/并不是说/g,'并非'],[/并不意味着/g,'不代表'],[/主要的目的就是/g,'目的就是'],
- [/核心的逻辑就是/g,'核心是'],[/最核心的逻辑是/g,'核心是'],[/更重要的是/g,'更重要的是']
+ [/核心的逻辑就是/g,'核心是'],[/最核心的逻辑是/g,'核心是'],[/更重要的是/g,'更重要的是'],
+ [/能够/g,'能'],[/可以/g,'可'],[/需要/g,'需'],[/进行/g,''],[/以及/g,'和'],
+ [/之后/g,'后'],[/以前/g,'前'],[/的时候/g,'时'],[/的情况下/g,'时'],[/的过程/g,'过程']
 ];
 function normalizeNarrationForMeaning(text){
  let s=String(text||'').trim().replace(/\s+/g,'');
@@ -1627,7 +1629,7 @@ function compressLogicUnit(text,budget){
 }
 function fitNarrationTextToClip(text,clipSeconds,budgetOverride=0){
  const original=String(text||'').trim(),speed=Math.max(.85,Math.min(1.15,Number(q('aiVoiceSpeed')?.value)||1));
- const targetChars=Math.max(90,Math.floor(budgetOverride||clipSeconds*3.55*speed*.96));
+ const targetChars=Math.max(90,Math.floor(budgetOverride||clipSeconds*3.95*Math.max(1,speed)*.98));
  if(narrationCharCount(original)<=targetChars){STUDIO.meaningCoverage=100;return original}
 
  const units=narrationLogicUnits(original);
@@ -1769,25 +1771,35 @@ async function generateClipLockedAIVoice(originalText,mode,force=false){
  let source=(STUDIO.clipLockedNarration&&incoming===STUDIO.clipLockedNarration&&STUDIO.sourceNarration)?STUDIO.sourceNarration:incoming;
  if(!STUDIO.sourceNarration||STUDIO.clipLockedOriginal!==source)STUDIO.sourceNarration=source;
  if(STUDIO.clipLockedOriginal!==source){STUDIO.clipLockedOriginal=source;STUDIO.clipLockedNarration='';renderClipLockedScript()}
- let fitted=fitNarrationTextToClip(source,clip),baseSpeed=Math.max(.85,Math.min(1.15,Number(q('aiVoiceSpeed')?.value)||1)),result=null;
- for(let pass=0;pass<3;pass++){
+ let fitted=fitNarrationTextToClip(source,clip),baseSpeed=Math.max(.90,Math.min(1.08,Number(q('aiVoiceSpeed')?.value)||1)),result=null;
+ for(let pass=0;pass<4;pass++){
   STUDIO.generatedVoiceKey='';
   buildVoiceTimeline(false,fitted);if(STUDIO.sceneAnalysis?.scenes?.length)matchVoiceTimelineToScenes();
-  setVoiceState('VIDEO FIRST · 第'+(pass+1)+'轮 · 正在生成 '+clip.toFixed(1)+'秒内的配音…');
+  setVoiceState('VIDEO FIRST · 保真校准 '+(pass+1)+'/4 · 正在生成 '+clip.toFixed(1)+'秒内的配音…');
   result=await generateCompleteAIVoice(fitted,mode,true,baseSpeed);
   if(result.duration<=clip+.25)break;
-  const currentChars=narrationCharCount(fitted),nextBudget=Math.max(70,Math.floor(currentChars*(clip/result.duration)*.95));
-  fitted=fitNarrationTextToClip(source,clip,nextBudget)
+
+  const ratio=result.duration/clip;
+  // Preserve wording first: if modest speed-up can solve it, do not delete more content.
+  if(baseSpeed<1.15&&ratio<=1.22){
+   const nextSpeed=Math.min(1.15,baseSpeed*ratio*1.005);
+   if(nextSpeed>baseSpeed+.008){baseSpeed=nextSpeed;continue}
+  }
+
+  // Only then reduce wording, and do it from the untouched source script.
+  const currentChars=narrationCharCount(fitted);
+  const factor=Math.max(.86,Math.min(.98,(clip/result.duration)*.985));
+  const nextBudget=Math.max(90,Math.floor(currentChars*factor));
+  const next=fitNarrationTextToClip(source,clip,nextBudget);
+  if(next===fitted)break;
+  fitted=next
  }
  if(!result)throw new Error('VOICE_GENERATION_FAILED');
- if(result.duration>clip+.25){
-  const ratio=result.duration/clip;
-  if(ratio<=1.14){
-   baseSpeed=Math.min(1.18,baseSpeed*ratio*1.01);
-   result=await generateCompleteAIVoice(fitted,mode,true,baseSpeed)
-  }
+ if(result.duration>clip+.25&&baseSpeed<1.18){
+  const ratio=result.duration/clip,nextSpeed=Math.min(1.18,baseSpeed*ratio*1.005);
+  if(nextSpeed>baseSpeed+.005){baseSpeed=nextSpeed;result=await generateCompleteAIVoice(fitted,mode,true,baseSpeed)}
  }
- if(result.duration>clip+.25)throw new Error('解说仍超过视频时长，系统已阻止延长视频');
+ if(result.duration>clip+.25)throw new Error('在不破坏原意的前提下无法压进视频时长，已停止生成');
  // If the first compression was conservative, restore useful scene-matched lines
  // before resorting to a long silent tail.
  if(result.duration<clip*.90){
@@ -1803,7 +1815,7 @@ async function generateClipLockedAIVoice(originalText,mode,force=false){
   if(slower<baseSpeed-.008){baseSpeed=slower;result=await generateCompleteAIVoice(fitted,mode,true,baseSpeed)}
  }
  if(result.duration>clip+.25)throw new Error('配音微调后仍超过视频时长，系统已阻止延长视频');
- if((Number(STUDIO.meaningCoverage)||0)<88)throw new Error('82秒压缩会破坏原意，已停止生成；请改用保真重写稿');
+ if((Number(STUDIO.meaningCoverage)||0)<90)throw new Error('原意保真度低于90%，已停止生成，不再用删句方式强行压时长');
  // If speech finishes slightly early, keep the audio file exactly as long as the video
  // with clean silence rather than changing the picture duration.
  const exact=await padVoiceBlobToDuration(result.blob,clip);
