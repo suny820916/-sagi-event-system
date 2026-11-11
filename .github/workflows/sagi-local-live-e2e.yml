@@ -51,12 +51,26 @@ jobs:
           URL="https://suny820916.github.io/-sagi-event-system/sagi-local/?selftest=1&e2e=$GITHUB_SHA"
           "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage \
             --disable-background-networking --virtual-time-budget=9000 --dump-dom "$URL" > /tmp/live-dom.html
-          grep -q 'data-sagi-local-build="1.2.2"' /tmp/live-dom.html
-          grep -q 'data-live-selftest="ok"' /tmp/live-dom.html
-          grep -q 'id="poster34"[^>]*data-rendered="1"' /tmp/live-dom.html
-          grep -q 'id="poster916"[^>]*data-rendered="1"' /tmp/live-dom.html
-          grep -q 'id="download34"' /tmp/live-dom.html
-          grep -q 'id="download916"' /tmp/live-dom.html
+          echo "=== LIVE SELFTEST MARKERS ==="
+          grep -o 'data-live-selftest="[^"]*"' /tmp/live-dom.html || true
+          grep -o '<canvas[^>]*id="poster34"[^>]*>' /tmp/live-dom.html || true
+          grep -o '<canvas[^>]*id="poster916"[^>]*>' /tmp/live-dom.html || true
+          grep -o '<button[^>]*id="download34"[^>]*>' /tmp/live-dom.html || true
+          grep -o '<button[^>]*id="download916"[^>]*>' /tmp/live-dom.html || true
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('/tmp/live-dom.html').read_text(encoding='utf-8',errors='ignore')
+          checks={
+            'build':'data-sagi-local-build="1.2.2"' in s,
+            'selftest':'data-live-selftest="ok"' in s,
+            'poster34':'id="poster34"' in s and 'data-rendered="1"' in s[s.find('id="poster34"'):s.find('id="poster34"')+500],
+            'poster916':'id="poster916"' in s and 'data-rendered="1"' in s[s.find('id="poster916"'):s.find('id="poster916"')+500],
+            'download34':'id="download34"' in s,
+            'download916':'id="download916"' in s,
+          }
+          print(checks)
+          assert all(checks.values()), checks
+          PY
           echo "PUBLIC SAGI LOCAL POSTER FLOW OK"
 
       - name: Verify live page core labels
