@@ -873,16 +873,28 @@ def _atempo_chain(rate):
 
 
 def fit_narration_to_duration(source_path, work, target_duration):
+    """
+    Fit narration toward the clip duration WITHOUT ever cutting the ending.
+    We only apply a natural speed-up ceiling. If speech is still longer,
+    the renderer extends the video's final frame so every word is preserved.
+    """
     target = max(0.8, float(target_duration or 0))
     actual = audio_duration_seconds(source_path)
     if actual <= 0.1:
         return Path(source_path)
     ratio = actual / target
-    if 0.985 <= ratio <= 1.015:
+    if ratio <= 1.015:
         return Path(source_path)
+
+    # Avoid chipmunk / rushed speech. Anything beyond this is handled by
+    # extending the video tail instead of truncating narration.
+    applied_rate = min(ratio, 1.18)
+    if applied_rate <= 1.015:
+        return Path(source_path)
+
     out = Path(work) / "narration_fit.m4a"
     exe = imageio_ffmpeg.get_ffmpeg_exe()
-    af = _atempo_chain(ratio) + f",apad=pad_dur=2,atrim=duration={target:.3f}"
+    af = _atempo_chain(applied_rate)
     cmd = [
         exe, "-hide_banner", "-loglevel", "error", "-y",
         "-i", str(source_path), "-vn", "-filter:a", af,
@@ -1001,8 +1013,16 @@ def run_cloud_render(job_id, options):
                     _persist_render_jobs_locked()
                 narration_path = fit_narration_to_duration(narration_path, work, max(0.8, duration - 0.22))
 
+            narration_duration = audio_duration_seconds(narration_path) if narration_path else 0.0
+            # Complete narration always wins over the original clip boundary.
+            # Leave a small natural tail so the last syllable / AAC padding is never clipped.
+            output_duration = max(duration, narration_duration + 0.35 if narration_duration > 0 else duration)
+            tail_extension = max(0.0, output_duration - duration)
+
             width, height = render_dimensions(aspect, quality)
             vf = f"scale={width}:{height}:force_original_aspect_ratio=increase,crop={width}:{height},setsar=1"
+            if tail_extension > 0.04:
+                vf += f",tpad=stop_mode=clone:stop_duration={tail_extension:.3f}"
             ass_path = None
             if burn_subtitles and captions:
                 ensure_cjk_font()
@@ -1025,7 +1045,7 @@ def run_cloud_render(job_id, options):
                 filters += [
                     f"[0:a]volume={original_volume}[a0]",
                     f"[1:a]volume={voice_volume}[a1]",
-                    "[a0][a1]amix=inputs=2:duration=first:dropout_transition=1[aout]",
+                    "[a0][a1]amix=inputs=2:duration=longest:dropout_transition=1[aout]",
                 ]
                 audio_map = "[aout]"
             elif narration_path:
@@ -1057,7 +1077,7 @@ def run_cloud_render(job_id, options):
             ]
             if audio_map:
                 cmd += ["-c:a", "aac", "-b:a", "128k"]
-            cmd += ["-movflags", "+faststart", "-t", str(duration), "-progress", "pipe:1", "-nostats", str(out)]
+            cmd += ["-movflags", "+faststart", "-t", str(output_duration), "-progress", "pipe:1", "-nostats", str(out)]
 
             with render_jobs_lock:
                 render_jobs[job_id].update({"stage": "云端编码成片", "progress": 34, "updated_at": iso()})
@@ -1073,7 +1093,7 @@ def run_cloud_render(job_id, options):
                 if line.startswith("out_time_ms="):
                     try:
                         sec = float(line.split("=", 1)[1]) / 1_000_000.0
-                        pct = 34 + int(min(60, max(0, sec / duration * 60)))
+                        pct = 34 + int(min(60, max(0, sec / max(0.2, output_duration) * 60)))
                         with render_jobs_lock:
                             if job_id in render_jobs:
                                 render_jobs[job_id].update({"progress": pct, "updated_at": iso()})
@@ -2763,7 +2783,7 @@ def voice_preview():
     work = tempfile.mkdtemp(prefix="sagi_voice_preview_")
     path = Path(work) / "preview.mp3"
     try:
-        synthesize_voice(text[:500], mode, voice_id, path, speed, style)
+        synthesize_voice(text[:10000], mode, voice_id, path, speed, style)
         resp = send_file(path, mimetype="audio/mpeg", as_attachment=False)
         resp.call_on_close(lambda: shutil.rmtree(work, ignore_errors=True))
         return resp
