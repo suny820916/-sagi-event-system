@@ -1009,7 +1009,7 @@ jobs:
           assert "q('narrationText').value=fitted" not in html
           assert "async function runSimpleSyncVoice" in html, "Simple Sync function missing"
           assert "let fitted=source" in html, "advanced fallback original-script path missing"
-          assert "整稿一次生成 · 只锁总时长 · 默认不分析场景" in html, "Simple Sync UI missing"
+          assert "简单同步 · 锁定视频总时长（推荐）" in html and "SIMPLE SYNC" in html, "Simple Sync UI missing"
           assert "第'+(i+1)+'段在保持原意后仍无法自然落入画面时间窗" not in html, "old local-window failure path returned"
           assert "原意完整性不是100%" in html, "100% meaning gate missing"
 
