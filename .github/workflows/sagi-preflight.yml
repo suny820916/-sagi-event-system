@@ -935,6 +935,75 @@ jobs:
           PY
           node /tmp/semantic-regression.js
 
+      - name: Narration meaning preservation regression
+        run: |
+          python - <<'PY'
+          import pathlib
+          html=pathlib.Path("content-os/sagi-down.html").read_text(encoding="utf-8")
+
+          def extract_function(name):
+              token="function "+name+"("
+              start=html.index(token);brace=html.index("{",start)
+              depth=0;quote=None;escape=False;i=brace
+              while i<len(html):
+                  ch=html[i]
+                  if quote:
+                      if escape: escape=False
+                      elif ch=="\\": escape=True
+                      elif ch==quote: quote=None
+                  else:
+                      if ch in ("'",'"',"`"): quote=ch
+                      elif ch=="{": depth+=1
+                      elif ch=="}":
+                          depth-=1
+                          if depth==0:return html[start:i+1]
+                  i+=1
+              raise RuntimeError(name)
+
+          map_start=html.index("const NARRATION_CONDENSE_MAP=")
+          map_end=html.index("function normalizeNarrationForMeaning(",map_start)
+          funcs=[
+              extract_function("splitVoiceSentences"),
+              extract_function("narrationCharCount"),
+              extract_function("normalizeNarrationForMeaning"),
+              extract_function("narrationLogicUnits"),
+              extract_function("logicFingerprint"),
+              extract_function("logicSimilarity"),
+              extract_function("preserveRelationSkeleton"),
+              extract_function("compressLogicUnit"),
+              extract_function("meaningRelationFlags"),
+              extract_function("meaningIntegrity"),
+              extract_function("fitNarrationTextToClip"),
+          ]
+          fit=extract_function("fitNarrationTextToClip")
+          assert ".slice(" not in fit, "hard substring truncation returned"
+          assert "semanticSentenceScore" not in fit, "ranking deletion returned"
+          assert "q('narrationText').value=fitted" not in html, "source narration is being overwritten"
+
+          harness=r"""
+          const STUDIO={sceneAnalysis:{scenes:[]},meaningCoverage:100};
+          function q(){return {value:'1'}}
+          function sceneSemanticTags(text){
+            const t=String(text||''),out=[];
+            const rules={formation:/4321|阵型|圣诞树/,attack:/进攻|前压/,defense:/防守|回撤|保护/,midfield:/中场|后腰|前腰/,flank:/边路|边后卫/,movement:/横移|移动/,transition:/转换|反击/};
+            for(const [k,re] of Object.entries(rules))if(re.test(t))out.push(k);
+            return out
+          }
+          const source='我们可以看到，安切洛蒂的圣诞树阵型本质上是4321。事实上，这套阵型在进攻的过程当中，三名中场会进行整体的向前推进，为两名前腰提供支持。因为中路人数比较多，所以球队能够在中路形成局部人数优势。但是它的边路宽度会相对不足，因此边后卫需要及时进行前插。防守时，三名中场会进行整体的横向移动。当对方把球转移到边路以后，边后卫会迅速向外侧移动进行压迫，中场球员同时进行回撤保护。这个体系的优势是中路控制能力强，但是它的缺点是边路很容易暴露空间。';
+          const out=fitNarrationTextToClip(source,45);
+          for(const term of ['4321','进攻','中场','边路','边后卫','防守','横移','压迫','回撤','优势','缺点']){
+            if(!out.includes(term))throw new Error('lost core meaning: '+term+' => '+out)
+          }
+          if(!(/因为|所以|因此|从而/.test(out)))throw new Error('lost cause relation');
+          if(!(/但是|但|而|并非|不代表/.test(out)))throw new Error('lost contrast relation');
+          if(STUDIO.meaningCoverage<95)throw new Error('meaning coverage '+STUDIO.meaningCoverage);
+          console.log('narration meaning preservation OK',STUDIO.meaningCoverage,out);
+          """
+          code=html[map_start:map_end]+"\n"+"\n".join(funcs)+"\n"+harness
+          pathlib.Path("/tmp/narration-meaning-regression.js").write_text(code,encoding="utf-8")
+          PY
+          node /tmp/narration-meaning-regression.js
+
       - name: Cloud FFmpeg codec and subtitle capability
         run: |
           python - <<'PY'
