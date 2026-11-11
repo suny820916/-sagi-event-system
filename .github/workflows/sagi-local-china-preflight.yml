@@ -1,0 +1,155 @@
+name: SAGI LOCAL CHINA Preflight
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'sagi-local-china/**'
+      - '.github/workflows/sagi-local-china-preflight.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  china-v14:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install backend dependencies
+        working-directory: sagi-local-china
+        run: pip install -r server/requirements.txt
+
+      - name: Python syntax
+        working-directory: sagi-local-china
+        run: |
+          python -m py_compile server/app.py server/db.py server/auth.py server/ai.py
+
+      - name: Browser JavaScript syntax
+        working-directory: sagi-local-china
+        run: |
+          node --check web/api.js
+          node --check web/poster.js
+          node --check web/app.js
+          ! grep -R "is916?\\." web/poster.js
+
+      - name: Real backend API smoke
+        working-directory: sagi-local-china
+        env:
+          SAGI_DATA_DIR: /tmp/sagi-local-china-test
+          SAGI_SECRET: ci-secret-for-sagi-local-china
+          AI_BASE_URL: ''
+          AI_API_KEY: ''
+          AI_MODEL: ''
+        run: |
+          rm -rf /tmp/sagi-local-china-test
+          python - <<'PY'
+          import io
+          from fastapi.testclient import TestClient
+          from server.app import app
+
+          c=TestClient(app)
+          h=c.get('/health')
+          assert h.status_code==200, h.text
+          health=h.json()
+          assert health['version']=='1.4.0'
+          assert health['chinaDeploy'] is True
+          assert health['basePosterWorksWithoutAI'] is True
+          assert health['aiConfigured'] is False
+
+          r=c.post('/api/auth/register',json={'username':'sagi_test','password':'12345678'})
+          assert r.status_code==200, r.text
+          token=r.json()['token']
+          headers={'Authorization':'Bearer '+token}
+
+          r=c.get('/api/me',headers=headers)
+          assert r.status_code==200, r.text
+
+          profile={
+            'merchant_name':'SAGI测试烧烤',
+            'industry':'餐饮 / 烧烤',
+            'product':'羊排',
+            'audience':'年轻人',
+            'brand_tone':'高级、真实',
+            'phone':'',
+            'address':''
+          }
+          r=c.put('/api/profile',headers=headers,json=profile)
+          assert r.status_code==200, r.text
+          r=c.get('/api/profile',headers=headers)
+          assert r.json()['profile']['merchant_name']=='SAGI测试烧烤'
+
+          r=c.post('/api/ai/copy',headers=headers,json={'brief':'周末羊排第二份半价','style':'editorial'})
+          assert r.status_code==200, r.text
+          assert r.json()['copy']['engine']=='local-fallback'
+
+          r=c.post(
+            '/api/assets',
+            headers=headers,
+            data={'kind':'source'},
+            files={'file':('photo.jpg',io.BytesIO(b'fake-jpeg-content'),'image/jpeg')}
+          )
+          assert r.status_code==200, r.text
+          source_id=r.json()['asset']['id']
+
+          r=c.post(
+            '/api/projects',
+            headers=headers,
+            json={
+              'title':'周末羊排',
+              'brief':'周末羊排第二份半价',
+              'style':'editorial',
+              'source_asset_id':source_id,
+              'metadata':{'engine':'LOCAL POSTER'}
+            }
+          )
+          assert r.status_code==200, r.text
+
+          r=c.get('/api/projects',headers=headers)
+          assert r.status_code==200, r.text
+          assert len(r.json()['projects'])==1
+          print('SAGI LOCAL CHINA API SMOKE OK')
+          PY
+
+      - name: Real browser poster smoke
+        working-directory: sagi-local-china
+        env:
+          SAGI_DATA_DIR: /tmp/sagi-local-china-browser
+          SAGI_SECRET: ci-browser-secret
+        run: |
+          set -e
+          rm -rf /tmp/sagi-local-china-browser
+          uvicorn server.app:app --host 127.0.0.1 --port 8080 >/tmp/sagi-china-uvicorn.log 2>&1 &
+          PID=$!
+          trap 'kill $PID >/dev/null 2>&1 || true' EXIT
+          for i in $(seq 1 20); do
+            curl -fsS http://127.0.0.1:8080/health >/dev/null && break
+            sleep 1
+          done
+          CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          test -n "$CHROME"
+          "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage \
+            --virtual-time-budget=7000 --dump-dom "http://127.0.0.1:8080/?selftest=1" > /tmp/sagi-china-dom.html
+          grep -q 'data-selftest="ok"' /tmp/sagi-china-dom.html
+          grep -q 'data-template-smoke="ok"' /tmp/sagi-china-dom.html
+          grep -q 'data-rendered="1"' /tmp/sagi-china-dom.html
+          echo "SAGI LOCAL CHINA REAL POSTER SMOKE OK"
+
+      - name: Docker build
+        run: docker build -f sagi-local-china/Dockerfile -t sagi-local-china:v1.4 .
+
+      - name: Verify China production isolation
+        run: |
+          ! grep -R "suny820916.github.io" sagi-local-china/web sagi-local-china/server
+          ! grep -R "onrender.com" sagi-local-china/web sagi-local-china/server
+          echo "No GitHub Pages / Render runtime dependency in CHINA build."
