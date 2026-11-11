@@ -1060,7 +1060,7 @@ jobs:
           assert "submitSync='clip_locked'" in html
           assert "JSON.stringify(visualMode==='auto'?(STUDIO.scenePlan||[]):[])" in html
           assert "q('narrationText').value=fitted" not in html
-          simple=extract("runSimpleSyncVoice")
+          simple=html[html.index("async function runSimpleSyncVoice"):html.index("async function runLockstepVoice")]
           assert "analyzeVideoScenes(" not in simple, "Simple Sync must not analyze scenes by default"
           assert "buildLockstepVoicePlan(" not in simple, "Simple Sync must not build scene plans"
           assert "generateCompleteAIVoice(text,mode,true,speed)" in simple, "Simple Sync must generate the whole narration first"
