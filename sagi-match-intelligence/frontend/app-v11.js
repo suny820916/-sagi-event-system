@@ -183,8 +183,10 @@ function renderResult(jobId, result) {
   $("matchTitle").textContent = home.name + " VS " + away.name;
   $("homeName").textContent = home.name;
   $("awayName").textContent = away.name;
-  $("homePoss").textContent = home.possession_percent + "%";
-  $("awayPoss").textContent = away.possession_percent + "%";
+  const possessionAvailable = (result.possession && result.possession.available !== false) &&
+    home.possession_percent !== null && home.possession_percent !== undefined;
+  $("homePoss").textContent = possessionAvailable ? (home.possession_percent + "%") : "样本不足";
+  $("awayPoss").textContent = possessionAvailable ? (away.possession_percent + "%") : "样本不足";
   $("homeTracks").textContent = home.tracked_players;
   $("awayTracks").textContent = away.tracked_players;
   $("sampledFrames").textContent = Number(video.sampled_frames || 0).toLocaleString();
