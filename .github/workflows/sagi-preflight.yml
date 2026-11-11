@@ -229,6 +229,9 @@ jobs:
           assert health["localVisual"] is True
           assert health["localVisualVersion"] == "1.2"
           assert health["localVisualMaxMB"] == 8
+          assert health["localPoster"] is True
+          assert health["localPosterVersion"] == "1.2.1"
+          assert health["localImageQuality"] in ("low","medium","high")
           assert isinstance(health["localAIConfigured"], bool)
           # LOCAL AI must fail safely when no provider secret exists in CI.
           r = c.post("/api/local-ai/generate", json={
@@ -252,6 +255,17 @@ jobs:
           assert visual_fallback["errorCode"] == "local_ai_unconfigured"
           assert visual_fallback["fallback"] is True
           print("LOCAL VISUAL unconfigured fallback smoke OK")
+          r = c.post("/api/local-ai/poster", data={
+              "brief":"新品手抓肉",
+              "profile":"{}",
+              "pack":"{}",
+              "image": (io.BytesIO(b"fake-jpeg"), "photo.jpg")
+          }, content_type="multipart/form-data")
+          assert r.status_code == 503, (r.status_code, r.get_data(as_text=True))
+          poster_fallback = r.get_json()
+          assert poster_fallback["errorCode"] == "local_ai_unconfigured"
+          assert poster_fallback["fallback"] is True
+          print("LOCAL POSTER unconfigured fallback smoke OK")
           assert set(health["footballCompetitions"]) >= {"PL","PD","BL1","SA","FL1","CL"}
           # MATCH DATA HUB V2: Chinese aliases must resolve exactly and a
           # single structured source must remain a candidate.
@@ -623,28 +637,92 @@ jobs:
           PY
           node --check /tmp/sagi-down.js
 
-      - name: SAGI AI LOCAL V1.2 frontend smoke
+      - name: SAGI AI LOCAL V1.2.1 poster frontend smoke
         run: |
           python - <<'PY'
           import re, pathlib
           p=pathlib.Path("sagi-local/index.html")
           s=p.read_text(encoding="utf-8")
-          assert "V1.2 · AI VISUAL" in s
+          assert "V1.2.1 · POSTER CORE" in s
           assert "/api/local-ai/generate" in s
           assert "/api/local-ai/visual" in s
+          assert "/api/local-ai/poster" in s
           assert "localAIConfigured" in s
           assert "LOCAL FALLBACK" in s
           assert "3个创意方向" in s
           assert "内容质量评分" in s
-          assert "AI看图并生成海报" in s
+          assert "立即生成海报" in s
           assert "poster34" in s and "poster916" in s
           assert "saveCanvas" in s
+          assert "LOCAL POSTER" in s
+          assert "async function cloudPoster" in s
+          assert "commercialImage||photoImage" in s
           scripts=re.findall(r"<script>([\s\S]*?)</script>",s)
           assert scripts, "SAGI LOCAL inline script missing"
-          pathlib.Path("/tmp/sagi-local-v11.js").write_text("\n".join(scripts),encoding="utf-8")
-          print("SAGI AI LOCAL V1.2 wiring OK")
+          pathlib.Path("/tmp/sagi-local-v121.js").write_text("\n".join(scripts),encoding="utf-8")
+          print("SAGI AI LOCAL V1.2.1 poster wiring OK")
           PY
-          node --check /tmp/sagi-local-v11.js
+          node --check /tmp/sagi-local-v121.js
+
+      - name: SAGI AI LOCAL actual poster canvas smoke
+        run: |
+          set -e
+          CHROME="$(command -v google-chrome || command -v chromium-browser || command -v chromium || true)"
+          test -n "$CHROME"
+          rm -rf /tmp/sagi-local-poster-smoke
+          mkdir -p /tmp/sagi-local-poster-smoke
+          cp sagi-local/index.html /tmp/sagi-local-poster-smoke/index.html
+          cp sagi-local/manifest.webmanifest /tmp/sagi-local-poster-smoke/manifest.webmanifest
+          cp sagi-local/sw.js /tmp/sagi-local-poster-smoke/sw.js
+          python - <<'PY'
+          from pathlib import Path
+          p=Path("/tmp/sagi-local-poster-smoke/index.html")
+          s=p.read_text(encoding="utf-8")
+          smoke=r"""
+          <script>
+          setTimeout(()=>{
+            try{
+              const src=document.createElement('canvas');
+              src.width=600;src.height=900;
+              const x=src.getContext('2d');
+              x.fillStyle='#303030';x.fillRect(0,0,600,900);
+              x.fillStyle='#d8b763';x.fillRect(90,170,420,480);
+              const im=new Image();
+              im.onload=()=>{
+                try{
+                  photoImage=im;commercialImage=null;
+                  const pack=localVisualPack('周末主推产品');
+                  renderVisual(pack,'SMOKE',true);
+                  const a=document.getElementById('poster34');
+                  const b=document.getElementById('poster916');
+                  const p=a.getContext('2d').getImageData(10,10,1,1).data;
+                  const q=b.getContext('2d').getImageData(10,10,1,1).data;
+                  if(a.dataset.rendered!=='1'||b.dataset.rendered!=='1')throw new Error('render flag missing');
+                  if((p[0]+p[1]+p[2]+p[3])===0||(q[0]+q[1]+q[2]+q[3])===0)throw new Error('canvas blank');
+                  if(!document.getElementById('download34')||!document.getElementById('download916'))throw new Error('save buttons missing');
+                  document.body.dataset.posterSmoke='ok';
+                }catch(e){document.body.dataset.posterSmoke='fail:'+String(e&&e.message||e)}
+              };
+              im.onerror=()=>document.body.dataset.posterSmoke='fail:image';
+              im.src=src.toDataURL('image/png');
+            }catch(e){document.body.dataset.posterSmoke='fail:'+String(e&&e.message||e)}
+          },500);
+          </script>
+          """
+          s=s.replace("</body>",smoke+"\n</body>")
+          p.write_text(s,encoding="utf-8")
+          PY
+          python -m http.server 8877 --directory /tmp/sagi-local-poster-smoke >/tmp/sagi-local-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID >/dev/null 2>&1 || true' EXIT
+          sleep 1
+          "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage \
+            --virtual-time-budget=4500 --dump-dom http://127.0.0.1:8877/index.html > /tmp/sagi-local-dom.html
+          grep -q 'data-poster-smoke="ok"' /tmp/sagi-local-dom.html
+          grep -q 'data-rendered="1"' /tmp/sagi-local-dom.html
+          grep -q 'id="download34"' /tmp/sagi-local-dom.html
+          grep -q 'id="download916"' /tmp/sagi-local-dom.html
+          echo "SAGI AI LOCAL ACTUAL POSTER CANVAS OK"
 
       - name: Headless browser full-page smoke
         run: |
