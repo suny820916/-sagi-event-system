@@ -1469,7 +1469,7 @@ async function previewAIVoice(){
      speakNarration();
      return
    }
-   const serverV12=String(health.voiceDirectorVersion||'')==='1.2'&&health.voiceCompletenessGuard===true;
+   const serverV12=health.voiceCompletenessGuard===true&&['1.2','1.3'].includes(String(health.voiceDirectorVersion||''));
    if(!serverV12||text.length>260){
      const merged=await generateCompleteAIVoice(text,mode,false);
      const a=q('aiVoicePreview');a.src=STUDIO.generatedVoiceUrl;a.classList.add('show');await a.play().catch(()=>{});
@@ -1573,7 +1573,7 @@ async function startCloudRender(recovering=false){
    }
 
    let submitMode=mode,submitDuration=duration,submitSync=q('aiVoiceSync')?.value||'fit',submitVoiceBlob=null,submitVoiceName='voice.m4a';
-   const serverV12=String(health.voiceDirectorVersion||'')==='1.2'&&health.voiceCompletenessGuard===true;
+   const serverV12=health.voiceCompletenessGuard===true&&['1.2','1.3'].includes(String(health.voiceDirectorVersion||''));
    if(mode==='recorded'&&STUDIO.voiceBlob){
      submitVoiceBlob=STUDIO.voiceBlob;submitVoiceName='voice.'+(STUDIO.voiceMime.includes('webm')?'webm':'m4a')
    }else if((mode==='ai_male'||mode==='ai_female'||mode==='clone')&&!serverV12){
