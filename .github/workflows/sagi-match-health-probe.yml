@@ -1,11 +1,11 @@
 name: SAGI Match Intelligence Health Probe
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
     paths:
       - ".github/workflows/sagi-match-health-probe.yml"
-  workflow_dispatch:
 
 jobs:
   probe:
@@ -14,17 +14,27 @@ jobs:
       - name: Probe live SAGI Cloud
         run: |
           set -e
-          curl -L --fail --show-error --max-time 30 \
-            https://sagi-cloud-bridge-suny820916.onrender.com/health \
-            -o health.json
+          BASE="https://sagi-cloud-bridge-suny820916.onrender.com"
+          echo "=== /health ==="
+          curl -L --fail --show-error --max-time 30 "$BASE/health" -o health.json
           cat health.json | python -m json.tool
           python - <<'PY'
           import json
           d=json.load(open("health.json"))
           print("version =", d.get("version"))
+          print("deployRevision =", d.get("deployRevision"))
           print("matchIntelligence =", d.get("matchIntelligence"))
           print("matchIntelligenceVersion =", d.get("matchIntelligenceVersion"))
           print("matchIntelligenceEngine =", d.get("matchIntelligenceEngine"))
+          print("matchIntelligenceError =", d.get("matchIntelligenceError"))
           PY
 
-# probe-2
+          echo "=== diagnostics ==="
+          CODE="$(curl -L -sS -o diagnostics.json -w '%{http_code}' --max-time 30 "$BASE/api/match-intelligence/diagnostics" || true)"
+          echo "diagnostics HTTP $CODE"
+          cat diagnostics.json 2>/dev/null | python -m json.tool || cat diagnostics.json 2>/dev/null || true
+
+          echo "=== match health ==="
+          CODE2="$(curl -L -sS -o match-health.json -w '%{http_code}' --max-time 30 "$BASE/api/match-intelligence/health" || true)"
+          echo "match health HTTP $CODE2"
+          cat match-health.json 2>/dev/null | python -m json.tool || cat match-health.json 2>/dev/null || true
