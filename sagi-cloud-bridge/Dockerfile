@@ -8,7 +8,7 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY app.py .
+COPY app.py match_intelligence_lite.py .
 ENV PYTHONUNBUFFERED=1 \
     MALLOC_ARENA_MAX=2 \
     OMP_NUM_THREADS=1 \
