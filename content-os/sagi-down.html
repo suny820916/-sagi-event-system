@@ -162,7 +162,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 .origPoster .origControls{margin-top:9px}
 @media(max-width:520px){.origFilterPresets{grid-template-columns:1fr 1fr}.origTuneGrid{grid-template-columns:1fr}}
 
-/* SAGI V3.9.2.4 · SEMANTIC LOCK + LAYER CORE */
+/* SAGI V3.9.2.5 · ADAPTIVE LOCK + LAYER CORE */
 .origLayerEditor{margin-top:9px;border:1px solid #4b4430;border-radius:12px;background:linear-gradient(180deg,#0b1113,#080d0f);padding:10px}
 .origLayerHead{display:flex;justify-content:space-between;gap:8px;align-items:center}.origLayerHead b{font-size:10px}.origLayerHead span{font-size:8px;color:#72858c}.origLayerHead .badge{color:#e4ca84;border-color:#66572f}
 .origLayerAddRow{display:grid;grid-template-columns:1fr auto auto;gap:6px;margin-top:8px}.origLayerAddRow select{min-width:0;border:1px solid #314149;background:#071013;color:#e7ecee;border-radius:9px;padding:8px;font-size:8px}.origLayerAddRow .btn{padding:8px 9px;font-size:8px}
@@ -222,7 +222,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 <div class="wrap">
   <div class="top">
     <div class="brand"><b>SAGI DOWN</b><span>DOWNLOAD · IMAGE AI · VIDEO</span></div>
-    <span class="badge" id="sagiBuildBadge">V3.9.2.4 · SEMANTIC LOCK</span>
+    <span class="badge" id="sagiBuildBadge">V3.9.2.5 · ADAPTIVE LOCK</span>
   </div>
 
   <section class="hero">
@@ -801,7 +801,7 @@ Unbelievable finish."></textarea>
       </div>
       <div class="voicePanel">
         <div class="sectionHead">
-          <div><div class="label">VOICE DIRECTOR V2.1 · SEMANTIC LOCK</div><div class="mini">FAST SCAN · 原意锁定 · 画面优先 · 时长精确</div></div>
+          <div><div class="label">VOICE DIRECTOR V2.2 · ADAPTIVE LOCK</div><div class="mini">FAST SCAN · 原意锁定 · 画面优先 · 时长精确</div></div>
           <span class="badge">V2.1</span>
         </div>
         <div class="voiceGrid">
@@ -868,7 +868,7 @@ Unbelievable finish."></textarea>
             <div class="sceneSyncList" id="sceneSyncList"></div>
           </div>
           <div class="sceneSyncBox" id="clipScriptBox" style="display:none">
-            <div class="sceneSyncHead"><b id="clipScriptTitle">SEMANTIC LOCK 配音稿 · 原意锁定</b><span id="meaningCoverageBadge" class="badge">原意待校验</span></div>
+            <div class="sceneSyncHead"><b id="clipScriptTitle">ADAPTIVE LOCK 配音稿 · 原意锁定</b><span id="meaningCoverageBadge" class="badge">原意待校验</span></div>
             <div class="sceneSyncStatus" id="meaningAuditDetail">关键逻辑尚未校验。</div>
             <div class="sceneSyncStatus" id="clipScriptText"></div>
           </div>
@@ -935,14 +935,14 @@ Unbelievable finish."></textarea>
 
 <script>
 (()=>{'use strict';
-const SAGI_DOWN_BUILD='V3.9.2.4';
+const SAGI_DOWN_BUILD='V3.9.2.5';
 document.documentElement.dataset.sagiDownBuild=SAGI_DOWN_BUILD;
 const BTCH_PUBLIC='https://btch-downloader-api-green.vercel.app';
 const DOWNLOAD_ROUTER_VERSION='3.0';
 const KEY='sagi_down_history_v2';
 const OLD_KEY='sagi_down_history_v1';
 const q=id=>document.getElementById(id);
-const buildBadge=q('sagiBuildBadge');if(buildBadge)buildBadge.textContent=SAGI_DOWN_BUILD+' · SEMANTIC LOCK';
+const buildBadge=q('sagiBuildBadge');if(buildBadge)buildBadge.textContent=SAGI_DOWN_BUILD+' · ADAPTIVE LOCK';
 const input=q('url'),status=q('status'),platformName=q('platformName'),platformHint=q('platformHint'),platformType=q('platformType');
 
 function extractUrl(v){
@@ -1521,7 +1521,7 @@ function voiceTimingHint(){
  const mode=q('aiVoiceMode')?.value||'ai_male',actualKey=voiceGenerationKey(text,mode),clipLocked=!!(STUDIO.clipLockedNarration&&STUDIO.clipLockedTarget>0&&(STUDIO.clipLockedNarration===text||STUDIO.sourceNarration===text)),actual=clipLocked?STUDIO.clipLockedTarget:((STUDIO.generatedVoiceKey===actualKey&&STUDIO.generatedVoiceDuration>0)?STUDIO.generatedVoiceDuration:0);
  let clip=0;try{clip=Number(studioRange()[2])||0}catch(e){}
  let verdict='';
- if(clip>0){const r=estimate/clip;if(r>1.03)verdict=' · <b>稿件偏长</b>，V2.1会先按视频时长做语义压缩，再按画面事件逐段校准；锁原意、不锁字数';else if(r<.72)verdict=' · <b>稿件偏短</b>，SEMANTIC LOCK会保留原视频节奏并在场景间自然留白';else verdict=' · <b>长度合适</b>，SEMANTIC LOCK最终音轨锁定 '+clip.toFixed(1)+' 秒'}
+ if(clip>0){const r=estimate/clip;if(r>1.03)verdict=' · <b>稿件偏长</b>，V2.1会先按视频时长做语义压缩，再按画面事件逐段校准；锁原意、不锁字数';else if(r<.72)verdict=' · <b>稿件偏短</b>，ADAPTIVE LOCK会保留原视频节奏并在相邻场景间自动借时';else verdict=' · <b>长度合适</b>，ADAPTIVE LOCK最终音轨锁定 '+clip.toFixed(1)+' 秒'}
  el.innerHTML='约 <b>'+chars+' 字</b> · '+(actual?('实际配音 <b>'+actual.toFixed(1)+'秒</b>'):('预计配音 <b>'+estimate.toFixed(1)+'秒</b>'))+(clip>0?' · 当前片段 <b>'+clip.toFixed(1)+'秒</b>':'')+verdict;
  if(clipLocked){renderVoiceTimeline()}else if(actual)rebuildVoiceTimelineToDuration(actual,'actual');else buildVoiceTimeline(true)
 }
@@ -2052,6 +2052,48 @@ async function assembleLockstepVoice(segments,clipSeconds){
  }
  return{blob:waveformToWavBlob(out,rate),duration:out.length/rate}
 }
+
+function lockstepTotalAudioSeconds(rows,gap=.08){
+ const list=rows||[];if(!list.length)return 0;
+ return list.reduce((n,r)=>n+Math.max(0,Number(r.actualDuration)||0),0)+gap*Math.max(0,list.length-1)
+}
+function adaptiveReflowLockstep(rows,clipSeconds,gap=.08){
+ const list=(rows||[]).map((r,i)=>({...r,index:i}));
+ const clip=Math.max(.1,Number(clipSeconds)||0);if(!list.length)return list;
+ const speech=list.reduce((n,r)=>n+Math.max(.05,Number(r.actualDuration)||0),0);
+ const minTotal=speech+gap*Math.max(0,list.length-1);
+ if(minTotal>clip+.03)throw new Error('ADAPTIVE_TOTAL_OVERFLOW:'+minTotal.toFixed(2));
+
+ // Scene times are soft anchors only. First make a continuous audio-safe timeline.
+ const spare=Math.max(0,clip-minTotal),weights=[];
+ for(let i=0;i<=list.length;i++){
+   if(i===0||i===list.length){weights.push(.45);continue}
+   const prev=list[i-1],cur=list[i];
+   const plannedGap=Math.max(0,(Number(cur.start)||0)-(Number(prev.end)||0));
+   const boundaryImportance=((cur.sceneId!==prev.sceneId)?1.15:.65)+(plannedGap>0?Math.min(1,plannedGap/3):0);
+   weights.push(boundaryImportance)
+ }
+ const weightSum=Math.max(.01,weights.reduce((a,b)=>a+b,0));
+ const pauses=weights.map(w=>spare*w/weightSum);
+ let cursor=pauses[0];
+ for(let i=0;i<list.length;i++){
+   const r=list[i],dur=Math.max(.05,Number(r.actualDuration)||0);
+   r.plannedStart=Number(r.start)||0;r.plannedEnd=Number(r.end)||0;
+   r.start=Number(cursor.toFixed(3));
+   r.end=Number(Math.min(clip,cursor+dur).toFixed(3));
+   r.target=dur;
+   r.borrowed=Number(Math.max(0,r.end-r.plannedEnd).toFixed(3));
+   cursor=r.end+(i<list.length-1?gap+pauses[i+1]:0)
+ }
+ // Put any rounding residue at the end, never stretch speech.
+ list[list.length-1].timelineEnd=Number(clip.toFixed(3));
+ return list
+}
+function adaptivePlanNeedsGlobalRetry(rows,clipSeconds,gap=.08){
+ const total=lockstepTotalAudioSeconds(rows,gap),clip=Math.max(.1,Number(clipSeconds)||0);
+ return{total,clip,overflow:Math.max(0,total-clip),pass:total<=clip+.03}
+}
+
 function renderLockstepPlan(){
  const host=q('lockstepList'),status=q('lockstepStatus'),badge=q('lockstepBadge'),rows=STUDIO.lockstepSegments||[];
  if(!host||!status||!badge)return;
@@ -2076,62 +2118,61 @@ async function runLockstepVoice(autoPreview=true){
  if(!STUDIO.sceneAnalysis?.scenes?.length)await analyzeVideoScenes(true);
  if(!STUDIO.sceneAnalysis?.scenes?.length)throw new Error('视频场景分析失败');
 
- q('lockstepStatus').textContent='2/5 · SEMANTIC LOCK 正在按 '+clip.toFixed(1)+' 秒压缩表达 · 保留原意…';
+ q('lockstepStatus').textContent='2/5 · ADAPTIVE LOCK 正在按 '+clip.toFixed(1)+' 秒压缩表达 · 保留原意…';
  let fitted=semanticFitNarrationToClip(source,clip);
  let audit=meaningAuditStrict(source,fitted);
- if(!audit.pass){
-   // Conservative fallback keeps more wording; never silently ships a failed meaning audit.
-   fitted=fitNarrationTextToClip(source,clip);
-   audit=meaningAuditStrict(source,fitted)
- }
+ if(!audit.pass){fitted=fitNarrationTextToClip(source,clip);audit=meaningAuditStrict(source,fitted)}
  if(!audit.pass)throw new Error('原意校验未通过，系统已停止生成，避免破坏解说原意');
  STUDIO.sourceNarration=source;STUDIO.clipLockedOriginal=source;STUDIO.clipLockedNarration=fitted;STUDIO.clipLockedTarget=clip;STUDIO.meaningAudit=audit;STUDIO.meaningCoverage=100;
  renderClipLockedScript();
 
- q('lockstepStatus').textContent='3/5 · 正在锁定“压缩解说 ↔ 对应画面事件”…';
- let plan=buildLockstepVoicePlan(fitted);
- if(!plan.length)throw new Error('没有建立可用的场景锁定计划');
- // Use a natural-speed ceiling; scene clusters are merged before voice becomes unnaturally fast.
- plan=rebalanceSceneLockPlan(plan,1.16);
- STUDIO.lockstepSegments=plan;renderLockstepPlan();
+ let requested=Math.max(.94,Math.min(1.12,Number(q('aiVoiceSpeed')?.value)||1)),done=[],plan=[];
+ for(let globalPass=0;globalPass<3;globalPass++){
+   q('lockstepStatus').textContent='3/5 · 场景是软锚点 · 正在建立自适应时间轴…';
+   plan=buildLockstepVoicePlan(fitted);
+   if(!plan.length)throw new Error('没有建立可用的场景锁定计划');
 
- const requested=Math.max(.94,Math.min(1.12,Number(q('aiVoiceSpeed')?.value)||1)),done=[];
- for(let i=0;i<plan.length;i++){
-  const row=plan[i],text=row.sourceText;
-  let speed=requested,result=null;
-  for(let pass=0;pass<3;pass++){
-   q('lockstepStatus').textContent='4/5 · 场景 '+(i+1)+'/'+plan.length+' · '+row.target.toFixed(1)+'秒 · 实际TTS校准';
-   result=await requestLockstepVoice(text,mode,speed);
-   if(result.duration<=row.target+.04)break;
-   const ratio=result.duration/row.target;
-   const nextSpeed=Math.min(1.16,Math.max(speed+.012,speed*ratio*1.004));
-   if(nextSpeed<=speed+.004)break;
-   speed=nextSpeed
-  }
-  if(!result||result.duration>row.target+.04){
-    // Last semantic fallback for this scene: tighten wording inside the same protected meaning unit.
-    const targetChars=Math.max(14,Math.floor(row.target*4.12*1.16*.94));
-    const tighter=semanticCondenseUnit(text,targetChars);
-    const testAudit=meaningAuditStrict(text,tighter);
-    if(testAudit.pass&&tighter!==text){
-      result=await requestLockstepVoice(tighter,mode,1.16);
-      if(result.duration<=row.target+.04){
-        row.sourceText=tighter;speed=1.16
-      }
-    }
-  }
-  if(!result||result.duration>row.target+.04){
-    throw new Error('第'+(i+1)+'段在保持原意后仍无法自然落入画面时间窗；请点击重建时间轴后重试')
-  }
-  done.push({...row,index:i,text:row.sourceText,speed,blob:result.blob,actualDuration:result.duration});
-  STUDIO.lockstepSegments=done.concat(plan.slice(i+1));renderLockstepPlan()
+   // V2.2: do NOT reject a segment because one scene window is locally short.
+   // Generate all scene audio first, then borrow time between neighboring scenes.
+   done=[];
+   for(let i=0;i<plan.length;i++){
+     const row=plan[i],text=row.sourceText;
+     q('lockstepStatus').textContent='4/5 · 实际TTS '+(i+1)+'/'+plan.length+' · 场景时间窗可自动借时';
+     const result=await requestLockstepVoice(text,mode,requested);
+     done.push({...row,index:i,text,blob:result.blob,actualDuration:result.duration,speed:requested});
+     STUDIO.lockstepSegments=done.concat(plan.slice(i+1));renderLockstepPlan()
+   }
+
+   const fit=adaptivePlanNeedsGlobalRetry(done,clip,.08);
+   if(fit.pass)break;
+
+   // Only global overflow matters. First use a small global speed correction.
+   const ratio=fit.total/clip;
+   const nextSpeed=Math.min(1.16,Math.max(requested+.015,requested*ratio*1.006));
+   if(nextSpeed>requested+.006){
+     requested=nextSpeed;
+     if(globalPass<2)continue
+   }
+
+   // If the whole narration still exceeds the video, condense from the untouched source,
+   // not from one unlucky scene, then rebuild all scene mappings.
+   const currentChars=narrationCharCount(fitted);
+   const nextBudget=Math.max(90,Math.floor(currentChars*(clip/Math.max(.1,fit.total))*.965));
+   const tighter=semanticFitNarrationToClip(source,clip,nextBudget);
+   const tighterAudit=meaningAuditStrict(source,tighter);
+   if(tighterAudit.pass&&tighter!==fitted&&globalPass<2){fitted=tighter;audit=tighterAudit;requested=Math.min(requested,1.12);continue}
+   throw new Error('整条配音实际需要 '+fit.total.toFixed(1)+' 秒，视频只有 '+clip.toFixed(1)+' 秒；已停止生成，避免破坏原意')
  }
+ const totalFit=adaptivePlanNeedsGlobalRetry(done,clip,.08);
+ if(!totalFit.pass)throw new Error('整条配音仍超过视频时长 '+totalFit.overflow.toFixed(1)+' 秒');
 
+ // Borrow time across adjacent scene windows and distribute spare time across transitions.
+ done=adaptiveReflowLockstep(done,clip,.08);
  const finalText=done.map(x=>x.text).join('');
  const finalAudit=meaningAuditStrict(source,finalText);
  if(!finalAudit.pass)throw new Error('最终原意完整性校验未通过，已停止生成');
 
- q('lockstepStatus').textContent='5/5 · 正在拼装精确 '+clip.toFixed(2)+' 秒音轨…';
+ q('lockstepStatus').textContent='5/5 · 自适应借时完成 · 正在拼装精确 '+clip.toFixed(2)+' 秒音轨…';
  const assembled=await assembleLockstepVoice(done,clip);
  if(Math.abs(assembled.duration-clip)>.01)throw new Error('最终音轨与视频时长不一致');
 
@@ -2141,14 +2182,13 @@ async function runLockstepVoice(autoPreview=true){
  STUDIO.generatedVoiceBlob=assembled.blob;STUDIO.generatedVoiceUrl=STUDIO.lockstepVoiceUrl;STUDIO.generatedVoiceDuration=clip;STUDIO.generatedVoiceParts=done.length;
  STUDIO.clipLockedNarration=finalText;STUDIO.meaningAudit=finalAudit;STUDIO.meaningCoverage=100;
 
- STUDIO.voiceTimeline=done.map((x,i)=>({index:i,text:x.text,start:Number(x.start.toFixed(3)),end:Number((x.start+x.actualDuration).toFixed(3)),visualStart:x.start,visualEnd:x.end,basis:'lockstep',sceneId:x.sceneId,sceneCluster:x.sceneCluster||[x.sceneId],sceneReason:'SEMANTIC LOCK V2.1 · 原意锁定 · 画面优先'}));
+ STUDIO.voiceTimeline=done.map((x,i)=>({index:i,text:x.text,start:Number(x.start.toFixed(3)),end:Number(x.end.toFixed(3)),visualStart:Number(x.plannedStart||0),visualEnd:Number(x.plannedEnd||0),basis:'lockstep',sceneId:x.sceneId,sceneCluster:x.sceneCluster||[x.sceneId],sceneReason:'ADAPTIVE LOCK V2.2 · 画面软锚点 · 相邻场景可借时'}));
  renderVoiceTimeline();renderClipLockedScript();renderLockstepPlan();markVoiceCoverage(true,done.length,100);
  const srcChars=narrationCharCount(source),dstChars=narrationCharCount(finalText),rate=srcChars?Math.max(0,Math.round((1-dstChars/srcChars)*100)):0;
- q('lockstepStatus').textContent='完成 · SEMANTIC LOCK V2.1 · 原意100% · 表达压缩 '+rate+'% · 配音 '+assembled.duration.toFixed(2)+'秒 = 视频 '+clip.toFixed(2)+'秒';
+ q('lockstepStatus').textContent='完成 · ADAPTIVE LOCK V2.2 · 原意100% · '+done.length+'段自适应借时 · 配音 '+assembled.duration.toFixed(2)+'秒 = 视频 '+clip.toFixed(2)+'秒';
  if(autoPreview){const a=q('aiVoicePreview');a.src=STUDIO.lockstepVoiceUrl;a.classList.add('show');await a.play().catch(()=>{})}
  return{blob:assembled.blob,duration:clip,segments:done,text:finalText,audit:finalAudit}
 }
-
 async function generateCompleteAIVoice(text,mode,force=false,speedOverride=null){
  const actualSpeed=speedOverride==null?(Number(q('aiVoiceSpeed')?.value)||1):Number(speedOverride);
  const key=voiceGenerationKey(text,mode,actualSpeed);
@@ -2186,7 +2226,7 @@ function renderClipLockedScript(){
  box.style.display=script?'':'none';
  if(!script)return;
  txt.textContent=script;
- if(title)title.textContent=(STUDIO.clipLockedTarget>0?voiceTimeLabel(STUDIO.clipLockedTarget)+' · ':'')+'SEMANTIC LOCK 配音稿 · 原意锁定';
+ if(title)title.textContent=(STUDIO.clipLockedTarget>0?voiceTimeLabel(STUDIO.clipLockedTarget)+' · ':'')+'ADAPTIVE LOCK 配音稿 · 原意锁定';
  const sourceChars=narrationCharCount(STUDIO.clipLockedOriginal||''),finalChars=narrationCharCount(script);
  const compactRate=sourceChars?Math.max(0,Math.round((1-finalChars/sourceChars)*100)):0;
  badge.textContent=audit?.pass?'原意 100%':'原意待修复';
@@ -2279,7 +2319,7 @@ async function previewAIVoice(){
  try{
   if(!STUDIO.lockstepReady||STUDIO.sourceNarration!==text)await runLockstepVoice(false);
   const a=q('aiVoicePreview');a.src=STUDIO.lockstepVoiceUrl||STUDIO.generatedVoiceUrl;a.classList.add('show');await a.play().catch(()=>{});
-  setVoiceState('SEMANTIC LOCK V2.1 · 原意100% · 原视频不动 · '+STUDIO.lockstepDuration.toFixed(2)+'秒精确音轨')
+  setVoiceState('ADAPTIVE LOCK V2.2 · 原意100% · 原视频不动 · '+STUDIO.lockstepDuration.toFixed(2)+'秒精确音轨')
  }catch(e){
   setVoiceState('一键适配失败：'+(e.message||e));
   studioStatus('SEMANTIC LOCK：'+(e.message||e),'warn')
@@ -2338,8 +2378,8 @@ async function startCloudRender(recovering=false){
  const mode=q('aiVoiceMode')?.value||'none';
  if((mode==='ai_male'||mode==='ai_female'||mode==='clone')&&(health.voiceVideoDurationLock!==true||health.voiceMeaningFirst!==true||health.voiceLockstep!==true||health.voiceSemanticLock!==true||health.voiceSemanticMeaningProtected!==true)){
    setCloudRenderProgress(0);
-   setCloudRenderStatus('当前云端尚未启用 SEMANTIC LOCK V2.1；已阻止旧版错场景/改原意/延长视频。');
-   studioStatus('云端未确认“SEMANTIC LOCK V2.1 + 原意100% + 视频时长硬锁”，本次不会提交错误成片。','warn');
+   setCloudRenderStatus('当前云端尚未启用 ADAPTIVE LOCK V2.2；已阻止旧版错场景/改原意/延长视频。');
+   studioStatus('云端未确认“ADAPTIVE LOCK V2.2 + 原意100% + 视频时长硬锁”，本次不会提交错误成片。','warn');
    return
  }
  if(mode==='clone'&&!STUDIO.cloneVoiceId){studioStatus('请选择AI男声/女声，或先创建你的声音克隆。','warn');return}
@@ -2365,11 +2405,11 @@ async function startCloudRender(recovering=false){
    }else if(mode==='ai_male'||mode==='ai_female'||mode==='clone'){
      const sourceNow=String(q('narrationText')?.value||'').trim();
      if(!STUDIO.lockstepReady||STUDIO.sourceNarration!==sourceNow){
-       setCloudRenderStatus('SEMANTIC LOCK V2.1 · FAST SCAN场景匹配 + 原意压缩 + 精确配音…');
+       setCloudRenderStatus('ADAPTIVE LOCK V2.2 · FAST SCAN场景匹配 + 原意压缩 + 精确配音…');
        await runLockstepVoice(false)
      }
      submitMode='recorded';submitVoiceBlob=STUDIO.lockstepVoiceBlob;submitVoiceName='sagi-semantic-lock-v21.wav';submitSync='lockstep';submitDuration=duration;submitMeaningFirst=true;
-     setCloudRenderStatus('SEMANTIC LOCK V2.1 已完成 · 原意100% · '+STUDIO.lockstepDuration.toFixed(2)+'秒 = 视频 '+duration.toFixed(2)+'秒 · 正在出片')
+     setCloudRenderStatus('ADAPTIVE LOCK V2.2 已完成 · 原意100% · '+STUDIO.lockstepDuration.toFixed(2)+'秒 = 视频 '+duration.toFixed(2)+'秒 · 正在出片')
    }
 
    const selectedVisualMode=q('aiVisualSync')?.value||'voice_to_video';
@@ -3785,7 +3825,7 @@ q('cloudTestBtn').onclick=runCloudSelfTest;
 q('captionToNarrationBtn').onclick=captionToNarration;
 q('lockstepVoiceBtn').onclick=async()=>{
  const btn=q('lockstepVoiceBtn');btn.disabled=true;btn.textContent='正在一键适配…';
- try{await runLockstepVoice(true);toast('SEMANTIC LOCK V2.1 · 画面与配音锁定完成')}
+ try{await runLockstepVoice(true);toast('ADAPTIVE LOCK V2.2 · 画面与配音锁定完成')}
  catch(e){setVoiceState('一键适配失败：'+(e.message||e));studioStatus('LOCKSTEP：'+(e.message||e),'warn')}
  finally{btn.disabled=false;btn.textContent='SEMANTIC LOCK 一键配音'}
 };
