@@ -38,7 +38,7 @@ jobs:
           python - <<'PY'
           import json, time, urllib.request, sys
           url = "https://sagi-cloud-bridge-suny820916.onrender.com/health"
-          expected = "3.9.3"
+          expected = "3.9.4"
           for i in range(36):
               try:
                   with urllib.request.urlopen(url, timeout=15) as r:
@@ -56,12 +56,12 @@ jobs:
                   market_intake = bool(data.get("marketIntake"))
                   market_version = str(data.get("marketIntakeVersion", ""))
                   print(f"check {i+1}/36: version={version} revision={deploy_revision} market={market_intake}/{market_version} voiceDirector={voice} localAI={local_ai} localVisual={local_visual} localPoster={local_poster}")
-                  if version == expected and deploy_revision == "2026-11-11-market-intake-v110" and market_intake and market_version == "1.1" and voice == "2.4" and local_ai == "1.2" and local_visual == "1.2" and local_poster == "1.2.1" and bool(data.get("localVisual")) and bool(data.get("localPoster")) and bool(data.get("animationFirst")) and bool(data.get("voiceOneShot")) and bool(data.get("voiceCaptionFromFinalAudio")) and semantic and protected and exact and bool(data.get("voiceVideoDurationLock")):
-                      print(f"SAGI Cloud MARKET V1.1 + Voice Director 2.4 + LOCAL AI V1.2.1 verified. AI configured={local_ai_configured}")
+                  if version == expected and deploy_revision == "2026-11-12-match-intelligence-v100" and bool(data.get("matchIntelligence")) and str(data.get("matchIntelligenceVersion", "")) == "1.0-cloud-lite" and market_intake and market_version == "1.1" and voice == "2.4" and local_ai == "1.2" and local_visual == "1.2" and local_poster == "1.2.1" and bool(data.get("localVisual")) and bool(data.get("localPoster")) and bool(data.get("animationFirst")) and bool(data.get("voiceOneShot")) and bool(data.get("voiceCaptionFromFinalAudio")) and semantic and protected and exact and bool(data.get("voiceVideoDurationLock")):
+                      print(f"SAGI Cloud 3.9.4 + Match Intelligence V1.0 + MARKET V1.1 verified. AI configured={local_ai_configured}")
                       sys.exit(0)
               except Exception as e:
                   print(f"check {i+1}/36 failed: {e}")
               time.sleep(10)
-          print("Expected SAGI Cloud 3.9.3 + MARKET V1.1 + Voice Director 2.4 was not observed.")
+          print("Expected SAGI Cloud 3.9.4 + Match Intelligence V1.0 was not observed.")
           sys.exit(1)
           PY
