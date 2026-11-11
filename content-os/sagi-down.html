@@ -801,7 +801,7 @@ Unbelievable finish."></textarea>
       </div>
       <div class="voicePanel">
         <div class="sectionHead">
-          <div><div class="label">VOICE DIRECTOR · AI配音导演</div><div class="mini">LOCKSTEP · 原视频不动 · 配音逐场景锁时</div></div>
+          <div><div class="label">VOICE DIRECTOR V2.0 · SCENE LOCK</div><div class="mini">场景锁定配音 · 原视频主时钟 · 原稿逐字保留</div></div>
           <span class="badge">V1.7</span>
         </div>
         <div class="voiceGrid">
@@ -860,7 +860,7 @@ Unbelievable finish."></textarea>
             <button class="btn" id="voiceTimelineBtn" type="button">重建时间轴</button>
           </div>
           <div class="voiceTimelineList" id="voiceTimelineList"></div>
-          <div class="voiceTimelineHint">V1.7：原视频时间轴是唯一主时钟。AI读取场景后，把原稿逻辑逐段放进对应画面；每段独立测时、独立校准，最后音轨精确等于视频时长。原稿不改，画面不拉伸。</div>
+          <div class="voiceTimelineHint">V2.0 SCENE LOCK：原视频是唯一主时钟。先锁场景，再锁句子；一句说不完时自动合并相邻场景形成“场景簇”，只调整语速和停顿，不删词、不改写、不拉伸画面，最终音轨精确等于视频时长。</div>
           <div class="voiceTiming" id="visualSyncStatus">AI SCENE SYNC：等待视频内容分析。</div>
           <div class="sceneSyncBox">
             <div class="sceneSyncHead"><b>视频内容场景</b><button class="btn" id="sceneAnalyzeBtn" type="button">分析视频内容</button></div>
@@ -868,20 +868,20 @@ Unbelievable finish."></textarea>
             <div class="sceneSyncList" id="sceneSyncList"></div>
           </div>
           <div class="sceneSyncBox" id="clipScriptBox" style="display:none">
-            <div class="sceneSyncHead"><b id="clipScriptTitle">保真配音稿 · 原稿不改</b><span id="meaningCoverageBadge" class="badge">原意待校验</span></div>
+            <div class="sceneSyncHead"><b id="clipScriptTitle">SCENE LOCK 配音稿 · 原稿逐字保留</b><span id="meaningCoverageBadge" class="badge">逐字待校验</span></div>
             <div class="sceneSyncStatus" id="meaningAuditDetail">关键逻辑尚未校验。</div>
             <div class="sceneSyncStatus" id="clipScriptText"></div>
           </div>
         </div>
         <div class="voiceActions">
-          <button class="btn gold" id="lockstepVoiceBtn" type="button">一键适配视频配音</button>
+          <button class="btn gold" id="lockstepVoiceBtn" type="button">SCENE LOCK 一键配音</button>
           <button class="btn blue" id="aiVoicePreviewBtn" type="button">试听最终配音</button>
           <button class="btn gold" id="cloneVoiceBtn" type="button">克隆我的声音</button>
           <button class="btn" id="aiVoiceStatusBtn" type="button">刷新音色</button>
         </div>
         <div class="sceneSyncBox" id="lockstepBox">
           <div class="sceneSyncHead"><b>LOCKSTEP 一次适配</b><span class="badge" id="lockstepBadge">待开始</span></div>
-          <div class="sceneSyncStatus" id="lockstepStatus">导入视频、保留原稿，然后点“一键适配视频配音”。</div>
+          <div class="sceneSyncStatus" id="lockstepStatus">导入视频和原稿，然后点“SCENE LOCK 一键配音”。系统不会删改原稿。</div>
           <div class="sceneSyncList" id="lockstepList"></div>
         </div>
         <audio id="aiVoicePreview" class="voicePreview" controls></audio>
@@ -1799,32 +1799,73 @@ function lockstepUnitSceneScore(text,scene,index,total,lastIndex){
  if(index<lastIndex)score-=50;
  return score
 }
+function voiceExactSignature(text){
+ return String(text||'').replace(/\s+/g,'')
+}
+function estimateSceneLockSpeech(text,speed=1){
+ const chars=narrationCharCount(text),marks=(String(text||'').match(/[，。！？；：、,.!?;:]/g)||[]).length;
+ return Math.max(.45,chars/(4.25*Math.max(.75,Number(speed)||1))+marks*.055)
+}
+function rebalanceSceneLockPlan(rows,maxSpeed=1.24){
+ const plan=(rows||[]).map(x=>({...x,units:[...(x.units||[])]}));
+ if(!plan.length)return plan;
+ for(let i=0;i<plan.length;i++){
+  let row=plan[i];
+  while(i<plan.length-1&&estimateSceneLockSpeech(row.sourceText,maxSpeed)>row.target*1.015){
+   const next=plan[i+1];
+   row.sourceText+=next.sourceText;
+   row.units=(row.units||[]).concat(next.units||[]);
+   row.end=next.end;
+   row.target=Math.max(.3,row.end-row.start-.08);
+   row.label=(row.label||'场景')+' → '+(next.label||'场景');
+   row.sceneCluster=[...(row.sceneCluster||[row.sceneId]),...(next.sceneCluster||[next.sceneId])];
+   plan.splice(i+1,1)
+  }
+ }
+ for(let i=0;i<plan.length;i++){
+  plan[i].index=i;
+  plan[i].target=Math.max(.3,Number(plan[i].end)-Number(plan[i].start)-.08)
+ }
+ return plan
+}
 function buildLockstepVoicePlan(source){
- const scenes=STUDIO.sceneAnalysis?.scenes||[],units=narrationLogicUnits(source);
+ const scenes=STUDIO.sceneAnalysis?.scenes||[],units=splitVoiceSentences(String(source||''),88);
  if(!scenes.length||!units.length)return[];
+ const clip=Math.max(.5,Number(STUDIO.sceneAnalysis?.clipDuration)||Number(studioRange()[2])||0);
  let last=0,rows=[];
  for(let i=0;i<units.length;i++){
-  const unit=units[i],pos=units.length<=1?0:(i/(units.length-1))*(scenes.length-1);
-  let best={index:last,score:-1e9};
-  for(let si=last;si<scenes.length;si++){
-   let score=lockstepUnitSceneScore(unit,scenes[si],si,scenes.length,last)-Math.abs(si-pos)*1.8;
+  const unit=units[i];
+  const temporal=units.length<=1?0:(i/(units.length-1))*(scenes.length-1);
+  const lo=Math.max(last,Math.floor(temporal)-2),hi=Math.min(scenes.length-1,Math.ceil(temporal)+3);
+  let best={index:Math.min(Math.max(last,Math.round(temporal)),scenes.length-1),score:-1e9};
+  for(let si=lo;si<=hi;si++){
+   const semantic=lockstepUnitSceneScore(unit,scenes[si],si,scenes.length,last);
+   const score=semantic-Math.abs(si-temporal)*3.2;
    if(score>best.score)best={index:si,score}
   }
-  last=best.index;
+  last=Math.max(last,best.index);
+  const scene=scenes[last];
   const prev=rows.at(-1);
-  if(prev&&prev.sceneIndex===best.index){prev.sourceText+=unit;prev.units.push(unit)}
-  else rows.push({sceneIndex:best.index,sceneId:scenes[best.index].id,sourceText:unit,units:[unit],label:scenes[best.index].label||('场景'+(best.index+1))})
+  if(prev&&prev.sceneIndex===last){
+   prev.sourceText+=unit;prev.units.push(unit)
+  }else{
+   rows.push({sceneIndex:last,sceneId:scene.id,sceneCluster:[scene.id],sourceText:unit,units:[unit],label:scene.label||('场景'+(last+1))})
+  }
  }
- // Use the matched scene as an anchor, then borrow otherwise-unused time until the next matched topic.
  for(let i=0;i<rows.length;i++){
   const scene=scenes[rows[i].sceneIndex];
-  rows[i].start=i===0?0:Number(scene.start)||0;
-  const next=rows[i+1],end=next?Number(scenes[next.sceneIndex].start)||0:Number(STUDIO.sceneAnalysis.clipDuration)||Number(studioRange()[2])||0;
-  rows[i].end=Math.max(rows[i].start+.35,end);
+  rows[i].start=i===0?0:Math.max(Number(rows[i-1].end)||0,Number(scene.start)||0);
+  const next=rows[i+1];
+  const anchorEnd=next?Number(scenes[next.sceneIndex].start)||0:clip;
+  rows[i].end=Math.min(clip,Math.max(rows[i].start+.35,anchorEnd));
   rows[i].target=Math.max(.3,rows[i].end-rows[i].start-.08)
  }
+ rows=rebalanceSceneLockPlan(rows,1.24);
+ const sourceSig=voiceExactSignature(source),planSig=voiceExactSignature(rows.map(x=>x.sourceText).join(''));
+ if(sourceSig!==planSig)throw new Error('SCENE_LOCK_TEXT_MISMATCH');
  return rows
 }
+async function requestLockstepVoice
 async function requestLockstepVoice(text,mode,speed){
  const chunks=groupVoiceText(text,72),blobs=[];if(!chunks.length)throw new Error('EMPTY_LOCKSTEP_SEGMENT');
  for(let i=0;i<chunks.length;i++){
@@ -1875,42 +1916,41 @@ async function runLockstepVoice(autoPreview=true){
 
  STUDIO.lockstepReady=false;STUDIO.lockstepSegments=[];renderLockstepPlan();
  const clip=Math.max(.5,Number(studioRange()[2])||0);
- q('lockstepStatus').textContent='1/4 · 正在读取原视频场景…';
+ q('lockstepStatus').textContent='1/4 · SCENE LOCK 正在读取原视频场景…';
  if(!STUDIO.sceneAnalysis?.scenes?.length)await analyzeVideoScenes(true);
  if(!STUDIO.sceneAnalysis?.scenes?.length)throw new Error('视频场景分析失败');
 
- q('lockstepStatus').textContent='2/4 · 正在把原稿逻辑匹配到对应画面…';
+ q('lockstepStatus').textContent='2/4 · 正在锁定“解说句子 ↔ 对应场景”…';
  const plan=buildLockstepVoicePlan(source);
- if(!plan.length)throw new Error('没有建立可用的场景配音计划');
- const sourceAudit=meaningAuditStrict(source,plan.map(x=>x.sourceText).join(''));
- if(!sourceAudit.pass)throw new Error('原稿逻辑映射不完整，已停止生成');
+ if(!plan.length)throw new Error('没有建立可用的场景锁定计划');
+ if(voiceExactSignature(plan.map(x=>x.sourceText).join(''))!==voiceExactSignature(source))throw new Error('原稿逐字映射不完整，已停止生成');
  STUDIO.lockstepSegments=plan;renderLockstepPlan();
 
  const baseUserSpeed=Math.max(.90,Math.min(1.10,Number(q('aiVoiceSpeed')?.value)||1)),done=[];
  for(let i=0;i<plan.length;i++){
-  const row=plan[i],original=row.sourceText;
-  let text=fitNarrationTextToClip(original,row.target),speed=baseUserSpeed,result=null;
-  const audit=meaningAuditStrict(original,text);if(!audit.pass)throw new Error('第'+(i+1)+'段压缩会破坏原意，已停止');
-  for(let pass=0;pass<4;pass++){
-   q('lockstepStatus').textContent='3/4 · 场景 '+(i+1)+'/'+plan.length+' 配音校准 · 目标 '+row.target.toFixed(1)+'秒';
+  const row=plan[i],text=row.sourceText;
+  let speed=baseUserSpeed,result=null;
+  for(let pass=0;pass<5;pass++){
+   q('lockstepStatus').textContent='3/4 · 场景簇 '+(i+1)+'/'+plan.length+' 配音校准 · '+row.target.toFixed(1)+'秒 · 原稿不改';
    result=await requestLockstepVoice(text,mode,speed);
    if(result.duration<=row.target+.03)break;
    const ratio=result.duration/row.target;
-   if(speed<1.16&&ratio<=1.24){speed=Math.min(1.16,speed*ratio*1.004);continue}
-   const nextBudget=Math.max(16,Math.floor(narrationCharCount(text)*(row.target/result.duration)*.985));
-   const next=fitNarrationTextToClip(original,row.target,nextBudget);
-   const nextAudit=meaningAuditStrict(original,next);
-   if(!nextAudit.pass||next===text)break;
-   text=next
+   const nextSpeed=Math.min(1.24,Math.max(speed+.015,speed*ratio*1.006));
+   if(nextSpeed<=speed+.005)break;
+   speed=nextSpeed
   }
-  if(!result||result.duration>row.target+.03)throw new Error('第'+(i+1)+'段需要 '+(result?.duration||0).toFixed(1)+'秒，但对应画面只有 '+row.target.toFixed(1)+'秒；为保护原意已停止');
+  if(!result||result.duration>row.target+.03){
+   throw new Error('第'+(i+1)+'个场景簇需要 '+(result?.duration||0).toFixed(1)+'秒，但画面只有 '+row.target.toFixed(1)+'秒。V2.0 为保护原稿不会删词，请减少解说字数或扩大该场景时间。')
+  }
   done.push({...row,index:i,text,speed,blob:result.blob,actualDuration:result.duration});
   STUDIO.lockstepSegments=done.concat(plan.slice(i+1));renderLockstepPlan()
  }
- const finalText=done.map(x=>x.text).join(''),finalAudit=meaningAuditStrict(source,finalText);
+ const finalText=done.map(x=>x.text).join('');
+ if(voiceExactSignature(finalText)!==voiceExactSignature(source))throw new Error('最终逐字完整性校验未通过，已停止生成');
+ const finalAudit=meaningAuditStrict(source,finalText);
  if(!finalAudit.pass)throw new Error('最终原意完整性校验未通过，已停止生成');
 
- q('lockstepStatus').textContent='4/4 · 正在拼装精确 '+clip.toFixed(2)+' 秒音轨…';
+ q('lockstepStatus').textContent='4/4 · 正在拼装精确 '+clip.toFixed(2)+' 秒 SCENE LOCK 音轨…';
  const assembled=await assembleLockstepVoice(done,clip);
  if(Math.abs(assembled.duration-clip)>.01)throw new Error('最终音轨与视频时长不一致');
 
@@ -1920,12 +1960,13 @@ async function runLockstepVoice(autoPreview=true){
  STUDIO.generatedVoiceBlob=assembled.blob;STUDIO.generatedVoiceUrl=STUDIO.lockstepVoiceUrl;STUDIO.generatedVoiceDuration=clip;STUDIO.generatedVoiceParts=done.length;
  STUDIO.sourceNarration=source;STUDIO.clipLockedOriginal=source;STUDIO.clipLockedNarration=finalText;STUDIO.clipLockedTarget=clip;STUDIO.meaningAudit=finalAudit;STUDIO.meaningCoverage=100;
 
- STUDIO.voiceTimeline=done.map((x,i)=>({index:i,text:x.text,start:Number(x.start.toFixed(3)),end:Number((x.start+x.actualDuration).toFixed(3)),visualStart:x.start,visualEnd:x.end,basis:'lockstep',sceneId:x.sceneId,sceneReason:'原视频场景锁定'}));
+ STUDIO.voiceTimeline=done.map((x,i)=>({index:i,text:x.text,start:Number(x.start.toFixed(3)),end:Number((x.start+x.actualDuration).toFixed(3)),visualStart:x.start,visualEnd:x.end,basis:'scene_lock_v2',sceneId:x.sceneId,sceneCluster:x.sceneCluster||[x.sceneId],sceneReason:'SCENE LOCK V2.0 · 原稿逐字锁定'}));
  renderVoiceTimeline();renderClipLockedScript();renderLockstepPlan();markVoiceCoverage(true,done.length,100);
- q('lockstepStatus').textContent='完成 · 原意100% · 原视频不动 · 配音 '+assembled.duration.toFixed(2)+'秒 = 视频 '+clip.toFixed(2)+'秒';
+ q('lockstepStatus').textContent='完成 · SCENE LOCK V2.0 · 原稿逐字100% · 配音 '+assembled.duration.toFixed(2)+'秒 = 视频 '+clip.toFixed(2)+'秒';
  if(autoPreview){const a=q('aiVoicePreview');a.src=STUDIO.lockstepVoiceUrl;a.classList.add('show');await a.play().catch(()=>{})}
  return{blob:assembled.blob,duration:clip,segments:done,text:finalText,audit:finalAudit}
 }
+async function generateCompleteAIVoice
 async function generateCompleteAIVoice(text,mode,force=false,speedOverride=null){
  const actualSpeed=speedOverride==null?(Number(q('aiVoiceSpeed')?.value)||1):Number(speedOverride);
  const key=voiceGenerationKey(text,mode,actualSpeed);
@@ -1962,7 +2003,7 @@ function renderClipLockedScript(){
  box.style.display=script?'':'none';
  if(!script)return;
  txt.textContent=script;
- if(title)title.textContent=(STUDIO.clipLockedTarget>0?voiceTimeLabel(STUDIO.clipLockedTarget)+' · ':'')+'保真配音稿 · 原稿不改';
+ if(title)title.textContent=(STUDIO.clipLockedTarget>0?voiceTimeLabel(STUDIO.clipLockedTarget)+' · ':'')+'SCENE LOCK 配音稿 · 原稿逐字保留';
  badge.textContent=audit?.pass?'原意 100%':'原意未通过';
  badge.classList.toggle('ok',!!audit?.pass);
  if(detail){
@@ -2052,7 +2093,7 @@ async function previewAIVoice(){
  try{
   if(!STUDIO.lockstepReady||STUDIO.sourceNarration!==text)await runLockstepVoice(false);
   const a=q('aiVoicePreview');a.src=STUDIO.lockstepVoiceUrl||STUDIO.generatedVoiceUrl;a.classList.add('show');await a.play().catch(()=>{});
-  setVoiceState('LOCKSTEP · 原意100% · 原视频不动 · '+STUDIO.lockstepDuration.toFixed(2)+'秒精确音轨')
+  setVoiceState('SCENE LOCK V2.0 · 原稿逐字100% · 原视频不动 · '+STUDIO.lockstepDuration.toFixed(2)+'秒精确音轨')
  }catch(e){
   setVoiceState('一键适配失败：'+(e.message||e));
   studioStatus('LOCKSTEP：'+(e.message||e),'warn')
