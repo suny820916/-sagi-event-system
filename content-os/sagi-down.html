@@ -802,7 +802,7 @@ Unbelievable finish."></textarea>
       <div class="voicePanel">
         <div class="sectionHead">
           <div><div class="label">VOICE DIRECTOR V2.1 · SEMANTIC LOCK</div><div class="mini">FAST SCAN · 原意锁定 · 画面优先 · 时长精确</div></div>
-          <span class="badge">V1.7</span>
+          <span class="badge">V2.1</span>
         </div>
         <div class="voiceGrid">
           <label>配音方式
@@ -935,7 +935,7 @@ Unbelievable finish."></textarea>
 
 <script>
 (()=>{'use strict';
-const SAGI_DOWN_BUILD='V3.9.2.3';
+const SAGI_DOWN_BUILD='V3.9.2.4';
 document.documentElement.dataset.sagiDownBuild=SAGI_DOWN_BUILD;
 const BTCH_PUBLIC='https://btch-downloader-api-green.vercel.app';
 const DOWNLOAD_ROUTER_VERSION='3.0';
@@ -2278,10 +2278,10 @@ async function previewAIVoice(){
  try{
   if(!STUDIO.lockstepReady||STUDIO.sourceNarration!==text)await runLockstepVoice(false);
   const a=q('aiVoicePreview');a.src=STUDIO.lockstepVoiceUrl||STUDIO.generatedVoiceUrl;a.classList.add('show');await a.play().catch(()=>{});
-  setVoiceState('SCENE LOCK V2.0 · 原稿逐字100% · 原视频不动 · '+STUDIO.lockstepDuration.toFixed(2)+'秒精确音轨')
+  setVoiceState('SEMANTIC LOCK V2.1 · 原意100% · 原视频不动 · '+STUDIO.lockstepDuration.toFixed(2)+'秒精确音轨')
  }catch(e){
   setVoiceState('一键适配失败：'+(e.message||e));
-  studioStatus('LOCKSTEP：'+(e.message||e),'warn')
+  studioStatus('SEMANTIC LOCK：'+(e.message||e),'warn')
  }
 }
 async function cloneMyVoice(){
@@ -2335,10 +2335,10 @@ async function startCloudRender(recovering=false){
 
  const [start,end,duration]=studioRange();
  const mode=q('aiVoiceMode')?.value||'none';
- if((mode==='ai_male'||mode==='ai_female'||mode==='clone')&&(health.voiceVideoDurationLock!==true||health.voiceMeaningFirst!==true||health.voiceLockstep!==true||health.voiceSceneLockExactScript!==true)){
+ if((mode==='ai_male'||mode==='ai_female'||mode==='clone')&&(health.voiceVideoDurationLock!==true||health.voiceMeaningFirst!==true||health.voiceLockstep!==true||health.voiceSemanticLock!==true||health.voiceSemanticMeaningProtected!==true)){
    setCloudRenderProgress(0);
-   setCloudRenderStatus('当前云端尚未启用 SCENE LOCK V2.0；已阻止旧版删意/错场景/延长视频。');
-   studioStatus('云端未确认“SCENE LOCK V2.0 + 原稿逐字100% + 视频时长硬锁”，本次不会提交错误成片。','warn');
+   setCloudRenderStatus('当前云端尚未启用 SEMANTIC LOCK V2.1；已阻止旧版错场景/改原意/延长视频。');
+   studioStatus('云端未确认“SEMANTIC LOCK V2.1 + 原意100% + 视频时长硬锁”，本次不会提交错误成片。','warn');
    return
  }
  if(mode==='clone'&&!STUDIO.cloneVoiceId){studioStatus('请选择AI男声/女声，或先创建你的声音克隆。','warn');return}
@@ -2364,11 +2364,11 @@ async function startCloudRender(recovering=false){
    }else if(mode==='ai_male'||mode==='ai_female'||mode==='clone'){
      const sourceNow=String(q('narrationText')?.value||'').trim();
      if(!STUDIO.lockstepReady||STUDIO.sourceNarration!==sourceNow){
-       setCloudRenderStatus('SCENE LOCK V2.0 · 正在读取场景、逐句锁定并生成精确配音…');
+       setCloudRenderStatus('SEMANTIC LOCK V2.1 · FAST SCAN场景匹配 + 原意压缩 + 精确配音…');
        await runLockstepVoice(false)
      }
-     submitMode='recorded';submitVoiceBlob=STUDIO.lockstepVoiceBlob;submitVoiceName='sagi-scene-lock-v2.wav';submitSync='lockstep';submitDuration=duration;submitMeaningFirst=true;
-     setCloudRenderStatus('SCENE LOCK V2.0 已完成 · 原稿逐字100% · '+STUDIO.lockstepDuration.toFixed(2)+'秒 = 视频 '+duration.toFixed(2)+'秒 · 正在出片')
+     submitMode='recorded';submitVoiceBlob=STUDIO.lockstepVoiceBlob;submitVoiceName='sagi-semantic-lock-v21.wav';submitSync='lockstep';submitDuration=duration;submitMeaningFirst=true;
+     setCloudRenderStatus('SEMANTIC LOCK V2.1 已完成 · 原意100% · '+STUDIO.lockstepDuration.toFixed(2)+'秒 = 视频 '+duration.toFixed(2)+'秒 · 正在出片')
    }
 
    const selectedVisualMode=q('aiVisualSync')?.value||'voice_to_video';
@@ -2411,8 +2411,8 @@ async function startCloudRender(recovering=false){
    }
    if(visualMode==='auto'&&health.aiSceneSync!==true){
      setCloudRenderProgress(0);
-     setCloudRenderStatus('已读取视频内容，但当前 Render 尚未上线 AI SCENE SYNC V1.4；已阻止退化成机械拉伸。');
-     studioStatus('AI SCENE SYNC V1.4 云端尚未确认上线。','warn');
+     setCloudRenderStatus('已读取视频内容，但当前 Render 尚未上线 AI SCENE SYNC V1.5；已阻止退化成机械拉伸。');
+     studioStatus('AI SCENE SYNC V1.5 云端尚未确认上线。','warn');
      return
    }
    fd.append('voice_sync',submitSync);
@@ -2501,7 +2501,7 @@ async function pollCloudRender(){
      setCloudRenderProgress(100);
       if(j.voiceSegments>0&&j.voiceComplete){
         markVoiceCoverage(true,j.voiceSegments,j.voiceCoverage||100);
-        setCloudRenderStatus('云端成片完成 · 解说完整性100% · '+j.voiceSegments+'句全部保留 · 可以直接保存或分享。')
+        setCloudRenderStatus('云端成片完成 · 原意校验100% · '+j.voiceSegments+'句已锁定 · 可以直接保存或分享。')
       }else setCloudRenderStatus('云端成片完成 · 可以直接保存或分享。');
       toast('云端成片完成');return
    }
