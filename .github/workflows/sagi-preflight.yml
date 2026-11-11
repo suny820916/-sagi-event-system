@@ -673,7 +673,16 @@ jobs:
           trap 'kill $SERVER_PID >/dev/null 2>&1 || true' EXIT
           sleep 1
           "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage             --virtual-time-budget=4000 --dump-dom http://127.0.0.1:8765/sagi-down.html             > /tmp/sagi-dom.html
-          grep -q 'data-sagi-down-build="V3.9.2.6"' /tmp/sagi-dom.html
+          EXPECTED_BUILD="$(python - <<'PY'
+          import re
+          from pathlib import Path
+          s=Path("content-os/sagi-down.html").read_text(encoding="utf-8")
+          m=re.search(r"const SAGI_DOWN_BUILD='([^']+)'",s)
+          assert m, "SAGI_DOWN_BUILD missing"
+          print(m.group(1))
+          PY
+          )"
+          grep -q "data-sagi-down-build=\"$EXPECTED_BUILD\"" /tmp/sagi-dom.html
           grep -q 'data-layer-smoke="ok"' /tmp/sagi-dom.html
           grep -q 'id="sdOrigLayerList"' /tmp/sagi-dom.html
           grep -q 'data-layer-row=' /tmp/sagi-dom.html
