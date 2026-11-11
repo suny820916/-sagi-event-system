@@ -1,0 +1,20 @@
+name: SAGI Match Intelligence Docker Smoke
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "sagi-cloud-bridge/Dockerfile"
+      - "sagi-cloud-bridge/app.py"
+      - "sagi-cloud-bridge/match_intelligence_lite.py"
+      - ".github/workflows/sagi-match-docker-smoke.yml"
+  workflow_dispatch:
+
+jobs:
+  docker-source-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Match Intelligence source smoke stage
+        run: |
+          docker build             --target match-source-smoke             -f sagi-cloud-bridge/Dockerfile             sagi-cloud-bridge
