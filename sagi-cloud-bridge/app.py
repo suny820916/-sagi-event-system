@@ -2399,7 +2399,8 @@ def health():
         "voiceNarrationNoCut": True,
         "voiceSentenceTimeline": True,
         "voiceCompletenessGuard": True,
-        "voicePreviewMaxChars": 10000,
+        "voicePreviewMaxChars": 50000,
+        "voicePreviewChunked": True,
         "voiceClone": bool(ELEVENLABS_API_KEY),
         "cloudRender": True,
         "cloudRenderStable": True,
@@ -3000,6 +3001,7 @@ def voice_preview():
         resp.headers["X-SAGI-Voice-Coverage"] = "100"
         resp.headers["X-SAGI-Voice-Segments"] = str(meta.get("segments") or 0)
         resp.headers["X-SAGI-Voice-Duration"] = str(meta.get("duration") or 0)
+        resp.headers["Access-Control-Expose-Headers"] = "X-SAGI-Voice-Complete, X-SAGI-Voice-Coverage, X-SAGI-Voice-Segments, X-SAGI-Voice-Duration"
         resp.call_on_close(lambda: shutil.rmtree(work, ignore_errors=True))
         return resp
     except Exception as e:
