@@ -2002,7 +2002,7 @@ function renderClipLockedScript(){
  if(!script)return;
  txt.textContent=script;
  if(title)title.textContent=(STUDIO.clipLockedTarget>0?voiceTimeLabel(STUDIO.clipLockedTarget)+' · ':'')+'SCENE LOCK 配音稿 · 原稿逐字保留';
- badge.textContent=audit?.pass?'原意 100%':'原意未通过';
+ badge.textContent=(audit?.pass&&STUDIO.clipLockedOriginal&&voiceExactSignature(STUDIO.clipLockedOriginal)===voiceExactSignature(STUDIO.clipLockedNarration))?'逐字 100%':(audit?.pass?'原意 100%':'原意未通过');
  badge.classList.toggle('ok',!!audit?.pass);
  if(detail){
   if(!audit)detail.textContent='关键逻辑尚未校验。';
@@ -2148,10 +2148,10 @@ async function startCloudRender(recovering=false){
 
  const [start,end,duration]=studioRange();
  const mode=q('aiVoiceMode')?.value||'none';
- if((mode==='ai_male'||mode==='ai_female'||mode==='clone')&&(health.voiceVideoDurationLock!==true||health.voiceMeaningFirst!==true||health.voiceLockstep!==true)){
+ if((mode==='ai_male'||mode==='ai_female'||mode==='clone')&&(health.voiceVideoDurationLock!==true||health.voiceMeaningFirst!==true||health.voiceLockstep!==true||health.voiceSceneLockExactScript!==true)){
    setCloudRenderProgress(0);
-   setCloudRenderStatus('当前云端尚未启用 LOCKSTEP V1.7；已阻止旧版删意/延长视频。');
-   studioStatus('云端未确认“LOCKSTEP + 原意100% + 视频时长硬锁”，本次不会提交错误成片。','warn');
+   setCloudRenderStatus('当前云端尚未启用 SCENE LOCK V2.0；已阻止旧版删意/错场景/延长视频。');
+   studioStatus('云端未确认“SCENE LOCK V2.0 + 原稿逐字100% + 视频时长硬锁”，本次不会提交错误成片。','warn');
    return
  }
  if(mode==='clone'&&!STUDIO.cloneVoiceId){studioStatus('请选择AI男声/女声，或先创建你的声音克隆。','warn');return}
@@ -2177,11 +2177,11 @@ async function startCloudRender(recovering=false){
    }else if(mode==='ai_male'||mode==='ai_female'||mode==='clone'){
      const sourceNow=String(q('narrationText')?.value||'').trim();
      if(!STUDIO.lockstepReady||STUDIO.sourceNarration!==sourceNow){
-       setCloudRenderStatus('LOCKSTEP · 正在一次性完成场景分析、保真配音和精确锁时…');
+       setCloudRenderStatus('SCENE LOCK V2.0 · 正在读取场景、逐句锁定并生成精确配音…');
        await runLockstepVoice(false)
      }
-     submitMode='recorded';submitVoiceBlob=STUDIO.lockstepVoiceBlob;submitVoiceName='sagi-lockstep-exact.wav';submitSync='lockstep';submitDuration=duration;submitMeaningFirst=true;
-     setCloudRenderStatus('LOCKSTEP 已完成 · 原意100% · '+STUDIO.lockstepDuration.toFixed(2)+'秒 = 视频 '+duration.toFixed(2)+'秒 · 正在出片')
+     submitMode='recorded';submitVoiceBlob=STUDIO.lockstepVoiceBlob;submitVoiceName='sagi-scene-lock-v2.wav';submitSync='lockstep';submitDuration=duration;submitMeaningFirst=true;
+     setCloudRenderStatus('SCENE LOCK V2.0 已完成 · 原稿逐字100% · '+STUDIO.lockstepDuration.toFixed(2)+'秒 = 视频 '+duration.toFixed(2)+'秒 · 正在出片')
    }
 
    const selectedVisualMode=q('aiVisualSync')?.value||'voice_to_video';
@@ -2207,7 +2207,7 @@ async function startCloudRender(recovering=false){
    fd.append('quality',q('exportQuality')?.value||'fast');
    fd.append('captions',JSON.stringify(cloudRenderCaptions()));
    fd.append('narration',submitMeaningFirst?String(STUDIO.clipLockedNarration||''):String(q('narrationText')?.value||''));
-   const hasLockedTimeline=STUDIO.generatedVoiceDuration>0&&(STUDIO.voiceTimeline||[]).some(x=>x.basis==='clip_locked'||x.basis==='lockstep');
+   const hasLockedTimeline=STUDIO.generatedVoiceDuration>0&&(STUDIO.voiceTimeline||[]).some(x=>x.basis==='clip_locked'||x.basis==='lockstep'||x.basis==='scene_lock_v2');
    const voiceTimeline=hasLockedTimeline?STUDIO.voiceTimeline:buildVoiceTimeline(true);
    fd.append('voice_timeline',JSON.stringify(voiceTimeline));
    fd.append('voice_mode',submitMode);
@@ -3597,7 +3597,7 @@ q('cloudTestBtn').onclick=runCloudSelfTest;
 q('captionToNarrationBtn').onclick=captionToNarration;
 q('lockstepVoiceBtn').onclick=async()=>{
  const btn=q('lockstepVoiceBtn');btn.disabled=true;btn.textContent='正在一键适配…';
- try{await runLockstepVoice(true);toast('LOCKSTEP 一次适配完成')}
+ try{await runLockstepVoice(true);toast('SCENE LOCK V2.0 · 场景锁定完成')}
  catch(e){setVoiceState('一键适配失败：'+(e.message||e));studioStatus('LOCKSTEP：'+(e.message||e),'warn')}
  finally{btn.disabled=false;btn.textContent='一键适配视频配音'}
 };
