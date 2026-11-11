@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0b">
+<title>SAGI MARKET｜闲置寄售提交</title>
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body data-seller-build="1.1.0">
+<div class="sellerWrap">
+  <header class="sellerHead">
+    <div><div class="brand">SAGI MARKET</div><div class="version">SECOND LIFE · SELLER INTAKE V1.1</div></div>
+  </header>
+
+  <section class="hero sellerHero">
+    <span>SELL YOUR FOOTBALL GEAR</span>
+    <h1>把闲置足球装备交给 SAGI。</h1>
+    <p>你负责填写真实信息，SAGI负责审核、编号、商品卡和发布。成交后再按规则收取服务费。</p>
+  </section>
+
+  <div id="successCard" class="card hidden">
+    <span class="eyebrow">SUBMITTED</span>
+    <h2>提交成功</h2>
+    <div id="submissionId" class="submitId"></div>
+    <p class="sellerHint">SAGI审核后会联系你。请保留这个提交编号。</p>
+    <button id="submitAnother" class="ghost">再提交一件</button>
+  </div>
+
+  <form id="sellerForm" class="card">
+    <div class="sectionHead"><div><span class="eyebrow">01</span><h2>商品照片</h2></div></div>
+    <label for="sellerPhoto" class="photoDrop sellerPhotoDrop">
+      <img id="sellerPhotoPreview" class="hidden" alt="">
+      <div id="sellerPhotoHint"><b>＋ 添加1张主图</b><span>建议自然光，完整拍到商品</span></div>
+    </label>
+    <input id="sellerPhoto" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+
+    <div class="sectionHead formSection"><div><span class="eyebrow">02</span><h2>商品信息</h2></div></div>
+    <label>商品名称 *</label>
+    <input id="sellerName" class="field" required maxlength="80" placeholder="例如：Nike Tiempo 传奇足球鞋">
+
+    <div class="twoCol">
+      <div><label>分类</label><select id="sellerCategory" class="field"><option>球鞋</option><option>球衣</option><option>门将装备</option><option>足球</option><option>训练装备</option><option>球队装备</option><option>其他</option></select></div>
+      <div><label>尺码 / 规格</label><input id="sellerSize" class="field" maxlength="30" placeholder="42 / XL / 5号"></div>
+    </div>
+
+    <div class="twoCol">
+      <div><label>成色</label><input id="sellerCondition" class="field" maxlength="30" placeholder="例如：9成新"></div>
+      <div><label>所在城市</label><input id="sellerCity" class="field" maxlength="40" placeholder="例如：塔城"></div>
+    </div>
+
+    <label>你希望卖多少钱</label>
+    <div class="moneyInput"><span>¥</span><input id="sellerPrice" type="number" min="0" max="999999" step="1" placeholder="199"></div>
+
+    <label>瑕疵 / 真实情况 *</label>
+    <textarea id="sellerNotes" class="field textarea" required maxlength="800" placeholder="请主动写清：是否开胶、鞋钉磨损、是否修补、污渍、缺件等。"></textarea>
+
+    <div class="sectionHead formSection"><div><span class="eyebrow">03</span><h2>你的联系方式</h2></div></div>
+    <div class="twoCol">
+      <div><label>姓名 / 昵称 *</label><input id="sellerSeller" class="field" required maxlength="60" placeholder="方便SAGI联系你"></div>
+      <div><label>微信 / 电话 *</label><input id="sellerContact" class="field" required maxlength="80" placeholder="至少填写一种"></div>
+    </div>
+
+    <label class="agreeRow">
+      <input id="sellerAgree" type="checkbox" required>
+      <span>我确认商品信息真实，并同意 SAGI 审核后再决定是否上架。</span>
+    </label>
+
+    <button id="sellerSubmit" class="primary sellerSubmit" type="submit">提交给 SAGI 审核</button>
+    <div id="sellerMessage" class="message"></div>
+  </form>
+
+  <div class="sellerRules">
+    <b>SAGI寄售原则</b>
+    <p>不卖假货 · 不隐瞒明显瑕疵 · 审核通过才上架 · 成交后按工作台规则结算。</p>
+  </div>
+</div>
+<script src="./seller.js"></script>
+</body>
+</html>
