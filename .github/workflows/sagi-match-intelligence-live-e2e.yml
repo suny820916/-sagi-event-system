@@ -1,0 +1,94 @@
+name: SAGI Match Intelligence Live E2E
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "sagi-cloud-bridge/match_intelligence_lite.py"
+      - "sagi-cloud-bridge/requirements.txt"
+      - "sagi-cloud-bridge/app.py"
+      - "sagi-match-intelligence/frontend/**"
+      - ".github/workflows/sagi-match-intelligence-live-e2e.yml"
+  workflow_dispatch:
+
+jobs:
+  live-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - name: Install test tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg jq
+
+      - name: Wait for Match Intelligence API
+        run: |
+          set -e
+          URL="https://sagi-cloud-bridge-suny820916.onrender.com/api/match-intelligence/health"
+          for i in $(seq 1 60); do
+            CODE="$(curl -L -sS -o health.json -w '%{http_code}' --max-time 25 "$URL" || true)"
+            echo "health $i/60 -> HTTP $CODE"
+            if [ "$CODE" = "200" ] && jq -e '.ok == true and (.version | startswith("1.0-"))' health.json >/dev/null 2>&1; then
+              cat health.json
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "Match Intelligence health endpoint did not become ready."
+          cat health.json 2>/dev/null || true
+          exit 1
+
+      - name: Build tiny real-image video
+        run: |
+          curl -L --fail --retry 3 -o bus.jpg https://ultralytics.com/images/bus.jpg
+          ffmpeg -v error -loop 1 -i bus.jpg -t 4 -r 12 -vf "scale=640:-2" -pix_fmt yuv420p test.mp4
+          ls -lh test.mp4
+
+      - name: Upload video and run real cloud inference
+        run: |
+          set -euo pipefail
+          BASE="https://sagi-cloud-bridge-suny820916.onrender.com"
+          CREATE="$(curl -L --fail --show-error --max-time 90 \
+            -F "video=@test.mp4;type=video/mp4" \
+            -F "home_team=测试蓝队" \
+            -F "away_team=测试红队" \
+            -F "match_format=7v7" \
+            "$BASE/api/match-intelligence/jobs")"
+          echo "$CREATE" | jq .
+          JOB_ID="$(echo "$CREATE" | jq -r '.job_id')"
+          test -n "$JOB_ID"
+          test "$JOB_ID" != "null"
+
+          for i in $(seq 1 72); do
+            sleep 5
+            RESULT="$(curl -L --fail --show-error --max-time 30 "$BASE/api/match-intelligence/jobs/$JOB_ID")"
+            STATUS="$(echo "$RESULT" | jq -r '.status')"
+            PROGRESS="$(echo "$RESULT" | jq -r '.progress')"
+            MESSAGE="$(echo "$RESULT" | jq -r '.message')"
+            echo "job $i/72 -> $STATUS $PROGRESS% $MESSAGE"
+
+            if [ "$STATUS" = "failed" ]; then
+              echo "$RESULT" | jq .
+              exit 1
+            fi
+            if [ "$STATUS" = "completed" ]; then
+              echo "$RESULT" | jq .
+              echo "$RESULT" | jq -e '
+                .result.version == "1.0-cloud-lite" and
+                .result.video.sampled_frames > 0 and
+                .result.video.person_detection_samples > 0 and
+                (.result.tracking_map | length > 0)
+              ' >/dev/null
+
+              TRACKING="$(echo "$RESULT" | jq -r '.result.tracking_map')"
+              curl -L --fail --show-error --max-time 30 \
+                "$BASE/api/match-intelligence/jobs/$JOB_ID/artifacts/$TRACKING" \
+                -o tracking-map.svg
+              grep -q "<svg" tracking-map.svg
+              echo "SAGI MATCH INTELLIGENCE LIVE E2E PASSED."
+              exit 0
+            fi
+          done
+
+          echo "Analysis job timed out."
+          exit 1
