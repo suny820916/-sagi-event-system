@@ -28,6 +28,11 @@ ANALYSIS_FPS = max(0.25, min(2.0, float(os.getenv("SAGI_MATCH_FPS") or "1")))
 MAX_SECONDS = max(15, min(180, int(os.getenv("SAGI_MATCH_MAX_SECONDS") or "90")))
 CONFIDENCE = max(0.15, min(0.8, float(os.getenv("SAGI_MATCH_CONF") or "0.28")))
 TRACK_DISTANCE = max(0.04, min(0.25, float(os.getenv("SAGI_MATCH_TRACK_DISTANCE") or "0.12")))
+TRACK_MAX_AGE = max(2, min(8, int(os.getenv("SAGI_MATCH_TRACK_MAX_AGE") or "5")))
+TRACK_COLOR_WEIGHT = max(0.0, min(0.5, float(os.getenv("SAGI_MATCH_TRACK_COLOR_WEIGHT") or "0.18")))
+BALL_MAX_AGE = max(1, min(5, int(os.getenv("SAGI_MATCH_BALL_MAX_AGE") or "2")))
+POSSESSION_MIN_SAMPLES = max(2, min(12, int(os.getenv("SAGI_MATCH_POSSESSION_MIN_SAMPLES") or "4")))
+MATCH_VERSION = "1.1.2-tracking-core"
 
 _jobs = {}
 _jobs_lock = Lock()
@@ -158,6 +163,7 @@ def _detect(frame: np.ndarray):
                     "score": float(s[idx]),
                     "cx": float((x1 + x2) / 2 / _input_w),
                     "cy": float(y2 / _input_h),
+                    "center_y": float((y1 + y2) / 2 / _input_h),
                 }
             )
         results[class_id] = rows
@@ -186,22 +192,67 @@ def _jersey_rgb(frame: np.ndarray, box):
     return np.median(keep, axis=0).astype(np.float32)
 
 
+def _color_distance(a, b):
+    if a is None or b is None:
+        return 0.0
+    return float(np.linalg.norm(np.asarray(a, dtype=np.float32) - np.asarray(b, dtype=np.float32)) / 441.673)
+
+
+def _predict_track_position(track, frame_no):
+    positions = track.get("positions") or []
+    if not positions:
+        return track.get("last_pos") or (0.5, 0.5)
+    _, x2, y2 = positions[-1]
+    if len(positions) < 2:
+        return float(x2), float(y2)
+
+    f1, x1, y1 = positions[-2]
+    f2, x2, y2 = positions[-1]
+    dt = max(1, int(f2) - int(f1))
+    age = max(0, int(frame_no) - int(f2))
+    vx = (float(x2) - float(x1)) / dt
+    vy = (float(y2) - float(y1)) / dt
+    px = min(1.0, max(0.0, float(x2) + vx * age))
+    py = min(1.0, max(0.0, float(y2) + vy * age))
+    return px, py
+
+
+def _track_color(track):
+    colors = track.get("colors") or []
+    if not colors:
+        return None
+    return np.median(np.vstack(colors[-6:]), axis=0)
+
+
 def _match_tracks(active, people, frame_no, next_id):
     candidates = []
     for tid, track in active.items():
-        if frame_no - track["last_frame"] > 3:
+        age = int(frame_no) - int(track["last_frame"])
+        if age > TRACK_MAX_AGE:
             continue
-        tx, ty = track["last_pos"]
+
+        tx, ty = _predict_track_position(track, frame_no)
+        track_color = _track_color(track)
+        gate = min(0.34, TRACK_DISTANCE * (1.0 + 0.55 * max(0, age - 1)))
+
         for j, person in enumerate(people):
             d = math.hypot(tx - person["cx"], ty - person["cy"])
-            if d <= TRACK_DISTANCE:
-                candidates.append((d, tid, j))
-    candidates.sort()
+            if d > gate:
+                continue
 
+            person_color = person.get("jersey_rgb")
+            color_d = _color_distance(track_color, person_color)
+            if track_color is not None and person_color is not None and color_d > 0.42:
+                continue
+
+            cost = d + TRACK_COLOR_WEIGHT * color_d
+            candidates.append((cost, d, color_d, tid, j))
+
+    candidates.sort()
     used_tracks = set()
     used_people = set()
     assignments = {}
-    for _, tid, j in candidates:
+    for _, _, _, tid, j in candidates:
         if tid in used_tracks or j in used_people:
             continue
         used_tracks.add(tid)
@@ -213,6 +264,68 @@ def _match_tracks(active, people, frame_no, next_id):
             assignments[j] = next_id
             next_id += 1
     return assignments, next_id
+
+
+def _update_ball_track(ball_track, balls, frame_no):
+    if balls:
+        predicted = None
+        if ball_track and ball_track.get("positions"):
+            predicted = _predict_track_position(ball_track, frame_no)
+
+        def ball_cost(item):
+            if predicted is None:
+                return -float(item.get("score") or 0.0)
+            bx = float(item["cx"])
+            by = float(item.get("center_y", item["cy"]))
+            return math.hypot(predicted[0] - bx, predicted[1] - by) - 0.04 * float(item.get("score") or 0.0)
+
+        ball = min(balls, key=ball_cost)
+        bx = float(ball["cx"])
+        by = float(ball.get("center_y", ball["cy"]))
+        if ball_track is None:
+            ball_track = {"positions": []}
+        ball_track["positions"].append((frame_no, bx, by))
+        ball_track["last_frame"] = frame_no
+        ball_track["last_pos"] = (bx, by)
+        return ball_track, {"cx": bx, "cy": by, "observed": True}
+
+    if ball_track and ball_track.get("positions"):
+        age = int(frame_no) - int(ball_track.get("last_frame", frame_no))
+        if age <= BALL_MAX_AGE:
+            bx, by = _predict_track_position(ball_track, frame_no)
+            return ball_track, {"cx": bx, "cy": by, "observed": False}
+
+    return ball_track, None
+
+
+def _expected_players(match_format):
+    raw = str(match_format or "").lower()
+    try:
+        value = int(raw.split("v", 1)[0])
+        return value if value in (5, 6, 7, 8, 9, 10, 11) else 0
+    except Exception:
+        return 0
+
+
+def _stable_track_ids(tracks, team_assignments, frame_no, match_format):
+    expected = _expected_players(match_format)
+    min_visible = max(2, int(math.ceil(max(1, frame_no) * 0.25)))
+    selected = set()
+
+    for team in (0, 1):
+        rows = []
+        for tid, track in tracks.items():
+            if team_assignments.get(tid) != team:
+                continue
+            visible = len(track.get("positions") or [])
+            if visible < min_visible:
+                continue
+            rows.append((visible, int(track.get("last_frame") or 0), tid))
+        rows.sort(reverse=True)
+        limit = expected if expected > 0 else len(rows)
+        selected.update(tid for _, _, tid in rows[:limit])
+
+    return selected
 
 
 def _kmeans(features: np.ndarray, k: int):
@@ -394,7 +507,11 @@ def _run_job(job_id, video_path: Path, workdir: Path, heavy_slot: Lock, home_tea
             next_id = 1
             frame_no = 0
             possession_track_ids = []
+            possession_weights = []
+            ball_track = None
+            last_possessor = None
             ball_seen = 0
+            ball_tracked = 0
             person_samples = 0
 
             while True:
@@ -404,6 +521,10 @@ def _run_job(job_id, video_path: Path, workdir: Path, heavy_slot: Lock, home_tea
                 frame = np.frombuffer(raw, dtype=np.uint8).reshape((_input_h, _input_w, 3))
                 people, balls = _detect(frame)
                 person_samples += len(people)
+
+                for person in people:
+                    color = _jersey_rgb(frame, person["box"])
+                    person["jersey_rgb"] = color
 
                 assignments, next_id = _match_tracks(tracks, people, frame_no, next_id)
                 for idx, person in enumerate(people):
@@ -420,22 +541,32 @@ def _run_job(job_id, video_path: Path, workdir: Path, heavy_slot: Lock, home_tea
                     track["last_frame"] = frame_no
                     track["last_pos"] = (person["cx"], person["cy"])
                     track["positions"].append((frame_no, person["cx"], person["cy"]))
-                    color = _jersey_rgb(frame, person["box"])
+                    color = person.get("jersey_rgb")
                     if color is not None:
                         track["colors"].append(color)
 
-                if balls and people:
-                    ball_seen += 1
-                    ball = max(balls, key=lambda item: item["score"])
+                ball_track, ball_state = _update_ball_track(ball_track, balls, frame_no)
+                if ball_state is not None:
+                    ball_tracked += 1
+                    if ball_state["observed"]:
+                        ball_seen += 1
+
+                if ball_state is not None and people:
                     nearest = None
                     nearest_d = 999.0
                     for idx, person in enumerate(people):
-                        d = math.hypot(person["cx"] - ball["cx"], person["cy"] - ball["cy"])
+                        d = math.hypot(person["cx"] - ball_state["cx"], person["cy"] - ball_state["cy"])
                         if d < nearest_d:
                             nearest_d = d
                             nearest = assignments[idx]
-                    if nearest is not None and nearest_d <= 0.18:
+
+                    if nearest is not None and nearest_d <= 0.16:
+                        weight = 1.0 if ball_state["observed"] else 0.35
+                        if last_possessor is not None and nearest != last_possessor and ball_state["observed"]:
+                            weight = 0.65
                         possession_track_ids.append(nearest)
+                        possession_weights.append(weight)
+                        last_possessor = nearest
 
                 frame_no += 1
                 max_frames = max(1, int(MAX_SECONDS * ANALYSIS_FPS))
@@ -459,30 +590,41 @@ def _run_job(job_id, video_path: Path, workdir: Path, heavy_slot: Lock, home_tea
             _update(job_id, progress=90, message="正在自动区分两支球队")
             team_assignments = _assign_teams(tracks)
 
+            stable_ids = _stable_track_ids(tracks, team_assignments, frame_no, match_format)
+            stable_tracks = {tid: track for tid, track in tracks.items() if tid in stable_ids}
+
             team_counts = Counter()
-            possession_counts = Counter()
-            for tid, team in team_assignments.items():
-                if team in (0, 1):
-                    team_counts[team] += 1
-            for tid in possession_track_ids:
+            for tid in stable_ids:
                 team = team_assignments.get(tid)
                 if team in (0, 1):
-                    possession_counts[team] += 1
+                    team_counts[team] += 1
+
+            possession_counts = {0: 0.0, 1: 0.0}
+            for tid, weight in zip(possession_track_ids, possession_weights):
+                team = team_assignments.get(tid)
+                if team in (0, 1):
+                    possession_counts[team] += float(weight)
 
             poss_total = possession_counts[0] + possession_counts[1]
-            home_poss = round(possession_counts[0] / poss_total * 100, 1) if poss_total else 0.0
-            away_poss = round(100.0 - home_poss, 1) if poss_total else 0.0
+            possession_available = ball_seen >= POSSESSION_MIN_SAMPLES and poss_total > 0
+            if possession_available:
+                home_poss = round(possession_counts[0] / poss_total * 100, 1)
+                away_poss = round(100.0 - home_poss, 1)
+            else:
+                home_poss = None
+                away_poss = None
+            possession_confidence = min(100, int(round(ball_seen / max(POSSESSION_MIN_SAMPLES * 2, 1) * 100)))
 
-            _update(job_id, progress=94, message="正在生成二维追踪图和活动热区")
+            _update(job_id, progress=94, message="正在生成稳定追踪图和活动热区")
             tracking_svg = workdir / "tracking-map.svg"
             home_svg = workdir / "home-heatmap.svg"
             away_svg = workdir / "away-heatmap.svg"
-            _svg_pitch(tracking_svg, tracks, team_assignments, title="SAGI · 二维球员追踪")
-            _svg_heatmap(home_svg, tracks, team_assignments, 0, f"{home_team} · 活动热区")
-            _svg_heatmap(away_svg, tracks, team_assignments, 1, f"{away_team} · 活动热区")
+            _svg_pitch(tracking_svg, stable_tracks, team_assignments, title="SAGI · 稳定球员追踪")
+            _svg_heatmap(home_svg, stable_tracks, team_assignments, 0, f"{home_team} · 活动热区")
+            _svg_heatmap(away_svg, stable_tracks, team_assignments, 1, f"{away_team} · 活动热区")
 
             public_tracks = []
-            for tid, track in sorted(tracks.items()):
+            for tid, track in sorted(stable_tracks.items()):
                 positions = track.get("positions") or []
                 public_tracks.append(
                     {
@@ -493,38 +635,56 @@ def _run_job(job_id, video_path: Path, workdir: Path, heavy_slot: Lock, home_tea
                 )
 
             result = {
-                "version": "1.0-cloud-lite",
-                "mode": "SAGI Cloud Lite",
+                "version": MATCH_VERSION,
+                "mode": "SAGI Tracking Core",
                 "match": {"home_team": home_team, "away_team": away_team},
                 "video": {
                     "sampled_frames": frame_no,
                     "analysis_fps": ANALYSIS_FPS,
                     "max_seconds": MAX_SECONDS,
                     "ball_seen_samples": ball_seen,
+                    "ball_tracked_samples": ball_tracked,
                     "person_detection_samples": person_samples,
+                    "raw_track_count": len(tracks),
+                    "stable_track_count": len(stable_tracks),
                 },
                 "teams": {
                     "home": {
                         "name": home_team,
                         "tracked_players": int(team_counts[0]),
                         "possession_percent": home_poss,
+                        "possession_available": possession_available,
                         "heatmap": "home-heatmap.svg",
                     },
                     "away": {
                         "name": away_team,
                         "tracked_players": int(team_counts[1]),
                         "possession_percent": away_poss,
+                        "possession_available": possession_available,
                         "heatmap": "away-heatmap.svg",
                     },
+                },
+                "possession": {
+                    "available": possession_available,
+                    "observed_ball_samples": ball_seen,
+                    "tracked_ball_samples": ball_tracked,
+                    "minimum_samples": POSSESSION_MIN_SAMPLES,
+                    "confidence_percent": possession_confidence,
+                },
+                "tracking": {
+                    "raw_track_count": len(tracks),
+                    "stable_track_count": len(stable_tracks),
+                    "max_age_frames": TRACK_MAX_AGE,
+                    "expected_players_per_team": _expected_players(match_format),
                 },
                 "tracks": public_tracks,
                 "tracking_map": "tracking-map.svg",
                 "limitations": [
-                    "云端轻量版目前采用低频采样，优先验证识别与分析链路。",
-                    "球员身份是临时追踪编号，遮挡后仍可能产生新编号。",
-                    "主客队通过球衣颜色聚类自动判断，个别比赛可能需要人工交换。",
-                    "控球率为足球与最近球员距离的估算值。",
-                    f"免费测试版最多分析视频前 {MAX_SECONDS} 秒。",
+                    "V1.1.2 使用位置预测与球衣颜色联合追踪，显著减少短时遮挡造成的新 ID。",
+                    "报告只统计持续出现的稳定轨迹，并按比赛制式限制单队场上追踪数量。",
+                    "足球短暂消失时最多续接数个采样帧，但高速小球仍可能漏检。",
+                    "足球观测样本不足时不再输出误导性的控球率百分比。",
+                    f"当前云端版最多分析视频前 {MAX_SECONDS} 秒。",
                 ],
             }
 
@@ -564,8 +724,8 @@ def create_match_intelligence_blueprint(heavy_slot: Lock, allowed_origin: str):
             {
                 "ok": True,
                 "service": "SAGI 比赛智能分析",
-                "version": "1.0-cloud-lite",
-                "engine": "YOLO11 ONNX Runtime",
+                "version": MATCH_VERSION,
+                "engine": "YOLO11 ONNX Runtime + SAGI Tracking Core",
                 "analysisFps": ANALYSIS_FPS,
                 "maxSeconds": MAX_SECONDS,
                 "maxUploadMB": MAX_UPLOAD_MB,
