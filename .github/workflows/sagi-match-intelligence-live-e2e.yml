@@ -16,10 +16,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 18
     steps:
-      - name: Install test tools
+      - name: Verify test tools
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq ffmpeg jq
+          ffmpeg -version | head -1
+          jq --version
+          curl --version | head -1
 
       - name: Wait for Match Intelligence API
         run: |
