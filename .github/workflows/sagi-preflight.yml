@@ -178,12 +178,12 @@ jobs:
           c = mod.app.test_client()
           health = c.get("/health").get_json()
           print("health", health)
-          assert health["version"] == "3.9.2"
+          assert health["version"] == "3.9.3"
           assert health["captionMedia"] is True
           assert health["contextTranslate"] is True
           assert health["smartTranslate"] is True
           assert health["aiVoice"] is True
-          assert health["voiceDirectorVersion"] == "2.1"
+          assert health["voiceDirectorVersion"] == "2.4"
           assert health["voiceNarrationNoCut"] is False
           assert health["voiceNarrationMeaningProtected"] is True
           assert health["voiceSentenceTimeline"] is True
@@ -224,6 +224,9 @@ jobs:
           assert health["downloadPrimary"] == "multi-engine-router"
           assert health["footballDataHub"] is True
           assert health["footballDataHubVersion"] == "2.0"
+          assert health["localAI"] is True
+          assert health["localAIVersion"] == "1.1"
+          assert isinstance(health["localAIConfigured"], bool)
           assert set(health["footballCompetitions"]) >= {"PL","PD","BL1","SA","FL1","CL"}
           # MATCH DATA HUB V2: Chinese aliases must resolve exactly and a
           # single structured source must remain a candidate.
