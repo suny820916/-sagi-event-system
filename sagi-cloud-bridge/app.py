@@ -32,8 +32,8 @@ app = Flask(__name__)
 ALLOWED_ORIGIN = (os.getenv("SAGI_ALLOWED_ORIGIN") or "https://suny820916.github.io").rstrip("/")
 SERVER_SECRET = (os.getenv("SAGI_SERVER_SECRET") or os.getenv("SAGI_BRIDGE_TOKEN") or "").strip()
 PORT = int(os.getenv("PORT") or "10000")
-DEPLOY_REVISION = "2026-11-11-v392-match-board"
-APP_VERSION = "3.9.2"
+DEPLOY_REVISION = "2026-11-11-animation-first-v240"
+APP_VERSION = "3.9.3"
 MAX_FILE_MB = int(os.getenv("SAGI_MAX_FILE_MB") or "300")
 JOB_TTL_MIN = int(os.getenv("SAGI_JOB_TTL_MIN") or "30")
 RATE_LIMIT_PER_HOUR = int(os.getenv("SAGI_RATE_LIMIT_PER_HOUR") or "20")
@@ -2656,7 +2656,10 @@ def health():
         "smartTranslate": True,
         "aiVoice": True,
         "aiVoiceFallback": True,
-        "voiceDirectorVersion": "2.1",
+        "voiceDirectorVersion": "2.4",
+        "animationFirst": True,
+        "voiceOneShot": True,
+        "voiceCaptionFromFinalAudio": True,
         "voiceSceneLock": True,
         "voiceSceneLockExactScript": False,
         "voiceSceneLockClusterRebalance": True,
@@ -3260,6 +3263,52 @@ def voice_clone():
     finally:
         shutil.rmtree(work, ignore_errors=True)
         gc.collect()
+
+@app.post("/api/voice/one-shot")
+def voice_one_shot():
+    """
+    VOICE DIRECTOR V2.4 · ANIMATION FIRST
+    Generate the complete narration in ONE provider request.
+    The final audio is the source of truth; captions are created afterwards
+    by transcribing this exact audio through /api/caption.
+    """
+    if not authorized():
+        return jsonify({"ok": False, "error": "Unauthorized"}), 401
+    data = request.get_json(silent=True) or {}
+    text = str(data.get("text") or "").strip()
+    mode = str(data.get("mode") or "ai_male")
+    voice_id = str(data.get("voice_id") or "").strip()
+    try:
+        speed = max(0.75, min(1.25, float(data.get("speed") or 1.0)))
+    except Exception:
+        speed = 1.0
+    style = str(data.get("style") or "documentary")
+
+    if not text:
+        return jsonify({"ok": False, "error": "Text required"}), 400
+    if len(text) > 10000:
+        return jsonify({"ok": False, "error": "ONE_SHOT_TEXT_TOO_LONG"}), 413
+    if mode == "clone" and not ELEVENLABS_API_KEY:
+        return jsonify({"ok": False, "error": "VOICE_CLONE_REQUIRES_ELEVENLABS"}), 503
+
+    work = tempfile.mkdtemp(prefix="sagi_voice_one_shot_")
+    path = Path(work) / "one_shot.mp3"
+    try:
+        synthesize_voice(text, mode, voice_id, path, speed, style)
+        duration = audio_duration_seconds(path)
+        if duration <= 0.1 or not path.exists() or path.stat().st_size < 1000:
+            raise RuntimeError("ONE_SHOT_EMPTY_AUDIO")
+        resp = send_file(path, mimetype="audio/mpeg", as_attachment=False)
+        resp.headers["X-SAGI-Voice-Complete"] = "1"
+        resp.headers["X-SAGI-Voice-Mode"] = "one-shot"
+        resp.headers["X-SAGI-Voice-Duration"] = str(round(duration, 3))
+        resp.headers["Access-Control-Expose-Headers"] = "X-SAGI-Voice-Complete, X-SAGI-Voice-Mode, X-SAGI-Voice-Duration"
+        resp.call_on_close(lambda: shutil.rmtree(work, ignore_errors=True))
+        return resp
+    except Exception as e:
+        shutil.rmtree(work, ignore_errors=True)
+        return jsonify({"ok": False, "error": str(e)[:700]}), 500
+
 
 @app.post("/api/voice/preview")
 def voice_preview():
