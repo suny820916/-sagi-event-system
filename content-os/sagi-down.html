@@ -1272,9 +1272,30 @@ function buildVoiceTimeline(render=true){
  });
  if(render)renderVoiceTimeline();return STUDIO.voiceTimeline
 }
+function rebuildVoiceTimelineToDuration(duration,source='actual'){
+ const text=String(q('narrationText')?.value||'').trim(),parts=splitVoiceSentences(text),total=Math.max(.1,Number(duration)||0);
+ if(!parts.length||!total)return[];
+ const weights=parts.map(p=>Math.max(1,(p.match(/[\u3400-\u9fffA-Za-z0-9]/g)||[]).length+(p.match(/[，。！？；：、,.!?;:]/g)||[]).length*1.8));
+ const gap=.08,usable=Math.max(parts.length*.35,total-gap*Math.max(0,parts.length-1)),sum=Math.max(1,weights.reduce((a,b)=>a+b,0));
+ let cursor=0;
+ STUDIO.voiceTimeline=parts.map((p,i)=>{
+  let slot=usable*weights[i]/sum;
+  if(i===parts.length-1)slot=Math.max(.12,total-cursor);
+  const start=Math.min(total,cursor),end=Math.min(total,start+slot);
+  cursor=end+(i<parts.length-1?gap:0);
+  return{index:i,text:p,start:Number(start.toFixed(3)),end:Number(end.toFixed(3)),basis:source}
+ });
+ if(STUDIO.voiceTimeline.length)STUDIO.voiceTimeline[STUDIO.voiceTimeline.length-1].end=Number(total.toFixed(3));
+ renderVoiceTimeline();
+ return STUDIO.voiceTimeline
+}
 function renderVoiceTimeline(){
  const box=q('voiceTimelineList'),state=q('voiceCoverageState'),rows=STUDIO.voiceTimeline||[];
- if(state){state.textContent=rows.length?('待云端校验 · '+rows.length+'句'):'完整性待检查';state.classList.remove('ok')}
+ if(state){
+  const actual=rows.length&&rows.some(r=>r.basis==='actual'||r.basis==='server_actual'),end=rows.length?Number(rows[rows.length-1].end)||0:0;
+  state.textContent=rows.length?(actual?('实际音轨 · '+rows.length+'句 · '+voiceTimeLabel(end)):('待云端校验 · '+rows.length+'句')):'完整性待检查';
+  state.classList.toggle('ok',!!actual)
+ }
  if(!box)return;
  if(!rows.length){box.innerHTML='<div class="voiceTimelineHint">输入解说词后自动拆分为句级时间轴。</div>';return}
  box.innerHTML=rows.map((r,i)=>'<div class="voiceSentenceRow"><time>'+voiceTimeLabel(r.start)+'–'+voiceTimeLabel(r.end)+'</time><span><em>#'+String(i+1).padStart(2,'0')+'</em>'+escapeHtml(r.text)+'</span></div>').join('')
@@ -1290,11 +1311,12 @@ function voiceTimingHint(){
  if(!text){el.textContent='输入解说稿后，会自动估算配音时长并和当前视频片段比较。';STUDIO.voiceTimeline=[];renderVoiceTimeline();return}
  const chars=(text.match(/[\u3400-\u9fffA-Za-z0-9]/g)||[]).length,marks=(text.match(/[，。！？；：,.!?;:]/g)||[]).length;
  const speed=Math.max(.75,Number(q('aiVoiceSpeed')?.value)||1),estimate=Math.max(1,chars/(4.25*speed)+marks*.08);
+ const mode=q('aiVoiceMode')?.value||'ai_male',actualKey=voiceGenerationKey(text,mode),actual=(STUDIO.generatedVoiceKey===actualKey&&STUDIO.generatedVoiceDuration>0)?STUDIO.generatedVoiceDuration:0;
  let clip=0;try{clip=Number(studioRange()[2])||0}catch(e){}
  let verdict='';
  if(clip>0){const r=estimate/clip;if(r>1.18)verdict=' · <b>稿件偏长</b>，最多自然加速18%，仍超时则自动延长视频尾帧，不截解说';else if(r<.72)verdict=' · <b>稿件偏短</b>，结尾会保留原声/留白';else verdict=' · <b>长度合适</b>，适合智能贴合'}
- el.innerHTML='约 <b>'+chars+' 字</b> · 预计配音 <b>'+estimate.toFixed(1)+'秒</b>'+(clip>0?' · 当前片段 <b>'+clip.toFixed(1)+'秒</b>':'')+verdict;
- buildVoiceTimeline(true)
+ el.innerHTML='约 <b>'+chars+' 字</b> · '+(actual?('实际配音 <b>'+actual.toFixed(1)+'秒</b>'):('预计配音 <b>'+estimate.toFixed(1)+'秒</b>'))+(clip>0?' · 当前片段 <b>'+clip.toFixed(1)+'秒</b>':'')+verdict;
+ if(actual)rebuildVoiceTimelineToDuration(actual,'actual');else buildVoiceTimeline(true)
 }
 async function voiceApiReady(){
  const ready=await wakeCaptionCloud();
@@ -1363,6 +1385,7 @@ async function mergeVoiceChunks(blobs,texts){
 async function generateCompleteAIVoice(text,mode,force=false){
  const key=voiceGenerationKey(text,mode);
  if(!force&&STUDIO.generatedVoiceBlob&&STUDIO.generatedVoiceKey===key){
+  rebuildVoiceTimelineToDuration(STUDIO.generatedVoiceDuration,'actual');
   return{blob:STUDIO.generatedVoiceBlob,duration:STUDIO.generatedVoiceDuration,parts:STUDIO.generatedVoiceParts,cached:true}
  }
  const chunks=groupVoiceText(text,72);if(!chunks.length)throw new Error('EMPTY_NARRATION');
@@ -1383,6 +1406,7 @@ async function generateCompleteAIVoice(text,mode,force=false){
  if(STUDIO.generatedVoiceUrl)URL.revokeObjectURL(STUDIO.generatedVoiceUrl);
  STUDIO.generatedVoiceBlob=merged.blob;STUDIO.generatedVoiceDuration=merged.duration;STUDIO.generatedVoiceParts=chunks.length;STUDIO.generatedVoiceKey=key;
  STUDIO.generatedVoiceUrl=URL.createObjectURL(merged.blob);
+ rebuildVoiceTimelineToDuration(merged.duration,'actual');
  markVoiceCoverage(true,(STUDIO.voiceTimeline||[]).length||chunks.length,100);
  return{blob:merged.blob,duration:merged.duration,parts:chunks.length,cached:false}
 }
@@ -1517,7 +1541,7 @@ async function startCloudRender(recovering=false){
      const merged=await generateCompleteAIVoice(String(q('narrationText')?.value||''),mode,false);
      if(merged.duration>179.2)throw new Error('完整配音超过3分钟云端上限，请缩短解说稿');
      submitMode='recorded';submitVoiceBlob=merged.blob;submitVoiceName='sagi-complete-ai-voice.wav';submitSync='natural';
-     submitDuration=Math.max(duration,merged.duration+.5);
+     submitDuration=duration;
      setCloudRenderStatus('完整音轨已准备 · '+merged.duration.toFixed(1)+'秒 · 文本覆盖100% · 正在上传成片')
    }
 
@@ -1603,6 +1627,10 @@ async function pollCloudRender(){
    }
    if(!r.ok||!d?.ok)throw new Error(d?.error||('HTTP '+r.status));
    const j=d.job||{};setCloudRenderProgress(j.progress||0);setCloudRenderStatus((j.stage||j.status||'处理中')+(j.progress?' · '+j.progress+'%':''));
+    if(Array.isArray(j.voiceTimeline)&&j.voiceTimeline.length){
+      STUDIO.voiceTimeline=j.voiceTimeline.map((x,i)=>({index:i,text:String(x.text||''),start:Number(x.start)||0,end:Number(x.end)||0,basis:'server_actual'})).filter(x=>x.text);
+      renderVoiceTimeline()
+    }
     if(j.voiceSegments>0&&j.voiceComplete)markVoiceCoverage(true,j.voiceSegments,j.voiceCoverage||100);
    if(j.status==='ready'&&j.downloadUrl){
      STUDIO.cloudResultUrl=j.previewUrl||j.downloadUrl;STUDIO.cloudRenderJobId='';
