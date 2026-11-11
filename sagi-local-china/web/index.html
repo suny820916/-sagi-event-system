@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0a0a0b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>SAGI AI LOCAL CHINA</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body data-build="1.4.0">
+  <div id="authGate" class="authGate">
+    <div class="authCard">
+      <div class="authBrand">SAGI AI LOCAL</div>
+      <div class="authSub">CHINA · V1.4</div>
+      <h1>本地商家的 AI 宣传员</h1>
+      <p>国内生产版。基础海报、商家档案和历史记录不依赖海外服务。</p>
+      <div class="authTabs">
+        <button id="loginTab" class="authTab active">登录</button>
+        <button id="registerTab" class="authTab">注册</button>
+      </div>
+      <label>账号</label>
+      <input id="authUser" class="field" autocomplete="username" placeholder="至少3位">
+      <label>密码</label>
+      <input id="authPass" class="field" type="password" autocomplete="current-password" placeholder="至少6位">
+      <button id="authSubmit" class="primary">登录</button>
+      <div id="authMessage" class="message"></div>
+    </div>
+  </div>
+
+  <div id="app" class="app hidden">
+    <header class="topbar">
+      <div>
+        <div class="brand">SAGI AI LOCAL</div>
+        <div class="version">CHINA · V1.4</div>
+      </div>
+      <div id="healthBadge" class="health">检测中</div>
+    </header>
+
+    <main>
+      <section id="pagePoster" class="page active">
+        <div class="hero">
+          <span>POSTER ENGINE</span>
+          <h1>一张照片，做成真正能发的海报。</h1>
+          <p>基础版式本地直接生成；AI在线时自动优化标题、构图建议和视觉判断。</p>
+        </div>
+
+        <div class="card">
+          <div class="sectionTitle">01 · 上传照片</div>
+          <label for="photoInput" class="uploadBox">
+            <strong>＋ 选择照片</strong>
+            <span>菜品 / 商品 / 门店 / 服务现场</span>
+          </label>
+          <input id="photoInput" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+          <img id="photoPreview" class="photoPreview hidden" alt="预览">
+        </div>
+
+        <div class="card">
+          <div class="sectionTitle">02 · 这次要宣传什么</div>
+          <textarea id="brief" class="field textarea" placeholder="例如：周末羊排第二份半价，晚上6点开始"></textarea>
+          <div class="quickRows">
+            <button class="quick" data-fill="今日主推">今日主推</button>
+            <button class="quick" data-fill="新品上市">新品上市</button>
+            <button class="quick" data-fill="周末活动">周末活动</button>
+            <button class="quick" data-fill="开业优惠">开业优惠</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="sectionTitle">03 · 选择视觉方向</div>
+          <div class="styleGrid">
+            <button class="styleBtn active" data-style="editorial">
+              <b>EDITORIAL</b><span>高级杂志感</span>
+            </button>
+            <button class="styleBtn" data-style="split">
+              <b>BRAND SPLIT</b><span>品牌分栏感</span>
+            </button>
+            <button class="styleBtn" data-style="impact">
+              <b>IMPACT</b><span>强转化广告感</span>
+            </button>
+          </div>
+          <button id="generateBtn" class="primary">生成海报</button>
+          <div id="generateMessage" class="message"></div>
+        </div>
+
+        <div id="resultCard" class="card hidden">
+          <div class="resultHead">
+            <div>
+              <div class="sectionTitle">04 · 生成结果</div>
+              <div id="engineLabel" class="engine">LOCAL POSTER</div>
+            </div>
+            <button id="saveProjectBtn" class="ghost small">保存到历史</button>
+          </div>
+
+          <div class="copyBox">
+            <div class="copyLabel">主标题</div>
+            <div id="headline" class="headlineText"></div>
+            <div id="subheadline" class="subText"></div>
+          </div>
+
+          <div class="canvasGrid">
+            <div class="canvasCard">
+              <div class="canvasTitle">3:4 商业海报</div>
+              <canvas id="poster34" width="900" height="1200"></canvas>
+              <button id="download34" class="ghost">保存 3:4 PNG</button>
+            </div>
+            <div class="canvasCard">
+              <div class="canvasTitle">9:16 短视频封面</div>
+              <canvas id="poster916" width="900" height="1600"></canvas>
+              <button id="download916" class="ghost">保存 9:16 PNG</button>
+            </div>
+          </div>
+
+          <div class="analysisGrid">
+            <div class="analysisBox">
+              <span>视觉判断</span>
+              <b id="visualSubject">真实商家素材</b>
+              <p id="visualScene">优先保留主体完整和文字空间。</p>
+            </div>
+            <div class="analysisBox">
+              <span>发布文案</span>
+              <p id="publishCopy"></p>
+              <button id="copyPublish" class="mini">复制文案</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="pageHistory" class="page">
+        <div class="pageTitle"><h1>历史记录</h1><p>保存过的海报项目都在这里。</p></div>
+        <div id="historyList" class="historyList"></div>
+      </section>
+
+      <section id="pageProfile" class="page">
+        <div class="pageTitle"><h1>商家档案</h1><p>保存一次，之后每次生成都会自动读取。</p></div>
+        <div class="card">
+          <label>商家名称</label>
+          <input id="merchantName" class="field" placeholder="例如：阿达西烧烤">
+          <label>行业</label>
+          <select id="industry" class="field">
+            <option>餐饮 / 烧烤</option>
+            <option>酒店 / 民宿</option>
+            <option>汽车服务</option>
+            <option>培训机构</option>
+            <option>健身运动</option>
+            <option>美发 / 美业</option>
+            <option>摄影 / 婚庆</option>
+            <option>零售门店</option>
+            <option>其他本地服务</option>
+          </select>
+          <label>主打产品 / 服务</label>
+          <input id="product" class="field" placeholder="例如：羊排、双人套餐">
+          <label>主要客群</label>
+          <input id="audience" class="field" placeholder="例如：18-35岁年轻人">
+          <label>品牌调性</label>
+          <input id="brandTone" class="field" placeholder="例如：高级、真实、热烈、不油腻">
+          <label>联系电话</label>
+          <input id="phone" class="field" placeholder="可选">
+          <label>地址</label>
+          <input id="address" class="field" placeholder="可选">
+          <button id="saveProfileBtn" class="primary">保存商家档案</button>
+          <div id="profileMessage" class="message"></div>
+        </div>
+      </section>
+
+      <section id="pageAccount" class="page">
+        <div class="pageTitle"><h1>我的</h1><p>SAGI AI LOCAL CHINA 生产环境状态。</p></div>
+        <div class="card stats">
+          <div><span>版本</span><b>1.4.0</b></div>
+          <div><span>部署模式</span><b>CHINA</b></div>
+          <div><span>基础海报</span><b>离线可生成</b></div>
+          <div><span>AI</span><b id="accountAI">检测中</b></div>
+        </div>
+        <div class="card">
+          <div class="sectionTitle">近31天用量</div>
+          <div id="usageList" class="usageList"></div>
+        </div>
+        <button id="logoutBtn" class="danger">退出登录</button>
+      </section>
+    </main>
+
+    <nav class="bottomNav">
+      <button class="navBtn active" data-page="Poster"><span>✦</span>海报</button>
+      <button class="navBtn" data-page="History"><span>▤</span>历史</button>
+      <button class="navBtn" data-page="Profile"><span>◎</span>商家</button>
+      <button class="navBtn" data-page="Account"><span>●</span>我的</button>
+    </nav>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="/api.js"></script>
+  <script src="/poster.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>
