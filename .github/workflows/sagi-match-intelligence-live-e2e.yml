@@ -34,7 +34,7 @@ jobs:
           for i in $(seq 1 60); do
             CODE="$(curl -L -sS -o health.json -w '%{http_code}' --max-time 25 "$URL" || true)"
             echo "health $i/60 -> HTTP $CODE"
-            if [ "$CODE" = "200" ] && jq -e '.ok == true and (.version | startswith("1.0-"))' health.json >/dev/null 2>&1; then
+            if [ "$CODE" = "200" ] && jq -e '.ok == true and (.version | startswith("1.1.2-"))' health.json >/dev/null 2>&1; then
               cat health.json
               exit 0
             fi
@@ -80,9 +80,11 @@ jobs:
             if [ "$STATUS" = "completed" ]; then
               echo "$RESULT" | jq .
               echo "$RESULT" | jq -e '
-                .result.version == "1.0-cloud-lite" and
+                .result.version == "1.1.2-tracking-core" and
                 .result.video.sampled_frames > 0 and
                 .result.video.person_detection_samples > 0 and
+                .result.video.stable_track_count >= 0 and
+                (.result.tracking.stable_track_count >= 0) and
                 (.result.tracking_map | length > 0)
               ' >/dev/null
 
