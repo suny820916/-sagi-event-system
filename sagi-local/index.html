@@ -156,14 +156,22 @@ async function runLiveSelfTest(){
     if(!photoImage){photoImage=await loadImg(URL.createObjectURL(file))}
     $('#photoBrief').value='线上自检海报';
     const pack=localVisualPack('线上自检海报');
-    commercialImage=null;renderVisual(pack,'LIVE SELFTEST',true);
-    await new Promise(r=>setTimeout(r,120));
+    commercialImage=null;
+    const signatures=[];
+    for(const tpl of ['editorial','split','impact']){
+      currentPosterTemplate=tpl;renderVisual(pack,'LIVE SELFTEST',true);
+      await new Promise(r=>setTimeout(r,80));
+      signatures.push($('#poster34').toDataURL('image/png').slice(-180));
+    }
+    currentPosterTemplate='editorial';renderVisual(pack,'LIVE SELFTEST',true);
     const a=$('#poster34'),b=$('#poster916');
     const ap=a.getContext('2d').getImageData(20,20,1,1).data;
     const bp=b.getContext('2d').getImageData(20,20,1,1).data;
+    const distinct=new Set(signatures).size===3;
     const ok=a.dataset.rendered==='1'&&b.dataset.rendered==='1'&&
       (ap[0]+ap[1]+ap[2]+ap[3]>0)&&(bp[0]+bp[1]+bp[2]+bp[3]>0)&&
-      !!$('#download34')&&!!$('#download916');
+      !!$('#download34')&&!!$('#download916')&&distinct;
+    document.body.dataset.templateSmoke=distinct?'ok':'fail';
     document.body.dataset.liveSelftest=ok?'ok':'fail:blank';
   }catch(e){document.body.dataset.liveSelftest='fail:'+String(e&&e.message||e)}
 }
