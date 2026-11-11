@@ -872,7 +872,7 @@ def _atempo_chain(rate):
     return ",".join(f"atempo={x:.5f}" for x in parts)
 
 
-def fit_narration_to_duration(source_path, work, target_duration):
+def fit_narration_to_duration(source_path, work, target_duration, output_name="narration_fit.m4a"):
     """
     Fit narration toward the clip duration WITHOUT ever cutting the ending.
     We only apply a natural speed-up ceiling. If speech is still longer,
@@ -892,7 +892,7 @@ def fit_narration_to_duration(source_path, work, target_duration):
     if applied_rate <= 1.015:
         return Path(source_path)
 
-    out = Path(work) / "narration_fit.m4a"
+    out = Path(work) / str(output_name or "narration_fit.m4a")
     exe = imageio_ffmpeg.get_ffmpeg_exe()
     af = _atempo_chain(applied_rate)
     cmd = [
@@ -905,6 +905,183 @@ def fit_narration_to_duration(source_path, work, target_duration):
         print("voice sync fallback:", (proc.stdout or "")[-500:], flush=True)
         return Path(source_path)
     return out
+
+
+def _voice_compact_text(text):
+    return re.sub(r"\s+", "", str(text or ""))
+
+
+def split_voice_sentences(text, max_chars=140):
+    """Split narration without losing any spoken characters."""
+    raw = str(text or "").replace("\r\n", "\n").replace("\r", "\n").strip()
+    if not raw:
+        return []
+    max_chars = max(40, min(280, int(max_chars or 140)))
+    chunks, buf = [], ""
+    strong = set("。！？!?；;\n")
+    soft = set("，、,:：")
+    last_soft = -1
+    for ch in raw:
+        buf += ch
+        if ch in soft:
+            last_soft = len(buf)
+        should_flush = ch in strong
+        if len(buf) >= max_chars:
+            if last_soft >= max(20, int(max_chars * 0.55)):
+                head, tail = buf[:last_soft], buf[last_soft:]
+                if head.strip():
+                    chunks.append(head.strip())
+                buf = tail
+            else:
+                if buf.strip():
+                    chunks.append(buf.strip())
+                buf = ""
+            last_soft = -1
+            continue
+        if should_flush and buf.strip():
+            chunks.append(buf.strip())
+            buf = ""
+            last_soft = -1
+    if buf.strip():
+        chunks.append(buf.strip())
+    return [x for x in chunks if x]
+
+
+def build_voice_timeline(text, clip_duration=0):
+    parts = split_voice_sentences(text)
+    if not parts:
+        return []
+    weights = []
+    for part in parts:
+        chars = max(1, len(re.findall(r"[\u3400-\u9fffA-Za-z0-9]", part)))
+        marks = len(re.findall(r"[，。！？；：、,.!?;:]", part))
+        weights.append(max(1.0, chars + marks * 1.8))
+    natural_total = sum(
+        max(0.7, len(re.findall(r"[\u3400-\u9fffA-Za-z0-9]", p)) / 4.25
+            + len(re.findall(r"[，。！？；：、,.!?;:]", p)) * 0.08)
+        for p in parts
+    )
+    target_total = max(natural_total, float(clip_duration or 0))
+    gap = 0.08
+    usable = max(len(parts) * 0.7, target_total - gap * max(0, len(parts) - 1))
+    total_weight = max(1.0, sum(weights))
+    rows, cursor = [], 0.0
+    for i, (part, weight) in enumerate(zip(parts, weights)):
+        slot = max(0.7, usable * weight / total_weight)
+        rows.append({"index": i, "text": part, "start": round(cursor, 3), "end": round(cursor + slot, 3)})
+        cursor += slot + (gap if i < len(parts) - 1 else 0)
+    return rows
+
+
+def normalize_voice_timeline(raw_timeline, narration, clip_duration=0):
+    expected = _voice_compact_text(narration)
+    rows = []
+    if isinstance(raw_timeline, list):
+        for i, item in enumerate(raw_timeline[:120]):
+            if not isinstance(item, dict):
+                continue
+            text = str(item.get("text") or "").strip()
+            if not text:
+                continue
+            try:
+                start = max(0.0, float(item.get("start") or 0))
+                end = max(start + 0.1, float(item.get("end") or start + 0.1))
+            except Exception:
+                continue
+            rows.append({"index": len(rows), "text": text, "start": start, "end": end})
+    # Never trust a client timeline that omits/reorders narration.
+    if not rows or _voice_compact_text("".join(x["text"] for x in rows)) != expected:
+        rows = build_voice_timeline(narration, clip_duration)
+    if _voice_compact_text("".join(x["text"] for x in rows)) != expected:
+        raise RuntimeError("VOICE_TIMELINE_TEXT_MISMATCH")
+    return rows
+
+
+def synthesize_voice_timeline(narration, mode, voice_id, work, speed=1.0, style="natural",
+                              clip_duration=0, raw_timeline=None, sync_mode="fit"):
+    """
+    VOICE DIRECTOR V1.2:
+    synthesize every sentence independently, validate every segment, then place
+    segments on a narration timeline. No input sentence is allowed to disappear.
+    """
+    narration = str(narration or "").strip()
+    timeline = normalize_voice_timeline(raw_timeline, narration, clip_duration)
+    if not timeline:
+        raise RuntimeError("EMPTY_NARRATION")
+
+    exe = imageio_ffmpeg.get_ffmpeg_exe()
+    inputs, filter_parts, actual_rows = [], [], []
+    cursor = 0.0
+    spoken_chars = 0
+    for i, row in enumerate(timeline):
+        text = str(row["text"]).strip()
+        seg_path = Path(work) / f"voice_seg_{i:03d}.mp3"
+        synthesize_voice(text, mode, voice_id, seg_path, speed, style)
+        seg_duration = audio_duration_seconds(seg_path)
+        char_count = len(re.findall(r"[\u3400-\u9fffA-Za-z0-9]", text))
+        # Very permissive sanity floor: catches empty/provider-truncated segments.
+        min_reasonable = max(0.12, char_count / 15.0)
+        if seg_duration < min_reasonable:
+            raise RuntimeError(f"VOICE_SEGMENT_INCOMPLETE_{i+1}")
+
+        target_slot = max(0.7, float(row["end"]) - float(row["start"]))
+        fitted = seg_path
+        if str(sync_mode or "fit") == "fit" and seg_duration > target_slot * 1.015:
+            fitted = fit_narration_to_duration(
+                seg_path, work, target_slot,
+                output_name=f"voice_seg_{i:03d}_fit.m4a",
+            )
+            seg_duration = audio_duration_seconds(fitted)
+            if seg_duration <= 0.1:
+                raise RuntimeError(f"VOICE_SEGMENT_FIT_FAILED_{i+1}")
+
+        desired_start = max(0.0, float(row["start"]))
+        actual_start = desired_start if i == 0 else max(desired_start, cursor + 0.06)
+        actual_end = actual_start + seg_duration
+        cursor = actual_end
+        spoken_chars += char_count
+        inputs += ["-i", str(fitted)]
+        delay_ms = max(0, int(round(actual_start * 1000)))
+        filter_parts.append(f"[{i}:a]asetpts=PTS-STARTPTS,adelay={delay_ms}:all=1[a{i}]")
+        actual_rows.append({
+            "index": i,
+            "text": text,
+            "targetStart": round(desired_start, 3),
+            "targetEnd": round(float(row["end"]), 3),
+            "start": round(actual_start, 3),
+            "end": round(actual_end, 3),
+            "duration": round(seg_duration, 3),
+        })
+
+    expected_compact = _voice_compact_text(narration)
+    actual_compact = _voice_compact_text("".join(x["text"] for x in actual_rows))
+    if not expected_compact or actual_compact != expected_compact:
+        raise RuntimeError("VOICE_COMPLETENESS_GUARD_FAILED")
+
+    out = Path(work) / "narration_timeline.m4a"
+    labels = "".join(f"[a{i}]" for i in range(len(actual_rows)))
+    filter_parts.append(f"{labels}amix=inputs={len(actual_rows)}:duration=longest:normalize=0[aout]")
+    cmd = [
+        exe, "-hide_banner", "-loglevel", "error", "-y", *inputs,
+        "-filter_complex", ";".join(filter_parts),
+        "-map", "[aout]", "-c:a", "aac", "-b:a", "160k", str(out),
+    ]
+    proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=180)
+    if proc.returncode != 0 or not out.exists() or out.stat().st_size < 1000:
+        raise RuntimeError("VOICE_TIMELINE_MIX_FAILED: " + (proc.stdout or "")[-500:])
+
+    final_duration = audio_duration_seconds(out)
+    if final_duration + 0.08 < actual_rows[-1]["end"]:
+        raise RuntimeError("VOICE_FINAL_AUDIO_TRUNCATED")
+    meta = {
+        "complete": True,
+        "coverage": 100,
+        "segments": len(actual_rows),
+        "chars": spoken_chars,
+        "duration": round(final_duration, 3),
+        "timeline": actual_rows,
+    }
+    return out, meta
 
 
 def media_has_audio(path):
@@ -987,6 +1164,7 @@ def run_cloud_render(job_id, options):
             quality = str(options.get("quality") or "fast")
             captions = options.get("captions") or []
             narration = str(options.get("narration") or "").strip()
+            voice_timeline = options.get("voice_timeline") or []
             voice_mode = str(options.get("voice_mode") or "none")
             voice_id = str(options.get("voice_id") or "").strip()
             voice_speed = float(options.get("voice_speed") or 1.0)
@@ -997,21 +1175,36 @@ def run_cloud_render(job_id, options):
             burn_subtitles = bool(options.get("burn_subtitles", True))
 
             narration_path = None
+            voice_meta = {"complete": False, "coverage": 0, "segments": 0, "duration": 0.0, "timeline": []}
             uploaded_voice = options.get("uploaded_voice")
             if uploaded_voice and Path(uploaded_voice).exists():
                 narration_path = Path(uploaded_voice)
+                voice_meta = {
+                    "complete": True, "coverage": 100, "segments": 1,
+                    "duration": round(audio_duration_seconds(narration_path), 3), "timeline": [],
+                    "source": "recorded",
+                }
             elif voice_mode in ("ai_male", "ai_female", "clone") and narration:
                 with render_jobs_lock:
-                    render_jobs[job_id].update({"stage": "生成 AI 配音", "progress": 20, "updated_at": iso()})
+                    render_jobs[job_id].update({
+                        "stage": "VOICE V1.2 · 句级生成 0%",
+                        "progress": 18, "updated_at": iso(),
+                    })
                     _persist_render_jobs_locked()
-                narration_path = work / "narration.mp3"
-                synthesize_voice(narration, voice_mode, voice_id, narration_path, voice_speed, voice_style)
-
-            if narration_path and voice_sync == "fit":
+                narration_path, voice_meta = synthesize_voice_timeline(
+                    narration, voice_mode, voice_id, work,
+                    voice_speed, voice_style, duration, voice_timeline, voice_sync,
+                )
                 with render_jobs_lock:
-                    render_jobs[job_id].update({"stage": "智能贴合配音时长", "progress": 27, "updated_at": iso()})
+                    render_jobs[job_id].update({
+                        "stage": f"解说完整性校验通过 · {voice_meta['segments']}句 · 100%",
+                        "progress": 29, "updated_at": iso(),
+                        "voiceComplete": True, "voiceCoverage": 100,
+                        "voiceSegments": voice_meta["segments"],
+                        "voiceDuration": voice_meta["duration"],
+                        "voiceTimeline": voice_meta["timeline"][:120],
+                    })
                     _persist_render_jobs_locked()
-                narration_path = fit_narration_to_duration(narration_path, work, max(0.8, duration - 0.22))
 
             narration_duration = audio_duration_seconds(narration_path) if narration_path else 0.0
             # Complete narration always wins over the original clip boundary.
@@ -1108,6 +1301,11 @@ def run_cloud_render(job_id, options):
                     "status": "ready", "stage": "成片完成", "progress": 100,
                     "updated_at": iso(), "path": str(out), "size": out.stat().st_size,
                     "filename": "SAGI_CLOUD_RENDER.mp4", "error": "",
+                    "voiceComplete": bool(voice_meta.get("complete")) if narration_path else True,
+                    "voiceCoverage": int(voice_meta.get("coverage") or 0) if narration_path else 100,
+                    "voiceSegments": int(voice_meta.get("segments") or 0),
+                    "voiceDuration": round(float(voice_meta.get("duration") or narration_duration or 0), 3),
+                    "voiceTimeline": (voice_meta.get("timeline") or [])[:120],
                 })
                 _persist_render_jobs_locked()
         except Exception as e:
@@ -2194,6 +2392,8 @@ def health():
         "aiVoiceFallback": True,
         "voiceDirectorVersion": "1.2",
         "voiceNarrationNoCut": True,
+        "voiceSentenceTimeline": True,
+        "voiceCompletenessGuard": True,
         "voicePreviewMaxChars": 10000,
         "voiceClone": bool(ELEVENLABS_API_KEY),
         "cloudRender": True,
@@ -2786,8 +2986,15 @@ def voice_preview():
     work = tempfile.mkdtemp(prefix="sagi_voice_preview_")
     path = Path(work) / "preview.mp3"
     try:
-        synthesize_voice(text[:10000], mode, voice_id, path, speed, style)
-        resp = send_file(path, mimetype="audio/mpeg", as_attachment=False)
+        preview_path, meta = synthesize_voice_timeline(
+            text, mode, voice_id, Path(work), speed, style,
+            clip_duration=0, raw_timeline=None, sync_mode="natural",
+        )
+        resp = send_file(preview_path, mimetype="audio/mp4", as_attachment=False)
+        resp.headers["X-SAGI-Voice-Complete"] = "1"
+        resp.headers["X-SAGI-Voice-Coverage"] = "100"
+        resp.headers["X-SAGI-Voice-Segments"] = str(meta.get("segments") or 0)
+        resp.headers["X-SAGI-Voice-Duration"] = str(meta.get("duration") or 0)
         resp.call_on_close(lambda: shutil.rmtree(work, ignore_errors=True))
         return resp
     except Exception as e:
@@ -2827,6 +3034,13 @@ def create_render_job():
         voice_upload.save(vp)
         uploaded_voice = str(vp)
 
+    try:
+        voice_timeline = json.loads(request.form.get("voice_timeline") or "[]")
+        if not isinstance(voice_timeline, list):
+            voice_timeline = []
+    except Exception:
+        voice_timeline = []
+
     options = {
         "start": request.form.get("start") or "0",
         "duration": request.form.get("duration") or "15",
@@ -2834,6 +3048,7 @@ def create_render_job():
         "quality": request.form.get("quality") or "fast",
         "captions": captions[:300],
         "narration": request.form.get("narration") or "",
+        "voice_timeline": voice_timeline,
         "voice_mode": request.form.get("voice_mode") or "none",
         "voice_id": request.form.get("voice_id") or "",
         "voice_speed": request.form.get("voice_speed") or "1",
