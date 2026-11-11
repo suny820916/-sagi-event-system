@@ -19,7 +19,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  # SAGI LOCAL POSTER CORE V1.2.1
+  # SAGI LOCAL DESIGN SYSTEM V1.3
   preflight:
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -638,13 +638,13 @@ jobs:
           PY
           node --check /tmp/sagi-down.js
 
-      - name: SAGI AI LOCAL V1.2.1 poster frontend smoke
+      - name: SAGI AI LOCAL V1.3 design frontend smoke
         run: |
           python - <<'PY'
           import re, pathlib
           p=pathlib.Path("sagi-local/index.html")
           s=p.read_text(encoding="utf-8")
-          assert "V1.2.3 · POSTER HOTFIX" in s
+          assert "V1.3 · DESIGN SYSTEM" in s
           assert "/api/local-ai/generate" in s
           assert "/api/local-ai/visual" in s
           assert "/api/local-ai/poster" in s
@@ -655,6 +655,12 @@ jobs:
           assert "立即生成海报" in s
           assert "poster34" in s and "poster916" in s
           assert "saveCanvas" in s
+          assert 'data-template="editorial"' in s
+          assert 'data-template="split"' in s
+          assert 'data-template="impact"' in s
+          assert "drawEditorialPoster" in s
+          assert "drawSplitPoster" in s
+          assert "drawImpactPoster" in s
           assert "LOCAL POSTER" in s
           assert "async function cloudPoster" in s
           assert "$('##photoGen')" not in s
@@ -663,7 +669,7 @@ jobs:
           scripts=re.findall(r"<script>([\s\S]*?)</script>",s)
           assert scripts, "SAGI LOCAL inline script missing"
           pathlib.Path("/tmp/sagi-local-v121.js").write_text("\n".join(scripts),encoding="utf-8")
-          print("SAGI AI LOCAL V1.2.1 poster wiring OK")
+          print("SAGI AI LOCAL V1.3 design wiring OK")
           PY
           node --check /tmp/sagi-local-v121.js
 
@@ -695,14 +701,21 @@ jobs:
                 try{
                   photoImage=im;commercialImage=null;
                   const pack=localVisualPack('周末主推产品');
-                  renderVisual(pack,'SMOKE',true);
                   const a=document.getElementById('poster34');
                   const b=document.getElementById('poster916');
+                  const sig=[];
+                  for(const tpl of ['editorial','split','impact']){
+                    currentPosterTemplate=tpl;renderVisual(pack,'SMOKE',true);
+                    sig.push(a.toDataURL('image/png').slice(-180));
+                  }
+                  currentPosterTemplate='editorial';renderVisual(pack,'SMOKE',true);
                   const p=a.getContext('2d').getImageData(10,10,1,1).data;
                   const q=b.getContext('2d').getImageData(10,10,1,1).data;
                   if(a.dataset.rendered!=='1'||b.dataset.rendered!=='1')throw new Error('render flag missing');
                   if((p[0]+p[1]+p[2]+p[3])===0||(q[0]+q[1]+q[2]+q[3])===0)throw new Error('canvas blank');
+                  if(new Set(sig).size!==3)throw new Error('templates not visually distinct');
                   if(!document.getElementById('download34')||!document.getElementById('download916'))throw new Error('save buttons missing');
+                  document.body.dataset.templateSmoke='ok';
                   document.body.dataset.posterSmoke='ok';
                 }catch(e){document.body.dataset.posterSmoke='fail:'+String(e&&e.message||e)}
               };
