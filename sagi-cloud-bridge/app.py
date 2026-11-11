@@ -1334,6 +1334,7 @@ def run_cloud_render(job_id, options):
             voice_sync = str(options.get("voice_sync") or "fit")
             visual_sync = str(options.get("visual_sync") or "auto")
             visual_sync_max_hold = max(0.0, min(3.0, float(options.get("visual_sync_max_hold") or 3.0)))
+            scene_plan_raw = options.get("scene_plan") or []
             voice_volume = max(0.25, min(2.0, float(options.get("voice_volume") or 1.0)))
             original_volume = max(0.0, min(1.0, float(options.get("original_volume") or 0.25)))
             burn_subtitles = bool(options.get("burn_subtitles", True))
@@ -1376,8 +1377,11 @@ def run_cloud_render(job_id, options):
             output_duration = max(duration, narration_duration + 0.35 if narration_duration > 0 else duration)
             visual_gap = max(0.0, output_duration - duration)
             visual_factor = max(1.0, output_duration / max(0.2, duration))
+            scene_plan = normalize_scene_plan(scene_plan_raw, duration, output_duration)
             visual_strategy = "native"
-            if visual_gap > visual_sync_max_hold + 0.01:
+            if visual_sync == "auto" and scene_plan:
+                visual_strategy = "semantic"
+            elif visual_gap > visual_sync_max_hold + 0.01:
                 if visual_sync == "off":
                     raise RuntimeError(
                         f"VISUAL_SYNC_REQUIRED: narration exceeds picture by {visual_gap:.1f}s; "
@@ -1388,25 +1392,14 @@ def run_cloud_render(job_id, options):
                 visual_strategy = "short_hold"
 
             width, height = render_dimensions(aspect, quality)
-            vf = f"scale={width}:{height}:force_original_aspect_ratio=increase,crop={width}:{height},setsar=1"
-            if visual_strategy in ("stretch", "dynamic"):
-                vf += f",setpts={visual_factor:.8f}*PTS"
-                if visual_strategy == "dynamic" and visual_factor > 1.08:
-                    # Subtle continuous motion keeps tactical/educational frames alive
-                    # while preserving the original visual order.
-                    zw = max(width + 2, int(round(width * 1.06 / 2.0) * 2))
-                    zh = max(height + 2, int(round(height * 1.06 / 2.0) * 2))
-                    vf += (
-                        f",scale={zw}:{zh},"
-                        f"crop={width}:{height}:"
-                        "x='(iw-ow)/2*(1+sin(t*0.19))':"
-                        "y='(ih-oh)/2*(1+cos(t*0.13))'"
-                    )
-            elif visual_strategy == "short_hold":
-                vf += f",tpad=stop_mode=clone:stop_duration={min(visual_gap, visual_sync_max_hold):.3f}"
-
             render_captions = captions
-            if visual_strategy in ("stretch", "dynamic") and captions:
+            semantic_instances = []
+            if visual_strategy == "semantic":
+                render_captions = remap_captions_to_scene_plan(captions, scene_plan)
+                semantic_instances = expand_scene_instances(scene_plan)
+                if not semantic_instances:
+                    raise RuntimeError("SCENE_SYNC_PLAN_EMPTY")
+            elif visual_strategy in ("stretch", "dynamic") and captions:
                 render_captions = []
                 for cap in captions:
                     cc = dict(cap)
@@ -1417,14 +1410,14 @@ def run_cloud_render(job_id, options):
                         pass
                     render_captions.append(cc)
 
-            ass_path = None
+            subtitle_filter = ""
             if burn_subtitles and render_captions:
                 ensure_cjk_font()
                 ass_path = work / "captions.ass"
                 write_ass(render_captions, ass_path, width, height)
                 ass_escaped = str(ass_path).replace("\\", "/").replace(":", r"\:").replace("'", r"\'")
                 font_escaped = str(FONT_DIR).replace("\\", "/").replace(":", r"\:").replace("'", r"\'")
-                vf += f",subtitles='{ass_escaped}':fontsdir='{font_escaped}'"
+                subtitle_filter = f"subtitles='{ass_escaped}':fontsdir='{font_escaped}'"
 
             exe = imageio_ffmpeg.get_ffmpeg_exe()
             out = work / "SAGI_CLOUD_RENDER.mp4"
@@ -1432,31 +1425,70 @@ def run_cloud_render(job_id, options):
             if narration_path:
                 cmd += ["-i", str(narration_path)]
 
-            filters = [f"[0:v]{vf}[vout]"]
+            filters = []
             has_audio = media_has_audio(source)
             audio_map = None
-            if narration_path and has_audio and original_volume > 0:
-                original_af = f"volume={original_volume}"
-                if visual_strategy in ("stretch", "dynamic") and visual_factor > 1.001:
-                    original_af += "," + _atempo_chain(1.0 / visual_factor)
-                filters += [
-                    f"[0:a]{original_af}[a0]",
-                    f"[1:a]volume={voice_volume}[a1]",
-                    "[a0][a1]amix=inputs=2:duration=longest:dropout_transition=1[aout]",
-                ]
-                audio_map = "[aout]"
-            elif narration_path:
-                filters += [f"[1:a]volume={voice_volume}[aout]"]
-                audio_map = "[aout]"
-            elif has_audio and original_volume > 0:
-                if visual_strategy in ("stretch", "dynamic") and visual_factor > 1.001:
-                    filters += [f"[0:a]volume={original_volume},{_atempo_chain(1.0 / visual_factor)}[aout]"]
+
+            if visual_strategy == "semantic":
+                vparts, vlabel = build_semantic_video_filters(semantic_instances, width, height)
+                filters += vparts
+                filters.append(f"{vlabel}{subtitle_filter if subtitle_filter else 'null'}[vout]")
+                original_audio_label = ""
+                if has_audio and original_volume > 0:
+                    aparts, original_audio_label = build_semantic_audio_filters(semantic_instances, original_volume)
+                    filters += aparts
+                if narration_path and original_audio_label:
+                    filters += [
+                        f"[1:a]volume={voice_volume}[a1]",
+                        f"{original_audio_label}[a1]amix=inputs=2:duration=longest:dropout_transition=1[aout]",
+                    ]
                     audio_map = "[aout]"
-                elif original_volume != 1:
-                    filters += [f"[0:a]volume={original_volume}[aout]"]
+                elif narration_path:
+                    filters += [f"[1:a]volume={voice_volume}[aout]"]
                     audio_map = "[aout]"
-                else:
-                    audio_map = "0:a?"
+                elif original_audio_label:
+                    audio_map = original_audio_label
+            else:
+                vf = f"scale={width}:{height}:force_original_aspect_ratio=increase,crop={width}:{height},setsar=1"
+                if visual_strategy in ("stretch", "dynamic"):
+                    vf += f",setpts={visual_factor:.8f}*PTS"
+                    if visual_strategy == "dynamic" and visual_factor > 1.08:
+                        zw = max(width + 2, int(round(width * 1.06 / 2.0) * 2))
+                        zh = max(height + 2, int(round(height * 1.06 / 2.0) * 2))
+                        vf += (
+                            f",scale={zw}:{zh},"
+                            f"crop={width}:{height}:"
+                            "x='(iw-ow)/2*(1+sin(t*0.19))':"
+                            "y='(ih-oh)/2*(1+cos(t*0.13))'"
+                        )
+                elif visual_strategy == "short_hold":
+                    vf += f",tpad=stop_mode=clone:stop_duration={min(visual_gap, visual_sync_max_hold):.3f}"
+                if subtitle_filter:
+                    vf += "," + subtitle_filter
+                filters = [f"[0:v]{vf}[vout]"]
+                if narration_path and has_audio and original_volume > 0:
+                    original_af = f"volume={original_volume}"
+                    if visual_strategy in ("stretch", "dynamic") and visual_factor > 1.001:
+                        original_af += "," + _atempo_chain(1.0 / visual_factor)
+                    filters += [
+                        f"[0:a]{original_af}[a0]",
+                        f"[1:a]volume={voice_volume}[a1]",
+                        "[a0][a1]amix=inputs=2:duration=longest:dropout_transition=1[aout]",
+                    ]
+                    audio_map = "[aout]"
+                elif narration_path:
+                    filters += [f"[1:a]volume={voice_volume}[aout]"]
+                    audio_map = "[aout]"
+                elif has_audio and original_volume > 0:
+                    if visual_strategy in ("stretch", "dynamic") and visual_factor > 1.001:
+                        filters += [f"[0:a]volume={original_volume},{_atempo_chain(1.0 / visual_factor)}[aout]"]
+                        audio_map = "[aout]"
+                    elif original_volume != 1:
+                        filters += [f"[0:a]volume={original_volume}[aout]"]
+                        audio_map = "[aout]"
+                    else:
+                        audio_map = "0:a?"
+
             cmd += ["-filter_complex", ";".join(filters), "-map", "[vout]"]
             if audio_map:
                 cmd += ["-map", audio_map]
