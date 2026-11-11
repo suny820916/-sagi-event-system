@@ -1990,13 +1990,13 @@ async function startCloudRender(recovering=false){
      await voiceApiReady();
    }
 
-   let submitMode=mode,submitDuration=duration,submitSync='clip_locked',submitVoiceBlob=null,submitVoiceName='voice.m4a';
+   let submitMode=mode,submitDuration=duration,submitSync='clip_locked',submitVoiceBlob=null,submitVoiceName='voice.m4a',submitMeaningFirst=false;
    if(mode==='recorded'&&STUDIO.voiceBlob){
      submitVoiceBlob=STUDIO.voiceBlob;submitVoiceName='voice.'+(STUDIO.voiceMime.includes('webm')?'webm':'m4a')
    }else if(mode==='ai_male'||mode==='ai_female'||mode==='clone'){
      setCloudRenderStatus('VIDEO FIRST · 正在把AI解说锁定到 '+duration.toFixed(1)+' 秒…');
      const locked=await generateClipLockedAIVoice(String(q('narrationText')?.value||''),mode,false);
-     submitMode='recorded';submitVoiceBlob=locked.blob;submitVoiceName='sagi-clip-locked-voice.wav';submitSync='clip_locked';submitDuration=duration;
+     submitMode='recorded';submitVoiceBlob=locked.blob;submitVoiceName='sagi-clip-locked-voice.wav';submitSync='clip_locked';submitDuration=duration;submitMeaningFirst=true;
      setCloudRenderStatus('MEANING FIRST · 配音 '+locked.duration.toFixed(1)+'秒 · '+locked.originalChars+'字→'+locked.fittedChars+'字 · 原意100% · 正在按视频场景出片')
    }
 
@@ -2044,6 +2044,8 @@ async function startCloudRender(recovering=false){
      return
    }
    fd.append('voice_sync',submitSync);
+   fd.append('meaning_first',submitMeaningFirst?'true':'false');
+   fd.append('meaning_audit',JSON.stringify(submitMeaningFirst?(STUDIO.meaningAudit||{}):{}));
    fd.append('visual_sync',visualMode);
    fd.append('visual_sync_max_hold','3');
    fd.append('scene_plan',JSON.stringify(visualMode==='auto'?(STUDIO.scenePlan||[]):[]));
