@@ -123,6 +123,22 @@ render_slot = Lock()
 # All memory-heavy work shares one slot. This prevents Whisper + FFmpeg from
 # peaking at the same time on small Render instances.
 heavy_slot = Lock()
+
+MATCH_INTELLIGENCE_LITE = False
+MATCH_INTELLIGENCE_LITE_ERROR = ""
+try:
+    from match_intelligence_lite import create_match_intelligence_blueprint
+    app.register_blueprint(
+        create_match_intelligence_blueprint(
+            heavy_slot=heavy_slot,
+            allowed_origin=ALLOWED_ORIGIN,
+        )
+    )
+    MATCH_INTELLIGENCE_LITE = True
+except Exception as exc:
+    MATCH_INTELLIGENCE_LITE_ERROR = str(exc)[:240]
+    print("match intelligence init failed:", MATCH_INTELLIGENCE_LITE_ERROR, flush=True)
+
 FFMPEG_THREADS = max(1, min(2, int(os.getenv("SAGI_FFMPEG_THREADS") or "1")))
 STATE_DIR = Path(os.getenv("SAGI_STATE_DIR") or (Path(tempfile.gettempdir()) / "sagi_cloud_state"))
 RENDER_STATE_FILE = STATE_DIR / "render_jobs.json"
@@ -2739,6 +2755,9 @@ def health():
         "service": "SAGI CLOUD BRIDGE",
         "deployRevision": DEPLOY_REVISION,
         "version": APP_VERSION,
+        "matchIntelligence": MATCH_INTELLIGENCE_LITE,
+        "matchIntelligenceVersion": "1.0-cloud-lite" if MATCH_INTELLIGENCE_LITE else "",
+        "matchIntelligenceEngine": "YOLO11 ONNX Runtime" if MATCH_INTELLIGENCE_LITE else "",
         "instagram": True,
         "cloudDownload": True,
         "cloudDownloadVersion": "3.0",
