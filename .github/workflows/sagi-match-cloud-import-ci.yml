@@ -50,5 +50,43 @@ jobs:
               assert r.status_code == 200
               data = r.get_json()
               assert data["ok"] is True
-              assert data["version"] == "1.0-cloud-lite"
+              assert data["version"] == "1.1.2-tracking-core"
+          PY
+      - name: Tracking core synthetic smoke
+        run: |
+          cd sagi-cloud-bridge
+          python - <<'PY'
+          import numpy as np
+          import match_intelligence_lite as m
+
+          tracks = {
+              1: {
+                  "last_frame": 1,
+                  "last_pos": (0.20, 0.50),
+                  "positions": [(0, 0.18, 0.50), (1, 0.20, 0.50)],
+                  "colors": [np.array([30, 80, 210], dtype=np.float32)] * 3,
+              }
+          }
+          people = [{
+              "cx": 0.24, "cy": 0.50, "center_y": 0.46,
+              "box": [0, 0, 1, 1],
+              "score": 0.9,
+              "jersey_rgb": np.array([32, 82, 208], dtype=np.float32),
+          }]
+          assignments, next_id = m._match_tracks(tracks, people, 2, 2)
+          assert assignments[0] == 1, assignments
+          assert next_id == 2
+
+          team_assignments = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0}
+          many = {}
+          for tid in range(1, 9):
+              many[tid] = {
+                  "last_frame": 9,
+                  "last_pos": (0.1 * tid, 0.5),
+                  "positions": [(i, min(0.95, 0.08 * tid + i * 0.001), 0.5) for i in range(10)],
+                  "colors": [],
+              }
+          stable = m._stable_track_ids(many, team_assignments, 10, "7v7")
+          assert len(stable) == 7, stable
+          print("Tracking core synthetic smoke passed:", sorted(stable))
           PY
