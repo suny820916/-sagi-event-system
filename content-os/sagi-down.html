@@ -1454,8 +1454,12 @@ function matchVoiceTimelineToScenes(){
 }
 function buildVisualSyncPlan(){
  let clip=0;try{clip=Number(studioRange()[2])||0}catch(e){}
- const mode=q('aiVisualSync')?.value||'auto',voice=Number(STUDIO.generatedVoiceDuration)||0;
+ const mode=q('aiVisualSync')?.value||'voice_to_video',voice=Number(STUDIO.generatedVoiceDuration)||0;
  const rows=STUDIO.voiceTimeline||[],finalDuration=voice>0?voice:(rows.length?Number(rows[rows.length-1].end)||0:0);
+ if(rows.some(r=>r.basis==='lockstep')&&clip>0){
+  const plan={mode:'voice_to_video',strategy:'lockstep',label:'LOCKSTEP 配音跟随原视频',clip,finalDuration:clip,gap:0,ratio:1,maxHold:0,sceneCount:STUDIO.sceneAnalysis?.scenes?.length||0,sceneSegments:rows.length};
+  STUDIO.visualSyncPlan=plan;renderVisualSyncStatus();return plan
+ }
  if(!clip||!finalDuration){STUDIO.visualSyncPlan=null;renderVisualSyncStatus();return null}
  const gap=Math.max(0,finalDuration-clip),ratio=finalDuration/clip;
  let strategy='native',label='原画面自然播放';
@@ -1479,13 +1483,17 @@ function renderVisualSyncStatus(){
  if(p.strategy==='blocked'){
   e.innerHTML='<b>画面不足 '+p.gap.toFixed(1)+'秒</b> · 已禁止长尾帧定格。请选择“AI动态匹配”。';return
  }
+ if(p.strategy==='lockstep'){
+  e.innerHTML='<b>LOCKSTEP 配音跟随原视频</b> · 画面顺序不变 · '+p.sceneSegments+'个配音段 · 最终 '+p.finalDuration.toFixed(2)+'秒';
+  return
+ }
  const speed=p.finalDuration>p.clip?(p.clip/p.finalDuration):1;
  e.innerHTML='<b>'+p.label+'</b> · 原画面 '+p.clip.toFixed(1)+'秒 → 最终 '+p.finalDuration.toFixed(1)+'秒'+(p.strategy==='semantic'?(' · '+p.sceneCount+'场景 / '+p.sceneSegments+'匹配段'):(' · 视觉速度约 '+speed.toFixed(2)+'×'))+' · 尾帧保护≤3秒';
 }
 function renderVoiceTimeline(){
  const box=q('voiceTimelineList'),state=q('voiceCoverageState'),rows=STUDIO.voiceTimeline||[];
  if(state){
-  const actual=rows.length&&rows.some(r=>r.basis==='actual'||r.basis==='server_actual'||r.basis==='clip_locked'),end=rows.length?Number(rows[rows.length-1].end)||0:0;
+  const actual=rows.length&&rows.some(r=>r.basis==='actual'||r.basis==='server_actual'||r.basis==='clip_locked'||r.basis==='lockstep'),end=rows.length?Number(rows[rows.length-1].end)||0:0;
   state.textContent=rows.length?(actual?('实际音轨 · '+rows.length+'句 · '+voiceTimeLabel(end)):('待云端校验 · '+rows.length+'句')):'完整性待检查';
   state.classList.toggle('ok',!!actual)
  }
@@ -1497,7 +1505,7 @@ function renderVoiceTimeline(){
 function markVoiceCoverage(complete,segments,coverage=100){
  const e=q('voiceCoverageState');if(!e)return;
  if(complete){
-  const rows=STUDIO.voiceTimeline||[],end=rows.length?Number(rows[rows.length-1].end)||0:0,actual=rows.some(r=>r.basis==='actual'||r.basis==='server_actual'||r.basis==='clip_locked');
+  const rows=STUDIO.voiceTimeline||[],end=rows.length?Number(rows[rows.length-1].end)||0:0,actual=rows.some(r=>r.basis==='actual'||r.basis==='server_actual'||r.basis==='clip_locked'||r.basis==='lockstep');
   e.textContent='完整性 '+Math.max(0,Number(coverage)||100)+'% · '+Math.max(1,Number(segments)||rows.length||1)+'句'+(actual&&end>0?' · '+voiceTimeLabel(end):'');
   e.classList.add('ok')
  }else{e.textContent='完整性校验未通过';e.classList.remove('ok')}
@@ -1785,8 +1793,7 @@ function lockstepUnitSceneScore(text,scene,index,total,lastIndex){
  let score=0;
  for(const tag of tags)if(sceneTags.has(tag))score+=18;
  let direct=0;for(const tok of tokens)if(sceneTokens.has(tok)){direct++;score+=2.5}
- const positionTarget=Math.max(0,total-1);
- score+=Math.max(0,8-Math.abs(index-positionTarget)*.8);
+ score+=Math.max(0,4-Math.abs(index-lastIndex)*.45);
  if(/横移|移动|推进|前插|反击|压迫|逼抢|回撤/.test(text))score+=Math.min(7,(Number(scene.motion)||0)*120);
  if(/阵型|站位|结构|空间/.test(text))score+=Math.max(0,5-(Number(scene.motion)||0)*50);
  if(index<lastIndex)score-=50;
