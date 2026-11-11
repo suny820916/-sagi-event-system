@@ -2575,7 +2575,7 @@ function captionToNarration(){
  if(middle)text+='真正值得注意的是，'+middle+'。';
  if(tail&&tail!==lead)text+='最后再看一遍：'+tail+'。';
  text+='这就是这段画面最值得记住的地方。';
- q('narrationText').value=text;studioStatus('已根据字幕生成中文解说初稿，可以继续改写后朗读或录音。','good');toast('解说初稿已生成')
+ q('narrationText').value=text;voiceTimingHint();studioStatus('已根据字幕生成中文解说初稿，可以继续改写后朗读或录音。','good');toast('解说初稿已生成')
 }
 
 async function translateLine(text,source,target){
