@@ -21,4 +21,4 @@ ENV PYTHONUNBUFFERED=1 \
     OMP_NUM_THREADS=1 \
     OPENBLAS_NUM_THREADS=1 \
     SAGI_FFMPEG_THREADS=1
-CMD ["sh","-c","gunicorn -w 1 -k gthread --threads 2 -b 0.0.0.0:$PORT --timeout 300 app:app"]
+CMD ["sh","-c","gunicorn -w 1 -k gthread --threads 2 -b 0.0.0.0:$PORT --timeout 900 app:app"]
