@@ -62,7 +62,7 @@ SAGI_LOCAL_IMAGE_QUALITY = (os.getenv("SAGI_LOCAL_IMAGE_QUALITY") or "medium").s
 
 SAGI_SUPABASE_URL = (os.getenv("SAGI_SUPABASE_URL") or "https://zgqrjuwltbnkgovtsccb.supabase.co").strip().rstrip("/")
 SAGI_SUPABASE_KEY = (os.getenv("SAGI_SUPABASE_KEY") or "sb_publishable_bqROSu6ZQRdDW3DLazUCfg_4aYxldN8").strip()
-SAGI_MARKET_WRITE_TOKEN = (os.getenv("SAGI_MARKET_WRITE_TOKEN") or "").strip()
+SAGI_MARKET_WRITE_TOKEN = (os.getenv("SAGI_MARKET_WRITE_TOKEN") or (hmac.new(SERVER_SECRET.encode("utf-8"), b"sagi-market-inbox-v1", hashlib.sha256).hexdigest() if SERVER_SECRET else "")).strip()
 SAGI_MARKET_INBOX_SLUG = (os.getenv("SAGI_MARKET_INBOX_SLUG") or "sagi-market-inbox-v1").strip()
 SAGI_MARKET_RATE_LIMIT_PER_HOUR = max(3, min(60, int(os.getenv("SAGI_MARKET_RATE_LIMIT_PER_HOUR") or "12")))
 market_rate_hits = {}
