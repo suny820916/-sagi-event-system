@@ -15,11 +15,12 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from . import ai
+from . import ai, billing
+from .admin import admin_auth
 from .auth import auth_user, make_token, password_hash
 from .db import UPLOAD_DIR, connect, init_db
 
-APP_VERSION = "1.4.0"
+APP_VERSION = "1.4.1"
 WEB_DIR = Path(__file__).resolve().parent.parent / "web"
 MAX_UPLOAD_MB = max(2, min(50, int(os.getenv("MAX_UPLOAD_MB") or "12")))
 MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024
@@ -67,6 +68,12 @@ class ProjectIn(BaseModel):
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
+class PlanUpdate(BaseModel):
+    plan_code: str = Field(pattern="^(free|pro|business)$")
+    status: str = Field(default="active", pattern="^(active|paused|expired)$")
+    expires_at: int | None = None
+
+
 def profile_for(user_id: int) -> dict[str, Any]:
     with connect() as con:
         row = con.execute(
@@ -96,6 +103,9 @@ def health() -> dict[str, Any]:
         "aiConfigured": ai.configured(),
         "visionConfigured": ai.vision_configured(),
         "maxUploadMB": MAX_UPLOAD_MB,
+        "plans": list(billing.PLANS.keys()),
+        "quotaEngine": True,
+        "adminConfigured": bool(os.getenv("SAGI_ADMIN_KEY")),
     }
 
 
@@ -114,6 +124,10 @@ def register(body: AuthIn) -> dict[str, Any]:
             uid = int(cur.lastrowid)
             con.execute(
                 "INSERT INTO profiles(user_id,updated_at) VALUES(?,?)",
+                (uid, now),
+            )
+            con.execute(
+                "INSERT INTO subscriptions(user_id,plan_code,status,expires_at,updated_at) VALUES(?, 'free', 'active', NULL, ?)",
                 (uid, now),
             )
     except sqlite3.IntegrityError as exc:
@@ -198,6 +212,8 @@ async def upload_asset(
             status_code=413,
             detail="图片不能超过 " + str(MAX_UPLOAD_MB) + "MB",
         )
+    if not billing.can_store(user["id"], len(raw)):
+        raise HTTPException(status_code=429, detail="当前套餐存储空间已用完")
 
     asset_id = uuid.uuid4().hex
     stored_name = asset_id + ALLOWED_MIME[mime]
@@ -259,8 +275,12 @@ def get_asset(asset_id: str, user=Depends(auth_user)):
 @app.post("/api/ai/copy")
 async def ai_copy(body: CopyIn, user=Depends(auth_user)) -> dict[str, Any]:
     profile = profile_for(user["id"])
-    result = await ai.generate_copy(body.brief, body.style, profile)
-    record_usage(user["id"], "copy", result.get("engine", "unknown"))
+    if ai.configured() and not billing.can_use_ai(user["id"]):
+        result = ai.local_copy(body.brief, profile)
+        result["engine"] = "quota-fallback"
+    else:
+        result = await ai.generate_copy(body.brief, body.style, profile)
+        record_usage(user["id"], "copy", result.get("engine", "unknown"))
     return {"ok": True, "copy": result}
 
 
@@ -283,18 +303,31 @@ async def ai_vision(
             detail="图片不能超过 " + str(MAX_UPLOAD_MB) + "MB",
         )
 
-    result = await ai.analyze_image(
-        raw,
-        mime,
-        brief,
-        profile_for(user["id"]),
-    )
-    record_usage(user["id"], "vision", result.get("engine", "unknown"))
+    if ai.vision_configured() and not billing.can_use_ai(user["id"]):
+        result = {
+            "subject": "商家上传的真实照片",
+            "scene": "本地商业宣传场景",
+            "cropFocus": "center",
+            "overlayPosition": "bottom",
+            "strengths": ["保留真实素材，可信度高"],
+            "fixes": ["当前套餐AI次数已用完，已切换基础视觉判断"],
+            "engine": "quota-fallback",
+        }
+    else:
+        result = await ai.analyze_image(
+            raw,
+            mime,
+            brief,
+            profile_for(user["id"]),
+        )
+        record_usage(user["id"], "vision", result.get("engine", "unknown"))
     return {"ok": True, "visual": result}
 
 
 @app.post("/api/projects")
 def create_project(body: ProjectIn, user=Depends(auth_user)) -> dict[str, Any]:
+    if not billing.can_create_project(user["id"]):
+        raise HTTPException(status_code=429, detail="本月海报项目次数已用完")
     project_id = uuid.uuid4().hex
     now = int(time.time())
 
@@ -365,6 +398,73 @@ def list_projects(user=Depends(auth_user)) -> dict[str, Any]:
         items.append(item)
 
     return {"ok": True, "projects": items}
+
+
+@app.get("/api/plans")
+def plans() -> dict[str, Any]:
+    return {"ok": True, "plans": billing.PLANS}
+
+
+@app.get("/api/account/quota")
+def account_quota(user=Depends(auth_user)) -> dict[str, Any]:
+    return {"ok": True, "quota": billing.quota_status(user["id"])}
+
+
+@app.get("/api/admin/summary")
+def admin_summary(_=Depends(admin_auth)) -> dict[str, Any]:
+    with connect() as con:
+        users = con.execute("SELECT COUNT(*) AS n FROM users").fetchone()["n"]
+        projects = con.execute("SELECT COUNT(*) AS n FROM projects").fetchone()["n"]
+        assets = con.execute("SELECT COUNT(*) AS n, COALESCE(SUM(bytes),0) AS bytes FROM assets").fetchone()
+    return {
+        "ok": True,
+        "summary": {
+            "users": int(users),
+            "projects": int(projects),
+            "assets": int(assets["n"]),
+            "storage_bytes": int(assets["bytes"]),
+        },
+    }
+
+
+@app.get("/api/admin/users")
+def admin_users(_=Depends(admin_auth)) -> dict[str, Any]:
+    with connect() as con:
+        rows = con.execute(
+            """
+            SELECT u.id,u.username,u.created_at,
+                   p.merchant_name,p.industry,p.phone,
+                   COALESCE(s.plan_code,'free') AS plan_code,
+                   COALESCE(s.status,'active') AS status,
+                   s.expires_at
+            FROM users u
+            LEFT JOIN profiles p ON p.user_id=u.id
+            LEFT JOIN subscriptions s ON s.user_id=u.id
+            ORDER BY u.id DESC
+            LIMIT 500
+            """
+        ).fetchall()
+    items = []
+    for row in rows:
+        item = dict(row)
+        item["quota"] = billing.quota_status(int(row["id"]))
+        items.append(item)
+    return {"ok": True, "users": items}
+
+
+@app.put("/api/admin/users/{user_id}/plan")
+def admin_set_plan(user_id: int, body: PlanUpdate, _=Depends(admin_auth)) -> dict[str, Any]:
+    with connect() as con:
+        exists = con.execute("SELECT id FROM users WHERE id=?", (user_id,)).fetchone()
+    if not exists:
+        raise HTTPException(status_code=404, detail="商户账号不存在")
+    subscription = billing.set_plan(
+        user_id,
+        body.plan_code,
+        status=body.status,
+        expires_at=body.expires_at,
+    )
+    return {"ok": True, "subscription": subscription}
 
 
 @app.get("/api/usage")
