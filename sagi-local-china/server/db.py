@@ -77,5 +77,23 @@ def init_db() -> None:
                 created_at INTEGER NOT NULL,
                 FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
             );
+
+            CREATE TABLE IF NOT EXISTS subscriptions (
+                user_id INTEGER PRIMARY KEY,
+                plan_code TEXT NOT NULL DEFAULT 'free',
+                status TEXT NOT NULL DEFAULT 'active',
+                expires_at INTEGER,
+                updated_at INTEGER NOT NULL,
+                FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_projects_user_created
+            ON projects(user_id, created_at);
+
+            CREATE INDEX IF NOT EXISTS idx_usage_user_created
+            ON usage_log(user_id, created_at);
+
+            CREATE INDEX IF NOT EXISTS idx_assets_user_created
+            ON assets(user_id, created_at);
             """
         )
