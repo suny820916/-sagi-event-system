@@ -1380,8 +1380,11 @@ async function startCloudRender(recovering=false){
    fd.append('captions',JSON.stringify(cloudRenderCaptions()));
    fd.append('narration',String(q('narrationText')?.value||''));
    fd.append('voice_mode',mode);
-   fd.append('voice_id',mode==='clone'?STUDIO.cloneVoiceId:'');
+   fd.append('voice_id',mode==='clone'?STUDIO.cloneVoiceId:(q('aiVoiceVoice')?.value||''));
    fd.append('voice_speed',q('aiVoiceSpeed')?.value||'1');
+   fd.append('voice_style',q('aiVoiceStyle')?.value||'football');
+   fd.append('voice_sync',q('aiVoiceSync')?.value||'fit');
+   fd.append('voice_volume',q('aiVoiceVolume')?.value||'1');
    fd.append('original_volume',q('originalAudio')?.value||'0.25');
    fd.append('burn_subtitles',(q('burnSubtitle')?.value||'yes')==='yes'?'true':'false');
    if(mode==='recorded'&&STUDIO.voiceBlob)fd.append('voice_audio',STUDIO.voiceBlob,'voice.'+(STUDIO.voiceMime.includes('webm')?'webm':'m4a'));
@@ -2733,6 +2736,9 @@ q('captionToNarrationBtn').onclick=captionToNarration;
 q('aiVoicePreviewBtn').onclick=previewAIVoice;
 q('cloneVoiceBtn').onclick=cloneMyVoice;
 q('aiVoiceStatusBtn').onclick=()=>refreshAIVoiceStatus(true);
+['narrationText','aiVoiceSpeed','aiVoiceStyle','aiVoiceVoice','aiVoiceMode','aiVoiceSync'].forEach(id=>{
+ const e=q(id);if(e)e.addEventListener(id==='narrationText'?'input':'change',voiceTimingHint)
+});
 q('cloudRenderBtn').onclick=startCloudRender;
 q('cloudRenderCancelBtn').onclick=stopCloudRenderPolling;
 q('translateSubtitleBtn').onclick=translateSubtitles;
