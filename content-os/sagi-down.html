@@ -1538,13 +1538,46 @@ async function refreshAIVoiceStatus(showToast=false){
 function narrationCharCount(text){
  return (String(text||'').match(/[\u3400-\u9fffA-Za-z0-9]/g)||[]).length
 }
+const NARRATION_CONDENSE_MAP=[
+ [/在进攻的过程当中/g,'进攻时'],[/在防守的过程当中/g,'防守时'],[/在这个过程当中/g,'过程中'],
+ [/这个时候/g,'此时'],[/这时候/g,'此时'],[/当对方把球转移到边路以后/g,'球到边路后'],
+ [/会进行整体的横向移动/g,'整体横移'],[/会迅速向外侧移动进行压迫/g,'迅速外移压迫'],
+ [/进行向前推进/g,'向前推进'],[/进行回撤保护/g,'回撤保护'],[/进行位置上的调整/g,'调整站位'],
+ [/最重要的一点是/g,'关键是'],[/真正值得注意的是/g,'关键是'],[/需要注意的是/g,'注意'],
+ [/我们可以看到/g,''],[/你会发现/g,''],[/可以看出来/g,''],[/也就是说/g,'也就是'],
+ [/从而达到/g,'从而'],[/这样一来/g,'这样'],[/与此同时/g,'同时'],[/在这种情况下/g,'此时'],
+ [/并不是说/g,'并非'],[/并不意味着/g,'不代表'],[/主要的目的就是/g,'目的就是'],
+ [/核心的逻辑就是/g,'核心是'],[/最核心的逻辑是/g,'核心是'],[/更重要的是/g,'更重要的是']
+];
 function normalizeNarrationForMeaning(text){
- return String(text||'').trim()
-  .replace(/\s+/g,'')
+ let s=String(text||'').trim().replace(/\s+/g,'');
+ for(const [re,to] of NARRATION_CONDENSE_MAP)s=s.replace(re,to);
+ return s
   .replace(/^(其实|事实上|可以看到|我们可以看到|你会发现)[，,：:\s]*/,'')
-  .replace(/(其实|非常|本质上|相对来说|一定程度上|从这个角度来看|在这个过程当中)/g,'')
+  .replace(/(其实|非常|本质上|相对来说|一定程度上|从这个角度来看)/g,'')
   .replace(/[，,]{2,}/g,'，')
   .replace(/。{2,}/g,'。')
+}
+function meaningRelationFlags(text){
+ const t=String(text||'');
+ return{
+  cause:/因为|所以|因此|从而/.test(t),
+  contrast:/但是|但|而|并非|不代表/.test(t),
+  condition:/如果|当|一旦|只有/.test(t),
+  sequence:/首先|其次|然后|随后|最后/.test(t),
+  attack:/进攻/.test(t),defense:/防守/.test(t),
+  advantage:/优点|优势/.test(t),drawback:/缺点|代价|问题|风险/.test(t)
+ }
+}
+function meaningIntegrity(source,out){
+ const sFlags=meaningRelationFlags(source),oFlags=meaningRelationFlags(out);
+ let required=0,kept=0;
+ for(const k of Object.keys(sFlags))if(sFlags[k]){required++;if(oFlags[k])kept++}
+ const sTags=new Set(sceneSemanticTags(source)),oTags=new Set(sceneSemanticTags(out));
+ for(const tag of sTags){required++;if(oTags.has(tag))kept++}
+ const nums=String(source||'').match(/\b\d{1,4}\b/g)||[];
+ for(const n of [...new Set(nums)]){required++;if(String(out||'').includes(n))kept++}
+ return required?Math.round(kept/required*100):100
 }
 function narrationLogicUnits(text){
  const raw=splitVoiceSentences(String(text||''),140),units=[];let buf='';
@@ -1638,7 +1671,8 @@ function fitNarrationTextToClip(text,clipSeconds,budgetOverride=0){
  }
 
  const keptUnits=narrationLogicUnits(out),matched=unique.filter(u=>keptUnits.some(k=>logicSimilarity(u,k)>=.28)).length;
- STUDIO.meaningCoverage=Math.round(matched/Math.max(1,unique.length)*100);
+ const unitCoverage=Math.round(matched/Math.max(1,unique.length)*100),integrity=meaningIntegrity(original,out);
+ STUDIO.meaningCoverage=Math.round(unitCoverage*.65+integrity*.35);
  return out||original
 }
 async function padVoiceBlobToDuration(blob,targetSeconds){
@@ -1769,6 +1803,7 @@ async function generateClipLockedAIVoice(originalText,mode,force=false){
   if(slower<baseSpeed-.008){baseSpeed=slower;result=await generateCompleteAIVoice(fitted,mode,true,baseSpeed)}
  }
  if(result.duration>clip+.25)throw new Error('配音微调后仍超过视频时长，系统已阻止延长视频');
+ if((Number(STUDIO.meaningCoverage)||0)<88)throw new Error('82秒压缩会破坏原意，已停止生成；请改用保真重写稿');
  // If speech finishes slightly early, keep the audio file exactly as long as the video
  // with clean silence rather than changing the picture duration.
  const exact=await padVoiceBlobToDuration(result.blob,clip);
