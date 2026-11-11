@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b0b0c">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <title>SAGI AI LOCAL V1.0</title>
+  <style>
+    :root{--bg:#09090a;--card:#151517;--card2:#1d1d20;--line:#2b2b2f;--text:#f7f7f5;--muted:#9a9aa2;--gold:#e8c86b;--green:#76d39b;--red:#ff7a7a}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","PingFang SC","Microsoft YaHei",sans-serif}
+    button,input,textarea,select{font:inherit}.app{max-width:760px;margin:auto;min-height:100vh;padding:18px 16px 100px}
+    .top{display:flex;align-items:center;justify-content:space-between;margin:2px 0 20px}.brand b{font-size:22px;letter-spacing:.5px}.brand small{display:block;color:var(--gold);font-weight:700;margin-top:3px}.badge{padding:7px 10px;border:1px solid #4a4023;border-radius:999px;color:var(--gold);font-size:12px}
+    .hero{background:linear-gradient(145deg,#1d1a11,#111113 55%);border:1px solid #39301b;border-radius:24px;padding:22px;margin-bottom:14px;box-shadow:0 18px 60px #0008}.hero h1{font-size:28px;line-height:1.15;margin:0 0 9px}.hero p{color:#c5c1b4;line-height:1.6;margin:0}
+    .today{display:flex;gap:12px;align-items:flex-start;background:#111214;border:1px solid #22252a;border-radius:18px;padding:15px;margin:14px 0}.today .ico{font-size:22px}.today b{display:block;margin-bottom:4px}.today span{color:var(--muted);font-size:13px;line-height:1.5}
+    .tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:16px 0}.tab{border:1px solid var(--line);background:var(--card);color:#aaa;border-radius:14px;padding:11px 4px}.tab.active{background:#242018;color:var(--gold);border-color:#51431f}
+    .panel{display:none}.panel.active{display:block}.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px;margin-bottom:13px}.card h2{font-size:17px;margin:0 0 12px}.hint{font-size:12px;color:var(--muted);line-height:1.6;margin:8px 1px 0}
+    label{display:block;color:#bdbdc4;font-size:12px;margin:12px 0 6px}.field,textarea,select{width:100%;background:#0f0f11;border:1px solid #303034;color:#fff;border-radius:13px;padding:13px;outline:none}textarea{min-height:100px;resize:vertical}.field:focus,textarea:focus,select:focus{border-color:#71602b}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.btn{width:100%;border:0;border-radius:14px;padding:14px;font-weight:800;background:var(--gold);color:#15120a;margin-top:12px}.btn.secondary{background:#242428;color:#eee;border:1px solid #34343a}.btn.small{padding:10px 12px;margin:0;width:auto;font-size:12px}
+    .output{display:none}.output.show{display:block}.outbox{background:#0f0f11;border:1px solid #2b2b31;border-radius:14px;padding:13px;margin-top:10px}.outbox .k{color:var(--gold);font-size:11px;font-weight:800;letter-spacing:.5px}.outbox .v{white-space:pre-wrap;line-height:1.6;margin-top:6px;font-size:14px}.row{display:flex;justify-content:space-between;gap:10px;align-items:center}
+    .upload{border:1px dashed #4a4a50;border-radius:18px;padding:20px;text-align:center;background:#101012}.upload input{display:none}.preview{width:100%;max-height:360px;object-fit:cover;border-radius:16px;margin-top:12px;display:none}
+    .packs{display:grid;grid-template-columns:1fr 1fr;gap:10px}.pack{background:var(--card2);border:1px solid #303036;border-radius:16px;padding:14px}.pack b{display:block;font-size:15px;margin-bottom:5px}.pack span{font-size:12px;color:var(--muted)}
+    .history{display:flex;flex-direction:column;gap:9px}.hist{padding:12px;border-radius:14px;background:#101012;border:1px solid #29292e}.hist b{font-size:14px}.hist small{display:block;color:var(--muted);margin-top:4px}
+    .bottom{position:fixed;left:0;right:0;bottom:0;background:#0b0b0deF;backdrop-filter:blur(16px);border-top:1px solid #252529;padding:9px max(14px,env(safe-area-inset-right)) calc(9px + env(safe-area-inset-bottom));z-index:9}.bottomin{max-width:760px;margin:auto;display:grid;grid-template-columns:repeat(4,1fr);gap:4px}.nav{background:none;border:0;color:#777;padding:7px 2px;font-size:11px}.nav.active{color:var(--gold)}.nav i{display:block;font-style:normal;font-size:20px;margin-bottom:2px}
+    .toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);background:#f4f0df;color:#18140a;padding:10px 15px;border-radius:999px;font-size:12px;font-weight:700;opacity:0;pointer-events:none;transition:.2s;z-index:20}.toast.show{opacity:1}
+    @media(max-width:430px){.hero h1{font-size:25px}.packs{grid-template-columns:1fr 1fr}.grid2{grid-template-columns:1fr}.tabs{gap:5px}.tab{font-size:12px}}
+  </style>
+</head>
+<body>
+<div class="app">
+  <header class="top"><div class="brand"><b>SAGI AI LOCAL</b><small>本地商家的 AI 宣传员工</small></div><div class="badge">V1.0</div></header>
+  <section class="hero"><h1>一句话，做完整套宣传。</h1><p>商家只负责告诉我们“今天卖什么”。SAGI 负责标题、海报方向、短视频脚本、抖音与朋友圈文案。</p></section>
+  <div class="today"><div class="ico">⚡️</div><div><b id="todayTitle">今天该发什么</b><span id="todayText">建立商家档案后，我会按行业给出今日内容建议。</span></div></div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="create">做活动</button>
+    <button class="tab" data-tab="photo">做宣传</button>
+    <button class="tab" data-tab="calendar">内容计划</button>
+    <button class="tab" data-tab="profile">商家档案</button>
+  </div>
+
+  <main>
+    <section class="panel active" id="create">
+      <div class="card">
+        <h2>一句话做活动</h2>
+        <label>今天想宣传什么？</label>
+        <textarea id="brief" placeholder="例如：周末羊排第二份半价，晚上6点开始，想吸引年轻人到店。"></textarea>
+        <div class="grid2">
+          <div><label>目标</label><select id="goal"><option>到店消费</option><option>新品上市</option><option>开业引流</option><option>团购转化</option><option>招生获客</option><option>预约咨询</option></select></div>
+          <div><label>风格</label><select id="tone"><option>高级直接</option><option>年轻热闹</option><option>真实亲切</option><option>极简克制</option><option>强促销</option></select></div>
+        </div>
+        <button class="btn" id="generate">生成整套宣传内容</button>
+        <p class="hint">V1.0先使用SAGI本地内容引擎，确保秒开、稳定、无API密钥泄露。云端AI接入后会无缝替换。</p>
+      </div>
+      <div class="card output" id="output">
+        <div class="row"><h2>宣传包</h2><button class="btn small secondary" id="copyAll">复制全部</button></div>
+        <div class="outbox"><div class="k">主标题</div><div class="v" id="headline"></div></div>
+        <div class="outbox"><div class="k">海报方向</div><div class="v" id="poster"></div></div>
+        <div class="outbox"><div class="k">15秒短视频脚本</div><div class="v" id="video"></div></div>
+        <div class="outbox"><div class="k">抖音文案</div><div class="v" id="douyin"></div></div>
+        <div class="outbox"><div class="k">朋友圈文案</div><div class="v" id="moments"></div></div>
+      </div>
+    </section>
+
+    <section class="panel" id="photo">
+      <div class="card">
+        <h2>一张照片做宣传</h2>
+        <label class="upload" for="photoInput"><b>＋ 上传产品 / 菜品 / 门店照片</b><div class="hint">照片只在当前设备预览，V1.0不会自动上传到公共服务器。</div></label>
+        <input id="photoInput" type="file" accept="image/*">
+        <img id="preview" class="preview" alt="预览">
+        <label>这张图要宣传什么？</label>
+        <input class="field" id="photoBrief" placeholder="例如：新品手抓肉，今晚到店九折">
+        <button class="btn" id="photoGen">生成图片宣传方案</button>
+      </div>
+      <div class="card output" id="photoOut">
+        <div class="outbox"><div class="k">画面主标题</div><div class="v" id="photoTitle"></div></div>
+        <div class="outbox"><div class="k">版式建议</div><div class="v" id="layout"></div></div>
+        <div class="outbox"><div class="k">发布文案</div><div class="v" id="photoCopy"></div></div>
+      </div>
+    </section>
+
+    <section class="panel" id="calendar">
+      <div class="card">
+        <h2>7天内容计划</h2>
+        <div id="calendarList" class="history"></div>
+        <button class="btn secondary" id="regenCalendar">重新生成本周计划</button>
+      </div>
+      <div class="card">
+        <h2>标准服务套餐</h2>
+        <div class="packs">
+          <div class="pack"><b>START · 399</b><span>8张海报 + 发布文案 / 月</span></div>
+          <div class="pack"><b>PRO · 699</b><span>12张海报 + 4条短视频 / 月</span></div>
+          <div class="pack"><b>BUSINESS · 1299</b><span>内容托管 + 活动策划 + 8条视频</span></div>
+          <div class="pack"><b>定制活动包</b><span>开业 / 新品 / 招聘 / 团购一套完成</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="profile">
+      <div class="card">
+        <h2>商家 BRAND MEMORY</h2>
+        <label>商家名称</label><input class="field" id="bizName" placeholder="例如：SAGI 烧烤">
+        <label>行业</label><select id="industry"><option>餐饮 / 烧烤</option><option>酒店 / 民宿</option><option>汽车服务</option><option>培训机构</option><option>健身运动</option><option>美发 / 美业</option><option>摄影 / 婚庆</option><option>零售门店</option><option>其他本地服务</option></select>
+        <div class="grid2"><div><label>主打产品/服务</label><input class="field" id="product" placeholder="羊排、双人套餐"></div><div><label>主要客群</label><input class="field" id="audience" placeholder="18-35岁年轻人"></div></div>
+        <label>品牌调性</label><input class="field" id="brandTone" placeholder="例如：高级、热烈、真实、不油腻">
+        <button class="btn" id="saveProfile">保存商家档案</button>
+      </div>
+      <div class="card"><h2>最近生成</h2><div id="history" class="history"><div class="hint">还没有内容。</div></div></div>
+    </section>
+  </main>
+</div>
+<div class="bottom"><div class="bottomin">
+<button class="nav active" data-tab="create"><i>✦</i>创作</button>
+<button class="nav" data-tab="photo"><i>▣</i>图片</button>
+<button class="nav" data-tab="calendar"><i>▤</i>计划</button>
+<button class="nav" data-tab="profile"><i>◎</i>商家</button>
+</div></div>
+<div class="toast" id="toast">已完成</div>
+<script>
+const $=s=>document.querySelector(s), $$=s=>document.querySelectorAll(s);
+const store={get:(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}},set:(k,v)=>localStorage.setItem(k,JSON.stringify(v))};
+let profile=store.get('sagiLocalProfile',{name:'',industry:'餐饮 / 烧烤',product:'',audience:'',brandTone:''});
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),1300)}
+function openTab(id){$$('.panel').forEach(x=>x.classList.toggle('active',x.id===id));$$('[data-tab]').forEach(x=>x.classList.toggle('active',x.dataset.tab===id));window.scrollTo({top:0,behavior:'smooth'})}
+$$('[data-tab]').forEach(x=>x.onclick=()=>openTab(x.dataset.tab));
+function syncProfile(){ $('#bizName').value=profile.name; $('#industry').value=profile.industry; $('#product').value=profile.product; $('#audience').value=profile.audience; $('#brandTone').value=profile.brandTone; updateToday()}
+function updateToday(){
+ const ind=profile.industry||'本地商家'; const name=profile.name||'你的店';
+ const map={
+ '餐饮 / 烧烤':'今天建议拍“热气 + 近景 + 价格锚点”，18:00前发布一条到店理由。',
+ '酒店 / 民宿':'今天建议用“房间空镜 + 周末场景”，突出环境、位置和剩余房量。',
+ '汽车服务':'今天建议发一条真实前后对比，少讲参数，多给效果证据。',
+ '培训机构':'今天建议发一个家长最关心的问题，用老师真人/案例做答案。',
+ '健身运动':'今天建议用训练现场 + 学员变化，把“今天为什么来练”讲清楚。',
+ '美发 / 美业':'今天建议用真实案例前后对比，配一个明确预约入口。',
+ '摄影 / 婚庆':'今天建议展示一组完整案例，不只发最好看的一张。',
+ '零售门店':'今天建议只推一个主商品，一个价格，一个购买理由。'
+ };
+ $('#todayTitle').textContent=name+' · 今天该发什么';
+ $('#todayText').textContent=map[ind]||'今天只解决一个顾客问题：用一张真实图片 + 一个明确卖点 + 一个行动指令。'
+}
+$('#saveProfile').onclick=()=>{profile={name:$('#bizName').value.trim(),industry:$('#industry').value,product:$('#product').value.trim(),audience:$('#audience').value.trim(),brandTone:$('#brandTone').value.trim()};store.set('sagiLocalProfile',profile);updateToday();renderCalendar();toast('商家档案已保存')};
+function clean(s){return (s||'').trim().replace(/\s+/g,' ')}
+function makePack(brief,goal,tone){
+ const biz=profile.name||'本店', prod=profile.product?('｜主打 '+profile.product):'';
+ const hook=goal==='开业引流'?'今天，给你一个来店里的理由':goal==='新品上市'?'今天只推荐这一款':goal==='团购转化'?'别先划走，这个价格值得看完':goal==='招生获客'?'真正适合你的，不该只看价格':goal==='预约咨询'?'把选择困难交给我们':'今晚，别只是路过';
+ const headline=hook+'｜'+clean(brief).slice(0,32);
+ const poster='3:4主视觉。主体占画面55%–65%，背景保持真实场景；上方只放一句主标题，中部突出产品/服务，下方只保留一个价格或行动指令。'+(tone==='强促销'?'价格字号最大，减少装饰。':'避免促销贴纸堆叠，保留高级留白。');
+ const video='0–2秒：'+hook+'\n2–6秒：真实产品/环境近景，快速建立“这是什么”\n6–10秒：放出核心卖点：'+clean(brief)+'\n10–13秒：补充真实细节/使用场景\n13–15秒：'+biz+'｜现在就来 / 立即咨询';
+ const douyin=''+headline+'\n\n'+clean(brief)+'\n真正有效的宣传，不需要说很多。给顾客一个现在行动的理由。\n#本地生活 #'+profile.industry.replace(/\s|\/|·/g,'')+' #'+biz.replace(/\s/g,'');
+ const moments='今天想认真推荐一下：'+clean(brief)+'。\n\n'+(profile.audience?'如果你是'+profile.audience+'，可以来看看。':'需要的朋友可以直接问我。')+'\n\n'+biz+prod;
+ return {headline,poster,video,douyin,moments}
+}
+function addHistory(title){let h=store.get('sagiLocalHistory',[]);h.unshift({title,time:new Date().toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})});h=h.slice(0,12);store.set('sagiLocalHistory',h);renderHistory()}
+$('#generate').onclick=()=>{
+ const brief=clean($('#brief').value); if(!brief){toast('先写一句活动内容');return}
+ const p=makePack(brief,$('#goal').value,$('#tone').value);
+ Object.keys(p).forEach(k=>$('#'+k).textContent=p[k]); $('#output').classList.add('show'); addHistory(p.headline); toast('宣传包已生成')
+}
+$('#copyAll').onclick=async()=>{const t=['主标题：'+$('#headline').textContent,'海报方向：'+$('#poster').textContent,'15秒视频：'+$('#video').textContent,'抖音：'+$('#douyin').textContent,'朋友圈：'+$('#moments').textContent].join('\n\n');try{await navigator.clipboard.writeText(t);toast('已复制全部')}catch{toast('长按内容复制')}}
+$('#photoInput').onchange=e=>{const f=e.target.files[0];if(!f)return;const u=URL.createObjectURL(f);$('#preview').src=u;$('#preview').style.display='block';toast('照片已载入')}
+$('#photoGen').onclick=()=>{const b=clean($('#photoBrief').value);if(!b){toast('写一下宣传目标');return}const biz=profile.name||'本店';$('#photoTitle').textContent='今天，就看这一款｜'+b.slice(0,24);$('#layout').textContent='保留真实照片质感。主体居中偏下，占60%左右；背景压暗10%–20%；标题放左上，价格/利益点只出现一次；底部放'+biz+'与行动指令。优先做3:4和9:16两版。';$('#photoCopy').textContent=b+'。\n\n不把画面做复杂，只让你第一眼看见真正重要的东西。\n'+biz+'｜欢迎到店 / 私信咨询';$('#photoOut').classList.add('show');addHistory('图片宣传｜'+b.slice(0,22));toast('图片宣传方案已生成')}
+function renderCalendar(){
+ const ind=profile.industry||'本地商家';const items=[
+ ['第1天','真实产品/服务','别急着促销，先让顾客看清你到底卖什么。'],
+ ['第2天','顾客问题','回答一个顾客下单前最犹豫的问题。'],
+ ['第3天','幕后/老板真人','让品牌出现“人”，建立信任。'],
+ ['第4天','案例证明','发一个真实前后对比、评价或使用结果。'],
+ ['第5天','主推商品','只推一个产品，一个核心利益点。'],
+ ['第6天','周末活动','把优惠写清楚：谁能用、什么时候、怎么获得。'],
+ ['第7天','品牌内容','不卖东西，讲一次为什么做这家店。']
+ ];
+ $('#calendarList').innerHTML=items.map(x=>'<div class="hist"><b>'+x[0]+' · '+x[1]+'</b><small>'+ind+'｜'+x[2]+'</small></div>').join('')
+}
+$('#regenCalendar').onclick=()=>{renderCalendar();toast('本周计划已更新')}
+function renderHistory(){const h=store.get('sagiLocalHistory',[]);$('#history').innerHTML=h.length?h.map(x=>'<div class="hist"><b>'+x.title+'</b><small>'+x.time+'</small></div>').join(''):'<div class="hint">还没有内容。</div>'}
+syncProfile();renderCalendar();renderHistory();
+if('serviceWorker'in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}))}
+</script>
+</body>
+</html>
