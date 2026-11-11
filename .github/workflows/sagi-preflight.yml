@@ -159,7 +159,9 @@ jobs:
         run: |
           cd sagi-cloud-bridge
           python - <<'PY'
-          import io, types
+          import io, types, subprocess
+          from pathlib import Path
+          import imageio_ffmpeg
           import app as mod
 
           class Seg:
@@ -181,6 +183,10 @@ jobs:
           assert health["contextTranslate"] is True
           assert health["smartTranslate"] is True
           assert health["aiVoice"] is True
+          assert health["voiceDirectorVersion"] == "1.2"
+          assert health["voiceNarrationNoCut"] is True
+          assert health["voiceSentenceTimeline"] is True
+          assert health["voiceCompletenessGuard"] is True
           assert health["cloudRender"] is True
           assert health["cloudDownload"] is True
           assert set(health["downloadPlatforms"]) >= {"Instagram","YouTube","TikTok","X"}
@@ -431,11 +437,31 @@ jobs:
           assert r.status_code == 200, (r.status_code, r.get_data(as_text=True))
           assert r.get_json()["voice_id"] == "clone-test"
 
-          r = c.post("/api/voice/preview", headers={**headers, "Content-Type":"application/json"},
-                     json={"text":"测试AI配音","mode":"ai_male","speed":1.0})
-          assert r.status_code == 200, (r.status_code, r.get_data(as_text=True))
-          assert len(r.data) > 1000
-          mod.requests.post = original_post
+          # V1.2 validates real decodable audio instead of accepting arbitrary bytes.
+          original_synth = mod.synthesize_voice
+          def fake_synth(text, mode, voice_id, output_path, speed=1.0, style="natural"):
+              duration = max(0.8, min(2.2, len(str(text or "")) / 5.0))
+              exe = imageio_ffmpeg.get_ffmpeg_exe()
+              subprocess.run([
+                  exe, "-hide_banner", "-loglevel", "error", "-y",
+                  "-f", "lavfi", "-i", f"sine=frequency=620:duration={duration}",
+                  "-c:a", "pcm_s16le", "-f", "wav", str(output_path)
+              ], check=True)
+              return str(output_path)
+          mod.synthesize_voice = fake_synth
+          try:
+              narration = "第一句完整测试。第二句也必须保留。最后一句绝不能被截掉。"
+              r = c.post("/api/voice/preview", headers={**headers, "Content-Type":"application/json"},
+                         json={"text":narration,"mode":"ai_male","speed":1.0})
+              assert r.status_code == 200, (r.status_code, r.get_data(as_text=True))
+              assert len(r.data) > 1000
+              assert r.headers.get("X-SAGI-Voice-Complete") == "1"
+              assert int(r.headers.get("X-SAGI-Voice-Coverage") or 0) == 100
+              assert int(r.headers.get("X-SAGI-Voice-Segments") or 0) >= 3
+              print("VOICE V1.2 COMPLETE PREVIEW OK", r.headers.get("X-SAGI-Voice-Segments"))
+          finally:
+              mod.synthesize_voice = original_synth
+              mod.requests.post = original_post
           print("AI Voice API smoke OK")
           PY
 
