@@ -228,7 +228,8 @@ def worker_online():
 
 def origin_allowed():
     origin = (request.headers.get("Origin") or "").rstrip("/")
-    return origin == ALLOWED_ORIGIN
+    same_origin = request.host_url.rstrip("/")
+    return origin in (ALLOWED_ORIGIN, same_origin)
 
 def authorized():
     token = client_token()
@@ -4431,6 +4432,22 @@ def market_decision():
         return jsonify({"ok": True, "id": submission_id, "decision": decision})
     except Exception as exc:
         return jsonify({"ok": False, "error": "更新审核状态失败", "detail": str(exc)[:180]}), 503
+
+
+@app.get("/house")
+@app.get("/house/")
+def house_page():
+    return send_file(Path(__file__).resolve().parent / "house.html", mimetype="text/html")
+
+
+@app.get("/house-owner")
+def house_owner_page():
+    return send_file(Path(__file__).resolve().parent / "house-owner.html", mimetype="text/html")
+
+
+@app.get("/house-admin")
+def house_admin_page():
+    return send_file(Path(__file__).resolve().parent / "house-admin.html", mimetype="text/html")
 
 
 @app.post("/api/house/submit")
