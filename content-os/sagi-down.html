@@ -48,6 +48,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 .voiceTimelineBox{margin-top:8px;border:1px solid #314852;border-radius:11px;background:#071014;padding:9px}
 .voiceTimelineHead{display:grid;grid-template-columns:1fr auto auto;gap:7px;align-items:center}.voiceTimelineHead b{font-size:9px;color:#d4dfe2}.voiceTimelineHead span{font-size:8px;color:#82959d}.voiceTimelineHead span.ok{color:#94bd9e}.voiceTimelineHead .btn{padding:7px 9px;font-size:8px}
 .voiceTimelineList{display:grid;gap:5px;margin-top:7px;max-height:190px;overflow:auto}.voiceSentenceRow{display:grid;grid-template-columns:64px 1fr;gap:7px;border:1px solid #22363f;border-radius:9px;padding:7px;background:#091318}.voiceSentenceRow time{font-size:8px;color:#c5aa68;font-variant-numeric:tabular-nums}.voiceSentenceRow span{font-size:9px;line-height:1.4;color:#c8d2d5}.voiceSentenceRow em{font-style:normal;color:#6f858e;font-size:8px;margin-right:5px}.voiceTimelineHint{margin-top:6px;font-size:8px;color:#667c85;line-height:1.45}
+.sceneSyncBox{margin-top:8px;border:1px solid #3e4e35;border-radius:11px;background:#0a1008;padding:9px}.sceneSyncHead{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}.sceneSyncHead b{font-size:9px;color:#d6dece}.sceneSyncHead .btn{padding:7px 9px;font-size:8px}.sceneSyncStatus{margin-top:6px;font-size:8px;color:#84917a;line-height:1.5}.sceneSyncList{display:grid;gap:5px;margin-top:7px;max-height:160px;overflow:auto}.sceneSyncRow{display:grid;grid-template-columns:64px 1fr auto;gap:7px;align-items:center;border:1px solid #2e3d2b;border-radius:9px;background:#091008;padding:7px}.sceneSyncRow time{font-size:8px;color:#c3ae6e}.sceneSyncRow span{font-size:8px;color:#aeb9aa;line-height:1.4}.sceneSyncRow em{font-style:normal;font-size:7px;color:#78906e}
 .cloudRenderBox{margin-top:10px;border:1px solid #594b2b;border-radius:13px;padding:10px;background:#0f0d08}.cloudRenderBox .heroMini{font-size:11px;font-weight:800;color:#d6b86f}.cloudRenderBox .mini{margin-top:4px;color:#8d8161;font-size:8px;line-height:1.5}
 .cloudRenderActions{display:grid;grid-template-columns:1.5fr 1fr;gap:7px;margin-top:9px}.cloudRenderProgress{height:7px;background:#080909;border:1px solid #4e4328;border-radius:99px;overflow:hidden;margin-top:9px}.cloudRenderProgress i{display:block;width:0;height:100%;background:linear-gradient(90deg,#86703a,#e4bf69);transition:.25s}
 .cloudRenderStatus{margin-top:7px;font-size:9px;color:#aa9560;line-height:1.5}
@@ -800,8 +801,8 @@ Unbelievable finish."></textarea>
       </div>
       <div class="voicePanel">
         <div class="sectionHead">
-          <div><div class="label">VOICE DIRECTOR · AI配音导演</div><div class="mini">AI VISUAL SYNC · 句级时间轴 · 完整性保护</div></div>
-          <span class="badge">V1.3</span>
+          <div><div class="label">VOICE DIRECTOR · AI配音导演</div><div class="mini">AI SCENE SYNC · 读取视频内容 · 句级语义匹配</div></div>
+          <span class="badge">V1.4</span>
         </div>
         <div class="voiceGrid">
           <label>配音方式
@@ -845,7 +846,7 @@ Unbelievable finish."></textarea>
           </label>
           <label>画面同步
             <select id="aiVisualSync">
-              <option value="auto" selected>AI动态匹配 · 推荐</option>
+              <option value="auto" selected>读取视频内容匹配 · 推荐</option>
               <option value="stretch">全程均匀匹配</option>
               <option value="off">保持原画面 · 超3秒禁止定格</option>
             </select>
@@ -859,8 +860,13 @@ Unbelievable finish."></textarea>
             <button class="btn" id="voiceTimelineBtn" type="button">重建时间轴</button>
           </div>
           <div class="voiceTimelineList" id="voiceTimelineList"></div>
-          <div class="voiceTimelineHint">V1.3：配音完整后，以实际音轨为总时间轴；每句同步映射到原视频对应区间。画面不足超过3秒时，默认全程动态分配，不再用长尾帧定格。</div>
-          <div class="voiceTiming" id="visualSyncStatus">AI VISUAL SYNC：等待完整配音时长。</div>
+          <div class="voiceTimelineHint">V1.4：先读取原视频的字幕语义、场景切换和运动强度，再把每句解说匹配到对应画面。只有找不到内容依据时才使用节奏补偿。</div>
+          <div class="voiceTiming" id="visualSyncStatus">AI SCENE SYNC：等待视频内容分析。</div>
+          <div class="sceneSyncBox">
+            <div class="sceneSyncHead"><b>视频内容场景</b><button class="btn" id="sceneAnalyzeBtn" type="button">分析视频内容</button></div>
+            <div class="sceneSyncStatus" id="sceneSyncStatus">尚未读取视频。会在本机抽帧分析场景变化，并结合原字幕做语义匹配。</div>
+            <div class="sceneSyncList" id="sceneSyncList"></div>
+          </div>
         </div>
         <div class="voiceActions">
           <button class="btn blue" id="aiVoicePreviewBtn" type="button">试听当前声音</button>
@@ -1226,6 +1232,7 @@ const STUDIO={
  captionVisibleCount:40,oneTapBusy:false,translationScore:0,recreatePlan:null,
  cloneVoiceId:localStorage.getItem('sagi_clone_voice_id')||'',aiVoiceReady:false,aiVoiceVoices:[],voicePreviewUrl:'',voiceTimeline:[],
  generatedVoiceBlob:null,generatedVoiceUrl:'',generatedVoiceDuration:0,generatedVoiceKey:'',generatedVoiceParts:0,visualSyncPlan:null,
+ sceneAnalysis:null,scenePlan:[],sceneAnalyzing:false,
  cloudRenderJobId:'',cloudRenderTimer:null,cloudResultUrl:'',cloudRenderRecoveries:0,cloudRenderRecovering:false,
  pendingTranslateZh:false,
  cloudHealth:null,cloudLastError:''
