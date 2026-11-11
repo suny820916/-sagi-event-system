@@ -1,0 +1,68 @@
+name: SAGI MARKET Preflight
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'sagi-market/**'
+      - '.github/workflows/sagi-market-preflight.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  market-v100:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: JavaScript syntax
+        run: node --check sagi-market/app.js
+
+      - name: Static wiring
+        run: |
+          grep -q 'data-build="1.0.0"' sagi-market/index.html
+          grep -q 'SECOND LIFE' sagi-market/index.html
+          grep -q 'TEAM BUY' sagi-market/index.html
+          grep -q 'SAGI DEAL' sagi-market/index.html
+          grep -q 'SG-S' sagi-market/app.js
+          grep -q 'productCard' sagi-market/app.js
+          grep -q 'sagi-market-v100' sagi-market/sw.js
+          ! grep -R 'onrender.com' sagi-market
+          ! grep -R 'api.openai.com' sagi-market
+          echo "SAGI MARKET STATIC WIRING OK"
+
+      - name: Real browser smoke
+        run: |
+          set -e
+          python -m http.server 8899 --directory . >/tmp/sagi-market-http.log 2>&1 &
+          PID=$!
+          trap 'kill $PID >/dev/null 2>&1 || true' EXIT
+          for i in $(seq 1 15); do
+            curl -fsS http://127.0.0.1:8899/sagi-market/ >/dev/null && break
+            sleep 1
+          done
+          CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          test -n "$CHROME"
+          "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage \
+            --virtual-time-budget=4000 --dump-dom \
+            "http://127.0.0.1:8899/sagi-market/?selftest=1" >/tmp/sagi-market-dom.html
+          grep -q 'data-selftest="ok"' /tmp/sagi-market-dom.html
+          grep -q 'id="kpiActive"' /tmp/sagi-market-dom.html
+          grep -q 'SG-S001' /tmp/sagi-market-dom.html
+          grep -q 'SG-T001' /tmp/sagi-market-dom.html
+          echo "SAGI MARKET REAL BROWSER SMOKE OK"
+
+      - name: PWA shell
+        run: |
+          grep -q '"display": "standalone"' sagi-market/manifest.webmanifest
+          grep -q "cache:'no-store'" sagi-market/sw.js
+          grep -q 'self.skipWaiting' sagi-market/sw.js
+          grep -q 'self.clients.claim' sagi-market/sw.js
+          echo "SAGI MARKET PWA SHELL OK"
