@@ -2325,7 +2325,8 @@ function handleStudioFile(e){
  const file=e.target.files?.[0];if(!file)return;
  if(!String(file.type||'').startsWith('video/')){studioStatus('请选择视频文件。','warn');return}
  STUDIO.file=file;
- STUDIO.sceneAnalysis=null;STUDIO.scenePlan=[];STUDIO.visualSyncPlan=null;renderSceneAnalysis();
+ STUDIO.sceneAnalysis=null;STUDIO.scenePlan=[];STUDIO.visualSyncPlan=null;
+ STUDIO.lockstepReady=false;STUDIO.lockstepSegments=[];STUDIO.lockstepVoiceBlob=null;STUDIO.lockstepDuration=0;renderSceneAnalysis();renderLockstepPlan();
  wakeCaptionCloud();
  if(STUDIO.url)URL.revokeObjectURL(STUDIO.url);
  STUDIO.url=URL.createObjectURL(file);
@@ -3539,8 +3540,8 @@ q('recreateFromLinkBtn').onclick=()=>makeJob(false);
 q('studioFile').onchange=handleStudioFile;
 q('setInBtn').onclick=()=>setTrimPoint('in');
 q('setOutBtn').onclick=()=>setTrimPoint('out');
-q('trimStart').addEventListener('change',()=>{STUDIO.sceneAnalysis=null;STUDIO.scenePlan=[];renderSceneAnalysis();if(STUDIO.captions.length&&STUDIO.captionRangeKey!==captionKey())aiCaptionStatus('裁剪区间已变化；重新识别可恢复精确时间轴。')});
-q('trimEnd').addEventListener('change',()=>{STUDIO.sceneAnalysis=null;STUDIO.scenePlan=[];renderSceneAnalysis();if(STUDIO.captions.length&&STUDIO.captionRangeKey!==captionKey())aiCaptionStatus('裁剪区间已变化；重新识别可恢复精确时间轴。')});
+q('trimStart').addEventListener('change',()=>{STUDIO.sceneAnalysis=null;STUDIO.scenePlan=[];STUDIO.lockstepReady=false;STUDIO.lockstepSegments=[];STUDIO.lockstepVoiceBlob=null;renderSceneAnalysis();renderLockstepPlan();if(STUDIO.captions.length&&STUDIO.captionRangeKey!==captionKey())aiCaptionStatus('裁剪区间已变化；重新识别可恢复精确时间轴。')});
+q('trimEnd').addEventListener('change',()=>{STUDIO.sceneAnalysis=null;STUDIO.scenePlan=[];STUDIO.lockstepReady=false;STUDIO.lockstepSegments=[];STUDIO.lockstepVoiceBlob=null;renderSceneAnalysis();renderLockstepPlan();if(STUDIO.captions.length&&STUDIO.captionRangeKey!==captionKey())aiCaptionStatus('裁剪区间已变化；重新识别可恢复精确时间轴。')});
 q('captionSpeed').onchange=async()=>{
  const cfg=captionSpeedConfig();
  if(STUDIO.captionModel){try{await STUDIO.captionModel.dispose?.()}catch(e){}STUDIO.captionModel=null;STUDIO.captionModelKey=''}
