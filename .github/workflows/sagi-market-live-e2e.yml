@@ -78,10 +78,12 @@ jobs:
             -H "Authorization: Bearer $TOKEN" \
             "$BRIDGE/api/market/inbox")"
           echo "$RESP"
-          python - "$SID" "$NAME" <<'PY' <<<"$RESP"
+          printf '%s' "$RESP" >/tmp/market-e2e-inbox.json
+          python - "$SID" "$NAME" /tmp/market-e2e-inbox.json <<'PY'
           import json,sys
-          data=json.load(sys.stdin)
-          sid=sys.argv[1]; name=sys.argv[2]
+          sid=sys.argv[1]; name=sys.argv[2]; path=sys.argv[3]
+          with open(path, "r", encoding="utf-8") as f:
+              data=json.load(f)
           items=data.get("items") or []
           assert any(x.get("id")==sid and x.get("name")==name for x in items), items
           print("SELLER SUBMISSION FOUND IN LIVE INBOX")
