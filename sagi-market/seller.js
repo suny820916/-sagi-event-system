@@ -28,10 +28,18 @@ function payload(){
     photo:photo
   };
 }
-function fallbackPack(data,error){
+async function fallbackPack(data,error){
   const id='LOCAL-'+Date.now().toString(36).toUpperCase();
   const pack={version:'1.1',submissionId:id,createdAt:new Date().toISOString(),reason:String(error||'cloud unavailable'),payload:data};
-  download(new Blob([JSON.stringify(pack)],{type:'application/json'}),'SAGI_MARKET_SUBMISSION_'+id+'.json');
+  const file=new File([JSON.stringify(pack)],'SAGI_MARKET_SUBMISSION_'+id+'.json',{type:'application/json'});
+  if(navigator.canShare&&navigator.share&&navigator.canShare({files:[file]})){
+    try{
+      await navigator.share({title:'SAGI MARKET 闲置提交单',text:'云端暂不可用，把这个提交单发给 SAGI 即可审核。',files:[file]});
+      msg('提交单已生成。发送给 SAGI 后，不需要重新填写。','ok');
+      return;
+    }catch(e){}
+  }
+  download(file,file.name);
   msg('云端暂不可用，已生成提交单文件。把这个文件发给 SAGI 即可，不用重新填写。','error');
 }
 async function submit(e){
@@ -46,7 +54,7 @@ async function submit(e){
     if(!r.ok||!out.ok)throw new Error(out.error||('HTTP '+r.status));
     $('#sellerForm').classList.add('hidden');$('#successCard').classList.remove('hidden');$('#submissionId').textContent='提交编号：'+out.submissionId;window.scrollTo({top:0,behavior:'smooth'});
   }catch(err){
-    fallbackPack(data,err.message||err);
+    await fallbackPack(data,err.message||err);
   }finally{btn.disabled=false;btn.textContent='提交给 SAGI 审核'}
 }
 $('#sellerPhoto').onchange=async e=>{const f=e.target.files&&e.target.files[0];if(!f)return;msg('正在压缩照片…');try{photo=await compress(f);$('#sellerPhotoPreview').src=photo;$('#sellerPhotoPreview').classList.remove('hidden');$('#sellerPhotoHint').classList.add('hidden');msg('照片已准备好','ok')}catch(err){photo='';msg(err.message,'error')}};
