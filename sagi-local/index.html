@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#09090a"><link rel="manifest" href="./manifest.webmanifest">
-<title>SAGI AI LOCAL V1.3</title>
+<title>SAGI AI LOCAL V1.3.1</title>
 <style>
 :root{--bg:#09090a;--card:#151517;--card2:#1d1d20;--line:#2b2b2f;--text:#f7f7f5;--muted:#9a9aa2;--gold:#e8c86b;--green:#72d298;--red:#ff7a7a}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","PingFang SC","Microsoft YaHei",sans-serif}button,input,textarea,select{font:inherit}.app{max-width:760px;margin:auto;min-height:100vh;padding:18px 16px 100px}
@@ -18,9 +18,9 @@ label{display:block;color:#bdbdc4;font-size:12px;margin:12px 0 6px}.field,textar
 @media(max-width:520px){.hero h1{font-size:25px}.grid2{grid-template-columns:1fr}.variants{grid-template-columns:1fr}.score{grid-template-columns:repeat(4,1fr)}.metric strong{font-size:17px}.tabs{gap:5px}.tab{font-size:12px}.posterGrid{grid-template-columns:1fr}.visualMeta{grid-template-columns:1fr 1fr}.score3{grid-template-columns:repeat(4,1fr)}}
 </style>
 </head>
-<body data-sagi-local-build="1.3.0">
+<body data-sagi-local-build="1.3.1">
 <div class="app">
-<header class="top"><div class="brand"><b>SAGI AI LOCAL</b><small>本地商家的 AI 宣传员工</small></div><div class="status"><div class="badge">V1.3 · DESIGN SYSTEM</div><div id="aiStatus" class="ai">检测AI…</div></div></header>
+<header class="top"><div class="brand"><b>SAGI AI LOCAL</b><small>本地商家的 AI 宣传员工</small></div><div class="status"><div class="badge">V1.3.1 · DESIGN SYSTEM</div><div id="aiStatus" class="ai">检测AI…</div></div></header>
 <section class="hero"><h1>一张照片，生成真正不同的商业版式。</h1><p>不是简单叠字。V1.3内置 EDITORIAL / BRAND SPLIT / IMPACT 三套商业设计系统，可直接切换对比；AI在线时再升级底图。</p></section>
 <div class="today"><div class="ico">⚡️</div><div><b id="todayTitle">今天该发什么</b><span id="todayText">建立商家档案后，我会按行业给出今日内容建议。</span></div></div>
 <div class="tabs"><button class="tab active" data-tab="create">AI创作</button><button class="tab" data-tab="photo">图片</button><button class="tab" data-tab="calendar">计划</button><button class="tab" data-tab="profile">商家档案</button></div>
@@ -94,19 +94,19 @@ function drawEditorialPoster(ctx,source,pack,W,H,is916){
  const g=ctx.createLinearGradient(0,H*.38,0,H);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(.55,'rgba(0,0,0,.18)');g.addColorStop(1,'rgba(0,0,0,.94)');ctx.fillStyle=g;ctx.fillRect(0,H*.30,W,H*.70);
  const pad=W*.07;ctx.textBaseline='top';ctx.shadowBlur=0;
  ctx.fillStyle='rgba(255,255,255,.78)';ctx.font='700 '+Math.round(W*.021)+'px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif';ctx.letterSpacing='2px';ctx.fillText('SAGI LOCAL / '+(profile.industry||'LOCAL BUSINESS'),pad,H*.055);
- ctx.fillStyle=c.accent;ctx.fillRect(pad,H*(is916?.61:.57),W*.12,Math.max(5,W*.006));
- ctx.fillStyle=c.text;ctx.font='900 '+Math.round(W*(is916?.082:.075))+'px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif';const y=H*(is916?.64:.61);const n=textLines(ctx,headline,pad,y,W*.78,is916?3:2,W*.10);
+ ctx.fillStyle=c.accent;ctx.fillRect(pad,H*(is916 ? .61:.57),W*.12,Math.max(5,W*.006));
+ ctx.fillStyle=c.text;ctx.font='900 '+Math.round(W*(is916 ? .082:.075))+'px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif';const y=H*(is916 ? .64:.61);const n=textLines(ctx,headline,pad,y,W*.78,is916?3:2,W*.10);
  const subY=y+n*W*.10+W*.02;ctx.fillStyle='rgba(255,255,255,.78)';ctx.font='500 '+Math.round(W*.030)+'px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif';textLines(ctx,pack.subheadline||'',pad,subY,W*.70,2,W*.043);
- if(offer){ctx.fillStyle=c.accent;ctx.font='900 '+Math.round(W*.062)+'px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif';ctx.textAlign='right';ctx.fillText(offer,W-pad,H*(is916?.835:.84));ctx.textAlign='left'}
+ if(offer){ctx.fillStyle=c.accent;ctx.font='900 '+Math.round(W*.062)+'px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif';ctx.textAlign='right';ctx.fillText(offer,W-pad,H*(is916 ? .835:.84));ctx.textAlign='left'}
  ctx.fillStyle='rgba(255,255,255,.68)';ctx.font='600 '+Math.round(W*.024)+'px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif';ctx.fillText(brand,pad,H*.92);
  ctx.fillStyle=c.accent;ctx.fillRect(W-pad-W*.18,H*.92+W*.008,W*.18,Math.max(3,W*.004));
 }
 function drawSplitPoster(ctx,source,pack,W,H,is916){
- const c=posterColors(pack),brand=(profile.name||'SAGI AI LOCAL').toUpperCase(),headline=is916?(pack.coverHeadline||pack.headline):pack.headline,offer=extractOffer($('#photoBrief').value||headline),split=is916?.61:.60;
+ const c=posterColors(pack),brand=(profile.name||'SAGI AI LOCAL').toUpperCase(),headline=is916?(pack.coverHeadline||pack.headline):pack.headline,offer=extractOffer($('#photoBrief').value||headline),split=is916 ? .61:.60;
  ctx.fillStyle=c.ink;ctx.fillRect(0,0,W,H);ctx.save();ctx.beginPath();ctx.rect(0,0,W,H*split);ctx.clip();drawPhotoGrade(ctx,source,W,H*split,pack.cropFocus||'center','clean');ctx.restore();
  const topG=ctx.createLinearGradient(0,0,W,0);topG.addColorStop(0,'rgba(0,0,0,.45)');topG.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=topG;ctx.fillRect(0,0,W,H*split);
  const pad=W*.07;ctx.textBaseline='top';ctx.fillStyle=c.accent;ctx.font='800 '+Math.round(W*.022)+'px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif';ctx.fillText(brand,pad,H*.05);
- ctx.fillStyle=c.paper;ctx.font='900 '+Math.round(W*(is916?.070:.063))+'px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif';const y=H*(split+.055);const n=textLines(ctx,headline,pad,y,W*.76,is916?3:2,W*.086);
+ ctx.fillStyle=c.paper;ctx.font='900 '+Math.round(W*(is916 ? .070:.063))+'px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif';const y=H*(split+.055);const n=textLines(ctx,headline,pad,y,W*.76,is916?3:2,W*.086);
  ctx.fillStyle='rgba(242,239,231,.66)';ctx.font='500 '+Math.round(W*.028)+'px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif';textLines(ctx,pack.subheadline||'',pad,y+n*W*.086+W*.015,W*.67,2,W*.042);
  if(offer){ctx.fillStyle=c.accent;ctx.font='900 '+Math.round(W*.058)+'px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif';ctx.fillText(offer,pad,H*.88)}
  const cta=pack.cta||'了解更多';ctx.font='800 '+Math.round(W*.024)+'px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif';const tw=ctx.measureText(cta).width+W*.065;roundRectPath(ctx,W-pad-tw,H*.89,tw,W*.062,W*.031);ctx.fillStyle=c.paper;ctx.fill();ctx.fillStyle=c.ink;ctx.fillText(cta,W-pad-tw+W*.032,H*.89+W*.018);
@@ -116,8 +116,8 @@ function drawImpactPoster(ctx,source,pack,W,H,is916){
  drawPhotoGrade(ctx,source,W,H,pack.cropFocus||'center','impact');ctx.fillStyle='rgba(0,0,0,.20)';ctx.fillRect(0,0,W,H);drawVignette(ctx,W,H,.42);
  const pad=W*.055;ctx.textBaseline='top';
  ctx.save();ctx.translate(0,H*.08);ctx.rotate(-.035);ctx.fillStyle=c.accent;ctx.fillRect(-W*.04,0,W*.60,W*.085);ctx.fillStyle=c.ink;ctx.font='900 '+Math.round(W*.035)+'px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif';ctx.fillText((profile.industry||'LOCAL DEAL').toUpperCase(),pad,W*.022);ctx.restore();
- const panelY=H*(is916?.59:.56);const g=ctx.createLinearGradient(0,panelY,0,H);g.addColorStop(0,'rgba(0,0,0,.10)');g.addColorStop(.25,'rgba(0,0,0,.76)');g.addColorStop(1,'rgba(0,0,0,.96)');ctx.fillStyle=g;ctx.fillRect(0,panelY,W,H-panelY);
- ctx.fillStyle='#fff';ctx.font='900 '+Math.round(W*(is916?.086:.078))+'px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif';const y=H*(is916?.65:.62);const n=textLines(ctx,headline,pad,y,W*.84,is916?3:2,W*.102);
+ const panelY=H*(is916 ? .59:.56);const g=ctx.createLinearGradient(0,panelY,0,H);g.addColorStop(0,'rgba(0,0,0,.10)');g.addColorStop(.25,'rgba(0,0,0,.76)');g.addColorStop(1,'rgba(0,0,0,.96)');ctx.fillStyle=g;ctx.fillRect(0,panelY,W,H-panelY);
+ ctx.fillStyle='#fff';ctx.font='900 '+Math.round(W*(is916 ? .086:.078))+'px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif';const y=H*(is916 ? .65:.62);const n=textLines(ctx,headline,pad,y,W*.84,is916?3:2,W*.102);
  if(offer){ctx.fillStyle=c.accent;ctx.font='900 '+Math.round(W*.075)+'px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif';ctx.fillText(offer,pad,y+n*W*.102+W*.02)}
  ctx.fillStyle='rgba(255,255,255,.72)';ctx.font='600 '+Math.round(W*.026)+'px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif';ctx.fillText(brand,pad,H*.925);
  ctx.strokeStyle='rgba(255,255,255,.25)';ctx.lineWidth=Math.max(2,W*.002);ctx.strokeRect(pad*.55,pad*.55,W-pad*1.1,H-pad*1.1);
@@ -129,6 +129,7 @@ async function runPhotoVisual(){const b=clean($('#photoBrief').value)||clean(pro
 $('#photoGen').onclick=runPhotoVisual;$('#photoAgain').onclick=runPhotoVisual;
 function saveCanvas(id,name){const c=$(id);if(!c)return;c.toBlob(blob=>{if(!blob){toast('导出失败，请截图保存');return}const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;a.style.display='none';document.body.appendChild(a);try{a.click();toast('已生成高清PNG')}catch{window.open(url,'_blank')}setTimeout(()=>{URL.revokeObjectURL(url);a.remove()},5000)},'image/png')}
 $('#download34').onclick=()=>saveCanvas('#poster34','SAGI_LOCAL_3x4.png');$('#download916').onclick=()=>saveCanvas('#poster916','SAGI_LOCAL_9x16.png');
+document.querySelectorAll('.templateBtn').forEach(btn=>{btn.onclick=()=>{currentPosterTemplate=btn.dataset.template||'editorial';document.querySelectorAll('.templateBtn').forEach(x=>x.classList.toggle('active',x===btn));if(lastVisualPack){drawCommercialPoster($('#poster34'),lastVisualPack,false);drawCommercialPoster($('#poster916'),lastVisualPack,true)}toast('已切换模板')}});
 $('.templateBtn').forEach(btn=>btn.onclick=()=>{currentPosterTemplate=btn.dataset.template||'editorial';$('.templateBtn').forEach(x=>x.classList.toggle('active',x===btn));if(lastVisualPack){drawCommercialPoster($('#poster34'),lastVisualPack,false);drawCommercialPoster($('#poster916'),lastVisualPack,true);toast('已切换 '+btn.textContent.trim())}});
 
 function renderCalendar(){const ind=profile.industry||'本地商家';const items=[['第1天','真实产品/服务','先让顾客看清你到底卖什么。'],['第2天','顾客问题','回答一个顾客下单前最犹豫的问题。'],['第3天','幕后/老板真人','让品牌出现“人”，建立信任。'],['第4天','案例证明','发一个真实前后对比、评价或使用结果。'],['第5天','主推商品','只推一个产品，一个核心利益点。'],['第6天','周末活动','把优惠写清楚：谁能用、什么时候、怎么获得。'],['第7天','品牌内容','不卖东西，讲一次为什么做这家店。']];$('#calendarList').innerHTML=items.map(x=>'<div class="hist"><b>'+x[0]+' · '+x[1]+'</b><small>'+ind+'｜'+x[2]+'</small></div>').join('')}
