@@ -11,5 +11,5 @@ def test_health():
     assert response.status_code == 200
     payload = response.json()
     assert payload["ok"] is True
-    assert payload["service"] == "SAGI MATCH INTELLIGENCE"
+    assert payload["service"] == "SAGI 比赛智能分析"
     assert payload["version"].startswith("1.0.")
