@@ -1,5 +1,8 @@
 const $ = (id) => document.getElementById(id);
 
+const CLOUD_BASE = "https://sagi-cloud-bridge-suny820916.onrender.com";
+const API_ROOT = CLOUD_BASE + "/api/match-intelligence";
+
 const form = $("uploadForm");
 const videoInput = $("videoInput");
 const fileTitle = $("fileTitle");
@@ -9,6 +12,20 @@ const jobPanel = $("jobPanel");
 const resultSection = $("resultSection");
 
 let pollTimer = null;
+
+async function checkCloud() {
+  const badge = document.querySelector(".status-dot");
+  try {
+    const response = await fetch(API_ROOT + "/health", { cache: "no-store" });
+    const data = await response.json();
+    if (!response.ok || !data.ok) throw new Error("offline");
+    badge.textContent = "AI 云端已连接";
+    badge.classList.remove("offline");
+  } catch (_) {
+    badge.textContent = "云端启动中";
+    badge.classList.add("offline");
+  }
+}
 
 videoInput.addEventListener("change", () => {
   const file = videoInput.files && videoInput.files[0];
@@ -22,6 +39,11 @@ form.addEventListener("submit", async (event) => {
   const file = videoInput.files && videoInput.files[0];
   if (!file) return;
 
+  if (file.size > 80 * 1024 * 1024) {
+    alert("当前免费测试版单个视频最大 80MB。请先用 15–60 秒比赛片段测试。");
+    return;
+  }
+
   submitBtn.disabled = true;
   submitBtn.querySelector("span").textContent = "正在上传比赛…";
   resultSection.classList.add("hidden");
@@ -33,13 +55,16 @@ form.addEventListener("submit", async (event) => {
   body.append("match_format", $("matchFormat").value);
 
   try {
-    const response = await fetch("/api/v1/jobs", { method: "POST", body: body });
+    const response = await fetch(API_ROOT + "/jobs", {
+      method: "POST",
+      body: body
+    });
     const payload = await response.json();
-    if (!response.ok) throw new Error(payload.detail || "上传失败");
+    if (!response.ok) throw new Error(payload.error || payload.detail || "上传失败");
 
     jobPanel.classList.remove("hidden");
     $("jobId").textContent = payload.job_id;
-    setProgress(0, "视频上传完成，AI排队中");
+    setProgress(0, "视频上传完成，AI 排队中");
     startPolling(payload.job_id);
   } catch (error) {
     alert(error.message || "上传失败");
@@ -59,9 +84,9 @@ function startPolling(jobId) {
 
   const poll = async () => {
     try {
-      const response = await fetch("/api/v1/jobs/" + jobId, { cache: "no-store" });
+      const response = await fetch(API_ROOT + "/jobs/" + jobId, { cache: "no-store" });
       const job = await response.json();
-      if (!response.ok) throw new Error(job.detail || "任务读取失败");
+      if (!response.ok) throw new Error(job.error || job.detail || "任务读取失败");
 
       setProgress(job.progress, job.message);
 
@@ -110,11 +135,14 @@ function renderResult(jobId, result) {
   $("homeHeatTitle").textContent = home.name + " · 热区";
   $("awayHeatTitle").textContent = away.name + " · 热区";
 
-  const base = "/api/v1/jobs/" + jobId + "/artifacts";
-  $("previewVideo").src = base + "/analysis-preview.mp4";
+  const base = API_ROOT + "/jobs/" + jobId + "/artifacts";
+  $("trackingMap").src = base + "/" + result.tracking_map;
   $("homeHeatmap").src = base + "/" + home.heatmap;
   $("awayHeatmap").src = base + "/" + away.heatmap;
 
   resultSection.classList.remove("hidden");
   resultSection.scrollIntoView({ behavior: "smooth", block: "start" });
 }
+
+checkCloud();
+setInterval(checkCloud, 60000);
