@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#09090a"><link rel="manifest" href="./manifest.webmanifest">
-<title>SAGI AI LOCAL V1.3.1</title>
+<title>SAGI AI LOCAL V1.3.2</title>
 <style>
 :root{--bg:#09090a;--card:#151517;--card2:#1d1d20;--line:#2b2b2f;--text:#f7f7f5;--muted:#9a9aa2;--gold:#e8c86b;--green:#72d298;--red:#ff7a7a}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","PingFang SC","Microsoft YaHei",sans-serif}button,input,textarea,select{font:inherit}.app{max-width:760px;margin:auto;min-height:100vh;padding:18px 16px 100px}
@@ -18,9 +18,9 @@ label{display:block;color:#bdbdc4;font-size:12px;margin:12px 0 6px}.field,textar
 @media(max-width:520px){.hero h1{font-size:25px}.grid2{grid-template-columns:1fr}.variants{grid-template-columns:1fr}.score{grid-template-columns:repeat(4,1fr)}.metric strong{font-size:17px}.tabs{gap:5px}.tab{font-size:12px}.posterGrid{grid-template-columns:1fr}.visualMeta{grid-template-columns:1fr 1fr}.score3{grid-template-columns:repeat(4,1fr)}}
 </style>
 </head>
-<body data-sagi-local-build="1.3.1">
+<body data-sagi-local-build="1.3.2">
 <div class="app">
-<header class="top"><div class="brand"><b>SAGI AI LOCAL</b><small>本地商家的 AI 宣传员工</small></div><div class="status"><div class="badge">V1.3.1 · DESIGN SYSTEM</div><div id="aiStatus" class="ai">检测AI…</div></div></header>
+<header class="top"><div class="brand"><b>SAGI AI LOCAL</b><small>本地商家的 AI 宣传员工</small></div><div class="status"><div class="badge">V1.3.2 · DESIGN SYSTEM</div><div id="aiStatus" class="ai">检测AI…</div></div></header>
 <section class="hero"><h1>一张照片，生成真正不同的商业版式。</h1><p>不是简单叠字。V1.3内置 EDITORIAL / BRAND SPLIT / IMPACT 三套商业设计系统，可直接切换对比；AI在线时再升级底图。</p></section>
 <div class="today"><div class="ico">⚡️</div><div><b id="todayTitle">今天该发什么</b><span id="todayText">建立商家档案后，我会按行业给出今日内容建议。</span></div></div>
 <div class="tabs"><button class="tab active" data-tab="create">AI创作</button><button class="tab" data-tab="photo">图片</button><button class="tab" data-tab="calendar">计划</button><button class="tab" data-tab="profile">商家档案</button></div>
@@ -54,6 +54,8 @@ label{display:block;color:#bdbdc4;font-size:12px;margin:12px 0 6px}.field,textar
 <div class="bottom"><div class="bottomin"><button class="nav active" data-tab="create"><i>✦</i>创作</button><button class="nav" data-tab="photo"><i>▣</i>图片</button><button class="nav" data-tab="calendar"><i>▤</i>计划</button><button class="nav" data-tab="profile"><i>◎</i>商家</button></div></div><div class="toast" id="toast">已完成</div>
 <script>
 const CLOUD='https://sagi-cloud-bridge-suny820916.onrender.com';
+window.addEventListener('error',e=>{try{document.body.dataset.runtimeError=String((e&&e.message)||'unknown').slice(0,180)}catch{}});
+window.addEventListener('unhandledrejection',e=>{try{document.body.dataset.runtimeError='promise:'+String((e&&e.reason&&e.reason.message)||e.reason||'unknown').slice(0,160)}catch{}});
 const $=s=>document.querySelector(s), $$=s=>document.querySelectorAll(s);
 const store={get:(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}},set:(k,v)=>localStorage.setItem(k,JSON.stringify(v))};
 let profile=store.get('sagiLocalProfile',{name:'',industry:'餐饮 / 烧烤',product:'',audience:'',brandTone:''});let lastPack=null,aiOnline=false;let photoFile=null,photoImage=null,commercialImage=null,lastVisualPack=null,currentPosterTemplate='editorial';
