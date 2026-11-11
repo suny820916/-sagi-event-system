@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     device: str = "cpu"
     analysis_fps: float = 3.0
     conf: float = 0.25
+    imgsz: int = 416
     max_upload_mb: int = 4096
     data_dir: Path = Path("./data")
 
