@@ -1519,7 +1519,7 @@ function voiceTimingHint(){
  const mode=q('aiVoiceMode')?.value||'ai_male',actualKey=voiceGenerationKey(text,mode),clipLocked=!!(STUDIO.clipLockedNarration&&STUDIO.clipLockedTarget>0&&(STUDIO.clipLockedNarration===text||STUDIO.sourceNarration===text)),actual=clipLocked?STUDIO.clipLockedTarget:((STUDIO.generatedVoiceKey===actualKey&&STUDIO.generatedVoiceDuration>0)?STUDIO.generatedVoiceDuration:0);
  let clip=0;try{clip=Number(studioRange()[2])||0}catch(e){}
  let verdict='';
- if(clip>0){const r=estimate/clip;if(r>1.03)verdict=' · <b>稿件偏长</b>，V1.6只压缩表达、不删除独立战术观点；若原意100%仍无法进入 '+clip.toFixed(1)+' 秒，将直接停止';else if(r<.72)verdict=' · <b>稿件偏短</b>，音轨仍锁定视频时长，末尾保留自然留白';else verdict=' · <b>长度合适</b>，最终音轨锁定 '+clip.toFixed(1)+' 秒'}
+ if(clip>0){const r=estimate/clip;if(r>1.03)verdict=' · <b>稿件偏长</b>，V1.7会按原视频场景逐段校准；每段只压缩表达、不删除独立战术观点，原意100%仍超时就停止';else if(r<.72)verdict=' · <b>稿件偏短</b>，LOCKSTEP会保留原视频节奏并在场景间自然留白';else verdict=' · <b>长度合适</b>，LOCKSTEP最终音轨锁定 '+clip.toFixed(1)+' 秒'}
  el.innerHTML='约 <b>'+chars+' 字</b> · '+(actual?('实际配音 <b>'+actual.toFixed(1)+'秒</b>'):('预计配音 <b>'+estimate.toFixed(1)+'秒</b>'))+(clip>0?' · 当前片段 <b>'+clip.toFixed(1)+'秒</b>':'')+verdict;
  if(clipLocked){renderVoiceTimeline()}else if(actual)rebuildVoiceTimelineToDuration(actual,'actual');else buildVoiceTimeline(true)
 }
@@ -2111,7 +2111,7 @@ async function startCloudRender(recovering=false){
  const mode=q('aiVoiceMode')?.value||'none';
  if((mode==='ai_male'||mode==='ai_female'||mode==='clone')&&(health.voiceVideoDurationLock!==true||health.voiceMeaningFirst!==true)){
    setCloudRenderProgress(0);
-   setCloudRenderStatus('当前云端尚未启用 MEANING FIRST V1.6；已阻止旧版删意/延长视频。');
+   setCloudRenderStatus('当前云端尚未启用 LOCKSTEP V1.7；已阻止旧版删意/延长视频。');
    studioStatus('云端未确认“原意100% + 视频时长硬锁”，本次不会提交错误成片。','warn');
    return
  }
