@@ -1588,6 +1588,74 @@ function meaningIntegrity(source,out){
  for(const n of [...new Set(nums)]){required++;if(String(out||'').includes(n))kept++}
  return required?Math.round(kept/required*100):100
 }
+const MEANING_CRITICAL_GROUPS={
+ formation:['4321','4-3-2-1','433','圣诞树','阵型','站位','结构'],
+ attack:['进攻','推进','前插','套边','控球','组织'],
+ defense:['防守','回防','落位','保护','封堵','压迫','逼抢','低位'],
+ midfield:['中场','三中场','后腰','前腰','双前腰','中路'],
+ flank:['边路','边后卫','边锋','侧翼','拉边','宽度'],
+ transition:['转换','反击','丢球','抢断','由攻转守','由守转攻'],
+ movement:['移动','横移','跑动','轮转','拉扯','回撤','前压'],
+ pass:['传球','出球','转移','直塞','回传'],
+ advantage:['优点','优势','好处','强项'],
+ drawback:['缺点','问题','风险','代价','不足']
+};
+function criticalMeaningSignature(text){
+ const t=String(text||''),groups=[],rels=meaningRelationFlags(t),numbers=[...new Set(t.match(/\b\d{1,4}\b/g)||[])];
+ for(const [key,terms] of Object.entries(MEANING_CRITICAL_GROUPS))if(terms.some(x=>t.includes(x)))groups.push(key);
+ return{groups:[...new Set(groups)],numbers,relations:Object.keys(rels).filter(k=>rels[k])}
+}
+function meaningUnitRepresented(sourceUnit,outUnits){
+ const sig=criticalMeaningSignature(sourceUnit),sTags=new Set(sceneSemanticTags(sourceUnit));
+ let bestScore=0,bestText='',criticalOK=false;
+ for(const out of outUnits){
+  const oSig=criticalMeaningSignature(out),oGroups=new Set(oSig.groups),oRels=new Set(oSig.relations),oTags=new Set(sceneSemanticTags(out));
+  const groupOK=sig.groups.every(x=>oGroups.has(x));
+  const numberOK=sig.numbers.every(x=>String(out).includes(x));
+  const relationOK=sig.relations.every(x=>oRels.has(x));
+  const tagOK=[...sTags].every(x=>oTags.has(x));
+  const sim=logicSimilarity(sourceUnit,out);
+  let score=sim*55;
+  if(groupOK)score+=20;if(numberOK)score+=10;if(relationOK)score+=10;if(tagOK)score+=5;
+  if(score>bestScore){bestScore=score;bestText=out;criticalOK=groupOK&&numberOK&&relationOK&&tagOK}
+ }
+ const hasCritical=!!(sig.groups.length||sig.numbers.length||sig.relations.length||sTags.size);
+ return{ok:hasCritical?(criticalOK&&bestScore>=45):bestScore>=30,score:Math.round(bestScore),bestText,signature:sig}
+}
+function meaningAuditStrict(source,out){
+ const sourceUnits=narrationLogicUnits(source),outUnits=narrationLogicUnits(out),rows=[];
+ for(const unit of sourceUnits){
+  const r=meaningUnitRepresented(unit,outUnits);rows.push({source:unit,...r})
+ }
+ const missing=rows.filter(x=>!x.ok),unitCoverage=sourceUnits.length?Math.round((sourceUnits.length-missing.length)/sourceUnits.length*100):100;
+ const s=criticalMeaningSignature(source),o=criticalMeaningSignature(out),oGroups=new Set(o.groups),oRels=new Set(o.relations);
+ let total=s.groups.length+s.numbers.length+s.relations.length,kept=0;
+ kept+=s.groups.filter(x=>oGroups.has(x)).length;
+ kept+=s.numbers.filter(x=>String(out||'').includes(x)).length;
+ kept+=s.relations.filter(x=>oRels.has(x)).length;
+ const anchorCoverage=total?Math.round(kept/total*100):100;
+ const pass=missing.length===0&&anchorCoverage===100;
+ return{
+  pass,coverage:pass?100:Math.round(unitCoverage*.7+anchorCoverage*.3),
+  unitCoverage,anchorCoverage,totalUnits:sourceUnits.length,
+  missingUnits:missing.slice(0,6).map(x=>x.source),
+  missingCount:missing.length
+ }
+}
+function strictCondenseUnit(text){
+ let s=normalizeNarrationForMeaning(text);
+ const safe=[
+  [/在进攻时/g,'进攻时'],[/在防守时/g,'防守时'],[/在中场区域/g,'中场'],
+  [/向外侧移动/g,'外移'],[/向内侧移动/g,'内收'],[/整体进行横移/g,'整体横移'],
+  [/形成了/g,'形成'],[/形成一个/g,'形成'],[/来完成/g,'完成'],
+  [/从这个位置/g,'从这里'],[/在这个位置/g,'在这里'],[/对于对手来说/g,'对手'],
+  [/对于本方来说/g,'本方'],[/相对比较/g,'较'],[/相对更加/g,'更'],
+  [/就会/g,'会'],[/就能/g,'能'],[/就可以/g,'可'],[/也会/g,'会'],
+  [/往往会/g,'常会'],[/通常会/g,'常会'],[/这也是为什么/g,'因此']
+ ];
+ for(const [re,to] of safe)s=s.replace(re,to);
+ return s.replace(/[，,]{2,}/g,'，').replace(/。{2,}/g,'。').trim()
+}
 function narrationLogicUnits(text){
  const raw=splitVoiceSentences(String(text||''),140),units=[];let buf='';
  const connector=/^(因为|所以|因此|但是|但|而|如果|当|只有|同时|这意味着|也就是说|换句话说|最后|首先|其次|进攻时|防守时|一旦|随后|然后)/;
@@ -1635,54 +1703,26 @@ function compressLogicUnit(text,budget){
  return keep.map(x=>x.x).join('')||s
 }
 function fitNarrationTextToClip(text,clipSeconds,budgetOverride=0){
- const original=String(text||'').trim(),speed=Math.max(.85,Math.min(1.15,Number(q('aiVoiceSpeed')?.value)||1));
+ const original=String(text||'').trim(),speed=Math.max(.85,Math.min(1.18,Number(q('aiVoiceSpeed')?.value)||1));
  const targetChars=Math.max(90,Math.floor(budgetOverride||clipSeconds*3.95*Math.max(1,speed)*.98));
- if(narrationCharCount(original)<=targetChars){STUDIO.meaningCoverage=100;return original}
+ if(!original){STUDIO.meaningAudit={pass:true,coverage:100,unitCoverage:100,anchorCoverage:100,totalUnits:0,missingUnits:[],missingCount:0};STUDIO.meaningCoverage=100;return''}
 
- const units=narrationLogicUnits(original);
- if(!units.length){STUDIO.meaningCoverage=100;return original}
-
- // Only merge genuinely repetitive neighbouring ideas. Never rank away unique propositions.
- const unique=[];
- for(const unit of units){
-  const prev=unique.at(-1);
-  if(prev&&logicSimilarity(prev,unit)>=.72){
-    // Keep the fuller wording when two adjacent units say nearly the same thing.
-    if(narrationCharCount(unit)>narrationCharCount(prev))unique[unique.length-1]=unit;
-  }else unique.push(unit)
+ const sourceUnits=narrationLogicUnits(original);
+ const compactUnits=sourceUnits.map(strictCondenseUnit).filter(Boolean);
+ // V1.6 rule: no unique logic unit may be ranked away. Only exact duplicate wording can collapse.
+ const kept=[];
+ for(const unit of compactUnits){
+  if(kept.length&&normalizeNarrationForMeaning(kept.at(-1))===normalizeNarrationForMeaning(unit))continue;
+  kept.push(unit)
  }
+ const out=(kept.join('')||original).replace(/。{2,}/g,'。').trim();
+ const audit=meaningAuditStrict(original,out);
+ STUDIO.meaningAudit=audit;STUDIO.meaningCoverage=audit.coverage;
 
- const totalChars=unique.reduce((n,x)=>n+narrationCharCount(x),0);
- const minPer=Math.max(8,Math.floor(targetChars/Math.max(1,unique.length)*.52));
- const budgets=unique.map(x=>Math.max(minPer,Math.floor(targetChars*narrationCharCount(x)/Math.max(1,totalChars))));
- let used=budgets.reduce((a,b)=>a+b,0);
- while(used>targetChars){
-  let changed=false;
-  for(let i=budgets.length-1;i>=0&&used>targetChars;i--){
-   if(budgets[i]>minPer){budgets[i]--;used--;changed=true}
-  }
-  if(!changed)break
- }
-
- const compressed=unique.map((x,i)=>compressLogicUnit(x,budgets[i]));
- let out=compressed.join('').replace(/。{2,}/g,'。').trim();
-
- // Never use substring truncation. If still long, remove only exact/near duplicate logic units.
- if(narrationCharCount(out)>targetChars){
-  const rows=compressed.map((x,i)=>({x,i,chars:narrationCharCount(x)}));
-  const keep=rows.map(()=>true);
-  for(let i=rows.length-1;i>0&&narrationCharCount(rows.filter((_,k)=>keep[k]).map(r=>r.x).join(''))>targetChars;i--){
-   for(let j=0;j<i;j++){
-    if(keep[j]&&logicSimilarity(rows[j].x,rows[i].x)>=.68){keep[i]=false;break}
-   }
-  }
-  out=rows.filter((_,i)=>keep[i]).map(r=>r.x).join('').trim()
- }
-
- const keptUnits=narrationLogicUnits(out),matched=unique.filter(u=>keptUnits.some(k=>logicSimilarity(u,k)>=.28)).length;
- const unitCoverage=Math.round(matched/Math.max(1,unique.length)*100),integrity=meaningIntegrity(original,out);
- STUDIO.meaningCoverage=Math.round(unitCoverage*.65+integrity*.35);
- return out||original
+ // budgetOverride may request tighter wording, but V1.6 never removes a unique proposition.
+ // If safe phrase compression still exceeds the target, caller must try modest TTS speed-up
+ // and then stop instead of deleting meaning.
+ return out
 }
 async function padVoiceBlobToDuration(blob,targetSeconds){
  const Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)return{blob,duration:targetSeconds};
