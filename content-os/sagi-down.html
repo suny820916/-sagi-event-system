@@ -1276,8 +1276,8 @@ function voiceTimeLabel(sec){
  sec=Math.max(0,Number(sec)||0);const m=Math.floor(sec/60),s=sec-m*60;
  return String(m).padStart(2,'0')+':'+s.toFixed(1).padStart(4,'0')
 }
-function buildVoiceTimeline(render=true){
- const text=String(q('narrationText')?.value||'').trim(),parts=splitVoiceSentences(text);
+function buildVoiceTimeline(render=true,textOverride=''){
+ const text=String(textOverride||q('narrationText')?.value||'').trim(),parts=splitVoiceSentences(text);
  if(!parts.length){STUDIO.voiceTimeline=[];if(render)renderVoiceTimeline();return[]}
  let clip=0;try{clip=Number(studioRange()[2])||0}catch(e){}
  const weights=parts.map(p=>Math.max(1,(p.match(/[\u3400-\u9fffA-Za-z0-9]/g)||[]).length+(p.match(/[，。！？；：、,.!?;:]/g)||[]).length*1.8));
@@ -1291,8 +1291,8 @@ function buildVoiceTimeline(render=true){
  });
  if(render)renderVoiceTimeline();return STUDIO.voiceTimeline
 }
-function rebuildVoiceTimelineToDuration(duration,source='actual'){
- const text=String(q('narrationText')?.value||'').trim(),parts=splitVoiceSentences(text),total=Math.max(.1,Number(duration)||0);
+function rebuildVoiceTimelineToDuration(duration,source='actual',textOverride=''){
+ const text=String(textOverride||q('narrationText')?.value||'').trim(),parts=splitVoiceSentences(text),total=Math.max(.1,Number(duration)||0);
  if(!parts.length||!total)return[];
  const weights=parts.map(p=>Math.max(1,(p.match(/[\u3400-\u9fffA-Za-z0-9]/g)||[]).length+(p.match(/[，。！？；：、,.!?;:]/g)||[]).length*1.8));
  const gap=.08,usable=Math.max(parts.length*.35,total-gap*Math.max(0,parts.length-1)),sum=Math.max(1,weights.reduce((a,b)=>a+b,0));
@@ -1500,7 +1500,7 @@ function voiceTimingHint(){
  if(!text){el.textContent='输入解说稿后，会自动估算配音时长并和当前视频片段比较。';STUDIO.voiceTimeline=[];renderVoiceTimeline();return}
  const chars=(text.match(/[\u3400-\u9fffA-Za-z0-9]/g)||[]).length,marks=(text.match(/[，。！？；：,.!?;:]/g)||[]).length;
  const speed=Math.max(.75,Number(q('aiVoiceSpeed')?.value)||1),estimate=Math.max(1,chars/(4.25*speed)+marks*.08);
- const mode=q('aiVoiceMode')?.value||'ai_male',actualKey=voiceGenerationKey(text,mode),clipLocked=(STUDIO.clipLockedNarration===text&&STUDIO.clipLockedTarget>0),actual=clipLocked?STUDIO.clipLockedTarget:((STUDIO.generatedVoiceKey===actualKey&&STUDIO.generatedVoiceDuration>0)?STUDIO.generatedVoiceDuration:0);
+ const mode=q('aiVoiceMode')?.value||'ai_male',actualKey=voiceGenerationKey(text,mode),clipLocked=!!(STUDIO.clipLockedNarration&&STUDIO.clipLockedTarget>0&&(STUDIO.clipLockedNarration===text||STUDIO.sourceNarration===text)),actual=clipLocked?STUDIO.clipLockedTarget:((STUDIO.generatedVoiceKey===actualKey&&STUDIO.generatedVoiceDuration>0)?STUDIO.generatedVoiceDuration:0);
  let clip=0;try{clip=Number(studioRange()[2])||0}catch(e){}
  let verdict='';
  if(clip>0){const r=estimate/clip;if(r>1.03)verdict=' · <b>稿件偏长</b>，生成时会按视频内容自动压缩到 '+clip.toFixed(1)+' 秒';else if(r<.72)verdict=' · <b>稿件偏短</b>，音轨仍锁定视频时长，末尾保留自然留白';else verdict=' · <b>长度合适</b>，最终音轨锁定 '+clip.toFixed(1)+' 秒'}
@@ -1694,7 +1694,7 @@ async function generateCompleteAIVoice(text,mode,force=false,speedOverride=null)
  const actualSpeed=speedOverride==null?(Number(q('aiVoiceSpeed')?.value)||1):Number(speedOverride);
  const key=voiceGenerationKey(text,mode,actualSpeed);
  if(!force&&STUDIO.generatedVoiceBlob&&STUDIO.generatedVoiceKey===key){
-  rebuildVoiceTimelineToDuration(STUDIO.generatedVoiceDuration,'actual');
+  rebuildVoiceTimelineToDuration(STUDIO.generatedVoiceDuration,'actual',text);
   return{blob:STUDIO.generatedVoiceBlob,duration:STUDIO.generatedVoiceDuration,parts:STUDIO.generatedVoiceParts,cached:true}
  }
  const chunks=groupVoiceText(text,72);if(!chunks.length)throw new Error('EMPTY_NARRATION');
@@ -1715,7 +1715,7 @@ async function generateCompleteAIVoice(text,mode,force=false,speedOverride=null)
  if(STUDIO.generatedVoiceUrl)URL.revokeObjectURL(STUDIO.generatedVoiceUrl);
  STUDIO.generatedVoiceBlob=merged.blob;STUDIO.generatedVoiceDuration=merged.duration;STUDIO.generatedVoiceParts=chunks.length;STUDIO.generatedVoiceKey=key;
  STUDIO.generatedVoiceUrl=URL.createObjectURL(merged.blob);
- rebuildVoiceTimelineToDuration(merged.duration,'actual');
+ rebuildVoiceTimelineToDuration(merged.duration,'actual',text);
  markVoiceCoverage(true,(STUDIO.voiceTimeline||[]).length||chunks.length,100);
  return{blob:merged.blob,duration:merged.duration,parts:chunks.length,cached:false}
 }
@@ -1738,7 +1738,7 @@ async function generateClipLockedAIVoice(originalText,mode,force=false){
  let fitted=fitNarrationTextToClip(source,clip),baseSpeed=Math.max(.85,Math.min(1.15,Number(q('aiVoiceSpeed')?.value)||1)),result=null;
  for(let pass=0;pass<3;pass++){
   STUDIO.generatedVoiceKey='';
-  buildVoiceTimeline(false);if(STUDIO.sceneAnalysis?.scenes?.length)matchVoiceTimelineToScenes();
+  buildVoiceTimeline(false,fitted);if(STUDIO.sceneAnalysis?.scenes?.length)matchVoiceTimelineToScenes();
   setVoiceState('VIDEO FIRST · 第'+(pass+1)+'轮 · 正在生成 '+clip.toFixed(1)+'秒内的配音…');
   result=await generateCompleteAIVoice(fitted,mode,true,baseSpeed);
   if(result.duration<=clip+.25)break;
@@ -1777,11 +1777,8 @@ async function generateClipLockedAIVoice(originalText,mode,force=false){
  STUDIO.generatedVoiceBlob=exact.blob;STUDIO.generatedVoiceDuration=clip;STUDIO.generatedVoiceParts=result.parts;STUDIO.generatedVoiceKey=voiceGenerationKey(fitted,mode,baseSpeed);
  STUDIO.generatedVoiceUrl=URL.createObjectURL(exact.blob);STUDIO.clipLockedNarration=fitted;STUDIO.clipLockedTarget=clip;
  renderClipLockedScript();
- // Build the spoken timeline from the condensed voice script without overwriting the user's source script.
- const sourceField=q('narrationText'),savedSource=sourceField?sourceField.value:'';
- if(sourceField)sourceField.value=fitted;
- rebuildVoiceTimelineToDuration(clip,'clip_locked');
- if(sourceField)sourceField.value=savedSource;
+ // Build spoken timing strictly from the condensed voice script; source text stays untouched.
+ rebuildVoiceTimelineToDuration(clip,'clip_locked',fitted);
  if(STUDIO.sceneAnalysis?.scenes?.length)matchVoiceTimelineToScenes();
  renderVoiceTimeline();markVoiceCoverage(true,(STUDIO.voiceTimeline||[]).length,100);
  voiceTimingHint();
