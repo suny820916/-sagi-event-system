@@ -1,0 +1,28 @@
+name: SAGI Match Intelligence Health Probe
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/sagi-match-health-probe.yml"
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe live SAGI Cloud
+        run: |
+          set -e
+          curl -L --fail --show-error --max-time 30 \
+            https://sagi-cloud-bridge-suny820916.onrender.com/health \
+            -o health.json
+          cat health.json | python -m json.tool
+          python - <<'PY'
+          import json
+          d=json.load(open("health.json"))
+          print("version =", d.get("version"))
+          print("matchIntelligence =", d.get("matchIntelligence"))
+          print("matchIntelligenceVersion =", d.get("matchIntelligenceVersion"))
+          print("matchIntelligenceEngine =", d.get("matchIntelligenceEngine"))
+          PY
