@@ -2035,31 +2035,20 @@ async function generateClipLockedAIVoice(originalText,mode,force=false){
  return{blob:exact.blob,duration:clip,parts:result.parts,text:fitted,speed:baseSpeed,originalChars:narrationCharCount(source),fittedChars:narrationCharCount(fitted)}
 }
 async function previewAIVoice(){
- const text=String(q('narrationText')?.value||'').trim();
- if(!text){studioStatus('请先生成解说稿。','warn');return}
- const mode=q('aiVoiceMode')?.value||'ai_male';
+ const text=String(q('narrationText')?.value||'').trim(),mode=q('aiVoiceMode')?.value||'ai_male';
+ if(!text){studioStatus('请先填写解说原稿。','warn');return}
  if(mode==='recorded'){
-   if(!STUDIO.voiceUrl){studioStatus('请先录制你的解说。','warn');return}
-   const a=q('aiVoicePreview');a.src=STUDIO.voiceUrl;a.classList.add('show');a.play().catch(()=>{});return
+  if(!STUDIO.voiceUrl){studioStatus('请先录制你的解说。','warn');return}
+  const a=q('aiVoicePreview');a.src=STUDIO.voiceUrl;a.classList.add('show');a.play().catch(()=>{});return
  }
  if(mode==='none'){studioStatus('当前选择“不加解说”。','warn');return}
- if(mode==='clone'&&!STUDIO.cloneVoiceId){studioStatus('还没有克隆声音，请先录一段自己的声音再克隆。','warn');return}
-
  try{
-   await voiceApiReady();
-   const health=STUDIO.cloudHealth||{};
-   if(!health.aiVoice){
-     setVoiceState('云端 AI Voice 尚未上线，暂不能生成视频锁定配音。');
-     studioStatus('VIDEO FIRST 需要云端AI Voice，当前不使用手机朗读代替成片配音。','warn');
-     return
-   }
-   setVoiceState('VIDEO FIRST · 正在读取视频并把解说锁定到当前片段时长…');
-   const locked=await generateClipLockedAIVoice(text,mode,true);
-   const a=q('aiVoicePreview');a.src=STUDIO.generatedVoiceUrl;a.classList.add('show');await a.play().catch(()=>{});
-   setVoiceState('MEANING FIRST · '+locked.duration.toFixed(1)+'秒 · '+locked.originalChars+'字→'+locked.fittedChars+'字 · 原意100% · 场景已匹配');
+  if(!STUDIO.lockstepReady||STUDIO.sourceNarration!==text)await runLockstepVoice(false);
+  const a=q('aiVoicePreview');a.src=STUDIO.lockstepVoiceUrl||STUDIO.generatedVoiceUrl;a.classList.add('show');await a.play().catch(()=>{});
+  setVoiceState('LOCKSTEP · 原意100% · 原视频不动 · '+STUDIO.lockstepDuration.toFixed(2)+'秒精确音轨')
  }catch(e){
-   setVoiceState('AI配音失败：'+(e.message||e));
-   studioStatus('VIDEO FIRST 配音失败：'+(e.message||e),'warn')
+  setVoiceState('一键适配失败：'+(e.message||e));
+  studioStatus('LOCKSTEP：'+(e.message||e),'warn')
  }
 }
 async function cloneMyVoice(){
@@ -2136,17 +2125,21 @@ async function startCloudRender(recovering=false){
      await voiceApiReady();
    }
 
-   let submitMode=mode,submitDuration=duration,submitSync='clip_locked',submitVoiceBlob=null,submitVoiceName='voice.m4a',submitMeaningFirst=false;
+   let submitMode=mode,submitDuration=duration,submitSync='lockstep',submitVoiceBlob=null,submitVoiceName='voice.m4a',submitMeaningFirst=false;
    if(mode==='recorded'&&STUDIO.voiceBlob){
      submitVoiceBlob=STUDIO.voiceBlob;submitVoiceName='voice.'+(STUDIO.voiceMime.includes('webm')?'webm':'m4a')
    }else if(mode==='ai_male'||mode==='ai_female'||mode==='clone'){
-     setCloudRenderStatus('VIDEO FIRST · 正在把AI解说锁定到 '+duration.toFixed(1)+' 秒…');
-     const locked=await generateClipLockedAIVoice(String(q('narrationText')?.value||''),mode,false);
-     submitMode='recorded';submitVoiceBlob=locked.blob;submitVoiceName='sagi-clip-locked-voice.wav';submitSync='clip_locked';submitDuration=duration;submitMeaningFirst=true;
-     setCloudRenderStatus('MEANING FIRST · 配音 '+locked.duration.toFixed(1)+'秒 · '+locked.originalChars+'字→'+locked.fittedChars+'字 · 原意100% · 正在按视频场景出片')
+     const sourceNow=String(q('narrationText')?.value||'').trim();
+     if(!STUDIO.lockstepReady||STUDIO.sourceNarration!==sourceNow){
+       setCloudRenderStatus('LOCKSTEP · 正在一次性完成场景分析、保真配音和精确锁时…');
+       await runLockstepVoice(false)
+     }
+     submitMode='recorded';submitVoiceBlob=STUDIO.lockstepVoiceBlob;submitVoiceName='sagi-lockstep-exact.wav';submitSync='lockstep';submitDuration=duration;submitMeaningFirst=true;
+     setCloudRenderStatus('LOCKSTEP 已完成 · 原意100% · '+STUDIO.lockstepDuration.toFixed(2)+'秒 = 视频 '+duration.toFixed(2)+'秒 · 正在出片')
    }
 
-   const visualMode=q('aiVisualSync')?.value||'auto';
+   const selectedVisualMode=q('aiVisualSync')?.value||'voice_to_video';
+   const visualMode=(STUDIO.lockstepReady&&submitMeaningFirst)?'voice_to_video':selectedVisualMode;
    if(visualMode==='auto'){
      if(!STUDIO.sceneAnalysis?.scenes?.length){
        setCloudRenderStatus('AI SCENE SYNC · 正在读取视频内容…');
@@ -2167,16 +2160,16 @@ async function startCloudRender(recovering=false){
    fd.append('aspect',q('studioAspect')?.value||'9:16');
    fd.append('quality',q('exportQuality')?.value||'fast');
    fd.append('captions',JSON.stringify(cloudRenderCaptions()));
-   fd.append('narration',String(q('narrationText')?.value||''));
-   const hasLockedTimeline=STUDIO.generatedVoiceDuration>0&&(STUDIO.voiceTimeline||[]).some(x=>x.basis==='clip_locked');
+   fd.append('narration',submitMeaningFirst?String(STUDIO.clipLockedNarration||''):String(q('narrationText')?.value||''));
+   const hasLockedTimeline=STUDIO.generatedVoiceDuration>0&&(STUDIO.voiceTimeline||[]).some(x=>x.basis==='clip_locked'||x.basis==='lockstep');
    const voiceTimeline=hasLockedTimeline?STUDIO.voiceTimeline:buildVoiceTimeline(true);
    fd.append('voice_timeline',JSON.stringify(voiceTimeline));
    fd.append('voice_mode',submitMode);
    fd.append('voice_id',submitMode==='recorded'?'':(mode==='clone'?STUDIO.cloneVoiceId:(q('aiVoiceVoice')?.value||'')));
    fd.append('voice_speed',q('aiVoiceSpeed')?.value||'1');
    fd.append('voice_style',q('aiVoiceStyle')?.value||'football');
-   const visualPlan=buildVisualSyncPlan();
-   if(visualPlan?.strategy==='blocked')throw new Error('画面比配音短 '+visualPlan.gap.toFixed(1)+' 秒，已禁止长尾帧定格；请选择 AI动态匹配');
+   const visualPlan=visualMode==='voice_to_video'?null:buildVisualSyncPlan();
+   if(visualPlan?.strategy==='blocked')throw new Error('画面与配音时长冲突，已停止生成');
    if(visualPlan&&visualPlan.gap>3&&health.aiVisualSync!==true){
      setCloudRenderProgress(0);
      setCloudRenderStatus('已阻止旧云端生成长尾定格：当前 Render 尚未上线 VISUAL SYNC。');
@@ -2192,8 +2185,8 @@ async function startCloudRender(recovering=false){
    fd.append('voice_sync',submitSync);
    fd.append('meaning_first',submitMeaningFirst?'true':'false');
    fd.append('meaning_audit',JSON.stringify(submitMeaningFirst?(STUDIO.meaningAudit||{}):{}));
-   fd.append('visual_sync',visualMode);
-   fd.append('visual_sync_max_hold','3');
+   fd.append('visual_sync',visualMode==='voice_to_video'?'off':visualMode);
+   fd.append('visual_sync_max_hold','0');
    fd.append('scene_plan',JSON.stringify(visualMode==='auto'?(STUDIO.scenePlan||[]):[]));
    fd.append('voice_volume',q('aiVoiceVolume')?.value||'1');
    fd.append('original_volume',q('originalAudio')?.value||'0.25');
@@ -3555,6 +3548,12 @@ q('downloadSrtBtn').onclick=downloadSrt;
 q('localCaptionBtn').onclick=runLocalCaption;
 q('cloudTestBtn').onclick=runCloudSelfTest;
 q('captionToNarrationBtn').onclick=captionToNarration;
+q('lockstepVoiceBtn').onclick=async()=>{
+ const btn=q('lockstepVoiceBtn');btn.disabled=true;btn.textContent='正在一键适配…';
+ try{await runLockstepVoice(true);toast('LOCKSTEP 一次适配完成')}
+ catch(e){setVoiceState('一键适配失败：'+(e.message||e));studioStatus('LOCKSTEP：'+(e.message||e),'warn')}
+ finally{btn.disabled=false;btn.textContent='一键适配视频配音'}
+};
 q('aiVoicePreviewBtn').onclick=previewAIVoice;
 q('cloneVoiceBtn').onclick=cloneMyVoice;
 q('aiVoiceStatusBtn').onclick=()=>refreshAIVoiceStatus(true);
@@ -3563,6 +3562,7 @@ q('sceneAnalyzeBtn').onclick=()=>analyzeVideoScenes(false);
 ['narrationText','aiVoiceSpeed','aiVoiceStyle','aiVoiceVoice','aiVoiceMode','aiVoiceSync','aiVisualSync'].forEach(id=>{
  const e=q(id);if(e)e.addEventListener(id==='narrationText'?'input':'change',()=>{
   if(id!=='aiVisualSync')STUDIO.generatedVoiceKey='';
+  if(id!=='aiVisualSync'){STUDIO.lockstepReady=false;STUDIO.lockstepSegments=[];STUDIO.lockstepVoiceBlob=null;renderLockstepPlan()}
   voiceTimingHint();
   if(STUDIO.sceneAnalysis?.scenes?.length){matchVoiceTimelineToScenes();renderVoiceTimeline()}
  })
