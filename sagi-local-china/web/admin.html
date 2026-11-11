@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>SAGI LOCAL · ADMIN</title>
+<link rel="stylesheet" href="/styles.css">
+<style>
+.adminWrap{max-width:1050px;margin:auto;padding:24px 16px 60px}
+.adminTop{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}
+.adminGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.merchantTable{display:flex;flex-direction:column;gap:8px}
+.merchantRow{display:grid;grid-template-columns:1.3fr 1fr .8fr .8fr auto;gap:10px;align-items:center;background:#101012;border:1px solid #29292f;border-radius:14px;padding:12px}
+.merchantRow small{display:block;color:#777;margin-top:3px}
+.adminKey{display:flex;gap:8px}
+.adminKey input{min-width:250px}
+@media(max-width:760px){.adminGrid{grid-template-columns:1fr 1fr}.merchantRow{grid-template-columns:1fr}.adminKey{flex-direction:column}.adminKey input{min-width:0}}
+</style>
+</head>
+<body data-build="1.4.1-admin">
+<div class="adminWrap">
+  <div class="adminTop">
+    <div><div class="brand">SAGI AI LOCAL</div><div class="version">CHINA · ADMIN V1.4.1</div></div>
+    <a class="ghost small" href="/">返回商家端</a>
+  </div>
+
+  <div class="card">
+    <div class="sectionTitle">管理员认证</div>
+    <div class="adminKey">
+      <input id="adminKey" class="field" type="password" placeholder="SAGI_ADMIN_KEY">
+      <button id="connectAdmin" class="primary" style="width:auto;margin:0">进入后台</button>
+    </div>
+    <div id="adminMessage" class="message"></div>
+  </div>
+
+  <div id="adminContent" class="hidden">
+    <div class="adminGrid">
+      <div class="card"><span class="copyLabel">商户账号</span><div id="statUsers" class="headlineText">0</div></div>
+      <div class="card"><span class="copyLabel">已保存项目</span><div id="statProjects" class="headlineText">0</div></div>
+      <div class="card"><span class="copyLabel">素材数量</span><div id="statAssets" class="headlineText">0</div></div>
+      <div class="card"><span class="copyLabel">存储占用</span><div id="statStorage" class="headlineText">0 MB</div></div>
+    </div>
+
+    <div class="card">
+      <div class="resultHead"><div class="sectionTitle">商户与套餐</div><button id="refreshAdmin" class="ghost small">刷新</button></div>
+      <div id="merchantList" class="merchantTable"></div>
+    </div>
+  </div>
+</div>
+<script src="/admin.js"></script>
+</body>
+</html>
