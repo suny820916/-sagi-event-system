@@ -1,0 +1,17 @@
+{$PUBLIC_DOMAIN:localhost} {
+  encode zstd gzip
+  reverse_proxy sagi-local-china:8080
+
+  header {
+    X-Content-Type-Options nosniff
+    X-Frame-Options SAMEORIGIN
+    Referrer-Policy strict-origin-when-cross-origin
+    Permissions-Policy "camera=(self), microphone=(), geolocation=()"
+  }
+
+  @static path /styles.css /api.js /poster.js /app.js /manifest.webmanifest /sw.js
+  header @static Cache-Control "public, max-age=3600"
+
+  @html path /
+  header @html Cache-Control "no-store"
+}
