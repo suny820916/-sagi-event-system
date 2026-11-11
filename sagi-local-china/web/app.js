@@ -300,16 +300,30 @@
     }
   }
 
+  function formatBytes(n){
+    n=Number(n)||0;
+    if(n<1024*1024)return Math.round(n/1024)+' KB';
+    if(n<1024*1024*1024)return (n/1024/1024).toFixed(1)+' MB';
+    return (n/1024/1024/1024).toFixed(2)+' GB';
+  }
+
   async function loadUsage(){
     const box=$('#usageList');
     box.textContent='读取中…';
     try{
-      const data=await SAGI_API.usage();
+      const results=await Promise.all([SAGI_API.usage(),SAGI_API.quota()]);
+      const data=results[0],quotaData=results[1];
       const items=data.usage||[];
-      if(!items.length){box.textContent='本月暂无AI调用记录';return}
-      box.innerHTML=items.map(function(x){
+      box.innerHTML=items.length?items.map(function(x){
         return '<div>'+String(x.action)+' · '+String(x.engine)+'：'+String(x.count)+' 次</div>';
-      }).join('');
+      }).join(''):'本月暂无AI调用记录';
+
+      const q=quotaData.quota||{},sub=q.subscription||{},rem=q.remaining||{};
+      const plan=(sub.limits&&sub.limits.name)||sub.plan_code||'免费版';
+      $('#accountPlan').textContent=plan;
+      $('#accountProjects').textContent=String(rem.projects??'—');
+      $('#accountAICalls').textContent=String(rem.ai_calls??'—');
+      $('#accountStorage').textContent=rem.storage_bytes===undefined?'—':formatBytes(rem.storage_bytes);
     }catch(err){
       box.textContent=err.message||'读取失败';
     }
