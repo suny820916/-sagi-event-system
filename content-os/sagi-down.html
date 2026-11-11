@@ -1473,7 +1473,7 @@ function renderVisualSyncStatus(){
 function renderVoiceTimeline(){
  const box=q('voiceTimelineList'),state=q('voiceCoverageState'),rows=STUDIO.voiceTimeline||[];
  if(state){
-  const actual=rows.length&&rows.some(r=>r.basis==='actual'||r.basis==='server_actual'),end=rows.length?Number(rows[rows.length-1].end)||0:0;
+  const actual=rows.length&&rows.some(r=>r.basis==='actual'||r.basis==='server_actual'||r.basis==='clip_locked'),end=rows.length?Number(rows[rows.length-1].end)||0:0;
   state.textContent=rows.length?(actual?('实际音轨 · '+rows.length+'句 · '+voiceTimeLabel(end)):('待云端校验 · '+rows.length+'句')):'完整性待检查';
   state.classList.toggle('ok',!!actual)
  }
@@ -1485,7 +1485,7 @@ function renderVoiceTimeline(){
 function markVoiceCoverage(complete,segments,coverage=100){
  const e=q('voiceCoverageState');if(!e)return;
  if(complete){
-  const rows=STUDIO.voiceTimeline||[],end=rows.length?Number(rows[rows.length-1].end)||0:0,actual=rows.some(r=>r.basis==='actual'||r.basis==='server_actual');
+  const rows=STUDIO.voiceTimeline||[],end=rows.length?Number(rows[rows.length-1].end)||0:0,actual=rows.some(r=>r.basis==='actual'||r.basis==='server_actual'||r.basis==='clip_locked');
   e.textContent='完整性 '+Math.max(0,Number(coverage)||100)+'% · '+Math.max(1,Number(segments)||rows.length||1)+'句'+(actual&&end>0?' · '+voiceTimeLabel(end):'');
   e.classList.add('ok')
  }else{e.textContent='完整性校验未通过';e.classList.remove('ok')}
@@ -1499,7 +1499,7 @@ function voiceTimingHint(){
  const mode=q('aiVoiceMode')?.value||'ai_male',actualKey=voiceGenerationKey(text,mode),actual=(STUDIO.generatedVoiceKey===actualKey&&STUDIO.generatedVoiceDuration>0)?STUDIO.generatedVoiceDuration:0;
  let clip=0;try{clip=Number(studioRange()[2])||0}catch(e){}
  let verdict='';
- if(clip>0){const r=estimate/clip;if(r>1.18)verdict=' · <b>稿件偏长</b>，最多自然加速18%，仍超时则自动延长视频尾帧，不截解说';else if(r<.72)verdict=' · <b>稿件偏短</b>，结尾会保留原声/留白';else verdict=' · <b>长度合适</b>，适合智能贴合'}
+ if(clip>0){const r=estimate/clip;if(r>1.03)verdict=' · <b>稿件偏长</b>，生成时会按视频内容自动压缩到 '+clip.toFixed(1)+' 秒';else if(r<.72)verdict=' · <b>稿件偏短</b>，音轨仍锁定视频时长，末尾保留自然留白';else verdict=' · <b>长度合适</b>，最终音轨锁定 '+clip.toFixed(1)+' 秒'}
  el.innerHTML='约 <b>'+chars+' 字</b> · '+(actual?('实际配音 <b>'+actual.toFixed(1)+'秒</b>'):('预计配音 <b>'+estimate.toFixed(1)+'秒</b>'))+(clip>0?' · 当前片段 <b>'+clip.toFixed(1)+'秒</b>':'')+verdict;
  if(actual)rebuildVoiceTimelineToDuration(actual,'actual');else buildVoiceTimeline(true)
 }
@@ -1727,43 +1727,17 @@ async function previewAIVoice(){
    await voiceApiReady();
    const health=STUDIO.cloudHealth||{};
    if(!health.aiVoice){
-     setVoiceState('云端 AI Voice 尚未上线，已自动改用手机系统朗读试听。');
-     speakNarration();
+     setVoiceState('云端 AI Voice 尚未上线，暂不能生成视频锁定配音。');
+     studioStatus('VIDEO FIRST 需要云端AI Voice，当前不使用手机朗读代替成片配音。','warn');
      return
    }
-   const serverV12=health.voiceCompletenessGuard===true&&['1.2','1.3','1.4'].includes(String(health.voiceDirectorVersion||''));
-   if(!serverV12||text.length>260){
-     const merged=await generateCompleteAIVoice(text,mode,false);
-     const a=q('aiVoicePreview');a.src=STUDIO.generatedVoiceUrl;a.classList.add('show');await a.play().catch(()=>{});
-     setVoiceState('完整配音保护已启用 · '+merged.parts+'段拼接 · '+merged.duration.toFixed(1)+'秒 · 文本覆盖100%');
-     return
-   }
-   setVoiceState('正在生成 AI 配音试听…');
-   const r=await fetch(CAPTION_CLOUD+'/api/voice/preview',{
-     method:'POST',
-     headers:{'Content-Type':'application/json',Authorization:'Bearer '+STUDIO.cloudCaptionToken},
-     body:JSON.stringify({text,mode,voice_id:mode==='clone'?STUDIO.cloneVoiceId:(q('aiVoiceVoice')?.value||''),speed:Number(q('aiVoiceSpeed')?.value)||1,style:q('aiVoiceStyle')?.value||'football'})
-   });
-   if(!r.ok){
-     const d=await r.json().catch(()=>({}));
-     throw new Error(d?.error||('HTTP '+r.status))
-   }
-   const complete=r.headers.get('X-SAGI-Voice-Complete')==='1',segments=Number(r.headers.get('X-SAGI-Voice-Segments')||0),coverage=Number(r.headers.get('X-SAGI-Voice-Coverage')||0);
-   if(!complete){
-     const merged=await generateCompleteAIVoice(text,mode,true);
-     const a=q('aiVoicePreview');a.src=STUDIO.generatedVoiceUrl;a.classList.add('show');await a.play().catch(()=>{});
-     setVoiceState('云端未返回完整性证明，已自动切换分段拼接 · '+merged.parts+'段 · 文本覆盖100%');
-     return
-   }
-   const blob=await r.blob();
-   if(STUDIO.voicePreviewUrl)URL.revokeObjectURL(STUDIO.voicePreviewUrl);
-   STUDIO.voicePreviewUrl=URL.createObjectURL(blob);
-   const a=q('aiVoicePreview');a.src=STUDIO.voicePreviewUrl;a.classList.add('show');await a.play().catch(()=>{});
-   markVoiceCoverage(true,segments,coverage||100);
-   setVoiceState('完整 AI 配音试听已生成 · '+segments+'句 · 完整性100%')
+   setVoiceState('VIDEO FIRST · 正在读取视频并把解说锁定到当前片段时长…');
+   const locked=await generateClipLockedAIVoice(text,mode,true);
+   const a=q('aiVoicePreview');a.src=STUDIO.generatedVoiceUrl;a.classList.add('show');await a.play().catch(()=>{});
+   setVoiceState('视频时长锁定成功 · '+locked.duration.toFixed(1)+'秒 · '+locked.originalChars+'字→'+locked.fittedChars+'字 · 文本与场景已重排');
  }catch(e){
-   setVoiceState('AI配音云端暂不可用，已改用手机朗读试听。');
-   try{speakNarration()}catch(_){}
+   setVoiceState('AI配音失败：'+(e.message||e));
+   studioStatus('VIDEO FIRST 配音失败：'+(e.message||e),'warn')
  }
 }
 async function cloneMyVoice(){
