@@ -33,12 +33,12 @@ jobs:
         run: |
           curl --fail --show-error --silent --retry 3 "$RENDER_DEPLOY_HOOK_URL"
 
-      - name: Wait for SAGI Cloud 3.9.2 Semantic Lock V2.1
+      - name: Wait for SAGI Cloud 3.9.3 Animation First V2.4
         run: |
           python - <<'PY'
           import json, time, urllib.request, sys
           url = "https://sagi-cloud-bridge-suny820916.onrender.com/health"
-          expected = "3.9.2"
+          expected = "3.9.3"
           for i in range(36):
               try:
                   with urllib.request.urlopen(url, timeout=15) as r:
@@ -49,12 +49,12 @@ jobs:
                   protected = bool(data.get("voiceSemanticMeaningProtected"))
                   exact = bool(data.get("voiceLockstepExactDuration"))
                   print(f"check {i+1}/36: version={version} voiceDirector={voice} semantic={semantic} protected={protected} exact={exact}")
-                  if version == expected and voice == "2.1" and semantic and protected and exact and bool(data.get("voiceMeaningFirst")) and int(data.get("voiceMeaningIntegrityRequired") or 0) == 100 and bool(data.get("voiceLockstep")) and bool(data.get("voiceLockstepOriginalVideoMaster")) and bool(data.get("voiceVideoDurationLock")):
-                      print("SAGI Cloud Voice Director 2.1 / SEMANTIC LOCK exact-duration verified.")
+                  if version == expected and voice == "2.4" and bool(data.get("animationFirst")) and bool(data.get("voiceOneShot")) and bool(data.get("voiceCaptionFromFinalAudio")) and semantic and protected and exact and bool(data.get("voiceVideoDurationLock")):
+                      print("SAGI Cloud Voice Director 2.4 / ANIMATION FIRST / ONE-SHOT verified.")
                       sys.exit(0)
               except Exception as e:
                   print(f"check {i+1}/36 failed: {e}")
               time.sleep(10)
-          print("Expected SAGI Cloud version 3.9.2 was not observed.")
+          print("Expected SAGI Cloud version 3.9.3 / Voice Director 2.4 was not observed.")
           sys.exit(1)
           PY
