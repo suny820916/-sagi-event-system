@@ -20,6 +20,7 @@ import sys
 import math
 import zipfile
 import html as html_lib
+import base64
 import requests
 from curl_cffi import requests as curl_requests
 import yt_dlp
@@ -55,6 +56,7 @@ OPENAI_BASE_URL = (os.getenv("OPENAI_BASE_URL") or "https://api.openai.com").str
 SAGI_LOCAL_AI_MODEL = (os.getenv("SAGI_LOCAL_AI_MODEL") or "gpt-6-luna").strip()
 SAGI_LOCAL_AI_TIMEOUT = max(10, min(60, int(os.getenv("SAGI_LOCAL_AI_TIMEOUT") or "35")))
 SAGI_LOCAL_AI_RATE_LIMIT_PER_HOUR = max(10, min(300, int(os.getenv("SAGI_LOCAL_AI_RATE_LIMIT_PER_HOUR") or "60")))
+SAGI_LOCAL_VISUAL_MAX_MB = max(2, min(20, int(os.getenv("SAGI_LOCAL_VISUAL_MAX_MB") or "8")))
 local_ai_hits = {}
 local_ai_rate_lock = Lock()
 FOOTBALL_CACHE_SECONDS = max(30, min(900, int(os.getenv("SAGI_FOOTBALL_CACHE_SECONDS") or "180")))
@@ -2718,10 +2720,13 @@ def health():
         "apiFootballConfigured": bool(API_FOOTBALL_KEY),
         "sportmonksConfigured": bool(SPORTMONKS_TOKEN),
         "localAI": True,
-        "localAIVersion": "1.1",
+        "localAIVersion": "1.2",
+        "localVisual": True,
+        "localVisualVersion": "1.2",
         "localAIConfigured": bool(OPENAI_API_KEY),
         "localAIModel": SAGI_LOCAL_AI_MODEL if OPENAI_API_KEY else "",
         "localAIRateLimitPerHour": SAGI_LOCAL_AI_RATE_LIMIT_PER_HOUR,
+        "localVisualMaxMB": SAGI_LOCAL_VISUAL_MAX_MB,
         "configured": bool(SERVER_SECRET),
     })
 
@@ -2865,7 +2870,7 @@ def sagi_local_ai_generate():
             headers={
                 "Authorization": "Bearer " + OPENAI_API_KEY,
                 "Content-Type": "application/json",
-                "User-Agent": "SAGI-AI-LOCAL/1.1"
+                "User-Agent": "SAGI-AI-LOCAL/1.2"
             },
             json=body,
             timeout=(6, SAGI_LOCAL_AI_TIMEOUT)
@@ -2894,7 +2899,7 @@ def sagi_local_ai_generate():
             "ok": True,
             "engine": "openai-responses",
             "model": SAGI_LOCAL_AI_MODEL,
-            "version": "1.1",
+            "version": "1.2",
             "latencyMs": int((time.time() - started) * 1000),
             "pack": pack
         })
@@ -2910,6 +2915,231 @@ def sagi_local_ai_generate():
             "ok": False,
             "error": "AI generation failed",
             "errorCode": "local_ai_failed",
+            "detail": str(e)[:240],
+            "fallback": True
+        }), 502
+
+
+
+SAGI_LOCAL_VISUAL_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "subject": {"type": "string"},
+        "scene": {"type": "string"},
+        "strengths": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 4,
+            "items": {"type": "string"}
+        },
+        "fixes": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 4,
+            "items": {"type": "string"}
+        },
+        "headline": {"type": "string"},
+        "subheadline": {"type": "string"},
+        "cta": {"type": "string"},
+        "coverHeadline": {"type": "string"},
+        "overlayPosition": {
+            "type": "string",
+            "enum": ["top", "bottom", "left", "right"]
+        },
+        "cropFocus": {
+            "type": "string",
+            "enum": ["center", "top", "bottom", "left", "right"]
+        },
+        "contrastOverlay": {
+            "type": "string",
+            "enum": ["dark_bottom", "dark_top", "dark_full", "none"]
+        },
+        "posterDirection": {"type": "string"},
+        "coverDirection": {"type": "string"},
+        "videoPlan": {"type": "string"},
+        "publishCopy": {"type": "string"},
+        "palette": {
+            "type": "object",
+            "properties": {
+                "text": {"type": "string"},
+                "accent": {"type": "string"},
+                "shadow": {"type": "string"}
+            },
+            "required": ["text", "accent", "shadow"],
+            "additionalProperties": False
+        },
+        "score": {
+            "type": "object",
+            "properties": {
+                "imageQuality": {"type": "integer", "minimum": 0, "maximum": 100},
+                "commercialPotential": {"type": "integer", "minimum": 0, "maximum": 100},
+                "readability": {"type": "integer", "minimum": 0, "maximum": 100},
+                "overall": {"type": "integer", "minimum": 0, "maximum": 100},
+                "reason": {"type": "string"}
+            },
+            "required": ["imageQuality", "commercialPotential", "readability", "overall", "reason"],
+            "additionalProperties": False
+        }
+    },
+    "required": [
+        "subject", "scene", "strengths", "fixes",
+        "headline", "subheadline", "cta", "coverHeadline",
+        "overlayPosition", "cropFocus", "contrastOverlay",
+        "posterDirection", "coverDirection", "videoPlan", "publishCopy",
+        "palette", "score"
+    ],
+    "additionalProperties": False
+}
+
+@app.post("/api/local-ai/visual")
+def sagi_local_ai_visual():
+    if not _local_ai_rate_allowed():
+        return jsonify({"ok": False, "error": "AI hourly limit reached", "errorCode": "local_ai_rate_limit"}), 429
+    if not OPENAI_API_KEY:
+        return jsonify({
+            "ok": False,
+            "error": "AI provider is not configured",
+            "errorCode": "local_ai_unconfigured",
+            "fallback": True
+        }), 503
+
+    upload = request.files.get("image")
+    if not upload:
+        return jsonify({"ok": False, "error": "image is required"}), 400
+
+    mime = str(upload.mimetype or "").lower().split(";")[0].strip()
+    allowed = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+    if mime not in allowed:
+        return jsonify({
+            "ok": False,
+            "error": "unsupported image type",
+            "errorCode": "local_visual_unsupported_type",
+            "supported": sorted(allowed)
+        }), 415
+
+    raw = upload.read(SAGI_LOCAL_VISUAL_MAX_MB * 1024 * 1024 + 1)
+    if not raw:
+        return jsonify({"ok": False, "error": "empty image"}), 400
+    if len(raw) > SAGI_LOCAL_VISUAL_MAX_MB * 1024 * 1024:
+        return jsonify({
+            "ok": False,
+            "error": f"image exceeds {SAGI_LOCAL_VISUAL_MAX_MB}MB",
+            "errorCode": "local_visual_too_large"
+        }), 413
+
+    brief = str(request.form.get("brief") or "").strip()[:1200]
+    profile_raw = str(request.form.get("profile") or "{}")
+    try:
+        profile = json.loads(profile_raw)
+        if not isinstance(profile, dict):
+            profile = {}
+    except Exception:
+        profile = {}
+
+    safe_profile = {
+        "name": str(profile.get("name") or "")[:120],
+        "industry": str(profile.get("industry") or "")[:120],
+        "product": str(profile.get("product") or "")[:300],
+        "audience": str(profile.get("audience") or "")[:300],
+        "brandTone": str(profile.get("brandTone") or "")[:300],
+    }
+    context = {
+        "merchant": safe_profile,
+        "brief": brief,
+        "deliverables": ["3:4海报", "9:16短视频封面", "15秒视频视觉计划", "发布文案"],
+        "language": "简体中文",
+    }
+    data_url = "data:" + mime + ";base64," + base64.b64encode(raw).decode("ascii")
+
+    system_prompt = """你是 SAGI AI LOCAL 的商业视觉导演，服务本地小商家。
+你要先看懂用户上传的真实照片，再给出可直接用于商业宣传的视觉方案。
+严格遵守：
+1. 只根据图片可见信息和商家明确提供的信息判断，不编造价格、折扣、地址、销量、奖项、评价、品牌历史或稀缺性。
+2. 如果画面有人，只描述可见动作、服装、构图和场景；不要猜身份、姓名、年龄、种族、健康、宗教等敏感或不可见属性。
+3. 不要把普通照片描述成“专业棚拍”“高端品牌合作”等图片无法证明的事实。
+4. subject/scene 要简短准确；strengths 和 fixes 必须是能指导设计的视觉判断。
+5. 3:4海报要尽量保留真实照片主体，避免遮挡主体；overlayPosition 和 cropFocus 必须可直接用于自动排版。
+6. 标题尽量控制在18个汉字以内，副标题控制在26个汉字以内，CTA控制在10个汉字以内。
+7. 9:16封面要适合手机端，前三秒能看懂卖点；不要堆满文字。
+8. palette 返回适合叠加在原图上的十六进制颜色，例如 #FFFFFF；text、accent、shadow 必须是合法 #RRGGBB。
+9. 评分要严格，特别是原图光线、主体清晰度、文字可读空间和商业转化潜力。
+只返回符合指定JSON结构的数据。"""
+
+    body = {
+        "model": SAGI_LOCAL_AI_MODEL,
+        "input": [
+            {"role": "system", "content": system_prompt},
+            {
+                "role": "user",
+                "content": [
+                    {"type": "input_text", "text": json.dumps(context, ensure_ascii=False)},
+                    {"type": "input_image", "image_url": data_url, "detail": "high"}
+                ]
+            }
+        ],
+        "text": {
+            "format": {
+                "type": "json_schema",
+                "name": "sagi_local_visual_pack",
+                "strict": True,
+                "schema": SAGI_LOCAL_VISUAL_SCHEMA
+            }
+        },
+        "max_output_tokens": 2600,
+        "store": False
+    }
+
+    started = time.time()
+    try:
+        r = requests.post(
+            OPENAI_BASE_URL + "/v1/responses",
+            headers={
+                "Authorization": "Bearer " + OPENAI_API_KEY,
+                "Content-Type": "application/json",
+                "User-Agent": "SAGI-AI-LOCAL/1.2"
+            },
+            json=body,
+            timeout=(8, SAGI_LOCAL_AI_TIMEOUT)
+        )
+        if r.status_code >= 400:
+            return jsonify({
+                "ok": False,
+                "error": "AI visual request failed",
+                "errorCode": "local_visual_provider_error",
+                "status": r.status_code,
+                "detail": (r.text or "")[:500],
+                "fallback": True
+            }), 502
+        raw_response = r.json()
+        output_text = _responses_output_text(raw_response)
+        if not output_text:
+            return jsonify({
+                "ok": False,
+                "error": "AI returned no visual analysis",
+                "errorCode": "local_visual_empty",
+                "fallback": True
+            }), 502
+        pack = json.loads(output_text)
+        return jsonify({
+            "ok": True,
+            "engine": "openai-responses-vision",
+            "model": SAGI_LOCAL_AI_MODEL,
+            "version": "1.2",
+            "latencyMs": int((time.time() - started) * 1000),
+            "pack": pack
+        })
+    except requests.Timeout:
+        return jsonify({
+            "ok": False,
+            "error": "AI visual request timed out",
+            "errorCode": "local_visual_timeout",
+            "fallback": True
+        }), 504
+    except Exception as e:
+        return jsonify({
+            "ok": False,
+            "error": "AI visual generation failed",
+            "errorCode": "local_visual_failed",
             "detail": str(e)[:240],
             "fallback": True
         }), 502
