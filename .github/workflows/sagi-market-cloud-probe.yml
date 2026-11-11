@@ -1,0 +1,28 @@
+name: SAGI MARKET Cloud Probe
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/sagi-market-cloud-probe.yml'
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Probe live bridge health
+        run: |
+          set -e
+          curl -fsS --max-time 20 \
+            https://sagi-cloud-bridge-suny820916.onrender.com/health \
+            -o /tmp/health.json
+          cat /tmp/health.json
+          python - <<'PY'
+          import json
+          data=json.load(open('/tmp/health.json'))
+          print('deployRevision=', data.get('deployRevision'))
+          print('version=', data.get('version'))
+          print('marketIntake=', data.get('marketIntake'))
+          print('marketIntakeVersion=', data.get('marketIntakeVersion'))
+          PY
