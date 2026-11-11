@@ -935,7 +935,7 @@ Unbelievable finish."></textarea>
 
 <script>
 (()=>{'use strict';
-const SAGI_DOWN_BUILD='V3.9.2.1';
+const SAGI_DOWN_BUILD='V3.9.2.2';
 document.documentElement.dataset.sagiDownBuild=SAGI_DOWN_BUILD;
 const BTCH_PUBLIC='https://btch-downloader-api-green.vercel.app';
 const DOWNLOAD_ROUTER_VERSION='3.0';
@@ -1341,12 +1341,12 @@ function sceneWordTokens(text){
  (t.match(/[a-z]{3,}|[\u3400-\u9fff]{2,4}/g)||[]).forEach(x=>out.add(x));
  return out
 }
-function waitStudioSeek(v,time){
+function waitStudioSeek(v,time,timeoutMs=320){
  return new Promise(resolve=>{
   const target=Math.max(0,Math.min(Number(v.duration)||time,Number(time)||0));
-  if(Math.abs((v.currentTime||0)-target)<.025){resolve();return}
+  if(Math.abs((v.currentTime||0)-target)<.04){resolve();return}
   let done=false;const finish=()=>{if(done)return;done=true;v.removeEventListener('seeked',finish);clearTimeout(timer);resolve()};
-  const timer=setTimeout(finish,900);v.addEventListener('seeked',finish,{once:true});
+  const timer=setTimeout(finish,Math.max(180,Number(timeoutMs)||320));v.addEventListener('seeked',finish,{once:true});
   try{if(typeof v.fastSeek==='function')v.fastSeek(target);else v.currentTime=target}catch(e){finish()}
  })
 }
@@ -1366,7 +1366,7 @@ function renderSceneAnalysis(){
  const host=q('sceneSyncList'),status=q('sceneSyncStatus'),a=STUDIO.sceneAnalysis;
  if(!host||!status)return;
  if(!a?.scenes?.length){host.innerHTML='';status.textContent=STUDIO.sceneAnalyzing?'正在读取视频画面…':'尚未读取视频。会在本机抽帧分析场景变化，并结合原字幕做语义匹配。';return}
- status.textContent='已读取 '+a.samples+' 个画面采样 · 拆出 '+a.scenes.length+' 个场景 · '+(a.captionHits?'原字幕语义已参与匹配':'无原字幕时使用画面运动/场景顺序匹配');
+ status.textContent='FAST SCAN · '+(a.scanMs?((a.scanMs/1000).toFixed(1)+'秒 · '):'')+'读取 '+a.samples+' 个关键采样 · 拆出 '+a.scenes.length+' 个场景 · '+(a.captionHits?'原字幕语义已参与匹配':'无原字幕时使用画面运动/场景顺序匹配');
  host.innerHTML=a.scenes.map((s,i)=>'<div class="sceneSyncRow"><time>'+voiceTimeLabel(s.start)+'–'+voiceTimeLabel(s.end)+'</time><span>#'+(i+1)+' '+escapeHtml(s.label)+(s.text?'<br>'+escapeHtml(s.text.slice(0,54)):'')+'</span><em>'+Math.round(s.motion*100)+'%</em></div>').join('')
 }
 async function analyzeVideoScenes(silent=false){
@@ -1375,15 +1375,16 @@ async function analyzeVideoScenes(silent=false){
  STUDIO.sceneAnalyzing=true;renderSceneAnalysis();
  const oldTime=v.currentTime||0,wasPaused=v.paused;try{v.pause()}catch(e){}
  try{
-  const [clipStart,,clipDuration]=studioRange(),count=Math.max(12,Math.min(72,Math.ceil(clipDuration/1.15)+1)),step=clipDuration/Math.max(1,count-1);
-  const canvas=document.createElement('canvas'),w=64,h=36;canvas.width=w;canvas.height=h;const ctx=canvas.getContext('2d',{willReadFrequently:true});
+  const scanStarted=performance.now();
+  const [clipStart,,clipDuration]=studioRange(),count=Math.max(10,Math.min(30,Math.ceil(clipDuration/6)+1)),step=clipDuration/Math.max(1,count-1);
+  const canvas=document.createElement('canvas'),w=48,h=27;canvas.width=w;canvas.height=h;const ctx=canvas.getContext('2d',{willReadFrequently:true});
   const samples=[];let prev=null;
   for(let i=0;i<count;i++){
    const rel=Math.min(clipDuration,i*step),abs=clipStart+rel;
-   await waitStudioSeek(v,abs);ctx.drawImage(v,0,0,w,h);
+   await waitStudioSeek(v,abs,320);ctx.drawImage(v,0,0,w,h);
    const d=frameDescriptor(ctx,w,h,prev);prev=d.gray;
    samples.push({t:rel,diff:d.diff,green:d.green,brightness:d.brightness,edge:d.edge,focusX:d.focusX,colorActivity:d.colorActivity});
-   if(i%6===0&&q('sceneSyncStatus'))q('sceneSyncStatus').textContent='正在读取视频内容 · '+Math.round((i+1)/count*100)+'%'
+   if((i%3===0||i===count-1)&&q('sceneSyncStatus'))q('sceneSyncStatus').textContent='FAST SCAN · 正在读取关键画面 '+(i+1)+'/'+count+' · '+Math.round((i+1)/count*100)+'%'
   }
   const diffs=samples.slice(1).map(x=>x.diff).sort((a,b)=>a-b),p75=diffs.length?diffs[Math.min(diffs.length-1,Math.floor(diffs.length*.75))]:.08,cutThreshold=Math.max(.07,p75*1.35);
   const bounds=[0];let last=0;
@@ -1405,9 +1406,9 @@ async function analyzeVideoScenes(silent=false){
    if(green>.12)label+=' · '+visualSide;
    scenes.push({id:bi,start:Number(start.toFixed(3)),end:Number(end.toFixed(3)),motion:Number(motion.toFixed(4)),green:Number(green.toFixed(4)),focusX:Number(focusX.toFixed(3)),text,tags,label,tokens:[...sceneWordTokens(text)]})
   }
-  STUDIO.sceneAnalysis={scenes,samples:count,captionHits:scenes.filter(x=>x.text).length,cutThreshold:Number(cutThreshold.toFixed(4)),clipDuration,analyzedAt:Date.now()};
+  STUDIO.sceneAnalysis={scenes,samples:count,captionHits:scenes.filter(x=>x.text).length,cutThreshold:Number(cutThreshold.toFixed(4)),clipDuration,scanMs:Math.round(performance.now()-scanStarted),mode:'fast_scan_v3922',analyzedAt:Date.now()};
   matchVoiceTimelineToScenes();renderSceneAnalysis();renderVoiceTimeline();
-  if(!silent)toast('视频内容分析完成 · '+scenes.length+' 个场景');
+  if(!silent)toast('FAST SCAN 完成 · '+scenes.length+' 个场景 · '+(STUDIO.sceneAnalysis.scanMs/1000).toFixed(1)+'秒');
   return STUDIO.sceneAnalysis
  }catch(e){
   console.error('SCENE_SYNC',e);STUDIO.sceneAnalysis=null;if(!silent)studioStatus('视频内容分析失败：'+(e.message||e),'warn');return null
