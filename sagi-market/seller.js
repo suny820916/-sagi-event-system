@@ -10,8 +10,8 @@ async function compress(file){
   const max=720,scale=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight));
   const c=document.createElement('canvas');c.width=Math.max(1,Math.round(img.naturalWidth*scale));c.height=Math.max(1,Math.round(img.naturalHeight*scale));c.getContext('2d').drawImage(img,0,0,c.width,c.height);
   let q=.72,data=c.toDataURL('image/jpeg',q);
-  while(data.length>850000&&q>.38){q-=.08;data=c.toDataURL('image/jpeg',q)}
-  if(data.length>950000)throw new Error('照片仍然太大，请换一张或裁剪后提交');
+  while(data.length>560000&&q>.38){q-=.08;data=c.toDataURL('image/jpeg',q)}
+  if(data.length>620000)throw new Error('照片仍然太大，请换一张或裁剪后提交');
   return data;
 }
 function payload(){
