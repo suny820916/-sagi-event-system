@@ -11,14 +11,14 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, UploadFile
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from . import ai, billing
+from . import ai, billing, storage
 from .admin import admin_auth
 from .auth import auth_user, make_token, password_hash
-from .db import UPLOAD_DIR, connect, init_db
+from .db import connect, init_db
 
 APP_VERSION = "1.4.1"
 WEB_DIR = Path(__file__).resolve().parent.parent / "web"
@@ -103,6 +103,7 @@ def health() -> dict[str, Any]:
         "aiConfigured": ai.configured(),
         "visionConfigured": ai.vision_configured(),
         "maxUploadMB": MAX_UPLOAD_MB,
+        "storageBackend": storage.backend(),
         "plans": list(billing.PLANS.keys()),
         "quotaEngine": True,
         "adminConfigured": bool(os.getenv("SAGI_ADMIN_KEY")),
@@ -217,7 +218,10 @@ async def upload_asset(
 
     asset_id = uuid.uuid4().hex
     stored_name = asset_id + ALLOWED_MIME[mime]
-    (UPLOAD_DIR / stored_name).write_bytes(raw)
+    try:
+        storage.save(stored_name, raw, mime)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="图片存储服务暂不可用") from exc
     now = int(time.time())
 
     with connect() as con:
@@ -261,15 +265,23 @@ def get_asset(asset_id: str, user=Depends(auth_user)):
     if not row:
         raise HTTPException(status_code=404, detail="图片不存在")
 
-    path = UPLOAD_DIR / row["stored_name"]
-    if not path.exists():
+    if not storage.exists(row["stored_name"]):
         raise HTTPException(status_code=404, detail="图片文件不存在")
 
-    return FileResponse(
-        path,
-        media_type=row["mime"],
-        filename=row["filename"],
-    )
+    path = storage.local_path(row["stored_name"])
+    if path is not None:
+        return FileResponse(
+            path,
+            media_type=row["mime"],
+            filename=row["filename"],
+        )
+    try:
+        return RedirectResponse(
+            storage.signed_url(row["stored_name"], filename=row["filename"]),
+            status_code=307,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="图片读取服务暂不可用") from exc
 
 
 @app.post("/api/ai/copy")
