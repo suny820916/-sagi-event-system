@@ -41,8 +41,9 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 
 
 .voicePanel{margin-top:10px;border:1px solid #324d57;border-radius:13px;padding:10px;background:#081014}
-.voiceGrid{display:grid;grid-template-columns:1.2fr .8fr;gap:8px}.voiceGrid label{font-size:8px;color:#77909a}.voiceGrid select{width:100%;margin-top:4px;border:1px solid #35515d;background:#081014;color:#fff;border-radius:10px;padding:10px;font-size:10px}
+.voiceGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.voiceGrid label{font-size:8px;color:#77909a}.voiceGrid select{width:100%;margin-top:4px;border:1px solid #35515d;background:#081014;color:#fff;border-radius:10px;padding:10px;font-size:10px}
 .voiceActions{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:8px}.voiceActions .btn{padding:11px 6px}
+.voiceTiming{margin-top:8px;border:1px solid #2a414a;background:#091217;border-radius:10px;padding:8px 9px;font-size:8px;color:#8ba2ab;line-height:1.5}.voiceTiming b{color:#d8c280}
 .voiceState{margin-top:8px;font-size:9px;color:#7f9aa5;line-height:1.5}.voicePreview{display:none;width:100%;margin-top:8px;height:34px}.voicePreview.show{display:block}
 .cloudRenderBox{margin-top:10px;border:1px solid #594b2b;border-radius:13px;padding:10px;background:#0f0d08}.cloudRenderBox .heroMini{font-size:11px;font-weight:800;color:#d6b86f}.cloudRenderBox .mini{margin-top:4px;color:#8d8161;font-size:8px;line-height:1.5}
 .cloudRenderActions{display:grid;grid-template-columns:1.5fr 1fr;gap:7px;margin-top:9px}.cloudRenderProgress{height:7px;background:#080909;border:1px solid #4e4328;border-radius:99px;overflow:hidden;margin-top:9px}.cloudRenderProgress i{display:block;width:0;height:100%;background:linear-gradient(90deg,#86703a,#e4bf69);transition:.25s}
@@ -795,8 +796,12 @@ Unbelievable finish."></textarea>
         <button class="btn" id="stopNarrationBtn" type="button">停止录音</button>
       </div>
       <div class="voicePanel">
+        <div class="sectionHead">
+          <div><div class="label">VOICE DIRECTOR · AI配音导演</div><div class="mini">音色 · 情绪 · 节奏 · 时长贴合</div></div>
+          <span class="badge">V1.1</span>
+        </div>
         <div class="voiceGrid">
-          <label>AI配音
+          <label>配音方式
             <select id="aiVoiceMode">
               <option value="ai_male">AI专业男声</option>
               <option value="ai_female">AI专业女声</option>
@@ -805,19 +810,42 @@ Unbelievable finish."></textarea>
               <option value="none" selected>不加解说（稳定优先）</option>
             </select>
           </label>
-          <label>语速
-            <select id="aiVoiceSpeed">
-              <option value="0.92">沉稳 0.92×</option>
-              <option value="1" selected>自然 1.00×</option>
-              <option value="1.08">短视频 1.08×</option>
-              <option value="1.15">快速 1.15×</option>
+          <label>具体音色
+            <select id="aiVoiceVoice"><option value="">自动匹配（推荐）</option></select>
+          </label>
+          <label>配音风格
+            <select id="aiVoiceStyle">
+              <option value="football" selected>足球热血 · 强节奏</option>
+              <option value="natural">自然解说 · 通用</option>
+              <option value="documentary">纪录片 · 沉稳</option>
+              <option value="news">新闻播报 · 清晰</option>
+              <option value="warm">温暖叙事 · 情绪</option>
             </select>
           </label>
+          <label>语速
+            <select id="aiVoiceSpeed">
+              <option value="0.88">慢速 0.88×</option>
+              <option value="0.94">沉稳 0.94×</option>
+              <option value="1" selected>自然 1.00×</option>
+              <option value="1.08">短视频 1.08×</option>
+              <option value="1.16">快速 1.16×</option>
+              <option value="1.24">冲刺 1.24×</option>
+            </select>
+          </label>
+          <label>解说音量
+            <select id="aiVoiceVolume">
+              <option value="0.9">轻 90%</option><option value="1" selected>标准 100%</option><option value="1.1">突出 110%</option><option value="1.2">强 120%</option>
+            </select>
+          </label>
+          <label>时长同步
+            <select id="aiVoiceSync"><option value="fit" selected>智能贴合片段</option><option value="natural">保持自然时长</option></select>
+          </label>
         </div>
+        <div class="voiceTiming" id="voiceTiming">输入解说稿后，会自动估算配音时长并和当前视频片段比较。</div>
         <div class="voiceActions">
-          <button class="btn blue" id="aiVoicePreviewBtn" type="button">AI配音试听</button>
-          <button class="btn gold" id="cloneVoiceBtn" type="button">用当前录音克隆我的声音</button>
-          <button class="btn" id="aiVoiceStatusBtn" type="button">AI Voice 状态</button>
+          <button class="btn blue" id="aiVoicePreviewBtn" type="button">试听当前声音</button>
+          <button class="btn gold" id="cloneVoiceBtn" type="button">克隆我的声音</button>
+          <button class="btn" id="aiVoiceStatusBtn" type="button">刷新音色</button>
         </div>
         <audio id="aiVoicePreview" class="voicePreview" controls></audio>
         <div class="voiceState" id="aiVoiceState">AI Voice 检测中。克隆声音前请先录制一段你自己的干净人声。</div>
@@ -1188,6 +1216,26 @@ function setProgress(v){const e=q('exportProgressBar');if(e)e.style.width=Math.m
 function setCloudRenderProgress(v){const e=q('cloudRenderProgress');if(e)e.style.width=Math.max(0,Math.min(100,Number(v)||0))+'%'}
 function setCloudRenderStatus(t){const e=q('cloudRenderStatus');if(e)e.textContent=t}
 function setVoiceState(t){const e=q('aiVoiceState');if(e)e.textContent=t}
+function populateVoiceChoices(list){
+ const sel=q('aiVoiceVoice');if(!sel)return;
+ const current=sel.value||'',items=Array.isArray(list)?list:[];
+ sel.innerHTML='<option value="">自动匹配（推荐）</option>'+items.map(v=>{
+  const id=escapeHtml(v.voice_id||''),name=escapeHtml(v.name||'Voice'),gender=v.gender==='female'?'女声':(v.gender==='male'?'男声':'音色'),source=v.category==='fallback'?'FREE':'PREMIUM';
+  return '<option value="'+id+'">'+name+' · '+gender+' · '+source+'</option>'
+ }).join('');
+ if([...sel.options].some(o=>o.value===current))sel.value=current
+}
+function voiceTimingHint(){
+ const el=q('voiceTiming');if(!el)return;
+ const text=String(q('narrationText')?.value||'').trim();
+ if(!text){el.textContent='输入解说稿后，会自动估算配音时长并和当前视频片段比较。';return}
+ const chars=(text.match(/[\u3400-\u9fffA-Za-z0-9]/g)||[]).length,marks=(text.match(/[，。！？；：,.!?;:]/g)||[]).length;
+ const speed=Math.max(.75,Number(q('aiVoiceSpeed')?.value)||1),estimate=Math.max(1,chars/(4.25*speed)+marks*.08);
+ let clip=0;try{clip=Number(studioRange()[2])||0}catch(e){}
+ let verdict='';
+ if(clip>0){const r=estimate/clip;if(r>1.18)verdict=' · <b>稿件偏长</b>，智能贴合会明显加快，建议精简';else if(r<.72)verdict=' · <b>稿件偏短</b>，结尾会保留原声/留白';else verdict=' · <b>长度合适</b>，适合智能贴合'}
+ el.innerHTML='约 <b>'+chars+' 字</b> · 预计配音 <b>'+estimate.toFixed(1)+'秒</b>'+(clip>0?' · 当前片段 <b>'+clip.toFixed(1)+'秒</b>':'')+verdict
+}
 async function voiceApiReady(){
  const ready=await wakeCaptionCloud();
  if(!ready||!STUDIO.cloudCaptionToken)throw new Error('SAGI Cloud 未连接');
@@ -1205,7 +1253,7 @@ async function refreshAIVoiceStatus(showToast=false){
    const r=await fetch(CAPTION_CLOUD+'/api/voice/status',{headers:{Authorization:'Bearer '+STUDIO.cloudCaptionToken},cache:'no-store'});
    const d=await r.json().catch(()=>({}));
    if(!r.ok||!d?.ok)throw new Error(d?.error||('HTTP '+r.status));
-   STUDIO.aiVoiceReady=!!d.configured;STUDIO.aiVoiceVoices=d.voices||[];
+   STUDIO.aiVoiceReady=!!d.configured;STUDIO.aiVoiceVoices=d.voices||[];populateVoiceChoices(STUDIO.aiVoiceVoices);voiceTimingHint();
    if(d.configured){
      const clone=d.cloneConfigured?' · 克隆声音可用':' · 克隆声音需 ElevenLabs Key';
      setVoiceState('AI Voice 已连接 · '+d.provider+' · '+d.voiceCount+' 个音色'+clone+(STUDIO.cloneVoiceId?' · 已保存我的声音':''));
@@ -1239,7 +1287,7 @@ async function previewAIVoice(){
    const r=await fetch(CAPTION_CLOUD+'/api/voice/preview',{
      method:'POST',
      headers:{'Content-Type':'application/json',Authorization:'Bearer '+STUDIO.cloudCaptionToken},
-     body:JSON.stringify({text:text.slice(0,500),mode,voice_id:mode==='clone'?STUDIO.cloneVoiceId:'',speed:Number(q('aiVoiceSpeed')?.value)||1})
+     body:JSON.stringify({text:text.slice(0,500),mode,voice_id:mode==='clone'?STUDIO.cloneVoiceId:(q('aiVoiceVoice')?.value||''),speed:Number(q('aiVoiceSpeed')?.value)||1,style:q('aiVoiceStyle')?.value||'football'})
    });
    if(!r.ok){
      const d=await r.json().catch(()=>({}));
