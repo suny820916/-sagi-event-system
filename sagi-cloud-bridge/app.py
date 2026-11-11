@@ -671,6 +671,11 @@ def public_render_job(job):
         "updatedAt": job.get("updated_at", ""),
         "error": job.get("error", ""),
         "size": int(job.get("size", 0) or 0),
+        "voiceComplete": bool(job.get("voiceComplete", False)),
+        "voiceCoverage": int(job.get("voiceCoverage", 0) or 0),
+        "voiceSegments": int(job.get("voiceSegments", 0) or 0),
+        "voiceDuration": float(job.get("voiceDuration", 0) or 0),
+        "voiceTimeline": list(job.get("voiceTimeline") or [])[:120],
     }
     if job.get("status") == "ready":
         base = request.host_url.rstrip("/") + f"/api/render-jobs/{job['id']}/file?key={job['download_key']}"
