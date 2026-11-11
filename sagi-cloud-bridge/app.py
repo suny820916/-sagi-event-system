@@ -1186,20 +1186,18 @@ def normalize_scene_plan(raw_plan, clip_duration, output_duration):
     if not rows:
         return []
     rows.sort(key=lambda x: (x["outputStart"], x["outputEnd"]))
-    plan_end = max(x["outputEnd"] for x in rows)
-    if plan_end <= 0.05:
-        return []
-    scale = max(0.01, float(output_duration) / plan_end)
+    weights = [max(0.08, x["outputEnd"] - x["outputStart"]) for x in rows]
+    total_weight = max(0.08, sum(weights))
     out = []
     cursor = 0.0
-    for i, row in enumerate(rows):
-        start = max(cursor, row["outputStart"] * scale)
-        end = max(start + 0.08, row["outputEnd"] * scale)
+    for i, (row, weight) in enumerate(zip(rows, weights)):
+        start = cursor
+        seg_duration = float(output_duration) * weight / total_weight
+        end = min(float(output_duration), start + max(0.08, seg_duration))
         if i == len(rows) - 1:
             end = float(output_duration)
         if start >= output_duration - 0.02:
             break
-        end = min(float(output_duration), end)
         x = dict(row)
         x["outputStart"] = start
         x["outputEnd"] = end
