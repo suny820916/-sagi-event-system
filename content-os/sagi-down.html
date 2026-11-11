@@ -1585,10 +1585,14 @@ function normalizeNarrationForMeaning(text){
 }
 function meaningRelationFlags(text){
  const t=String(text||'');
+ const hasCondition=/如果|只要|当|一旦|只有/.test(t);
  return{
   cause:/因为|所以|因此|从而/.test(t),
-  contrast:/但是|但|而|并非|不代表/.test(t),
-  condition:/如果|当|一旦|只有/.test(t),
+  causePair:/因为/.test(t)&&/所以|因此|从而/.test(t),
+  contrast:/但是|但|而|并非|不代表|不是/.test(t),
+  contrastPair:/不是|并非/.test(t)&&/而是/.test(t),
+  condition:hasCondition,
+  conditionOutcome:hasCondition&&/会|就|可能|能|需|必须|容易|易|面对|导致|形成|暴露|下降|增加|失去|出现/.test(t),
   sequence:/首先|其次|然后|随后|最后/.test(t),
   attack:/进攻/.test(t),defense:/防守/.test(t),
   advantage:/优点|优势/.test(t),drawback:/缺点|代价|问题|风险/.test(t)
@@ -1871,6 +1875,13 @@ function semanticTightenPhrase(text){
  let s=strictCondenseUnit(text);
  const map=[
   [/始终要做一件事[———:：]*守住/g,'始终守住'],
+  [/始终要做一件事[，,]?就是守住/g,'始终守住'],
+  [/不是一个简单把数字摆在场上的阵型/g,'不是简单站位'],
+  [/不是简单把数字摆在场上的阵型/g,'不是简单站位'],
+  [/而是一套围绕/g,'而是围绕'],
+  [/建立起来的体系/g,'建立的体系'],
+  [/承担非常大的上下往返任务/g,'承担大量上下往返'],
+  [/阅读比赛能力/g,'比赛阅读能力'],
   [/最大的风险也恰恰在/g,'最大风险在'],
   [/最大的风险恰恰在/g,'最大风险在'],
   [/只要([^，。]{1,18})慢一步/g,'若$1慢一步'],
@@ -1939,6 +1950,19 @@ function semanticCondenseUnit(text,budget=0){
    const adds=['groups','numbers','relations','tags'].some(k=>merged[k].size>cover[k].size);
    if(adds){selected.push(row);cover=merged}
    if(semanticCovers(cover,need))break
+ }
+ // Complete dependent logical pairs before trimming: condition→outcome, because→result, not→but.
+ const addIndex=(idx)=>{if(idx<0||idx>=rows.length)return;const row=rows[idx];if(!selected.includes(row)){selected.push(row);cover=semanticMergeCoverage(cover,row.sig)}};
+ for(const row of [...selected]){
+   const x=row.x;
+   if(/^(而是|所以|因此|从而|但是|但|不过)/.test(x))addIndex(row.i-1);
+   if(/如果|只要|一旦|当/.test(x))addIndex(row.i+1);
+   if(/因为/.test(x)&&!/所以|因此|从而/.test(x))addIndex(row.i+1);
+   if(/不是|并非/.test(x)&&row.i+1<rows.length&&/^(而是|而)/.test(rows[row.i+1].x))addIndex(row.i+1);
+ }
+ for(let i=0;i<rows.length-1;i++){
+   if(selected.includes(rows[i])&&/如果|只要|一旦|当|因为/.test(rows[i].x))addIndex(i+1);
+   if(selected.includes(rows[i+1])&&/^(而是|所以|因此|从而)/.test(rows[i+1].x))addIndex(i);
  }
  // Keep a representative clause even when the unit has no dictionary anchors.
  if(!selected.length)selected.push(rows.sort((a,b)=>b.score-a.score)[0]);
