@@ -82,7 +82,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent
 .captainNode:after{content:'C';position:absolute;right:-6px;top:-7px;width:19px;height:19px;border-radius:50%;background:#fff1b7;color:#111;font-size:10px;display:flex;align-items:center;justify-content:center;font-weight:1000}
 
 /* ===== V4.5 MATCHDAY GRAPHICS ===== */
-.graphicsStage{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;overflow:hidden;pointer-events:none;color:#fff}
+.graphicsStage{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;overflow:hidden;pointer-events:none;color:#fff;z-index:9999}
 .scoreBug{position:absolute;left:50%;top:42px;transform:translateX(-50%);display:none;height:74px;border-radius:14px;background:#070a0ef2;border:1px solid #ffffff25;box-shadow:0 18px 44px #0009;overflow:hidden;align-items:stretch;font-weight:900}
 .scoreBug.on{display:flex}.sbTeam{min-width:235px;max-width:320px;padding:0 24px;display:flex;align-items:center;justify-content:center;font-size:21px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sbTeam.home{background:linear-gradient(90deg,#151a21,#0d1117)}.sbTeam.away{background:linear-gradient(270deg,#151a21,#0d1117)}
 .sbScore{width:78px;display:flex;align-items:center;justify-content:center;font-size:36px;background:#d8b55b;color:#0b0d10}.sbMid{width:126px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0d1218}.sbClock{font-size:22px;font-variant-numeric:tabular-nums}.sbPeriod{font-size:9px;color:#d8b55b;letter-spacing:2px;margin-top:3px}
@@ -123,6 +123,11 @@ const LAN_DIRECT=true;
 async function lanState(){
  const r=await fetch('/api/state',{cache:'no-store'});
  if(!r.ok)throw new Error('LAN '+r.status);
+ return r.json();
+}
+async function lanMatchday(){
+ const r=await fetch('/api/matchday?ts='+Date.now(),{cache:'no-store'});
+ if(!r.ok)throw new Error('MATCHDAY '+r.status);
  return r.json();
 }
 
@@ -353,8 +358,11 @@ function applyGraphics(g){currentGraphics=g;updateScoreBug();showEvent(g)}
 
 async function poll(){
  try{
-   const p=await lanState(),x=p.lineupIntro,g=p.matchdayGraphics;
+   const p=await lanState(),x=p.lineupIntro;
    if(x&&x.commandId&&x.commandId!==last){last=x.commandId;render(x)}
+ }catch(e){}
+ try{
+   const g=await lanMatchday();
    if(g&&g.commandId&&g.commandId!==lastGraphics){lastGraphics=g.commandId;applyGraphics(g)}
  }catch(e){}
 }
