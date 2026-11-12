@@ -24,6 +24,7 @@ def clear_scene():
 
 def material(name, color, rough=.55, metallic=0.0, emission_strength=0.0):
     m = bpy.data.materials.new(name)
+    m.diffuse_color = color
     m.use_nodes = True
     bsdf = m.node_tree.nodes.get("Principled BSDF")
     bsdf.inputs["Base Color"].default_value = color
@@ -183,6 +184,17 @@ scene.render.image_settings.file_format = "PNG"
 scene.render.image_settings.color_mode = "RGB"
 scene.render.filepath = os.path.join(frames_dir, "frame_")
 scene.world.color = hex_rgba(pal["background"])[:3]
+
+# Workbench is the fast cloud preview renderer. Keep material colors
+# and shadows readable so geometry/camera can be reviewed before final Eevee.
+try:
+    scene.display.shading.light = "STUDIO"
+    scene.display.shading.color_type = "MATERIAL"
+    scene.display.shading.show_shadows = True
+    scene.display.shading.show_cavity = True
+    scene.display.shading.cavity_type = "WORLD"
+except Exception:
+    pass
 
 try:
     scene.render.image_settings.color_mode = "RGB"
