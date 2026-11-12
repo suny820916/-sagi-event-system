@@ -89,9 +89,9 @@ jobs:
           test -s sagi_blender_benchmark_01.mp4
           test -s sagi_blender_benchmark_01.blend
 
-          ffprobe -v error \
+          docker exec sagi-blender-ci ffprobe -v error \
             -show_entries format=duration:stream=codec_name,width,height,r_frame_rate \
-            -of json sagi_blender_benchmark_01.mp4 \
+            -of json "/tmp/sagi_jobs/$JOB_ID/render.mp4" \
             | tee benchmark_probe.json
 
       - name: Upload benchmark artifact
