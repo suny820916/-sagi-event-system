@@ -190,7 +190,7 @@ scene.world.color = hex_rgba(pal["background"])[:3]
 try:
     scene.display.shading.light = "STUDIO"
     scene.display.shading.color_type = "MATERIAL"
-    scene.display.shading.show_shadows = True
+    scene.display.shading.show_shadows = False
     scene.display.shading.show_cavity = True
     scene.display.shading.cavity_type = "WORLD"
 except Exception:
@@ -206,6 +206,11 @@ except Exception:
     pass
 
 m_pitch = material("PITCH", hex_rgba(pal["pitch"]), rough=.78)
+m_pitch_alt = material(
+    "PITCH_ALT",
+    hex_rgba(pal.get("pitch_alt", "#131719")),
+    rough=.80,
+)
 m_line = material("LINE", hex_rgba(pal["pitch_line"]), rough=.52)
 m_y = material(
     "OWN_PRIMARY",
@@ -237,7 +242,21 @@ m_ball = material(
 
 # Floating pitch
 cube("PITCH", (0, 0, 0), (34, 52.5, .18), m_pitch)
-lw = .045
+
+# Teactics-like low-contrast horizontal spatial bands.
+# They support depth reading without turning the pitch into a grass texture.
+band_h = 105.0 / 8.0
+for i in range(8):
+    if i % 2 == 0:
+        y0 = -52.5 + band_h * (i + .5)
+        cube(
+            f"PITCH_BAND_{i}",
+            (0, y0, .185),
+            (33.95, band_h / 2.0, .004),
+            m_pitch_alt,
+        )
+
+lw = .055
 polyline(
     "TOUCHLINE",
     [(-34,-52.5),(34,-52.5),(34,52.5),(-34,52.5)],
@@ -277,6 +296,8 @@ def create_player(name, data):
     root.rotation_euler[2] = math.radians(
         float(data.get("yaw", 0))
     )
+    # Slightly larger tactical marker: still miniature, but readable on mobile.
+    root.scale = (1.16, 1.16, 1.16)
 
     matp = (
         m_g
@@ -292,42 +313,42 @@ def create_player(name, data):
     # solid torso, short/thin limbs, almost no gait.
     torso = cube(
         name + "_TORSO",
-        (0,0,1.10),
-        (.23,.15,.43),
+        (0,0,1.03),
+        (.225,.145,.36),
         matp,
     )
     head = sphere(
         name + "_HEAD",
-        (0,0,1.68),
-        .17,
+        (0,0,1.58),
+        .16,
         matp,
     )
     la = cyl(
         name + "_LA",
-        (-.29,0,1.12),
-        .052,
-        .55,
+        (-.285,0,1.05),
+        .050,
+        .50,
         matp,
     )
     ra = cyl(
         name + "_RA",
-        (.29,0,1.12),
-        .052,
-        .55,
+        (.285,0,1.05),
+        .050,
+        .50,
         matp,
     )
     ll = cyl(
         name + "_LL",
-        (-.11,0,.45),
-        .061,
-        .68,
+        (-.105,0,.42),
+        .060,
+        .70,
         matp,
     )
     rl = cyl(
         name + "_RL",
-        (.11,0,.45),
-        .061,
-        .68,
+        (.105,0,.42),
+        .060,
+        .70,
         matp,
     )
 
@@ -393,34 +414,59 @@ scene.camera = cam
 
 camera_presets = {
     "shape": {
-        "loc": (0,-73,77),
-        "target": (0,0,0),
-        "lens": 52,
+        "loc": (0,-69,69),
+        "target": (0,-2,0),
+        "lens": 56,
     },
     "relation": {
-        "loc": (22,-61,36),
-        "target": (4,-15,1.0),
-        "lens": 59,
+        "loc": (18,-56,34),
+        "target": (3,-14,1.0),
+        "lens": 62,
     },
     "result": {
-        "loc": (-15,-59,45),
-        "target": (0,-4,1.0),
-        "lens": 55,
+        "loc": (-12,-55,41),
+        "target": (0,-5,1.0),
+        "lens": 60,
     },
 }
 
+camera_last = None
+camera_last_t = 0.0
 
-def camera_key(preset, t):
-    p = camera_presets[preset]
-    fr = 1 + round(t * fps)
 
+def apply_camera_pose(p, frame):
     cam.location = p["loc"]
     cam.data.lens = p["lens"]
     look_at(cam, p["target"])
+    key(cam, "location", frame)
+    key(cam, "rotation_euler", frame)
+    cam.data.keyframe_insert("lens", frame=frame)
 
-    key(cam, "location", fr)
-    key(cam, "rotation_euler", fr)
-    cam.data.keyframe_insert("lens", frame=fr)
+
+def camera_key(preset, t):
+    # Teactics grammar: stable composition inside an idea.
+    # Reframe quickly only just before the next tactical question.
+    global camera_last, camera_last_t
+    p = camera_presets[preset]
+    fr = 1 + round(t * fps)
+
+    if camera_last is None or t <= 0.001:
+        apply_camera_pose(p, fr)
+        camera_last = p
+        camera_last_t = t
+        return
+
+    transition = 0.58
+    start_t = max(camera_last_t, t - transition)
+    start_fr = 1 + round(start_t * fps)
+
+    # Duplicate the previous pose at transition start = camera stays locked
+    # through the concept, then makes one short purposeful move.
+    apply_camera_pose(camera_last, start_fr)
+    apply_camera_pose(p, fr)
+
+    camera_last = p
+    camera_last_t = t
 
 
 def focus_player(name, t):
