@@ -284,6 +284,65 @@ for sy in (-1, 1):
         m_line,
     )
 
+    # Six-yard box: important spatial reference once the camera moves
+    # into the finishing phase.
+    y6 = sy * (52.5 - 5.5)
+    polyline(
+        "SIX_YARD",
+        [(-9.16,y),(9.16,y),(9.16,y6),(-9.16,y6)],
+        lw,
+        m_line,
+    )
+
+    # Minimal goal frame. Keep it geometric and readable from a high
+    # tactical camera; no net texture or broadcast-style detail.
+    goal_y = sy * 52.72
+    back_y = sy * 54.65
+    post_z = 1.22
+    cube(
+        "GOAL_POST_L",
+        (-3.66, goal_y, post_z),
+        (.055, .055, 1.22),
+        m_line,
+    )
+    cube(
+        "GOAL_POST_R",
+        (3.66, goal_y, post_z),
+        (.055, .055, 1.22),
+        m_line,
+    )
+    cube(
+        "GOAL_BAR",
+        (0, goal_y, 2.44),
+        (3.72, .055, .055),
+        m_line,
+    )
+    # Ground-depth rails make the goal mouth legible from above.
+    line(
+        "GOAL_SIDE_L",
+        (-3.66, goal_y),
+        (-3.66, back_y),
+        .045,
+        m_line,
+        z=.23,
+    )
+    line(
+        "GOAL_SIDE_R",
+        (3.66, goal_y),
+        (3.66, back_y),
+        .045,
+        m_line,
+        z=.23,
+    )
+    line(
+        "GOAL_BACK",
+        (-3.66, back_y),
+        (3.66, back_y),
+        .045,
+        m_line,
+        z=.23,
+    )
+
 
 def create_player(name, data):
     root = bpy.data.objects.new(name, None)
@@ -372,7 +431,9 @@ def create_player(name, data):
         m_ring,
     )
     ring.parent = root
-    ring.hide_render = data.get("role") != "primary"
+    # Focus rings are editorial annotations, not permanent player badges.
+    # Start hidden and reveal only through explicit focus events.
+    ring.hide_render = True
 
     return root, ring
 
@@ -433,14 +494,14 @@ camera_presets = {
         "lens": 62,
     },
     "result": {
-        "loc": (-10,-54,39),
-        "target": (2,8,1.0),
+        "loc": (-8,-49,46),
+        "target": (2,9,1.0),
         "lens": 62,
     },
     "finish": {
-        "loc": (12,-44,31),
-        "target": (12,27,1.0),
-        "lens": 68,
+        "loc": (10,-36,68),
+        "target": (8,36,0.8),
+        "lens": 64,
     },
 }
 
@@ -472,7 +533,7 @@ def camera_key(preset, t):
 
     # V03: a shorter, purposeful reframe. The camera should feel like it
     # recognizes the next tactical question, not like it is travelling there.
-    transition = 0.38
+    transition = 0.32
     start_t = max(camera_last_t, t - transition)
     start_fr = 1 + round(start_t * fps)
 
