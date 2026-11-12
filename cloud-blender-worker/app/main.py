@@ -14,7 +14,7 @@ from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.responses import FileResponse, PlainTextResponse
 from pydantic import BaseModel, Field
 
-APP_VERSION = "1.0.0"
+APP_VERSION = "1.0.1"
 ROOT = Path(__file__).resolve().parents[1]
 ENGINE = ROOT / "engine" / "sagi_tactics_blender.py"
 BENCHMARK = ROOT / "presets" / "benchmark_4231.json"
@@ -95,7 +95,6 @@ def enqueue(config: dict[str, Any]) -> dict[str, Any]:
     )
     write_status(
         job_id,
-        job_id=job_id,
         status="queued",
         created_at=time.time(),
         progress=0,
