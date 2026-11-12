@@ -1,4 +1,4 @@
-# SAGI V4.6.3 AUTO UPDATE LAN DIRECT Bridge
+# SAGI V4.6.4 AUTO UPDATE LAN DIRECT Bridge
 # Same-LAN control server + local vMix API bridge.
 # Phone Control: http://<PC-LAN-IP>:8099/
 # vMix Browser:  http://127.0.0.1:8099/vmix
@@ -11,6 +11,8 @@ New-Item -ItemType Directory -Force -Path $Root | Out-Null
 
 $ControlCache = Join-Path $Root "control-latest.html"
 $OutputCache  = Join-Path $Root "output-latest.html"
+$BridgeCache  = Join-Path $Root "bridge-stable.ps1"
+$RemoteBase   = "https://suny820916.github.io/-sagi-event-system/intro"
 
 $Allowed = @(
   "Cut","Fade","Stinger1","PreviewInput",
@@ -26,6 +28,30 @@ $State = @{
   matchdayGraphics = $null
 }
 $MatchdayJson = "null"
+
+function Update-SagiLan {
+  $ProgressPreference = "SilentlyContinue"
+  $stamp = [DateTime]::UtcNow.Ticks
+  $items = @(
+    @{url=($RemoteBase + "/v45-lan.html?t=" + $stamp); dest=$ControlCache; kind="control"},
+    @{url=($RemoteBase + "/vmix-v45-lan.html?t=" + $stamp); dest=$OutputCache; kind="output"},
+    @{url=($RemoteBase + "/vmix-bridge-stable.ps1?t=" + $stamp); dest=$BridgeCache; kind="bridge"}
+  )
+  $updated = New-Object System.Collections.Generic.List[string]
+  foreach ($item in $items) {
+    $r = Invoke-WebRequest -UseBasicParsing -Uri $item.url -TimeoutSec 8 -Headers @{"Cache-Control"="no-cache"}
+    $text = [string]$r.Content
+    if ([string]::IsNullOrWhiteSpace($text) -or $text.Length -lt 1000) { throw ("Invalid update payload: " + $item.kind) }
+    $tmp = $item.dest + ".new"
+    [IO.File]::WriteAllText($tmp,$text,(New-Object Text.UTF8Encoding($false)))
+    Move-Item $tmp $item.dest -Force
+    if ($item.kind -eq "control") { $script:ControlHtml = $text }
+    elseif ($item.kind -eq "output") { $script:OutputHtml = $text }
+    $updated.Add([string]$item.kind)
+  }
+  Write-Host ("[UPDATE] Mobile update complete: " + ($updated -join ", ")) -ForegroundColor Green
+  return @{ok=$true;version="4.6.4";updated=$updated;restartBridge=$true}
+}
 
 function Get-LanIPv4 {
   try {
@@ -144,7 +170,7 @@ function State-Json {
 
 Write-Host ""
 Write-Host "============================================================" -ForegroundColor Cyan
-Write-Host "  SAGI V4.6.3 AUTO UPDATE LAN DIRECT - vMix Bridge" -ForegroundColor Cyan
+Write-Host "  SAGI V4.6.4 AUTO UPDATE LAN DIRECT - vMix Bridge" -ForegroundColor Cyan
 Write-Host "============================================================" -ForegroundColor Cyan
 
 if (-not (Test-Path $ControlCache) -or -not (Test-Path $OutputCache)) {
@@ -277,6 +303,16 @@ while ($true) {
         Write-HttpResponse $stream 200 "application/json" '{"ok":true}'
       } catch {
         Write-Host ("[vMix ERROR] " + $_.Exception.Message) -ForegroundColor Red
+        $err = $_.Exception.Message | ConvertTo-Json -Compress
+        Write-HttpResponse $stream 500 "application/json" ('{"ok":false,"error":' + $err + '}')
+      }
+    }
+    elseif ($method -eq "POST" -and $path -eq "/api/update") {
+      try {
+        $result = Update-SagiLan
+        Write-HttpResponse $stream 200 "application/json" ($result | ConvertTo-Json -Compress)
+      } catch {
+        Write-Host ("[UPDATE ERROR] " + $_.Exception.Message) -ForegroundColor Red
         $err = $_.Exception.Message | ConvertTo-Json -Compress
         Write-HttpResponse $stream 500 "application/json" ('{"ok":false,"error":' + $err + '}')
       }
