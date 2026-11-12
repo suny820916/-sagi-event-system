@@ -1,8 +1,8 @@
 {
   "project": "SAGI TACTICS",
-  "version": "BLENDER BENCHMARK 02 · VISUAL LOCK",
+  "version": "BLENDER BENCHMARK 03 · MOTION LOCK",
   "fps": 12,
-  "duration_sec": 12,
+  "duration_sec": 7.7,
   "resolution": [
     540,
     960
@@ -98,7 +98,7 @@
         0,
         9
       ],
-      "role": "context",
+      "role": "primary",
       "yaw": 0
     },
     "RW": {
@@ -107,7 +107,7 @@
         25,
         12
       ],
-      "role": "context",
+      "role": "primary",
       "yaw": 0
     },
     "ST": {
@@ -154,83 +154,136 @@
       "preset": "shape"
     },
     {
-      "t": 1.2,
+      "t": 0.9,
       "type": "focus",
       "player": "RCB"
     },
     {
-      "t": 2,
+      "t": 1.55,
       "type": "camera",
       "preset": "relation"
     },
     {
-      "t": 2.35,
+      "t": 1.75,
       "type": "pass",
       "from": "GK",
       "to": "RCB",
-      "release": 2.65,
-      "arrive": 3.55
+      "release": 1.92,
+      "arrive": 2.52
     },
     {
-      "t": 3.75,
+      "t": 2.58,
       "type": "defender_shift",
       "player": "P9",
       "to": [
         8,
         -20
       ],
-      "duration": 0.62
+      "duration": 0.52
     },
     {
-      "t": 4.2,
+      "t": 3,
       "type": "focus",
       "player": "LDM"
     },
     {
-      "t": 4.9,
+      "t": 3.32,
       "type": "pass",
       "from": "RCB",
       "to": "LDM",
-      "release": 5.25,
-      "arrive": 6.15
+      "release": 3.46,
+      "arrive": 4.08
     },
     {
-      "t": 6.2,
+      "t": 4.02,
       "type": "space",
       "center": [
         -2,
         -6
       ],
       "radius": [
-        4.2,
-        2.4
+        4,
+        2.2
       ],
-      "duration": 1.35
+      "duration": 0.82
     },
     {
-      "t": 6.4,
+      "t": 4.3,
       "type": "player_move",
       "player": "CAM",
       "to": [
-        -2,
-        14
+        -4,
+        15
       ],
-      "duration": 1.15
+      "duration": 0.72
     },
     {
-      "t": 7.3,
-      "type": "camera",
-      "preset": "result"
+      "t": 4.4,
+      "type": "pass",
+      "from": "LDM",
+      "to": "CAM",
+      "release": 4.52,
+      "arrive": 5.1
     },
     {
-      "t": 9,
+      "t": 4.72,
+      "type": "player_move",
+      "player": "RW",
+      "to": [
+        16,
+        29
+      ],
+      "duration": 0.92
+    },
+    {
+      "t": 4.82,
+      "type": "defender_shift",
+      "player": "M2",
+      "to": [
+        2,
+        10
+      ],
+      "duration": 0.7
+    },
+    {
+      "t": 5.08,
       "type": "focus",
       "player": "CAM"
     },
     {
-      "t": 10.6,
+      "t": 5.28,
       "type": "camera",
-      "preset": "shape"
+      "preset": "result"
+    },
+    {
+      "t": 5.42,
+      "type": "pass",
+      "from": "CAM",
+      "to": "RW",
+      "release": 5.55,
+      "arrive": 6.24
+    },
+    {
+      "t": 6.05,
+      "type": "camera",
+      "preset": "finish"
+    },
+    {
+      "t": 6.22,
+      "type": "focus",
+      "player": "RW"
+    },
+    {
+      "t": 6.36,
+      "type": "shot",
+      "from": "RW",
+      "to": [
+        6,
+        50
+      ],
+      "release": 6.4,
+      "arrive": 6.92,
+      "arc": 0.82
     }
   ],
   "preview_mode": true
