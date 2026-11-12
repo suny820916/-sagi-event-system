@@ -180,12 +180,11 @@ for candidate in (requested_engine, "BLENDER_EEVEE", "BLENDER_WORKBENCH", "CYCLE
 if not engine_ok:
     raise RuntimeError("No supported Blender render engine is available")
 
-scene.render.image_settings.file_format = "FFMPEG"
-scene.render.ffmpeg.format = "MPEG4"
-scene.render.ffmpeg.codec = "H264"
-scene.render.ffmpeg.constant_rate_factor = "MEDIUM"
-scene.render.ffmpeg.ffmpeg_preset = "GOOD"
-scene.render.filepath = os.path.join(out_dir, "render_raw.mp4")
+frames_dir = os.path.join(out_dir, "frames")
+os.makedirs(frames_dir, exist_ok=True)
+scene.render.image_settings.file_format = "PNG"
+scene.render.image_settings.color_mode = "RGB"
+scene.render.filepath = os.path.join(frames_dir, "frame_")
 scene.world.color = hex_rgba(pal["background"])[:3]
 
 try:
