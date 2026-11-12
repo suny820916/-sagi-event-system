@@ -8,8 +8,8 @@ $VmixApi = "http://127.0.0.1:8088/api/"
 $Root = Join-Path $env:LOCALAPPDATA "SAGI\LiveMatchDirector"
 New-Item -ItemType Directory -Force -Path $Root | Out-Null
 
-$ControlUrl = "https://raw.githubusercontent.com/suny820916/-sagi-event-system/main/intro/v45-lan.html?v=455"
-$OutputUrl  = "https://raw.githubusercontent.com/suny820916/-sagi-event-system/main/intro/vmix-v45-lan.html?v=455"
+$ControlUrl = "https://suny820916.github.io/-sagi-event-system/intro/v45-lan.html?v=456"
+$OutputUrl  = "https://suny820916.github.io/-sagi-event-system/intro/vmix-v45-lan.html?v=456"
 $ControlCache = Join-Path $Root "v45-lan.html"
 $OutputCache  = Join-Path $Root "vmix-v45-lan.html"
 
@@ -29,9 +29,9 @@ $State = @{
 
 function Get-CachedText([string]$Url,[string]$CachePath) {
   try {
-    $wc = New-Object Net.WebClient
-    $wc.Headers.Add("Cache-Control","no-cache")
-    $text = $wc.DownloadString($Url)
+    Write-Host ("[LOAD] " + $Url) -ForegroundColor DarkCyan
+    $resp = Invoke-WebRequest -UseBasicParsing -Uri $Url -TimeoutSec 15 -Headers @{"Cache-Control"="no-cache"}
+    $text = [string]$resp.Content
     [IO.File]::WriteAllText($CachePath,$text,(New-Object Text.UTF8Encoding($false)))
     return $text
   }
