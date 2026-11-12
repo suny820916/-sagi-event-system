@@ -1015,7 +1015,7 @@ function refreshMatchdayUI(){
  q('mdHomeName').textContent=q('matchHome').value.trim()||'主队';q('mdAwayName').textContent=q('matchAway').value.trim()||'客队';
  q('mdHomeScore').textContent=matchdayState.homeScore;q('mdAwayScore').textContent=matchdayState.awayScore;
  q('mdClock').textContent=mdFormat(mdNowSeconds());q('mdPeriod').value=matchdayState.period;q('mdPeriodLabel').textContent=mdPeriodName(matchdayState.period);
- q('mdScoreboardShow').classList.toggle('primary',matchdayState.scoreboardVisible);q('mdSyncDot').classList.toggle('on',matchdayState.scoreboardVisible||!!matchdayState.lastEvent);
+ q('mdScoreboardShow').classList.toggle('primary',matchdayState.scoreboardVisible);const syncDot=q('mdSyncDot');if(syncDot)syncDot.classList.toggle('on',matchdayState.scoreboardVisible||!!matchdayState.lastEvent);
 }
 function mdPersist(){try{const s={...matchdayState,clockBase:mdNowSeconds(),clockRunning:false,clockStartedAt:0};localStorage.setItem('sagi_matchday_graphics_v42',JSON.stringify(s))}catch(e){}}
 function mdLoad(){
@@ -1036,10 +1036,10 @@ async function publishMatchday(event=null){
  const state=mdCloudSnapshot(event);matchdayState.lastEvent=event;mdPersist();refreshMatchdayUI();
  try{
   await lanPost('/api/state',{matchdayGraphics:state});
-  q('mdSync').innerHTML='<span class="mdLiveDot on"></span>LAN 已同步 vMix';
+  q('mdSync').innerHTML='<span id="mdSyncDot" class="mdLiveDot on"></span>LAN 已同步 vMix';
   return{ok:true}
  }catch(e){
-  q('mdSync').innerHTML='<span class="mdLiveDot"></span>LAN 同步失败';
+  q('mdSync').innerHTML='<span id="mdSyncDot" class="mdLiveDot"></span>LAN 同步失败';
   return{ok:false}
  }
 }
