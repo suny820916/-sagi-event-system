@@ -128,14 +128,11 @@ def key(obj, path, frame):
 
 
 def smooth_action(obj):
-    ad = getattr(obj, "animation_data", None)
-    if not ad or not ad.action:
-        return
-    for fc in ad.action.fcurves:
-        for kp in fc.keyframe_points:
-            kp.interpolation = "BEZIER"
-            kp.handle_left_type = "AUTO_CLAMPED"
-            kp.handle_right_type = "AUTO_CLAMPED"
+    # Blender 5.x uses layered/slotted Actions and no longer exposes
+    # Action.fcurves through the legacy API. Default keyframe interpolation
+    # is already Bezier, so V1 deliberately leaves curve data untouched.
+    # We will add SAGI camera-specific easing with the Blender 5.x API later.
+    return
 
 
 args = args_after_dd()
