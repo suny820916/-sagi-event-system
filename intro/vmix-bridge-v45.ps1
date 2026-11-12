@@ -6,7 +6,9 @@ $SupabaseUrl = "https://zgqrjuwltbnkgovtsccb.supabase.co"
 $ApiKey = "sb_publishable_bqROSu6ZQRdDW3DLazUCfg_4aYxldN8"
 $EventSlug = "tacheng-winter-2026"
 $VmixApi = "http://127.0.0.1:8088/api/"
-$PollMilliseconds = 250
+$PollMilliseconds = 500
+$CloudTimeoutSeconds = 12
+$MaxBackoffMilliseconds = 8000
 
 $Allowed = @(
   "Cut","Fade","Stinger1","PreviewInput",
@@ -20,7 +22,7 @@ $Allowed = @(
 function Get-SagiEvent {
   $headers = @{ "apikey"=$ApiKey; "Content-Type"="application/json" }
   $body = @{ "p_slug"=$EventSlug } | ConvertTo-Json -Compress
-  return Invoke-RestMethod -Method Post -Uri ($SupabaseUrl.TrimEnd("/") + "/rest/v1/rpc/sagi_get_event") -Headers $headers -Body $body -TimeoutSec 4
+  return Invoke-RestMethod -Method Post -Uri ($SupabaseUrl.TrimEnd("/") + "/rest/v1/rpc/sagi_get_event") -Headers $headers -Body $body -TimeoutSec $CloudTimeoutSeconds
 }
 
 function Invoke-VmixDirectorCommand($cmd) {
@@ -63,18 +65,31 @@ catch {
 
 $lastCommandId = ""
 $initialized = $false
+$cloudFailures = 0
+$lastWarnAt = [DateTime]::MinValue
+$cloudWasDown = $false
 
 while ($true) {
+  $sleepMs = $PollMilliseconds
   try {
     $eventData = Get-SagiEvent
+
+    if ($cloudWasDown) {
+      Write-Host "[READY] Cloud link restored." -ForegroundColor Green
+      $cloudWasDown = $false
+    }
+
+    $cloudFailures = 0
     $cmd = $eventData.payload.vmixDirector
+
     if ($null -ne $cmd -and -not [string]::IsNullOrWhiteSpace([string]$cmd.commandId)) {
       $id = [string]$cmd.commandId
+
       if (-not $initialized) {
         # Ignore an old cloud command when Bridge first starts.
         $lastCommandId = $id
         $initialized = $true
-        Write-Host "[READY] Current cloud command acknowledged. Waiting for the next command." -ForegroundColor DarkGray
+        Write-Host "[READY] Cloud connected. Waiting for the next command." -ForegroundColor Green
       }
       elseif ($id -ne $lastCommandId) {
         $lastCommandId = $id
@@ -83,11 +98,21 @@ while ($true) {
     }
     elseif (-not $initialized) {
       $initialized = $true
-      Write-Host "[READY] No pending command. Waiting." -ForegroundColor DarkGray
+      Write-Host "[READY] Cloud connected. No pending command." -ForegroundColor Green
     }
   }
   catch {
-    Write-Host ("[WARN] " + $_.Exception.Message) -ForegroundColor DarkYellow
+    $cloudFailures++
+    $cloudWasDown = $true
+    $pow = [Math]::Min(4, $cloudFailures - 1)
+    $sleepMs = [Math]::Min($MaxBackoffMilliseconds, [int]($PollMilliseconds * [Math]::Pow(2, $pow)))
+
+    $now = Get-Date
+    if (($now - $lastWarnAt).TotalSeconds -ge 10) {
+      Write-Host ("[CLOUD WARN] " + $_.Exception.Message + "  retry=" + $sleepMs + "ms") -ForegroundColor DarkYellow
+      $lastWarnAt = $now
+    }
   }
-  Start-Sleep -Milliseconds $PollMilliseconds
+
+  Start-Sleep -Milliseconds $sleepMs
 }
