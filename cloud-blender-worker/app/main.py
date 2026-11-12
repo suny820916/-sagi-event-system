@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import secrets
+import shutil
 import subprocess
 import time
 import uuid
@@ -14,7 +15,7 @@ from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.responses import FileResponse, PlainTextResponse
 from pydantic import BaseModel, Field
 
-APP_VERSION = "1.0.2"
+APP_VERSION = "1.0.3"
 ROOT = Path(__file__).resolve().parents[1]
 ENGINE = ROOT / "engine" / "sagi_tactics_blender.py"
 BENCHMARK = ROOT / "presets" / "benchmark_4231.json"
@@ -108,7 +109,7 @@ def run_job(job_id: str) -> None:
     job_dir = JOBS_DIR / job_id
     cfg = job_dir / "config.json"
     log = job_dir / "blender.log"
-    raw = job_dir / "render_raw.mp4"
+    frames_dir = job_dir / "frames"
     final = job_dir / "render.mp4"
 
     try:
@@ -133,14 +134,20 @@ def run_job(job_id: str) -> None:
 
         if proc.returncode != 0:
             raise RuntimeError(f"Blender exited with code {proc.returncode}")
-        if not raw.exists():
-            raise RuntimeError("Blender completed but render_raw.mp4 is missing")
+
+        frames = sorted(frames_dir.glob("frame_*.png"))
+        if not frames:
+            raise RuntimeError("Blender completed but no PNG frames were rendered")
+
+        cfg_data = json.loads(cfg.read_text(encoding="utf-8"))
+        fps = int(cfg_data.get("fps", 24))
 
         write_status(job_id, status="transcoding", progress=85)
 
         ffmpeg = [
             "ffmpeg", "-y", "-loglevel", "error",
-            "-i", str(raw),
+            "-framerate", str(fps),
+            "-i", str(frames_dir / "frame_%04d.png"),
             "-f", "lavfi",
             "-i", "anullsrc=channel_layout=stereo:sample_rate=44100",
             "-map", "0:v:0",
@@ -158,6 +165,8 @@ def run_job(job_id: str) -> None:
             str(final),
         ]
         subprocess.run(ffmpeg, check=True, timeout=300)
+
+        shutil.rmtree(frames_dir, ignore_errors=True)
 
         write_status(
             job_id,
