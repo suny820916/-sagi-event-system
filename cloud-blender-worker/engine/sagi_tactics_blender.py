@@ -453,7 +453,7 @@ ball = sphere(
         players["GK"].location.y,
         .37,
     ),
-    .16,
+    .20,
     m_ball,
 )
 
@@ -499,9 +499,9 @@ camera_presets = {
         "lens": 62,
     },
     "finish": {
-        "loc": (10,-36,68),
-        "target": (8,36,0.8),
-        "lens": 64,
+        "loc": (10,-34,72),
+        "target": (8,29,0.8),
+        "lens": 66,
     },
 }
 
@@ -556,26 +556,82 @@ def focus_player(name, t):
         )
 
 
+def animate_stride(name, f0, f1, strength=1.0):
+    """Minimal locomotion for tactical miniatures.
+
+    No full character rig: just one restrained stride cycle on the four
+    limbs. It is enough to create weight transfer without turning the
+    diagram into a character animation.
+    """
+    if f1 <= f0:
+        return
+
+    la = bpy.data.objects.get(name + "_LA")
+    ra = bpy.data.objects.get(name + "_RA")
+    ll = bpy.data.objects.get(name + "_LL")
+    rl = bpy.data.objects.get(name + "_RL")
+    if not all((la, ra, ll, rl)):
+        return
+
+    arm = math.radians(16.0 * strength)
+    leg = math.radians(19.0 * strength)
+    frames = [
+        f0,
+        round(f0 + (f1 - f0) * .33),
+        round(f0 + (f1 - f0) * .66),
+        f1,
+    ]
+    poses = [
+        (0.0, 0.0),
+        (1.0, -1.0),
+        (-1.0, 1.0),
+        (0.0, 0.0),
+    ]
+
+    for fr, (phase_a, phase_b) in zip(frames, poses):
+        la.rotation_euler[0] = arm * phase_a
+        ra.rotation_euler[0] = arm * phase_b
+        ll.rotation_euler[0] = leg * phase_b
+        rl.rotation_euler[0] = leg * phase_a
+        for limb in (la, ra, ll, rl):
+            key(limb, "rotation_euler", fr)
+
+
 def move_player(name, target, t0, dur):
     o = players[name]
     f0 = 1 + round(t0 * fps)
     f1 = 1 + round((t0 + dur) * fps)
 
+    sx, sy, sz = o.location.x, o.location.y, o.location.z
+    tx, ty = float(target[0]), float(target[1])
+    dx = tx - sx
+    dy = ty - sy
+    dist = math.hypot(dx, dy)
+
     # Anticipation first: turn toward the route just before the run begins.
-    # This removes the "sliding token" look without introducing full walk cycles.
-    dx = float(target[0]) - o.location.x
-    dy = float(target[1]) - o.location.y
-    if abs(dx) + abs(dy) > 1e-5:
-        turn_fr = max(1, f0 - max(1, round(.16 * fps)))
+    if dist > 1e-5:
+        turn_fr = max(1, f0 - max(1, round(.14 * fps)))
         key(o, "rotation_euler", turn_fr)
         o.rotation_euler[2] = math.atan2(-dx, dy)
         key(o, "rotation_euler", f0)
 
+    # Three spatial keys create a tiny rise/fall of the centre of mass.
+    # The amount is deliberately small: tactical clarity first.
     key(o, "location", f0)
-    o.location.x = float(target[0])
-    o.location.y = float(target[1])
+
+    fm = max(f0 + 1, round((f0 + f1) / 2))
+    o.location = (
+        sx + dx * .52,
+        sy + dy * .52,
+        sz + min(.075, .018 + dist * .0022),
+    )
+    key(o, "location", fm)
+
+    o.location = (tx, ty, sz)
     key(o, "location", f1)
 
+    stride_strength = min(1.0, max(.35, dist / 10.0))
+    animate_stride(name, f0, f1, stride_strength)
     smooth_action(o)
 
 
@@ -607,6 +663,17 @@ def shot_ball(player, target, release, arrive, arc=.9):
     f0 = 1 + round(release * fps)
     f1 = 1 + round(arrive * fps)
     fm = max(f0 + 1, round((f0 + f1) / 2))
+
+    # One compact kicking gesture on the shooting leg.
+    rl = bpy.data.objects.get(player + "_RL")
+    if rl is not None:
+        fk0 = max(1, f0 - max(1, round(.15 * fps)))
+        rl.rotation_euler[0] = math.radians(-10)
+        key(rl, "rotation_euler", fk0)
+        rl.rotation_euler[0] = math.radians(30)
+        key(rl, "rotation_euler", f0)
+        rl.rotation_euler[0] = 0.0
+        key(rl, "rotation_euler", min(f1, f0 + max(1, round(.18 * fps))))
 
     ball.location = (src.location.x, src.location.y, .37)
     key(ball, "location", f0)
