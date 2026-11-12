@@ -1,10 +1,13 @@
 {
   "project": "SAGI TACTICS",
-  "version": "BLENDER BENCHMARK 01",
-  "fps": 24,
+  "version": "BLENDER BENCHMARK 01 · FAST PREVIEW",
+  "fps": 12,
   "duration_sec": 12,
-  "resolution": [540, 960],
-  "render_engine": "BLENDER_EEVEE",
+  "resolution": [
+    360,
+    640
+  ],
+  "render_engine": "BLENDER_WORKBENCH",
   "attack_direction": "upfield(+Y)",
   "palette": {
     "background": "#020304",
@@ -16,33 +19,218 @@
     "ring": "#F3F500"
   },
   "players": {
-    "GK":  {"team":"own","pos":[0.0,-39.0],"role":"secondary","yaw":0},
-    "LB":  {"team":"own","pos":[-24.0,-23.0],"role":"context","yaw":0},
-    "LCB": {"team":"own","pos":[-10.0,-27.0],"role":"secondary","yaw":0},
-    "RCB": {"team":"own","pos":[10.0,-27.0],"role":"primary","yaw":-8},
-    "RB":  {"team":"own","pos":[24.0,-23.0],"role":"context","yaw":0},
-    "LDM": {"team":"own","pos":[-6.0,-8.0],"role":"primary","yaw":-12},
-    "RDM": {"team":"own","pos":[7.0,-6.0],"role":"secondary","yaw":-6},
-    "LW":  {"team":"own","pos":[-25.0,12.0],"role":"context","yaw":0},
-    "CAM": {"team":"own","pos":[0.0,9.0],"role":"context","yaw":0},
-    "RW":  {"team":"own","pos":[25.0,12.0],"role":"context","yaw":0},
-    "ST":  {"team":"own","pos":[0.0,28.0],"role":"context","yaw":0},
-    "P9":  {"team":"opp","pos":[3.0,-17.0],"role":"secondary","yaw":180},
-    "M1":  {"team":"opp","pos":[-8.0,3.0],"role":"context","yaw":180},
-    "M2":  {"team":"opp","pos":[9.0,2.0],"role":"context","yaw":180}
+    "GK": {
+      "team": "own",
+      "pos": [
+        0,
+        -39
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "LB": {
+      "team": "own",
+      "pos": [
+        -24,
+        -23
+      ],
+      "role": "context",
+      "yaw": 0
+    },
+    "LCB": {
+      "team": "own",
+      "pos": [
+        -10,
+        -27
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "RCB": {
+      "team": "own",
+      "pos": [
+        10,
+        -27
+      ],
+      "role": "primary",
+      "yaw": -8
+    },
+    "RB": {
+      "team": "own",
+      "pos": [
+        24,
+        -23
+      ],
+      "role": "context",
+      "yaw": 0
+    },
+    "LDM": {
+      "team": "own",
+      "pos": [
+        -6,
+        -8
+      ],
+      "role": "primary",
+      "yaw": -12
+    },
+    "RDM": {
+      "team": "own",
+      "pos": [
+        7,
+        -6
+      ],
+      "role": "secondary",
+      "yaw": -6
+    },
+    "LW": {
+      "team": "own",
+      "pos": [
+        -25,
+        12
+      ],
+      "role": "context",
+      "yaw": 0
+    },
+    "CAM": {
+      "team": "own",
+      "pos": [
+        0,
+        9
+      ],
+      "role": "context",
+      "yaw": 0
+    },
+    "RW": {
+      "team": "own",
+      "pos": [
+        25,
+        12
+      ],
+      "role": "context",
+      "yaw": 0
+    },
+    "ST": {
+      "team": "own",
+      "pos": [
+        0,
+        28
+      ],
+      "role": "context",
+      "yaw": 0
+    },
+    "P9": {
+      "team": "opp",
+      "pos": [
+        3,
+        -17
+      ],
+      "role": "secondary",
+      "yaw": 180
+    },
+    "M1": {
+      "team": "opp",
+      "pos": [
+        -8,
+        3
+      ],
+      "role": "context",
+      "yaw": 180
+    },
+    "M2": {
+      "team": "opp",
+      "pos": [
+        9,
+        2
+      ],
+      "role": "context",
+      "yaw": 180
+    }
   },
   "events": [
-    {"t":0.0,"type":"camera","preset":"shape"},
-    {"t":1.2,"type":"focus","player":"RCB"},
-    {"t":2.0,"type":"camera","preset":"relation"},
-    {"t":2.35,"type":"pass","from":"GK","to":"RCB","release":2.65,"arrive":3.55},
-    {"t":3.75,"type":"defender_shift","player":"P9","to":[8.0,-20.0],"duration":0.62},
-    {"t":4.2,"type":"focus","player":"LDM"},
-    {"t":4.9,"type":"pass","from":"RCB","to":"LDM","release":5.25,"arrive":6.15},
-    {"t":6.2,"type":"space","center":[-2.0,-6.0],"radius":[7.5,4.2],"duration":1.8},
-    {"t":6.4,"type":"player_move","player":"CAM","to":[-2.0,14.0],"duration":1.15},
-    {"t":7.3,"type":"camera","preset":"result"},
-    {"t":9.0,"type":"focus","player":"CAM"},
-    {"t":10.6,"type":"camera","preset":"shape"}
-  ]
+    {
+      "t": 0,
+      "type": "camera",
+      "preset": "shape"
+    },
+    {
+      "t": 1.2,
+      "type": "focus",
+      "player": "RCB"
+    },
+    {
+      "t": 2,
+      "type": "camera",
+      "preset": "relation"
+    },
+    {
+      "t": 2.35,
+      "type": "pass",
+      "from": "GK",
+      "to": "RCB",
+      "release": 2.65,
+      "arrive": 3.55
+    },
+    {
+      "t": 3.75,
+      "type": "defender_shift",
+      "player": "P9",
+      "to": [
+        8,
+        -20
+      ],
+      "duration": 0.62
+    },
+    {
+      "t": 4.2,
+      "type": "focus",
+      "player": "LDM"
+    },
+    {
+      "t": 4.9,
+      "type": "pass",
+      "from": "RCB",
+      "to": "LDM",
+      "release": 5.25,
+      "arrive": 6.15
+    },
+    {
+      "t": 6.2,
+      "type": "space",
+      "center": [
+        -2,
+        -6
+      ],
+      "radius": [
+        7.5,
+        4.2
+      ],
+      "duration": 1.8
+    },
+    {
+      "t": 6.4,
+      "type": "player_move",
+      "player": "CAM",
+      "to": [
+        -2,
+        14
+      ],
+      "duration": 1.15
+    },
+    {
+      "t": 7.3,
+      "type": "camera",
+      "preset": "result"
+    },
+    {
+      "t": 9,
+      "type": "focus",
+      "player": "CAM"
+    },
+    {
+      "t": 10.6,
+      "type": "camera",
+      "preset": "shape"
+    }
+  ],
+  "preview_mode": true
 }
