@@ -49,6 +49,18 @@ Write-Host ("Event: " + $EventSlug)
 Write-Host ("vMix API: " + $VmixApi)
 Write-Host "Bridge is listening. Keep this window open during the match." -ForegroundColor Cyan
 
+try {
+  Invoke-WebRequest -UseBasicParsing -Uri $VmixApi -TimeoutSec 3 | Out-Null
+  Write-Host "[READY] vMix API connected on 127.0.0.1:8088" -ForegroundColor Green
+}
+catch {
+  Write-Host "[ERROR] Cannot connect to vMix API on 127.0.0.1:8088" -ForegroundColor Red
+  Write-Host "Open vMix -> Settings -> Web Controller -> Enable, port 8088." -ForegroundColor Yellow
+  Write-Host "Then close this window and run SAGI_VMIX_BRIDGE.bat again." -ForegroundColor Yellow
+  Read-Host "Press Enter to close"
+  exit 1
+}
+
 $lastCommandId = ""
 $initialized = $false
 
