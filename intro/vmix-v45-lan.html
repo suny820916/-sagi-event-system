@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="zh-CN"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SAGI V4.6.6 · PREMIUM SCOREBUG · MATCH SAFE · LAN DIRECT · vMix</title>
+<title>SAGI V4.7 · MATCH MODE · SCOREBUG V2 · vMix</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%2307090d%22/%3E%3Ctext x=%2232%22 y=%2243%22 text-anchor=%22middle%22 font-size=%2234%22 fill=%22%23d8b55b%22%3ES%3C/text%3E%3C/svg%3E">
 <style>
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent;font-family:Arial,"PingFang SC","Microsoft YaHei",sans-serif}.stage{position:absolute;left:0;top:0;width:1920px;height:1080px;overflow:hidden;background:#07090c;transform-origin:0 0}.stadium{position:absolute;inset:0;background:radial-gradient(circle at 50% 0,#6f8294 0,#263442 18%,#111820 42%,#06080b 74%)}.stadium:before{content:"";position:absolute;left:-5%;right:-5%;top:165px;height:300px;background:linear-gradient(#19212a,#0b1016 68%,transparent),repeating-linear-gradient(90deg,#ffffff08 0 7px,transparent 7px 22px);clip-path:polygon(0 0,100% 0,92% 100%,8% 100%)}.stadium:after{content:"";position:absolute;left:0;right:0;bottom:-35px;height:430px;background:linear-gradient(180deg,#173421,#0a2716 70%,#05130a);clip-path:polygon(20% 0,80% 0,100% 100%,0 100%)}.stadiumPhoto{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}.shade{position:absolute;inset:0;background:linear-gradient(90deg,#030508e6 0,#05070a99 38%,#05070a55 58%,#030508c9 100%),linear-gradient(0deg,#040609c7 0,transparent 55%,#03050775 100%)}.pitchLines{position:absolute;left:320px;right:320px;bottom:0;height:360px;opacity:.22;transform:perspective(800px) rotateX(62deg);transform-origin:bottom;border:5px solid #fff;border-bottom:0}.pitchLines:before{content:"";position:absolute;left:50%;top:0;bottom:0;border-left:4px solid #fff}.pitchLines:after{content:"";position:absolute;width:170px;height:170px;border:4px solid #fff;border-radius:50%;left:50%;top:45%;transform:translate(-50%,-50%)}.light{position:absolute;width:760px;height:760px;border-radius:50%;filter:blur(100px);opacity:.22}.l1{left:-180px;top:-330px;background:#5cb4ff}.l2{right:-220px;top:-300px;background:#d7b051}.header{position:absolute;left:95px;top:72px;display:flex;align-items:center;gap:24px}.crest{width:96px;height:96px;object-fit:contain;filter:drop-shadow(0 12px 20px #0009)}.team{font-size:34px;font-weight:950;letter-spacing:2px;color:#fff}.sub{font-size:17px;color:#d8b55b;letter-spacing:5px;margin-top:7px;font-weight:850}.groupTitle{position:absolute;left:100px;top:205px;font-size:28px;letter-spacing:7px;color:#d8b55b;font-weight:900}.groupName{position:absolute;left:95px;top:245px;font-size:72px;line-height:1;font-weight:1000;letter-spacing:-2px;color:#fff}.line{position:absolute;left:98px;top:330px;width:400px;height:5px;background:linear-gradient(90deg,#d8b55b,#fff1b7)}.players{position:absolute;left:70px;top:350px;width:1240px;height:650px;display:flex;align-items:flex-end;justify-content:center;gap:18px}.card{position:relative;width:230px;height:570px;flex:0 0 auto}.card.one{width:520px}.cut{position:absolute;left:0;right:0;bottom:82px;height:490px;display:flex;align-items:flex-end;justify-content:center}.cut img{width:100%;height:100%;object-fit:contain;object-position:center bottom;filter:drop-shadow(0 20px 25px #000d)}
@@ -81,23 +81,24 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent
 .subNo{font-size:24px;font-weight:1000;color:#d8b55b}.subName{font-size:21px;font-weight:900}.subStat{font-size:11px;color:#aab2be}
 .captainNode:after{content:'C';position:absolute;right:-6px;top:-7px;width:19px;height:19px;border-radius:50%;background:#fff1b7;color:#111;font-size:10px;display:flex;align-items:center;justify-content:center;font-weight:1000}
 
-/* ===== V4.6 PREMIUM SCOREBUG ===== */
+/* ===== V4.7 SCOREBUG V2 ===== */
 .graphicsStage{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;overflow:hidden;pointer-events:none;color:#fff;z-index:9999}
-.scoreBug{--home:#d8b55b;--away:#4c7dff;--accent:#f4f0e8;position:absolute;left:50%;top:38px;transform:translateX(-50%);display:none;height:78px;border-radius:18px;background:linear-gradient(180deg,#121820f5,#070a0ef7);border:1px solid #ffffff24;box-shadow:0 18px 50px #000a,0 1px 0 #ffffff14 inset;overflow:hidden;align-items:stretch;font-weight:900;backdrop-filter:blur(16px)}
-.scoreBug.on{display:flex}
-.scoreBug:after{content:'SAGI LIVE';position:absolute;left:50%;top:-1px;transform:translateX(-50%);font-size:8px;letter-spacing:2.5px;color:#0a0d11;background:var(--accent);padding:2px 8px 3px;border-radius:0 0 7px 7px;font-weight:1000}
-.sbTeam{position:relative;min-width:245px;max-width:330px;padding:0 28px;display:flex;align-items:center;justify-content:center;font-size:20px;letter-spacing:.4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:#0e131a;color:#fff}
-.sbTeam.home{border-left:7px solid var(--home);box-shadow:18px 0 34px -28px var(--home) inset}
-.sbTeam.away{border-right:7px solid var(--away);box-shadow:-18px 0 34px -28px var(--away) inset}
-.sbTeam.home:after,.sbTeam.away:after{content:'';position:absolute;bottom:0;height:3px;width:68%;opacity:.95}
-.sbTeam.home:after{left:14%;background:var(--home)}
-.sbTeam.away:after{right:14%;background:var(--away)}
-.sbScore{width:78px;display:flex;align-items:center;justify-content:center;font-size:38px;font-weight:1000;background:#f7f8fa;color:#090c10;text-shadow:none}
-#sbHomeScore{box-shadow:inset 0 -5px 0 var(--home)}
-#sbAwayScore{box-shadow:inset 0 -5px 0 var(--away)}
-.sbMid{width:132px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(180deg,#161d26,#0b1016);border-left:1px solid #ffffff10;border-right:1px solid #ffffff10}
-.sbClock{font-size:23px;font-variant-numeric:tabular-nums;letter-spacing:1px;color:#fff}
-.sbPeriod{font-size:9px;color:var(--accent);letter-spacing:2.4px;margin-top:4px;font-weight:1000}
+.scoreBug{--home:#d8b55b;--away:#4c7dff;--accent:#f4f0e8;position:absolute;left:50%;top:34px;transform:translateX(-50%);display:none;height:84px;border-radius:17px;background:linear-gradient(180deg,#121820f7,#070a0ef9);border:1px solid #ffffff24;box-shadow:0 18px 54px #000a,0 1px 0 #ffffff18 inset;overflow:hidden;align-items:stretch;font-weight:900;backdrop-filter:blur(16px);transition:.2s}
+.scoreBug.on{display:flex}.scoreBug.frozen{box-shadow:0 18px 54px #000a,0 0 0 2px #e4c97966}.scoreBug.frozen:before{content:'FROZEN';position:absolute;right:8px;bottom:4px;font-size:7px;letter-spacing:1.5px;color:#e4c979;z-index:8}
+.sbTeamBlock{position:relative;min-width:245px;max-width:330px;padding:0 19px;display:flex;align-items:center;gap:11px;background:#0e131a;color:#fff}
+.sbTeamBlock.home{border-left:7px solid var(--home)}.sbTeamBlock.away{border-right:7px solid var(--away);flex-direction:row-reverse}
+.sbCrest{width:42px;height:42px;object-fit:contain;filter:drop-shadow(0 5px 8px #0009);display:none}.sbCrest.on{display:block}
+.sbTeamMeta{min-width:0;display:flex;align-items:center;gap:8px;flex:1}.sbTeamBlock.away .sbTeamMeta{justify-content:flex-end}
+.sbTeam{font-size:19px;font-weight:1000;letter-spacing:.8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sbReds{display:flex;gap:3px;min-width:0}.sbRedCard{width:7px;height:12px;border-radius:1px;background:#df3038;box-shadow:0 2px 5px #0008}
+.sbScoreWrap{width:82px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#f7f8fa;color:#090c10;position:relative}
+.sbScore{font-size:38px;font-weight:1000;line-height:1}.sbPenalty{font-size:8px;letter-spacing:1px;margin-top:3px;color:#59616a;font-weight:1000;display:none}.sbPenalty.on{display:block}
+#sbHomeScoreWrap{box-shadow:inset 0 -5px 0 var(--home)}#sbAwayScoreWrap{box-shadow:inset 0 -5px 0 var(--away)}
+.sbMid{width:142px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(180deg,#161d26,#0b1016);border-left:1px solid #ffffff10;border-right:1px solid #ffffff10;position:relative}
+.sbCompetition{position:absolute;top:4px;font-size:6px;letter-spacing:1.5px;color:#8995a3;max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sbClockRow{display:flex;align-items:center;gap:6px;margin-top:8px}.sbClock{font-size:22px;font-variant-numeric:tabular-nums;letter-spacing:1px;color:#fff}.sbStoppage{display:none;padding:3px 5px;border-radius:5px;background:var(--accent);color:#0a0d11;font-size:9px;font-weight:1000}.sbStoppage.on{display:block}.sbPeriod{font-size:8px;color:var(--accent);letter-spacing:2.2px;margin-top:3px;font-weight:1000}
+.scoreBug.theme-premier{background:#fff;border-color:#fff;color:#1b092e;box-shadow:0 16px 45px #0008}.scoreBug.theme-premier .sbTeamBlock{background:#f7f6fa;color:#23112f}.scoreBug.theme-premier .sbMid{background:#2b0b3f}.scoreBug.theme-premier .sbScoreWrap{background:#21e89b;color:#170722}.scoreBug.theme-premier .sbPeriod{color:#21e89b}.scoreBug.theme-premier .sbCompetition{color:#c7b9d3}
+.scoreBug.theme-uefa{height:76px;border-radius:4px;background:#071a34;border-color:#31527b;box-shadow:0 12px 35px #0009}.scoreBug.theme-uefa .sbTeamBlock{background:#0a2343}.scoreBug.theme-uefa .sbMid{background:#06172c}.scoreBug.theme-uefa .sbScoreWrap{background:#fff;color:#071a34}.scoreBug.theme-uefa .sbTeam{font-size:17px;letter-spacing:1.4px}.scoreBug.theme-uefa .sbCrest{width:36px;height:36px}.scoreBug.theme-uefa .sbPeriod{color:#73b8ff}
 .eventCard{position:absolute;left:78px;bottom:72px;width:760px;min-height:176px;background:linear-gradient(115deg,#080b10f5,#111923f2);border:1px solid #ffffff23;border-left:8px solid #d8b55b;border-radius:8px;box-shadow:0 24px 75px #000b;display:none;align-items:center;padding:28px 34px;gap:26px}
 .eventCard.on{display:flex}.eventIcon{width:104px;height:104px;border-radius:14px;display:flex;align-items:center;justify-content:center;background:#d8b55b;color:#0a0c0f;font-size:54px;font-weight:1000}.eventCard.yellow .eventIcon{background:#f2d536}.eventCard.red .eventIcon{background:#db3038;color:#fff}.eventCard.sub .eventIcon{background:#2786b5;color:#fff}
 .eventKicker{font-size:15px;font-weight:1000;letter-spacing:5px;color:#d8b55b}.eventName{font-size:42px;font-weight:1000;margin-top:7px}.eventMeta{font-size:16px;color:#b4bdc8;margin-top:8px;letter-spacing:1px}.eventCard.yellow{border-left-color:#f2d536}.eventCard.red{border-left-color:#db3038}.eventCard.sub{border-left-color:#2786b5}
@@ -120,9 +121,11 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent
 
 <div id="graphicsStage" class="graphicsStage">
   <div id="scoreBug" class="scoreBug">
-    <div id="sbHome" class="sbTeam home">HOME</div><div id="sbHomeScore" class="sbScore">0</div>
-    <div class="sbMid"><div id="sbClock" class="sbClock">00:00</div><div id="sbPeriod" class="sbPeriod">1H</div></div>
-    <div id="sbAwayScore" class="sbScore">0</div><div id="sbAway" class="sbTeam away">AWAY</div>
+    <div class="sbTeamBlock home"><img id="sbHomeCrest" class="sbCrest"><div class="sbTeamMeta"><div id="sbHome" class="sbTeam">HOME</div><div id="sbHomeReds" class="sbReds"></div></div></div>
+    <div id="sbHomeScoreWrap" class="sbScoreWrap"><div id="sbHomeScore" class="sbScore">0</div><div id="sbHomePen" class="sbPenalty">PEN 0</div></div>
+    <div class="sbMid"><div id="sbCompetition" class="sbCompetition">SAGI LIVE</div><div class="sbClockRow"><div id="sbClock" class="sbClock">00:00</div><div id="sbStoppage" class="sbStoppage">+3</div></div><div id="sbPeriod" class="sbPeriod">1H</div></div>
+    <div id="sbAwayScoreWrap" class="sbScoreWrap"><div id="sbAwayScore" class="sbScore">0</div><div id="sbAwayPen" class="sbPenalty">PEN 0</div></div>
+    <div class="sbTeamBlock away"><img id="sbAwayCrest" class="sbCrest"><div class="sbTeamMeta"><div id="sbAwayReds" class="sbReds"></div><div id="sbAway" class="sbTeam">AWAY</div></div></div>
   </div>
   <div id="eventCard" class="eventCard"><div id="eventIcon" class="eventIcon">⚽</div><div><div id="eventKicker" class="eventKicker">GOAL</div><div id="eventName" class="eventName"></div><div id="eventMeta" class="eventMeta"></div><div id="subRows" class="subRows"></div></div></div>
   <div id="stateSplash" class="stateSplash"><div class="stateBox"><div id="stateKicker" class="stateKicker"></div><div id="stateTitle" class="stateTitle"></div><div id="stateScore" class="stateScore"></div><div id="stateTeams" class="stateTeams"></div><div id="mvpName" class="mvpName"></div><div id="mvpMeta" class="mvpMeta"></div></div></div>
@@ -183,7 +186,7 @@ function effectiveGroupPlayers(x){
  return (Array.isArray(x.players)?x.players:[]).slice(0,n)
 }
 
-let last='',lastGraphics='',hideTimer=null,current=null,currentGraphics=null,eventTimer=null;
+let last='',lastGraphics='',hideTimer=null,current=null,currentGraphics=null,eventTimer=null,frozenGraphics=null;
 function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function fit(){const s=Math.min(innerWidth/1920,innerHeight/1080),x=(innerWidth-1920*s)/2,y=(innerHeight-1080*s)/2,t='translate3d('+x+'px,'+y+'px,0) scale('+s+')';q('stage').style.transform=t;q('graphicsStage').style.transform=t}
 function fallback(role,i,n){const y={GK:91,DF:72,MF:48,FW:22}[role]||50;return[((i+1)/(n+1))*100,y]}
@@ -348,11 +351,23 @@ function gfxPeriodName(p){return({'1H':'上半场','2H':'下半场','ET1':'加�
 function gfxSeconds(g){const c=g&&g.clock||{};let s=Number(c.baseSeconds)||0;if(c.running&&c.startedAt){const t=Date.parse(c.startedAt);if(Number.isFinite(t))s+=(Date.now()-t)/1000}return Math.max(0,s)}
 function gfxFormat(sec){sec=Math.max(0,Math.floor(Number(sec)||0));return String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0')}
 function validHex(v,f){return /^#[0-9a-f]{6}$/i.test(String(v||''))?v:f}
+function redCardsHtml(n){return Array.from({length:Math.max(0,Math.min(5,Number(n)||0))},()=>'<i class="sbRedCard"></i>').join('')}
+function setCrest(id,src){const el=q(id);if(src){if(el.src!==src)el.src=src;el.classList.add('on')}else{el.removeAttribute('src');el.classList.remove('on')}}
 function updateScoreBug(){
- const g=currentGraphics;if(!g)return;
- const bug=q('scoreBug'),home=validHex(g.homeColor,'#d8b55b'),away=validHex(g.awayColor,'#4c7dff'),accent=validHex(g.accentColor,'#f4f0e8');
+ const live=currentGraphics;if(!live)return;
+ const g=(live.scoreboardFrozen&&frozenGraphics)?frozenGraphics:live,bug=q('scoreBug');
+ const home=validHex(g.homeColor,'#d8b55b'),away=validHex(g.awayColor,'#4c7dff'),accent=validHex(g.accentColor,'#f4f0e8');
  bug.style.setProperty('--home',home);bug.style.setProperty('--away',away);bug.style.setProperty('--accent',accent);
- bug.classList.toggle('on',!!g.scoreboardVisible);q('sbHome').textContent=g.home||'HOME';q('sbAway').textContent=g.away||'AWAY';q('sbHomeScore').textContent=Number(g.homeScore)||0;q('sbAwayScore').textContent=Number(g.awayScore)||0;q('sbClock').textContent=gfxFormat(gfxSeconds(g));q('sbPeriod').textContent=gfxPeriodName(g.clock&&g.clock.period);
+ bug.className='scoreBug'+(live.scoreboardVisible?' on':'')+(live.scoreboardFrozen?' frozen':'')+' theme-'+(g.scoreTheme||'sagi');
+ q('sbHome').textContent=g.homeShort||g.home||'HOME';q('sbAway').textContent=g.awayShort||g.away||'AWAY';
+ q('sbHomeScore').textContent=Number(g.homeScore)||0;q('sbAwayScore').textContent=Number(g.awayScore)||0;
+ q('sbClock').textContent=gfxFormat(gfxSeconds(g));q('sbPeriod').textContent=gfxPeriodName(g.clock&&g.clock.period);
+ q('sbCompetition').textContent=g.competition||'SAGI LIVE';
+ const stoppage=String(g.stoppageTime||'').trim();q('sbStoppage').textContent=stoppage;q('sbStoppage').classList.toggle('on',!!stoppage);
+ q('sbHomeReds').innerHTML=redCardsHtml(g.homeRedCards);q('sbAwayReds').innerHTML=redCardsHtml(g.awayRedCards);
+ const penOn=(g.clock&&g.clock.period==='PEN')||Number(g.homePen)>0||Number(g.awayPen)>0;
+ q('sbHomePen').textContent='PEN '+(Number(g.homePen)||0);q('sbAwayPen').textContent='PEN '+(Number(g.awayPen)||0);q('sbHomePen').classList.toggle('on',penOn);q('sbAwayPen').classList.toggle('on',penOn);
+ setCrest('sbHomeCrest',g.homeCrest||'');setCrest('sbAwayCrest',g.awayCrest||'');
 }
 function hideEvent(){clearTimeout(eventTimer);q('eventCard').className='eventCard';q('eventCard').style.borderLeftColor='';q('eventIcon').style.background='';q('stateSplash').classList.remove('on')}
 function showEvent(g){
@@ -363,7 +378,7 @@ function showEvent(g){
    const teamColor=e.side==='AWAY'?validHex(g.awayColor,'#4c7dff'):validHex(g.homeColor,'#d8b55b');
    card.style.borderLeftColor=e.type==='GOAL'?teamColor:'';
    icon.style.background=e.type==='GOAL'?teamColor:'';
-   card.className='eventCard on '+(e.type==='YELLOW'?'yellow':e.type==='RED'?'red':'goal');icon.textContent=e.type==='GOAL'?'⚽':'▮';k.textContent=e.type==='GOAL'?'进球 · GOAL':e.type==='YELLOW'?'黄牌 · YELLOW CARD':'红牌 · RED CARD';name.textContent='#'+(e.player&&e.player.number||'')+'  '+(e.player&&e.player.name||'PLAYER');meta.textContent=(e.team||'')+'  ·  '+(e.at||'');
+   card.className='eventCard on '+(e.type==='YELLOW'?'yellow':e.type==='RED'?'red':'goal');icon.textContent=e.type==='GOAL'?'⚽':'▮';k.textContent=e.type==='GOAL'?'进球 · GOAL':e.type==='YELLOW'?'黄牌 · YELLOW CARD':'红牌 · RED CARD';{const no=e.player&&e.player.number?('#'+e.player.number+'  '):'';name.textContent=no+(e.player&&e.player.name||e.team||'PLAYER')}meta.textContent=(e.team||'')+'  ·  '+(e.at||'');
    eventTimer=setTimeout(hideEvent,5200);
  } else if(e.type==='SUB'){
    card.className='eventCard on sub';icon.textContent='↕';k.textContent='换人 · SUBSTITUTION';name.textContent=e.team||'';meta.textContent=e.at||'';rows.innerHTML='<div class="subRowG in"><span class="subArrow">▲</span>#'+esc(e.on&&e.on.number)+' '+esc(e.on&&e.on.name)+'</div><div class="subRowG out"><span class="subArrow">▼</span>#'+esc(e.off&&e.off.number)+' '+esc(e.off&&e.off.name)+'</div>';eventTimer=setTimeout(hideEvent,6500);
@@ -373,7 +388,12 @@ function showEvent(g){
    splash.classList.add('on');q('stateKicker').textContent='PLAYER OF THE MATCH · 本场最佳';q('stateTitle').textContent='MVP';q('stateScore').textContent=e.score||'';q('stateTeams').textContent=e.team||'';q('mvpName').textContent='#'+(e.player&&e.player.number||'')+'  '+(e.player&&e.player.name||'PLAYER');q('mvpMeta').textContent=e.player&&e.player.position||'';eventTimer=setTimeout(hideEvent,9000);
  }
 }
-function applyGraphics(g){currentGraphics=g;updateScoreBug();showEvent(g)}
+function applyGraphics(g){
+ const enteringFreeze=!!g.scoreboardFrozen&&!(currentGraphics&&currentGraphics.scoreboardFrozen);
+ if(enteringFreeze){frozenGraphics={...g,clock:{...(g.clock||{}),baseSeconds:gfxSeconds(g),running:false,startedAt:null}}}
+ if(!g.scoreboardFrozen)frozenGraphics=null;
+ currentGraphics=g;updateScoreBug();showEvent(g)
+}
 
 async function poll(){
  try{
