@@ -1,4 +1,4 @@
-# SAGI V4.6.4 AUTO UPDATE LAN DIRECT Bridge
+# SAGI V4.6.5 AUTO UPDATE LAN DIRECT Bridge
 # Same-LAN control server + local vMix API bridge.
 # Phone Control: http://<PC-LAN-IP>:8099/
 # vMix Browser:  http://127.0.0.1:8099/vmix
@@ -33,24 +33,35 @@ function Update-SagiLan {
   $ProgressPreference = "SilentlyContinue"
   $stamp = [DateTime]::UtcNow.Ticks
   $items = @(
-    @{url=($RemoteBase + "/v45-lan.html?t=" + $stamp); dest=$ControlCache; kind="control"},
-    @{url=($RemoteBase + "/vmix-v45-lan.html?t=" + $stamp); dest=$OutputCache; kind="output"},
-    @{url=($RemoteBase + "/vmix-bridge-stable.ps1?t=" + $stamp); dest=$BridgeCache; kind="bridge"}
+    @{url=($RemoteBase + "/v45-lan.html?t=" + $stamp); dest=$ControlCache; kind="control"; min=50000},
+    @{url=($RemoteBase + "/vmix-v45-lan.html?t=" + $stamp); dest=$OutputCache; kind="output"; min=20000},
+    @{url=($RemoteBase + "/vmix-bridge-stable.ps1?t=" + $stamp); dest=$BridgeCache; kind="bridge"; min=5000}
   )
   $updated = New-Object System.Collections.Generic.List[string]
   foreach ($item in $items) {
-    $r = Invoke-WebRequest -UseBasicParsing -Uri $item.url -TimeoutSec 8 -Headers @{"Cache-Control"="no-cache"}
-    $text = [string]$r.Content
-    if ([string]::IsNullOrWhiteSpace($text) -or $text.Length -lt 1000) { throw ("Invalid update payload: " + $item.kind) }
-    $tmp = $item.dest + ".new"
-    [IO.File]::WriteAllText($tmp,$text,(New-Object Text.UTF8Encoding($false)))
-    Move-Item $tmp $item.dest -Force
-    if ($item.kind -eq "control") { $script:ControlHtml = $text }
-    elseif ($item.kind -eq "output") { $script:OutputHtml = $text }
-    $updated.Add([string]$item.kind)
+    $download = $item.dest + ".download"
+    try {
+      Invoke-WebRequest -UseBasicParsing -Uri $item.url -TimeoutSec 8 -Headers @{"Cache-Control"="no-cache"} -OutFile $download
+      if (-not (Test-Path $download)) { throw ("Download missing: " + $item.kind) }
+      $len = (Get-Item $download).Length
+      if ($len -lt [int]$item.min) { throw ("Download too small: " + $item.kind + " " + $len) }
+      $bytes = [IO.File]::ReadAllBytes($download)
+      $text = [Text.Encoding]::UTF8.GetString($bytes)
+      if ([string]::IsNullOrWhiteSpace($text)) { throw ("Empty update payload: " + $item.kind) }
+      if ($item.kind -eq "bridge" -and $text -notmatch "SAGI V4\.") { throw "Bridge validation failed" }
+      if (($item.kind -eq "control" -or $item.kind -eq "output") -and $text -notmatch "<!doctype html>") { throw ("HTML validation failed: " + $item.kind) }
+      $tmp = $item.dest + ".new"
+      [IO.File]::WriteAllText($tmp,$text,(New-Object Text.UTF8Encoding($false)))
+      Move-Item $tmp $item.dest -Force
+      if ($item.kind -eq "control") { $script:ControlHtml = $text }
+      elseif ($item.kind -eq "output") { $script:OutputHtml = $text }
+      $updated.Add([string]$item.kind)
+    } finally {
+      Remove-Item $download -Force -ErrorAction SilentlyContinue
+    }
   }
   Write-Host ("[UPDATE] Mobile update complete: " + ($updated -join ", ")) -ForegroundColor Green
-  return @{ok=$true;version="4.6.4";updated=$updated;restartBridge=$true}
+  return @{ok=$true;version="4.6.5";updated=$updated;restartBridge=$false}
 }
 
 function Get-LanIPv4 {
@@ -170,7 +181,7 @@ function State-Json {
 
 Write-Host ""
 Write-Host "============================================================" -ForegroundColor Cyan
-Write-Host "  SAGI V4.6.4 AUTO UPDATE LAN DIRECT - vMix Bridge" -ForegroundColor Cyan
+Write-Host "  SAGI V4.6.5 AUTO UPDATE LAN DIRECT - vMix Bridge" -ForegroundColor Cyan
 Write-Host "============================================================" -ForegroundColor Cyan
 
 if (-not (Test-Path $ControlCache) -or -not (Test-Path $OutputCache)) {
@@ -318,7 +329,7 @@ while ($true) {
       }
     }
     elseif ($method -eq "GET" -and $path -eq "/health") {
-      $health = @{ok=$true;vmix=(Test-Vmix);lan=$true;ip=$lanIp;port=$Port;version="4.6.3"} | ConvertTo-Json -Compress
+      $health = @{ok=$true;vmix=(Test-Vmix);lan=$true;ip=$lanIp;port=$Port;version="4.6.5"} | ConvertTo-Json -Compress
       Write-HttpResponse $stream 200 "application/json" $health
     }
     else {
