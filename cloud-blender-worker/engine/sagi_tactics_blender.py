@@ -1,0 +1,554 @@
+import bpy
+import json
+import math
+import os
+import sys
+from mathutils import Vector
+
+
+def args_after_dd():
+    if "--" not in sys.argv:
+        return []
+    return sys.argv[sys.argv.index("--") + 1:]
+
+
+def hex_rgba(h, alpha=1.0):
+    h = h.lstrip("#")
+    return tuple(int(h[i:i+2], 16) / 255.0 for i in (0, 2, 4)) + (alpha,)
+
+
+def clear_scene():
+    bpy.ops.object.select_all(action="SELECT")
+    bpy.ops.object.delete(use_global=False)
+
+
+def material(name, color, rough=.55, metallic=0.0, emission_strength=0.0):
+    m = bpy.data.materials.new(name)
+    m.use_nodes = True
+    bsdf = m.node_tree.nodes.get("Principled BSDF")
+    bsdf.inputs["Base Color"].default_value = color
+    bsdf.inputs["Roughness"].default_value = rough
+    bsdf.inputs["Metallic"].default_value = metallic
+    if emission_strength:
+        if "Emission Color" in bsdf.inputs:
+            bsdf.inputs["Emission Color"].default_value = color
+        if "Emission Strength" in bsdf.inputs:
+            bsdf.inputs["Emission Strength"].default_value = emission_strength
+    return m
+
+
+def cube(name, loc, scale, mat):
+    bpy.ops.mesh.primitive_cube_add(location=loc)
+    o = bpy.context.object
+    o.name = name
+    o.scale = scale
+    bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+    o.data.materials.append(mat)
+    return o
+
+
+def sphere(name, loc, radius, mat):
+    bpy.ops.mesh.primitive_uv_sphere_add(
+        segments=12,
+        ring_count=6,
+        radius=radius,
+        location=loc,
+    )
+    o = bpy.context.object
+    o.name = name
+    o.data.materials.append(mat)
+    return o
+
+
+def cyl(name, loc, radius, depth, mat):
+    bpy.ops.mesh.primitive_cylinder_add(
+        vertices=10,
+        radius=radius,
+        depth=depth,
+        location=loc,
+    )
+    o = bpy.context.object
+    o.name = name
+    o.data.materials.append(mat)
+    return o
+
+
+def torus(name, loc, major, minor, mat):
+    bpy.ops.mesh.primitive_torus_add(
+        major_radius=major,
+        minor_radius=minor,
+        major_segments=40,
+        minor_segments=8,
+        location=loc,
+    )
+    o = bpy.context.object
+    o.name = name
+    o.data.materials.append(mat)
+    return o
+
+
+def line(name, p1, p2, width, mat, z=.205):
+    c = bpy.data.curves.new(name, "CURVE")
+    c.dimensions = "3D"
+    c.bevel_depth = width
+    c.bevel_resolution = 1
+    s = c.splines.new("POLY")
+    s.points.add(1)
+    s.points[0].co = (p1[0], p1[1], z, 1)
+    s.points[1].co = (p2[0], p2[1], z, 1)
+    o = bpy.data.objects.new(name, c)
+    bpy.context.collection.objects.link(o)
+    o.data.materials.append(mat)
+    return o
+
+
+def polyline(name, pts, width, mat, closed=True, z=.205):
+    c = bpy.data.curves.new(name, "CURVE")
+    c.dimensions = "3D"
+    c.bevel_depth = width
+    c.bevel_resolution = 1
+    s = c.splines.new("POLY")
+    s.points.add(len(pts) - 1)
+    for i, p in enumerate(pts):
+        s.points[i].co = (p[0], p[1], z, 1)
+    s.use_cyclic_u = closed
+    o = bpy.data.objects.new(name, c)
+    bpy.context.collection.objects.link(o)
+    o.data.materials.append(mat)
+    return o
+
+
+def look_at(obj, target):
+    direction = Vector(target) - obj.location
+    obj.rotation_euler = direction.to_track_quat("-Z", "Y").to_euler()
+
+
+def key(obj, path, frame):
+    obj.keyframe_insert(data_path=path, frame=frame)
+
+
+def smooth_action(obj):
+    ad = getattr(obj, "animation_data", None)
+    if not ad or not ad.action:
+        return
+    for fc in ad.action.fcurves:
+        for kp in fc.keyframe_points:
+            kp.interpolation = "BEZIER"
+            kp.handle_left_type = "AUTO_CLAMPED"
+            kp.handle_right_type = "AUTO_CLAMPED"
+
+
+args = args_after_dd()
+if len(args) < 2:
+    raise SystemExit(
+        "Usage: blender --background --python sagi_tactics_blender.py -- config.json output_dir"
+    )
+
+cfg_path = os.path.abspath(args[0])
+out_dir = os.path.abspath(args[1])
+os.makedirs(out_dir, exist_ok=True)
+with open(cfg_path, "r", encoding="utf-8") as f:
+    cfg = json.load(f)
+
+fps = int(cfg.get("fps", 24))
+dur = float(cfg.get("duration_sec", 12))
+w, h = cfg.get("resolution", [540, 960])
+pal = cfg["palette"]
+
+clear_scene()
+
+scene = bpy.context.scene
+scene.render.resolution_x = int(w)
+scene.render.resolution_y = int(h)
+scene.render.resolution_percentage = 100
+scene.render.fps = fps
+scene.frame_start = 1
+scene.frame_end = max(1, int(round(dur * fps)))
+scene.render.engine = cfg.get("render_engine", "BLENDER_EEVEE_NEXT")
+scene.render.image_settings.file_format = "FFMPEG"
+scene.render.ffmpeg.format = "MPEG4"
+scene.render.ffmpeg.codec = "H264"
+scene.render.ffmpeg.constant_rate_factor = "MEDIUM"
+scene.render.ffmpeg.ffmpeg_preset = "GOOD"
+scene.render.filepath = os.path.join(out_dir, "render_raw.mp4")
+scene.world.color = hex_rgba(pal["background"])[:3]
+
+try:
+    scene.render.engine = "BLENDER_EEVEE_NEXT"
+except Exception:
+    pass
+try:
+    scene.render.image_settings.color_mode = "RGB"
+except Exception:
+    pass
+try:
+    scene.view_settings.look = "AgX - Medium High Contrast"
+except Exception:
+    pass
+
+m_pitch = material("PITCH", hex_rgba(pal["pitch"]), rough=.78)
+m_line = material("LINE", hex_rgba(pal["pitch_line"]), rough=.52)
+m_y = material(
+    "OWN_PRIMARY",
+    hex_rgba(pal["own_primary"]),
+    rough=.42,
+    emission_strength=.10,
+)
+m_y2 = material(
+    "OWN_SECONDARY",
+    hex_rgba(pal["own_secondary"]),
+    rough=.48,
+)
+m_g = material(
+    "OPPONENT",
+    hex_rgba(pal["opponent"]),
+    rough=.58,
+)
+m_ring = material(
+    "RING",
+    hex_rgba(pal.get("ring", pal["own_primary"])),
+    rough=.30,
+    emission_strength=2.0,
+)
+m_ball = material(
+    "BALL",
+    (0.94, .94, .94, 1),
+    rough=.33,
+)
+
+# Floating pitch
+cube("PITCH", (0, 0, 0), (34, 52.5, .18), m_pitch)
+lw = .045
+polyline(
+    "TOUCHLINE",
+    [(-34,-52.5),(34,-52.5),(34,52.5),(-34,52.5)],
+    lw,
+    m_line,
+)
+line("HALFWAY", (-34,0), (34,0), lw, m_line)
+
+bpy.ops.curve.primitive_bezier_circle_add(
+    radius=9.15,
+    location=(0,0,.205),
+)
+cc = bpy.context.object
+cc.data.bevel_depth = lw
+cc.data.bevel_resolution = 1
+cc.data.materials.append(m_line)
+
+for sy in (-1, 1):
+    y = sy * 52.5
+    y2 = sy * (52.5 - 16.5)
+    polyline(
+        "BOX",
+        [(-20.15,y),(20.15,y),(20.15,y2),(-20.15,y2)],
+        lw,
+        m_line,
+    )
+
+
+def create_player(name, data):
+    root = bpy.data.objects.new(name, None)
+    bpy.context.collection.objects.link(root)
+    root.location = (
+        data["pos"][0],
+        data["pos"][1],
+        .205,
+    )
+    root.rotation_euler[2] = math.radians(
+        float(data.get("yaw", 0))
+    )
+
+    matp = (
+        m_g
+        if data["team"] == "opp"
+        else (
+            m_y
+            if data.get("role") == "primary"
+            else m_y2
+        )
+    )
+
+    # Minimal figure: stable silhouette, small head,
+    # solid torso, short/thin limbs, almost no gait.
+    torso = cube(
+        name + "_TORSO",
+        (0,0,1.10),
+        (.23,.15,.43),
+        matp,
+    )
+    head = sphere(
+        name + "_HEAD",
+        (0,0,1.68),
+        .17,
+        matp,
+    )
+    la = cyl(
+        name + "_LA",
+        (-.29,0,1.12),
+        .052,
+        .55,
+        matp,
+    )
+    ra = cyl(
+        name + "_RA",
+        (.29,0,1.12),
+        .052,
+        .55,
+        matp,
+    )
+    ll = cyl(
+        name + "_LL",
+        (-.11,0,.45),
+        .061,
+        .68,
+        matp,
+    )
+    rl = cyl(
+        name + "_RL",
+        (.11,0,.45),
+        .061,
+        .68,
+        matp,
+    )
+
+    for ch in (torso, head, la, ra, ll, rl):
+        ch.parent = root
+
+    ring = torus(
+        name + "_RING",
+        (0,0,.04),
+        .66,
+        .024,
+        m_ring,
+    )
+    ring.parent = root
+    ring.hide_render = data.get("role") != "primary"
+
+    return root, ring
+
+
+players = {}
+rings = {}
+for name, data in cfg["players"].items():
+    players[name], rings[name] = create_player(
+        name,
+        data,
+    )
+
+ball = sphere(
+    "BALL",
+    (
+        players["GK"].location.x,
+        players["GK"].location.y,
+        .37,
+    ),
+    .16,
+    m_ball,
+)
+
+# Light rig
+bpy.ops.object.light_add(
+    type="AREA",
+    location=(0,-8,28),
+)
+key_light = bpy.context.object
+key_light.data.energy = 850
+key_light.data.shape = "DISK"
+key_light.data.size = 24
+look_at(key_light, (0,0,0))
+
+bpy.ops.object.light_add(
+    type="AREA",
+    location=(24,-16,14),
+)
+rim = bpy.context.object
+rim.data.energy = 420
+rim.data.size = 14
+look_at(rim, (0,0,0))
+
+# Camera presets are stable inside each tactical idea.
+bpy.ops.object.camera_add()
+cam = bpy.context.object
+scene.camera = cam
+
+camera_presets = {
+    "shape": {
+        "loc": (0,-73,77),
+        "target": (0,0,0),
+        "lens": 52,
+    },
+    "relation": {
+        "loc": (22,-61,36),
+        "target": (4,-15,1.0),
+        "lens": 59,
+    },
+    "result": {
+        "loc": (-15,-59,45),
+        "target": (0,-4,1.0),
+        "lens": 55,
+    },
+}
+
+
+def camera_key(preset, t):
+    p = camera_presets[preset]
+    fr = 1 + round(t * fps)
+
+    cam.location = p["loc"]
+    cam.data.lens = p["lens"]
+    look_at(cam, p["target"])
+
+    key(cam, "location", fr)
+    key(cam, "rotation_euler", fr)
+    cam.data.keyframe_insert("lens", frame=fr)
+
+
+def focus_player(name, t):
+    fr = 1 + round(t * fps)
+    for n, r in rings.items():
+        r.hide_render = n != name
+        r.keyframe_insert(
+            "hide_render",
+            frame=fr,
+        )
+
+
+def move_player(name, target, t0, dur):
+    o = players[name]
+    f0 = 1 + round(t0 * fps)
+    f1 = 1 + round((t0 + dur) * fps)
+
+    key(o, "location", f0)
+    o.location.x = float(target[0])
+    o.location.y = float(target[1])
+    key(o, "location", f1)
+
+    smooth_action(o)
+
+
+def pass_ball(a, b, release, arrive):
+    aa = players[a]
+    bb = players[b]
+    f0 = 1 + round(release * fps)
+    f1 = 1 + round(arrive * fps)
+
+    ball.location = (
+        aa.location.x,
+        aa.location.y,
+        .37,
+    )
+    key(ball, "location", f0)
+
+    ball.location = (
+        bb.location.x,
+        bb.location.y,
+        .37,
+    )
+    key(ball, "location", f1)
+
+    smooth_action(ball)
+
+
+def add_space(ev):
+    sp = torus(
+        "SPACE",
+        (
+            ev["center"][0],
+            ev["center"][1],
+            .24,
+        ),
+        1.0,
+        .035,
+        m_ring,
+    )
+    sp.scale = (
+        float(ev["radius"][0]),
+        float(ev["radius"][1]),
+        1,
+    )
+
+    f0 = 1 + round(float(ev["t"]) * fps)
+    f1 = 1 + round(
+        (
+            float(ev["t"])
+            + float(ev["duration"])
+        )
+        * fps
+    )
+
+    sp.hide_render = True
+    sp.keyframe_insert(
+        "hide_render",
+        frame=max(1, f0 - 1),
+    )
+
+    sp.hide_render = False
+    sp.keyframe_insert(
+        "hide_render",
+        frame=f0,
+    )
+
+    sp.hide_render = True
+    sp.keyframe_insert(
+        "hide_render",
+        frame=f1,
+    )
+
+
+camera_key("shape", 0)
+
+for ev in cfg.get("events", []):
+    typ = ev.get("type")
+
+    if typ == "camera":
+        camera_key(
+            ev["preset"],
+            float(ev["t"]),
+        )
+
+    elif typ == "focus":
+        focus_player(
+            ev["player"],
+            float(ev["t"]),
+        )
+
+    elif typ in ("player_move", "defender_shift"):
+        move_player(
+            ev["player"],
+            ev["to"],
+            float(ev["t"]),
+            float(ev["duration"]),
+        )
+
+    elif typ == "pass":
+        pass_ball(
+            ev["from"],
+            ev["to"],
+            float(ev["release"]),
+            float(ev["arrive"]),
+        )
+
+    elif typ == "space":
+        add_space(ev)
+
+smooth_action(cam)
+
+blend_path = os.path.join(
+    out_dir,
+    "scene.blend",
+)
+
+bpy.ops.wm.save_as_mainfile(
+    filepath=blend_path,
+)
+
+bpy.ops.render.render(
+    animation=True,
+)
+
+print(
+    "SAGI_RENDER_DONE",
+    scene.render.filepath,
+    blend_path,
+)
