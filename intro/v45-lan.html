@@ -1244,7 +1244,7 @@ function mdEventText(e){
 }
 function mdRecordEvent(ev,before){
  if(!ev||ev.type==='CLEAR_EVENT')return;
- const item={id:'ev_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),createdAt:new Date().toISOString(),event:ev,beforeHomeScore:before.homeScore,beforeAwayScore:before.awayScore};
+ const item={id:'ev_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),createdAt:new Date().toISOString(),event:ev,beforeHomeScore:before.homeScore,beforeAwayScore:before.awayScore,beforeHomeRed:Number(before.homeRedCards??matchdayState.homeRedCards)||0,beforeAwayRed:Number(before.awayRedCards??matchdayState.awayRedCards)||0};
  matchdayState.eventLog=[item].concat(matchdayState.eventLog||[]).slice(0,40);mdRenderLog();
 }
 function mdRenderLog(){
@@ -1255,9 +1255,11 @@ function mdRenderLog(){
 }
 function mdUndoLast(){
  const list=matchdayState.eventLog||[];if(!list.length){note('没有可撤销的比赛事件');return}
- const x=list.shift();matchdayState.homeScore=Number(x.beforeHomeScore)||0;matchdayState.awayScore=Number(x.beforeAwayScore)||0;matchdayState.eventLog=list;mdRenderLog();q('mdEventStatus').textContent='已撤销 · '+mdEventLabel(x.event);publishMatchday({type:'CLEAR_EVENT'});note('已撤销 '+mdEventLabel(x.event));
+ const x=list.shift(),e=x.event||{};matchdayState.homeScore=Number(x.beforeHomeScore)||0;matchdayState.awayScore=Number(x.beforeAwayScore)||0;
+ matchdayState.homeRedCards=Number(x.beforeHomeRed)||0;matchdayState.awayRedCards=Number(x.beforeAwayRed)||0;matchdayState.eventLog=list;
+ if(e.type==='GOAL'||e.type==='RED'){const idx=(matchdayState.replayMarkers||[]).findIndex(m=>m.type===e.type);if(idx>=0)matchdayState.replayMarkers.splice(idx,1)}
+ mdRenderLog();mdRenderMarkers();q('mdEventStatus').textContent='已撤销 · '+mdEventLabel(e);publishMatchday({type:'CLEAR_EVENT'});note('已撤销 '+mdEventLabel(e));
 }
-
 function mdScore(side,delta){if(side==='HOME')matchdayState.homeScore=Math.max(0,matchdayState.homeScore+delta);else matchdayState.awayScore=Math.max(0,matchdayState.awayScore+delta);publishMatchday(null)}
 function mdEventAutoClear(ms=5400){
  const seq=++mdMacroSeq;clearTimeout(mdMacroTimer);mdMacroTimer=setTimeout(()=>{if(seq!==mdMacroSeq)return;matchdayState.lastEvent=null;publishMatchday({type:'CLEAR_EVENT'})},ms)
@@ -1275,7 +1277,7 @@ async function mdCopyMarkers(){
  try{await navigator.clipboard.writeText(txt);note('回放标记已复制')}catch(e){prompt('复制回放标记：',txt)}
 }
 function mdMacroEvent(type,side,playerId=''){
- const p=playerId?mdPlayer(side,playerId):null,before={homeScore:matchdayState.homeScore,awayScore:matchdayState.awayScore};
+ const p=playerId?mdPlayer(side,playerId):null,before={homeScore:matchdayState.homeScore,awayScore:matchdayState.awayScore,homeRedCards:matchdayState.homeRedCards,awayRedCards:matchdayState.awayRedCards};
  if(type==='GOAL'){if(side==='HOME')matchdayState.homeScore++;else matchdayState.awayScore++;matchdayState.scoreboardVisible=true}
  if(type==='RED'){if(side==='HOME')matchdayState.homeRedCards=Math.min(5,(Number(matchdayState.homeRedCards)||0)+1);else matchdayState.awayRedCards=Math.min(5,(Number(matchdayState.awayRedCards)||0)+1)}
  const team=side==='HOME'?(q('matchHome').value||'HOME'):(q('matchAway').value||'AWAY');
