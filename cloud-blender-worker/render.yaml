@@ -1,0 +1,19 @@
+services:
+  - type: web
+    runtime: docker
+    name: sagi-tactics-blender-worker
+    plan: starter
+    region: singapore
+    dockerfilePath: ./cloud-blender-worker/Dockerfile
+    dockerContext: ./cloud-blender-worker
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: SAGI_MAX_WORKERS
+        value: "1"
+      - key: SAGI_RENDER_TIMEOUT_SEC
+        value: "1800"
+      - key: LIBGL_ALWAYS_SOFTWARE
+        value: "1"
+      - key: SAGI_API_KEY
+        sync: false
