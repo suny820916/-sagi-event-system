@@ -268,7 +268,7 @@ button:disabled{cursor:not-allowed;opacity:.42}
 
   <div id="setupDesk" class="setupDesk">
     <div class="setupHead">
-      <div class="setupTitle">比赛设置 · MATCH SETUP ENGINE<small>V4.5 · 比赛项目 · 赛制校验 · 阵容检查 · READY GATE</small></div>
+      <div class="setupTitle">比赛设置 · MATCH SETUP ENGINE<small>V4.6.2 · 比赛项目 · 赛制校验 · 阵容检查 · READY GATE</small></div>
       <div id="setupReadyBadge" class="setupReadyBadge">NOT READY</div>
     </div>
     <div class="setupGrid">
@@ -386,7 +386,7 @@ button:disabled{cursor:not-allowed;opacity:.42}
 
   <div class="matchdayDesk">
     <div class="mdHead">
-      <div class="mdTitle">V4.5 · 现场比赛导演 <small>LIVE MATCH DIRECTOR</small></div>
+      <div class="mdTitle">V4.6.2 · PREMIUM SCOREBUG <small>LIVE MATCH DIRECTOR</small></div>
       <div id="mdSync" class="mdSync"><span id="mdSyncDot" class="mdLiveDot"></span>比赛图形待命</div>
     </div>
     <div class="mdGrid">
@@ -638,8 +638,8 @@ button:disabled{cursor:not-allowed;opacity:.42}
       <div class="card">
         <h2>vMix 直播输出</h2>
         <div class="grid2"><div><label>输出背景</label><select id="outputBg"><option value="tunnel" selected>球员通道</option><option value="stadium">球场背景</option><option value="transparent">透明背景叠加</option><option value="chroma">绿幕</option></select></div><div><label>画面</label><input value="1920 × 1080" readonly></div></div>
-        <div class="actions"><button id="copyVmixBtn" type="button">复制 V4.5 vMix 链接</button></div>
-        <div class="tiny" style="margin-top:8px">vMix：添加输入 → Web Browser（网页浏览器）→ 粘贴 V4.5 专用链接。控制端点击“切入播出”后同步到直播电脑。</div>
+        <div class="actions"><button id="copyVmixBtn" type="button">复制 LAN vMix 图形链接</button></div>
+        <div class="tiny" style="margin-top:8px">vMix：添加输入 → Web Browser（网页浏览器）→ 粘贴 LAN 专用图形链接。控制端点击“切入播出”后同步到直播电脑。</div>
       </div>
     </div>
 
@@ -667,7 +667,7 @@ button:disabled{cursor:not-allowed;opacity:.42}
             </div>
           </div>
         </div>
-        <div class="statusBar"><div id="status" class="status">V4.5 · FORMATION EDITOR 已就绪</div><div class="mini">1920 × 1080</div></div>
+        <div class="statusBar"><div id="status" class="status">V4.6.2 · FORMATION EDITOR 已就绪</div><div class="mini">1920 × 1080</div></div>
       </div>
     </div>
   </div>
@@ -1463,7 +1463,7 @@ async function save(){
  if(assets.musicBlob)await dbPut('showMusic',assets.musicBlob);else await dbDel('showMusic');
  localStorage.setItem('sagi_player_intro_v40',JSON.stringify({activeSide:snapshot.activeSide,matchConfig:snapshot.matchConfig,package:snapshot.package,teams:snapshot.teams}));
  localStorage.setItem('sagi_show_director_v40',JSON.stringify(snapshot.show));
- note('V4.5 双队阵容、音频与节目已保存')
+ note('V4.6.2 双队阵容、音频与节目已保存')
 }
 async function hydrateRoster(list=[]){const out=[];for(const p of list){p.photo=await dbGet('photo:'+p.id);p.mediaBlob=await dbGet('media:'+p.id);p.mediaObjectUrl=p.mediaBlob instanceof Blob?URL.createObjectURL(p.mediaBlob):'';p.mediaAction=p.mediaAction||'STANDARD';p.directorIn=Number(p.directorIn)||0;p.directorOut=Number(p.directorOut)||0;p.directorSpeed=Number(p.directorSpeed)||1;p.directorFreeze=!!p.directorFreeze;p.directorFreezeMs=Number(p.directorFreezeMs)||1000;p.directorCamera=p.directorCamera||'MEDIUM';out.push(p)}return out}
 async function load(){
@@ -1480,7 +1480,7 @@ async function load(){
   reconcileTeamStarters('HOME',teamStore.HOME.formation);reconcileTeamStarters('AWAY',teamStore.AWAY.formation);
   assets.bg=await dbGet('stadium');assets.eventLogo=await dbGet('eventLogo');assets.musicBlob=await dbGet('showMusic');assets.musicObjectUrl=assets.musicBlob instanceof Blob?URL.createObjectURL(assets.musicBlob):'';
   let storedShow=JSON.parse(localStorage.getItem('sagi_show_director_v40')||'null');if(!storedShow){try{storedShow=JSON.parse(localStorage.getItem('sagi_show_director_v36')||'null')}catch(_){}}if(Array.isArray(storedShow)&&storedShow.length)showSteps=normalizeShowSteps(storedShow);else showSteps=normalizeShowSteps(DEFAULT_SHOW);
-  switchTeam(x.activeSide||'HOME',{silent:true,skipStash:true});renderPreviews();renderShowTimeline();syncMatchStage();note('V4.5 双队阵容、音频与节目已读取')
+  switchTeam(x.activeSide||'HOME',{silent:true,skipStash:true});renderPreviews();renderShowTimeline();syncMatchStage();note('V4.6.2 双队阵容、音频与节目已读取')
  }catch(e){note('读取失败')}
 }
 
@@ -1554,8 +1554,8 @@ function initBroadcastControl(){
  refreshBroadcastStatus();
 }
 
-function vmixLink(){return new URL('./vmix-v45.html',location.href).toString()}
-async function copyVmix(){try{await navigator.clipboard.writeText(vmixLink());note('V4.5 vMix 链接已复制')}catch(e){prompt('复制这个链接：',vmixLink())}}
+function vmixLink(){return new URL('/vmix',location.href).toString()}
+async function copyVmix(){try{await navigator.clipboard.writeText(vmixLink());note('LAN vMix 图形链接已复制')}catch(e){prompt('复制这个链接：',vmixLink())}}
 
 q('crestFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;assets.crest=await fileData(f,420,.84);teamStore[activeSide].crest=assets.crest;renderPreviews();renderStage(currentGroup)};
 q('bgFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;assets.bg=await fileData(f,1600,.78);renderPreviews();renderStage(currentGroup)};
