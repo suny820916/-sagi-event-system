@@ -34,9 +34,9 @@ powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -Command ^
  "[IO.File]::WriteAllText($env:SAGI_FB_CONTROL,$m.Groups[2].Value,$utf);" ^
  "[IO.File]::WriteAllText($env:SAGI_FB_OUTPUT,$m.Groups[3].Value,$utf);" ^
  "Copy-Item $env:SAGI_FB_BRIDGE $env:SAGI_BRIDGE -Force;" ^
- "$controlOk=$false;if(Test-Path $env:SAGI_CONTROL){try{$t=[IO.File]::ReadAllText($env:SAGI_CONTROL,[Text.Encoding]::UTF8);$controlOk=($t.Length -gt 50000 -and $t -match '<!doctype html>' -and $t -match 'SAGI LIVE MATCH DIRECTOR')}catch{}};" ^
+ "$controlOk=$false;if(Test-Path $env:SAGI_CONTROL){try{$t=[IO.File]::ReadAllText($env:SAGI_CONTROL,[Text.Encoding]::UTF8);$controlOk=($t.Length -gt 50000 -and $t -match '<!doctype html>' -and $t -match 'SAGI LIVE MATCH DIRECTOR' -and $t -match 'MATCH MODE')}catch{}};" ^
  "if(-not $controlOk){Copy-Item $env:SAGI_FB_CONTROL $env:SAGI_CONTROL -Force;Write-Host '[REPAIR] Control Room restored from V4.7 fallback.' -ForegroundColor Yellow}else{Write-Host '[SAFE] Existing Control Room kept.' -ForegroundColor Green};" ^
- "$outputOk=$false;if(Test-Path $env:SAGI_OUTPUT){try{$t=[IO.File]::ReadAllText($env:SAGI_OUTPUT,[Text.Encoding]::UTF8);$outputOk=($t.Length -gt 20000 -and $t -match '<!doctype html>')}catch{}};" ^
+ "$outputOk=$false;if(Test-Path $env:SAGI_OUTPUT){try{$t=[IO.File]::ReadAllText($env:SAGI_OUTPUT,[Text.Encoding]::UTF8);$outputOk=($t.Length -gt 20000 -and $t -match '<!doctype html>' -and $t -match 'SCOREBUG V2')}catch{}};" ^
  "if(-not $outputOk){Copy-Item $env:SAGI_FB_OUTPUT $env:SAGI_OUTPUT -Force;Write-Host '[REPAIR] vMix Graphics restored from V4.7 fallback.' -ForegroundColor Yellow}else{Write-Host '[SAFE] Existing vMix Graphics kept.' -ForegroundColor Green};"
 
 if errorlevel 1 (
