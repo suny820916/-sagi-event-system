@@ -14,7 +14,7 @@ from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.responses import FileResponse, PlainTextResponse
 from pydantic import BaseModel, Field
 
-APP_VERSION = "1.0.1"
+APP_VERSION = "1.0.2"
 ROOT = Path(__file__).resolve().parents[1]
 ENGINE = ROOT / "engine" / "sagi_tactics_blender.py"
 BENCHMARK = ROOT / "presets" / "benchmark_4231.json"
@@ -54,8 +54,8 @@ def read_status(job_id: str) -> dict[str, Any]:
     return json.loads(p.read_text(encoding="utf-8"))
 
 
-def write_status(job_id: str, **updates: Any) -> None:
-    p = status_path(job_id)
+def write_status(job_key: str, **updates: Any) -> None:
+    p = status_path(job_key)
     current: dict[str, Any] = {}
     if p.exists():
         try:
@@ -95,6 +95,7 @@ def enqueue(config: dict[str, Any]) -> dict[str, Any]:
     )
     write_status(
         job_id,
+        job_id=job_id,
         status="queued",
         created_at=time.time(),
         progress=0,
