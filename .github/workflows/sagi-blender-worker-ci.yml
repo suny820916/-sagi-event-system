@@ -9,9 +9,9 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-healthcheck:
+  build-health-render:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -25,6 +25,7 @@ jobs:
             -p 10000:10000 \
             -e PORT=10000 \
             -e SAGI_API_KEY=test \
+            -e SAGI_RENDER_TIMEOUT_SEC=1800 \
             sagi-blender-worker:ci
 
       - name: Wait for API
@@ -40,6 +41,70 @@ jobs:
 
       - name: Show Blender version
         run: docker exec sagi-blender-ci blender --version | head -n 2
+
+      - name: Render 12-second benchmark
+        shell: bash
+        run: |
+          set -euo pipefail
+          START_JSON=$(curl -fsS -X POST \
+            http://127.0.0.1:10000/benchmark \
+            -H "X-API-Key: test")
+          echo "$START_JSON" | tee benchmark_start.json
+          JOB_ID=$(python3 -c 'import json; print(json.load(open("benchmark_start.json"))["job_id"])')
+          echo "JOB_ID=$JOB_ID" >> "$GITHUB_ENV"
+
+          for i in $(seq 1 360); do
+            STATUS_JSON=$(curl -fsS \
+              "http://127.0.0.1:10000/jobs/$JOB_ID" \
+              -H "X-API-Key: test")
+            echo "$STATUS_JSON" | tee benchmark_status.json
+            STATUS=$(python3 -c 'import json; print(json.load(open("benchmark_status.json"))["status"])')
+
+            if [ "$STATUS" = "done" ]; then
+              break
+            fi
+            if [ "$STATUS" = "failed" ]; then
+              echo "Benchmark failed"
+              curl -fsS \
+                "http://127.0.0.1:10000/jobs/$JOB_ID/log" \
+                -H "X-API-Key: test" || true
+              exit 1
+            fi
+            sleep 5
+          done
+
+          FINAL_STATUS=$(python3 -c 'import json; print(json.load(open("benchmark_status.json"))["status"])')
+          test "$FINAL_STATUS" = "done"
+
+          curl -fsSL \
+            "http://127.0.0.1:10000/jobs/$JOB_ID/video" \
+            -H "X-API-Key: test" \
+            -o sagi_blender_benchmark_01.mp4
+
+          curl -fsSL \
+            "http://127.0.0.1:10000/jobs/$JOB_ID/blend" \
+            -H "X-API-Key: test" \
+            -o sagi_blender_benchmark_01.blend
+
+          test -s sagi_blender_benchmark_01.mp4
+          test -s sagi_blender_benchmark_01.blend
+
+          ffprobe -v error \
+            -show_entries format=duration:stream=codec_name,width,height,r_frame_rate \
+            -of json sagi_blender_benchmark_01.mp4 \
+            | tee benchmark_probe.json
+
+      - name: Upload benchmark artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sagi-blender-benchmark-01
+          path: |
+            sagi_blender_benchmark_01.mp4
+            sagi_blender_benchmark_01.blend
+            benchmark_probe.json
+            benchmark_status.json
+          retention-days: 7
 
       - name: Container logs
         if: always()
