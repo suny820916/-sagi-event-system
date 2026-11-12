@@ -1004,7 +1004,7 @@ function refreshMatchdayUI(){
  q('mdHomeName').textContent=q('matchHome').value.trim()||'主队';q('mdAwayName').textContent=q('matchAway').value.trim()||'客队';
  q('mdHomeScore').textContent=matchdayState.homeScore;q('mdAwayScore').textContent=matchdayState.awayScore;
  q('mdClock').textContent=mdFormat(mdNowSeconds());q('mdPeriod').value=matchdayState.period;q('mdPeriodLabel').textContent=mdPeriodName(matchdayState.period);
- q('mdScoreboardShow').classList.toggle('primary',matchdayState.scoreboardVisible);q('mdSyncDot').classList.toggle('on',matchdayState.scoreboardVisible||!!matchdayState.lastEvent);
+ q('mdScoreboardShow').classList.toggle('primary',matchdayState.scoreboardVisible);const syncDot=q('mdSyncDot');if(syncDot)syncDot.classList.toggle('on',matchdayState.scoreboardVisible||!!matchdayState.lastEvent);
 }
 function mdPersist(){try{const s={...matchdayState,clockBase:mdNowSeconds(),clockRunning:false,clockStartedAt:0};localStorage.setItem('sagi_matchday_graphics_v42',JSON.stringify(s))}catch(e){}}
 function mdLoad(){
@@ -1023,14 +1023,14 @@ function mdCloudSnapshot(event=null){
 }
 async function publishMatchday(event=null){
  const cfg=cloudAdmin(),state=mdCloudSnapshot(event);matchdayState.lastEvent=event;mdPersist();refreshMatchdayUI();
- if(!window.SagiCloud||!cfg.url||!cfg.key||!cfg.eventSlug||!cfg.token){q('mdSync').innerHTML='<span class="mdLiveDot"></span>仅本机 · 未连接云端';return{ok:false}}
+ if(!window.SagiCloud||!cfg.url||!cfg.key||!cfg.eventSlug||!cfg.token){q('mdSync').innerHTML='<span id="mdSyncDot" class="mdLiveDot"></span>仅本机 · 未连接云端';return{ok:false}}
  try{
   let cur=await window.SagiCloud.getEvent(cfg.eventSlug,cfg);if(!cur||!cur.payload)return{ok:false};
   let payload=Object.assign({},cur.payload,{matchdayGraphics:state});
   try{await window.SagiCloud.saveEvent(cfg.eventSlug,cfg.token,payload,cur.revision,cfg)}
   catch(e){if(String(e.message).includes('REVISION_CONFLICT')){cur=await window.SagiCloud.getEvent(cfg.eventSlug,cfg);payload=Object.assign({},cur.payload,{matchdayGraphics:state});await window.SagiCloud.saveEvent(cfg.eventSlug,cfg.token,payload,cur.revision,cfg)}else throw e}
-  q('mdSync').innerHTML='<span class="mdLiveDot on"></span>已同步 vMix';return{ok:true}
- }catch(e){q('mdSync').innerHTML='<span class="mdLiveDot"></span>同步失败';return{ok:false}}
+  q('mdSync').innerHTML='<span id="mdSyncDot" class="mdLiveDot on"></span>已同步 vMix';return{ok:true}
+ }catch(e){q('mdSync').innerHTML='<span id="mdSyncDot" class="mdLiveDot"></span>同步失败';return{ok:false}}
 }
 
 function mdEventLabel(e){
