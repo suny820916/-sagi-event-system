@@ -1,12 +1,12 @@
 @echo off
 chcp 65001 >nul
 setlocal
-title SAGI VMIX LAN - AUTO UPDATE
+title SAGI VMIX LAN - MOBILE UPDATE
 
 echo.
 echo ==========================================
 echo   SAGI LIVE MATCH DIRECTOR - LAN DIRECT
-echo            AUTO UPDATE CHANNEL
+echo            MOBILE UPDATE CHANNEL
 echo ==========================================
 echo.
 echo Preparing SAGI LAN...
@@ -63,7 +63,7 @@ pause
 exit /b
 
 ###SAGI_PS###
-# SAGI V4.6.3 AUTO UPDATE LAN DIRECT Bridge
+# SAGI V4.6.4 AUTO UPDATE LAN DIRECT Bridge
 # Same-LAN control server + local vMix API bridge.
 # Phone Control: http://<PC-LAN-IP>:8099/
 # vMix Browser:  http://127.0.0.1:8099/vmix
@@ -76,6 +76,8 @@ New-Item -ItemType Directory -Force -Path $Root | Out-Null
 
 $ControlCache = Join-Path $Root "control-latest.html"
 $OutputCache  = Join-Path $Root "output-latest.html"
+$BridgeCache  = Join-Path $Root "bridge-stable.ps1"
+$RemoteBase   = "https://suny820916.github.io/-sagi-event-system/intro"
 
 $Allowed = @(
   "Cut","Fade","Stinger1","PreviewInput",
@@ -91,6 +93,30 @@ $State = @{
   matchdayGraphics = $null
 }
 $MatchdayJson = "null"
+
+function Update-SagiLan {
+  $ProgressPreference = "SilentlyContinue"
+  $stamp = [DateTime]::UtcNow.Ticks
+  $items = @(
+    @{url=($RemoteBase + "/v45-lan.html?t=" + $stamp); dest=$ControlCache; kind="control"},
+    @{url=($RemoteBase + "/vmix-v45-lan.html?t=" + $stamp); dest=$OutputCache; kind="output"},
+    @{url=($RemoteBase + "/vmix-bridge-stable.ps1?t=" + $stamp); dest=$BridgeCache; kind="bridge"}
+  )
+  $updated = New-Object System.Collections.Generic.List[string]
+  foreach ($item in $items) {
+    $r = Invoke-WebRequest -UseBasicParsing -Uri $item.url -TimeoutSec 8 -Headers @{"Cache-Control"="no-cache"}
+    $text = [string]$r.Content
+    if ([string]::IsNullOrWhiteSpace($text) -or $text.Length -lt 1000) { throw ("Invalid update payload: " + $item.kind) }
+    $tmp = $item.dest + ".new"
+    [IO.File]::WriteAllText($tmp,$text,(New-Object Text.UTF8Encoding($false)))
+    Move-Item $tmp $item.dest -Force
+    if ($item.kind -eq "control") { $script:ControlHtml = $text }
+    elseif ($item.kind -eq "output") { $script:OutputHtml = $text }
+    $updated.Add([string]$item.kind)
+  }
+  Write-Host ("[UPDATE] Mobile update complete: " + ($updated -join ", ")) -ForegroundColor Green
+  return @{ok=$true;version="4.6.4";updated=$updated;restartBridge=$true}
+}
 
 function Get-LanIPv4 {
   try {
@@ -209,7 +235,7 @@ function State-Json {
 
 Write-Host ""
 Write-Host "============================================================" -ForegroundColor Cyan
-Write-Host "  SAGI V4.6.3 AUTO UPDATE LAN DIRECT - vMix Bridge" -ForegroundColor Cyan
+Write-Host "  SAGI V4.6.4 AUTO UPDATE LAN DIRECT - vMix Bridge" -ForegroundColor Cyan
 Write-Host "============================================================" -ForegroundColor Cyan
 
 if (-not (Test-Path $ControlCache) -or -not (Test-Path $OutputCache)) {
@@ -346,6 +372,16 @@ while ($true) {
         Write-HttpResponse $stream 500 "application/json" ('{"ok":false,"error":' + $err + '}')
       }
     }
+    elseif ($method -eq "POST" -and $path -eq "/api/update") {
+      try {
+        $result = Update-SagiLan
+        Write-HttpResponse $stream 200 "application/json" ($result | ConvertTo-Json -Compress)
+      } catch {
+        Write-Host ("[UPDATE ERROR] " + $_.Exception.Message) -ForegroundColor Red
+        $err = $_.Exception.Message | ConvertTo-Json -Compress
+        Write-HttpResponse $stream 500 "application/json" ('{"ok":false,"error":' + $err + '}')
+      }
+    }
     elseif ($method -eq "GET" -and $path -eq "/health") {
       $health = @{ok=$true;vmix=(Test-Vmix);lan=$true;ip=$lanIp;port=$Port;version="4.6.3"} | ConvertTo-Json -Compress
       Write-HttpResponse $stream 200 "application/json" $health
@@ -378,7 +414,7 @@ while ($true) {
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="format-detection" content="telephone=no">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%2307090d%22/%3E%3Ctext x=%2232%22 y=%2243%22 text-anchor=%22middle%22 font-size=%2234%22 fill=%22%23d8b55b%22%3ES%3C/text%3E%3C/svg%3E">
-<title>SAGI V4.6.3 · PREMIUM SCOREBUG · AUTO UPDATE · LAN DIRECT</title>
+<title>SAGI V4.6.4 · PREMIUM SCOREBUG · MOBILE UPDATE · LAN DIRECT</title>
 <style>
 :root{--bg:#07090d;--panel:#11151c;--line:#2b3340;--text:#f4f0e8;--muted:#8f97a5;--gold:#d8b55b;--green:#72c79a}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
@@ -614,11 +650,17 @@ button:disabled{cursor:not-allowed;opacity:.42}
 .mdColorReset{min-height:34px!important;padding:7px 10px!important;font-size:9px!important}
 @media(max-width:650px){.mdColorGrid{grid-template-columns:1fr 1fr}.mdColorReset{grid-column:1/-1}}
 
+
+.mobileUpdateBtn{border:1px solid #6b592d!important;background:linear-gradient(135deg,#17130b,#2a220f)!important;color:#f0d887!important;min-height:34px!important;padding:7px 11px!important;font-size:10px!important;border-radius:999px!important;white-space:nowrap}
+.mobileUpdateBtn.busy{opacity:.55}.mobileUpdateStatus{font-size:9px;color:#778493;margin-top:5px;text-align:right}
+.topRight{display:grid;justify-items:end;gap:5px}
+@media(max-width:650px){.mobileUpdateBtn{min-height:38px!important}}
+
 </style>
 </head>
 <body>
 <div class="app">
-  <div class="top"><div><div class="brand">SAGI LIVE MATCH DIRECTOR</div><div class="sub">V4.6.3 · PREMIUM SCOREBUG · AUTO UPDATE · LAN DIRECT · 主客队独立配色</div></div><div class="ver">V4.6.3</div></div>
+  <div class="top"><div><div class="brand">SAGI LIVE MATCH DIRECTOR</div><div class="sub">V4.6.4 · PREMIUM SCOREBUG · MOBILE UPDATE · LAN DIRECT · 主客队独立配色</div></div><div class="topRight"><div class="ver">V4.6.4</div><button id="mobileUpdateBtn" class="mobileUpdateBtn" type="button">↻ 手机一键更新</button><div id="mobileUpdateStatus" class="mobileUpdateStatus">当前 V4.6.4</div></div></div>
 
   <div id="pwaBar" class="pwaBar" style="display:none">
     <div class="pwaInfo">
@@ -633,7 +675,7 @@ button:disabled{cursor:not-allowed;opacity:.42}
 
   <div id="setupDesk" class="setupDesk">
     <div class="setupHead">
-      <div class="setupTitle">比赛设置 · MATCH SETUP ENGINE<small>V4.6.3 · 比赛项目 · 赛制校验 · 阵容检查 · READY GATE</small></div>
+      <div class="setupTitle">比赛设置 · MATCH SETUP ENGINE<small>V4.6.4 · 比赛项目 · 赛制校验 · 阵容检查 · READY GATE</small></div>
       <div id="setupReadyBadge" class="setupReadyBadge">NOT READY</div>
     </div>
     <div class="setupGrid">
@@ -698,7 +740,7 @@ button:disabled{cursor:not-allowed;opacity:.42}
 
   <div class="vmixDirector">
     <div class="vdHead">
-      <div class="vdTitle">V4.6.3 · vMix 导播控制 <small>LIVE MATCH DIRECTOR</small></div>
+      <div class="vdTitle">V4.6.4 · vMix 导播控制 <small>LIVE MATCH DIRECTOR</small></div>
       <div id="vdStatus" class="vdStatus">LAN Bridge 待命</div>
     </div>
     <div class="vdGrid">
@@ -709,7 +751,7 @@ button:disabled{cursor:not-allowed;opacity:.42}
           <div><label>机位 2</label><input id="vdCam2" value="2"></div>
           <div><label>无人机</label><input id="vdDrone" value="3"></div>
           <div><label>回放输入</label><input id="vdReplay" value="4"></div>
-          <div><label>V4.6.3图形输入</label><input id="vdGraphics" value="5"></div>
+          <div><label>V4.6.4图形输入</label><input id="vdGraphics" value="5"></div>
         </div>
         <div class="vdInputs" style="grid-template-columns:1fr 1fr 1fr;margin-top:7px">
           <div><label>切换方式</label><select id="vdTransition"><option value="Cut">CUT 硬切</option><option value="Fade">FADE 淡变</option><option value="Stinger1">STINGER 1</option></select></div>
@@ -751,7 +793,7 @@ button:disabled{cursor:not-allowed;opacity:.42}
 
   <div class="matchdayDesk">
     <div class="mdHead">
-      <div class="mdTitle">V4.6.3 · PREMIUM SCOREBUG <small>LIVE MATCH DIRECTOR</small></div>
+      <div class="mdTitle">V4.6.4 · PREMIUM SCOREBUG <small>LIVE MATCH DIRECTOR</small></div>
       <div id="mdSync" class="mdSync"><span id="mdSyncDot" class="mdLiveDot"></span>比赛图形待命</div>
     </div>
     <div class="mdGrid">
@@ -1032,7 +1074,7 @@ button:disabled{cursor:not-allowed;opacity:.42}
             </div>
           </div>
         </div>
-        <div class="statusBar"><div id="status" class="status">V4.6.3 · FORMATION EDITOR 已就绪</div><div class="mini">1920 × 1080</div></div>
+        <div class="statusBar"><div id="status" class="status">V4.6.4 · FORMATION EDITOR 已就绪</div><div class="mini">1920 × 1080</div></div>
       </div>
     </div>
   </div>
@@ -1413,7 +1455,7 @@ function mdLoad(){
 function mdCloudSnapshot(event=null){
  const now=mdNowSeconds();return{
   commandId:Date.now()+'_'+Math.random().toString(36).slice(2,7),
-  visualVersion:'V4.6.3-PREMIUM-SCOREBUG',
+  visualVersion:'V4.6.4-PREMIUM-SCOREBUG',
   home:q('matchHome').value.trim()||'HOME',away:q('matchAway').value.trim()||'AWAY',
   homeScore:matchdayState.homeScore,awayScore:matchdayState.awayScore,scoreboardVisible:!!matchdayState.scoreboardVisible,
   homeColor:matchdayState.homeColor||'#d8b55b',awayColor:matchdayState.awayColor||'#4c7dff',accentColor:matchdayState.accentColor||'#f4f0e8',
@@ -1514,7 +1556,7 @@ function vdLoad(){
 }
 function vdInput(slot){vdSave();return vmixDirectorSettings[slot]||''}
 async function publishVmixDirector(functionName,input='',duration=0,label=''){
- const cmd={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,7),functionName,input:String(input||''),duration:Math.max(0,Number(duration)||0),label,issuedAt:new Date().toISOString(),version:'V4.6.3-LAN'};
+ const cmd={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,7),functionName,input:String(input||''),duration:Math.max(0,Number(duration)||0),label,issuedAt:new Date().toISOString(),version:'V4.6.4-LAN'};
  q('vdStatus').textContent='LAN 发送中 · '+(label||functionName);
  try{
    await lanPost('/api/vmix',cmd);
@@ -1698,7 +1740,7 @@ function stopCountdown(){clearInterval(startCountdown.t)}
 function cloudAdmin(){try{const x=JSON.parse(localStorage.getItem('sagi_cloud_admin_v20')||'null')||{},b=window.SAGI_CLOUD||{};return{url:x.url||b.url||'',key:x.key||b.key||'',eventSlug:x.eventSlug||b.eventSlug||'',token:x.token||''}}catch(e){const b=window.SAGI_CLOUD||{};return{url:b.url||'',key:b.key||'',eventSlug:b.eventSlug||'',token:''}}}
 function compactPlayersForGroup(group){const src=group==='FULL'?validStarters():group==='SUB'?substitutes():(['GK','DF','MF','FW'].includes(group)?grouped(group):[]);return src.map(p=>({id:p.id,layoutKey:formationPlayerKey(p),name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',squadType:p.squadType||'STARTER',photo:(group==='FULL'||group==='SUB')?'':p.photo||'',mediaUrl:(group==='FULL'||group==='SUB')?'':p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'}))}
 async function publishGroup(group,duration,show=null){
- const state={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,6),group,side:activeSide,team:currentTeamName(),formation:q('formation').value,matchFormat:{mode:matchConfig.mode,playerCount:starterLimit()},playerCount:starterLimit(),startingLabel:startingLabel(),players:compactPlayersForGroup(group),formationLayout:currentFormationLayoutPayload(),allPlayers:validStarters().map(p=>({id:p.id,layoutKey:formationPlayerKey(p),name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',mediaUrl:p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'})),substitutes:substitutes().map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,statLabel:p.statLabel||'',statValue:p.statValue||''})),crest:assets.crest||'',stadium:assets.bg||'',background:q('outputBg').value,visualVersion:'V4.6.3-FORMATION-EDITOR',duration,show:show||null,package:packageData(),startedAt:new Date().toISOString()};
+ const state={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,6),group,side:activeSide,team:currentTeamName(),formation:q('formation').value,matchFormat:{mode:matchConfig.mode,playerCount:starterLimit()},playerCount:starterLimit(),startingLabel:startingLabel(),players:compactPlayersForGroup(group),formationLayout:currentFormationLayoutPayload(),allPlayers:validStarters().map(p=>({id:p.id,layoutKey:formationPlayerKey(p),name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',mediaUrl:p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'})),substitutes:substitutes().map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,statLabel:p.statLabel||'',statValue:p.statValue||''})),crest:assets.crest||'',stadium:assets.bg||'',background:q('outputBg').value,visualVersion:'V4.6.4-FORMATION-EDITOR',duration,show:show||null,package:packageData(),startedAt:new Date().toISOString()};
  try{
    await lanPost('/api/state',{lineupIntro:state});
    return{ok:true}
@@ -1828,7 +1870,7 @@ async function save(){
  if(assets.musicBlob)await dbPut('showMusic',assets.musicBlob);else await dbDel('showMusic');
  localStorage.setItem('sagi_player_intro_v40',JSON.stringify({activeSide:snapshot.activeSide,matchConfig:snapshot.matchConfig,package:snapshot.package,teams:snapshot.teams}));
  localStorage.setItem('sagi_show_director_v40',JSON.stringify(snapshot.show));
- note('V4.6.3 双队阵容、音频与节目已保存')
+ note('V4.6.4 双队阵容、音频与节目已保存')
 }
 async function hydrateRoster(list=[]){const out=[];for(const p of list){p.photo=await dbGet('photo:'+p.id);p.mediaBlob=await dbGet('media:'+p.id);p.mediaObjectUrl=p.mediaBlob instanceof Blob?URL.createObjectURL(p.mediaBlob):'';p.mediaAction=p.mediaAction||'STANDARD';p.directorIn=Number(p.directorIn)||0;p.directorOut=Number(p.directorOut)||0;p.directorSpeed=Number(p.directorSpeed)||1;p.directorFreeze=!!p.directorFreeze;p.directorFreezeMs=Number(p.directorFreezeMs)||1000;p.directorCamera=p.directorCamera||'MEDIUM';out.push(p)}return out}
 async function load(){
@@ -1845,7 +1887,7 @@ async function load(){
   reconcileTeamStarters('HOME',teamStore.HOME.formation);reconcileTeamStarters('AWAY',teamStore.AWAY.formation);
   assets.bg=await dbGet('stadium');assets.eventLogo=await dbGet('eventLogo');assets.musicBlob=await dbGet('showMusic');assets.musicObjectUrl=assets.musicBlob instanceof Blob?URL.createObjectURL(assets.musicBlob):'';
   let storedShow=JSON.parse(localStorage.getItem('sagi_show_director_v40')||'null');if(!storedShow){try{storedShow=JSON.parse(localStorage.getItem('sagi_show_director_v36')||'null')}catch(_){}}if(Array.isArray(storedShow)&&storedShow.length)showSteps=normalizeShowSteps(storedShow);else showSteps=normalizeShowSteps(DEFAULT_SHOW);
-  switchTeam(x.activeSide||'HOME',{silent:true,skipStash:true});renderPreviews();renderShowTimeline();syncMatchStage();note('V4.6.3 双队阵容、音频与节目已读取')
+  switchTeam(x.activeSide||'HOME',{silent:true,skipStash:true});renderPreviews();renderShowTimeline();syncMatchStage();note('V4.6.4 双队阵容、音频与节目已读取')
  }catch(e){note('读取失败')}
 }
 
@@ -2052,12 +2094,34 @@ if(false&&'serviceWorker' in navigator){
 setInstalledState();
 })();
 </script>
+
+<script>
+(function(){
+ const btn=document.getElementById('mobileUpdateBtn'),status=document.getElementById('mobileUpdateStatus');
+ if(!btn||!status)return;
+ btn.addEventListener('click',async()=>{
+   if(btn.disabled)return;
+   btn.disabled=true;btn.classList.add('busy');btn.textContent='正在更新…';status.textContent='正在获取最新版';
+   try{
+     const r=await fetch('/api/update',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}',cache:'no-store'});
+     const x=await r.json().catch(()=>({}));
+     if(!r.ok||!x.ok)throw new Error(x.error||('HTTP '+r.status));
+     status.textContent='更新成功 · 正在刷新';
+     btn.textContent='更新完成 ✓';
+     setTimeout(()=>location.replace('/?updated='+Date.now()),650);
+   }catch(e){
+     status.textContent='更新失败 · 当前版本继续可用';
+     btn.textContent='↻ 重新更新';btn.disabled=false;btn.classList.remove('busy');
+   }
+ });
+})();
+</script>
 </body></html>
 ###SAGI_OUTPUT###
 <!doctype html>
 <html lang="zh-CN"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SAGI V4.6.3 · PREMIUM SCOREBUG · AUTO UPDATE · LAN DIRECT · vMix</title>
+<title>SAGI V4.6.4 · PREMIUM SCOREBUG · MOBILE UPDATE · LAN DIRECT · vMix</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%2307090d%22/%3E%3Ctext x=%2232%22 y=%2243%22 text-anchor=%22middle%22 font-size=%2234%22 fill=%22%23d8b55b%22%3ES%3C/text%3E%3C/svg%3E">
 <style>
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent;font-family:Arial,"PingFang SC","Microsoft YaHei",sans-serif}.stage{position:absolute;left:0;top:0;width:1920px;height:1080px;overflow:hidden;background:#07090c;transform-origin:0 0}.stadium{position:absolute;inset:0;background:radial-gradient(circle at 50% 0,#6f8294 0,#263442 18%,#111820 42%,#06080b 74%)}.stadium:before{content:"";position:absolute;left:-5%;right:-5%;top:165px;height:300px;background:linear-gradient(#19212a,#0b1016 68%,transparent),repeating-linear-gradient(90deg,#ffffff08 0 7px,transparent 7px 22px);clip-path:polygon(0 0,100% 0,92% 100%,8% 100%)}.stadium:after{content:"";position:absolute;left:0;right:0;bottom:-35px;height:430px;background:linear-gradient(180deg,#173421,#0a2716 70%,#05130a);clip-path:polygon(20% 0,80% 0,100% 100%,0 100%)}.stadiumPhoto{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}.shade{position:absolute;inset:0;background:linear-gradient(90deg,#030508e6 0,#05070a99 38%,#05070a55 58%,#030508c9 100%),linear-gradient(0deg,#040609c7 0,transparent 55%,#03050775 100%)}.pitchLines{position:absolute;left:320px;right:320px;bottom:0;height:360px;opacity:.22;transform:perspective(800px) rotateX(62deg);transform-origin:bottom;border:5px solid #fff;border-bottom:0}.pitchLines:before{content:"";position:absolute;left:50%;top:0;bottom:0;border-left:4px solid #fff}.pitchLines:after{content:"";position:absolute;width:170px;height:170px;border:4px solid #fff;border-radius:50%;left:50%;top:45%;transform:translate(-50%,-50%)}.light{position:absolute;width:760px;height:760px;border-radius:50%;filter:blur(100px);opacity:.22}.l1{left:-180px;top:-330px;background:#5cb4ff}.l2{right:-220px;top:-300px;background:#d7b051}.header{position:absolute;left:95px;top:72px;display:flex;align-items:center;gap:24px}.crest{width:96px;height:96px;object-fit:contain;filter:drop-shadow(0 12px 20px #0009)}.team{font-size:34px;font-weight:950;letter-spacing:2px;color:#fff}.sub{font-size:17px;color:#d8b55b;letter-spacing:5px;margin-top:7px;font-weight:850}.groupTitle{position:absolute;left:100px;top:205px;font-size:28px;letter-spacing:7px;color:#d8b55b;font-weight:900}.groupName{position:absolute;left:95px;top:245px;font-size:72px;line-height:1;font-weight:1000;letter-spacing:-2px;color:#fff}.line{position:absolute;left:98px;top:330px;width:400px;height:5px;background:linear-gradient(90deg,#d8b55b,#fff1b7)}.players{position:absolute;left:70px;top:350px;width:1240px;height:650px;display:flex;align-items:flex-end;justify-content:center;gap:18px}.card{position:relative;width:230px;height:570px;flex:0 0 auto}.card.one{width:520px}.cut{position:absolute;left:0;right:0;bottom:82px;height:490px;display:flex;align-items:flex-end;justify-content:center}.cut img{width:100%;height:100%;object-fit:contain;object-position:center bottom;filter:drop-shadow(0 20px 25px #000d)}
