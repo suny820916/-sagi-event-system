@@ -296,8 +296,10 @@ def create_player(name, data):
     root.rotation_euler[2] = math.radians(
         float(data.get("yaw", 0))
     )
-    # Slightly larger tactical marker: still miniature, but readable on mobile.
-    root.scale = (1.16, 1.16, 1.16)
+    # Teactics-style miniature figure: readable, but never dominant.
+    # V03 reduces the overall scale and gives the limbs a quiet natural stance
+    # so players read as people rather than rigid chess pieces.
+    root.scale = (1.10, 1.10, 1.10)
 
     matp = (
         m_g
@@ -326,31 +328,38 @@ def create_player(name, data):
     la = cyl(
         name + "_LA",
         (-.285,0,1.05),
-        .050,
-        .50,
+        .048,
+        .48,
         matp,
     )
     ra = cyl(
         name + "_RA",
         (.285,0,1.05),
-        .050,
-        .50,
+        .048,
+        .48,
         matp,
     )
     ll = cyl(
         name + "_LL",
         (-.105,0,.42),
-        .060,
-        .70,
+        .058,
+        .68,
         matp,
     )
     rl = cyl(
         name + "_RL",
         (.105,0,.42),
-        .060,
-        .70,
+        .058,
+        .68,
         matp,
     )
+
+    # Quiet athletic stance. The figure stays diagrammatic, but the slight
+    # asymmetry prevents the "frozen stick man" feeling during movement.
+    la.rotation_euler[1] = math.radians(-12)
+    ra.rotation_euler[1] = math.radians(12)
+    ll.rotation_euler[1] = math.radians(4)
+    rl.rotation_euler[1] = math.radians(-4)
 
     for ch in (torso, head, la, ra, ll, rl):
         ch.parent = root
@@ -424,9 +433,14 @@ camera_presets = {
         "lens": 62,
     },
     "result": {
-        "loc": (-12,-55,41),
-        "target": (0,-5,1.0),
-        "lens": 60,
+        "loc": (-10,-54,39),
+        "target": (2,8,1.0),
+        "lens": 62,
+    },
+    "finish": {
+        "loc": (12,-44,31),
+        "target": (12,27,1.0),
+        "lens": 68,
     },
 }
 
@@ -456,7 +470,9 @@ def camera_key(preset, t):
         camera_last_t = t
         return
 
-    transition = 0.58
+    # V03: a shorter, purposeful reframe. The camera should feel like it
+    # recognizes the next tactical question, not like it is travelling there.
+    transition = 0.38
     start_t = max(camera_last_t, t - transition)
     start_fr = 1 + round(start_t * fps)
 
@@ -484,6 +500,16 @@ def move_player(name, target, t0, dur):
     f0 = 1 + round(t0 * fps)
     f1 = 1 + round((t0 + dur) * fps)
 
+    # Anticipation first: turn toward the route just before the run begins.
+    # This removes the "sliding token" look without introducing full walk cycles.
+    dx = float(target[0]) - o.location.x
+    dy = float(target[1]) - o.location.y
+    if abs(dx) + abs(dy) > 1e-5:
+        turn_fr = max(1, f0 - max(1, round(.16 * fps)))
+        key(o, "rotation_euler", turn_fr)
+        o.rotation_euler[2] = math.atan2(-dx, dy)
+        key(o, "rotation_euler", f0)
+
     key(o, "location", f0)
     o.location.x = float(target[0])
     o.location.y = float(target[1])
@@ -510,6 +536,28 @@ def pass_ball(a, b, release, arrive):
         bb.location.y,
         .37,
     )
+    key(ball, "location", f1)
+
+    smooth_action(ball)
+
+
+def shot_ball(player, target, release, arrive, arc=.9):
+    src = players[player]
+    f0 = 1 + round(release * fps)
+    f1 = 1 + round(arrive * fps)
+    fm = max(f0 + 1, round((f0 + f1) / 2))
+
+    ball.location = (src.location.x, src.location.y, .37)
+    key(ball, "location", f0)
+
+    ball.location = (
+        (src.location.x + float(target[0])) / 2.0,
+        (src.location.y + float(target[1])) / 2.0,
+        .37 + float(arc),
+    )
+    key(ball, "location", fm)
+
+    ball.location = (float(target[0]), float(target[1]), .37)
     key(ball, "location", f1)
 
     smooth_action(ball)
@@ -592,6 +640,15 @@ for ev in cfg.get("events", []):
             ev["to"],
             float(ev["release"]),
             float(ev["arrive"]),
+        )
+
+    elif typ == "shot":
+        shot_ball(
+            ev["from"],
+            ev["to"],
+            float(ev["release"]),
+            float(ev["arrive"]),
+            float(ev.get("arc", .9)),
         )
 
     elif typ == "space":
