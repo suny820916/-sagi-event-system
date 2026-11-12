@@ -164,7 +164,22 @@ scene.render.resolution_percentage = 100
 scene.render.fps = fps
 scene.frame_start = 1
 scene.frame_end = max(1, int(round(dur * fps)))
-scene.render.engine = cfg.get("render_engine", "BLENDER_EEVEE_NEXT")
+requested_engine = cfg.get("render_engine", "BLENDER_EEVEE")
+if requested_engine == "BLENDER_EEVEE_NEXT":
+    requested_engine = "BLENDER_EEVEE"
+
+engine_ok = False
+for candidate in (requested_engine, "BLENDER_EEVEE", "BLENDER_WORKBENCH", "CYCLES"):
+    try:
+        scene.render.engine = candidate
+        engine_ok = True
+        break
+    except (TypeError, ValueError):
+        continue
+
+if not engine_ok:
+    raise RuntimeError("No supported Blender render engine is available")
+
 scene.render.image_settings.file_format = "FFMPEG"
 scene.render.ffmpeg.format = "MPEG4"
 scene.render.ffmpeg.codec = "H264"
@@ -173,10 +188,6 @@ scene.render.ffmpeg.ffmpeg_preset = "GOOD"
 scene.render.filepath = os.path.join(out_dir, "render_raw.mp4")
 scene.world.color = hex_rgba(pal["background"])[:3]
 
-try:
-    scene.render.engine = "BLENDER_EEVEE_NEXT"
-except Exception:
-    pass
 try:
     scene.render.image_settings.color_mode = "RGB"
 except Exception:
