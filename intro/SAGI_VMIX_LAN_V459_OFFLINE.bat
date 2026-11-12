@@ -39,7 +39,7 @@ pause
 exit /b
 
 ###SAGI_PS###
-# SAGI V4.5.5 LAN DIRECT Bridge
+# SAGI V4.5.9 LAN DIRECT Bridge
 # Same-LAN control server + local vMix API bridge.
 # Phone Control: http://<PC-LAN-IP>:8099/
 # vMix Browser:  http://127.0.0.1:8099/vmix
@@ -50,8 +50,6 @@ $VmixApi = "http://127.0.0.1:8088/api/"
 $Root = Join-Path $env:LOCALAPPDATA "SAGI\LiveMatchDirector"
 New-Item -ItemType Directory -Force -Path $Root | Out-Null
 
-$ControlUrl = "https://suny820916.github.io/-sagi-event-system/intro/v45-lan.html?v=456"
-$OutputUrl  = "https://suny820916.github.io/-sagi-event-system/intro/vmix-v45-lan.html?v=456"
 $ControlCache = Join-Path $Root "v45-lan.html"
 $OutputCache  = Join-Path $Root "vmix-v45-lan.html"
 
@@ -68,23 +66,7 @@ $State = @{
   lineupIntro = $null
   matchdayGraphics = $null
 }
-
-function Get-CachedText([string]$Url,[string]$CachePath) {
-  try {
-    Write-Host ("[LOAD] " + $Url) -ForegroundColor DarkCyan
-    $resp = Invoke-WebRequest -UseBasicParsing -Uri $Url -TimeoutSec 15 -Headers @{"Cache-Control"="no-cache"}
-    $text = [string]$resp.Content
-    [IO.File]::WriteAllText($CachePath,$text,(New-Object Text.UTF8Encoding($false)))
-    return $text
-  }
-  catch {
-    if (Test-Path $CachePath) {
-      Write-Host ("[OFFLINE] Using cached UI: " + [IO.Path]::GetFileName($CachePath)) -ForegroundColor DarkYellow
-      return [IO.File]::ReadAllText($CachePath,[Text.Encoding]::UTF8)
-    }
-    throw
-  }
-}
+$MatchdayJson = "null"
 
 function Get-LanIPv4 {
   try {
@@ -203,17 +185,17 @@ function State-Json {
 
 Write-Host ""
 Write-Host "============================================================" -ForegroundColor Cyan
-Write-Host "  SAGI V4.5.5 LAN DIRECT - vMix Bridge" -ForegroundColor Cyan
+Write-Host "  SAGI V4.5.9 LAN DIRECT - vMix Bridge" -ForegroundColor Cyan
 Write-Host "============================================================" -ForegroundColor Cyan
 
-try {
-  $ControlHtml = Get-CachedText $ControlUrl $ControlCache
-  $OutputHtml = Get-CachedText $OutputUrl $OutputCache
-} catch {
-  Write-Host ("[ERROR] Cannot load LAN UI: " + $_.Exception.Message) -ForegroundColor Red
+if (-not (Test-Path $ControlCache) -or -not (Test-Path $OutputCache)) {
+  Write-Host "[ERROR] Embedded LAN UI files were not extracted." -ForegroundColor Red
   Read-Host "Press Enter to close"
   exit 1
 }
+$ControlHtml = [IO.File]::ReadAllText($ControlCache,[Text.Encoding]::UTF8)
+$OutputHtml = [IO.File]::ReadAllText($OutputCache,[Text.Encoding]::UTF8)
+Write-Host "[READY] Embedded LAN UI loaded." -ForegroundColor Green
 
 $vmixReady = Test-Vmix
 if ($vmixReady) {
@@ -228,7 +210,6 @@ if ($vmixReady) {
 $lanIp = Get-LanIPv4
 $listener = $null
 $started = $false
-
 for ($candidate = $PreferredPort; $candidate -le ($PreferredPort + 20); $candidate++) {
   try {
     $tryListener = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Any,$candidate)
@@ -240,14 +221,12 @@ for ($candidate = $PreferredPort; $candidate -le ($PreferredPort + 20); $candida
       Write-Host ("[INFO] Port " + $PreferredPort + " is busy. Using port " + $Port + " instead.") -ForegroundColor Yellow
     }
     break
-  }
-  catch {
+  } catch {
     try { if ($null -ne $tryListener) { $tryListener.Stop() } } catch {}
   }
 }
-
 if (-not $started -or $null -eq $listener) {
-  Write-Host ("[ERROR] No free LAN port found from " + $PreferredPort + " to " + ($PreferredPort + 20) + ".") -ForegroundColor Red
+  Write-Host ("[ERROR] No free LAN port found.") -ForegroundColor Red
   Read-Host "Press Enter to close"
   exit 1
 }
@@ -308,6 +287,23 @@ while ($true) {
         Write-HttpResponse $stream 400 "application/json" ('{"ok":false,"error":' + $err + '}')
       }
     }
+    elseif ($method -eq "GET" -and $path -eq "/api/matchday") {
+      Write-HttpResponse $stream 200 "application/json" $MatchdayJson
+    }
+    elseif ($method -eq "POST" -and $path -eq "/api/matchday") {
+      try {
+        $probe = $req.body | ConvertFrom-Json
+        $MatchdayJson = $req.body
+        $hs = [string]$probe.homeScore
+        $as = [string]$probe.awayScore
+        $vis = [string]$probe.scoreboardVisible
+        Write-Host ("[SCORE] " + $hs + ":" + $as + " visible=" + $vis) -ForegroundColor Cyan
+        Write-HttpResponse $stream 200 "application/json" '{"ok":true}'
+      } catch {
+        $err = $_.Exception.Message | ConvertTo-Json -Compress
+        Write-HttpResponse $stream 400 "application/json" ('{"ok":false,"error":' + $err + '}')
+      }
+    }
     elseif ($method -eq "POST" -and $path -eq "/api/vmix") {
       try {
         $cmd = $req.body | ConvertFrom-Json
@@ -320,7 +316,7 @@ while ($true) {
       }
     }
     elseif ($method -eq "GET" -and $path -eq "/health") {
-      $health = @{ok=$true;vmix=(Test-Vmix);lan=$true;ip=$lanIp;port=$Port;version="4.5.5"} | ConvertTo-Json -Compress
+      $health = @{ok=$true;vmix=(Test-Vmix);lan=$true;ip=$lanIp;port=$Port;version="4.5.9"} | ConvertTo-Json -Compress
       Write-HttpResponse $stream 200 "application/json" $health
     }
     else {
@@ -351,7 +347,7 @@ while ($true) {
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="format-detection" content="telephone=no">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%2307090d%22/%3E%3Ctext x=%2232%22 y=%2243%22 text-anchor=%22middle%22 font-size=%2234%22 fill=%22%23d8b55b%22%3ES%3C/text%3E%3C/svg%3E">
-<title>SAGI V4.5.9 · LAN DIRECT</title>
+<title>SAGI V4.5 · LAN DIRECT</title>
 <style>
 :root{--bg:#07090d;--panel:#11151c;--line:#2b3340;--text:#f4f0e8;--muted:#8f97a5;--gold:#d8b55b;--green:#72c79a}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
@@ -2002,7 +1998,7 @@ setInstalledState();
 <!doctype html>
 <html lang="zh-CN"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SAGI V4.5.9 · LAN DIRECT · vMix</title>
+<title>SAGI V4.5 · LAN DIRECT · vMix</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%2307090d%22/%3E%3Ctext x=%2232%22 y=%2243%22 text-anchor=%22middle%22 font-size=%2234%22 fill=%22%23d8b55b%22%3ES%3C/text%3E%3C/svg%3E">
 <style>
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent;font-family:Arial,"PingFang SC","Microsoft YaHei",sans-serif}.stage{position:absolute;left:0;top:0;width:1920px;height:1080px;overflow:hidden;background:#07090c;transform-origin:0 0}.stadium{position:absolute;inset:0;background:radial-gradient(circle at 50% 0,#6f8294 0,#263442 18%,#111820 42%,#06080b 74%)}.stadium:before{content:"";position:absolute;left:-5%;right:-5%;top:165px;height:300px;background:linear-gradient(#19212a,#0b1016 68%,transparent),repeating-linear-gradient(90deg,#ffffff08 0 7px,transparent 7px 22px);clip-path:polygon(0 0,100% 0,92% 100%,8% 100%)}.stadium:after{content:"";position:absolute;left:0;right:0;bottom:-35px;height:430px;background:linear-gradient(180deg,#173421,#0a2716 70%,#05130a);clip-path:polygon(20% 0,80% 0,100% 100%,0 100%)}.stadiumPhoto{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}.shade{position:absolute;inset:0;background:linear-gradient(90deg,#030508e6 0,#05070a99 38%,#05070a55 58%,#030508c9 100%),linear-gradient(0deg,#040609c7 0,transparent 55%,#03050775 100%)}.pitchLines{position:absolute;left:320px;right:320px;bottom:0;height:360px;opacity:.22;transform:perspective(800px) rotateX(62deg);transform-origin:bottom;border:5px solid #fff;border-bottom:0}.pitchLines:before{content:"";position:absolute;left:50%;top:0;bottom:0;border-left:4px solid #fff}.pitchLines:after{content:"";position:absolute;width:170px;height:170px;border:4px solid #fff;border-radius:50%;left:50%;top:45%;transform:translate(-50%,-50%)}.light{position:absolute;width:760px;height:760px;border-radius:50%;filter:blur(100px);opacity:.22}.l1{left:-180px;top:-330px;background:#5cb4ff}.l2{right:-220px;top:-300px;background:#d7b051}.header{position:absolute;left:95px;top:72px;display:flex;align-items:center;gap:24px}.crest{width:96px;height:96px;object-fit:contain;filter:drop-shadow(0 12px 20px #0009)}.team{font-size:34px;font-weight:950;letter-spacing:2px;color:#fff}.sub{font-size:17px;color:#d8b55b;letter-spacing:5px;margin-top:7px;font-weight:850}.groupTitle{position:absolute;left:100px;top:205px;font-size:28px;letter-spacing:7px;color:#d8b55b;font-weight:900}.groupName{position:absolute;left:95px;top:245px;font-size:72px;line-height:1;font-weight:1000;letter-spacing:-2px;color:#fff}.line{position:absolute;left:98px;top:330px;width:400px;height:5px;background:linear-gradient(90deg,#d8b55b,#fff1b7)}.players{position:absolute;left:70px;top:350px;width:1240px;height:650px;display:flex;align-items:flex-end;justify-content:center;gap:18px}.card{position:relative;width:230px;height:570px;flex:0 0 auto}.card.one{width:520px}.cut{position:absolute;left:0;right:0;bottom:82px;height:490px;display:flex;align-items:flex-end;justify-content:center}.cut img{width:100%;height:100%;object-fit:contain;object-position:center bottom;filter:drop-shadow(0 20px 25px #000d)}
