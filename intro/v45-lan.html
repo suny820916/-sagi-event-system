@@ -1060,10 +1060,10 @@ async function publishMatchday(event=null){
  const state=mdCloudSnapshot(event);matchdayState.lastEvent=event;mdPersist();refreshMatchdayUI();
  try{
   await lanPost('/api/matchday',state);
-  q('mdSync').innerHTML='<span id="mdSyncDot" class="mdLiveDot on"></span>LAN 比分已同步 vMix';
+  q('mdSync').innerHTML='<span class="mdLiveDot on"></span>LAN 比分已同步 vMix';
   return{ok:true}
  }catch(e){
-  q('mdSync').innerHTML='<span id="mdSyncDot" class="mdLiveDot"></span>LAN 比分同步失败';
+  q('mdSync').innerHTML='<span class="mdLiveDot"></span>LAN 比分同步失败';
   return{ok:false}
  }
 }
