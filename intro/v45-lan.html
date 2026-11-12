@@ -238,6 +238,17 @@ button:disabled{cursor:not-allowed;opacity:.42}
 .pwaInstall{background:#1d4935}.pwaUpdate{background:#5b4720;color:#f3d98f}.pwaUpdate[hidden]{display:none}
 @media(max-width:650px){.pwaBar{align-items:flex-start;flex-direction:column}.pwaActions{width:100%;display:grid;grid-template-columns:1fr 1fr}.pwaActions button{width:100%;min-height:44px}.pwaStatus{font-size:11px}}
 
+
+.mdColorEditor{margin-top:9px;padding:9px;border:1px solid #2a3541;border-radius:12px;background:#0a0f15}
+.mdColorTitle{font-size:9px;font-weight:1000;letter-spacing:1.5px;color:#8895a3;margin-bottom:7px}
+.mdColorGrid{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:7px;align-items:end}
+.mdColorField{display:grid;grid-template-columns:38px 1fr;gap:7px;align-items:center}
+.mdColorField span{font-size:9px;color:#8d98a5}
+.mdColorField input[type=color]{width:38px;height:34px;border:1px solid #3a4653;border-radius:8px;background:#0d1218;padding:2px}
+.mdColorValue{font-size:9px!important;padding:7px!important;min-width:0}
+.mdColorReset{min-height:34px!important;padding:7px 10px!important;font-size:9px!important}
+@media(max-width:650px){.mdColorGrid{grid-template-columns:1fr 1fr}.mdColorReset{grid-column:1/-1}}
+
 </style>
 </head>
 <body>
@@ -392,6 +403,15 @@ button:disabled{cursor:not-allowed;opacity:.42}
           <div></div><button id="mdAwayMinus" class="mdScoreBtn" type="button">−</button><div id="mdAwayScore" class="mdScore">0</div><button id="mdAwayPlus" class="mdScoreBtn" type="button">＋</button><div></div>
         </div>
         <div class="mdScoreboardBtns"><button id="mdScoreboardShow" class="ok" type="button">显示比分牌</button><button id="mdScoreboardHide" type="button">隐藏比分牌</button></div>
+        <div class="mdColorEditor">
+          <div class="mdColorTitle">比分牌配色 · SCOREBUG COLORS</div>
+          <div class="mdColorGrid">
+            <label class="mdColorField"><input id="mdHomeColor" type="color" value="#d8b55b"><span>主队颜色</span></label>
+            <label class="mdColorField"><input id="mdAwayColor" type="color" value="#4c7dff"><span>客队颜色</span></label>
+            <label class="mdColorField"><input id="mdAccentColor" type="color" value="#f4f0e8"><span>主题高光</span></label>
+            <button id="mdColorReset" class="mdColorReset" type="button">恢复默认</button>
+          </div>
+        </div>
       </div>
 
       <div class="mdPanel">
@@ -995,7 +1015,7 @@ const BROADCAST_MANUAL=[
 ];
 
 
-let matchdayState={homeScore:0,awayScore:0,scoreboardVisible:false,period:'1H',clockBase:0,clockRunning:false,clockStartedAt:0,lastEvent:null,eventLog:[]};
+let matchdayState={homeScore:0,awayScore:0,scoreboardVisible:false,period:'1H',clockBase:0,clockRunning:false,clockStartedAt:0,lastEvent:null,eventLog:[],homeColor:'#d8b55b',awayColor:'#4c7dff',accentColor:'#f4f0e8'};
 function mdPeriodName(p){return({'1H':'上半场','2H':'下半场','ET1':'加时上半场','ET2':'加时下半场','PEN':'点球大战'})[p]||p}
 function mdNowSeconds(){return Math.max(0,matchdayState.clockBase+(matchdayState.clockRunning?((Date.now()-matchdayState.clockStartedAt)/1000):0))}
 function mdFormat(sec){sec=Math.max(0,Math.floor(Number(sec)||0));return String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0')}
@@ -1015,6 +1035,9 @@ function refreshMatchdayUI(){
  q('mdHomeName').textContent=q('matchHome').value.trim()||'主队';q('mdAwayName').textContent=q('matchAway').value.trim()||'客队';
  q('mdHomeScore').textContent=matchdayState.homeScore;q('mdAwayScore').textContent=matchdayState.awayScore;
  q('mdClock').textContent=mdFormat(mdNowSeconds());q('mdPeriod').value=matchdayState.period;q('mdPeriodLabel').textContent=mdPeriodName(matchdayState.period);
+ if(q('mdHomeColor'))q('mdHomeColor').value=matchdayState.homeColor||'#d8b55b';
+ if(q('mdAwayColor'))q('mdAwayColor').value=matchdayState.awayColor||'#4c7dff';
+ if(q('mdAccentColor'))q('mdAccentColor').value=matchdayState.accentColor||'#f4f0e8';
  q('mdScoreboardShow').classList.toggle('primary',matchdayState.scoreboardVisible);const syncDot=q('mdSyncDot');if(syncDot)syncDot.classList.toggle('on',matchdayState.scoreboardVisible||!!matchdayState.lastEvent);
 }
 function mdPersist(){try{const s={...matchdayState,clockBase:mdNowSeconds(),clockRunning:false,clockStartedAt:0};localStorage.setItem('sagi_matchday_graphics_v42',JSON.stringify(s))}catch(e){}}
@@ -1028,6 +1051,7 @@ function mdCloudSnapshot(event=null){
   visualVersion:'V4.5-LIVE-MATCH-DIRECTOR',
   home:q('matchHome').value.trim()||'HOME',away:q('matchAway').value.trim()||'AWAY',
   homeScore:matchdayState.homeScore,awayScore:matchdayState.awayScore,scoreboardVisible:!!matchdayState.scoreboardVisible,
+  homeColor:matchdayState.homeColor||'#d8b55b',awayColor:matchdayState.awayColor||'#4c7dff',accentColor:matchdayState.accentColor||'#f4f0e8',
   clock:{baseSeconds:now,running:!!matchdayState.clockRunning,startedAt:matchdayState.clockRunning?new Date().toISOString():null,period:matchdayState.period},
   event:event||null,updatedAt:new Date().toISOString()
  };
@@ -1092,6 +1116,10 @@ function mdMvp(){
 function initMatchdayGraphics(){
  q('mdHomeMinus').onclick=()=>mdScore('HOME',-1);q('mdHomePlus').onclick=()=>mdScore('HOME',1);q('mdAwayMinus').onclick=()=>mdScore('AWAY',-1);q('mdAwayPlus').onclick=()=>mdScore('AWAY',1);
  q('mdScoreboardShow').onclick=()=>{matchdayState.scoreboardVisible=true;publishMatchday(null)};q('mdScoreboardHide').onclick=()=>{matchdayState.scoreboardVisible=false;publishMatchday(null)};
+ q('mdHomeColor').oninput=e=>{matchdayState.homeColor=e.target.value;publishMatchday(null)};
+ q('mdAwayColor').oninput=e=>{matchdayState.awayColor=e.target.value;publishMatchday(null)};
+ q('mdAccentColor').oninput=e=>{matchdayState.accentColor=e.target.value;publishMatchday(null)};
+ q('mdColorReset').onclick=()=>{matchdayState.homeColor='#d8b55b';matchdayState.awayColor='#4c7dff';matchdayState.accentColor='#f4f0e8';refreshMatchdayUI();publishMatchday(null)};
  q('mdClockStart').onclick=()=>{if(!matchdayState.clockRunning){matchdayState.clockStartedAt=Date.now();matchdayState.clockRunning=true;publishMatchday(null)}};
  q('mdClockPause').onclick=()=>{matchdayState.clockBase=mdNowSeconds();matchdayState.clockRunning=false;matchdayState.clockStartedAt=0;publishMatchday(null)};
  q('mdClockReset').onclick=()=>{matchdayState.clockBase=0;matchdayState.clockRunning=false;matchdayState.clockStartedAt=0;publishMatchday(null)};
