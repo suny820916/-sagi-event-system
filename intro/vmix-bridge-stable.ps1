@@ -1,4 +1,4 @@
-# SAGI V4.6.5 AUTO UPDATE LAN DIRECT Bridge
+# SAGI V4.6.6 MATCH SAFE LAN DIRECT Bridge
 # Same-LAN control server + local vMix API bridge.
 # Phone Control: http://<PC-LAN-IP>:8099/
 # vMix Browser:  http://127.0.0.1:8099/vmix
@@ -12,6 +12,8 @@ New-Item -ItemType Directory -Force -Path $Root | Out-Null
 $ControlCache = Join-Path $Root "control-latest.html"
 $OutputCache  = Join-Path $Root "output-latest.html"
 $BridgeCache  = Join-Path $Root "bridge-stable.ps1"
+$ControlBackup = Join-Path $Root "control-backup.html"
+$OutputBackup  = Join-Path $Root "output-backup.html"
 $RemoteBase   = "https://suny820916.github.io/-sagi-event-system/intro"
 
 $Allowed = @(
@@ -32,36 +34,50 @@ $MatchdayJson = "null"
 function Update-SagiLan {
   $ProgressPreference = "SilentlyContinue"
   $stamp = [DateTime]::UtcNow.Ticks
-  $items = @(
-    @{url=($RemoteBase + "/v45-lan.html?t=" + $stamp); dest=$ControlCache; kind="control"; min=50000},
-    @{url=($RemoteBase + "/vmix-v45-lan.html?t=" + $stamp); dest=$OutputCache; kind="output"; min=20000},
-    @{url=($RemoteBase + "/vmix-bridge-stable.ps1?t=" + $stamp); dest=$BridgeCache; kind="bridge"; min=5000}
-  )
-  $updated = New-Object System.Collections.Generic.List[string]
-  foreach ($item in $items) {
-    $download = $item.dest + ".download"
-    try {
-      Invoke-WebRequest -UseBasicParsing -Uri $item.url -TimeoutSec 8 -Headers @{"Cache-Control"="no-cache"} -OutFile $download
-      if (-not (Test-Path $download)) { throw ("Download missing: " + $item.kind) }
-      $len = (Get-Item $download).Length
-      if ($len -lt [int]$item.min) { throw ("Download too small: " + $item.kind + " " + $len) }
-      $bytes = [IO.File]::ReadAllBytes($download)
-      $text = [Text.Encoding]::UTF8.GetString($bytes)
-      if ([string]::IsNullOrWhiteSpace($text)) { throw ("Empty update payload: " + $item.kind) }
-      if ($item.kind -eq "bridge" -and $text -notmatch "SAGI V4\.") { throw "Bridge validation failed" }
-      if (($item.kind -eq "control" -or $item.kind -eq "output") -and $text -notmatch "<!doctype html>") { throw ("HTML validation failed: " + $item.kind) }
-      $tmp = $item.dest + ".new"
-      [IO.File]::WriteAllText($tmp,$text,(New-Object Text.UTF8Encoding($false)))
-      Move-Item $tmp $item.dest -Force
-      if ($item.kind -eq "control") { $script:ControlHtml = $text }
-      elseif ($item.kind -eq "output") { $script:OutputHtml = $text }
-      $updated.Add([string]$item.kind)
-    } finally {
-      Remove-Item $download -Force -ErrorAction SilentlyContinue
-    }
+  $controlDownload = $ControlCache + ".download"
+  $outputDownload = $OutputCache + ".download"
+  try {
+    Invoke-WebRequest -UseBasicParsing -Uri ($RemoteBase + "/v45-lan.html?t=" + $stamp) -TimeoutSec 8 -Headers @{"Cache-Control"="no-cache"} -OutFile $controlDownload
+    Invoke-WebRequest -UseBasicParsing -Uri ($RemoteBase + "/vmix-v45-lan.html?t=" + $stamp) -TimeoutSec 8 -Headers @{"Cache-Control"="no-cache"} -OutFile $outputDownload
+
+    if ((Get-Item $controlDownload).Length -lt 50000) { throw "Control update too small" }
+    if ((Get-Item $outputDownload).Length -lt 20000) { throw "Graphics update too small" }
+
+    $controlText = [Text.Encoding]::UTF8.GetString([IO.File]::ReadAllBytes($controlDownload))
+    $outputText = [Text.Encoding]::UTF8.GetString([IO.File]::ReadAllBytes($outputDownload))
+    if ($controlText -notmatch "<!doctype html>") { throw "Control validation failed" }
+    if ($outputText -notmatch "<!doctype html>") { throw "Graphics validation failed" }
+    if ($controlText -notmatch "SAGI LIVE MATCH DIRECTOR") { throw "Control identity validation failed" }
+
+    Copy-Item $ControlCache $ControlBackup -Force
+    Copy-Item $OutputCache $OutputBackup -Force
+
+    [IO.File]::WriteAllText($ControlCache,$controlText,(New-Object Text.UTF8Encoding($false)))
+    [IO.File]::WriteAllText($OutputCache,$outputText,(New-Object Text.UTF8Encoding($false)))
+    $script:ControlHtml = $controlText
+    $script:OutputHtml = $outputText
+
+    Write-Host "[SAFE UPDATE] Control Room + vMix Graphics updated. Bridge core unchanged." -ForegroundColor Green
+    return @{ok=$true;version="4.6.6";updated=@("control","output");bridgeLocked=$true;rollbackAvailable=$true}
+  } catch {
+    Write-Host ("[SAFE UPDATE ERROR] " + $_.Exception.Message) -ForegroundColor Red
+    throw
+  } finally {
+    Remove-Item $controlDownload -Force -ErrorAction SilentlyContinue
+    Remove-Item $outputDownload -Force -ErrorAction SilentlyContinue
   }
-  Write-Host ("[UPDATE] Mobile update complete: " + ($updated -join ", ")) -ForegroundColor Green
-  return @{ok=$true;version="4.6.5";updated=$updated;restartBridge=$false}
+}
+
+function Restore-SagiLan {
+  if (-not (Test-Path $ControlBackup) -or -not (Test-Path $OutputBackup)) {
+    throw "No backup available"
+  }
+  Copy-Item $ControlBackup $ControlCache -Force
+  Copy-Item $OutputBackup $OutputCache -Force
+  $script:ControlHtml = [IO.File]::ReadAllText($ControlCache,[Text.Encoding]::UTF8)
+  $script:OutputHtml = [IO.File]::ReadAllText($OutputCache,[Text.Encoding]::UTF8)
+  Write-Host "[ROLLBACK] Previous Control Room + vMix Graphics restored." -ForegroundColor Yellow
+  return @{ok=$true;version="4.6.6";rolledBack=$true}
 }
 
 function Get-LanIPv4 {
@@ -181,7 +197,7 @@ function State-Json {
 
 Write-Host ""
 Write-Host "============================================================" -ForegroundColor Cyan
-Write-Host "  SAGI V4.6.5 AUTO UPDATE LAN DIRECT - vMix Bridge" -ForegroundColor Cyan
+Write-Host "  SAGI V4.6.6 MATCH SAFE LAN DIRECT - vMix Bridge" -ForegroundColor Cyan
 Write-Host "============================================================" -ForegroundColor Cyan
 
 if (-not (Test-Path $ControlCache) -or -not (Test-Path $OutputCache)) {
@@ -328,8 +344,18 @@ while ($true) {
         Write-HttpResponse $stream 500 "application/json" ('{"ok":false,"error":' + $err + '}')
       }
     }
+    elseif ($method -eq "POST" -and $path -eq "/api/rollback") {
+      try {
+        $result = Restore-SagiLan
+        Write-HttpResponse $stream 200 "application/json" ($result | ConvertTo-Json -Compress)
+      } catch {
+        Write-Host ("[ROLLBACK ERROR] " + $_.Exception.Message) -ForegroundColor Red
+        $err = $_.Exception.Message | ConvertTo-Json -Compress
+        Write-HttpResponse $stream 500 "application/json" ('{"ok":false,"error":' + $err + '}')
+      }
+    }
     elseif ($method -eq "GET" -and $path -eq "/health") {
-      $health = @{ok=$true;vmix=(Test-Vmix);lan=$true;ip=$lanIp;port=$Port;version="4.6.5"} | ConvertTo-Json -Compress
+      $health = @{ok=$true;vmix=(Test-Vmix);lan=$true;ip=$lanIp;port=$Port;version="4.6.6";mode="MATCH_SAFE";bridgeLocked=$true} | ConvertTo-Json -Compress
       Write-HttpResponse $stream 200 "application/json" $health
     }
     else {
