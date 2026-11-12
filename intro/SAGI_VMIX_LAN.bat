@@ -1,16 +1,16 @@
 @echo off
 chcp 65001 >nul
 setlocal
-title SAGI VMIX LAN - V4.7 MATCH MODE / MATCH SAFE
+title SAGI VMIX LAN - V4.7.1 FILTER ENGINE / MATCH SAFE
 
 echo.
 echo ==========================================
 echo   SAGI LIVE MATCH DIRECTOR - LAN DIRECT
-echo        V4.7 MATCH MODE / MATCH SAFE
+echo      V4.7.1 FILTER ENGINE / MATCH SAFE
 echo ==========================================
 echo.
 echo [SAFE] No automatic internet update on startup.
-echo [SAFE] Bridge core is locked to V4.7 stable build.
+echo [SAFE] Bridge core is locked to V4.7.1 stable build.
 echo [SAFE] Match state recovery is stored locally.
 echo.
 
@@ -34,10 +34,10 @@ powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -Command ^
  "[IO.File]::WriteAllText($env:SAGI_FB_CONTROL,$m.Groups[2].Value,$utf);" ^
  "[IO.File]::WriteAllText($env:SAGI_FB_OUTPUT,$m.Groups[3].Value,$utf);" ^
  "Copy-Item $env:SAGI_FB_BRIDGE $env:SAGI_BRIDGE -Force;" ^
- "$controlOk=$false;if(Test-Path $env:SAGI_CONTROL){try{$t=[IO.File]::ReadAllText($env:SAGI_CONTROL,[Text.Encoding]::UTF8);$controlOk=($t.Length -gt 50000 -and $t -match '<!doctype html>' -and $t -match 'SAGI LIVE MATCH DIRECTOR' -and $t -match 'MATCH MODE')}catch{}};" ^
- "if(-not $controlOk){Copy-Item $env:SAGI_FB_CONTROL $env:SAGI_CONTROL -Force;Write-Host '[REPAIR] Control Room upgraded/restored to MATCH MODE.' -ForegroundColor Yellow}else{Write-Host '[SAFE] Existing MATCH MODE Control Room kept.' -ForegroundColor Green};" ^
+ "$controlOk=$false;if(Test-Path $env:SAGI_CONTROL){try{$t=[IO.File]::ReadAllText($env:SAGI_CONTROL,[Text.Encoding]::UTF8);$controlOk=($t.Length -gt 50000 -and $t -match '<!doctype html>' -and $t -match 'MATCH MODE' -and $t -match 'FILTER ENGINE')}catch{}};" ^
+ "if(-not $controlOk){Copy-Item $env:SAGI_FB_CONTROL $env:SAGI_CONTROL -Force;Write-Host '[REPAIR] Control Room upgraded/restored to FILTER ENGINE.' -ForegroundColor Yellow}else{Write-Host '[SAFE] Existing FILTER ENGINE Control Room kept.' -ForegroundColor Green};" ^
  "$outputOk=$false;if(Test-Path $env:SAGI_OUTPUT){try{$t=[IO.File]::ReadAllText($env:SAGI_OUTPUT,[Text.Encoding]::UTF8);$outputOk=($t.Length -gt 20000 -and $t -match '<!doctype html>' -and $t -match 'SCOREBUG V2')}catch{}};" ^
- "if(-not $outputOk){Copy-Item $env:SAGI_FB_OUTPUT $env:SAGI_OUTPUT -Force;Write-Host '[REPAIR] vMix Graphics upgraded/restored to SCOREBUG V2.' -ForegroundColor Yellow}else{Write-Host '[SAFE] Existing SCOREBUG V2 Graphics kept.' -ForegroundColor Green};"
+ "if(-not $outputOk){Copy-Item $env:SAGI_FB_OUTPUT $env:SAGI_OUTPUT -Force;Write-Host '[REPAIR] vMix Graphics restored.' -ForegroundColor Yellow}else{Write-Host '[SAFE] Existing SCOREBUG V2 Graphics kept.' -ForegroundColor Green};"
 
 if errorlevel 1 (
   echo.
@@ -48,7 +48,7 @@ if errorlevel 1 (
 
 echo.
 echo [READY] MATCH SAFE local files prepared.
-echo [READY] Starting V4.7 locked SAGI Bridge core...
+echo [READY] Starting V4.7.1 locked SAGI Bridge core...
 echo.
 
 powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%SAGI_BRIDGE%"
@@ -58,7 +58,7 @@ pause
 exit /b
 
 ###SAGI_PS###
-# SAGI V4.7.0 MATCH MODE / MATCH SAFE LAN DIRECT Bridge
+# SAGI V4.7.1 MATCH MODE / FILTER ENGINE / MATCH SAFE LAN DIRECT Bridge
 # Same-LAN control server + local vMix API bridge.
 # Phone Control: http://<PC-LAN-IP>:8099/
 # vMix Browser:  http://127.0.0.1:8099/vmix
@@ -83,7 +83,9 @@ $Allowed = @(
   "OverlayInput2In","OverlayInput2Out","OverlayInput2Off",
   "OverlayInput3In","OverlayInput3Out","OverlayInput3Off",
   "OverlayInput4In","OverlayInput4Out","OverlayInput4Off",
-  "OverlayInputAllOff"
+  "OverlayInputAllOff",
+  "Effect1On","Effect1Off","Effect2On","Effect2Off","Effect3On","Effect3Off","Effect4On","Effect4Off",
+  "SetEffect1Strength","SetEffect2Strength","SetEffect3Strength","SetEffect4Strength"
 )
 
 $State = @{
@@ -205,6 +207,11 @@ function Invoke-VmixCommand($cmd) {
   if ($null -ne $cmd.duration) { [void][int]::TryParse([string]$cmd.duration,[ref]$durationValue) }
   if ($durationValue -gt 0) { $pairs.Add("Duration=" + $durationValue) }
 
+  $value = [string]$cmd.value
+  if (-not [string]::IsNullOrWhiteSpace($value)) {
+    $pairs.Add("Value=" + [uri]::EscapeDataString($value))
+  }
+
   $url = $VmixApi + "?" + ($pairs -join "&")
   Invoke-WebRequest -UseBasicParsing -Uri $url -TimeoutSec 3 | Out-Null
   $label = [string]$cmd.label
@@ -288,7 +295,7 @@ function State-Json {
 
 Write-Host ""
 Write-Host "============================================================" -ForegroundColor Cyan
-Write-Host "  SAGI V4.7.0 MATCH SAFE LAN DIRECT - vMix Bridge" -ForegroundColor Cyan
+Write-Host "  SAGI V4.7.1 MATCH SAFE LAN DIRECT - vMix Bridge" -ForegroundColor Cyan
 Write-Host "============================================================" -ForegroundColor Cyan
 
 if (-not (Test-Path $ControlCache) -or -not (Test-Path $OutputCache)) {
@@ -491,7 +498,7 @@ while ($true) {
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="format-detection" content="telephone=no">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%2307090d%22/%3E%3Ctext x=%2232%22 y=%2243%22 text-anchor=%22middle%22 font-size=%2234%22 fill=%22%23d8b55b%22%3ES%3C/text%3E%3C/svg%3E">
-<title>SAGI V4.7 · MATCH MODE · MATCH SAFE · LAN DIRECT</title>
+<title>SAGI V4.7.1 · MATCH MODE · FILTER ENGINE · MATCH SAFE</title>
 <style>
 :root{--bg:#07090d;--panel:#11151c;--line:#2b3340;--text:#f4f0e8;--muted:#8f97a5;--gold:#d8b55b;--green:#72c79a}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
@@ -756,11 +763,20 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 @media(max-width:900px){.modeDock{align-items:flex-start;flex-direction:column}.modeDockRight{width:100%;justify-content:flex-start}.mmGrid{grid-template-columns:1fr}.mmStatus{grid-template-columns:1fr 1fr}.mmPreflightList{grid-template-columns:1fr 1fr}.mmEmergencyGrid{grid-template-columns:1fr 1fr 1fr}}
 @media(max-width:520px){body.mmOn .app{padding:8px 7px 30px}.mmTitle{font-size:16px}.mmHead{grid-template-columns:1fr}.mmHeadActions{justify-content:space-between}.mmStatus{grid-template-columns:1fr 1fr}.mmScore{font-size:42px}.mmClock{font-size:42px}.mdProGrid{grid-template-columns:1fr 1fr}}
 
+
+.filterEngine{margin-top:10px;border:1px solid #354250;border-radius:14px;background:#091018;padding:10px}
+.filterHead{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:8px}.filterTitle{font-size:10px;font-weight:1000;letter-spacing:2px;color:#e2ca78}.filterStatus{font-size:9px;color:#8090a0}
+.filterGrid{display:grid;grid-template-columns:1fr 1fr;gap:7px}.filterPresets{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:7px}.filterPresets button{min-height:40px;font-size:9px}
+.filterOriginal{background:#222a34!important}.filterClean{background:#183d4f!important;color:#bfeeff!important}.filterWarm{background:#4b321b!important;color:#ffd49e!important}.filterNight{background:#17233e!important;color:#b7cbff!important}
+.filterStrengthRow{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin-top:8px}.filterStrengthRow input{padding:0}.filterStrengthValue{min-width:42px;text-align:right;font-size:10px;color:#e8cf83;font-weight:900}
+.mmFilter{margin-top:9px}.mmFilter .filterPresets{grid-template-columns:repeat(4,1fr)}
+@media(max-width:520px){.filterPresets{grid-template-columns:1fr 1fr}.filterGrid{grid-template-columns:1fr}}
+
 </style>
 </head>
 <body>
 <div class="app">
-  <div class="top"><div><div class="brand">SAGI LIVE MATCH DIRECTOR</div><div class="sub">V4.7.0 · MATCH MODE · MATCH SAFE · LAN DIRECT · 主客队独立配色</div></div><div class="topRight"><div class="ver">V4.7.0</div><button id="mobileUpdateBtn" class="mobileUpdateBtn" type="button">↻ 安全更新</button><button id="mobileRollbackBtn" class="mobileRollbackBtn" type="button">↶ 回退上一版</button><div id="mobileUpdateStatus" class="mobileUpdateStatus">V4.7.0 · MATCH SAFE · Bridge 已锁定</div></div></div>
+  <div class="top"><div><div class="brand">SAGI LIVE MATCH DIRECTOR</div><div class="sub">V4.7.1 · MATCH MODE · MATCH SAFE · LAN DIRECT · 主客队独立配色</div></div><div class="topRight"><div class="ver">V4.7.1</div><button id="mobileUpdateBtn" class="mobileUpdateBtn" type="button">↻ 安全更新</button><button id="mobileRollbackBtn" class="mobileRollbackBtn" type="button">↶ 回退上一版</button><div id="mobileUpdateStatus" class="mobileUpdateStatus">V4.7.1 · MATCH SAFE · Bridge 已锁定</div></div></div>
 
   <div id="pwaBar" class="pwaBar" style="display:none">
     <div class="pwaInfo">
@@ -775,7 +791,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 
   <div id="setupDesk" class="setupDesk">
     <div class="setupHead">
-      <div class="setupTitle">比赛设置 · MATCH SETUP ENGINE<small>V4.7.0 · 比赛项目 · 赛制校验 · 阵容检查 · READY GATE</small></div>
+      <div class="setupTitle">比赛设置 · MATCH SETUP ENGINE<small>V4.7.1 · 比赛项目 · 赛制校验 · 阵容检查 · READY GATE</small></div>
       <div id="setupReadyBadge" class="setupReadyBadge">NOT READY</div>
     </div>
     <div class="setupGrid">
@@ -883,6 +899,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
         <div class="mmPanelTitle">DIRECTOR · 机位导播</div>
         <div class="mmRow"><button id="mmCam1" class="ok" type="button">1 主机位</button><button id="mmCam2" type="button">2 机位2</button><button id="mmDrone" type="button">3 无人机</button><button id="mmReplay" class="mmMarker" type="button">4 回放</button></div>
         <div class="mmRow" style="margin-top:6px"><button id="mmGraphicsOn" type="button">GRAPHICS ON</button><button id="mmGraphicsOff" type="button">GRAPHICS OFF</button></div>
+        <div class="mmFilter"><div class="mmPanelTitle" style="margin-top:10px">FILTER LOOK · 电影感</div><div class="filterPresets"><button class="filterOriginal" type="button" data-mm-filter="ORIGINAL">原片</button><button class="filterClean" type="button" data-mm-filter="CLEAN">CLEAN</button><button class="filterWarm" type="button" data-mm-filter="WARM">WARM</button><button class="filterNight" type="button" data-mm-filter="NIGHT">NIGHT</button></div></div>
         <div class="mmPanelTitle" style="margin-top:10px">REPLAY MARKER · 回放标记</div>
         <div class="mmRow3"><button id="mmMarkSave" class="mmMarker" type="button">扑救 SAVE</button><button id="mmMarkIncident" class="mmMarker" type="button">对抗/冲突</button><button id="mmMarkKey" class="mmMarker" type="button">精彩 KEY</button></div>
       </div>
@@ -910,7 +927,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 
   <div class="vmixDirector">
     <div class="vdHead">
-      <div class="vdTitle">V4.7.0 · vMix 导播控制 <small>LIVE MATCH DIRECTOR</small></div>
+      <div class="vdTitle">V4.7.1 · vMix 导播控制 <small>LIVE MATCH DIRECTOR</small></div>
       <div id="vdStatus" class="vdStatus">LAN Bridge 待命</div>
     </div>
     <div class="vdGrid">
@@ -921,7 +938,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
           <div><label>机位 2</label><input id="vdCam2" value="2"></div>
           <div><label>无人机</label><input id="vdDrone" value="3"></div>
           <div><label>回放输入</label><input id="vdReplay" value="4"></div>
-          <div><label>V4.7.0图形输入</label><input id="vdGraphics" value="5"></div>
+          <div><label>V4.7.1图形输入</label><input id="vdGraphics" value="5"></div>
         </div>
         <div class="vdInputs" style="grid-template-columns:1fr 1fr 1fr;margin-top:7px">
           <div><label>切换方式</label><select id="vdTransition"><option value="Cut">CUT 硬切</option><option value="Fade">FADE 淡变</option><option value="Stinger1">STINGER 1</option></select></div>
@@ -958,12 +975,25 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
         <a class="vdDownload" href="/health" target="_blank">检查 LAN Bridge</a>
         <div class="vdKeys">快捷键：1 主机位 · 2 机位2 · 3 无人机 · 4 回放 · G 图形ON · X 图形OFF。输入框正在编辑时快捷键自动停用。</div>
       </div>
+      <div class="vdPanel">
+        <div class="vdPanelTitle">FILTER ENGINE · 电影感滤镜</div>
+        <div class="filterEngine">
+          <div class="filterHead"><div class="filterTitle">CAMERA LOOK</div><div id="filterStatus" class="filterStatus">ORIGINAL · 待命</div></div>
+          <div class="filterGrid">
+            <div><label>作用机位</label><select id="filterTarget"><option value="ALL">全部机位</option><option value="cam1">主机位</option><option value="cam2">机位2</option><option value="drone">无人机</option><option value="replay">回放</option></select></div>
+            <div><label>LUT Effect 槽位</label><input value="1 CLEAN · 2 WARM · 3 NIGHT" readonly></div>
+          </div>
+          <div class="filterPresets"><button class="filterOriginal" type="button" data-filter-preset="ORIGINAL">ORIGINAL</button><button class="filterClean" type="button" data-filter-preset="CLEAN">STADIUM CLEAN</button><button class="filterWarm" type="button" data-filter-preset="WARM">CINEMA WARM</button><button class="filterNight" type="button" data-filter-preset="NIGHT">NIGHT CINEMA</button></div>
+          <div class="filterStrengthRow"><input id="filterStrength" type="range" min="0" max="100" value="65"><div id="filterStrengthValue" class="filterStrengthValue">65%</div></div>
+          <div class="vdBridgeHelp" style="margin-top:7px">vMix 每个摄像机 Input：Effect 1 = CLEAN，Effect 2 = WARM，Effect 3 = NIGHT。控制台只开关 LUT，不改相机原始色彩。</div>
+        </div>
+      </div>
     </div>
   </div>
 
   <div class="matchdayDesk">
     <div class="mdHead">
-      <div class="mdTitle">V4.7.0 · MATCH MODE <small>LIVE MATCH DIRECTOR</small></div>
+      <div class="mdTitle">V4.7.1 · MATCH MODE <small>LIVE MATCH DIRECTOR</small></div>
       <div id="mdSync" class="mdSync"><span id="mdSyncDot" class="mdLiveDot"></span>比赛图形待命</div>
     </div>
     <div class="mdGrid">
@@ -1257,7 +1287,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
             </div>
           </div>
         </div>
-        <div class="statusBar"><div id="status" class="status">V4.7.0 · FORMATION EDITOR 已就绪</div><div class="mini">1920 × 1080</div></div>
+        <div class="statusBar"><div id="status" class="status">V4.7.1 · FORMATION EDITOR 已就绪</div><div class="mini">1920 × 1080</div></div>
       </div>
     </div>
   </div>
@@ -1881,6 +1911,26 @@ function initMatchdayGraphics(){
 
 
 let vmixDirectorSettings={cam1:'1',cam2:'2',drone:'3',replay:'4',graphics:'5',transition:'Cut',duration:350,overlay:'1'};
+let filterSettings={target:'ALL',preset:'ORIGINAL',strength:.65};
+const FILTER_SLOT={CLEAN:1,WARM:2,NIGHT:3};
+function filterSave(){try{localStorage.setItem('sagi_filter_engine_v471',JSON.stringify(filterSettings))}catch(e){}}
+function filterLoad(){try{const x=JSON.parse(localStorage.getItem('sagi_filter_engine_v471')||'null');if(x)filterSettings={...filterSettings,...x}}catch(e){}}
+function filterInputs(target=filterSettings.target){vdSave();const slots=target==='ALL'?['cam1','cam2','drone','replay']:[target],seen=new Set(),out=[];for(const slot of slots){const n=String(vmixDirectorSettings[slot]||'').trim();if(n&&n!==String(vmixDirectorSettings.graphics)&&!seen.has(n)){seen.add(n);out.push(n)}}return out}
+async function filterCommand(fn,input,value=''){const cmd={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,7),functionName:fn,input:String(input||''),duration:0,value:String(value??''),label:'FILTER '+fn,issuedAt:new Date().toISOString(),version:'V4.7.1-LAN'};try{await lanPost('/api/vmix',cmd);return true}catch(e){return false}}
+async function applyFilterPreset(preset,target=filterSettings.target){
+ preset=['ORIGINAL','CLEAN','WARM','NIGHT'].includes(preset)?preset:'ORIGINAL';const inputs=filterInputs(target);if(!inputs.length){if(q('filterStatus'))q('filterStatus').textContent='没有可用摄像机 Input';note('没有可用摄像机 Input');return false}
+ if(q('filterStatus'))q('filterStatus').textContent='正在应用 '+preset+'…';let ok=true;
+ for(const input of inputs){for(const n of [1,2,3])ok=(await filterCommand('Effect'+n+'Off',input))&&ok;if(preset!=='ORIGINAL'){const n=FILTER_SLOT[preset],strength=Math.max(0,Math.min(1,Number(filterSettings.strength)||0));ok=(await filterCommand('SetEffect'+n+'Strength',input,strength.toFixed(2)))&&ok;ok=(await filterCommand('Effect'+n+'On',input))&&ok}}
+ filterSettings.preset=preset;filterSettings.target=target;filterSave();if(q('filterStatus'))q('filterStatus').textContent=(ok?'已应用 · ':'部分失败 · ')+preset+' · '+Math.round(filterSettings.strength*100)+'%';return ok
+}
+function initFilterEngine(){
+ filterLoad();if(q('filterTarget'))q('filterTarget').value=filterSettings.target;if(q('filterStrength'))q('filterStrength').value=Math.round((Number(filterSettings.strength)||.65)*100);if(q('filterStrengthValue'))q('filterStrengthValue').textContent=Math.round((Number(filterSettings.strength)||.65)*100)+'%';
+ document.querySelectorAll('[data-filter-preset]').forEach(b=>b.onclick=()=>applyFilterPreset(b.dataset.filterPreset,q('filterTarget').value));document.querySelectorAll('[data-mm-filter]').forEach(b=>b.onclick=()=>applyFilterPreset(b.dataset.mmFilter,'ALL'));
+ if(q('filterTarget'))q('filterTarget').onchange=e=>{filterSettings.target=e.target.value;filterSave()};
+ if(q('filterStrength')){q('filterStrength').oninput=e=>q('filterStrengthValue').textContent=e.target.value+'%';q('filterStrength').onchange=e=>{filterSettings.strength=Math.max(0,Math.min(1,Number(e.target.value)/100));filterSave();if(filterSettings.preset!=='ORIGINAL')applyFilterPreset(filterSettings.preset,filterSettings.target)}}
+ if(q('filterStatus'))q('filterStatus').textContent=filterSettings.preset+' · '+Math.round(filterSettings.strength*100)+'%';
+}
+
 function vdSave(){
  vmixDirectorSettings={cam1:q('vdCam1').value.trim()||'1',cam2:q('vdCam2').value.trim()||'2',drone:q('vdDrone').value.trim()||'3',replay:q('vdReplay').value.trim()||'4',graphics:q('vdGraphics').value.trim()||'5',transition:q('vdTransition').value||'Cut',duration:Math.max(0,Number(q('vdDuration').value)||0),overlay:q('vdOverlay').value||'1'};
  try{localStorage.setItem('sagi_vmix_director_v42',JSON.stringify(vmixDirectorSettings))}catch(e){}
@@ -1890,8 +1940,8 @@ function vdLoad(){
  q('vdCam1').value=vmixDirectorSettings.cam1;q('vdCam2').value=vmixDirectorSettings.cam2;q('vdDrone').value=vmixDirectorSettings.drone;q('vdReplay').value=vmixDirectorSettings.replay;q('vdGraphics').value=vmixDirectorSettings.graphics;q('vdTransition').value=vmixDirectorSettings.transition;q('vdDuration').value=vmixDirectorSettings.duration;q('vdOverlay').value=vmixDirectorSettings.overlay;
 }
 function vdInput(slot){vdSave();return vmixDirectorSettings[slot]||''}
-async function publishVmixDirector(functionName,input='',duration=0,label=''){
- const cmd={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,7),functionName,input:String(input||''),duration:Math.max(0,Number(duration)||0),label,issuedAt:new Date().toISOString(),version:'V4.7.0-LAN'};
+async function publishVmixDirector(functionName,input='',duration=0,label='',value=''){
+ const cmd={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,7),functionName,input:String(input||''),duration:Math.max(0,Number(duration)||0),value:String(value??''),label,issuedAt:new Date().toISOString(),version:'V4.7.1-LAN'};
  q('vdStatus').textContent='LAN 发送中 · '+(label||functionName);
  try{
    await lanPost('/api/vmix',cmd);
@@ -2075,7 +2125,7 @@ function stopCountdown(){clearInterval(startCountdown.t)}
 function cloudAdmin(){try{const x=JSON.parse(localStorage.getItem('sagi_cloud_admin_v20')||'null')||{},b=window.SAGI_CLOUD||{};return{url:x.url||b.url||'',key:x.key||b.key||'',eventSlug:x.eventSlug||b.eventSlug||'',token:x.token||''}}catch(e){const b=window.SAGI_CLOUD||{};return{url:b.url||'',key:b.key||'',eventSlug:b.eventSlug||'',token:''}}}
 function compactPlayersForGroup(group){const src=group==='FULL'?validStarters():group==='SUB'?substitutes():(['GK','DF','MF','FW'].includes(group)?grouped(group):[]);return src.map(p=>({id:p.id,layoutKey:formationPlayerKey(p),name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',squadType:p.squadType||'STARTER',photo:(group==='FULL'||group==='SUB')?'':p.photo||'',mediaUrl:(group==='FULL'||group==='SUB')?'':p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'}))}
 async function publishGroup(group,duration,show=null){
- const state={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,6),group,side:activeSide,team:currentTeamName(),formation:q('formation').value,matchFormat:{mode:matchConfig.mode,playerCount:starterLimit()},playerCount:starterLimit(),startingLabel:startingLabel(),players:compactPlayersForGroup(group),formationLayout:currentFormationLayoutPayload(),allPlayers:validStarters().map(p=>({id:p.id,layoutKey:formationPlayerKey(p),name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',mediaUrl:p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'})),substitutes:substitutes().map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,statLabel:p.statLabel||'',statValue:p.statValue||''})),crest:assets.crest||'',stadium:assets.bg||'',background:q('outputBg').value,visualVersion:'V4.7.0-FORMATION-EDITOR',duration,show:show||null,package:packageData(),startedAt:new Date().toISOString()};
+ const state={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,6),group,side:activeSide,team:currentTeamName(),formation:q('formation').value,matchFormat:{mode:matchConfig.mode,playerCount:starterLimit()},playerCount:starterLimit(),startingLabel:startingLabel(),players:compactPlayersForGroup(group),formationLayout:currentFormationLayoutPayload(),allPlayers:validStarters().map(p=>({id:p.id,layoutKey:formationPlayerKey(p),name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',mediaUrl:p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'})),substitutes:substitutes().map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,statLabel:p.statLabel||'',statValue:p.statValue||''})),crest:assets.crest||'',stadium:assets.bg||'',background:q('outputBg').value,visualVersion:'V4.7.1-FORMATION-EDITOR',duration,show:show||null,package:packageData(),startedAt:new Date().toISOString()};
  try{
    await lanPost('/api/state',{lineupIntro:state});
    return{ok:true}
@@ -2205,7 +2255,7 @@ async function save(){
  if(assets.musicBlob)await dbPut('showMusic',assets.musicBlob);else await dbDel('showMusic');
  localStorage.setItem('sagi_player_intro_v40',JSON.stringify({activeSide:snapshot.activeSide,matchConfig:snapshot.matchConfig,package:snapshot.package,teams:snapshot.teams}));
  localStorage.setItem('sagi_show_director_v40',JSON.stringify(snapshot.show));
- note('V4.7.0 双队阵容、音频与节目已保存')
+ note('V4.7.1 双队阵容、音频与节目已保存')
 }
 async function hydrateRoster(list=[]){const out=[];for(const p of list){p.photo=await dbGet('photo:'+p.id);p.mediaBlob=await dbGet('media:'+p.id);p.mediaObjectUrl=p.mediaBlob instanceof Blob?URL.createObjectURL(p.mediaBlob):'';p.mediaAction=p.mediaAction||'STANDARD';p.directorIn=Number(p.directorIn)||0;p.directorOut=Number(p.directorOut)||0;p.directorSpeed=Number(p.directorSpeed)||1;p.directorFreeze=!!p.directorFreeze;p.directorFreezeMs=Number(p.directorFreezeMs)||1000;p.directorCamera=p.directorCamera||'MEDIUM';out.push(p)}return out}
 async function load(){
@@ -2222,7 +2272,7 @@ async function load(){
   reconcileTeamStarters('HOME',teamStore.HOME.formation);reconcileTeamStarters('AWAY',teamStore.AWAY.formation);
   assets.bg=await dbGet('stadium');assets.eventLogo=await dbGet('eventLogo');assets.musicBlob=await dbGet('showMusic');assets.musicObjectUrl=assets.musicBlob instanceof Blob?URL.createObjectURL(assets.musicBlob):'';
   let storedShow=JSON.parse(localStorage.getItem('sagi_show_director_v40')||'null');if(!storedShow){try{storedShow=JSON.parse(localStorage.getItem('sagi_show_director_v36')||'null')}catch(_){}}if(Array.isArray(storedShow)&&storedShow.length)showSteps=normalizeShowSteps(storedShow);else showSteps=normalizeShowSteps(DEFAULT_SHOW);
-  switchTeam(x.activeSide||'HOME',{silent:true,skipStash:true});renderPreviews();renderShowTimeline();syncMatchStage();note('V4.7.0 双队阵容、音频与节目已读取')
+  switchTeam(x.activeSide||'HOME',{silent:true,skipStash:true});renderPreviews();renderShowTimeline();syncMatchStage();note('V4.7.1 双队阵容、音频与节目已读取')
  }catch(e){note('读取失败')}
 }
 
@@ -2315,7 +2365,7 @@ q('matchFormat').onchange=()=>setMatchFormatFromUI();q('customPlayerCount').onch
 q('formation').onchange=()=>{teamStore[activeSide].formation=q('formation').value;const r=reconcileTeamStarters(activeSide,q('formation').value);roster=teamStore[activeSide].roster||roster;renderRoster();updateFormatUI();updateFormationEditorUI();renderStage(currentGroup);refreshMatchdayPlayers();if(matchReady){matchReady=false;setupReadySignature='';refreshSetupReadyUI()}note('阵型已切换 '+q('formation').value+(r.changed?' · '+syncSummary(r):''))};q('teamName').oninput=()=>{if(activeSide==='HOME')q('matchHome').value=q('teamName').value;else q('matchAway').value=q('teamName').value;renderStage(currentGroup)};q('outputBg').onchange=()=>renderStage(currentGroup);
 ['matchCompetition','matchRound','matchKickoff','matchVenue'].forEach(id=>q(id).oninput=syncMatchStage);q('matchHome').oninput=()=>{if(activeSide==='HOME')q('teamName').value=q('matchHome').value;syncMatchStage()};q('matchAway').oninput=()=>{if(activeSide==='AWAY')q('teamName').value=q('matchAway').value;syncMatchStage()};
 ['audioMode','audioTheme','audioIntensity','audioDucking','cueVolume','countdownBeat'].forEach(id=>q(id).onchange=()=>{q('audioEngineState').textContent=q('audioMode').value+' · '+q('audioTheme').value.replaceAll('_',' ')});
-window.addEventListener('resize',resize);renderPreviews();renderRoster();loadShow();applyStoredMatchConfig({mode:'11',playerCount:11},true);refreshFormationOptions('4-3-3');demo();refreshSideUI();updateFormatUI();syncMatchStage();renderStage('TEAM');resize();initBroadcastControl();initMatchdayGraphics();initVmixDirector();initMatchSetup();initFormationEditor();initMatchMode();setBroadcastPreview('TEAM','HOME','主队开场',2500);
+window.addEventListener('resize',resize);renderPreviews();renderRoster();loadShow();applyStoredMatchConfig({mode:'11',playerCount:11},true);refreshFormationOptions('4-3-3');demo();refreshSideUI();updateFormatUI();syncMatchStage();renderStage('TEAM');resize();initBroadcastControl();initMatchdayGraphics();initVmixDirector();initFilterEngine();initMatchSetup();initFormationEditor();initMatchMode();setBroadcastPreview('TEAM','HOME','主队开场',2500);
 })();
 </script>
 
@@ -2474,7 +2524,7 @@ setInstalledState();
 <!doctype html>
 <html lang="zh-CN"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SAGI V4.7 · MATCH MODE · SCOREBUG V2 · vMix</title>
+<title>SAGI V4.7.1 · MATCH MODE · SCOREBUG V2 · vMix</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%2307090d%22/%3E%3Ctext x=%2232%22 y=%2243%22 text-anchor=%22middle%22 font-size=%2234%22 fill=%22%23d8b55b%22%3ES%3C/text%3E%3C/svg%3E">
 <style>
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent;font-family:Arial,"PingFang SC","Microsoft YaHei",sans-serif}.stage{position:absolute;left:0;top:0;width:1920px;height:1080px;overflow:hidden;background:#07090c;transform-origin:0 0}.stadium{position:absolute;inset:0;background:radial-gradient(circle at 50% 0,#6f8294 0,#263442 18%,#111820 42%,#06080b 74%)}.stadium:before{content:"";position:absolute;left:-5%;right:-5%;top:165px;height:300px;background:linear-gradient(#19212a,#0b1016 68%,transparent),repeating-linear-gradient(90deg,#ffffff08 0 7px,transparent 7px 22px);clip-path:polygon(0 0,100% 0,92% 100%,8% 100%)}.stadium:after{content:"";position:absolute;left:0;right:0;bottom:-35px;height:430px;background:linear-gradient(180deg,#173421,#0a2716 70%,#05130a);clip-path:polygon(20% 0,80% 0,100% 100%,0 100%)}.stadiumPhoto{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}.shade{position:absolute;inset:0;background:linear-gradient(90deg,#030508e6 0,#05070a99 38%,#05070a55 58%,#030508c9 100%),linear-gradient(0deg,#040609c7 0,transparent 55%,#03050775 100%)}.pitchLines{position:absolute;left:320px;right:320px;bottom:0;height:360px;opacity:.22;transform:perspective(800px) rotateX(62deg);transform-origin:bottom;border:5px solid #fff;border-bottom:0}.pitchLines:before{content:"";position:absolute;left:50%;top:0;bottom:0;border-left:4px solid #fff}.pitchLines:after{content:"";position:absolute;width:170px;height:170px;border:4px solid #fff;border-radius:50%;left:50%;top:45%;transform:translate(-50%,-50%)}.light{position:absolute;width:760px;height:760px;border-radius:50%;filter:blur(100px);opacity:.22}.l1{left:-180px;top:-330px;background:#5cb4ff}.l2{right:-220px;top:-300px;background:#d7b051}.header{position:absolute;left:95px;top:72px;display:flex;align-items:center;gap:24px}.crest{width:96px;height:96px;object-fit:contain;filter:drop-shadow(0 12px 20px #0009)}.team{font-size:34px;font-weight:950;letter-spacing:2px;color:#fff}.sub{font-size:17px;color:#d8b55b;letter-spacing:5px;margin-top:7px;font-weight:850}.groupTitle{position:absolute;left:100px;top:205px;font-size:28px;letter-spacing:7px;color:#d8b55b;font-weight:900}.groupName{position:absolute;left:95px;top:245px;font-size:72px;line-height:1;font-weight:1000;letter-spacing:-2px;color:#fff}.line{position:absolute;left:98px;top:330px;width:400px;height:5px;background:linear-gradient(90deg,#d8b55b,#fff1b7)}.players{position:absolute;left:70px;top:350px;width:1240px;height:650px;display:flex;align-items:flex-end;justify-content:center;gap:18px}.card{position:relative;width:230px;height:570px;flex:0 0 auto}.card.one{width:520px}.cut{position:absolute;left:0;right:0;bottom:82px;height:490px;display:flex;align-items:flex-end;justify-content:center}.cut img{width:100%;height:100%;object-fit:contain;object-position:center bottom;filter:drop-shadow(0 20px 25px #000d)}
