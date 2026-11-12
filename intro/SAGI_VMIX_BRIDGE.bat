@@ -6,19 +6,12 @@ echo ==========================================
 echo   SAGI LIVE MATCH DIRECTOR - vMix Bridge
 echo ==========================================
 echo.
-echo 正在启动，请保持 vMix 已打开...
+echo 正在连接 vMix，请保持 vMix 已打开...
 echo.
 
-set "BRIDGE=%TEMP%\sagi-vmix-bridge-v45.ps1"
-powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "try { Invoke-WebRequest -UseBasicParsing -Uri 'https://raw.githubusercontent.com/suny820916/-sagi-event-system/main/intro/vmix-bridge-v45.ps1' -OutFile '%BRIDGE%' } catch { Write-Host '[ERROR] 无法下载 Bridge，请检查电脑网络。' -ForegroundColor Red; exit 1 }"
+powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -Command ^
+  "$u='https://raw.githubusercontent.com/suny820916/-sagi-event-system/main/intro/vmix-bridge-v45.ps1';" ^
+  "try {$code=(New-Object Net.WebClient).DownloadString($u); Invoke-Expression $code} catch {Write-Host ('[ERROR] '+$_.Exception.Message) -ForegroundColor Red; Read-Host '按回车关闭'}"
 
-if not exist "%BRIDGE%" (
-  echo.
-  echo Bridge 下载失败。
-  pause
-  exit /b 1
-)
-
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%BRIDGE%"
 echo.
 pause
