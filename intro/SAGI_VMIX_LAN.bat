@@ -27,7 +27,37 @@ if not exist "%SAGI_ROOT%" mkdir "%SAGI_ROOT%"
 
 powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -Command ^
  "$s=[IO.File]::ReadAllText($env:SAGI_SELF,[Text.Encoding]::UTF8);" ^
- "$m=[regex]::Match($s,'(?s)###SAGI_PS###
+ "$m=[regex]::Match($s,'(?s)###SAGI_PS###\r?\n(.*?)\r?\n###SAGI_CONTROL###\r?\n(.*?)\r?\n###SAGI_OUTPUT###\r?\n(.*)$');" ^
+ "if(-not $m.Success){Write-Host '[ERROR] Embedded stable payload not found.' -ForegroundColor Red;exit 2};" ^
+ "$utf=New-Object Text.UTF8Encoding($false);" ^
+ "[IO.File]::WriteAllText($env:SAGI_FB_BRIDGE,$m.Groups[1].Value,$utf);" ^
+ "[IO.File]::WriteAllText($env:SAGI_FB_CONTROL,$m.Groups[2].Value,$utf);" ^
+ "[IO.File]::WriteAllText($env:SAGI_FB_OUTPUT,$m.Groups[3].Value,$utf);" ^
+ "Copy-Item $env:SAGI_FB_BRIDGE $env:SAGI_BRIDGE -Force;" ^
+ "$controlOk=$false;if(Test-Path $env:SAGI_CONTROL){try{$t=[IO.File]::ReadAllText($env:SAGI_CONTROL,[Text.Encoding]::UTF8);$controlOk=($t.Length -gt 50000 -and $t -match '<!doctype html>' -and $t -match 'SAGI LIVE MATCH DIRECTOR' -and $t -match 'MATCH MODE')}catch{}};" ^
+ "if(-not $controlOk){Copy-Item $env:SAGI_FB_CONTROL $env:SAGI_CONTROL -Force;Write-Host '[REPAIR] Control Room upgraded/restored to MATCH MODE.' -ForegroundColor Yellow}else{Write-Host '[SAFE] Existing MATCH MODE Control Room kept.' -ForegroundColor Green};" ^
+ "$outputOk=$false;if(Test-Path $env:SAGI_OUTPUT){try{$t=[IO.File]::ReadAllText($env:SAGI_OUTPUT,[Text.Encoding]::UTF8);$outputOk=($t.Length -gt 20000 -and $t -match '<!doctype html>' -and $t -match 'SCOREBUG V2')}catch{}};" ^
+ "if(-not $outputOk){Copy-Item $env:SAGI_FB_OUTPUT $env:SAGI_OUTPUT -Force;Write-Host '[REPAIR] vMix Graphics upgraded/restored to SCOREBUG V2.' -ForegroundColor Yellow}else{Write-Host '[SAFE] Existing SCOREBUG V2 Graphics kept.' -ForegroundColor Green};"
+
+if errorlevel 1 (
+  echo.
+  echo [ERROR] Unable to prepare stable local files.
+  pause
+  exit /b 1
+)
+
+echo.
+echo [READY] MATCH SAFE local files prepared.
+echo [READY] Starting V4.7 locked SAGI Bridge core...
+echo.
+
+powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%SAGI_BRIDGE%"
+
+echo.
+pause
+exit /b
+
+###SAGI_PS###
 # SAGI V4.7.0 MATCH MODE / MATCH SAFE LAN DIRECT Bridge
 # Same-LAN control server + local vMix API bridge.
 # Phone Control: http://<PC-LAN-IP>:8099/
