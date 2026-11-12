@@ -1,4 +1,4 @@
-# SAGI V4.7.0 MATCH MODE / MATCH SAFE LAN DIRECT Bridge
+# SAGI V4.7.1 MATCH MODE / FILTER ENGINE / MATCH SAFE LAN DIRECT Bridge
 # Same-LAN control server + local vMix API bridge.
 # Phone Control: http://<PC-LAN-IP>:8099/
 # vMix Browser:  http://127.0.0.1:8099/vmix
@@ -23,7 +23,9 @@ $Allowed = @(
   "OverlayInput2In","OverlayInput2Out","OverlayInput2Off",
   "OverlayInput3In","OverlayInput3Out","OverlayInput3Off",
   "OverlayInput4In","OverlayInput4Out","OverlayInput4Off",
-  "OverlayInputAllOff"
+  "OverlayInputAllOff",
+  "Effect1On","Effect1Off","Effect2On","Effect2Off","Effect3On","Effect3Off","Effect4On","Effect4Off",
+  "SetEffect1Strength","SetEffect2Strength","SetEffect3Strength","SetEffect4Strength"
 )
 
 $State = @{
@@ -145,6 +147,11 @@ function Invoke-VmixCommand($cmd) {
   if ($null -ne $cmd.duration) { [void][int]::TryParse([string]$cmd.duration,[ref]$durationValue) }
   if ($durationValue -gt 0) { $pairs.Add("Duration=" + $durationValue) }
 
+  $value = [string]$cmd.value
+  if (-not [string]::IsNullOrWhiteSpace($value)) {
+    $pairs.Add("Value=" + [uri]::EscapeDataString($value))
+  }
+
   $url = $VmixApi + "?" + ($pairs -join "&")
   Invoke-WebRequest -UseBasicParsing -Uri $url -TimeoutSec 3 | Out-Null
   $label = [string]$cmd.label
@@ -228,7 +235,7 @@ function State-Json {
 
 Write-Host ""
 Write-Host "============================================================" -ForegroundColor Cyan
-Write-Host "  SAGI V4.7.0 MATCH SAFE LAN DIRECT - vMix Bridge" -ForegroundColor Cyan
+Write-Host "  SAGI V4.7.1 MATCH SAFE LAN DIRECT - vMix Bridge" -ForegroundColor Cyan
 Write-Host "============================================================" -ForegroundColor Cyan
 
 if (-not (Test-Path $ControlCache) -or -not (Test-Path $OutputCache)) {
