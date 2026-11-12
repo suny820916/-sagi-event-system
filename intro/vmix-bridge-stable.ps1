@@ -1,4 +1,4 @@
-# SAGI V4.6.6 MATCH SAFE LAN DIRECT Bridge
+# SAGI V4.7.0 MATCH MODE / MATCH SAFE LAN DIRECT Bridge
 # Same-LAN control server + local vMix API bridge.
 # Phone Control: http://<PC-LAN-IP>:8099/
 # vMix Browser:  http://127.0.0.1:8099/vmix
@@ -12,6 +12,7 @@ New-Item -ItemType Directory -Force -Path $Root | Out-Null
 $ControlCache = Join-Path $Root "control-latest.html"
 $OutputCache  = Join-Path $Root "output-latest.html"
 $BridgeCache  = Join-Path $Root "bridge-stable.ps1"
+$MatchdayStateFile = Join-Path $Root "matchday-state.json"
 $ControlBackup = Join-Path $Root "control-backup.html"
 $OutputBackup  = Join-Path $Root "output-backup.html"
 $RemoteBase   = "https://suny820916.github.io/-sagi-event-system/intro"
@@ -30,6 +31,18 @@ $State = @{
   matchdayGraphics = $null
 }
 $MatchdayJson = "null"
+if (Test-Path $MatchdayStateFile) {
+  try {
+    $savedMatchday = [IO.File]::ReadAllText($MatchdayStateFile,[Text.Encoding]::UTF8)
+    if (-not [string]::IsNullOrWhiteSpace($savedMatchday)) {
+      $null = $savedMatchday | ConvertFrom-Json
+      $MatchdayJson = $savedMatchday
+      Write-Host "[RECOVERY] Saved match state loaded." -ForegroundColor Green
+    }
+  } catch {
+    Write-Host "[RECOVERY WARN] Saved match state could not be loaded." -ForegroundColor DarkYellow
+  }
+}
 
 function Update-SagiLan {
   $ProgressPreference = "SilentlyContinue"
@@ -58,7 +71,7 @@ function Update-SagiLan {
     $script:OutputHtml = $outputText
 
     Write-Host "[SAFE UPDATE] Control Room + vMix Graphics updated. Bridge core unchanged." -ForegroundColor Green
-    return @{ok=$true;version="4.6.6";updated=@("control","output");bridgeLocked=$true;rollbackAvailable=$true}
+    return @{ok=$true;version="4.7.0";updated=@("control","output");bridgeLocked=$true;rollbackAvailable=$true}
   } catch {
     Write-Host ("[SAFE UPDATE ERROR] " + $_.Exception.Message) -ForegroundColor Red
     throw
@@ -77,7 +90,7 @@ function Restore-SagiLan {
   $script:ControlHtml = [IO.File]::ReadAllText($ControlCache,[Text.Encoding]::UTF8)
   $script:OutputHtml = [IO.File]::ReadAllText($OutputCache,[Text.Encoding]::UTF8)
   Write-Host "[ROLLBACK] Previous Control Room + vMix Graphics restored." -ForegroundColor Yellow
-  return @{ok=$true;version="4.6.6";rolledBack=$true}
+  return @{ok=$true;version="4.7.0";rolledBack=$true}
 }
 
 function Get-LanIPv4 {
@@ -94,6 +107,24 @@ function Test-Vmix {
     Invoke-WebRequest -UseBasicParsing -Uri $VmixApi -TimeoutSec 3 | Out-Null
     return $true
   } catch { return $false }
+}
+
+function Get-VmixStatusInfo {
+  try {
+    $r = Invoke-WebRequest -UseBasicParsing -Uri $VmixApi -TimeoutSec 3
+    [xml]$xml = [string]$r.Content
+    $inputs = @()
+    foreach ($inputNode in $xml.vmix.inputs.input) {
+      $inputs += @{number=[string]$inputNode.number;key=[string]$inputNode.key;type=[string]$inputNode.type;title=[string]$inputNode.title;state=[string]$inputNode.state}
+    }
+    $overlays = @()
+    foreach ($overlayNode in $xml.vmix.overlays.overlay) {
+      $overlays += @{number=[string]$overlayNode.number;value=[string]$overlayNode.InnerText}
+    }
+    return @{ok=$true;active=[string]$xml.vmix.active;preview=[string]$xml.vmix.preview;inputs=$inputs;overlays=$overlays}
+  } catch {
+    return @{ok=$false;active="";preview="";inputs=@();overlays=@()}
+  }
 }
 
 function Invoke-VmixCommand($cmd) {
@@ -197,7 +228,7 @@ function State-Json {
 
 Write-Host ""
 Write-Host "============================================================" -ForegroundColor Cyan
-Write-Host "  SAGI V4.6.6 MATCH SAFE LAN DIRECT - vMix Bridge" -ForegroundColor Cyan
+Write-Host "  SAGI V4.7.0 MATCH SAFE LAN DIRECT - vMix Bridge" -ForegroundColor Cyan
 Write-Host "============================================================" -ForegroundColor Cyan
 
 if (-not (Test-Path $ControlCache) -or -not (Test-Path $OutputCache)) {
@@ -313,6 +344,9 @@ while ($true) {
       try {
         $probe = $req.body | ConvertFrom-Json
         $MatchdayJson = $req.body
+        $tmpState = $MatchdayStateFile + ".new"
+        [IO.File]::WriteAllText($tmpState,$MatchdayJson,(New-Object Text.UTF8Encoding($false)))
+        Move-Item $tmpState $MatchdayStateFile -Force
         $hs = [string]$probe.homeScore
         $as = [string]$probe.awayScore
         $vis = [string]$probe.scoreboardVisible
@@ -321,6 +355,16 @@ while ($true) {
       } catch {
         $err = $_.Exception.Message | ConvertTo-Json -Compress
         Write-HttpResponse $stream 400 "application/json" ('{"ok":false,"error":' + $err + '}')
+      }
+    }
+    elseif ($method -eq "POST" -and $path -eq "/api/recovery/reset") {
+      try {
+        $MatchdayJson = "null"
+        Remove-Item $MatchdayStateFile -Force -ErrorAction SilentlyContinue
+        Write-HttpResponse $stream 200 "application/json" '{"ok":true}'
+      } catch {
+        $err = $_.Exception.Message | ConvertTo-Json -Compress
+        Write-HttpResponse $stream 500 "application/json" ('{"ok":false,"error":' + $err + '}')
       }
     }
     elseif ($method -eq "POST" -and $path -eq "/api/vmix") {
@@ -355,7 +399,8 @@ while ($true) {
       }
     }
     elseif ($method -eq "GET" -and $path -eq "/health") {
-      $health = @{ok=$true;vmix=(Test-Vmix);lan=$true;ip=$lanIp;port=$Port;version="4.6.6";mode="MATCH_SAFE";bridgeLocked=$true} | ConvertTo-Json -Compress
+      $vmixInfo = Get-VmixStatusInfo
+      $health = @{ok=$true;vmix=[bool]$vmixInfo.ok;vmixInfo=$vmixInfo;lan=$true;ip=$lanIp;port=$Port;version="4.7.0";mode="MATCH_MODE";bridgeLocked=$true;recovery=(Test-Path $MatchdayStateFile)} | ConvertTo-Json -Depth 8 -Compress
       Write-HttpResponse $stream 200 "application/json" $health
     }
     else {
