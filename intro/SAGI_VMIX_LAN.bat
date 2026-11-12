@@ -27,36 +27,7 @@ if not exist "%SAGI_ROOT%" mkdir "%SAGI_ROOT%"
 
 powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -Command ^
  "$s=[IO.File]::ReadAllText($env:SAGI_SELF,[Text.Encoding]::UTF8);" ^
- "$m=[regex]::Match($s,'(?s)###SAGI_PS###\r?\n(.*?)\r?\n###SAGI_CONTROL###\r?\n(.*?)\r?\n###SAGI_OUTPUT###\r?\n(.*)$');" ^
- "if(-not $m.Success){Write-Host '[ERROR] Embedded stable payload not found.' -ForegroundColor Red;exit 2};" ^
- "$utf=New-Object Text.UTF8Encoding($false);" ^
- "[IO.File]::WriteAllText($env:SAGI_FB_BRIDGE,$m.Groups[1].Value,$utf);" ^
- "[IO.File]::WriteAllText($env:SAGI_FB_CONTROL,$m.Groups[2].Value,$utf);" ^
- "[IO.File]::WriteAllText($env:SAGI_FB_OUTPUT,$m.Groups[3].Value,$utf);" ^
- "Copy-Item $env:SAGI_FB_BRIDGE $env:SAGI_BRIDGE -Force;" ^
- "$controlOk=$false;if(Test-Path $env:SAGI_CONTROL){try{$t=[IO.File]::ReadAllText($env:SAGI_CONTROL,[Text.Encoding]::UTF8);$controlOk=($t.Length -gt 50000 -and $t -match '<!doctype html>' -and $t -match 'SAGI LIVE MATCH DIRECTOR' -and $t -match 'MATCH MODE')}catch{}};" ^
- "if(-not $controlOk){Copy-Item $env:SAGI_FB_CONTROL $env:SAGI_CONTROL -Force;Write-Host '[REPAIR] Control Room restored from V4.7 fallback.' -ForegroundColor Yellow}else{Write-Host '[SAFE] Existing Control Room kept.' -ForegroundColor Green};" ^
- "$outputOk=$false;if(Test-Path $env:SAGI_OUTPUT){try{$t=[IO.File]::ReadAllText($env:SAGI_OUTPUT,[Text.Encoding]::UTF8);$outputOk=($t.Length -gt 20000 -and $t -match '<!doctype html>' -and $t -match 'SCOREBUG V2')}catch{}};" ^
- "if(-not $outputOk){Copy-Item $env:SAGI_FB_OUTPUT $env:SAGI_OUTPUT -Force;Write-Host '[REPAIR] vMix Graphics restored from V4.7 fallback.' -ForegroundColor Yellow}else{Write-Host '[SAFE] Existing vMix Graphics kept.' -ForegroundColor Green};"
-
-if errorlevel 1 (
-  echo.
-  echo [ERROR] Unable to prepare stable local files.
-  pause
-  exit /b 1
-)
-
-echo [READY] MATCH SAFE local files prepared.
-echo [READY] Starting V4.7 locked SAGI Bridge core...
-echo.
-
-powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%SAGI_BRIDGE%"
-
-echo.
-pause
-exit /b
-
-###SAGI_PS###
+ "$m=[regex]::Match($s,'(?s)###SAGI_PS###
 # SAGI V4.7.0 MATCH MODE / MATCH SAFE LAN DIRECT Bridge
 # Same-LAN control server + local vMix API bridge.
 # Phone Control: http://<PC-LAN-IP>:8099/
@@ -740,7 +711,7 @@ button:disabled{cursor:not-allowed;opacity:.42}
 .modeDock select{width:auto;min-width:125px;padding:8px;font-size:11px}.modeDock button{min-height:36px;font-size:10px}.modeEnter{background:linear-gradient(135deg,#1d6848,#48a873)!important}.preflightBtn{background:#15384d!important;color:#9fd9ff!important}
 .matchCockpit{display:none;margin:14px 0;border:1px solid #465566;border-radius:22px;background:linear-gradient(180deg,#090d13,#05080c);padding:13px;box-shadow:0 25px 70px #0009}
 body.mmOn .matchCockpit{display:block}
-body.mmOn .setupDesk,body.mmOn .broadcastDesk,body.mmOn .layout,body.mmOn .vmixDirector,body.mmOn .matchdayDesk,body.mmOn .modeDock{display:none!important}
+body.mmOn .top,body.mmOn .pwaBar,body.mmOn .setupDesk,body.mmOn .broadcastDesk,body.mmOn .layout,body.mmOn .vmixDirector,body.mmOn .matchdayDesk,body.mmOn .modeDock{display:none!important}
 .mmHead{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;margin-bottom:10px}.mmKicker{font-size:10px;letter-spacing:3px;color:#7d8a98;font-weight:1000}.mmTitle{font-size:20px;font-weight:1000}.mmTitle b{color:#e5ca78}.mmHeadActions{display:flex;gap:7px;align-items:center}.mmHeadActions select{width:auto;min-width:115px;padding:8px;font-size:11px}.mmExit{background:#3b2024!important;color:#ffb2b8!important}
 .mmStatus{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:10px}.mmStatusCard{border:1px solid #2c3743;background:#0b1118;border-radius:12px;padding:9px}.mmStatusCard span{display:block;font-size:8px;letter-spacing:1.5px;color:#718090}.mmStatusCard b{display:block;margin-top:4px;font-size:11px}.mmGood{color:#7bddaa!important}.mmBad{color:#ff9298!important}.mmWarn{color:#edd17c!important}
 .mmGrid{display:grid;grid-template-columns:1.15fr .95fr 1fr;gap:9px}.mmPanel{border:1px solid #2d3845;border-radius:15px;background:#090e14;padding:10px}.mmPanelTitle{font-size:9px;font-weight:1000;letter-spacing:2px;color:#8794a3;margin-bottom:8px}
@@ -872,7 +843,10 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
         <div class="mmRow"><select id="mmEventSide"><option value="HOME">主队</option><option value="AWAY">客队</option></select><select id="mmEventPlayer"><option value="">球员可选</option></select></div>
         <div class="mmRow3" style="margin-top:6px"><button id="mmGoalMacro" class="mmMacroGoal" type="button">⚽ 进球宏</button><button id="mmYellowMacro" class="mmMacroYellow" type="button">▮ 黄牌宏</button><button id="mmRedMacro" class="mmMacroRed" type="button">▮ 红牌宏</button></div>
         <div class="mmRow" style="margin-top:6px"><button id="mmHalf" type="button">HALF TIME</button><button id="mmFull" type="button">FULL TIME</button></div>
-        <div class="mmRoleHint">进球宏：自动加分 → 记录回放点 → 播放事件 → 自动回到比分牌。</div>
+        <div class="mmPanelTitle" style="margin-top:9px">SUBSTITUTION MACRO · 换人宏</div>
+        <div class="mmRow3"><select id="mmSubSide"><option value="HOME">主队</option><option value="AWAY">客队</option></select><select id="mmSubOff"><option value="">换下</option></select><select id="mmSubOn"><option value="">换上</option></select></div>
+        <button id="mmSubMacro" style="width:100%;margin-top:6px" type="button">↕ 一键播放换人</button>
+        <div class="mmRoleHint">进球宏：自动加分 → 记录回放点 → 播放事件 → 自动回到比分牌。换人同样自动收起。</div>
       </div>
 
       <div class="mmPanel mmDirectorOnly">
@@ -1618,6 +1592,7 @@ function refreshMatchdayPlayers(){
  mdFillSelect('mdSubOn',q('mdSubSide').value,'换上球员');
  mdFillSelect('mdMvpPlayer',q('mdMvpSide').value,'选择MVP球员');
  if(q('mmEventPlayer'))mdFillSelect('mmEventPlayer',q('mmEventSide').value,'球员可选');
+ if(q('mmSubSide')){mdFillSelect('mmSubOff',q('mmSubSide').value,'换下');mdFillSelect('mmSubOn',q('mmSubSide').value,'换上')}
 }
 function mdShortAuto(name,fallback){const x=String(name||'').trim();if(!x)return fallback;const parts=x.split(/\s+/).filter(Boolean);if(parts.length>1)return parts.map(p=>p[0]).join('').slice(0,4).toUpperCase();return x.slice(0,4).toUpperCase()}
 function refreshMatchdayUI(){
@@ -1669,7 +1644,7 @@ function mdApplyRecovered(x){
 async function recoverMatchdayFromBridge(showNote=false){
  try{
    const x=await lanJson('/api/matchday?recover='+Date.now());
-   if(x&&x.commandId&&mdApplyRecovered(x)){refreshMatchdayUI();mdRenderLog();mdPersist();if(showNote)note('已从 Bridge 恢复比赛状态');return true}
+   if(x&&x.commandId&&mdApplyRecovered(x)){refreshMatchdayUI();mdRenderLog();mdPersist();if(showNote){vdSave();if(matchdayState.overlayVisible)publishVmixDirector('OverlayInput'+vmixDirectorSettings.overlay+'In',vmixDirectorSettings.graphics,0,'RESTORE GRAPHICS ON');else publishVmixDirector('OverlayInput'+vmixDirectorSettings.overlay+'Out','',0,'RESTORE GRAPHICS OFF');note('已从 Bridge 恢复比赛状态与 Overlay')}return true}
  }catch(e){}
  if(showNote)note('Bridge 暂无可恢复比赛状态');return false
 }
@@ -1768,11 +1743,14 @@ function mdEvent(type){
  const side=q('mdEventSide').value,pid=q('mdEventPlayer').value;if(!pid){note('请先选择球员');return}mdMacroEvent(type,side,pid)
 }
 
-function mdSubstitution(){
- const side=q('mdSubSide').value,off=mdPlayer(side,q('mdSubOff').value),on=mdPlayer(side,q('mdSubOn').value);if(!off||!on){note('请选择换下和换上球员');return}
- const before={homeScore:matchdayState.homeScore,awayScore:matchdayState.awayScore};
- const ev={type:'SUB',side,team:side==='HOME'?(q('matchHome').value||'HOME'):(q('matchAway').value||'AWAY'),off:{id:off.id,name:off.name,number:off.number},on:{id:on.id,name:on.name,number:on.number},at:mdFormat(mdNowSeconds())};mdRecordEvent(ev,before);q('mdEventStatus').textContent='换人 · #'+off.number+' '+off.name+' → #'+on.number+' '+on.name;publishMatchday(ev);mdEventAutoClear(6200)
+function mdSubstitutionByIds(side,offId,onId){
+ const off=mdPlayer(side,offId),on=mdPlayer(side,onId);if(!off||!on){note('请选择换下和换上球员');return}
+ const before={homeScore:matchdayState.homeScore,awayScore:matchdayState.awayScore,homeRedCards:matchdayState.homeRedCards,awayRedCards:matchdayState.awayRedCards};
+ const ev={type:'SUB',side,team:side==='HOME'?(q('matchHome').value||'HOME'):(q('matchAway').value||'AWAY'),off:{id:off.id,name:off.name,number:off.number},on:{id:on.id,name:on.name,number:on.number},at:mdFormat(mdNowSeconds())};
+ mdRecordEvent(ev,before);q('mdEventStatus').textContent='换人 · #'+off.number+' '+off.name+' → #'+on.number+' '+on.name;publishMatchday(ev);mdEventAutoClear(6200)
 }
+function mdSubstitution(){mdSubstitutionByIds(q('mdSubSide').value,q('mdSubOff').value,q('mdSubOn').value)}
+
 function mdMatchState(type){
  const before={homeScore:matchdayState.homeScore,awayScore:matchdayState.awayScore},sec=mdNowSeconds();matchdayState.clockBase=sec;matchdayState.clockRunning=false;matchdayState.clockStartedAt=0;
  const ev={type,home:q('matchHome').value||'HOME',away:q('matchAway').value||'AWAY',homeScore:matchdayState.homeScore,awayScore:matchdayState.awayScore,at:mdFormat(sec)};
@@ -1837,6 +1815,7 @@ function initMatchMode(){
  q('mmClockStart').onclick=()=>q('mdClockStart').click();q('mmClockPause').onclick=()=>q('mdClockPause').click();q('mmScoreboardToggle').onclick=()=>{matchdayState.scoreboardVisible=!matchdayState.scoreboardVisible;publishMatchday(null)};
  q('mmEventSide').onchange=refreshMatchdayPlayers;q('mmGoalMacro').onclick=()=>mdMacroEvent('GOAL',q('mmEventSide').value,q('mmEventPlayer').value);q('mmYellowMacro').onclick=()=>mdMacroEvent('YELLOW',q('mmEventSide').value,q('mmEventPlayer').value);q('mmRedMacro').onclick=()=>mdMacroEvent('RED',q('mmEventSide').value,q('mmEventPlayer').value);
  q('mmHalf').onclick=()=>mdMatchState('HALF_TIME');q('mmFull').onclick=()=>mdMatchState('FULL_TIME');
+ q('mmSubSide').onchange=refreshMatchdayPlayers;q('mmSubMacro').onclick=()=>mdSubstitutionByIds(q('mmSubSide').value,q('mmSubOff').value,q('mmSubOn').value);
  q('mmCam1').onclick=()=>vdTake('cam1');q('mmCam2').onclick=()=>vdTake('cam2');q('mmDrone').onclick=()=>vdTake('drone');q('mmReplay').onclick=()=>vdTake('replay');q('mmGraphicsOn').onclick=vdOverlayIn;q('mmGraphicsOff').onclick=vdOverlayOut;
  q('mmMarkSave').onclick=()=>{mdAddReplayMarker('SAVE','精彩扑救');note('已标记扑救')};q('mmMarkIncident').onclick=()=>{mdAddReplayMarker('INCIDENT','对抗/冲突');note('已标记事件')};q('mmMarkKey').onclick=()=>{mdAddReplayMarker('KEY','精彩时刻');note('已标记精彩时刻')};
  q('mmCopyMarkers').onclick=mdCopyMarkers;q('mmClearMarkers').onclick=()=>{matchdayState.replayMarkers=[];mdPersist();mdRenderMarkers();note('回放标记已清空')};
