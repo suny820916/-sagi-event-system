@@ -1006,11 +1006,35 @@ def relation_camera_pose(
     # Keep the camera nearly tactical-top-down. The central master is quieter:
     # a fixed shallow tilt makes the full pitch read like a stable tactical map,
     # while relation shots retain a little more depth for body direction.
+    perspective_cfg = cfg.get("camera_perspective", {})
+    scale_name = str(shot_scale or "")
     if is_central_master:
         master_cfg = cfg.get("central_master", {})
-        tilt_back = float(master_cfg.get("tilt_back_m", 4.8))
+        tilt_back = float(
+            perspective_cfg.get(
+                "central_master_tilt_back_m",
+                master_cfg.get("tilt_back_m", 4.8),
+            )
+        )
     else:
-        tilt_back = max(4.5, min(7.0, span_y * .16))
+        default_tilt = max(4.5, min(7.0, span_y * .16))
+        per_scale = {
+            "STRUCTURE": "structure_tilt_back_m",
+            "WIDE_STRUCTURE": "wide_structure_tilt_back_m",
+            "RELATION": "relation_tilt_back_m",
+            "RESULT_RELATION": "result_relation_tilt_back_m",
+        }
+        key_name = per_scale.get(scale_name)
+        tilt_back = float(
+            perspective_cfg.get(key_name, default_tilt)
+            if key_name
+            else default_tilt
+        )
+
+    # Optional vertical scale allows a lower, more cinematic Teactics-like
+    # viewpoint while preserving the existing tactical framing calculation.
+    height_scale = float(perspective_cfg.get("height_scale", 1.0))
+    z *= max(0.45, min(1.20, height_scale))
 
     continuity_cfg = cfg.get("camera_continuity", {})
     return {
