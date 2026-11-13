@@ -319,7 +319,8 @@ def validate_execution(config):
             if ev.get("type") not in ("camera", "camera_dna", "relation_camera", "focus", "space")
         ]
         defender_events = [
-            ev for ev in phase_events if ev.get("type") == "defender_shift"
+            ev for ev in phase_events
+            if ev.get("type") in ("defender_shift", "defensive_unit")
         ]
         if not tactical_events:
             errors.append(f"phase {phase['name']} has no tactical action")
