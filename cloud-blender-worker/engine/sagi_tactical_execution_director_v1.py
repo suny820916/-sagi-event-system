@@ -697,6 +697,9 @@ look_at(rim, (0,0,0))
 bpy.ops.object.camera_add()
 cam = bpy.context.object
 scene.camera = cam
+# Lock horizontal sensor fit so 9:16 framing math is deterministic.
+# AUTO can narrow the horizontal field in portrait renders and crop subjects.
+cam.data.sensor_fit = "HORIZONTAL"
 
 camera_dna = {
     # V2 relation framing: preserve the tactical angle but crop much tighter.
@@ -771,9 +774,21 @@ def camera_dna_key(cue, t):
     camera_last_t = t + settle
 
 
-def relation_camera_pose(subjects, focus_t, lens=64.0, min_z=64.0, margin=1.20):
-    """Automatically frame a tactical relationship from subject positions."""
-    pts = [predicted_player_pos(name, float(focus_t)) for name in subjects]
+def relation_camera_pose(subjects, start_t, focus_t, lens=64.0, min_z=64.0, margin=1.20):
+    """Frame the whole tactical relation trajectory, not only its future endpoint."""
+    start_t = float(start_t)
+    focus_t = float(focus_t)
+    mid_t = (start_t + focus_t) * .5
+
+    # Include start/mid/focus positions. This prevents a runner from being
+    # cropped at the beginning of a move just because the camera anticipates
+    # where the relation will end.
+    pts = []
+    for name in subjects:
+        pts.append(predicted_player_pos(name, start_t))
+        pts.append(predicted_player_pos(name, mid_t))
+        pts.append(predicted_player_pos(name, focus_t))
+
     xs = [p[0] for p in pts]
     ys = [p[1] for p in pts]
 
@@ -816,7 +831,7 @@ def relation_camera_key(subjects, t, focus_t=None, lens=64.0, min_z=64.0, margin
     global camera_last, camera_last_t
     t = float(t)
     focus_t = float(t if focus_t is None else focus_t)
-    p = relation_camera_pose(subjects, focus_t, lens, min_z, margin)
+    p = relation_camera_pose(subjects, t, focus_t, lens, min_z, margin)
 
     if camera_last is None or t <= .001:
         apply_camera_pose(p, 1 + round(t * fps))
