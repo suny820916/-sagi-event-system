@@ -580,7 +580,7 @@ def create_player(name, data):
     # Teactics-style miniature figure: readable, but never dominant.
     # V03 reduces the overall scale and gives the limbs a quiet natural stance
     # so players read as people rather than rigid chess pieces.
-    root.scale = (1.10, 1.10, 1.10)
+    root.scale = (1.42, 1.42, 1.42)
 
     matp = (
         m_g
@@ -669,7 +669,7 @@ ball = sphere(
         ball_owner.location.y,
         .37,
     ),
-    .24,
+    .28,
     m_ball,
 )
 
@@ -1085,7 +1085,15 @@ def add_space(ev):
     )
 
 
-camera_dna_key("receive", 0)
+first_camera_event = next(
+    (
+        ev for ev in cfg.get("events", [])
+        if ev.get("type") in ("camera", "camera_dna", "relation_camera")
+    ),
+    None,
+)
+if first_camera_event is None or float(first_camera_event.get("t", 0)) > 0.001:
+    camera_dna_key("receive", 0)
 
 for ev in cfg.get("events", []):
     typ = ev.get("type")
