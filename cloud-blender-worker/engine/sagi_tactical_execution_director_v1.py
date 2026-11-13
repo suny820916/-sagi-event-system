@@ -148,6 +148,159 @@ os.makedirs(out_dir, exist_ok=True)
 with open(cfg_path, "r", encoding="utf-8") as f:
     cfg = json.load(f)
 
+
+def event_start(ev):
+    if "t" in ev:
+        return float(ev["t"])
+    if "release" in ev:
+        return float(ev["release"])
+    return 0.0
+
+
+def event_end(ev):
+    typ = ev.get("type")
+    if typ in ("pass", "shot"):
+        return float(ev.get("arrive", ev.get("release", event_start(ev))))
+    if typ in ("player_move", "defender_shift", "space"):
+        return event_start(ev) + float(ev.get("duration", 0.0))
+    return event_start(ev)
+
+
+def validate_execution(config):
+    """Validate tactical continuity before Blender spends time rendering."""
+    errors = []
+    warnings = []
+    players_cfg = config.get("players", {})
+    events = config.get("events", [])
+    duration = float(config.get("duration_sec", 0.0))
+    phases = config.get("execution_phases", [])
+    initial_holder = config.get("initial_ball_holder")
+
+    if not initial_holder:
+        errors.append("initial_ball_holder is required")
+    elif initial_holder not in players_cfg:
+        errors.append(f"initial_ball_holder {initial_holder} is not a player")
+
+    # Timeline must be chronological in the preset so cause/effect is explicit.
+    starts = [event_start(ev) for ev in events]
+    if starts != sorted(starts):
+        errors.append("events are not sorted chronologically")
+
+    # Every referenced player must exist, and every action must finish on screen.
+    for i, ev in enumerate(events):
+        typ = ev.get("type")
+        for key_name in ("player", "from", "to"):
+            ref = ev.get(key_name)
+            if key_name == "to" and isinstance(ref, list):
+                continue
+            if key_name in ("player", "from", "to") and isinstance(ref, str):
+                if ref not in players_cfg and not (typ == "shot" and key_name == "to"):
+                    errors.append(f"event {i} references unknown player {ref}")
+
+        if event_end(ev) > duration + 1e-6:
+            errors.append(
+                f"event {i} ({typ}) ends at {event_end(ev):.2f}s "
+                f"after duration {duration:.2f}s"
+            )
+
+        if typ in ("pass", "shot"):
+            release = float(ev.get("release", 0))
+            arrive = float(ev.get("arrive", 0))
+            if arrive <= release:
+                errors.append(f"event {i} ({typ}) has invalid ball timing")
+
+    # Possession chain: no teleporting the ball between unrelated players.
+    holder = initial_holder
+    ball_chain = []
+    for i, ev in enumerate(events):
+        typ = ev.get("type")
+        if typ == "pass":
+            src = ev.get("from")
+            dst = ev.get("to")
+            if holder and src != holder:
+                errors.append(
+                    f"possession break before event {i}: "
+                    f"expected {holder}, pass starts from {src}"
+                )
+            holder = dst
+            ball_chain.append(f"{src}->{dst}")
+        elif typ == "shot":
+            src = ev.get("from")
+            if holder and src != holder:
+                errors.append(
+                    f"possession break before shot event {i}: "
+                    f"expected {holder}, shot starts from {src}"
+                )
+            ball_chain.append(f"{src}->TARGET")
+
+    # Each declared phase must contain a real tactical action, not only a camera cue.
+    phase_report = []
+    for phase in phases:
+        p0 = float(phase["from"])
+        p1 = float(phase["to"])
+        phase_events = [
+            ev for ev in events
+            if event_start(ev) >= p0 - 1e-6 and event_start(ev) < p1 - 1e-6
+        ]
+        tactical_events = [
+            ev for ev in phase_events
+            if ev.get("type") not in ("camera", "camera_dna", "focus", "space")
+        ]
+        defender_events = [
+            ev for ev in phase_events if ev.get("type") == "defender_shift"
+        ]
+        if not tactical_events:
+            errors.append(f"phase {phase['name']} has no tactical action")
+        if config.get("require_defensive_reaction", False) and not defender_events:
+            warnings.append(f"phase {phase['name']} has no visible defensive reaction")
+        phase_report.append({
+            "name": phase["name"],
+            "from": p0,
+            "to": p1,
+            "event_count": len(phase_events),
+            "tactical_event_count": len(tactical_events),
+            "defender_reaction_count": len(defender_events),
+        })
+
+    last_action_end = max(
+        [event_end(ev) for ev in events if ev.get("type") not in ("camera", "camera_dna", "focus", "space")]
+        or [0.0]
+    )
+    completion_hold = max(0.0, duration - last_action_end)
+    if completion_hold > 1.5:
+        warnings.append(
+            f"post-execution hold is {completion_hold:.2f}s; check for dead time"
+        )
+
+    report = {
+        "version": config.get("version"),
+        "director_mode": config.get("director_mode"),
+        "duration_sec": duration,
+        "initial_ball_holder": initial_holder,
+        "final_ball_holder": holder,
+        "ball_chain": ball_chain,
+        "phase_report": phase_report,
+        "last_action_end_sec": round(last_action_end, 3),
+        "completion_hold_sec": round(completion_hold, 3),
+        "errors": errors,
+        "warnings": warnings,
+        "valid": not errors,
+    }
+    return report
+
+
+execution_report = validate_execution(cfg)
+report_path = os.path.join(out_dir, "execution_report.json")
+with open(report_path, "w", encoding="utf-8") as f:
+    json.dump(execution_report, f, ensure_ascii=False, indent=2)
+
+print("SAGI_EXECUTION_REPORT", json.dumps(execution_report, ensure_ascii=False))
+
+if execution_report["errors"]:
+    raise RuntimeError(
+        "TACTICAL_EXECUTION_INVALID: " + "; ".join(execution_report["errors"])
+    )
+
 fps = int(cfg.get("fps", 24))
 dur = float(cfg.get("duration_sec", 12))
 w, h = cfg.get("resolution", [540, 960])
@@ -438,11 +591,13 @@ for name, data in cfg["players"].items():
         data,
     )
 
+initial_ball_holder = cfg.get("initial_ball_holder", "GK")
+ball_owner = players[initial_ball_holder]
 ball = sphere(
     "BALL",
     (
-        players["GK"].location.x,
-        players["GK"].location.y,
+        ball_owner.location.x,
+        ball_owner.location.y,
         .37,
     ),
     .20,
