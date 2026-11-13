@@ -527,7 +527,11 @@ for i in range(8):
             m_pitch_alt,
         )
 
-lw = .055
+visual_geo = cfg.get("visual_geometry", {})
+lw = float(visual_geo.get("pitch_line_width", .055))
+goal_line_width = float(visual_geo.get("goal_line_width", .045))
+goal_post_half_width = float(visual_geo.get("goal_post_half_width", .055))
+ring_tube = float(visual_geo.get("focus_ring_tube", .024))
 polyline(
     "TOUCHLINE",
     [(-34,-52.5),(34,-52.5),(34,52.5),(-34,52.5)],
@@ -573,19 +577,19 @@ for sy in (-1, 1):
     cube(
         "GOAL_POST_L",
         (-3.66, goal_y, post_z),
-        (.055, .055, 1.22),
+        (goal_post_half_width, goal_post_half_width, 1.22),
         m_line,
     )
     cube(
         "GOAL_POST_R",
         (3.66, goal_y, post_z),
-        (.055, .055, 1.22),
+        (goal_post_half_width, goal_post_half_width, 1.22),
         m_line,
     )
     cube(
         "GOAL_BAR",
         (0, goal_y, 2.44),
-        (3.72, .055, .055),
+        (3.72, goal_post_half_width, goal_post_half_width),
         m_line,
     )
     # Ground-depth rails make the goal mouth legible from above.
@@ -593,7 +597,7 @@ for sy in (-1, 1):
         "GOAL_SIDE_L",
         (-3.66, goal_y),
         (-3.66, back_y),
-        .045,
+        goal_line_width,
         m_line,
         z=.23,
     )
@@ -601,7 +605,7 @@ for sy in (-1, 1):
         "GOAL_SIDE_R",
         (3.66, goal_y),
         (3.66, back_y),
-        .045,
+        goal_line_width,
         m_line,
         z=.23,
     )
@@ -609,7 +613,7 @@ for sy in (-1, 1):
         "GOAL_BACK",
         (-3.66, back_y),
         (3.66, back_y),
-        .045,
+        goal_line_width,
         m_line,
         z=.23,
     )
@@ -690,7 +694,7 @@ def create_player(name, data):
         name + "_RING",
         (0,0,.04),
         .66,
-        .024,
+        ring_tube,
         m_ring,
     )
     ring.parent = root
