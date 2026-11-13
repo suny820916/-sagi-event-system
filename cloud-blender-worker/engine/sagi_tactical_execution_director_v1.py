@@ -1162,8 +1162,8 @@ def focus_player(name, t):
         )
 
 
-def animate_stride(name, f0, f1, strength=1.0):
-    """Restrained locomotion with joint pivots and distance-aware cadence."""
+def animate_stride(name, f0, f1, strength=1.0, movement_kind="player_move"):
+    """Restrained locomotion with different attacking/defending movement language."""
     if f1 <= f0:
         return
 
@@ -1175,16 +1175,33 @@ def animate_stride(name, f0, f1, strength=1.0):
     if not all((la, ra, ll, rl)):
         return
 
-    arm = math.radians(18.0 * strength)
-    leg = math.radians(22.0 * strength)
+    motion_cfg = cfg.get("motion_profile", {})
+    kind_cfg = motion_cfg.get(str(movement_kind), {})
+
+    # Defenders move with shorter, quieter steps; attacking runs have a little
+    # more arm/leg separation. Dribbling stays compact so the ball remains the cue.
+    default_arm = 11.5 if movement_kind == "defender_shift" else (13.5 if movement_kind == "dribble" else 16.0)
+    default_leg = 15.0 if movement_kind == "defender_shift" else (17.0 if movement_kind == "dribble" else 20.0)
+    arm = math.radians(float(kind_cfg.get("arm_deg", default_arm)) * strength)
+    leg = math.radians(float(kind_cfg.get("leg_deg", default_leg)) * strength)
     span = max(1, f1 - f0)
 
-    # One long tactical run needs several compact steps, not one slow swing.
-    # At 12 fps this gives roughly 2-6 half-steps depending on run duration.
-    half_steps = max(2, min(6, int(round(span / 3.0))))
+    # 24fps tactical animation: roughly 2.2-3.0 full steps/sec depending on
+    # movement type, with a hard cap to avoid the "windmill" look.
+    frames_per_half_step = float(kind_cfg.get(
+        "frames_per_half_step",
+        4.2 if movement_kind == "defender_shift" else 3.8
+    ))
+    half_steps = max(2, min(8, int(round(span / max(2.5, frames_per_half_step)))))
+
+    # Small deterministic phase offset prevents every player from swinging
+    # limbs on the exact same frame when a defensive line shifts together.
+    phase_seed = (sum(ord(ch) for ch in name) % 3) - 1
+    phase_offset = int(kind_cfg.get("phase_offset_frames", phase_seed))
 
     for idx in range(half_steps + 1):
-        fr = round(f0 + span * (idx / half_steps))
+        fr = round(f0 + span * (idx / half_steps)) + phase_offset
+        fr = max(f0, min(f1, fr))
         if idx == 0 or idx == half_steps:
             phase = 0.0
         else:
@@ -1197,22 +1214,26 @@ def animate_stride(name, f0, f1, strength=1.0):
         for limb in (la, ra, ll, rl):
             key(limb, "rotation_euler", fr)
 
-    # A tiny forward body lean gives acceleration/weight without making the
-    # miniature behave like a fully animated character.
+    # The body lean is subtle and movement-specific: defenders stay more upright,
+    # while forward runs can show a little acceleration.
     if torso is not None:
+        lean_deg = float(kind_cfg.get(
+            "lean_deg",
+            -1.4 if movement_kind == "defender_shift" else (-2.0 if movement_kind == "dribble" else -2.8)
+        ))
         torso.rotation_euler[0] = 0.0
         key(torso, "rotation_euler", f0)
-        lean_fr = min(f1 - 1, f0 + max(1, round(span * .22)))
-        torso.rotation_euler[0] = math.radians(-3.2 * strength)
+        lean_fr = min(f1 - 1, f0 + max(1, round(span * .20)))
+        torso.rotation_euler[0] = math.radians(lean_deg * strength)
         key(torso, "rotation_euler", lean_fr)
-        recover_fr = max(lean_fr + 1, f1 - max(1, round(span * .18)))
-        torso.rotation_euler[0] = math.radians(-1.0 * strength)
+        recover_fr = max(lean_fr + 1, f1 - max(1, round(span * .20)))
+        torso.rotation_euler[0] = math.radians(lean_deg * .30 * strength)
         key(torso, "rotation_euler", recover_fr)
         torso.rotation_euler[0] = 0.0
         key(torso, "rotation_euler", f1)
 
 
-def move_player(name, target, t0, dur, carry_ball=False):
+def move_player(name, target, t0, dur, carry_ball=False, movement_kind="player_move"):
     o = players[name]
     f0 = 1 + round(t0 * fps)
     f1 = 1 + round((t0 + dur) * fps)
@@ -1230,20 +1251,35 @@ def move_player(name, target, t0, dur, carry_ball=False):
         o.rotation_euler[2] = math.atan2(-dx, dy)
         key(o, "rotation_euler", f0)
 
-    # Three spatial keys create a tiny rise/fall of the centre of mass.
-    # The amount is deliberately small: tactical clarity first.
+    # Four spatial keys create a restrained acceleration/deceleration curve.
+    # This keeps players from looking like chess pieces sliding at one speed.
     key(o, "location", f0)
 
-    fm = max(f0 + 1, round((f0 + f1) / 2))
+    span = max(2, f1 - f0)
+    f_acc = min(f1 - 2, f0 + max(1, round(span * .28)))
+    f_dec = max(f_acc + 1, f0 + round(span * .76))
+    rise = min(.050, .012 + dist * .0014)
+    if movement_kind == "defender_shift":
+        rise *= .55
+
     o.location = (
-        sx + dx * .52,
-        sy + dy * .52,
-        sz + min(.075, .018 + dist * .0022),
+        sx + dx * .20,
+        sy + dy * .20,
+        sz + rise * .55,
     )
-    key(o, "location", fm)
+    key(o, "location", f_acc)
+
+    o.location = (
+        sx + dx * .79,
+        sy + dy * .79,
+        sz + rise,
+    )
+    key(o, "location", f_dec)
 
     o.location = (tx, ty, sz)
     key(o, "location", f1)
+
+    fm = max(f0 + 1, round((f0 + f1) / 2))
 
     if carry_ball:
         # Explicit ball-carrying state. The ball follows the runner instead of
@@ -1258,8 +1294,8 @@ def move_player(name, target, t0, dur, carry_ball=False):
         ball.location = (sx + ux * .10, sy + uy * .10, .37)
         key(ball, "location", f0)
         ball.location = (
-            sx + dx * .52 + ux * lead,
-            sy + dy * .52 + uy * lead,
+            sx + dx * .50 + ux * lead,
+            sy + dy * .50 + uy * lead,
             .37,
         )
         key(ball, "location", fm)
@@ -1268,7 +1304,7 @@ def move_player(name, target, t0, dur, carry_ball=False):
         restore_new_key_interpolation(old_interp)
 
     stride_strength = min(1.0, max(.35, dist / 10.0))
-    animate_stride(name, f0, f1, stride_strength)
+    animate_stride(name, f0, f1, stride_strength, movement_kind)
     smooth_action(o)
 
 
@@ -1561,6 +1597,7 @@ for ev in cfg.get("events", []):
             float(ev["t"]),
             float(ev["duration"]),
             False,
+            typ,
         )
 
     elif typ == "dribble":
@@ -1570,6 +1607,7 @@ for ev in cfg.get("events", []):
             float(ev["t"]),
             float(ev["duration"]),
             True,
+            "dribble",
         )
 
     elif typ == "pass":
