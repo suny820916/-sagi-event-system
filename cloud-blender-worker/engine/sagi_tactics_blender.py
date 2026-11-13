@@ -495,6 +495,10 @@ camera_presets = {
     "final_third": {"loc": (15,-4,64), "target": (8,24,0), "lens": 58},
     "box_relation": {"loc": (12,8,58), "target": (4,32,0), "lens": 60},
     "finish_close": {"loc": (8,18,53), "target": (0,39,0), "lens": 60},
+    "def_compact": {"loc": (18,-38,72), "target": (0,-8,0), "lens": 60},
+    "def_force_wide": {"loc": (24,-28,64), "target": (18,-8,0), "lens": 61},
+    "def_triangle": {"loc": (26,-22,58), "target": (17,-12,0), "lens": 63},
+    "def_weakness": {"loc": (12,-24,64), "target": (-18,-14,0), "lens": 61},
 }
 
 camera_last = None
@@ -815,6 +819,38 @@ def shot_ball(player, target, release, arrive, arc=.9):
     smooth_action(ball)
 
 
+def add_triangle(ev):
+    """Show three-player defensive protection as one tactical relationship."""
+    names = ev["players"]
+    if len(names) != 3:
+        raise ValueError("triangle event requires exactly three players")
+
+    f0 = 1 + round(float(ev["t"]) * fps)
+    f1 = 1 + round((float(ev["t"]) + float(ev["duration"])) * fps)
+
+    pts = []
+    for n in names:
+        o = players[n]
+        pts.append((o.location.x, o.location.y))
+
+    edges = [(0,1),(1,2),(2,0)]
+    for idx,(a,b) in enumerate(edges):
+        seg = line(
+            "TRIANGLE_" + "_".join(names) + f"_{idx}",
+            pts[a],
+            pts[b],
+            .045,
+            m_ring,
+            z=.29,
+        )
+        seg.hide_render = True
+        seg.keyframe_insert("hide_render", frame=max(1, f0-1))
+        seg.hide_render = False
+        seg.keyframe_insert("hide_render", frame=f0)
+        seg.hide_render = True
+        seg.keyframe_insert("hide_render", frame=f1)
+
+
 def add_space(ev):
     sp = torus(
         "SPACE",
@@ -933,6 +969,9 @@ for ev in cfg.get("events", []):
             float(ev["arrive"]),
             float(ev.get("arc", .9)),
         )
+
+    elif typ == "triangle":
+        add_triangle(ev)
 
     elif typ == "space":
         add_space(ev)
