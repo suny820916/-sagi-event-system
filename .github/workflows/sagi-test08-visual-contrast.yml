@@ -1,0 +1,80 @@
+name: SAGI TEST 08 VISUAL CONTRAST
+
+concurrency:
+  group: sagi-test08-visual-contrast-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "cloud-blender-worker/presets/christmas_tree_execution_test08_visual_contrast.json"
+      - ".github/workflows/sagi-test08-visual-contrast.yml"
+      - "cloud-blender-worker/engine/sagi_tactical_execution_director_v1.py"
+  workflow_dispatch:
+
+jobs:
+  render-test08:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Blender image
+        run: docker build -t sagi-test08 ./cloud-blender-worker
+
+      - name: Render TEST 08 and encode iPhone-safe MP4
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p test08_out
+          docker run --rm \
+            -v "$PWD/test08_out:/out" \
+            sagi-test08 \
+            bash -lc '
+              blender --background \
+                --python /app/engine/sagi_tactical_execution_director_v1.py \
+                -- \
+                /app/presets/christmas_tree_execution_test08_visual_contrast.json \
+                /out
+
+              ffmpeg -y -loglevel error \
+                -framerate 24 \
+                -i /out/frames/frame_%04d.png \
+                -f lavfi \
+                -i anullsrc=channel_layout=stereo:sample_rate=44100 \
+                -map 0:v:0 -map 1:a:0 \
+                -c:v libx264 \
+                -profile:v baseline \
+                -level 3.1 \
+                -pix_fmt yuv420p \
+                -preset veryfast \
+                -crf 22 \
+                -c:a aac \
+                -b:a 64k \
+                -shortest \
+                -movflags +faststart \
+                /out/SAGI_TEST08_VISUAL_CONTRAST.mp4
+
+              ffprobe -v error \
+                -show_entries format=duration:stream=codec_name,width,height,r_frame_rate \
+                -of json \
+                /out/SAGI_TEST08_VISUAL_CONTRAST.mp4 \
+                > /out/probe.json
+            '
+          sudo chown -R "$USER":"$USER" test08_out
+          test -s test08_out/SAGI_TEST08_VISUAL_CONTRAST.mp4
+          cat test08_out/execution_report.json
+          cat test08_out/probe.json
+
+      - name: Upload TEST 08 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SAGI-TEST08-VISUAL-CONTRAST
+          path: |
+            test08_out/SAGI_TEST08_VISUAL_CONTRAST.mp4
+            test08_out/execution_report.json
+            test08_out/probe.json
+            test08_out/scene.blend
+          retention-days: 7
