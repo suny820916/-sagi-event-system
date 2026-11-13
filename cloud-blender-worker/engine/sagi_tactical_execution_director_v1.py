@@ -775,29 +775,38 @@ def camera_dna_key(cue, t):
 
 
 def relation_camera_pose(subjects, start_t, focus_t, lens=64.0, min_z=64.0, margin=1.20):
-    """Frame the whole tactical relation trajectory, not only its future endpoint."""
+    """Keep full trajectory in frame, but centre on the current tactical relation."""
     start_t = float(start_t)
     focus_t = float(focus_t)
     mid_t = (start_t + focus_t) * .5
 
-    # Include start/mid/focus positions. This prevents a runner from being
-    # cropped at the beginning of a move just because the camera anticipates
-    # where the relation will end.
-    pts = []
+    # Full trajectory protects framing completeness.
+    trajectory_pts = []
+    # Focus positions define where the tactical story actually is now.
+    focus_pts = []
     for name in subjects:
-        pts.append(predicted_player_pos(name, start_t))
-        pts.append(predicted_player_pos(name, mid_t))
-        pts.append(predicted_player_pos(name, focus_t))
+        trajectory_pts.append(predicted_player_pos(name, start_t))
+        trajectory_pts.append(predicted_player_pos(name, mid_t))
+        fp = predicted_player_pos(name, focus_t)
+        trajectory_pts.append(fp)
+        focus_pts.append(fp)
 
-    xs = [p[0] for p in pts]
-    ys = [p[1] for p in pts]
+    xs = [p[0] for p in trajectory_pts]
+    ys = [p[1] for p in trajectory_pts]
 
     min_x, max_x = min(xs), max(xs)
     min_y, max_y = min(ys), max(ys)
     span_x = max(4.0, max_x - min_x)
     span_y = max(4.0, max_y - min_y)
-    cx = (min_x + max_x) * .5
-    cy = (min_y + max_y) * .5
+
+    # Do NOT centre on the entire start-to-end trajectory: that can pull the
+    # camera backwards while the attack has already moved forward. Centre on
+    # the relationship at focus_t, while still using the whole trajectory for
+    # safe framing bounds.
+    fxs = [p[0] for p in focus_pts]
+    fys = [p[1] for p in focus_pts]
+    cx = (min(fxs) + max(fxs)) * .5
+    cy = (min(fys) + max(fys)) * .5
 
     # Lens-aware framing for 9:16 portrait.
     # The old empirical factors pushed wide tactical relations far too high,
@@ -817,12 +826,13 @@ def relation_camera_pose(subjects, start_t, focus_t, lens=64.0, min_z=64.0, marg
     # perceive miniature bodies and running direction.
     tilt_back = max(4.5, min(7.0, span_y * .16))
 
+    continuity_cfg = cfg.get("camera_continuity", {})
     return {
         "loc": (cx, cy - tilt_back, z),
         "target": (cx, cy, 0),
         "lens": float(lens),
-        "lead": .24,
-        "settle": .16,
+        "lead": float(continuity_cfg.get("lead_sec", .34)),
+        "settle": float(continuity_cfg.get("settle_sec", .32)),
     }
 
 
@@ -832,6 +842,19 @@ def relation_camera_key(subjects, t, focus_t=None, lens=64.0, min_z=64.0, margin
     t = float(t)
     focus_t = float(t if focus_t is None else focus_t)
     p = relation_camera_pose(subjects, t, focus_t, lens, min_z, margin)
+
+    # Spatial continuity: in an upfield attack, don't let the camera centre
+    # suddenly jump backwards just because a supporting runner started deeper.
+    continuity_cfg = cfg.get("camera_continuity", {})
+    if camera_last is not None and continuity_cfg.get("preserve_forward_progression", False):
+        max_back = float(continuity_cfg.get("max_backward_target_m", 1.5))
+        prev_y = float(camera_last["target"][1])
+        new_y = float(p["target"][1])
+        min_allowed_y = prev_y - max_back
+        if new_y < min_allowed_y:
+            dy = min_allowed_y - new_y
+            p["target"] = (p["target"][0], min_allowed_y, p["target"][2])
+            p["loc"] = (p["loc"][0], p["loc"][1] + dy, p["loc"][2])
 
     if camera_last is None or t <= .001:
         apply_camera_pose(p, 1 + round(t * fps))
