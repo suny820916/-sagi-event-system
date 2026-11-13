@@ -1,0 +1,120 @@
+name: SAGI VOICE DIRECTOR Christmas Tree CI
+
+concurrency:
+  group: sagi-voice-director-christmas-tree-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "cloud-blender-worker/voice/christmas_tree_full_lesson_00_101_voice_sync.json"
+      - "cloud-blender-worker/voice/voice_director.py"
+      - ".github/workflows/sagi-voice-director-christmas-tree.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  voice-director-101:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install VOICE DIRECTOR runtime
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          python3 -m pip install --upgrade pip
+          python3 -m pip install edge-tts
+          python3 -m py_compile cloud-blender-worker/voice/voice_director.py
+
+      - name: Download latest successful 101-second master
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          RUN_ID=$(gh run list \
+            --workflow sagi-christmas-tree-final-101-ci.yml \
+            --status success \
+            --limit 1 \
+            --json databaseId \
+            --jq '.[0].databaseId')
+
+          test -n "$RUN_ID"
+          echo "MASTER_RUN_ID=$RUN_ID" | tee master_run.txt
+
+          mkdir -p master
+          gh run download "$RUN_ID" \
+            --name sagi-christmas-tree-full-lesson-00-101 \
+            --dir master
+
+          test -s master/sagi_christmas_tree_full_lesson_00_101.mp4
+
+          ffprobe -v error \
+            -show_entries format=duration:stream=codec_name,width,height,r_frame_rate \
+            -of json master/sagi_christmas_tree_full_lesson_00_101.mp4 \
+            | tee master_probe.json
+
+      - name: Generate slot-locked narration
+        run: |
+          set -euo pipefail
+
+          python3 cloud-blender-worker/voice/voice_director.py \
+            --config cloud-blender-worker/voice/christmas_tree_full_lesson_00_101_voice_sync.json \
+            --video master/sagi_christmas_tree_full_lesson_00_101.mp4 \
+            --out-dir voice_output \
+            | tee voice_director_stdout.json
+
+          test -s voice_output/SAGI_TACTICS_CHRISTMAS_TREE_V1_VOICE.mp4
+          test -s voice_output/sagi_voice_101s.wav
+          test -s voice_output/sagi_voice_101s.srt
+          test -s voice_output/voice_director_report.json
+
+      - name: Validate 101-second voice lock
+        run: |
+          set -euo pipefail
+
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          report = json.loads(Path("voice_output/voice_director_report.json").read_text())
+          assert report["all_slots_fit"], "one or more narration slots overflow"
+          assert report["text_lock_preserved"], "text lock was not preserved"
+          assert abs(float(report["final_video_duration_sec"]) - 101.0) <= 0.25
+          assert abs(float(report["voice_mix_duration_sec"]) - 101.0) <= 0.25
+
+          for row in report["slots"]:
+              assert float(row["overflow_sec"]) <= 0.04, row
+
+          print("VOICE_LOCK_OK")
+          print("voice=", report["voice"])
+          print("final=", report["final_video_duration_sec"])
+          PY
+
+          ffprobe -v error \
+            -show_entries format=duration:stream=codec_name,width,height,r_frame_rate \
+            -of json voice_output/SAGI_TACTICS_CHRISTMAS_TREE_V1_VOICE.mp4 \
+            | tee voice_output/final_voice_probe.json
+
+      - name: Upload VOICE DIRECTOR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sagi-christmas-tree-voice-director-101
+          path: |
+            voice_output/SAGI_TACTICS_CHRISTMAS_TREE_V1_VOICE.mp4
+            voice_output/sagi_voice_101s.wav
+            voice_output/sagi_voice_101s.srt
+            voice_output/voice_director_report.json
+            voice_output/final_voice_probe.json
+            master_probe.json
+            master_run.txt
+            cloud-blender-worker/voice/christmas_tree_full_lesson_00_101_voice_sync.json
+          retention-days: 7
