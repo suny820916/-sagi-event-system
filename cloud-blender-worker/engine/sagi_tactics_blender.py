@@ -499,7 +499,7 @@ camera_presets = {
     "finish_close": {"loc": (7,23,46), "target": (0,41,0), "lens": 68},
     "def_compact": {"loc": (18,-38,72), "target": (0,-8,0), "lens": 60},
     # Defensive teaching shots keep the full relationship inside frame.
-    "def_force_wide": {"loc": (20,-32,74), "target": (20,-8,0), "lens": 59},
+    "def_force_wide": {"loc": (8,-30,84), "target": (18,-8,0), "lens": 59},
     "def_triangle": {"loc": (20,-26,72), "target": (17,-12,0), "lens": 58},
     # Move to the weak-side half-space rather than looking across the
     # touchline from the opposite side; this removes the black pitch void.
