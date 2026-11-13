@@ -790,6 +790,12 @@ FIELD_SCOPE_BOUNDS = {
     "FULL_PITCH": (-34.0, 34.0, -52.5, 52.5),
     "DEFENSIVE_HALF_PLUS_MIDFIELD": (-30.0, 30.0, -48.0, 12.0),
     "CENTRAL_THREE_QUARTERS": (-30.0, 30.0, -34.0, 34.0),
+    # V10.2: tactical completeness is not the same as showing more grass.
+    # These two scopes retain the landmarks needed to understand buildup and
+    # midfield width while keeping the actual player relationships readable
+    # on a 9:16 phone screen.
+    "BUILD_RELATION_ZONE": (-20.0, 20.0, -34.0, 9.0),
+    "MIDFIELD_WIDTH_ZONE": (-21.0, 21.0, -16.0, 25.0),
     # V10.1 Teactics-style tactical scopes: wide enough to explain the
     # relationship, but not so wide that every semi-global view becomes a
     # near-full-pitch shot in 9:16.
