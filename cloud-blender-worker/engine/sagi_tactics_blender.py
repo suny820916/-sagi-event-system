@@ -491,7 +491,7 @@ camera_presets = {
     # Oblique width view: fitting a 68m pitch into a portrait frame by
     # rotating the spatial axis, instead of simply pulling the camera higher.
     "width": {"loc": (28,-30,76), "target": (0,5,0), "lens": 56},
-    "right_flank": {"loc": (27,-8,62), "target": (15,14,0), "lens": 61},
+    "right_flank": {"loc": (29,-6,60), "target": (20,16,0), "lens": 60},
     "final_third": {"loc": (15,-4,64), "target": (8,24,0), "lens": 58},
     "box_relation": {"loc": (12,8,58), "target": (4,32,0), "lens": 60},
     "finish_close": {"loc": (8,18,53), "target": (0,39,0), "lens": 60},
