@@ -489,19 +489,19 @@ camera_presets = {
         "lens": 56,
     },
     "relation": {
-        "loc": (18,-56,34),
-        "target": (3,-14,1.0),
-        "lens": 62,
+        "loc": (14,-58,39),
+        "target": (2,-10,1.0),
+        "lens": 61,
     },
     "result": {
-        "loc": (-8,-49,46),
-        "target": (2,9,1.0),
+        "loc": (12,-49,50),
+        "target": (5,13,1.0),
         "lens": 62,
     },
     "finish": {
-        "loc": (10,-34,72),
-        "target": (8,29,0.8),
-        "lens": 66,
+        "loc": (10,-39,64),
+        "target": (7,30,0.8),
+        "lens": 65,
     },
 }
 
@@ -533,7 +533,9 @@ def camera_key(preset, t):
 
     # V03: a shorter, purposeful reframe. The camera should feel like it
     # recognizes the next tactical question, not like it is travelling there.
-    transition = 0.32
+    # V06 keeps all tactical reframes on one visual axis. A slightly
+    # longer transition now reads as a controlled push rather than a cut.
+    transition = 0.46
     start_t = max(camera_last_t, t - transition)
     start_fr = 1 + round(start_t * fps)
 
