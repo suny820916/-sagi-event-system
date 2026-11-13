@@ -99,6 +99,24 @@ def main() -> None:
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
 
+    # The original PNG asset was committed with invalid binary bytes. Validate
+    # its signature before FFmpeg so a corrupt logo cannot abort the entire render.
+    # Until a valid original is restored, render a transparent white SAGI mark
+    # from the existing repository SVG brand symbol.
+    if not logo.is_file() or logo.read_bytes()[:8] != b"\\x89PNG\\r\\n\\x1a\\n":
+        import cairosvg
+        symbol = Path("icon.svg")
+        if not symbol.is_file():
+            raise RuntimeError("SAGI logo PNG invalid and icon.svg fallback missing")
+        svg = symbol.read_text(encoding="utf-8")
+        svg = svg.replace('<rect width="512" height="512" rx="110" fill="#080808"/>', "")
+        svg = svg.replace('stroke="#dfbd67"', 'stroke="#FFFFFF"')
+        svg = svg.replace('fill="#dfbd67"', 'fill="#FFFFFF"')
+        fallback = output.parent / "_sagi_white_logo_fallback.png"
+        cairosvg.svg2png(bytestring=svg.encode("utf-8"), write_to=str(fallback), output_width=512, output_height=512)
+        logo = fallback
+        print("SAGI_LOGO_FALLBACK_FROM_REPO_SVG", flush=True)
+
     ass_path = output.parent / "_sagi_final_titles.ass"
     write_ass(cfg, ass_path)
 
