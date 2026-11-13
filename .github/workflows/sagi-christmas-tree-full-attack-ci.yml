@@ -1,5 +1,10 @@
 name: SAGI Christmas Tree Full Attack CI
 
+
+concurrency:
+  group: sagi-christmas-tree-full-attack-ci-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
     branches: [main]
