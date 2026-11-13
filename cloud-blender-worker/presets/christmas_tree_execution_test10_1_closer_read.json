@@ -1,6 +1,6 @@
 {
   "project": "SAGI TACTICS",
-  "version": "SAGI TACTICAL DIRECTOR TEST 10.1.1 · CLEAN FLOOR · NO VOICE",
+  "version": "SAGI TACTICAL DIRECTOR TEST 10.1.2 · CLEAN BALL · NO VOICE",
   "fps": 24,
   "duration_sec": 16.2,
   "resolution": [
@@ -20,7 +20,8 @@
     "pitch_alt": "#09090B",
     "tactical_floor": "#000000",
     "pitch_edge": "#030304",
-    "pitch_shadow": "#000000"
+    "pitch_shadow": "#000000",
+    "ball": "#A8ACAF"
   },
   "players": {
     "GK": {
@@ -630,7 +631,7 @@
     }
   ],
   "preview_mode": true,
-  "director_mode": "TACTICAL_TEACTICS_CLOSER_READ_CLEAN_FLOOR",
+  "director_mode": "TACTICAL_TEACTICS_CLOSER_READ_CLEAN_BALL",
   "principles": [
     "complete_pattern_over_dramatic_pacing",
     "tactical_cause_before_camera_motion",
@@ -1068,5 +1069,17 @@
     "locked_player_scale": true,
     "locked_tactics": true,
     "locked_color_language": true
+  },
+  "ball_visual": {
+    "radius": 0.22
+  },
+  "test1012_clean_ball": {
+    "source_baseline": "TEST 10.1.1 · CLEAN FLOOR",
+    "issue": "the near-white ball reads as a glowing white point against the clean black pitch during the shot",
+    "fix": "lower ball luminance and reduce its screen footprint slightly",
+    "locked_camera": true,
+    "locked_player_scale": true,
+    "locked_pitch": true,
+    "locked_tactics": true
   }
 }
