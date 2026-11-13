@@ -1,0 +1,131 @@
+name: SAGI CHRISTMAS TREE FINAL V1
+
+concurrency:
+  group: sagi-christmas-tree-final-v1-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "cloud-blender-worker/presets/christmas_tree_full_lesson_final_v1.json"
+      - "cloud-blender-worker/voice/christmas_tree_full_lesson_final_v1_voice_sync.json"
+      - "cloud-blender-worker/voice/voice_director.py"
+      - "cloud-blender-worker/engine/sagi_tactical_execution_director_v1.py"
+      - ".github/workflows/sagi-christmas-tree-final-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  final-v1:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Blender image
+        run: docker build -t sagi-christmas-final-v1 ./cloud-blender-worker
+
+      - name: Render 101-second tactics-first master
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p final_v1_out
+
+          docker run --rm \
+            -v "$PWD/final_v1_out:/out" \
+            sagi-christmas-final-v1 \
+            bash -lc '
+              blender --background \
+                --python /app/engine/sagi_tactical_execution_director_v1.py \
+                -- \
+                /app/presets/christmas_tree_full_lesson_final_v1.json \
+                /out
+
+              ffmpeg -y -loglevel error \
+                -framerate 24 \
+                -i /out/frames/frame_%04d.png \
+                -f lavfi \
+                -i anullsrc=channel_layout=stereo:sample_rate=48000 \
+                -map 0:v:0 -map 1:a:0 \
+                -c:v libx264 -profile:v baseline -level 3.1 \
+                -pix_fmt yuv420p -preset veryfast -crf 23 \
+                -c:a aac -b:a 64k -shortest -movflags +faststart \
+                /out/SAGI_CHRISTMAS_TREE_FINAL_V1_NO_VOICE.mp4
+            '
+
+          sudo chown -R "$USER":"$USER" final_v1_out
+          test -s final_v1_out/SAGI_CHRISTMAS_TREE_FINAL_V1_NO_VOICE.mp4
+          test -s final_v1_out/scene.blend
+
+          ffprobe -v error \
+            -show_entries format=duration:stream=codec_name,width,height,r_frame_rate \
+            -of json final_v1_out/SAGI_CHRISTMAS_TREE_FINAL_V1_NO_VOICE.mp4 \
+            | tee final_v1_out/master_probe.json
+
+          python3 - <<'PY'
+          import json
+          d=json.load(open("final_v1_out/master_probe.json"))
+          dur=float(d["format"]["duration"])
+          assert abs(dur-101.0) <= 0.25, dur
+          print("MASTER_101_OK", dur)
+          PY
+
+      - name: Install Voice Director
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          python3 -m pip install --upgrade pip
+          python3 -m pip install edge-tts
+          python3 -m py_compile cloud-blender-worker/voice/voice_director.py
+
+      - name: Generate slot-locked narration and final voice master
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 cloud-blender-worker/voice/voice_director.py \
+            --config cloud-blender-worker/voice/christmas_tree_full_lesson_final_v1_voice_sync.json \
+            --video final_v1_out/SAGI_CHRISTMAS_TREE_FINAL_V1_NO_VOICE.mp4 \
+            --out-dir final_v1_voice \
+            | tee final_v1_voice_stdout.json
+
+          test -s final_v1_voice/SAGI_TACTICS_CHRISTMAS_TREE_V1_VOICE.mp4
+          test -s final_v1_voice/sagi_voice_101s.wav
+          test -s final_v1_voice/sagi_voice_101s.srt
+          test -s final_v1_voice/voice_director_report.json
+
+          python3 - <<'PY'
+          import json
+          d=json.load(open("final_v1_voice/voice_director_report.json"))
+          assert d["all_slots_fit"]
+          assert d["text_lock_preserved"]
+          assert abs(float(d["final_video_duration_sec"])-101.0) <= 0.25
+          print("VOICE_FINAL_101_OK")
+          PY
+
+          cp final_v1_voice/SAGI_TACTICS_CHRISTMAS_TREE_V1_VOICE.mp4 \
+             final_v1_out/SAGI_CHRISTMAS_TREE_FINAL_V1_VOICE.mp4
+          cp final_v1_voice/sagi_voice_101s.srt \
+             final_v1_out/SAGI_CHRISTMAS_TREE_FINAL_V1.srt
+          cp final_v1_voice/voice_director_report.json \
+             final_v1_out/voice_director_report.json
+
+      - name: Upload FINAL V1
+        uses: actions/upload-artifact@v4
+        with:
+          name: SAGI-CHRISTMAS-TREE-FINAL-V1
+          path: |
+            final_v1_out/SAGI_CHRISTMAS_TREE_FINAL_V1_VOICE.mp4
+            final_v1_out/SAGI_CHRISTMAS_TREE_FINAL_V1_NO_VOICE.mp4
+            final_v1_out/SAGI_CHRISTMAS_TREE_FINAL_V1.srt
+            final_v1_out/voice_director_report.json
+            final_v1_out/master_probe.json
+            final_v1_out/execution_report.json
+            final_v1_out/scene.blend
+            cloud-blender-worker/presets/christmas_tree_full_lesson_final_v1.json
+            cloud-blender-worker/voice/christmas_tree_full_lesson_final_v1_voice_sync.json
+          retention-days: 7
