@@ -1,0 +1,52 @@
+name: SAGI TACTICS REBASE 01 CI
+
+concurrency:
+  group: sagi-tactics-rebase-01-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "cloud-blender-worker/engine/sagi_tactics_rebase_01.py"
+      - "cloud-blender-worker/presets/christmas_tree_rebase_01.json"
+      - "cloud-blender-worker/Dockerfile"
+      - ".github/workflows/sagi-tactics-rebase-01.yml"
+  workflow_dispatch:
+
+jobs:
+  render-rebase-01:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Blender image
+        run: docker build -t sagi-rebase-01 ./cloud-blender-worker
+
+      - name: Render REBASE 01
+        run: |
+          set -euo pipefail
+          mkdir -p rebase_out
+          docker run --rm             -v "$PWD/rebase_out:/out"             sagi-rebase-01             sh -lc '
+              blender --background                 --python /app/engine/sagi_tactics_rebase_01.py                 -- /app/presets/christmas_tree_rebase_01.json /out
+
+              ffmpeg -y -loglevel error                 -framerate 24                 -i /out/frames/frame_%04d.png                 -f lavfi                 -i anullsrc=channel_layout=stereo:sample_rate=44100                 -map 0:v:0 -map 1:a:0                 -c:v libx264                 -profile:v baseline                 -level 3.1                 -pix_fmt yuv420p                 -preset veryfast                 -crf 23                 -c:a aac                 -b:a 64k                 -shortest                 -movflags +faststart                 /out/SAGI_TACTICS_REBASE_01.mp4
+            '
+
+          test -s rebase_out/SAGI_TACTICS_REBASE_01.mp4
+          test -s rebase_out/scene.blend
+
+          ffprobe -v error             -show_entries format=duration:stream=codec_name,width,height,r_frame_rate             -of json rebase_out/SAGI_TACTICS_REBASE_01.mp4             | tee rebase_out/probe.json
+
+      - name: Upload REBASE 01
+        uses: actions/upload-artifact@v4
+        with:
+          name: sagi-tactics-rebase-01
+          path: |
+            rebase_out/SAGI_TACTICS_REBASE_01.mp4
+            rebase_out/scene.blend
+            rebase_out/probe.json
+          retention-days: 7
