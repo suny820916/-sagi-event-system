@@ -1,17 +1,17 @@
-name: SAGI TACTICS CAMERA DNA GOLDEN 15S
+name: SAGI TACTICAL EXECUTION DIRECTOR
 
 concurrency:
-  group: sagi-camera-dna-golden-${{ github.ref }}
+  group: sagi-tactical-execution-${{ github.ref }}
   cancel-in-progress: true
 
 on:
   push:
     branches: [main]
     paths:
-      - "cloud-blender-worker/engine/sagi_tactics_camera_dna_v1.py"
+      - "cloud-blender-worker/engine/sagi_tactical_execution_director_v1.py"
       - "cloud-blender-worker/presets/christmas_tree_golden_15s.json"
       - "cloud-blender-worker/Dockerfile"
-      - ".github/workflows/sagi-camera-dna-golden.yml"
+      - ".github/workflows/sagi-tactical-execution-golden.yml"
   workflow_dispatch:
 
 jobs:
@@ -24,15 +24,15 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build Blender image
-        run: docker build -t sagi-camera-dna ./cloud-blender-worker
+        run: docker build -t sagi-tactical-execution ./cloud-blender-worker
 
-      - name: Render 15s Golden Sample
+      - name: Render Tactical Execution Master
         run: |
           set -euo pipefail
           mkdir -p golden_out
           docker run --rm \
             -v "$PWD/golden_out:/out" \
-            sagi-camera-dna \
+            sagi-tactical-execution \
             sh -lc '
               blender --background \
                 --python /app/engine/sagi_tactics_camera_dna_v1.py \
@@ -54,23 +54,23 @@ jobs:
                 -b:a 64k \
                 -shortest \
                 -movflags +faststart \
-                /out/SAGI_CAMERA_DNA_GOLDEN_15S.mp4
+                /out/SAGI_TACTICAL_EXECUTION_CHRISTMAS_TREE_V1.mp4
             '
 
-          test -s golden_out/SAGI_CAMERA_DNA_GOLDEN_15S.mp4
+          test -s golden_out/SAGI_TACTICAL_EXECUTION_CHRISTMAS_TREE_V1.mp4
           test -s golden_out/scene.blend
 
           ffprobe -v error \
             -show_entries format=duration:stream=codec_name,width,height,r_frame_rate \
-            -of json golden_out/SAGI_CAMERA_DNA_GOLDEN_15S.mp4 \
+            -of json golden_out/SAGI_TACTICAL_EXECUTION_CHRISTMAS_TREE_V1.mp4 \
             | tee golden_out/probe.json
 
-      - name: Upload Golden Sample
+      - name: Upload Tactical Execution Master
         uses: actions/upload-artifact@v4
         with:
-          name: sagi-camera-dna-golden-15s
+          name: sagi-tactical-execution-golden-15s
           path: |
-            golden_out/SAGI_CAMERA_DNA_GOLDEN_15S.mp4
+            golden_out/SAGI_TACTICAL_EXECUTION_CHRISTMAS_TREE_V1.mp4
             golden_out/scene.blend
             golden_out/probe.json
           retention-days: 7
