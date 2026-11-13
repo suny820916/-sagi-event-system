@@ -180,7 +180,7 @@ def event_end(ev):
     typ = ev.get("type")
     if typ in ("pass", "shot"):
         return float(ev.get("arrive", ev.get("release", event_start(ev))))
-    if typ in ("player_move", "defender_shift", "dribble", "space"):
+    if typ in ("player_move", "defender_shift", "dribble", "space", "face"):
         return event_start(ev) + float(ev.get("duration", 0.0))
     return event_start(ev)
 
@@ -977,6 +977,8 @@ def relation_camera_key(
     margin=1.20,
     shot_scale=None,
     field_scope=None,
+    lead_sec=None,
+    settle_sec=None,
 ):
     """Reframe from the actual tactical relationship instead of fixed coordinates."""
     global camera_last, camera_last_t
@@ -985,6 +987,12 @@ def relation_camera_key(
     p = relation_camera_pose(
         subjects, t, focus_t, lens, min_z, margin, shot_scale, field_scope
     )
+    # Director-script override: a tactical cue may need the camera to begin
+    # preparing noticeably before the action, instead of using one global lead.
+    if lead_sec is not None:
+        p["lead"] = float(lead_sec)
+    if settle_sec is not None:
+        p["settle"] = float(settle_sec)
 
     # Spatial continuity: in an upfield attack, don't let the camera centre
     # suddenly jump backwards just because a supporting runner started deeper.
@@ -1190,6 +1198,26 @@ def yaw_toward(src_xy, dst_xy):
     if abs(dx) + abs(dy) <= 1e-6:
         return None
     return math.atan2(-dx, dy)
+
+
+def face_player(name, target, t0, duration=.18):
+    """Turn a miniature toward a tactical reference before the next action."""
+    o = players[name]
+    t0 = float(t0)
+    duration = max(.04, float(duration))
+    src_xy = predicted_player_pos(name, t0)
+    if isinstance(target, str):
+        target_xy = predicted_player_pos(target, t0 + duration)
+    else:
+        target_xy = (float(target[0]), float(target[1]))
+    yaw = yaw_toward(src_xy, target_xy)
+    if yaw is None:
+        return
+    f0 = 1 + round(t0 * fps)
+    f1 = min(scene.frame_end, 1 + round((t0 + duration) * fps))
+    key(o, "rotation_euler", f0)
+    o.rotation_euler[2] = yaw
+    key(o, "rotation_euler", f1)
 
 
 def next_action_target(name, after_t):
@@ -1428,12 +1456,22 @@ for ev in cfg.get("events", []):
             float(ev.get("margin", 1.20)),
             ev.get("shot_scale"),
             ev.get("field_scope"),
+            ev.get("lead_sec"),
+            ev.get("settle_sec"),
         )
 
     elif typ == "focus":
         focus_player(
             ev["player"],
             float(ev["t"]),
+        )
+
+    elif typ == "face":
+        face_player(
+            ev["player"],
+            ev["target"],
+            float(ev["t"]),
+            float(ev.get("duration", .18)),
         )
 
     elif typ in ("player_move", "defender_shift"):
