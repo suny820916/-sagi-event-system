@@ -244,7 +244,7 @@ m_ball = material(
 # The regulation markings remain 68 x 105 below, but the dark pitch surface
 # continues beyond the touchlines so oblique Teactics-style cameras can pan
 # and lead into wide spaces without revealing the black world background.
-cube("PITCH", (0, 0, 0), (48, 68, .18), m_pitch)
+cube("PITCH", (0, 0, 0), (80, 100, .18), m_pitch)
 
 # Teactics-like low-contrast horizontal spatial bands.
 # They support depth reading without turning the pitch into a grass texture.
@@ -484,6 +484,8 @@ scene.camera = cam
 camera_presets = {
     # V05: elevated tactical angles keep the playing surface in frame.
     "shape": {"loc": (0,-17,125), "target": (0,-10,0), "lens": 57},
+    # Closer portrait framing for the opening formation reveal.
+    "intro_shape": {"loc": (0,-14,108), "target": (0,-6,0), "lens": 60},
     "relation": {"loc": (6,-16,94), "target": (3,-12,0), "lens": 57},
     "result": {"loc": (3,10,96), "target": (3,12,0), "lens": 55},
     "finish": {"loc": (4,28,83), "target": (4,36,0), "lens": 53},
