@@ -856,6 +856,17 @@ def relation_camera_key(subjects, t, focus_t=None, lens=64.0, min_z=64.0, margin
             p["target"] = (p["target"][0], min_allowed_y, p["target"][2])
             p["loc"] = (p["loc"][0], p["loc"][1] + dy, p["loc"][2])
 
+    # Camera-rail scale continuity:
+    # zoom OUT immediately when the structure needs more room, but zoom IN only
+    # gradually from phase to phase. This keeps the tactical space coherent.
+    if camera_last is not None and continuity_cfg.get("preserve_scale_continuity", False):
+        prev_z = float(camera_last["loc"][2])
+        new_z = float(p["loc"][2])
+        max_zoom_in = float(continuity_cfg.get("max_zoom_in_per_phase_m", 8.0))
+        min_allowed_z = max(1.0, prev_z - max_zoom_in)
+        if new_z < min_allowed_z:
+            p["loc"] = (p["loc"][0], p["loc"][1], min_allowed_z)
+
     if camera_last is None or t <= .001:
         apply_camera_pose(p, 1 + round(t * fps))
         camera_last = p
