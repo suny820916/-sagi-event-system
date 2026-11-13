@@ -627,6 +627,54 @@ def camera_lead_space(center, t, duration, base_preset="between_lines", height=N
     camera_last_t = float(t) + float(duration)
 
 
+def set_player_visible(name, visible, frame):
+    """Key body visibility for chapter changes; focus rings stay editorial."""
+    prefix = name + "_"
+    for obj in bpy.data.objects:
+        if obj.name == name or obj.name.startswith(prefix):
+            # Never auto-show a focus ring at a chapter boundary.
+            if obj.name == name + "_RING":
+                obj.hide_render = True
+            else:
+                obj.hide_render = not bool(visible)
+            obj.keyframe_insert("hide_render", frame=frame)
+
+
+def chapter_state(ev):
+    """Reset one lesson chapter inside the same Blender scene.
+
+    This is an editorial cut, not a new render: it can swap opponent units,
+    restore a formation, and hand ball possession to the correct player.
+    """
+    fr = 1 + round(float(ev["t"]) * fps)
+    visible = set(ev.get("visible_players", players.keys()))
+
+    for name in players:
+        set_player_visible(name, name in visible, fr)
+
+    for name, pos in ev.get("positions", {}).items():
+        if name not in players:
+            continue
+        obj = players[name]
+        # One-frame state change so no unexplained sprint appears between
+        # attack, defense and summary chapters.
+        obj.location = (float(pos[0]), float(pos[1]), obj.location.z)
+        key(obj, "location", fr)
+
+    owner = ev.get("ball_owner")
+    if owner:
+        if owner not in players:
+            raise ValueError(f"Unknown chapter ball owner: {owner}")
+        o = players[owner]
+        ball.location = (o.location.x, o.location.y, .37)
+        key(ball, "location", fr)
+
+    # Clear tactical emphasis at every chapter boundary.
+    for r in rings.values():
+        r.hide_render = True
+        r.keyframe_insert("hide_render", frame=fr)
+
+
 def focus_player(name, t):
     fr = 1 + round(t * fps)
     for n, r in rings.items():
@@ -904,7 +952,10 @@ camera_key("shape", 0)
 for ev in cfg.get("events", []):
     typ = ev.get("type")
 
-    if typ == "camera":
+    if typ == "chapter_state":
+        chapter_state(ev)
+
+    elif typ == "camera":
         camera_key(
             ev["preset"],
             float(ev["t"]),
