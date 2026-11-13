@@ -12,9 +12,22 @@ def args_after_dd():
     return sys.argv[sys.argv.index("--") + 1:]
 
 
+COLOR_INPUT_SRGB = False
+
+
+def _srgb_to_linear(v):
+    v = max(0.0, min(1.0, float(v)))
+    if v <= 0.04045:
+        return v / 12.92
+    return ((v + 0.055) / 1.055) ** 2.4
+
+
 def hex_rgba(h, alpha=1.0):
     h = h.lstrip("#")
-    return tuple(int(h[i:i+2], 16) / 255.0 for i in (0, 2, 4)) + (alpha,)
+    rgb = tuple(int(h[i:i+2], 16) / 255.0 for i in (0, 2, 4))
+    if COLOR_INPUT_SRGB:
+        rgb = tuple(_srgb_to_linear(v) for v in rgb)
+    return rgb + (alpha,)
 
 
 def clear_scene():
@@ -166,6 +179,11 @@ out_dir = os.path.abspath(args[1])
 os.makedirs(out_dir, exist_ok=True)
 with open(cfg_path, "r", encoding="utf-8") as f:
     cfg = json.load(f)
+
+# Design palettes are authored as normal sRGB HEX values. Blender material
+# colors are linear, so opt-in conversion is required if we want a written
+# #09090B to actually render visually near #09090B instead of a lifted grey.
+COLOR_INPUT_SRGB = str(cfg.get("palette_input_space", "LINEAR")).upper() == "SRGB"
 
 
 def event_start(ev):
