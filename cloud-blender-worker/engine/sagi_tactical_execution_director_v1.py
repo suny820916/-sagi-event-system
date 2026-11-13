@@ -443,8 +443,21 @@ try:
     scene.render.image_settings.color_mode = "RGB"
 except Exception:
     pass
+cm = cfg.get("color_management", {})
 try:
-    scene.view_settings.look = "AgX - Medium High Contrast"
+    scene.view_settings.view_transform = str(cm.get("view_transform", "AgX"))
+except Exception:
+    pass
+try:
+    if cm.get("look"):
+        scene.view_settings.look = str(cm["look"])
+    elif str(cm.get("view_transform", "AgX")) == "AgX":
+        scene.view_settings.look = "AgX - Medium High Contrast"
+except Exception:
+    pass
+try:
+    scene.view_settings.exposure = float(cm.get("exposure", 0.0))
+    scene.view_settings.gamma = float(cm.get("gamma", 1.0))
 except Exception:
     pass
 
