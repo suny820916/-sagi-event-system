@@ -1,6 +1,6 @@
 {
   "project": "SAGI TACTICS",
-  "version": "SAGI TACTICAL EXECUTION DIRECTOR V11.0 · CENTRAL MASTER SYSTEM",
+  "version": "SAGI TACTICAL EXECUTION DIRECTOR V11.1 · FLOATING CENTRAL PITCH",
   "fps": 24,
   "duration_sec": 15.2,
   "resolution": [
@@ -18,7 +18,9 @@
     "opponent": "#92979B",
     "ring": "#F3F500",
     "pitch_alt": "#101315",
-    "tactical_floor": "#080A0B"
+    "tactical_floor": "#020304",
+    "pitch_edge": "#07090A",
+    "pitch_shadow": "#010203"
   },
   "players": {
     "GK": {
@@ -193,11 +195,11 @@
       ],
       "focus_t": 0.9,
       "lens": 54,
-      "min_z": 82,
-      "margin": 1.03,
+      "min_z": 118,
+      "margin": 1.08,
       "type": "relation_camera",
       "shot_scale": "CENTRAL_MASTER",
-      "field_scope": "FULL_PITCH",
+      "field_scope": "FLOATING_BOARD",
       "phase_name": "OPENING_MASTER"
     },
     {
@@ -400,11 +402,11 @@
       ],
       "focus_t": 10.2,
       "lens": 54,
-      "min_z": 82,
-      "margin": 1.03,
+      "min_z": 118,
+      "margin": 1.08,
       "type": "relation_camera",
       "shot_scale": "CENTRAL_MASTER",
-      "field_scope": "FULL_PITCH",
+      "field_scope": "FLOATING_BOARD",
       "phase_name": "SHIFT_AND_SWITCH"
     },
     {
@@ -745,18 +747,19 @@
   },
   "central_master": {
     "benchmark": "TEACTICS",
-    "principle": "use a stable pitch-centred master shot as the spatial map; cut or glide into local tactical relations, then return to the map when global spacing becomes the tactical question",
-    "field_scope": "FULL_PITCH",
+    "principle": "use a stable floating pitch-centred master shot as the spatial map; the whole physical pitch board must remain visible with dark breathing room around it",
+    "field_scope": "FLOATING_BOARD",
     "tilt_back_m": 4.8,
     "uses": [
       "OPENING_MAP",
       "STRONG_WEAK_SIDE_RESET"
     ],
     "rules": [
-      "pitch centre owns composition in CENTRAL_MASTER",
+      "pitch board centre owns composition in CENTRAL_MASTER",
+      "show the full physical board silhouette, not only the white touchlines",
+      "preserve dark breathing room around the board so it reads as suspended in space",
       "do not let player clusters drag the master shot off-centre",
-      "use the master shot briefly as spatial orientation, not as the default view",
-      "return to local relation framing once the viewer understands the global spacing"
+      "use the floating master briefly as spatial orientation, then return to tactical relation framing"
     ]
   }
 }
