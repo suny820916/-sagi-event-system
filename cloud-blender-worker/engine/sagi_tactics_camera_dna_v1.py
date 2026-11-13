@@ -475,31 +475,39 @@ cam = bpy.context.object
 scene.camera = cam
 
 camera_dna = {
-    # Event-driven camera grammar. Each cue answers one tactical question.
-    # loc/target stay on one visual axis; only depth, bias and lens change.
+    # Teactics-derived grammar applied to SAGI:
+    # frame only the players needed to understand the tactical question.
+    # The camera anticipates the next relation, settles quickly, then stays quiet.
     "receive": {
-        "loc": (4,-23,84), "target": (0,-11,0), "lens": 60,
+        # Pirlo + first presser + nearest support; no need to show the whole pitch.
+        "loc": (3,-19,78), "target": (0,-11,0), "lens": 64,
         "lead": .00, "settle": .00,
     },
     "expand": {
-        "loc": (3,-18,101), "target": (0,-6,0), "lens": 58,
-        "lead": .28, "settle": .22,
+        # Reveal both 8s and the opponent midfield line in one readable comparison.
+        "loc": (2,-15,94), "target": (0,-4,0), "lens": 60,
+        "lead": .24, "settle": .16,
     },
     "half_space": {
-        "loc": (6,-5,90), "target": (4,10,0), "lens": 62,
-        "lead": .30, "settle": .20,
+        # Tight enough to read Kaka entering between the lines,
+        # wide enough to keep Pirlo and the nearest defenders in the same story.
+        "loc": (6,-1,82), "target": (4,10,0), "lens": 66,
+        "lead": .26, "settle": .16,
     },
     "overlap": {
-        "loc": (11,0,92), "target": (13,15,0), "lens": 59,
-        "lead": .30, "settle": .22,
+        # Reserved for future clips; keep on the same visual axis.
+        "loc": (10,2,84), "target": (13,16,0), "lens": 63,
+        "lead": .26, "settle": .16,
     },
     "switch": {
-        "loc": (3,10,102), "target": (0,22,0), "lens": 56,
-        "lead": .34, "settle": .24,
+        # Show strong-side attraction and weak-side target together.
+        "loc": (2,12,92), "target": (0,24,0), "lens": 59,
+        "lead": .28, "settle": .18,
     },
     "finish": {
-        "loc": (-3,27,76), "target": (-5,39,0), "lens": 61,
-        "lead": .30, "settle": .18,
+        # Final-third close tactical view: receiver, nearest centre-backs and goal.
+        "loc": (-3,30,69), "target": (-5,40,0), "lens": 66,
+        "lead": .24, "settle": .14,
     },
 }
 
