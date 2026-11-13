@@ -1,6 +1,6 @@
 {
   "project": "SAGI TACTICS",
-  "version": "SAGI TACTICAL EXECUTION DIRECTOR V10 · FIELD SCALE SCRIPT",
+  "version": "SAGI TACTICAL EXECUTION DIRECTOR V10.1 · TEACTICS SCALE TIMING",
   "fps": 24,
   "duration_sec": 15.2,
   "resolution": [
@@ -235,11 +235,11 @@
       ],
       "focus_t": 3,
       "lens": 58,
-      "min_z": 52,
-      "margin": 1.12,
+      "min_z": 46,
+      "margin": 1.08,
       "type": "relation_camera",
       "shot_scale": "WIDE_STRUCTURE",
-      "field_scope": "CENTRAL_THREE_QUARTERS",
+      "field_scope": "CENTRAL_MIDFIELD_WIDE",
       "phase_name": "STRETCH"
     },
     {
@@ -287,19 +287,16 @@
       "subjects": [
         "PIRLO",
         "KAKA",
-        "SEEDORF",
-        "INZAGHI",
         "OM_C",
-        "OM_R",
         "OCB_R"
       ],
       "focus_t": 5.45,
       "lens": 60,
-      "min_z": 50,
-      "margin": 1.12,
+      "min_z": 42,
+      "margin": 1.07,
       "type": "relation_camera",
       "shot_scale": "RELATION",
-      "field_scope": "MIDFIELD_ZONE",
+      "field_scope": "CENTRAL_ATTACK_RELATION",
       "phase_name": "BETWEEN_LINES"
     },
     {
@@ -335,18 +332,16 @@
       "subjects": [
         "KAKA",
         "RB",
-        "RCM",
-        "INZAGHI",
         "OM_R",
         "OCB_R"
       ],
       "focus_t": 7.55,
       "lens": 60,
-      "min_z": 50,
-      "margin": 1.12,
+      "min_z": 40,
+      "margin": 1.07,
       "type": "relation_camera",
       "shot_scale": "RELATION",
-      "field_scope": "RIGHT_CHANNEL_ZONE",
+      "field_scope": "RIGHT_OVERLAP_RELATION",
       "phase_name": "OVERLAP"
     },
     {
@@ -390,11 +385,11 @@
       ],
       "focus_t": 10.2,
       "lens": 56,
-      "min_z": 58,
-      "margin": 1.14,
+      "min_z": 50,
+      "margin": 1.08,
       "type": "relation_camera",
       "shot_scale": "WIDE_STRUCTURE",
-      "field_scope": "ATTACKING_TWO_THIRDS",
+      "field_scope": "ATTACKING_WIDTH_ZONE",
       "phase_name": "SHIFT_AND_SWITCH"
     },
     {
@@ -460,15 +455,14 @@
       "subjects": [
         "SEEDORF",
         "INZAGHI",
-        "KAKA",
         "OCB_L",
         "OCB_R",
         "OGK"
       ],
       "focus_t": 13.1,
       "lens": 60,
-      "min_z": 50,
-      "margin": 1.12,
+      "min_z": 44,
+      "margin": 1.08,
       "type": "relation_camera",
       "shot_scale": "RESULT_RELATION",
       "field_scope": "FINAL_THIRD",
@@ -561,6 +555,8 @@
     "principle": "learn_expression_not_copy_content",
     "locked_direction": true,
     "priorities": [
+      "semi_global_should_not_default_to_near_full_pitch",
+      "local_relation_shots_should_be_defined_by_relevant_players_only",
       "local_and_global_views_are_both_valid_when_tactically_justified",
       "field_extent_should_change_with_tactical_question",
       "visible_pitch_scope_must_match_tactical_information",
@@ -632,7 +628,7 @@
     "weak_side_release": "left"
   },
   "scale_script": {
-    "principle": "camera scale and visible pitch area are both tactical language",
+    "principle": "use the smallest field extent that fully explains the tactical question; return wider only when structure or strong-weak-side spacing must be read",
     "benchmark": "TEACTICS",
     "rules": [
       "use full or near-full pitch only when the viewer needs global structure",
@@ -674,7 +670,7 @@
         "purpose": "show weak-side receive, central occupation, defenders and goal relation"
       }
     },
-    "local_relation_history_sec": 0.68
+    "local_relation_history_sec": 0.56
   },
   "field_scale_script": {
     "enabled": true,
@@ -722,7 +718,9 @@
       "local_closeup_may_crop_pitch_lines": true,
       "retain_attack_direction_reference": true,
       "return_to_structure_after_local_relation": true,
-      "pitch_extent_must_match_tactical_question": true
-    }
+      "pitch_extent_must_match_tactical_question": true,
+      "minimum_necessary_field_extent": true
+    },
+    "version": "V10.1"
   }
 }
