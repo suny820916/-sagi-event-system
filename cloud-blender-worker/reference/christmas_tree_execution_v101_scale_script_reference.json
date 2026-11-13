@@ -1,0 +1,726 @@
+{
+  "project": "SAGI TACTICS",
+  "version": "SAGI TACTICAL EXECUTION DIRECTOR V10.1 · TEACTICS SCALE TIMING",
+  "fps": 24,
+  "duration_sec": 15.2,
+  "resolution": [
+    540,
+    960
+  ],
+  "render_engine": "BLENDER_WORKBENCH",
+  "attack_direction": "upfield(+Y)",
+  "palette": {
+    "background": "#020304",
+    "pitch": "#0D1012",
+    "pitch_line": "#41474B",
+    "own_primary": "#F3F500",
+    "own_secondary": "#C5C700",
+    "opponent": "#92979B",
+    "ring": "#F3F500",
+    "pitch_alt": "#101315",
+    "tactical_floor": "#080A0B"
+  },
+  "players": {
+    "GK": {
+      "team": "own",
+      "pos": [
+        0,
+        -40
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "LB": {
+      "team": "own",
+      "pos": [
+        -24,
+        -24
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "LCB": {
+      "team": "own",
+      "pos": [
+        -10,
+        -28
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "RCB": {
+      "team": "own",
+      "pos": [
+        10,
+        -28
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "RB": {
+      "team": "own",
+      "pos": [
+        24,
+        -24
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "PIRLO": {
+      "team": "own",
+      "pos": [
+        0,
+        -11
+      ],
+      "role": "primary",
+      "yaw": 0
+    },
+    "LCM": {
+      "team": "own",
+      "pos": [
+        -10,
+        -3
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "RCM": {
+      "team": "own",
+      "pos": [
+        10,
+        -3
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "SEEDORF": {
+      "team": "own",
+      "pos": [
+        -7,
+        9
+      ],
+      "role": "primary",
+      "yaw": 0
+    },
+    "KAKA": {
+      "team": "own",
+      "pos": [
+        7,
+        10
+      ],
+      "role": "primary",
+      "yaw": 0
+    },
+    "INZAGHI": {
+      "team": "own",
+      "pos": [
+        0,
+        28
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "O9": {
+      "team": "opp",
+      "pos": [
+        2,
+        -18
+      ],
+      "role": "context",
+      "yaw": 180
+    },
+    "OM_L": {
+      "team": "opp",
+      "pos": [
+        -12,
+        2
+      ],
+      "role": "context",
+      "yaw": 180
+    },
+    "OM_C": {
+      "team": "opp",
+      "pos": [
+        0,
+        3
+      ],
+      "role": "context",
+      "yaw": 180
+    },
+    "OM_R": {
+      "team": "opp",
+      "pos": [
+        12,
+        2
+      ],
+      "role": "context",
+      "yaw": 180
+    },
+    "OCB_L": {
+      "team": "opp",
+      "pos": [
+        -9,
+        23
+      ],
+      "role": "context",
+      "yaw": 180
+    },
+    "OCB_R": {
+      "team": "opp",
+      "pos": [
+        9,
+        23
+      ],
+      "role": "context",
+      "yaw": 180
+    },
+    "OGK": {
+      "team": "opp",
+      "pos": [
+        0,
+        48.5
+      ],
+      "role": "context",
+      "yaw": 180
+    }
+  },
+  "events": [
+    {
+      "t": 0,
+      "subjects": [
+        "LCB",
+        "PIRLO",
+        "LCM",
+        "RCM",
+        "O9"
+      ],
+      "focus_t": 1.15,
+      "lens": 60,
+      "min_z": 48,
+      "margin": 1.12,
+      "type": "relation_camera",
+      "shot_scale": "STRUCTURE",
+      "field_scope": "DEFENSIVE_HALF_PLUS_MIDFIELD",
+      "phase_name": "BUILD"
+    },
+    {
+      "t": 0.45,
+      "type": "pass",
+      "from": "LCB",
+      "to": "PIRLO",
+      "release": 0.55,
+      "arrive": 1.15
+    },
+    {
+      "t": 0.9,
+      "type": "defender_shift",
+      "player": "O9",
+      "to": [
+        2,
+        -13
+      ],
+      "duration": 0.72
+    },
+    {
+      "t": 2.1,
+      "subjects": [
+        "PIRLO",
+        "LCM",
+        "RCM",
+        "KAKA",
+        "SEEDORF",
+        "OM_L",
+        "OM_C",
+        "OM_R"
+      ],
+      "focus_t": 3,
+      "lens": 58,
+      "min_z": 46,
+      "margin": 1.08,
+      "type": "relation_camera",
+      "shot_scale": "WIDE_STRUCTURE",
+      "field_scope": "CENTRAL_MIDFIELD_WIDE",
+      "phase_name": "STRETCH"
+    },
+    {
+      "t": 2.18,
+      "type": "player_move",
+      "player": "LCM",
+      "to": [
+        -19,
+        -1
+      ],
+      "duration": 1
+    },
+    {
+      "t": 2.22,
+      "type": "player_move",
+      "player": "RCM",
+      "to": [
+        19,
+        -1
+      ],
+      "duration": 1
+    },
+    {
+      "t": 2.36,
+      "type": "defender_shift",
+      "player": "OM_L",
+      "to": [
+        -10,
+        2
+      ],
+      "duration": 0.78
+    },
+    {
+      "t": 2.4,
+      "type": "defender_shift",
+      "player": "OM_R",
+      "to": [
+        10,
+        2
+      ],
+      "duration": 0.78
+    },
+    {
+      "t": 4.15,
+      "subjects": [
+        "PIRLO",
+        "KAKA",
+        "OM_C",
+        "OCB_R"
+      ],
+      "focus_t": 5.45,
+      "lens": 60,
+      "min_z": 42,
+      "margin": 1.07,
+      "type": "relation_camera",
+      "shot_scale": "RELATION",
+      "field_scope": "CENTRAL_ATTACK_RELATION",
+      "phase_name": "BETWEEN_LINES"
+    },
+    {
+      "t": 4.18,
+      "type": "player_move",
+      "player": "KAKA",
+      "to": [
+        7,
+        16
+      ],
+      "duration": 0.86
+    },
+    {
+      "t": 4.32,
+      "type": "defender_shift",
+      "player": "OM_C",
+      "to": [
+        1.5,
+        7
+      ],
+      "duration": 0.72
+    },
+    {
+      "t": 5.1,
+      "type": "pass",
+      "from": "PIRLO",
+      "to": "KAKA",
+      "release": 5.18,
+      "arrive": 5.82
+    },
+    {
+      "t": 6.3,
+      "subjects": [
+        "KAKA",
+        "RB",
+        "OM_R",
+        "OCB_R"
+      ],
+      "focus_t": 7.55,
+      "lens": 60,
+      "min_z": 40,
+      "margin": 1.07,
+      "type": "relation_camera",
+      "shot_scale": "RELATION",
+      "field_scope": "RIGHT_OVERLAP_RELATION",
+      "phase_name": "OVERLAP"
+    },
+    {
+      "t": 6.52,
+      "type": "player_move",
+      "player": "RB",
+      "to": [
+        29,
+        18
+      ],
+      "duration": 1.3
+    },
+    {
+      "t": 6.64,
+      "type": "defender_shift",
+      "player": "OM_R",
+      "to": [
+        17,
+        8
+      ],
+      "duration": 0.9
+    },
+    {
+      "t": 7.72,
+      "type": "pass",
+      "from": "KAKA",
+      "to": "RB",
+      "release": 7.8,
+      "arrive": 8.48
+    },
+    {
+      "t": 8.92,
+      "subjects": [
+        "RB",
+        "KAKA",
+        "SEEDORF",
+        "INZAGHI",
+        "OM_R",
+        "OCB_L",
+        "OCB_R"
+      ],
+      "focus_t": 10.2,
+      "lens": 56,
+      "min_z": 50,
+      "margin": 1.08,
+      "type": "relation_camera",
+      "shot_scale": "WIDE_STRUCTURE",
+      "field_scope": "ATTACKING_WIDTH_ZONE",
+      "phase_name": "SHIFT_AND_SWITCH"
+    },
+    {
+      "t": 8.98,
+      "type": "defender_shift",
+      "player": "OM_C",
+      "to": [
+        6.5,
+        12.5
+      ],
+      "duration": 0.72
+    },
+    {
+      "t": 9,
+      "type": "player_move",
+      "player": "SEEDORF",
+      "to": [
+        -13,
+        31
+      ],
+      "duration": 1.08
+    },
+    {
+      "t": 9.06,
+      "type": "defender_shift",
+      "player": "OCB_L",
+      "to": [
+        -4.5,
+        27.5
+      ],
+      "duration": 0.82
+    },
+    {
+      "t": 9.1,
+      "type": "player_move",
+      "player": "INZAGHI",
+      "to": [
+        3,
+        36
+      ],
+      "duration": 0.96
+    },
+    {
+      "t": 9.28,
+      "type": "defender_shift",
+      "player": "OCB_R",
+      "to": [
+        11.5,
+        30.5
+      ],
+      "duration": 0.86
+    },
+    {
+      "t": 9.86,
+      "type": "pass",
+      "from": "RB",
+      "to": "SEEDORF",
+      "release": 9.96,
+      "arrive": 10.94
+    },
+    {
+      "t": 11.82,
+      "subjects": [
+        "SEEDORF",
+        "INZAGHI",
+        "OCB_L",
+        "OCB_R",
+        "OGK"
+      ],
+      "focus_t": 13.1,
+      "lens": 60,
+      "min_z": 44,
+      "margin": 1.08,
+      "type": "relation_camera",
+      "shot_scale": "RESULT_RELATION",
+      "field_scope": "FINAL_THIRD",
+      "phase_name": "COMPLETE"
+    },
+    {
+      "t": 11.92,
+      "type": "dribble",
+      "player": "SEEDORF",
+      "to": [
+        -8,
+        37
+      ],
+      "duration": 0.72
+    },
+    {
+      "t": 12.06,
+      "type": "defender_shift",
+      "player": "OCB_L",
+      "to": [
+        -5.2,
+        35.5
+      ],
+      "duration": 0.62
+    },
+    {
+      "t": 13.2,
+      "type": "shot",
+      "from": "SEEDORF",
+      "to": [
+        -2.2,
+        52.3
+      ],
+      "release": 13.25,
+      "arrive": 14.15,
+      "arc": 0.28
+    }
+  ],
+  "preview_mode": true,
+  "director_mode": "TACTICAL_EXECUTION",
+  "principles": [
+    "complete_pattern_over_dramatic_pacing",
+    "tactical_cause_before_camera_motion",
+    "defensive_reaction_must_be_visible",
+    "no_climax_treatment",
+    "hold_final_shape_until_execution_is_readable"
+  ],
+  "execution_phases": [
+    {
+      "name": "BUILD",
+      "from": 0,
+      "to": 2.1,
+      "question": "How does Pirlo receive under first pressure?"
+    },
+    {
+      "name": "STRETCH",
+      "from": 2.1,
+      "to": 4.15,
+      "question": "How do the side midfielders stretch the block?"
+    },
+    {
+      "name": "BETWEEN_LINES",
+      "from": 4.15,
+      "to": 6.3,
+      "question": "How is the receiver found between the lines?"
+    },
+    {
+      "name": "OVERLAP",
+      "from": 6.3,
+      "to": 8.92,
+      "question": "How does the fullback overlap change the defensive relationship?"
+    },
+    {
+      "name": "SHIFT_AND_SWITCH",
+      "from": 8.92,
+      "to": 11.82,
+      "question": "How is the block moved before the weak-side switch?"
+    },
+    {
+      "name": "COMPLETE",
+      "from": 11.82,
+      "to": 15.2,
+      "question": "How is the weak-side advantage fully executed?"
+    }
+  ],
+  "initial_ball_holder": "LCB",
+  "require_defensive_reaction": true,
+  "benchmark": {
+    "reference": "TEACTICS",
+    "principle": "learn_expression_not_copy_content",
+    "locked_direction": true,
+    "priorities": [
+      "semi_global_should_not_default_to_near_full_pitch",
+      "local_relation_shots_should_be_defined_by_relevant_players_only",
+      "local_and_global_views_are_both_valid_when_tactically_justified",
+      "field_extent_should_change_with_tactical_question",
+      "visible_pitch_scope_must_match_tactical_information",
+      "full_pitch_and_local_pitch_are_both_valid_when_tactically_motivated",
+      "weak_side_space_must_be_caused_by_collective_defensive_shift",
+      "defenders_should_move_as_a_block_not_as_isolated_markers",
+      "receive_turn_next_action_must_read_as_one_chain",
+      "body_orientation_should_reveal_tactical_intent",
+      "no_floating_pitch_or_black_void_in_wide_structure_views",
+      "no_abrupt_scale_reset_between_tactical_phases",
+      "camera_center_must_follow_tactical_progression",
+      "no_tactical_subject_on_frame_edge",
+      "whole_tactical_picture_before_local_beauty",
+      "local_relation_must_keep_formation_context",
+      "spatial_continuity_between_phases",
+      "relation_camera_must_protect_start_mid_end_positions",
+      "switch_camera_may_follow_ball_between_zones",
+      "players_must_read_as_people_not_chess_pieces",
+      "tactical_clarity",
+      "complete_execution",
+      "stable_camera_until_relation_changes",
+      "ball_drives_tempo",
+      "player_reaction_follows_tactical_cause",
+      "no_unnecessary_effects",
+      "no_dramatic_climax",
+      "minimal_dead_time",
+      "few_relevant_players_per_frame"
+    ]
+  },
+  "visual_integrity": {
+    "locked": true,
+    "rule": "Every tactical shot must preserve both the local relation and enough formation structure to understand where it belongs.",
+    "minimum_context": "carrier + next option + nearest defender + two structural anchors",
+    "no_isolated_triangle_shots": true,
+    "no_contextless_closeups": true,
+    "preserve_attack_direction": true,
+    "preserve_spatial_continuity": true,
+    "edge_safe_zone": true,
+    "edge_safe_rule": "No tactical subject should sit on or be clipped by the portrait-frame edge.",
+    "spatial_continuity": true,
+    "scale_continuity": true,
+    "continuous_tactical_background": true,
+    "background_rule": "Wide tactical views may reveal more board, but must never reveal a hard visual void beyond the pitch.",
+    "field_scope_is_tactical": true,
+    "field_scope_rule": "The amount of pitch visible must be chosen by tactical information need, not by a fixed camera aesthetic."
+  },
+  "camera_continuity": {
+    "preserve_forward_progression": true,
+    "max_backward_target_m": 1.5,
+    "lead_sec": 0.34,
+    "settle_sec": 0.32,
+    "principle": "preserve spatial continuity, but allow deliberate tactical scale changes between structure and relation shots",
+    "preserve_scale_continuity": true,
+    "max_zoom_in_per_phase_m": 8,
+    "allow_scale_reset_on_shot_scale_change": true
+  },
+  "action_continuity": {
+    "enabled": true,
+    "principle": "the next tactical action begins in body orientation before the current action fully ends",
+    "passer_pre_turn_sec": 0.12,
+    "receiver_scan_sec": 0.18,
+    "post_receive_turn_window_sec": 0.34,
+    "first_touch_distance_m": 0.16
+  },
+  "defensive_response": {
+    "enabled": true,
+    "principle": "space must be created by visible collective defensive movement, not by static empty zones",
+    "strong_side_shift": "right",
+    "weak_side_release": "left"
+  },
+  "scale_script": {
+    "principle": "use the smallest field extent that fully explains the tactical question; return wider only when structure or strong-weak-side spacing must be read",
+    "benchmark": "TEACTICS",
+    "rules": [
+      "use full or near-full pitch only when the viewer needs global structure",
+      "use half-pitch or zone framing when the tactical relation is local",
+      "never show the whole field just to look complete",
+      "never crop pitch landmarks that are needed to understand the action",
+      "return to wider pitch context after a local tactical explanation when the next phase depends on global spacing",
+      "global-to-local and local-to-global scale changes may be decisive when the tactical question changes"
+    ],
+    "phases": {
+      "BUILD": {
+        "shot_scale": "STRUCTURE",
+        "field_scope": "DEFENSIVE_HALF_PLUS_MIDFIELD",
+        "purpose": "show buildup base, Pirlo depth and first pressure"
+      },
+      "STRETCH": {
+        "shot_scale": "WIDE_STRUCTURE",
+        "field_scope": "CENTRAL_THREE_QUARTERS",
+        "purpose": "show both side midfielders stretching the block"
+      },
+      "BETWEEN_LINES": {
+        "shot_scale": "RELATION",
+        "field_scope": "MIDFIELD_ZONE",
+        "purpose": "show Pirlo-Kaka-defender relation without wasting screen on remote pitch"
+      },
+      "OVERLAP": {
+        "shot_scale": "RELATION",
+        "field_scope": "RIGHT_CHANNEL_ZONE",
+        "purpose": "show Kaka-RB-defender triangle and overlap timing"
+      },
+      "SHIFT_AND_SWITCH": {
+        "shot_scale": "WIDE_STRUCTURE",
+        "field_scope": "ATTACKING_TWO_THIRDS",
+        "purpose": "show strong-side defensive shift and weak-side space simultaneously"
+      },
+      "COMPLETE": {
+        "shot_scale": "RESULT_RELATION",
+        "field_scope": "FINAL_THIRD",
+        "purpose": "show weak-side receive, central occupation, defenders and goal relation"
+      }
+    },
+    "local_relation_history_sec": 0.56
+  },
+  "field_scale_script": {
+    "enabled": true,
+    "principle": "field visibility and camera scale are chosen by tactical information needs, not visual uniformity",
+    "stages": [
+      {
+        "phase": "BUILD",
+        "shot": "GLOBAL",
+        "field": "large_pitch_context",
+        "purpose": "locate first build-up relation and attack direction"
+      },
+      {
+        "phase": "STRETCH",
+        "shot": "SEMI_GLOBAL",
+        "field": "middle_thirds",
+        "purpose": "show midfield width and defensive block stretch"
+      },
+      {
+        "phase": "BETWEEN_LINES",
+        "shot": "RELATION_CLOSE",
+        "field": "central_attacking_zone",
+        "purpose": "show receiver between lines without losing reference structure"
+      },
+      {
+        "phase": "OVERLAP",
+        "shot": "RELATION_CLOSE",
+        "field": "right_half_space_and_flank",
+        "purpose": "show carrier-overlap-defender timing"
+      },
+      {
+        "phase": "SHIFT_AND_SWITCH",
+        "shot": "SEMI_GLOBAL",
+        "field": "both_sides_of_attacking_half",
+        "purpose": "show strong-side attraction and weak-side release"
+      },
+      {
+        "phase": "COMPLETE",
+        "shot": "RESULT_MEDIUM",
+        "field": "final_third_and_box",
+        "purpose": "show weak-side reception, depth, defenders and goal"
+      }
+    ],
+    "rules": {
+      "full_picture_does_not_mean_full_pitch_every_time": true,
+      "local_closeup_may_crop_pitch_lines": true,
+      "retain_attack_direction_reference": true,
+      "return_to_structure_after_local_relation": true,
+      "pitch_extent_must_match_tactical_question": true,
+      "minimum_necessary_field_extent": true
+    },
+    "version": "V10.1"
+  }
+}
