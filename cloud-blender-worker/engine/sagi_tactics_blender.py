@@ -384,43 +384,35 @@ def create_player(name, data):
         .16,
         matp,
     )
-    la = cyl(
-        name + "_LA",
-        (-.285,0,1.05),
-        .048,
-        .48,
-        matp,
-    )
-    ra = cyl(
-        name + "_RA",
-        (.285,0,1.05),
-        .048,
-        .48,
-        matp,
-    )
-    ll = cyl(
-        name + "_LL",
-        (-.105,0,.42),
-        .058,
-        .68,
-        matp,
-    )
-    rl = cyl(
-        name + "_RL",
-        (.105,0,.42),
-        .058,
-        .68,
-        matp,
-    )
+    # V06 MOTION ENGINE: limbs rotate around actual shoulder / hip pivots.
+    # Earlier versions rotated each cylinder around its own centre, which
+    # created the stiff "chess-piece" motion visible in the preview.
+    def make_limb(suffix, joint_loc, radius, length, rest_y=0.0):
+        pivot = bpy.data.objects.new(name + suffix, None)
+        bpy.context.collection.objects.link(pivot)
+        pivot.parent = root
+        pivot.location = joint_loc
+        pivot.rotation_euler[1] = math.radians(rest_y)
 
-    # Quiet athletic stance. The figure stays diagrammatic, but the slight
-    # asymmetry prevents the "frozen stick man" feeling during movement.
-    la.rotation_euler[1] = math.radians(-12)
-    ra.rotation_euler[1] = math.radians(12)
-    ll.rotation_euler[1] = math.radians(4)
-    rl.rotation_euler[1] = math.radians(-4)
+        mesh = cyl(
+            name + suffix + "_MESH",
+            (0,0,0),
+            radius,
+            length,
+            matp,
+        )
+        mesh.parent = pivot
+        # Cylinder extends down from the joint rather than spinning around
+        # its midpoint. This single change makes starts/stops read as running.
+        mesh.location = (0,0,-length * .5)
+        return pivot, mesh
 
-    for ch in (torso, head, la, ra, ll, rl):
+    la, la_mesh = make_limb("_LA", (-.285,0,1.30), .048, .50, -10)
+    ra, ra_mesh = make_limb("_RA", (.285,0,1.30), .048, .50, 10)
+    ll, ll_mesh = make_limb("_LL", (-.105,0,.78), .058, .72, 3)
+    rl, rl_mesh = make_limb("_RL", (.105,0,.78), .058, .72, -3)
+
+    for ch in (torso, head):
         ch.parent = root
 
     ring = torus(
@@ -549,12 +541,7 @@ def focus_player(name, t):
 
 
 def animate_stride(name, f0, f1, strength=1.0):
-    """Minimal locomotion for tactical miniatures.
-
-    No full character rig: just one restrained stride cycle on the four
-    limbs. It is enough to create weight transfer without turning the
-    diagram into a character animation.
-    """
+    """Restrained locomotion with joint pivots and distance-aware cadence."""
     if f1 <= f0:
         return
 
@@ -562,31 +549,45 @@ def animate_stride(name, f0, f1, strength=1.0):
     ra = bpy.data.objects.get(name + "_RA")
     ll = bpy.data.objects.get(name + "_LL")
     rl = bpy.data.objects.get(name + "_RL")
+    torso = bpy.data.objects.get(name + "_TORSO")
     if not all((la, ra, ll, rl)):
         return
 
-    arm = math.radians(16.0 * strength)
-    leg = math.radians(19.0 * strength)
-    frames = [
-        f0,
-        round(f0 + (f1 - f0) * .33),
-        round(f0 + (f1 - f0) * .66),
-        f1,
-    ]
-    poses = [
-        (0.0, 0.0),
-        (1.0, -1.0),
-        (-1.0, 1.0),
-        (0.0, 0.0),
-    ]
+    arm = math.radians(18.0 * strength)
+    leg = math.radians(22.0 * strength)
+    span = max(1, f1 - f0)
 
-    for fr, (phase_a, phase_b) in zip(frames, poses):
-        la.rotation_euler[0] = arm * phase_a
-        ra.rotation_euler[0] = arm * phase_b
-        ll.rotation_euler[0] = leg * phase_b
-        rl.rotation_euler[0] = leg * phase_a
+    # One long tactical run needs several compact steps, not one slow swing.
+    # At 12 fps this gives roughly 2-6 half-steps depending on run duration.
+    half_steps = max(2, min(6, int(round(span / 3.0))))
+
+    for idx in range(half_steps + 1):
+        fr = round(f0 + span * (idx / half_steps))
+        if idx == 0 or idx == half_steps:
+            phase = 0.0
+        else:
+            phase = 1.0 if idx % 2 else -1.0
+
+        la.rotation_euler[0] = arm * phase
+        ra.rotation_euler[0] = -arm * phase
+        ll.rotation_euler[0] = -leg * phase
+        rl.rotation_euler[0] = leg * phase
         for limb in (la, ra, ll, rl):
             key(limb, "rotation_euler", fr)
+
+    # A tiny forward body lean gives acceleration/weight without making the
+    # miniature behave like a fully animated character.
+    if torso is not None:
+        torso.rotation_euler[0] = 0.0
+        key(torso, "rotation_euler", f0)
+        lean_fr = min(f1 - 1, f0 + max(1, round(span * .22)))
+        torso.rotation_euler[0] = math.radians(-3.2 * strength)
+        key(torso, "rotation_euler", lean_fr)
+        recover_fr = max(lean_fr + 1, f1 - max(1, round(span * .18)))
+        torso.rotation_euler[0] = math.radians(-1.0 * strength)
+        key(torso, "rotation_euler", recover_fr)
+        torso.rotation_euler[0] = 0.0
+        key(torso, "rotation_euler", f1)
 
 
 def move_player(name, target, t0, dur):
