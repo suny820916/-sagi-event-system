@@ -1,0 +1,554 @@
+{
+  "project": "SAGI TACTICS",
+  "version": "SAGI TACTICAL EXECUTION DIRECTOR V7.1 · FULL FRAME SAFE",
+  "fps": 24,
+  "duration_sec": 15.2,
+  "resolution": [
+    540,
+    960
+  ],
+  "render_engine": "BLENDER_WORKBENCH",
+  "attack_direction": "upfield(+Y)",
+  "palette": {
+    "background": "#020304",
+    "pitch": "#0D1012",
+    "pitch_line": "#41474B",
+    "own_primary": "#F3F500",
+    "own_secondary": "#C5C700",
+    "opponent": "#92979B",
+    "ring": "#F3F500",
+    "pitch_alt": "#101315"
+  },
+  "players": {
+    "GK": {
+      "team": "own",
+      "pos": [
+        0,
+        -40
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "LB": {
+      "team": "own",
+      "pos": [
+        -24,
+        -24
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "LCB": {
+      "team": "own",
+      "pos": [
+        -10,
+        -28
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "RCB": {
+      "team": "own",
+      "pos": [
+        10,
+        -28
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "RB": {
+      "team": "own",
+      "pos": [
+        24,
+        -24
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "PIRLO": {
+      "team": "own",
+      "pos": [
+        0,
+        -11
+      ],
+      "role": "primary",
+      "yaw": 0
+    },
+    "LCM": {
+      "team": "own",
+      "pos": [
+        -10,
+        -3
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "RCM": {
+      "team": "own",
+      "pos": [
+        10,
+        -3
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "SEEDORF": {
+      "team": "own",
+      "pos": [
+        -7,
+        9
+      ],
+      "role": "primary",
+      "yaw": 0
+    },
+    "KAKA": {
+      "team": "own",
+      "pos": [
+        7,
+        10
+      ],
+      "role": "primary",
+      "yaw": 0
+    },
+    "INZAGHI": {
+      "team": "own",
+      "pos": [
+        0,
+        28
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "O9": {
+      "team": "opp",
+      "pos": [
+        2,
+        -18
+      ],
+      "role": "context",
+      "yaw": 180
+    },
+    "OM_L": {
+      "team": "opp",
+      "pos": [
+        -12,
+        2
+      ],
+      "role": "context",
+      "yaw": 180
+    },
+    "OM_C": {
+      "team": "opp",
+      "pos": [
+        0,
+        3
+      ],
+      "role": "context",
+      "yaw": 180
+    },
+    "OM_R": {
+      "team": "opp",
+      "pos": [
+        12,
+        2
+      ],
+      "role": "context",
+      "yaw": 180
+    },
+    "OCB_L": {
+      "team": "opp",
+      "pos": [
+        -9,
+        23
+      ],
+      "role": "context",
+      "yaw": 180
+    },
+    "OCB_R": {
+      "team": "opp",
+      "pos": [
+        9,
+        23
+      ],
+      "role": "context",
+      "yaw": 180
+    },
+    "OGK": {
+      "team": "opp",
+      "pos": [
+        0,
+        48.5
+      ],
+      "role": "context",
+      "yaw": 180
+    }
+  },
+  "events": [
+    {
+      "t": 0,
+      "subjects": [
+        "LCB",
+        "PIRLO",
+        "LCM",
+        "RCM",
+        "O9"
+      ],
+      "focus_t": 1.15,
+      "lens": 60,
+      "min_z": 48,
+      "margin": 1.12,
+      "type": "relation_camera"
+    },
+    {
+      "t": 0.45,
+      "type": "pass",
+      "from": "LCB",
+      "to": "PIRLO",
+      "release": 0.55,
+      "arrive": 1.15
+    },
+    {
+      "t": 0.9,
+      "type": "defender_shift",
+      "player": "O9",
+      "to": [
+        2,
+        -13
+      ],
+      "duration": 0.72
+    },
+    {
+      "t": 2.1,
+      "subjects": [
+        "PIRLO",
+        "LCM",
+        "RCM",
+        "KAKA",
+        "SEEDORF",
+        "OM_L",
+        "OM_C",
+        "OM_R"
+      ],
+      "focus_t": 3,
+      "lens": 58,
+      "min_z": 52,
+      "margin": 1.12,
+      "type": "relation_camera"
+    },
+    {
+      "t": 2.18,
+      "type": "player_move",
+      "player": "LCM",
+      "to": [
+        -19,
+        -1
+      ],
+      "duration": 1
+    },
+    {
+      "t": 2.22,
+      "type": "player_move",
+      "player": "RCM",
+      "to": [
+        19,
+        -1
+      ],
+      "duration": 1
+    },
+    {
+      "t": 2.36,
+      "type": "defender_shift",
+      "player": "OM_L",
+      "to": [
+        -10,
+        2
+      ],
+      "duration": 0.78
+    },
+    {
+      "t": 2.4,
+      "type": "defender_shift",
+      "player": "OM_R",
+      "to": [
+        10,
+        2
+      ],
+      "duration": 0.78
+    },
+    {
+      "t": 4.15,
+      "subjects": [
+        "PIRLO",
+        "KAKA",
+        "SEEDORF",
+        "INZAGHI",
+        "OM_C",
+        "OM_R",
+        "OCB_R"
+      ],
+      "focus_t": 5.45,
+      "lens": 60,
+      "min_z": 50,
+      "margin": 1.12,
+      "type": "relation_camera"
+    },
+    {
+      "t": 4.18,
+      "type": "player_move",
+      "player": "KAKA",
+      "to": [
+        7,
+        16
+      ],
+      "duration": 0.86
+    },
+    {
+      "t": 4.32,
+      "type": "defender_shift",
+      "player": "OM_C",
+      "to": [
+        1.5,
+        7
+      ],
+      "duration": 0.72
+    },
+    {
+      "t": 5.1,
+      "type": "pass",
+      "from": "PIRLO",
+      "to": "KAKA",
+      "release": 5.18,
+      "arrive": 5.82
+    },
+    {
+      "t": 6.3,
+      "subjects": [
+        "KAKA",
+        "RB",
+        "RCM",
+        "INZAGHI",
+        "OM_R",
+        "OCB_R"
+      ],
+      "focus_t": 7.55,
+      "lens": 60,
+      "min_z": 50,
+      "margin": 1.12,
+      "type": "relation_camera"
+    },
+    {
+      "t": 6.52,
+      "type": "player_move",
+      "player": "RB",
+      "to": [
+        29,
+        18
+      ],
+      "duration": 1.3
+    },
+    {
+      "t": 6.64,
+      "type": "defender_shift",
+      "player": "OM_R",
+      "to": [
+        17,
+        8
+      ],
+      "duration": 0.9
+    },
+    {
+      "t": 7.72,
+      "type": "pass",
+      "from": "KAKA",
+      "to": "RB",
+      "release": 7.8,
+      "arrive": 8.48
+    },
+    {
+      "t": 8.92,
+      "subjects": [
+        "RB",
+        "KAKA",
+        "SEEDORF",
+        "INZAGHI",
+        "OM_R",
+        "OCB_L",
+        "OCB_R"
+      ],
+      "focus_t": 10.2,
+      "lens": 56,
+      "min_z": 58,
+      "margin": 1.14,
+      "type": "relation_camera"
+    },
+    {
+      "t": 9,
+      "type": "player_move",
+      "player": "SEEDORF",
+      "to": [
+        -13,
+        31
+      ],
+      "duration": 1.08
+    },
+    {
+      "t": 9.1,
+      "type": "player_move",
+      "player": "INZAGHI",
+      "to": [
+        3,
+        36
+      ],
+      "duration": 0.96
+    },
+    {
+      "t": 9.28,
+      "type": "defender_shift",
+      "player": "OCB_R",
+      "to": [
+        6,
+        31
+      ],
+      "duration": 0.86
+    },
+    {
+      "t": 9.86,
+      "type": "pass",
+      "from": "RB",
+      "to": "SEEDORF",
+      "release": 9.96,
+      "arrive": 10.94
+    },
+    {
+      "t": 11.82,
+      "subjects": [
+        "SEEDORF",
+        "INZAGHI",
+        "KAKA",
+        "OCB_L",
+        "OCB_R",
+        "OGK"
+      ],
+      "focus_t": 13.1,
+      "lens": 60,
+      "min_z": 50,
+      "margin": 1.12,
+      "type": "relation_camera"
+    },
+    {
+      "t": 11.92,
+      "type": "dribble",
+      "player": "SEEDORF",
+      "to": [
+        -8,
+        37
+      ],
+      "duration": 0.72
+    },
+    {
+      "t": 12.06,
+      "type": "defender_shift",
+      "player": "OCB_L",
+      "to": [
+        -2.5,
+        35.5
+      ],
+      "duration": 0.62
+    },
+    {
+      "t": 13.2,
+      "type": "shot",
+      "from": "SEEDORF",
+      "to": [
+        -2.2,
+        52.3
+      ],
+      "release": 13.25,
+      "arrive": 14.15,
+      "arc": 0.28
+    }
+  ],
+  "preview_mode": true,
+  "director_mode": "TACTICAL_EXECUTION",
+  "principles": [
+    "complete_pattern_over_dramatic_pacing",
+    "tactical_cause_before_camera_motion",
+    "defensive_reaction_must_be_visible",
+    "no_climax_treatment",
+    "hold_final_shape_until_execution_is_readable"
+  ],
+  "execution_phases": [
+    {
+      "name": "BUILD",
+      "from": 0,
+      "to": 2.1,
+      "question": "How does Pirlo receive under first pressure?"
+    },
+    {
+      "name": "STRETCH",
+      "from": 2.1,
+      "to": 4.15,
+      "question": "How do the side midfielders stretch the block?"
+    },
+    {
+      "name": "BETWEEN_LINES",
+      "from": 4.15,
+      "to": 6.3,
+      "question": "How is the receiver found between the lines?"
+    },
+    {
+      "name": "OVERLAP",
+      "from": 6.3,
+      "to": 8.92,
+      "question": "How does the fullback overlap change the defensive relationship?"
+    },
+    {
+      "name": "SHIFT_AND_SWITCH",
+      "from": 8.92,
+      "to": 11.82,
+      "question": "How is the block moved before the weak-side switch?"
+    },
+    {
+      "name": "COMPLETE",
+      "from": 11.82,
+      "to": 15.2,
+      "question": "How is the weak-side advantage fully executed?"
+    }
+  ],
+  "initial_ball_holder": "LCB",
+  "require_defensive_reaction": true,
+  "benchmark": {
+    "reference": "TEACTICS",
+    "principle": "learn_expression_not_copy_content",
+    "locked_direction": true,
+    "priorities": [
+      "no_tactical_subject_on_frame_edge",
+      "whole_tactical_picture_before_local_beauty",
+      "local_relation_must_keep_formation_context",
+      "spatial_continuity_between_phases",
+      "relation_camera_must_protect_start_mid_end_positions",
+      "switch_camera_may_follow_ball_between_zones",
+      "players_must_read_as_people_not_chess_pieces",
+      "tactical_clarity",
+      "complete_execution",
+      "stable_camera_until_relation_changes",
+      "ball_drives_tempo",
+      "player_reaction_follows_tactical_cause",
+      "no_unnecessary_effects",
+      "no_dramatic_climax",
+      "minimal_dead_time",
+      "few_relevant_players_per_frame"
+    ]
+  },
+  "visual_integrity": {
+    "locked": true,
+    "rule": "Every tactical shot must preserve both the local relation and enough formation structure to understand where it belongs.",
+    "minimum_context": "carrier + next option + nearest defender + two structural anchors",
+    "no_isolated_triangle_shots": true,
+    "no_contextless_closeups": true,
+    "preserve_attack_direction": true,
+    "preserve_spatial_continuity": true,
+    "edge_safe_zone": true,
+    "edge_safe_rule": "No tactical subject should sit on or be clipped by the portrait-frame edge."
+  }
+}
