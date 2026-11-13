@@ -540,6 +540,18 @@ def focus_player(name, t):
         )
 
 
+def focus_group(names, t):
+    """Reveal one tactical line as a group: 4 -> 3 -> 2 -> 1."""
+    fr = 1 + round(t * fps)
+    active = set(names)
+    for n, r in rings.items():
+        r.hide_render = n not in active
+        r.keyframe_insert(
+            "hide_render",
+            frame=fr,
+        )
+
+
 def animate_stride(name, f0, f1, strength=1.0):
     """Restrained locomotion with joint pivots and distance-aware cadence."""
     if f1 <= f0:
@@ -744,6 +756,12 @@ for ev in cfg.get("events", []):
     elif typ == "focus":
         focus_player(
             ev["player"],
+            float(ev["t"]),
+        )
+
+    elif typ == "focus_group":
+        focus_group(
+            ev["players"],
             float(ev["t"]),
         )
 
