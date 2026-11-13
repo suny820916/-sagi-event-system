@@ -498,9 +498,12 @@ camera_presets = {
     "box_relation": {"loc": (12,13,50), "target": (5,34,0), "lens": 66},
     "finish_close": {"loc": (7,23,46), "target": (0,41,0), "lens": 68},
     "def_compact": {"loc": (18,-38,72), "target": (0,-8,0), "lens": 60},
-    "def_force_wide": {"loc": (24,-28,64), "target": (18,-8,0), "lens": 61},
-    "def_triangle": {"loc": (26,-22,58), "target": (17,-12,0), "lens": 63},
-    "def_weakness": {"loc": (12,-24,64), "target": (-18,-14,0), "lens": 61},
+    # Defensive teaching shots keep the full relationship inside frame.
+    "def_force_wide": {"loc": (20,-32,74), "target": (20,-8,0), "lens": 59},
+    "def_triangle": {"loc": (20,-26,72), "target": (17,-12,0), "lens": 58},
+    # Move to the weak-side half-space rather than looking across the
+    # touchline from the opposite side; this removes the black pitch void.
+    "def_weakness": {"loc": (-10,-36,76), "target": (-18,-15,0), "lens": 58},
 }
 
 camera_last = None
