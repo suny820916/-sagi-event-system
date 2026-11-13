@@ -1,6 +1,6 @@
 {
   "project": "SAGI TACTICS",
-  "version": "SAGI TACTICAL EXECUTION DIRECTOR V6.3 · TACTICAL SCALE BALANCE",
+  "version": "SAGI TACTICAL EXECUTION DIRECTOR V7 · STRUCTURE + RELATION",
   "fps": 24,
   "duration_sec": 15.2,
   "resolution": [
@@ -186,16 +186,17 @@
   "events": [
     {
       "t": 0,
-      "type": "relation_camera",
       "subjects": [
         "LCB",
         "PIRLO",
+        "LCM",
+        "RCM",
         "O9"
       ],
-      "focus_t": 1.05,
-      "lens": 62,
-      "min_z": 36,
-      "margin": 1.04
+      "focus_t": 1.15,
+      "lens": 60,
+      "min_z": 48,
+      "margin": 1.06
     },
     {
       "t": 0.45,
@@ -217,18 +218,20 @@
     },
     {
       "t": 2.1,
-      "type": "relation_camera",
       "subjects": [
         "PIRLO",
         "LCM",
         "RCM",
+        "KAKA",
+        "SEEDORF",
         "OM_L",
+        "OM_C",
         "OM_R"
       ],
-      "focus_t": 2.85,
-      "lens": 60,
-      "min_z": 48,
-      "margin": 1.07
+      "focus_t": 3,
+      "lens": 58,
+      "min_z": 52,
+      "margin": 1.06
     },
     {
       "t": 2.18,
@@ -272,17 +275,19 @@
     },
     {
       "t": 4.15,
-      "type": "relation_camera",
       "subjects": [
         "PIRLO",
         "KAKA",
+        "SEEDORF",
+        "INZAGHI",
         "OM_C",
-        "OM_R"
+        "OM_R",
+        "OCB_R"
       ],
-      "focus_t": 5.35,
-      "lens": 62,
-      "min_z": 36,
-      "margin": 1.04
+      "focus_t": 5.45,
+      "lens": 60,
+      "min_z": 50,
+      "margin": 1.05
     },
     {
       "t": 4.18,
@@ -314,16 +319,18 @@
     },
     {
       "t": 6.3,
-      "type": "relation_camera",
       "subjects": [
         "KAKA",
         "RB",
-        "OM_R"
+        "RCM",
+        "INZAGHI",
+        "OM_R",
+        "OCB_R"
       ],
-      "focus_t": 7.4,
-      "lens": 62,
-      "min_z": 38,
-      "margin": 1.04
+      "focus_t": 7.55,
+      "lens": 60,
+      "min_z": 50,
+      "margin": 1.05
     },
     {
       "t": 6.52,
@@ -355,16 +362,19 @@
     },
     {
       "t": 8.92,
-      "type": "relation_camera",
       "subjects": [
         "RB",
+        "KAKA",
+        "SEEDORF",
         "INZAGHI",
+        "OM_R",
+        "OCB_L",
         "OCB_R"
       ],
-      "focus_t": 9.45,
-      "lens": 62,
-      "min_z": 40,
-      "margin": 1.04
+      "focus_t": 10.2,
+      "lens": 56,
+      "min_z": 58,
+      "margin": 1.05
     },
     {
       "t": 9,
@@ -405,31 +415,19 @@
       "arrive": 10.94
     },
     {
-      "t": 10.28,
-      "type": "relation_camera",
-      "subjects": [
-        "SEEDORF",
-        "INZAGHI",
-        "OCB_L"
-      ],
-      "focus_t": 10.82,
-      "lens": 62,
-      "min_z": 36,
-      "margin": 1.04
-    },
-    {
       "t": 11.82,
-      "type": "relation_camera",
       "subjects": [
         "SEEDORF",
         "INZAGHI",
+        "KAKA",
         "OCB_L",
+        "OCB_R",
         "OGK"
       ],
-      "focus_t": 13,
+      "focus_t": 13.1,
       "lens": 60,
-      "min_z": 38,
-      "margin": 1.04
+      "min_z": 50,
+      "margin": 1.05
     },
     {
       "t": 11.92,
@@ -518,10 +516,11 @@
     "principle": "learn_expression_not_copy_content",
     "locked_direction": true,
     "priorities": [
-      "shape_phases_can_be_wide_relation_phases_should_be_close",
+      "whole_tactical_picture_before_local_beauty",
+      "local_relation_must_keep_formation_context",
+      "spatial_continuity_between_phases",
       "relation_camera_must_protect_start_mid_end_positions",
       "switch_camera_may_follow_ball_between_zones",
-      "relationship_is_the_subject",
       "players_must_read_as_people_not_chess_pieces",
       "tactical_clarity",
       "complete_execution",
@@ -533,5 +532,14 @@
       "minimal_dead_time",
       "few_relevant_players_per_frame"
     ]
+  },
+  "visual_integrity": {
+    "locked": true,
+    "rule": "Every tactical shot must preserve both the local relation and enough formation structure to understand where it belongs.",
+    "minimum_context": "carrier + next option + nearest defender + two structural anchors",
+    "no_isolated_triangle_shots": true,
+    "no_contextless_closeups": true,
+    "preserve_attack_direction": true,
+    "preserve_spatial_continuity": true
   }
 }
