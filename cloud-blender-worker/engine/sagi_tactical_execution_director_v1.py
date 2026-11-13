@@ -438,6 +438,16 @@ m_pitch_alt = material(
     hex_rgba(pal.get("pitch_alt", "#131719")),
     rough=.80,
 )
+m_pitch_edge = material(
+    "PITCH_EDGE",
+    hex_rgba(pal.get("pitch_edge", "#07090A")),
+    rough=.92,
+)
+m_pitch_shadow = material(
+    "PITCH_SHADOW",
+    hex_rgba(pal.get("pitch_shadow", "#010203")),
+    rough=1.0,
+)
 m_line = material("LINE", hex_rgba(pal["pitch_line"]), rough=.52)
 m_y = material(
     "OWN_PRIMARY",
@@ -467,12 +477,20 @@ m_ball = material(
     rough=.33,
 )
 
-# Continuous tactical board beneath the regulation pitch.
-# It removes hard black voids when a structure-preserving camera pulls wider,
-# while keeping all football markings confined to the real pitch.
-cube("TACTICAL_FLOOR", (0, 5, -.23), (78, 105, .045), m_floor)
+# V11.1 FLOATING CENTRAL PITCH
+# Keep a very dark safety floor far below the board so relation shots never
+# reveal a hard void, but make it visually merge with the world background.
+cube("TACTICAL_FLOOR", (0, 5, -1.20), (78, 105, .045), m_floor)
 
-# Floating pitch
+# A restrained two-stage underlay creates the Teactics-like impression that
+# the tactical pitch is an object suspended in dark space. Workbench preview
+# does not give us reliable soft contact shadows, so the underlay itself is
+# deliberately geometric and subtle rather than decorative.
+cube("PITCH_SHADOW", (0, 1.10, -.50), (42.2, 62.2, .035), m_pitch_shadow)
+cube("PITCH_EDGE_BASE", (0, 0, -.285), (40.75, 60.75, .12), m_pitch_edge)
+
+# Main tactical board. Its slightly oversized slab leaves the regulation
+# touchline inset, so the viewer can read a physical board edge in master shots.
 cube("PITCH", (0, 0, 0), (40, 60, .18), m_pitch)
 
 # Teactics-like low-contrast horizontal spatial bands.
@@ -788,6 +806,9 @@ FIELD_SCOPE_BOUNDS = {
     # Tactical board regions. These are not visual decorations: each rectangle
     # represents the minimum pitch context needed to understand a phase.
     "FULL_PITCH": (-34.0, 34.0, -52.5, 52.5),
+    # Full physical board silhouette, used only by CENTRAL_MASTER so the dark
+    # rim and breathing room remain visible instead of cropping to touchlines.
+    "FLOATING_BOARD": (-42.5, 42.5, -62.5, 62.5),
     "DEFENSIVE_HALF_PLUS_MIDFIELD": (-30.0, 30.0, -48.0, 12.0),
     "CENTRAL_THREE_QUARTERS": (-30.0, 30.0, -34.0, 34.0),
     # V10.2: tactical completeness is not the same as showing more grass.
