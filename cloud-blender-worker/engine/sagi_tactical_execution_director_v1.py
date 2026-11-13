@@ -658,39 +658,30 @@ cam = bpy.context.object
 scene.camera = cam
 
 camera_dna = {
-    # Execution-first tactical grammar applied to SAGI:
-    # frame only the players needed to understand the tactical question.
-    # The camera anticipates the next relation, settles quickly, then stays quiet.
+    # V2 relation framing: preserve the tactical angle but crop much tighter.
+    # The pitch is context; the relationship between players is the subject.
     "receive": {
-        # Pirlo + first presser + nearest support; no need to show the whole pitch.
-        "loc": (3,-19,78), "target": (0,-11,0), "lens": 64,
+        "loc": (2,-17,62), "target": (0,-10,0), "lens": 70,
         "lead": .00, "settle": .00,
     },
     "expand": {
-        # Reveal both 8s and the opponent midfield line in one readable comparison.
-        "loc": (2,-15,94), "target": (0,-4,0), "lens": 60,
-        "lead": .24, "settle": .16,
+        "loc": (2,-13,76), "target": (0,-3,0), "lens": 68,
+        "lead": .22, "settle": .16,
     },
     "half_space": {
-        # Tight enough to read Kaka entering between the lines,
-        # wide enough to keep Pirlo and the nearest defenders in the same story.
-        "loc": (6,-1,82), "target": (4,10,0), "lens": 66,
-        "lead": .26, "settle": .16,
+        "loc": (5,1,67), "target": (4,11,0), "lens": 72,
+        "lead": .24, "settle": .16,
     },
     "overlap": {
-        # Reserved for future clips; keep on the same visual axis.
-        "loc": (10,2,84), "target": (13,16,0), "lens": 63,
-        "lead": .26, "settle": .16,
+        "loc": (9,4,70), "target": (14,17,0), "lens": 69,
+        "lead": .24, "settle": .16,
     },
     "switch": {
-        # Show strong-side attraction and weak-side target together.
-        "loc": (2,12,92), "target": (0,24,0), "lens": 59,
-        "lead": .28, "settle": .18,
+        "loc": (2,14,78), "target": (0,26,0), "lens": 66,
+        "lead": .26, "settle": .18,
     },
     "complete": {
-        # Completion view: same visual language as the rest of the sequence.
-        # No dramatic push, no acceleration, no hero framing.
-        "loc": (-1,22,88), "target": (-3,36,0), "lens": 59,
+        "loc": (-1,24,72), "target": (-3,38,0), "lens": 68,
         "lead": .18, "settle": .20,
     },
 }
