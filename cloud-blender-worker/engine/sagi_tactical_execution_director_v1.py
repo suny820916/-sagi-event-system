@@ -818,14 +818,24 @@ def relation_camera_pose(
     """Keep full trajectory in frame, but centre on the current tactical relation."""
     start_t = float(start_t)
     focus_t = float(focus_t)
-    mid_t = (start_t + focus_t) * .5
 
-    # Full trajectory protects framing completeness.
+    # A local Teactics-style relation shot should not be forced to include the
+    # entire run from its origin. Enter the close tactical view only when the
+    # relationship is forming; structural shots still preserve the full route.
+    framing_start_t = start_t
+    if str(shot_scale or "") in ("RELATION", "RESULT_RELATION"):
+        scale_cfg = cfg.get("scale_script", {})
+        history_sec = float(scale_cfg.get("local_relation_history_sec", .68))
+        framing_start_t = max(start_t, focus_t - history_sec)
+
+    mid_t = (framing_start_t + focus_t) * .5
+
+    # Trajectory protects framing completeness inside the chosen shot scale.
     trajectory_pts = []
     # Focus positions define where the tactical story actually is now.
     focus_pts = []
     for name in subjects:
-        trajectory_pts.append(predicted_player_pos(name, start_t))
+        trajectory_pts.append(predicted_player_pos(name, framing_start_t))
         trajectory_pts.append(predicted_player_pos(name, mid_t))
         fp = predicted_player_pos(name, focus_t)
         trajectory_pts.append(fp)
