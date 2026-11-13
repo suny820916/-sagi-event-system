@@ -784,7 +784,37 @@ def camera_dna_key(cue, t):
     camera_last_t = t + settle
 
 
-def relation_camera_pose(subjects, start_t, focus_t, lens=64.0, min_z=64.0, margin=1.20):
+FIELD_SCOPE_BOUNDS = {
+    # Tactical board regions. These are not visual decorations: each rectangle
+    # represents the minimum pitch context needed to understand a phase.
+    "FULL_PITCH": (-34.0, 34.0, -52.5, 52.5),
+    "DEFENSIVE_HALF_PLUS_MIDFIELD": (-30.0, 30.0, -48.0, 12.0),
+    "CENTRAL_THREE_QUARTERS": (-30.0, 30.0, -34.0, 34.0),
+    "MIDFIELD_ZONE": (-18.0, 18.0, -12.0, 26.0),
+    "RIGHT_CHANNEL_ZONE": (0.0, 32.0, -6.0, 32.0),
+    "ATTACKING_TWO_THIRDS": (-30.0, 30.0, 0.0, 52.5),
+    "FINAL_THIRD": (-24.0, 24.0, 18.0, 54.0),
+}
+
+
+def field_scope_points(name):
+    bounds = FIELD_SCOPE_BOUNDS.get(name)
+    if not bounds:
+        return []
+    x0, x1, y0, y1 = bounds
+    return [(x0,y0), (x0,y1), (x1,y0), (x1,y1)]
+
+
+def relation_camera_pose(
+    subjects,
+    start_t,
+    focus_t,
+    lens=64.0,
+    min_z=64.0,
+    margin=1.20,
+    shot_scale=None,
+    field_scope=None,
+):
     """Keep full trajectory in frame, but centre on the current tactical relation."""
     start_t = float(start_t)
     focus_t = float(focus_t)
@@ -815,8 +845,34 @@ def relation_camera_pose(subjects, start_t, focus_t, lens=64.0, min_z=64.0, marg
     # safe framing bounds.
     fxs = [p[0] for p in focus_pts]
     fys = [p[1] for p in focus_pts]
-    cx = (min(fxs) + max(fxs)) * .5
-    cy = (min(fys) + max(fys)) * .5
+    relation_cx = (min(fxs) + max(fxs)) * .5
+    relation_cy = (min(fys) + max(fys)) * .5
+
+    scope_pts = field_scope_points(field_scope)
+    if scope_pts:
+        sxs = [p[0] for p in scope_pts]
+        sys = [p[1] for p in scope_pts]
+        scope_cx = (min(sxs) + max(sxs)) * .5
+        scope_cy = (min(sys) + max(sys)) * .5
+    else:
+        scope_cx, scope_cy = relation_cx, relation_cy
+
+    # Teactics-style scale grammar:
+    # structural shots let the pitch region lead composition; relation shots
+    # let the player relationship lead while still retaining its tactical zone.
+    scope_weight = {
+        "STRUCTURE": .58,
+        "WIDE_STRUCTURE": .68,
+        "RELATION": .18,
+        "RESULT_RELATION": .30,
+    }.get(str(shot_scale or ""), .22)
+
+    cx = relation_cx * (1.0 - scope_weight) + scope_cx * scope_weight
+    cy = relation_cy * (1.0 - scope_weight) + scope_cy * scope_weight
+
+    # Frame both the actual player trajectory and the tactical pitch region.
+    framing_pts = list(trajectory_pts)
+    framing_pts.extend(scope_pts)
 
     # Lens-aware framing for 9:16 portrait.
     # The old empirical factors pushed wide tactical relations far too high,
@@ -828,8 +884,13 @@ def relation_camera_pose(subjects, start_t, focus_t, lens=64.0, min_z=64.0, marg
     aspect_h_over_w = max(1.0, float(h) / max(1.0, float(w)))
     tan_half_v = tan_half_h * aspect_h_over_w
 
-    z_x = (span_x * float(margin) * .5) / max(1e-6, tan_half_h)
-    z_y = (span_y * float(margin) * .5) / max(1e-6, tan_half_v)
+    # Target may intentionally sit closer to the tactical relation than the
+    # centre of the field scope, so fit by maximum distance from the target,
+    # not by bbox span alone.
+    max_dx = max([abs(p[0] - cx) for p in framing_pts] or [span_x * .5])
+    max_dy = max([abs(p[1] - cy) for p in framing_pts] or [span_y * .5])
+    z_x = (max_dx * float(margin)) / max(1e-6, tan_half_h)
+    z_y = (max_dy * float(margin)) / max(1e-6, tan_half_v)
     z = max(float(min_z), z_x, z_y)
 
     # Keep the camera nearly tactical-top-down, but retain enough angle to
@@ -846,12 +907,23 @@ def relation_camera_pose(subjects, start_t, focus_t, lens=64.0, min_z=64.0, marg
     }
 
 
-def relation_camera_key(subjects, t, focus_t=None, lens=64.0, min_z=64.0, margin=1.20):
+def relation_camera_key(
+    subjects,
+    t,
+    focus_t=None,
+    lens=64.0,
+    min_z=64.0,
+    margin=1.20,
+    shot_scale=None,
+    field_scope=None,
+):
     """Reframe from the actual tactical relationship instead of fixed coordinates."""
     global camera_last, camera_last_t
     t = float(t)
     focus_t = float(t if focus_t is None else focus_t)
-    p = relation_camera_pose(subjects, t, focus_t, lens, min_z, margin)
+    p = relation_camera_pose(
+        subjects, t, focus_t, lens, min_z, margin, shot_scale, field_scope
+    )
 
     # Spatial continuity: in an upfield attack, don't let the camera centre
     # suddenly jump backwards just because a supporting runner started deeper.
@@ -1273,6 +1345,8 @@ for ev in cfg.get("events", []):
             float(ev.get("lens", 64)),
             float(ev.get("min_z", 64)),
             float(ev.get("margin", 1.20)),
+            ev.get("shot_scale"),
+            ev.get("field_scope"),
         )
 
     elif typ == "focus":
