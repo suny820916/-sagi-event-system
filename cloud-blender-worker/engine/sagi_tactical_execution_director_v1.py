@@ -427,6 +427,11 @@ try:
 except Exception:
     pass
 
+m_floor = material(
+    "TACTICAL_FLOOR",
+    hex_rgba(pal.get("tactical_floor", "#080A0B")),
+    rough=.88,
+)
 m_pitch = material("PITCH", hex_rgba(pal["pitch"]), rough=.78)
 m_pitch_alt = material(
     "PITCH_ALT",
@@ -461,6 +466,11 @@ m_ball = material(
     (0.94, .94, .94, 1),
     rough=.33,
 )
+
+# Continuous tactical board beneath the regulation pitch.
+# It removes hard black voids when a structure-preserving camera pulls wider,
+# while keeping all football markings confined to the real pitch.
+cube("TACTICAL_FLOOR", (0, 5, -.23), (78, 105, .045), m_floor)
 
 # Floating pitch
 cube("PITCH", (0, 0, 0), (40, 60, .18), m_pitch)
