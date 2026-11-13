@@ -908,6 +908,8 @@ def relation_camera_pose(
         "lens": float(lens),
         "lead": float(continuity_cfg.get("lead_sec", .34)),
         "settle": float(continuity_cfg.get("settle_sec", .32)),
+        "shot_scale": shot_scale,
+        "field_scope": field_scope,
     }
 
 
@@ -946,12 +948,25 @@ def relation_camera_key(
     # zoom OUT immediately when the structure needs more room, but zoom IN only
     # gradually from phase to phase. This keeps the tactical space coherent.
     if camera_last is not None and continuity_cfg.get("preserve_scale_continuity", False):
-        prev_z = float(camera_last["loc"][2])
-        new_z = float(p["loc"][2])
-        max_zoom_in = float(continuity_cfg.get("max_zoom_in_per_phase_m", 8.0))
-        min_allowed_z = max(1.0, prev_z - max_zoom_in)
-        if new_z < min_allowed_z:
-            p["loc"] = (p["loc"][0], p["loc"][1], min_allowed_z)
+        prev_scale = camera_last.get("shot_scale")
+        new_scale = p.get("shot_scale")
+        deliberate_scale_change = (
+            continuity_cfg.get("allow_scale_reset_on_shot_scale_change", False)
+            and prev_scale
+            and new_scale
+            and prev_scale != new_scale
+        )
+
+        # Teactics-style grammar: continuity is preserved inside one tactical
+        # scale, but a deliberate STRUCTURE -> RELATION or RELATION -> WIDE
+        # change is allowed to reset framing decisively.
+        if not deliberate_scale_change:
+            prev_z = float(camera_last["loc"][2])
+            new_z = float(p["loc"][2])
+            max_zoom_in = float(continuity_cfg.get("max_zoom_in_per_phase_m", 8.0))
+            min_allowed_z = max(1.0, prev_z - max_zoom_in)
+            if new_z < min_allowed_z:
+                p["loc"] = (p["loc"][0], p["loc"][1], min_allowed_z)
 
     if camera_last is None or t <= .001:
         apply_camera_pose(p, 1 + round(t * fps))
