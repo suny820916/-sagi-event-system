@@ -1,0 +1,533 @@
+{
+  "project": "SAGI TACTICS",
+  "version": "CHRISTMAS TREE 4-3-2-1 · DEFENSE 43-76 · V1",
+  "fps": 24,
+  "duration_sec": 33,
+  "resolution": [
+    540,
+    960
+  ],
+  "render_engine": "BLENDER_WORKBENCH",
+  "attack_direction": "opponent downfield(-Y)",
+  "ball_start_player": "O10",
+  "timeline_offset_sec": 43,
+  "timeline_end_sec": 76,
+  "lesson_markers": [
+    {
+      "id": "protect_center",
+      "label": "Protect the middle first",
+      "local_start": 0,
+      "local_end": 8,
+      "global_start": 43,
+      "global_end": 51
+    },
+    {
+      "id": "force_wide",
+      "label": "Force the ball outside",
+      "local_start": 8,
+      "local_end": 15,
+      "global_start": 51,
+      "global_end": 58
+    },
+    {
+      "id": "triangle",
+      "label": "Fullback + midfielder + center-back triangle",
+      "local_start": 15,
+      "local_end": 23,
+      "global_start": 58,
+      "global_end": 66
+    },
+    {
+      "id": "weakness",
+      "label": "Lateral shift weakness and space behind",
+      "local_start": 23,
+      "local_end": 31,
+      "global_start": 66,
+      "global_end": 74
+    },
+    {
+      "id": "reset",
+      "label": "Recover central compactness",
+      "local_start": 31,
+      "local_end": 33,
+      "global_start": 74,
+      "global_end": 76
+    }
+  ],
+  "palette": {
+    "background": "#020304",
+    "pitch": "#0D1012",
+    "pitch_line": "#555B60",
+    "own_primary": "#F3F500",
+    "own_secondary": "#C5C700",
+    "opponent": "#92979B",
+    "ring": "#F3F500",
+    "pitch_alt": "#15191B"
+  },
+  "players": {
+    "GK": {
+      "team": "own",
+      "pos": [
+        0,
+        -42
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "LB": {
+      "team": "own",
+      "pos": [
+        -24,
+        -25
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "LCB": {
+      "team": "own",
+      "pos": [
+        -9,
+        -29
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "RCB": {
+      "team": "own",
+      "pos": [
+        9,
+        -29
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "RB": {
+      "team": "own",
+      "pos": [
+        24,
+        -25
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "PIRLO": {
+      "team": "own",
+      "pos": [
+        0,
+        -12
+      ],
+      "role": "primary",
+      "yaw": 0
+    },
+    "LCM": {
+      "team": "own",
+      "pos": [
+        -8,
+        -8
+      ],
+      "role": "primary",
+      "yaw": 0
+    },
+    "RCM": {
+      "team": "own",
+      "pos": [
+        8,
+        -8
+      ],
+      "role": "primary",
+      "yaw": 0
+    },
+    "SEEDORF": {
+      "team": "own",
+      "pos": [
+        -5,
+        0
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "KAKA": {
+      "team": "own",
+      "pos": [
+        5,
+        0
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "INZAGHI": {
+      "team": "own",
+      "pos": [
+        0,
+        14
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "O10": {
+      "team": "opp",
+      "pos": [
+        6,
+        10
+      ],
+      "role": "context",
+      "yaw": 180
+    },
+    "O6": {
+      "team": "opp",
+      "pos": [
+        -4,
+        16
+      ],
+      "role": "context",
+      "yaw": 180
+    },
+    "O8": {
+      "team": "opp",
+      "pos": [
+        12,
+        16
+      ],
+      "role": "context",
+      "yaw": 180
+    },
+    "OW_L": {
+      "team": "opp",
+      "pos": [
+        -28,
+        4
+      ],
+      "role": "context",
+      "yaw": 180
+    },
+    "OW_R": {
+      "team": "opp",
+      "pos": [
+        28,
+        4
+      ],
+      "role": "context",
+      "yaw": 180
+    },
+    "O9": {
+      "team": "opp",
+      "pos": [
+        0,
+        -2
+      ],
+      "role": "context",
+      "yaw": 180
+    }
+  },
+  "events": [
+    {
+      "t": 0,
+      "type": "camera",
+      "preset": "def_compact"
+    },
+    {
+      "t": 0.55,
+      "type": "focus_group",
+      "players": [
+        "LCM",
+        "PIRLO",
+        "RCM"
+      ]
+    },
+    {
+      "t": 1.45,
+      "type": "carry",
+      "player": "O10",
+      "to": [
+        4,
+        3
+      ],
+      "duration": 2.15
+    },
+    {
+      "t": 1.75,
+      "type": "player_move",
+      "player": "KAKA",
+      "to": [
+        3,
+        -1
+      ],
+      "duration": 1.05
+    },
+    {
+      "t": 1.85,
+      "type": "player_move",
+      "player": "RCM",
+      "to": [
+        6,
+        -7
+      ],
+      "duration": 1.05
+    },
+    {
+      "t": 2.05,
+      "type": "player_move",
+      "player": "SEEDORF",
+      "to": [
+        -4,
+        -1
+      ],
+      "duration": 1
+    },
+    {
+      "t": 6.35,
+      "type": "camera_lead_space",
+      "center": [
+        24,
+        -5
+      ],
+      "base_preset": "def_force_wide",
+      "duration": 1.35,
+      "lens": 61
+    },
+    {
+      "t": 7.35,
+      "type": "pass",
+      "from": "O10",
+      "to": "OW_R",
+      "release": 7.52,
+      "arrive": 8.45
+    },
+    {
+      "t": 8.5,
+      "type": "player_move",
+      "player": "RB",
+      "to": [
+        25,
+        -9
+      ],
+      "duration": 1.3
+    },
+    {
+      "t": 8.62,
+      "type": "player_move",
+      "player": "RCM",
+      "to": [
+        16,
+        -6
+      ],
+      "duration": 1.2
+    },
+    {
+      "t": 8.72,
+      "type": "player_move",
+      "player": "RCB",
+      "to": [
+        12,
+        -22
+      ],
+      "duration": 1.2
+    },
+    {
+      "t": 9.9,
+      "type": "camera_glide",
+      "preset": "def_triangle",
+      "duration": 0.95
+    },
+    {
+      "t": 10.78,
+      "type": "focus_group",
+      "players": [
+        "RB",
+        "RCM",
+        "RCB"
+      ]
+    },
+    {
+      "t": 10.95,
+      "type": "triangle",
+      "players": [
+        "RB",
+        "RCM",
+        "RCB"
+      ],
+      "duration": 6.35
+    },
+    {
+      "t": 12.05,
+      "type": "carry",
+      "player": "OW_R",
+      "to": [
+        28,
+        -7
+      ],
+      "duration": 2
+    },
+    {
+      "t": 12.35,
+      "type": "player_move",
+      "player": "RB",
+      "to": [
+        26,
+        -12
+      ],
+      "duration": 1.25
+    },
+    {
+      "t": 20.35,
+      "type": "camera_lead_space",
+      "center": [
+        -25,
+        -9
+      ],
+      "base_preset": "def_weakness",
+      "duration": 1.55,
+      "lens": 61
+    },
+    {
+      "t": 21.4,
+      "type": "pass",
+      "from": "OW_R",
+      "to": "OW_L",
+      "release": 21.55,
+      "arrive": 23.1
+    },
+    {
+      "t": 23.18,
+      "type": "focus",
+      "player": "LB"
+    },
+    {
+      "t": 23.28,
+      "type": "player_move",
+      "player": "LB",
+      "to": [
+        -25,
+        -9
+      ],
+      "duration": 1.15
+    },
+    {
+      "t": 23.45,
+      "type": "player_move",
+      "player": "O9",
+      "to": [
+        -17,
+        -17
+      ],
+      "duration": 1.45
+    },
+    {
+      "t": 24.05,
+      "type": "space",
+      "center": [
+        -20,
+        -20
+      ],
+      "radius": [
+        5.2,
+        4
+      ],
+      "duration": 5.4
+    },
+    {
+      "t": 24.35,
+      "type": "player_move",
+      "player": "LCB",
+      "to": [
+        -13,
+        -23
+      ],
+      "duration": 1.25
+    },
+    {
+      "t": 25.2,
+      "type": "player_move",
+      "player": "LCM",
+      "to": [
+        -15,
+        -7
+      ],
+      "duration": 1.75
+    },
+    {
+      "t": 26.98,
+      "type": "triangle",
+      "players": [
+        "LB",
+        "LCM",
+        "LCB"
+      ],
+      "duration": 2.75
+    },
+    {
+      "t": 27.05,
+      "type": "pass",
+      "from": "OW_L",
+      "to": "O9",
+      "release": 27.22,
+      "arrive": 28.18
+    },
+    {
+      "t": 29.1,
+      "type": "camera_glide",
+      "preset": "def_compact",
+      "duration": 1.15
+    },
+    {
+      "t": 29.45,
+      "type": "player_move",
+      "player": "LB",
+      "to": [
+        -24,
+        -25
+      ],
+      "duration": 1.7
+    },
+    {
+      "t": 29.52,
+      "type": "player_move",
+      "player": "LCB",
+      "to": [
+        -9,
+        -29
+      ],
+      "duration": 1.65
+    },
+    {
+      "t": 29.58,
+      "type": "player_move",
+      "player": "RCB",
+      "to": [
+        9,
+        -29
+      ],
+      "duration": 1.6
+    },
+    {
+      "t": 29.72,
+      "type": "player_move",
+      "player": "LCM",
+      "to": [
+        -8,
+        -8
+      ],
+      "duration": 1.55
+    },
+    {
+      "t": 29.78,
+      "type": "player_move",
+      "player": "RCM",
+      "to": [
+        8,
+        -8
+      ],
+      "duration": 1.5
+    },
+    {
+      "t": 31.55,
+      "type": "focus_group",
+      "players": [
+        "LCM",
+        "PIRLO",
+        "RCM"
+      ]
+    }
+  ],
+  "preview_mode": true
+}
