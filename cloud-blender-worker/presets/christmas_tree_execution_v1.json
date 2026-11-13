@@ -1,6 +1,6 @@
 {
   "project": "SAGI TACTICS",
-  "version": "SAGI TACTICAL EXECUTION DIRECTOR V10.1 · TEACTICS SCALE TIMING",
+  "version": "SAGI TACTICAL EXECUTION DIRECTOR V10.2 · TEACTICS FIELD RHYTHM",
   "fps": 24,
   "duration_sec": 15.2,
   "resolution": [
@@ -196,11 +196,11 @@
       ],
       "focus_t": 1.15,
       "lens": 60,
-      "min_z": 48,
-      "margin": 1.12,
+      "min_z": 46,
+      "margin": 1.08,
       "type": "relation_camera",
       "shot_scale": "STRUCTURE",
-      "field_scope": "DEFENSIVE_HALF_PLUS_MIDFIELD",
+      "field_scope": "BUILD_RELATION_ZONE",
       "phase_name": "BUILD"
     },
     {
@@ -235,11 +235,11 @@
       ],
       "focus_t": 3,
       "lens": 58,
-      "min_z": 46,
-      "margin": 1.08,
+      "min_z": 44,
+      "margin": 1.06,
       "type": "relation_camera",
       "shot_scale": "WIDE_STRUCTURE",
-      "field_scope": "CENTRAL_MIDFIELD_WIDE",
+      "field_scope": "MIDFIELD_WIDTH_ZONE",
       "phase_name": "STRETCH"
     },
     {
@@ -628,7 +628,7 @@
     "weak_side_release": "left"
   },
   "scale_script": {
-    "principle": "use the smallest field extent that fully explains the tactical question; return wider only when structure or strong-weak-side spacing must be read",
+    "principle": "show only the pitch extent needed to explain the current tactical question; tactical completeness comes from preserved relationships and landmarks, not maximum field area",
     "benchmark": "TEACTICS",
     "rules": [
       "use full or near-full pitch only when the viewer needs global structure",
@@ -641,13 +641,13 @@
     "phases": {
       "BUILD": {
         "shot_scale": "STRUCTURE",
-        "field_scope": "DEFENSIVE_HALF_PLUS_MIDFIELD",
-        "purpose": "show buildup base, Pirlo depth and first pressure"
+        "field_scope": "BUILD_RELATION_ZONE",
+        "purpose": "show LCB-Pirlo-first pressure and enough midfield landmark context without shrinking players"
       },
       "STRETCH": {
         "shot_scale": "WIDE_STRUCTURE",
-        "field_scope": "CENTRAL_THREE_QUARTERS",
-        "purpose": "show both side midfielders stretching the block"
+        "field_scope": "MIDFIELD_WIDTH_ZONE",
+        "purpose": "show both side midfielders stretching the block while keeping the midfield relation readable on mobile"
       },
       "BETWEEN_LINES": {
         "shot_scale": "RELATION",
