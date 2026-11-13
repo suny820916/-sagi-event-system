@@ -1,10 +1,10 @@
 {
   "project": "SAGI VOICE DIRECTOR",
-  "version": "CHRISTMAS TREE 4-3-2-1 · VOICE SYNC 00-101 · V1",
+  "version": "CHRISTMAS TREE 4-3-2-1 · VOICE SYNC 00-101 · V2 DENSITY LOCK",
   "source_preset": "cloud-blender-worker/presets/christmas_tree_full_lesson_00_101.json",
   "fps": 24,
   "total_sec": 101,
-  "rule": "voice must complete inside each slot; never extend final duration; visual motion continues through the slot",
+  "rule": "voice must complete inside each slot; preserve meaning; visual motion may lead or trail narration by <=1.0s; never extend final duration",
   "slots": [
     {
       "id": "intro",
@@ -13,7 +13,9 @@
       "duration": 6,
       "status": "locked",
       "visual": "Kaka + Seedorf + Inzaghi emphasis, glide to shape",
-      "voice_text": "萨吉体育，上课了。如果说谁让圣诞树阵型成为经典，安切洛蒂一定是最重要的人之一。"
+      "voice_text": "萨吉体育，上课了。让圣诞树成为经典，安切洛蒂是最重要的人之一。",
+      "cjk_chars": 27,
+      "cjk_per_sec": 4.5
     },
     {
       "id": "formation",
@@ -22,7 +24,9 @@
       "duration": 6,
       "status": "locked",
       "visual": "4 → 3 → 2 → 1 formation reveal",
-      "voice_text": "四后卫、三中场、两名前腰、一个前锋。四三二一，这就是圣诞树。"
+      "voice_text": "四后卫、三中场、两名前腰、一个前锋。四三二一，这就是圣诞树。",
+      "cjk_chars": 24,
+      "cjk_per_sec": 4
     },
     {
       "id": "pirlo",
@@ -31,7 +35,9 @@
       "duration": 5,
       "status": "locked",
       "visual": "Pirlo deepest midfielder, passing direction",
-      "voice_text": "先看进攻。皮尔洛站在中场最深处，负责决定进攻方向。"
+      "voice_text": "先看进攻。皮尔洛站在中场最深处，负责决定进攻方向。",
+      "cjk_chars": 22,
+      "cjk_per_sec": 4.4
     },
     {
       "id": "midfield_width",
@@ -40,34 +46,42 @@
       "duration": 4,
       "status": "locked",
       "visual": "LCM and RCM open away from Pirlo",
-      "voice_text": "他两侧的中场主动拉开，为他创造出球角度。"
+      "voice_text": "他两侧的中场主动拉开，为他创造出球角度。",
+      "cjk_chars": 18,
+      "cjk_per_sec": 4.5
     },
     {
       "id": "between_lines",
       "start": 21,
-      "end": 25,
-      "duration": 4,
+      "end": 26,
+      "duration": 5,
       "status": "locked",
       "visual": "Seedorf and Kaka enter between lines",
-      "voice_text": "当中场宽度打开，西多夫和卡卡就能进入两线之间，把后场控制连接到前场。"
+      "voice_text": "中场拉开后，西多夫和卡卡进入两线之间，把控制送到前场。",
+      "cjk_chars": 24,
+      "cjk_per_sec": 4.8
     },
     {
       "id": "fullback_width",
-      "start": 25,
-      "end": 30,
+      "start": 26,
+      "end": 31,
       "duration": 5,
       "status": "locked",
       "visual": "Fullbacks overlap to provide width",
-      "voice_text": "但圣诞树没有真正的边锋，所以拉开球场宽度的任务，更多交给边后卫。"
+      "voice_text": "圣诞树没有真正的边锋，拉开宽度更多交给边后卫。",
+      "cjk_chars": 21,
+      "cjk_per_sec": 4.2
     },
     {
       "id": "attack_finish",
-      "start": 30,
-      "end": 42,
+      "start": 31,
+      "end": 43,
       "duration": 12,
       "status": "locked",
       "visual": "Overlap, cutback, Kaka acceleration, Inzaghi finish",
-      "voice_text": "中场吸引防守，边后卫从外线套上；一旦到底线，回传或者倒三角，往往比直接传中更危险。最后，卡卡负责突然加速，因扎吉只等待防线失去位置的那一刻。"
+      "voice_text": "中场吸引防守，边后卫从外线套上；一旦到底线，回传或者倒三角，往往比直接传中更危险。最后，卡卡负责突然加速，因扎吉只等待防线失去位置的那一刻。",
+      "cjk_chars": 62,
+      "cjk_per_sec": 5.17
     },
     {
       "id": "protect_center",
@@ -76,7 +90,9 @@
       "duration": 8,
       "status": "locked",
       "visual": "Compact central block",
-      "voice_text": "再看防守。圣诞树的第一原则不是马上抢球，而是先守住中路。"
+      "voice_text": "再看防守。圣诞树的第一原则不是马上抢球，而是先守住中路。",
+      "cjk_chars": 25,
+      "cjk_per_sec": 3.13
     },
     {
       "id": "force_wide",
@@ -85,7 +101,9 @@
       "duration": 7,
       "status": "draft",
       "visual": "Force ball toward touchline",
-      "voice_text": "球到边路后，边后卫压外线，中场堵住内线，让对手继续往边路走。"
+      "voice_text": "球到边路后，边后卫压外线，中场堵住内线，让对手继续往边路走。",
+      "cjk_chars": 26,
+      "cjk_per_sec": 3.71
     },
     {
       "id": "triangle",
@@ -94,7 +112,9 @@
       "duration": 8,
       "status": "draft",
       "visual": "Fullback + midfielder + center-back protection triangle",
-      "voice_text": "这时候形成三角保护：边后卫压外线，中场堵内线，中卫保护身后。"
+      "voice_text": "这时候形成三角保护：边后卫压外线，中场堵内线，中卫保护身后。",
+      "cjk_chars": 26,
+      "cjk_per_sec": 3.25
     },
     {
       "id": "weakness",
@@ -103,7 +123,9 @@
       "duration": 8,
       "status": "draft",
       "visual": "Switch of play exposes weak side",
-      "voice_text": "真正的弱点，是连续横向转移。阵型横移速度一旦跟不上，弱侧空间就会被暴露。"
+      "voice_text": "真正的弱点，是连续横向转移。阵型横移速度一旦跟不上，弱侧空间就会被暴露。",
+      "cjk_chars": 32,
+      "cjk_per_sec": 4
     },
     {
       "id": "defense_reset",
@@ -112,7 +134,9 @@
       "duration": 2,
       "status": "draft",
       "visual": "Recover compact central shape",
-      "voice_text": "所以，防守必须始终保持中路紧凑。"
+      "voice_text": "所以，中路必须始终紧凑。",
+      "cjk_chars": 10,
+      "cjk_per_sec": 5
     },
     {
       "id": "strength",
@@ -121,7 +145,9 @@
       "duration": 8,
       "status": "draft",
       "visual": "Central numbers and short distances",
-      "voice_text": "圣诞树最大的优势，是中路人数多、控制强，而且球员之间的距离很短。"
+      "voice_text": "圣诞树最大的优势，是中路人数多、控制强，而且球员之间的距离很短。",
+      "cjk_chars": 28,
+      "cjk_per_sec": 3.5
     },
     {
       "id": "risk",
@@ -130,7 +156,9 @@
       "duration": 8,
       "status": "draft",
       "visual": "Wide overload and possible 2v1",
-      "voice_text": "但风险也很明显：边路天然人数不足，对手很容易制造二打一。"
+      "voice_text": "但风险也很明显：边路天然人数不足，对手很容易制造二打一。",
+      "cjk_chars": 25,
+      "cjk_per_sec": 3.13
     },
     {
       "id": "people",
@@ -139,7 +167,9 @@
       "duration": 9,
       "status": "draft",
       "visual": "Return to 4-3-2-1 and close",
-      "voice_text": "阵型只是数字。真正决定它能不能成为经典的，永远是执行它的人。"
+      "voice_text": "阵型只是数字。真正决定它能不能成为经典的，永远是执行它的人。",
+      "cjk_chars": 27,
+      "cjk_per_sec": 3
     }
   ]
 }
