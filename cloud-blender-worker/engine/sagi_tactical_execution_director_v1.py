@@ -463,7 +463,7 @@ m_ball = material(
 )
 
 # Floating pitch
-cube("PITCH", (0, 0, 0), (34, 52.5, .18), m_pitch)
+cube("PITCH", (0, 0, 0), (40, 60, .18), m_pitch)
 
 # Teactics-like low-contrast horizontal spatial bands.
 # They support depth reading without turning the pitch into a grass texture.
@@ -580,7 +580,7 @@ def create_player(name, data):
     # Teactics-style miniature figure: readable, but never dominant.
     # V03 reduces the overall scale and gives the limbs a quiet natural stance
     # so players read as people rather than rigid chess pieces.
-    root.scale = (1.42, 1.42, 1.42)
+    root.scale = (1.56, 1.56, 1.56)
 
     matp = (
         m_g
