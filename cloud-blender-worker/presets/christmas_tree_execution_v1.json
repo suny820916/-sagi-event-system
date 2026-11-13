@@ -610,9 +610,10 @@
     "max_backward_target_m": 1.5,
     "lead_sec": 0.34,
     "settle_sec": 0.32,
-    "principle": "camera follows tactical progression on one rail; zoom out as needed, zoom in gradually",
+    "principle": "preserve spatial continuity, but allow deliberate tactical scale changes between structure and relation shots",
     "preserve_scale_continuity": true,
-    "max_zoom_in_per_phase_m": 8
+    "max_zoom_in_per_phase_m": 8,
+    "allow_scale_reset_on_shot_scale_change": true
   },
   "action_continuity": {
     "enabled": true,
@@ -636,7 +637,8 @@
       "use half-pitch or zone framing when the tactical relation is local",
       "never show the whole field just to look complete",
       "never crop pitch landmarks that are needed to understand the action",
-      "return to wider pitch context after a local tactical explanation when the next phase depends on global spacing"
+      "return to wider pitch context after a local tactical explanation when the next phase depends on global spacing",
+      "global-to-local and local-to-global scale changes may be decisive when the tactical question changes"
     ],
     "phases": {
       "BUILD": {
