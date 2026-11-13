@@ -1,6 +1,6 @@
 {
   "project": "SAGI TACTICS",
-  "version": "SAGI TACTICAL EXECUTION DIRECTOR V10 · SCALE + FIELD SCOPE SCRIPT",
+  "version": "SAGI TACTICAL EXECUTION DIRECTOR V10 · FIELD SCALE SCRIPT",
   "fps": 24,
   "duration_sec": 15.2,
   "resolution": [
@@ -561,6 +561,8 @@
     "principle": "learn_expression_not_copy_content",
     "locked_direction": true,
     "priorities": [
+      "local_and_global_views_are_both_valid_when_tactically_justified",
+      "field_extent_should_change_with_tactical_question",
       "visible_pitch_scope_must_match_tactical_information",
       "full_pitch_and_local_pitch_are_both_valid_when_tactically_motivated",
       "weak_side_space_must_be_caused_by_collective_defensive_shift",
@@ -673,5 +675,54 @@
       }
     },
     "local_relation_history_sec": 0.68
+  },
+  "field_scale_script": {
+    "enabled": true,
+    "principle": "field visibility and camera scale are chosen by tactical information needs, not visual uniformity",
+    "stages": [
+      {
+        "phase": "BUILD",
+        "shot": "GLOBAL",
+        "field": "large_pitch_context",
+        "purpose": "locate first build-up relation and attack direction"
+      },
+      {
+        "phase": "STRETCH",
+        "shot": "SEMI_GLOBAL",
+        "field": "middle_thirds",
+        "purpose": "show midfield width and defensive block stretch"
+      },
+      {
+        "phase": "BETWEEN_LINES",
+        "shot": "RELATION_CLOSE",
+        "field": "central_attacking_zone",
+        "purpose": "show receiver between lines without losing reference structure"
+      },
+      {
+        "phase": "OVERLAP",
+        "shot": "RELATION_CLOSE",
+        "field": "right_half_space_and_flank",
+        "purpose": "show carrier-overlap-defender timing"
+      },
+      {
+        "phase": "SHIFT_AND_SWITCH",
+        "shot": "SEMI_GLOBAL",
+        "field": "both_sides_of_attacking_half",
+        "purpose": "show strong-side attraction and weak-side release"
+      },
+      {
+        "phase": "COMPLETE",
+        "shot": "RESULT_MEDIUM",
+        "field": "final_third_and_box",
+        "purpose": "show weak-side reception, depth, defenders and goal"
+      }
+    ],
+    "rules": {
+      "full_picture_does_not_mean_full_pitch_every_time": true,
+      "local_closeup_may_crop_pitch_lines": true,
+      "retain_attack_direction_reference": true,
+      "return_to_structure_after_local_relation": true,
+      "pitch_extent_must_match_tactical_question": true
+    }
   }
 }
