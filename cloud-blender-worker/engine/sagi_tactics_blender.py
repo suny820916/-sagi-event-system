@@ -503,7 +503,7 @@ camera_presets = {
     "def_triangle": {"loc": (20,-26,72), "target": (17,-12,0), "lens": 58},
     # Move to the weak-side half-space rather than looking across the
     # touchline from the opposite side; this removes the black pitch void.
-    "def_weakness": {"loc": (-10,-36,76), "target": (-18,-15,0), "lens": 58},
+    "def_weakness": {"loc": (3,-30,90), "target": (-17,-14,0), "lens": 58},
 }
 
 camera_last = None
