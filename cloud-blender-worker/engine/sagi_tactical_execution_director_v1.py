@@ -525,8 +525,8 @@ m_ring = material(
 )
 m_ball = material(
     "BALL",
-    (0.94, .94, .94, 1),
-    rough=.33,
+    hex_rgba(pal.get("ball", "#B5B8BA")),
+    rough=.88,
 )
 
 # V11.1 FLOATING CENTRAL PITCH
@@ -753,7 +753,7 @@ ball = sphere(
         ball_owner.location.y,
         .37,
     ),
-    .28,
+    float(cfg.get("ball_visual", {}).get("radius", .28)),
     m_ball,
 )
 
