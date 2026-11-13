@@ -1,0 +1,60 @@
+name: SAGI TEST 14 FLOW CONTINUITY
+
+concurrency:
+  group: sagi-test14-flow-continuity-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "cloud-blender-worker/presets/christmas_tree_execution_test14_flow_continuity.json"
+      - ".github/workflows/sagi-test14-flow-continuity.yml"
+      - "cloud-blender-worker/engine/sagi_tactical_execution_director_v1.py"
+  workflow_dispatch:
+
+jobs:
+  render-test14:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Build Blender image
+        run: docker build -t sagi-test14 ./cloud-blender-worker
+      - name: Render TEST 14 and encode iPhone-safe MP4
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p test14_out
+          docker run --rm \
+            -v "$PWD/test14_out:/out" \
+            sagi-test14 \
+            bash -lc '
+              blender --background \
+                --python /app/engine/sagi_tactical_execution_director_v1.py \
+                -- \
+                /app/presets/christmas_tree_execution_test14_flow_continuity.json \
+                /out
+              ffmpeg -y -loglevel error \
+                -framerate 24 \
+                -i /out/frames/frame_%04d.png \
+                -f lavfi \
+                -i anullsrc=channel_layout=stereo:sample_rate=44100 \
+                -map 0:v:0 -map 1:a:0 \
+                -c:v libx264 -profile:v baseline -level 3.1 \
+                -pix_fmt yuv420p -preset veryfast -crf 23 \
+                -c:a aac -b:a 64k -shortest -movflags +faststart \
+                /out/SAGI_TEST14_FLOW_CONTINUITY.mp4
+            '
+          sudo chown -R "$USER":"$USER" test14_out
+          test -s test14_out/SAGI_TEST14_FLOW_CONTINUITY.mp4
+      - name: Upload TEST 14 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SAGI-TEST14-FLOW-CONTINUITY
+          path: |
+            test14_out/SAGI_TEST14_FLOW_CONTINUITY.mp4
+            test14_out/execution_report.json
+            test14_out/scene.blend
+          retention-days: 7
