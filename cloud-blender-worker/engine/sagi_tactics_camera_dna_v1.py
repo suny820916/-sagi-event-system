@@ -670,6 +670,16 @@ def pass_ball(a, b, release, arrive):
     f0 = 1 + round(release * fps)
     f1 = 1 + round(arrive * fps)
 
+    # Teactics-derived causality: the receiver prepares for the ball
+    # just before arrival instead of standing inert until contact.
+    prep_fr = max(f0 + 1, f1 - max(1, round(.18 * fps)))
+    prev_yaw = bb.rotation_euler[2]
+    dx = aa.location.x - bb.location.x
+    dy = aa.location.y - bb.location.y
+    if abs(dx) + abs(dy) > 1e-5:
+        bb.rotation_euler[2] = math.atan2(-dx, dy)
+        key(bb, "rotation_euler", prep_fr)
+
     ball.location = (
         aa.location.x,
         aa.location.y,
@@ -683,6 +693,11 @@ def pass_ball(a, b, release, arrive):
         .37,
     )
     key(ball, "location", f1)
+
+    # After first touch, recover toward the player's tactical orientation.
+    recover_fr = min(scene.frame_end, f1 + max(1, round(.14 * fps)))
+    bb.rotation_euler[2] = prev_yaw
+    key(bb, "rotation_euler", recover_fr)
 
     smooth_action(ball)
 
