@@ -1,6 +1,6 @@
 {
   "project": "SAGI TACTICS",
-  "version": "SAGI TACTICAL EXECUTION DIRECTOR V7 · STRUCTURE + RELATION",
+  "version": "SAGI TACTICAL EXECUTION DIRECTOR V7.1 · FULL FRAME SAFE",
   "fps": 24,
   "duration_sec": 15.2,
   "resolution": [
@@ -196,7 +196,7 @@
       "focus_t": 1.15,
       "lens": 60,
       "min_z": 48,
-      "margin": 1.06,
+      "margin": 1.12,
       "type": "relation_camera"
     },
     {
@@ -232,7 +232,7 @@
       "focus_t": 3,
       "lens": 58,
       "min_z": 52,
-      "margin": 1.06,
+      "margin": 1.12,
       "type": "relation_camera"
     },
     {
@@ -289,7 +289,7 @@
       "focus_t": 5.45,
       "lens": 60,
       "min_z": 50,
-      "margin": 1.05,
+      "margin": 1.12,
       "type": "relation_camera"
     },
     {
@@ -333,7 +333,7 @@
       "focus_t": 7.55,
       "lens": 60,
       "min_z": 50,
-      "margin": 1.05,
+      "margin": 1.12,
       "type": "relation_camera"
     },
     {
@@ -378,7 +378,7 @@
       "focus_t": 10.2,
       "lens": 56,
       "min_z": 58,
-      "margin": 1.05,
+      "margin": 1.14,
       "type": "relation_camera"
     },
     {
@@ -432,7 +432,7 @@
       "focus_t": 13.1,
       "lens": 60,
       "min_z": 50,
-      "margin": 1.05,
+      "margin": 1.12,
       "type": "relation_camera"
     },
     {
@@ -522,6 +522,7 @@
     "principle": "learn_expression_not_copy_content",
     "locked_direction": true,
     "priorities": [
+      "no_tactical_subject_on_frame_edge",
       "whole_tactical_picture_before_local_beauty",
       "local_relation_must_keep_formation_context",
       "spatial_continuity_between_phases",
@@ -546,6 +547,8 @@
     "no_isolated_triangle_shots": true,
     "no_contextless_closeups": true,
     "preserve_attack_direction": true,
-    "preserve_spatial_continuity": true
+    "preserve_spatial_continuity": true,
+    "edge_safe_zone": true,
+    "edge_safe_rule": "No tactical subject should sit on or be clipped by the portrait-frame edge."
   }
 }
