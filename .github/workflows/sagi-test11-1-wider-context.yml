@@ -1,0 +1,60 @@
+name: SAGI TEST 11.1 WIDER CONTEXT
+
+concurrency:
+  group: sagi-test11-1-wider-context-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "cloud-blender-worker/presets/christmas_tree_execution_test11_1_wider_context.json"
+      - ".github/workflows/sagi-test11-1-wider-context.yml"
+      - "cloud-blender-worker/engine/sagi_tactical_execution_director_v1.py"
+  workflow_dispatch:
+
+jobs:
+  render-test11-1:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Build Blender image
+        run: docker build -t sagi-test11-1 ./cloud-blender-worker
+      - name: Render TEST 11.1 and encode iPhone-safe MP4
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p test11_1_out
+          docker run --rm \
+            -v "$PWD/test11_1_out:/out" \
+            sagi-test11-1 \
+            bash -lc '
+              blender --background \
+                --python /app/engine/sagi_tactical_execution_director_v1.py \
+                -- \
+                /app/presets/christmas_tree_execution_test11_1_wider_context.json \
+                /out
+              ffmpeg -y -loglevel error \
+                -framerate 24 \
+                -i /out/frames/frame_%04d.png \
+                -f lavfi \
+                -i anullsrc=channel_layout=stereo:sample_rate=44100 \
+                -map 0:v:0 -map 1:a:0 \
+                -c:v libx264 -profile:v baseline -level 3.1 \
+                -pix_fmt yuv420p -preset veryfast -crf 23 \
+                -c:a aac -b:a 64k -shortest -movflags +faststart \
+                /out/SAGI_TEST11_1_WIDER_CONTEXT.mp4
+            '
+          sudo chown -R "$USER":"$USER" test11_1_out
+          test -s test11_1_out/SAGI_TEST11_1_WIDER_CONTEXT.mp4
+      - name: Upload TEST 11.1 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SAGI-TEST11-1-WIDER-CONTEXT
+          path: |
+            test11_1_out/SAGI_TEST11_1_WIDER_CONTEXT.mp4
+            test11_1_out/execution_report.json
+            test11_1_out/scene.blend
+          retention-days: 7
