@@ -1031,53 +1031,141 @@ def move_player(name, target, t0, dur, carry_ball=False):
     smooth_action(o)
 
 
+def yaw_toward(src_xy, dst_xy):
+    dx = float(dst_xy[0]) - float(src_xy[0])
+    dy = float(dst_xy[1]) - float(src_xy[1])
+    if abs(dx) + abs(dy) <= 1e-6:
+        return None
+    return math.atan2(-dx, dy)
+
+
+def next_action_target(name, after_t):
+    """Return the next tactical destination for a player after receiving."""
+    after_t = float(after_t)
+    for ev in cfg.get("events", []):
+        typ = ev.get("type")
+
+        if typ == "pass" and ev.get("from") == name:
+            start_t = float(ev.get("release", ev.get("t", 0)))
+            if start_t <= after_t + .04:
+                continue
+            target_name = ev.get("to")
+            return (
+                predicted_player_pos(target_name, float(ev.get("arrive", start_t))),
+                start_t,
+            )
+
+        if typ == "dribble" and ev.get("player") == name:
+            start_t = float(ev.get("t", 0))
+            if start_t <= after_t + .04:
+                continue
+            return (
+                (float(ev["to"][0]), float(ev["to"][1])),
+                start_t,
+            )
+
+        if typ == "shot" and ev.get("from") == name:
+            start_t = float(ev.get("release", ev.get("t", 0)))
+            if start_t <= after_t + .04:
+                continue
+            return (
+                (float(ev["to"][0]), float(ev["to"][1])),
+                start_t,
+            )
+
+    return (None, None)
+
+
 def pass_ball(a, b, release, arrive):
     aa = players[a]
     bb = players[b]
+    release = float(release)
+    arrive = float(arrive)
     f0 = 1 + round(release * fps)
     f1 = 1 + round(arrive * fps)
 
-    # Teactics-derived causality: the receiver prepares for the ball
-    # just before arrival instead of standing inert until contact.
-    prep_fr = max(f0 + 1, f1 - max(1, round(.18 * fps)))
-    prev_yaw = bb.rotation_euler[2]
-    dx = aa.location.x - bb.location.x
-    dy = aa.location.y - bb.location.y
-    if abs(dx) + abs(dy) > 1e-5:
-        bb.rotation_euler[2] = math.atan2(-dx, dy)
-        key(bb, "rotation_euler", prep_fr)
+    # Use timeline positions, not the object's eventual final transform.
+    # This keeps ball flight attached to where players really are at release/arrival.
+    src_xy = predicted_player_pos(a, release)
+    dst_xy = predicted_player_pos(b, arrive)
 
-    # Passes should travel decisively. Player motion may ease, but the ball
-    # should not inherit a cinematic slow-in/slow-out curve.
+    # Passer opens toward the target just before release.
+    pass_yaw = yaw_toward(src_xy, dst_xy)
+    if pass_yaw is not None:
+        turn_fr = max(1, f0 - max(1, round(.12 * fps)))
+        key(aa, "rotation_euler", turn_fr)
+        aa.rotation_euler[2] = pass_yaw
+        key(aa, "rotation_euler", f0)
+
+    # Receiver checks toward the incoming ball before contact.
+    prep_fr = max(f0 + 1, f1 - max(1, round(.18 * fps)))
+    receive_yaw = yaw_toward(dst_xy, src_xy)
+    if receive_yaw is not None:
+        bb.rotation_euler[2] = receive_yaw
+        key(bb, "rotation_euler", prep_fr)
+        key(bb, "rotation_euler", f1)
+
+    # Ball travels decisively between actual timeline positions.
     old_interp = set_new_key_interpolation("LINEAR")
-    ball.location = (
-        aa.location.x,
-        aa.location.y,
-        .37,
-    )
+    ball.location = (src_xy[0], src_xy[1], .37)
     key(ball, "location", f0)
 
-    ball.location = (
-        bb.location.x,
-        bb.location.y,
-        .37,
-    )
+    ball.location = (dst_xy[0], dst_xy[1], .37)
     key(ball, "location", f1)
+
+    # Compact first touch: continue the incoming line a fraction, then keep
+    # possession ready for the next action. This avoids a dead "ball stops"
+    # feeling without turning the clip into character animation.
+    next_target, next_t = next_action_target(b, arrive)
+    gap = None if next_t is None else float(next_t) - arrive
+    if gap is None or gap > .22:
+        dx = dst_xy[0] - src_xy[0]
+        dy = dst_xy[1] - src_xy[1]
+        dist = math.hypot(dx, dy)
+        if dist > 1e-5:
+            ux, uy = dx / dist, dy / dist
+            touch_fr = min(scene.frame_end, f1 + max(1, round(.11 * fps)))
+            ball.location = (
+                dst_xy[0] + ux * .16,
+                dst_xy[1] + uy * .16,
+                .37,
+            )
+            key(ball, "location", touch_fr)
     restore_new_key_interpolation(old_interp)
 
-    # After first touch, recover toward the player's tactical orientation.
-    recover_fr = min(scene.frame_end, f1 + max(1, round(.14 * fps)))
-    bb.rotation_euler[2] = prev_yaw
-    key(bb, "rotation_euler", recover_fr)
+    # Instead of recovering to an arbitrary old yaw, the receiver turns
+    # directly toward the next tactical action: pass, dribble, or shot.
+    if next_target is not None:
+        next_yaw = yaw_toward(dst_xy, next_target)
+        if next_yaw is not None:
+            latest_turn_t = max(arrive + .12, float(next_t) - .08)
+            turn_done_t = min(arrive + .34, latest_turn_t)
+            turn_done_fr = min(
+                scene.frame_end,
+                max(f1 + 1, 1 + round(turn_done_t * fps)),
+            )
+            bb.rotation_euler[2] = next_yaw
+            key(bb, "rotation_euler", turn_done_fr)
 
     smooth_action(ball)
 
 
 def shot_ball(player, target, release, arrive, arc=.9):
     src = players[player]
+    release = float(release)
+    arrive = float(arrive)
     f0 = 1 + round(release * fps)
     f1 = 1 + round(arrive * fps)
     fm = max(f0 + 1, round((f0 + f1) / 2))
+    src_xy = predicted_player_pos(player, release)
+    target_xy = (float(target[0]), float(target[1]))
+
+    shot_yaw = yaw_toward(src_xy, target_xy)
+    if shot_yaw is not None:
+        turn_fr = max(1, f0 - max(1, round(.14 * fps)))
+        key(src, "rotation_euler", turn_fr)
+        src.rotation_euler[2] = shot_yaw
+        key(src, "rotation_euler", f0)
 
     # One compact kicking gesture on the shooting leg.
     rl = bpy.data.objects.get(player + "_RL")
@@ -1090,17 +1178,17 @@ def shot_ball(player, target, release, arrive, arc=.9):
         rl.rotation_euler[0] = 0.0
         key(rl, "rotation_euler", min(f1, f0 + max(1, round(.18 * fps))))
 
-    ball.location = (src.location.x, src.location.y, .37)
+    ball.location = (src_xy[0], src_xy[1], .37)
     key(ball, "location", f0)
 
     ball.location = (
-        (src.location.x + float(target[0])) / 2.0,
-        (src.location.y + float(target[1])) / 2.0,
+        (src_xy[0] + target_xy[0]) / 2.0,
+        (src_xy[1] + target_xy[1]) / 2.0,
         .37 + float(arc),
     )
     key(ball, "location", fm)
 
-    ball.location = (float(target[0]), float(target[1]), .37)
+    ball.location = (target_xy[0], target_xy[1], .37)
     key(ball, "location", f1)
 
     smooth_action(ball)
