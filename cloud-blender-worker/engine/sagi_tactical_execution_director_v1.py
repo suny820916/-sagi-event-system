@@ -870,9 +870,13 @@ def relation_camera_pose(
     cx = relation_cx * (1.0 - scope_weight) + scope_cx * scope_weight
     cy = relation_cy * (1.0 - scope_weight) + scope_cy * scope_weight
 
-    # Frame both the actual player trajectory and the tactical pitch region.
+    # Structural shots must genuinely show their wider pitch region.
+    # Relation shots use the named field scope only to orient the composition;
+    # forcing all four scope corners into a close tactical shot would shrink
+    # players back into chess pieces.
     framing_pts = list(trajectory_pts)
-    framing_pts.extend(scope_pts)
+    if str(shot_scale or "") in ("STRUCTURE", "WIDE_STRUCTURE"):
+        framing_pts.extend(scope_pts)
 
     # Lens-aware framing for 9:16 portrait.
     # The old empirical factors pushed wide tactical relations far too high,
