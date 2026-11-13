@@ -568,6 +568,59 @@ def camera_glide(preset, t, duration):
 
 
 
+def tactical_space_pose(center, base_preset="between_lines", height=None, lens=None):
+    """Build a camera pose around the NEXT advantageous space, not the ball.
+
+    The base preset preserves the established pitch angle; only the tactical
+    look-at point is translated toward the future zone. This keeps a stable
+    visual language while allowing the camera to arrive before the action.
+    """
+    base = camera_presets[base_preset]
+    cx, cy = float(center[0]), float(center[1])
+    tx, ty, tz = base["target"]
+    dx = cx - float(tx)
+    dy = cy - float(ty)
+
+    # Move only part of the camera translation. The target leads more than
+    # the camera itself, creating a purposeful "look ahead" composition.
+    loc = (
+        float(base["loc"][0]) + dx * .42,
+        float(base["loc"][1]) + dy * .42,
+        float(height) if height is not None else float(base["loc"][2]),
+    )
+    return {
+        "loc": loc,
+        "target": (cx, cy, 0.0),
+        "lens": float(lens) if lens is not None else float(base["lens"]),
+    }
+
+
+def camera_lead_space(center, t, duration, base_preset="between_lines", height=None, lens=None):
+    """Glide into an empty/next space before the tactical action arrives."""
+    global camera_last, camera_last_t
+    target = tactical_space_pose(center, base_preset, height, lens)
+
+    if camera_last is None:
+        apply_camera_pose(target, 1 + round(float(t) * fps))
+        camera_last = target
+        camera_last_t = float(t)
+        return
+
+    start_pose = camera_last
+    f0 = 1 + round(float(t) * fps)
+    f1 = 1 + round((float(t) + float(duration)) * fps)
+    span = max(1, f1 - f0)
+
+    # Lead-space motion is slightly gentler than a chapter reframe.
+    for u in (0.0, 0.22, 0.52, 0.78, 1.0):
+        eased = u * u * (3.0 - 2.0 * u)
+        fr = round(f0 + span * u)
+        apply_camera_pose(mix_pose(start_pose, target, eased), fr)
+
+    camera_last = target
+    camera_last_t = float(t) + float(duration)
+
+
 def focus_player(name, t):
     fr = 1 + round(t * fps)
     for n, r in rings.items():
@@ -824,6 +877,16 @@ for ev in cfg.get("events", []):
             ev["preset"],
             float(ev["t"]),
             float(ev["duration"]),
+        )
+
+    elif typ == "camera_lead_space":
+        camera_lead_space(
+            ev["center"],
+            float(ev["t"]),
+            float(ev["duration"]),
+            ev.get("base_preset", "between_lines"),
+            ev.get("height"),
+            ev.get("lens"),
         )
 
     elif typ == "focus":
