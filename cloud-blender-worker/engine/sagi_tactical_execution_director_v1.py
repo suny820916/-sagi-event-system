@@ -790,6 +790,13 @@ FIELD_SCOPE_BOUNDS = {
     "FULL_PITCH": (-34.0, 34.0, -52.5, 52.5),
     "DEFENSIVE_HALF_PLUS_MIDFIELD": (-30.0, 30.0, -48.0, 12.0),
     "CENTRAL_THREE_QUARTERS": (-30.0, 30.0, -34.0, 34.0),
+    # V10.1 Teactics-style tactical scopes: wide enough to explain the
+    # relationship, but not so wide that every semi-global view becomes a
+    # near-full-pitch shot in 9:16.
+    "CENTRAL_MIDFIELD_WIDE": (-26.0, 26.0, -20.0, 22.0),
+    "CENTRAL_ATTACK_RELATION": (-17.0, 18.0, -4.0, 27.0),
+    "RIGHT_OVERLAP_RELATION": (5.0, 32.0, 0.0, 34.0),
+    "ATTACKING_WIDTH_ZONE": (-22.0, 32.0, 9.0, 46.0),
     "MIDFIELD_ZONE": (-18.0, 18.0, -12.0, 26.0),
     "RIGHT_CHANNEL_ZONE": (0.0, 32.0, -6.0, 32.0),
     "ATTACKING_TWO_THIRDS": (-30.0, 30.0, 0.0, 52.5),
