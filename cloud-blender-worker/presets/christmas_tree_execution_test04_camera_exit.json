@@ -1,6 +1,6 @@
 {
   "project": "SAGI TACTICS",
-  "version": "SAGI TACTICAL DIRECTOR TEST 04.1.1 · PASS CAMERA HOLD · NO VOICE",
+  "version": "SAGI TACTICAL DIRECTOR TEST 04.1.2 · PASS RECEIVE HOLD · NO VOICE",
   "fps": 24,
   "duration_sec": 16.2,
   "resolution": [
@@ -498,7 +498,7 @@
       "arrive": 10.88
     },
     {
-      "t": 10.94,
+      "t": 11.02,
       "type": "relation_camera",
       "subjects": [
         "SEEDORF",
@@ -507,15 +507,15 @@
         "OCB_R",
         "OGK"
       ],
-      "focus_t": 11.28,
+      "focus_t": 11.42,
       "lens": 60,
       "min_z": 44,
       "margin": 1.08,
       "shot_scale": "RESULT_RELATION",
       "field_scope": "FINAL_THIRD",
       "phase_name": "WEAK_SIDE_RECEIVE",
-      "lead_sec": 0.18,
-      "settle_sec": 0.12
+      "lead_sec": 0,
+      "settle_sec": 0.3
     },
     {
       "t": 11.2,
@@ -886,7 +886,7 @@
         "attacker_detail": "RB opens his body and switches; Seedorf receives and attacks the exposed gap",
         "defender_reaction": "OCB_L reacts late from a stretched position",
         "spatial_change": "the weak-side pocket becomes a direct route toward goal",
-        "camera_intent": "hold the full passing corridor until Seedorf receives, then shift into the finishing relationship"
+        "camera_intent": "keep the full cross-field passing corridor through Seedorf's first control; only then move into the finishing relationship"
       }
     ]
   },
@@ -922,7 +922,9 @@
     "pass": "RB_TO_SEEDORF",
     "release_sec": 10,
     "arrive_sec": 10.88,
-    "camera_transition_sec": 10.94,
-    "rule": "Keep full lateral passing corridor visible until ball reaches Seedorf; then reframe to receiving relationship."
+    "receive_hold_sec": 0.14,
+    "camera_transition_start_sec": 11.02,
+    "camera_transition_end_sec": 11.32,
+    "rule": "Do not leave the full lateral passing corridor before the receiver has controlled the ball."
   }
 }
