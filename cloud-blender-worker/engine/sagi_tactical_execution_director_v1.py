@@ -128,6 +128,25 @@ def key(obj, path, frame):
     obj.keyframe_insert(data_path=path, frame=frame)
 
 
+def set_new_key_interpolation(mode):
+    """Best-effort control for newly inserted keys; safe across Blender versions."""
+    try:
+        old = bpy.context.preferences.edit.keyframe_new_interpolation_type
+        bpy.context.preferences.edit.keyframe_new_interpolation_type = mode
+        return old
+    except Exception:
+        return None
+
+
+def restore_new_key_interpolation(old):
+    if old is None:
+        return
+    try:
+        bpy.context.preferences.edit.keyframe_new_interpolation_type = old
+    except Exception:
+        pass
+
+
 def smooth_action(obj):
     # Blender 5.x uses layered/slotted Actions and no longer exposes
     # Action.fcurves through the legacy API. Default keyframe interpolation
@@ -837,6 +856,9 @@ def pass_ball(a, b, release, arrive):
         bb.rotation_euler[2] = math.atan2(-dx, dy)
         key(bb, "rotation_euler", prep_fr)
 
+    # Passes should travel decisively. Player motion may ease, but the ball
+    # should not inherit a cinematic slow-in/slow-out curve.
+    old_interp = set_new_key_interpolation("LINEAR")
     ball.location = (
         aa.location.x,
         aa.location.y,
@@ -850,6 +872,7 @@ def pass_ball(a, b, release, arrive):
         .37,
     )
     key(ball, "location", f1)
+    restore_new_key_interpolation(old_interp)
 
     # After first touch, recover toward the player's tactical orientation.
     recover_fr = min(scene.frame_end, f1 + max(1, round(.14 * fps)))
