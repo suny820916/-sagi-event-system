@@ -1,0 +1,73 @@
+name: SAGI Christmas Tree Intro CI
+
+concurrency:
+  group: sagi-christmas-tree-intro-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "cloud-blender-worker/engine/**"
+      - "cloud-blender-worker/presets/christmas_tree_intro_00_06.json"
+      - ".github/workflows/sagi-christmas-tree-intro-ci.yml"
+  workflow_dispatch:
+
+jobs:
+  render-intro-00-06:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Build Docker image
+        run: docker build -t sagi-blender-worker:intro ./cloud-blender-worker
+      - name: Start container
+        run: |
+          docker run -d --name sagi-intro-ci \
+            -p 10000:10000 \
+            -e PORT=10000 \
+            -e SAGI_API_KEY=test \
+            -e SAGI_RENDER_TIMEOUT_SEC=1800 \
+            sagi-blender-worker:intro
+      - name: Wait for API
+        run: |
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:10000/health; then exit 0; fi
+            sleep 2
+          done
+          exit 1
+      - name: Render intro 00-06
+        shell: bash
+        run: |
+          set -euo pipefail
+          jq -c '{config:.}' cloud-blender-worker/presets/christmas_tree_intro_00_06.json > intro_request.json
+          curl -fsS -X POST http://127.0.0.1:10000/jobs \
+            -H "X-API-Key: test" -H "Content-Type: application/json" \
+            --data-binary @intro_request.json | tee intro_start.json
+          JOB_ID=$(python3 -c 'import json; print(json.load(open("intro_start.json"))["job_id"])')
+          for i in $(seq 1 360); do
+            curl -fsS "http://127.0.0.1:10000/jobs/$JOB_ID" -H "X-API-Key: test" | tee intro_status.json
+            STATUS=$(python3 -c 'import json; print(json.load(open("intro_status.json"))["status"])')
+            [ "$STATUS" = "done" ] && break
+            [ "$STATUS" = "failed" ] && exit 1
+            sleep 5
+          done
+          test "$(python3 -c 'import json; print(json.load(open("intro_status.json"))["status"])')" = "done"
+          curl -fsSL "http://127.0.0.1:10000/jobs/$JOB_ID/video" -H "X-API-Key: test" -o sagi_christmas_tree_intro_00_06.mp4
+          curl -fsSL "http://127.0.0.1:10000/jobs/$JOB_ID/blend" -H "X-API-Key: test" -o sagi_christmas_tree_intro_00_06.blend
+          test -s sagi_christmas_tree_intro_00_06.mp4
+          test -s sagi_christmas_tree_intro_00_06.blend
+      - name: Upload intro artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sagi-christmas-tree-intro-00-06
+          path: |
+            sagi_christmas_tree_intro_00_06.mp4
+            sagi_christmas_tree_intro_00_06.blend
+            intro_status.json
+          retention-days: 7
+      - name: Container logs
+        if: always()
+        run: docker logs sagi-intro-ci || true
