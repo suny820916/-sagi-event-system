@@ -273,10 +273,26 @@ def validate_execution(config):
                 errors.append(f"event {i} ({typ}) has invalid ball timing")
 
     # Possession chain: no teleporting the ball between unrelated players.
+    # Full-lesson presets may deliberately reset possession at chapter boundaries
+    # (for example: attack chapter -> defense chapter). chapter_state.ball_owner
+    # is therefore an authored tactical reset, not a possession error.
     holder = initial_holder
     ball_chain = []
     for i, ev in enumerate(events):
         typ = ev.get("type")
+
+        if typ == "chapter_state":
+            reset_holder = ev.get("ball_owner")
+            if reset_holder:
+                if reset_holder not in players_cfg:
+                    errors.append(
+                        f"event {i} chapter_state references unknown ball_owner {reset_holder}"
+                    )
+                else:
+                    holder = reset_holder
+                    ball_chain.append(f"RESET->{reset_holder}")
+            continue
+
         if typ == "pass":
             src = ev.get("from")
             dst = ev.get("to")
