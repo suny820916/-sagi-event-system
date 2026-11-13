@@ -11,11 +11,38 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 python3-pip python3-venv \
     && rm -rf /var/lib/apt/lists/*
 
-RUN curl -fsSL "https://download.blender.org/release/Blender5.2/blender-${BLENDER_VERSION}-linux-x64.tar.xz" -o /tmp/blender.tar.xz \
-    && mkdir -p /opt/blender \
-    && tar -xJf /tmp/blender.tar.xz --strip-components=1 -C /opt/blender \
-    && ln -s /opt/blender/blender /usr/local/bin/blender \
-    && rm -f /tmp/blender.tar.xz
+RUN set -eux; \
+    BLENDER_ARCHIVE="blender-${BLENDER_VERSION}-linux-x64.tar.xz"; \
+    BLENDER_PATH="Blender5.2/${BLENDER_ARCHIVE}"; \
+    rm -f /tmp/blender.tar.xz; \
+    for url in \
+      "https://mirror.blender.org/release/${BLENDER_PATH}" \
+      "https://download.blender.org/release/${BLENDER_PATH}"; do \
+      echo "Trying Blender download: ${url}"; \
+      if curl -fL \
+        --retry 5 \
+        --retry-delay 2 \
+        --retry-all-errors \
+        --connect-timeout 20 \
+        -A "Mozilla/5.0 SAGI-Blender-Worker" \
+        "${url}" -o /tmp/blender.tar.xz; then \
+        break; \
+      fi; \
+      rm -f /tmp/blender.tar.xz; \
+    done; \
+    if [ -s /tmp/blender.tar.xz ]; then \
+      mkdir -p /opt/blender; \
+      tar -xJf /tmp/blender.tar.xz --strip-components=1 -C /opt/blender; \
+      ln -sf /opt/blender/blender /usr/local/bin/blender; \
+      rm -f /tmp/blender.tar.xz; \
+    else \
+      echo "Official Blender archives unavailable; falling back to Ubuntu package"; \
+      apt-get update; \
+      apt-get install -y --no-install-recommends blender; \
+      ln -sf /usr/bin/blender /usr/local/bin/blender; \
+      rm -rf /var/lib/apt/lists/*; \
+    fi; \
+    blender --version | head -n 2
 
 WORKDIR /app
 COPY requirements.txt /app/requirements.txt
