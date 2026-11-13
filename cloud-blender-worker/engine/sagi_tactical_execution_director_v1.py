@@ -200,6 +200,13 @@ def event_end(ev):
         return float(ev.get("arrive", ev.get("release", event_start(ev))))
     if typ in ("player_move", "defender_shift", "dribble", "space", "face"):
         return event_start(ev) + float(ev.get("duration", 0.0))
+    if typ == "defensive_unit":
+        base = event_start(ev)
+        ends = [
+            base + float(m.get("delay", 0.0)) + float(m.get("duration", ev.get("duration", 0.0)))
+            for m in ev.get("moves", [])
+        ]
+        return max(ends or [base])
     return event_start(ev)
 
 
@@ -241,6 +248,17 @@ def validate_execution(config):
             for subject in subjects:
                 if subject not in players_cfg:
                     errors.append(f"event {i} relation_camera references unknown player {subject}")
+
+        if typ == "defensive_unit":
+            moves = ev.get("moves", [])
+            if len(moves) < 2:
+                errors.append(f"event {i} defensive_unit needs at least two moves")
+            for move in moves:
+                player_name = move.get("player")
+                if player_name not in players_cfg:
+                    errors.append(
+                        f"event {i} defensive_unit references unknown player {player_name}"
+                    )
 
         if event_end(ev) > duration + 1e-6:
             errors.append(
@@ -1599,6 +1617,18 @@ for ev in cfg.get("events", []):
             False,
             typ,
         )
+
+    elif typ == "defensive_unit":
+        base_t = float(ev["t"])
+        for move in ev.get("moves", []):
+            move_player(
+                move["player"],
+                move["to"],
+                base_t + float(move.get("delay", 0.0)),
+                float(move.get("duration", ev.get("duration", .7))),
+                False,
+                "defender_shift",
+            )
 
     elif typ == "dribble":
         move_player(
