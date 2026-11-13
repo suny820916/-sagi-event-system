@@ -488,6 +488,9 @@ camera_presets = {
     # rotating the spatial axis, instead of simply pulling the camera higher.
     "width": {"loc": (28,-30,76), "target": (0,5,0), "lens": 56},
     "right_flank": {"loc": (27,-8,62), "target": (15,14,0), "lens": 61},
+    "final_third": {"loc": (15,-4,64), "target": (8,24,0), "lens": 58},
+    "box_relation": {"loc": (12,8,58), "target": (4,32,0), "lens": 60},
+    "finish_close": {"loc": (8,18,53), "target": (0,39,0), "lens": 60},
 }
 
 camera_last = None
@@ -671,6 +674,34 @@ def move_player(name, target, t0, dur):
     smooth_action(o)
 
 
+def carry_ball(name, target, t0, dur):
+    """Move the runner and ball together as one tactical carry."""
+    o = players[name]
+    sx, sy = o.location.x, o.location.y
+    tx, ty = float(target[0]), float(target[1])
+    dx, dy = tx - sx, ty - sy
+    dist = max(1e-6, math.hypot(dx, dy))
+    ux, uy = dx / dist, dy / dist
+    lead = .46
+
+    f0 = 1 + round(float(t0) * fps)
+    f1 = 1 + round((float(t0) + float(dur)) * fps)
+    fa = round(f0 + (f1 - f0) * .34)
+    fb = round(f0 + (f1 - f0) * .68)
+
+    ball.location = (sx + ux * lead, sy + uy * lead, .37)
+    key(ball, "location", f0)
+    ball.location = (sx + dx * .34 + ux * lead, sy + dy * .34 + uy * lead, .43)
+    key(ball, "location", fa)
+    ball.location = (sx + dx * .68 + ux * lead, sy + dy * .68 + uy * lead, .39)
+    key(ball, "location", fb)
+    ball.location = (tx + ux * lead, ty + uy * lead, .37)
+    key(ball, "location", f1)
+    smooth_action(ball)
+
+    move_player(name, target, t0, dur)
+
+
 def pass_ball(a, b, release, arrive):
     aa = players[a]
     bb = players[b]
@@ -805,6 +836,14 @@ for ev in cfg.get("events", []):
 
     elif typ in ("player_move", "defender_shift"):
         move_player(
+            ev["player"],
+            ev["to"],
+            float(ev["t"]),
+            float(ev["duration"]),
+        )
+
+    elif typ == "carry":
+        carry_ball(
             ev["player"],
             ev["to"],
             float(ev["t"]),
