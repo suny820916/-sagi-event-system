@@ -488,6 +488,11 @@ camera_presets = {
     "relation": {"loc": (6,-16,94), "target": (3,-12,0), "lens": 57},
     "result": {"loc": (3,10,96), "target": (3,12,0), "lens": 55},
     "finish": {"loc": (4,28,83), "target": (4,36,0), "lens": 53},
+    # Christmas-tree lesson cameras: same elevated Teactics-style axis,
+    # with target depth changing by tactical idea.
+    "midfield": {"loc": (5,-20,100), "target": (0,-8,0), "lens": 57},
+    "between_lines": {"loc": (5,-4,96), "target": (0,7,0), "lens": 56},
+    "width": {"loc": (2,-8,116), "target": (0,4,0), "lens": 55},
 }
 
 camera_last = None
