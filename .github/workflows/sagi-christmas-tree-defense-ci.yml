@@ -1,5 +1,10 @@
 name: SAGI Christmas Tree Defense CI
 
+
+concurrency:
+  group: sagi-christmas-tree-defense-ci-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
     branches: [main]
