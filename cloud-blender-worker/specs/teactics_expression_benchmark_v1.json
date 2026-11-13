@@ -1,0 +1,64 @@
+{
+  "name": "SAGI TEACTICS EXPRESSION BENCHMARK V1",
+  "purpose": "Use Teactics as the reference for tactical expression, not for copying content or branding.",
+  "locked": true,
+  "hierarchy": [
+    "tactical_clarity",
+    "complete_execution",
+    "causal_player_reaction",
+    "ball_continuity",
+    "camera_restraint",
+    "visual_simplicity"
+  ],
+  "rules": {
+    "camera": {
+      "role": "observer_of_tactics",
+      "max_reframes_per_phase": 1,
+      "preferred_min_dwell_sec": 2,
+      "same_visual_axis": true,
+      "no_hero_shots": true,
+      "no_dramatic_finish_push": true,
+      "reframe_only_when_relation_changes": true
+    },
+    "action": {
+      "overlap_related_actions": true,
+      "no_serial_robotic_waiting": true,
+      "receiver_prepares_before_arrival": true,
+      "defender_reacts_after_attacking_cause": true,
+      "defender_reaction_delay_sec": [
+        0.1,
+        0.45
+      ]
+    },
+    "ball": {
+      "drives_tempo": true,
+      "continuous_possession_chain": true,
+      "passes_should_feel_decisive": true,
+      "dribble_must_move_ball_with_carrier": true,
+      "no_ball_teleport": true
+    },
+    "composition": {
+      "show_only_relevant_players": true,
+      "prefer_relationship_over_full_pitch": true,
+      "overlays_default_off": true,
+      "focus_rings_default_off": true,
+      "keep_space_readable": true
+    },
+    "timing": {
+      "complete_pattern_over_short_duration": true,
+      "post_execution_hold_sec": [
+        0.6,
+        1.2
+      ],
+      "avoid_dead_time_over_sec": 1.2
+    },
+    "acceptance_questions": [
+      "Can the tactic be understood without narration?",
+      "Can the viewer see why each run happens?",
+      "Can the viewer see the defensive reaction caused by that run?",
+      "Does the ball remain logically continuous through the pattern?",
+      "Does the camera help understanding without becoming noticeable?",
+      "Does the pattern feel complete rather than edited for drama?"
+    ]
+  }
+}
