@@ -1,5 +1,10 @@
 name: SAGI Blender Worker CI
 
+
+concurrency:
+  group: sagi-blender-worker-ci-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
     branches: [main]
