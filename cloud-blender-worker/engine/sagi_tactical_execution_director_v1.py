@@ -180,7 +180,7 @@ def event_end(ev):
     typ = ev.get("type")
     if typ in ("pass", "shot"):
         return float(ev.get("arrive", ev.get("release", event_start(ev))))
-    if typ in ("player_move", "defender_shift", "space"):
+    if typ in ("player_move", "defender_shift", "dribble", "space"):
         return event_start(ev) + float(ev.get("duration", 0.0))
     return event_start(ev)
 
@@ -251,6 +251,15 @@ def validate_execution(config):
                     f"expected {holder}, shot starts from {src}"
                 )
             ball_chain.append(f"{src}->TARGET")
+
+        elif typ == "dribble":
+            src = ev.get("player")
+            if holder and src != holder:
+                errors.append(
+                    f"possession break before dribble event {i}: "
+                    f"expected {holder}, dribble belongs to {src}"
+                )
+            ball_chain.append(f"{src}->DRIBBLE")
 
     # Each declared phase must contain a real tactical action, not only a camera cue.
     phase_report = []
@@ -802,7 +811,7 @@ def animate_stride(name, f0, f1, strength=1.0):
         key(torso, "rotation_euler", f1)
 
 
-def move_player(name, target, t0, dur):
+def move_player(name, target, t0, dur, carry_ball=False):
     o = players[name]
     f0 = 1 + round(t0 * fps)
     f1 = 1 + round((t0 + dur) * fps)
@@ -834,6 +843,28 @@ def move_player(name, target, t0, dur):
 
     o.location = (tx, ty, sz)
     key(o, "location", f1)
+
+    if carry_ball:
+        # Explicit ball-carrying state. The ball follows the runner instead of
+        # teleporting from the reception point to the eventual shot/pass point.
+        if dist > 1e-5:
+            ux, uy = dx / dist, dy / dist
+        else:
+            ux, uy = 0.0, 1.0
+        lead = .34
+
+        old_interp = set_new_key_interpolation("LINEAR")
+        ball.location = (sx + ux * .10, sy + uy * .10, .37)
+        key(ball, "location", f0)
+        ball.location = (
+            sx + dx * .52 + ux * lead,
+            sy + dy * .52 + uy * lead,
+            .37,
+        )
+        key(ball, "location", fm)
+        ball.location = (tx + ux * .12, ty + uy * .12, .37)
+        key(ball, "location", f1)
+        restore_new_key_interpolation(old_interp)
 
     stride_strength = min(1.0, max(.35, dist / 10.0))
     animate_stride(name, f0, f1, stride_strength)
@@ -990,6 +1021,16 @@ for ev in cfg.get("events", []):
             ev["to"],
             float(ev["t"]),
             float(ev["duration"]),
+            False,
+        )
+
+    elif typ == "dribble":
+        move_player(
+            ev["player"],
+            ev["to"],
+            float(ev["t"]),
+            float(ev["duration"]),
+            True,
         )
 
     elif typ == "pass":
