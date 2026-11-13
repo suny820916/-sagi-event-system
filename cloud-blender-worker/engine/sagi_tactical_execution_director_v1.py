@@ -784,15 +784,23 @@ def relation_camera_pose(subjects, focus_t, lens=64.0, min_z=64.0, margin=1.20):
     cx = (min_x + max_x) * .5
     cy = (min_y + max_y) * .5
 
-    # 9:16 portrait needs more protection horizontally than vertically.
-    # These empirically map a tactical relationship bbox to a readable
-    # high-angle camera while leaving ~20% breathing room.
-    z = max(
-        float(min_z),
-        span_x * 3.50 * float(margin),
-        span_y * 2.20 * float(margin),
-    )
-    tilt_back = max(5.0, min(8.0, span_y * .20))
+    # Lens-aware framing for 9:16 portrait.
+    # The old empirical factors pushed wide tactical relations far too high,
+    # making players read like chess pieces. Compute the height from the
+    # actual horizontal field of view instead.
+    sensor_width = float(getattr(cam.data, "sensor_width", 36.0))
+    lens = max(20.0, float(lens))
+    tan_half_h = sensor_width / (2.0 * lens)
+    aspect_h_over_w = max(1.0, float(h) / max(1.0, float(w)))
+    tan_half_v = tan_half_h * aspect_h_over_w
+
+    z_x = (span_x * float(margin) * .5) / max(1e-6, tan_half_h)
+    z_y = (span_y * float(margin) * .5) / max(1e-6, tan_half_v)
+    z = max(float(min_z), z_x, z_y)
+
+    # Keep the camera nearly tactical-top-down, but retain enough angle to
+    # perceive miniature bodies and running direction.
+    tilt_back = max(4.5, min(7.0, span_y * .16))
 
     return {
         "loc": (cx, cy - tilt_back, z),
