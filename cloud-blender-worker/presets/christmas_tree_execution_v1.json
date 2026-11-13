@@ -1,6 +1,6 @@
 {
   "project": "SAGI TACTICS",
-  "version": "SAGI TACTICAL EXECUTION DIRECTOR V7.3 · CAMERA RAIL",
+  "version": "SAGI TACTICAL EXECUTION DIRECTOR V7.4 · INFINITE TACTICAL BOARD",
   "fps": 24,
   "duration_sec": 15.2,
   "resolution": [
@@ -17,7 +17,8 @@
     "own_secondary": "#C5C700",
     "opponent": "#92979B",
     "ring": "#F3F500",
-    "pitch_alt": "#101315"
+    "pitch_alt": "#101315",
+    "tactical_floor": "#080A0B"
   },
   "players": {
     "GK": {
@@ -522,6 +523,7 @@
     "principle": "learn_expression_not_copy_content",
     "locked_direction": true,
     "priorities": [
+      "no_floating_pitch_or_black_void_in_wide_structure_views",
       "no_abrupt_scale_reset_between_tactical_phases",
       "camera_center_must_follow_tactical_progression",
       "no_tactical_subject_on_frame_edge",
@@ -553,7 +555,9 @@
     "edge_safe_zone": true,
     "edge_safe_rule": "No tactical subject should sit on or be clipped by the portrait-frame edge.",
     "spatial_continuity": true,
-    "scale_continuity": true
+    "scale_continuity": true,
+    "continuous_tactical_background": true,
+    "background_rule": "Wide tactical views may reveal more board, but must never reveal a hard visual void beyond the pitch."
   },
   "camera_continuity": {
     "preserve_forward_progression": true,
