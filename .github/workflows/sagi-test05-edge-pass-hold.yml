@@ -8,7 +8,7 @@ on:
   push:
     branches: [main]
     paths:
-      - "cloud-blender-worker/presets/christmas_tree_execution_test05_camera_exit.json"
+      - "cloud-blender-worker/presets/christmas_tree_execution_test05_edge_pass_hold.json"
       - ".github/workflows/sagi-test05-edge-pass-hold.yml"
       - "cloud-blender-worker/engine/sagi_tactical_execution_director_v1.py"
   workflow_dispatch:
@@ -36,7 +36,7 @@ jobs:
               blender --background \
                 --python /app/engine/sagi_tactical_execution_director_v1.py \
                 -- \
-                /app/presets/christmas_tree_execution_test05_camera_exit.json \
+                /app/presets/christmas_tree_execution_test05_edge_pass_hold.json \
                 /out
 
               ffmpeg -y -loglevel error \
@@ -55,25 +55,25 @@ jobs:
                 -b:a 64k \
                 -shortest \
                 -movflags +faststart \
-                /out/SAGI_TEST05_CAMERA_EXIT.mp4
+                /out/SAGI_TEST05_EDGE_PASS_HOLD.mp4
 
               ffprobe -v error \
                 -show_entries format=duration:stream=codec_name,width,height,r_frame_rate \
                 -of json \
-                /out/SAGI_TEST05_CAMERA_EXIT.mp4 \
+                /out/SAGI_TEST05_EDGE_PASS_HOLD.mp4 \
                 > /out/probe.json
             '
           sudo chown -R "$USER":"$USER" test05_out
-          test -s test05_out/SAGI_TEST05_CAMERA_EXIT.mp4
+          test -s test05_out/SAGI_TEST05_EDGE_PASS_HOLD.mp4
           cat test05_out/execution_report.json
           cat test05_out/probe.json
 
       - name: Upload TEST 05 artifact
         uses: actions/upload-artifact@v4
         with:
-          name: SAGI-TEST05-CAMERA-EXIT
+          name: SAGI-TEST05-EDGE-PASS-HOLD
           path: |
-            test05_out/SAGI_TEST05_CAMERA_EXIT.mp4
+            test05_out/SAGI_TEST05_EDGE_PASS_HOLD.mp4
             test05_out/execution_report.json
             test05_out/probe.json
             test05_out/scene.blend
