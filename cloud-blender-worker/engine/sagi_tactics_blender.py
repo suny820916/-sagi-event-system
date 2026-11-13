@@ -504,6 +504,10 @@ camera_presets = {
     # Move to the weak-side half-space rather than looking across the
     # touchline from the opposite side; this removes the black pitch void.
     "def_weakness": {"loc": (3,-30,90), "target": (-17,-14,0), "lens": 58},
+    # Summary-specific views: stay over the playing surface and keep the
+    # lesson subject large enough for portrait viewing.
+    "summary_risk": {"loc": (8,-26,88), "target": (20,-12,0), "lens": 59},
+    "summary_shape": {"loc": (0,-14,108), "target": (0,-3,0), "lens": 59},
 }
 
 camera_last = None
