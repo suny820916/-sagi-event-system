@@ -505,9 +505,10 @@ camera_dna = {
         "lead": .28, "settle": .18,
     },
     "finish": {
-        # Final-third close tactical view: receiver, nearest centre-backs and goal.
-        "loc": (-3,30,69), "target": (-5,40,0), "lens": 66,
-        "lead": .24, "settle": .14,
+        # Completion view: no dramatic push, no climax treatment.
+        # Keep the whole final relation readable until the tactical action is complete.
+        "loc": (-2,24,84), "target": (-4,37,0), "lens": 60,
+        "lead": .20, "settle": .18,
     },
 }
 
