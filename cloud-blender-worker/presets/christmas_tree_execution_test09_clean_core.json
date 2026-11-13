@@ -1,6 +1,6 @@
 {
   "project": "SAGI TACTICS",
-  "version": "SAGI TACTICAL DIRECTOR TEST 09.1 · CLEAN BLACK · NO VOICE",
+  "version": "SAGI TACTICAL DIRECTOR TEST 09.2 · CLEAN SRGB · NO VOICE",
   "fps": 24,
   "duration_sec": 16.2,
   "resolution": [
@@ -630,7 +630,7 @@
     }
   ],
   "preview_mode": true,
-  "director_mode": "TACTICAL_CLEAN_BLACK_NO_VOICE",
+  "director_mode": "TACTICAL_CLEAN_SRGB_NO_VOICE",
   "principles": [
     "complete_pattern_over_dramatic_pacing",
     "tactical_cause_before_camera_motion",
@@ -1025,12 +1025,15 @@
       "no heavy cast shadows",
       "visual hierarchy must read tactics before materials"
     ],
-    "revision": "09.1 CLEAN BLACK",
-    "rule_added": "Preserve near-black pitch values without AgX lifting dark tones."
+    "revision": "09.2 CLEAN SRGB",
+    "rule_added": "Preserve near-black pitch values without AgX lifting dark tones.",
+    "root_fix": "Convert authored HEX sRGB palette values to Blender linear material values before rendering.",
+    "expected_result": "near-black pitch remains near-black on output while yellow/grey preserve intended display colors"
   },
   "color_management": {
     "view_transform": "Standard",
-    "exposure": -0.15,
+    "exposure": 0,
     "gamma": 1
-  }
+  },
+  "palette_input_space": "SRGB"
 }
