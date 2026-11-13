@@ -1,0 +1,93 @@
+name: SAGI Christmas Tree Summary CI
+
+concurrency:
+  group: sagi-christmas-tree-summary-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "cloud-blender-worker/engine/**"
+      - "cloud-blender-worker/presets/christmas_tree_summary_76_101.json"
+      - ".github/workflows/sagi-christmas-tree-summary-ci.yml"
+  workflow_dispatch:
+
+jobs:
+  render-summary-76-101:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t sagi-blender-worker:summary ./cloud-blender-worker
+
+      - name: Start container
+        run: |
+          docker run -d --name sagi-summary-ci \
+            -p 10000:10000 \
+            -e PORT=10000 \
+            -e SAGI_API_KEY=test \
+            -e SAGI_RENDER_TIMEOUT_SEC=2100 \
+            sagi-blender-worker:summary
+
+      - name: Wait for API
+        run: |
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:10000/health; then exit 0; fi
+            sleep 2
+          done
+          docker logs sagi-summary-ci
+          exit 1
+
+      - name: Render summary 76-101
+        shell: bash
+        run: |
+          set -euo pipefail
+          jq -c '{config:.}' cloud-blender-worker/presets/christmas_tree_summary_76_101.json > summary_request.json
+          curl -fsS -X POST http://127.0.0.1:10000/jobs \
+            -H "X-API-Key: test" \
+            -H "Content-Type: application/json" \
+            --data-binary @summary_request.json | tee summary_start.json
+
+          JOB_ID=$(python3 -c 'import json; print(json.load(open("summary_start.json"))["job_id"])')
+          for i in $(seq 1 600); do
+            curl -fsS "http://127.0.0.1:10000/jobs/$JOB_ID" \
+              -H "X-API-Key: test" | tee summary_status.json
+            STATUS=$(python3 -c 'import json; print(json.load(open("summary_status.json"))["status"])')
+            [ "$STATUS" = "done" ] && break
+            if [ "$STATUS" = "failed" ]; then
+              curl -fsS "http://127.0.0.1:10000/jobs/$JOB_ID/log" -H "X-API-Key: test" || true
+              exit 1
+            fi
+            sleep 5
+          done
+
+          test "$(python3 -c 'import json; print(json.load(open("summary_status.json"))["status"])')" = "done"
+          curl -fsSL "http://127.0.0.1:10000/jobs/$JOB_ID/video" -H "X-API-Key: test" -o sagi_christmas_tree_summary_76_101.mp4
+          curl -fsSL "http://127.0.0.1:10000/jobs/$JOB_ID/blend" -H "X-API-Key: test" -o sagi_christmas_tree_summary_76_101.blend
+
+          test -s sagi_christmas_tree_summary_76_101.mp4
+          test -s sagi_christmas_tree_summary_76_101.blend
+
+          docker exec sagi-summary-ci ffprobe -v error \
+            -show_entries format=duration:stream=codec_name,width,height,r_frame_rate \
+            -of json "/tmp/sagi_jobs/$JOB_ID/render.mp4" | tee summary_probe.json
+
+      - name: Upload summary artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sagi-christmas-tree-summary-76-101
+          path: |
+            sagi_christmas_tree_summary_76_101.mp4
+            sagi_christmas_tree_summary_76_101.blend
+            summary_probe.json
+            summary_status.json
+          retention-days: 7
+
+      - name: Container logs
+        if: always()
+        run: docker logs sagi-summary-ci || true
