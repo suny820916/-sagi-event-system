@@ -1,6 +1,6 @@
 {
   "project": "SAGI TACTICS",
-  "version": "SAGI TACTICAL EXECUTION DIRECTOR V7.4 · INFINITE TACTICAL BOARD",
+  "version": "SAGI TACTICAL EXECUTION DIRECTOR V8 · ACTION CHAIN",
   "fps": 24,
   "duration_sec": 15.2,
   "resolution": [
@@ -523,6 +523,8 @@
     "principle": "learn_expression_not_copy_content",
     "locked_direction": true,
     "priorities": [
+      "receive_turn_next_action_must_read_as_one_chain",
+      "body_orientation_should_reveal_tactical_intent",
       "no_floating_pitch_or_black_void_in_wide_structure_views",
       "no_abrupt_scale_reset_between_tactical_phases",
       "camera_center_must_follow_tactical_progression",
@@ -567,5 +569,13 @@
     "principle": "camera follows tactical progression on one rail; zoom out as needed, zoom in gradually",
     "preserve_scale_continuity": true,
     "max_zoom_in_per_phase_m": 8
+  },
+  "action_continuity": {
+    "enabled": true,
+    "principle": "the next tactical action begins in body orientation before the current action fully ends",
+    "passer_pre_turn_sec": 0.12,
+    "receiver_scan_sec": 0.18,
+    "post_receive_turn_window_sec": 0.34,
+    "first_touch_distance_m": 0.16
   }
 }
