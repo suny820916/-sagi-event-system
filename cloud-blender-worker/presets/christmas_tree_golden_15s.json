@@ -1,0 +1,423 @@
+{
+  "project": "SAGI TACTICS",
+  "version": "SAGI TACTICS CAMERA DNA V1 · GOLDEN 15S",
+  "fps": 24,
+  "duration_sec": 15,
+  "resolution": [
+    540,
+    960
+  ],
+  "render_engine": "BLENDER_WORKBENCH",
+  "attack_direction": "upfield(+Y)",
+  "palette": {
+    "background": "#020304",
+    "pitch": "#0D1012",
+    "pitch_line": "#555B60",
+    "own_primary": "#F3F500",
+    "own_secondary": "#C5C700",
+    "opponent": "#92979B",
+    "ring": "#F3F500",
+    "pitch_alt": "#15191B"
+  },
+  "players": {
+    "GK": {
+      "team": "own",
+      "pos": [
+        0,
+        -40
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "LB": {
+      "team": "own",
+      "pos": [
+        -24,
+        -24
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "LCB": {
+      "team": "own",
+      "pos": [
+        -10,
+        -28
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "RCB": {
+      "team": "own",
+      "pos": [
+        10,
+        -28
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "RB": {
+      "team": "own",
+      "pos": [
+        24,
+        -24
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "PIRLO": {
+      "team": "own",
+      "pos": [
+        0,
+        -11
+      ],
+      "role": "primary",
+      "yaw": 0
+    },
+    "LCM": {
+      "team": "own",
+      "pos": [
+        -10,
+        -3
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "RCM": {
+      "team": "own",
+      "pos": [
+        10,
+        -3
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "SEEDORF": {
+      "team": "own",
+      "pos": [
+        -7,
+        9
+      ],
+      "role": "primary",
+      "yaw": 0
+    },
+    "KAKA": {
+      "team": "own",
+      "pos": [
+        7,
+        10
+      ],
+      "role": "primary",
+      "yaw": 0
+    },
+    "INZAGHI": {
+      "team": "own",
+      "pos": [
+        0,
+        28
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "O9": {
+      "team": "opp",
+      "pos": [
+        2,
+        -18
+      ],
+      "role": "context",
+      "yaw": 180
+    },
+    "OM_L": {
+      "team": "opp",
+      "pos": [
+        -12,
+        2
+      ],
+      "role": "context",
+      "yaw": 180
+    },
+    "OM_C": {
+      "team": "opp",
+      "pos": [
+        0,
+        3
+      ],
+      "role": "context",
+      "yaw": 180
+    },
+    "OM_R": {
+      "team": "opp",
+      "pos": [
+        12,
+        2
+      ],
+      "role": "context",
+      "yaw": 180
+    },
+    "OCB_L": {
+      "team": "opp",
+      "pos": [
+        -9,
+        23
+      ],
+      "role": "context",
+      "yaw": 180
+    },
+    "OCB_R": {
+      "team": "opp",
+      "pos": [
+        9,
+        23
+      ],
+      "role": "context",
+      "yaw": 180
+    },
+    "OGK": {
+      "team": "opp",
+      "pos": [
+        0,
+        48.5
+      ],
+      "role": "context",
+      "yaw": 180
+    }
+  },
+  "events": [
+    {
+      "t": 0,
+      "type": "camera_dna",
+      "cue": "receive"
+    },
+    {
+      "t": 0.55,
+      "type": "pass",
+      "from": "LCB",
+      "to": "PIRLO",
+      "release": 0.65,
+      "arrive": 1.35
+    },
+    {
+      "t": 1.1,
+      "type": "defender_shift",
+      "player": "O9",
+      "to": [
+        3,
+        -13
+      ],
+      "duration": 0.75
+    },
+    {
+      "t": 2.05,
+      "type": "camera_dna",
+      "cue": "expand"
+    },
+    {
+      "t": 2.15,
+      "type": "player_move",
+      "player": "LCM",
+      "to": [
+        -18,
+        -1
+      ],
+      "duration": 1.15
+    },
+    {
+      "t": 2.2,
+      "type": "player_move",
+      "player": "RCM",
+      "to": [
+        18,
+        -1
+      ],
+      "duration": 1.15
+    },
+    {
+      "t": 2.35,
+      "type": "defender_shift",
+      "player": "OM_L",
+      "to": [
+        -8,
+        2
+      ],
+      "duration": 0.75
+    },
+    {
+      "t": 2.35,
+      "type": "defender_shift",
+      "player": "OM_R",
+      "to": [
+        8,
+        2
+      ],
+      "duration": 0.75
+    },
+    {
+      "t": 4.15,
+      "type": "camera_dna",
+      "cue": "half_space"
+    },
+    {
+      "t": 4.2,
+      "type": "player_move",
+      "player": "SEEDORF",
+      "to": [
+        -9,
+        15
+      ],
+      "duration": 0.9
+    },
+    {
+      "t": 4.25,
+      "type": "player_move",
+      "player": "KAKA",
+      "to": [
+        8,
+        16
+      ],
+      "duration": 0.9
+    },
+    {
+      "t": 4.35,
+      "type": "defender_shift",
+      "player": "OM_C",
+      "to": [
+        2,
+        8
+      ],
+      "duration": 0.75
+    },
+    {
+      "t": 5.25,
+      "type": "pass",
+      "from": "PIRLO",
+      "to": "KAKA",
+      "release": 5.35,
+      "arrive": 6.1
+    },
+    {
+      "t": 6.55,
+      "type": "camera_dna",
+      "cue": "overlap"
+    },
+    {
+      "t": 6.6,
+      "type": "player_move",
+      "player": "RB",
+      "to": [
+        29,
+        17
+      ],
+      "duration": 1.45
+    },
+    {
+      "t": 6.8,
+      "type": "defender_shift",
+      "player": "OM_R",
+      "to": [
+        15,
+        8
+      ],
+      "duration": 0.9
+    },
+    {
+      "t": 7.65,
+      "type": "pass",
+      "from": "KAKA",
+      "to": "RB",
+      "release": 7.75,
+      "arrive": 8.45
+    },
+    {
+      "t": 8.95,
+      "type": "camera_dna",
+      "cue": "switch"
+    },
+    {
+      "t": 9,
+      "type": "player_move",
+      "player": "SEEDORF",
+      "to": [
+        -13,
+        30
+      ],
+      "duration": 1.3
+    },
+    {
+      "t": 9.1,
+      "type": "player_move",
+      "player": "INZAGHI",
+      "to": [
+        3,
+        35
+      ],
+      "duration": 1.1
+    },
+    {
+      "t": 9.2,
+      "type": "defender_shift",
+      "player": "OCB_R",
+      "to": [
+        5,
+        30
+      ],
+      "duration": 0.95
+    },
+    {
+      "t": 9.25,
+      "type": "defender_shift",
+      "player": "OCB_L",
+      "to": [
+        -3,
+        30
+      ],
+      "duration": 0.95
+    },
+    {
+      "t": 9.55,
+      "type": "pass",
+      "from": "RB",
+      "to": "SEEDORF",
+      "release": 9.7,
+      "arrive": 10.8
+    },
+    {
+      "t": 11.15,
+      "type": "camera_dna",
+      "cue": "finish"
+    },
+    {
+      "t": 11.2,
+      "type": "player_move",
+      "player": "SEEDORF",
+      "to": [
+        -8,
+        36
+      ],
+      "duration": 0.65
+    },
+    {
+      "t": 11.3,
+      "type": "defender_shift",
+      "player": "OCB_L",
+      "to": [
+        -6,
+        34
+      ],
+      "duration": 0.55
+    },
+    {
+      "t": 12.05,
+      "type": "shot",
+      "from": "SEEDORF",
+      "to": [
+        -2.2,
+        52.3
+      ],
+      "release": 12.1,
+      "arrive": 12.7,
+      "arc": 0.65
+    }
+  ],
+  "preview_mode": true
+}
