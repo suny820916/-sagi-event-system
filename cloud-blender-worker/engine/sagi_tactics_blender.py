@@ -438,11 +438,15 @@ for name, data in cfg["players"].items():
         data,
     )
 
+ball_owner = cfg.get("ball_start_player", "GK")
+if ball_owner not in players:
+    raise ValueError(f"Unknown ball_start_player: {ball_owner}")
+
 ball = sphere(
     "BALL",
     (
-        players["GK"].location.x,
-        players["GK"].location.y,
+        players[ball_owner].location.x,
+        players[ball_owner].location.y,
         .37,
     ),
     .20,
