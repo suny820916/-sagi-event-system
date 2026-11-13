@@ -1,6 +1,6 @@
 {
   "project": "SAGI TACTICS",
-  "version": "SAGI TACTICAL EXECUTION DIRECTOR V5 · AUTO RELATION CAMERA",
+  "version": "SAGI TACTICAL EXECUTION DIRECTOR V6 · RELATION FIRST",
   "fps": 24,
   "duration_sec": 15.2,
   "resolution": [
@@ -186,8 +186,16 @@
   "events": [
     {
       "t": 0,
-      "type": "camera_dna",
-      "cue": "receive"
+      "type": "relation_camera",
+      "subjects": [
+        "LCB",
+        "PIRLO",
+        "O9"
+      ],
+      "focus_t": 1.05,
+      "lens": 62,
+      "min_z": 44,
+      "margin": 1.08
     },
     {
       "t": 0.45,
@@ -209,8 +217,18 @@
     },
     {
       "t": 2.1,
-      "type": "camera_dna",
-      "cue": "expand"
+      "type": "relation_camera",
+      "subjects": [
+        "PIRLO",
+        "LCM",
+        "RCM",
+        "OM_L",
+        "OM_R"
+      ],
+      "focus_t": 2.85,
+      "lens": 60,
+      "min_z": 48,
+      "margin": 1.08
     },
     {
       "t": 2.18,
@@ -254,8 +272,17 @@
     },
     {
       "t": 4.15,
-      "type": "camera_dna",
-      "cue": "half_space"
+      "type": "relation_camera",
+      "subjects": [
+        "PIRLO",
+        "KAKA",
+        "OM_C",
+        "OM_R"
+      ],
+      "focus_t": 5.35,
+      "lens": 62,
+      "min_z": 44,
+      "margin": 1.06
     },
     {
       "t": 4.18,
@@ -294,9 +321,9 @@
         "OM_R"
       ],
       "focus_t": 7.4,
-      "lens": 64,
-      "min_z": 64,
-      "margin": 1.2
+      "lens": 62,
+      "min_z": 42,
+      "margin": 1.06
     },
     {
       "t": 6.52,
@@ -328,8 +355,17 @@
     },
     {
       "t": 8.92,
-      "type": "camera_dna",
-      "cue": "switch"
+      "type": "relation_camera",
+      "subjects": [
+        "RB",
+        "SEEDORF",
+        "INZAGHI",
+        "OCB_R"
+      ],
+      "focus_t": 10.15,
+      "lens": 60,
+      "min_z": 48,
+      "margin": 1.08
     },
     {
       "t": 9,
@@ -371,8 +407,17 @@
     },
     {
       "t": 11.82,
-      "type": "camera_dna",
-      "cue": "complete"
+      "type": "relation_camera",
+      "subjects": [
+        "SEEDORF",
+        "INZAGHI",
+        "OCB_L",
+        "OGK"
+      ],
+      "focus_t": 13,
+      "lens": 60,
+      "min_z": 46,
+      "margin": 1.08
     },
     {
       "t": 11.92,
@@ -461,15 +506,17 @@
     "principle": "learn_expression_not_copy_content",
     "locked_direction": true,
     "priorities": [
+      "relationship_is_the_subject",
+      "players_must_read_as_people_not_chess_pieces",
       "tactical_clarity",
       "complete_execution",
-      "few_relevant_players_per_frame",
       "stable_camera_until_relation_changes",
       "ball_drives_tempo",
       "player_reaction_follows_tactical_cause",
       "no_unnecessary_effects",
       "no_dramatic_climax",
-      "minimal_dead_time"
+      "minimal_dead_time",
+      "few_relevant_players_per_frame"
     ]
   }
 }
