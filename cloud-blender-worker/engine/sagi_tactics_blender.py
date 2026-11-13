@@ -483,26 +483,11 @@ cam = bpy.context.object
 scene.camera = cam
 
 camera_presets = {
-    "shape": {
-        "loc": (0,-69,69),
-        "target": (0,-2,0),
-        "lens": 56,
-    },
-    "relation": {
-        "loc": (14,-58,39),
-        "target": (2,-10,1.0),
-        "lens": 61,
-    },
-    "result": {
-        "loc": (12,-49,50),
-        "target": (5,13,1.0),
-        "lens": 62,
-    },
-    "finish": {
-        "loc": (10,-39,64),
-        "target": (7,30,0.8),
-        "lens": 65,
-    },
+    # V05: elevated tactical angles keep the playing surface in frame.
+    "shape": {"loc": (0,-17,125), "target": (0,-10,0), "lens": 57},
+    "relation": {"loc": (6,-16,94), "target": (3,-12,0), "lens": 57},
+    "result": {"loc": (3,10,96), "target": (3,12,0), "lens": 55},
+    "finish": {"loc": (4,28,83), "target": (4,36,0), "lens": 53},
 }
 
 camera_last = None
