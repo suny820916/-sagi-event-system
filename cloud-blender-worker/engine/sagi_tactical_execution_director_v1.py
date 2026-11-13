@@ -413,9 +413,24 @@ wb = cfg.get("workbench_visual", {})
 try:
     scene.display.shading.light = str(wb.get("light", "STUDIO"))
     scene.display.shading.color_type = "MATERIAL"
+    # Workbench has its own viewport background. Explicitly bind it to the
+    # tactical palette so the rendered black does not inherit Blender's grey
+    # studio background.
+    try:
+        scene.display.shading.background_type = str(wb.get("background_type", "VIEWPORT"))
+        bg = wb.get("background_color", pal.get("background", "#000000"))
+        scene.display.shading.background_color = hex_rgba(bg)[:3]
+    except Exception:
+        pass
     scene.display.shading.show_shadows = bool(wb.get("show_shadows", False))
     scene.display.shading.show_cavity = bool(wb.get("show_cavity", True))
     scene.display.shading.cavity_type = str(wb.get("cavity_type", "WORLD"))
+    try:
+        scene.display.shading.show_specular_highlight = bool(
+            wb.get("show_specular_highlight", True)
+        )
+    except Exception:
+        pass
     try:
         scene.display.shading.curvature_ridge_factor = float(wb.get("ridge", 1.0))
         scene.display.shading.curvature_valley_factor = float(wb.get("valley", 1.0))
