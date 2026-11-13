@@ -1,6 +1,6 @@
 {
   "project": "SAGI TACTICS",
-  "version": "SAGI TACTICAL EXECUTION DIRECTOR V7.2 · SPATIAL CONTINUITY",
+  "version": "SAGI TACTICAL EXECUTION DIRECTOR V7.3 · CAMERA RAIL",
   "fps": 24,
   "duration_sec": 15.2,
   "resolution": [
@@ -522,6 +522,7 @@
     "principle": "learn_expression_not_copy_content",
     "locked_direction": true,
     "priorities": [
+      "no_abrupt_scale_reset_between_tactical_phases",
       "camera_center_must_follow_tactical_progression",
       "no_tactical_subject_on_frame_edge",
       "whole_tactical_picture_before_local_beauty",
@@ -551,13 +552,16 @@
     "preserve_spatial_continuity": true,
     "edge_safe_zone": true,
     "edge_safe_rule": "No tactical subject should sit on or be clipped by the portrait-frame edge.",
-    "spatial_continuity": true
+    "spatial_continuity": true,
+    "scale_continuity": true
   },
   "camera_continuity": {
     "preserve_forward_progression": true,
     "max_backward_target_m": 1.5,
     "lead_sec": 0.34,
     "settle_sec": 0.32,
-    "principle": "camera follows tactical progression; trajectory protects framing but does not drag the centre backwards"
+    "principle": "camera follows tactical progression on one rail; zoom out as needed, zoom in gradually",
+    "preserve_scale_continuity": true,
+    "max_zoom_in_per_phase_m": 8
   }
 }
