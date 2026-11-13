@@ -482,9 +482,11 @@ camera_presets = {
     "finish": {"loc": (4,28,83), "target": (4,36,0), "lens": 53},
     # Christmas-tree lesson cameras: same elevated Teactics-style axis,
     # with target depth changing by tactical idea.
-    "midfield": {"loc": (5,-20,100), "target": (0,-8,0), "lens": 57},
-    "between_lines": {"loc": (5,-4,96), "target": (0,7,0), "lens": 56},
-    "width": {"loc": (2,-8,116), "target": (0,4,0), "lens": 55},
+    "midfield": {"loc": (18,-32,62), "target": (0,-7,0), "lens": 60},
+    "between_lines": {"loc": (18,-18,58), "target": (0,8,0), "lens": 60},
+    # Oblique width view: fitting a 68m pitch into a portrait frame by
+    # rotating the spatial axis, instead of simply pulling the camera higher.
+    "width": {"loc": (28,-30,76), "target": (0,5,0), "lens": 56},
 }
 
 camera_last = None
