@@ -407,14 +407,20 @@ scene.render.image_settings.color_mode = "RGB"
 scene.render.filepath = os.path.join(frames_dir, "frame_")
 scene.world.color = hex_rgba(pal["background"])[:3]
 
-# Workbench is the fast cloud preview renderer. Keep material colors
-# and shadows readable so geometry/camera can be reviewed before final Eevee.
+# Workbench is the fast cloud preview renderer. Visual contrast can be
+# overridden per preset so dark tactical scenes do not inherit a grey studio wash.
+wb = cfg.get("workbench_visual", {})
 try:
-    scene.display.shading.light = "STUDIO"
+    scene.display.shading.light = str(wb.get("light", "STUDIO"))
     scene.display.shading.color_type = "MATERIAL"
-    scene.display.shading.show_shadows = False
-    scene.display.shading.show_cavity = True
-    scene.display.shading.cavity_type = "WORLD"
+    scene.display.shading.show_shadows = bool(wb.get("show_shadows", False))
+    scene.display.shading.show_cavity = bool(wb.get("show_cavity", True))
+    scene.display.shading.cavity_type = str(wb.get("cavity_type", "WORLD"))
+    try:
+        scene.display.shading.curvature_ridge_factor = float(wb.get("ridge", 1.0))
+        scene.display.shading.curvature_valley_factor = float(wb.get("valley", 1.0))
+    except Exception:
+        pass
 except Exception:
     pass
 
