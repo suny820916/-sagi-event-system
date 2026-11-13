@@ -33,6 +33,11 @@ jobs:
       - name: Build Blender image
         run: docker build -t sagi-christmas-final-v1 ./cloud-blender-worker
 
+      - name: Install host ffprobe before master validation
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
       - name: Render 101-second tactics-first master
         shell: bash
         run: |
@@ -80,8 +85,7 @@ jobs:
 
       - name: Install packaging + Voice Director runtime
         run: |
-          sudo apt-get update
-          sudo apt-get install -y ffmpeg fontconfig fonts-noto-cjk
+          sudo apt-get install -y fontconfig fonts-noto-cjk
           python3 -m pip install --upgrade pip
           python3 -m pip install edge-tts
           python3 -m py_compile cloud-blender-worker/voice/voice_director.py
