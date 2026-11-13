@@ -1,0 +1,121 @@
+name: SAGI Christmas Tree Final 101s CI
+
+
+concurrency:
+  group: sagi-christmas-tree-final-101-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "cloud-blender-worker/engine/**"
+      - "cloud-blender-worker/presets/christmas_tree_full_lesson_00_101.json"
+      - ".github/workflows/sagi-christmas-tree-final-101-ci.yml"
+  workflow_dispatch:
+
+jobs:
+  render-final-lesson-00-101:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t sagi-blender-worker:christmas ./cloud-blender-worker
+
+      - name: Start container
+        run: |
+          docker run -d --name sagi-christmas-lesson-ci \
+            -p 10000:10000 \
+            -e PORT=10000 \
+            -e SAGI_API_KEY=test \
+            -e SAGI_RENDER_TIMEOUT_SEC=4800 \
+            sagi-blender-worker:christmas
+
+      - name: Wait for API
+        run: |
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:10000/health; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs sagi-christmas-lesson-ci
+          exit 1
+
+      - name: Render Christmas-tree final lesson 00-101
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          jq -c '{config:.}' \
+            cloud-blender-worker/presets/christmas_tree_full_lesson_00_101.json \
+            > christmas_lesson_request.json
+
+          START_JSON=$(curl -fsS -X POST \
+            http://127.0.0.1:10000/jobs \
+            -H "X-API-Key: test" \
+            -H "Content-Type: application/json" \
+            --data-binary @christmas_lesson_request.json)
+
+          echo "$START_JSON" | tee christmas_lesson_start.json
+          JOB_ID=$(python3 -c 'import json; print(json.load(open("christmas_lesson_start.json"))["job_id"])')
+          echo "JOB_ID=$JOB_ID" >> "$GITHUB_ENV"
+
+          for i in $(seq 1 1200); do
+            STATUS_JSON=$(curl -fsS \
+              "http://127.0.0.1:10000/jobs/$JOB_ID" \
+              -H "X-API-Key: test")
+            echo "$STATUS_JSON" | tee christmas_lesson_status.json
+            STATUS=$(python3 -c 'import json; print(json.load(open("christmas_lesson_status.json"))["status"])')
+
+            if [ "$STATUS" = "done" ]; then
+              break
+            fi
+            if [ "$STATUS" = "failed" ]; then
+              curl -fsS \
+                "http://127.0.0.1:10000/jobs/$JOB_ID/log" \
+                -H "X-API-Key: test" || true
+              exit 1
+            fi
+            sleep 5
+          done
+
+          FINAL_STATUS=$(python3 -c 'import json; print(json.load(open("christmas_lesson_status.json"))["status"])')
+          test "$FINAL_STATUS" = "done"
+
+          curl -fsSL \
+            "http://127.0.0.1:10000/jobs/$JOB_ID/video" \
+            -H "X-API-Key: test" \
+            -o sagi_christmas_tree_full_lesson_00_101.mp4
+
+          curl -fsSL \
+            "http://127.0.0.1:10000/jobs/$JOB_ID/blend" \
+            -H "X-API-Key: test" \
+            -o sagi_christmas_tree_full_lesson_00_101.blend
+
+          test -s sagi_christmas_tree_full_lesson_00_101.mp4
+          test -s sagi_christmas_tree_full_lesson_00_101.blend
+
+          docker exec sagi-christmas-lesson-ci ffprobe -v error \
+            -show_entries format=duration:stream=codec_name,width,height,r_frame_rate \
+            -of json "/tmp/sagi_jobs/$JOB_ID/render.mp4" \
+            | tee christmas_lesson_probe.json
+
+      - name: Upload Christmas-tree artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sagi-christmas-tree-full-lesson-00-101
+          path: |
+            sagi_christmas_tree_full_lesson_00_101.mp4
+            sagi_christmas_tree_full_lesson_00_101.blend
+            christmas_lesson_probe.json
+            christmas_lesson_status.json
+          retention-days: 7
+
+      - name: Container logs
+        if: always()
+        run: docker logs sagi-christmas-lesson-ci || true
