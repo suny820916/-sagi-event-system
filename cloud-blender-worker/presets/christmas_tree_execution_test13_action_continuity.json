@@ -1,0 +1,1320 @@
+{
+  "project": "SAGI TACTICS",
+  "version": "SAGI TACTICAL DIRECTOR TEST 13 · ACTION CONTINUITY · NO VOICE",
+  "fps": 24,
+  "duration_sec": 13.4,
+  "resolution": [
+    540,
+    960
+  ],
+  "render_engine": "BLENDER_WORKBENCH",
+  "attack_direction": "upfield(+Y)",
+  "palette": {
+    "background": "#000000",
+    "pitch": "#09090B",
+    "pitch_line": "#36363B",
+    "own_primary": "#F5F700",
+    "own_secondary": "#E7EA00",
+    "opponent": "#676B70",
+    "ring": "#EEF200",
+    "pitch_alt": "#09090B",
+    "tactical_floor": "#000000",
+    "pitch_edge": "#030304",
+    "pitch_shadow": "#000000",
+    "ball": "#A8ACAF"
+  },
+  "players": {
+    "GK": {
+      "team": "own",
+      "pos": [
+        0,
+        -40
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "LB": {
+      "team": "own",
+      "pos": [
+        -24,
+        -24
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "LCB": {
+      "team": "own",
+      "pos": [
+        -10,
+        -28
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "RCB": {
+      "team": "own",
+      "pos": [
+        10,
+        -28
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "RB": {
+      "team": "own",
+      "pos": [
+        24,
+        -24
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "PIRLO": {
+      "team": "own",
+      "pos": [
+        0,
+        -11
+      ],
+      "role": "primary",
+      "yaw": 0
+    },
+    "LCM": {
+      "team": "own",
+      "pos": [
+        -10,
+        -3
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "RCM": {
+      "team": "own",
+      "pos": [
+        10,
+        -3
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "SEEDORF": {
+      "team": "own",
+      "pos": [
+        -7,
+        9
+      ],
+      "role": "primary",
+      "yaw": 0
+    },
+    "KAKA": {
+      "team": "own",
+      "pos": [
+        7,
+        10
+      ],
+      "role": "primary",
+      "yaw": 0
+    },
+    "INZAGHI": {
+      "team": "own",
+      "pos": [
+        0,
+        28
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "O9": {
+      "team": "opp",
+      "pos": [
+        2,
+        -18
+      ],
+      "role": "context",
+      "yaw": 180
+    },
+    "OM_L": {
+      "team": "opp",
+      "pos": [
+        -12,
+        2
+      ],
+      "role": "context",
+      "yaw": 180
+    },
+    "OM_C": {
+      "team": "opp",
+      "pos": [
+        0,
+        3
+      ],
+      "role": "context",
+      "yaw": 180
+    },
+    "OM_R": {
+      "team": "opp",
+      "pos": [
+        12,
+        2
+      ],
+      "role": "context",
+      "yaw": 180
+    },
+    "OCB_L": {
+      "team": "opp",
+      "pos": [
+        -9,
+        23
+      ],
+      "role": "context",
+      "yaw": 180
+    },
+    "OCB_R": {
+      "team": "opp",
+      "pos": [
+        9,
+        23
+      ],
+      "role": "context",
+      "yaw": 180
+    },
+    "OGK": {
+      "team": "opp",
+      "pos": [
+        0,
+        48.5
+      ],
+      "role": "context",
+      "yaw": 180
+    }
+  },
+  "events": [
+    {
+      "t": 0,
+      "type": "relation_camera",
+      "subjects": [
+        "PIRLO",
+        "KAKA"
+      ],
+      "focus_t": 0.8,
+      "lens": 54,
+      "min_z": 112,
+      "margin": 1.04,
+      "shot_scale": "CENTRAL_MASTER",
+      "field_scope": "FLOATING_BOARD",
+      "phase_name": "OPENING_MASTER",
+      "lead_sec": 0,
+      "settle_sec": 0
+    },
+    {
+      "t": 0.55,
+      "type": "pass",
+      "from": "LCB",
+      "to": "PIRLO",
+      "release": 0.65,
+      "arrive": 1.25
+    },
+    {
+      "t": 0.9,
+      "type": "defender_shift",
+      "player": "O9",
+      "to": [
+        2,
+        -13
+      ],
+      "duration": 0.7
+    },
+    {
+      "t": 1.1,
+      "type": "relation_camera",
+      "subjects": [
+        "LCB",
+        "PIRLO",
+        "LCM",
+        "RCM",
+        "O9"
+      ],
+      "focus_t": 1.72,
+      "lens": 60,
+      "min_z": 42,
+      "margin": 1.04,
+      "shot_scale": "STRUCTURE",
+      "field_scope": "BUILD_RELATION_ZONE",
+      "phase_name": "BUILD",
+      "lead_sec": 0.42,
+      "settle_sec": 0.18
+    },
+    {
+      "t": 1.95,
+      "type": "relation_camera",
+      "subjects": [
+        "PIRLO",
+        "LCM",
+        "RCM",
+        "KAKA",
+        "SEEDORF",
+        "OM_L",
+        "OM_C",
+        "OM_R"
+      ],
+      "focus_t": 2.95,
+      "lens": 58,
+      "min_z": 42,
+      "margin": 1.03,
+      "shot_scale": "WIDE_STRUCTURE",
+      "field_scope": "MIDFIELD_WIDTH_ZONE",
+      "phase_name": "STRETCH",
+      "lead_sec": 0.45,
+      "settle_sec": 0.18
+    },
+    {
+      "t": 2.25,
+      "type": "player_move",
+      "player": "LCM",
+      "to": [
+        -19,
+        -1
+      ],
+      "duration": 0.95
+    },
+    {
+      "t": 2.32,
+      "type": "player_move",
+      "player": "RCM",
+      "to": [
+        19,
+        -1
+      ],
+      "duration": 0.93
+    },
+    {
+      "t": 2.5,
+      "type": "defender_shift",
+      "player": "OM_L",
+      "to": [
+        -10,
+        2
+      ],
+      "duration": 0.7
+    },
+    {
+      "t": 2.62,
+      "type": "defender_shift",
+      "player": "OM_R",
+      "to": [
+        10,
+        2
+      ],
+      "duration": 0.7
+    },
+    {
+      "t": 3.45,
+      "type": "relation_camera",
+      "subjects": [
+        "PIRLO",
+        "KAKA",
+        "RB",
+        "OM_C",
+        "OM_R",
+        "OCB_R"
+      ],
+      "focus_t": 4.95,
+      "lens": 58,
+      "min_z": 49,
+      "margin": 1.08,
+      "shot_scale": "RELATION",
+      "field_scope": "CENTRAL_MIDFIELD_WIDE",
+      "phase_name": "BETWEEN_LINES",
+      "lead_sec": 0.58,
+      "settle_sec": 0.18
+    },
+    {
+      "t": 4,
+      "type": "player_move",
+      "player": "KAKA",
+      "to": [
+        7,
+        16
+      ],
+      "duration": 0.8
+    },
+    {
+      "t": 4.22,
+      "type": "defensive_unit",
+      "phase_name": "KAKA_ATTRACTION_SHAPE",
+      "moves": [
+        {
+          "player": "OM_C",
+          "to": [
+            2,
+            8
+          ],
+          "delay": 0,
+          "duration": 0.68
+        },
+        {
+          "player": "OM_R",
+          "to": [
+            13.5,
+            4.5
+          ],
+          "delay": 0.08,
+          "duration": 0.72
+        },
+        {
+          "player": "OCB_R",
+          "to": [
+            8,
+            21
+          ],
+          "delay": 0.14,
+          "duration": 0.7
+        },
+        {
+          "player": "OCB_L",
+          "to": [
+            -7.2,
+            22.5
+          ],
+          "delay": 0.2,
+          "duration": 0.74
+        }
+      ]
+    },
+    {
+      "t": 4.85,
+      "type": "pass",
+      "from": "PIRLO",
+      "to": "KAKA",
+      "release": 4.92,
+      "arrive": 5.55
+    },
+    {
+      "t": 5.35,
+      "type": "relation_camera",
+      "subjects": [
+        "KAKA",
+        "RB",
+        "OM_R",
+        "OCB_R"
+      ],
+      "focus_t": 6.7,
+      "lens": 60,
+      "min_z": 38,
+      "margin": 1.04,
+      "shot_scale": "RELATION",
+      "field_scope": "RIGHT_OVERLAP_RELATION",
+      "phase_name": "OVERLAP",
+      "lead_sec": 0.52,
+      "settle_sec": 0.16
+    },
+    {
+      "t": 5.72,
+      "type": "player_move",
+      "player": "RB",
+      "to": [
+        29,
+        18
+      ],
+      "duration": 1
+    },
+    {
+      "t": 5.9,
+      "type": "defensive_unit",
+      "phase_name": "RIGHT_SIDE_COMPRESSION_SHAPE",
+      "moves": [
+        {
+          "player": "OM_R",
+          "to": [
+            17,
+            8
+          ],
+          "delay": 0,
+          "duration": 0.74
+        },
+        {
+          "player": "OM_C",
+          "to": [
+            5,
+            9.5
+          ],
+          "delay": 0.07,
+          "duration": 0.74
+        },
+        {
+          "player": "OCB_R",
+          "to": [
+            11,
+            24
+          ],
+          "delay": 0.12,
+          "duration": 0.74
+        },
+        {
+          "player": "OCB_L",
+          "to": [
+            -5.5,
+            23.5
+          ],
+          "delay": 0.18,
+          "duration": 0.74
+        }
+      ]
+    },
+    {
+      "t": 6.48,
+      "type": "pass",
+      "from": "KAKA",
+      "to": "RB",
+      "release": 6.55,
+      "arrive": 7.18
+    },
+    {
+      "t": 7.3,
+      "type": "relation_camera",
+      "subjects": [
+        "RB",
+        "KAKA",
+        "SEEDORF",
+        "INZAGHI",
+        "OM_R",
+        "OM_C",
+        "OCB_L",
+        "OCB_R"
+      ],
+      "focus_t": 8.62,
+      "lens": 54,
+      "min_z": 112,
+      "margin": 1.04,
+      "shot_scale": "CENTRAL_MASTER",
+      "field_scope": "FLOATING_BOARD",
+      "phase_name": "SHIFT_AND_SWITCH",
+      "lead_sec": 0.58,
+      "settle_sec": 0.18
+    },
+    {
+      "t": 7.5,
+      "type": "defensive_unit",
+      "phase_name": "STRONG_SIDE_SHIFT_SHAPE",
+      "moves": [
+        {
+          "player": "OM_C",
+          "to": [
+            6.2,
+            12.3
+          ],
+          "delay": 0,
+          "duration": 0.72
+        },
+        {
+          "player": "OM_R",
+          "to": [
+            16,
+            10
+          ],
+          "delay": 0.05,
+          "duration": 0.74
+        },
+        {
+          "player": "OCB_R",
+          "to": [
+            11.5,
+            28.8
+          ],
+          "delay": 0.1,
+          "duration": 0.78
+        },
+        {
+          "player": "OCB_L",
+          "to": [
+            -3.8,
+            27.3
+          ],
+          "delay": 0.16,
+          "duration": 0.82
+        }
+      ]
+    },
+    {
+      "t": 7.68,
+      "type": "player_move",
+      "player": "INZAGHI",
+      "to": [
+        3,
+        36
+      ],
+      "duration": 0.74
+    },
+    {
+      "t": 8.02,
+      "type": "player_move",
+      "player": "SEEDORF",
+      "to": [
+        -13,
+        31
+      ],
+      "duration": 0.9
+    },
+    {
+      "t": 8.74,
+      "type": "face",
+      "player": "RB",
+      "target": "SEEDORF",
+      "duration": 0.14
+    },
+    {
+      "t": 8.92,
+      "type": "pass",
+      "from": "RB",
+      "to": "SEEDORF",
+      "release": 9,
+      "arrive": 9.78
+    },
+    {
+      "t": 9.28,
+      "type": "defensive_unit",
+      "phase_name": "WEAK_SIDE_RECOVERY_SHAPE",
+      "moves": [
+        {
+          "player": "OCB_L",
+          "to": [
+            -5,
+            35.4
+          ],
+          "delay": 0,
+          "duration": 0.72
+        },
+        {
+          "player": "OCB_R",
+          "to": [
+            7.2,
+            32.6
+          ],
+          "delay": 0.06,
+          "duration": 0.76
+        },
+        {
+          "player": "OM_C",
+          "to": [
+            1.5,
+            17
+          ],
+          "delay": 0.1,
+          "duration": 0.78
+        },
+        {
+          "player": "OM_R",
+          "to": [
+            12,
+            13.2
+          ],
+          "delay": 0.15,
+          "duration": 0.8
+        }
+      ]
+    },
+    {
+      "t": 9.74,
+      "type": "relation_camera",
+      "subjects": [
+        "RB",
+        "SEEDORF",
+        "INZAGHI",
+        "OM_C",
+        "OCB_L",
+        "OCB_R",
+        "OGK"
+      ],
+      "focus_t": 9.94,
+      "lens": 56,
+      "min_z": 76,
+      "margin": 1.04,
+      "shot_scale": "STRUCTURE",
+      "field_scope": "ATTACKING_WIDTH_ZONE",
+      "phase_name": "WEAK_SIDE_SCALE_BRIDGE",
+      "lead_sec": 0,
+      "settle_sec": 0.18
+    },
+    {
+      "t": 9.96,
+      "type": "dribble",
+      "player": "SEEDORF",
+      "to": [
+        -8,
+        37
+      ],
+      "duration": 0.54
+    },
+    {
+      "t": 9.96,
+      "type": "relation_camera",
+      "subjects": [
+        "SEEDORF",
+        "INZAGHI",
+        "OCB_L",
+        "OCB_R",
+        "OGK"
+      ],
+      "focus_t": 10.26,
+      "lens": 56,
+      "min_z": 68,
+      "margin": 1.1,
+      "shot_scale": "STRUCTURE",
+      "field_scope": "FINAL_THIRD_CONTEXT",
+      "phase_name": "WEAK_SIDE_RECEIVE_LOCAL",
+      "lead_sec": 0,
+      "settle_sec": 0.24
+    },
+    {
+      "t": 10.48,
+      "type": "relation_camera",
+      "subjects": [
+        "SEEDORF",
+        "INZAGHI",
+        "OCB_L",
+        "OCB_R",
+        "OGK"
+      ],
+      "focus_t": 10.96,
+      "lens": 56,
+      "min_z": 65,
+      "margin": 1.1,
+      "shot_scale": "STRUCTURE",
+      "field_scope": "FINAL_THIRD_CONTEXT",
+      "phase_name": "FINAL_ACTION",
+      "lead_sec": 0.18,
+      "settle_sec": 0.14
+    },
+    {
+      "t": 10.88,
+      "type": "shot",
+      "from": "SEEDORF",
+      "to": [
+        -2.2,
+        52.3
+      ],
+      "release": 10.95,
+      "arrive": 11.49,
+      "arc": 0.22
+    },
+    {
+      "t": 11.74,
+      "type": "relation_camera",
+      "subjects": [
+        "SEEDORF",
+        "INZAGHI",
+        "OCB_L",
+        "OCB_R",
+        "OGK"
+      ],
+      "focus_t": 11.96,
+      "lens": 56,
+      "min_z": 74,
+      "margin": 1.04,
+      "shot_scale": "STRUCTURE",
+      "field_scope": "ATTACKING_WIDTH_ZONE",
+      "phase_name": "EXIT_SCALE_BRIDGE",
+      "lead_sec": 0,
+      "settle_sec": 0.24
+    },
+    {
+      "t": 12.42,
+      "type": "relation_camera",
+      "subjects": [
+        "SEEDORF",
+        "INZAGHI"
+      ],
+      "focus_t": 12.72,
+      "lens": 54,
+      "min_z": 112,
+      "margin": 1.04,
+      "shot_scale": "CENTRAL_MASTER",
+      "field_scope": "FLOATING_BOARD",
+      "phase_name": "EXIT_CENTRAL_MASTER",
+      "lead_sec": 0,
+      "settle_sec": 0.3
+    }
+  ],
+  "preview_mode": true,
+  "director_mode": "TACTICAL_ACTION_CONTINUITY",
+  "principles": [
+    "complete_pattern_over_dramatic_pacing",
+    "tactical_cause_before_camera_motion",
+    "defensive_reaction_must_be_visible",
+    "no_climax_treatment",
+    "hold_final_shape_until_execution_is_readable",
+    "camera_exit_replaces_dead_hold_without_new_tactical_action",
+    "global_to_local_requires_scale_bridge_after_long_switch",
+    "local_to_global_requires_exit_scale_bridge"
+  ],
+  "execution_phases": [
+    {
+      "name": "BUILD",
+      "from": 0,
+      "to": 1.95,
+      "question": "How is the first pressure connected to Pirlo?"
+    },
+    {
+      "name": "STRETCH",
+      "from": 1.95,
+      "to": 3.45,
+      "question": "How does width open the vertical lane?"
+    },
+    {
+      "name": "BETWEEN_LINES",
+      "from": 3.45,
+      "to": 5.4,
+      "question": "How does Kaka pull central defenders inward?"
+    },
+    {
+      "name": "OVERLAP",
+      "from": 5.4,
+      "to": 8,
+      "question": "Why does the delayed overlap become free?"
+    },
+    {
+      "name": "SHIFT_AND_SWITCH",
+      "from": 8,
+      "to": 9.75,
+      "question": "How does the defensive block shift in sequence?"
+    },
+    {
+      "name": "COMPLETE",
+      "from": 9.75,
+      "to": 16.2,
+      "question": "How is the weak-side pocket converted into the final action?"
+    }
+  ],
+  "initial_ball_holder": "LCB",
+  "require_defensive_reaction": true,
+  "benchmark": {
+    "reference": "TEACTICS",
+    "principle": "learn_expression_not_copy_content",
+    "locked_direction": true,
+    "priorities": [
+      "semi_global_should_not_default_to_near_full_pitch",
+      "local_relation_shots_should_be_defined_by_relevant_players_only",
+      "local_and_global_views_are_both_valid_when_tactically_justified",
+      "field_extent_should_change_with_tactical_question",
+      "visible_pitch_scope_must_match_tactical_information",
+      "full_pitch_and_local_pitch_are_both_valid_when_tactically_motivated",
+      "weak_side_space_must_be_caused_by_collective_defensive_shift",
+      "defenders_should_move_as_a_block_not_as_isolated_markers",
+      "receive_turn_next_action_must_read_as_one_chain",
+      "body_orientation_should_reveal_tactical_intent",
+      "no_floating_pitch_or_black_void_in_wide_structure_views",
+      "no_abrupt_scale_reset_between_tactical_phases",
+      "camera_center_must_follow_tactical_progression",
+      "no_tactical_subject_on_frame_edge",
+      "whole_tactical_picture_before_local_beauty",
+      "local_relation_must_keep_formation_context",
+      "spatial_continuity_between_phases",
+      "relation_camera_must_protect_start_mid_end_positions",
+      "switch_camera_may_follow_ball_between_zones",
+      "players_must_read_as_people_not_chess_pieces",
+      "tactical_clarity",
+      "complete_execution",
+      "stable_camera_until_relation_changes",
+      "ball_drives_tempo",
+      "player_reaction_follows_tactical_cause",
+      "no_unnecessary_effects",
+      "no_dramatic_climax",
+      "minimal_dead_time",
+      "few_relevant_players_per_frame"
+    ]
+  },
+  "visual_integrity": {
+    "locked": true,
+    "rule": "Every tactical shot must preserve both the local relation and enough formation structure to understand where it belongs.",
+    "minimum_context": "carrier + next option + nearest defender + two structural anchors",
+    "no_isolated_triangle_shots": true,
+    "no_contextless_closeups": true,
+    "preserve_attack_direction": true,
+    "preserve_spatial_continuity": true,
+    "edge_safe_zone": true,
+    "edge_safe_rule": "No tactical subject should sit on or be clipped by the portrait-frame edge.",
+    "spatial_continuity": true,
+    "scale_continuity": true,
+    "continuous_tactical_background": true,
+    "background_rule": "Wide tactical views may reveal more board, but must never reveal a hard visual void beyond the pitch.",
+    "field_scope_is_tactical": true,
+    "field_scope_rule": "The amount of pitch visible must be chosen by tactical information need, not by a fixed camera aesthetic."
+  },
+  "camera_continuity": {
+    "preserve_forward_progression": true,
+    "max_backward_target_m": 1.5,
+    "lead_sec": 0.34,
+    "settle_sec": 0.32,
+    "principle": "preserve spatial continuity, but allow deliberate tactical scale changes between structure and relation shots",
+    "preserve_scale_continuity": true,
+    "max_zoom_in_per_phase_m": 8,
+    "allow_scale_reset_on_shot_scale_change": true
+  },
+  "action_continuity": {
+    "enabled": true,
+    "principle": "the next tactical action begins in body orientation before the current action fully ends",
+    "passer_pre_turn_sec": 0.12,
+    "receiver_scan_sec": 0.18,
+    "post_receive_turn_window_sec": 0.34,
+    "first_touch_distance_m": 0.16
+  },
+  "defensive_response": {
+    "enabled": true,
+    "principle": "space must be created by visible collective defensive movement, not by static empty zones",
+    "strong_side_shift": "right",
+    "weak_side_release": "left"
+  },
+  "scale_script": {
+    "principle": "CENTRAL_MASTER provides the spatial map; STRUCTURE and RELATION shots then use only the pitch extent needed to explain the current tactical question",
+    "benchmark": "TEACTICS",
+    "rules": [
+      "use full or near-full pitch only when the viewer needs global structure",
+      "use half-pitch or zone framing when the tactical relation is local",
+      "never show the whole field just to look complete",
+      "never crop pitch landmarks that are needed to understand the action",
+      "return to wider pitch context after a local tactical explanation when the next phase depends on global spacing",
+      "global-to-local and local-to-global scale changes may be decisive when the tactical question changes"
+    ],
+    "phases": {
+      "BUILD": {
+        "shot_scale": "STRUCTURE",
+        "field_scope": "BUILD_RELATION_ZONE",
+        "purpose": "show LCB-Pirlo-first pressure and enough midfield landmark context without shrinking players"
+      },
+      "STRETCH": {
+        "shot_scale": "WIDE_STRUCTURE",
+        "field_scope": "MIDFIELD_WIDTH_ZONE",
+        "purpose": "show both side midfielders stretching the block while keeping the midfield relation readable on mobile"
+      },
+      "BETWEEN_LINES": {
+        "shot_scale": "RELATION",
+        "field_scope": "MIDFIELD_ZONE",
+        "purpose": "show Pirlo-Kaka-defender relation without wasting screen on remote pitch"
+      },
+      "OVERLAP": {
+        "shot_scale": "RELATION",
+        "field_scope": "RIGHT_CHANNEL_ZONE",
+        "purpose": "show Kaka-RB-defender triangle and overlap timing"
+      },
+      "SHIFT_AND_SWITCH": {
+        "shot_scale": "CENTRAL_MASTER",
+        "field_scope": "FLOATING_BOARD",
+        "purpose": "return to the floating spatial map before the weak-side switch so the defensive block movement is visible"
+      },
+      "COMPLETE": {
+        "shot_scale": "RESULT_RELATION",
+        "field_scope": "FINAL_THIRD",
+        "purpose": "show weak-side receive, central occupation, defenders and goal relation"
+      },
+      "OPENING_MASTER": {
+        "shot_scale": "CENTRAL_MASTER",
+        "field_scope": "FLOATING_BOARD",
+        "purpose": "establish the floating pitch as the spatial map before any local explanation"
+      }
+    },
+    "local_relation_history_sec": 0.56
+  },
+  "field_scale_script": {
+    "enabled": true,
+    "principle": "field visibility and camera scale are chosen by tactical information needs, not visual uniformity",
+    "stages": [
+      {
+        "phase": "BUILD",
+        "shot": "GLOBAL",
+        "field": "large_pitch_context",
+        "purpose": "locate first build-up relation and attack direction"
+      },
+      {
+        "phase": "STRETCH",
+        "shot": "SEMI_GLOBAL",
+        "field": "middle_thirds",
+        "purpose": "show midfield width and defensive block stretch"
+      },
+      {
+        "phase": "BETWEEN_LINES",
+        "shot": "RELATION_CLOSE",
+        "field": "central_attacking_zone",
+        "purpose": "show receiver between lines without losing reference structure"
+      },
+      {
+        "phase": "OVERLAP",
+        "shot": "RELATION_CLOSE",
+        "field": "right_half_space_and_flank",
+        "purpose": "show carrier-overlap-defender timing"
+      },
+      {
+        "phase": "SHIFT_AND_SWITCH",
+        "shot": "SEMI_GLOBAL",
+        "field": "both_sides_of_attacking_half",
+        "purpose": "show strong-side attraction and weak-side release"
+      },
+      {
+        "phase": "COMPLETE",
+        "shot": "RESULT_MEDIUM",
+        "field": "final_third_and_box",
+        "purpose": "show weak-side reception, depth, defenders and goal"
+      }
+    ],
+    "rules": {
+      "full_picture_does_not_mean_full_pitch_every_time": true,
+      "local_closeup_may_crop_pitch_lines": true,
+      "retain_attack_direction_reference": true,
+      "return_to_structure_after_local_relation": true,
+      "pitch_extent_must_match_tactical_question": true,
+      "minimum_necessary_field_extent": true
+    },
+    "version": "V10.1"
+  },
+  "central_master": {
+    "benchmark": "TEACTICS",
+    "principle": "use a lower oblique floating-pitch master so the near end reads larger and the far end compresses, matching Teactics spatial depth while retaining the whole board",
+    "field_scope": "FLOATING_BOARD",
+    "tilt_back_m": 58,
+    "uses": [
+      "OPENING_MAP",
+      "STRONG_WEAK_SIDE_RESET"
+    ],
+    "rules": [
+      "pitch board centre owns composition in CENTRAL_MASTER",
+      "show the full physical board silhouette, not only the white touchlines",
+      "preserve dark breathing room around the board so it reads as suspended in space",
+      "do not let player clusters drag the master shot off-centre",
+      "use the floating master briefly as spatial orientation, then return to tactical relation framing"
+    ]
+  },
+  "camera_anticipation": {
+    "enabled": true,
+    "principle": "prepare early, then hold steady through the tactical information",
+    "rules": [
+      "camera should finish most of its move before the critical receive",
+      "global view is brief and exists only to explain the block shift",
+      "do not add a camera move for a detail that does not change tactical understanding"
+    ]
+  },
+  "tactical_script_detail": {
+    "theme": "strong-side attraction creates weak-side release",
+    "thesis": "Kaka attracts central pressure, the overlap overloads the right, the block shifts in sequence, then Seedorf receives on the weak side",
+    "phases": [
+      {
+        "name": "PIRLO_PREPARES",
+        "trigger": "first pressure reaches Pirlo",
+        "attacker_detail": "side midfielders widen before Kaka enters the next line",
+        "defender_reaction": "first striker closes, then the midfield line stretches",
+        "spatial_change": "a vertical lane appears between midfield and defence",
+        "camera_intent": "show only enough structure to understand why the lane opens"
+      },
+      {
+        "name": "KAKA_BETWEEN_LINES",
+        "trigger": "the lane is open",
+        "attacker_detail": "Kaka accelerates into the right half-space instead of moving at the same time as the side midfielders",
+        "defender_reaction": "OM_C narrows first, OCB_R steps later",
+        "spatial_change": "central pressure increases and the outside lane becomes available",
+        "camera_intent": "camera is already local before Kaka receives"
+      },
+      {
+        "name": "RIGHT_OVERLAP",
+        "trigger": "Kaka receives facing forward and central pressure has committed",
+        "attacker_detail": "RB delays, then accelerates outside",
+        "defender_reaction": "OM_R tracks wide while the centre-back remains occupied inside",
+        "spatial_change": "the right becomes the clear strong side",
+        "camera_intent": "move to the outside lane before RB's decisive acceleration"
+      },
+      {
+        "name": "BLOCK_SHIFT",
+        "trigger": "RB receives with the right side overloaded",
+        "attacker_detail": "Inzaghi pins the centre while Seedorf waits away from the block before advancing",
+        "defender_reaction": "OM_C shifts, then OCB_R, then OCB_L follows",
+        "spatial_change": "the block travels right and the left receiving pocket grows",
+        "camera_intent": "widen briefly to show the whole cause before the switch"
+      },
+      {
+        "name": "WEAK_SIDE_EXECUTION",
+        "trigger": "the weak-side pocket is now visible",
+        "attacker_detail": "RB opens his body and switches; Seedorf receives and attacks the exposed gap",
+        "defender_reaction": "OCB_L reacts late from a stretched position",
+        "spatial_change": "the weak-side pocket becomes a direct route toward goal",
+        "camera_intent": "hold the switch through first control, bridge through the attacking-third structure, then enter the finishing relationship without a hard scale jump"
+      }
+    ]
+  },
+  "detail_filter": {
+    "goal": "keep only details that materially improve tactical causality, spatial reading, or camera anticipation",
+    "A_must_animate": [
+      "trigger before each decisive run",
+      "order of defender reactions",
+      "strong-side overload before weak-side switch",
+      "weak-side receiver staying free until the block has shifted",
+      "camera arriving before the decisive receive"
+    ],
+    "B_keep_selectively": [
+      "one meaningful body-orientation cue before the weak-side switch",
+      "supporting width movements that explain the passing lane"
+    ],
+    "C_remove_from_animation": [
+      "duplicate body turns already implied by pass or run mechanics",
+      "extra late recovery movements that do not change the tactical explanation",
+      "micro-actions that lengthen the phase without changing the viewer's understanding"
+    ]
+  },
+  "camera_exit": {
+    "enabled": true,
+    "source_baseline": "TEST 03 · DETAIL FILTER",
+    "shot_arrival_sec": 15.05,
+    "inertia_sec": 0.28,
+    "pull_out_sec": 0.45,
+    "natural_hold_sec": 0.42,
+    "rule": "Do not add tactical actions; preserve the TEST 03 visual system and finish by camera continuity only."
+  },
+  "camera_pass_hold": {
+    "pass": "RB_TO_SEEDORF",
+    "release_sec": 10,
+    "arrive_sec": 10.88,
+    "receive_hold_sec": 0.14,
+    "camera_transition_start_sec": 11.02,
+    "camera_transition_end_sec": 11.32,
+    "rule": "Do not leave the full lateral passing corridor before the receiver has controlled the ball."
+  },
+  "scale_bridge": {
+    "enabled": true,
+    "source_baseline": "TEST 04.1.2 · PASS RECEIVE HOLD",
+    "pass_arrive_sec": 10.88,
+    "global_hold_until_sec": 11.02,
+    "bridge_start_sec": 11.02,
+    "bridge_end_sec": 11.22,
+    "local_start_sec": 11.38,
+    "local_end_sec": 11.68,
+    "rule": "After a long cross-field pass, preserve the master until first control, then step through an attacking-third structure shot before entering the local finishing relationship."
+  },
+  "exit_bridge": {
+    "enabled": true,
+    "source_baseline": "TEST 06 · SCALE BRIDGE",
+    "shot_arrival_sec": 15.05,
+    "local_read_hold_until_sec": 15.22,
+    "structure_bridge_start_sec": 15.22,
+    "structure_bridge_end_sec": 15.5,
+    "central_master_start_sec": 15.62,
+    "central_master_end_sec": 16,
+    "final_hold_sec": 0.2,
+    "rule": "Exit local tactical detail in two scales: local result -> attacking-third structure -> floating central master. Never snap directly from local to full-board."
+  },
+  "workbench_visual": {
+    "light": "FLAT",
+    "background_type": "VIEWPORT",
+    "background_color": "#000000",
+    "show_shadows": false,
+    "show_cavity": true,
+    "cavity_type": "WORLD",
+    "ridge": 0.52,
+    "valley": 0.28,
+    "show_specular_highlight": false
+  },
+  "visual_geometry": {
+    "pitch_line_width": 0.038,
+    "goal_line_width": 0.032,
+    "goal_post_half_width": 0.04,
+    "focus_ring_tube": 0.017
+  },
+  "clean_core": {
+    "enabled": true,
+    "source_baseline": "TEST 07 · EXIT BRIDGE",
+    "reference_direction": "TEACTICS clean black tactical-board language",
+    "locked_tactics": true,
+    "locked_camera": true,
+    "rules": [
+      "pure black negative space",
+      "pitch only slightly brighter than background",
+      "thin neutral-grey field lines",
+      "flat clean yellow own-team silhouettes",
+      "muted neutral-grey opponents",
+      "no visible specular sheen",
+      "no decorative lighting",
+      "no heavy cast shadows",
+      "visual hierarchy must read tactics before materials"
+    ],
+    "revision": "09.2 CLEAN SRGB",
+    "rule_added": "Preserve near-black pitch values without AgX lifting dark tones.",
+    "root_fix": "Convert authored HEX sRGB palette values to Blender linear material values before rendering.",
+    "expected_result": "near-black pitch remains near-black on output while yellow/grey preserve intended display colors"
+  },
+  "color_management": {
+    "view_transform": "Standard",
+    "exposure": 0,
+    "gamma": 1
+  },
+  "palette_input_space": "SRGB",
+  "camera_perspective": {
+    "central_master_tilt_back_m": 58,
+    "wide_structure_tilt_back_m": 42,
+    "structure_tilt_back_m": 36,
+    "relation_tilt_back_m": 24,
+    "result_relation_tilt_back_m": 22,
+    "height_scale": 0.88
+  },
+  "test10_camera_goal": {
+    "source_baseline": "TEST 09.2 · CLEAN SRGB",
+    "locked_visuals": true,
+    "locked_tactics": true,
+    "change_only": "camera elevation / backward offset",
+    "target": "less top-down; stronger near-to-far pitch perspective without becoming broadcast-low"
+  },
+  "test101_closer_read": {
+    "source_baseline": "TEST 10 · TEACTICS PERSPECTIVE",
+    "reference": "Teactics player-to-pitch screen ratio",
+    "locked_visuals": true,
+    "locked_tactics": true,
+    "locked_camera_angle_direction": true,
+    "target_screen_size_gain": "approximately 8-12 percent, not oversized",
+    "rule": "Keep the TEST 10 oblique perspective. Increase player readability by modestly tightening framing, not by turning the camera top-down again."
+  },
+  "test1011_clean_floor": {
+    "source_baseline": "TEST 10.1 · CLOSER READ",
+    "issue": "compressed horizontal pitch bands became visible near the bottom at the lower Teactics camera angle",
+    "fix": "make pitch bands identical to the base pitch so the surface reads as one clean near-black plane",
+    "locked_camera": true,
+    "locked_player_scale": true,
+    "locked_tactics": true,
+    "locked_color_language": true
+  },
+  "ball_visual": {
+    "radius": 0.22
+  },
+  "test1012_clean_ball": {
+    "source_baseline": "TEST 10.1.1 · CLEAN FLOOR",
+    "issue": "the near-white ball reads as a glowing white point against the clean black pitch during the shot",
+    "fix": "lower ball luminance and reduce its screen footprint slightly",
+    "locked_camera": true,
+    "locked_player_scale": true,
+    "locked_pitch": true,
+    "locked_tactics": true
+  },
+  "motion_profile": {
+    "player_move": {
+      "arm_deg": 15.5,
+      "leg_deg": 19,
+      "frames_per_half_step": 3.9,
+      "lean_deg": -2.6
+    },
+    "defender_shift": {
+      "arm_deg": 9.5,
+      "leg_deg": 13,
+      "frames_per_half_step": 4.3,
+      "lean_deg": -1.1
+    },
+    "dribble": {
+      "arm_deg": 11,
+      "leg_deg": 14.5,
+      "frames_per_half_step": 4.2,
+      "lean_deg": -1.8
+    }
+  },
+  "test11_motion_coordination": {
+    "source_baseline": "TEST 10.1.2 · CLEAN BALL",
+    "locked_camera": true,
+    "locked_player_scale": true,
+    "locked_visual_language": true,
+    "locked_tactical_destinations": true,
+    "goals": [
+      "attacking runs feel less like constant-speed sliding",
+      "defensive movement uses shorter quieter steps",
+      "defenders react in a compact wave instead of isolated simultaneous chess-piece motion",
+      "keep the tactical explanation readable before animation style"
+    ],
+    "key_sequence": {
+      "kaka_attract": "OM_C reacts first, OCB_R follows shortly after",
+      "strong_to_weak_switch": "OM_C -> OCB_R -> OCB_L compress in a readable defensive wave",
+      "seedorf_drive": "nearest centre-back reacts shortly after the dribble begins"
+    }
+  },
+  "test111_wider_context": {
+    "source_baseline": "TEST 11 · MOTION COORDINATION",
+    "locked_motion": true,
+    "locked_visuals": true,
+    "locked_other_cameras": true,
+    "changed_window": "approximately 3.45s–5.2s",
+    "goal": "keep Kaka readable while restoring nearest defenders and the right-side development lane",
+    "rule": "This is a relationship shot, not a character close-up."
+  },
+  "test12_defensive_shape": {
+    "source_baseline": "TEST 11.1 · 4S WIDER CONTEXT",
+    "locked_camera": true,
+    "locked_visuals": true,
+    "locked_player_scale": true,
+    "locked_attacking_actions": true,
+    "goals": [
+      "defensive unit moves as one compact block instead of independent pieces",
+      "nearest defender initiates pressure while inside cover follows",
+      "far centre-back protects depth and keeps the back line connected",
+      "horizontal shifts preserve readable spacing between midfield and centre-backs"
+    ],
+    "key_windows": [
+      "4.2s Kaka attraction",
+      "6.1s right-side compression",
+      "8.3s strong-side shift before the switch",
+      "11.1s weak-side recovery after Seedorf receives"
+    ]
+  },
+  "test121_fast_finish": {
+    "source_baseline": "TEST 12 · DEFENSIVE SHAPE",
+    "locked_camera": true,
+    "locked_defensive_shape": true,
+    "locked_visuals": true,
+    "locked_player_scale": true,
+    "change_only": "final shot timing",
+    "old_flight_sec": 0.87,
+    "new_flight_sec": 0.54,
+    "goal": "make the finish decisive and match the acceleration of the preceding attack"
+  },
+  "test122": {
+    "baseline": "TEST 12.1",
+    "camera_reference": "2-3s midfield relationship distance",
+    "changes": "Only 11.38s onward camera scale and final-shot timing",
+    "ball_received": 10.88,
+    "shot_release": 12.27,
+    "shot_arrival": 12.81,
+    "locked": "prior attack, defensive unit, players, palette"
+  },
+  "camera_rail": {
+    "enabled": true,
+    "anchor_x": 0,
+    "wide_structure_lateral_weight": 0.16,
+    "structure_lateral_weight": 0.2,
+    "relation_lateral_weight": 0.28,
+    "result_relation_lateral_weight": 0.24,
+    "max_abs_target_x": 7.5,
+    "max_lateral_step_m": 2.4,
+    "principle": "follow attack/defence mainly along pitch length; side actions stay inside a wider frame instead of pulling the camera laterally"
+  },
+  "test123_camera_rail": {
+    "source_baseline": "TEST 12.2 · CONTEXT SCALE + QUICK SHOT",
+    "locked_visuals": true,
+    "locked_player_scale": true,
+    "locked_tactics": true,
+    "locked_quick_shot": true,
+    "reference_distance": "2–3 second tactical relationship shot",
+    "change_only": "camera travel direction",
+    "rule": "camera movement is longitudinal first; lateral motion is secondary compensation only"
+  },
+  "test13_action_continuity": {
+    "source_baseline": "TEST 12.3 · LONGITUDINAL RAIL",
+    "locked": [
+      "longitudinal camera rail",
+      "2–3 second relationship framing reference",
+      "defensive shape logic",
+      "visual palette",
+      "player scale"
+    ],
+    "goals": [
+      "remove dead time between receive and next action",
+      "make overlap, switch and weak-side finish one continuous attacking chain",
+      "keep tactical readability while increasing tempo"
+    ],
+    "key_timing": {
+      "kaka_receive": 5.55,
+      "kaka_to_rb_release": 6.55,
+      "rb_receive": 7.18,
+      "rb_to_seedorf_release": 9,
+      "seedorf_receive": 9.78,
+      "seedorf_shot_release": 10.95,
+      "shot_arrival": 11.49
+    }
+  }
+}
