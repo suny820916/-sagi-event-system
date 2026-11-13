@@ -628,7 +628,7 @@ ball = sphere(
         ball_owner.location.y,
         .37,
     ),
-    .20,
+    .24,
     m_ball,
 )
 
@@ -669,11 +669,14 @@ camera_dna = {
         "lead": .22, "settle": .16,
     },
     "half_space": {
-        "loc": (5,1,67), "target": (4,11,0), "lens": 72,
+        # Keep passer + receiver + nearest midfield defenders in the same frame.
+        "loc": (4,-5,74), "target": (3,3,0), "lens": 68,
         "lead": .24, "settle": .16,
     },
     "overlap": {
-        "loc": (9,4,70), "target": (14,17,0), "lens": 69,
+        # Dedicated relationship frame: ball carrier + overlapping fullback
+        # + the defender forced to move with the overlap.
+        "loc": (16,-4,80), "target": (16,1,0), "lens": 68,
         "lead": .24, "settle": .16,
     },
     "switch": {
