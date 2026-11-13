@@ -1,6 +1,6 @@
 {
   "project": "SAGI TACTICS",
-  "version": "SAGI TACTICAL EXECUTION DIRECTOR V8 · ACTION CHAIN",
+  "version": "SAGI TACTICAL EXECUTION DIRECTOR V9 · DEFENSIVE BLOCK RESPONSE",
   "fps": 24,
   "duration_sec": 15.2,
   "resolution": [
@@ -383,6 +383,16 @@
       "type": "relation_camera"
     },
     {
+      "t": 8.98,
+      "type": "defender_shift",
+      "player": "OM_C",
+      "to": [
+        6.5,
+        12.5
+      ],
+      "duration": 0.72
+    },
+    {
       "t": 9,
       "type": "player_move",
       "player": "SEEDORF",
@@ -391,6 +401,16 @@
         31
       ],
       "duration": 1.08
+    },
+    {
+      "t": 9.06,
+      "type": "defender_shift",
+      "player": "OCB_L",
+      "to": [
+        -4.5,
+        27.5
+      ],
+      "duration": 0.82
     },
     {
       "t": 9.1,
@@ -407,8 +427,8 @@
       "type": "defender_shift",
       "player": "OCB_R",
       "to": [
-        6,
-        31
+        11.5,
+        30.5
       ],
       "duration": 0.86
     },
@@ -451,7 +471,7 @@
       "type": "defender_shift",
       "player": "OCB_L",
       "to": [
-        -2.5,
+        -5.2,
         35.5
       ],
       "duration": 0.62
@@ -523,6 +543,8 @@
     "principle": "learn_expression_not_copy_content",
     "locked_direction": true,
     "priorities": [
+      "weak_side_space_must_be_caused_by_collective_defensive_shift",
+      "defenders_should_move_as_a_block_not_as_isolated_markers",
       "receive_turn_next_action_must_read_as_one_chain",
       "body_orientation_should_reveal_tactical_intent",
       "no_floating_pitch_or_black_void_in_wide_structure_views",
@@ -577,5 +599,11 @@
     "receiver_scan_sec": 0.18,
     "post_receive_turn_window_sec": 0.34,
     "first_touch_distance_m": 0.16
+  },
+  "defensive_response": {
+    "enabled": true,
+    "principle": "space must be created by visible collective defensive movement, not by static empty zones",
+    "strong_side_shift": "right",
+    "weak_side_release": "left"
   }
 }
