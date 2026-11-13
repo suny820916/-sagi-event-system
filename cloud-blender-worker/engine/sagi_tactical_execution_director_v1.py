@@ -881,24 +881,30 @@ def relation_camera_pose(
         scope_cx, scope_cy = relation_cx, relation_cy
 
     # Teactics-style scale grammar:
-    # structural shots let the pitch region lead composition; relation shots
-    # let the player relationship lead while still retaining its tactical zone.
+    # CENTRAL_MASTER is a true spatial reset: the pitch itself owns the frame
+    # and stays centred. Other shot types keep the tactical relationship as the
+    # primary subject, with the named pitch region only guiding composition.
+    is_central_master = str(shot_scale or "") == "CENTRAL_MASTER"
     scope_weight = {
+        "CENTRAL_MASTER": 1.00,
         "STRUCTURE": .58,
         "WIDE_STRUCTURE": .68,
         "RELATION": .18,
         "RESULT_RELATION": .30,
     }.get(str(shot_scale or ""), .22)
 
-    cx = relation_cx * (1.0 - scope_weight) + scope_cx * scope_weight
-    cy = relation_cy * (1.0 - scope_weight) + scope_cy * scope_weight
+    if is_central_master and scope_pts:
+        cx, cy = scope_cx, scope_cy
+    else:
+        cx = relation_cx * (1.0 - scope_weight) + scope_cx * scope_weight
+        cy = relation_cy * (1.0 - scope_weight) + scope_cy * scope_weight
 
     # Structural shots must genuinely show their wider pitch region.
     # Relation shots use the named field scope only to orient the composition;
     # forcing all four scope corners into a close tactical shot would shrink
     # players back into chess pieces.
     framing_pts = list(trajectory_pts)
-    if str(shot_scale or "") in ("STRUCTURE", "WIDE_STRUCTURE"):
+    if str(shot_scale or "") in ("CENTRAL_MASTER", "STRUCTURE", "WIDE_STRUCTURE"):
         framing_pts.extend(scope_pts)
 
     # Lens-aware framing for 9:16 portrait.
@@ -920,9 +926,14 @@ def relation_camera_pose(
     z_y = (max_dy * float(margin)) / max(1e-6, tan_half_v)
     z = max(float(min_z), z_x, z_y)
 
-    # Keep the camera nearly tactical-top-down, but retain enough angle to
-    # perceive miniature bodies and running direction.
-    tilt_back = max(4.5, min(7.0, span_y * .16))
+    # Keep the camera nearly tactical-top-down. The central master is quieter:
+    # a fixed shallow tilt makes the full pitch read like a stable tactical map,
+    # while relation shots retain a little more depth for body direction.
+    if is_central_master:
+        master_cfg = cfg.get("central_master", {})
+        tilt_back = float(master_cfg.get("tilt_back_m", 4.8))
+    else:
+        tilt_back = max(4.5, min(7.0, span_y * .16))
 
     continuity_cfg = cfg.get("camera_continuity", {})
     return {
@@ -957,7 +968,14 @@ def relation_camera_key(
     # Spatial continuity: in an upfield attack, don't let the camera centre
     # suddenly jump backwards just because a supporting runner started deeper.
     continuity_cfg = cfg.get("camera_continuity", {})
-    if camera_last is not None and continuity_cfg.get("preserve_forward_progression", False):
+    if (
+        camera_last is not None
+        and continuity_cfg.get("preserve_forward_progression", False)
+        and "CENTRAL_MASTER" not in (
+            str(camera_last.get("shot_scale") or ""),
+            str(p.get("shot_scale") or ""),
+        )
+    ):
         max_back = float(continuity_cfg.get("max_backward_target_m", 1.5))
         prev_y = float(camera_last["target"][1])
         new_y = float(p["target"][1])
