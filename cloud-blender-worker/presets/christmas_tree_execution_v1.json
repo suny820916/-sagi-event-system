@@ -1,6 +1,6 @@
 {
   "project": "SAGI TACTICS",
-  "version": "SAGI TACTICAL DIRECTOR TEST 01 · STRONG SIDE TO WEAK SIDE · NO VOICE",
+  "version": "SAGI TACTICAL DIRECTOR TEST 02 · DETAIL SCRIPT · NO VOICE",
   "fps": 24,
   "duration_sec": 18,
   "resolution": [
@@ -189,6 +189,7 @@
   "events": [
     {
       "t": 0,
+      "type": "relation_camera",
       "subjects": [
         "PIRLO",
         "KAKA"
@@ -197,10 +198,18 @@
       "lens": 54,
       "min_z": 118,
       "margin": 1.08,
-      "type": "relation_camera",
       "shot_scale": "CENTRAL_MASTER",
       "field_scope": "FLOATING_BOARD",
-      "phase_name": "OPENING_MASTER"
+      "phase_name": "OPENING_MASTER",
+      "lead_sec": 0,
+      "settle_sec": 0
+    },
+    {
+      "t": 0.5,
+      "type": "face",
+      "player": "LCB",
+      "target": "PIRLO",
+      "duration": 0.16
     },
     {
       "t": 0.72,
@@ -211,7 +220,7 @@
       "arrive": 1.48
     },
     {
-      "t": 1.05,
+      "t": 1.04,
       "type": "defender_shift",
       "player": "O9",
       "to": [
@@ -221,7 +230,8 @@
       "duration": 0.78
     },
     {
-      "t": 1.25,
+      "t": 1.3,
+      "type": "relation_camera",
       "subjects": [
         "LCB",
         "PIRLO",
@@ -229,17 +239,19 @@
         "RCM",
         "O9"
       ],
-      "focus_t": 2.05,
+      "focus_t": 2,
       "lens": 60,
       "min_z": 46,
       "margin": 1.08,
-      "type": "relation_camera",
       "shot_scale": "STRUCTURE",
       "field_scope": "BUILD_RELATION_ZONE",
-      "phase_name": "BUILD"
+      "phase_name": "BUILD",
+      "lead_sec": 0.48,
+      "settle_sec": 0.2
     },
     {
-      "t": 2.25,
+      "t": 2.18,
+      "type": "relation_camera",
       "subjects": [
         "PIRLO",
         "LCM",
@@ -250,24 +262,25 @@
         "OM_C",
         "OM_R"
       ],
-      "focus_t": 3.55,
+      "focus_t": 3.45,
       "lens": 58,
       "min_z": 44,
       "margin": 1.06,
-      "type": "relation_camera",
       "shot_scale": "WIDE_STRUCTURE",
       "field_scope": "MIDFIELD_WIDTH_ZONE",
-      "phase_name": "STRETCH"
+      "phase_name": "STRETCH",
+      "lead_sec": 0.52,
+      "settle_sec": 0.2
     },
     {
-      "t": 2.55,
+      "t": 2.52,
       "type": "player_move",
       "player": "LCM",
       "to": [
         -19,
         -1
       ],
-      "duration": 1.05
+      "duration": 1.06
     },
     {
       "t": 2.6,
@@ -277,30 +290,38 @@
         19,
         -1
       ],
-      "duration": 1.05
+      "duration": 1.02
     },
     {
-      "t": 2.78,
+      "t": 2.84,
       "type": "defender_shift",
       "player": "OM_L",
       "to": [
         -10,
         2
       ],
-      "duration": 0.82
+      "duration": 0.8
     },
     {
-      "t": 2.82,
+      "t": 3.02,
       "type": "defender_shift",
       "player": "OM_R",
       "to": [
         10,
         2
       ],
-      "duration": 0.82
+      "duration": 0.78
     },
     {
-      "t": 3.75,
+      "t": 3.62,
+      "type": "face",
+      "player": "PIRLO",
+      "target": "KAKA",
+      "duration": 0.18
+    },
+    {
+      "t": 3.82,
+      "type": "relation_camera",
       "subjects": [
         "PIRLO",
         "KAKA",
@@ -311,33 +332,51 @@
       "lens": 60,
       "min_z": 42,
       "margin": 1.07,
-      "type": "relation_camera",
       "shot_scale": "RELATION",
       "field_scope": "CENTRAL_ATTACK_RELATION",
-      "phase_name": "BETWEEN_LINES"
+      "phase_name": "BETWEEN_LINES",
+      "lead_sec": 0.68,
+      "settle_sec": 0.18
     },
     {
-      "t": 4.45,
+      "t": 4.1,
+      "type": "face",
+      "player": "KAKA",
+      "target": "PIRLO",
+      "duration": 0.16
+    },
+    {
+      "t": 4.48,
       "type": "player_move",
       "player": "KAKA",
       "to": [
         7,
         16
       ],
-      "duration": 0.92
+      "duration": 0.84
     },
     {
-      "t": 4.68,
+      "t": 4.7,
       "type": "defender_shift",
       "player": "OM_C",
       "to": [
-        1.5,
-        7
+        2,
+        8
       ],
-      "duration": 0.78
+      "duration": 0.72
     },
     {
-      "t": 5.42,
+      "t": 4.98,
+      "type": "defender_shift",
+      "player": "OCB_R",
+      "to": [
+        8,
+        21
+      ],
+      "duration": 0.66
+    },
+    {
+      "t": 5.4,
       "type": "pass",
       "from": "PIRLO",
       "to": "KAKA",
@@ -345,52 +384,72 @@
       "arrive": 6.18
     },
     {
-      "t": 6,
+      "t": 5.78,
+      "type": "relation_camera",
       "subjects": [
         "KAKA",
         "RB",
         "OM_R",
         "OCB_R"
       ],
-      "focus_t": 7.9,
+      "focus_t": 7.75,
       "lens": 60,
       "min_z": 40,
       "margin": 1.07,
-      "type": "relation_camera",
       "shot_scale": "RELATION",
       "field_scope": "RIGHT_OVERLAP_RELATION",
-      "phase_name": "OVERLAP"
+      "phase_name": "OVERLAP",
+      "lead_sec": 0.65,
+      "settle_sec": 0.18
     },
     {
-      "t": 6.75,
+      "t": 6.46,
+      "type": "face",
+      "player": "RB",
+      "target": [
+        30,
+        22
+      ],
+      "duration": 0.16
+    },
+    {
+      "t": 6.82,
       "type": "player_move",
       "player": "RB",
       "to": [
         29,
         18
       ],
-      "duration": 1.38
+      "duration": 1.36
     },
     {
-      "t": 6.9,
+      "t": 7.02,
       "type": "defender_shift",
       "player": "OM_R",
       "to": [
         17,
         8
       ],
-      "duration": 0.98
+      "duration": 0.94
     },
     {
-      "t": 8.05,
+      "t": 7.24,
+      "type": "face",
+      "player": "OCB_R",
+      "target": "KAKA",
+      "duration": 0.18
+    },
+    {
+      "t": 8.06,
       "type": "pass",
       "from": "KAKA",
       "to": "RB",
-      "release": 8.12,
+      "release": 8.14,
       "arrive": 8.88
     },
     {
-      "t": 8.55,
+      "t": 8.7,
+      "type": "relation_camera",
       "subjects": [
         "RB",
         "KAKA",
@@ -401,75 +460,86 @@
         "OCB_L",
         "OCB_R"
       ],
-      "focus_t": 10.65,
+      "focus_t": 10.55,
       "lens": 54,
       "min_z": 118,
       "margin": 1.08,
-      "type": "relation_camera",
       "shot_scale": "CENTRAL_MASTER",
       "field_scope": "FLOATING_BOARD",
-      "phase_name": "SHIFT_AND_SWITCH"
+      "phase_name": "SHIFT_AND_SWITCH",
+      "lead_sec": 0.74,
+      "settle_sec": 0.2
     },
     {
-      "t": 9.3,
+      "t": 9.18,
       "type": "defender_shift",
       "player": "OM_C",
       "to": [
-        6.5,
-        12.5
+        6.2,
+        12.3
       ],
-      "duration": 0.78
+      "duration": 0.76
     },
     {
-      "t": 9.38,
-      "type": "defender_shift",
-      "player": "OCB_L",
-      "to": [
-        -4.5,
-        27.5
-      ],
-      "duration": 0.9
-    },
-    {
-      "t": 9.48,
-      "type": "defender_shift",
-      "player": "OCB_R",
-      "to": [
-        11.5,
-        30.5
-      ],
-      "duration": 0.92
-    },
-    {
-      "t": 9.55,
-      "type": "player_move",
-      "player": "SEEDORF",
-      "to": [
-        -13,
-        31
-      ],
-      "duration": 1.15
-    },
-    {
-      "t": 9.62,
+      "t": 9.34,
       "type": "player_move",
       "player": "INZAGHI",
       "to": [
         3,
         36
       ],
-      "duration": 1.02
+      "duration": 1
     },
     {
-      "t": 10.82,
-      "type": "pass",
-      "from": "RB",
-      "to": "SEEDORF",
-      "release": 10.9,
-      "arrive": 11.96
+      "t": 9.42,
+      "type": "defender_shift",
+      "player": "OCB_R",
+      "to": [
+        11.5,
+        30
+      ],
+      "duration": 0.88
     },
     {
-      "t": 11.15,
+      "t": 9.62,
+      "type": "defender_shift",
+      "player": "OCB_L",
+      "to": [
+        -3.8,
+        27.2
+      ],
+      "duration": 0.9
+    },
+    {
+      "t": 9.72,
+      "type": "player_move",
+      "player": "SEEDORF",
+      "to": [
+        -15,
+        22
+      ],
+      "duration": 1.05
+    },
+    {
+      "t": 10.62,
+      "type": "player_move",
+      "player": "SEEDORF",
+      "to": [
+        -13,
+        31
+      ],
+      "duration": 0.94
+    },
+    {
+      "t": 10.78,
+      "type": "face",
+      "player": "RB",
+      "target": "SEEDORF",
+      "duration": 0.18
+    },
+    {
+      "t": 10.98,
+      "type": "relation_camera",
       "subjects": [
         "SEEDORF",
         "INZAGHI",
@@ -477,37 +547,74 @@
         "OCB_R",
         "OGK"
       ],
-      "focus_t": 12.3,
+      "focus_t": 12.15,
       "lens": 60,
       "min_z": 44,
       "margin": 1.08,
-      "type": "relation_camera",
       "shot_scale": "RESULT_RELATION",
       "field_scope": "FINAL_THIRD",
-      "phase_name": "WEAK_SIDE_RECEIVE"
+      "phase_name": "WEAK_SIDE_RECEIVE",
+      "lead_sec": 0.84,
+      "settle_sec": 0.18
     },
     {
-      "t": 12.42,
+      "t": 11.08,
+      "type": "face",
+      "player": "SEEDORF",
+      "target": "RB",
+      "duration": 0.16
+    },
+    {
+      "t": 11.1,
+      "type": "pass",
+      "from": "RB",
+      "to": "SEEDORF",
+      "release": 11.16,
+      "arrive": 12.18
+    },
+    {
+      "t": 12.58,
       "type": "dribble",
       "player": "SEEDORF",
       "to": [
         -8,
         37
       ],
-      "duration": 0.92
+      "duration": 0.96
     },
     {
-      "t": 12.55,
+      "t": 12.82,
       "type": "defender_shift",
       "player": "OCB_L",
       "to": [
-        -5.2,
-        35.5
+        -5,
+        35.4
       ],
       "duration": 0.74
     },
     {
-      "t": 14.35,
+      "t": 13.18,
+      "type": "player_move",
+      "player": "INZAGHI",
+      "to": [
+        4.5,
+        40
+      ],
+      "duration": 0.72
+    },
+    {
+      "t": 13.42,
+      "type": "defender_shift",
+      "player": "OCB_R",
+      "to": [
+        8,
+        36
+      ],
+      "duration": 0.76
+    },
+    {
+      "t": 14.02,
+      "type": "relation_camera",
       "subjects": [
         "SEEDORF",
         "INZAGHI",
@@ -515,14 +622,25 @@
         "OCB_R",
         "OGK"
       ],
-      "focus_t": 15.85,
+      "focus_t": 15.72,
       "lens": 62,
       "min_z": 46,
       "margin": 1.06,
-      "type": "relation_camera",
       "shot_scale": "RESULT_RELATION",
       "field_scope": "FINAL_THIRD",
-      "phase_name": "FINAL_ACTION"
+      "phase_name": "FINAL_ACTION",
+      "lead_sec": 0.56,
+      "settle_sec": 0.18
+    },
+    {
+      "t": 15.66,
+      "type": "face",
+      "player": "SEEDORF",
+      "target": [
+        -2.2,
+        52.3
+      ],
+      "duration": 0.12
     },
     {
       "t": 15.72,
@@ -532,13 +650,13 @@
         -2.2,
         52.3
       ],
-      "release": 15.78,
-      "arrive": 16.72,
+      "release": 15.8,
+      "arrive": 16.74,
       "arc": 0.28
     }
   ],
   "preview_mode": true,
-  "director_mode": "TACTICAL_FIRST_NO_VOICE",
+  "director_mode": "TACTICAL_DETAIL_SCRIPT_NO_VOICE",
   "principles": [
     "complete_pattern_over_dramatic_pacing",
     "tactical_cause_before_camera_motion",
@@ -550,38 +668,38 @@
     {
       "name": "BUILD",
       "from": 0,
-      "to": 2.4,
-      "question": "How is the first line connected to Pirlo?"
+      "to": 2.35,
+      "question": "How does Pirlo receive and hold the first pressure long enough to prepare the next lane?"
     },
     {
       "name": "STRETCH",
-      "from": 2.4,
-      "to": 4.3,
-      "question": "How do the side midfielders open the central passing lane?"
+      "from": 2.35,
+      "to": 4.25,
+      "question": "How does width create the vertical lane before Kaka moves?"
     },
     {
       "name": "BETWEEN_LINES",
-      "from": 4.3,
-      "to": 6.6,
-      "question": "How does Kaka receive between the lines and pull the block inward?"
+      "from": 4.25,
+      "to": 6.55,
+      "question": "Who reacts first when Kaka accelerates between the lines?"
     },
     {
       "name": "OVERLAP",
-      "from": 6.6,
-      "to": 9.2,
-      "question": "How does the right back exploit the outside lane after central attraction?"
+      "from": 6.55,
+      "to": 9.15,
+      "question": "Why can the right back delay, then accelerate outside?"
     },
     {
       "name": "SHIFT_AND_SWITCH",
-      "from": 9.2,
-      "to": 12.4,
-      "question": "How does strong-side occupation move the whole defensive block before the switch?"
+      "from": 9.15,
+      "to": 12.35,
+      "question": "In what order does the block shift before the switch?"
     },
     {
       "name": "COMPLETE",
-      "from": 12.4,
+      "from": 12.35,
       "to": 18,
-      "question": "How is the weak-side space received, attacked and converted into a finish?"
+      "question": "How does Seedorf exploit the weak-side pocket while Inzaghi pins the central defender?"
     }
   ],
   "initial_ball_holder": "LCB",
@@ -783,12 +901,58 @@
   },
   "camera_anticipation": {
     "enabled": true,
-    "principle": "camera prepares the next tactical relationship before the action arrives; no camera move is timed to narration",
-    "target_lead_sec": {
-      "relation": 0.6,
-      "overlap": 0.75,
-      "global_reset": 0.75,
-      "weak_side_receive": 0.8
-    }
+    "principle": "camera is driven by tactical triggers, not narration or ball location",
+    "rules": [
+      "complete most reframing before the critical receive or run",
+      "keep the camera comparatively stable while the key relationship is being read",
+      "widen only when a global defensive movement is itself the tactical information",
+      "return local before the weak-side receiver controls the ball"
+    ]
+  },
+  "tactical_script_detail": {
+    "theme": "strong-side attraction creates weak-side release",
+    "thesis": "the weak-side receiver is free because central occupation and the overlap move the defensive block before the switch",
+    "phases": [
+      {
+        "name": "PIRLO_PREPARES",
+        "trigger": "LCB finds Pirlo after the first striker steps toward the ball",
+        "attacker_detail": "Pirlo receives side-on and delays the next pass while both side midfielders widen",
+        "defender_reaction": "O9 closes first; the midfield line stays compact before it is stretched",
+        "spatial_change": "central passing lane begins to open behind the first pressure",
+        "camera_intent": "start on floating master, then move into the Pirlo relationship before the structure changes"
+      },
+      {
+        "name": "KAKA_BETWEEN_LINES",
+        "trigger": "side midfielders have widened the midfield line enough for a vertical lane to appear",
+        "attacker_detail": "Kaka checks toward Pirlo, pauses, then accelerates diagonally into the right half-space",
+        "defender_reaction": "OM_C narrows first; OCB_R steps out later instead of moving at the same time",
+        "spatial_change": "the right outside lane becomes less protected as central defenders become occupied",
+        "camera_intent": "camera is already on Kaka and his nearest defenders before the pass arrives"
+      },
+      {
+        "name": "RIGHT_OVERLAP",
+        "trigger": "Kaka receives facing forward and central defenders have committed inward",
+        "attacker_detail": "RB waits until the central reaction is visible, opens his body upfield, then accelerates outside",
+        "defender_reaction": "OM_R tracks toward the touchline first while OCB_R remains concerned with Kaka and Inzaghi",
+        "spatial_change": "the strong side now contains ball, runner and multiple defenders",
+        "camera_intent": "move toward the right channel before RB starts the decisive run"
+      },
+      {
+        "name": "BLOCK_SHIFT",
+        "trigger": "RB receives on the outside with the defense already overloaded to the right",
+        "attacker_detail": "Inzaghi pins the central line; Seedorf stays away from the block, then advances into the weak-side lane",
+        "defender_reaction": "OM_R moves first, OM_C shifts second, OCB_R squeezes third, OCB_L follows last",
+        "spatial_change": "the defensive block travels right and leaves a larger receiving pocket on the left",
+        "camera_intent": "widen before the switch so the viewer sees the block move before seeing the pass"
+      },
+      {
+        "name": "WEAK_SIDE_EXECUTION",
+        "trigger": "the weak-side pocket is visible and Seedorf has a clean receiving angle",
+        "attacker_detail": "RB opens toward Seedorf; Seedorf checks to the ball, receives, then attacks diagonally toward goal while Inzaghi pins the far centre-back",
+        "defender_reaction": "OCB_L reacts first to Seedorf; OCB_R recovers later because he is still occupied centrally",
+        "spatial_change": "Seedorf attacks the gap created between a recovering centre-back and the goalkeeper",
+        "camera_intent": "arrive on Seedorf before the switch reaches him, then hold through the decisive action"
+      }
+    ]
   }
 }
