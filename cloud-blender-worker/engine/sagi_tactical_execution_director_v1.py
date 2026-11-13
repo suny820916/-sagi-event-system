@@ -216,6 +216,14 @@ def validate_execution(config):
                 if ref not in players_cfg and not (typ == "shot" and key_name == "to"):
                     errors.append(f"event {i} references unknown player {ref}")
 
+        if typ == "relation_camera":
+            subjects = ev.get("subjects", [])
+            if len(subjects) < 2:
+                errors.append(f"event {i} relation_camera needs at least two subjects")
+            for subject in subjects:
+                if subject not in players_cfg:
+                    errors.append(f"event {i} relation_camera references unknown player {subject}")
+
         if event_end(ev) > duration + 1e-6:
             errors.append(
                 f"event {i} ({typ}) ends at {event_end(ev):.2f}s "
@@ -272,7 +280,7 @@ def validate_execution(config):
         ]
         tactical_events = [
             ev for ev in phase_events
-            if ev.get("type") not in ("camera", "camera_dna", "focus", "space")
+            if ev.get("type") not in ("camera", "camera_dna", "relation_camera", "focus", "space")
         ]
         defender_events = [
             ev for ev in phase_events if ev.get("type") == "defender_shift"
@@ -291,7 +299,7 @@ def validate_execution(config):
         })
 
     last_action_end = max(
-        [event_end(ev) for ev in events if ev.get("type") not in ("camera", "camera_dna", "focus", "space")]
+        [event_end(ev) for ev in events if ev.get("type") not in ("camera", "camera_dna", "relation_camera", "focus", "space")]
         or [0.0]
     )
     completion_hold = max(0.0, duration - last_action_end)
@@ -315,6 +323,39 @@ def validate_execution(config):
         "valid": not errors,
     }
     return report
+
+
+def predicted_player_pos(name, t):
+    """Predict a player's XY position from preset movement events at time t."""
+    base = cfg["players"][name]["pos"]
+    x, y = float(base[0]), float(base[1])
+
+    for ev in cfg.get("events", []):
+        if ev.get("type") not in ("player_move", "defender_shift", "dribble"):
+            continue
+        if ev.get("player") != name:
+            continue
+
+        t0 = float(ev["t"])
+        dur = max(1e-6, float(ev["duration"]))
+        t1 = t0 + dur
+        tx, ty = float(ev["to"][0]), float(ev["to"][1])
+
+        if t < t0:
+            break
+        if t >= t1:
+            x, y = tx, ty
+            continue
+
+        alpha = max(0.0, min(1.0, (t - t0) / dur))
+        # Match the spatial intent closely enough for framing; exact Bezier
+        # easing is less important than keeping all relationship subjects visible.
+        return (
+            x + (tx - x) * alpha,
+            y + (ty - y) * alpha,
+        )
+
+    return (x, y)
 
 
 execution_report = validate_execution(cfg)
@@ -730,6 +771,64 @@ def camera_dna_key(cue, t):
     camera_last_t = t + settle
 
 
+def relation_camera_pose(subjects, focus_t, lens=64.0, min_z=64.0, margin=1.20):
+    """Automatically frame a tactical relationship from subject positions."""
+    pts = [predicted_player_pos(name, float(focus_t)) for name in subjects]
+    xs = [p[0] for p in pts]
+    ys = [p[1] for p in pts]
+
+    min_x, max_x = min(xs), max(xs)
+    min_y, max_y = min(ys), max(ys)
+    span_x = max(4.0, max_x - min_x)
+    span_y = max(4.0, max_y - min_y)
+    cx = (min_x + max_x) * .5
+    cy = (min_y + max_y) * .5
+
+    # 9:16 portrait needs more protection horizontally than vertically.
+    # These empirically map a tactical relationship bbox to a readable
+    # high-angle camera while leaving ~20% breathing room.
+    z = max(
+        float(min_z),
+        span_x * 3.50 * float(margin),
+        span_y * 2.20 * float(margin),
+    )
+    tilt_back = max(5.0, min(8.0, span_y * .20))
+
+    return {
+        "loc": (cx, cy - tilt_back, z),
+        "target": (cx, cy, 0),
+        "lens": float(lens),
+        "lead": .24,
+        "settle": .16,
+    }
+
+
+def relation_camera_key(subjects, t, focus_t=None, lens=64.0, min_z=64.0, margin=1.20):
+    """Reframe from the actual tactical relationship instead of fixed coordinates."""
+    global camera_last, camera_last_t
+    t = float(t)
+    focus_t = float(t if focus_t is None else focus_t)
+    p = relation_camera_pose(subjects, focus_t, lens, min_z, margin)
+
+    if camera_last is None or t <= .001:
+        apply_camera_pose(p, 1 + round(t * fps))
+        camera_last = p
+        camera_last_t = t
+        return
+
+    lead = float(p.get("lead", .24))
+    settle = float(p.get("settle", .16))
+    start_t = max(camera_last_t, t - lead)
+    start_fr = 1 + round(start_t * fps)
+    end_fr = 1 + round((t + settle) * fps)
+
+    apply_camera_pose(camera_last, start_fr)
+    apply_camera_pose(p, end_fr)
+
+    camera_last = p
+    camera_last_t = t + settle
+
+
 def camera_key(preset, t):
     # Backward compatibility for old presets; new Golden Sample uses camera_dna.
     legacy = {
@@ -1001,6 +1100,16 @@ for ev in cfg.get("events", []):
         camera_dna_key(
             ev["cue"],
             float(ev["t"]),
+        )
+
+    elif typ == "relation_camera":
+        relation_camera_key(
+            ev["subjects"],
+            float(ev["t"]),
+            ev.get("focus_t"),
+            float(ev.get("lens", 64)),
+            float(ev.get("min_z", 64)),
+            float(ev.get("margin", 1.20)),
         )
 
     elif typ == "focus":
