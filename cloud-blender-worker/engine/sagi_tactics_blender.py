@@ -240,8 +240,11 @@ m_ball = material(
     rough=.33,
 )
 
-# Floating pitch
-cube("PITCH", (0, 0, 0), (34, 52.5, .18), m_pitch)
+# Extended tactical surface.
+# The regulation markings remain 68 x 105 below, but the dark pitch surface
+# continues beyond the touchlines so oblique Teactics-style cameras can pan
+# and lead into wide spaces without revealing the black world background.
+cube("PITCH", (0, 0, 0), (48, 68, .18), m_pitch)
 
 # Teactics-like low-contrast horizontal spatial bands.
 # They support depth reading without turning the pitch into a grass texture.
