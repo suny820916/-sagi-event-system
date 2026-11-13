@@ -60,9 +60,12 @@ jobs:
           test -s execution_out/SAGI_TACTICAL_EXECUTION_CHRISTMAS_TREE_V1.mp4
           test -s execution_out/scene.blend
 
-          ffprobe -v error \
-            -show_entries format=duration:stream=codec_name,width,height,r_frame_rate \
-            -of json execution_out/SAGI_TACTICAL_EXECUTION_CHRISTMAS_TREE_V1.mp4 \
+          docker run --rm \
+            -v "$PWD/execution_out:/out" \
+            sagi-tactical-execution \
+            ffprobe -v error \
+              -show_entries format=duration:stream=codec_name,width,height,r_frame_rate \
+              -of json /out/SAGI_TACTICAL_EXECUTION_CHRISTMAS_TREE_V1.mp4 \
             | tee execution_out/probe.json
 
       - name: Upload Tactical Execution Master
