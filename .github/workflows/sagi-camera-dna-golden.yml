@@ -11,7 +11,7 @@ on:
       - "cloud-blender-worker/engine/sagi_tactical_execution_director_v1.py"
       - "cloud-blender-worker/presets/christmas_tree_golden_15s.json"
       - "cloud-blender-worker/Dockerfile"
-      - ".github/workflows/sagi-tactical-execution-golden.yml"
+      - ".github/workflows/sagi-camera-dna-golden.yml"
   workflow_dispatch:
 
 jobs:
@@ -35,7 +35,7 @@ jobs:
             sagi-tactical-execution \
             sh -lc '
               blender --background \
-                --python /app/engine/sagi_tactics_camera_dna_v1.py \
+                --python /app/engine/sagi_tactical_execution_director_v1.py \
                 -- /app/presets/christmas_tree_golden_15s.json /out
 
               ffmpeg -y -loglevel error \
@@ -68,7 +68,7 @@ jobs:
       - name: Upload Tactical Execution Master
         uses: actions/upload-artifact@v4
         with:
-          name: sagi-tactical-execution-golden-15s
+          name: sagi-tactical-execution-christmas-tree-v1
           path: |
             golden_out/SAGI_TACTICAL_EXECUTION_CHRISTMAS_TREE_V1.mp4
             golden_out/scene.blend
