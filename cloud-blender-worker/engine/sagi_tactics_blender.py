@@ -487,6 +487,7 @@ camera_presets = {
     # Oblique width view: fitting a 68m pitch into a portrait frame by
     # rotating the spatial axis, instead of simply pulling the camera higher.
     "width": {"loc": (28,-30,76), "target": (0,5,0), "lens": 56},
+    "right_flank": {"loc": (27,-8,62), "target": (15,14,0), "lens": 61},
 }
 
 camera_last = None
@@ -503,8 +504,7 @@ def apply_camera_pose(p, frame):
 
 
 def camera_key(preset, t):
-    # Teactics grammar: stable composition inside an idea.
-    # Reframe quickly only just before the next tactical question.
+    # Hard editorial reframe: reserve this for chapter changes.
     global camera_last, camera_last_t
     p = camera_presets[preset]
     fr = 1 + round(t * fps)
@@ -515,21 +515,50 @@ def camera_key(preset, t):
         camera_last_t = t
         return
 
-    # V03: a shorter, purposeful reframe. The camera should feel like it
-    # recognizes the next tactical question, not like it is travelling there.
-    # V06 keeps all tactical reframes on one visual axis. A slightly
-    # longer transition now reads as a controlled push rather than a cut.
-    transition = 0.46
+    transition = 0.38
     start_t = max(camera_last_t, t - transition)
     start_fr = 1 + round(start_t * fps)
-
-    # Duplicate the previous pose at transition start = camera stays locked
-    # through the concept, then makes one short purposeful move.
     apply_camera_pose(camera_last, start_fr)
     apply_camera_pose(p, fr)
-
     camera_last = p
     camera_last_t = t
+
+
+def mix_pose(a, b, u):
+    def mix3(x, y):
+        return tuple(float(x[i]) + (float(y[i]) - float(x[i])) * u for i in range(3))
+    return {
+        "loc": mix3(a["loc"], b["loc"]),
+        "target": mix3(a["target"], b["target"]),
+        "lens": float(a["lens"]) + (float(b["lens"]) - float(a["lens"])) * u,
+    }
+
+
+def camera_glide(preset, t, duration):
+    """Continuous tactical glide with moving position, target and lens."""
+    global camera_last, camera_last_t
+    target = camera_presets[preset]
+
+    if camera_last is None:
+        apply_camera_pose(target, 1 + round(float(t) * fps))
+        camera_last = target
+        camera_last_t = float(t)
+        return
+
+    start_pose = camera_last
+    f0 = 1 + round(float(t) * fps)
+    f1 = 1 + round((float(t) + float(duration)) * fps)
+    span = max(1, f1 - f0)
+
+    # Multiple look-at keys prevent the view from feeling like a preset cut.
+    for u in (0.0, 0.28, 0.62, 1.0):
+        eased = u * u * (3.0 - 2.0 * u)
+        fr = round(f0 + span * u)
+        apply_camera_pose(mix_pose(start_pose, target, eased), fr)
+
+    camera_last = target
+    camera_last_t = float(t) + float(duration)
+
 
 
 def focus_player(name, t):
@@ -753,6 +782,13 @@ for ev in cfg.get("events", []):
         camera_key(
             ev["preset"],
             float(ev["t"]),
+        )
+
+    elif typ == "camera_glide":
+        camera_glide(
+            ev["preset"],
+            float(ev["t"]),
+            float(ev["duration"]),
         )
 
     elif typ == "focus":
