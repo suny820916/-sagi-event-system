@@ -1,6 +1,6 @@
 {
   "project": "SAGI TACTICS",
-  "version": "SAGI TACTICAL EXECUTION DIRECTOR V9 · DEFENSIVE BLOCK RESPONSE",
+  "version": "SAGI TACTICAL EXECUTION DIRECTOR V10 · SCALE + FIELD SCOPE SCRIPT",
   "fps": 24,
   "duration_sec": 15.2,
   "resolution": [
@@ -543,6 +543,8 @@
     "principle": "learn_expression_not_copy_content",
     "locked_direction": true,
     "priorities": [
+      "visible_pitch_scope_must_match_tactical_information",
+      "full_pitch_and_local_pitch_are_both_valid_when_tactically_motivated",
       "weak_side_space_must_be_caused_by_collective_defensive_shift",
       "defenders_should_move_as_a_block_not_as_isolated_markers",
       "receive_turn_next_action_must_read_as_one_chain",
@@ -581,7 +583,9 @@
     "spatial_continuity": true,
     "scale_continuity": true,
     "continuous_tactical_background": true,
-    "background_rule": "Wide tactical views may reveal more board, but must never reveal a hard visual void beyond the pitch."
+    "background_rule": "Wide tactical views may reveal more board, but must never reveal a hard visual void beyond the pitch.",
+    "field_scope_is_tactical": true,
+    "field_scope_rule": "The amount of pitch visible must be chosen by tactical information need, not by a fixed camera aesthetic."
   },
   "camera_continuity": {
     "preserve_forward_progression": true,
@@ -605,5 +609,48 @@
     "principle": "space must be created by visible collective defensive movement, not by static empty zones",
     "strong_side_shift": "right",
     "weak_side_release": "left"
+  },
+  "scale_script": {
+    "principle": "camera scale and visible pitch area are both tactical language",
+    "benchmark": "TEACTICS",
+    "rules": [
+      "use full or near-full pitch only when the viewer needs global structure",
+      "use half-pitch or zone framing when the tactical relation is local",
+      "never show the whole field just to look complete",
+      "never crop pitch landmarks that are needed to understand the action",
+      "return to wider pitch context after a local tactical explanation when the next phase depends on global spacing"
+    ],
+    "phases": {
+      "BUILD": {
+        "shot_scale": "STRUCTURE",
+        "field_scope": "DEFENSIVE_HALF_PLUS_MIDFIELD",
+        "purpose": "show buildup base, Pirlo depth and first pressure"
+      },
+      "STRETCH": {
+        "shot_scale": "WIDE_STRUCTURE",
+        "field_scope": "CENTRAL_THREE_QUARTERS",
+        "purpose": "show both side midfielders stretching the block"
+      },
+      "BETWEEN_LINES": {
+        "shot_scale": "RELATION",
+        "field_scope": "MIDFIELD_ZONE",
+        "purpose": "show Pirlo-Kaka-defender relation without wasting screen on remote pitch"
+      },
+      "OVERLAP": {
+        "shot_scale": "RELATION",
+        "field_scope": "RIGHT_CHANNEL_ZONE",
+        "purpose": "show Kaka-RB-defender triangle and overlap timing"
+      },
+      "SHIFT_AND_SWITCH": {
+        "shot_scale": "WIDE_STRUCTURE",
+        "field_scope": "ATTACKING_TWO_THIRDS",
+        "purpose": "show strong-side defensive shift and weak-side space simultaneously"
+      },
+      "COMPLETE": {
+        "shot_scale": "RESULT_RELATION",
+        "field_scope": "FINAL_THIRD",
+        "purpose": "show weak-side receive, central occupation, defenders and goal relation"
+      }
+    }
   }
 }
