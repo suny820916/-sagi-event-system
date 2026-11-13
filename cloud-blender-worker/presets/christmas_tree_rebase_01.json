@@ -1,0 +1,392 @@
+{
+  "project": "SAGI TACTICS",
+  "version": "SAGI TACTICS REBASE 01 · OLD VISUAL + NEW PEOPLE",
+  "fps": 24,
+  "duration_sec": 24,
+  "resolution": [
+    540,
+    960
+  ],
+  "render_engine": "BLENDER_WORKBENCH",
+  "attack_direction": "upfield(+Y)",
+  "palette": {
+    "background": "#020304",
+    "pitch": "#0D1012",
+    "pitch_line": "#555B60",
+    "own_primary": "#F3F500",
+    "own_secondary": "#C5C700",
+    "opponent": "#92979B",
+    "ring": "#F3F500",
+    "pitch_alt": "#15191B"
+  },
+  "players": {
+    "GK": {
+      "team": "own",
+      "pos": [
+        0,
+        -40
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "LB": {
+      "team": "own",
+      "pos": [
+        -24,
+        -24
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "LCB": {
+      "team": "own",
+      "pos": [
+        -10,
+        -28
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "RCB": {
+      "team": "own",
+      "pos": [
+        10,
+        -28
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "RB": {
+      "team": "own",
+      "pos": [
+        24,
+        -24
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "PIRLO": {
+      "team": "own",
+      "pos": [
+        0,
+        -11
+      ],
+      "role": "primary",
+      "yaw": 0
+    },
+    "LCM": {
+      "team": "own",
+      "pos": [
+        -10,
+        -3
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "RCM": {
+      "team": "own",
+      "pos": [
+        10,
+        -3
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "SEEDORF": {
+      "team": "own",
+      "pos": [
+        -7,
+        9
+      ],
+      "role": "primary",
+      "yaw": 0
+    },
+    "KAKA": {
+      "team": "own",
+      "pos": [
+        7,
+        10
+      ],
+      "role": "primary",
+      "yaw": 0
+    },
+    "INZAGHI": {
+      "team": "own",
+      "pos": [
+        0,
+        28
+      ],
+      "role": "secondary",
+      "yaw": 0
+    },
+    "O9": {
+      "team": "opp",
+      "pos": [
+        2,
+        -18
+      ],
+      "role": "context",
+      "yaw": 180
+    },
+    "OM_L": {
+      "team": "opp",
+      "pos": [
+        -12,
+        2
+      ],
+      "role": "context",
+      "yaw": 180
+    },
+    "OM_C": {
+      "team": "opp",
+      "pos": [
+        0,
+        3
+      ],
+      "role": "context",
+      "yaw": 180
+    },
+    "OM_R": {
+      "team": "opp",
+      "pos": [
+        12,
+        2
+      ],
+      "role": "context",
+      "yaw": 180
+    },
+    "OCB_L": {
+      "team": "opp",
+      "pos": [
+        -9,
+        23
+      ],
+      "role": "context",
+      "yaw": 180
+    },
+    "OCB_R": {
+      "team": "opp",
+      "pos": [
+        9,
+        23
+      ],
+      "role": "context",
+      "yaw": 180
+    },
+    "OGK": {
+      "team": "opp",
+      "pos": [
+        0,
+        48.5
+      ],
+      "role": "context",
+      "yaw": 180
+    }
+  },
+  "events": [
+    {
+      "t": 0,
+      "type": "camera",
+      "preset": "shape"
+    },
+    {
+      "t": 5.55,
+      "type": "camera",
+      "preset": "midfield"
+    },
+    {
+      "t": 5.95,
+      "type": "focus",
+      "player": "PIRLO"
+    },
+    {
+      "t": 6.25,
+      "type": "pass",
+      "from": "LCB",
+      "to": "PIRLO",
+      "release": 6.45,
+      "arrive": 7.25
+    },
+    {
+      "t": 7.35,
+      "type": "defender_shift",
+      "player": "O9",
+      "to": [
+        3,
+        -13
+      ],
+      "duration": 0.75
+    },
+    {
+      "t": 7.55,
+      "type": "space",
+      "center": [
+        0,
+        -10
+      ],
+      "radius": [
+        5.3,
+        3
+      ],
+      "duration": 2.2
+    },
+    {
+      "t": 10.65,
+      "type": "camera",
+      "preset": "width"
+    },
+    {
+      "t": 10.9,
+      "type": "player_move",
+      "player": "LCM",
+      "to": [
+        -18,
+        -1
+      ],
+      "duration": 1.25
+    },
+    {
+      "t": 10.95,
+      "type": "player_move",
+      "player": "RCM",
+      "to": [
+        18,
+        -1
+      ],
+      "duration": 1.25
+    },
+    {
+      "t": 11.1,
+      "type": "defender_shift",
+      "player": "OM_L",
+      "to": [
+        -8,
+        2
+      ],
+      "duration": 0.8
+    },
+    {
+      "t": 11.15,
+      "type": "defender_shift",
+      "player": "OM_R",
+      "to": [
+        8,
+        2
+      ],
+      "duration": 0.8
+    },
+    {
+      "t": 14.65,
+      "type": "camera",
+      "preset": "between_lines"
+    },
+    {
+      "t": 14.85,
+      "type": "player_move",
+      "player": "SEEDORF",
+      "to": [
+        -8,
+        14
+      ],
+      "duration": 0.9
+    },
+    {
+      "t": 14.9,
+      "type": "player_move",
+      "player": "KAKA",
+      "to": [
+        8,
+        16
+      ],
+      "duration": 0.9
+    },
+    {
+      "t": 15.05,
+      "type": "defender_shift",
+      "player": "OM_C",
+      "to": [
+        1,
+        7
+      ],
+      "duration": 0.72
+    },
+    {
+      "t": 15.55,
+      "type": "focus",
+      "player": "KAKA"
+    },
+    {
+      "t": 16.1,
+      "type": "pass",
+      "from": "PIRLO",
+      "to": "KAKA",
+      "release": 16.25,
+      "arrive": 17.2
+    },
+    {
+      "t": 18.65,
+      "type": "camera",
+      "preset": "width"
+    },
+    {
+      "t": 18.9,
+      "type": "player_move",
+      "player": "LB",
+      "to": [
+        -29,
+        7
+      ],
+      "duration": 1.45
+    },
+    {
+      "t": 18.95,
+      "type": "player_move",
+      "player": "RB",
+      "to": [
+        29,
+        8
+      ],
+      "duration": 1.45
+    },
+    {
+      "t": 19.05,
+      "type": "space",
+      "center": [
+        -29,
+        8
+      ],
+      "radius": [
+        3,
+        4.3
+      ],
+      "duration": 2.1
+    },
+    {
+      "t": 19.1,
+      "type": "space",
+      "center": [
+        29,
+        9
+      ],
+      "radius": [
+        3,
+        4.3
+      ],
+      "duration": 2.1
+    },
+    {
+      "t": 20.75,
+      "type": "focus",
+      "player": "RB"
+    },
+    {
+      "t": 21.05,
+      "type": "pass",
+      "from": "KAKA",
+      "to": "RB",
+      "release": 21.2,
+      "arrive": 22.2
+    }
+  ],
+  "preview_mode": true
+}
