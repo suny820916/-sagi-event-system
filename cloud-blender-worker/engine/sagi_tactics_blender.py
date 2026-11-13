@@ -492,9 +492,11 @@ camera_presets = {
     # rotating the spatial axis, instead of simply pulling the camera higher.
     "width": {"loc": (28,-30,76), "target": (0,5,0), "lens": 56},
     "right_flank": {"loc": (29,-6,60), "target": (20,16,0), "lens": 60},
-    "final_third": {"loc": (15,-4,64), "target": (8,24,0), "lens": 58},
-    "box_relation": {"loc": (12,8,58), "target": (4,32,0), "lens": 60},
-    "finish_close": {"loc": (8,18,53), "target": (0,39,0), "lens": 60},
+    # Final-third cameras are intentionally tighter: the teaching subject
+    # should occupy the portrait frame instead of floating in empty pitch.
+    "final_third": {"loc": (14,3,54), "target": (7,28,0), "lens": 64},
+    "box_relation": {"loc": (12,13,50), "target": (5,34,0), "lens": 66},
+    "finish_close": {"loc": (7,23,46), "target": (0,41,0), "lens": 68},
     "def_compact": {"loc": (18,-38,72), "target": (0,-8,0), "lens": 60},
     "def_force_wide": {"loc": (24,-28,64), "target": (18,-8,0), "lens": 61},
     "def_triangle": {"loc": (26,-22,58), "target": (17,-12,0), "lens": 63},
