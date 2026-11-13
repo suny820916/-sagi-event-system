@@ -12,6 +12,9 @@ on:
       - "cloud-blender-worker/voice/christmas_tree_full_lesson_final_v1_voice_sync.json"
       - "cloud-blender-worker/voice/voice_director.py"
       - "cloud-blender-worker/engine/sagi_tactical_execution_director_v1.py"
+      - "cloud-blender-worker/assets/sagi_logo_overlay.png"
+      - "cloud-blender-worker/overlay/overlay_chapter_titles.py"
+      - "cloud-blender-worker/overlay/christmas_tree_final_v1_packaging.json"
       - ".github/workflows/sagi-christmas-tree-final-v1.yml"
   workflow_dispatch:
 
@@ -75,13 +78,42 @@ jobs:
           print("MASTER_101_OK", dur)
           PY
 
-      - name: Install Voice Director
+      - name: Install packaging + Voice Director runtime
         run: |
           sudo apt-get update
-          sudo apt-get install -y ffmpeg
+          sudo apt-get install -y ffmpeg fontconfig fonts-noto-cjk
           python3 -m pip install --upgrade pip
           python3 -m pip install edge-tts
           python3 -m py_compile cloud-blender-worker/voice/voice_director.py
+          python3 -m py_compile cloud-blender-worker/overlay/overlay_chapter_titles.py
+
+      - name: Apply SAGI logo + chapter title packaging
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          python3 cloud-blender-worker/overlay/overlay_chapter_titles.py \
+            --config cloud-blender-worker/overlay/christmas_tree_final_v1_packaging.json \
+            --video final_v1_out/SAGI_CHRISTMAS_TREE_FINAL_V1_NO_VOICE.mp4 \
+            --logo cloud-blender-worker/assets/sagi_logo_overlay.png \
+            --output final_v1_out/SAGI_CHRISTMAS_TREE_FINAL_V1_NO_VOICE_PACKAGED.mp4
+
+          test -s final_v1_out/SAGI_CHRISTMAS_TREE_FINAL_V1_NO_VOICE_PACKAGED.mp4
+          mv final_v1_out/SAGI_CHRISTMAS_TREE_FINAL_V1_NO_VOICE_PACKAGED.mp4 \
+             final_v1_out/SAGI_CHRISTMAS_TREE_FINAL_V1_NO_VOICE.mp4
+
+          ffprobe -v error \
+            -show_entries format=duration:stream=codec_name,width,height,r_frame_rate \
+            -of json final_v1_out/SAGI_CHRISTMAS_TREE_FINAL_V1_NO_VOICE.mp4 \
+            | tee final_v1_out/packaged_probe.json
+
+          python3 - <<'PY'
+          import json
+          d=json.load(open("final_v1_out/packaged_probe.json"))
+          dur=float(d["format"]["duration"])
+          assert abs(dur-101.0) <= 0.25, dur
+          print("PACKAGING_101_OK", dur)
+          PY
 
       - name: Generate slot-locked narration and final voice master
         shell: bash
@@ -124,8 +156,11 @@ jobs:
             final_v1_out/SAGI_CHRISTMAS_TREE_FINAL_V1.srt
             final_v1_out/voice_director_report.json
             final_v1_out/master_probe.json
+            final_v1_out/packaged_probe.json
             final_v1_out/execution_report.json
             final_v1_out/scene.blend
             cloud-blender-worker/presets/christmas_tree_full_lesson_final_v1.json
             cloud-blender-worker/voice/christmas_tree_full_lesson_final_v1_voice_sync.json
+            cloud-blender-worker/overlay/christmas_tree_final_v1_packaging.json
+            cloud-blender-worker/assets/sagi_logo_overlay.png
           retention-days: 7
