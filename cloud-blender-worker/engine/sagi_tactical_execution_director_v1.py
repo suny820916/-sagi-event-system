@@ -995,6 +995,27 @@ def relation_camera_pose(
         cx = relation_cx * (1.0 - scope_weight) + scope_cx * scope_weight
         cy = relation_cy * (1.0 - scope_weight) + scope_cy * scope_weight
 
+    # SAGI camera rail:
+    # The main tactical camera follows the game longitudinally along the pitch
+    # (attack forward / defence backward). Lateral action should normally be
+    # contained by framing, not chased by a side-to-side local pan.
+    rail_cfg = cfg.get("camera_rail", {})
+    if rail_cfg.get("enabled", False):
+        anchor_x = float(rail_cfg.get("anchor_x", 0.0))
+        if is_central_master:
+            cx = anchor_x
+        else:
+            scale_weight = {
+                "WIDE_STRUCTURE": float(rail_cfg.get("wide_structure_lateral_weight", .18)),
+                "STRUCTURE": float(rail_cfg.get("structure_lateral_weight", .22)),
+                "RELATION": float(rail_cfg.get("relation_lateral_weight", .30)),
+                "RESULT_RELATION": float(rail_cfg.get("result_relation_lateral_weight", .26)),
+            }.get(str(shot_scale or ""), float(rail_cfg.get("lateral_weight", .24)))
+            cx = anchor_x + (cx - anchor_x) * max(0.0, min(1.0, scale_weight))
+
+        max_abs_x = float(rail_cfg.get("max_abs_target_x", 8.0))
+        cx = max(anchor_x - max_abs_x, min(anchor_x + max_abs_x, cx))
+
     # Structural shots must genuinely show their wider pitch region.
     # Relation shots use the named field scope only to orient the composition;
     # forcing all four scope corners into a close tactical shot would shrink
@@ -1096,6 +1117,28 @@ def relation_camera_key(
     # Spatial continuity: in an upfield attack, don't let the camera centre
     # suddenly jump backwards just because a supporting runner started deeper.
     continuity_cfg = cfg.get("camera_continuity", {})
+
+    # Longitudinal rail continuity: allow only small lateral corrections between
+    # phases. The tactical camera should read as moving up/down the pitch, not
+    # tracking side channels like a broadcast close-follow camera.
+    rail_cfg = cfg.get("camera_rail", {})
+    if (
+        camera_last is not None
+        and rail_cfg.get("enabled", False)
+        and "CENTRAL_MASTER" not in (
+            str(camera_last.get("shot_scale") or ""),
+            str(p.get("shot_scale") or ""),
+        )
+    ):
+        max_step_x = float(rail_cfg.get("max_lateral_step_m", 2.6))
+        prev_x = float(camera_last["target"][0])
+        new_x = float(p["target"][0])
+        clamped_x = max(prev_x - max_step_x, min(prev_x + max_step_x, new_x))
+        dx = clamped_x - new_x
+        if abs(dx) > 1e-6:
+            p["target"] = (clamped_x, p["target"][1], p["target"][2])
+            p["loc"] = (p["loc"][0] + dx, p["loc"][1], p["loc"][2])
+
     if (
         camera_last is not None
         and continuity_cfg.get("preserve_forward_progression", False)
