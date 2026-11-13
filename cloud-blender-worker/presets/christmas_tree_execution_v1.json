@@ -1,6 +1,6 @@
 {
   "project": "SAGI TACTICS",
-  "version": "SAGI TACTICAL EXECUTION DIRECTOR V10.2 · TEACTICS FIELD RHYTHM",
+  "version": "SAGI TACTICAL EXECUTION DIRECTOR V11.0 · CENTRAL MASTER SYSTEM",
   "fps": 24,
   "duration_sec": 15.2,
   "resolution": [
@@ -188,20 +188,17 @@
     {
       "t": 0,
       "subjects": [
-        "LCB",
         "PIRLO",
-        "LCM",
-        "RCM",
-        "O9"
+        "KAKA"
       ],
-      "focus_t": 1.15,
-      "lens": 60,
-      "min_z": 46,
-      "margin": 1.08,
+      "focus_t": 0.9,
+      "lens": 54,
+      "min_z": 82,
+      "margin": 1.03,
       "type": "relation_camera",
-      "shot_scale": "STRUCTURE",
-      "field_scope": "BUILD_RELATION_ZONE",
-      "phase_name": "BUILD"
+      "shot_scale": "CENTRAL_MASTER",
+      "field_scope": "FULL_PITCH",
+      "phase_name": "OPENING_MASTER"
     },
     {
       "t": 0.45,
@@ -220,6 +217,24 @@
         -13
       ],
       "duration": 0.72
+    },
+    {
+      "t": 1.35,
+      "subjects": [
+        "LCB",
+        "PIRLO",
+        "LCM",
+        "RCM",
+        "O9"
+      ],
+      "focus_t": 2,
+      "lens": 60,
+      "min_z": 46,
+      "margin": 1.08,
+      "type": "relation_camera",
+      "shot_scale": "STRUCTURE",
+      "field_scope": "BUILD_RELATION_ZONE",
+      "phase_name": "BUILD"
     },
     {
       "t": 2.1,
@@ -384,12 +399,12 @@
         "OCB_R"
       ],
       "focus_t": 10.2,
-      "lens": 56,
-      "min_z": 50,
-      "margin": 1.08,
+      "lens": 54,
+      "min_z": 82,
+      "margin": 1.03,
       "type": "relation_camera",
-      "shot_scale": "WIDE_STRUCTURE",
-      "field_scope": "ATTACKING_WIDTH_ZONE",
+      "shot_scale": "CENTRAL_MASTER",
+      "field_scope": "FULL_PITCH",
       "phase_name": "SHIFT_AND_SWITCH"
     },
     {
@@ -628,7 +643,7 @@
     "weak_side_release": "left"
   },
   "scale_script": {
-    "principle": "show only the pitch extent needed to explain the current tactical question; tactical completeness comes from preserved relationships and landmarks, not maximum field area",
+    "principle": "CENTRAL_MASTER provides the spatial map; STRUCTURE and RELATION shots then use only the pitch extent needed to explain the current tactical question",
     "benchmark": "TEACTICS",
     "rules": [
       "use full or near-full pitch only when the viewer needs global structure",
@@ -660,14 +675,19 @@
         "purpose": "show Kaka-RB-defender triangle and overlap timing"
       },
       "SHIFT_AND_SWITCH": {
-        "shot_scale": "WIDE_STRUCTURE",
-        "field_scope": "ATTACKING_TWO_THIRDS",
-        "purpose": "show strong-side defensive shift and weak-side space simultaneously"
+        "shot_scale": "CENTRAL_MASTER",
+        "field_scope": "FULL_PITCH",
+        "purpose": "return to the centred full-pitch map so strong-side defensive attraction and weak-side release are visible together"
       },
       "COMPLETE": {
         "shot_scale": "RESULT_RELATION",
         "field_scope": "FINAL_THIRD",
         "purpose": "show weak-side receive, central occupation, defenders and goal relation"
+      },
+      "OPENING_MASTER": {
+        "shot_scale": "CENTRAL_MASTER",
+        "field_scope": "FULL_PITCH",
+        "purpose": "establish the full pitch as a stable centred tactical map before zooming into buildup"
       }
     },
     "local_relation_history_sec": 0.56
@@ -722,5 +742,21 @@
       "minimum_necessary_field_extent": true
     },
     "version": "V10.1"
+  },
+  "central_master": {
+    "benchmark": "TEACTICS",
+    "principle": "use a stable pitch-centred master shot as the spatial map; cut or glide into local tactical relations, then return to the map when global spacing becomes the tactical question",
+    "field_scope": "FULL_PITCH",
+    "tilt_back_m": 4.8,
+    "uses": [
+      "OPENING_MAP",
+      "STRONG_WEAK_SIDE_RESET"
+    ],
+    "rules": [
+      "pitch centre owns composition in CENTRAL_MASTER",
+      "do not let player clusters drag the master shot off-centre",
+      "use the master shot briefly as spatial orientation, not as the default view",
+      "return to local relation framing once the viewer understands the global spacing"
+    ]
   }
 }
