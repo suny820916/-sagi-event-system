@@ -674,9 +674,9 @@ camera_dna = {
         "lead": .24, "settle": .16,
     },
     "overlap": {
-        # Dedicated relationship frame: ball carrier + overlapping fullback
-        # + the defender forced to move with the overlap.
-        "loc": (16,-4,80), "target": (16,1,0), "lens": 68,
+        # Centre the actual overlap triangle: carrier + fullback + shifted defender.
+        # At the key moment their tactical centroid is around x=17, y=10.
+        "loc": (17,3,78), "target": (17,10,0), "lens": 68,
         "lead": .24, "settle": .16,
     },
     "switch": {
