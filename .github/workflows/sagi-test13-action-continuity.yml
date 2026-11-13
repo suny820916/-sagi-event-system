@@ -1,0 +1,60 @@
+name: SAGI TEST 13 ACTION CONTINUITY
+
+concurrency:
+  group: sagi-test13-action-continuity-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "cloud-blender-worker/presets/christmas_tree_execution_test13_action_continuity.json"
+      - ".github/workflows/sagi-test13-action-continuity.yml"
+      - "cloud-blender-worker/engine/sagi_tactical_execution_director_v1.py"
+  workflow_dispatch:
+
+jobs:
+  render-test13:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Build Blender image
+        run: docker build -t sagi-test13 ./cloud-blender-worker
+      - name: Render TEST 13 and encode iPhone-safe MP4
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p test13_out
+          docker run --rm \
+            -v "$PWD/test13_out:/out" \
+            sagi-test13 \
+            bash -lc '
+              blender --background \
+                --python /app/engine/sagi_tactical_execution_director_v1.py \
+                -- \
+                /app/presets/christmas_tree_execution_test13_action_continuity.json \
+                /out
+              ffmpeg -y -loglevel error \
+                -framerate 24 \
+                -i /out/frames/frame_%04d.png \
+                -f lavfi \
+                -i anullsrc=channel_layout=stereo:sample_rate=44100 \
+                -map 0:v:0 -map 1:a:0 \
+                -c:v libx264 -profile:v baseline -level 3.1 \
+                -pix_fmt yuv420p -preset veryfast -crf 23 \
+                -c:a aac -b:a 64k -shortest -movflags +faststart \
+                /out/SAGI_TEST13_ACTION_CONTINUITY.mp4
+            '
+          sudo chown -R "$USER":"$USER" test13_out
+          test -s test13_out/SAGI_TEST13_ACTION_CONTINUITY.mp4
+      - name: Upload TEST 13 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SAGI-TEST13-ACTION-CONTINUITY
+          path: |
+            test13_out/SAGI_TEST13_ACTION_CONTINUITY.mp4
+            test13_out/execution_report.json
+            test13_out/scene.blend
+          retention-days: 7
