@@ -103,7 +103,7 @@ def main() -> None:
     # its signature before FFmpeg so a corrupt logo cannot abort the entire render.
     # Until a valid original is restored, render a transparent white SAGI mark
     # from the existing repository SVG brand symbol.
-    if not logo.is_file() or logo.read_bytes()[:8] != b"\\x89PNG\\r\\n\\x1a\\n":
+    if not logo.is_file() or logo.read_bytes()[:8] != bytes.fromhex("89504e470d0a1a0a"):
         import cairosvg
         symbol = Path("icon.svg")
         if not symbol.is_file():
