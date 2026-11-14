@@ -965,18 +965,6 @@ def apply_camera_pose(p, frame):
     # preserving a dedicated black safe area below the pitch.
     cam.data.shift_y = float(p.get("frame_shift_y", 0.0))
     look_at(cam, p["target"])
-
-    # V1.9 ROLL LOCK: preserve a stable screen axis for the tactical board.
-    # We allow yaw/tilt changes, but prevent accidental camera roll from making
-    # the pitch feel as if the whole board is spinning in screen space.
-    roll_cfg = cfg.get("roll_lock", {})
-    if roll_cfg.get("enabled", False):
-        max_roll_deg = abs(float(roll_cfg.get("max_abs_roll_deg", 0.0)))
-        cam.rotation_euler[1] = max(
-            math.radians(-max_roll_deg),
-            min(math.radians(max_roll_deg), cam.rotation_euler[1]),
-        )
-
     key(cam, "location", frame)
     key(cam, "rotation_euler", frame)
     cam.data.keyframe_insert("lens", frame=frame)
