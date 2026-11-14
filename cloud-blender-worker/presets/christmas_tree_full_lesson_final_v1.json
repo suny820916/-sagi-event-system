@@ -765,11 +765,11 @@
         "O9"
       ],
       "focus_t": 13.2,
-      "lens": 60,
-      "min_z": 43,
-      "margin": 1.05,
-      "shot_scale": "STRUCTURE",
-      "field_scope": "BUILD_RELATION_ZONE",
+      "lens": 54,
+      "min_z": 76,
+      "margin": 1.1,
+      "shot_scale": "WIDE_STRUCTURE",
+      "field_scope": "CENTRAL_THREE_QUARTERS",
       "phase_name": "ATTACK_PIRLO_BUILD",
       "lead_sec": 0.48,
       "settle_sec": 0.18
@@ -824,11 +824,11 @@
         "OM_R"
       ],
       "focus_t": 18.8,
-      "lens": 58,
-      "min_z": 44,
-      "margin": 1.04,
+      "lens": 52,
+      "min_z": 84,
+      "margin": 1.1,
       "shot_scale": "WIDE_STRUCTURE",
-      "field_scope": "MIDFIELD_WIDTH_ZONE",
+      "field_scope": "FULL_PITCH",
       "phase_name": "ATTACK_MIDFIELD_WIDTH",
       "lead_sec": 0.5,
       "settle_sec": 0.18
@@ -885,11 +885,11 @@
         "OCB_R"
       ],
       "focus_t": 23.1,
-      "lens": 59,
-      "min_z": 49,
-      "margin": 1.07,
-      "shot_scale": "RELATION",
-      "field_scope": "CENTRAL_ATTACK_RELATION",
+      "lens": 54,
+      "min_z": 76,
+      "margin": 1.1,
+      "shot_scale": "STRUCTURE",
+      "field_scope": "CENTRAL_THREE_QUARTERS",
       "phase_name": "ATTACK_BETWEEN_LINES",
       "lead_sec": 0.56,
       "settle_sec": 0.18
@@ -975,11 +975,11 @@
         "OCB_R"
       ],
       "focus_t": 28.1,
-      "lens": 56,
-      "min_z": 61,
-      "margin": 1.06,
+      "lens": 52,
+      "min_z": 86,
+      "margin": 1.11,
       "shot_scale": "WIDE_STRUCTURE",
-      "field_scope": "CENTRAL_THREE_QUARTERS",
+      "field_scope": "FULL_PITCH",
       "phase_name": "ATTACK_FULLBACK_WIDTH",
       "lead_sec": 0.54,
       "settle_sec": 0.18
@@ -1031,11 +1031,11 @@
         "INZAGHI"
       ],
       "focus_t": 32.6,
-      "lens": 60,
-      "min_z": 45,
-      "margin": 1.05,
-      "shot_scale": "RELATION",
-      "field_scope": "RIGHT_OVERLAP_RELATION",
+      "lens": 52,
+      "min_z": 86,
+      "margin": 1.11,
+      "shot_scale": "WIDE_STRUCTURE",
+      "field_scope": "FULL_PITCH",
       "phase_name": "ATTACK_STRONG_SIDE_OVERLAP",
       "lead_sec": 0.62,
       "settle_sec": 0.18
@@ -1104,11 +1104,11 @@
         "OGK"
       ],
       "focus_t": 35.8,
-      "lens": 57,
-      "min_z": 62,
-      "margin": 1.08,
-      "shot_scale": "STRUCTURE",
-      "field_scope": "FINAL_THIRD",
+      "lens": 53,
+      "min_z": 82,
+      "margin": 1.1,
+      "shot_scale": "WIDE_STRUCTURE",
+      "field_scope": "ATTACKING_TWO_THIRDS",
       "phase_name": "ATTACK_FINAL_THIRD_FLOW",
       "lead_sec": 0.68,
       "settle_sec": 0.18
@@ -1169,11 +1169,11 @@
         "OGK"
       ],
       "focus_t": 38.4,
-      "lens": 59,
-      "min_z": 55,
-      "margin": 1.08,
-      "shot_scale": "RELATION",
-      "field_scope": "FINAL_THIRD",
+      "lens": 54,
+      "min_z": 78,
+      "margin": 1.1,
+      "shot_scale": "STRUCTURE",
+      "field_scope": "ATTACKING_TWO_THIRDS",
       "phase_name": "ATTACK_FINISH_RELATION",
       "lead_sec": 0.5,
       "settle_sec": 0.18
@@ -1224,11 +1224,11 @@
         "OGK"
       ],
       "focus_t": 41,
-      "lens": 56,
-      "min_z": 72,
-      "margin": 1.05,
-      "shot_scale": "STRUCTURE",
-      "field_scope": "ATTACKING_WIDTH_ZONE",
+      "lens": 52,
+      "min_z": 88,
+      "margin": 1.11,
+      "shot_scale": "WIDE_STRUCTURE",
+      "field_scope": "FULL_PITCH",
       "phase_name": "ATTACK_RESULT_EXIT",
       "lead_sec": 0.2,
       "settle_sec": 0.24
@@ -2388,5 +2388,30 @@
     "possession_reset_rule": "chapter_state.ball_owner explicitly resets the tactical ball owner at chapter boundaries",
     "summary_possession_note": "Summary circulation explicitly returns from Seedorf to Pirlo before the flank-risk example, preserving continuous possession logic."
   },
-  "initial_ball_holder": "PIRLO"
+  "initial_ball_holder": "PIRLO",
+  "attack_layout_v2": {
+    "window_sec": [
+      12,
+      43
+    ],
+    "reference": "Teactics-style central floating pitch",
+    "locked_rules": [
+      "pitch stays visually central with black breathing room around it",
+      "players read smaller than TEST14 local close-ups but remain identifiable",
+      "top title and subtitle must not overlap the tactical pitch body",
+      "full horizontal width is mandatory whenever fullbacks, flank overloads or switches are explained",
+      "camera follows the phase longitudinally; it does not chase the ball laterally",
+      "attack actions and timing remain unchanged"
+    ],
+    "camera_scale_notes": {
+      "build": "semi-global structure, not a close Pirlo portrait",
+      "midfield_width": "full pitch width visible",
+      "between_lines": "structural crop allowed, but both half-spaces remain readable",
+      "fullback_width": "full touchline-to-touchline width visible",
+      "strong_side_overlap": "keep opposite side in frame; no right-channel crop",
+      "final_third": "retain attacking two-thirds instead of final-third-only crop",
+      "finish": "slightly tighter structure while keeping goal + surrounding defenders",
+      "exit": "return to full-pitch floating view before defense chapter"
+    }
+  }
 }
