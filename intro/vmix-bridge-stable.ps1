@@ -1,9 +1,9 @@
-# SAGI V4.7.1 MATCH MODE / FILTER ENGINE / MATCH SAFE LAN DIRECT Bridge
+# SAGI V4.7.2 STABLE LAN / FILTER ENGINE / MATCH SAFE Bridge
 # Same-LAN control server + local vMix API bridge.
 # Phone Control: http://<PC-LAN-IP>:8099/
 # vMix Browser:  http://127.0.0.1:8099/vmix
 
-$PreferredPort = 8099
+$PreferredPort = 8100
 $Port = $PreferredPort
 $VmixApi = "http://127.0.0.1:8088/api/"
 $Root = Join-Path $env:LOCALAPPDATA "SAGI\LiveMatchDirector"
@@ -98,12 +98,24 @@ function Restore-SagiLan {
 function Get-LanIPv4 {
   try {
     $ips = [System.Net.Dns]::GetHostAddresses([System.Net.Dns]::GetHostName()) |
-      Where-Object { $_.AddressFamily -eq [System.Net.Sockets.AddressFamily]::InterNetwork -and $_.IPAddressToString -notlike "169.254.*" -and $_.IPAddressToString -ne "127.0.0.1" }
-    if ($ips.Count -gt 0) { return $ips[0].IPAddressToString }
+      Where-Object { $_.AddressFamily -eq [System.Net.Sockets.AddressFamily]::InterNetwork -and $_.IPAddressToString -notlike "169.254.*" -and $_.IPAddressToString -ne "127.0.0.1" } |
+      ForEach-Object { $_.IPAddressToString }
+
+    $pick = $ips | Where-Object { $_ -like "192.168.*" } | Select-Object -First 1
+    if (-not $pick) { $pick = $ips | Where-Object { $_ -like "10.*" } | Select-Object -First 1 }
+    if (-not $pick) {
+      $pick = $ips | Where-Object {
+        $parts = $_.Split(".")
+        if ($parts.Count -ne 4) { return $false }
+        $a=[int]$parts[0];$b=[int]$parts[1]
+        return ($a -eq 172 -and $b -ge 16 -and $b -le 31)
+      } | Select-Object -First 1
+    }
+    if (-not $pick) { $pick = $ips | Select-Object -First 1 }
+    if ($pick) { return [string]$pick }
   } catch {}
   return "127.0.0.1"
 }
-
 function Test-Vmix {
   try {
     Invoke-WebRequest -UseBasicParsing -Uri $VmixApi -TimeoutSec 3 | Out-Null
@@ -235,7 +247,7 @@ function State-Json {
 
 Write-Host ""
 Write-Host "============================================================" -ForegroundColor Cyan
-Write-Host "  SAGI V4.7.1 MATCH SAFE LAN DIRECT - vMix Bridge" -ForegroundColor Cyan
+Write-Host "  SAGI V4.7.2 MATCH SAFE LAN DIRECT - vMix Bridge" -ForegroundColor Cyan
 Write-Host "============================================================" -ForegroundColor Cyan
 
 if (-not (Test-Path $ControlCache) -or -not (Test-Path $OutputCache)) {
@@ -251,16 +263,14 @@ $vmixReady = Test-Vmix
 if ($vmixReady) {
   Write-Host "[READY] vMix API connected on 127.0.0.1:8088" -ForegroundColor Green
 } else {
-  Write-Host "[ERROR] vMix API is not available on 127.0.0.1:8088" -ForegroundColor Red
-  Write-Host "Open vMix -> Settings -> Web Controller -> Enable -> Port 8088." -ForegroundColor Yellow
-  Read-Host "Press Enter to close"
-  exit 1
+  Write-Host "[WARN] vMix API is not available on 127.0.0.1:8088" -ForegroundColor Yellow
+  Write-Host "[READY] LAN Control will still start. Open vMix / enable Web Controller 8088 when needed." -ForegroundColor Green
 }
 
 $lanIp = Get-LanIPv4
 $listener = $null
 $started = $false
-for ($candidate = $PreferredPort; $candidate -le ($PreferredPort + 20); $candidate++) {
+for ($candidate = $PreferredPort; $candidate -le 8120; $candidate++) {
   try {
     $tryListener = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Any,$candidate)
     $tryListener.Start()
@@ -284,6 +294,7 @@ if (-not $started -or $null -eq $listener) {
 Write-Host "[READY] LAN DIRECT server is running." -ForegroundColor Green
 Write-Host ""
 Write-Host ("PHONE CONTROL : http://" + $lanIp + ":" + $Port + "/") -ForegroundColor Cyan
+Write-Host ("PC CONTROL    : http://127.0.0.1:" + $Port + "/") -ForegroundColor Cyan
 Write-Host ("VMIX BROWSER  : http://127.0.0.1:" + $Port + "/vmix") -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Phone and vMix PC must be on the same Wi-Fi/LAN." -ForegroundColor White
