@@ -1046,6 +1046,7 @@ def relation_camera_pose(
     shot_scale=None,
     field_scope=None,
     view_angle=None,
+    landmark_point=None,
 ):
     """Keep full trajectory in frame, but centre on the current tactical relation."""
     start_t = float(start_t)
@@ -1148,6 +1149,12 @@ def relation_camera_pose(
     framing_pts = list(trajectory_pts)
     if str(shot_scale or "") in ("CENTRAL_MASTER", "STRUCTURE", "WIDE_STRUCTURE"):
         framing_pts.extend(scope_pts)
+
+    # V1.7 landmark protection: a focused relation may tighten, but it must
+    # retain at least one authored spatial reference (centre spot, touchline,
+    # box edge, etc.) so the viewer never loses where the action is happening.
+    if landmark_point and str(shot_scale or "") in ("FOCUS_RELATION", "FINISH_FOCUS"):
+        framing_pts.append((float(landmark_point[0]), float(landmark_point[1])))
 
     # Lens-aware framing for 9:16 portrait.
     # The old empirical factors pushed wide tactical relations far too high,
@@ -1305,13 +1312,14 @@ def relation_camera_key(
     lead_sec=None,
     settle_sec=None,
     view_angle=None,
+    landmark_point=None,
 ):
     """Reframe from the actual tactical relationship instead of fixed coordinates."""
     global camera_last, camera_last_t
     t = float(t)
     focus_t = float(t if focus_t is None else focus_t)
     p = relation_camera_pose(
-        subjects, t, focus_t, lens, min_z, margin, shot_scale, field_scope, view_angle
+        subjects, t, focus_t, lens, min_z, margin, shot_scale, field_scope, view_angle, landmark_point
     )
     # Director-script override: a tactical cue may need the camera to begin
     # preparing noticeably before the action, instead of using one global lead.
@@ -2048,6 +2056,7 @@ for ev in cfg.get("events", []):
             ev.get("lead_sec"),
             ev.get("settle_sec"),
             ev.get("view_angle"),
+            ev.get("landmark_point"),
         )
 
     elif typ == "focus":
