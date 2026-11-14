@@ -1,6 +1,6 @@
 {
   "project": "SAGI TACTICS",
-  "version": "SAGI VIEWPOINT V2.1 · NATIVE 30FPS",
+  "version": "SAGI VIEWPOINT V2.1 · AXIS LOCK 30FPS",
   "fps": 30,
   "duration_sec": 43,
   "resolution": [
@@ -16,16 +16,16 @@
     "background": "#000000",
     "pitch": "#09090B",
     "pitch_line": "#45454A",
-    "own_primary": "#F5F700",
-    "own_secondary": "#D6D77A",
-    "opponent": "#76797D",
-    "ring": "#EEF200",
+    "own_primary": "#DDE200",
+    "own_secondary": "#AEB255",
+    "opponent": "#6B6E72",
+    "ring": "#F2F500",
     "pitch_alt": "#0E1012",
     "tactical_floor": "#000000",
     "pitch_edge": "#030304",
     "pitch_shadow": "#000000",
     "ball": "#A8ACAF",
-    "tactical_guide": "#EAF000",
+    "tactical_guide": "#F0F300",
     "tactical_guide_soft": "#6F7420",
     "ring_support": "#565A1A",
     "tactical_zone": "#151708"
@@ -1485,7 +1485,7 @@
     }
   ],
   "preview_mode": true,
-  "director_mode": "TEACTICS_REFERENCE_PROPORTION_MATCH",
+  "director_mode": "TEACTICS_SCREEN_AXIS_LOCK",
   "workbench_visual": {
     "light": "FLAT",
     "background_type": "VIEWPORT",
@@ -1544,22 +1544,22 @@
   },
   "motion_profile": {
     "player_move": {
-      "arm_deg": 9.5,
-      "leg_deg": 13,
-      "frames_per_half_step": 4.4,
-      "lean_deg": -1.4
+      "arm_deg": 8.5,
+      "leg_deg": 11.5,
+      "frames_per_half_step": 5.4,
+      "lean_deg": -1.2
     },
     "defender_shift": {
-      "arm_deg": 6.5,
-      "leg_deg": 9.5,
-      "frames_per_half_step": 4.8,
-      "lean_deg": -0.7
+      "arm_deg": 5.8,
+      "leg_deg": 8.5,
+      "frames_per_half_step": 5.8,
+      "lean_deg": -0.6
     },
     "dribble": {
-      "arm_deg": 8,
-      "leg_deg": 11.5,
-      "frames_per_half_step": 4.6,
-      "lean_deg": -1
+      "arm_deg": 7.2,
+      "leg_deg": 10,
+      "frames_per_half_step": 5.6,
+      "lean_deg": -0.9
     }
   },
   "camera_rail": {
@@ -1728,16 +1728,16 @@
         "frame_shift_y": -0.11
       },
       "RIGHT_FLANK_DIAGONAL": {
-        "azimuth_deg": 4,
-        "distance_mult": 1.02,
-        "height_mult": 0.94,
+        "azimuth_deg": 3,
+        "distance_mult": 1.01,
+        "height_mult": 0.97,
         "purpose": "right-flank overlap and half-space channel while retaining central reference",
         "frame_shift_y": -0.11
       },
       "LEFT_FLANK_DIAGONAL": {
-        "azimuth_deg": -4,
-        "distance_mult": 1.02,
-        "height_mult": 0.94,
+        "azimuth_deg": -3,
+        "distance_mult": 1.01,
+        "height_mult": 0.97,
         "purpose": "left-flank overlap and half-space channel while retaining central reference",
         "frame_shift_y": -0.11
       },
@@ -1835,9 +1835,9 @@
     ]
   },
   "player_visual": {
-    "scale_base": 2.26,
-    "primary_scale_mult": 1.025,
-    "principle": "Match Teactics visual ratio: smaller pitch in frame, larger readable miniature players, never broadcast close-ups.",
+    "scale_base": 2.52,
+    "primary_scale_mult": 1.02,
+    "principle": "Reference-match Teactics player-to-pitch ratio: readable miniature humans on a smaller floating board.",
     "silhouette": {
       "torso_scale": [
         0.19,
@@ -1991,12 +1991,12 @@
       "CENTRAL_MASTER": 0,
       "WIDE_STRUCTURE": 0,
       "STRUCTURE": 0,
-      "RELATION": 4,
-      "RESULT_RELATION": 4,
-      "FOCUS_RELATION": 4,
-      "FINISH_FOCUS": 4
+      "RELATION": 3,
+      "RESULT_RELATION": 3,
+      "FOCUS_RELATION": 3,
+      "FINISH_FOCUS": 3
     },
-    "principle": "Keep the pitch axis stable; use only a minimal side observation when the tactic truly needs depth."
+    "principle": "Default to axial viewing; use only tiny lateral observation changes when needed."
   },
   "floating_stage": {
     "enabled": true,
@@ -2005,35 +2005,35 @@
     "structural_frame_shift_y": -0.092,
     "z_range_by_scale": {
       "CENTRAL_MASTER": [
-        126,
-        132
+        142,
+        150
       ],
       "WIDE_STRUCTURE": [
-        112,
-        118
+        128,
+        136
       ],
       "STRUCTURE": [
-        106,
-        112
+        120,
+        128
       ],
       "RELATION": [
-        102,
-        108
+        116,
+        124
       ],
       "RESULT_RELATION": [
-        100,
-        106
+        112,
+        120
       ],
       "FOCUS_RELATION": [
-        98,
-        104
+        110,
+        118
       ],
       "FINISH_FOCUS": [
-        96,
-        102
+        106,
+        114
       ]
     },
-    "principle": "Reference-match the Teactics ratio: a smaller suspended pitch in the 9:16 canvas, never a full-screen field."
+    "principle": "Match Teactics floating-board scale: generous dark space around the tactical stage, with modest concept-driven scale changes."
   },
   "graphic_semantics": {
     "rule": "One shot answers one tactical question. Multiple graphic types are allowed only when they explain the same question.",
@@ -2071,7 +2071,7 @@
   "teactics_similarity_target": {
     "target_percent": 90,
     "basis": "Exact 71s Teactics reference supplied by user",
-    "previous_score_estimate": 72,
+    "previous_score_estimate": 78,
     "scoring": {
       "camera_stability_and_necessity": 30,
       "floating_pitch_composition": 20,
@@ -2079,8 +2079,8 @@
       "tactical_graphic_semantics": 20,
       "pacing_and_readability": 15
     },
-    "v20_focus": "Correct the two largest V1.9 gaps: pitch-to-canvas scale and player-to-pitch scale, while reducing side-angle rotation to a maximum of 4 degrees.",
-    "pass_rule": "Do not claim 90%+ until rendered V2.0 is reopened and compared frame-by-frame against the exact reference."
+    "v21_focus": "True screen-axis lock, native 30fps, smaller floating board, larger readable miniature players.",
+    "pass_rule": "Do not claim 90%+ until rendered V2.1 is reopened and compared frame-by-frame against the exact reference."
   },
   "v19_acceptance": [
     "No camera change occurs at midfield-width if the previous structural view still explains it.",
@@ -2100,8 +2100,18 @@
     "Graphics remain readable at the smaller pitch scale.",
     "Exact-reference comparison must score at least 90/100 before this stage is accepted."
   ],
-  "v21_acceptance": {
-    "purpose": "Match Teactics native 30fps without retiming action; maintain 43 second timeline and 11 defenders",
-    "score_status": "UNSCORED - reference video unavailable; do not claim 90"
+  "v21_acceptance": [
+    "Output is 30fps.",
+    "Pitch longitudinal axis remains visually stable in all tactical shots.",
+    "No right-side or finishing shot makes the board appear to roll in screen space.",
+    "Floating board leaves more dark negative space than V2.0.",
+    "Players remain clearly readable despite the smaller pitch.",
+    "No title, subtitle or logo.",
+    "Reference comparison must score at least 90/100 before acceptance."
+  ],
+  "screen_axis_lock": {
+    "enabled": true,
+    "up_axis": "PITCH_LONGITUDINAL_Y",
+    "principle": "Keep pitch longitudinal direction visually stable in screen space; camera may tilt and zoom but the board must not appear to roll."
   }
 }
