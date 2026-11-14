@@ -570,6 +570,18 @@ m_ball = material(
     hex_rgba(pal.get("ball", "#B5B8BA")),
     rough=.88,
 )
+m_tactical_guide = material(
+    "TACTICAL_GUIDE",
+    hex_rgba(pal.get("tactical_guide", pal.get("own_primary", "#F5F700"))),
+    rough=.34,
+    emission_strength=.65,
+)
+m_tactical_guide_soft = material(
+    "TACTICAL_GUIDE_SOFT",
+    hex_rgba(pal.get("tactical_guide_soft", "#777A26")),
+    rough=.62,
+    emission_strength=.10,
+)
 
 # V11.1 FLOATING CENTRAL PITCH
 # Keep a very dark safety floor far below the board so relation shots never
@@ -706,7 +718,15 @@ def create_player(name, data):
     # Teactics-style miniature figure: readable, but never dominant.
     # V03 reduces the overall scale and gives the limbs a quiet natural stance
     # so players read as people rather than rigid chess pieces.
-    root.scale = (1.56, 1.56, 1.56)
+    player_visual = cfg.get("player_visual", {})
+    base_scale = float(player_visual.get("scale_base", 1.56))
+    role_mult = (
+        float(player_visual.get("primary_scale_mult", 1.0))
+        if data.get("role") == "primary"
+        else 1.0
+    )
+    final_scale = base_scale * role_mult
+    root.scale = (final_scale, final_scale, final_scale)
 
     matp = (
         m_g
@@ -1144,7 +1164,55 @@ def relation_camera_pose(
         "field_scope": field_scope,
         "view_angle": profile_name,
         "frame_shift_y": frame_shift_y,
+        "azimuth_deg": azimuth_deg,
+        "orbit_dist": orbit_dist,
     }
+
+
+def interpolated_camera_pose(a, b, alpha=.5):
+    """Create a smooth orbit midpoint between two authored tactical viewpoints."""
+    alpha = max(0.0, min(1.0, float(alpha)))
+    ta = a.get("target", (0,0,0))
+    tb = b.get("target", ta)
+    target = tuple(float(ta[i]) + (float(tb[i]) - float(ta[i])) * alpha for i in range(3))
+
+    if "azimuth_deg" in a and "azimuth_deg" in b and "orbit_dist" in a and "orbit_dist" in b:
+        az0 = float(a["azimuth_deg"])
+        az1 = float(b["azimuth_deg"])
+        # shortest angular route
+        delta = ((az1 - az0 + 180.0) % 360.0) - 180.0
+        az = az0 + delta * alpha
+        radius = float(a["orbit_dist"]) + (float(b["orbit_dist"]) - float(a["orbit_dist"])) * alpha
+        z0 = float(a["loc"][2])
+        z1 = float(b["loc"][2])
+        z = z0 + (z1 - z0) * alpha
+        ar = math.radians(az)
+        loc = (
+            target[0] + math.sin(ar) * radius,
+            target[1] - math.cos(ar) * radius,
+            z,
+        )
+    else:
+        la = a.get("loc", (0,0,64))
+        lb = b.get("loc", la)
+        loc = tuple(float(la[i]) + (float(lb[i]) - float(la[i])) * alpha for i in range(3))
+        az = b.get("azimuth_deg", a.get("azimuth_deg"))
+        radius = b.get("orbit_dist", a.get("orbit_dist"))
+
+    out = dict(b)
+    out["loc"] = loc
+    out["target"] = target
+    out["lens"] = float(a.get("lens", b.get("lens", 64))) + (
+        float(b.get("lens", a.get("lens", 64))) - float(a.get("lens", b.get("lens", 64)))
+    ) * alpha
+    out["frame_shift_y"] = float(a.get("frame_shift_y", 0.0)) + (
+        float(b.get("frame_shift_y", 0.0)) - float(a.get("frame_shift_y", 0.0))
+    ) * alpha
+    if az is not None:
+        out["azimuth_deg"] = az
+    if radius is not None:
+        out["orbit_dist"] = radius
+    return out
 
 
 def relation_camera_key(
@@ -1253,6 +1321,18 @@ def relation_camera_key(
     end_fr = 1 + round((t + settle) * fps)
 
     apply_camera_pose(camera_last, start_fr)
+
+    path_cfg = cfg.get("camera_path_smoothing", {})
+    use_orbit_path = bool(path_cfg.get("enabled", False))
+    if use_orbit_path and end_fr - start_fr >= 4:
+        mid_fr = int(round((start_fr + end_fr) * .5))
+        mid_pose = interpolated_camera_pose(
+            camera_last,
+            p,
+            float(path_cfg.get("midpoint_alpha", .5)),
+        )
+        apply_camera_pose(mid_pose, mid_fr)
+
     apply_camera_pose(p, end_fr)
 
     camera_last = p
@@ -1613,6 +1693,96 @@ def shot_ball(player, target, release, arrive, arc=.9):
     smooth_action(ball)
 
 
+def set_object_visibility_window(obj, t0, t1):
+    f0 = 1 + round(float(t0) * fps)
+    f1 = 1 + round(float(t1) * fps)
+    obj.hide_render = True
+    obj.keyframe_insert("hide_render", frame=max(1, f0 - 1))
+    obj.hide_render = False
+    obj.keyframe_insert("hide_render", frame=f0)
+    obj.hide_render = True
+    obj.keyframe_insert("hide_render", frame=min(scene.frame_end, f1))
+
+
+def add_pass_link(ev):
+    a = ev["from"]
+    b = ev["to"]
+    t = float(ev["t"])
+    duration = float(ev.get("duration", 1.4))
+    pa = predicted_player_pos(a, t)
+    pb = predicted_player_pos(b, t)
+    obj = line(
+        "PASS_LINK_" + a + "_" + b,
+        pa,
+        pb,
+        float(ev.get("width", .045)),
+        m_tactical_guide_soft,
+        z=float(ev.get("z", .29)),
+    )
+    set_object_visibility_window(obj, t, t + duration)
+
+
+def add_tactical_arrow(ev):
+    start = ev.get("start")
+    end = ev.get("end")
+    if ev.get("player"):
+        start = predicted_player_pos(ev["player"], float(ev["t"]))
+    if not start or not end:
+        return
+
+    start = (float(start[0]), float(start[1]))
+    end = (float(end[0]), float(end[1]))
+    dx = end[0] - start[0]
+    dy = end[1] - start[1]
+    dist = max(.001, math.hypot(dx, dy))
+    ux, uy = dx / dist, dy / dist
+    head_len = min(float(ev.get("head_length", 1.8)), dist * .28)
+    shaft_end = (end[0] - ux * head_len, end[1] - uy * head_len)
+
+    shaft = line(
+        "TACTICAL_ARROW_SHAFT",
+        start,
+        shaft_end,
+        float(ev.get("width", .065)),
+        m_tactical_guide,
+        z=float(ev.get("z", .31)),
+    )
+
+    # Arrow head as a flat triangular outline, readable from all tactical views.
+    px, py = -uy, ux
+    half_w = float(ev.get("head_width", .78))
+    left = (shaft_end[0] + px * half_w, shaft_end[1] + py * half_w)
+    right = (shaft_end[0] - px * half_w, shaft_end[1] - py * half_w)
+    head = polyline(
+        "TACTICAL_ARROW_HEAD",
+        [left, end, right],
+        float(ev.get("width", .065)),
+        m_tactical_guide,
+        closed=False,
+        z=float(ev.get("z", .31)),
+    )
+
+    t0 = float(ev["t"])
+    t1 = t0 + float(ev.get("duration", 1.5))
+    set_object_visibility_window(shaft, t0, t1)
+    set_object_visibility_window(head, t0, t1)
+
+
+def add_channel_highlight(ev):
+    x0, x1, y0, y1 = [float(v) for v in ev["bounds"]]
+    obj = polyline(
+        "CHANNEL_HIGHLIGHT",
+        [(x0,y0),(x1,y0),(x1,y1),(x0,y1)],
+        float(ev.get("width", .06)),
+        m_tactical_guide_soft,
+        closed=True,
+        z=float(ev.get("z", .275)),
+    )
+    t0 = float(ev["t"])
+    t1 = t0 + float(ev.get("duration", 1.8))
+    set_object_visibility_window(obj, t0, t1)
+
+
 def add_space(ev):
     sp = torus(
         "SPACE",
@@ -1764,6 +1934,15 @@ for ev in cfg.get("events", []):
 
     elif typ == "space":
         add_space(ev)
+
+    elif typ == "pass_link":
+        add_pass_link(ev)
+
+    elif typ == "tactical_arrow":
+        add_tactical_arrow(ev)
+
+    elif typ == "channel_highlight":
+        add_channel_highlight(ev)
 
 smooth_action(cam)
 
