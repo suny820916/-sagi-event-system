@@ -965,6 +965,18 @@ def apply_camera_pose(p, frame):
     # preserving a dedicated black safe area below the pitch.
     cam.data.shift_y = float(p.get("frame_shift_y", 0.0))
     look_at(cam, p["target"])
+
+    # V1.9 ROLL LOCK: preserve a stable screen axis for the tactical board.
+    # We allow yaw/tilt changes, but prevent accidental camera roll from making
+    # the pitch feel as if the whole board is spinning in screen space.
+    roll_cfg = cfg.get("roll_lock", {})
+    if roll_cfg.get("enabled", False):
+        max_roll_deg = abs(float(roll_cfg.get("max_abs_roll_deg", 0.0)))
+        cam.rotation_euler[1] = max(
+            math.radians(-max_roll_deg),
+            min(math.radians(max_roll_deg), cam.rotation_euler[1]),
+        )
+
     key(cam, "location", frame)
     key(cam, "rotation_euler", frame)
     cam.data.keyframe_insert("lens", frame=frame)
@@ -1209,6 +1221,19 @@ def relation_camera_pose(
     # viewpoint while preserving the existing tactical framing calculation.
     height_scale = float(perspective_cfg.get("height_scale", 1.0))
     z *= max(0.45, min(1.20, height_scale))
+
+    # V1.9 CAMERA DISCIPLINE: keep the floating tactical board within a
+    # deliberately narrow scale envelope. This prevents "full-screen pitch"
+    # jumps when the tactical concept changes.
+    stage_cfg = cfg.get("floating_stage", {})
+    if stage_cfg.get("enabled", False):
+        z_ranges = stage_cfg.get("z_range_by_scale", {})
+        z_range = z_ranges.get(scale_name)
+        if isinstance(z_range, (list, tuple)) and len(z_range) == 2:
+            z0, z1 = float(z_range[0]), float(z_range[1])
+            if z0 > z1:
+                z0, z1 = z1, z0
+            z = max(z0, min(z1, z))
 
     # SAGI VIEWPOINT DIRECTOR
     # Shot scale answers "how much do we see?" and field_scope answers
