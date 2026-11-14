@@ -779,18 +779,29 @@ def create_player(name, data):
         )
     )
 
-    # Minimal figure: stable silhouette, small head,
-    # solid torso, short/thin limbs, almost no gait.
+    # Teactics-oriented miniature silhouette.
+    # Geometry is preset-driven so we can improve readability without simply
+    # scaling the whole player up.
+    silhouette = player_visual.get("silhouette", {})
+    torso_scale = silhouette.get("torso_scale", [.225, .145, .36])
+    torso_z = float(silhouette.get("torso_z", 1.03))
+    head_radius = float(silhouette.get("head_radius", .16))
+    head_z = float(silhouette.get("head_z", 1.58))
+
     torso = cube(
         name + "_TORSO",
-        (0,0,1.03),
-        (.225,.145,.36),
+        (0,0,torso_z),
+        (
+            float(torso_scale[0]),
+            float(torso_scale[1]),
+            float(torso_scale[2]),
+        ),
         matp,
     )
     head = sphere(
         name + "_HEAD",
-        (0,0,1.58),
-        .16,
+        (0,0,head_z),
+        head_radius,
         matp,
     )
     # V06 MOTION ENGINE: limbs rotate around actual shoulder / hip pivots.
@@ -816,10 +827,19 @@ def create_player(name, data):
         mesh.location = (0,0,-length * .5)
         return pivot, mesh
 
-    la, la_mesh = make_limb("_LA", (-.285,0,1.30), .048, .50, -10)
-    ra, ra_mesh = make_limb("_RA", (.285,0,1.30), .048, .50, 10)
-    ll, ll_mesh = make_limb("_LL", (-.105,0,.78), .058, .72, 3)
-    rl, rl_mesh = make_limb("_RL", (.105,0,.78), .058, .72, -3)
+    shoulder_x = float(silhouette.get("shoulder_x", .285))
+    shoulder_z = float(silhouette.get("shoulder_z", 1.30))
+    arm_radius = float(silhouette.get("arm_radius", .048))
+    arm_length = float(silhouette.get("arm_length", .50))
+    hip_x = float(silhouette.get("hip_x", .105))
+    hip_z = float(silhouette.get("hip_z", .78))
+    leg_radius = float(silhouette.get("leg_radius", .058))
+    leg_length = float(silhouette.get("leg_length", .72))
+
+    la, la_mesh = make_limb("_LA", (-shoulder_x,0,shoulder_z), arm_radius, arm_length, -10)
+    ra, ra_mesh = make_limb("_RA", (shoulder_x,0,shoulder_z), arm_radius, arm_length, 10)
+    ll, ll_mesh = make_limb("_LL", (-hip_x,0,hip_z), leg_radius, leg_length, 3)
+    rl, rl_mesh = make_limb("_RL", (hip_x,0,hip_z), leg_radius, leg_length, -3)
 
     for ch in (torso, head):
         ch.parent = root
