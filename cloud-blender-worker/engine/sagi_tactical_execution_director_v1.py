@@ -198,7 +198,11 @@ def event_end(ev):
     typ = ev.get("type")
     if typ in ("pass", "shot"):
         return float(ev.get("arrive", ev.get("release", event_start(ev))))
-    if typ in ("player_move", "defender_shift", "dribble", "space", "face"):
+    if typ in (
+        "player_move", "defender_shift", "dribble", "space", "face",
+        "pass_link", "tactical_arrow", "channel_highlight",
+        "dashed_path", "zone_fill", "tactical_hold"
+    ):
         return event_start(ev) + float(ev.get("duration", 0.0))
     if typ == "defensive_unit":
         base = event_start(ev)
@@ -339,7 +343,11 @@ def validate_execution(config):
         ]
         tactical_events = [
             ev for ev in phase_events
-            if ev.get("type") not in ("camera", "camera_dna", "relation_camera", "focus", "space")
+            if ev.get("type") not in (
+                "camera", "camera_dna", "relation_camera", "focus", "space",
+                "emphasis", "pass_link", "tactical_arrow", "channel_highlight",
+                "dashed_path", "zone_fill", "tactical_hold"
+            )
         ]
         defender_events = [
             ev for ev in phase_events
@@ -359,7 +367,11 @@ def validate_execution(config):
         })
 
     last_action_end = max(
-        [event_end(ev) for ev in events if ev.get("type") not in ("camera", "camera_dna", "relation_camera", "focus", "space")]
+        [event_end(ev) for ev in events if ev.get("type") not in (
+            "camera", "camera_dna", "relation_camera", "focus", "space",
+            "emphasis", "pass_link", "tactical_arrow", "channel_highlight",
+            "dashed_path", "zone_fill", "tactical_hold"
+        )]
         or [0.0]
     )
     completion_hold = max(0.0, duration - last_action_end)
@@ -391,25 +403,41 @@ def predicted_player_pos(name, t):
     x, y = float(base[0]), float(base[1])
 
     for ev in cfg.get("events", []):
-        if ev.get("type") not in ("player_move", "defender_shift", "dribble"):
-            continue
-        if ev.get("player") != name:
+        typ = ev.get("type")
+        move_event = None
+
+        if typ in ("player_move", "defender_shift", "dribble") and ev.get("player") == name:
+            move_event = {
+                "t": float(ev["t"]),
+                "duration": float(ev["duration"]),
+                "to": ev["to"],
+            }
+        elif typ == "defensive_unit":
+            base = float(ev["t"])
+            for move in ev.get("moves", []):
+                if move.get("player") == name:
+                    move_event = {
+                        "t": base + float(move.get("delay", 0.0)),
+                        "duration": float(move.get("duration", ev.get("duration", .7))),
+                        "to": move["to"],
+                    }
+                    break
+
+        if move_event is None:
             continue
 
-        t0 = float(ev["t"])
-        dur = max(1e-6, float(ev["duration"]))
+        t0 = float(move_event["t"])
+        dur = max(1e-6, float(move_event["duration"]))
         t1 = t0 + dur
-        tx, ty = float(ev["to"][0]), float(ev["to"][1])
+        tx, ty = float(move_event["to"][0]), float(move_event["to"][1])
 
         if t < t0:
-            break
+            continue
         if t >= t1:
             x, y = tx, ty
             continue
 
         alpha = max(0.0, min(1.0, (t - t0) / dur))
-        # Match the spatial intent closely enough for framing; exact Bezier
-        # easing is less important than keeping all relationship subjects visible.
         return (
             x + (tx - x) * alpha,
             y + (ty - y) * alpha,
@@ -581,6 +609,18 @@ m_tactical_guide_soft = material(
     hex_rgba(pal.get("tactical_guide_soft", "#777A26")),
     rough=.62,
     emission_strength=.10,
+)
+m_ring_support = material(
+    "RING_SUPPORT",
+    hex_rgba(pal.get("ring_support", "#777A26")),
+    rough=.44,
+    emission_strength=.22,
+)
+m_tactical_zone = material(
+    "TACTICAL_ZONE",
+    hex_rgba(pal.get("tactical_zone", "#272A12")),
+    rough=.82,
+    emission_strength=.03,
 )
 
 # V11.1 FLOATING CENTRAL PITCH
@@ -791,17 +831,26 @@ def create_player(name, data):
         m_ring,
     )
     ring.parent = root
-    # Focus rings are editorial annotations, not permanent player badges.
-    # Start hidden and reveal only through explicit focus events.
     ring.hide_render = True
 
-    return root, ring
+    support_ring = torus(
+        name + "_SUPPORT_RING",
+        (0,0,.035),
+        .92,
+        max(.012, ring_tube * .68),
+        m_ring_support,
+    )
+    support_ring.parent = root
+    support_ring.hide_render = True
+
+    return root, ring, support_ring
 
 
 players = {}
 rings = {}
+support_rings = {}
 for name, data in cfg["players"].items():
-    players[name], rings[name] = create_player(
+    players[name], rings[name], support_rings[name] = create_player(
         name,
         data,
     )
@@ -981,7 +1030,7 @@ def relation_camera_pose(
     # entire run from its origin. Enter the close tactical view only when the
     # relationship is forming; structural shots still preserve the full route.
     framing_start_t = start_t
-    if str(shot_scale or "") in ("RELATION", "RESULT_RELATION"):
+    if str(shot_scale or "") in ("RELATION", "RESULT_RELATION", "FOCUS_RELATION", "FINISH_FOCUS"):
         scale_cfg = cfg.get("scale_script", {})
         history_sec = float(scale_cfg.get("local_relation_history_sec", .68))
         framing_start_t = max(start_t, focus_t - history_sec)
@@ -1036,6 +1085,8 @@ def relation_camera_pose(
         "WIDE_STRUCTURE": .68,
         "RELATION": .18,
         "RESULT_RELATION": .30,
+        "FOCUS_RELATION": .10,
+        "FINISH_FOCUS": .14,
     }.get(str(shot_scale or ""), .22)
 
     if is_central_master and scope_pts:
@@ -1112,6 +1163,8 @@ def relation_camera_pose(
             "WIDE_STRUCTURE": "wide_structure_tilt_back_m",
             "RELATION": "relation_tilt_back_m",
             "RESULT_RELATION": "result_relation_tilt_back_m",
+            "FOCUS_RELATION": "relation_tilt_back_m",
+            "FINISH_FOCUS": "result_relation_tilt_back_m",
         }
         key_name = per_scale.get(scale_name)
         tilt_back = float(
@@ -1354,14 +1407,28 @@ def camera_key(preset, t):
     camera_dna_key(legacy.get(preset, "receive"), t)
 
 
+def set_emphasis(ev):
+    fr = 1 + round(float(ev["t"]) * fps)
+    focal = set(ev.get("focal", []))
+    support = set(ev.get("support", []))
+
+    for n in players:
+        r = rings[n]
+        sr = support_rings[n]
+
+        r.hide_render = n not in focal
+        r.keyframe_insert("hide_render", frame=fr)
+
+        sr.hide_render = (n not in support) or (n in focal)
+        sr.keyframe_insert("hide_render", frame=fr)
+
+
 def focus_player(name, t):
-    fr = 1 + round(t * fps)
-    for n, r in rings.items():
-        r.hide_render = n != name
-        r.keyframe_insert(
-            "hide_render",
-            frame=fr,
-        )
+    set_emphasis({
+        "t": float(t),
+        "focal": [name],
+        "support": [],
+    })
 
 
 def animate_stride(name, f0, f1, strength=1.0, movement_kind="player_move"):
@@ -1783,6 +1850,95 @@ def add_channel_highlight(ev):
     set_object_visibility_window(obj, t0, t1)
 
 
+def add_dashed_path(ev):
+    start = ev.get("start")
+    if ev.get("player"):
+        start = predicted_player_pos(ev["player"], float(ev["t"]))
+    end = ev.get("end")
+    if not start or not end:
+        return
+
+    p0 = (float(start[0]), float(start[1]))
+    p2 = (float(end[0]), float(end[1]))
+    control = ev.get("control")
+    if control:
+        p1 = (float(control[0]), float(control[1]))
+    else:
+        # A restrained bow keeps the path readable without becoming decorative.
+        dx, dy = p2[0] - p0[0], p2[1] - p0[1]
+        curve = float(ev.get("curve", .10))
+        p1 = (
+            (p0[0] + p2[0]) * .5 - dy * curve,
+            (p0[1] + p2[1]) * .5 + dx * curve,
+        )
+
+    samples = max(8, int(ev.get("samples", 18)))
+    pts = []
+    for i in range(samples + 1):
+        a = i / samples
+        om = 1.0 - a
+        pts.append((
+            om*om*p0[0] + 2*om*a*p1[0] + a*a*p2[0],
+            om*om*p0[1] + 2*om*a*p1[1] + a*a*p2[1],
+        ))
+
+    t0 = float(ev["t"])
+    t1 = t0 + float(ev.get("duration", 1.6))
+    dash_group = max(1, int(ev.get("dash_group", 2)))
+    gap_group = max(1, int(ev.get("gap_group", 1)))
+    cycle = dash_group + gap_group
+
+    for i in range(len(pts) - 1):
+        if (i % cycle) >= dash_group:
+            continue
+        seg = line(
+            "DASHED_PATH",
+            pts[i],
+            pts[i+1],
+            float(ev.get("width", .075)),
+            m_tactical_guide,
+            z=float(ev.get("z", .315)),
+        )
+        set_object_visibility_window(seg, t0, t1)
+
+
+def add_zone_fill(ev):
+    x0, x1, y0, y1 = [float(v) for v in ev["bounds"]]
+    cx, cy = (x0+x1)*.5, (y0+y1)*.5
+    hx, hy = abs(x1-x0)*.5, abs(y1-y0)*.5
+    zone = cube(
+        "TACTICAL_ZONE_FILL",
+        (cx, cy, float(ev.get("z", .216))),
+        (hx, hy, .006),
+        m_tactical_zone,
+    )
+    t0 = float(ev["t"])
+    t1 = t0 + float(ev.get("duration", 1.8))
+    set_object_visibility_window(zone, t0, t1)
+
+    if bool(ev.get("border", False)):
+        border = polyline(
+            "TACTICAL_ZONE_BORDER",
+            [(x0,y0),(x1,y0),(x1,y1),(x0,y1)],
+            float(ev.get("border_width", .045)),
+            m_tactical_guide_soft,
+            closed=True,
+            z=float(ev.get("z", .216)) + .012,
+        )
+        set_object_visibility_window(border, t0, t1)
+
+
+def tactical_hold(ev):
+    global camera_last, camera_last_t
+    if camera_last is None:
+        return
+    t0 = float(ev["t"])
+    duration = max(0.0, float(ev.get("duration", .7)))
+    apply_camera_pose(camera_last, 1 + round(t0 * fps))
+    apply_camera_pose(camera_last, 1 + round((t0 + duration) * fps))
+    camera_last_t = max(camera_last_t, t0 + duration)
+
+
 def add_space(ev):
     sp = torus(
         "SPACE",
@@ -1875,6 +2031,12 @@ for ev in cfg.get("events", []):
             float(ev["t"]),
         )
 
+    elif typ == "emphasis":
+        set_emphasis(ev)
+
+    elif typ == "tactical_hold":
+        tactical_hold(ev)
+
     elif typ == "face":
         face_player(
             ev["player"],
@@ -1943,6 +2105,12 @@ for ev in cfg.get("events", []):
 
     elif typ == "channel_highlight":
         add_channel_highlight(ev)
+
+    elif typ == "dashed_path":
+        add_dashed_path(ev)
+
+    elif typ == "zone_fill":
+        add_zone_fill(ev)
 
 smooth_action(cam)
 
