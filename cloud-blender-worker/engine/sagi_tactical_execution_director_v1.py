@@ -866,10 +866,15 @@ camera_last_t = 0.0
 def apply_camera_pose(p, frame):
     cam.location = p["loc"]
     cam.data.lens = p["lens"]
+    # Screen-space composition is separate from tactical target selection.
+    # Negative shift_y raises the tactical board inside the 9:16 frame,
+    # preserving a dedicated black safe area below the pitch.
+    cam.data.shift_y = float(p.get("frame_shift_y", 0.0))
     look_at(cam, p["target"])
     key(cam, "location", frame)
     key(cam, "rotation_euler", frame)
     cam.data.keyframe_insert("lens", frame=frame)
+    cam.data.keyframe_insert("shift_y", frame=frame)
 
 
 def camera_dna_key(cue, t):
@@ -1118,6 +1123,7 @@ def relation_camera_pose(
     height_mult = float(profile.get("height_mult", 1.0))
     target_x_offset = float(profile.get("target_x_offset", 0.0))
     target_y_offset = float(profile.get("target_y_offset", 0.0))
+    frame_shift_y = float(profile.get("frame_shift_y", vp_cfg.get("default_frame_shift_y", 0.0)))
 
     target_x = cx + target_x_offset
     target_y = cy + target_y_offset
@@ -1137,6 +1143,7 @@ def relation_camera_pose(
         "shot_scale": shot_scale,
         "field_scope": field_scope,
         "view_angle": profile_name,
+        "frame_shift_y": frame_shift_y,
     }
 
 
