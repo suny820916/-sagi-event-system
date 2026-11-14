@@ -1,0 +1,75 @@
+name: SAGI VIEWPOINT V1.6 EMPHASIS BALANCE
+
+concurrency:
+  group: sagi-viewpoint-v16-attack-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "cloud-blender-worker/presets/christmas_tree_attack_viewpoint_v16.json"
+      - ".github/workflows/sagi-viewpoint-v16-attack.yml"
+      - "cloud-blender-worker/engine/sagi_tactical_execution_director_v1.py"
+  workflow_dispatch:
+
+jobs:
+  render-viewpoint-v16:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Blender image
+        run: docker build -t sagi-viewpoint-v16 ./cloud-blender-worker
+
+      - name: Render V1.6 emphasis balance attack test
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p viewpoint_v16_out
+          docker run --rm \
+            -v "$PWD/viewpoint_v16_out:/out" \
+            sagi-viewpoint-v16 \
+            bash -lc '
+              blender --background \
+                --python /app/engine/sagi_tactical_execution_director_v1.py \
+                -- \
+                /app/presets/christmas_tree_attack_viewpoint_v16.json \
+                /out
+
+              ffmpeg -y -loglevel error \
+                -framerate 24 \
+                -i /out/frames/frame_%04d.png \
+                -f lavfi \
+                -i anullsrc=channel_layout=stereo:sample_rate=44100 \
+                -map 0:v:0 -map 1:a:0 \
+                -c:v libx264 -profile:v baseline -level 3.1 \
+                -pix_fmt yuv420p -preset veryfast -crf 23 \
+                -c:a aac -b:a 64k -shortest -movflags +faststart \
+                /out/SAGI_VIEWPOINT_V1_6_ATTACK_00_43.mp4
+
+              ffmpeg -y -loglevel error \
+                -ss 12 -to 43 \
+                -i /out/SAGI_VIEWPOINT_V1_6_ATTACK_00_43.mp4 \
+                -c copy \
+                /out/SAGI_VIEWPOINT_V1_6_ATTACK_12_43.mp4
+            '
+
+          sudo chown -R "$USER":"$USER" viewpoint_v16_out
+          test -s viewpoint_v16_out/SAGI_VIEWPOINT_V1_6_ATTACK_12_43.mp4
+          test -s viewpoint_v16_out/execution_report.json
+          test -s viewpoint_v16_out/scene.blend
+
+      - name: Upload V1.6 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SAGI-VIEWPOINT-V1.6-EMPHASIS-BALANCE
+          path: |
+            viewpoint_v16_out/SAGI_VIEWPOINT_V1_6_ATTACK_12_43.mp4
+            viewpoint_v16_out/SAGI_VIEWPOINT_V1_6_ATTACK_00_43.mp4
+            viewpoint_v16_out/execution_report.json
+            viewpoint_v16_out/scene.blend
+            cloud-blender-worker/presets/christmas_tree_attack_viewpoint_v16.json
+          retention-days: 7
