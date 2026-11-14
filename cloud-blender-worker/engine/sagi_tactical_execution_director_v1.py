@@ -1210,19 +1210,6 @@ def relation_camera_pose(
     height_scale = float(perspective_cfg.get("height_scale", 1.0))
     z *= max(0.45, min(1.20, height_scale))
 
-    # V1.9 CAMERA DISCIPLINE: keep the floating tactical board within a
-    # deliberately narrow scale envelope. This prevents "full-screen pitch"
-    # jumps when the tactical concept changes.
-    stage_cfg = cfg.get("floating_stage", {})
-    if stage_cfg.get("enabled", False):
-        z_ranges = stage_cfg.get("z_range_by_scale", {})
-        z_range = z_ranges.get(scale_name)
-        if isinstance(z_range, (list, tuple)) and len(z_range) == 2:
-            z0, z1 = float(z_range[0]), float(z_range[1])
-            if z0 > z1:
-                z0, z1 = z1, z0
-            z = max(z0, min(z1, z))
-
     # SAGI VIEWPOINT DIRECTOR
     # Shot scale answers "how much do we see?" and field_scope answers
     # "which pitch context must remain visible?". view_angle is a separate
@@ -1274,6 +1261,20 @@ def relation_camera_pose(
     dx = math.sin(az) * orbit_dist
     dy = -math.cos(az) * orbit_dist
     z *= max(0.55, min(1.45, height_mult))
+
+    # V2.0 REFERENCE MATCH: apply the floating-stage scale envelope AFTER all
+    # viewpoint height multipliers. Earlier versions clamped z too early, then
+    # profile.height_mult changed it again, so the pitch could still jump in
+    # apparent size. This final clamp makes the authored stage size real.
+    stage_cfg = cfg.get("floating_stage", {})
+    if stage_cfg.get("enabled", False):
+        z_ranges = stage_cfg.get("z_range_by_scale", {})
+        z_range = z_ranges.get(scale_name)
+        if isinstance(z_range, (list, tuple)) and len(z_range) == 2:
+            z0, z1 = float(z_range[0]), float(z_range[1])
+            if z0 > z1:
+                z0, z1 = z1, z0
+            z = max(z0, min(z1, z))
 
     continuity_cfg = cfg.get("camera_continuity", {})
     return {
