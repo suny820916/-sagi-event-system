@@ -243,6 +243,13 @@ def validate_execution(config):
 
         if typ == "relation_camera":
             subjects = ev.get("subjects", [])
+            view_angle = ev.get("view_angle")
+            if view_angle:
+                vp_profiles = config.get("viewpoint_language", {}).get("profiles", {})
+                if view_angle not in vp_profiles:
+                    errors.append(
+                        f"event {i} relation_camera references unknown view_angle {view_angle}"
+                    )
             if len(subjects) < 2:
                 errors.append(f"event {i} relation_camera needs at least two subjects")
             for subject in subjects:
@@ -939,6 +946,7 @@ def relation_camera_pose(
     margin=1.20,
     shot_scale=None,
     field_scope=None,
+    view_angle=None,
 ):
     """Keep full trajectory in frame, but centre on the current tactical relation."""
     start_t = float(start_t)
@@ -1092,15 +1100,43 @@ def relation_camera_pose(
     height_scale = float(perspective_cfg.get("height_scale", 1.0))
     z *= max(0.45, min(1.20, height_scale))
 
+    # SAGI VIEWPOINT DIRECTOR
+    # Shot scale answers "how much do we see?" and field_scope answers
+    # "which pitch context must remain visible?". view_angle is a separate
+    # semantic layer answering "from which direction should we understand it?".
+    #
+    # The camera orbits around the same tactical target instead of changing the
+    # tactical centre. This lets us explain width, depth, channels and line
+    # relationships without cropping away the context.
+    vp_cfg = cfg.get("viewpoint_language", {})
+    profiles = vp_cfg.get("profiles", {})
+    profile_name = str(view_angle or vp_cfg.get("default", "STRUCTURAL_OBLIQUE"))
+    profile = profiles.get(profile_name, {})
+
+    azimuth_deg = float(profile.get("azimuth_deg", 0.0))
+    distance_mult = float(profile.get("distance_mult", 1.0))
+    height_mult = float(profile.get("height_mult", 1.0))
+    target_x_offset = float(profile.get("target_x_offset", 0.0))
+    target_y_offset = float(profile.get("target_y_offset", 0.0))
+
+    target_x = cx + target_x_offset
+    target_y = cy + target_y_offset
+    orbit_dist = max(1.0, tilt_back * max(0.45, min(1.80, distance_mult)))
+    az = math.radians(azimuth_deg)
+    dx = math.sin(az) * orbit_dist
+    dy = -math.cos(az) * orbit_dist
+    z *= max(0.55, min(1.45, height_mult))
+
     continuity_cfg = cfg.get("camera_continuity", {})
     return {
-        "loc": (cx, cy - tilt_back, z),
-        "target": (cx, cy, 0),
+        "loc": (target_x + dx, target_y + dy, z),
+        "target": (target_x, target_y, 0),
         "lens": float(lens),
         "lead": float(continuity_cfg.get("lead_sec", .34)),
         "settle": float(continuity_cfg.get("settle_sec", .32)),
         "shot_scale": shot_scale,
         "field_scope": field_scope,
+        "view_angle": profile_name,
     }
 
 
@@ -1115,13 +1151,14 @@ def relation_camera_key(
     field_scope=None,
     lead_sec=None,
     settle_sec=None,
+    view_angle=None,
 ):
     """Reframe from the actual tactical relationship instead of fixed coordinates."""
     global camera_last, camera_last_t
     t = float(t)
     focus_t = float(t if focus_t is None else focus_t)
     p = relation_camera_pose(
-        subjects, t, focus_t, lens, min_z, margin, shot_scale, field_scope
+        subjects, t, focus_t, lens, min_z, margin, shot_scale, field_scope, view_angle
     )
     # Director-script override: a tactical cue may need the camera to begin
     # preparing noticeably before the action, instead of using one global lead.
@@ -1652,6 +1689,7 @@ for ev in cfg.get("events", []):
             ev.get("field_scope"),
             ev.get("lead_sec"),
             ev.get("settle_sec"),
+            ev.get("view_angle"),
         )
 
     elif typ == "focus":
