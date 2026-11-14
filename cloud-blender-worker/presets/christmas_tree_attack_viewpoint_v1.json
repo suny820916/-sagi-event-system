@@ -1,6 +1,6 @@
 {
   "project": "SAGI TACTICS",
-  "version": "SAGI VIEWPOINT DIRECTOR V1.2 · BOTTOM SAFE AREA",
+  "version": "SAGI VIEWPOINT DIRECTOR V1.3 · TEACTICS COMPOSITION STANDARD",
   "fps": 24,
   "duration_sec": 43,
   "resolution": [
@@ -1569,21 +1569,21 @@
         "distance_mult": 0.82,
         "height_mult": 1.18,
         "purpose": "formation, width, both flanks, spatial reset",
-        "frame_shift_y": -0.12
+        "frame_shift_y": -0.09
       },
       "THREE_QUARTER_OBLIQUE": {
         "azimuth_deg": 0,
         "distance_mult": 1,
         "height_mult": 0.98,
         "purpose": "main structural relation with readable depth",
-        "frame_shift_y": -0.12
+        "frame_shift_y": -0.1
       },
       "TOP_DOWN_TACTICAL": {
         "azimuth_deg": 0,
         "distance_mult": 0.58,
         "height_mult": 1.3,
         "purpose": "shape, zones, compactness and horizontal distances",
-        "frame_shift_y": -0.1
+        "frame_shift_y": -0.08
       },
       "LOW_ANGLE_LONGITUDINAL": {
         "azimuth_deg": 0,
@@ -1597,28 +1597,28 @@
         "distance_mult": 1.16,
         "height_mult": 0.84,
         "purpose": "right-flank overlap and half-space channel while retaining central reference",
-        "frame_shift_y": -0.12
+        "frame_shift_y": -0.11
       },
       "LEFT_FLANK_DIAGONAL": {
         "azimuth_deg": -34,
         "distance_mult": 1.16,
         "height_mult": 0.84,
         "purpose": "left-flank overlap and half-space channel while retaining central reference",
-        "frame_shift_y": -0.12
+        "frame_shift_y": -0.11
       },
       "LOW_ANGLE_LATERAL": {
         "azimuth_deg": 72,
         "distance_mult": 1.08,
         "height_mult": 0.76,
         "purpose": "horizontal line spacing and side-on pressing relationships",
-        "frame_shift_y": -0.11
+        "frame_shift_y": -0.12
       },
       "GOAL_FACING_AXIAL": {
         "azimuth_deg": 0,
         "distance_mult": 1.34,
         "height_mult": 0.7,
         "purpose": "final pass, striker movement, centre-backs, goalkeeper and goal in one depth picture",
-        "frame_shift_y": -0.13
+        "frame_shift_y": -0.12
       }
     },
     "transition_rules": [
@@ -1655,13 +1655,20 @@
         "FLOATING_BOARD": "Full floating tactical board silhouette retained."
       }
     },
-    "default_frame_shift_y": -0.12,
+    "default_frame_shift_y": -0.1,
     "composition_standard": {
-      "frame": "9:16 portrait",
-      "top_safe_zone": "reserve title/subtitle breathing room above tactical board",
-      "bottom_safe_zone": "reserve approximately 15-20% black breathing room below the tactical board",
-      "board_position": "floating central stage; never rest the pitch on the bottom edge",
-      "rule": "screen composition is independent from tactical target selection"
+      "benchmark": "TEACTICS 71s reference video supplied by user",
+      "principle": "The pitch is a floating tactical stage inside the 9:16 canvas. Screen placement adapts to the viewpoint; it is not defined by a fixed top or bottom percentage.",
+      "rules": [
+        "Do not let the near edge of the tactical stage sit on the bottom frame edge as a default composition.",
+        "Re-center the tactical stage in screen space whenever viewpoint angle changes.",
+        "Preserve dark negative space below the active tactical stage when the reference viewpoint calls for it.",
+        "Title space, pitch space and lower breathing space must read as separate visual zones.",
+        "Do not create layout space by changing the tactical target or hiding required field context.",
+        "Full-width phases must preserve the touchlines; depth phases must preserve the near/far reference needed to understand vertical relationships.",
+        "A close tactical relation may crop non-essential board edges, but never crop the tactical landmark currently being explained."
+      ],
+      "acceptance": "Judge against the Teactics reference frame-by-frame, not against a fixed percentage."
     }
   },
   "viewpoint_test_notes": {
@@ -1684,11 +1691,12 @@
       "does finish show striker-centrebacks-goalkeeper-goal as one depth relation"
     ],
     "language_rule": "All internal camera-direction, framing and field-scope terminology is authored in standardized English. Chinese is reserved for viewer-facing titles, subtitles and voice-over.",
-    "bottom_space_acceptance": [
-      "pitch must not touch or visually rest on the bottom edge",
-      "retain a clean black lower safe area throughout 12-43s",
-      "bottom breathing room must survive flank and finishing viewpoints",
-      "do not move the tactical target merely to create layout space"
+    "teactics_composition_acceptance": [
+      "compare each viewpoint against the supplied Teactics reference, not a fixed safe-area percentage",
+      "near pitch edge must not default to touching the bottom frame edge",
+      "pitch should read as a floating tactical stage with dark breathing space around it",
+      "top title zone and lower breathing zone must remain visually independent from the tactical stage",
+      "viewpoint changes may alter the amount of bottom space; tactical clarity decides the composition"
     ]
   }
 }
