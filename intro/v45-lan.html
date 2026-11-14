@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="format-detection" content="telephone=no">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%2307090d%22/%3E%3Ctext x=%2232%22 y=%2243%22 text-anchor=%22middle%22 font-size=%2234%22 fill=%22%23d8b55b%22%3ES%3C/text%3E%3C/svg%3E">
-<title>SAGI V4.7.2 · STABLE LAN · MATCH MODE · FILTER ENGINE</title>
+<title>SAGI V4.8 · SMART ROSTER IMPORT · MATCH MODE</title>
 <style>
 :root{--bg:#07090d;--panel:#11151c;--line:#2b3340;--text:#f4f0e8;--muted:#8f97a5;--gold:#d8b55b;--green:#72c79a}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
@@ -287,11 +287,22 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 .mmFilter{margin-top:9px}.mmFilter .filterPresets{grid-template-columns:repeat(4,1fr)}
 @media(max-width:520px){.filterPresets{grid-template-columns:1fr 1fr}.filterGrid{grid-template-columns:1fr}}
 
+
+/* ===== V4.8 SMART ROSTER IMPORT ===== */
+.rosterImport{margin:0 0 12px;border:1px solid #394653;border-radius:15px;background:linear-gradient(180deg,#0c131b,#080c11);padding:11px}
+.riHead{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px}.riTitle{font-size:11px;font-weight:1000;letter-spacing:1.7px;color:#e2ca78}.riSub{font-size:9px;color:#7d8996;margin-top:3px;line-height:1.45}.riBadge{font-size:8px;padding:5px 7px;border:1px solid #3a594a;border-radius:999px;color:#8ed3ac;background:#0e2018;white-space:nowrap}
+.riButtons{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}.riButtons .fileBtn,.riButtons button{min-height:39px;font-size:9px}.riCamera{background:#18384a!important;color:#b9e7ff!important}.riFile{background:#2a3040!important}.riPasteBtn{background:#3d3320!important;color:#f0d790!important}
+.riPaste{display:none;margin-top:7px}.riPaste.on{display:block}.riPaste textarea{width:100%;min-height:105px;resize:vertical;background:#070b10;color:#fff;border:1px solid #343f4b;border-radius:10px;padding:9px;font-size:11px;line-height:1.5}.riPasteActions{display:flex;gap:6px;margin-top:6px}
+.riStatus{margin-top:7px;padding:7px 8px;border-radius:9px;background:#070b0f;border:1px solid #29343f;color:#84919e;font-size:9px;line-height:1.45}.riStatus.work{border-color:#5a4c26;color:#e4c878}.riStatus.ok{border-color:#305d48;color:#92d6b1}.riStatus.bad{border-color:#66373b;color:#ee9ea3}
+.riPreview{display:none;margin-top:8px;border-top:1px solid #25303b;padding-top:8px}.riPreview.on{display:block}.riTools{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:7px}.riTools button{min-height:34px;font-size:9px}.riCount{margin-left:auto;color:#8c98a5;font-size:9px}
+.riTableWrap{max-height:330px;overflow:auto;border:1px solid #28333e;border-radius:10px}.riTable{width:100%;border-collapse:collapse;min-width:610px}.riTable th{position:sticky;top:0;z-index:1;background:#111923;color:#8995a3;font-size:8px;padding:6px 5px;text-align:left}.riTable td{border-top:1px solid #222d38;padding:4px}.riTable input,.riTable select{padding:5px 6px;border-radius:7px;font-size:9px;min-height:29px}.riTable .riUse{width:28px}.riWarn{color:#e5c673;font-size:8px;white-space:nowrap}.riCommit{width:100%;margin-top:8px;background:linear-gradient(135deg,#1d6848,#48a873)!important;min-height:43px!important}
+@media(max-width:520px){.riButtons{grid-template-columns:1fr 1fr}.riButtons>:last-child{grid-column:1/-1}.riTableWrap{max-height:390px}}
+
 </style>
 </head>
 <body>
 <div class="app">
-  <div class="top"><div><div class="brand">SAGI LIVE MATCH DIRECTOR</div><div class="sub">V4.7.2 · MATCH MODE · MATCH SAFE · LAN DIRECT · 主客队独立配色</div></div><div class="topRight"><div class="ver">V4.7.2</div><button id="mobileUpdateBtn" class="mobileUpdateBtn" type="button">↻ 安全更新</button><button id="mobileRollbackBtn" class="mobileRollbackBtn" type="button">↶ 回退上一版</button><div id="mobileUpdateStatus" class="mobileUpdateStatus">V4.7.2 · MATCH SAFE · Bridge 已锁定</div></div></div>
+  <div class="top"><div><div class="brand">SAGI LIVE MATCH DIRECTOR</div><div class="sub">V4.8.0 · MATCH MODE · MATCH SAFE · LAN DIRECT · 主客队独立配色</div></div><div class="topRight"><div class="ver">V4.8.0</div><button id="mobileUpdateBtn" class="mobileUpdateBtn" type="button">↻ 安全更新</button><button id="mobileRollbackBtn" class="mobileRollbackBtn" type="button">↶ 回退上一版</button><div id="mobileUpdateStatus" class="mobileUpdateStatus">V4.8.0 · MATCH SAFE · Bridge 已锁定</div></div></div>
 
   <div id="pwaBar" class="pwaBar" style="display:none">
     <div class="pwaInfo">
@@ -306,7 +317,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 
   <div id="setupDesk" class="setupDesk">
     <div class="setupHead">
-      <div class="setupTitle">比赛设置 · MATCH SETUP ENGINE<small>V4.7.2 · 比赛项目 · 赛制校验 · 阵容检查 · READY GATE</small></div>
+      <div class="setupTitle">比赛设置 · MATCH SETUP ENGINE<small>V4.8.0 · 比赛项目 · 赛制校验 · 阵容检查 · READY GATE</small></div>
       <div id="setupReadyBadge" class="setupReadyBadge">NOT READY</div>
     </div>
     <div class="setupGrid">
@@ -442,7 +453,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 
   <div class="vmixDirector">
     <div class="vdHead">
-      <div class="vdTitle">V4.7.2 · vMix 导播控制 <small>LIVE MATCH DIRECTOR</small></div>
+      <div class="vdTitle">V4.8.0 · vMix 导播控制 <small>LIVE MATCH DIRECTOR</small></div>
       <div id="vdStatus" class="vdStatus">LAN Bridge 待命</div>
     </div>
     <div class="vdGrid">
@@ -453,7 +464,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
           <div><label>机位 2</label><input id="vdCam2" value="2"></div>
           <div><label>无人机</label><input id="vdDrone" value="3"></div>
           <div><label>回放输入</label><input id="vdReplay" value="4"></div>
-          <div><label>V4.7.2图形输入</label><input id="vdGraphics" value="5"></div>
+          <div><label>V4.8.0图形输入</label><input id="vdGraphics" value="5"></div>
         </div>
         <div class="vdInputs" style="grid-template-columns:1fr 1fr 1fr;margin-top:7px">
           <div><label>切换方式</label><select id="vdTransition"><option value="Cut">CUT 硬切</option><option value="Fade">FADE 淡变</option><option value="Stinger1">STINGER 1</option></select></div>
@@ -508,7 +519,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 
   <div class="matchdayDesk">
     <div class="mdHead">
-      <div class="mdTitle">V4.7.2 · MATCH MODE <small>LIVE MATCH DIRECTOR</small></div>
+      <div class="mdTitle">V4.8.0 · MATCH MODE <small>LIVE MATCH DIRECTOR</small></div>
       <div id="mdSync" class="mdSync"><span id="mdSyncDot" class="mdLiveDot"></span>比赛图形待命</div>
     </div>
     <div class="mdGrid">
@@ -716,6 +727,21 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 
       <div class="card">
         <h2>球员名单 · <span id="rosterSideText">HOME 主队</span></h2>
+        <div class="rosterImport">
+          <div class="riHead"><div><div class="riTitle">SMART ROSTER IMPORT · 智能名单导入</div><div class="riSub">照片 / Excel / CSV / Word / PDF / 文本 → 识别预览 → 一键写入当前球队</div></div><div class="riBadge">赛前工具 · 不影响直播核心</div></div>
+          <div class="riButtons">
+            <label class="fileBtn riCamera">📷 拍照识别<input id="rosterCameraFile" type="file" accept="image/*" capture="environment"></label>
+            <label class="fileBtn riFile">📁 导入文件<input id="rosterImportFile" type="file" accept="image/*,.txt,.csv,.tsv,.xlsx,.xls,.docx,.pdf,text/plain,text/csv,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.wordprocessingml.document"></label>
+            <button id="rosterPasteToggle" class="riPasteBtn" type="button">⌨ 粘贴名单</button>
+          </div>
+          <div id="rosterPaste" class="riPaste"><textarea id="rosterPasteText" placeholder="可直接粘贴：&#10;1  张三  GK  首发&#10;5  李四  CB  首发&#10;10 王五  CM  首发&#10;9  赵六  ST  首发&#10;18 阿力  MF  替补"></textarea><div class="riPasteActions"><button id="rosterParsePaste" class="ok" type="button">解析文字</button><button id="rosterPasteClear" type="button">清空</button></div></div>
+          <div id="rosterImportStatus" class="riStatus">支持本地直接解析 TXT/CSV；Excel、Word、PDF、照片在导入时按需加载识别模块。识别结果不会自动写入，必须确认。</div>
+          <div id="rosterImportPreview" class="riPreview">
+            <div class="riTools"><button id="riAllStarter" type="button">前 <span id="riStarterLimit">11</span> 人设首发</button><button id="riAutoRole" type="button">按阵型补位置</button><button id="riClearDraft" type="button">取消导入</button><span id="riCount" class="riCount">0 人</span></div>
+            <div class="riTableWrap"><table class="riTable"><thead><tr><th>用</th><th>号码</th><th>姓名</th><th>身份</th><th>位置组</th><th>详细位置</th><th>队长</th><th>提示</th></tr></thead><tbody id="rosterImportBody"></tbody></table></div>
+            <button id="rosterCommitImport" class="riCommit" type="button">确认并导入当前球队</button>
+          </div>
+        </div>
         <div class="grid2">
           <div><label>姓名</label><input id="playerName" value="MARHULAN"></div>
           <div><label>号码</label><input id="playerNo" value="88"></div>
@@ -802,7 +828,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
             </div>
           </div>
         </div>
-        <div class="statusBar"><div id="status" class="status">V4.7.2 · FORMATION EDITOR 已就绪</div><div class="mini">1920 × 1080</div></div>
+        <div class="statusBar"><div id="status" class="status">V4.8.0 · FORMATION EDITOR 已就绪</div><div class="mini">1920 × 1080</div></div>
       </div>
     </div>
   </div>
@@ -1431,7 +1457,7 @@ const FILTER_SLOT={CLEAN:1,WARM:2,NIGHT:3};
 function filterSave(){try{localStorage.setItem('sagi_filter_engine_v471',JSON.stringify(filterSettings))}catch(e){}}
 function filterLoad(){try{const x=JSON.parse(localStorage.getItem('sagi_filter_engine_v471')||'null');if(x)filterSettings={...filterSettings,...x}}catch(e){}}
 function filterInputs(target=filterSettings.target){vdSave();const slots=target==='ALL'?['cam1','cam2','drone','replay']:[target],seen=new Set(),out=[];for(const slot of slots){const n=String(vmixDirectorSettings[slot]||'').trim();if(n&&n!==String(vmixDirectorSettings.graphics)&&!seen.has(n)){seen.add(n);out.push(n)}}return out}
-async function filterCommand(fn,input,value=''){const cmd={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,7),functionName:fn,input:String(input||''),duration:0,value:String(value??''),label:'FILTER '+fn,issuedAt:new Date().toISOString(),version:'V4.7.2-LAN'};try{await lanPost('/api/vmix',cmd);return true}catch(e){return false}}
+async function filterCommand(fn,input,value=''){const cmd={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,7),functionName:fn,input:String(input||''),duration:0,value:String(value??''),label:'FILTER '+fn,issuedAt:new Date().toISOString(),version:'V4.8.0-LAN'};try{await lanPost('/api/vmix',cmd);return true}catch(e){return false}}
 async function applyFilterPreset(preset,target=filterSettings.target){
  preset=['ORIGINAL','CLEAN','WARM','NIGHT'].includes(preset)?preset:'ORIGINAL';const inputs=filterInputs(target);if(!inputs.length){if(q('filterStatus'))q('filterStatus').textContent='没有可用摄像机 Input';note('没有可用摄像机 Input');return false}
  if(q('filterStatus'))q('filterStatus').textContent='正在应用 '+preset+'…';let ok=true;
@@ -1456,7 +1482,7 @@ function vdLoad(){
 }
 function vdInput(slot){vdSave();return vmixDirectorSettings[slot]||''}
 async function publishVmixDirector(functionName,input='',duration=0,label='',value=''){
- const cmd={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,7),functionName,input:String(input||''),duration:Math.max(0,Number(duration)||0),value:String(value??''),label,issuedAt:new Date().toISOString(),version:'V4.7.2-LAN'};
+ const cmd={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,7),functionName,input:String(input||''),duration:Math.max(0,Number(duration)||0),value:String(value??''),label,issuedAt:new Date().toISOString(),version:'V4.8.0-LAN'};
  q('vdStatus').textContent='LAN 发送中 · '+(label||functionName);
  try{
    await lanPost('/api/vmix',cmd);
@@ -1507,6 +1533,171 @@ function switchTeam(side,opts={}){
  q('teamName').value=side==='HOME'?(q('matchHome').value||'HOME'):(q('matchAway').value||'AWAY');
  selected=roster.length?0:-1;if(selected>=0)writePlayer(roster[0]);else{assets.photo='';assets.mediaBlob=null;assets.mediaObjectUrl='';renderPreviews()}
  refreshSideUI();updateFormatUI();updateFormationEditorUI();q('stage').dataset.side=activeSide;renderRoster();renderPreviews();if(!opts.noRender)renderStage(currentGroup);if(!opts.silent)note('已切换到 '+sideLabel(side))
+}
+
+let rosterImportDraft=[],rosterImportSeq=0;
+const RI_LIBS={
+ xlsx:'https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js',
+ mammoth:'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.13.0/mammoth.browser.min.js',
+ tesseract:'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'
+};
+function riStatus(text,kind=''){const el=q('rosterImportStatus');if(!el)return;el.textContent=text;el.className='riStatus'+(kind?' '+kind:'')}
+function riLoadScript(src,globalName,timeout=20000){
+ if(globalName&&window[globalName])return Promise.resolve(window[globalName]);
+ return new Promise((resolve,reject)=>{
+   const found=[...document.scripts].find(s=>s.src===src);if(found){const t=setInterval(()=>{if(!globalName||window[globalName]){clearInterval(t);resolve(globalName?window[globalName]:true)}},100);setTimeout(()=>{clearInterval(t);reject(new Error('模块加载超时'))},timeout);return}
+   const s=document.createElement('script');s.src=src;s.async=true;s.crossOrigin='anonymous';
+   const timer=setTimeout(()=>{s.remove();reject(new Error('模块加载超时'))},timeout);
+   s.onload=()=>{clearTimeout(timer);if(globalName&&!window[globalName])reject(new Error('模块未初始化'));else resolve(globalName?window[globalName]:true)};
+   s.onerror=()=>{clearTimeout(timer);reject(new Error('模块下载失败'))};document.head.appendChild(s);
+ })
+}
+function riExt(name=''){const m=String(name).toLowerCase().match(/\.([a-z0-9]+)$/);return m?m[1]:''}
+function riClean(s){return String(s==null?'':s).replace(/[\u200b\ufeff]/g,'').replace(/\s+/g,' ').trim()}
+function riRoleFrom(s=''){
+ const x=String(s).toUpperCase();
+ if(/门将|守门|GOAL|GK/.test(x))return'GK';
+ if(/后卫|中卫|边后卫|DF|CB|LB|RB|LWB|RWB|BACK/.test(x))return'DF';
+ if(/中场|前腰|后腰|MF|CM|CDM|DM|CAM|AM|LM|RM|MID/.test(x))return'MF';
+ if(/前锋|边锋|FW|ST|CF|LW|RW|WG|FORWARD|STRIKER/.test(x))return'FW';
+ return''
+}
+function riSquadFrom(s=''){const x=String(s).toUpperCase();return /替补|SUB|BENCH/.test(x)?'SUB':/首发|START|STARTER/.test(x)?'STARTER':''}
+function riCaptainFrom(s=''){return /队长|CAPTAIN|(^|\s)C($|\s)|\(C\)|（C）/i.test(String(s))}
+function riPositionFrom(s='',role=''){
+ const x=String(s).toUpperCase();
+ const tokens=['GK','CB','LB','RB','LWB','RWB','DM','CDM','CM','CAM','AM','LM','RM','LW','RW','ST','CF','FW','DF','MF'];
+ for(const t of tokens)if(new RegExp('(^|[^A-Z])'+t+'([^A-Z]|$)').test(x))return t;
+ if(/门将|守门/.test(s))return'GK';if(/中卫/.test(s))return'CB';if(/左后卫/.test(s))return'LB';if(/右后卫/.test(s))return'RB';if(/后腰/.test(s))return'DM';if(/前腰/.test(s))return'AM';if(/中场/.test(s))return'CM';if(/边锋/.test(s))return'WG';if(/前锋/.test(s))return'ST';return role||''
+}
+function riLooksHeader(s=''){return /姓名|球员|号码|编号|位置|首发|替补|name|number|no\.?|position|player/i.test(String(s))}
+function riLikelyName(s=''){
+ const x=riClean(s);if(!x||riLooksHeader(x)||/^\d{1,3}$/.test(x))return false;
+ return /[\u3400-\u9fff\u0400-\u04ffA-Za-z·•'’-]/.test(x)&&x.length<=32
+}
+function riParseLine(line,index=0){
+ let raw=riClean(line);if(!raw||riLooksHeader(raw)&&!/\d/.test(raw))return null;
+ raw=raw.replace(/[，；;|]+/g,'\t');
+ let cells=raw.split(/\t+/).map(riClean).filter(Boolean);
+ if(cells.length<2)cells=raw.split(/\s{2,}/).map(riClean).filter(Boolean);
+ if(cells.length<2)cells=raw.split(/\s+/).map(riClean).filter(Boolean);
+ if(!cells.length)return null;
+ let number='',name='',rest=[];
+ const numIdx=cells.findIndex(x=>/^#?\d{1,3}$/.test(x));
+ if(numIdx>=0){number=cells[numIdx].replace('#','');rest=cells.filter((_,i)=>i!==numIdx)}
+ else rest=[...cells];
+ const nameIdx=rest.findIndex(riLikelyName);
+ if(nameIdx>=0){name=rest[nameIdx];rest.splice(nameIdx,1)}
+ if(!name&&cells.length===1){const m=raw.match(/^#?(\d{1,3})\s*[-.、]?\s*(.+)$/);if(m){number=m[1];name=riClean(m[2]);rest=[]}}
+ if(!name)return null;
+ const meta=rest.join(' '),role=riRoleFrom(meta),position=riPositionFrom(meta,role),squadType=riSquadFrom(meta);
+ return{use:true,number:number||String(index+1),name,role:role||'',position:position||'',squadType:squadType||'',captain:riCaptainFrom(raw),warning:(!number?'缺号码 · ':'')+(!role?'位置待确认':'')}
+}
+function riRowsFromMatrix(matrix){
+ const out=[];for(let r=0;r<matrix.length;r++){
+   const row=(matrix[r]||[]).map(riClean);if(!row.some(Boolean))continue;
+   const joined=row.filter(Boolean).join('\t');const p=riParseLine(joined,out.length);if(p)out.push(p)
+ }return out
+}
+function riParseText(text=''){
+ const lines=String(text).replace(/\r/g,'\n').split(/\n+/).map(riClean).filter(Boolean),out=[];
+ for(const line of lines){const p=riParseLine(line,out.length);if(p)out.push(p)}
+ if(out.length<2){
+   const chunks=String(text).split(/[;；]/).map(riClean).filter(Boolean);for(const ch of chunks){const p=riParseLine(ch,out.length);if(p)out.push(p)}
+ }
+ return out
+}
+function riAutoFillRoles(list=rosterImportDraft){
+ const starters=list.filter(x=>x.use&&x.squadType!=='SUB'),need=formationRoleCounts(q('formation').value),left={...need};
+ for(const p of starters)if(p.role&&left[p.role]>0)left[p.role]--;
+ const order=[];for(const role of ['GK','DF','MF','FW'])for(let i=0;i<Math.max(0,left[role]||0);i++)order.push(role);
+ let oi=0;for(const p of starters){if(!p.role){p.role=order[oi++]||'MF';p.position=p.position||p.role;p.warning=p.warning.replace('位置待确认','自动补位')}}
+ for(const p of list.filter(x=>x.use&&x.squadType==='SUB')){if(!p.role){p.role=riRoleFrom(p.position)||'MF';p.position=p.position||p.role}}
+ riRenderDraft()
+}
+function riSetDraft(rows,source=''){
+ rosterImportDraft=(rows||[]).slice(0,40).map((p,i)=>({...p,use:p.use!==false,number:riClean(p.number)||String(i+1),name:riClean(p.name),squadType:p.squadType||'',role:p.role||'',position:p.position||'',captain:!!p.captain,warning:p.warning||''})).filter(p=>p.name);
+ if(!rosterImportDraft.length){q('rosterImportPreview').classList.remove('on');riStatus('没有识别到有效球员。可换一张更清晰的照片，或使用“粘贴名单”。','bad');return}
+ const limit=starterLimit();let starterCount=0;
+ for(const p of rosterImportDraft){if(!p.squadType){p.squadType=starterCount<limit?'STARTER':'SUB'}if(p.squadType==='STARTER')starterCount++}
+ q('rosterImportPreview').classList.add('on');q('riStarterLimit').textContent=limit;riRenderDraft();riStatus('已识别 '+rosterImportDraft.length+' 人'+(source?' · '+source:'')+'。请先检查号码、姓名、首发/替补和位置，再确认导入。','ok')
+}
+function riRenderDraft(){
+ const body=q('rosterImportBody');if(!body)return;body.innerHTML='';
+ rosterImportDraft.forEach((p,i)=>{
+   const tr=document.createElement('tr');tr.innerHTML=
+   '<td><input class="riUse" type="checkbox" data-ri="use" data-i="'+i+'" '+(p.use?'checked':'')+'></td>'+
+   '<td><input value="'+escAttr(p.number)+'" data-ri="number" data-i="'+i+'"></td>'+
+   '<td><input value="'+escAttr(p.name)+'" data-ri="name" data-i="'+i+'"></td>'+
+   '<td><select data-ri="squadType" data-i="'+i+'"><option value="STARTER" '+(p.squadType==='STARTER'?'selected':'')+'>首发</option><option value="SUB" '+(p.squadType==='SUB'?'selected':'')+'>替补</option></select></td>'+
+   '<td><select data-ri="role" data-i="'+i+'"><option value="" '+(!p.role?'selected':'')+'>待定</option><option value="GK" '+(p.role==='GK'?'selected':'')+'>GK</option><option value="DF" '+(p.role==='DF'?'selected':'')+'>DF</option><option value="MF" '+(p.role==='MF'?'selected':'')+'>MF</option><option value="FW" '+(p.role==='FW'?'selected':'')+'>FW</option></select></td>'+
+   '<td><input value="'+escAttr(p.position)+'" data-ri="position" data-i="'+i+'"></td>'+
+   '<td><select data-ri="captain" data-i="'+i+'"><option value="0" '+(!p.captain?'selected':'')+'>否</option><option value="1" '+(p.captain?'selected':'')+'>C</option></select></td>'+
+   '<td><span class="riWarn">'+esc(p.warning||'')+'</span></td>';body.appendChild(tr)
+ });
+ body.querySelectorAll('[data-ri]').forEach(el=>{el.onchange=()=>{const i=+el.dataset.i,k=el.dataset.ri;if(!rosterImportDraft[i])return;rosterImportDraft[i][k]=k==='use'?el.checked:k==='captain'?el.value==='1':el.value}});
+ q('riCount').textContent=rosterImportDraft.filter(x=>x.use).length+' 人';
+}
+function riReadTextFile(file){return new Promise((res,rej)=>{const r=new FileReader();r.onerror=()=>rej(r.error);r.onload=()=>res(String(r.result||''));r.readAsText(file,'utf-8')})}
+async function riReadSpreadsheet(file){
+ riStatus('正在加载 Excel 解析模块…','work');await riLoadScript(RI_LIBS.xlsx,'XLSX',20000);const buf=await file.arrayBuffer(),wb=XLSX.read(buf,{type:'array'}),sheet=wb.Sheets[wb.SheetNames[0]],matrix=XLSX.utils.sheet_to_json(sheet,{header:1,raw:false,defval:''});return riRowsFromMatrix(matrix)
+}
+async function riReadDocx(file){
+ riStatus('正在加载 Word 解析模块…','work');await riLoadScript(RI_LIBS.mammoth,'mammoth',20000);const result=await mammoth.extractRawText({arrayBuffer:await file.arrayBuffer()});return riParseText(result.value||'')
+}
+async function riReadPdf(file){
+ riStatus('正在加载 PDF 解析模块…','work');
+ const pdfjs=await import('https://cdn.jsdelivr.net/npm/pdfjs-dist@6.5.438/build/pdf.min.mjs');pdfjs.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@6.5.438/build/pdf.worker.min.mjs';
+ const doc=await pdfjs.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;let text='';
+ for(let n=1;n<=doc.numPages;n++){const page=await doc.getPage(n),tc=await page.getTextContent();text+='\n'+tc.items.map(x=>x.str).join(' ')}
+ return riParseText(text)
+}
+async function riImageCanvas(file){
+ const url=URL.createObjectURL(file);try{
+   const img=await new Promise((res,rej)=>{const im=new Image();im.onload=()=>res(im);im.onerror=()=>rej(new Error('照片无法读取'));im.src=url});
+   const max=2400,scale=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight)),cv=document.createElement('canvas');cv.width=Math.max(1,Math.round(img.naturalWidth*scale));cv.height=Math.max(1,Math.round(img.naturalHeight*scale));
+   const cx=cv.getContext('2d',{willReadFrequently:true});cx.drawImage(img,0,0,cv.width,cv.height);const d=cx.getImageData(0,0,cv.width,cv.height),a=d.data;
+   for(let i=0;i<a.length;i+=4){const y=.299*a[i]+.587*a[i+1]+.114*a[i+2],v=Math.max(0,Math.min(255,(y-128)*1.35+128));a[i]=a[i+1]=a[i+2]=v}cx.putImageData(d,0,0);return cv
+ }finally{URL.revokeObjectURL(url)}
+}
+async function riReadImage(file){
+ riStatus('正在加载照片文字识别模块…首次使用需要联网下载 OCR 组件。','work');await riLoadScript(RI_LIBS.tesseract,'Tesseract',30000);const cv=await riImageCanvas(file);
+ const worker=await Tesseract.createWorker('chi_sim+eng',1,{logger:m=>{if(m&&m.status){const pct=Number.isFinite(m.progress)?' '+Math.round(m.progress*100)+'%':'';riStatus('照片识别：'+m.status+pct,'work')}}});
+ try{const r=await worker.recognize(cv);return riParseText(r.data&&r.data.text||'')}finally{await worker.terminate()}
+}
+async function riHandleFile(file){
+ if(!file)return;const seq=++rosterImportSeq,ext=riExt(file.name),type=String(file.type||'').toLowerCase();riStatus('读取 '+file.name+'…','work');
+ try{
+   let rows=[];
+   if(type.startsWith('image/')||['jpg','jpeg','png','webp','heic','heif'].includes(ext))rows=await riReadImage(file);
+   else if(['csv','tsv','txt'].includes(ext)||type.startsWith('text/'))rows=riParseText(await riReadTextFile(file));
+   else if(['xlsx','xls'].includes(ext))rows=await riReadSpreadsheet(file);
+   else if(ext==='docx')rows=await riReadDocx(file);
+   else if(ext==='pdf'||type==='application/pdf')rows=await riReadPdf(file);
+   else throw new Error('暂不支持此文件格式');
+   if(seq!==rosterImportSeq)return;riSetDraft(rows,file.name)
+ }catch(e){if(seq!==rosterImportSeq)return;riStatus('导入失败：'+(e&&e.message||'无法解析')+'。可改用“粘贴名单”作为稳定备用。','bad')}
+}
+function riCommit(){
+ const selectedRows=rosterImportDraft.filter(p=>p.use&&riClean(p.name));if(!selectedRows.length){note('没有勾选球员');return}
+ const limit=starterLimit(),starterRows=selectedRows.filter(p=>p.squadType==='STARTER');
+ if(starterRows.length>limit){note('首发超过 '+limit+' 人，请先调整首发/替补');return}
+ if(selectedRows.some(p=>!p.role)){note('还有球员“位置组”未确认');return}
+ const existing=new Set(roster.map(p=>(String(p.number)+'|'+String(p.name)).toLowerCase()));
+ let added=0;
+ for(const x of selectedRows){
+   const key=(String(x.number)+'|'+String(x.name)).toLowerCase();if(existing.has(key))continue;
+   roster.push({id:uid(),name:riClean(x.name),number:riClean(x.number)||'00',squadType:x.squadType||'SUB',role:x.role||'MF',position:riClean(x.position)||x.role||'MF',captain:!!x.captain,statLabel:'',statValue:'',photo:'',mediaBlob:null,mediaObjectUrl:'',mediaUrl:'',mediaAction:'STANDARD',directorIn:0,directorOut:0,directorSpeed:1,directorFreeze:false,directorFreezeMs:1000,directorCamera:'MEDIUM'});existing.add(key);added++
+ }
+ teamStore[activeSide].roster=roster;reconcileTeamStarters(activeSide,q('formation').value);selected=roster.length?roster.length-1:-1;renderRoster();updateFormatUI();refreshMatchdayPlayers();renderStage(currentGroup);mdPersist();riStatus('已导入 '+added+' 人到 '+sideLabel(activeSide)+'。重复球员已自动跳过。','ok');q('rosterImportPreview').classList.remove('on');rosterImportDraft=[];note('名单导入完成 · '+added+' 人')
+}
+function initRosterImport(){
+ q('rosterPasteToggle').onclick=()=>q('rosterPaste').classList.toggle('on');q('rosterPasteClear').onclick=()=>{q('rosterPasteText').value=''};
+ q('rosterParsePaste').onclick=()=>riSetDraft(riParseText(q('rosterPasteText').value),'粘贴文字');
+ q('rosterCameraFile').onchange=e=>{const f=e.target.files&&e.target.files[0];riHandleFile(f);e.target.value=''};
+ q('rosterImportFile').onchange=e=>{const f=e.target.files&&e.target.files[0];riHandleFile(f);e.target.value=''};
+ q('riAllStarter').onclick=()=>{const limit=starterLimit();let n=0;for(const p of rosterImportDraft){if(!p.use)continue;p.squadType=n++<limit?'STARTER':'SUB'}riRenderDraft()};
+ q('riAutoRole').onclick=()=>riAutoFillRoles();q('riClearDraft').onclick=()=>{rosterImportDraft=[];q('rosterImportPreview').classList.remove('on');riStatus('已取消本次导入。')};q('rosterCommitImport').onclick=riCommit
 }
 function readPlayer(){return{id:selected>=0&&roster[selected]?roster[selected].id:'',name:q('playerName').value.trim()||'PLAYER',number:q('playerNo').value.trim()||'00',squadType:q('squadType').value||'STARTER',role:q('role').value,position:q('position').value.trim()||q('role').value,captain:q('captain').value==='1',statLabel:q('statLabel').value.trim()||'',statValue:q('statValue').value.trim()||'',photo:assets.photo||'',mediaBlob:assets.mediaBlob||null,mediaObjectUrl:assets.mediaObjectUrl||'',mediaUrl:q('mediaUrl').value.trim()||'',mediaAction:q('mediaAction').value||'STANDARD',directorIn:Math.max(0,parseFloat(q('directorIn').value)||0),directorOut:Math.max(0,parseFloat(q('directorOut').value)||0),directorSpeed:parseFloat(q('directorSpeed').value)||1,directorFreeze:q('directorFreeze').value==='1',directorFreezeMs:parseInt(q('directorFreezeMs').value,10)||1000,directorCamera:q('directorCamera').value||'MEDIUM'}}
 function writePlayer(p){q('playerName').value=p.name||'';q('playerNo').value=p.number||'';q('squadType').value=p.squadType||'STARTER';q('role').value=p.role||'MF';q('position').value=p.position||p.role||'';q('captain').value=p.captain?'1':'0';q('statLabel').value=p.statLabel||'';q('statValue').value=p.statValue||'';q('mediaUrl').value=p.mediaUrl||'';q('mediaAction').value=p.mediaAction||'STANDARD';q('directorIn').value=Number.isFinite(+p.directorIn)?+p.directorIn:0;q('directorOut').value=Number.isFinite(+p.directorOut)?+p.directorOut:0;q('directorSpeed').value=String(p.directorSpeed||1);q('directorFreeze').value=p.directorFreeze?'1':'0';q('directorFreezeMs').value=String(p.directorFreezeMs||1000);q('directorCamera').value=p.directorCamera||'MEDIUM';assets.photo=p.photo||'';assets.mediaBlob=p.mediaBlob||null;assets.mediaObjectUrl=p.mediaObjectUrl||'';renderPreviews()}
@@ -1640,7 +1831,7 @@ function stopCountdown(){clearInterval(startCountdown.t)}
 function cloudAdmin(){try{const x=JSON.parse(localStorage.getItem('sagi_cloud_admin_v20')||'null')||{},b=window.SAGI_CLOUD||{};return{url:x.url||b.url||'',key:x.key||b.key||'',eventSlug:x.eventSlug||b.eventSlug||'',token:x.token||''}}catch(e){const b=window.SAGI_CLOUD||{};return{url:b.url||'',key:b.key||'',eventSlug:b.eventSlug||'',token:''}}}
 function compactPlayersForGroup(group){const src=group==='FULL'?validStarters():group==='SUB'?substitutes():(['GK','DF','MF','FW'].includes(group)?grouped(group):[]);return src.map(p=>({id:p.id,layoutKey:formationPlayerKey(p),name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',squadType:p.squadType||'STARTER',photo:(group==='FULL'||group==='SUB')?'':p.photo||'',mediaUrl:(group==='FULL'||group==='SUB')?'':p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'}))}
 async function publishGroup(group,duration,show=null){
- const state={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,6),group,side:activeSide,team:currentTeamName(),formation:q('formation').value,matchFormat:{mode:matchConfig.mode,playerCount:starterLimit()},playerCount:starterLimit(),startingLabel:startingLabel(),players:compactPlayersForGroup(group),formationLayout:currentFormationLayoutPayload(),allPlayers:validStarters().map(p=>({id:p.id,layoutKey:formationPlayerKey(p),name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',mediaUrl:p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'})),substitutes:substitutes().map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,statLabel:p.statLabel||'',statValue:p.statValue||''})),crest:assets.crest||'',stadium:assets.bg||'',background:q('outputBg').value,visualVersion:'V4.7.2-FORMATION-EDITOR',duration,show:show||null,package:packageData(),startedAt:new Date().toISOString()};
+ const state={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,6),group,side:activeSide,team:currentTeamName(),formation:q('formation').value,matchFormat:{mode:matchConfig.mode,playerCount:starterLimit()},playerCount:starterLimit(),startingLabel:startingLabel(),players:compactPlayersForGroup(group),formationLayout:currentFormationLayoutPayload(),allPlayers:validStarters().map(p=>({id:p.id,layoutKey:formationPlayerKey(p),name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',mediaUrl:p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'})),substitutes:substitutes().map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,statLabel:p.statLabel||'',statValue:p.statValue||''})),crest:assets.crest||'',stadium:assets.bg||'',background:q('outputBg').value,visualVersion:'V4.8.0-FORMATION-EDITOR',duration,show:show||null,package:packageData(),startedAt:new Date().toISOString()};
  try{
    await lanPost('/api/state',{lineupIntro:state});
    return{ok:true}
@@ -1770,7 +1961,7 @@ async function save(){
  if(assets.musicBlob)await dbPut('showMusic',assets.musicBlob);else await dbDel('showMusic');
  localStorage.setItem('sagi_player_intro_v40',JSON.stringify({activeSide:snapshot.activeSide,matchConfig:snapshot.matchConfig,package:snapshot.package,teams:snapshot.teams}));
  localStorage.setItem('sagi_show_director_v40',JSON.stringify(snapshot.show));
- note('V4.7.2 双队阵容、音频与节目已保存')
+ note('V4.8 双队阵容、音频与节目已保存')
 }
 async function hydrateRoster(list=[]){const out=[];for(const p of list){p.photo=await dbGet('photo:'+p.id);p.mediaBlob=await dbGet('media:'+p.id);p.mediaObjectUrl=p.mediaBlob instanceof Blob?URL.createObjectURL(p.mediaBlob):'';p.mediaAction=p.mediaAction||'STANDARD';p.directorIn=Number(p.directorIn)||0;p.directorOut=Number(p.directorOut)||0;p.directorSpeed=Number(p.directorSpeed)||1;p.directorFreeze=!!p.directorFreeze;p.directorFreezeMs=Number(p.directorFreezeMs)||1000;p.directorCamera=p.directorCamera||'MEDIUM';out.push(p)}return out}
 async function load(){
@@ -1787,7 +1978,7 @@ async function load(){
   reconcileTeamStarters('HOME',teamStore.HOME.formation);reconcileTeamStarters('AWAY',teamStore.AWAY.formation);
   assets.bg=await dbGet('stadium');assets.eventLogo=await dbGet('eventLogo');assets.musicBlob=await dbGet('showMusic');assets.musicObjectUrl=assets.musicBlob instanceof Blob?URL.createObjectURL(assets.musicBlob):'';
   let storedShow=JSON.parse(localStorage.getItem('sagi_show_director_v40')||'null');if(!storedShow){try{storedShow=JSON.parse(localStorage.getItem('sagi_show_director_v36')||'null')}catch(_){}}if(Array.isArray(storedShow)&&storedShow.length)showSteps=normalizeShowSteps(storedShow);else showSteps=normalizeShowSteps(DEFAULT_SHOW);
-  switchTeam(x.activeSide||'HOME',{silent:true,skipStash:true});renderPreviews();renderShowTimeline();syncMatchStage();note('V4.7.2 双队阵容、音频与节目已读取')
+  switchTeam(x.activeSide||'HOME',{silent:true,skipStash:true});renderPreviews();renderShowTimeline();syncMatchStage();note('V4.8.0 双队阵容、音频与节目已读取')
  }catch(e){note('读取失败')}
 }
 
@@ -1880,7 +2071,7 @@ q('matchFormat').onchange=()=>setMatchFormatFromUI();q('customPlayerCount').onch
 q('formation').onchange=()=>{teamStore[activeSide].formation=q('formation').value;const r=reconcileTeamStarters(activeSide,q('formation').value);roster=teamStore[activeSide].roster||roster;renderRoster();updateFormatUI();updateFormationEditorUI();renderStage(currentGroup);refreshMatchdayPlayers();if(matchReady){matchReady=false;setupReadySignature='';refreshSetupReadyUI()}note('阵型已切换 '+q('formation').value+(r.changed?' · '+syncSummary(r):''))};q('teamName').oninput=()=>{if(activeSide==='HOME')q('matchHome').value=q('teamName').value;else q('matchAway').value=q('teamName').value;renderStage(currentGroup)};q('outputBg').onchange=()=>renderStage(currentGroup);
 ['matchCompetition','matchRound','matchKickoff','matchVenue'].forEach(id=>q(id).oninput=syncMatchStage);q('matchHome').oninput=()=>{if(activeSide==='HOME')q('teamName').value=q('matchHome').value;syncMatchStage()};q('matchAway').oninput=()=>{if(activeSide==='AWAY')q('teamName').value=q('matchAway').value;syncMatchStage()};
 ['audioMode','audioTheme','audioIntensity','audioDucking','cueVolume','countdownBeat'].forEach(id=>q(id).onchange=()=>{q('audioEngineState').textContent=q('audioMode').value+' · '+q('audioTheme').value.replaceAll('_',' ')});
-window.addEventListener('resize',resize);renderPreviews();renderRoster();loadShow();applyStoredMatchConfig({mode:'11',playerCount:11},true);refreshFormationOptions('4-3-3');demo();refreshSideUI();updateFormatUI();syncMatchStage();renderStage('TEAM');resize();initBroadcastControl();initMatchdayGraphics();initVmixDirector();initFilterEngine();initMatchSetup();initFormationEditor();initMatchMode();setBroadcastPreview('TEAM','HOME','主队开场',2500);
+window.addEventListener('resize',resize);renderPreviews();renderRoster();loadShow();applyStoredMatchConfig({mode:'11',playerCount:11},true);refreshFormationOptions('4-3-3');demo();refreshSideUI();updateFormatUI();syncMatchStage();renderStage('TEAM');resize();initBroadcastControl();initMatchdayGraphics();initVmixDirector();initFilterEngine();initRosterImport();initMatchSetup();initFormationEditor();initMatchMode();setBroadcastPreview('TEAM','HOME','主队开场',2500);
 })();
 </script>
 
