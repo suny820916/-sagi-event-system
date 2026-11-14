@@ -1188,6 +1188,8 @@ def relation_camera_pose(
                 "STRUCTURE": float(rail_cfg.get("structure_lateral_weight", .22)),
                 "RELATION": float(rail_cfg.get("relation_lateral_weight", .30)),
                 "RESULT_RELATION": float(rail_cfg.get("result_relation_lateral_weight", .26)),
+                "FOCUS_RELATION": float(rail_cfg.get("focus_relation_lateral_weight", .58)),
+                "FINISH_FOCUS": float(rail_cfg.get("finish_focus_lateral_weight", .46)),
             }.get(str(shot_scale or ""), float(rail_cfg.get("lateral_weight", .24)))
             cx = anchor_x + (cx - anchor_x) * max(0.0, min(1.0, scale_weight))
 
