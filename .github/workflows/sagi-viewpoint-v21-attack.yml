@@ -1,4 +1,4 @@
-name: SAGI VIEWPOINT V2.1 NATIVE 30FPS
+name: SAGI VIEWPOINT V2.1 AXIS LOCK 30FPS
 
 concurrency:
   group: sagi-viewpoint-v21-attack-${{ github.ref }}
@@ -10,7 +10,7 @@ on:
     paths:
       - "cloud-blender-worker/presets/christmas_tree_attack_viewpoint_v21.json"
       - ".github/workflows/sagi-viewpoint-v21-attack.yml"
-      - "cloud-blender-worker/engine/sagi_tactical_execution_director_v1.py"
+      - "cloud-blender-worker/engine/sagi_tactical_execution_director_v21.py"
   workflow_dispatch:
 
 jobs:
@@ -24,7 +24,7 @@ jobs:
       - name: Build Blender image
         run: docker build -t sagi-viewpoint-v21 ./cloud-blender-worker
 
-      - name: Render V2.1 reference match attack test
+      - name: Render V2.1 axis-lock 30fps attack test
         shell: bash
         run: |
           set -euo pipefail
@@ -34,7 +34,7 @@ jobs:
             sagi-viewpoint-v21 \
             bash -lc '
               blender --background \
-                --python /app/engine/sagi_tactical_execution_director_v1.py \
+                --python /app/engine/sagi_tactical_execution_director_v21.py \
                 -- \
                 /app/presets/christmas_tree_attack_viewpoint_v21.json \
                 /out
@@ -65,7 +65,7 @@ jobs:
       - name: Upload V2.1 artifact
         uses: actions/upload-artifact@v4
         with:
-          name: SAGI-VIEWPOINT-V2.1-NATIVE-30FPS
+          name: SAGI-VIEWPOINT-V2.1-AXIS-LOCK-30FPS
           path: |
             viewpoint_v21_out/SAGI_VIEWPOINT_V2_1_ATTACK_12_43.mp4
             viewpoint_v21_out/SAGI_VIEWPOINT_V2_1_ATTACK_00_43.mp4
