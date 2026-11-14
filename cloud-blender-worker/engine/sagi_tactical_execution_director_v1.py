@@ -610,11 +610,12 @@ m_tactical_guide_soft = material(
     rough=.62,
     emission_strength=.10,
 )
+emphasis_visual_cfg = cfg.get("emphasis_visual", {})
 m_ring_support = material(
     "RING_SUPPORT",
     hex_rgba(pal.get("ring_support", "#777A26")),
     rough=.44,
-    emission_strength=.22,
+    emission_strength=float(emphasis_visual_cfg.get("support_emission_strength", .16)),
 )
 m_tactical_zone = material(
     "TACTICAL_ZONE",
@@ -823,10 +824,14 @@ def create_player(name, data):
     for ch in (torso, head):
         ch.parent = root
 
+    emphasis_cfg = cfg.get("emphasis_visual", {})
+    focal_ring_radius = float(emphasis_cfg.get("focal_ring_radius", .66))
+    support_ring_radius = float(emphasis_cfg.get("support_ring_radius", .92))
+
     ring = torus(
         name + "_RING",
         (0,0,.04),
-        .66,
+        focal_ring_radius,
         ring_tube,
         m_ring,
     )
@@ -836,8 +841,8 @@ def create_player(name, data):
     support_ring = torus(
         name + "_SUPPORT_RING",
         (0,0,.035),
-        .92,
-        max(.012, ring_tube * .68),
+        support_ring_radius,
+        max(.010, ring_tube * float(emphasis_cfg.get("support_ring_tube_mult", .58))),
         m_ring_support,
     )
     support_ring.parent = root
