@@ -10,7 +10,7 @@ on:
     paths:
       - "cloud-blender-worker/presets/christmas_tree_attack_viewpoint_v30.json"
       - ".github/workflows/sagi-viewpoint-v30-attack.yml"
-      - "cloud-blender-worker/engine/sagi_tactical_execution_director_v30.py"
+      - "cloud-blender-worker/engine/sagi_tactical_execution_director_v29.py"
   workflow_dispatch:
 
 jobs:
@@ -34,7 +34,7 @@ jobs:
             sagi-viewpoint-v30 \
             bash -lc '
               blender --background \
-                --python /app/engine/sagi_tactical_execution_director_v30.py \
+                --python /app/engine/sagi_tactical_execution_director_v29.py \
                 -- \
                 /app/presets/christmas_tree_attack_viewpoint_v30.json \
                 /out
