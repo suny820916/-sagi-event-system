@@ -1230,6 +1230,30 @@ def relation_camera_pose(
     target_y_offset = float(profile.get("target_y_offset", 0.0))
     frame_shift_y = float(profile.get("frame_shift_y", vp_cfg.get("default_frame_shift_y", 0.0)))
 
+    # V1.8 DIRECTOR LOGIC: the tactical pitch has a stable longitudinal axis.
+    # A viewpoint may change height/distance freely, but orbit rotation is capped
+    # by shot purpose so the board never appears to spin without tactical reason.
+    director_cfg = cfg.get("director_constraints", {})
+    az_caps = director_cfg.get("max_abs_azimuth_by_scale", {})
+    az_cap = az_caps.get(scale_name)
+    if az_cap is not None:
+        az_cap = abs(float(az_cap))
+        azimuth_deg = max(-az_cap, min(az_cap, azimuth_deg))
+
+    # Floating-stage envelope: vertical screen placement stays inside a narrow
+    # authored band so the pitch reads as one suspended tactical object rather
+    # than a camera flying in and out of a full-screen field.
+    stage_cfg = cfg.get("floating_stage", {})
+    if stage_cfg.get("enabled", False):
+        shift_min = float(stage_cfg.get("frame_shift_y_min", -0.11))
+        shift_max = float(stage_cfg.get("frame_shift_y_max", -0.07))
+        if shift_min > shift_max:
+            shift_min, shift_max = shift_max, shift_min
+        frame_shift_y = max(shift_min, min(shift_max, frame_shift_y))
+        structural_shift = stage_cfg.get("structural_frame_shift_y")
+        if structural_shift is not None and scale_name in ("CENTRAL_MASTER", "WIDE_STRUCTURE", "STRUCTURE"):
+            frame_shift_y = max(shift_min, min(shift_max, float(structural_shift)))
+
     target_x = cx + target_x_offset
     target_y = cy + target_y_offset
     orbit_dist = max(1.0, tilt_back * max(0.45, min(1.80, distance_mult)))
