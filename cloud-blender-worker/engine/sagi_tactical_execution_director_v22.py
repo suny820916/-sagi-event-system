@@ -1,0 +1,2242 @@
+import bpy
+import json
+import math
+import os
+import sys
+from mathutils import Vector
+
+
+def args_after_dd():
+    if "--" not in sys.argv:
+        return []
+    return sys.argv[sys.argv.index("--") + 1:]
+
+
+COLOR_INPUT_SRGB = False
+
+
+def _srgb_to_linear(v):
+    v = max(0.0, min(1.0, float(v)))
+    if v <= 0.04045:
+        return v / 12.92
+    return ((v + 0.055) / 1.055) ** 2.4
+
+
+def hex_rgba(h, alpha=1.0):
+    h = h.lstrip("#")
+    rgb = tuple(int(h[i:i+2], 16) / 255.0 for i in (0, 2, 4))
+    if COLOR_INPUT_SRGB:
+        rgb = tuple(_srgb_to_linear(v) for v in rgb)
+    return rgb + (alpha,)
+
+
+def clear_scene():
+    bpy.ops.object.select_all(action="SELECT")
+    bpy.ops.object.delete(use_global=False)
+
+
+def material(name, color, rough=.55, metallic=0.0, emission_strength=0.0):
+    m = bpy.data.materials.new(name)
+    m.diffuse_color = color
+    m.use_nodes = True
+    bsdf = m.node_tree.nodes.get("Principled BSDF")
+    bsdf.inputs["Base Color"].default_value = color
+    bsdf.inputs["Roughness"].default_value = rough
+    bsdf.inputs["Metallic"].default_value = metallic
+    if emission_strength:
+        if "Emission Color" in bsdf.inputs:
+            bsdf.inputs["Emission Color"].default_value = color
+        if "Emission Strength" in bsdf.inputs:
+            bsdf.inputs["Emission Strength"].default_value = emission_strength
+    return m
+
+
+def cube(name, loc, scale, mat):
+    bpy.ops.mesh.primitive_cube_add(location=loc)
+    o = bpy.context.object
+    o.name = name
+    o.scale = scale
+    bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+    o.data.materials.append(mat)
+    return o
+
+
+def sphere(name, loc, radius, mat):
+    bpy.ops.mesh.primitive_uv_sphere_add(
+        segments=12,
+        ring_count=6,
+        radius=radius,
+        location=loc,
+    )
+    o = bpy.context.object
+    o.name = name
+    o.data.materials.append(mat)
+    return o
+
+
+def cyl(name, loc, radius, depth, mat):
+    bpy.ops.mesh.primitive_cylinder_add(
+        vertices=10,
+        radius=radius,
+        depth=depth,
+        location=loc,
+    )
+    o = bpy.context.object
+    o.name = name
+    o.data.materials.append(mat)
+    return o
+
+
+def torus(name, loc, major, minor, mat):
+    bpy.ops.mesh.primitive_torus_add(
+        major_radius=major,
+        minor_radius=minor,
+        major_segments=40,
+        minor_segments=8,
+        location=loc,
+    )
+    o = bpy.context.object
+    o.name = name
+    o.data.materials.append(mat)
+    return o
+
+
+def line(name, p1, p2, width, mat, z=.205):
+    c = bpy.data.curves.new(name, "CURVE")
+    c.dimensions = "3D"
+    c.bevel_depth = width
+    c.bevel_resolution = 1
+    s = c.splines.new("POLY")
+    s.points.add(1)
+    s.points[0].co = (p1[0], p1[1], z, 1)
+    s.points[1].co = (p2[0], p2[1], z, 1)
+    o = bpy.data.objects.new(name, c)
+    bpy.context.collection.objects.link(o)
+    o.data.materials.append(mat)
+    return o
+
+
+def polyline(name, pts, width, mat, closed=True, z=.205):
+    c = bpy.data.curves.new(name, "CURVE")
+    c.dimensions = "3D"
+    c.bevel_depth = width
+    c.bevel_resolution = 1
+    s = c.splines.new("POLY")
+    s.points.add(len(pts) - 1)
+    for i, p in enumerate(pts):
+        s.points[i].co = (p[0], p[1], z, 1)
+    s.use_cyclic_u = closed
+    o = bpy.data.objects.new(name, c)
+    bpy.context.collection.objects.link(o)
+    o.data.materials.append(mat)
+    return o
+
+
+def look_at(obj, target):
+    direction = Vector(target) - obj.location
+    obj.rotation_euler = direction.to_track_quat("-Z", "Y").to_euler()
+
+
+def look_at_tactical_locked(obj, target):
+    """Point camera at target while keeping pitch longitudinal axis stable on screen."""
+    from mathutils import Matrix
+    forward = (Vector(target) - obj.location).normalized()
+    desired_up = Vector((0.0, 1.0, 0.0))
+    up = desired_up - forward * desired_up.dot(forward)
+    if up.length < 1e-6:
+        desired_up = Vector((0.0, 0.0, 1.0))
+        up = desired_up - forward * desired_up.dot(forward)
+    up.normalize()
+    right = forward.cross(up).normalized()
+    # Blender camera looks along local -Z; local Y is screen-up.
+    rot = Matrix((
+        (right.x, up.x, -forward.x),
+        (right.y, up.y, -forward.y),
+        (right.z, up.z, -forward.z),
+    ))
+    obj.rotation_euler = rot.to_euler()
+
+
+def key(obj, path, frame):
+    obj.keyframe_insert(data_path=path, frame=frame)
+
+
+def set_new_key_interpolation(mode):
+    """Best-effort control for newly inserted keys; safe across Blender versions."""
+    try:
+        old = bpy.context.preferences.edit.keyframe_new_interpolation_type
+        bpy.context.preferences.edit.keyframe_new_interpolation_type = mode
+        return old
+    except Exception:
+        return None
+
+
+def restore_new_key_interpolation(old):
+    if old is None:
+        return
+    try:
+        bpy.context.preferences.edit.keyframe_new_interpolation_type = old
+    except Exception:
+        pass
+
+
+def smooth_action(obj):
+    # Blender 5.x uses layered/slotted Actions and no longer exposes
+    # Action.fcurves through the legacy API. Default keyframe interpolation
+    # is already Bezier, so V1 deliberately leaves curve data untouched.
+    # We will add SAGI camera-specific easing with the Blender 5.x API later.
+    return
+
+
+args = args_after_dd()
+if len(args) < 2:
+    raise SystemExit(
+        "Usage: blender --background --python sagi_tactics_blender.py -- config.json output_dir"
+    )
+
+cfg_path = os.path.abspath(args[0])
+out_dir = os.path.abspath(args[1])
+os.makedirs(out_dir, exist_ok=True)
+with open(cfg_path, "r", encoding="utf-8") as f:
+    cfg = json.load(f)
+
+# Design palettes are authored as normal sRGB HEX values. Blender material
+# colors are linear, so opt-in conversion is required if we want a written
+# #09090B to actually render visually near #09090B instead of a lifted grey.
+COLOR_INPUT_SRGB = str(cfg.get("palette_input_space", "LINEAR")).upper() == "SRGB"
+
+
+def event_start(ev):
+    if "t" in ev:
+        return float(ev["t"])
+    if "release" in ev:
+        return float(ev["release"])
+    return 0.0
+
+
+def event_end(ev):
+    typ = ev.get("type")
+    if typ in ("pass", "shot"):
+        return float(ev.get("arrive", ev.get("release", event_start(ev))))
+    if typ in (
+        "player_move", "defender_shift", "dribble", "space", "face",
+        "pass_link", "tactical_arrow", "channel_highlight",
+        "dashed_path", "zone_fill", "tactical_hold"
+    ):
+        return event_start(ev) + float(ev.get("duration", 0.0))
+    if typ == "defensive_unit":
+        base = event_start(ev)
+        ends = [
+            base + float(m.get("delay", 0.0)) + float(m.get("duration", ev.get("duration", 0.0)))
+            for m in ev.get("moves", [])
+        ]
+        return max(ends or [base])
+    return event_start(ev)
+
+
+def validate_execution(config):
+    """Validate tactical continuity before Blender spends time rendering."""
+    errors = []
+    warnings = []
+    players_cfg = config.get("players", {})
+    events = config.get("events", [])
+    duration = float(config.get("duration_sec", 0.0))
+    phases = config.get("execution_phases", [])
+    initial_holder = config.get("initial_ball_holder")
+
+    if not initial_holder:
+        errors.append("initial_ball_holder is required")
+    elif initial_holder not in players_cfg:
+        errors.append(f"initial_ball_holder {initial_holder} is not a player")
+
+    # Timeline must be chronological in the preset so cause/effect is explicit.
+    starts = [event_start(ev) for ev in events]
+    if starts != sorted(starts):
+        errors.append("events are not sorted chronologically")
+
+    # Every referenced player must exist, and every action must finish on screen.
+    for i, ev in enumerate(events):
+        typ = ev.get("type")
+        for key_name in ("player", "from", "to"):
+            ref = ev.get(key_name)
+            if key_name == "to" and isinstance(ref, list):
+                continue
+            if key_name in ("player", "from", "to") and isinstance(ref, str):
+                if ref not in players_cfg and not (typ == "shot" and key_name == "to"):
+                    errors.append(f"event {i} references unknown player {ref}")
+
+        if typ == "relation_camera":
+            subjects = ev.get("subjects", [])
+            view_angle = ev.get("view_angle")
+            if view_angle:
+                vp_profiles = config.get("viewpoint_language", {}).get("profiles", {})
+                if view_angle not in vp_profiles:
+                    errors.append(
+                        f"event {i} relation_camera references unknown view_angle {view_angle}"
+                    )
+            if len(subjects) < 2:
+                errors.append(f"event {i} relation_camera needs at least two subjects")
+            for subject in subjects:
+                if subject not in players_cfg:
+                    errors.append(f"event {i} relation_camera references unknown player {subject}")
+
+        if typ == "defensive_unit":
+            moves = ev.get("moves", [])
+            if len(moves) < 2:
+                errors.append(f"event {i} defensive_unit needs at least two moves")
+            for move in moves:
+                player_name = move.get("player")
+                if player_name not in players_cfg:
+                    errors.append(
+                        f"event {i} defensive_unit references unknown player {player_name}"
+                    )
+
+        if event_end(ev) > duration + 1e-6:
+            errors.append(
+                f"event {i} ({typ}) ends at {event_end(ev):.2f}s "
+                f"after duration {duration:.2f}s"
+            )
+
+        if typ in ("pass", "shot"):
+            release = float(ev.get("release", 0))
+            arrive = float(ev.get("arrive", 0))
+            if arrive <= release:
+                errors.append(f"event {i} ({typ}) has invalid ball timing")
+
+    # Possession chain: no teleporting the ball between unrelated players.
+    # Full-lesson presets may deliberately reset possession at chapter boundaries
+    # (for example: attack chapter -> defense chapter). chapter_state.ball_owner
+    # is therefore an authored tactical reset, not a possession error.
+    holder = initial_holder
+    ball_chain = []
+    for i, ev in enumerate(events):
+        typ = ev.get("type")
+
+        if typ == "chapter_state":
+            reset_holder = ev.get("ball_owner")
+            if reset_holder:
+                if reset_holder not in players_cfg:
+                    errors.append(
+                        f"event {i} chapter_state references unknown ball_owner {reset_holder}"
+                    )
+                else:
+                    holder = reset_holder
+                    ball_chain.append(f"RESET->{reset_holder}")
+            continue
+
+        if typ == "pass":
+            src = ev.get("from")
+            dst = ev.get("to")
+            if holder and src != holder:
+                errors.append(
+                    f"possession break before event {i}: "
+                    f"expected {holder}, pass starts from {src}"
+                )
+            holder = dst
+            ball_chain.append(f"{src}->{dst}")
+        elif typ == "shot":
+            src = ev.get("from")
+            if holder and src != holder:
+                errors.append(
+                    f"possession break before shot event {i}: "
+                    f"expected {holder}, shot starts from {src}"
+                )
+            ball_chain.append(f"{src}->TARGET")
+
+        elif typ == "dribble":
+            src = ev.get("player")
+            if holder and src != holder:
+                errors.append(
+                    f"possession break before dribble event {i}: "
+                    f"expected {holder}, dribble belongs to {src}"
+                )
+            ball_chain.append(f"{src}->DRIBBLE")
+
+    # Each declared phase must contain a real tactical action, not only a camera cue.
+    phase_report = []
+    for phase in phases:
+        p0 = float(phase["from"])
+        p1 = float(phase["to"])
+        phase_events = [
+            ev for ev in events
+            if event_start(ev) >= p0 - 1e-6 and event_start(ev) < p1 - 1e-6
+        ]
+        tactical_events = [
+            ev for ev in phase_events
+            if ev.get("type") not in (
+                "camera", "camera_dna", "relation_camera", "focus", "space",
+                "emphasis", "pass_link", "tactical_arrow", "channel_highlight",
+                "dashed_path", "zone_fill", "tactical_hold"
+            )
+        ]
+        defender_events = [
+            ev for ev in phase_events
+            if ev.get("type") in ("defender_shift", "defensive_unit")
+        ]
+        if not tactical_events:
+            errors.append(f"phase {phase['name']} has no tactical action")
+        if config.get("require_defensive_reaction", False) and not defender_events:
+            warnings.append(f"phase {phase['name']} has no visible defensive reaction")
+        phase_report.append({
+            "name": phase["name"],
+            "from": p0,
+            "to": p1,
+            "event_count": len(phase_events),
+            "tactical_event_count": len(tactical_events),
+            "defender_reaction_count": len(defender_events),
+        })
+
+    last_action_end = max(
+        [event_end(ev) for ev in events if ev.get("type") not in (
+            "camera", "camera_dna", "relation_camera", "focus", "space",
+            "emphasis", "pass_link", "tactical_arrow", "channel_highlight",
+            "dashed_path", "zone_fill", "tactical_hold"
+        )]
+        or [0.0]
+    )
+    completion_hold = max(0.0, duration - last_action_end)
+    if completion_hold > 1.5:
+        warnings.append(
+            f"post-execution hold is {completion_hold:.2f}s; check for dead time"
+        )
+
+    report = {
+        "version": config.get("version"),
+        "director_mode": config.get("director_mode"),
+        "duration_sec": duration,
+        "initial_ball_holder": initial_holder,
+        "final_ball_holder": holder,
+        "ball_chain": ball_chain,
+        "phase_report": phase_report,
+        "last_action_end_sec": round(last_action_end, 3),
+        "completion_hold_sec": round(completion_hold, 3),
+        "errors": errors,
+        "warnings": warnings,
+        "valid": not errors,
+    }
+    return report
+
+
+def predicted_player_pos(name, t):
+    """Predict a player's XY position from preset movement events at time t."""
+    base = cfg["players"][name]["pos"]
+    x, y = float(base[0]), float(base[1])
+
+    for ev in cfg.get("events", []):
+        typ = ev.get("type")
+        move_event = None
+
+        if typ in ("player_move", "defender_shift", "dribble") and ev.get("player") == name:
+            move_event = {
+                "t": float(ev["t"]),
+                "duration": float(ev["duration"]),
+                "to": ev["to"],
+            }
+        elif typ == "defensive_unit":
+            base = float(ev["t"])
+            for move in ev.get("moves", []):
+                if move.get("player") == name:
+                    move_event = {
+                        "t": base + float(move.get("delay", 0.0)),
+                        "duration": float(move.get("duration", ev.get("duration", .7))),
+                        "to": move["to"],
+                    }
+                    break
+
+        if move_event is None:
+            continue
+
+        t0 = float(move_event["t"])
+        dur = max(1e-6, float(move_event["duration"]))
+        t1 = t0 + dur
+        tx, ty = float(move_event["to"][0]), float(move_event["to"][1])
+
+        if t < t0:
+            continue
+        if t >= t1:
+            x, y = tx, ty
+            continue
+
+        alpha = max(0.0, min(1.0, (t - t0) / dur))
+        return (
+            x + (tx - x) * alpha,
+            y + (ty - y) * alpha,
+        )
+
+    return (x, y)
+
+
+execution_report = validate_execution(cfg)
+report_path = os.path.join(out_dir, "execution_report.json")
+with open(report_path, "w", encoding="utf-8") as f:
+    json.dump(execution_report, f, ensure_ascii=False, indent=2)
+
+print("SAGI_EXECUTION_REPORT", json.dumps(execution_report, ensure_ascii=False))
+
+if execution_report["errors"]:
+    raise RuntimeError(
+        "TACTICAL_EXECUTION_INVALID: " + "; ".join(execution_report["errors"])
+    )
+
+fps = int(cfg.get("fps", 24))
+dur = float(cfg.get("duration_sec", 12))
+w, h = cfg.get("resolution", [540, 960])
+pal = cfg["palette"]
+
+clear_scene()
+
+scene = bpy.context.scene
+scene.render.resolution_x = int(w)
+scene.render.resolution_y = int(h)
+scene.render.resolution_percentage = 100
+scene.render.fps = fps
+scene.frame_start = 1
+scene.frame_end = max(1, int(round(dur * fps)))
+requested_engine = cfg.get("render_engine", "BLENDER_EEVEE")
+if requested_engine == "BLENDER_EEVEE_NEXT":
+    requested_engine = "BLENDER_EEVEE"
+
+engine_ok = False
+for candidate in (requested_engine, "BLENDER_EEVEE", "BLENDER_WORKBENCH", "CYCLES"):
+    try:
+        scene.render.engine = candidate
+        engine_ok = True
+        break
+    except (TypeError, ValueError):
+        continue
+
+if not engine_ok:
+    raise RuntimeError("No supported Blender render engine is available")
+
+frames_dir = os.path.join(out_dir, "frames")
+os.makedirs(frames_dir, exist_ok=True)
+scene.render.image_settings.file_format = "PNG"
+scene.render.image_settings.color_mode = "RGB"
+scene.render.filepath = os.path.join(frames_dir, "frame_")
+scene.world.color = hex_rgba(pal["background"])[:3]
+
+# Workbench is the fast cloud preview renderer. Visual contrast can be
+# overridden per preset so dark tactical scenes do not inherit a grey studio wash.
+wb = cfg.get("workbench_visual", {})
+try:
+    scene.display.shading.light = str(wb.get("light", "STUDIO"))
+    scene.display.shading.color_type = "MATERIAL"
+    # Workbench has its own viewport background. Explicitly bind it to the
+    # tactical palette so the rendered black does not inherit Blender's grey
+    # studio background.
+    try:
+        scene.display.shading.background_type = str(wb.get("background_type", "VIEWPORT"))
+        bg = wb.get("background_color", pal.get("background", "#000000"))
+        scene.display.shading.background_color = hex_rgba(bg)[:3]
+    except Exception:
+        pass
+    scene.display.shading.show_shadows = bool(wb.get("show_shadows", False))
+    scene.display.shading.show_cavity = bool(wb.get("show_cavity", True))
+    scene.display.shading.cavity_type = str(wb.get("cavity_type", "WORLD"))
+    try:
+        scene.display.shading.show_specular_highlight = bool(
+            wb.get("show_specular_highlight", True)
+        )
+    except Exception:
+        pass
+    try:
+        scene.display.shading.curvature_ridge_factor = float(wb.get("ridge", 1.0))
+        scene.display.shading.curvature_valley_factor = float(wb.get("valley", 1.0))
+    except Exception:
+        pass
+except Exception:
+    pass
+
+try:
+    scene.render.image_settings.color_mode = "RGB"
+except Exception:
+    pass
+cm = cfg.get("color_management", {})
+try:
+    scene.view_settings.view_transform = str(cm.get("view_transform", "AgX"))
+except Exception:
+    pass
+try:
+    if cm.get("look"):
+        scene.view_settings.look = str(cm["look"])
+    elif str(cm.get("view_transform", "AgX")) == "AgX":
+        scene.view_settings.look = "AgX - Medium High Contrast"
+except Exception:
+    pass
+try:
+    scene.view_settings.exposure = float(cm.get("exposure", 0.0))
+    scene.view_settings.gamma = float(cm.get("gamma", 1.0))
+except Exception:
+    pass
+
+m_floor = material(
+    "TACTICAL_FLOOR",
+    hex_rgba(pal.get("tactical_floor", "#080A0B")),
+    rough=.88,
+)
+m_pitch = material("PITCH", hex_rgba(pal["pitch"]), rough=.78)
+m_pitch_alt = material(
+    "PITCH_ALT",
+    hex_rgba(pal.get("pitch_alt", "#131719")),
+    rough=.80,
+)
+m_pitch_edge = material(
+    "PITCH_EDGE",
+    hex_rgba(pal.get("pitch_edge", "#07090A")),
+    rough=.92,
+)
+m_pitch_shadow = material(
+    "PITCH_SHADOW",
+    hex_rgba(pal.get("pitch_shadow", "#010203")),
+    rough=1.0,
+)
+m_line = material("LINE", hex_rgba(pal["pitch_line"]), rough=.52)
+m_y = material(
+    "OWN_PRIMARY",
+    hex_rgba(pal["own_primary"]),
+    rough=.42,
+    emission_strength=.10,
+)
+m_y2 = material(
+    "OWN_SECONDARY",
+    hex_rgba(pal["own_secondary"]),
+    rough=.48,
+)
+m_g = material(
+    "OPPONENT",
+    hex_rgba(pal["opponent"]),
+    rough=.58,
+)
+m_ring = material(
+    "RING",
+    hex_rgba(pal.get("ring", pal["own_primary"])),
+    rough=.30,
+    emission_strength=2.0,
+)
+m_ball = material(
+    "BALL",
+    hex_rgba(pal.get("ball", "#B5B8BA")),
+    rough=.88,
+)
+m_tactical_guide = material(
+    "TACTICAL_GUIDE",
+    hex_rgba(pal.get("tactical_guide", pal.get("own_primary", "#F5F700"))),
+    rough=.34,
+    emission_strength=.65,
+)
+m_tactical_guide_soft = material(
+    "TACTICAL_GUIDE_SOFT",
+    hex_rgba(pal.get("tactical_guide_soft", "#777A26")),
+    rough=.62,
+    emission_strength=.10,
+)
+emphasis_visual_cfg = cfg.get("emphasis_visual", {})
+m_ring_support = material(
+    "RING_SUPPORT",
+    hex_rgba(pal.get("ring_support", "#777A26")),
+    rough=.44,
+    emission_strength=float(emphasis_visual_cfg.get("support_emission_strength", .16)),
+)
+m_tactical_zone = material(
+    "TACTICAL_ZONE",
+    hex_rgba(pal.get("tactical_zone", "#272A12")),
+    rough=.82,
+    emission_strength=.03,
+)
+
+# V11.1 FLOATING CENTRAL PITCH
+# Keep a very dark safety floor far below the board so relation shots never
+# reveal a hard void, but make it visually merge with the world background.
+cube("TACTICAL_FLOOR", (0, 5, -1.20), (78, 105, .045), m_floor)
+
+# A restrained two-stage underlay creates the Teactics-like impression that
+# the tactical pitch is an object suspended in dark space. Workbench preview
+# does not give us reliable soft contact shadows, so the underlay itself is
+# deliberately geometric and subtle rather than decorative.
+cube("PITCH_SHADOW", (0, 1.10, -.50), (42.2, 62.2, .035), m_pitch_shadow)
+cube("PITCH_EDGE_BASE", (0, 0, -.285), (40.75, 60.75, .12), m_pitch_edge)
+
+# Main tactical board. Its slightly oversized slab leaves the regulation
+# touchline inset, so the viewer can read a physical board edge in master shots.
+cube("PITCH", (0, 0, 0), (40, 60, .18), m_pitch)
+
+# Teactics-like low-contrast horizontal spatial bands.
+# They support depth reading without turning the pitch into a grass texture.
+band_h = 105.0 / 8.0
+for i in range(8):
+    if i % 2 == 0:
+        y0 = -52.5 + band_h * (i + .5)
+        cube(
+            f"PITCH_BAND_{i}",
+            (0, y0, .185),
+            (33.95, band_h / 2.0, .004),
+            m_pitch_alt,
+        )
+
+visual_geo = cfg.get("visual_geometry", {})
+lw = float(visual_geo.get("pitch_line_width", .055))
+goal_line_width = float(visual_geo.get("goal_line_width", .045))
+goal_post_half_width = float(visual_geo.get("goal_post_half_width", .055))
+ring_tube = float(visual_geo.get("focus_ring_tube", .024))
+polyline(
+    "TOUCHLINE",
+    [(-34,-52.5),(34,-52.5),(34,52.5),(-34,52.5)],
+    lw,
+    m_line,
+)
+line("HALFWAY", (-34,0), (34,0), lw, m_line)
+
+bpy.ops.curve.primitive_bezier_circle_add(
+    radius=9.15,
+    location=(0,0,.205),
+)
+cc = bpy.context.object
+cc.data.bevel_depth = lw
+cc.data.bevel_resolution = 1
+cc.data.materials.append(m_line)
+
+for sy in (-1, 1):
+    y = sy * 52.5
+    y2 = sy * (52.5 - 16.5)
+    polyline(
+        "BOX",
+        [(-20.15,y),(20.15,y),(20.15,y2),(-20.15,y2)],
+        lw,
+        m_line,
+    )
+
+    # Six-yard box: important spatial reference once the camera moves
+    # into the finishing phase.
+    y6 = sy * (52.5 - 5.5)
+    polyline(
+        "SIX_YARD",
+        [(-9.16,y),(9.16,y),(9.16,y6),(-9.16,y6)],
+        lw,
+        m_line,
+    )
+
+    # Minimal goal frame. Keep it geometric and readable from a high
+    # tactical camera; no net texture or broadcast-style detail.
+    goal_y = sy * 52.72
+    back_y = sy * 54.65
+    post_z = 1.22
+    cube(
+        "GOAL_POST_L",
+        (-3.66, goal_y, post_z),
+        (goal_post_half_width, goal_post_half_width, 1.22),
+        m_line,
+    )
+    cube(
+        "GOAL_POST_R",
+        (3.66, goal_y, post_z),
+        (goal_post_half_width, goal_post_half_width, 1.22),
+        m_line,
+    )
+    cube(
+        "GOAL_BAR",
+        (0, goal_y, 2.44),
+        (3.72, goal_post_half_width, goal_post_half_width),
+        m_line,
+    )
+    # Ground-depth rails make the goal mouth legible from above.
+    line(
+        "GOAL_SIDE_L",
+        (-3.66, goal_y),
+        (-3.66, back_y),
+        goal_line_width,
+        m_line,
+        z=.23,
+    )
+    line(
+        "GOAL_SIDE_R",
+        (3.66, goal_y),
+        (3.66, back_y),
+        goal_line_width,
+        m_line,
+        z=.23,
+    )
+    line(
+        "GOAL_BACK",
+        (-3.66, back_y),
+        (3.66, back_y),
+        goal_line_width,
+        m_line,
+        z=.23,
+    )
+
+
+def create_player(name, data):
+    root = bpy.data.objects.new(name, None)
+    bpy.context.collection.objects.link(root)
+    root.location = (
+        data["pos"][0],
+        data["pos"][1],
+        .205,
+    )
+    root.rotation_euler[2] = math.radians(
+        float(data.get("yaw", 0))
+    )
+    # Teactics-style miniature figure: readable, but never dominant.
+    # V03 reduces the overall scale and gives the limbs a quiet natural stance
+    # so players read as people rather than rigid chess pieces.
+    player_visual = cfg.get("player_visual", {})
+    base_scale = float(player_visual.get("scale_base", 1.56))
+    role_mult = (
+        float(player_visual.get("primary_scale_mult", 1.0))
+        if data.get("role") == "primary"
+        else 1.0
+    )
+    final_scale = base_scale * role_mult
+    root.scale = (final_scale, final_scale, final_scale)
+
+    matp = (
+        m_g
+        if data["team"] == "opp"
+        else (
+            m_y
+            if data.get("role") == "primary"
+            else m_y2
+        )
+    )
+
+    # Teactics-oriented miniature silhouette.
+    # Geometry is preset-driven so we can improve readability without simply
+    # scaling the whole player up.
+    silhouette = player_visual.get("silhouette", {})
+    torso_scale = silhouette.get("torso_scale", [.225, .145, .36])
+    torso_z = float(silhouette.get("torso_z", 1.03))
+    head_radius = float(silhouette.get("head_radius", .16))
+    head_z = float(silhouette.get("head_z", 1.58))
+
+    torso = cube(
+        name + "_TORSO",
+        (0,0,torso_z),
+        (
+            float(torso_scale[0]),
+            float(torso_scale[1]),
+            float(torso_scale[2]),
+        ),
+        matp,
+    )
+    head = sphere(
+        name + "_HEAD",
+        (0,0,head_z),
+        head_radius,
+        matp,
+    )
+    # V06 MOTION ENGINE: limbs rotate around actual shoulder / hip pivots.
+    # Earlier versions rotated each cylinder around its own centre, which
+    # created the stiff "chess-piece" motion visible in the preview.
+    def make_limb(suffix, joint_loc, radius, length, rest_y=0.0):
+        pivot = bpy.data.objects.new(name + suffix, None)
+        bpy.context.collection.objects.link(pivot)
+        pivot.parent = root
+        pivot.location = joint_loc
+        pivot.rotation_euler[1] = math.radians(rest_y)
+
+        mesh = cyl(
+            name + suffix + "_MESH",
+            (0,0,0),
+            radius,
+            length,
+            matp,
+        )
+        mesh.parent = pivot
+        # Cylinder extends down from the joint rather than spinning around
+        # its midpoint. This single change makes starts/stops read as running.
+        mesh.location = (0,0,-length * .5)
+        return pivot, mesh
+
+    shoulder_x = float(silhouette.get("shoulder_x", .285))
+    shoulder_z = float(silhouette.get("shoulder_z", 1.30))
+    arm_radius = float(silhouette.get("arm_radius", .048))
+    arm_length = float(silhouette.get("arm_length", .50))
+    hip_x = float(silhouette.get("hip_x", .105))
+    hip_z = float(silhouette.get("hip_z", .78))
+    leg_radius = float(silhouette.get("leg_radius", .058))
+    leg_length = float(silhouette.get("leg_length", .72))
+
+    la, la_mesh = make_limb("_LA", (-shoulder_x,0,shoulder_z), arm_radius, arm_length, -10)
+    ra, ra_mesh = make_limb("_RA", (shoulder_x,0,shoulder_z), arm_radius, arm_length, 10)
+    ll, ll_mesh = make_limb("_LL", (-hip_x,0,hip_z), leg_radius, leg_length, 3)
+    rl, rl_mesh = make_limb("_RL", (hip_x,0,hip_z), leg_radius, leg_length, -3)
+
+    for ch in (torso, head):
+        ch.parent = root
+
+    emphasis_cfg = cfg.get("emphasis_visual", {})
+    focal_ring_radius = float(emphasis_cfg.get("focal_ring_radius", .66))
+    support_ring_radius = float(emphasis_cfg.get("support_ring_radius", .92))
+
+    ring = torus(
+        name + "_RING",
+        (0,0,.04),
+        focal_ring_radius,
+        ring_tube,
+        m_ring,
+    )
+    ring.parent = root
+    ring.hide_render = True
+
+    support_ring = torus(
+        name + "_SUPPORT_RING",
+        (0,0,.035),
+        support_ring_radius,
+        max(.010, ring_tube * float(emphasis_cfg.get("support_ring_tube_mult", .58))),
+        m_ring_support,
+    )
+    support_ring.parent = root
+    support_ring.hide_render = True
+
+    return root, ring, support_ring
+
+
+players = {}
+rings = {}
+support_rings = {}
+for name, data in cfg["players"].items():
+    players[name], rings[name], support_rings[name] = create_player(
+        name,
+        data,
+    )
+
+initial_ball_holder = cfg.get("initial_ball_holder", "GK")
+ball_owner = players[initial_ball_holder]
+ball = sphere(
+    "BALL",
+    (
+        ball_owner.location.x,
+        ball_owner.location.y,
+        .37,
+    ),
+    float(cfg.get("ball_visual", {}).get("radius", .28)),
+    m_ball,
+)
+
+# Light rig
+bpy.ops.object.light_add(
+    type="AREA",
+    location=(0,-8,28),
+)
+key_light = bpy.context.object
+key_light.data.energy = 850
+key_light.data.shape = "DISK"
+key_light.data.size = 24
+look_at(key_light, (0,0,0))
+
+bpy.ops.object.light_add(
+    type="AREA",
+    location=(24,-16,14),
+)
+rim = bpy.context.object
+rim.data.energy = 420
+rim.data.size = 14
+look_at(rim, (0,0,0))
+
+# Camera presets are stable inside each tactical idea.
+bpy.ops.object.camera_add()
+cam = bpy.context.object
+scene.camera = cam
+# Lock horizontal sensor fit so 9:16 framing math is deterministic.
+# AUTO can narrow the horizontal field in portrait renders and crop subjects.
+cam.data.sensor_fit = "HORIZONTAL"
+
+camera_dna = {
+    # V2 relation framing: preserve the tactical angle but crop much tighter.
+    # The pitch is context; the relationship between players is the subject.
+    "receive": {
+        "loc": (2,-17,62), "target": (0,-10,0), "lens": 70,
+        "lead": .00, "settle": .00,
+    },
+    "expand": {
+        "loc": (2,-13,76), "target": (0,-3,0), "lens": 68,
+        "lead": .22, "settle": .16,
+    },
+    "half_space": {
+        # Keep passer + receiver + nearest midfield defenders in the same frame.
+        "loc": (4,-5,74), "target": (3,3,0), "lens": 68,
+        "lead": .24, "settle": .16,
+    },
+    "overlap": {
+        # Centre the actual overlap triangle: carrier + fullback + shifted defender.
+        # At the key moment their tactical centroid is around x=17, y=10.
+        "loc": (17,3,78), "target": (17,10,0), "lens": 68,
+        "lead": .24, "settle": .16,
+    },
+    "switch": {
+        "loc": (2,14,78), "target": (0,26,0), "lens": 66,
+        "lead": .26, "settle": .18,
+    },
+    "complete": {
+        "loc": (-1,24,72), "target": (-3,38,0), "lens": 68,
+        "lead": .18, "settle": .20,
+    },
+}
+
+camera_last = None
+camera_last_t = 0.0
+
+
+def apply_camera_pose(p, frame):
+    cam.location = p["loc"]
+    cam.data.lens = p["lens"]
+    # Screen-space composition is separate from tactical target selection.
+    # Negative shift_y raises the tactical board inside the 9:16 frame,
+    # preserving a dedicated black safe area below the pitch.
+    cam.data.shift_y = float(p.get("frame_shift_y", 0.0))
+    if cfg.get("screen_axis_lock", {}).get("enabled", False):
+        look_at_tactical_locked(cam, p["target"])
+    else:
+        look_at(cam, p["target"])
+    key(cam, "location", frame)
+    key(cam, "rotation_euler", frame)
+    cam.data.keyframe_insert("lens", frame=frame)
+    cam.data.keyframe_insert("shift_y", frame=frame)
+
+
+def camera_dna_key(cue, t):
+    """Execution camera: preserve the tactical relation, reframe only when required."""
+    global camera_last, camera_last_t
+    p = camera_dna[cue]
+    t = float(t)
+    cue_fr = 1 + round(t * fps)
+
+    if camera_last is None or t <= .001:
+        apply_camera_pose(p, cue_fr)
+        camera_last = p
+        camera_last_t = t
+        return
+
+    lead = float(p.get("lead", .28))
+    settle = float(p.get("settle", .20))
+    start_t = max(camera_last_t, t - lead)
+    start_fr = 1 + round(start_t * fps)
+    end_fr = 1 + round((t + settle) * fps)
+
+    # Hold the previous composition until just before the tactical event.
+    apply_camera_pose(camera_last, start_fr)
+    # Complete the reframe just after the event begins, then stop moving.
+    apply_camera_pose(p, end_fr)
+
+    camera_last = p
+    camera_last_t = t + settle
+
+
+FIELD_SCOPE_BOUNDS = {
+    # Tactical board regions. These are not visual decorations: each rectangle
+    # represents the minimum pitch context needed to understand a phase.
+    "FULL_PITCH": (-34.0, 34.0, -52.5, 52.5),
+    # Full physical board silhouette, used only by CENTRAL_MASTER so the dark
+    # rim and breathing room remain visible instead of cropping to touchlines.
+    "FLOATING_BOARD": (-42.5, 42.5, -62.5, 62.5),
+    "DEFENSIVE_HALF_PLUS_MIDFIELD": (-30.0, 30.0, -48.0, 12.0),
+    "CENTRAL_THREE_QUARTERS": (-30.0, 30.0, -34.0, 34.0),
+    # V10.2: tactical completeness is not the same as showing more grass.
+    # These two scopes retain the landmarks needed to understand buildup and
+    # midfield width while keeping the actual player relationships readable
+    # on a 9:16 phone screen.
+    "BUILD_RELATION_ZONE": (-20.0, 20.0, -34.0, 9.0),
+    "MIDFIELD_WIDTH_ZONE": (-21.0, 21.0, -16.0, 25.0),
+    # V10.1 Teactics-style tactical scopes: wide enough to explain the
+    # relationship, but not so wide that every semi-global view becomes a
+    # near-full-pitch shot in 9:16.
+    "CENTRAL_MIDFIELD_WIDE": (-26.0, 26.0, -20.0, 22.0),
+    "CENTRAL_ATTACK_RELATION": (-17.0, 18.0, -4.0, 27.0),
+    "RIGHT_OVERLAP_RELATION": (5.0, 32.0, 0.0, 34.0),
+    "ATTACKING_WIDTH_ZONE": (-22.0, 32.0, 9.0, 46.0),
+    "MIDFIELD_ZONE": (-18.0, 18.0, -12.0, 26.0),
+    "RIGHT_CHANNEL_ZONE": (0.0, 32.0, -6.0, 32.0),
+    "ATTACKING_TWO_THIRDS": (-30.0, 30.0, 0.0, 52.5),
+    "FINAL_THIRD": (-24.0, 24.0, 18.0, 54.0),
+}
+
+
+def field_scope_points(name):
+    bounds = FIELD_SCOPE_BOUNDS.get(name)
+    if not bounds:
+        return []
+    x0, x1, y0, y1 = bounds
+    return [(x0,y0), (x0,y1), (x1,y0), (x1,y1)]
+
+
+def relation_camera_pose(
+    subjects,
+    start_t,
+    focus_t,
+    lens=64.0,
+    min_z=64.0,
+    margin=1.20,
+    shot_scale=None,
+    field_scope=None,
+    view_angle=None,
+    landmark_point=None,
+):
+    """Keep full trajectory in frame, but centre on the current tactical relation."""
+    start_t = float(start_t)
+    focus_t = float(focus_t)
+
+    # A local Teactics-style relation shot should not be forced to include the
+    # entire run from its origin. Enter the close tactical view only when the
+    # relationship is forming; structural shots still preserve the full route.
+    framing_start_t = start_t
+    if str(shot_scale or "") in ("RELATION", "RESULT_RELATION", "FOCUS_RELATION", "FINISH_FOCUS"):
+        scale_cfg = cfg.get("scale_script", {})
+        history_sec = float(scale_cfg.get("local_relation_history_sec", .68))
+        framing_start_t = max(start_t, focus_t - history_sec)
+
+    mid_t = (framing_start_t + focus_t) * .5
+
+    # Trajectory protects framing completeness inside the chosen shot scale.
+    trajectory_pts = []
+    # Focus positions define where the tactical story actually is now.
+    focus_pts = []
+    for name in subjects:
+        trajectory_pts.append(predicted_player_pos(name, framing_start_t))
+        trajectory_pts.append(predicted_player_pos(name, mid_t))
+        fp = predicted_player_pos(name, focus_t)
+        trajectory_pts.append(fp)
+        focus_pts.append(fp)
+
+    xs = [p[0] for p in trajectory_pts]
+    ys = [p[1] for p in trajectory_pts]
+
+    min_x, max_x = min(xs), max(xs)
+    min_y, max_y = min(ys), max(ys)
+    span_x = max(4.0, max_x - min_x)
+    span_y = max(4.0, max_y - min_y)
+
+    # Do NOT centre on the entire start-to-end trajectory: that can pull the
+    # camera backwards while the attack has already moved forward. Centre on
+    # the relationship at focus_t, while still using the whole trajectory for
+    # safe framing bounds.
+    fxs = [p[0] for p in focus_pts]
+    fys = [p[1] for p in focus_pts]
+    relation_cx = (min(fxs) + max(fxs)) * .5
+    relation_cy = (min(fys) + max(fys)) * .5
+
+    scope_pts = field_scope_points(field_scope)
+    if scope_pts:
+        sxs = [p[0] for p in scope_pts]
+        sys = [p[1] for p in scope_pts]
+        scope_cx = (min(sxs) + max(sxs)) * .5
+        scope_cy = (min(sys) + max(sys)) * .5
+    else:
+        scope_cx, scope_cy = relation_cx, relation_cy
+
+    # Teactics-style scale grammar:
+    # CENTRAL_MASTER is a true spatial reset: the pitch itself owns the frame
+    # and stays centred. Other shot types keep the tactical relationship as the
+    # primary subject, with the named pitch region only guiding composition.
+    is_central_master = str(shot_scale or "") == "CENTRAL_MASTER"
+    scope_weight = {
+        "CENTRAL_MASTER": 1.00,
+        "STRUCTURE": .58,
+        "WIDE_STRUCTURE": .68,
+        "RELATION": .18,
+        "RESULT_RELATION": .30,
+        "FOCUS_RELATION": .10,
+        "FINISH_FOCUS": .14,
+    }.get(str(shot_scale or ""), .22)
+
+    if is_central_master and scope_pts:
+        cx, cy = scope_cx, scope_cy
+    else:
+        cx = relation_cx * (1.0 - scope_weight) + scope_cx * scope_weight
+        cy = relation_cy * (1.0 - scope_weight) + scope_cy * scope_weight
+
+    # SAGI camera rail:
+    # The main tactical camera follows the game longitudinally along the pitch
+    # (attack forward / defence backward). Lateral action should normally be
+    # contained by framing, not chased by a side-to-side local pan.
+    rail_cfg = cfg.get("camera_rail", {})
+    if rail_cfg.get("enabled", False):
+        anchor_x = float(rail_cfg.get("anchor_x", 0.0))
+        if is_central_master:
+            cx = anchor_x
+        else:
+            scale_weight = {
+                "WIDE_STRUCTURE": float(rail_cfg.get("wide_structure_lateral_weight", .18)),
+                "STRUCTURE": float(rail_cfg.get("structure_lateral_weight", .22)),
+                "RELATION": float(rail_cfg.get("relation_lateral_weight", .30)),
+                "RESULT_RELATION": float(rail_cfg.get("result_relation_lateral_weight", .26)),
+            }.get(str(shot_scale or ""), float(rail_cfg.get("lateral_weight", .24)))
+            cx = anchor_x + (cx - anchor_x) * max(0.0, min(1.0, scale_weight))
+
+        max_abs_x = float(rail_cfg.get("max_abs_target_x", 8.0))
+        cx = max(anchor_x - max_abs_x, min(anchor_x + max_abs_x, cx))
+
+    # Structural shots must genuinely show their wider pitch region.
+    # Relation shots use the named field scope only to orient the composition;
+    # forcing all four scope corners into a close tactical shot would shrink
+    # players back into chess pieces.
+    framing_pts = list(trajectory_pts)
+    if str(shot_scale or "") in ("CENTRAL_MASTER", "STRUCTURE", "WIDE_STRUCTURE"):
+        framing_pts.extend(scope_pts)
+
+    # V1.7 landmark protection: a focused relation may tighten, but it must
+    # retain at least one authored spatial reference (centre spot, touchline,
+    # box edge, etc.) so the viewer never loses where the action is happening.
+    if landmark_point and str(shot_scale or "") in ("FOCUS_RELATION", "FINISH_FOCUS"):
+        framing_pts.append((float(landmark_point[0]), float(landmark_point[1])))
+
+    # Lens-aware framing for 9:16 portrait.
+    # The old empirical factors pushed wide tactical relations far too high,
+    # making players read like chess pieces. Compute the height from the
+    # actual horizontal field of view instead.
+    sensor_width = float(getattr(cam.data, "sensor_width", 36.0))
+    lens = max(20.0, float(lens))
+    tan_half_h = sensor_width / (2.0 * lens)
+    aspect_h_over_w = max(1.0, float(h) / max(1.0, float(w)))
+    tan_half_v = tan_half_h * aspect_h_over_w
+
+    # Target may intentionally sit closer to the tactical relation than the
+    # centre of the field scope, so fit by maximum distance from the target,
+    # not by bbox span alone.
+    max_dx = max([abs(p[0] - cx) for p in framing_pts] or [span_x * .5])
+    max_dy = max([abs(p[1] - cy) for p in framing_pts] or [span_y * .5])
+    z_x = (max_dx * float(margin)) / max(1e-6, tan_half_h)
+    z_y = (max_dy * float(margin)) / max(1e-6, tan_half_v)
+    z = max(float(min_z), z_x, z_y)
+
+    # Keep the camera nearly tactical-top-down. The central master is quieter:
+    # a fixed shallow tilt makes the full pitch read like a stable tactical map,
+    # while relation shots retain a little more depth for body direction.
+    perspective_cfg = cfg.get("camera_perspective", {})
+    scale_name = str(shot_scale or "")
+    if is_central_master:
+        master_cfg = cfg.get("central_master", {})
+        tilt_back = float(
+            perspective_cfg.get(
+                "central_master_tilt_back_m",
+                master_cfg.get("tilt_back_m", 4.8),
+            )
+        )
+    else:
+        default_tilt = max(4.5, min(7.0, span_y * .16))
+        per_scale = {
+            "STRUCTURE": "structure_tilt_back_m",
+            "WIDE_STRUCTURE": "wide_structure_tilt_back_m",
+            "RELATION": "relation_tilt_back_m",
+            "RESULT_RELATION": "result_relation_tilt_back_m",
+            "FOCUS_RELATION": "relation_tilt_back_m",
+            "FINISH_FOCUS": "result_relation_tilt_back_m",
+        }
+        key_name = per_scale.get(scale_name)
+        tilt_back = float(
+            perspective_cfg.get(key_name, default_tilt)
+            if key_name
+            else default_tilt
+        )
+
+    # Optional vertical scale allows a lower, more cinematic Teactics-like
+    # viewpoint while preserving the existing tactical framing calculation.
+    height_scale = float(perspective_cfg.get("height_scale", 1.0))
+    z *= max(0.45, min(1.20, height_scale))
+
+    # SAGI VIEWPOINT DIRECTOR
+    # Shot scale answers "how much do we see?" and field_scope answers
+    # "which pitch context must remain visible?". view_angle is a separate
+    # semantic layer answering "from which direction should we understand it?".
+    #
+    # The camera orbits around the same tactical target instead of changing the
+    # tactical centre. This lets us explain width, depth, channels and line
+    # relationships without cropping away the context.
+    vp_cfg = cfg.get("viewpoint_language", {})
+    profiles = vp_cfg.get("profiles", {})
+    profile_name = str(view_angle or vp_cfg.get("default", "STRUCTURAL_OBLIQUE"))
+    profile = profiles.get(profile_name, {})
+
+    azimuth_deg = float(profile.get("azimuth_deg", 0.0))
+    distance_mult = float(profile.get("distance_mult", 1.0))
+    height_mult = float(profile.get("height_mult", 1.0))
+    target_x_offset = float(profile.get("target_x_offset", 0.0))
+    target_y_offset = float(profile.get("target_y_offset", 0.0))
+    frame_shift_y = float(profile.get("frame_shift_y", vp_cfg.get("default_frame_shift_y", 0.0)))
+
+    # V1.8 DIRECTOR LOGIC: the tactical pitch has a stable longitudinal axis.
+    # A viewpoint may change height/distance freely, but orbit rotation is capped
+    # by shot purpose so the board never appears to spin without tactical reason.
+    director_cfg = cfg.get("director_constraints", {})
+    az_caps = director_cfg.get("max_abs_azimuth_by_scale", {})
+    az_cap = az_caps.get(scale_name)
+    if az_cap is not None:
+        az_cap = abs(float(az_cap))
+        azimuth_deg = max(-az_cap, min(az_cap, azimuth_deg))
+
+    # Floating-stage envelope: vertical screen placement stays inside a narrow
+    # authored band so the pitch reads as one suspended tactical object rather
+    # than a camera flying in and out of a full-screen field.
+    stage_cfg = cfg.get("floating_stage", {})
+    if stage_cfg.get("enabled", False):
+        shift_min = float(stage_cfg.get("frame_shift_y_min", -0.11))
+        shift_max = float(stage_cfg.get("frame_shift_y_max", -0.07))
+        if shift_min > shift_max:
+            shift_min, shift_max = shift_max, shift_min
+        frame_shift_y = max(shift_min, min(shift_max, frame_shift_y))
+        structural_shift = stage_cfg.get("structural_frame_shift_y")
+        if structural_shift is not None and scale_name in ("CENTRAL_MASTER", "WIDE_STRUCTURE", "STRUCTURE"):
+            frame_shift_y = max(shift_min, min(shift_max, float(structural_shift)))
+
+    target_x = cx + target_x_offset
+    target_y = cy + target_y_offset
+    orbit_dist = max(1.0, tilt_back * max(0.45, min(1.80, distance_mult)))
+    az = math.radians(azimuth_deg)
+    dx = math.sin(az) * orbit_dist
+    dy = -math.cos(az) * orbit_dist
+    z *= max(0.55, min(1.45, height_mult))
+
+    # V2.0 REFERENCE MATCH: apply the floating-stage scale envelope AFTER all
+    # viewpoint height multipliers. Earlier versions clamped z too early, then
+    # profile.height_mult changed it again, so the pitch could still jump in
+    # apparent size. This final clamp makes the authored stage size real.
+    stage_cfg = cfg.get("floating_stage", {})
+    if stage_cfg.get("enabled", False):
+        z_ranges = stage_cfg.get("z_range_by_scale", {})
+        z_range = z_ranges.get(scale_name)
+        if isinstance(z_range, (list, tuple)) and len(z_range) == 2:
+            z0, z1 = float(z_range[0]), float(z_range[1])
+            if z0 > z1:
+                z0, z1 = z1, z0
+            z = max(z0, min(z1, z))
+
+    # V2.2 SCREEN-SCALE LOCK: apparent pitch size depends on both camera
+    # distance and focal length. Earlier versions clamped only z, so a longer
+    # lens could still make the floating board jump larger on screen. Scale
+    # distance with focal length around an authored reference lens.
+    screen_scale_cfg = cfg.get("screen_scale_lock", {})
+    if screen_scale_cfg.get("enabled", False):
+        reference_lens = max(1.0, float(screen_scale_cfg.get("reference_lens_mm", 52.0)))
+        lens_factor = float(lens) / reference_lens
+        z *= max(
+            float(screen_scale_cfg.get("min_lens_factor", 0.90)),
+            min(float(screen_scale_cfg.get("max_lens_factor", 1.18)), lens_factor),
+        )
+
+    continuity_cfg = cfg.get("camera_continuity", {})
+    return {
+        "loc": (target_x + dx, target_y + dy, z),
+        "target": (target_x, target_y, 0),
+        "lens": float(lens),
+        "lead": float(continuity_cfg.get("lead_sec", .34)),
+        "settle": float(continuity_cfg.get("settle_sec", .32)),
+        "shot_scale": shot_scale,
+        "field_scope": field_scope,
+        "view_angle": profile_name,
+        "frame_shift_y": frame_shift_y,
+        "azimuth_deg": azimuth_deg,
+        "orbit_dist": orbit_dist,
+    }
+
+
+def interpolated_camera_pose(a, b, alpha=.5):
+    """Create a smooth orbit midpoint between two authored tactical viewpoints."""
+    alpha = max(0.0, min(1.0, float(alpha)))
+    ta = a.get("target", (0,0,0))
+    tb = b.get("target", ta)
+    target = tuple(float(ta[i]) + (float(tb[i]) - float(ta[i])) * alpha for i in range(3))
+
+    if "azimuth_deg" in a and "azimuth_deg" in b and "orbit_dist" in a and "orbit_dist" in b:
+        az0 = float(a["azimuth_deg"])
+        az1 = float(b["azimuth_deg"])
+        # shortest angular route
+        delta = ((az1 - az0 + 180.0) % 360.0) - 180.0
+        az = az0 + delta * alpha
+        radius = float(a["orbit_dist"]) + (float(b["orbit_dist"]) - float(a["orbit_dist"])) * alpha
+        z0 = float(a["loc"][2])
+        z1 = float(b["loc"][2])
+        z = z0 + (z1 - z0) * alpha
+        ar = math.radians(az)
+        loc = (
+            target[0] + math.sin(ar) * radius,
+            target[1] - math.cos(ar) * radius,
+            z,
+        )
+    else:
+        la = a.get("loc", (0,0,64))
+        lb = b.get("loc", la)
+        loc = tuple(float(la[i]) + (float(lb[i]) - float(la[i])) * alpha for i in range(3))
+        az = b.get("azimuth_deg", a.get("azimuth_deg"))
+        radius = b.get("orbit_dist", a.get("orbit_dist"))
+
+    out = dict(b)
+    out["loc"] = loc
+    out["target"] = target
+    out["lens"] = float(a.get("lens", b.get("lens", 64))) + (
+        float(b.get("lens", a.get("lens", 64))) - float(a.get("lens", b.get("lens", 64)))
+    ) * alpha
+    out["frame_shift_y"] = float(a.get("frame_shift_y", 0.0)) + (
+        float(b.get("frame_shift_y", 0.0)) - float(a.get("frame_shift_y", 0.0))
+    ) * alpha
+    if az is not None:
+        out["azimuth_deg"] = az
+    if radius is not None:
+        out["orbit_dist"] = radius
+    return out
+
+
+def relation_camera_key(
+    subjects,
+    t,
+    focus_t=None,
+    lens=64.0,
+    min_z=64.0,
+    margin=1.20,
+    shot_scale=None,
+    field_scope=None,
+    lead_sec=None,
+    settle_sec=None,
+    view_angle=None,
+    landmark_point=None,
+):
+    """Reframe from the actual tactical relationship instead of fixed coordinates."""
+    global camera_last, camera_last_t
+    t = float(t)
+    focus_t = float(t if focus_t is None else focus_t)
+    p = relation_camera_pose(
+        subjects, t, focus_t, lens, min_z, margin, shot_scale, field_scope, view_angle, landmark_point
+    )
+    # Director-script override: a tactical cue may need the camera to begin
+    # preparing noticeably before the action, instead of using one global lead.
+    if lead_sec is not None:
+        p["lead"] = float(lead_sec)
+    if settle_sec is not None:
+        p["settle"] = float(settle_sec)
+
+    # Spatial continuity: in an upfield attack, don't let the camera centre
+    # suddenly jump backwards just because a supporting runner started deeper.
+    continuity_cfg = cfg.get("camera_continuity", {})
+
+    # Longitudinal rail continuity: allow only small lateral corrections between
+    # phases. The tactical camera should read as moving up/down the pitch, not
+    # tracking side channels like a broadcast close-follow camera.
+    rail_cfg = cfg.get("camera_rail", {})
+    if (
+        camera_last is not None
+        and rail_cfg.get("enabled", False)
+        and "CENTRAL_MASTER" not in (
+            str(camera_last.get("shot_scale") or ""),
+            str(p.get("shot_scale") or ""),
+        )
+    ):
+        max_step_x = float(rail_cfg.get("max_lateral_step_m", 2.6))
+        prev_x = float(camera_last["target"][0])
+        new_x = float(p["target"][0])
+        clamped_x = max(prev_x - max_step_x, min(prev_x + max_step_x, new_x))
+        dx = clamped_x - new_x
+        if abs(dx) > 1e-6:
+            p["target"] = (clamped_x, p["target"][1], p["target"][2])
+            p["loc"] = (p["loc"][0] + dx, p["loc"][1], p["loc"][2])
+
+    if (
+        camera_last is not None
+        and continuity_cfg.get("preserve_forward_progression", False)
+        and "CENTRAL_MASTER" not in (
+            str(camera_last.get("shot_scale") or ""),
+            str(p.get("shot_scale") or ""),
+        )
+    ):
+        max_back = float(continuity_cfg.get("max_backward_target_m", 1.5))
+        prev_y = float(camera_last["target"][1])
+        new_y = float(p["target"][1])
+        min_allowed_y = prev_y - max_back
+        if new_y < min_allowed_y:
+            dy = min_allowed_y - new_y
+            p["target"] = (p["target"][0], min_allowed_y, p["target"][2])
+            p["loc"] = (p["loc"][0], p["loc"][1] + dy, p["loc"][2])
+
+    # Camera-rail scale continuity:
+    # zoom OUT immediately when the structure needs more room, but zoom IN only
+    # gradually from phase to phase. This keeps the tactical space coherent.
+    if camera_last is not None and continuity_cfg.get("preserve_scale_continuity", False):
+        prev_scale = camera_last.get("shot_scale")
+        new_scale = p.get("shot_scale")
+        deliberate_scale_change = (
+            continuity_cfg.get("allow_scale_reset_on_shot_scale_change", False)
+            and prev_scale
+            and new_scale
+            and prev_scale != new_scale
+        )
+
+        # Teactics-style grammar: continuity is preserved inside one tactical
+        # scale, but a deliberate STRUCTURE -> RELATION or RELATION -> WIDE
+        # change is allowed to reset framing decisively.
+        if not deliberate_scale_change:
+            prev_z = float(camera_last["loc"][2])
+            new_z = float(p["loc"][2])
+            max_zoom_in = float(continuity_cfg.get("max_zoom_in_per_phase_m", 8.0))
+            min_allowed_z = max(1.0, prev_z - max_zoom_in)
+            if new_z < min_allowed_z:
+                p["loc"] = (p["loc"][0], p["loc"][1], min_allowed_z)
+
+    if camera_last is None or t <= .001:
+        apply_camera_pose(p, 1 + round(t * fps))
+        camera_last = p
+        camera_last_t = t
+        return
+
+    lead = float(p.get("lead", .24))
+    settle = float(p.get("settle", .16))
+    start_t = max(camera_last_t, t - lead)
+    start_fr = 1 + round(start_t * fps)
+    end_fr = 1 + round((t + settle) * fps)
+
+    apply_camera_pose(camera_last, start_fr)
+
+    path_cfg = cfg.get("camera_path_smoothing", {})
+    use_orbit_path = bool(path_cfg.get("enabled", False))
+    if use_orbit_path and end_fr - start_fr >= 4:
+        mid_fr = int(round((start_fr + end_fr) * .5))
+        mid_pose = interpolated_camera_pose(
+            camera_last,
+            p,
+            float(path_cfg.get("midpoint_alpha", .5)),
+        )
+        apply_camera_pose(mid_pose, mid_fr)
+
+    apply_camera_pose(p, end_fr)
+
+    camera_last = p
+    camera_last_t = t + settle
+
+
+def camera_key(preset, t):
+    # Backward compatibility for old presets; new Golden Sample uses camera_dna.
+    legacy = {
+        "shape": "receive",
+        "midfield": "receive",
+        "between_lines": "half_space",
+        "width": "switch",
+        "relation": "half_space",
+        "result": "switch",
+        "finish": "complete",
+        "complete": "complete",
+    }
+    camera_dna_key(legacy.get(preset, "receive"), t)
+
+
+def set_emphasis(ev):
+    fr = 1 + round(float(ev["t"]) * fps)
+    focal = set(ev.get("focal", []))
+    support = set(ev.get("support", []))
+
+    for n in players:
+        r = rings[n]
+        sr = support_rings[n]
+
+        r.hide_render = n not in focal
+        r.keyframe_insert("hide_render", frame=fr)
+
+        sr.hide_render = (n not in support) or (n in focal)
+        sr.keyframe_insert("hide_render", frame=fr)
+
+
+def focus_player(name, t):
+    set_emphasis({
+        "t": float(t),
+        "focal": [name],
+        "support": [],
+    })
+
+
+def animate_stride(name, f0, f1, strength=1.0, movement_kind="player_move"):
+    """Restrained locomotion with different attacking/defending movement language."""
+    if f1 <= f0:
+        return
+
+    la = bpy.data.objects.get(name + "_LA")
+    ra = bpy.data.objects.get(name + "_RA")
+    ll = bpy.data.objects.get(name + "_LL")
+    rl = bpy.data.objects.get(name + "_RL")
+    torso = bpy.data.objects.get(name + "_TORSO")
+    if not all((la, ra, ll, rl)):
+        return
+
+    motion_cfg = cfg.get("motion_profile", {})
+    kind_cfg = motion_cfg.get(str(movement_kind), {})
+
+    # Defenders move with shorter, quieter steps; attacking runs have a little
+    # more arm/leg separation. Dribbling stays compact so the ball remains the cue.
+    default_arm = 11.5 if movement_kind == "defender_shift" else (13.5 if movement_kind == "dribble" else 16.0)
+    default_leg = 15.0 if movement_kind == "defender_shift" else (17.0 if movement_kind == "dribble" else 20.0)
+    arm = math.radians(float(kind_cfg.get("arm_deg", default_arm)) * strength)
+    leg = math.radians(float(kind_cfg.get("leg_deg", default_leg)) * strength)
+    span = max(1, f1 - f0)
+
+    # 24fps tactical animation: roughly 2.2-3.0 full steps/sec depending on
+    # movement type, with a hard cap to avoid the "windmill" look.
+    frames_per_half_step = float(kind_cfg.get(
+        "frames_per_half_step",
+        4.2 if movement_kind == "defender_shift" else 3.8
+    ))
+    half_steps = max(2, min(8, int(round(span / max(2.5, frames_per_half_step)))))
+
+    # Small deterministic phase offset prevents every player from swinging
+    # limbs on the exact same frame when a defensive line shifts together.
+    phase_seed = (sum(ord(ch) for ch in name) % 3) - 1
+    phase_offset = int(kind_cfg.get("phase_offset_frames", phase_seed))
+
+    for idx in range(half_steps + 1):
+        fr = round(f0 + span * (idx / half_steps)) + phase_offset
+        fr = max(f0, min(f1, fr))
+        if idx == 0 or idx == half_steps:
+            phase = 0.0
+        else:
+            phase = 1.0 if idx % 2 else -1.0
+
+        la.rotation_euler[0] = arm * phase
+        ra.rotation_euler[0] = -arm * phase
+        ll.rotation_euler[0] = -leg * phase
+        rl.rotation_euler[0] = leg * phase
+        for limb in (la, ra, ll, rl):
+            key(limb, "rotation_euler", fr)
+
+    # The body lean is subtle and movement-specific: defenders stay more upright,
+    # while forward runs can show a little acceleration.
+    if torso is not None:
+        lean_deg = float(kind_cfg.get(
+            "lean_deg",
+            -1.4 if movement_kind == "defender_shift" else (-2.0 if movement_kind == "dribble" else -2.8)
+        ))
+        torso.rotation_euler[0] = 0.0
+        key(torso, "rotation_euler", f0)
+        lean_fr = min(f1 - 1, f0 + max(1, round(span * .20)))
+        torso.rotation_euler[0] = math.radians(lean_deg * strength)
+        key(torso, "rotation_euler", lean_fr)
+        recover_fr = max(lean_fr + 1, f1 - max(1, round(span * .20)))
+        torso.rotation_euler[0] = math.radians(lean_deg * .30 * strength)
+        key(torso, "rotation_euler", recover_fr)
+        torso.rotation_euler[0] = 0.0
+        key(torso, "rotation_euler", f1)
+
+
+def move_player(name, target, t0, dur, carry_ball=False, movement_kind="player_move"):
+    o = players[name]
+    f0 = 1 + round(t0 * fps)
+    f1 = 1 + round((t0 + dur) * fps)
+
+    sx, sy, sz = o.location.x, o.location.y, o.location.z
+    tx, ty = float(target[0]), float(target[1])
+    dx = tx - sx
+    dy = ty - sy
+    dist = math.hypot(dx, dy)
+
+    # Anticipation first: turn toward the route just before the run begins.
+    if dist > 1e-5:
+        turn_fr = max(1, f0 - max(1, round(.14 * fps)))
+        key(o, "rotation_euler", turn_fr)
+        o.rotation_euler[2] = math.atan2(-dx, dy)
+        key(o, "rotation_euler", f0)
+
+    # Four spatial keys create a restrained acceleration/deceleration curve.
+    # This keeps players from looking like chess pieces sliding at one speed.
+    key(o, "location", f0)
+
+    span = max(2, f1 - f0)
+    f_acc = min(f1 - 2, f0 + max(1, round(span * .28)))
+    f_dec = max(f_acc + 1, f0 + round(span * .76))
+    rise = min(.050, .012 + dist * .0014)
+    if movement_kind == "defender_shift":
+        rise *= .55
+
+    o.location = (
+        sx + dx * .20,
+        sy + dy * .20,
+        sz + rise * .55,
+    )
+    key(o, "location", f_acc)
+
+    o.location = (
+        sx + dx * .79,
+        sy + dy * .79,
+        sz + rise,
+    )
+    key(o, "location", f_dec)
+
+    o.location = (tx, ty, sz)
+    key(o, "location", f1)
+
+    fm = max(f0 + 1, round((f0 + f1) / 2))
+
+    if carry_ball:
+        # Explicit ball-carrying state. The ball follows the runner instead of
+        # teleporting from the reception point to the eventual shot/pass point.
+        if dist > 1e-5:
+            ux, uy = dx / dist, dy / dist
+        else:
+            ux, uy = 0.0, 1.0
+        lead = .34
+
+        old_interp = set_new_key_interpolation("LINEAR")
+        ball.location = (sx + ux * .10, sy + uy * .10, .37)
+        key(ball, "location", f0)
+        ball.location = (
+            sx + dx * .50 + ux * lead,
+            sy + dy * .50 + uy * lead,
+            .37,
+        )
+        key(ball, "location", fm)
+        ball.location = (tx + ux * .12, ty + uy * .12, .37)
+        key(ball, "location", f1)
+        restore_new_key_interpolation(old_interp)
+
+    stride_strength = min(1.0, max(.35, dist / 10.0))
+    animate_stride(name, f0, f1, stride_strength, movement_kind)
+    smooth_action(o)
+
+
+def yaw_toward(src_xy, dst_xy):
+    dx = float(dst_xy[0]) - float(src_xy[0])
+    dy = float(dst_xy[1]) - float(src_xy[1])
+    if abs(dx) + abs(dy) <= 1e-6:
+        return None
+    return math.atan2(-dx, dy)
+
+
+def face_player(name, target, t0, duration=.18):
+    """Turn a miniature toward a tactical reference before the next action."""
+    o = players[name]
+    t0 = float(t0)
+    duration = max(.04, float(duration))
+    src_xy = predicted_player_pos(name, t0)
+    if isinstance(target, str):
+        target_xy = predicted_player_pos(target, t0 + duration)
+    else:
+        target_xy = (float(target[0]), float(target[1]))
+    yaw = yaw_toward(src_xy, target_xy)
+    if yaw is None:
+        return
+    f0 = 1 + round(t0 * fps)
+    f1 = min(scene.frame_end, 1 + round((t0 + duration) * fps))
+    key(o, "rotation_euler", f0)
+    o.rotation_euler[2] = yaw
+    key(o, "rotation_euler", f1)
+
+
+def next_action_target(name, after_t):
+    """Return the next tactical destination for a player after receiving."""
+    after_t = float(after_t)
+    for ev in cfg.get("events", []):
+        typ = ev.get("type")
+
+        if typ == "pass" and ev.get("from") == name:
+            start_t = float(ev.get("release", ev.get("t", 0)))
+            if start_t <= after_t + .04:
+                continue
+            target_name = ev.get("to")
+            return (
+                predicted_player_pos(target_name, float(ev.get("arrive", start_t))),
+                start_t,
+            )
+
+        if typ == "dribble" and ev.get("player") == name:
+            start_t = float(ev.get("t", 0))
+            if start_t <= after_t + .04:
+                continue
+            return (
+                (float(ev["to"][0]), float(ev["to"][1])),
+                start_t,
+            )
+
+        if typ == "shot" and ev.get("from") == name:
+            start_t = float(ev.get("release", ev.get("t", 0)))
+            if start_t <= after_t + .04:
+                continue
+            return (
+                (float(ev["to"][0]), float(ev["to"][1])),
+                start_t,
+            )
+
+    return (None, None)
+
+
+def pass_ball(a, b, release, arrive):
+    aa = players[a]
+    bb = players[b]
+    release = float(release)
+    arrive = float(arrive)
+    f0 = 1 + round(release * fps)
+    f1 = 1 + round(arrive * fps)
+
+    # Use timeline positions, not the object's eventual final transform.
+    # This keeps ball flight attached to where players really are at release/arrival.
+    src_xy = predicted_player_pos(a, release)
+    dst_xy = predicted_player_pos(b, arrive)
+
+    # Passer opens toward the target just before release.
+    pass_yaw = yaw_toward(src_xy, dst_xy)
+    if pass_yaw is not None:
+        turn_fr = max(1, f0 - max(1, round(.12 * fps)))
+        key(aa, "rotation_euler", turn_fr)
+        aa.rotation_euler[2] = pass_yaw
+        key(aa, "rotation_euler", f0)
+
+    # Receiver checks toward the incoming ball before contact.
+    prep_fr = max(f0 + 1, f1 - max(1, round(.18 * fps)))
+    receive_yaw = yaw_toward(dst_xy, src_xy)
+    if receive_yaw is not None:
+        bb.rotation_euler[2] = receive_yaw
+        key(bb, "rotation_euler", prep_fr)
+        key(bb, "rotation_euler", f1)
+
+    # Ball travels decisively between actual timeline positions.
+    old_interp = set_new_key_interpolation("LINEAR")
+    ball.location = (src_xy[0], src_xy[1], .37)
+    key(ball, "location", f0)
+
+    ball.location = (dst_xy[0], dst_xy[1], .37)
+    key(ball, "location", f1)
+
+    # Compact first touch: continue the incoming line a fraction, then keep
+    # possession ready for the next action. This avoids a dead "ball stops"
+    # feeling without turning the clip into character animation.
+    next_target, next_t = next_action_target(b, arrive)
+    gap = None if next_t is None else float(next_t) - arrive
+    if gap is None or gap > .22:
+        dx = dst_xy[0] - src_xy[0]
+        dy = dst_xy[1] - src_xy[1]
+        dist = math.hypot(dx, dy)
+        if dist > 1e-5:
+            ux, uy = dx / dist, dy / dist
+            touch_fr = min(scene.frame_end, f1 + max(1, round(.11 * fps)))
+            ball.location = (
+                dst_xy[0] + ux * .16,
+                dst_xy[1] + uy * .16,
+                .37,
+            )
+            key(ball, "location", touch_fr)
+    restore_new_key_interpolation(old_interp)
+
+    # Instead of recovering to an arbitrary old yaw, the receiver turns
+    # directly toward the next tactical action: pass, dribble, or shot.
+    if next_target is not None:
+        next_yaw = yaw_toward(dst_xy, next_target)
+        if next_yaw is not None:
+            latest_turn_t = max(arrive + .12, float(next_t) - .08)
+            turn_done_t = min(arrive + .34, latest_turn_t)
+            turn_done_fr = min(
+                scene.frame_end,
+                max(f1 + 1, 1 + round(turn_done_t * fps)),
+            )
+            bb.rotation_euler[2] = next_yaw
+            key(bb, "rotation_euler", turn_done_fr)
+
+    smooth_action(ball)
+
+
+def shot_ball(player, target, release, arrive, arc=.9):
+    src = players[player]
+    release = float(release)
+    arrive = float(arrive)
+    f0 = 1 + round(release * fps)
+    f1 = 1 + round(arrive * fps)
+    fm = max(f0 + 1, round((f0 + f1) / 2))
+    src_xy = predicted_player_pos(player, release)
+    target_xy = (float(target[0]), float(target[1]))
+
+    shot_yaw = yaw_toward(src_xy, target_xy)
+    if shot_yaw is not None:
+        turn_fr = max(1, f0 - max(1, round(.14 * fps)))
+        key(src, "rotation_euler", turn_fr)
+        src.rotation_euler[2] = shot_yaw
+        key(src, "rotation_euler", f0)
+
+    # One compact kicking gesture on the shooting leg.
+    rl = bpy.data.objects.get(player + "_RL")
+    if rl is not None:
+        fk0 = max(1, f0 - max(1, round(.15 * fps)))
+        rl.rotation_euler[0] = math.radians(-10)
+        key(rl, "rotation_euler", fk0)
+        rl.rotation_euler[0] = math.radians(30)
+        key(rl, "rotation_euler", f0)
+        rl.rotation_euler[0] = 0.0
+        key(rl, "rotation_euler", min(f1, f0 + max(1, round(.18 * fps))))
+
+    ball.location = (src_xy[0], src_xy[1], .37)
+    key(ball, "location", f0)
+
+    ball.location = (
+        (src_xy[0] + target_xy[0]) / 2.0,
+        (src_xy[1] + target_xy[1]) / 2.0,
+        .37 + float(arc),
+    )
+    key(ball, "location", fm)
+
+    ball.location = (target_xy[0], target_xy[1], .37)
+    key(ball, "location", f1)
+
+    smooth_action(ball)
+
+
+def set_object_visibility_window(obj, t0, t1):
+    f0 = 1 + round(float(t0) * fps)
+    f1 = 1 + round(float(t1) * fps)
+    obj.hide_render = True
+    obj.keyframe_insert("hide_render", frame=max(1, f0 - 1))
+    obj.hide_render = False
+    obj.keyframe_insert("hide_render", frame=f0)
+    obj.hide_render = True
+    obj.keyframe_insert("hide_render", frame=min(scene.frame_end, f1))
+
+
+def add_pass_link(ev):
+    a = ev["from"]
+    b = ev["to"]
+    t = float(ev["t"])
+    duration = float(ev.get("duration", 1.4))
+    pa = predicted_player_pos(a, t)
+    pb = predicted_player_pos(b, t)
+    obj = line(
+        "PASS_LINK_" + a + "_" + b,
+        pa,
+        pb,
+        float(ev.get("width", .045)),
+        m_tactical_guide_soft,
+        z=float(ev.get("z", .29)),
+    )
+    set_object_visibility_window(obj, t, t + duration)
+
+
+def add_tactical_arrow(ev):
+    start = ev.get("start")
+    end = ev.get("end")
+    if ev.get("player"):
+        start = predicted_player_pos(ev["player"], float(ev["t"]))
+    if not start or not end:
+        return
+
+    start = (float(start[0]), float(start[1]))
+    end = (float(end[0]), float(end[1]))
+    dx = end[0] - start[0]
+    dy = end[1] - start[1]
+    dist = max(.001, math.hypot(dx, dy))
+    ux, uy = dx / dist, dy / dist
+    head_len = min(float(ev.get("head_length", 1.8)), dist * .28)
+    shaft_end = (end[0] - ux * head_len, end[1] - uy * head_len)
+
+    shaft = line(
+        "TACTICAL_ARROW_SHAFT",
+        start,
+        shaft_end,
+        float(ev.get("width", .065)),
+        m_tactical_guide,
+        z=float(ev.get("z", .31)),
+    )
+
+    # Arrow head as a flat triangular outline, readable from all tactical views.
+    px, py = -uy, ux
+    half_w = float(ev.get("head_width", .78))
+    left = (shaft_end[0] + px * half_w, shaft_end[1] + py * half_w)
+    right = (shaft_end[0] - px * half_w, shaft_end[1] - py * half_w)
+    head = polyline(
+        "TACTICAL_ARROW_HEAD",
+        [left, end, right],
+        float(ev.get("width", .065)),
+        m_tactical_guide,
+        closed=False,
+        z=float(ev.get("z", .31)),
+    )
+
+    t0 = float(ev["t"])
+    t1 = t0 + float(ev.get("duration", 1.5))
+    set_object_visibility_window(shaft, t0, t1)
+    set_object_visibility_window(head, t0, t1)
+
+
+def add_channel_highlight(ev):
+    x0, x1, y0, y1 = [float(v) for v in ev["bounds"]]
+    obj = polyline(
+        "CHANNEL_HIGHLIGHT",
+        [(x0,y0),(x1,y0),(x1,y1),(x0,y1)],
+        float(ev.get("width", .06)),
+        m_tactical_guide_soft,
+        closed=True,
+        z=float(ev.get("z", .275)),
+    )
+    t0 = float(ev["t"])
+    t1 = t0 + float(ev.get("duration", 1.8))
+    set_object_visibility_window(obj, t0, t1)
+
+
+def add_dashed_path(ev):
+    start = ev.get("start")
+    if ev.get("player"):
+        start = predicted_player_pos(ev["player"], float(ev["t"]))
+    end = ev.get("end")
+    if not start or not end:
+        return
+
+    p0 = (float(start[0]), float(start[1]))
+    p2 = (float(end[0]), float(end[1]))
+    control = ev.get("control")
+    if control:
+        p1 = (float(control[0]), float(control[1]))
+    else:
+        # A restrained bow keeps the path readable without becoming decorative.
+        dx, dy = p2[0] - p0[0], p2[1] - p0[1]
+        curve = float(ev.get("curve", .10))
+        p1 = (
+            (p0[0] + p2[0]) * .5 - dy * curve,
+            (p0[1] + p2[1]) * .5 + dx * curve,
+        )
+
+    samples = max(8, int(ev.get("samples", 18)))
+    pts = []
+    for i in range(samples + 1):
+        a = i / samples
+        om = 1.0 - a
+        pts.append((
+            om*om*p0[0] + 2*om*a*p1[0] + a*a*p2[0],
+            om*om*p0[1] + 2*om*a*p1[1] + a*a*p2[1],
+        ))
+
+    t0 = float(ev["t"])
+    t1 = t0 + float(ev.get("duration", 1.6))
+    dash_group = max(1, int(ev.get("dash_group", 2)))
+    gap_group = max(1, int(ev.get("gap_group", 1)))
+    cycle = dash_group + gap_group
+
+    for i in range(len(pts) - 1):
+        if (i % cycle) >= dash_group:
+            continue
+        seg = line(
+            "DASHED_PATH",
+            pts[i],
+            pts[i+1],
+            float(ev.get("width", .075)),
+            m_tactical_guide,
+            z=float(ev.get("z", .315)),
+        )
+        set_object_visibility_window(seg, t0, t1)
+
+
+def add_zone_fill(ev):
+    x0, x1, y0, y1 = [float(v) for v in ev["bounds"]]
+    cx, cy = (x0+x1)*.5, (y0+y1)*.5
+    hx, hy = abs(x1-x0)*.5, abs(y1-y0)*.5
+    zone = cube(
+        "TACTICAL_ZONE_FILL",
+        (cx, cy, float(ev.get("z", .194))),
+        (hx, hy, .006),
+        m_tactical_zone,
+    )
+    t0 = float(ev["t"])
+    t1 = t0 + float(ev.get("duration", 1.8))
+    set_object_visibility_window(zone, t0, t1)
+
+    if bool(ev.get("border", False)):
+        border = polyline(
+            "TACTICAL_ZONE_BORDER",
+            [(x0,y0),(x1,y0),(x1,y1),(x0,y1)],
+            float(ev.get("border_width", .045)),
+            m_tactical_guide_soft,
+            closed=True,
+            z=float(ev.get("z", .194)) + .022,
+        )
+        set_object_visibility_window(border, t0, t1)
+
+
+def tactical_hold(ev):
+    global camera_last, camera_last_t
+    if camera_last is None:
+        return
+    t0 = float(ev["t"])
+    duration = max(0.0, float(ev.get("duration", .7)))
+    apply_camera_pose(camera_last, 1 + round(t0 * fps))
+    apply_camera_pose(camera_last, 1 + round((t0 + duration) * fps))
+    camera_last_t = max(camera_last_t, t0 + duration)
+
+
+def add_space(ev):
+    sp = torus(
+        "SPACE",
+        (
+            ev["center"][0],
+            ev["center"][1],
+            .24,
+        ),
+        1.0,
+        .035,
+        m_ring,
+    )
+    sp.scale = (
+        float(ev["radius"][0]),
+        float(ev["radius"][1]),
+        1,
+    )
+
+    f0 = 1 + round(float(ev["t"]) * fps)
+    f1 = 1 + round(
+        (
+            float(ev["t"])
+            + float(ev["duration"])
+        )
+        * fps
+    )
+
+    sp.hide_render = True
+    sp.keyframe_insert(
+        "hide_render",
+        frame=max(1, f0 - 1),
+    )
+
+    sp.hide_render = False
+    sp.keyframe_insert(
+        "hide_render",
+        frame=f0,
+    )
+
+    sp.hide_render = True
+    sp.keyframe_insert(
+        "hide_render",
+        frame=f1,
+    )
+
+
+first_camera_event = next(
+    (
+        ev for ev in cfg.get("events", [])
+        if ev.get("type") in ("camera", "camera_dna", "relation_camera")
+    ),
+    None,
+)
+if first_camera_event is None or float(first_camera_event.get("t", 0)) > 0.001:
+    camera_dna_key("receive", 0)
+
+for ev in cfg.get("events", []):
+    typ = ev.get("type")
+
+    if typ == "camera":
+        camera_key(
+            ev["preset"],
+            float(ev["t"]),
+        )
+
+    elif typ == "camera_dna":
+        camera_dna_key(
+            ev["cue"],
+            float(ev["t"]),
+        )
+
+    elif typ == "relation_camera":
+        relation_camera_key(
+            ev["subjects"],
+            float(ev["t"]),
+            ev.get("focus_t"),
+            float(ev.get("lens", 64)),
+            float(ev.get("min_z", 64)),
+            float(ev.get("margin", 1.20)),
+            ev.get("shot_scale"),
+            ev.get("field_scope"),
+            ev.get("lead_sec"),
+            ev.get("settle_sec"),
+            ev.get("view_angle"),
+            ev.get("landmark_point"),
+        )
+
+    elif typ == "focus":
+        focus_player(
+            ev["player"],
+            float(ev["t"]),
+        )
+
+    elif typ == "emphasis":
+        set_emphasis(ev)
+
+    elif typ == "tactical_hold":
+        tactical_hold(ev)
+
+    elif typ == "face":
+        face_player(
+            ev["player"],
+            ev["target"],
+            float(ev["t"]),
+            float(ev.get("duration", .18)),
+        )
+
+    elif typ in ("player_move", "defender_shift"):
+        move_player(
+            ev["player"],
+            ev["to"],
+            float(ev["t"]),
+            float(ev["duration"]),
+            False,
+            typ,
+        )
+
+    elif typ == "defensive_unit":
+        base_t = float(ev["t"])
+        for move in ev.get("moves", []):
+            move_player(
+                move["player"],
+                move["to"],
+                base_t + float(move.get("delay", 0.0)),
+                float(move.get("duration", ev.get("duration", .7))),
+                False,
+                "defender_shift",
+            )
+
+    elif typ == "dribble":
+        move_player(
+            ev["player"],
+            ev["to"],
+            float(ev["t"]),
+            float(ev["duration"]),
+            True,
+            "dribble",
+        )
+
+    elif typ == "pass":
+        pass_ball(
+            ev["from"],
+            ev["to"],
+            float(ev["release"]),
+            float(ev["arrive"]),
+        )
+
+    elif typ == "shot":
+        shot_ball(
+            ev["from"],
+            ev["to"],
+            float(ev["release"]),
+            float(ev["arrive"]),
+            float(ev.get("arc", .9)),
+        )
+
+    elif typ == "space":
+        add_space(ev)
+
+    elif typ == "pass_link":
+        add_pass_link(ev)
+
+    elif typ == "tactical_arrow":
+        add_tactical_arrow(ev)
+
+    elif typ == "channel_highlight":
+        add_channel_highlight(ev)
+
+    elif typ == "dashed_path":
+        add_dashed_path(ev)
+
+    elif typ == "zone_fill":
+        add_zone_fill(ev)
+
+smooth_action(cam)
+
+blend_path = os.path.join(
+    out_dir,
+    "scene.blend",
+)
+
+bpy.ops.wm.save_as_mainfile(
+    filepath=blend_path,
+)
+
+bpy.ops.render.render(
+    animation=True,
+)
+
+print(
+    "SAGI_RENDER_DONE",
+    scene.render.filepath,
+    blend_path,
+)
