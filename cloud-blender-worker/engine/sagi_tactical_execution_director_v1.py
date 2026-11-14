@@ -1908,7 +1908,7 @@ def add_zone_fill(ev):
     hx, hy = abs(x1-x0)*.5, abs(y1-y0)*.5
     zone = cube(
         "TACTICAL_ZONE_FILL",
-        (cx, cy, float(ev.get("z", .216))),
+        (cx, cy, float(ev.get("z", .194))),
         (hx, hy, .006),
         m_tactical_zone,
     )
@@ -1923,7 +1923,7 @@ def add_zone_fill(ev):
             float(ev.get("border_width", .045)),
             m_tactical_guide_soft,
             closed=True,
-            z=float(ev.get("z", .216)) + .012,
+            z=float(ev.get("z", .194)) + .022,
         )
         set_object_visibility_window(border, t0, t1)
 
