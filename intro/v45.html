@@ -162,6 +162,7 @@ button,.fileBtn{border:0;border-radius:12px;background:#262d37;color:#fff;font-w
 .bcTransport .goLive{background:linear-gradient(135deg,#c62e2e,#f05a4e);color:white;font-size:16px;box-shadow:0 10px 26px #b5252540}
 .bcTransport .hold.on{background:#6b531d;color:#ffe39a;border-color:#aa8736}
 .bcTransport .clearAll{background:#2b1114;border-color:#71313a;color:#ff9ca5}
+.bcFullIntroBar{margin-top:10px}.bcFullIntroBtn{width:100%;min-height:64px;border:1px solid #e5c76c;background:linear-gradient(135deg,#7a6022,#e2c56c 58%,#f0da93);color:#0a0c0f;font-size:17px;font-weight:1000;letter-spacing:1px;box-shadow:0 12px 30px #d8b55b22}.bcFullIntroBtn span{display:block;margin-top:4px;font-size:10px;font-weight:900;letter-spacing:1.5px;opacity:.72}
 .bcQuick{display:grid;grid-template-columns:repeat(9,1fr);gap:7px;margin-top:9px}
 .bcQuick button{min-height:42px;padding:7px 5px;font-size:10px;background:#10161d;border:1px solid #2d3743}
 .bcQuick button.on{border-color:#d8b55b;color:#edd68d;background:#1a160d;box-shadow:0 0 0 1px #d8b55b22 inset}
@@ -297,6 +298,7 @@ button:disabled{cursor:not-allowed;opacity:.42}
         <div class="bcStatusLine"><span>下一画面</span><b id="bcNextLabel">主队门将</b></div>
       </div>
     </div>
+    <div class="bcFullIntroBar"><button id="fullIntroBtn" class="bcFullIntroBtn" type="button">▶ 一键播放完整出场<span>赛事 LOGO → 主队首发/替补 → 客队首发/替补</span></button></div>
     <div class="bcTransport">
       <button id="prevLiveBtn" type="button">← 上一个</button>
       <button id="holdBtn" class="hold" type="button">保持</button>
@@ -1400,6 +1402,11 @@ function runShowStep(i){
  if(i>=showSteps.length){playing=false;showIndex=-1;stopCountdown();stopShowMusic();q('status').textContent='节目播放结束';q('showNow').textContent='COMPLETE';q('showProgressBar').style.width='100%';renderShowTimeline();return}
  showIndex=i;const s=showSteps[i],d=Math.max(500,Number(s.duration)||1000);if(s.side&&s.side!==activeSide)switchTeam(s.side,{silent:true,noRender:true});renderShowTimeline();broadcastProgramFromShow(s,d);applyShowTransition(s.transition);triggerCue(s.cue);renderStage(s.group);animateStage();animatePackageGroup(s.group,d);showProgressTick(s,d);q('status').textContent='SHOW '+(i+1)+' / '+showSteps.length+' · '+s.label;publishGroup(s.group,d,showMeta(s));clearTimeout(showTimer);if(!broadcastHold)showTimer=setTimeout(()=>runShowStep(i+1),d)
 }
+function startFullIntro(){
+ broadcastHold=false;const hb=q('holdBtn');if(hb){hb.classList.remove('on');hb.textContent='保持'}broadcastManualIndex=0;
+ q('status').textContent='一键完整出场 · 赛事Logo → 客队替补';
+ startShow();
+}
 function startShow(){if(!requireMatchReady())return;if(roster.length<1){note('请先加入球员');return}stopShow(false);playing=true;showSession=Date.now().toString(36);ensureShowMusic();focusAndRun(()=>runShowStep(0))}
 function stopShow(update=true){playing=false;clearTimeout(showTimer);clearTimeout(seqTimer);stopCountdown();stopShowMusic();if(update){q('status').textContent='节目已停止';q('showNow').textContent='STOPPED'}renderShowTimeline()}
 function nextShow(){if(!requireMatchReady())return;if(!showSteps.length)return;playing=true;showSession=showSession||Date.now().toString(36);clearTimeout(showTimer);runShowStep(Math.min(showSteps.length,showIndex+1))}
@@ -1502,7 +1509,7 @@ function broadcastProgramFromShow(s,d){
 }
 function initBroadcastControl(){
  document.querySelectorAll('[data-bc-group]').forEach(b=>b.onclick=()=>setBroadcastPreview(b.dataset.bcGroup,b.dataset.bcSide||activeSide,b.dataset.bcLabel||'',bcDuration(b.dataset.bcGroup)));
- q('goLiveBtn').onclick=takeBroadcastLive;q('holdBtn').onclick=toggleBroadcastHold;q('prevLiveBtn').onclick=()=>stepBroadcastPreview(-1);q('nextLiveBtn').onclick=()=>stepBroadcastPreview(1);q('clearAllBtn').onclick=clearBroadcastAll;
+ q('fullIntroBtn').onclick=startFullIntro;q('goLiveBtn').onclick=takeBroadcastLive;q('holdBtn').onclick=toggleBroadcastHold;q('prevLiveBtn').onclick=()=>stepBroadcastPreview(-1);q('nextLiveBtn').onclick=()=>stepBroadcastPreview(1);q('clearAllBtn').onclick=clearBroadcastAll;
  document.addEventListener('keydown',e=>{const tag=(document.activeElement&&document.activeElement.tagName)||'';if(['INPUT','SELECT','TEXTAREA'].includes(tag))return;
   if(e.code==='Space'){e.preventDefault();takeBroadcastLive()}else if(e.key==='h'||e.key==='H'){toggleBroadcastHold()}else if(e.key==='ArrowRight'){stepBroadcastPreview(1)}else if(e.key==='ArrowLeft'){stepBroadcastPreview(-1)}else if(e.key==='Escape'){clearBroadcastAll()}
  });
