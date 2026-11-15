@@ -652,6 +652,11 @@ m_ring_support = material(
     rough=.44,
     emission_strength=float(emphasis_visual_cfg.get("support_emission_strength", .16)),
 )
+m_label_text = material(
+    "TACTICAL_LABEL_TEXT",
+    hex_rgba("#080A0B"),
+    rough=.80,
+)
 m_tactical_zone = material(
     "TACTICAL_ZONE",
     hex_rgba(pal.get("tactical_zone", "#272A12")),
@@ -922,6 +927,53 @@ def create_player(name, data):
     support_ring.parent = root
     support_ring.scale = (ring_scale_comp, ring_scale_comp, ring_scale_comp)
     support_ring.hide_render = True
+
+    # V4.5 Teactics-style role badge. Small tactical marker only; not a
+    # title/subtitle overlay.
+    label_cfg = cfg.get("tactical_role_labels", {})
+    role_labels = label_cfg.get("labels", {})
+    label_text = str(role_labels.get(name, data.get("label", ""))).strip()
+    if label_cfg.get("enabled", False) and label_text:
+        label_root = bpy.data.objects.new(name + "_TACTICAL_LABEL_ROOT", None)
+        bpy.context.collection.objects.link(label_root)
+        label_root.location = (
+            float(label_cfg.get("offset_x", 0.0)),
+            float(label_cfg.get("offset_y", 1.35)),
+            float(label_cfg.get("offset_z", 0.18)),
+        )
+        copy_loc = label_root.constraints.new(type="COPY_LOCATION")
+        copy_loc.target = root
+        copy_loc.use_offset = True
+
+        badge = cube(
+            name + "_TACTICAL_LABEL_BADGE",
+            (0,0,0),
+            (
+                float(label_cfg.get("badge_half_width", .50)),
+                float(label_cfg.get("badge_half_height", .25)),
+                float(label_cfg.get("badge_half_depth", .015)),
+            ),
+            m_ring,
+        )
+        badge.parent = label_root
+        badge.location = (0,0,0)
+        badge.hide_render = True
+
+        bpy.ops.object.text_add(location=(0,0,0))
+        txt = bpy.context.object
+        txt.name = name + "_TACTICAL_LABEL_TEXT"
+        txt.data.body = label_text
+        txt.data.align_x = "CENTER"
+        txt.data.align_y = "CENTER"
+        txt.data.size = float(label_cfg.get("text_size", .34))
+        txt.data.extrude = 0.0
+        txt.data.bevel_depth = 0.0
+        txt.data.materials.append(m_label_text)
+        txt.parent = label_root
+        txt.location = (0,0,float(label_cfg.get("text_z", .035)))
+        txt.hide_render = True
+
+        tactical_labels[name] = (badge, txt)
 
     return root, ring, support_ring
 
@@ -1619,6 +1671,15 @@ def set_emphasis(ev):
 
         sr.hide_render = (n not in support) or (n in focal)
         sr.keyframe_insert("hide_render", frame=fr)
+
+        label_cfg = cfg.get("tactical_role_labels", {})
+        label_objs = tactical_labels.get(n)
+        if label_objs:
+            show_support = bool(label_cfg.get("show_support", True))
+            show_label = (n in focal) or (show_support and n in support)
+            for lo in label_objs:
+                lo.hide_render = not show_label
+                lo.keyframe_insert("hide_render", frame=fr)
 
         if body_enabled:
             mat = player_materials.get(n)
