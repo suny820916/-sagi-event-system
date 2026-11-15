@@ -786,6 +786,7 @@ for sy in (-1, 1):
 
 
 player_materials = {}
+tactical_labels = {}
 
 
 def create_player(name, data):
