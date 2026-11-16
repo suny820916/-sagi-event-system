@@ -1,0 +1,22 @@
+name: SAGI POOL LIVE self-check
+
+on:
+  push:
+    paths:
+      - 'sagi-pool-live/**'
+      - '.github/workflows/sagi-pool-live-selfcheck.yml'
+  pull_request:
+    paths:
+      - 'sagi-pool-live/**'
+  workflow_dispatch:
+
+jobs:
+  selfcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run product self-check
+        run: node sagi-pool-live/selftest.mjs
