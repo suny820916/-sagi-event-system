@@ -73,3 +73,13 @@ V1 使用单进程 JSON 持久化；当门店数扩大后升级为 MySQL/Redis�
 - 自动生成 heartbeat_timeout 结束原因。
 - 防止手机断电、进程被系统杀死或网络彻底中断后后台长期显示假直播。
 - 超时时间可通过 SAGI_LIVE_HEARTBEAT_TIMEOUT_MS 配置。
+
+
+## V2.6 数据保护与关机恢复
+
+- 主数据文件继续使用 tmp → rename 原子替换。
+- 每次持久化前，把上一份有效主文件复制为 .bak。
+- 启动时如果主 data.json 无法解析，会自动尝试 data.json.bak。
+- SIGTERM / SIGINT 时先同步持久化，再关闭 HTTP 服务。
+- 部署更新、systemd 重启和云服务器正常关机时减少最后状态丢失风险。
+- 自动自检会真实执行：写入 → 关机 → 重启 → 读取 → 故意破坏主文件 → .bak 恢复。
