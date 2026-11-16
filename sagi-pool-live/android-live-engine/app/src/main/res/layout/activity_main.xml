@@ -56,29 +56,39 @@
     </LinearLayout>
 
     <LinearLayout
-        android:layout_width="390dp"
+        android:layout_width="410dp"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
-        android:layout_margin="14dp"
+        android:layout_margin="12dp"
         android:background="#E6101412"
         android:orientation="vertical"
-        android:padding="12dp">
+        android:padding="11dp">
 
         <TextView
             android:id="@+id/status"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="LIVE ENGINE · 未连接"
-            android:textColor="#B8C5BC"
+            android:text="LIVE ENGINE · V0.2"
+            android:textColor="#DCE4DE"
             android:textSize="12sp"
             android:textStyle="bold"/>
+
+        <TextView
+            android:id="@+id/networkStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:text="网络：未推流"
+            android:textColor="#8FA198"
+            android:textSize="11sp"/>
 
         <EditText
             android:id="@+id/syncUrl"
             android:layout_width="match_parent"
-            android:layout_height="44dp"
+            android:layout_height="42dp"
             android:hint="国内同步服务器 HTTPS"
             android:inputType="textUri"
+            android:singleLine="true"
             android:textColor="#FFFFFF"
             android:textColorHint="#718078"/>
 
@@ -90,9 +100,10 @@
             <EditText
                 android:id="@+id/clubId"
                 android:layout_width="0dp"
-                android:layout_height="44dp"
+                android:layout_height="42dp"
                 android:layout_weight="1"
                 android:hint="Club ID"
+                android:singleLine="true"
                 android:text="SAGI-DEMO"
                 android:textColor="#FFFFFF"
                 android:textColorHint="#718078"/>
@@ -100,8 +111,9 @@
             <EditText
                 android:id="@+id/tableNo"
                 android:layout_width="100dp"
-                android:layout_height="44dp"
+                android:layout_height="42dp"
                 android:hint="球桌"
+                android:singleLine="true"
                 android:text="01桌"
                 android:textColor="#FFFFFF"
                 android:textColorHint="#718078"/>
@@ -110,31 +122,81 @@
         <EditText
             android:id="@+id/syncToken"
             android:layout_width="match_parent"
-            android:layout_height="44dp"
+            android:layout_height="42dp"
             android:hint="球房同步密钥"
             android:inputType="textPassword"
+            android:singleLine="true"
             android:textColor="#FFFFFF"
             android:textColorHint="#718078"/>
 
         <EditText
             android:id="@+id/rtmpUrl"
             android:layout_width="match_parent"
-            android:layout_height="44dp"
+            android:layout_height="42dp"
             android:hint="rtmp:// 推流地址"
             android:inputType="textUri"
+            android:singleLine="true"
             android:textColor="#FFFFFF"
             android:textColorHint="#718078"/>
 
         <LinearLayout
             android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/switchCameraButton"
+                android:layout_width="0dp"
+                android:layout_height="42dp"
+                android:layout_weight="1"
+                android:text="切镜头"
+                android:textSize="11sp"/>
+
+            <Button
+                android:id="@+id/torchButton"
+                android:layout_width="0dp"
+                android:layout_height="42dp"
+                android:layout_weight="1"
+                android:text="灯光"
+                android:textSize="11sp"/>
+
+            <Button
+                android:id="@+id/zoomOutButton"
+                android:layout_width="58dp"
+                android:layout_height="42dp"
+                android:text="−"
+                android:textSize="16sp"/>
+
+            <TextView
+                android:id="@+id/zoomLabel"
+                android:layout_width="54dp"
+                android:layout_height="42dp"
+                android:gravity="center"
+                android:text="1.0x"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp"
+                android:textStyle="bold"/>
+
+            <Button
+                android:id="@+id/zoomInButton"
+                android:layout_width="58dp"
+                android:layout_height="42dp"
+                android:text="+"
+                android:textSize="16sp"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
+
             <Button
                 android:id="@+id/startButton"
                 android:layout_width="0dp"
                 android:layout_height="46dp"
                 android:layout_weight="1"
                 android:text="开始直播"/>
+
             <Button
                 android:id="@+id/stopButton"
                 android:layout_width="0dp"
