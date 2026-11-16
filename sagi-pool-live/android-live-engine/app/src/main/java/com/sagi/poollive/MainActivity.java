@@ -6,9 +6,12 @@ import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.view.View;
 import android.view.WindowManager;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -22,6 +25,7 @@ import com.tencent.live2.V2TXLivePusherObserver;
 import com.tencent.live2.impl.V2TXLivePusherImpl;
 import com.tencent.rtmp.ui.TXCloudVideoView;
 
+import java.util.Locale;
 import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
@@ -33,6 +37,10 @@ public class MainActivity extends AppCompatActivity {
 
     private TextView status, networkStatus, player1, player2, score, zoomLabel;
     private EditText syncUrl, clubId, tableNo, syncToken, rtmpUrl;
+    private Spinner qualitySpinner;
+    private Button audioButton, directorModeButton;
+    private View controlPanel;
+    private SecurePrefs securePrefs;
 
     private String lastSignature = "";
     private int lastLogCount = -1;
@@ -40,6 +48,8 @@ public class MainActivity extends AppCompatActivity {
     private boolean torchEnabled = false;
     private float zoomRatio = 1f;
     private boolean pushing = false;
+    private boolean audioEnabled = true;
+    private boolean directorMode = false;
     private ScoreState latestState;
 
     private final ActivityResultLauncher<String[]> permissionLauncher =
@@ -63,6 +73,20 @@ public class MainActivity extends AppCompatActivity {
         tableNo = findViewById(R.id.tableNo);
         syncToken = findViewById(R.id.syncToken);
         rtmpUrl = findViewById(R.id.rtmpUrl);
+        qualitySpinner = findViewById(R.id.qualitySpinner);
+        audioButton = findViewById(R.id.audioButton);
+        directorModeButton = findViewById(R.id.directorModeButton);
+        controlPanel = findViewById(R.id.controlPanel);
+        securePrefs = new SecurePrefs(this);
+
+        ArrayAdapter<String> qualityAdapter = new ArrayAdapter<>(
+                this,
+                android.R.layout.simple_spinner_item,
+                new String[]{"540P 流畅", "720P 标准", "1080P 高清"});
+        qualityAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        qualitySpinner.setAdapter(qualityAdapter);
+
+        loadConfig();
 
         ((Button)findViewById(R.id.startButton)).setOnClickListener(v -> startLive());
         ((Button)findViewById(R.id.stopButton)).setOnClickListener(v -> stopLive());
@@ -70,6 +94,8 @@ public class MainActivity extends AppCompatActivity {
         ((Button)findViewById(R.id.torchButton)).setOnClickListener(v -> toggleTorch());
         ((Button)findViewById(R.id.zoomOutButton)).setOnClickListener(v -> changeZoom(-0.5f));
         ((Button)findViewById(R.id.zoomInButton)).setOnClickListener(v -> changeZoom(0.5f));
+        audioButton.setOnClickListener(v -> toggleAudio());
+        directorModeButton.setOnClickListener(v -> toggleDirectorMode());
 
         pusher = new V2TXLivePusherImpl(this, V2TXLiveDef.V2TXLiveMode.TXLiveMode_RTMP);
         pusher.setRenderView(preview);
@@ -77,12 +103,48 @@ public class MainActivity extends AppCompatActivity {
         requestMediaPermissions();
     }
 
+    private void loadConfig() {
+        syncUrl.setText(securePrefs.get("sync_url"));
+        String cid = securePrefs.get("club_id");
+        clubId.setText(cid.isEmpty() ? "SAGI-DEMO" : cid);
+        String table = securePrefs.get("table_no");
+        tableNo.setText(table.isEmpty() ? "01桌" : table);
+        syncToken.setText(securePrefs.get("sync_token"));
+        rtmpUrl.setText(securePrefs.get("rtmp_url"));
+
+        int quality = safeInt(securePrefs.get("quality"), 1);
+        qualitySpinner.setSelection(Math.max(0, Math.min(2, quality)));
+
+        String audio = securePrefs.get("audio_enabled");
+        audioEnabled = audio.isEmpty() || "1".equals(audio);
+        updateAudioButton();
+    }
+
+    private void saveConfig() {
+        securePrefs.put("sync_url", syncUrl.getText().toString().trim());
+        securePrefs.put("club_id", clubId.getText().toString().trim());
+        securePrefs.put("table_no", tableNo.getText().toString().trim());
+        securePrefs.put("sync_token", syncToken.getText().toString());
+        securePrefs.put("rtmp_url", rtmpUrl.getText().toString().trim());
+        securePrefs.put("quality", String.valueOf(qualitySpinner.getSelectedItemPosition()));
+        securePrefs.put("audio_enabled", audioEnabled ? "1" : "0");
+    }
+
+    private int safeInt(String value, int fallback) {
+        try {
+            return Integer.parseInt(value);
+        } catch (Exception ignored) {
+            return fallback;
+        }
+    }
+
     private void requestMediaPermissions() {
         boolean camera = checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
         boolean audio = checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
+
         if (camera) {
             startPreview();
-            if (audio) pusher.startMicrophone();
+            if (audio && audioEnabled) pusher.startMicrophone();
         } else {
             permissionLauncher.launch(new String[]{Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO});
         }
@@ -91,7 +153,7 @@ public class MainActivity extends AppCompatActivity {
     private void onPermissions(Map<String, Boolean> grants) {
         if (Boolean.TRUE.equals(grants.get(Manifest.permission.CAMERA))) {
             startPreview();
-            if (Boolean.TRUE.equals(grants.get(Manifest.permission.RECORD_AUDIO))) {
+            if (Boolean.TRUE.equals(grants.get(Manifest.permission.RECORD_AUDIO)) && audioEnabled) {
                 pusher.startMicrophone();
             }
         } else {
@@ -106,6 +168,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void startLive() {
+        saveConfig();
+
         String push = rtmpUrl.getText().toString().trim();
         String api = syncUrl.getText().toString().trim();
         String cid = clubId.getText().toString().trim();
@@ -121,18 +185,13 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        V2TXLiveDef.V2TXLiveVideoEncoderParam video =
-                new V2TXLiveDef.V2TXLiveVideoEncoderParam(
-                        V2TXLiveDef.V2TXLiveVideoResolution.V2TXLiveVideoResolution1280x720);
-        video.videoResolutionMode =
-                V2TXLiveDef.V2TXLiveVideoResolutionMode.V2TXLiveVideoResolutionModeLandscape;
-        video.videoBitrate = 1600;
-        video.minVideoBitrate = 900;
-        video.videoFps = 24;
-        pusher.setVideoQuality(video);
+        applyVideoQuality();
 
-        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+        if (audioEnabled
+                && checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
             pusher.startMicrophone();
+        } else {
+            pusher.stopMicrophone();
         }
 
         int result = pusher.startPush(push);
@@ -156,6 +215,36 @@ public class MainActivity extends AppCompatActivity {
                 if (!message.contains("已连接")) status.setText(message);
             }
         });
+    }
+
+    private void applyVideoQuality() {
+        int selected = qualitySpinner.getSelectedItemPosition();
+        V2TXLiveDef.V2TXLiveVideoResolution resolution;
+        int target;
+        int min;
+
+        if (selected == 0) {
+            resolution = V2TXLiveDef.V2TXLiveVideoResolution.V2TXLiveVideoResolution960x540;
+            target = 1200;
+            min = 700;
+        } else if (selected == 2) {
+            resolution = V2TXLiveDef.V2TXLiveVideoResolution.V2TXLiveVideoResolution1920x1080;
+            target = 2800;
+            min = 1800;
+        } else {
+            resolution = V2TXLiveDef.V2TXLiveVideoResolution.V2TXLiveVideoResolution1280x720;
+            target = 1600;
+            min = 900;
+        }
+
+        V2TXLiveDef.V2TXLiveVideoEncoderParam video =
+                new V2TXLiveDef.V2TXLiveVideoEncoderParam(resolution);
+        video.videoResolutionMode =
+                V2TXLiveDef.V2TXLiveVideoResolutionMode.V2TXLiveVideoResolutionModeLandscape;
+        video.videoBitrate = target;
+        video.minVideoBitrate = min;
+        video.videoFps = 24;
+        pusher.setVideoQuality(video);
     }
 
     private void updateScore(ScoreState state) {
@@ -189,18 +278,15 @@ public class MainActivity extends AppCompatActivity {
     private void playEventOverlay(ScoreState state) {
         if (!pushing) return;
         overlayHandler.removeCallbacksAndMessages(null);
-
         pusher.setWatermark(watermarkRenderer.renderEvent(state, 0), 0.06f, 0.025f, 0.88f);
         overlayHandler.postDelayed(
                 () -> pusher.setWatermark(
                         watermarkRenderer.renderEvent(state, 1), 0.06f, 0.025f, 0.88f),
-                90
-        );
+                90);
         overlayHandler.postDelayed(
                 () -> pusher.setWatermark(
                         watermarkRenderer.renderEvent(state, 2), 0.06f, 0.025f, 0.88f),
-                180
-        );
+                180);
         overlayHandler.postDelayed(() -> {
             if (latestState != null && pushing) setNormalWatermark(latestState);
         }, 1550);
@@ -244,7 +330,33 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateZoomLabel() {
-        zoomLabel.setText(String.format(java.util.Locale.US, "%.1fx", zoomRatio));
+        zoomLabel.setText(String.format(Locale.US, "%.1fx", zoomRatio));
+    }
+
+    private void toggleAudio() {
+        audioEnabled = !audioEnabled;
+        if (audioEnabled) {
+            if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                pusher.startMicrophone();
+            } else {
+                permissionLauncher.launch(
+                        new String[]{Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO});
+            }
+        } else {
+            pusher.stopMicrophone();
+        }
+        updateAudioButton();
+        saveConfig();
+    }
+
+    private void updateAudioButton() {
+        audioButton.setText(audioEnabled ? "麦克风 开" : "麦克风 关");
+    }
+
+    private void toggleDirectorMode() {
+        directorMode = !directorMode;
+        controlPanel.setVisibility(directorMode ? View.GONE : View.VISIBLE);
+        directorModeButton.setText(directorMode ? "显示控制" : "隐藏控制");
     }
 
     private void stopLive() {
@@ -255,6 +367,7 @@ public class MainActivity extends AppCompatActivity {
         pusher.setWatermark(null, 0f, 0f, 0f);
         status.setText("直播已停止 · 摄像头预览继续");
         networkStatus.setText("网络：未推流");
+        saveConfig();
     }
 
     private final class SagiPusherObserver extends V2TXLivePusherObserver {
@@ -297,13 +410,13 @@ public class MainActivity extends AppCompatActivity {
             runOnUiThread(() -> networkStatus.setText(
                     "网络：" + statistics.videoBitrate + "kbps · "
                             + statistics.fps + "fps · "
-                            + statistics.width + "×" + statistics.height
-            ));
+                            + statistics.width + "×" + statistics.height));
         }
     }
 
     @Override
     protected void onDestroy() {
+        saveConfig();
         pushing = false;
         overlayHandler.removeCallbacksAndMessages(null);
         syncClient.shutdown();
