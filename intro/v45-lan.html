@@ -736,10 +736,10 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
       <div class="card">
         <h2>球员名单 · <span id="rosterSideText">HOME 主队</span></h2>
         <div class="rosterImport">
-          <div class="riHead"><div><div class="riTitle">SMART ROSTER IMPORT · 智能名单导入</div><div class="riSub">照片 / Excel / CSV / Word / PDF / 文本 → 识别预览 → 一键写入当前球队</div></div><div class="riBadge">赛前工具 · 不影响直播核心</div></div>
+          <div class="riHead"><div><div class="riTitle">SMART ROSTER IMPORT · 智能名单导入</div><div class="riSub">照片 / JSON / Excel / CSV / Word / PDF / 文本 → 识别预览 → 一键替换当前球队名单</div></div><div class="riBadge">赛前工具 · 不影响直播核心</div></div>
           <div class="riButtons">
             <label class="fileBtn riCamera">📷 拍照识别<input id="rosterCameraFile" type="file" accept="image/*" capture="environment"></label>
-            <label class="fileBtn riFile">📁 导入文件<input id="rosterImportFile" type="file" accept="image/*,.txt,.csv,.tsv,.xlsx,.xls,.docx,.pdf,text/plain,text/csv,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.wordprocessingml.document"></label>
+            <label class="fileBtn riFile">📁 导入文件<input id="rosterImportFile" type="file" accept="image/*,.txt,.csv,.tsv,.json,.xlsx,.xls,.docx,.pdf,text/plain,text/csv,application/json,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.wordprocessingml.document"></label>
             <button id="rosterPasteToggle" class="riPasteBtn" type="button">⌨ 粘贴名单</button>
           </div>
           <div id="rosterPaste" class="riPaste"><textarea id="rosterPasteText" placeholder="可直接粘贴：&#10;1  张三  GK  首发&#10;5  李四  CB  首发&#10;10 王五  CM  首发&#10;9  赵六  ST  首发&#10;18 阿力  MF  替补"></textarea><div class="riPasteActions"><button id="rosterParsePaste" class="ok" type="button">解析文字</button><button id="rosterPasteClear" type="button">清空</button></div></div>
@@ -747,7 +747,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
           <div id="rosterImportPreview" class="riPreview">
             <div class="riTools"><button id="riAllStarter" type="button">前 <span id="riStarterLimit">11</span> 人设首发</button><button id="riAutoRole" type="button">按阵型补位置</button><button id="riClearDraft" type="button">取消导入</button><span id="riCount" class="riCount">0 人</span></div>
             <div class="riTableWrap"><table class="riTable"><thead><tr><th>用</th><th>号码</th><th>姓名</th><th>身份</th><th>位置组</th><th>详细位置</th><th>队长</th><th>提示</th></tr></thead><tbody id="rosterImportBody"></tbody></table></div>
-            <button id="rosterCommitImport" class="riCommit" type="button">确认并导入当前球队</button>
+            <button id="rosterCommitImport" class="riCommit" type="button">确认替换并导入当前球队</button>
           </div>
         </div>
         <div class="grid2">
@@ -1758,6 +1758,29 @@ function riRenderDraft(){
  q('riCount').textContent=rosterImportDraft.filter(x=>x.use).length+' 人';
 }
 function riReadTextFile(file){return new Promise((res,rej)=>{const r=new FileReader();r.onerror=()=>rej(r.error);r.onload=()=>res(String(r.result||''));r.readAsText(file,'utf-8')})}
+async function riReadJson(file){
+ const raw=await riReadTextFile(file);let data;
+ try{data=JSON.parse(raw)}catch(e){throw new Error('JSON 格式错误')}
+ const list=Array.isArray(data)?data:(data.starting_xi||data.players||data.roster||[]);
+ if(!Array.isArray(list)||!list.length)throw new Error('JSON 中没有球员数据');
+ return list.map((p,i)=>{
+   const pos=riClean(p.position_code||p.positionCode||p.position||p.pos||p.role||'');
+   const role=riRoleFrom(pos)||riRoleFrom(p.position||'')||'';
+   const photo=String(p.photo||p.photo_data||p.photoData||p.image||'');
+   const starter=(p.starter===true||p.starter===1||String(p.starter).toLowerCase()==='true'||String(p.squadType||'').toUpperCase()==='STARTER');
+   return{
+     use:p.use!==false,
+     number:riClean(p.number||p.no||p.jersey_number||p.jerseyNumber)||String(i+1),
+     name:riClean(p.name||p.player_name||p.playerName),
+     role,
+     position:pos||role,
+     squadType:starter?'STARTER':(String(p.squadType||'').toUpperCase()==='SUB'?'SUB':'STARTER'),
+     captain:!!p.captain,
+     photo,
+     warning:photo?'📷 已含照片':'无照片'
+   }
+ }).filter(p=>p.name)
+}
 async function riReadSpreadsheet(file){
  riStatus('正在加载 Excel 解析模块…','work');await riLoadScript(RI_LIBS.xlsx,'XLSX',20000);const buf=await file.arrayBuffer(),wb=XLSX.read(buf,{type:'array'}),sheet=wb.Sheets[wb.SheetNames[0]],matrix=XLSX.utils.sheet_to_json(sheet,{header:1,raw:false,defval:''});return riRowsFromMatrix(matrix)
 }
@@ -1789,6 +1812,7 @@ async function riHandleFile(file){
  try{
    let rows=[];
    if(type.startsWith('image/')||['jpg','jpeg','png','webp','heic','heif'].includes(ext))rows=await riReadImage(file);
+   else if(ext==='json'||type==='application/json')rows=await riReadJson(file);
    else if(['csv','tsv','txt'].includes(ext)||type.startsWith('text/'))rows=riParseText(await riReadTextFile(file));
    else if(['xlsx','xls'].includes(ext))rows=await riReadSpreadsheet(file);
    else if(ext==='docx')rows=await riReadDocx(file);
@@ -1802,13 +1826,17 @@ function riCommit(){
  const limit=starterLimit(),starterRows=selectedRows.filter(p=>p.squadType==='STARTER');
  if(starterRows.length>limit){note('首发超过 '+limit+' 人，请先调整首发/替补');return}
  if(selectedRows.some(p=>!p.role)){note('还有球员“位置组”未确认');return}
- const existing=new Set(roster.map(p=>(String(p.number)+'|'+String(p.name)).toLowerCase()));
- let added=0;
+ const seen=new Set(),next=[];
  for(const x of selectedRows){
-   const key=(String(x.number)+'|'+String(x.name)).toLowerCase();if(existing.has(key))continue;
-   roster.push({id:uid(),name:riClean(x.name),number:riClean(x.number)||'00',squadType:x.squadType||'SUB',role:x.role||'MF',position:riClean(x.position)||x.role||'MF',captain:!!x.captain,statLabel:'',statValue:'',photo:'',mediaBlob:null,mediaObjectUrl:'',mediaUrl:'',mediaAction:'STANDARD',directorIn:0,directorOut:0,directorSpeed:1,directorFreeze:false,directorFreezeMs:1000,directorCamera:'MEDIUM'});existing.add(key);added++
+   const key=(String(x.number)+'|'+String(x.name)).toLowerCase();if(seen.has(key))continue;seen.add(key);
+   next.push({id:uid(),name:riClean(x.name),number:riClean(x.number)||'00',squadType:x.squadType||'SUB',role:x.role||'MF',position:riClean(x.position)||x.role||'MF',captain:!!x.captain,statLabel:'',statValue:'',photo:String(x.photo||''),mediaBlob:null,mediaObjectUrl:'',mediaUrl:'',mediaAction:'STANDARD',directorIn:0,directorOut:0,directorSpeed:1,directorFreeze:false,directorFreezeMs:1000,directorCamera:'MEDIUM'})
  }
- teamStore[activeSide].roster=roster;reconcileTeamStarters(activeSide,q('formation').value);selected=roster.length?roster.length-1:-1;renderRoster();updateFormatUI();refreshMatchdayPlayers();renderStage(currentGroup);mdPersist();riStatus('已导入 '+added+' 人到 '+sideLabel(activeSide)+'。重复球员已自动跳过。','ok');q('rosterImportPreview').classList.remove('on');rosterImportDraft=[];note('名单导入完成 · '+added+' 人')
+ roster=next;teamStore[activeSide].roster=roster;reconcileTeamStarters(activeSide,q('formation').value);
+ selected=roster.length?0:-1;if(selected>=0)writePlayer(roster[0]);else{assets.photo='';assets.mediaBlob=null;assets.mediaObjectUrl='';renderPreviews()}
+ renderRoster();updateFormatUI();refreshMatchdayPlayers();renderStage(currentGroup);mdPersist();
+ const photoCount=roster.filter(p=>p.photo).length;
+ riStatus('已替换 '+sideLabel(activeSide)+' 名单 · '+roster.length+' 人 · 照片 '+photoCount+'/'+roster.length+'。','ok');
+ q('rosterImportPreview').classList.remove('on');rosterImportDraft=[];note('名单替换完成 · '+roster.length+' 人 · 照片 '+photoCount)
 }
 function initRosterImport(){
  q('rosterPasteToggle').onclick=()=>q('rosterPaste').classList.toggle('on');q('rosterPasteClear').onclick=()=>{q('rosterPasteText').value=''};
