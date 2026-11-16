@@ -60,6 +60,8 @@ check(html.includes("deviceLabel:'Web记分端"),'Scorer device label missing');
 check(live.includes('sagi_pool_web_live_device_id_v1'),'Live-screen stable web device identity missing');
 check(live.includes("deviceLabel:'Web直播端"),'Live-screen device label missing');
 check(admin.includes('/api/admin/licenses'),'Seller license endpoint missing');
+check(admin.includes('/api/admin/status'),'Seller health-dashboard endpoint missing');
+check(admin.includes('serverHealth'),'Seller health-dashboard UI missing');
 check(admin.includes('/api/admin/provisions'),'Seller installation-code endpoint missing');
 check(admin.includes('/devices'),'Seller device-management endpoint missing');
 check(sw.includes('./club.html')&&sw.includes('./live.html')&&sw.includes('./admin.html'),'Offline cache missing product pages');
