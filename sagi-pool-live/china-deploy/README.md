@@ -61,3 +61,40 @@ https://pool.example.com
 - Nginx 只对公网暴露 443
 - Node 只监听 127.0.0.1:8787
 - 不要把管理密钥写进 GitHub
+
+
+## 每日自动备份
+
+部署包包含：
+
+- `sagi-pool-backup.service`
+- `sagi-pool-backup.timer`
+- `backup.mjs`
+- `restore.mjs`
+
+默认每天约 04:10 执行一次 gzip 备份，并随机延迟最多 5 分钟，默认保留 14 天。
+
+启用：
+
+```bash
+sudo systemctl enable --now sagi-pool-backup.timer
+sudo systemctl list-timers | grep sagi-pool
+```
+
+手动测试：
+
+```bash
+sudo systemctl start sagi-pool-backup.service
+ls -lh /opt/sagi-pool-sync/backups/
+```
+
+恢复必须先停止服务，并显式确认：
+
+```bash
+sudo systemctl stop sagi-pool-sync
+cd /opt/sagi-pool-sync
+sudo -u www-data env SAGI_DATA_FILE=/opt/sagi-pool-sync/data.json SAGI_CONFIRM_RESTORE=YES node restore.mjs /opt/sagi-pool-sync/backups/<backup>.json.gz
+sudo systemctl start sagi-pool-sync
+```
+
+恢复脚本会在覆盖前自动保留一份 `data.json.pre-restore-*.bak`。
