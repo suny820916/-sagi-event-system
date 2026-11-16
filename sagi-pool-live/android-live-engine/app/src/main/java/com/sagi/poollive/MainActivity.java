@@ -1,8 +1,10 @@
 package com.sagi.poollive;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -291,8 +293,10 @@ public class MainActivity extends AppCompatActivity {
             pusher.stopMicrophone();
         }
 
+        startKeepAliveService();
         int result = pusher.startPush(push);
         if (result != V2TXLiveCode.V2TXLIVE_OK) {
+            stopKeepAliveService();
             status.setText("推流启动失败 · " + result);
             return;
         }
@@ -456,8 +460,22 @@ public class MainActivity extends AppCompatActivity {
         directorModeButton.setText(directorMode ? "显示控制" : "隐藏控制");
     }
 
+    private void startKeepAliveService() {
+        Intent intent = new Intent(this, LiveKeepAliveService.class);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(intent);
+        } else {
+            startService(intent);
+        }
+    }
+
+    private void stopKeepAliveService() {
+        stopService(new Intent(this, LiveKeepAliveService.class));
+    }
+
     private void stopLive() {
         pushing = false;
+        stopKeepAliveService();
         overlayHandler.removeCallbacksAndMessages(null);
         syncClient.stop();
         pusher.stopPush();
@@ -515,6 +533,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         saveConfig();
         pushing = false;
+        stopKeepAliveService();
         overlayHandler.removeCallbacksAndMessages(null);
         syncClient.shutdown();
         provisionClient.shutdown();
