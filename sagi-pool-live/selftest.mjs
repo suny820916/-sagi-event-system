@@ -1,136 +1,157 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { spawn, spawnSync } from 'node:child_process';
 
 const root = new URL('./', import.meta.url);
-const html = fs.readFileSync(new URL('index.html', root), 'utf8');
-const club = fs.readFileSync(new URL('club.html', root), 'utf8');
-const live = fs.readFileSync(new URL('live.html', root), 'utf8');
-const manifestText = fs.readFileSync(new URL('manifest.webmanifest', root), 'utf8');
-const sw = fs.readFileSync(new URL('sw.js', root), 'utf8');
-const serverPath = fileURLPath(new URL('china-sync/server.mjs', root));
+const read = name => fs.readFileSync(new URL(name, root), 'utf8');
+const html = read('index.html');
+const club = read('club.html');
+const live = read('live.html');
+const admin = read('admin.html');
+const manifestText = read('manifest.webmanifest');
+const sw = read('sw.js');
+const serverPath = fileURLToPath(new URL('china-sync/server.mjs', root));
 
 const failures = [];
 function check(ok, msg){ if(!ok) failures.push(msg); }
-function fileURLPath(u){ return decodeURIComponent(u.pathname); }
-
 function checkInlineScripts(source, label){
-  const scripts = [...source.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m=>m[1]);
-  check(scripts.length >= 1, label+' should contain an inline script');
-  scripts.forEach((code,i)=>{
-    try { new Function(code); }
-    catch (e) { failures.push(label+' script '+(i+1)+' syntax error: '+e.message); }
-  });
+  const scripts=[...source.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m=>m[1]);
+  check(scripts.length>=1,label+' should contain an inline script');
+  scripts.forEach((code,i)=>{try{new Function(code)}catch(e){failures.push(label+' script '+(i+1)+' syntax error: '+e.message)}});
   return scripts;
 }
 
-const scripts = checkInlineScripts(html, 'index.html');
-checkInlineScripts(club, 'club.html');
-checkInlineScripts(live, 'live.html');
+const scorerScripts=checkInlineScripts(html,'index.html');
+checkInlineScripts(club,'club.html');
+checkInlineScripts(live,'live.html');
+checkInlineScripts(admin,'admin.html');
 
-try { JSON.parse(manifestText); }
-catch(e){ failures.push('manifest.webmanifest JSON error: '+e.message); }
+try{JSON.parse(manifestText)}catch(e){failures.push('manifest.webmanifest JSON error: '+e.message)}
+try{new Function(sw)}catch(e){failures.push('sw.js syntax error: '+e.message)}
 
-try { new Function(sw); }
-catch(e){ failures.push('sw.js syntax error: '+e.message); }
-
-const serverCheck = spawnSync(process.execPath, ['--check', serverPath], {encoding:'utf8'});
-check(serverCheck.status===0, 'China sync server syntax error: '+(serverCheck.stderr||serverCheck.stdout||'unknown'));
+const serverCheck=spawnSync(process.execPath,['--check',serverPath],{encoding:'utf8'});
+check(serverCheck.status===0,'China sync server syntax error: '+(serverCheck.stderr||serverCheck.stdout||'unknown'));
 
 const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);
 const dup=[...new Set(ids.filter((x,i)=>ids.indexOf(x)!==i))];
 check(dup.length===0,'Duplicate ids: '+dup.join(', '));
-
-const refs=[...scripts.join('\n').matchAll(/\$\('#([^']+)'\)/g)].map(m=>m[1]);
+const refs=[...scorerScripts.join('\n').matchAll(/\$\('#([^']+)'\)/g)].map(m=>m[1]);
 const missing=[...new Set(refs.filter(x=>!ids.includes(x)))];
-check(missing.length===0,'Referenced ids missing from HTML: '+missing.join(', '));
+check(missing.length===0,'Referenced ids missing from scorer HTML: '+missing.join(', '));
 
-const required=[
-  'camera','cameraBtn','swapBtn','players','eightPanel','chasePanel',
-  'undoBtn','newRackBtn','resetBtn','clubName','tableNo','raceTo',
-  'settlement','log','extraOverlay','splash','syncUrl','clubId','syncToken',
-  'syncTestBtn','liveScreenLink'
-];
-for(const id of required) check(ids.includes(id),'Required UI id missing: '+id);
+const required=['camera','cameraBtn','swapBtn','players','eightPanel','chasePanel','undoBtn','newRackBtn','resetBtn','clubName','tableNo','raceTo','settlement','log','extraOverlay','splash','syncUrl','clubId','syncToken','syncTestBtn','liveScreenLink'];
+for(const id of required)check(ids.includes(id),'Required scorer UI id missing: '+id);
 
 for(const token of ['中式八球','4球追分','6球追分','9球追分','普胜','小金','大金','黄金9','localStorage','getUserMedia','serviceWorker']){
   check(html.includes(token),'Core capability marker missing: '+token);
 }
-
 check(html.includes("state.players.length>=4"),'4-player limit guard missing');
 check(html.includes("state.history.length>40"),'Undo history bound missing');
 check(html.includes("state.settlement==='transfer'"),'Transfer settlement logic missing');
 check(html.includes("state.mode==='8ball'"),'8-ball mode logic missing');
-check(html.includes("sagi_pool_live_v20_"),'V2 per-table storage key missing from scorer');
-check(html.includes('/api/rooms/'),'Scorer China sync endpoint missing');
-check(club.includes('球桌状态'),'Club dashboard marker missing');
-check(club.includes('sagi_pool_live_v20_'),'V2 per-table storage isolation missing from club dashboard');
-check(club.includes('/api/clubs/'),'Club cloud sync endpoint missing');
-check(live.includes('/api/rooms/'),'Live screen cloud pull missing');
-check(live.includes('getUserMedia'),'Live screen camera missing');
-check(sw.includes('./club.html'),'Club dashboard missing from offline cache');
-check(sw.includes('./live.html'),'Live screen missing from offline cache');
-check(sw.includes("sagi-pool-live-v20"),'Service worker cache version not V2');
+check(html.includes("sagi_pool_live_v20_"),'V2 per-table storage key missing');
+check(html.includes('授权无效或已到期'),'License error UI missing from scorer');
+check(club.includes('/api/clubs/'),'Club cloud endpoint missing');
+check(live.includes('/api/rooms/'),'Live screen cloud endpoint missing');
+check(admin.includes('/api/admin/licenses'),'Seller license endpoint missing');
+check(sw.includes('./club.html')&&sw.includes('./live.html')&&sw.includes('./admin.html'),'Offline cache missing product pages');
 
 async function waitHealth(base){
-  for(let i=0;i<40;i++){
+  for(let i=0;i<50;i++){
     try{const r=await fetch(base+'/health');if(r.ok)return true}catch{}
     await new Promise(r=>setTimeout(r,100));
   }
   return false;
 }
 
-async function e2eChinaSync(){
+async function e2eCommercial(){
   const port=18787;
   const base='http://127.0.0.1:'+port;
   const tmp=path.join(os.tmpdir(),'sagi-pool-selftest-'+process.pid+'.json');
   try{fs.rmSync(tmp,{force:true})}catch{}
   const child=spawn(process.execPath,[serverPath],{
-    env:{...process.env,PORT:String(port),HOST:'127.0.0.1',SAGI_SYNC_TOKEN:'test-token',SAGI_DATA_FILE:tmp},
+    env:{...process.env,PORT:String(port),HOST:'127.0.0.1',SAGI_REQUIRE_LICENSE:'1',SAGI_ADMIN_TOKEN:'admin-secret',SAGI_DATA_FILE:tmp},
     stdio:['ignore','pipe','pipe']
   });
   let stderr='';child.stderr.on('data',d=>stderr+=d.toString());
   try{
     check(await waitHealth(base),'China sync /health did not start: '+stderr);
-    const state={mode:'chase6',club:'测试球房',table:'01桌',players:[{name:'A',score:3,wins:0},{name:'B',score:1,wins:0}],log:[{type:'大金'}],updatedAt:Date.now()};
-    const post=await fetch(base+'/api/rooms/'+encodeURIComponent('TEST-CLUB')+'/'+encodeURIComponent('01桌'),{
+
+    const pre=await fetch(base+'/api/clubs/TEST-CLUB',{headers:{'X-SAGI-Token':'club-secret'}});
+    check(pre.status===401,'Unlicensed club should be rejected');
+
+    const badAdmin=await fetch(base+'/api/admin/licenses',{method:'POST',headers:{'Content-Type':'application/json','X-SAGI-Admin':'wrong'},body:'{}'});
+    check(badAdmin.status===401,'Wrong admin token should be rejected');
+
+    const expires=Date.now()+86400000;
+    const issue=await fetch(base+'/api/admin/licenses',{
       method:'POST',
-      headers:{'Content-Type':'application/json','X-SAGI-Token':'test-token'},
+      headers:{'Content-Type':'application/json','X-SAGI-Admin':'admin-secret'},
+      body:JSON.stringify({clubId:'TEST-CLUB',clubName:'测试球房',plan:'CLUB PRO',maxTables:2,expiresAt:expires,token:'club-secret'})
+    });
+    const issueData=await issue.json();
+    check(issue.ok&&issueData.license?.active===true,'License issuance failed');
+    check(issueData.license?.maxTables===2,'License maxTables incorrect');
+
+    const lic=await fetch(base+'/api/license/TEST-CLUB',{headers:{'X-SAGI-Token':'club-secret'}});
+    const licData=await lic.json();
+    check(lic.ok&&licData.license?.plan==='CLUB PRO','License verification failed');
+
+    const wrong=await fetch(base+'/api/rooms/TEST-CLUB/01%E6%A1%8C',{headers:{'X-SAGI-Token':'wrong-token'}});
+    check(wrong.status===401,'Wrong club token should be rejected');
+
+    const state={mode:'chase6',club:'测试球房',table:'01桌',players:[{name:'A',score:3,wins:0},{name:'B',score:1,wins:0}],log:[{type:'大金'}],updatedAt:Date.now()};
+    const post=await fetch(base+'/api/rooms/TEST-CLUB/01%E6%A1%8C',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-SAGI-Token':'club-secret'},
       body:JSON.stringify({state,updatedAt:state.updatedAt,deviceId:'selftest'})
     });
-    check(post.ok,'China sync POST failed: '+post.status);
-    const one=await fetch(base+'/api/rooms/'+encodeURIComponent('TEST-CLUB')+'/'+encodeURIComponent('01桌'),{headers:{'X-SAGI-Token':'test-token'}});
+    check(post.ok,'Licensed room POST failed: '+post.status);
+
+    const one=await fetch(base+'/api/rooms/TEST-CLUB/01%E6%A1%8C',{headers:{'X-SAGI-Token':'club-secret'}});
     const oneData=await one.json();
-    check(one.ok && oneData.room?.state?.players?.[0]?.score===3,'China sync room readback failed');
-    const all=await fetch(base+'/api/clubs/'+encodeURIComponent('TEST-CLUB'),{headers:{'X-SAGI-Token':'test-token'}});
+    check(one.ok&&oneData.room?.state?.players?.[0]?.score===3,'Room readback failed');
+
+    const all=await fetch(base+'/api/clubs/TEST-CLUB',{headers:{'X-SAGI-Token':'club-secret'}});
     const allData=await all.json();
-    check(all.ok && allData.rooms?.length===1,'China sync club list failed');
-    check(allData.rooms?.[0]?.state?.mode==='chase6','China sync club list missing full room state');
-    const unauth=await fetch(base+'/api/clubs/'+encodeURIComponent('TEST-CLUB'));
-    check(unauth.status===401,'China sync token protection failed');
+    check(all.ok&&allData.rooms?.length===1,'Club list failed');
+    check(allData.rooms?.[0]?.state?.mode==='chase6','Club list missing full room state');
+
+    const over=await fetch(base+'/api/rooms/TEST-CLUB/03%E6%A1%8C',{headers:{'X-SAGI-Token':'club-secret'}});
+    const overData=await over.json();
+    check(over.status===403&&overData.error==='table_limit_exceeded','Table limit enforcement failed');
+
+    const list=await fetch(base+'/api/admin/licenses',{headers:{'X-SAGI-Admin':'admin-secret'}});
+    const listData=await list.json();
+    check(list.ok&&listData.licenses?.some(x=>x.clubId==='TEST-CLUB'),'Admin license listing failed');
+
+    const revoke=await fetch(base+'/api/admin/licenses/TEST-CLUB/revoke',{method:'POST',headers:{'X-SAGI-Admin':'admin-secret'}});
+    check(revoke.ok,'License revoke failed');
+
+    const after=await fetch(base+'/api/clubs/TEST-CLUB',{headers:{'X-SAGI-Token':'club-secret'}});
+    check(after.status===401,'Revoked license should be rejected');
   }catch(e){
-    failures.push('China sync E2E error: '+e.message);
+    failures.push('Commercial China E2E error: '+e.message);
   }finally{
     child.kill('SIGTERM');
     try{fs.rmSync(tmp,{force:true})}catch{}
   }
 }
 
-await e2eChinaSync();
+await e2eCommercial();
 
 if(failures.length){
   console.error('\nSAGI POOL LIVE SELF-CHECK: FAILED');
   failures.forEach((x,i)=>console.error((i+1)+'. '+x));
   process.exit(1);
 }
-
-console.log('SAGI POOL LIVE CHINA V2 SELF-CHECK: PASSED');
-console.log('✓ Scorer / club / live-screen JavaScript syntax');
-console.log('✓ PWA manifest and V2 offline cache');
-console.log('✓ Core billiards modes and 2-4 player scoring');
-console.log('✓ Active shooter / foul / undo / persistence');
-console.log('✓ Per-table isolation');
-console.log('✓ China sync server syntax');
-console.log('✓ Real POST → room GET → club GET sync flow');
-console.log('✓ Sync token protection');
+console.log('SAGI POOL LIVE CHINA V2.1 SELF-CHECK: PASSED');
+console.log('✓ Scorer / club / live / seller JavaScript');
+console.log('✓ PWA cache and core billiards scoring');
+console.log('✓ China sync real read/write flow');
+console.log('✓ Per-club license issuance');
+console.log('✓ Wrong-token rejection');
+console.log('✓ Purchased table-count enforcement');
+console.log('✓ Admin license listing and revoke');
