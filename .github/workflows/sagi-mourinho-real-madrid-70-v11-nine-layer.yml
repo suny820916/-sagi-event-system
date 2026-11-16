@@ -1,0 +1,118 @@
+name: SAGI MOURINHO REAL MADRID 70S V1.1 NINE LAYER
+
+concurrency:
+  group: sagi-mourinho-real-madrid-70-v11-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "cloud-blender-worker/presets/mourinho_real_madrid_4231_70s_v11_nine_layer.json"
+      - "cloud-blender-worker/presets/mourinho_v11_cn_titles.ass"
+      - "cloud-blender-worker/engine/sagi_tactical_mourinho_70_v11.py"
+      - ".github/workflows/sagi-mourinho-real-madrid-70-v11-nine-layer.yml"
+  workflow_dispatch:
+
+jobs:
+  render-mourinho-v11:
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Blender image
+        run: docker build -t sagi-mourinho-v11 ./cloud-blender-worker
+
+      - name: Render and compose V1.1
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p mourinho_v11_out/critical_frames
+
+          docker run --rm \
+            -v "$PWD/mourinho_v11_out:/out" \
+            sagi-mourinho-v11 \
+            bash -lc '
+              set -euo pipefail
+              apt-get update -qq
+              apt-get install -y -qq --no-install-recommends fonts-noto-cjk fontconfig >/dev/null
+              fc-match "Noto Sans CJK SC" | head -1
+
+              blender --background \
+                --python /app/engine/sagi_tactical_mourinho_70_v11.py \
+                -- \
+                /app/presets/mourinho_real_madrid_4231_70s_v11_nine_layer.json \
+                /out
+
+              ffmpeg -y -loglevel error \
+                -framerate 30 \
+                -i /out/frames/frame_%04d.png \
+                -f lavfi \
+                -i anullsrc=channel_layout=stereo:sample_rate=44100 \
+                -map 0:v:0 -map 1:a:0 \
+                -c:v libx264 -profile:v baseline -level 3.1 \
+                -pix_fmt yuv420p -preset veryfast -crf 20 \
+                -c:a aac -b:a 64k -shortest -movflags +faststart \
+                /out/SAGI_MOURINHO_REAL_MADRID_V11_BASE.mp4
+
+              cp /app/presets/mourinho_v11_cn_titles.ass /out/mourinho_v11_cn_titles.ass
+
+              ffmpeg -y -loglevel error \
+                -i /out/SAGI_MOURINHO_REAL_MADRID_V11_BASE.mp4 \
+                -vf "ass=/out/mourinho_v11_cn_titles.ass" \
+                -c:v libx264 -profile:v baseline -level 3.1 \
+                -pix_fmt yuv420p -preset veryfast -crf 20 \
+                -c:a copy -movflags +faststart \
+                /out/SAGI_MOURINHO_REAL_MADRID_70S_V11_NINE_LAYER_CN.mp4
+
+              ffmpeg -y -loglevel error \
+                -ss 29 -t 29 \
+                -i /out/SAGI_MOURINHO_REAL_MADRID_70S_V11_NINE_LAYER_CN.mp4 \
+                -c:v libx264 -pix_fmt yuv420p -crf 20 -preset veryfast -c:a aac \
+                /out/SAGI_MOURINHO_V11_29_58_CORE_REVIEW.mp4
+
+              for spec in "03.0 03_0" "11.0 11_0" "22.0 22_0" "33.6 33_6" "36.0 36_0" "36.6 36_6" "37.5 37_5" "38.2 38_2" "49.0 49_0" "56.1 56_1" "61.0 61_0" "68.8 68_8" "69.5 69_5"; do
+                set -- $spec
+                ffmpeg -y -loglevel error -ss "$1" \
+                  -i /out/SAGI_MOURINHO_REAL_MADRID_70S_V11_NINE_LAYER_CN.mp4 \
+                  -frames:v 1 /out/critical_frames/"$2".jpg
+              done
+
+              rm -f /out/SAGI_MOURINHO_REAL_MADRID_V11_BASE.mp4
+            '
+
+          sudo chown -R "$USER":"$USER" mourinho_v11_out
+
+          test -s mourinho_v11_out/SAGI_MOURINHO_REAL_MADRID_70S_V11_NINE_LAYER_CN.mp4
+          test -s mourinho_v11_out/SAGI_MOURINHO_V11_29_58_CORE_REVIEW.mp4
+          test -s mourinho_v11_out/execution_report.json
+          test -s mourinho_v11_out/scene.blend
+          test -s mourinho_v11_out/critical_frames/36_6.jpg
+          test -s mourinho_v11_out/critical_frames/69_5.jpg
+
+          python3 - <<'PY'
+          import json
+          with open("mourinho_v11_out/execution_report.json", encoding="utf-8") as f:
+              r=json.load(f)
+          assert r["valid"] is True, r
+          assert r["errors"] == [], r
+          assert abs(r["duration_sec"] - 70.0) < 1e-6, r
+          assert r["completion_hold_sec"] <= 1.5, r
+          print(json.dumps(r, ensure_ascii=False, indent=2))
+          PY
+
+      - name: Upload V1.1 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SAGI-MOURINHO-REAL-MADRID-70S-V1.1-NINE-LAYER
+          path: |
+            mourinho_v11_out/SAGI_MOURINHO_REAL_MADRID_70S_V11_NINE_LAYER_CN.mp4
+            mourinho_v11_out/SAGI_MOURINHO_V11_29_58_CORE_REVIEW.mp4
+            mourinho_v11_out/execution_report.json
+            mourinho_v11_out/scene.blend
+            mourinho_v11_out/mourinho_v11_cn_titles.ass
+            mourinho_v11_out/critical_frames/*.jpg
+            cloud-blender-worker/presets/mourinho_real_madrid_4231_70s_v11_nine_layer.json
+          retention-days: 7
