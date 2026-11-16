@@ -73,7 +73,7 @@ check(admin.includes('auditList'),'Seller audit UI missing');
 check(admin.includes('/api/admin/provisions'),'Seller installation-code endpoint missing');
 check(admin.includes('/devices'),'Seller device-management endpoint missing');
 check(sw.includes('./club.html')&&sw.includes('./live.html')&&sw.includes('./admin.html'),'Offline cache missing product pages');
-check(sw.includes('sagi-pool-live-v31'),'Service worker cache generation not V2.11');
+check(sw.includes('sagi-pool-live-v32'),'Service worker cache generation not V2.12');
 
 async function waitHealth(base){
   for(let i=0;i<50;i++){
