@@ -1,4 +1,4 @@
-# SAGI V4.7.4 STABLE LAN / VERSION-VERIFIED SAFE UPDATE Bridge
+# SAGI V4.7.5 STABLE LAN / BROWSER RELOAD COMPAT Bridge
 # Same-LAN control server + local vMix API bridge.
 # Phone Control: http://<PC-LAN-IP>:8099/
 # vMix Browser:  http://127.0.0.1:8099/vmix
@@ -27,7 +27,7 @@ $Allowed = @(
   "OverlayInput4In","OverlayInput4Out","OverlayInput4Off",
   "OverlayInputAllOff",
   "Effect1On","Effect1Off","Effect2On","Effect2Off","Effect3On","Effect3Off","Effect4On","Effect4Off",
-  "SetEffect1Strength","SetEffect2Strength","SetEffect3Strength","SetEffect4Strength"
+  "SetEffect1Strength","SetEffect2Strength","SetEffect3Strength","SetEffect4Strength","BrowserReload"
 )
 
 $State = @{
@@ -274,7 +274,7 @@ function State-Json {
 
 Write-Host ""
 Write-Host "============================================================" -ForegroundColor Cyan
-Write-Host "  SAGI V4.7.4 VERSION-VERIFIED SAFE UPDATE - vMix Bridge" -ForegroundColor Cyan
+Write-Host "  SAGI V4.7.5 BROWSER RELOAD COMPAT - vMix Bridge" -ForegroundColor Cyan
 Write-Host "============================================================" -ForegroundColor Cyan
 
 if (-not (Test-Path $ControlCache) -or -not (Test-Path $OutputCache)) {
