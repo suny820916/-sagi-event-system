@@ -3,37 +3,64 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#07090d"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="SAGI 赛前">
-<link rel="apple-touch-icon" href="./sagi-app-icon.svg"><title>SAGI PRE-MATCH · 赛前准备</title>
+<link rel="apple-touch-icon" href="./sagi-app-icon.svg"><title>SAGI PRE-MATCH V2.0 · 赛前准备</title>
 <style>
 :root{--bg:#07090d;--p:#11161d;--l:#2c3742;--t:#f5f2eb;--m:#87929f;--g:#d8b75f}*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--t);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}body{padding-bottom:90px}.app{max-width:760px;margin:auto;padding:14px 12px 30px}.top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin:6px 0 14px}.brand{font-size:22px;font-weight:1000}.brand small{display:block;font-size:10px;color:var(--m);letter-spacing:2px;margin-top:5px}.ver{border:1px solid #725d2c;color:var(--g);border-radius:999px;padding:7px 10px;font-size:10px}.cloud{display:flex;gap:8px;align-items:center;padding:10px;border:1px solid var(--l);border-radius:13px;background:#0a0f15;color:var(--m);font-size:11px}.dot{width:8px;height:8px;border-radius:50%;background:#777}.cloud.ok .dot{background:#65d49c;box-shadow:0 0 10px #65d49c88}.cloud.work .dot{background:#e2c56f}.card{background:var(--p);border:1px solid var(--l);border-radius:18px;padding:13px;margin:11px 0}.title{font-size:13px;font-weight:1000;margin-bottom:10px}.title small{display:block;color:var(--m);font-size:9px;font-weight:600;margin-top:4px}.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}label{display:block;color:#8f9aa7;font-size:9px;margin-bottom:5px}input,select,textarea{width:100%;background:#080c11;color:#fff;border:1px solid #34404c;border-radius:11px;padding:10px;font-size:14px}textarea{min-height:100px;resize:vertical}button,.file{border:0;border-radius:11px;background:#252e38;color:#fff;font-weight:900;padding:9px 11px;min-height:40px;font-size:11px}.gold{background:linear-gradient(135deg,#82671f,#e0c46d);color:#111}.red{background:#55272a}.actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}.file{display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}.file input{position:absolute;inset:0;opacity:0}.projects{display:grid;gap:7px}.project{background:#0a0f15;border:1px solid #293540;border-radius:13px;padding:10px}.pn{font-size:13px;font-weight:950}.pm{font-size:9px;color:var(--m);margin-top:4px}.pb{display:flex;gap:6px;margin-top:8px}.pb button{min-height:32px;padding:6px 9px;font-size:9px}.tabs{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:10px}.tabs button.on{background:#342a0f;color:#efd77d;border:1px solid #8d7537}.team{display:grid;grid-template-columns:76px 1fr;gap:9px;align-items:center}.crest,.logo{border:1px dashed #3a4652;background:#090d12;border-radius:13px;display:flex;align-items:center;justify-content:center;color:#6f7883;overflow:hidden}.crest{height:76px}.logo{height:80px}.crest img,.logo img{width:100%;height:100%;object-fit:contain}.imp{margin-top:11px;padding:10px;border:1px solid #303b46;border-radius:13px;background:#0a0f15}.hint,.status,.sum{font-size:9px;color:var(--m);line-height:1.5}.status{margin-top:7px}.status.ok{color:#79d4a6}.status.bad{color:#e38c91}.status.work{color:#e0c56e}.rw{margin-top:10px;overflow:auto;border:1px solid #2b3641;border-radius:12px}table{width:100%;min-width:650px;border-collapse:collapse}th{position:sticky;top:0;background:#151d26;color:#8995a1;font-size:8px;text-align:left;padding:7px 5px}td{border-top:1px solid #222d37;padding:4px}td input,td select{padding:6px;font-size:10px;border-radius:7px;min-height:30px}.del{background:#4c2427;min-height:29px;padding:5px 8px;font-size:9px}.sticky{position:fixed;left:0;right:0;bottom:0;z-index:20;background:#090c11ee;border-top:1px solid #2c3540;padding:9px 12px calc(9px + env(safe-area-inset-bottom));backdrop-filter:blur(12px)}.si{max-width:760px;margin:auto;display:grid;grid-template-columns:1fr 1.4fr;gap:8px}.si button{min-height:48px}.toast{position:fixed;left:50%;bottom:85px;transform:translateX(-50%) translateY(10px);background:#151b23;border:1px solid #3a4551;padding:10px 13px;border-radius:12px;font-size:10px;opacity:0;transition:.2s;z-index:30;max-width:88%;text-align:center}.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ===== PRE-MATCH V2.0 ===== */
+.flow{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:11px 0}
+.step{min-height:58px;position:relative;text-align:left;padding:9px 10px;background:#0a0f15;border:1px solid #2c3742;border-radius:13px}
+.step b{display:block;font-size:11px}.step small{display:block;margin-top:5px;color:#7f8b98;font-size:8px;line-height:1.3}.step i{position:absolute;right:8px;top:8px;width:21px;height:21px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#18212b;color:#8995a1;font-style:normal;font-size:9px}
+.step.on{border-color:#d8b75f;box-shadow:0 0 0 1px #d8b75f24 inset}.step.done{border-color:#326d50;background:#0c1713}.step.done i{background:#326d50;color:#fff}
+.readyBox{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:10px 11px;margin-top:9px;border:1px solid #303c47;border-radius:13px;background:#090e14}.readyBox b{font-size:12px}.readyBox span{display:block;margin-top:4px;color:#85919e;font-size:9px}.readyBadge{padding:6px 9px;border-radius:999px;background:#3e2727;color:#ef9a9f;font-size:9px;font-weight:1000}.readyBadge.ok{background:#153a29;color:#8de0b5}
+.tabs.v2 button{min-height:58px;text-align:left;padding:9px 11px}.tabs.v2 b{font-size:12px}.tabs.v2 small{display:block;margin-top:5px;color:#7f8b98;font-size:8px}.tabs.v2 button.on small{color:#e0c879}
+.teamStats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0}.ts{background:#090e14;border:1px solid #293540;border-radius:10px;padding:7px}.ts span{display:block;color:#7b8794;font-size:8px}.ts b{display:block;margin-top:3px;font-size:11px}
+.impTarget{display:flex;justify-content:space-between;gap:8px;padding:8px 9px;margin:8px 0;border:1px solid #34414c;border-radius:10px;background:#080d12;font-size:9px;color:#8793a0}.impTarget b{color:#efd67f}
+.importPreview{display:none;margin-top:8px;padding:9px;border:1px solid #3a4a57;border-radius:11px;background:#091018}.importPreview.on{display:block}.previewTitle{font-size:10px;font-weight:950}.previewMeta{font-size:9px;color:#8d9aa7;margin-top:5px;line-height:1.5}.previewActions{display:grid;grid-template-columns:1.4fr 1fr;gap:7px;margin-top:8px}.previewActions button{min-height:42px}.confirm{background:linear-gradient(135deg,#1d6548,#45a472);color:#fff}
+.photoThumb{width:32px;height:32px;border-radius:8px;overflow:hidden;background:#151d26;display:flex;align-items:center;justify-content:center;color:#75808c;font-size:7px}.photoThumb img{width:100%;height:100%;object-fit:cover}
+.projectReady{display:inline-flex;margin-left:7px;padding:3px 6px;border-radius:999px;background:#173b2a;color:#8eddb2;font-size:7px}.projectDraft{display:inline-flex;margin-left:7px;padding:3px 6px;border-radius:999px;background:#3b3020;color:#e0c679;font-size:7px}
+.templateBtn{background:#213a55!important;color:#b9ddff!important}.checkBtn{background:#173a29!important;color:#9ce0bc!important}
+.si.v2{grid-template-columns:.8fr 1fr 1.5fr}
+@media(max-width:560px){.flow{grid-template-columns:1fr 1fr}.teamStats{grid-template-columns:1fr 1fr}.g2{grid-template-columns:1fr 1fr}.si.v2{grid-template-columns:.75fr .85fr 1.4fr}.si.v2 button{padding:7px 5px;font-size:10px}}
+
 </style>
 </head>
 <body>
 <div class="app">
-<div class="top"><div class="brand">SAGI PRE-MATCH<small>赛前准备 · 手机云端工作台</small></div><div class="ver">V1.0</div></div>
+<div class="top"><div class="brand">SAGI PRE-MATCH<small>赛前准备 · 球队资料收集 · 云端同步</small></div><div class="ver">V2.0</div></div>
 <div id="cloud" class="cloud work"><span class="dot"></span><span id="cloudText">正在连接赛前云端…</span></div>
+<div class="flow">
+  <button id="stepInfo" class="step on" type="button"><i>1</i><b>比赛信息</b><small id="stepInfoText">赛事 / 时间 / 场地</small></button>
+  <button id="stepHome" class="step" type="button"><i>2</i><b>主队 HOME</b><small id="stepHomeText">等待名单</small></button>
+  <button id="stepAway" class="step" type="button"><i>3</i><b>客队 AWAY</b><small id="stepAwayText">等待名单</small></button>
+  <button id="stepCheck" class="step" type="button"><i>4</i><b>检查保存</b><small id="stepCheckText">NOT READY</small></button>
+</div>
 
-<div class="card"><div class="title">云端比赛项目<small>电脑关闭也可以提前设置；到现场 V4.8 一键同步。</small></div><div id="projects" class="projects"></div></div>
+<div class="card"><div class="title">云端比赛项目<small>电脑关闭也可以提前设置；到现场 V4.10 同步云端项目即可。</small></div><div id="projects" class="projects"></div></div>
 
-<div class="card"><div class="title">比赛信息 · MATCH INFO</div>
+<div class="card" id="infoCard"><div class="title">比赛信息 · MATCH INFO</div>
 <div class="g2">
 <div><label>项目名称</label><input id="projectName" placeholder="例如：托朗戈杯总决赛"></div><div><label>赛事</label><input id="competition" value="SAGI FOOTBALL"></div>
 <div><label>轮次</label><input id="round" placeholder="FINAL / MATCHDAY 01"></div><div><label>日期</label><input id="date" type="date"></div>
 <div><label>开球时间</label><input id="kickoff" type="time"></div><div><label>场地</label><input id="venue" placeholder="WUSU / TACHENG"></div>
 <div><label>比赛人数</label><select id="count"><option>5</option><option>7</option><option>8</option><option>9</option><option selected>11</option></select></div>
 <div><label>赛事 LOGO</label><label class="file">上传赛事 Logo<input id="eventLogoFile" type="file" accept="image/*"></label></div>
-</div><div id="eventLogo" class="logo" style="margin-top:9px">EVENT LOGO</div></div>
+</div><div id="eventLogo" class="logo" style="margin-top:9px">EVENT LOGO</div>
+<div class="readyBox"><div><b>赛前完成度</b><span id="readySummary">填写比赛信息并准备主客队名单</span></div><div id="readyBadge" class="readyBadge">NOT READY</div></div></div>
 
-<div class="card"><div class="title">主客队与名单 · SMART ROSTER</div>
-<div class="tabs"><button id="home" class="on">主队 HOME</button><button id="away">客队 AWAY</button></div>
+<div class="card" id="teamCard"><div class="title">主客队与名单 · SMART ROSTER<small>球队 ZIP 可直接在这里预先导入，照片会随比赛项目保存到云端。</small></div>
+<div class="tabs v2"><button id="home" class="on"><b>主队 HOME</b><small id="homeTabMeta">0人 · 首发0 · 照片0</small></button><button id="away"><b>客队 AWAY</b><small id="awayTabMeta">0人 · 首发0 · 照片0</small></button></div>
+<div class="teamStats"><div class="ts"><span>当前球队</span><b id="statSide">主队 HOME</b></div><div class="ts"><span>有效首发</span><b id="statStarter">0/11</b></div><div class="ts"><span>照片</span><b id="statPhotos">0/0</b></div><div class="ts"><span>替补</span><b id="statSubs">0</b></div></div>
 <div class="team"><label class="file" style="padding:0"><div id="crest" class="crest">队徽</div><input id="crestFile" type="file" accept="image/*"></label><div><label id="teamLabel">主队名称</label><input id="teamName" placeholder="球队名称"><div class="g2" style="margin-top:7px"><div><label>阵型</label><select id="formation"></select></div><div><label>名单人数</label><input id="rosterCount" disabled></div></div></div></div>
-<div class="imp"><div style="font-size:10px;font-weight:950">SMART ROSTER IMPORT</div><div class="hint">支持照片 OCR、Excel、Word、PDF、CSV、TXT，或直接粘贴名单。</div>
+<div class="imp"><div style="font-size:10px;font-weight:950">TEAM PACKAGE IMPORT · 球队资料包</div><div class="hint">推荐直接导入球队 ZIP：Excel/CSV 名单 + photos 球员照片 + 可选队徽。系统自动按号码/姓名匹配。</div>
+<div class="impTarget"><span>本次导入将替换</span><b id="importTarget">主队 HOME</b></div>
 <textarea id="paste" placeholder="1 张三 GK 首发&#10;2 李四 CB 首发&#10;8 王五 CM 首发&#10;18 赵六 ST 替补"></textarea>
-<div class="actions"><button id="parse">识别粘贴名单</button><label class="file gold">照片 / 文件导入<input id="file" type="file" accept="image/*,.xlsx,.xls,.docx,.pdf,.csv,.tsv,.txt"></label><button id="auto">自动排首发</button><button id="add">+ 添加球员</button></div><div id="status" class="status">等待导入。</div></div>
-<div class="rw"><table><thead><tr><th>#</th><th>姓名</th><th>首发/替补</th><th>位置组</th><th>具体位置</th><th>队长</th><th></th></tr></thead><tbody id="body"></tbody></table></div><div id="summary" class="sum" style="margin-top:8px">0 人</div></div>
+<div class="actions"><button id="parse">识别粘贴名单</button><label class="file gold">ZIP / 文件导入<input id="file" type="file" accept=".zip,application/zip,application/x-zip-compressed,image/*,.xlsx,.xls,.docx,.pdf,.csv,.tsv,.txt,.json"></label><button id="template" class="templateBtn">⬇ 球队 Excel 模板</button><button id="auto">自动排首发</button><button id="add">+ 添加球员</button></div><div id="status" class="status">推荐导入球队 ZIP 资料包。</div>
+<div id="importPreview" class="importPreview"><div class="previewTitle">导入预览</div><div id="previewMeta" class="previewMeta"></div><div class="previewActions"><button id="commitImport" class="confirm">确认替换当前球队</button><button id="cancelImport">取消</button></div></div></div>
+<div class="rw"><table><thead><tr><th>照片</th><th>#</th><th>姓名</th><th>首发/替补</th><th>位置组</th><th>具体位置</th><th>队长</th><th></th></tr></thead><tbody id="body"></tbody></table></div><div id="summary" class="sum" style="margin-top:8px">0 人</div></div>
 </div>
 
-<div class="sticky"><div class="si"><button id="new">新建比赛</button><button id="save" class="gold">保存到赛前云端</button></div></div><div id="toast" class="toast"></div>
+<div class="sticky"><div class="si v2"><button id="new">新建</button><button id="check" class="checkBtn">检查</button><button id="save" class="gold">保存到赛前云端</button></div></div><div id="toast" class="toast"></div>
 <script>
 (()=>{'use strict';
 const CLOUD='https://sagi-cloud-bridge-suny820916.onrender.com',q=id=>document.getElementById(id);
