@@ -2500,7 +2500,7 @@ function vmixIsReplay(x){return /replay/i.test(String(x&&x.type||'')+' '+String(
 function vmixIsDrone(x){return /drone|uav|无人机|航拍/i.test(String(x&&x.type||'')+' '+String(x&&x.title||''))}
 function vmixIsLikelyCamera(x){
  const t=String(x&&x.type||'')+' '+String(x&&x.title||'');
- return !vmixIsBrowser(x)&&!vmixIsReplay(x)&&(/camera|capture|webcam|integrated|ndi|decklink|hdmi|usb|avermedia|blackmagic|摄像|采集/i.test(t)||true)
+ return !vmixIsBrowser(x)&&!vmixIsReplay(x)&&/camera|capture|webcam|integrated|ndi|decklink|hdmi|usb|avermedia|blackmagic|摄像|采集/i.test(t)
 }
 function vdEnsureSelectValue(id,value){
  const el=q(id);if(!el)return;value=String(value||'');
