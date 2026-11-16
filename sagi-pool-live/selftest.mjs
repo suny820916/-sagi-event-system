@@ -15,6 +15,7 @@ const sw = read('sw.js');
 const serverPath = fileURLToPath(new URL('china-sync/server.mjs', root));
 const backupToolPath = fileURLToPath(new URL('china-sync/backup.mjs', root));
 const restoreToolPath = fileURLToPath(new URL('china-sync/restore.mjs', root));
+const verifyProductionPath = fileURLToPath(new URL('china-deploy/verify-production.sh', root));
 
 const failures = [];
 function check(ok, msg){ if(!ok) failures.push(msg); }
@@ -39,6 +40,8 @@ const backupCheck=spawnSync(process.execPath,['--check',backupToolPath],{encodin
 check(backupCheck.status===0,'Backup utility syntax error: '+(backupCheck.stderr||backupCheck.stdout||'unknown'));
 const restoreCheck=spawnSync(process.execPath,['--check',restoreToolPath],{encoding:'utf8'});
 check(restoreCheck.status===0,'Restore utility syntax error: '+(restoreCheck.stderr||restoreCheck.stdout||'unknown'));
+const deployVerifyCheck=spawnSync('bash',['-n',verifyProductionPath],{encoding:'utf8'});
+check(deployVerifyCheck.status===0,'Production verify shell syntax error: '+(deployVerifyCheck.stderr||deployVerifyCheck.stdout||'unknown'));
 
 const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);
 const dup=[...new Set(ids.filter((x,i)=>ids.indexOf(x)!==i))];
