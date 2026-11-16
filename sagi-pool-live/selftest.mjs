@@ -366,7 +366,7 @@ async function e2eCommercial(){
     await new Promise(r=>setTimeout(r,200));
     const adminStatus=await fetch(base+'/api/admin/status',{headers:{'X-SAGI-Admin':'admin-secret'}});
     const adminStatusData=await adminStatus.json();
-    check(adminStatus.ok&&adminStatusData.version==='2.9.0','Admin status endpoint/version failed');
+    check(adminStatus.ok&&adminStatusData.version==='2.10.0','Admin status endpoint/version failed');
     check(Number(adminStatusData.counts?.licenses||0)>=1,'Admin status license count failed');
     check(Number(adminStatusData.counts?.activeDevices||0)>=1,'Admin status active-device count failed');
     check(typeof adminStatusData.storage?.directoryWritable==='boolean','Admin status storage health missing');
