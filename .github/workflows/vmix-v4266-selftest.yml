@@ -1,0 +1,35 @@
+name: SAGI vMix V4.26.6 Browser Self Test
+
+on:
+  push:
+    paths:
+      - "intro/vmix-v45-lan.html"
+      - "intro/v45-lan.html"
+      - "intro/tests/v4266-browser-selftest.mjs"
+      - ".github/workflows/vmix-v4266-selftest.yml"
+  workflow_dispatch:
+
+jobs:
+  browser-selftest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Run SAGI browser self-test
+        run: |
+          mkdir -p selftest-artifacts
+          node intro/tests/v4266-browser-selftest.mjs
+      - name: Upload self-test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: SAGI_V4266_BROWSER_SELFTEST
+          path: selftest-artifacts
+          retention-days: 7
