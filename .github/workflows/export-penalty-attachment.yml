@@ -1,9 +1,9 @@
-name: Export SAGI Goal Expand Attachment
+name: Export SAGI Goal Player Attachment
 
 on:
   push:
     paths:
-      - "intro/SAGI_VMIX_LAN_V48_GOAL_EXPAND_4260.bat"
+      - "intro/SAGI_VMIX_LAN_V48_GOAL_PLAYER_4261.bat"
       - ".github/workflows/export-penalty-attachment.yml"
   workflow_dispatch:
 
@@ -15,7 +15,7 @@ jobs:
       - name: Upload BAT attachment
         uses: actions/upload-artifact@v4
         with:
-          name: SAGI_VMIX_LAN_V48_GOAL_EXPAND_4260
-          path: intro/SAGI_VMIX_LAN_V48_GOAL_EXPAND_4260.bat
+          name: SAGI_VMIX_LAN_V48_GOAL_PLAYER_4261
+          path: intro/SAGI_VMIX_LAN_V48_GOAL_PLAYER_4261.bat
           if-no-files-found: error
           retention-days: 7
