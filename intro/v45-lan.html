@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="format-detection" content="telephone=no">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%2307090d%22/%3E%3Ctext x=%2232%22 y=%2243%22 text-anchor=%22middle%22 font-size=%2234%22 fill=%22%23d8b55b%22%3ES%3C/text%3E%3C/svg%3E">
-<title>SAGI V4.10.1 · PHONE PRE-MATCH PACKAGE</title>
+<title>SAGI V4.10.2 · DIRECT PHONE PACKAGE LOAD</title>
 <style>
 :root{--bg:#07090d;--panel:#11151c;--line:#2b3340;--text:#f4f0e8;--muted:#8f97a5;--gold:#d8b55b;--green:#72c79a}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
@@ -335,7 +335,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 </head>
 <body>
 <div class="app">
-  <div class="top"><div><div class="brand">SAGI LIVE MATCH DIRECTOR</div><div class="sub">V4.10.1 · PHONE PRE-MATCH PACKAGE · MATCH SETUP UX</div></div><div class="topRight"><div class="ver">V4.10.1</div><button id="mobileUpdateBtn" class="mobileUpdateBtn" type="button">↻ 安全更新</button><button id="mobileRollbackBtn" class="mobileRollbackBtn" type="button">↶ 回退上一版</button><div id="mobileUpdateStatus" class="mobileUpdateStatus">V4.10.1 · PHONE PACKAGE · Bridge 已锁定</div></div></div>
+  <div class="top"><div><div class="brand">SAGI LIVE MATCH DIRECTOR</div><div class="sub">V4.10.2 · DIRECT PHONE PACKAGE LOAD · MATCH SETUP UX</div></div><div class="topRight"><div class="ver">V4.10.2</div><button id="mobileUpdateBtn" class="mobileUpdateBtn" type="button">↻ 安全更新</button><button id="mobileRollbackBtn" class="mobileRollbackBtn" type="button">↶ 回退上一版</button><div id="mobileUpdateStatus" class="mobileUpdateStatus">V4.10.2 · DIRECT PACKAGE LOAD · Bridge 已锁定</div></div></div>
 
   <div id="pwaBar" class="pwaBar" style="display:none">
     <div class="pwaInfo">
@@ -357,7 +357,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 
   <div id="setupDesk" class="setupDesk">
     <div class="setupHead">
-      <div class="setupTitle">比赛设置 · MATCH SETUP ENGINE<small>V4.10.1 · 手机赛前包 · 球队资料包 · READY GATE</small></div>
+      <div class="setupTitle">比赛设置 · MATCH SETUP ENGINE<small>V4.10.2 · 手机赛前包直读 · READY GATE</small></div>
       <div id="setupReadyBadge" class="setupReadyBadge">NOT READY</div>
     </div>
     <div class="setupGrid">
@@ -886,7 +886,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
             </div>
           </div>
         </div>
-        <div class="statusBar"><div id="status" class="status">V4.10.1 · PHONE PRE-MATCH PACKAGE 已就绪</div><div class="mini">1920 × 1080</div></div>
+        <div class="statusBar"><div id="status" class="status">V4.10.2 · DIRECT PHONE PACKAGE LOAD 已就绪</div><div class="mini">1920 × 1080</div></div>
       </div>
     </div>
   </div>
@@ -1224,10 +1224,64 @@ async function saveMatchProject(){
  let list=getMatchProjects();const same=list.findIndex(p=>p.name===name);if(same>=0){project.id=list[same].id;list.splice(same,1)}list.unshift(project);putMatchProjects(list);refreshProjectList(project.id);
  const safe=await persistMatchProjectsBridge(list);note((safe?'已永久保存到导播电脑 · ':'已保存在当前手机 · Bridge同步失败 · ')+name)
 }
+function portablePlayer(p={},photo=''){
+ return{
+  id:p.id||uid(),
+  name:String(p.name||'PLAYER'),
+  number:String(p.number||'00'),
+  squadType:String(p.squadType||'SUB').toUpperCase()==='STARTER'?'STARTER':'SUB',
+  role:['GK','DF','MF','FW'].includes(String(p.role||'').toUpperCase())?String(p.role).toUpperCase():(riRoleFrom(p.position||p.role)||'MF'),
+  position:String(p.position||p.role||'MF'),
+  captain:!!p.captain,
+  statLabel:p.statLabel||'',
+  statValue:p.statValue||'',
+  photo:photo||p.photo||'',
+  mediaBlob:null,
+  mediaObjectUrl:'',
+  mediaUrl:p.mediaUrl||'',
+  mediaAction:p.mediaAction||'STANDARD',
+  directorIn:Number(p.directorIn)||0,
+  directorOut:Number(p.directorOut)||0,
+  directorSpeed:Number(p.directorSpeed)||1,
+  directorFreeze:!!p.directorFreeze,
+  directorFreezeMs:Number(p.directorFreezeMs)||1000,
+  directorCamera:p.directorCamera||'MEDIUM'
+ }
+}
+async function applyPortableMatchProject(p){
+ if(!p||!p.core)throw new Error('项目缺少 core');
+ let x;try{x=typeof p.core==='string'?JSON.parse(p.core):p.core}catch(e){throw new Error('比赛数据解析失败')}
+ if(!x||!x.teams||!x.teams.HOME||!x.teams.AWAY)throw new Error('比赛项目缺少 HOME/AWAY 名单');
+ const ph=(p.assets&&p.assets.photos)||{},homeRaw=Array.isArray(x.teams.HOME.roster)?x.teams.HOME.roster:[],awayRaw=Array.isArray(x.teams.AWAY.roster)?x.teams.AWAY.roster:[];
+ applyStoredMatchConfig(x.matchConfig||x.package?.matchFormat||{mode:'11',playerCount:11},true);
+ writePackage(x.package||{});
+ const homeFormation=x.teams.HOME.formation||defaultFormationForCount(starterLimit()),awayFormation=x.teams.AWAY.formation||defaultFormationForCount(starterLimit());
+ const home=homeRaw.map(z=>portablePlayer(z,(ph.HOME||{})[z.id]||'')),away=awayRaw.map(z=>portablePlayer(z,(ph.AWAY||{})[z.id]||''));
+ teamStore.HOME={formation:homeFormation,customPositions:x.teams.HOME.customPositions||{},roster:home,crest:(p.assets&&p.assets.homeCrest)||''};
+ teamStore.AWAY={formation:awayFormation,customPositions:x.teams.AWAY.customPositions||{},roster:away,crest:(p.assets&&p.assets.awayCrest)||''};
+ for(const s of ['HOME','AWAY'])for(const z of teamStore[s].roster)if(z.id&&z.photo)await dbPut('photo:'+z.id,z.photo);
+ await dbPut('crest:HOME',teamStore.HOME.crest||'');await dbPut('crest:AWAY',teamStore.AWAY.crest||'');
+ assets.bg=(p.assets&&p.assets.stadium)||'';assets.eventLogo=(p.assets&&p.assets.eventLogo)||x.package?.eventLogo||'';
+ await dbPut('stadium',assets.bg||'');await dbPut('eventLogo',assets.eventLogo||'');
+ if(p.show){try{const sh=typeof p.show==='string'?JSON.parse(p.show):p.show;if(Array.isArray(sh)&&sh.length)showSteps=normalizeShowSteps(sh)}catch(e){}}
+ activeSide='HOME';roster=teamStore.HOME.roster;selected=roster.length?0:-1;assets.crest=teamStore.HOME.crest||'';assets.photo=selected>=0?(roster[0].photo||''):'';
+ refreshFormationOptions(homeFormation);if(q('formation'))q('formation').value=homeFormation;
+ refreshSideUI();updateFormatUI();updateFormationEditorUI();renderRoster();renderPreviews();renderShowTimeline();syncMatchStage();renderStage(currentGroup);refreshMatchdayPlayers();
+ // Persist the newly applied portable project as the current director state.
+ await save();
+ return{home:home.length,away:away.length,homeStarters:home.filter(z=>z.squadType==='STARTER').length,awayStarters:away.filter(z=>z.squadType==='STARTER').length}
+}
 async function loadMatchProject(){
  const id=q('projectSelect').value,p=getMatchProjects().find(x=>x.id===id);if(!p){note('请选择比赛项目');return}
- if(p.core)localStorage.setItem('sagi_player_intro_v40',p.core);if(p.show)localStorage.setItem('sagi_show_director_v40',p.show);if(p.matchday){localStorage.setItem('sagi_matchday_graphics_v47',p.matchday);localStorage.setItem('sagi_matchday_graphics_v42',p.matchday)}if(p.vmix)localStorage.setItem('sagi_vmix_director_v42',p.vmix);
- await restoreProjectAssets(p.assets);await load();await mdLoad();vdLoad();q('projectName').value=p.name;matchReady=false;setupReadySignature='';validateMatchSetup(true);refreshSetupReadyUI();note('比赛项目已读取 · '+p.name+' · 本机永久库')
+ try{
+  let stats=null;
+  if(p.core)stats=await applyPortableMatchProject(p);
+  else{if(p.show)localStorage.setItem('sagi_show_director_v40',p.show);await restoreProjectAssets(p.assets);await load()}
+  if(p.matchday){localStorage.setItem('sagi_matchday_graphics_v47',p.matchday);localStorage.setItem('sagi_matchday_graphics_v42',p.matchday);await mdLoad()}
+  if(p.vmix){localStorage.setItem('sagi_vmix_director_v42',p.vmix);vdLoad()}
+  q('projectName').value=p.name;matchReady=false;setupReadySignature='';validateMatchSetup(true);refreshSetupReadyUI();refreshUXDashboard();
+  note('比赛项目已读取 · '+p.name+(stats?' · HOME '+stats.home+'人/'+stats.homeStarters+'首发 · AWAY '+stats.away+'人/'+stats.awayStarters+'首发':''))
+ }catch(e){recoveryStatus('比赛项目读取失败 · '+(e&&e.message||'未知错误'),true);note('比赛项目读取失败 · '+(e&&e.message||'未知错误'))}
 }
 async function importPhonePrematchPackage(file){
  if(!file)return;
@@ -1238,11 +1292,13 @@ async function importPhonePrematchPackage(file){
   if(!p||typeof p!=='object'||!p.core)throw new Error('赛前包缺少比赛项目数据');
   let core;try{core=JSON.parse(p.core)}catch(e){throw new Error('赛前包比赛数据损坏')}
   if(!core.teams||!core.teams.HOME||!core.teams.AWAY)throw new Error('赛前包缺少主客队名单');
+  const hc=Array.isArray(core.teams.HOME.roster)?core.teams.HOME.roster.length:0,ac=Array.isArray(core.teams.AWAY.roster)?core.teams.AWAY.roster.length:0;
+  if(!hc&&!ac)throw new Error('赛前包内主客队名单均为空');
   const imported={...p,id:String(p.id||('phone_'+Date.now().toString(36))),name:String(p.name||'手机赛前比赛'),savedAt:Number(p.savedAt)||Date.now(),importedFrom:'PHONE_SAGI_PACKAGE'};
   let list=getMatchProjects(),same=list.findIndex(x=>String(x.id)===imported.id||x.name===imported.name);if(same>=0)list.splice(same,1);list.unshift(imported);putMatchProjects(list);refreshProjectList(imported.id);
   await persistMatchProjectsBridge(list).catch(()=>false);
   await loadMatchProject();
-  recoveryStatus('已读取手机赛前包 · '+imported.name+' · 名单 / 队徽 / 照片已恢复',true);note('手机赛前包读取成功 · '+imported.name)
+  const nowHome=(teamStore.HOME&&teamStore.HOME.roster||[]),nowAway=(teamStore.AWAY&&teamStore.AWAY.roster||[]);recoveryStatus('已读取手机赛前包 · '+imported.name+' · 主队 '+nowHome.length+' 人 · 客队 '+nowAway.length+' 人',true);note('手机赛前包读取成功 · 主队 '+nowHome.length+' 人 · 客队 '+nowAway.length+' 人')
  }catch(e){recoveryStatus('手机赛前包读取失败 · '+(e&&e.message||'文件错误'),true);note('手机赛前包读取失败')}
 }
 async function deleteMatchProject(){
@@ -2589,7 +2645,7 @@ if('serviceWorker' in navigator&&window.isSecureContext){
 
 setInstalledState();
 
-const HOME_SCREEN_BUILD='V4.10.1-HOME-20261116-01';
+const HOME_SCREEN_BUILD='V4.10.2-HOME-20261116-01';
 async function homeScreenColdStartUpdate(){
   if(!standalone||location.protocol!=='http:')return;
   const once='sagi_homescreen_boot_'+HOME_SCREEN_BUILD;
