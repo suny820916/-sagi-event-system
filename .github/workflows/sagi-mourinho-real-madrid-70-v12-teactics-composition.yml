@@ -8,10 +8,10 @@ on:
   push:
     branches: [main]
     paths:
-      - "cloud-blender-worker/presets/mourinho_real_madrid_4231_70s_v12_nine_layer.json"
+      - "cloud-blender-worker/presets/mourinho_real_madrid_4231_70s_v12_teactics_composition.json"
       - "cloud-blender-worker/presets/mourinho_v12_cn_titles.ass"
-      - "cloud-blender-worker/engine/sagi_tactical_mourinho_70_v12.py"
-      - ".github/workflows/sagi-mourinho-real-madrid-70-v12-nine-layer.yml"
+      - "cloud-blender-worker/engine/sagi_tactical_mourinho_70_v11.py"
+      - ".github/workflows/sagi-mourinho-real-madrid-70-v12-teactics-composition.yml"
   workflow_dispatch:
 
 jobs:
@@ -25,7 +25,7 @@ jobs:
       - name: Build Blender image
         run: docker build -t sagi-mourinho-v12 ./cloud-blender-worker
 
-      - name: Render and compose V1.1
+      - name: Render and compose V1.2
         shell: bash
         run: |
           set -euo pipefail
@@ -41,9 +41,9 @@ jobs:
               fc-match "Noto Sans CJK SC" | head -1
 
               blender --background \
-                --python /app/engine/sagi_tactical_mourinho_70_v12.py \
+                --python /app/engine/sagi_tactical_mourinho_70_v11.py \
                 -- \
-                /app/presets/mourinho_real_madrid_4231_70s_v12_nine_layer.json \
+                /app/presets/mourinho_real_madrid_4231_70s_v12_teactics_composition.json \
                 /out
 
               ffmpeg -y -loglevel error \
@@ -114,5 +114,5 @@ jobs:
             mourinho_v12_out/scene.blend
             mourinho_v12_out/mourinho_v12_cn_titles.ass
             mourinho_v12_out/critical_frames/*.jpg
-            cloud-blender-worker/presets/mourinho_real_madrid_4231_70s_v12_nine_layer.json
+            cloud-blender-worker/presets/mourinho_real_madrid_4231_70s_v12_teactics_composition.json
           retention-days: 7
