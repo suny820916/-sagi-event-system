@@ -107,6 +107,23 @@ if [ -f "$ENV_FILE" ]; then
     else
       fail "Public HTTPS /health check failed"
     fi
+
+    HEADERS="$(curl -fsSI --max-time 8 "$ORIGIN/" 2>/dev/null || true)"
+    if printf '%s' "$HEADERS" | grep -qi '^Strict-Transport-Security:'; then
+      ok "Public HSTS header present"
+    else
+      fail "Public HSTS header missing"
+    fi
+    if printf '%s' "$HEADERS" | grep -qi '^X-Frame-Options: *DENY'; then
+      ok "Public anti-frame header present"
+    else
+      fail "Public anti-frame header missing"
+    fi
+    if printf '%s' "$HEADERS" | grep -qi '^Permissions-Policy:.*camera=(self).*microphone=(self)'; then
+      ok "Public camera/microphone permissions policy present"
+    else
+      fail "Public camera/microphone permissions policy missing"
+    fi
   fi
 fi
 
