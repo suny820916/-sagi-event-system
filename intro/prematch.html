@@ -35,13 +35,25 @@
 .projectReady{display:inline-flex;margin-left:7px;padding:3px 6px;border-radius:999px;background:#173b2a;color:#8eddb2;font-size:7px}.projectDraft{display:inline-flex;margin-left:7px;padding:3px 6px;border-radius:999px;background:#3b3020;color:#e0c679;font-size:7px}
 .templateBtn{background:#213a55!important;color:#b9ddff!important}.checkBtn{background:#173a29!important;color:#9ce0bc!important}
 .si.v2{grid-template-columns:.75fr .85fr 1fr 1.35fr}
-@media(max-width:560px){.flow{grid-template-columns:1fr 1fr}.teamStats{grid-template-columns:1fr 1fr}.g2{grid-template-columns:1fr 1fr}.si.v2{grid-template-columns:1fr 1fr}.si.v2 button{padding:7px 5px;font-size:10px}}
+.opsCard{border-color:#4a4634!important;background:linear-gradient(180deg,#11130f,#0a0d0b)!important}
+.opsTop{display:flex;justify-content:space-between;gap:10px;align-items:center}.opsTop b{font-size:13px}.opsTop small{display:block;margin-top:4px;color:#8f968b;font-size:8px}
+.opsActions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-top:9px}.opsActions button{min-height:44px}
+.opsGrid{display:grid;grid-template-columns:1.2fr .8fr;gap:8px;margin-top:9px}.opsPanel{border:1px solid #30382e;border-radius:12px;padding:9px;background:#080b09}.opsPanel h4{margin:0 0 7px;font-size:9px;color:#9ba497}
+.issueList{display:flex;flex-wrap:wrap;gap:6px}.issue{border:1px solid #513d2d;background:#211711;color:#e7b77f;padding:6px 8px;border-radius:999px;font-size:8px}.issue.good{border-color:#28533c;background:#10251a;color:#96d9b3}.issue.bad{cursor:pointer}
+.archiveList{display:grid;gap:6px;max-height:180px;overflow:auto}.archiveItem{border:1px solid #2b352e;border-radius:9px;padding:7px;background:#090d0a}.archiveItem b{display:block;font-size:9px}.archiveItem span{display:block;margin-top:3px;color:#818a82;font-size:8px}.archiveBtns{display:flex;gap:5px;margin-top:6px}.archiveBtns button{min-height:30px;padding:5px 7px;font-size:8px}
+.matchDayBanner{display:none;position:sticky;top:0;z-index:40;margin:0 -12px 10px;padding:10px 12px;background:#10281d;border-bottom:1px solid #2f6b4c;box-shadow:0 7px 20px #0008}.matchDayBanner.on{display:flex;justify-content:space-between;align-items:center;gap:10px}.matchDayBanner b{font-size:12px;color:#9fe0bb}.matchDayBanner small{display:block;color:#759b83;font-size:8px;margin-top:3px}
+body.matchDayMode #smartInboxCard,body.matchDayMode #cloudProjectsCard,body.matchDayMode #teamCard{display:none}
+body.matchDayMode #infoCard .g2,body.matchDayMode #eventLogo{display:none}
+body.matchDayMode #infoCard{border-color:#2d6649}.matchDayOnly{display:none}body.matchDayMode .matchDayOnly{display:block}
+.opsReady{padding:6px 9px;border-radius:999px;background:#3c2d1e;color:#dfb16e;font-size:8px;font-weight:1000}.opsReady.ok{background:#143925;color:#8fe0b3}
+@media(max-width:560px){.flow{grid-template-columns:1fr 1fr}.teamStats{grid-template-columns:1fr 1fr}.g2{grid-template-columns:1fr 1fr}.si.v2{grid-template-columns:1fr 1fr}.si.v2 button{padding:7px 5px;font-size:10px}.opsActions{grid-template-columns:1fr}.opsGrid{grid-template-columns:1fr}}
 
 </style>
 </head>
 <body>
 <div class="app">
-<div class="top"><div class="brand">SAGI PRE-MATCH<small>赛前准备 · 球队资料收集 · 云端同步</small></div><div class="ver">V2.7</div></div>
+<div class="top"><div class="brand">SAGI PRE-MATCH<small>MATCH OPS · 赛前运营 · 球队资料 · 导播交接</small></div><div class="ver">V3.0</div></div>
+<div id="matchDayBanner" class="matchDayBanner"><div><b>MATCH DAY MODE</b><small id="matchDayBannerText">只保留比赛现场需要的信息</small></div><button id="matchDayExit" type="button">退出比赛日</button></div>
 <div id="cloud" class="cloud work"><span class="dot"></span><span id="cloudText">正在连接赛前云端…</span><button id="cloudRetry" type="button" style="margin-left:auto;min-height:30px;padding:5px 8px;font-size:9px">重新连接</button></div>
 <div class="flow">
   <button id="stepInfo" class="step on" type="button"><i>1</i><b>比赛信息</b><small id="stepInfoText">赛事 / 时间 / 场地</small></button>
@@ -50,8 +62,21 @@
   <button id="stepCheck" class="step" type="button"><i>4</i><b>检查保存</b><small id="stepCheckText">NOT READY</small></button>
 </div>
 
+<div class="card opsCard" id="matchOpsCard">
+  <div class="opsTop"><div><b>MATCH OPS · 比赛运营中心</b><small>先看缺失，再决定编辑、复用还是直接进入比赛日。</small></div><div id="opsReady" class="opsReady">NOT READY</div></div>
+  <div class="opsActions">
+    <button id="copyLastMatch" type="button">复制上一场</button>
+    <button id="enterMatchDay" class="checkBtn" type="button">进入比赛日模式</button>
+    <button id="opsGenerate" class="gold" type="button">一键生成比赛包</button>
+  </div>
+  <div class="opsGrid">
+    <div class="opsPanel"><h4>缺失资料中心</h4><div id="issueList" class="issueList"><span class="issue">正在检查…</span></div></div>
+    <div class="opsPanel"><h4>最近比赛档案</h4><div id="archiveList" class="archiveList"><div class="pm">暂无档案</div></div></div>
+  </div>
+</div>
+
 <div class="card smartInbox" id="smartInboxCard">
-  <div class="smartInboxHead"><div><b>SMART INBOX · 凌乱信息整理</b><span>微信群 / 报名信息 / 零散名单直接粘贴</span></div><div class="ver" style="font-size:8px">V2.7</div></div>
+  <div class="smartInboxHead"><div><b>SMART INBOX · 凌乱信息整理</b><span>微信群 / 报名信息 / 零散名单直接粘贴</span></div><div class="ver" style="font-size:8px">SMART INBOX</div></div>
   <textarea id="smartInboxText" placeholder="直接粘贴凌乱信息，例如：&#10;周六 17:00 乌苏体育馆&#10;主队 塔尔兰FC&#10;首发 1 张三 GK，4 李四 CB，8 王五 CM...&#10;替补 12 阿力 GK 18 努尔 ST&#10;客队 冰点FC&#10;1 王强 GK 首发..."></textarea>
   <div class="smartInboxActions"><button id="smartInboxParse" class="gold" type="button">✨ 自动整理</button><button id="smartInboxClear" type="button">清空</button></div>
   <div id="smartInboxPreview" class="smartInboxPreview">
@@ -67,7 +92,7 @@
   </div>
 </div>
 
-<div class="card"><div class="title">云端比赛项目<small>电脑关闭也可以提前设置；到现场 V4.10 同步云端项目即可。</small></div><div id="projects" class="projects"></div></div>
+<div class="card" id="cloudProjectsCard"><div class="title">云端比赛项目<small>电脑关闭也可以提前设置；到现场 V4.10 同步云端项目即可。</small></div><div id="projects" class="projects"></div></div>
 
 <div class="card" id="infoCard"><div class="title">比赛信息 · MATCH INFO</div>
 <div class="g2">
