@@ -801,7 +801,7 @@ function effectiveGroupPlayers(x){
  return (Array.isArray(x.players)?x.players:[]).slice(0,n)
 }
 
-let last='',lastGraphics='',hideTimer=null,current=null,currentGraphics=null,eventTimer=null,frozenGraphics=null,lastHomeScore=null,lastAwayScore=null,lastScoreboardVisible=false;
+let last='',lastGraphics='',hideTimer=null,current=null,currentGraphics=null,eventTimer=null,eventCleanupTimer=null,frozenGraphics=null,lastHomeScore=null,lastAwayScore=null,lastScoreboardVisible=false;
 function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function escAttr(s){return String(s??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')}
 function fit(){const s=Math.min(innerWidth/1920,innerHeight/1080),x=(innerWidth-1920*s)/2,y=(innerHeight-1080*s)/2,t='translate3d('+x+'px,'+y+'px,0) scale('+s+')';q('stage').style.transform=t;q('graphicsStage').style.transform=t}
@@ -983,6 +983,7 @@ function graphicsGoalFlash(){
 }
 let replayStingerTimer=null;
 function cleanupEventVisuals(){
+ clearTimeout(eventCleanupTimer);eventCleanupTimer=null;
  clearTimeout(replayStingerTimer);const rs=q('replayStinger');if(rs)rs.className='replayStinger';
  clearTimeout(scorebugGoalTimer);scorebugGoalActive=false;const scorebug=q('scoreBug');if(scorebug)scorebug.classList.remove('goalExpand');
  q('graphicsStage').classList.remove('eventActive');const card=q('eventCard'),splash=q('stateSplash');
@@ -991,12 +992,13 @@ function cleanupEventVisuals(){
  splash.className='stateSplash';q('stateBox').className='stateBox';q('mvpPhoto').className='mvpPhoto';q('stateCopy').className='stateCopy';q('mvpPhoto').removeAttribute('src')
 }
 function hideEvent(animated=false){
- clearTimeout(eventTimer);
+ clearTimeout(eventTimer);eventTimer=null;
+ clearTimeout(eventCleanupTimer);eventCleanupTimer=null;
  const card=q('eventCard'),splash=q('stateSplash'),hasCard=card.classList.contains('on'),hasSplash=splash.classList.contains('on');
  if(animated&&(hasCard||hasSplash)){
   if(hasCard)card.classList.add('motionOut');
   if(hasSplash)splash.classList.add('motionOut');
-  setTimeout(cleanupEventVisuals,340);return
+  eventCleanupTimer=setTimeout(()=>{eventCleanupTimer=null;cleanupEventVisuals()},340);return
  }
  cleanupEventVisuals()
 }
