@@ -60,7 +60,7 @@ function norm(v){return String(v||'').trim().replace(/\/+$/,'')}
 function server(){return norm($('#serverUrl').value)}
 function admin(){return $('#adminToken').value}
 function setStatus(t){$('#serverStatus').textContent=t}
-function load(){try{$('#serverUrl').value=localStorage.getItem(SERVER_KEY)||''}catch{};const d=new Date();d.setFullYear(d.getFullYear()+1);$('#expires').value=d.toISOString().slice(0,10)}
+function load(){const auto=((location.protocol==='https:'&&!location.hostname.endsWith('github.io'))?location.origin:'');try{$('#serverUrl').value=localStorage.getItem(SERVER_KEY)||auto}catch{};const d=new Date();d.setFullYear(d.getFullYear()+1);$('#expires').value=d.toISOString().slice(0,10)}
 function saveServer(){try{localStorage.setItem(SERVER_KEY,server())}catch{}}
 function randomToken(){const bytes=new Uint8Array(24);crypto.getRandomValues(bytes);return Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('')}
 function expiryMs(){const v=$('#expires').value;if(!v)return 0;const [y,m,d]=v.split('-').map(Number);return new Date(y,m-1,d,23,59,59,999).getTime()}
