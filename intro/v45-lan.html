@@ -637,9 +637,9 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
             <option value="DRONE">无人机</option>
             <option value="BEAUTY_WIDE">氛围宽景</option>
             <option value="REPLAY">回放</option></select></div>
-          <div><label>V4.17 图形输入</label><input id="vdGraphics" value="5"><div class="cameraRoleHint">GRAPHICS · 固定图形职责</div></div>
+          <div><label>V4.18 图形输入</label><input id="vdGraphics" value="5"><div class="cameraRoleHint">GRAPHICS · 固定图形职责</div></div>
         </div>
-        <div class="cameraRoleSummary"><b>SHOT SAFETY ENGINE</b><span id="cameraRoleSummary">主全景 · 边线近景 · 无人机 · 回放</span></div>
+        <div class="cameraRoleSummary"><b>CAMERA ROLE ENGINE</b><span id="cameraRoleSummary">主全景 · 边线近景 · 无人机 · 回放</span></div>
         <div class="vdInputs" style="grid-template-columns:1fr 1fr 1fr;margin-top:7px">
           <div><label>切换方式</label><select id="vdTransition"><option value="Cut">CUT 硬切</option><option value="Fade">FADE 淡变</option><option value="Stinger1">STINGER 1</option></select></div>
           <div><label>淡变时长 ms</label><input id="vdDuration" type="number" value="350" min="0" max="5000"></div>
@@ -706,7 +706,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
     </div>
     <div id="smartDirector" class="smartDirector">
       <div class="sdHead">
-        <div><b>SHOT SAFETY ENGINE</b><span>按机位职责推荐下一镜头</span></div>
+        <div><b>SMART MATCH DIRECTOR</b><span>按机位职责推荐下一镜头</span></div>
         <label class="gdSwitch"><input id="sdEnabled" type="checkbox" checked><span>智能建议</span></label>
         <label class="gdSwitch"><input id="sdAutoTake" type="checkbox"><span>AUTO TAKE</span></label>
       </div>
@@ -1903,7 +1903,7 @@ async function ssTake(slot,label,source='AUTO',force=false,eventType=''){
  if(ok)ssRegisterSwitch(slot,source);return !!ok
 }
 async function ssAttackLock(){
- const main=ssMainSlot();shotSafetyState.attackLockUntil=Date.now()+(Number(shotSafetySettings.attackLockMs)||12000);shotSafetyState.lastBlock='';ssRender();
+ shotSafetySettings.enabled=true;ssPersist();const main=ssMainSlot();shotSafetyState.attackLockUntil=Date.now()+(Number(shotSafetySettings.attackLockMs)||12000);shotSafetyState.lastBlock='';ssRender();
  smartCue={slot:main,role:'MAIN_WIDE',title:'关键进攻 · 主全景',reason:'SHOT SAFETY 已锁定主全景 12 秒',confidence:100,eventType:'ATTACK_LOCK'};sdRender();
  if(shotSafetyState.currentSlot!==main){await ssTake(main,'ATTACK LOCK · MAIN WIDE','OPERATOR',true,'ATTACK_LOCK')}
  note('关键进攻保护已开启 · 12秒')
