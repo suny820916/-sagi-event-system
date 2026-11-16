@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0a0c0b">
+<title>SAGI POOL · 球房控制台</title>
+<style>
+:root{--bg:#070908;--panel:#101412;--card:#151a17;--line:#28322c;--text:#f5f7f5;--muted:#91a097;--green:#31d17c}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;padding:calc(12px + env(safe-area-inset-top)) 12px calc(24px + env(safe-area-inset-bottom))}
+.app{max-width:940px;margin:auto}.top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px}.brand{font-weight:900;font-size:18px}.sub{font-size:11px;color:var(--muted);margin-top:3px;letter-spacing:.08em}.pill{padding:7px 10px;border:1px solid #2c3830;border-radius:999px;color:#bac5be;font-size:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:17px;padding:13px;margin-bottom:11px}.head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}.head h2{margin:0;font-size:15px}.small{font-size:11px;color:var(--muted)}
+.settings{display:grid;grid-template-columns:1.4fr .6fr auto;gap:8px}.field{display:flex;flex-direction:column;gap:5px}.field label{font-size:10px;color:var(--muted);font-weight:800}.field input{height:44px;border-radius:11px;border:1px solid #303b34;background:#0d110f;color:#fff;padding:0 11px;font-size:16px;outline:none}.btn{min-height:44px;border-radius:11px;border:1px solid #344039;background:#151b17;color:#eef2ef;font-weight:850;padding:9px 12px;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}.btn.primary{background:#eef2ee;color:#080a09;border-color:#eef2ee}
+.tables{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}.tableCard{background:#0d110f;border:1px solid #28322c;border-radius:14px;padding:12px}.tableTop{display:flex;justify-content:space-between;align-items:center;gap:8px}.tableNo{font-size:18px;font-weight:950}.state{font-size:10px;padding:5px 7px;border-radius:999px;background:#151b17;border:1px solid #303a34;color:#aeb9b2}.state.live{color:#bff5d1;border-color:#315f41;background:#13251a}.score{font-size:27px;font-weight:950;margin:13px 0 4px}.names{font-size:12px;color:#c2cbc5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.meta{font-size:10px;color:#748279;margin:7px 0 11px}.empty{color:#758279;font-size:12px;margin:13px 0}.foot{text-align:center;color:#647168;font-size:10px;margin-top:15px;letter-spacing:.08em}
+@media(min-width:720px){.tables{grid-template-columns:repeat(4,1fr)}}@media(max-width:520px){.settings{grid-template-columns:1fr 90px}.settings .btn{grid-column:1/-1}.top{align-items:flex-start}.pill{font-size:10px}.tables{grid-template-columns:1fr 1fr}}@media(max-width:350px){.tables{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="top"><div><div class="brand">SAGI POOL CLUB</div><div class="sub">球房直播与记分控制台 · V1.5</div></div><div class="pill">本机 CLUB MVP</div></header>
+<section class="card">
+  <div class="head"><h2>球房设置</h2><span class="small">每张球桌独立保存</span></div>
+  <div class="settings">
+    <div class="field"><label>球房名称</label><input id="club" maxlength="28" value="SAGI POOL CLUB"></div>
+    <div class="field"><label>球桌数量</label><input id="count" type="number" min="1" max="12" value="8"></div>
+    <button class="btn primary" id="save" type="button">保存并更新</button>
+  </div>
+</section>
+<section class="card">
+  <div class="head"><h2>球桌状态</h2><span class="small" id="summary">0 / 8 比赛中</span></div>
+  <div class="tables" id="tables"></div>
+</section>
+<section class="card">
+  <div class="head"><h2>球房商品化状态</h2><span class="small">CLUB MVP</span></div>
+  <div class="small" style="line-height:1.65">这版已经把单桌工具升级为球房产品：每桌独立入口、独立比分与历史记录、手机摄像头直播预览、中八/追分统一控制。下一层为云端多设备同步和真正平台推流。</div>
+</section>
+<div class="foot">SAGI SPORTS · POOL LIVE SYSTEM</div>
+</div>
+<script>
+(()=>{
+const SETTINGS='sagi_pool_club_settings_v1';
+const $=s=>document.querySelector(s);
+const modeNames={ '8ball':'中式八球','chase4':'4球追分','chase6':'6球追分','chase9':'9球追分'};
+function loadSettings(){try{return Object.assign({club:'SAGI POOL CLUB',count:8},JSON.parse(localStorage.getItem(SETTINGS)||'{}'))}catch(e){return{club:'SAGI POOL CLUB',count:8}}}
+let cfg=loadSettings();
+function pad(n){return String(n).padStart(2,'0')}
+function age(ts){if(!ts)return'暂无记录';const d=Math.max(0,Date.now()-ts),m=Math.floor(d/60000);if(m<1)return'刚刚更新';if(m<60)return m+'分钟前';const h=Math.floor(m/60);if(h<24)return h+'小时前';return Math.floor(h/24)+'天前'}
+function readTable(no){try{return JSON.parse(localStorage.getItem('sagi_pool_live_v15_'+no)||'null')}catch(e){return null}}
+function render(){
+  $('#club').value=cfg.club;$('#count').value=cfg.count;
+  const box=$('#tables');box.innerHTML='';let active=0;
+  for(let i=1;i<=cfg.count;i++){
+    const no=pad(i),st=readTable(no);if(st&&st.log&&st.log.length)active++;
+    const card=document.createElement('div');card.className='tableCard';
+    const top=document.createElement('div');top.className='tableTop';
+    const n=document.createElement('div');n.className='tableNo';n.textContent=no+'桌';
+    const state=document.createElement('div');state.className='state'+(st&&st.log&&st.log.length?' live':'');state.textContent=st&&st.log&&st.log.length?'比赛中':'待开台';top.append(n,state);
+    const score=document.createElement('div');score.className='score';
+    const names=document.createElement('div');names.className='names';
+    const meta=document.createElement('div');meta.className='meta';
+    if(st&&st.players&&st.players.length>=2){
+      const a=st.players[0],b=st.players[1],is8=st.mode==='8ball';score.textContent=(is8?a.wins:a.score)+' : '+(is8?b.wins:b.score);
+      names.textContent=a.name+'  vs  '+b.name;meta.textContent=(modeNames[st.mode]||st.mode)+' · '+age(st.updatedAt);
+    }else{score.textContent='— : —';names.textContent='尚未开始比赛';meta.textContent='点击进入本桌设置比赛'}
+    const link=document.createElement('a');link.className='btn';link.href='./?table='+encodeURIComponent(no)+'&club='+encodeURIComponent(cfg.club);link.textContent='进入 '+no+'桌';
+    card.append(top,score,names,meta,link);box.appendChild(card);
+  }
+  $('#summary').textContent=active+' / '+cfg.count+' 比赛中';
+}
+$('#save').addEventListener('click',()=>{cfg.club=$('#club').value.trim()||'SAGI POOL CLUB';cfg.count=Math.max(1,Math.min(12,Number($('#count').value)||8));localStorage.setItem(SETTINGS,JSON.stringify(cfg));render()});
+window.addEventListener('focus',render);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')render()});
+render();
+})();
+</script>
+</body></html>
