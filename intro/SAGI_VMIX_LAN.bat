@@ -869,6 +869,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
           <button id="projectLoadBtn" type="button">读取项目</button>
           <button id="projectDeleteBtn" class="danger" type="button">删除项目</button>
           <button id="projectRecoverBtn" class="recover" type="button">↻ 找回历史比赛</button>
+          <button id="projectCloudSyncBtn" class="ok" type="button">☁ 同步赛前云端</button>
         </div>
         <div id="projectRecoveryStatus" class="projectRecoveryStatus">可扫描旧版本、旧端口与 Bridge 恢复库；找回后自动并入永久比赛库，不覆盖现有项目。</div>
         <div class="tiny" style="margin-top:8px">比赛项目保存赛事信息、赛制、主客队名单、阵型、节目时间线与比赛事件状态；球员照片/视频继续使用本机素材库。</div>
@@ -1749,6 +1750,24 @@ async function scanLegacyLanPorts(){
  });
  const all=await Promise.all(jobs);return all.flat()
 }
+const PREMATCH_CLOUD_URL='https://sagi-cloud-bridge-suny820916.onrender.com/api/prematch';
+async function syncPrematchCloud(silent=false){
+ const btn=q('projectCloudSyncBtn');if(btn&&!silent){btn.disabled=true;btn.textContent='同步中…'}if(!silent)recoveryStatus('正在连接 SAGI PRE-MATCH 云端…',true);
+ const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),30000);
+ try{
+  const r=await fetch(PREMATCH_CLOUD_URL+'?t='+Date.now(),{cache:'no-store',signal:ctl.signal});
+  const x=await r.json().catch(()=>({}));if(!r.ok||!x.ok)throw new Error(x.error||('HTTP '+r.status));
+  const remote=Array.isArray(x.items)?x.items:[],before=getMatchProjects(),merged=mergeMatchProjects(remote,before);
+  const beforeMap=new Map(before.map(p=>[String(p.id),Number(p.savedAt)||0]));
+  const added=merged.filter(p=>!beforeMap.has(String(p.id))).length;
+  const updated=merged.filter(p=>beforeMap.has(String(p.id))&&(Number(p.savedAt)||0)>(beforeMap.get(String(p.id))||0)).length;
+  putMatchProjects(merged);refreshProjectList();await persistMatchProjectsBridge(merged);
+  const msg='赛前云端已同步 · '+remote.length+' 个云端项目'+(added?' · 新增 '+added:'')+(updated?' · 更新 '+updated:'');
+  if(!silent){recoveryStatus(msg,true);note(msg)}else if((added+updated)>0)note('赛前云端自动同步 · '+(added+updated)+' 个项目有变化');
+  return true
+ }catch(e){if(!silent){recoveryStatus('赛前云端同步失败 · 当前本机项目不受影响。',true);note('赛前云端同步失败')}return false}
+ finally{clearTimeout(tm);if(btn&&!silent){btn.disabled=false;btn.textContent='☁ 同步赛前云端'}}
+}
 async function recoverHistoryProjects(){
  const btn=q('projectRecoverBtn');if(btn){btn.disabled=true;btn.textContent='扫描中…'}recoveryStatus('正在扫描：当前手机旧版本 → Bridge 永久库 → 8099–8120 旧导播端口…',true);
  try{
@@ -1762,9 +1781,9 @@ async function recoverHistoryProjects(){
  finally{if(btn){btn.disabled=false;btn.textContent='↻ 找回历史比赛'}}
 }
 function initMatchSetup(){
- q('projectName').value=setupProjectDefaultName();refreshProjectList();q('projectSaveBtn').onclick=saveMatchProject;q('projectLoadBtn').onclick=loadMatchProject;q('projectDeleteBtn').onclick=deleteMatchProject;q('projectRecoverBtn').onclick=recoverHistoryProjects;
+ q('projectName').value=setupProjectDefaultName();refreshProjectList();q('projectSaveBtn').onclick=saveMatchProject;q('projectLoadBtn').onclick=loadMatchProject;q('projectDeleteBtn').onclick=deleteMatchProject;q('projectRecoverBtn').onclick=recoverHistoryProjects;q('projectCloudSyncBtn').onclick=()=>syncPrematchCloud(false);
  q('setupValidateBtn').onclick=()=>validateMatchSetup(true);q('setupReadyBtn').onclick=()=>setMatchReady(true);q('setupUnlockBtn').onclick=()=>setMatchReady(false);
- validateMatchSetup(true);refreshSetupReadyUI();syncMatchProjectsFromBridge()
+ validateMatchSetup(true);refreshSetupReadyUI();syncMatchProjectsFromBridge();setTimeout(()=>syncPrematchCloud(true),700)
 }
 
 const DEFAULT_SHOW=[
