@@ -249,7 +249,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent
 </style></head>
 <body>
 <div id="stage" class="stage"><div id="transitionLayer" class="transitionLayer"></div><div id="cueBadgeStage" class="cueBadgeStage"></div><div id="showStepStage" class="showStepStage"></div><div id="sideBadgeStage" class="sideBadgeStage">主队</div>
-  <div id="stingOverlay" class="stingOverlay"><div class="stingCore"><img id="stingLogo" class="stingLogo"><div class="stingLine"></div><div id="stingCompetition" class="stingComp">SAGI FOOTBALL</div></div></div>
+  <div id="stingOverlay" class="stingOverlay"><div class="stingCore"><img id="stingLogo" class="stingLogo"><div class="stingLine"></div><div id="stingCompetition" class="stingComp">SAGI 足球</div></div></div>
   <div id="matchOverlay" class="matchOverlay"><div class="matchCardStage"><div id="matchCompetitionStage" class="matchCompetition">比赛</div><div id="matchRoundStage" class="matchRound"></div><div class="matchTeams"><div id="matchHomeStage" class="matchTeam">主队</div><div class="matchVs">对</div><div id="matchAwayStage" class="matchTeam">客队</div></div><div class="matchMetaStage"><span id="matchKickoffStage"></span><span>·</span><span id="matchVenueStage"></span></div></div></div>
   <div id="countdownOverlay" class="countdownOverlay"><div class="countdownCore"><div class="countdownLabel">开赛倒计时</div><div id="countdownNumber" class="countdownNumber">5</div><div id="countdownSub" class="countdownSub">比赛</div></div></div>
   <div id="tunnelScene" class="tunnelScene"><div class="tunnelBack"></div><div class="portal"></div><div class="wall left"></div><div class="wall right"></div><div class="ceiling"></div><div class="floor"></div><div class="led left"><div id="ledLeft" class="ledText">球队<small>首发11人</small></div></div><div class="led right"><div id="ledRight" class="ledText">SAGI<small>球员通道</small></div></div><div class="roofLights"></div><div class="fog"></div><div class="cameraVignette"></div></div>
@@ -288,6 +288,7 @@ async function lanMatchday(){
 }
 
 const q=id=>document.getElementById(id),ROLE_NAMES={GK:'门将',DF:'后卫',MF:'中场',FW:'前锋'};
+function displayRoleLabel(v){const x=String(v||'').toUpperCase();return({GK:'门将',DF:'后卫',MF:'中场',FW:'前锋',SUB:'替补',CB:'中后卫',LB:'左后卫',RB:'右后卫',DM:'后腰',CM:'中场',AM:'前腰',LW:'左边锋',RW:'右边锋',ST:'前锋'})[x]||String(v||'')}
 const FORMATIONS={
  '4-3-3':{GK:[[50,91]],DF:[[16,73],[38,72],[62,72],[84,73]],MF:[[24,48],[50,52],[76,48]],FW:[[18,22],[50,18],[82,22]]},
  '4-4-2':{GK:[[50,91]],DF:[[16,73],[38,72],[62,72],[84,73]],MF:[[16,48],[38,50],[62,50],[84,48]],FW:[[35,22],[65,22]]},
@@ -562,7 +563,7 @@ function showEvent(g){
  } else if(e.type==='HALF_TIME'||e.type==='FULL_TIME'){
    splash.classList.add('on');splash.style.setProperty('--stateAccent',validHex(g.accentColor,'#f4f0e8'));q('stateKicker').textContent=e.type==='HALF_TIME'?'半场结束':'全场结束';q('stateTitle').textContent=e.type==='HALF_TIME'?'半场结束':'全场结束';q('stateScore').textContent=(Number(e.homeScore)||0)+'  :  '+(Number(e.awayScore)||0);q('stateTeams').textContent=(e.home||g.home||'主队')+'    ·    '+(e.away||g.away||'客队');motionInSplash(e.type);scheduleEventHide(e.type==='FULL_TIME'?9000:6500);
  } else if(e.type==='MVP'){
-   splash.classList.add('on','mvp');splash.style.setProperty('--stateAccent',teamColor);q('stateKicker').textContent='本场最佳球员';q('stateTitle').textContent=e.team||'';q('stateScore').textContent=e.score||'';q('stateTeams').textContent='';q('mvpName').textContent='#'+(e.player&&e.player.number||'')+'  '+(e.player&&e.player.name||'球员');q('mvpMeta').textContent=e.player&&e.player.position||'';if(e.player&&e.player.photo)q('mvpPhoto').src=e.player.photo;motionInSplash('MVP');scheduleEventHide(9000);
+   splash.classList.add('on','mvp');splash.style.setProperty('--stateAccent',teamColor);q('stateKicker').textContent='本场最佳球员';q('stateTitle').textContent=e.team||'';q('stateScore').textContent=e.score||'';q('stateTeams').textContent='';q('mvpName').textContent='#'+(e.player&&e.player.number||'')+'  '+(e.player&&e.player.name||'球员');q('mvpMeta').textContent=displayRoleLabel(e.player&&e.player.position||'');if(e.player&&e.player.photo)q('mvpPhoto').src=e.player.photo;motionInSplash('MVP');scheduleEventHide(9000);
  }
 }
 function applyGraphics(g){
