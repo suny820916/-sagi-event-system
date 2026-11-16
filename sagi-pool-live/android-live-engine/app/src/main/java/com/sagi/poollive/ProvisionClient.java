@@ -95,6 +95,9 @@ public final class ProvisionClient {
         if (status == 401) {
             throw new IllegalStateException("球房授权已失效");
         }
+        if (status == 429) {
+            throw new IllegalStateException("安装码尝试过多，请稍后再试");
+        }
         if (status < 200 || status >= 300) {
             throw new IllegalStateException("安装失败 · " + root.optString("error", String.valueOf(status)));
         }
