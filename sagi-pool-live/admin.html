@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#080a09">
+<title>SAGI POOL · 销售授权后台</title>
+<style>
+:root{--bg:#070908;--panel:#101412;--card:#151a17;--line:#29342d;--text:#f5f7f5;--muted:#93a097;--gold:#d7b46a}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;padding:calc(12px + env(safe-area-inset-top)) 12px calc(24px + env(safe-area-inset-bottom))}
+.app{max-width:860px;margin:auto}.top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:14px}.brand{font-size:19px;font-weight:950}.sub{font-size:11px;color:var(--muted);margin-top:3px}.pill{border:1px solid #3a443e;border-radius:999px;padding:7px 10px;font-size:11px;color:#bdc6c0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:13px;margin-bottom:11px}.head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}.head h2{font-size:15px;margin:0}.small{font-size:11px;color:var(--muted)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.field{display:flex;flex-direction:column;gap:5px}.field.full{grid-column:1/-1}.field label{font-size:10px;color:var(--muted);font-weight:800}.field input,.field select{height:44px;border-radius:10px;border:1px solid #303a34;background:#0d110f;color:#fff;padding:0 10px;font-size:16px;outline:none}
+.btn{min-height:44px;border-radius:11px;border:1px solid #344039;background:#151b17;color:#eef2ef;font-weight:850;padding:9px 12px}.btn.primary{background:#eef2ee;color:#080a09;border-color:#eef2ee}.btn.gold{background:#312817;border-color:#6c5730;color:#f2dfad}.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.result{margin-top:10px;padding:11px;border-radius:11px;background:#0d110f;border:1px solid #29342d;font-size:12px;line-height:1.65;word-break:break-all}.result b{color:#f4e0ac}.list{display:flex;flex-direction:column;gap:8px}.item{display:grid;grid-template-columns:1fr auto;gap:10px;padding:10px;border:1px solid #263029;background:#0d110f;border-radius:12px}.name{font-weight:900;font-size:13px}.meta{font-size:10px;color:var(--muted);margin-top:4px}.status{font-size:10px;border-radius:999px;padding:5px 7px;height:max-content;border:1px solid #3b4a40;color:#bcd7c5}.status.off{border-color:#60343a;color:#efb8bf}.empty{font-size:12px;color:#76837b}.warn{font-size:11px;color:#aab5ae;line-height:1.55;border-left:3px solid #6e5a31;padding:8px 9px;background:#12100b;border-radius:7px}
+@media(max-width:520px){.grid{grid-template-columns:1fr}.field.full{grid-column:auto}.actions{grid-template-columns:1fr}.top{align-items:flex-start}}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="top"><div><div class="brand">SAGI POOL SELLER</div><div class="sub">球房商业授权后台 · CHINA V2.1</div></div><div class="pill">仅 SAGI 管理员</div></header>
+
+<section class="card">
+  <div class="head"><h2>国内授权服务器</h2><span class="small" id="serverStatus">未连接</span></div>
+  <div class="grid">
+    <div class="field full"><label>服务器 HTTPS 地址</label><input id="serverUrl" inputmode="url" placeholder="https://pool-api.example.com"></div>
+    <div class="field full"><label>管理员密钥</label><input id="adminToken" type="password" placeholder="SAGI_ADMIN_TOKEN"></div>
+  </div>
+</section>
+
+<section class="card">
+  <div class="head"><h2>开通 / 续费球房</h2><span class="small">一店一授权</span></div>
+  <div class="grid">
+    <div class="field"><label>球房名称</label><input id="clubName" maxlength="40" placeholder="XX台球俱乐部"></div>
+    <div class="field"><label>Club ID</label><input id="clubId" maxlength="32" placeholder="TC-001"></div>
+    <div class="field"><label>套餐</label><select id="plan"><option>TRIAL</option><option selected>CLUB</option><option>CLUB PRO</option></select></div>
+    <div class="field"><label>最大球桌数</label><input id="maxTables" type="number" min="1" max="99" value="8"></div>
+    <div class="field"><label>到期日期</label><input id="expires" type="date"></div>
+    <div class="field"><label>球房同步密钥</label><input id="clubToken" maxlength="80" placeholder="点击生成"></div>
+  </div>
+  <div class="actions">
+    <button class="btn gold" id="generate" type="button">生成球房密钥</button>
+    <button class="btn primary" id="issue" type="button">开通 / 更新授权</button>
+  </div>
+  <div class="result" id="result">开通后，这里会显示需要交给球房老板的 <b>Club ID + 同步密钥</b>。</div>
+</section>
+
+<section class="card">
+  <div class="head"><h2>已开通球房</h2><button class="btn" id="refresh" type="button" style="min-height:36px;padding:5px 9px;font-size:12px">刷新</button></div>
+  <div class="list" id="list"><div class="empty">连接服务器后显示授权列表。</div></div>
+</section>
+
+<div class="warn">管理员密钥不会保存到页面源码，也不会随球房链接发送。正式商业部署请使用 HTTPS，并把 SAGI_ADMIN_TOKEN 只保存在你自己的设备与服务器环境变量中。</div>
+</div>
+<script>
+(()=>{
+const SERVER_KEY='sagi_pool_seller_server_v1';
+const $=s=>document.querySelector(s);
+function norm(v){return String(v||'').trim().replace(/\/+$/,'')}
+function server(){return norm($('#serverUrl').value)}
+function admin(){return $('#adminToken').value}
+function setStatus(t){$('#serverStatus').textContent=t}
+function load(){try{$('#serverUrl').value=localStorage.getItem(SERVER_KEY)||''}catch{};const d=new Date();d.setFullYear(d.getFullYear()+1);$('#expires').value=d.toISOString().slice(0,10)}
+function saveServer(){try{localStorage.setItem(SERVER_KEY,server())}catch{}}
+function randomToken(){const bytes=new Uint8Array(24);crypto.getRandomValues(bytes);return Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('')}
+function expiryMs(){const v=$('#expires').value;if(!v)return 0;const [y,m,d]=v.split('-').map(Number);return new Date(y,m-1,d,23,59,59,999).getTime()}
+function fmt(ms){if(!ms)return'长期';return new Date(ms).toLocaleDateString('zh-CN')}
+async function api(path,opt={}){
+  if(!server())throw new Error('请填写服务器地址');
+  saveServer();
+  const headers=Object.assign({'X-SAGI-Admin':admin()},opt.headers||{});
+  const r=await fetch(server()+path,Object.assign({},opt,{headers}));
+  const data=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error(data.error||('HTTP '+r.status));
+  return data;
+}
+$('#generate').addEventListener('click',()=>{$('#clubToken').value=randomToken()});
+$('#issue').addEventListener('click',async()=>{
+  try{
+    setStatus('开通中…');
+    const body={
+      clubName:$('#clubName').value.trim(),
+      clubId:$('#clubId').value.trim(),
+      plan:$('#plan').value,
+      maxTables:Number($('#maxTables').value)||1,
+      expiresAt:expiryMs(),
+      token:$('#clubToken').value.trim()
+    };
+    if(!body.clubName||!body.clubId)throw new Error('请填写球房名称和 Club ID');
+    if(body.token.length<8){body.token=randomToken();$('#clubToken').value=body.token}
+    const d=await api('/api/admin/licenses',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const l=d.license;
+    $('#result').innerHTML='';
+    const lines=[
+      ['球房',l.clubName||body.clubName],
+      ['Club ID',l.clubId],
+      ['同步密钥',body.token],
+      ['套餐',l.plan],
+      ['球桌数',String(l.maxTables)],
+      ['到期',fmt(l.expiresAt)]
+    ];
+    lines.forEach(([k,v])=>{const div=document.createElement('div');const b=document.createElement('b');b.textContent=k+'：';div.append(b,document.createTextNode(v));$('#result').appendChild(div)});
+    setStatus('授权已开通');refresh();
+  }catch(e){setStatus('开通失败');$('#result').textContent=e.message}
+});
+async function refresh(){
+  try{
+    setStatus('读取中…');const d=await api('/api/admin/licenses');const box=$('#list');box.innerHTML='';
+    if(!d.licenses?.length){box.innerHTML='<div class="empty">暂无球房授权。</div>';setStatus('已连接');return}
+    d.licenses.forEach(l=>{
+      const row=document.createElement('div');row.className='item';
+      const left=document.createElement('div');const n=document.createElement('div');n.className='name';n.textContent=(l.clubName||l.clubId)+' · '+l.clubId;
+      const m=document.createElement('div');m.className='meta';m.textContent=l.plan+' · '+l.maxTables+'桌 · 到期 '+fmt(l.expiresAt);
+      left.append(n,m);const st=document.createElement('div');st.className='status'+(l.active?'':' off');st.textContent=l.active?'有效':'已到期/停用';row.append(left,st);box.appendChild(row);
+    });setStatus('已连接 · '+d.licenses.length+' 家');
+  }catch(e){setStatus('连接失败');$('#list').innerHTML='<div class="empty">'+e.message+'</div>'}
+}
+$('#refresh').addEventListener('click',refresh);$('#serverUrl').addEventListener('change',saveServer);
+load();
+})();
+</script>
+</body></html>
