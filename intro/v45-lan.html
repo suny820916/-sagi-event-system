@@ -1833,8 +1833,8 @@ async function gdRunEvent(ev,holdMs=5200){
 }
 function sdSlotLabel(slot){return cameraRoleLabel(cameraRoleOf(slot))}
 function sdSlotTechnical(slot){return String(slot||'cam1').toUpperCase()+' · INPUT '+String(vmixDirectorSettings[slot]||'—')}
-function sdPersist(){try{localStorage.setItem('sagi_smart_director_v416',JSON.stringify(smartDirectorSettings))}catch(e){}}
-function sdLoad(){try{const x=JSON.parse(localStorage.getItem('sagi_smart_director_v416')||'null');if(x)smartDirectorSettings={...smartDirectorSettings,...x}}catch(e){}}
+function sdPersist(){try{localStorage.setItem('sagi_smart_director_v417',JSON.stringify(smartDirectorSettings))}catch(e){}}
+function sdLoad(){try{const raw=localStorage.getItem('sagi_smart_director_v417')||localStorage.getItem('sagi_smart_director_v416')||'null',x=JSON.parse(raw);if(x)smartDirectorSettings={...smartDirectorSettings,...x}}catch(e){}}
 function sdRender(){
  const box=q('sdCueSlot');if(!box)return;
  q('sdEnabled').checked=smartDirectorSettings.enabled!==false;q('sdAutoTake').checked=!!smartDirectorSettings.autoTake;
@@ -1974,6 +1974,11 @@ async function runTechnicalPreflight(){
  checks.push({label:'vMix 图形页',level:outputOk?'good':'bad',meta:outputOk?'READY':'ERROR'});checks.push({label:'比分状态通道',level:stateOk?'good':'bad',meta:stateOk?'READY':'ERROR'});
  const optional=['cam2','drone','replay'].filter(k=>!findInput(vmixDirectorSettings[k]));
  checks.push({label:'辅助机位',level:optional.length?'warn':'good',meta:optional.length?('缺 '+optional.join('/')):'全部可用'});
+ const mainRole=cameraSlotForRole('MAIN_WIDE',''),replayRole=cameraSlotForRole('REPLAY',''),closeRole=cameraSlotForRole('SIDELINE_CLOSE',''),droneRole=cameraSlotForRole('DRONE','');
+ checks.push({label:'主全景职责',level:mainRole?'good':'warn',meta:mainRole?(cameraRoleSlotLabel(mainRole)):'未分配 · 将回退 CAM1'});
+ checks.push({label:'回放职责',level:replayRole?'good':'warn',meta:replayRole?(cameraRoleSlotLabel(replayRole)):'未分配 · 进球不会自动建议回放'});
+ checks.push({label:'边线近景职责',level:closeRole?'good':'warn',meta:closeRole?(cameraRoleSlotLabel(closeRole)):'可选 · 换人将保持主全景'});
+ checks.push({label:'无人机职责',level:droneRole?'good':'warn',meta:droneRole?(cameraRoleSlotLabel(droneRole)):'可选 · 半场/全场使用其他宽景'});
  checks.push({label:'比赛项目 READY',level:matchReady?'good':'warn',meta:matchReady?'READY':'尚未锁定'});
  technicalReady=!checks.some(x=>x.level==='bad');
  if(q('mmPreflightList'))q('mmPreflightList').innerHTML=checks.map(mmCheckHtml).join('');
@@ -2081,7 +2086,7 @@ function vdSave(){
 }
 function vdLoad(){
  try{const x=JSON.parse(localStorage.getItem('sagi_vmix_director_v42')||'null');if(x)vmixDirectorSettings={...vmixDirectorSettings,...x}}catch(e){}
- q('vdCam1').value=vmixDirectorSettings.cam1;q('vdCam2').value=vmixDirectorSettings.cam2;q('vdDrone').value=vmixDirectorSettings.drone;q('vdReplay').value=vmixDirectorSettings.replay;q('vdGraphics').value=vmixDirectorSettings.graphics;q('vdTransition').value=vmixDirectorSettings.transition;q('vdDuration').value=vmixDirectorSettings.duration;q('vdOverlay').value=vmixDirectorSettings.overlay;q('vdCam1Role').value=vmixDirectorSettings.cam1Role||'MAIN_WIDE';q('vdCam2Role').value=vmixDirectorSettings.cam2Role||'SIDELINE_CLOSE';q('vdDroneRole').value=vmixDirectorSettings.droneRole||'DRONE';q('vdReplayRole').value=vmixDirectorSettings.replayRole||'REPLAY';refreshCameraRoleUI();
+ q('vdCam1').value=vmixDirectorSettings.cam1;q('vdCam2').value=vmixDirectorSettings.cam2;q('vdDrone').value=vmixDirectorSettings.drone;q('vdReplay').value=vmixDirectorSettings.replay;q('vdGraphics').value=vmixDirectorSettings.graphics;q('vdTransition').value=vmixDirectorSettings.transition;q('vdDuration').value=vmixDirectorSettings.duration;q('vdOverlay').value=vmixDirectorSettings.overlay;q('vdCam1Role').value=vmixDirectorSettings.cam1Role||'MAIN_WIDE';q('vdCam2Role').value=vmixDirectorSettings.cam2Role||'SIDELINE_CLOSE';q('vdDroneRole').value=vmixDirectorSettings.droneRole||'DRONE';q('vdReplayRole').value=vmixDirectorSettings.replayRole||'REPLAY';refreshCameraRoleUI();vdSave();
 }
 function vdInput(slot){vdSave();return vmixDirectorSettings[slot]||''}
 async function publishVmixDirector(functionName,input='',duration=0,label='',value=''){
