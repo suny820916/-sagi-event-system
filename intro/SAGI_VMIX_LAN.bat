@@ -72,6 +72,7 @@ $ControlCache = Join-Path $Root "control-latest.html"
 $OutputCache  = Join-Path $Root "output-latest.html"
 $BridgeCache  = Join-Path $Root "bridge-stable.ps1"
 $MatchdayStateFile = Join-Path $Root "matchday-state.json"
+$MatchProjectsFile = Join-Path $Root "match-projects.json"
 $ControlBackup = Join-Path $Root "control-backup.html"
 $OutputBackup  = Join-Path $Root "output-backup.html"
 $RemoteBase   = "https://suny820916.github.io/-sagi-event-system/intro"
@@ -102,6 +103,22 @@ if (Test-Path $MatchdayStateFile) {
     }
   } catch {
     Write-Host "[RECOVERY WARN] Saved match state could not be loaded." -ForegroundColor DarkYellow
+  }
+}
+
+$MatchProjectsJson = '{"projects":[]}'
+if (Test-Path $MatchProjectsFile) {
+  try {
+    $savedProjects = [IO.File]::ReadAllText($MatchProjectsFile,[Text.Encoding]::UTF8)
+    if (-not [string]::IsNullOrWhiteSpace($savedProjects)) {
+      $probeProjects = $savedProjects | ConvertFrom-Json
+      if ($probeProjects.PSObject.Properties.Name -contains "projects") {
+        $MatchProjectsJson = $savedProjects
+        Write-Host "[RECOVERY] Saved match projects loaded." -ForegroundColor Green
+      }
+    }
+  } catch {
+    Write-Host "[RECOVERY WARN] Saved match projects could not be loaded." -ForegroundColor DarkYellow
   }
 }
 
@@ -414,6 +431,27 @@ while ($true) {
         Write-HttpResponse $stream 400 "application/json" ('{"ok":false,"error":' + $err + '}')
       }
     }
+    elseif ($method -eq "GET" -and $path -eq "/api/projects") {
+      Write-HttpResponse $stream 200 "application/json" $MatchProjectsJson
+    }
+    elseif ($method -eq "POST" -and $path -eq "/api/projects") {
+      try {
+        $projectsPayload = $req.body | ConvertFrom-Json
+        if (-not ($projectsPayload.PSObject.Properties.Name -contains "projects")) { throw "Missing projects" }
+        $projects = @($projectsPayload.projects)
+        if ($projects.Count -gt 20) { $projects = @($projects | Select-Object -First 20) }
+        $safePayload = @{projects=$projects;savedAt=[DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds();schema="SAGI_MATCH_PROJECTS_V1"} | ConvertTo-Json -Depth 80 -Compress
+        $tmpProjects = $MatchProjectsFile + ".new"
+        [IO.File]::WriteAllText($tmpProjects,$safePayload,(New-Object Text.UTF8Encoding($false)))
+        Move-Item $tmpProjects $MatchProjectsFile -Force
+        $MatchProjectsJson = $safePayload
+        Write-Host ("[PROJECTS] Saved " + $projects.Count + " match project(s).") -ForegroundColor Green
+        Write-HttpResponse $stream 200 "application/json" '{"ok":true}'
+      } catch {
+        $err = $_.Exception.Message | ConvertTo-Json -Compress
+        Write-HttpResponse $stream 400 "application/json" ('{"ok":false,"error":' + $err + '}')
+      }
+    }
     elseif ($method -eq "GET" -and $path -eq "/api/matchday") {
       Write-HttpResponse $stream 200 "application/json" $MatchdayJson
     }
@@ -477,7 +515,7 @@ while ($true) {
     }
     elseif ($method -eq "GET" -and $path -eq "/health") {
       $vmixInfo = Get-VmixStatusInfo
-      $health = @{ok=$true;vmix=[bool]$vmixInfo.ok;vmixInfo=$vmixInfo;lan=$true;ip=$lanIp;port=$Port;version="4.7.0";mode="MATCH_MODE";bridgeLocked=$true;recovery=(Test-Path $MatchdayStateFile)} | ConvertTo-Json -Depth 8 -Compress
+      $health = @{ok=$true;vmix=[bool]$vmixInfo.ok;vmixInfo=$vmixInfo;lan=$true;ip=$lanIp;port=$Port;version="4.7.0";mode="MATCH_MODE";bridgeLocked=$true;recovery=(Test-Path $MatchdayStateFile);projectLibrary=(Test-Path $MatchProjectsFile)} | ConvertTo-Json -Depth 8 -Compress
       Write-HttpResponse $stream 200 "application/json" $health
     }
     else {
@@ -1605,28 +1643,57 @@ function refreshSetupReadyUI(){
  document.querySelectorAll('[data-vd-take]').forEach(x=>x.disabled=!matchReady);q('vdGraphicsIn').disabled=!matchReady;
  q('setupUnlockBtn').disabled=!matchReady;
 }
-function getMatchProjects(){try{const x=JSON.parse(localStorage.getItem(MATCH_PROJECTS_KEY)||'[]');return Array.isArray(x)?x:[]}catch(e){return[]}}
-function putMatchProjects(list){localStorage.setItem(MATCH_PROJECTS_KEY,JSON.stringify((list||[]).slice(0,20)))}
+let matchProjectsCache=null;
+function localMatchProjects(){try{const x=JSON.parse(localStorage.getItem(MATCH_PROJECTS_KEY)||'[]');return Array.isArray(x)?x:[]}catch(e){return[]}}
+function getMatchProjects(){return Array.isArray(matchProjectsCache)?matchProjectsCache.slice():localMatchProjects()}
+function putMatchProjects(list){matchProjectsCache=(list||[]).slice(0,20);try{localStorage.setItem(MATCH_PROJECTS_KEY,JSON.stringify(matchProjectsCache))}catch(e){}}
+function mergeMatchProjects(a=[],b=[]){
+ const map=new Map();[...a,...b].forEach(p=>{if(!p||!p.id)return;const key=String(p.id),old=map.get(key);if(!old||(Number(p.savedAt)||0)>(Number(old.savedAt)||0))map.set(key,p)});
+ const byName=new Map();[...map.values()].sort((x,y)=>(Number(y.savedAt)||0)-(Number(x.savedAt)||0)).forEach(p=>{const k=String(p.name||p.id);if(!byName.has(k))byName.set(k,p)});
+ return [...byName.values()].slice(0,20)
+}
+async function persistMatchProjectsBridge(list){
+ try{await lanPost('/api/projects',{projects:(list||[]).slice(0,20),savedAt:Date.now(),schema:'SAGI_MATCH_PROJECTS_V1'});return true}catch(e){return false}
+}
+async function syncMatchProjectsFromBridge(){
+ const local=localMatchProjects();
+ try{
+  const remote=await lanJson('/api/projects?ts='+Date.now()),remoteList=Array.isArray(remote&&remote.projects)?remote.projects:[];
+  const merged=mergeMatchProjects(remoteList,local);putMatchProjects(merged);refreshProjectList();
+  if(merged.length&&(JSON.stringify(merged)!==JSON.stringify(remoteList)))await persistMatchProjectsBridge(merged);
+  return true
+ }catch(e){matchProjectsCache=local;refreshProjectList();return false}
+}
+function projectAssetsSnapshot(){
+ const photos={HOME:{},AWAY:{}};for(const side of ['HOME','AWAY'])for(const p of (teamStore[side]&&teamStore[side].roster||[]))if(p&&p.id&&p.photo)photos[side][p.id]=p.photo;
+ return{homeCrest:(teamStore.HOME&&teamStore.HOME.crest)||'',awayCrest:(teamStore.AWAY&&teamStore.AWAY.crest)||'',stadium:assets.bg||'',eventLogo:assets.eventLogo||'',photos}
+}
+async function restoreProjectAssets(a){
+ if(!a||typeof a!=='object')return;
+ await dbPut('crest:HOME',a.homeCrest||'');await dbPut('crest:AWAY',a.awayCrest||'');await dbPut('stadium',a.stadium||'');await dbPut('eventLogo',a.eventLogo||'');
+ const ph=a.photos||{};for(const side of ['HOME','AWAY'])for(const [id,data] of Object.entries(ph[side]||{}))if(id&&data)await dbPut('photo:'+id,data)
+}
 function refreshProjectList(selected=''){
  const list=getMatchProjects().sort((a,b)=>(b.savedAt||0)-(a.savedAt||0)),el=q('projectSelect');el.innerHTML='<option value="">选择比赛项目</option>'+list.map(p=>'<option value="'+escAttr(p.id)+'">'+esc(p.name)+' · '+new Date(p.savedAt).toLocaleString()+'</option>').join('');if(selected)el.value=selected
 }
 async function saveMatchProject(){
  const name=q('projectName').value.trim()||setupProjectDefaultName();q('projectName').value=name;await save();mdPersist();vdSave();
- const id='match_'+Date.now().toString(36),project={id,name,savedAt:Date.now(),core:localStorage.getItem('sagi_player_intro_v40')||'',show:localStorage.getItem('sagi_show_director_v40')||'',matchday:localStorage.getItem('sagi_matchday_graphics_v42')||'',vmix:localStorage.getItem('sagi_vmix_director_v42')||''};
- let list=getMatchProjects();const same=list.findIndex(p=>p.name===name);if(same>=0){project.id=list[same].id;list.splice(same,1)}list.unshift(project);putMatchProjects(list);refreshProjectList(project.id);note('比赛项目已保存 · '+name)
+ const id='match_'+Date.now().toString(36),project={id,name,savedAt:Date.now(),core:localStorage.getItem('sagi_player_intro_v40')||'',show:localStorage.getItem('sagi_show_director_v40')||'',matchday:localStorage.getItem('sagi_matchday_graphics_v47')||localStorage.getItem('sagi_matchday_graphics_v42')||'',vmix:localStorage.getItem('sagi_vmix_director_v42')||'',assets:projectAssetsSnapshot()};
+ let list=getMatchProjects();const same=list.findIndex(p=>p.name===name);if(same>=0){project.id=list[same].id;list.splice(same,1)}list.unshift(project);putMatchProjects(list);refreshProjectList(project.id);
+ const safe=await persistMatchProjectsBridge(list);note((safe?'已永久保存到导播电脑 · ':'已保存在当前手机 · Bridge同步失败 · ')+name)
 }
 async function loadMatchProject(){
  const id=q('projectSelect').value,p=getMatchProjects().find(x=>x.id===id);if(!p){note('请选择比赛项目');return}
- if(p.core)localStorage.setItem('sagi_player_intro_v40',p.core);if(p.show)localStorage.setItem('sagi_show_director_v40',p.show);if(p.matchday)localStorage.setItem('sagi_matchday_graphics_v42',p.matchday);if(p.vmix)localStorage.setItem('sagi_vmix_director_v42',p.vmix);
- await load();mdLoad();vdLoad();q('projectName').value=p.name;matchReady=false;setupReadySignature='';validateMatchSetup(true);refreshSetupReadyUI();note('比赛项目已读取 · '+p.name)
+ if(p.core)localStorage.setItem('sagi_player_intro_v40',p.core);if(p.show)localStorage.setItem('sagi_show_director_v40',p.show);if(p.matchday){localStorage.setItem('sagi_matchday_graphics_v47',p.matchday);localStorage.setItem('sagi_matchday_graphics_v42',p.matchday)}if(p.vmix)localStorage.setItem('sagi_vmix_director_v42',p.vmix);
+ await restoreProjectAssets(p.assets);await load();await mdLoad();vdLoad();q('projectName').value=p.name;matchReady=false;setupReadySignature='';validateMatchSetup(true);refreshSetupReadyUI();note('比赛项目已读取 · '+p.name+' · 本机永久库')
 }
-function deleteMatchProject(){
- const id=q('projectSelect').value;if(!id){note('请选择比赛项目');return}let list=getMatchProjects(),p=list.find(x=>x.id===id);list=list.filter(x=>x.id!==id);putMatchProjects(list);refreshProjectList();note('已删除比赛项目'+(p?' · '+p.name:''))
+async function deleteMatchProject(){
+ const id=q('projectSelect').value;if(!id){note('请选择比赛项目');return}let list=getMatchProjects(),p=list.find(x=>x.id===id);list=list.filter(x=>x.id!==id);putMatchProjects(list);refreshProjectList();await persistMatchProjectsBridge(list);note('已删除比赛项目'+(p?' · '+p.name:''))
 }
 function initMatchSetup(){
  q('projectName').value=setupProjectDefaultName();refreshProjectList();q('projectSaveBtn').onclick=saveMatchProject;q('projectLoadBtn').onclick=loadMatchProject;q('projectDeleteBtn').onclick=deleteMatchProject;
  q('setupValidateBtn').onclick=()=>validateMatchSetup(true);q('setupReadyBtn').onclick=()=>setMatchReady(true);q('setupUnlockBtn').onclick=()=>setMatchReady(false);
- validateMatchSetup(true);refreshSetupReadyUI()
+ validateMatchSetup(true);refreshSetupReadyUI();syncMatchProjectsFromBridge()
 }
 
 const DEFAULT_SHOW=[
