@@ -98,3 +98,28 @@ sudo systemctl start sagi-pool-sync
 ```
 
 恢复脚本会在覆盖前自动保留一份 `data.json.pre-restore-*.bak`。
+
+
+## 正式上线一键自检
+
+部署完成后执行：
+
+```bash
+sudo /opt/sagi-pool-sync/verify-production.sh
+```
+
+它会检查但不会打印任何密钥：
+
+- Node.js 20+
+- SAGI_REQUIRE_LICENSE=1
+- 管理员密钥不是默认值且长度足够
+- CORS 使用真实 HTTPS 域名
+- data / backups 目录对 `www-data` 真正可写
+- Nginx 不再包含 `pool.example.com`
+- `nginx -t`
+- 同步服务已启用且运行中
+- 每日备份 timer 已启用且运行中
+- TLS 证书文件存在
+- 公网 HTTPS `/health` 可访问
+
+任一项不满足就返回非 0，不把服务器判定为可商用。
