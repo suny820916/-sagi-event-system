@@ -1,0 +1,136 @@
+name: SAGI MOURINHO REAL MADRID 70S V2.0 PRODUCTION MASTER
+
+concurrency:
+  group: sagi-mourinho-real-madrid-v20-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "cloud-blender-worker/prompts/mourinho_real_madrid_v21_production_master.md"
+      - "cloud-blender-worker/presets/mourinho_real_madrid_4231_70s_v20_production_master.json"
+      - "cloud-blender-worker/engine/sagi_tactical_mourinho_70_v13.py"
+      - ".github/workflows/sagi-mourinho-real-madrid-70-v20-production-master.yml"
+  workflow_dispatch:
+
+jobs:
+  render-mourinho-v20:
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Blender image
+        run: docker build -t sagi-mourinho-v20 ./cloud-blender-worker
+
+      - name: Render V2.0 production master
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p mourinho_v20_out/critical_frames
+
+          docker run --rm \
+            -v "$PWD/mourinho_v20_out:/out" \
+            sagi-mourinho-v20 \
+            bash -lc '
+              set -euo pipefail
+
+              blender --background \
+                --python /app/engine/sagi_tactical_mourinho_70_v13.py \
+                -- \
+                /app/presets/mourinho_real_madrid_4231_70s_v20_production_master.json \
+                /out
+
+              ffmpeg -y -loglevel error \
+                -framerate 30 \
+                -i /out/frames/frame_%04d.png \
+                -f lavfi \
+                -i anullsrc=channel_layout=stereo:sample_rate=44100 \
+                -map 0:v:0 -map 1:a:0 \
+                -c:v libx264 -profile:v baseline -level 3.1 \
+                -pix_fmt yuv420p -preset veryfast -crf 20 \
+                -c:a aac -b:a 64k -shortest -movflags +faststart \
+                /out/SAGI_MOURINHO_REAL_MADRID_70S_V20_PRODUCTION_MASTER.mp4
+
+              ffmpeg -y -loglevel error \
+                -ss 31 -t 22 \
+                -i /out/SAGI_MOURINHO_REAL_MADRID_70S_V20_PRODUCTION_MASTER.mp4 \
+                -c:v libx264 -pix_fmt yuv420p -crf 20 -preset veryfast -c:a aac \
+                /out/SAGI_MOURINHO_V20_31_53_TRANSITION_REVIEW.mp4
+
+              ffmpeg -y -loglevel error \
+                -ss 53 -t 17 \
+                -i /out/SAGI_MOURINHO_REAL_MADRID_70S_V20_PRODUCTION_MASTER.mp4 \
+                -c:v libx264 -pix_fmt yuv420p -crf 20 -preset veryfast -c:a aac \
+                /out/SAGI_MOURINHO_V20_53_70_COMPACT_REVIEW.mp4
+
+              for spec in \
+                "03.0 03_0" "12.0 12_0" "24.0 24_0" "34.6 34_6" \
+                "36.8 36_8" "45.4 45_4" "47.2 47_2" "48.2 48_2" \
+                "50.2 50_2" "51.7 51_7" "52.4 52_4" "53.4 53_4" \
+                "60.0 60_0" "68.8 68_8" "69.5 69_5"; do
+                set -- $spec
+                ffmpeg -y -loglevel error -ss "$1" \
+                  -i /out/SAGI_MOURINHO_REAL_MADRID_70S_V20_PRODUCTION_MASTER.mp4 \
+                  -frames:v 1 /out/critical_frames/"$2".jpg
+              done
+            '
+
+          sudo chown -R "$USER":"$USER" mourinho_v20_out
+
+          test -s mourinho_v20_out/SAGI_MOURINHO_REAL_MADRID_70S_V20_PRODUCTION_MASTER.mp4
+          test -s mourinho_v20_out/SAGI_MOURINHO_V20_31_53_TRANSITION_REVIEW.mp4
+          test -s mourinho_v20_out/SAGI_MOURINHO_V20_53_70_COMPACT_REVIEW.mp4
+          test -s mourinho_v20_out/execution_report.json
+          test -s mourinho_v20_out/scene.blend
+
+          python3 - <<'PY'
+          import json
+          preset_path="cloud-blender-worker/presets/mourinho_real_madrid_4231_70s_v20_production_master.json"
+          with open("mourinho_v20_out/execution_report.json", encoding="utf-8") as f:
+              r=json.load(f)
+          with open(preset_path, encoding="utf-8") as f:
+              p=json.load(f)
+
+          assert r["valid"] is True, r
+          assert r["errors"] == [], r
+          assert abs(r["duration_sec"] - 70.0) < 1e-6, r
+
+          shots=[e for e in p["events"] if e.get("type")=="shot" and e.get("from")=="MBAPPE"]
+          assert len(shots)==1, shots
+          shot=shots[0]
+          assert 50.0 <= float(shot["release"]) <= 53.0, shot
+
+          compact=[e for e in p["events"] if e.get("type")=="chapter_state" and abs(float(e.get("t",0))-53.0)<0.01]
+          assert compact, "53s compact chapter reset missing"
+
+          assert p.get("cn_title_overlay",{}).get("enabled") is False, p.get("cn_title_overlay")
+          assert p.get("tactical_role_labels",{}).get("enabled") is False, p.get("tactical_role_labels")
+
+          print(json.dumps({
+              "valid": r["valid"],
+              "errors": r["errors"],
+              "warnings": r["warnings"],
+              "duration_sec": r["duration_sec"],
+              "mbappe_shot_release": shot["release"],
+              "compact_block_start": 53.0,
+              "text_inside_animation": False
+          }, ensure_ascii=False, indent=2))
+          PY
+
+      - name: Upload V2.0 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SAGI-MOURINHO-REAL-MADRID-70S-V2.0-PRODUCTION-MASTER
+          path: |
+            mourinho_v20_out/SAGI_MOURINHO_REAL_MADRID_70S_V20_PRODUCTION_MASTER.mp4
+            mourinho_v20_out/SAGI_MOURINHO_V20_31_53_TRANSITION_REVIEW.mp4
+            mourinho_v20_out/SAGI_MOURINHO_V20_53_70_COMPACT_REVIEW.mp4
+            mourinho_v20_out/critical_frames/*.jpg
+            mourinho_v20_out/execution_report.json
+            mourinho_v20_out/scene.blend
+            cloud-blender-worker/prompts/mourinho_real_madrid_v21_production_master.md
+            cloud-blender-worker/presets/mourinho_real_madrid_4231_70s_v20_production_master.json
+          retention-days: 7
