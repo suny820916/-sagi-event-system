@@ -40,8 +40,10 @@ video{display:block;width:100%;height:100%;object-fit:cover;background:radial-gr
   <div class="controls"><button class="stageBtn" id="camBtn" type="button">开启摄像头</button><button class="stageBtn" id="swapBtn" type="button">切换镜头</button></div>
 </section>
 <section class="panel">
-  <div class="head"><b>SAGI 直播屏 · CHINA V2.0</b><span class="status" id="status">未连接</span></div>
+  <div class="head"><b>SAGI 直播屏 · CHINA V2.2</b><span class="status" id="status">未连接</span></div>
   <div class="setup">
+    <div class="field"><label>一次性安装码</label><input id="provisionCode" maxlength="12" autocapitalize="characters" placeholder="8位安装码"></div>
+    <button class="btn primary" id="claimProvisionBtn" type="button" style="align-self:end">领取球房配置</button>
     <div class="field full"><label>国内同步服务器 HTTPS 地址</label><input id="syncUrl" inputmode="url" placeholder="https://pool-api.example.com"></div>
     <div class="field"><label>球房同步ID</label><input id="clubId" maxlength="32" value="SAGI-DEMO"></div>
     <div class="field"><label>球桌</label><input id="table" maxlength="10" value="01桌"></div>
@@ -91,11 +93,37 @@ async function pull(){
     else setStatus('已连接 · 等待开台');
   }catch(e){setStatus(navigator.onLine?(e.message||'连接失败'):'离线')}
 }
+async function claimProvision(){
+  const base=norm($('#syncUrl').value||cfg.url);
+  const code=$('#provisionCode').value.trim().toUpperCase();
+  if(!base){setStatus('请先配置国内服务器');return}
+  if(code.length<6){setStatus('安装码格式不正确');return}
+  try{
+    setStatus('正在领取球房配置…');
+    const r=await fetch(base+'/api/provision/claim',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({code})
+    });
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok){
+      if(r.status===404||r.status===410)throw new Error('安装码无效、已使用或已过期');
+      if(r.status===401)throw new Error('球房授权已失效');
+      throw new Error(d.error||('安装失败 · '+r.status));
+    }
+    const c=d.config||{};
+    cfg.url=base;cfg.clubId=c.clubId||'SAGI-DEMO';cfg.table=c.table||'01桌';cfg.token=c.token||'';
+    $('#syncUrl').value=cfg.url;$('#clubId').value=cfg.clubId;$('#table').value=cfg.table;$('#token').value=cfg.token;$('#provisionCode').value='';
+    localStorage.setItem(CFG_KEY,JSON.stringify(cfg));updateLink();
+    setStatus('安装完成 · '+(c.clubName||cfg.clubId)+' · '+cfg.table);
+    connect();
+  }catch(e){setStatus(e.message||'安装失败')}
+}
 function connect(){saveCfg();clearInterval(timer);pull();timer=setInterval(()=>{if(document.visibilityState==='visible')pull()},1200)}
 async function stopCam(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}$('#camera').srcObject=null;$('#cameraMsg').style.display='grid';$('#camBtn').textContent='开启摄像头'}
 async function startCam(){if(stream){await stopCam();return}if(!navigator.mediaDevices?.getUserMedia){flash('CAMERA','浏览器不支持摄像头');return}try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:facing},width:{ideal:1920},height:{ideal:1080},frameRate:{ideal:30,max:60}},audio:false});$('#camera').srcObject=stream;$('#cameraMsg').style.display='none';$('#camBtn').textContent='关闭摄像头'}catch(e){flash('CAMERA BLOCKED','请允许摄像头权限')}}
 async function swap(){facing=facing==='environment'?'user':'environment';if(stream){await stopCam();await startCam()}else flash('CAMERA',facing==='environment'?'后置镜头':'前置镜头')}
-$('#connectBtn').addEventListener('click',connect);$('#camBtn').addEventListener('click',startCam);$('#swapBtn').addEventListener('click',swap);
+$('#claimProvisionBtn').addEventListener('click',claimProvision);$('#connectBtn').addEventListener('click',connect);$('#camBtn').addEventListener('click',startCam);$('#swapBtn').addEventListener('click',swap);
 ['syncUrl','clubId','table','token'].forEach(id=>$('#'+id).addEventListener('change',saveCfg));
 window.addEventListener('online',pull);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')pull()});
 fill();if(cfg.url)connect();
