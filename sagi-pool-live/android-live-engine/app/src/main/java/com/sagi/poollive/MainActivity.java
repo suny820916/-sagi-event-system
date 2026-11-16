@@ -21,6 +21,7 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
@@ -126,7 +127,33 @@ public class MainActivity extends AppCompatActivity {
         pusher = new V2TXLivePusherImpl(this, V2TXLiveDef.V2TXLiveMode.TXLiveMode_RTMP);
         pusher.setRenderView(preview);
         pusher.setObserver(new SagiPusherObserver());
+        installBackPressGuard();
         requestMediaPermissions();
+    }
+
+    private void installBackPressGuard() {
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (!pushing) {
+                    setEnabled(false);
+                    getOnBackPressedDispatcher().onBackPressed();
+                    return;
+                }
+
+                new AlertDialog.Builder(MainActivity.this)
+                        .setTitle("正在直播")
+                        .setMessage("返回并退出会停止当前 RTMP 直播。确定停止并退出吗？")
+                        .setNegativeButton("继续直播", null)
+                        .setPositiveButton("停止并退出", (dialog, which) -> {
+                            diagnostics.add("user_exit_stop", "back_press");
+                            stopLive();
+                            setEnabled(false);
+                            getOnBackPressedDispatcher().onBackPressed();
+                        })
+                        .show();
+            }
+        });
     }
 
     private void loadConfig() {
