@@ -33,6 +33,8 @@ sudo cp "$APP_ROOT/china-sync/server.mjs" /opt/sagi-pool-sync/
 sudo cp "$APP_ROOT/china-sync/backup.mjs" /opt/sagi-pool-sync/
 sudo cp "$APP_ROOT/china-sync/restore.mjs" /opt/sagi-pool-sync/
 sudo cp "$APP_ROOT/china-sync/package.json" /opt/sagi-pool-sync/
+sudo cp "$HERE/verify-production.sh" /opt/sagi-pool-sync/verify-production.sh
+sudo chmod 750 /opt/sagi-pool-sync/verify-production.sh
 
 if [ ! -f /etc/sagi-pool-sync.env ]; then
   sudo cp "$HERE/sagi-pool-sync.env.example" /etc/sagi-pool-sync.env
@@ -58,3 +60,4 @@ echo "4) sudo systemctl enable --now sagi-pool-sync"
 echo "5) sudo systemctl enable --now sagi-pool-backup.timer"
 echo "6) sudo nginx -t && sudo systemctl reload nginx"
 echo "7) Test backup: sudo systemctl start sagi-pool-backup.service"
+echo "8) Verify production: sudo /opt/sagi-pool-sync/verify-production.sh"
