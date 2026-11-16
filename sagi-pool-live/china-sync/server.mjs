@@ -58,7 +58,10 @@ function publicLicense(lic) {
     expiresAt: Number(lic.expiresAt || 0),
     active: lic.revoked !== true && (!lic.expiresAt || Date.now() < Number(lic.expiresAt)),
     createdAt: Number(lic.createdAt || 0),
-    updatedAt: Number(lic.updatedAt || 0)
+    updatedAt: Number(lic.updatedAt || 0),
+    deviceCount: Array.isArray(lic.devices)
+      ? lic.devices.filter(d=>d && d.revoked!==true).length
+      : (Array.isArray(lic.deviceTokenHashes)?lic.deviceTokenHashes.length:0)
   };
 }
 function licenseAuthorized(club, token) {
@@ -69,8 +72,33 @@ function licenseAuthorized(club, token) {
   if (!token) return false;
   const hash = hashToken(token);
   if (hash === lic.tokenHash) return true;
+
+  const devices = Array.isArray(lic.devices) ? lic.devices : [];
+  const device = devices.find(d=>d && d.tokenHash===hash && d.revoked!==true);
+  if (device) {
+    const now=Date.now();
+    if (!device.lastSeenAt || now-Number(device.lastSeenAt)>60000) {
+      device.lastSeenAt=now;
+      lic.updatedAt=now;
+      schedulePersist();
+    }
+    return true;
+  }
+
   const deviceHashes = Array.isArray(lic.deviceTokenHashes) ? lic.deviceTokenHashes : [];
   return deviceHashes.includes(hash);
+}
+
+function publicDevice(device) {
+  if (!device) return null;
+  return {
+    id:String(device.id||''),
+    label:String(device.label||'设备'),
+    table:String(device.table||''),
+    createdAt:Number(device.createdAt||0),
+    lastSeenAt:Number(device.lastSeenAt||0),
+    revoked:device.revoked===true
+  };
 }
 
 function makeProvisionCode() {
@@ -159,7 +187,7 @@ const server=http.createServer(async (req,res)=>{
   const url=new URL(req.url,'http://localhost');
 
   if(url.pathname==='/health'){
-    json(res,200,{ok:true,service:'SAGI CHINA SYNC',version:'2.2.0',licensedMode:REQUIRE_LICENSE,time:Date.now()});
+    json(res,200,{ok:true,service:'SAGI CHINA SYNC',version:'2.3.0',licensedMode:REQUIRE_LICENSE,time:Date.now()});
     return;
   }
 
@@ -186,6 +214,7 @@ const server=http.createServer(async (req,res)=>{
         expiresAt:Math.max(0,Number(body.expiresAt||prev.expiresAt||0)),
         tokenHash:hashToken(token),
         deviceTokenHashes:Array.isArray(prev.deviceTokenHashes)?prev.deviceTokenHashes:[],
+        devices:Array.isArray(prev.devices)?prev.devices:[],
         revoked:false,
         createdAt:Number(prev.createdAt||now),
         updatedAt:now
@@ -193,6 +222,26 @@ const server=http.createServer(async (req,res)=>{
       store.licenses[clubId]=lic;schedulePersist();
       json(res,200,{ok:true,license:publicLicense(lic)});return;
     }catch(e){json(res,e.message==='payload_too_large'?413:400,{ok:false,error:e.message});return;}
+  }
+
+  const devicesMatch=url.pathname.match(/^\/api\/admin\/licenses\/([^/]+)\/devices$/);
+  if(devicesMatch && req.method==='GET'){
+    if(!adminAuthorized(req)){json(res,401,{ok:false,error:'admin_unauthorized'});return;}
+    const club=safePart(devicesMatch[1]),lic=store.licenses[club];
+    if(!lic){json(res,404,{ok:false,error:'license_not_found'});return;}
+    const devices=(Array.isArray(lic.devices)?lic.devices:[]).map(publicDevice).filter(Boolean);
+    json(res,200,{ok:true,clubId:club,devices});return;
+  }
+
+  const deviceRevokeMatch=url.pathname.match(/^\/api\/admin\/licenses\/([^/]+)\/devices\/([^/]+)\/revoke$/);
+  if(deviceRevokeMatch && req.method==='POST'){
+    if(!adminAuthorized(req)){json(res,401,{ok:false,error:'admin_unauthorized'});return;}
+    const club=safePart(deviceRevokeMatch[1]),deviceId=safePart(deviceRevokeMatch[2]),lic=store.licenses[club];
+    if(!lic){json(res,404,{ok:false,error:'license_not_found'});return;}
+    const device=(Array.isArray(lic.devices)?lic.devices:[]).find(d=>d&&String(d.id)===deviceId);
+    if(!device){json(res,404,{ok:false,error:'device_not_found'});return;}
+    device.revoked=true;lic.updatedAt=Date.now();schedulePersist();
+    json(res,200,{ok:true,device:publicDevice(device)});return;
   }
 
   if(url.pathname==='/api/admin/provisions' && req.method==='POST'){
@@ -226,6 +275,8 @@ const server=http.createServer(async (req,res)=>{
       purgeExpiredProvisions();
       const body=JSON.parse(await readBody(req)||'{}');
       const code=String(body.code||'').trim().toUpperCase();
+      const requestedDeviceId=safePart(body.deviceId)||('dev-'+crypto.randomBytes(6).toString('hex'));
+      const deviceLabel=String(body.deviceLabel||'SAGI设备').slice(0,80);
       const item=provisions.get(code);
       if(!item){json(res,404,{ok:false,error:'provision_invalid_or_expired'});return;}
       if(item.used || Date.now()>=Number(item.expiresAt||0)){
@@ -238,9 +289,24 @@ const server=http.createServer(async (req,res)=>{
         json(res,401,{ok:false,error:'license_invalid_or_expired'});return;
       }
       const hash=hashToken(item.deviceToken);
-      if(!Array.isArray(lic.deviceTokenHashes)) lic.deviceTokenHashes=[];
-      if(!lic.deviceTokenHashes.includes(hash)) lic.deviceTokenHashes.push(hash);
-      lic.updatedAt=Date.now();
+      if(!Array.isArray(lic.devices)) lic.devices=[];
+      const now=Date.now();
+      const existing=lic.devices.find(d=>d&&String(d.id)===requestedDeviceId);
+      if(existing){
+        existing.label=deviceLabel;existing.table=item.table;existing.tokenHash=hash;
+        existing.revoked=false;existing.lastSeenAt=now;
+      }else{
+        lic.devices.push({
+          id:requestedDeviceId,
+          label:deviceLabel,
+          table:item.table,
+          tokenHash:hash,
+          createdAt:now,
+          lastSeenAt:now,
+          revoked:false
+        });
+      }
+      lic.updatedAt=now;
       item.used=true;
       provisions.delete(code);
       schedulePersist();
@@ -253,7 +319,8 @@ const server=http.createServer(async (req,res)=>{
           token:item.deviceToken,
           plan:lic.plan||'CLUB',
           maxTables:Number(lic.maxTables||1),
-          expiresAt:Number(lic.expiresAt||0)
+          expiresAt:Number(lic.expiresAt||0),
+          deviceId:requestedDeviceId
         }
       });return;
     }catch(e){json(res,e.message==='payload_too_large'?413:400,{ok:false,error:e.message});return;}
