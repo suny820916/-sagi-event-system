@@ -62,7 +62,8 @@ public final class LiveDiagnostics {
 
     private String sanitize(String v, int max) {
         String s = v == null ? "" : v.replaceAll("[\\r\\n]+", " ").trim();
-        if (s.startsWith("rtmp://") || s.startsWith("rtmps://")) return "[RTMP hidden]";
+        s = s.replaceAll("(?i)rtmps?://\\S+", "[RTMP hidden]");
+        s = s.replaceAll("(?i)(token|secret|key)=([^\\s&]+)", "$1=[hidden]");
         return s.length() <= max ? s : s.substring(0, max);
     }
 }
