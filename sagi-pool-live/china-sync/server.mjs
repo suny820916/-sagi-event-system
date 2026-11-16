@@ -21,6 +21,7 @@ try {
 if (!store.rooms) store.rooms = {};
 if (!store.licenses) store.licenses = {};
 
+const provisions = new Map();
 const clients = new Map();
 let persistTimer = null;
 
@@ -65,7 +66,29 @@ function licenseAuthorized(club, token) {
   if (!lic) return false;
   if (lic.revoked === true) return false;
   if (lic.expiresAt && Date.now() >= Number(lic.expiresAt)) return false;
-  return Boolean(token) && hashToken(token) === lic.tokenHash;
+  if (!token) return false;
+  const hash = hashToken(token);
+  if (hash === lic.tokenHash) return true;
+  const deviceHashes = Array.isArray(lic.deviceTokenHashes) ? lic.deviceTokenHashes : [];
+  return deviceHashes.includes(hash);
+}
+
+function makeProvisionCode() {
+  const alphabet = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+  for (let attempt = 0; attempt < 30; attempt++) {
+    let code = '';
+    const bytes = crypto.randomBytes(8);
+    for (let i = 0; i < 8; i++) code += alphabet[bytes[i] % alphabet.length];
+    if (!provisions.has(code)) return code;
+  }
+  return crypto.randomBytes(6).toString('hex').toUpperCase();
+}
+
+function purgeExpiredProvisions() {
+  const now = Date.now();
+  for (const [code, item] of provisions) {
+    if (!item || item.used || now >= Number(item.expiresAt || 0)) provisions.delete(code);
+  }
 }
 function authorizedForClub(req, url, club) {
   const token = requestToken(req, url);
@@ -136,7 +159,7 @@ const server=http.createServer(async (req,res)=>{
   const url=new URL(req.url,'http://localhost');
 
   if(url.pathname==='/health'){
-    json(res,200,{ok:true,service:'SAGI CHINA SYNC',version:'2.1.0',licensedMode:REQUIRE_LICENSE,time:Date.now()});
+    json(res,200,{ok:true,service:'SAGI CHINA SYNC',version:'2.2.0',licensedMode:REQUIRE_LICENSE,time:Date.now()});
     return;
   }
 
@@ -162,12 +185,77 @@ const server=http.createServer(async (req,res)=>{
         maxTables:Math.max(1,Math.min(99,Number(body.maxTables||prev.maxTables||1))),
         expiresAt:Math.max(0,Number(body.expiresAt||prev.expiresAt||0)),
         tokenHash:hashToken(token),
+        deviceTokenHashes:Array.isArray(prev.deviceTokenHashes)?prev.deviceTokenHashes:[],
         revoked:false,
         createdAt:Number(prev.createdAt||now),
         updatedAt:now
       };
       store.licenses[clubId]=lic;schedulePersist();
       json(res,200,{ok:true,license:publicLicense(lic)});return;
+    }catch(e){json(res,e.message==='payload_too_large'?413:400,{ok:false,error:e.message});return;}
+  }
+
+  if(url.pathname==='/api/admin/provisions' && req.method==='POST'){
+    if(!adminAuthorized(req)){json(res,401,{ok:false,error:'admin_unauthorized'});return;}
+    try{
+      purgeExpiredProvisions();
+      const body=JSON.parse(await readBody(req)||'{}');
+      const clubId=safePart(body.clubId);
+      const table=safePart(body.table);
+      const lic=store.licenses[clubId];
+      if(!lic){json(res,404,{ok:false,error:'license_not_found'});return;}
+      if(lic.revoked===true || (lic.expiresAt && Date.now()>=Number(lic.expiresAt))){
+        json(res,400,{ok:false,error:'license_inactive'});return;
+      }
+      if(!table || !tableAllowed(clubId,table)){
+        json(res,403,{ok:false,error:'table_limit_exceeded'});return;
+      }
+      const code=makeProvisionCode();
+      const deviceToken=crypto.randomBytes(24).toString('hex');
+      const expiresAt=Date.now()+10*60*1000;
+      provisions.set(code,{code,clubId,table,deviceToken,expiresAt,used:false});
+      json(res,200,{
+        ok:true,
+        provision:{code,clubId,table,expiresAt,ttlSeconds:600}
+      });return;
+    }catch(e){json(res,e.message==='payload_too_large'?413:400,{ok:false,error:e.message});return;}
+  }
+
+  if(url.pathname==='/api/provision/claim' && req.method==='POST'){
+    try{
+      purgeExpiredProvisions();
+      const body=JSON.parse(await readBody(req)||'{}');
+      const code=String(body.code||'').trim().toUpperCase();
+      const item=provisions.get(code);
+      if(!item){json(res,404,{ok:false,error:'provision_invalid_or_expired'});return;}
+      if(item.used || Date.now()>=Number(item.expiresAt||0)){
+        provisions.delete(code);
+        json(res,410,{ok:false,error:'provision_invalid_or_expired'});return;
+      }
+      const lic=store.licenses[item.clubId];
+      if(!lic || lic.revoked===true || (lic.expiresAt && Date.now()>=Number(lic.expiresAt))){
+        provisions.delete(code);
+        json(res,401,{ok:false,error:'license_invalid_or_expired'});return;
+      }
+      const hash=hashToken(item.deviceToken);
+      if(!Array.isArray(lic.deviceTokenHashes)) lic.deviceTokenHashes=[];
+      if(!lic.deviceTokenHashes.includes(hash)) lic.deviceTokenHashes.push(hash);
+      lic.updatedAt=Date.now();
+      item.used=true;
+      provisions.delete(code);
+      schedulePersist();
+      json(res,200,{
+        ok:true,
+        config:{
+          clubId:item.clubId,
+          clubName:lic.clubName||'',
+          table:item.table,
+          token:item.deviceToken,
+          plan:lic.plan||'CLUB',
+          maxTables:Number(lic.maxTables||1),
+          expiresAt:Number(lic.expiresAt||0)
+        }
+      });return;
     }catch(e){json(res,e.message==='payload_too_large'?413:400,{ok:false,error:e.message});return;}
   }
 
