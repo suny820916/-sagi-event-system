@@ -321,6 +321,15 @@ async function e2eCommercial(){
     check(typeof adminStatusData.storage?.directoryWritable==='boolean','Admin status storage health missing');
     const adminStatusUnauthorized=await fetch(base+'/api/admin/status',{headers:{'X-SAGI-Admin':'wrong-status'}});
     check(adminStatusUnauthorized.status===401,'Admin status must reject unauthorized access');
+
+    const backupResp=await fetch(base+'/api/admin/backup',{headers:{'X-SAGI-Admin':'admin-secret'}});
+    const backupData=await backupResp.json();
+    check(backupResp.ok&&backupData.schemaVersion===1,'Admin backup snapshot failed');
+    check(backupData.serviceVersion==='2.10.0','Admin backup service version failed');
+    check(Boolean(backupData.store?.licenses?.['TEST-CLUB']?.tokenHash),'Admin backup missing license hash');
+    check(!JSON.stringify(backupData).includes('"token":"club-secret"'),'Admin backup leaked plaintext club token');
+    const backupUnauthorized=await fetch(base+'/api/admin/backup',{headers:{'X-SAGI-Admin':'wrong-backup'}});
+    check(backupUnauthorized.status===401,'Admin backup must reject unauthorized access');
     const listedLicense=listData.licenses.find(x=>x.clubId==='TEST-CLUB');
     check(Number(listedLicense?.deviceCount||0)===1,'License device count failed');
 
@@ -382,7 +391,7 @@ if(failures.length){
   failures.forEach((x,i)=>console.error((i+1)+'. '+x));
   process.exit(1);
 }
-console.log('SAGI POOL LIVE CHINA V2.9 SELF-CHECK: PASSED');
+console.log('SAGI POOL LIVE CHINA V2.10 SELF-CHECK: PASSED');
 console.log('✓ Scorer / club / live / seller JavaScript');
 console.log('✓ PWA cache and core billiards scoring');
 console.log('✓ China sync real read/write flow');
@@ -394,6 +403,7 @@ console.log('✓ Install code one-use enforcement');
 console.log('✓ Provision claim IP rate limiting');
 console.log('✓ Admin failed-auth rate limiting with valid-key recovery');
 console.log('✓ Admin service/storage health status');
+console.log('✓ Admin downloadable business backup without plaintext main token');
 console.log('✓ Device inventory and per-device remote revoke');
 console.log('✓ Live start / heartbeat / stop telemetry');
 console.log('✓ Live session history and remote-revoke closure');
