@@ -56,12 +56,14 @@ video{display:block;width:100%;height:100%;object-fit:cover;background:radial-gr
 <script>
 (()=>{
 const CFG_KEY='sagi_pool_live_screen_cfg_v1';
+const DEVICE_KEY='sagi_pool_web_live_device_id_v1';
 const $=s=>document.querySelector(s);
 const params=new URLSearchParams(location.search);
 const modeNames={'8ball':'中式八球','chase4':'4球追分','chase6':'6球追分','chase9':'9球追分'};
 let cfg=loadCfg(), stream=null, facing='environment', timer=null, lastUpdated=0, lastScores='';
 function loadCfg(){const auto=((location.protocol==='https:'&&!location.hostname.endsWith('github.io'))?location.origin:'');try{return Object.assign({url:auto,clubId:'SAGI-DEMO',table:'01桌',token:''},JSON.parse(localStorage.getItem(CFG_KEY)||'{}'),params.get('clubId')?{clubId:params.get('clubId')}:{},params.get('table')?{table:(params.get('table').endsWith('桌')?params.get('table'):params.get('table')+'桌')}:{})}catch(e){return{url:auto,clubId:'SAGI-DEMO',table:'01桌',token:''}}}
 function norm(v){return String(v||'').trim().replace(/\/+$/,'')}
+function deviceId(){let id=localStorage.getItem(DEVICE_KEY);if(!id){id='web-live-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,9);localStorage.setItem(DEVICE_KEY,id)}return id}
 function saveCfg(){cfg.url=norm($('#syncUrl').value);cfg.clubId=$('#clubId').value.trim()||'SAGI-DEMO';cfg.table=$('#table').value.trim()||'01桌';cfg.token=$('#token').value;localStorage.setItem(CFG_KEY,JSON.stringify(cfg));updateLink()}
 function fill(){ $('#syncUrl').value=cfg.url;$('#clubId').value=cfg.clubId;$('#table').value=cfg.table;$('#token').value=cfg.token;updateLink()}
 function updateLink(){ $('#scoreLink').href='./?table='+encodeURIComponent(cfg.table.replace(/桌$/,''))+'&club='+encodeURIComponent(cfg.clubId)}
@@ -103,7 +105,7 @@ async function claimProvision(){
     const r=await fetch(base+'/api/provision/claim',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({code})
+      body:JSON.stringify({code,deviceId:deviceId(),deviceLabel:'Web直播端 · '+(cfg.table||'球桌')})
     });
     const d=await r.json().catch(()=>({}));
     if(!r.ok){
