@@ -1,45 +1,48 @@
-# SAGI POOL LIVE ENGINE · Android V0.3
+# SAGI POOL LIVE ENGINE · Android V0.5
 
 中国大陆优先的原生台球直播推流引擎。
 
-## V0.3
-- 540P 流畅 / 720P 标准 / 1080P 高清三档
-- 画质档位自动匹配目标与最低码率
-- 麦克风一键开关
-- Android Keystore + AES/GCM 加密保存：
-  - 国内同步服务器
-  - Club ID
-  - 球桌编号
-  - 球房同步密钥
-  - RTMP / RTMPS 推流地址
-  - 画质与音频偏好
-- 不会为了保存方便把推流密钥明文落盘
-- “导演模式”一键隐藏操作面板，只保留球台画面与直播比分
-- SAGI POOL App 图标
+## V0.5 开播前健康检查
+“开始直播”现在先经过预检：
+- 国内 SAGI CHINA SYNC /health
+- Club ID / 设备密钥
+- 球房授权是否有效
+- 球桌是否超出购买数量
+- 摄像头权限
+- 麦克风权限（仅在麦克风开启时要求）
+- RTMP / RTMPS 地址格式
+- LiteAV License URL / Key 是否注入
 
-## 已继承 V0.2
-- 前后摄像头切换
-- 后置灯光
-- 变焦
-- 弱网提醒
-- 推流连接 / 重连 / 断开状态
-- 实时码率 / FPS / 分辨率
-- 中国国内比分同步与球房授权
-- 大金 / 小金 / 黄金9 / 胜局 / 8号球犯规事件推流包装
-- 动态 Bitmap 水印真正烧入 RTMP 视频流
+也提供单独“开播检测”按钮，球房可以在比赛前先确认全部条件。
 
-## 直播 SDK
-固定：
-com.tencent.liteav:LiteAVSDK_Live:13.5.0.20670
+## V0.4
+- 销售后台生成 8 位一次性安装码
+- 10 分钟有效、使用一次立即失效
+- Android 输入安装码自动领取 Club ID / 球桌 / 设备专属 token
+- 正式构建可通过 SAGI_DEFAULT_SYNC_URL 预置国内服务器地址
+- 安装后配置用 Android Keystore + AES/GCM 加密保存
 
-License 通过构建环境变量注入：
+## 已有直播能力
+- 540P / 720P / 1080P
+- 麦克风开关
+- 前后镜头、灯光、变焦
+- 导演模式
+- 弱网与实时码率/FPS/分辨率
+- RTMP / RTMPS
+- 中八 / 追分比分烧录
+- BIG GOLDEN / SMALL GOLDEN / GOLDEN 9 / RACK WIN / 8-BALL FOUL
+
+## 正式构建需要
+环境变量：
 - TENCENT_LIVE_LICENSE_URL
 - TENCENT_LIVE_LICENSE_KEY
+- SAGI_DEFAULT_SYNC_URL
 
-## 下一阶段 V0.4
-- 开播配置向导：扫码导入球房、球桌、同步密钥
-- 推流地址二维码/深链导入
-- 开播前健康检查
-- 本地录制备份
-- Android 前台服务，提升长时间直播稳定性
-- Release 签名流水线
+没有有效 LiteAV License 时，APK 可以完成界面、摄像头预览和国内同步测试，但 V0.5 会阻止正式推流并明确提示“SDK授权缺失”，避免球房现场误判成网络故障。
+
+## 下一阶段 V0.6
+- 长时间直播稳定性
+- 前台服务与直播状态通知
+- 配置锁定，普通员工隐藏敏感字段
+- Release 签名构建
+- 自动生成球房安装包
