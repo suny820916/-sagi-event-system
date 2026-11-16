@@ -12,6 +12,7 @@ const live = read('live.html');
 const admin = read('admin.html');
 const manifestText = read('manifest.webmanifest');
 const sw = read('sw.js');
+const nginxDeployText = read('china-deploy/nginx-sagi-pool.conf');
 const serverPath = fileURLToPath(new URL('china-sync/server.mjs', root));
 const backupToolPath = fileURLToPath(new URL('china-sync/backup.mjs', root));
 const restoreToolPath = fileURLToPath(new URL('china-sync/restore.mjs', root));
@@ -78,6 +79,12 @@ check(admin.includes('auditList'),'Seller audit UI missing');
 check(admin.includes('/api/admin/provisions'),'Seller installation-code endpoint missing');
 check(admin.includes('/devices'),'Seller device-management endpoint missing');
 check(sw.includes('./club.html')&&sw.includes('./live.html')&&sw.includes('./admin.html'),'Offline cache missing product pages');
+check(nginxDeployText.includes('ssl_protocols TLSv1.2 TLSv1.3'),'Nginx TLS 1.2/1.3 hardening missing');
+check(nginxDeployText.includes('Strict-Transport-Security'),'Nginx HSTS header missing');
+check(nginxDeployText.includes('X-Frame-Options DENY'),'Nginx anti-frame header missing');
+check(nginxDeployText.includes('Permissions-Policy "camera=(self), microphone=(self)'),'Nginx camera/mic permissions policy missing');
+check(nginxDeployText.includes("frame-ancestors 'none'"),'Nginx CSP frame-ancestors missing');
+check(nginxDeployText.includes('proxy_set_header X-Forwarded-For $remote_addr'),'Nginx rate-limit anti-spoof IP forwarding missing');
 check(sw.includes('sagi-pool-live-v33'),'Service worker cache generation not V2.13');
 
 async function waitHealth(base){
