@@ -1,0 +1,133 @@
+name: SAGI VIEWPOINT V5.2 TEACTICS SCREEN COMPOSITION
+
+concurrency:
+  group: sagi-viewpoint-v52-attack-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "cloud-blender-worker/presets/christmas_tree_attack_viewpoint_v52.json"
+      - "cloud-blender-worker/engine/sagi_tactical_execution_director_v52.py"
+      - ".github/workflows/sagi-viewpoint-v52-attack.yml"
+  workflow_dispatch:
+
+jobs:
+  render-viewpoint-v52:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Blender image
+        run: docker build -t sagi-viewpoint-v52 ./cloud-blender-worker
+
+      - name: Render and compose V5.2
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p viewpoint_v52_out
+          docker run --rm \
+            -v "$PWD/viewpoint_v52_out:/out" \
+            sagi-viewpoint-v52 \
+            bash -lc '
+              set -euo pipefail
+              apt-get update -qq
+              apt-get install -y -qq --no-install-recommends fonts-dejavu-core >/dev/null
+
+              blender --background \
+                --python /app/engine/sagi_tactical_execution_director_v52.py \
+                -- \
+                /app/presets/christmas_tree_attack_viewpoint_v52.json \
+                /out
+
+              ffmpeg -y -loglevel error \
+                -framerate 30 \
+                -i /out/frames/frame_%04d.png \
+                -f lavfi \
+                -i anullsrc=channel_layout=stereo:sample_rate=44100 \
+                -map 0:v:0 -map 1:a:0 \
+                -c:v libx264 -profile:v baseline -level 3.1 \
+                -pix_fmt yuv420p -preset veryfast -crf 20 \
+                -c:a aac -b:a 64k -shortest -movflags +faststart \
+                /out/SAGI_VIEWPOINT_V5_2_BASE.mp4
+
+              cat > /out/v52_titles.ass <<'"'"'ASS'"'"'
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 540
+PlayResY: 960
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Kicker,DejaVu Sans Condensed,18,&H00E7E7E7,&H00E7E7E7,&H00000000,&H00000000,0,0,0,0,90,100,1,0,1,0,0,7,36,20,70,1
+Style: Main,DejaVu Sans Condensed,50,&H001AF2E6,&H001AF2E6,&H00000000,&H00000000,-1,0,0,0,84,100,0,0,1,0,0,7,36,20,98,1
+Style: MainLong,DejaVu Sans Condensed,42,&H001AF2E6,&H001AF2E6,&H00000000,&H00000000,-1,0,0,0,82,100,0,0,1,0,0,7,36,20,98,1
+Style: Sub,DejaVu Sans Condensed,16,&H00B8BCBF,&H00B8BCBF,&H00000000,&H00000000,0,0,0,0,90,100,0,0,1,0,0,7,36,20,160,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.00,0:00:06.00,Kicker,,0,0,0,,{\fad(120,120)}THE
+Dialogue: 0,0:00:00.00,0:00:06.00,Main,,0,0,0,,{\fad(120,120)}4-3-2-1
+Dialogue: 0,0:00:00.00,0:00:06.00,Sub,,0,0,0,,{\fad(120,120)}THE CHRISTMAS TREE
+Dialogue: 0,0:00:06.00,0:00:12.00,Kicker,,0,0,0,,{\fad(120,120)}THE
+Dialogue: 0,0:00:06.00,0:00:12.00,MainLong,,0,0,0,,{\fad(120,120)}CHRISTMAS TREE
+Dialogue: 0,0:00:06.00,0:00:12.00,Sub,,0,0,0,,{\fad(120,120)}FOUR. THREE. TWO. ONE.
+Dialogue: 0,0:00:12.00,0:00:17.00,Kicker,,0,0,0,,{\fad(120,120)}THE DEEP PLAYMAKER
+Dialogue: 0,0:00:12.00,0:00:17.00,Main,,0,0,0,,{\fad(120,120)}PIRLO
+Dialogue: 0,0:00:12.00,0:00:17.00,Sub,,0,0,0,,{\fad(120,120)}SETS THE DIRECTION.
+Dialogue: 0,0:00:17.00,0:00:21.00,Kicker,,0,0,0,,{\fad(120,120)}MIDFIELD
+Dialogue: 0,0:00:17.00,0:00:21.00,Main,,0,0,0,,{\fad(120,120)}THREE
+Dialogue: 0,0:00:17.00,0:00:21.00,Sub,,0,0,0,,{\fad(120,120)}CREATE THE ANGLES.
+Dialogue: 0,0:00:21.00,0:00:25.00,Kicker,,0,0,0,,{\fad(120,120)}BETWEEN THE LINES
+Dialogue: 0,0:00:21.00,0:00:25.00,MainLong,,0,0,0,,{\fad(120,120)}KAKA + SEEDORF
+Dialogue: 0,0:00:21.00,0:00:25.00,Sub,,0,0,0,,{\fad(120,120)}CONNECT CONTROL TO ATTACK.
+Dialogue: 0,0:00:25.00,0:00:30.00,Kicker,,0,0,0,,{\fad(120,120)}THE
+Dialogue: 0,0:00:25.00,0:00:30.00,Main,,0,0,0,,{\fad(120,120)}FULL-BACKS
+Dialogue: 0,0:00:25.00,0:00:30.00,Sub,,0,0,0,,{\fad(120,120)}PROVIDE THE WIDTH.
+Dialogue: 0,0:00:30.00,0:00:36.00,Kicker,,0,0,0,,{\fad(120,120)}THE ACCELERATOR
+Dialogue: 0,0:00:30.00,0:00:36.00,Main,,0,0,0,,{\fad(120,120)}KAKA
+Dialogue: 0,0:00:30.00,0:00:36.00,Sub,,0,0,0,,{\fad(120,120)}BREAKS THE LINE.
+Dialogue: 0,0:00:36.00,0:00:43.00,Kicker,,0,0,0,,{\fad(120,120)}THE FINISHER
+Dialogue: 0,0:00:36.00,0:00:43.00,Main,,0,0,0,,{\fad(120,120)}INZAGHI
+Dialogue: 0,0:00:36.00,0:00:43.00,Sub,,0,0,0,,{\fad(120,120)}ATTACKS THE MOMENT.
+ASS
+
+              ffmpeg -y -loglevel error \
+                -i /out/SAGI_VIEWPOINT_V5_2_BASE.mp4 \
+                -vf "ass=/out/v52_titles.ass" \
+                -c:v libx264 -profile:v baseline -level 3.1 \
+                -pix_fmt yuv420p -preset veryfast -crf 20 \
+                -c:a copy -movflags +faststart \
+                /out/SAGI_VIEWPOINT_V5_2_ATTACK_00_43.mp4
+
+              ffmpeg -y -loglevel error \
+                -ss 12 -t 31 \
+                -i /out/SAGI_VIEWPOINT_V5_2_ATTACK_00_43.mp4 \
+                -c:v libx264 -pix_fmt yuv420p -crf 20 -preset veryfast -c:a aac \
+                /out/SAGI_VIEWPOINT_V5_2_ATTACK_12_43.mp4
+
+              rm -f /out/SAGI_VIEWPOINT_V5_2_BASE.mp4
+            '
+
+          sudo chown -R "$USER":"$USER" viewpoint_v52_out
+          test -s viewpoint_v52_out/SAGI_VIEWPOINT_V5_2_ATTACK_00_43.mp4
+          test -s viewpoint_v52_out/SAGI_VIEWPOINT_V5_2_ATTACK_12_43.mp4
+          test -s viewpoint_v52_out/execution_report.json
+          test -s viewpoint_v52_out/scene.blend
+
+      - name: Upload V5.2 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SAGI-VIEWPOINT-V5.2-TEACTICS-SCREEN-COMPOSITION
+          path: |
+            viewpoint_v52_out/SAGI_VIEWPOINT_V5_2_ATTACK_00_43.mp4
+            viewpoint_v52_out/SAGI_VIEWPOINT_V5_2_ATTACK_12_43.mp4
+            viewpoint_v52_out/execution_report.json
+            viewpoint_v52_out/scene.blend
+            viewpoint_v52_out/v52_titles.ass
+            cloud-blender-worker/presets/christmas_tree_attack_viewpoint_v52.json
+          retention-days: 7
