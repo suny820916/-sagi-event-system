@@ -68,6 +68,8 @@ check(live.includes("deviceLabel:'Web直播端"),'Live-screen device label missi
 check(admin.includes('/api/admin/licenses'),'Seller license endpoint missing');
 check(admin.includes('/api/admin/status'),'Seller health-dashboard endpoint missing');
 check(admin.includes('serverHealth'),'Seller health-dashboard UI missing');
+check(admin.includes('/api/admin/audit'),'Seller audit endpoint missing');
+check(admin.includes('auditList'),'Seller audit UI missing');
 check(admin.includes('/api/admin/provisions'),'Seller installation-code endpoint missing');
 check(admin.includes('/devices'),'Seller device-management endpoint missing');
 check(sw.includes('./club.html')&&sw.includes('./live.html')&&sw.includes('./admin.html'),'Offline cache missing product pages');
@@ -378,7 +380,7 @@ async function e2eCommercial(){
     await new Promise(r=>setTimeout(r,200));
     const adminStatus=await fetch(base+'/api/admin/status',{headers:{'X-SAGI-Admin':'admin-secret'}});
     const adminStatusData=await adminStatus.json();
-    check(adminStatus.ok&&adminStatusData.version==='2.11.0','Admin status endpoint/version failed');
+    check(adminStatus.ok&&adminStatusData.version==='2.12.0','Admin status endpoint/version failed');
     check(Number(adminStatusData.counts?.licenses||0)>=1,'Admin status license count failed');
     check(Number(adminStatusData.counts?.activeDevices||0)>=1,'Admin status active-device count failed');
     check(typeof adminStatusData.storage?.directoryWritable==='boolean','Admin status storage health missing');
@@ -389,7 +391,7 @@ async function e2eCommercial(){
     const backupResp=await fetch(base+'/api/admin/backup',{headers:{'X-SAGI-Admin':'admin-secret'}});
     const backupData=await backupResp.json();
     check(backupResp.ok&&backupData.schemaVersion===1,'Admin backup snapshot failed');
-    check(backupData.serviceVersion==='2.11.0','Admin backup service version failed');
+    check(backupData.serviceVersion==='2.12.0','Admin backup service version failed');
     check(Boolean(backupData.store?.licenses?.['TEST-CLUB']?.tokenHash),'Admin backup missing license hash');
     check(!JSON.stringify(backupData).includes('"token":"club-secret"'),'Admin backup leaked plaintext club token');
     const backupUnauthorized=await fetch(base+'/api/admin/backup',{headers:{'X-SAGI-Admin':'wrong-backup'}});
@@ -434,8 +436,24 @@ async function e2eCommercial(){
     });
     check(mainStillWorks.ok,'Device revoke must not disable club main token');
 
+    const auditBeforeRevoke=await fetch(base+'/api/admin/audit?limit=100',{headers:{'X-SAGI-Admin':'admin-secret'}});
+    const auditBeforeData=await auditBeforeRevoke.json();
+    const auditActions=(auditBeforeData.audit||[]).map(x=>x.action);
+    for(const action of ['license_issue','license_renew','provision_create','device_provision','device_revoke','backup_export']){
+      check(auditActions.includes(action),'Admin audit endpoint missing expected commercial actions: '+action);
+    }
+    const auditText=JSON.stringify(auditBeforeData);
+    check(!auditText.includes('admin-secret'),'Audit leaked plaintext admin secret');
+    check(!auditText.includes('club-secret'),'Audit leaked plaintext club secret');
+    check((auditBeforeData.audit||[]).every(x=>!('ip' in x)&&typeof x.sourceHash==='string'),'Audit should store hashed source only');
+    const auditUnauthorized=await fetch(base+'/api/admin/audit',{headers:{'X-SAGI-Admin':'wrong-audit'}});
+    check(auditUnauthorized.status===401,'Admin audit must reject unauthorized access');
+
     const revoke=await fetch(base+'/api/admin/licenses/TEST-CLUB/revoke',{method:'POST',headers:{'X-SAGI-Admin':'admin-secret'}});
     check(revoke.ok,'License revoke failed');
+    const auditAfterRevoke=await fetch(base+'/api/admin/audit?limit=20',{headers:{'X-SAGI-Admin':'admin-secret'}});
+    const auditAfterData=await auditAfterRevoke.json();
+    check((auditAfterData.audit||[]).some(x=>x.action==='license_revoke'),'License revoke audit missing');
 
     const after=await fetch(base+'/api/clubs/TEST-CLUB',{headers:{'X-SAGI-Token':'club-secret'}});
     check(after.status===401,'Revoked license should be rejected');
@@ -456,7 +474,7 @@ if(failures.length){
   failures.forEach((x,i)=>console.error((i+1)+'. '+x));
   process.exit(1);
 }
-console.log('SAGI POOL LIVE CHINA V2.11 SELF-CHECK: PASSED');
+console.log('SAGI POOL LIVE CHINA V2.12 SELF-CHECK: PASSED');
 console.log('✓ Scorer / club / live / seller JavaScript');
 console.log('✓ PWA cache and core billiards scoring');
 console.log('✓ China sync real read/write flow');
@@ -470,6 +488,7 @@ console.log('✓ Admin failed-auth rate limiting with valid-key recovery');
 console.log('✓ Admin service/storage health status');
 console.log('✓ Admin downloadable business backup without plaintext main token');
 console.log('✓ Key-preserving license renewal and expiry metrics');
+console.log('✓ Privacy-safe commercial audit trail');
 console.log('✓ Device inventory and per-device remote revoke');
 console.log('✓ Live start / heartbeat / stop telemetry');
 console.log('✓ Live session history and remote-revoke closure');
