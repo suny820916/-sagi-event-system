@@ -238,19 +238,29 @@ button{cursor:pointer}
       updateSyncUI('同步中…');
       const url=syncCfg.url+'/api/rooms/'+encodeURIComponent(syncCfg.clubId)+'/'+encodeURIComponent(state.table);
       const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','X-SAGI-Token':syncCfg.token},body:JSON.stringify({state,updatedAt:state.updatedAt,deviceId:deviceId()})});
-      if(!r.ok) throw new Error('HTTP '+r.status);
-      const data=await r.json();
+      const data=await r.json().catch(()=>({}));
+      if(!r.ok){
+        if(r.status===401) throw new Error('授权无效或已到期');
+        if(r.status===403 && data.error==='table_limit_exceeded') throw new Error('已超出授权球桌数');
+        throw new Error('同步失败 · '+r.status);
+      }
       if(data.room?.updatedAt){state.updatedAt=data.room.updatedAt;localStorage.setItem(KEY,JSON.stringify(state))}
-      updateSyncUI('已同步');
-    }catch(e){updateSyncUI('同步失败');}
+      const lic=data.license;
+      updateSyncUI(lic?.active?('授权有效 · '+lic.plan+' · '+lic.maxTables+'桌'):'已同步');
+    }catch(e){updateSyncUI(e.message||'同步失败');}
   }
   async function pullRemote(force=false){
     if(!syncCfg.url||!navigator.onLine)return;
     try{
       const url=syncCfg.url+'/api/rooms/'+encodeURIComponent(syncCfg.clubId)+'/'+encodeURIComponent(state.table);
       const r=await fetch(url,{headers:{'X-SAGI-Token':syncCfg.token},cache:'no-store'});
-      if(!r.ok) throw new Error('HTTP '+r.status);
-      const data=await r.json(), room=data.room;
+      const data=await r.json().catch(()=>({}));
+      if(!r.ok){
+        if(r.status===401) throw new Error('授权无效或已到期');
+        if(r.status===403 && data.error==='table_limit_exceeded') throw new Error('已超出授权球桌数');
+        throw new Error('连接失败 · '+r.status);
+      }
+      const room=data.room;
       if(room?.state && (force || Number(room.updatedAt||0)>Number(state.updatedAt||0))){
         applyingRemote=true;
         state=room.state;
@@ -260,7 +270,7 @@ button{cursor:pointer}
         applyingRemote=false;
         updateSyncUI('已接收远端');
       } else updateSyncUI('已连接');
-    }catch(e){updateSyncUI('连接失败')}
+    }catch(e){updateSyncUI(e.message||'连接失败')}
   }
   function snapshot(){state.history.push({players:clone(state.players),log:clone(state.log),active:state.active});if(state.history.length>40)state.history.shift()}
   function now(){return new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})}
