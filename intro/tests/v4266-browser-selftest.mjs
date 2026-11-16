@@ -212,11 +212,12 @@ server.listen(PORT,'127.0.0.1',async()=>{
     await page.locator('#matchKickoff').fill('2026-11-17T20:00');
     await page.locator('#matchVenue').fill('SELF TEST STADIUM');
 
-    for (const [id,value] of [['vdCam1','1'],['vdCam2','2'],['vdDrone',''],['vdReplay',''],['vdGraphics','5'],['vdDuration','0']]) {
-      const el=page.locator('#'+id); await el.fill(value); await el.dispatchEvent('change');
-    }
+    await page.locator('#vdCam1').selectOption('1');
+    await page.locator('#vdCam2').selectOption('2');
+    await page.locator('#vdGraphics').selectOption('5');
+    await page.locator('#vdDuration').fill('0');
+    await page.locator('#vdDuration').dispatchEvent('change');
     await page.locator('#vdTransition').selectOption('Cut');
-    await page.locator('#vdTransition').dispatchEvent('change');
 
     await page.click('#setupValidateBtn');
     await page.waitForFunction(()=>!document.querySelector('#setupReadyBtn')?.disabled,null,{timeout:5000});
