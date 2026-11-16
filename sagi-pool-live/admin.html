@@ -18,7 +18,7 @@
 </head>
 <body>
 <div class="app">
-<header class="top"><div><div class="brand">SAGI POOL SELLER</div><div class="sub">球房商业授权后台 · CHINA V2.11</div></div><div class="pill">仅 SAGI 管理员</div></header>
+<header class="top"><div><div class="brand">SAGI POOL SELLER</div><div class="sub">球房商业授权后台 · CHINA V2.12</div></div><div class="pill">仅 SAGI 管理员</div></header>
 
 <section class="card">
   <div class="head"><h2>国内授权服务器</h2><span class="small" id="serverStatus">未连接</span></div>
@@ -75,6 +75,11 @@
 <section class="card">
   <div class="head"><h2>设备管理</h2><span class="small" id="deviceClub">未选择球房</span></div>
   <div class="list" id="deviceList"><div class="empty">在上面的球房列表中点击“设备”查看。</div></div>
+</section>
+
+<section class="card">
+  <div class="head"><h2>最近操作</h2><button class="btn" id="auditRefresh" type="button" style="min-height:36px;padding:5px 9px;font-size:12px">刷新</button></div>
+  <div class="list" id="auditList"><div class="empty">连接服务器后显示最近操作。</div></div>
 </section>
 
 <div class="warn">管理员密钥不会保存到页面源码，也不会随球房链接发送。正式商业部署请使用 HTTPS，并把 SAGI_ADMIN_TOKEN 只保存在你自己的设备与服务器环境变量中。</div>
@@ -295,6 +300,37 @@ async function loadSessions(clubId,device){
   }catch(e){setStatus('直播记录读取失败')}
 }
 
+function auditLabel(action){
+  const map={
+    license_issue:'开通授权',
+    license_update:'更新授权',
+    license_renew:'续费授权',
+    license_revoke:'停用授权',
+    provision_create:'生成安装码',
+    device_provision:'设备安装',
+    device_revoke:'设备下线',
+    backup_export:'下载备份'
+  };
+  return map[action]||action||'未知操作';
+}
+async function refreshAudit(){
+  try{
+    const d=await api('/api/admin/audit?limit=30');
+    const box=$('#auditList');box.innerHTML='';
+    if(!d.audit?.length){box.innerHTML='<div class="empty">暂无操作记录。</div>';return}
+    d.audit.forEach(x=>{
+      const row=document.createElement('div');row.className='item';
+      const left=document.createElement('div');
+      const n=document.createElement('div');n.className='name';n.textContent=auditLabel(x.action)+(x.clubId?' · '+x.clubId:'');
+      const m=document.createElement('div');m.className='meta';
+      const when=x.ts?new Date(x.ts).toLocaleString('zh-CN'):'未知时间';
+      const extra=[x.table,x.deviceId?('设备 '+x.deviceId):'',x.plan,x.maxTables?('授权'+x.maxTables+'桌'):''].filter(Boolean).join(' · ');
+      m.textContent=when+(extra?' · '+extra:'')+' · 来源#'+String(x.sourceHash||'').slice(0,8);
+      left.append(n,m);row.appendChild(left);box.appendChild(row);
+    });
+  }catch(e){$('#auditList').innerHTML='<div class="empty">'+e.message+'</div>'}
+}
+
 async function refresh(){
   try{
     setStatus('读取中…');const d=await api('/api/admin/licenses');const box=$('#list');box.innerHTML='';
@@ -344,7 +380,8 @@ async function refresh(){
 }
 $('#downloadBackup').addEventListener('click',downloadBackup);
 $('#healthRefresh').addEventListener('click',refreshServerHealth);
-$('#allRefresh').addEventListener('click',()=>{refreshServerHealth();refresh()});
+$('#allRefresh').addEventListener('click',()=>{refreshServerHealth();refresh();refreshAudit()});
+$('#auditRefresh').addEventListener('click',refreshAudit);
 $('#refresh').addEventListener('click',refresh);$('#serverUrl').addEventListener('change',saveServer);
 load();
 })();
