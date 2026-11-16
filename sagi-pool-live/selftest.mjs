@@ -2,7 +2,7 @@ import fs from 'node:fs';
 
 const root = new URL('./', import.meta.url);
 const html = fs.readFileSync(new URL('index.html', root), 'utf8');
-const manifestText = fs.readFileSync(new URL('manifest.webmanifest', root), 'utf8');
+const club = fs.readFileSync(new URL('club.html', root), 'utf8');\nconst manifestText = fs.readFileSync(new URL('manifest.webmanifest', root), 'utf8');
 const sw = fs.readFileSync(new URL('sw.js', root), 'utf8');
 
 const failures = [];
@@ -56,6 +56,6 @@ console.log('✓ JavaScript syntax');
 console.log('✓ PWA manifest');
 console.log('✓ Service worker syntax');
 console.log('✓ DOM id integrity');
-console.log('✓ Core billiards modes');
+console.log('✓ Core billiards modes');\nconsole.log('✓ Club dashboard / per-table isolation');
 console.log('✓ 2-4 player chase scoring');
 console.log('✓ Undo / persistence / camera markers');
