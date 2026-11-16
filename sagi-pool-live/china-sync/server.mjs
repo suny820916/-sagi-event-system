@@ -340,7 +340,7 @@ const server=http.createServer(async (req,res)=>{
   const url=new URL(req.url,'http://localhost');
 
   if(url.pathname==='/health'){
-    json(res,200,{ok:true,service:'SAGI CHINA SYNC',version:'2.9.0',licensedMode:REQUIRE_LICENSE,time:Date.now()});
+    json(res,200,{ok:true,service:'SAGI CHINA SYNC',version:'2.10.0',licensedMode:REQUIRE_LICENSE,time:Date.now()});
     return;
   }
 
@@ -356,6 +356,25 @@ const server=http.createServer(async (req,res)=>{
     }
   }
 
+  if(url.pathname==='/api/admin/backup' && req.method==='GET'){
+    const payload={
+      schemaVersion:1,
+      service:'SAGI CHINA SYNC',
+      serviceVersion:'2.10.0',
+      exportedAt:Date.now(),
+      store
+    };
+    const body=JSON.stringify(payload,null,2);
+    cors(res);
+    res.setHeader('Content-Disposition','attachment; filename="sagi-pool-backup.json"');
+    res.writeHead(200,{
+      'Content-Type':'application/json; charset=utf-8',
+      'Cache-Control':'no-store',
+      'Content-Length':Buffer.byteLength(body)
+    });
+    res.end(body);return;
+  }
+
   if(url.pathname==='/api/admin/status' && req.method==='GET'){
     const licenses=Object.values(store.licenses);
     const devices=licenses.flatMap(lic=>Array.isArray(lic.devices)?lic.devices:[]);
@@ -368,7 +387,7 @@ const server=http.createServer(async (req,res)=>{
     json(res,200,{
       ok:true,
       service:'SAGI CHINA SYNC',
-      version:'2.9.0',
+      version:'2.10.0',
       uptimeSeconds:Math.floor(process.uptime()),
       licensedMode:REQUIRE_LICENSE,
       counts:{
