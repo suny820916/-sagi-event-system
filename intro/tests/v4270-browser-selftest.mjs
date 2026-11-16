@@ -71,7 +71,7 @@ server.listen(PORT,'127.0.0.1',async()=>{
   assert(regular.bugRight<=1918,'regular scorebar exceeds frame');
   assert(regular.midTop>=regular.bugTop+regular.bugHeight-1,'clock ribbon is not below main scorebar');
   assert(regular.brandWidth>=60&&regular.logoWidth>=60,'event logo is not visually large enough');
-  assert(regular.logoSrc.startsWith('data:image/png;base64,'),'offline TORANHE event logo is not embedded');
+  assert(regular.logoSrc.startsWith('data:image/svg+xml'),'offline TORANHE event logo is not embedded');
   assert(regular.logoDisplay!=='none','event logo hidden');
   assert(regular.stopText==='+3'&&regular.stopDisplay!=='none','stoppage-time ribbon missing');
   assert(regular.burstWidth<=2&&!regular.goalExpand,'goal panel visible during regular play');
