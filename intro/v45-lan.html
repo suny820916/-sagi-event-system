@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="format-detection" content="telephone=no">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%2307090d%22/%3E%3Ctext x=%2232%22 y=%2243%22 text-anchor=%22middle%22 font-size=%2234%22 fill=%22%23d8b55b%22%3ES%3C/text%3E%3C/svg%3E">
-<title>SAGI V4.10.2 · DIRECT PHONE PACKAGE LOAD</title>
+<title>SAGI V4.10.3 · LOCAL PRE-MATCH READ</title>
 <style>
 :root{--bg:#07090d;--panel:#11151c;--line:#2b3340;--text:#f4f0e8;--muted:#8f97a5;--gold:#d8b55b;--green:#72c79a}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
@@ -335,7 +335,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 </head>
 <body>
 <div class="app">
-  <div class="top"><div><div class="brand">SAGI LIVE MATCH DIRECTOR</div><div class="sub">V4.10.2 · DIRECT PHONE PACKAGE LOAD · MATCH SETUP UX</div></div><div class="topRight"><div class="ver">V4.10.2</div><button id="mobileUpdateBtn" class="mobileUpdateBtn" type="button">↻ 安全更新</button><button id="mobileRollbackBtn" class="mobileRollbackBtn" type="button">↶ 回退上一版</button><div id="mobileUpdateStatus" class="mobileUpdateStatus">V4.10.2 · DIRECT PACKAGE LOAD · Bridge 已锁定</div></div></div>
+  <div class="top"><div><div class="brand">SAGI LIVE MATCH DIRECTOR</div><div class="sub">V4.10.3 · LOCAL PRE-MATCH READ · MATCH SETUP UX</div></div><div class="topRight"><div class="ver">V4.10.3</div><button id="mobileUpdateBtn" class="mobileUpdateBtn" type="button">↻ 安全更新</button><button id="mobileRollbackBtn" class="mobileRollbackBtn" type="button">↶ 回退上一版</button><div id="mobileUpdateStatus" class="mobileUpdateStatus">V4.10.3 · LOCAL PRE-MATCH · Bridge 已锁定</div></div></div>
 
   <div id="pwaBar" class="pwaBar" style="display:none">
     <div class="pwaInfo">
@@ -357,7 +357,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 
   <div id="setupDesk" class="setupDesk">
     <div class="setupHead">
-      <div class="setupTitle">比赛设置 · MATCH SETUP ENGINE<small>V4.10.2 · 手机赛前包直读 · READY GATE</small></div>
+      <div class="setupTitle">比赛设置 · MATCH SETUP ENGINE<small>V4.10.3 · 本机赛前直读 · READY GATE</small></div>
       <div id="setupReadyBadge" class="setupReadyBadge">NOT READY</div>
     </div>
     <div class="setupGrid">
@@ -373,7 +373,8 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
           <button id="projectDeleteBtn" class="danger" type="button">删除项目</button>
           <button id="projectRecoverBtn" class="recover" type="button">↻ 找回历史比赛</button>
           <button id="projectCloudSyncBtn" class="ok" type="button">☁ 同步赛前云端</button>
-          <label class="setupPhoneImport">📱 读取手机赛前包<input id="projectPhoneImportFile" type="file" accept=".sagi,.json,application/json"></label>
+          <button id="projectPhoneLocalBtn" type="button" class="ok">📱 读取本机赛前</button>
+          <label class="setupPhoneImport">文件备用导入<input id="projectPhoneImportFile" type="file" accept=".sagi,.json,application/json"></label>
         </div>
         <div id="projectRecoveryStatus" class="projectRecoveryStatus">可扫描旧版本、旧端口与 Bridge 恢复库；找回后自动并入永久比赛库，不覆盖现有项目。</div>
         <div class="tiny" style="margin-top:8px">比赛项目保存赛事信息、赛制、主客队名单、阵型、节目时间线与比赛事件状态；球员照片/视频继续使用本机素材库。</div>
@@ -886,7 +887,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
             </div>
           </div>
         </div>
-        <div class="statusBar"><div id="status" class="status">V4.10.2 · DIRECT PHONE PACKAGE LOAD 已就绪</div><div class="mini">1920 × 1080</div></div>
+        <div class="statusBar"><div id="status" class="status">V4.10.3 · LOCAL PRE-MATCH READ 已就绪</div><div class="mini">1920 × 1080</div></div>
       </div>
     </div>
   </div>
@@ -1283,6 +1284,25 @@ async function loadMatchProject(){
   note('比赛项目已读取 · '+p.name+(stats?' · HOME '+stats.home+'人/'+stats.homeStarters+'首发 · AWAY '+stats.away+'人/'+stats.awayStarters+'首发':''))
  }catch(e){recoveryStatus('比赛项目读取失败 · '+(e&&e.message||'未知错误'),true);note('比赛项目读取失败 · '+(e&&e.message||'未知错误'))}
 }
+function phonePrematchDbOpen(){
+ return new Promise((resolve,reject)=>{const r=indexedDB.open('sagi_prematch_phone_v1',1);r.onupgradeneeded=()=>{const db=r.result;if(!db.objectStoreNames.contains('packages'))db.createObjectStore('packages')};r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error||new Error('本机赛前数据库打开失败'))})
+}
+async function phonePrematchDbGet(key){const db=await phonePrematchDbOpen();return new Promise((resolve,reject)=>{const tx=db.transaction('packages','readonly'),r=tx.objectStore('packages').get(key);r.onsuccess=()=>{const v=r.result;db.close();resolve(v)};r.onerror=()=>{db.close();reject(r.error||new Error('本机赛前读取失败'))}})}
+async function loadPhonePrematchLocal(){
+ try{
+  const data=await phonePrematchDbGet('current');if(!data||data.schema!=='sagi.prematch.package.v1'||!data.project)throw new Error('本机还没有保存赛前比赛');
+  const p=data.project;let core;try{core=typeof p.core==='string'?JSON.parse(p.core):p.core}catch(e){throw new Error('本机赛前数据损坏')}
+  const hc=Array.isArray(core?.teams?.HOME?.roster)?core.teams.HOME.roster.length:0,ac=Array.isArray(core?.teams?.AWAY?.roster)?core.teams.AWAY.roster.length:0;
+  if(!hc&&!ac)throw new Error('本机赛前包内没有球员名单');
+  const imported={...p,id:String(p.id||('phone_'+Date.now().toString(36))),name:String(p.name||'本机赛前比赛'),savedAt:Number(p.savedAt)||Date.now(),importedFrom:'PHONE_INDEXEDDB'};
+  let list=getMatchProjects(),same=list.findIndex(x=>String(x.id)===imported.id||x.name===imported.name);if(same>=0)list.splice(same,1);list.unshift(imported);putMatchProjects(list);refreshProjectList(imported.id);
+  await persistMatchProjectsBridge(list).catch(()=>false);
+  await loadMatchProject();
+  const h=(teamStore.HOME&&teamStore.HOME.roster||[]),a=(teamStore.AWAY&&teamStore.AWAY.roster||[]);
+  recoveryStatus('本机赛前已读取 · 主队 '+h.length+' 人 / 首发 '+h.filter(x=>x.squadType==='STARTER').length+' · 客队 '+a.length+' 人 / 首发 '+a.filter(x=>x.squadType==='STARTER').length,true);
+  note('本机赛前读取成功')
+ }catch(e){recoveryStatus('本机赛前读取失败 · '+(e&&e.message||'未知错误'),true);note('本机赛前读取失败')}
+}
 async function importPhonePrematchPackage(file){
  if(!file)return;
  try{
@@ -1376,7 +1396,7 @@ async function recoverHistoryProjects(){
  finally{if(btn){btn.disabled=false;btn.textContent='↻ 找回历史比赛'}}
 }
 function initMatchSetup(){
- q('projectName').value=setupProjectDefaultName();refreshProjectList();q('projectSaveBtn').onclick=saveMatchProject;q('projectLoadBtn').onclick=loadMatchProject;q('projectDeleteBtn').onclick=deleteMatchProject;q('projectRecoverBtn').onclick=recoverHistoryProjects;q('projectCloudSyncBtn').onclick=()=>syncPrematchCloud(false);q('projectPhoneImportFile').onchange=async e=>{const f=e.target.files&&e.target.files[0];if(f)await importPhonePrematchPackage(f);e.target.value=''};
+ q('projectName').value=setupProjectDefaultName();refreshProjectList();q('projectSaveBtn').onclick=saveMatchProject;q('projectLoadBtn').onclick=loadMatchProject;q('projectDeleteBtn').onclick=deleteMatchProject;q('projectRecoverBtn').onclick=recoverHistoryProjects;q('projectCloudSyncBtn').onclick=()=>syncPrematchCloud(false);q('projectPhoneLocalBtn').onclick=loadPhonePrematchLocal;q('projectPhoneImportFile').onchange=async e=>{const f=e.target.files&&e.target.files[0];if(f)await importPhonePrematchPackage(f);e.target.value=''};
  q('setupValidateBtn').onclick=()=>validateMatchSetup(true);q('setupReadyBtn').onclick=()=>setMatchReady(true);q('setupUnlockBtn').onclick=()=>setMatchReady(false);
  validateMatchSetup(true);refreshSetupReadyUI();syncMatchProjectsFromBridge();setTimeout(()=>syncPrematchCloud(true),700)
 }
@@ -2645,7 +2665,7 @@ if('serviceWorker' in navigator&&window.isSecureContext){
 
 setInstalledState();
 
-const HOME_SCREEN_BUILD='V4.10.2-HOME-20261116-01';
+const HOME_SCREEN_BUILD='V4.10.3-HOME-20261116-01';
 async function homeScreenColdStartUpdate(){
   if(!standalone||location.protocol!=='http:')return;
   const once='sagi_homescreen_boot_'+HOME_SCREEN_BUILD;
