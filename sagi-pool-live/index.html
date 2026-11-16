@@ -137,6 +137,10 @@ button{cursor:pointer}
           </div>
           <div style="height:1px;background:#263029;margin:13px 0"></div>
           <div class="sectionHead" style="margin-bottom:8px"><h2 style="font-size:13px">国内多手机同步</h2><span class="small" id="syncState">本机模式</span></div>
+          <div class="grid two" style="margin-bottom:9px">
+            <div class="field"><label>一次性安装码</label><input id="provisionCode" maxlength="12" autocapitalize="characters" placeholder="8位安装码"></div>
+            <button class="btn primary" id="claimProvisionBtn" type="button" style="align-self:end">领取球房配置</button>
+          </div>
           <div class="field"><label>国内同步服务器 HTTPS 地址</label><input id="syncUrl" inputmode="url" placeholder="https://pool-api.example.com"></div>
           <div class="grid two" style="margin-top:9px">
             <div class="field"><label>球房同步ID</label><input id="clubId" maxlength="32" value="SAGI-DEMO"></div>
@@ -250,6 +254,36 @@ button{cursor:pointer}
       updateSyncUI(lic?.active?('授权有效 · '+lic.plan+' · '+lic.maxTables+'桌'):'已同步');
     }catch(e){updateSyncUI(e.message||'同步失败');}
   }
+  async function claimProvision(){
+    const base=normUrl($('#syncUrl').value||syncCfg.url);
+    const code=$('#provisionCode').value.trim().toUpperCase();
+    if(!base){updateSyncUI('请先配置国内服务器');return}
+    if(code.length<6){updateSyncUI('安装码格式不正确');return}
+    try{
+      updateSyncUI('正在领取配置…');
+      const r=await fetch(base+'/api/provision/claim',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({code})
+      });
+      const data=await r.json().catch(()=>({}));
+      if(!r.ok){
+        if(r.status===404||r.status===410)throw new Error('安装码无效、已使用或已过期');
+        if(r.status===401)throw new Error('球房授权已失效');
+        throw new Error(data.error||('领取失败 · '+r.status));
+      }
+      const cfg=data.config||{};
+      syncCfg.url=base;
+      syncCfg.clubId=cfg.clubId||'SAGI-DEMO';
+      syncCfg.token=cfg.token||'';
+      saveSync();
+      updateSyncUI('配置成功 · 正在进入 '+(cfg.table||'球桌'));
+      const table=String(cfg.table||'01桌').replace(/桌$/,'');
+      const club=cfg.clubName||syncCfg.clubId;
+      location.href='./?table='+encodeURIComponent(table)+'&club='+encodeURIComponent(club);
+    }catch(e){updateSyncUI(e.message||'安装失败')}
+  }
+
   async function pullRemote(force=false){
     if(!syncCfg.url||!navigator.onLine)return;
     try{
@@ -387,6 +421,7 @@ button{cursor:pointer}
   $('#raceTo').addEventListener('change',e=>{state.raceTo=clampNum(e.target.value,1,99,5);render()});
   $('#settlement').addEventListener('change',e=>{state.settlement=e.target.value;save()});
   [['normalPts','normal'],['smallPts','small'],['bigPts','big'],['gold9Pts','gold9']].forEach(([id,k])=>$('#'+id).addEventListener('change',e=>{state.points[k]=clampNum(e.target.value,-99,99,defaults.points[k]);render()}));
+  $('#claimProvisionBtn').addEventListener('click',claimProvision);
   $('#syncUrl').addEventListener('change',e=>{syncCfg.url=normUrl(e.target.value);saveSync();pullRemote()});
   $('#clubId').addEventListener('change',e=>{syncCfg.clubId=e.target.value.trim()||'SAGI-DEMO';saveSync();pullRemote()});
   $('#syncToken').addEventListener('change',e=>{syncCfg.token=e.target.value;saveSync();pullRemote()});
