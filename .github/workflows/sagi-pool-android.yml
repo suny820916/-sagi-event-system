@@ -64,6 +64,17 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+      - name: Compile unsigned release APK
+        working-directory: sagi-pool-live/android-live-engine
+        run: gradle :app:assembleRelease --stacktrace
+
+      - name: Verify unsigned release APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="sagi-pool-live/android-live-engine/app/build/outputs/apk/release/app-release-unsigned.apk"
+          test -f "$APK"
+
       - name: Prepare optional commercial signing key
         env:
           KEYSTORE_B64: ${{ secrets.SAGI_ANDROID_KEYSTORE_B64 }}
