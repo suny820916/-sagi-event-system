@@ -88,11 +88,15 @@ async function refreshCloud(){
   try{
     $('#summary').textContent='云端同步中…';
     const r=await fetch(cfg.syncUrl+'/api/clubs/'+encodeURIComponent(cfg.clubId),{headers:{'X-SAGI-Token':cfg.token},cache:'no-store'});
-    if(!r.ok)throw new Error('HTTP '+r.status);
-    const d=await r.json();cloudRooms={};
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok){
+      if(r.status===401)throw new Error('授权无效或已到期');
+      throw new Error('云端连接失败 · '+r.status);
+    }
+    cloudRooms={};
     (d.rooms||[]).forEach(x=>{cloudRooms[x.table]=x});
     render();
-  }catch(e){$('#summary').textContent='云端连接失败'}
+  }catch(e){$('#summary').textContent=e.message||'云端连接失败'}
 }
 $('#save').addEventListener('click',()=>{saveCfg();render()});
 $('#cloudRefresh').addEventListener('click',refreshCloud);
