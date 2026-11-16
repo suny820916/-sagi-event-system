@@ -62,7 +62,7 @@ server.listen(PORT,'127.0.0.1',async()=>{
   const regular=await page.evaluate(({HOME,AWAY})=>{
    const bug=document.querySelector('#scoreBug'),h=document.querySelector('#sbHome'),a=document.querySelector('#sbAway'),mid=document.querySelector('.sbMid'),brand=document.querySelector('.sbEventBrand'),logo=document.querySelector('#sbEventLogo'),burst=document.querySelector('#sbGoalBurst'),stop=document.querySelector('#sbStoppage');
    const br=bug.getBoundingClientRect(),hr=h.getBoundingClientRect(),ar=a.getBoundingClientRect(),mr=mid.getBoundingClientRect(),brandr=brand.getBoundingClientRect(),logoStyle=getComputedStyle(logo);
-   return {home:h.textContent,away:a.textContent,homeOverflow:getComputedStyle(h).textOverflow,awayOverflow:getComputedStyle(a).textOverflow,homeFont:parseFloat(getComputedStyle(h).fontSize),awayFont:parseFloat(getComputedStyle(a).fontSize),homeInside:hr.left>=br.left-1&&hr.right<=br.right+1,awayInside:ar.left>=br.left-1&&ar.right<=br.right+1,bugRight:br.right,midTop:mr.top,bugTop:br.top,bugHeight:br.height,brandWidth:brandr.width,logoSrc:logo.getAttribute('src')||'',logoDisplay:logoStyle.display,stopText:stop.textContent,stopDisplay:getComputedStyle(stop).display,burstWidth:burst.getBoundingClientRect().width,goalExpand:bug.classList.contains('goalExpand'),paper:getComputedStyle(document.querySelector('.sbTeamBlock.home')).backgroundColor};
+   return {home:h.textContent,away:a.textContent,homeOverflow:getComputedStyle(h).textOverflow,awayOverflow:getComputedStyle(a).textOverflow,homeFont:parseFloat(getComputedStyle(h).fontSize),awayFont:parseFloat(getComputedStyle(a).fontSize),homeInside:hr.left>=br.left-1&&hr.right<=br.right+1,awayInside:ar.left>=br.left-1&&ar.right<=br.right+1,bugRight:br.right,midTop:mr.top,bugTop:br.top,bugHeight:br.height,brandWidth:brandr.width,logoWidth:logo.getBoundingClientRect().width,logoSrc:logo.getAttribute('src')||'',logoDisplay:logoStyle.display,stopText:stop.textContent,stopDisplay:getComputedStyle(stop).display,burstWidth:burst.getBoundingClientRect().width,goalExpand:bug.classList.contains('goalExpand'),paper:getComputedStyle(document.querySelector('.sbTeamBlock.home')).backgroundColor};
   },{HOME,AWAY});
   assert(regular.home===HOME&&regular.away===AWAY,'team names changed');
   assert(regular.homeOverflow!=='ellipsis'&&regular.awayOverflow!=='ellipsis','ellipsis returned');
@@ -70,7 +70,7 @@ server.listen(PORT,'127.0.0.1',async()=>{
   assert(regular.homeInside&&regular.awayInside,'team name clipped outside main scorebar');
   assert(regular.bugRight<=1918,'regular scorebar exceeds frame');
   assert(regular.midTop>=regular.bugTop+regular.bugHeight-1,'clock ribbon is not below main scorebar');
-  assert(regular.brandWidth>=60,'event brand block too small');
+  assert(regular.brandWidth>=60&&regular.logoWidth>=60,'event logo is not visually large enough');
   assert(regular.logoSrc.includes('toranhe-event-logo.png'),'default TORANHE event logo is not wired');
   assert(regular.logoDisplay!=='none','event logo hidden');
   assert(regular.stopText==='+3'&&regular.stopDisplay!=='none','stoppage-time ribbon missing');
