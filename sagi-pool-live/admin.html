@@ -18,7 +18,7 @@
 </head>
 <body>
 <div class="app">
-<header class="top"><div><div class="brand">SAGI POOL SELLER</div><div class="sub">球房商业授权后台 · CHINA V2.10</div></div><div class="pill">仅 SAGI 管理员</div></header>
+<header class="top"><div><div class="brand">SAGI POOL SELLER</div><div class="sub">球房商业授权后台 · CHINA V2.11</div></div><div class="pill">仅 SAGI 管理员</div></header>
 
 <section class="card">
   <div class="head"><h2>国内授权服务器</h2><span class="small" id="serverStatus">未连接</span></div>
@@ -214,6 +214,7 @@ async function refreshServerHealth(){
       healthLine('服务',d.service+' · V'+d.version,true),
       healthLine('运行',durationText(d.uptimeSeconds),true),
       healthLine('授权',Number(d.counts?.activeLicenses||0)+' 有效 / '+Number(d.counts?.licenses||0)+' 总计',true),
+      healthLine('30天内到期',Number(d.counts?.expiringSoon||0)+' 家',Number(d.counts?.expiringSoon||0)===0),
       healthLine('设备',Number(d.counts?.activeDevices||0)+' 台 · '+Number(d.counts?.liveDevices||0)+' 台直播中',true),
       healthLine('球桌状态',Number(d.counts?.rooms||0)+' 个已同步',true),
       healthLine('主数据',d.storage?.dataValid?'正常':'异常',Boolean(d.storage?.dataValid)),
@@ -304,7 +305,24 @@ async function refresh(){
       const m=document.createElement('div');m.className='meta';m.textContent=l.plan+' · '+l.maxTables+'桌 · '+Number(l.deviceCount||0)+'台设备 · 到期 '+fmt(l.expiresAt);
       left.append(n,m);
       const right=document.createElement('div');right.style.cssText='display:flex;flex-direction:column;gap:6px;align-items:flex-end';
-      const st=document.createElement('div');st.className='status'+(l.active?'':' off');st.textContent=l.active?'有效':'已到期/停用';right.appendChild(st);
+      const remaining=Number(l.expiresAt||0)-Date.now();
+      const expiring=l.active&&Number(l.expiresAt||0)>0&&remaining>0&&remaining<=30*86400000;
+      const st=document.createElement('div');st.className='status'+((l.active&&!expiring)?'':' off');st.textContent=!l.active?'已到期/停用':(expiring?'30天内到期':'有效');right.appendChild(st);
+      const renew=document.createElement('button');renew.className='btn gold';renew.style.cssText='min-height:32px;padding:4px 8px;font-size:10px';renew.textContent='续费1年';
+      renew.addEventListener('click',async()=>{
+        const base=Math.max(Date.now(),Number(l.expiresAt||0));
+        const d=new Date(base);d.setFullYear(d.getFullYear()+1);
+        if(!confirm('续费至 '+d.toLocaleDateString('zh-CN')+'？现有密钥和设备不会变化。'))return;
+        try{
+          setStatus('正在续费…');
+          await api('/api/admin/licenses/'+encodeURIComponent(l.clubId)+'/renew',{
+            method:'POST',headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({expiresAt:d.getTime(),plan:l.plan,maxTables:l.maxTables})
+          });
+          setStatus('续费成功');refresh();refreshServerHealth();
+        }catch(e){setStatus('续费失败');alert(e.message)}
+      });
+      right.appendChild(renew);
       const devices=document.createElement('button');devices.className='btn';devices.style.cssText='min-height:32px;padding:4px 8px;font-size:10px';devices.textContent='设备 '+Number(l.deviceCount||0);
       devices.addEventListener('click',()=>loadDevices(l.clubId,l.clubName||l.clubId));
       right.appendChild(devices);
