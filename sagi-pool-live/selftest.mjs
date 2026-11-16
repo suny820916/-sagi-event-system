@@ -145,7 +145,7 @@ async function e2eCommercial(){
   const tmp=path.join(os.tmpdir(),'sagi-pool-selftest-'+process.pid+'.json');
   try{fs.rmSync(tmp,{force:true})}catch{}
   const child=spawn(process.execPath,[serverPath],{
-    env:{...process.env,PORT:String(port),HOST:'127.0.0.1',SAGI_REQUIRE_LICENSE:'1',SAGI_ADMIN_TOKEN:'admin-secret',SAGI_DATA_FILE:tmp,SAGI_LIVE_HEARTBEAT_TIMEOUT_MS:'1000',SAGI_PROVISION_RATE_LIMIT:'5',SAGI_PROVISION_RATE_WINDOW_MS:'10000'},
+    env:{...process.env,PORT:String(port),HOST:'127.0.0.1',SAGI_REQUIRE_LICENSE:'1',SAGI_ADMIN_TOKEN:'admin-secret',SAGI_DATA_FILE:tmp,SAGI_LIVE_HEARTBEAT_TIMEOUT_MS:'1000',SAGI_PROVISION_RATE_LIMIT:'5',SAGI_PROVISION_RATE_WINDOW_MS:'10000',SAGI_ADMIN_FAIL_LIMIT:'3',SAGI_ADMIN_FAIL_WINDOW_MS:'10000'},
     stdio:['ignore','pipe','pipe']
   });
   let stderr='';child.stderr.on('data',d=>stderr+=d.toString());
@@ -300,6 +300,15 @@ async function e2eCommercial(){
     const list=await fetch(base+'/api/admin/licenses',{headers:{'X-SAGI-Admin':'admin-secret'}});
     const listData=await list.json();
     check(list.ok&&listData.licenses?.some(x=>x.clubId==='TEST-CLUB'),'Admin license listing failed');
+
+    const adminWrong1=await fetch(base+'/api/admin/licenses',{headers:{'X-SAGI-Admin':'wrong-1'}});
+    const adminWrong2=await fetch(base+'/api/admin/licenses',{headers:{'X-SAGI-Admin':'wrong-2'}});
+    const adminWrong3=await fetch(base+'/api/admin/licenses',{headers:{'X-SAGI-Admin':'wrong-3'}});
+    check(adminWrong1.status===401&&adminWrong2.status===401,'Admin failure throttle should allow initial failures');
+    const adminWrong3Data=await adminWrong3.json();
+    check(adminWrong3.status===429&&adminWrong3Data.error==='admin_rate_limited','Admin failure rate limit failed');
+    const adminRecovery=await fetch(base+'/api/admin/licenses',{headers:{'X-SAGI-Admin':'admin-secret'}});
+    check(adminRecovery.ok,'Valid admin credential must bypass and reset failure throttle');
     const listedLicense=listData.licenses.find(x=>x.clubId==='TEST-CLUB');
     check(Number(listedLicense?.deviceCount||0)===1,'License device count failed');
 
@@ -361,7 +370,7 @@ if(failures.length){
   failures.forEach((x,i)=>console.error((i+1)+'. '+x));
   process.exit(1);
 }
-console.log('SAGI POOL LIVE CHINA V2.7 SELF-CHECK: PASSED');
+console.log('SAGI POOL LIVE CHINA V2.8 SELF-CHECK: PASSED');
 console.log('✓ Scorer / club / live / seller JavaScript');
 console.log('✓ PWA cache and core billiards scoring');
 console.log('✓ China sync real read/write flow');
@@ -371,6 +380,7 @@ console.log('✓ Purchased table-count enforcement');
 console.log('✓ One-time install code → per-device token');
 console.log('✓ Install code one-use enforcement');
 console.log('✓ Provision claim IP rate limiting');
+console.log('✓ Admin failed-auth rate limiting with valid-key recovery');
 console.log('✓ Device inventory and per-device remote revoke');
 console.log('✓ Live start / heartbeat / stop telemetry');
 console.log('✓ Live session history and remote-revoke closure');
