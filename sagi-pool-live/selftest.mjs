@@ -378,7 +378,7 @@ async function e2eCommercial(){
     await new Promise(r=>setTimeout(r,200));
     const adminStatus=await fetch(base+'/api/admin/status',{headers:{'X-SAGI-Admin':'admin-secret'}});
     const adminStatusData=await adminStatus.json();
-    check(adminStatus.ok&&adminStatusData.version==='2.10.0','Admin status endpoint/version failed');
+    check(adminStatus.ok&&adminStatusData.version==='2.11.0','Admin status endpoint/version failed');
     check(Number(adminStatusData.counts?.licenses||0)>=1,'Admin status license count failed');
     check(Number(adminStatusData.counts?.activeDevices||0)>=1,'Admin status active-device count failed');
     check(typeof adminStatusData.storage?.directoryWritable==='boolean','Admin status storage health missing');
@@ -389,7 +389,7 @@ async function e2eCommercial(){
     const backupResp=await fetch(base+'/api/admin/backup',{headers:{'X-SAGI-Admin':'admin-secret'}});
     const backupData=await backupResp.json();
     check(backupResp.ok&&backupData.schemaVersion===1,'Admin backup snapshot failed');
-    check(backupData.serviceVersion==='2.10.0','Admin backup service version failed');
+    check(backupData.serviceVersion==='2.11.0','Admin backup service version failed');
     check(Boolean(backupData.store?.licenses?.['TEST-CLUB']?.tokenHash),'Admin backup missing license hash');
     check(!JSON.stringify(backupData).includes('"token":"club-secret"'),'Admin backup leaked plaintext club token');
     const backupUnauthorized=await fetch(base+'/api/admin/backup',{headers:{'X-SAGI-Admin':'wrong-backup'}});
