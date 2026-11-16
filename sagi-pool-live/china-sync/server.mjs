@@ -91,13 +91,66 @@ function licenseAuthorized(club, token) {
 
 function publicDevice(device) {
   if (!device) return null;
+  const live=device.live||{};
   return {
     id:String(device.id||''),
     label:String(device.label||'设备'),
     table:String(device.table||''),
     createdAt:Number(device.createdAt||0),
     lastSeenAt:Number(device.lastSeenAt||0),
-    revoked:device.revoked===true
+    revoked:device.revoked===true,
+    live:{
+      active:live.active===true,
+      startedAt:Number(live.startedAt||0),
+      updatedAt:Number(live.updatedAt||0),
+      bitrate:Number(live.bitrate||0),
+      fps:Number(live.fps||0),
+      width:Number(live.width||0),
+      height:Number(live.height||0),
+      status:String(live.status||''),
+      error:String(live.error||'')
+    },
+    sessionCount:Array.isArray(device.sessions)?device.sessions.length:0
+  };
+}
+
+function deviceForToken(lic, deviceId, token) {
+  if(!lic || !token) return null;
+  const hash=hashToken(token);
+  const devices=Array.isArray(lic.devices)?lic.devices:[];
+  return devices.find(d=>d && String(d.id)===String(deviceId) && d.tokenHash===hash && d.revoked!==true) || null;
+}
+
+function finishLiveSession(device, reason, now=Date.now()) {
+  if(!device) return;
+  const live=device.live||{};
+  if(live.active===true || live.startedAt){
+    if(!Array.isArray(device.sessions)) device.sessions=[];
+    device.sessions.unshift({
+      startedAt:Number(live.startedAt||now),
+      endedAt:now,
+      reason:String(reason||'stop').slice(0,40),
+      maxBitrate:Number(live.maxBitrate||live.bitrate||0),
+      minBitrate:Number(live.minBitrate||live.bitrate||0),
+      lastFps:Number(live.fps||0),
+      width:Number(live.width||0),
+      height:Number(live.height||0),
+      error:String(live.error||'').slice(0,160)
+    });
+    if(device.sessions.length>30) device.sessions.length=30;
+  }
+  device.live={
+    active:false,
+    startedAt:0,
+    updatedAt:now,
+    bitrate:0,
+    fps:0,
+    width:0,
+    height:0,
+    status:String(reason||'stopped'),
+    error:String(live.error||'').slice(0,160),
+    maxBitrate:0,
+    minBitrate:0
   };
 }
 
@@ -187,7 +240,7 @@ const server=http.createServer(async (req,res)=>{
   const url=new URL(req.url,'http://localhost');
 
   if(url.pathname==='/health'){
-    json(res,200,{ok:true,service:'SAGI CHINA SYNC',version:'2.3.0',licensedMode:REQUIRE_LICENSE,time:Date.now()});
+    json(res,200,{ok:true,service:'SAGI CHINA SYNC',version:'2.4.0',licensedMode:REQUIRE_LICENSE,time:Date.now()});
     return;
   }
 
@@ -240,8 +293,61 @@ const server=http.createServer(async (req,res)=>{
     if(!lic){json(res,404,{ok:false,error:'license_not_found'});return;}
     const device=(Array.isArray(lic.devices)?lic.devices:[]).find(d=>d&&String(d.id)===deviceId);
     if(!device){json(res,404,{ok:false,error:'device_not_found'});return;}
-    device.revoked=true;lic.updatedAt=Date.now();schedulePersist();
+    const now=Date.now();
+    finishLiveSession(device,'remote_revoke',now);
+    device.revoked=true;lic.updatedAt=now;schedulePersist();
     json(res,200,{ok:true,device:publicDevice(device)});return;
+  }
+
+  const deviceSessionsMatch=url.pathname.match(/^\/api\/admin\/licenses\/([^/]+)\/devices\/([^/]+)\/sessions$/);
+  if(deviceSessionsMatch && req.method==='GET'){
+    if(!adminAuthorized(req)){json(res,401,{ok:false,error:'admin_unauthorized'});return;}
+    const club=safePart(deviceSessionsMatch[1]),deviceId=safePart(deviceSessionsMatch[2]),lic=store.licenses[club];
+    if(!lic){json(res,404,{ok:false,error:'license_not_found'});return;}
+    const device=(Array.isArray(lic.devices)?lic.devices:[]).find(d=>d&&String(d.id)===deviceId);
+    if(!device){json(res,404,{ok:false,error:'device_not_found'});return;}
+    json(res,200,{ok:true,clubId:club,deviceId,sessions:Array.isArray(device.sessions)?device.sessions:[]});return;
+  }
+
+  const liveMatch=url.pathname.match(/^\/api\/devices\/([^/]+)\/([^/]+)\/live$/);
+  if(liveMatch && req.method==='POST'){
+    try{
+      const club=safePart(liveMatch[1]),deviceId=safePart(liveMatch[2]),lic=store.licenses[club];
+      if(!lic){json(res,404,{ok:false,error:'license_not_found'});return;}
+      const token=requestToken(req,url);
+      const device=deviceForToken(lic,deviceId,token);
+      if(!device){json(res,401,{ok:false,error:'device_unauthorized'});return;}
+      const body=JSON.parse(await readBody(req)||'{}');
+      const action=String(body.action||'heartbeat').slice(0,32);
+      const now=Date.now();
+      if(action==='stop'){
+        finishLiveSession(device,'stop',now);
+      }else if(action==='error'){
+        if(!device.live) device.live={};
+        device.live.error=String(body.error||'stream_error').slice(0,160);
+        finishLiveSession(device,'error',now);
+      }else{
+        const bitrate=Math.max(0,Math.min(20000,Number(body.bitrate||0)));
+        const fps=Math.max(0,Math.min(120,Number(body.fps||0)));
+        const width=Math.max(0,Math.min(7680,Number(body.width||0)));
+        const height=Math.max(0,Math.min(4320,Number(body.height||0)));
+        if(!device.live || device.live.active!==true){
+          device.live={active:true,startedAt:now,maxBitrate:bitrate,minBitrate:bitrate};
+        }
+        device.live.active=true;
+        device.live.updatedAt=now;
+        device.live.status=action==='start'?'live':'heartbeat';
+        device.live.bitrate=bitrate;
+        device.live.fps=fps;
+        device.live.width=width;
+        device.live.height=height;
+        device.live.error='';
+        device.live.maxBitrate=Math.max(Number(device.live.maxBitrate||0),bitrate);
+        device.live.minBitrate=Number(device.live.minBitrate||0)>0?Math.min(Number(device.live.minBitrate),bitrate):bitrate;
+      }
+      device.lastSeenAt=now;lic.updatedAt=now;schedulePersist();
+      json(res,200,{ok:true,device:publicDevice(device)});return;
+    }catch(e){json(res,e.message==='payload_too_large'?413:400,{ok:false,error:e.message});return;}
   }
 
   if(url.pathname==='/api/admin/provisions' && req.method==='POST'){
