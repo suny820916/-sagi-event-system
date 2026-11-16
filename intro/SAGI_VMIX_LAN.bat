@@ -1379,7 +1379,11 @@ async function lanJson(url,options={}){
   return t?JSON.parse(t):{};
 }
 async function lanPost(url,data){
-  return lanJson(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data||{})});
+  let payload=data||{};
+  if(String(url).startsWith('/api/matchday')&&payload&&typeof payload==='object'&&!Array.isArray(payload)){
+    try{const ps=(typeof getMatchProjects==='function')?getMatchProjects():[];if(ps.length)payload={...payload,__sagiProjects:ps}}catch(e){}
+  }
+  return lanJson(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
 }
 
 const q=id=>document.getElementById(id);
@@ -1645,6 +1649,8 @@ function refreshSetupReadyUI(){
 }
 let matchProjectsCache=null;
 function localMatchProjects(){try{const x=JSON.parse(localStorage.getItem(MATCH_PROJECTS_KEY)||'[]');return Array.isArray(x)?x:[]}catch(e){return[]}}
+let matchProjectsCache=null;
+function localMatchProjects(){try{const x=JSON.parse(localStorage.getItem(MATCH_PROJECTS_KEY)||'[]');return Array.isArray(x)?x:[]}catch(e){return[]}}
 function getMatchProjects(){return Array.isArray(matchProjectsCache)?matchProjectsCache.slice():localMatchProjects()}
 function putMatchProjects(list){matchProjectsCache=(list||[]).slice(0,20);try{localStorage.setItem(MATCH_PROJECTS_KEY,JSON.stringify(matchProjectsCache))}catch(e){}}
 function mergeMatchProjects(a=[],b=[]){
@@ -1653,16 +1659,23 @@ function mergeMatchProjects(a=[],b=[]){
  return [...byName.values()].slice(0,20)
 }
 async function persistMatchProjectsBridge(list){
- try{await lanPost('/api/projects',{projects:(list||[]).slice(0,20),savedAt:Date.now(),schema:'SAGI_MATCH_PROJECTS_V1'});return true}catch(e){return false}
+ const projects=(list||[]).slice(0,20);
+ try{await lanPost('/api/projects',{projects,savedAt:Date.now(),schema:'SAGI_MATCH_PROJECTS_V1'});return true}catch(e){}
+ try{
+  let state=await lanJson('/api/matchday?projectSave='+Date.now());if(!state||typeof state!=='object'||Array.isArray(state))state={};
+  state.__sagiProjects=projects;await lanPost('/api/matchday',state);return true
+ }catch(e){return false}
 }
 async function syncMatchProjectsFromBridge(){
- const local=localMatchProjects();
+ const local=localMatchProjects();let remoteList=[];
  try{
-  const remote=await lanJson('/api/projects?ts='+Date.now()),remoteList=Array.isArray(remote&&remote.projects)?remote.projects:[];
-  const merged=mergeMatchProjects(remoteList,local);putMatchProjects(merged);refreshProjectList();
-  if(merged.length&&(JSON.stringify(merged)!==JSON.stringify(remoteList)))await persistMatchProjectsBridge(merged);
-  return true
- }catch(e){matchProjectsCache=local;refreshProjectList();return false}
+  const remote=await lanJson('/api/projects?ts='+Date.now());remoteList=Array.isArray(remote&&remote.projects)?remote.projects:[]
+ }catch(e){
+  try{const state=await lanJson('/api/matchday?projectLoad='+Date.now());remoteList=Array.isArray(state&&state.__sagiProjects)?state.__sagiProjects:[]}catch(_){}
+ }
+ const merged=mergeMatchProjects(remoteList,local);putMatchProjects(merged);refreshProjectList();
+ if(merged.length&&(JSON.stringify(merged)!==JSON.stringify(remoteList)))await persistMatchProjectsBridge(merged);
+ return merged.length>0||remoteList.length===0
 }
 function projectAssetsSnapshot(){
  const photos={HOME:{},AWAY:{}};for(const side of ['HOME','AWAY'])for(const p of (teamStore[side]&&teamStore[side].roster||[]))if(p&&p.id&&p.photo)photos[side][p.id]=p.photo;
@@ -1795,7 +1808,7 @@ function mdPersist(){
 }
 function mdApplyRecovered(x){
  if(!x||typeof x!=='object')return false;
- const copy={...x};delete copy.commandId;delete copy.visualVersion;delete copy.home;delete copy.away;delete copy.event;delete copy.clock;delete copy.updatedAt;delete copy.homeCrest;delete copy.awayCrest;delete copy.competition;
+ const copy={...x};delete copy.__sagiProjects;delete copy.commandId;delete copy.visualVersion;delete copy.home;delete copy.away;delete copy.event;delete copy.clock;delete copy.updatedAt;delete copy.homeCrest;delete copy.awayCrest;delete copy.competition;
  matchdayState={...matchdayState,...copy,eventLog:Array.isArray(x.eventLog)?x.eventLog:(matchdayState.eventLog||[]),replayMarkers:Array.isArray(x.replayMarkers)?x.replayMarkers:(matchdayState.replayMarkers||[])};
  if(x.clock){
    let sec=Math.max(0,Number(x.clock.baseSeconds)||0);
