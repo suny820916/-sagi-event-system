@@ -49,11 +49,11 @@ jobs:
         with:
           gradle-version: '8.10.2'
 
-      - name: Compile Android app
+      - name: Compile debug APK
         working-directory: sagi-pool-live/android-live-engine
         run: gradle :app:assembleDebug --stacktrace
 
-      - name: Verify APK
+      - name: Verify debug APK
         run: test -f sagi-pool-live/android-live-engine/app/build/outputs/apk/debug/app-debug.apk
 
       - name: Upload debug APK
@@ -63,3 +63,49 @@ jobs:
           path: sagi-pool-live/android-live-engine/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 7
+
+      - name: Prepare optional commercial signing key
+        env:
+          KEYSTORE_B64: ${{ secrets.SAGI_ANDROID_KEYSTORE_B64 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -n "${KEYSTORE_B64:-}" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/sagi-pool-release.jks"
+            echo "SAGI_KEYSTORE_PATH=$RUNNER_TEMP/sagi-pool-release.jks" >> "$GITHUB_ENV"
+            echo "SAGI_RELEASE_READY=1" >> "$GITHUB_ENV"
+            echo "Commercial signing key loaded."
+          else
+            echo "SAGI_RELEASE_READY=0" >> "$GITHUB_ENV"
+            echo "Commercial signing secrets are not configured; debug APK remains available."
+          fi
+
+      - name: Build signed commercial APK
+        if: env.SAGI_RELEASE_READY == '1'
+        working-directory: sagi-pool-live/android-live-engine
+        env:
+          SAGI_KEYSTORE_PASSWORD: ${{ secrets.SAGI_ANDROID_KEYSTORE_PASSWORD }}
+          SAGI_KEY_ALIAS: ${{ secrets.SAGI_ANDROID_KEY_ALIAS }}
+          SAGI_KEY_PASSWORD: ${{ secrets.SAGI_ANDROID_KEY_PASSWORD }}
+          TENCENT_LIVE_LICENSE_URL: ${{ secrets.TENCENT_LIVE_LICENSE_URL }}
+          TENCENT_LIVE_LICENSE_KEY: ${{ secrets.TENCENT_LIVE_LICENSE_KEY }}
+          SAGI_DEFAULT_SYNC_URL: ${{ secrets.SAGI_DEFAULT_SYNC_URL }}
+        run: gradle :app:assembleRelease --stacktrace
+
+      - name: Verify signed commercial APK
+        if: env.SAGI_RELEASE_READY == '1'
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="sagi-pool-live/android-live-engine/app/build/outputs/apk/release/app-release.apk"
+          test -f "$APK"
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose "$APK"
+
+      - name: Upload signed commercial APK
+        if: env.SAGI_RELEASE_READY == '1'
+        uses: actions/upload-artifact@v4
+        with:
+          name: SAGI-POOL-LIVE-ENGINE-commercial
+          path: sagi-pool-live/android-live-engine/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+          retention-days: 30
