@@ -1,4 +1,4 @@
-# SAGI POOL LIVE · CHINA V2.4
+# SAGI POOL LIVE · CHINA V2.5
 
 面向中国大陆球房销售的手机台球直播、追分、球房管理、商业授权、设备管理和原生推流系统。
 
@@ -15,7 +15,7 @@
 7. Android LIVE ENGINE 把 SAGI 比分与追分事件真正编码进 RTMP / RTMPS。
 8. 后台可以查看当前直播状态和最近直播记录。
 9. 单台设备丢失或员工离职时可远程下线，不影响整家球房。
-10. Android V0.9 收到远程下线后会硬停止 RTMP 与前台服务。
+10. Android V1.0 RC1 收到远程下线后会硬停止 RTMP 与前台服务。
 
 ## Web / PWA
 
@@ -32,7 +32,7 @@
 - 一次性安装码
 - 国内同域 HTTPS 自动识别
 
-## CHINA SYNC V2.4
+## CHINA SYNC V2.5
 
 - Node.js 零第三方运行时依赖
 - 腾讯云 / 阿里云大陆服务器
@@ -49,9 +49,10 @@
 - “● 直播中”状态
 - 码率 / FPS / 分辨率
 - 最近 30 场直播会话
+- 60 秒没有直播心跳自动结束假直播
 - remote_revoke 自动关闭服务器直播状态
 
-## Android LIVE ENGINE V0.9
+## Android LIVE ENGINE V1.0 RC1
 
 - RTMP / RTMPS 原生推流
 - 540P / 720P / 1080P
@@ -73,6 +74,8 @@
 - 直播会话心跳
 - 远程下线后 1 秒级硬停止推流
 - 可选固定商业签名流水线
+- LiteAV 重连后仍断开时，应用层最多 3 次兜底恢复
+- 本地隐私安全诊断日志
 
 ## 页面
 
