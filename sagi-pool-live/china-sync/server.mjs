@@ -11,6 +11,8 @@ const ADMIN_TOKEN = process.env.SAGI_ADMIN_TOKEN || '';
 const REQUIRE_LICENSE = process.env.SAGI_REQUIRE_LICENSE === '1';
 const ALLOW_ORIGIN = process.env.SAGI_ALLOW_ORIGIN || '*';
 const LIVE_HEARTBEAT_TIMEOUT_MS = Math.max(1000, Number(process.env.SAGI_LIVE_HEARTBEAT_TIMEOUT_MS || 60000));
+const PROVISION_RATE_LIMIT = Math.max(3, Number(process.env.SAGI_PROVISION_RATE_LIMIT || 20));
+const PROVISION_RATE_WINDOW_MS = Math.max(10000, Number(process.env.SAGI_PROVISION_RATE_WINDOW_MS || 60000));
 const DATA_FILE = process.env.SAGI_DATA_FILE || path.join(path.dirname(fileURLToPath(import.meta.url)), 'data.json');
 
 function readJsonFile(file) {
@@ -44,6 +46,7 @@ if (!store.rooms) store.rooms = {};
 if (!store.licenses) store.licenses = {};
 
 const provisions = new Map();
+const provisionRate = new Map();
 const clients = new Map();
 let persistTimer = null;
 
@@ -195,6 +198,27 @@ function makeProvisionCode() {
   return crypto.randomBytes(6).toString('hex').toUpperCase();
 }
 
+function clientIp(req) {
+  const forwarded=String(req.headers['x-forwarded-for']||'').split(',')[0].trim();
+  return forwarded || String(req.headers['x-real-ip']||'').trim() || req.socket?.remoteAddress || 'unknown';
+}
+
+function provisionRateAllowed(req) {
+  const key=clientIp(req);
+  const now=Date.now();
+  let bucket=provisionRate.get(key);
+  if(!bucket || now>=bucket.resetAt){
+    bucket={count:0,resetAt:now+PROVISION_RATE_WINDOW_MS};
+    provisionRate.set(key,bucket);
+  }
+  if(bucket.count>=PROVISION_RATE_LIMIT) return {ok:false,retryAfterMs:Math.max(0,bucket.resetAt-now)};
+  bucket.count++;
+  if(provisionRate.size>2000){
+    for(const [ip,b] of provisionRate){if(now>=b.resetAt)provisionRate.delete(ip)}
+  }
+  return {ok:true,retryAfterMs:0};
+}
+
 function purgeExpiredProvisions() {
   const now = Date.now();
   for (const [code, item] of provisions) {
@@ -290,7 +314,7 @@ const server=http.createServer(async (req,res)=>{
   const url=new URL(req.url,'http://localhost');
 
   if(url.pathname==='/health'){
-    json(res,200,{ok:true,service:'SAGI CHINA SYNC',version:'2.6.0',licensedMode:REQUIRE_LICENSE,time:Date.now()});
+    json(res,200,{ok:true,service:'SAGI CHINA SYNC',version:'2.7.0',licensedMode:REQUIRE_LICENSE,time:Date.now()});
     return;
   }
 
@@ -435,6 +459,12 @@ const server=http.createServer(async (req,res)=>{
 
   if(url.pathname==='/api/provision/claim' && req.method==='POST'){
     try{
+      const rate=provisionRateAllowed(req);
+      if(!rate.ok){
+        const retryAfter=Math.max(1,Math.ceil(rate.retryAfterMs/1000));
+        res.setHeader('Retry-After',String(retryAfter));
+        json(res,429,{ok:false,error:'provision_rate_limited',retryAfter});return;
+      }
       purgeExpiredProvisions();
       const body=JSON.parse(await readBody(req)||'{}');
       const code=String(body.code||'').trim().toUpperCase();
