@@ -78,7 +78,7 @@ check(admin.includes('auditList'),'Seller audit UI missing');
 check(admin.includes('/api/admin/provisions'),'Seller installation-code endpoint missing');
 check(admin.includes('/devices'),'Seller device-management endpoint missing');
 check(sw.includes('./club.html')&&sw.includes('./live.html')&&sw.includes('./admin.html'),'Offline cache missing product pages');
-check(sw.includes('sagi-pool-live-v32'),'Service worker cache generation not V2.12');
+check(sw.includes('sagi-pool-live-v33'),'Service worker cache generation not V2.13');
 
 async function waitHealth(base){
   for(let i=0;i<50;i++){
@@ -385,7 +385,7 @@ async function e2eCommercial(){
     await new Promise(r=>setTimeout(r,200));
     const adminStatus=await fetch(base+'/api/admin/status',{headers:{'X-SAGI-Admin':'admin-secret'}});
     const adminStatusData=await adminStatus.json();
-    check(adminStatus.ok&&adminStatusData.version==='2.12.0','Admin status endpoint/version failed');
+    check(adminStatus.ok&&adminStatusData.version==='2.13.0','Admin status endpoint/version failed');
     check(Number(adminStatusData.counts?.licenses||0)>=1,'Admin status license count failed');
     check(Number(adminStatusData.counts?.activeDevices||0)>=1,'Admin status active-device count failed');
     check(typeof adminStatusData.storage?.directoryWritable==='boolean','Admin status storage health missing');
@@ -396,7 +396,7 @@ async function e2eCommercial(){
     const backupResp=await fetch(base+'/api/admin/backup',{headers:{'X-SAGI-Admin':'admin-secret'}});
     const backupData=await backupResp.json();
     check(backupResp.ok&&backupData.schemaVersion===1,'Admin backup snapshot failed');
-    check(backupData.serviceVersion==='2.12.0','Admin backup service version failed');
+    check(backupData.serviceVersion==='2.13.0','Admin backup service version failed');
     check(Boolean(backupData.store?.licenses?.['TEST-CLUB']?.tokenHash),'Admin backup missing license hash');
     check(!JSON.stringify(backupData).includes('"token":"club-secret"'),'Admin backup leaked plaintext club token');
     const backupUnauthorized=await fetch(base+'/api/admin/backup',{headers:{'X-SAGI-Admin':'wrong-backup'}});
@@ -479,7 +479,7 @@ if(failures.length){
   failures.forEach((x,i)=>console.error((i+1)+'. '+x));
   process.exit(1);
 }
-console.log('SAGI POOL LIVE CHINA V2.12 SELF-CHECK: PASSED');
+console.log('SAGI POOL LIVE CHINA V2.13 SELF-CHECK: PASSED');
 console.log('✓ Scorer / club / live / seller JavaScript');
 console.log('✓ PWA cache and core billiards scoring');
 console.log('✓ China sync real read/write flow');
