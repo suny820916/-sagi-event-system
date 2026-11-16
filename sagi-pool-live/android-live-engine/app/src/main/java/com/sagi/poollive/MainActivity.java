@@ -33,6 +33,7 @@ public class MainActivity extends AppCompatActivity {
     private V2TXLivePusher pusher;
     private final ScoreSyncClient syncClient = new ScoreSyncClient();
     private final ProvisionClient provisionClient = new ProvisionClient();
+    private final HealthCheckClient healthCheckClient = new HealthCheckClient();
     private final ScoreWatermarkRenderer watermarkRenderer = new ScoreWatermarkRenderer();
     private final Handler overlayHandler = new Handler(Looper.getMainLooper());
 
@@ -91,7 +92,8 @@ public class MainActivity extends AppCompatActivity {
         loadConfig();
 
         ((Button)findViewById(R.id.claimInstallButton)).setOnClickListener(v -> claimInstall());
-        ((Button)findViewById(R.id.startButton)).setOnClickListener(v -> startLive());
+        ((Button)findViewById(R.id.healthButton)).setOnClickListener(v -> runPreflight(false));
+        ((Button)findViewById(R.id.startButton)).setOnClickListener(v -> runPreflight(true));
         ((Button)findViewById(R.id.stopButton)).setOnClickListener(v -> stopLive());
         ((Button)findViewById(R.id.switchCameraButton)).setOnClickListener(v -> switchCamera());
         ((Button)findViewById(R.id.torchButton)).setOnClickListener(v -> toggleTorch());
@@ -170,6 +172,65 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onError(String message) {
                 status.setText(message);
+            }
+        });
+    }
+
+    private void runPreflight(boolean startAfter) {
+        saveConfig();
+
+        String api = syncUrl.getText().toString().trim();
+        String cid = clubId.getText().toString().trim();
+        String table = tableNo.getText().toString().trim();
+        String token = syncToken.getText().toString();
+        String push = rtmpUrl.getText().toString().trim();
+
+        if (api.isEmpty()) {
+            status.setText("检测失败 · 未配置国内同步服务器");
+            return;
+        }
+        if (cid.isEmpty() || table.isEmpty() || token.isEmpty()) {
+            status.setText("检测失败 · 球房安装配置不完整");
+            return;
+        }
+        if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            status.setText("检测失败 · 缺少摄像头权限");
+            return;
+        }
+        if (audioEnabled
+                && checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            status.setText("检测失败 · 麦克风已开启但缺少权限");
+            return;
+        }
+        if (startAfter && !push.startsWith("rtmp://") && !push.startsWith("rtmps://")) {
+            status.setText("检测失败 · RTMP / RTMPS 推流地址无效");
+            return;
+        }
+
+        status.setText("正在检测国内服务器与球房授权…");
+        networkStatus.setText("自检：连接中");
+
+        healthCheckClient.check(api, cid, table, token, new HealthCheckClient.Callback() {
+            @Override
+            public void onSuccess(String serverVersion) {
+                boolean sdkLicenceReady =
+                        !BuildConfig.LIVE_LICENSE_URL.isEmpty() && !BuildConfig.LIVE_LICENSE_KEY.isEmpty();
+
+                if (!sdkLicenceReady) {
+                    status.setText("同步正常 · 当前APK未注入直播SDK License");
+                    networkStatus.setText("自检：服务器 " + serverVersion + " · SDK授权缺失");
+                    return;
+                }
+
+                networkStatus.setText("自检：全部通过 · 服务器 " + serverVersion);
+                status.setText(startAfter ? "自检通过 · 正在启动直播" : "✓ 开播条件全部通过");
+                if (startAfter) startLive();
+            }
+
+            @Override
+            public void onError(String message) {
+                status.setText("检测失败 · " + message);
+                networkStatus.setText("自检：未通过");
             }
         });
     }
@@ -457,6 +518,7 @@ public class MainActivity extends AppCompatActivity {
         overlayHandler.removeCallbacksAndMessages(null);
         syncClient.shutdown();
         provisionClient.shutdown();
+        healthCheckClient.shutdown();
         if (pusher != null) {
             pusher.setObserver(null);
             pusher.stopPush();
