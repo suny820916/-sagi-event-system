@@ -1662,7 +1662,7 @@ const DEFAULT_SHOW=[
  {id:'away_full',side:'AWAY',group:'FULL',label:'客队完整首发',duration:6000,transition:'ZOOM',cue:'CROWD',enabled:true},
  {id:'away_sub',side:'AWAY',group:'SUB',label:'客队替补名单',duration:5000,transition:'SLIDE',cue:'WHOOSH',enabled:true}
 ];
-let showSteps=DEFAULT_SHOW.map(x=>({...x})),showIndex=-1,showStartedAt=0,showSession='',showTimer=null;
+let showSteps=DEFAULT_SHOW.map(x=>({...x})),showIndex=-1,showStartedAt=0,showSession='',showTimer=null,showHoldElapsed=0;
 let broadcastHold=false,broadcastPreview={group:'TEAM',side:'HOME',label:'主队开场',duration:2500},broadcastProgram=null,broadcastManualIndex=3;
 const BROADCAST_MANUAL=[
  {group:'STING',side:'HOME',label:'赛事Logo',duration:2000},
@@ -2782,7 +2782,7 @@ function showRemainingMs(){
  const enabled=showEnabled();if(!enabled.length)return 0;
  if(!playing||showIndex<0)return showTotalMs();
  let remain=0;
- const current=showSteps[showIndex],elapsed=Math.max(0,performance.now()-showStartedAt);
+ const current=showSteps[showIndex],elapsed=Math.max(0,broadcastHold?showHoldElapsed:(performance.now()-showStartedAt));
  if(current&&current.enabled)remain+=Math.max(0,(Number(current.duration)||0)-elapsed);
  for(let i=showIndex+1;i<showSteps.length;i++)if(showSteps[i].enabled)remain+=Number(showSteps[i].duration)||0;
  return remain
@@ -2893,14 +2893,14 @@ function triggerCue(cue){
 }
 function showProgressTick(step,duration){
  const bar=q('showProgressBar'),now=q('showNow');showStartedAt=performance.now();
- const tick=()=>{if(!playing||showSteps[showIndex]!==step)return;const elapsed=performance.now()-showStartedAt,p=Math.min(1,elapsed/duration);if(bar)bar.style.width=(p*100).toFixed(1)+'%';if(now)now.innerHTML='正在播出 · <b>'+esc(step.label)+'</b> · 当前段剩余 '+Math.max(0,(duration-elapsed)/1000).toFixed(1)+' 秒';renderShowDirectorMonitor();if(p<1)requestAnimationFrame(tick)};tick()
+ const tick=()=>{if(!playing||showSteps[showIndex]!==step)return;const elapsed=broadcastHold?showHoldElapsed:(performance.now()-showStartedAt),p=Math.min(1,elapsed/duration);if(bar)bar.style.width=(p*100).toFixed(1)+'%';if(now)now.innerHTML='正在播出 · <b>'+esc(step.label)+'</b> · 当前段剩余 '+Math.max(0,(duration-elapsed)/1000).toFixed(1)+' 秒';renderShowDirectorMonitor();if(p<1)requestAnimationFrame(tick)};tick()
 }
 function showMeta(step){const en=showEnabled(),pos=en.indexOf(step);return{sessionId:showSession,stepIndex:showIndex,sequenceIndex:pos,stepTotal:en.length,label:step.label,side:step.side||activeSide,transition:step.transition,cue:step.cue,autoNext:true,isFirst:pos===0,isLast:pos===en.length-1}}
 function runShowStep(i){
  if(!playing)return;
  while(i<showSteps.length&&!showSteps[i].enabled)i++;
  if(i>=showSteps.length){playing=false;showIndex=showSteps.length-1;stopCountdown();stopShowMusic();q('status').textContent='节目播放结束';q('showNow').textContent='节目完成 · 已播出全部启用段落';q('showProgressBar').style.width='100%';renderShowTimeline();renderShowDirectorMonitor();return}
- showIndex=i;const s=showSteps[i],d=Math.max(500,Number(s.duration)||1000);if(s.side&&s.side!==activeSide)switchTeam(s.side,{silent:true,noRender:true});renderShowTimeline();broadcastProgramFromShow(s,d);applyShowTransition(s.transition);triggerCue(s.cue);renderStage(s.group);animateStage();animatePackageGroup(s.group,d);showProgressTick(s,d);q('status').textContent='节目 '+(i+1)+' / '+showSteps.length+' · '+s.label;publishGroup(s.group,d,showMeta(s));clearTimeout(showTimer);if(!broadcastHold)showTimer=setTimeout(()=>runShowStep(i+1),d)
+ showIndex=i;showHoldElapsed=0;const s=showSteps[i],d=Math.max(500,Number(s.duration)||1000);if(s.side&&s.side!==activeSide)switchTeam(s.side,{silent:true,noRender:true});renderShowTimeline();broadcastProgramFromShow(s,d);applyShowTransition(s.transition);triggerCue(s.cue);renderStage(s.group);animateStage();animatePackageGroup(s.group,d);showProgressTick(s,d);q('status').textContent='节目 '+(i+1)+' / '+showSteps.length+' · '+s.label;publishGroup(s.group,d,showMeta(s));clearTimeout(showTimer);if(!broadcastHold)showTimer=setTimeout(()=>runShowStep(i+1),d)
 }
 function startFullIntro(){
  broadcastHold=false;const hb=q('holdBtn');if(hb){hb.classList.remove('on');hb.textContent='保持'}broadcastManualIndex=0;
@@ -3024,7 +3024,7 @@ function stepBroadcastPreview(dir){
  broadcastManualIndex=(broadcastManualIndex+dir+BROADCAST_MANUAL.length)%BROADCAST_MANUAL.length;const c=BROADCAST_MANUAL[broadcastManualIndex];setBroadcastPreview(c.group,c.side,c.label,c.duration);
 }
 function toggleBroadcastHold(){
- broadcastHold=!broadcastHold;
+ broadcastHold=!broadcastHold;if(broadcastHold)showHoldElapsed=Math.max(0,performance.now()-showStartedAt);else showHoldElapsed=0;
  q('holdBtn').classList.toggle('on',broadcastHold);q('holdBtn').textContent=broadcastHold?'继续':'保持';
  const hb=q('showHoldDirectorBtn');if(hb){hb.classList.toggle('on',broadcastHold);hb.textContent=broadcastHold?'继续下一段':'保持当前'}
  if(broadcastHold){clearTimeout(showTimer);q('status').textContent='保持中 · 当前播出画面不变';}
