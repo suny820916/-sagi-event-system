@@ -340,7 +340,7 @@ const server=http.createServer(async (req,res)=>{
   const url=new URL(req.url,'http://localhost');
 
   if(url.pathname==='/health'){
-    json(res,200,{ok:true,service:'SAGI CHINA SYNC',version:'2.8.0',licensedMode:REQUIRE_LICENSE,time:Date.now()});
+    json(res,200,{ok:true,service:'SAGI CHINA SYNC',version:'2.9.0',licensedMode:REQUIRE_LICENSE,time:Date.now()});
     return;
   }
 
@@ -354,6 +354,39 @@ const server=http.createServer(async (req,res)=>{
       }
       json(res,401,{ok:false,error:'admin_unauthorized'});return;
     }
+  }
+
+  if(url.pathname==='/api/admin/status' && req.method==='GET'){
+    const licenses=Object.values(store.licenses);
+    const devices=licenses.flatMap(lic=>Array.isArray(lic.devices)?lic.devices:[]);
+    const now=Date.now();
+    let dataDirWritable=true;
+    try{fs.accessSync(path.dirname(DATA_FILE),fs.constants.W_OK)}catch{dataDirWritable=false}
+    const activeLicenses=licenses.filter(lic=>lic && lic.revoked!==true && (!lic.expiresAt || now<Number(lic.expiresAt))).length;
+    const activeDevices=devices.filter(d=>d && d.revoked!==true).length;
+    const liveDevices=devices.filter(d=>d && d.revoked!==true && d.live?.active===true && now-Number(d.live.updatedAt||0)<=LIVE_HEARTBEAT_TIMEOUT_MS).length;
+    json(res,200,{
+      ok:true,
+      service:'SAGI CHINA SYNC',
+      version:'2.9.0',
+      uptimeSeconds:Math.floor(process.uptime()),
+      licensedMode:REQUIRE_LICENSE,
+      counts:{
+        licenses:licenses.length,
+        activeLicenses,
+        rooms:Object.keys(store.rooms).length,
+        activeDevices,
+        liveDevices
+      },
+      storage:{
+        dataPresent:fs.existsSync(DATA_FILE),
+        backupPresent:fs.existsSync(DATA_FILE+'.bak'),
+        dataValid:hasValidJsonFile(DATA_FILE),
+        backupValid:hasValidJsonFile(DATA_FILE+'.bak'),
+        directoryWritable:dataDirWritable
+      },
+      time:now
+    });return;
   }
 
   if(url.pathname==='/api/admin/licenses' && req.method==='GET'){
