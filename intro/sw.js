@@ -1,4 +1,4 @@
-const CACHE_NAME='sagi-live-director-shell-v15';
+const CACHE_NAME='sagi-live-director-shell-v16';
 const CORE=['./','./manifest.webmanifest','./sagi-app-icon.svg'];
 
 self.addEventListener('install',event=>{
