@@ -18,7 +18,7 @@
 </head>
 <body>
 <div class="app">
-<header class="top"><div><div class="brand">SAGI POOL SELLER</div><div class="sub">球房商业授权后台 · CHINA V2.1</div></div><div class="pill">仅 SAGI 管理员</div></header>
+<header class="top"><div><div class="brand">SAGI POOL SELLER</div><div class="sub">球房商业授权后台 · CHINA V2.2</div></div><div class="pill">仅 SAGI 管理员</div></header>
 
 <section class="card">
   <div class="head"><h2>国内授权服务器</h2><span class="small" id="serverStatus">未连接</span></div>
@@ -43,6 +43,19 @@
     <button class="btn primary" id="issue" type="button">开通 / 更新授权</button>
   </div>
   <div class="result" id="result">开通后，这里会显示需要交给球房老板的 <b>Club ID + 同步密钥</b>。</div>
+</section>
+
+<section class="card">
+  <div class="head"><h2>生成设备安装码</h2><span class="small">10分钟 · 一次性</span></div>
+  <div class="grid">
+    <div class="field"><label>Club ID</label><input id="provisionClubId" maxlength="32" placeholder="TC-001"></div>
+    <div class="field"><label>球桌编号</label><input id="provisionTable" maxlength="12" value="01桌"></div>
+  </div>
+  <div class="actions">
+    <button class="btn primary" id="createProvision" type="button">生成安装码</button>
+    <button class="btn" id="copyProvision" type="button" disabled>复制安装码</button>
+  </div>
+  <div class="result" id="provisionResult">给球房安装 Android LIVE ENGINE 时，只需要输入这里生成的 <b>8位安装码</b>。主授权密钥不用交给普通员工。</div>
 </section>
 
 <section class="card">
@@ -74,6 +87,7 @@ async function api(path,opt={}){
   if(!r.ok)throw new Error(data.error||('HTTP '+r.status));
   return data;
 }
+let latestProvisionCode='';
 $('#generate').addEventListener('click',()=>{$('#clubToken').value=randomToken()});
 $('#issue').addEventListener('click',async()=>{
   try{
@@ -100,9 +114,46 @@ $('#issue').addEventListener('click',async()=>{
       ['到期',fmt(l.expiresAt)]
     ];
     lines.forEach(([k,v])=>{const div=document.createElement('div');const b=document.createElement('b');b.textContent=k+'：';div.append(b,document.createTextNode(v));$('#result').appendChild(div)});
+    $('#provisionClubId').value=l.clubId;
     setStatus('授权已开通');refresh();
   }catch(e){setStatus('开通失败');$('#result').textContent=e.message}
 });
+$('#createProvision').addEventListener('click',async()=>{
+  try{
+    setStatus('生成安装码…');
+    const clubId=$('#provisionClubId').value.trim();
+    const table=$('#provisionTable').value.trim()||'01桌';
+    if(!clubId)throw new Error('请填写 Club ID');
+    const d=await api('/api/admin/provisions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({clubId,table})
+    });
+    latestProvisionCode=d.provision.code;
+    $('#copyProvision').disabled=false;
+    $('#provisionResult').innerHTML='';
+    const title=document.createElement('div');title.style.cssText='font-size:28px;font-weight:950;letter-spacing:.16em;color:#f4e0ac;margin-bottom:5px';title.textContent=latestProvisionCode;
+    const meta=document.createElement('div');meta.textContent=(d.provision.table||table)+' · 10分钟内有效 · 使用一次后立即失效';
+    $('#provisionResult').append(title,meta);
+    setStatus('安装码已生成');
+  }catch(e){
+    latestProvisionCode='';
+    $('#copyProvision').disabled=true;
+    $('#provisionResult').textContent=e.message;
+    setStatus('生成失败');
+  }
+});
+$('#copyProvision').addEventListener('click',async()=>{
+  if(!latestProvisionCode)return;
+  try{
+    await navigator.clipboard.writeText(latestProvisionCode);
+    $('#copyProvision').textContent='已复制';
+    setTimeout(()=>$('#copyProvision').textContent='复制安装码',1000);
+  }catch{
+    $('#copyProvision').textContent=latestProvisionCode;
+  }
+});
+
 async function refresh(){
   try{
     setStatus('读取中…');const d=await api('/api/admin/licenses');const box=$('#list');box.innerHTML='';
