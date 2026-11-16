@@ -13,6 +13,7 @@ $ControlCache = Join-Path $Root "control-latest.html"
 $OutputCache  = Join-Path $Root "output-latest.html"
 $BridgeCache  = Join-Path $Root "bridge-stable.ps1"
 $MatchdayStateFile = Join-Path $Root "matchday-state.json"
+$MatchProjectsFile = Join-Path $Root "match-projects.json"
 $ControlBackup = Join-Path $Root "control-backup.html"
 $OutputBackup  = Join-Path $Root "output-backup.html"
 $RemoteBase   = "https://suny820916.github.io/-sagi-event-system/intro"
@@ -43,6 +44,22 @@ if (Test-Path $MatchdayStateFile) {
     }
   } catch {
     Write-Host "[RECOVERY WARN] Saved match state could not be loaded." -ForegroundColor DarkYellow
+  }
+}
+
+$MatchProjectsJson = '{"projects":[]}'
+if (Test-Path $MatchProjectsFile) {
+  try {
+    $savedProjects = [IO.File]::ReadAllText($MatchProjectsFile,[Text.Encoding]::UTF8)
+    if (-not [string]::IsNullOrWhiteSpace($savedProjects)) {
+      $probeProjects = $savedProjects | ConvertFrom-Json
+      if ($probeProjects.PSObject.Properties.Name -contains "projects") {
+        $MatchProjectsJson = $savedProjects
+        Write-Host "[RECOVERY] Saved match projects loaded." -ForegroundColor Green
+      }
+    }
+  } catch {
+    Write-Host "[RECOVERY WARN] Saved match projects could not be loaded." -ForegroundColor DarkYellow
   }
 }
 
@@ -355,6 +372,27 @@ while ($true) {
         Write-HttpResponse $stream 400 "application/json" ('{"ok":false,"error":' + $err + '}')
       }
     }
+    elseif ($method -eq "GET" -and $path -eq "/api/projects") {
+      Write-HttpResponse $stream 200 "application/json" $MatchProjectsJson
+    }
+    elseif ($method -eq "POST" -and $path -eq "/api/projects") {
+      try {
+        $projectsPayload = $req.body | ConvertFrom-Json
+        if (-not ($projectsPayload.PSObject.Properties.Name -contains "projects")) { throw "Missing projects" }
+        $projects = @($projectsPayload.projects)
+        if ($projects.Count -gt 20) { $projects = @($projects | Select-Object -First 20) }
+        $safePayload = @{projects=$projects;savedAt=[DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds();schema="SAGI_MATCH_PROJECTS_V1"} | ConvertTo-Json -Depth 80 -Compress
+        $tmpProjects = $MatchProjectsFile + ".new"
+        [IO.File]::WriteAllText($tmpProjects,$safePayload,(New-Object Text.UTF8Encoding($false)))
+        Move-Item $tmpProjects $MatchProjectsFile -Force
+        $MatchProjectsJson = $safePayload
+        Write-Host ("[PROJECTS] Saved " + $projects.Count + " match project(s).") -ForegroundColor Green
+        Write-HttpResponse $stream 200 "application/json" '{"ok":true}'
+      } catch {
+        $err = $_.Exception.Message | ConvertTo-Json -Compress
+        Write-HttpResponse $stream 400 "application/json" ('{"ok":false,"error":' + $err + '}')
+      }
+    }
     elseif ($method -eq "GET" -and $path -eq "/api/matchday") {
       Write-HttpResponse $stream 200 "application/json" $MatchdayJson
     }
@@ -418,7 +456,7 @@ while ($true) {
     }
     elseif ($method -eq "GET" -and $path -eq "/health") {
       $vmixInfo = Get-VmixStatusInfo
-      $health = @{ok=$true;vmix=[bool]$vmixInfo.ok;vmixInfo=$vmixInfo;lan=$true;ip=$lanIp;port=$Port;version="4.7.0";mode="MATCH_MODE";bridgeLocked=$true;recovery=(Test-Path $MatchdayStateFile)} | ConvertTo-Json -Depth 8 -Compress
+      $health = @{ok=$true;vmix=[bool]$vmixInfo.ok;vmixInfo=$vmixInfo;lan=$true;ip=$lanIp;port=$Port;version="4.7.0";mode="MATCH_MODE";bridgeLocked=$true;recovery=(Test-Path $MatchdayStateFile);projectLibrary=(Test-Path $MatchProjectsFile)} | ConvertTo-Json -Depth 8 -Compress
       Write-HttpResponse $stream 200 "application/json" $health
     }
     else {
