@@ -29,7 +29,7 @@ button{cursor:pointer}
 .playerSide{padding:8px 12px;min-width:0}.playerSide.right{text-align:right}.pname{font-size:13px;font-weight:850;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.psub{font-size:10px;color:#aab3ad;margin-top:2px}
 .scoreCenter{display:flex;align-items:center;gap:7px;padding:4px 13px;background:#f1f3ef;color:#0a0b0a;font-size:22px;font-weight:950;letter-spacing:.02em}
 .eventSplash{position:absolute;inset:0;background:rgba(4,5,4,.72);display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:.18s}.eventSplash.show{opacity:1}.eventSplash b{font-size:clamp(27px,7vw,54px);letter-spacing:.04em}.eventSplash span{margin-top:5px;color:#dbe2dd;font-size:14px}
-.liveTag{position:absolute;bottom:10px;left:10px;background:rgba(7,9,8,.8);border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:6px 9px;font-size:10px;font-weight:850;letter-spacing:.08em}.dot{color:#ff4d5a}
+.extraScores{position:absolute;top:66px;left:50%;transform:translateX(-50%);display:none;gap:10px;max-width:88%;padding:5px 10px;border-radius:999px;background:rgba(8,10,9,.86);border:1px solid rgba(255,255,255,.12);font-size:11px;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.extraScores.show{display:flex}.liveTag{position:absolute;bottom:10px;left:10px;background:rgba(7,9,8,.8);border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:6px 9px;font-size:10px;font-weight:850;letter-spacing:.08em}.dot{color:#ff4d5a}
 .stageActions{position:absolute;bottom:9px;right:9px;display:flex;gap:7px}.stageBtn{border:1px solid rgba(255,255,255,.15);background:rgba(8,10,9,.78);color:#fff;border-radius:10px;padding:8px 10px;font-size:12px;font-weight:800}
 .grid{display:grid;gap:10px}.grid.two{grid-template-columns:1fr 1fr}.grid.four{grid-template-columns:repeat(4,1fr)}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:13px;margin-top:11px}
@@ -52,7 +52,7 @@ button{cursor:pointer}
 <body>
 <div class="app">
   <header class="top">
-    <div class="brand"><div class="mark">S</div><div>SAGI POOL LIVE<div class="ver">CLUB · V1.3</div></div></div>
+    <div class="brand"><div class="mark">S</div><div>SAGI POOL LIVE<div class="ver">CLUB · V1.4</div></div></div>
     <div class="statusPill" id="saveStatus">● 本地自动保存</div>
   </header>
 
@@ -64,7 +64,7 @@ button{cursor:pointer}
       <div class="scoreCenter"><span id="overlayS1">0</span><span>:</span><span id="overlayS2">0</span></div>
       <div class="playerSide right"><div class="pname" id="overlayP2">球员B</div><div class="psub" id="overlayMode">中式八球</div></div>
     </div></div>
-    <div class="eventSplash" id="splash"><b id="splashTitle">BIG GOLDEN</b><span id="splashSub">大金 +3</span></div>
+    <div class="extraScores" id="extraOverlay"></div>\n    <div class="eventSplash" id="splash"><b id="splashTitle">BIG GOLDEN</b><span id="splashSub">大金 +3</span></div>
     <div class="liveTag"><span class="dot">●</span> LIVE · SAGI</div>
     <div class="stageActions">
       <button class="stageBtn" id="cameraBtn" type="button">开启摄像头</button>
@@ -154,7 +154,7 @@ button{cursor:pointer}
 </div>
 <script>
 (()=> {
-  const KEY='sagi_pool_live_v13';
+  const KEY='sagi_pool_live_v14';
   const defaults={
     mode:'8ball', club:'SAGI POOL CLUB', table:'01桌', raceTo:5, settlement:'winner',
     points:{normal:1,small:2,big:3,gold9:4},
@@ -211,9 +211,9 @@ button{cursor:pointer}
       const sc=document.createElement('div');sc.className='scoreBig';sc.textContent=state.mode==='8ball'?p.wins:p.score;
       const st=document.createElement('div');st.className='miniStats';st.textContent=state.mode==='8ball'?('抢'+state.raceTo+' · '+(p.wins>=state.raceTo?'已获胜':'进行中')):('大金 '+p.big+' · 小金 '+p.small);
       c.append(top,sc,st);
-      if(state.mode!=='8ball'){
-        const choose=document.createElement('button');choose.className='btn '+(i===state.active?'primary':'');choose.style.cssText='width:100%;min-height:38px;margin-top:9px;font-size:12px';choose.textContent=i===state.active?'本局胜者':'设为胜者';choose.addEventListener('click',()=>{state.active=i;render()});c.appendChild(choose);
-      }
+      const choose=document.createElement('button');choose.className='btn '+(i===state.active?'primary':'');choose.style.cssText='width:100%;min-height:38px;margin-top:9px;font-size:12px';
+      choose.textContent=state.mode==='8ball'?(i===state.active?'当前击球':'设为击球'):(i===state.active?'本局胜者':'设为胜者');
+      choose.addEventListener('click',()=>{state.active=i;render()});c.appendChild(choose);
       box.appendChild(c);
     });
   }
@@ -225,6 +225,13 @@ button{cursor:pointer}
     $('#overlayS2').textContent=state.mode==='8ball'?b.wins:b.score;
     $('#overlayClub').textContent=(state.club||'SAGI POOL CLUB')+' · '+state.table;
     $('#overlayMode').textContent=modeNames[state.mode];
+    const extra=$('#extraOverlay');
+    if(state.mode!=='8ball' && state.players.length>2){
+      extra.textContent=state.players.slice(2).map(p=>p.name+' '+p.score).join('  ·  ');
+      extra.classList.add('show');
+    }else{
+      extra.textContent='';extra.classList.remove('show');
+    }
   }
 
   function renderLog(){
