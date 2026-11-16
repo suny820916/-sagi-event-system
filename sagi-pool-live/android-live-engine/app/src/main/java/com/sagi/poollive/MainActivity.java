@@ -32,11 +32,12 @@ public class MainActivity extends AppCompatActivity {
     private TXCloudVideoView preview;
     private V2TXLivePusher pusher;
     private final ScoreSyncClient syncClient = new ScoreSyncClient();
+    private final ProvisionClient provisionClient = new ProvisionClient();
     private final ScoreWatermarkRenderer watermarkRenderer = new ScoreWatermarkRenderer();
     private final Handler overlayHandler = new Handler(Looper.getMainLooper());
 
     private TextView status, networkStatus, player1, player2, score, zoomLabel;
-    private EditText syncUrl, clubId, tableNo, syncToken, rtmpUrl;
+    private EditText installCode, syncUrl, clubId, tableNo, syncToken, rtmpUrl;
     private Spinner qualitySpinner;
     private Button audioButton, directorModeButton;
     private View controlPanel;
@@ -68,6 +69,7 @@ public class MainActivity extends AppCompatActivity {
         player2 = findViewById(R.id.player2);
         score = findViewById(R.id.score);
         zoomLabel = findViewById(R.id.zoomLabel);
+        installCode = findViewById(R.id.installCode);
         syncUrl = findViewById(R.id.syncUrl);
         clubId = findViewById(R.id.clubId);
         tableNo = findViewById(R.id.tableNo);
@@ -88,6 +90,7 @@ public class MainActivity extends AppCompatActivity {
 
         loadConfig();
 
+        ((Button)findViewById(R.id.claimInstallButton)).setOnClickListener(v -> claimInstall());
         ((Button)findViewById(R.id.startButton)).setOnClickListener(v -> startLive());
         ((Button)findViewById(R.id.stopButton)).setOnClickListener(v -> stopLive());
         ((Button)findViewById(R.id.switchCameraButton)).setOnClickListener(v -> switchCamera());
@@ -104,7 +107,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void loadConfig() {
-        syncUrl.setText(securePrefs.get("sync_url"));
+        String savedSyncUrl = securePrefs.get("sync_url");
+        syncUrl.setText(savedSyncUrl.isEmpty() ? BuildConfig.DEFAULT_SYNC_URL : savedSyncUrl);
         String cid = securePrefs.get("club_id");
         clubId.setText(cid.isEmpty() ? "SAGI-DEMO" : cid);
         String table = securePrefs.get("table_no");
@@ -136,6 +140,38 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception ignored) {
             return fallback;
         }
+    }
+
+    private void claimInstall() {
+        String base = syncUrl.getText().toString().trim();
+        String code = installCode.getText().toString().trim().toUpperCase(Locale.ROOT);
+
+        if (base.isEmpty()) {
+            status.setText("请填写国内同步服务器，正式版可预置");
+            return;
+        }
+        if (code.length() < 6) {
+            status.setText("请输入有效安装码");
+            return;
+        }
+
+        status.setText("正在领取球房配置…");
+        provisionClient.claim(base, code, new ProvisionClient.Callback() {
+            @Override
+            public void onSuccess(ProvisionClient.Config config) {
+                clubId.setText(config.clubId);
+                tableNo.setText(config.table);
+                syncToken.setText(config.token);
+                installCode.setText("");
+                saveConfig();
+                status.setText("安装完成 · " + config.clubName + " · " + config.table);
+            }
+
+            @Override
+            public void onError(String message) {
+                status.setText(message);
+            }
+        });
     }
 
     private void requestMediaPermissions() {
@@ -420,6 +456,7 @@ public class MainActivity extends AppCompatActivity {
         pushing = false;
         overlayHandler.removeCallbacksAndMessages(null);
         syncClient.shutdown();
+        provisionClient.shutdown();
         if (pusher != null) {
             pusher.setObserver(null);
             pusher.stopPush();
