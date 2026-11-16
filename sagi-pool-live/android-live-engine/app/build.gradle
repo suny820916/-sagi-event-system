@@ -4,6 +4,7 @@ plugins {
 
 def liveLicenceUrl = System.getenv("TENCENT_LIVE_LICENSE_URL") ?: ""
 def liveLicenceKey = System.getenv("TENCENT_LIVE_LICENSE_KEY") ?: ""
+def defaultSyncUrl = System.getenv("SAGI_DEFAULT_SYNC_URL") ?: ""
 
 android {
     namespace 'com.sagi.poollive'
@@ -13,11 +14,12 @@ android {
         applicationId "com.sagi.poollive"
         minSdk 23
         targetSdk 35
-        versionCode 3
-        versionName "0.3.0"
+        versionCode 4
+        versionName "0.4.0"
 
         buildConfigField "String", "LIVE_LICENSE_URL", '"' + liveLicenceUrl.replace('"','\\\"') + '"'
         buildConfigField "String", "LIVE_LICENSE_KEY", '"' + liveLicenceKey.replace('"','\\\"') + '"'
+        buildConfigField "String", "DEFAULT_SYNC_URL", '"' + defaultSyncUrl.replace('"','\\\"') + '"'
     }
 
     buildFeatures { buildConfig true }
