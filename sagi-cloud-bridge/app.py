@@ -68,6 +68,10 @@ SAGI_MARKET_RATE_LIMIT_PER_HOUR = max(3, min(60, int(os.getenv("SAGI_MARKET_RATE
 market_rate_hits = {}
 market_rate_lock = Lock()
 
+SAGI_PREMATCH_WRITE_TOKEN = (os.getenv("SAGI_PREMATCH_WRITE_TOKEN") or (hmac.new(SERVER_SECRET.encode("utf-8"), b"sagi-prematch-v1", hashlib.sha256).hexdigest() if SERVER_SECRET else "")).strip()
+SAGI_PREMATCH_SLUG = ("prematch-" + hmac.new(SERVER_SECRET.encode("utf-8"), b"sagi-prematch-slug-v1", hashlib.sha256).hexdigest()[:24]) if SERVER_SECRET else ""
+SAGI_PREMATCH_MAX_PROJECTS = max(10, min(100, int(os.getenv("SAGI_PREMATCH_MAX_PROJECTS") or "40")))
+
 SAGI_HOUSE_WRITE_TOKEN = (os.getenv("SAGI_HOUSE_WRITE_TOKEN") or (hmac.new(SERVER_SECRET.encode("utf-8"), b"sagi-house-inbox-v1", hashlib.sha256).hexdigest() if SERVER_SECRET else "")).strip()
 SAGI_HOUSE_INBOX_SLUG = ("house-inbox-" + hmac.new(SERVER_SECRET.encode("utf-8"), b"sagi-house-inbox-slug-v1", hashlib.sha256).hexdigest()[:24]) if SERVER_SECRET else ""
 SAGI_HOUSE_LEADS_SLUG = ("house-leads-" + hmac.new(SERVER_SECRET.encode("utf-8"), b"sagi-house-leads-slug-v1", hashlib.sha256).hexdigest()[:24]) if SERVER_SECRET else ""
@@ -4963,6 +4967,120 @@ def house_leads():
         return jsonify({"ok": True, "items": items, "count": len(items)})
     except Exception as exc:
         return jsonify({"ok": False, "error": "读取客户线索失败", "detail": str(exc)[:180]}), 503
+
+
+def prematch_cloud_ready():
+    return bool(SAGI_SUPABASE_URL and SAGI_SUPABASE_KEY and SAGI_PREMATCH_WRITE_TOKEN and SAGI_PREMATCH_SLUG)
+
+
+def _prematch_ensure():
+    row = _market_get(SAGI_PREMATCH_SLUG)
+    if row:
+        return row
+    return _market_rpc(
+        "sagi_claim_event",
+        {
+            "p_slug": SAGI_PREMATCH_SLUG,
+            "p_token": SAGI_PREMATCH_WRITE_TOKEN,
+            "p_payload": {"version": 1, "kind": "sagi-prematch", "items": []},
+        },
+    )
+
+
+def _prematch_update(mutator):
+    last_error = None
+    for _ in range(5):
+        try:
+            row = _prematch_ensure()
+            payload = dict((row or {}).get("payload") or {})
+            items = [x for x in list(payload.get("items") or []) if isinstance(x, dict)]
+            payload["version"] = 1
+            payload["kind"] = "sagi-prematch"
+            payload["items"] = list(mutator(items))[-SAGI_PREMATCH_MAX_PROJECTS:]
+            return _market_rpc(
+                "sagi_save_event",
+                {
+                    "p_slug": SAGI_PREMATCH_SLUG,
+                    "p_token": SAGI_PREMATCH_WRITE_TOKEN,
+                    "p_payload": payload,
+                    "p_expected_revision": (row or {}).get("revision"),
+                },
+            )
+        except Exception as exc:
+            last_error = exc
+            if "REVISION_CONFLICT" not in str(exc):
+                break
+            time.sleep(0.08)
+    raise last_error or RuntimeError("PREMATCH_UPDATE_FAILED")
+
+
+def _prematch_response(data, status=200, public_read=False):
+    resp = jsonify(data)
+    if public_read:
+        resp.headers["Access-Control-Allow-Origin"] = "*"
+        resp.headers["Cache-Control"] = "no-store"
+    return resp, status
+
+
+@app.get("/api/prematch")
+def prematch_list():
+    if not prematch_cloud_ready():
+        return _prematch_response({"ok": False, "error": "PRE-MATCH 云端尚未配置"}, 503, True)
+    try:
+        row = _prematch_ensure()
+        items = [x for x in list(((row or {}).get("payload") or {}).get("items") or []) if isinstance(x, dict)]
+        items = sorted(items, key=lambda x: int(x.get("savedAt") or 0), reverse=True)[:SAGI_PREMATCH_MAX_PROJECTS]
+        return _prematch_response({"ok": True, "items": items, "count": len(items), "version": "1.0"}, 200, True)
+    except Exception as exc:
+        return _prematch_response({"ok": False, "error": "读取赛前项目失败", "detail": str(exc)[:180]}, 503, True)
+
+
+@app.post("/api/prematch")
+def prematch_save():
+    if not origin_allowed():
+        return jsonify({"ok": False, "error": "Origin not allowed"}), 403
+    if not prematch_cloud_ready():
+        return jsonify({"ok": False, "error": "PRE-MATCH 云端尚未配置"}), 503
+    if not rate_allowed():
+        return jsonify({"ok": False, "error": "提交过于频繁，请稍后再试"}), 429
+    if request.content_length and request.content_length > 3 * 1024 * 1024:
+        return jsonify({"ok": False, "error": "赛前项目过大，请压缩图片后再保存"}), 413
+
+    body = request.get_json(silent=True) or {}
+    action = str(body.get("action") or "upsert").strip().lower()
+    if action == "delete":
+        project_id = str(body.get("id") or "").strip()[:120]
+        if not project_id:
+            return jsonify({"ok": False, "error": "Missing project id"}), 400
+        try:
+            _prematch_update(lambda items: [x for x in items if str(x.get("id") or "") != project_id])
+            return jsonify({"ok": True, "deleted": project_id})
+        except Exception as exc:
+            return jsonify({"ok": False, "error": "删除赛前项目失败", "detail": str(exc)[:180]}), 503
+
+    project = body.get("project")
+    if not isinstance(project, dict):
+        return jsonify({"ok": False, "error": "Missing project"}), 400
+    project_id = str(project.get("id") or "").strip()[:120]
+    name = str(project.get("name") or "").strip()[:160]
+    if not project_id or not name:
+        return jsonify({"ok": False, "error": "项目名称不能为空"}), 400
+
+    safe = dict(project)
+    safe["id"] = project_id
+    safe["name"] = name
+    safe["savedAt"] = int(time.time() * 1000)
+    safe["source"] = "SAGI_PREMATCH_V1"
+    try:
+        def upsert(items):
+            rows = [x for x in items if str(x.get("id") or "") != project_id and str(x.get("name") or "") != name]
+            rows.append(safe)
+            rows.sort(key=lambda x: int(x.get("savedAt") or 0))
+            return rows
+        _prematch_update(upsert)
+        return jsonify({"ok": True, "project": safe})
+    except Exception as exc:
+        return jsonify({"ok": False, "error": "保存赛前项目失败", "detail": str(exc)[:180]}), 503
 
 
 @app.post("/api/activate")
