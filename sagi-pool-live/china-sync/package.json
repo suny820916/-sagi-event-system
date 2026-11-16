@@ -1,9 +1,16 @@
 {
-  "name":"sagi-china-sync",
-  "version":"2.9.0",
-  "private":true,
-  "type":"module",
-  "description":"Zero-dependency domestic sync and licensing server for SAGI POOL LIVE",
-  "scripts":{"start":"node server.mjs","check":"node --check server.mjs"},
-  "engines":{"node":">=20"}
+  "name": "sagi-china-sync",
+  "version": "2.10.0",
+  "private": true,
+  "type": "module",
+  "description": "Zero-dependency domestic sync and licensing server for SAGI POOL LIVE",
+  "scripts": {
+    "start": "node server.mjs",
+    "check": "node --check server.mjs && node --check backup.mjs && node --check restore.mjs",
+    "backup": "node backup.mjs",
+    "restore": "node restore.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
 }
