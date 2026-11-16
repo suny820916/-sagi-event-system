@@ -280,6 +280,17 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent
 .label .statPill,.label .mediaTag,.label .directorBadge{display:none}.stage.group-GK .card.one{width:610px}.stage.group-GK .card.one .playerBigNo{font-size:250px}
 .stage.group-DF .card,.stage.group-MF .card,.stage.group-FW .card{max-width:285px}
 
+
+/* V4.20.0 开场标识 + 倒计时统一包装 */
+.stingOverlay{background:radial-gradient(circle at 50% 45%,#182633 0,#081018 42%,#020405 100%);overflow:hidden}
+.stingOverlay:before{content:"";position:absolute;inset:-20%;background:repeating-linear-gradient(112deg,#ffffff06 0 2px,transparent 2px 44px);opacity:.5}
+.stingCore{position:relative;z-index:2;min-width:720px;padding:70px 95px;border-top:1px solid #ffffff1f;border-bottom:1px solid #ffffff14;background:linear-gradient(90deg,transparent,#071019d9 15% 85%,transparent)}
+.stingLogo{width:230px;height:230px}.stingComp{font-size:30px;letter-spacing:4px;color:#fff}.stingLine{width:520px;height:5px;background:linear-gradient(90deg,transparent,var(--teamAccent),#fff,var(--teamAccent),transparent)}
+.countdownOverlay{background:radial-gradient(circle at center,#121d28 0,#070c12 46%,#020405 100%);overflow:hidden}
+.countdownOverlay:before{content:"";position:absolute;left:-8%;right:-8%;top:48%;height:3px;background:linear-gradient(90deg,transparent,var(--teamAccent),#fff,var(--teamAccent),transparent);opacity:.55}
+.countdownCore{position:relative;z-index:2;min-width:760px;padding:50px 70px;text-align:center;background:#071019d4;border:1px solid #ffffff18;box-shadow:0 32px 90px #000b}
+.countdownLabel{font-size:15px;letter-spacing:7px;color:#aab5c0}.countdownNumber{font-size:260px;letter-spacing:-13px;line-height:.9;text-shadow:none}.countdownSub{font-size:20px;color:#fff;letter-spacing:3px;margin-top:24px}
+
 </style></head>
 <body>
 <div id="stage" class="stage"><div id="transitionLayer" class="transitionLayer"></div><div id="cueBadgeStage" class="cueBadgeStage"></div><div id="showStepStage" class="showStepStage"></div><div id="sideBadgeStage" class="sideBadgeStage">主队</div>
