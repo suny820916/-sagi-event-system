@@ -14,8 +14,8 @@ android {
         applicationId "com.sagi.poollive"
         minSdk 23
         targetSdk 35
-        versionCode 5
-        versionName "0.5.0"
+        versionCode 6
+        versionName "0.6.0"
 
         buildConfigField "String", "LIVE_LICENSE_URL", '"' + liveLicenceUrl.replace('"','\\\"') + '"'
         buildConfigField "String", "LIVE_LICENSE_KEY", '"' + liveLicenceKey.replace('"','\\\"') + '"'
@@ -32,6 +32,6 @@ android {
 
 dependencies {
     implementation 'androidx.appcompat:appcompat:1.7.0'
-    implementation 'androidx.activity:activity:1.10.0'
+    implementation 'androidx.activity:activity:1.10.0'\n    implementation 'androidx.core:core:1.15.0'
     implementation 'com.tencent.liteav:LiteAVSDK_Live:13.5.0.20670'
 }
