@@ -154,6 +154,40 @@ async function e2eCommercial(){
     });
     check(deviceRead.ok,'Provisioned device token authorization failed');
 
+    const liveStart=await fetch(base+'/api/devices/TEST-CLUB/'+encodeURIComponent(claimData.config.deviceId)+'/live',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-SAGI-Token':deviceToken},
+      body:JSON.stringify({action:'start',bitrate:1600,fps:24,width:1280,height:720})
+    });
+    check(liveStart.ok,'Live session start telemetry failed');
+
+    const liveHeartbeat=await fetch(base+'/api/devices/TEST-CLUB/'+encodeURIComponent(claimData.config.deviceId)+'/live',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-SAGI-Token':deviceToken},
+      body:JSON.stringify({action:'heartbeat',bitrate:1450,fps:24,width:1280,height:720})
+    });
+    check(liveHeartbeat.ok,'Live session heartbeat failed');
+
+    const liveDevices=await fetch(base+'/api/admin/licenses/TEST-CLUB/devices',{headers:{'X-SAGI-Admin':'admin-secret'}});
+    const liveDevicesData=await liveDevices.json();
+    check(liveDevices.ok&&liveDevicesData.devices?.[0]?.live?.active===true,'Admin live-now device state failed');
+    check(Number(liveDevicesData.devices?.[0]?.live?.bitrate||0)===1450,'Live bitrate telemetry failed');
+
+    const liveStop=await fetch(base+'/api/devices/TEST-CLUB/'+encodeURIComponent(claimData.config.deviceId)+'/live',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-SAGI-Token':deviceToken},
+      body:JSON.stringify({action:'stop'})
+    });
+    check(liveStop.ok,'Live session stop telemetry failed');
+
+    const sessionsBeforeRevoke=await fetch(
+      base+'/api/admin/licenses/TEST-CLUB/devices/'+encodeURIComponent(claimData.config.deviceId)+'/sessions',
+      {headers:{'X-SAGI-Admin':'admin-secret'}}
+    );
+    const sessionsBeforeRevokeData=await sessionsBeforeRevoke.json();
+    check(sessionsBeforeRevoke.ok&&sessionsBeforeRevokeData.sessions?.length===1,'Live session history creation failed');
+    check(Number(sessionsBeforeRevokeData.sessions?.[0]?.maxBitrate||0)===1600,'Live max bitrate history failed');
+
     const over=await fetch(base+'/api/rooms/TEST-CLUB/03%E6%A1%8C',{headers:{'X-SAGI-Token':deviceToken}});
     const overData=await over.json();
     check(over.status===403&&overData.error==='table_limit_exceeded','Table limit enforcement failed for device token');
@@ -170,11 +204,26 @@ async function e2eCommercial(){
     const deviceId=devicesData.devices?.[0]?.id;
     check(Boolean(deviceId),'Admin device id missing');
 
+    const liveRestart=await fetch(base+'/api/devices/TEST-CLUB/'+encodeURIComponent(deviceId)+'/live',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-SAGI-Token':deviceToken},
+      body:JSON.stringify({action:'start',bitrate:1200,fps:23,width:1280,height:720})
+    });
+    check(liveRestart.ok,'Live restart before remote revoke failed');
+
     const revokeDevice=await fetch(base+'/api/admin/licenses/TEST-CLUB/devices/'+encodeURIComponent(deviceId)+'/revoke',{
       method:'POST',
       headers:{'X-SAGI-Admin':'admin-secret'}
     });
     check(revokeDevice.ok,'Per-device revoke failed');
+
+    const sessionsAfterRevoke=await fetch(
+      base+'/api/admin/licenses/TEST-CLUB/devices/'+encodeURIComponent(deviceId)+'/sessions',
+      {headers:{'X-SAGI-Admin':'admin-secret'}}
+    );
+    const sessionsAfterRevokeData=await sessionsAfterRevoke.json();
+    check(sessionsAfterRevoke.ok&&sessionsAfterRevokeData.sessions?.length===2,'Remote revoke should close active live session');
+    check(sessionsAfterRevokeData.sessions?.[0]?.reason==='remote_revoke','Remote revoke session reason missing');
 
     const afterDeviceRevoke=await fetch(base+'/api/rooms/TEST-CLUB/02%E6%A1%8C',{
       headers:{'X-SAGI-Token':deviceToken}
@@ -206,7 +255,7 @@ if(failures.length){
   failures.forEach((x,i)=>console.error((i+1)+'. '+x));
   process.exit(1);
 }
-console.log('SAGI POOL LIVE CHINA V2.3 SELF-CHECK: PASSED');
+console.log('SAGI POOL LIVE CHINA V2.4 SELF-CHECK: PASSED');
 console.log('✓ Scorer / club / live / seller JavaScript');
 console.log('✓ PWA cache and core billiards scoring');
 console.log('✓ China sync real read/write flow');
@@ -216,4 +265,6 @@ console.log('✓ Purchased table-count enforcement');
 console.log('✓ One-time install code → per-device token');
 console.log('✓ Install code one-use enforcement');
 console.log('✓ Device inventory and per-device remote revoke');
+console.log('✓ Live start / heartbeat / stop telemetry');
+console.log('✓ Live session history and remote-revoke closure');
 console.log('✓ Admin license listing and revoke');
