@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#07090d"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="SAGI 赛前">
-<link rel="apple-touch-icon" href="./sagi-app-icon.svg"><title>SAGI PRE-MATCH V2.5 · 赛前准备</title>
+<link rel="apple-touch-icon" href="./sagi-app-icon.svg"><title>SAGI PRE-MATCH V2.6 · 赛前准备</title>
 <style>
 :root{--bg:#07090d;--p:#11161d;--l:#2c3742;--t:#f5f2eb;--m:#87929f;--g:#d8b75f}*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--t);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}body{padding-bottom:90px}.app{max-width:760px;margin:auto;padding:14px 12px 30px}.top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin:6px 0 14px}.brand{font-size:22px;font-weight:1000}.brand small{display:block;font-size:10px;color:var(--m);letter-spacing:2px;margin-top:5px}.ver{border:1px solid #725d2c;color:var(--g);border-radius:999px;padding:7px 10px;font-size:10px}.cloud{display:flex;gap:8px;align-items:center;padding:10px;border:1px solid var(--l);border-radius:13px;background:#0a0f15;color:var(--m);font-size:11px}.dot{width:8px;height:8px;border-radius:50%;background:#777}.cloud.ok .dot{background:#65d49c;box-shadow:0 0 10px #65d49c88}.cloud.work .dot{background:#e2c56f}.card{background:var(--p);border:1px solid var(--l);border-radius:18px;padding:13px;margin:11px 0}.title{font-size:13px;font-weight:1000;margin-bottom:10px}.title small{display:block;color:var(--m);font-size:9px;font-weight:600;margin-top:4px}.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}label{display:block;color:#8f9aa7;font-size:9px;margin-bottom:5px}input,select,textarea{width:100%;background:#080c11;color:#fff;border:1px solid #34404c;border-radius:11px;padding:10px;font-size:14px}textarea{min-height:100px;resize:vertical}button,.file{border:0;border-radius:11px;background:#252e38;color:#fff;font-weight:900;padding:9px 11px;min-height:40px;font-size:11px}.gold{background:linear-gradient(135deg,#82671f,#e0c46d);color:#111}.red{background:#55272a}.actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}.file{display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}.file input{position:absolute;inset:0;opacity:0}.projects{display:grid;gap:7px}.project{background:#0a0f15;border:1px solid #293540;border-radius:13px;padding:10px}.pn{font-size:13px;font-weight:950}.pm{font-size:9px;color:var(--m);margin-top:4px}.pb{display:flex;gap:6px;margin-top:8px}.pb button{min-height:32px;padding:6px 9px;font-size:9px}.tabs{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:10px}.tabs button.on{background:#342a0f;color:#efd77d;border:1px solid #8d7537}.team{display:grid;grid-template-columns:76px 1fr;gap:9px;align-items:center}.crest,.logo{border:1px dashed #3a4652;background:#090d12;border-radius:13px;display:flex;align-items:center;justify-content:center;color:#6f7883;overflow:hidden}.crest{height:76px}.logo{height:80px}.crest img,.logo img{width:100%;height:100%;object-fit:contain}.imp{margin-top:11px;padding:10px;border:1px solid #303b46;border-radius:13px;background:#0a0f15}.hint,.status,.sum{font-size:9px;color:var(--m);line-height:1.5}.status{margin-top:7px}.status.ok{color:#79d4a6}.status.bad{color:#e38c91}.status.work{color:#e0c56e}.rw{margin-top:10px;overflow:auto;border:1px solid #2b3641;border-radius:12px}table{width:100%;min-width:650px;border-collapse:collapse}th{position:sticky;top:0;background:#151d26;color:#8995a1;font-size:8px;text-align:left;padding:7px 5px}td{border-top:1px solid #222d37;padding:4px}td input,td select{padding:6px;font-size:10px;border-radius:7px;min-height:30px}.del{background:#4c2427;min-height:29px;padding:5px 8px;font-size:9px}.sticky{position:fixed;left:0;right:0;bottom:0;z-index:20;background:#090c11ee;border-top:1px solid #2c3540;padding:9px 12px calc(9px + env(safe-area-inset-bottom));backdrop-filter:blur(12px)}.si{max-width:760px;margin:auto;display:grid;grid-template-columns:1fr 1.4fr;gap:8px}.si button{min-height:48px}.toast{position:fixed;left:50%;bottom:85px;transform:translateX(-50%) translateY(10px);background:#151b23;border:1px solid #3a4551;padding:10px 13px;border-radius:12px;font-size:10px;opacity:0;transition:.2s;z-index:30;max-width:88%;text-align:center}.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 
@@ -13,6 +13,12 @@
 .step b{display:block;font-size:11px}.step small{display:block;margin-top:5px;color:#7f8b98;font-size:8px;line-height:1.3}.step i{position:absolute;right:8px;top:8px;width:21px;height:21px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#18212b;color:#8995a1;font-style:normal;font-size:9px}
 .step.on{border-color:#d8b75f;box-shadow:0 0 0 1px #d8b75f24 inset}.step.done{border-color:#326d50;background:#0c1713}.step.done i{background:#326d50;color:#fff}
 .readyBox{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:10px 11px;margin-top:9px;border:1px solid #303c47;border-radius:13px;background:#090e14}.readyBox b{font-size:12px}.readyBox span{display:block;margin-top:4px;color:#85919e;font-size:9px}.readyBadge{padding:6px 9px;border-radius:999px;background:#3e2727;color:#ef9a9f;font-size:9px;font-weight:1000}.readyBadge.ok{background:#153a29;color:#8de0b5}
+.packageCenter{margin-top:10px;padding:12px;border:1px solid #3b4652;border-radius:14px;background:linear-gradient(180deg,#0c1218,#090d12)}
+.packageHead{display:flex;justify-content:space-between;gap:10px;align-items:center}.packageHead b{font-size:12px}.packageHead small{display:block;margin-top:4px;color:#7f8b98;font-size:8px}
+.packageState{padding:5px 8px;border-radius:999px;background:#3e2727;color:#ef9a9f;font-size:8px;font-weight:1000}.packageState.ok{background:#153a29;color:#8de0b5}
+.packageGrid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px}.packageStat{padding:8px;border:1px solid #293540;border-radius:10px;background:#080d12}.packageStat span{display:block;color:#788492;font-size:8px}.packageStat b{display:block;margin-top:4px;font-size:11px}
+.packageBtn{width:100%;min-height:58px;margin-top:10px;border:1px solid #d8b75f!important;background:linear-gradient(135deg,#80651d,#d8b75f)!important;color:#090b0e!important;font-size:14px!important;font-weight:1000!important;letter-spacing:1px}.packageBtn:disabled{filter:saturate(.3);opacity:.45}
+.packageHint{margin-top:7px;color:#7f8b98;font-size:8px;line-height:1.45}
 .tabs.v2 button{min-height:58px;text-align:left;padding:9px 11px}.tabs.v2 b{font-size:12px}.tabs.v2 small{display:block;margin-top:5px;color:#7f8b98;font-size:8px}.tabs.v2 button.on small{color:#e0c879}
 .teamStats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0}.ts{background:#090e14;border:1px solid #293540;border-radius:10px;padding:7px}.ts span{display:block;color:#7b8794;font-size:8px}.ts b{display:block;margin-top:3px;font-size:11px}
 .impTarget{display:flex;justify-content:space-between;gap:8px;padding:8px 9px;margin:8px 0;border:1px solid #34414c;border-radius:10px;background:#080d12;font-size:9px;color:#8793a0}.impTarget b{color:#efd67f}
@@ -27,7 +33,7 @@
 </head>
 <body>
 <div class="app">
-<div class="top"><div class="brand">SAGI PRE-MATCH<small>赛前准备 · 球队资料收集 · 云端同步</small></div><div class="ver">V2.5</div></div>
+<div class="top"><div class="brand">SAGI PRE-MATCH<small>赛前准备 · 球队资料收集 · 云端同步</small></div><div class="ver">V2.6</div></div>
 <div id="cloud" class="cloud work"><span class="dot"></span><span id="cloudText">正在连接赛前云端…</span><button id="cloudRetry" type="button" style="margin-left:auto;min-height:30px;padding:5px 8px;font-size:9px">重新连接</button></div>
 <div class="flow">
   <button id="stepInfo" class="step on" type="button"><i>1</i><b>比赛信息</b><small id="stepInfoText">赛事 / 时间 / 场地</small></button>
@@ -46,7 +52,18 @@
 <div><label>比赛人数</label><select id="count"><option>5</option><option>7</option><option>8</option><option>9</option><option selected>11</option></select></div>
 <div><label>赛事 LOGO</label><label class="file">上传赛事 Logo<input id="eventLogoFile" type="file" accept="image/*"></label></div>
 </div><div id="eventLogo" class="logo" style="margin-top:9px">EVENT LOGO</div>
-<div class="readyBox"><div><b>赛前完成度</b><span id="readySummary">填写比赛信息并准备主客队名单</span></div><div id="readyBadge" class="readyBadge">NOT READY</div></div></div>
+<div class="readyBox"><div><b>赛前完成度</b><span id="readySummary">填写比赛信息并准备主客队名单</span></div><div id="readyBadge" class="readyBadge">NOT READY</div></div>
+<div class="packageCenter">
+  <div class="packageHead"><div><b>比赛包 · MATCH PACKAGE</b><small>赛前完成后，一键生成导播可直接读取的比赛包。</small></div><div id="packageState" class="packageState">WAITING</div></div>
+  <div class="packageGrid">
+    <div class="packageStat"><span>主队</span><b id="packageHome">0人 · 首发0 · 照片0</b></div>
+    <div class="packageStat"><span>客队</span><b id="packageAway">0人 · 首发0 · 照片0</b></div>
+    <div class="packageStat"><span>队徽</span><b id="packageCrests">HOME × · AWAY ×</b></div>
+    <div class="packageStat"><span>比赛状态</span><b id="packageReady">NOT READY</b></div>
+  </div>
+  <button id="packageGenerate" class="packageBtn" type="button">生成比赛包</button>
+  <div id="packageHint" class="packageHint">完成比赛信息、主队、客队后即可生成。</div>
+</div></div>
 
 <div class="card" id="teamCard"><div class="title">主客队与名单 · SMART ROSTER<small>球队 ZIP 可直接在这里预先导入，照片会随比赛项目保存到云端。</small></div>
 <div class="tabs v2"><button id="home" class="on"><b>主队 HOME</b><small id="homeTabMeta">0人 · 首发0 · 照片0</small></button><button id="away"><b>客队 AWAY</b><small id="awayTabMeta">0人 · 首发0 · 照片0</small></button></div>
@@ -60,7 +77,7 @@
 <div class="rw"><table><thead><tr><th>照片</th><th>#</th><th>姓名</th><th>首发/替补</th><th>位置组</th><th>具体位置</th><th>队长</th><th></th></tr></thead><tbody id="body"></tbody></table></div><div id="summary" class="sum" style="margin-top:8px">0 人</div></div>
 </div>
 
-<div class="sticky"><div class="si v2"><button id="new">新建</button><button id="check" class="checkBtn">检查</button><button id="savePhone" class="templateBtn">下载赛前 ZIP</button><button id="save" class="gold">保存到赛前云端</button></div></div><div id="toast" class="toast"></div>
+<div class="sticky"><div class="si v2"><button id="new">新建</button><button id="check" class="checkBtn">检查</button><button id="savePhone" class="templateBtn">生成比赛包</button><button id="save" class="gold">保存到赛前云端</button></div></div><div id="toast" class="toast"></div>
 <script>
 (()=>{'use strict';
 const CLOUD='https://sagi-cloud-bridge-suny820916.onrender.com',q=id=>document.getElementById(id);
@@ -72,7 +89,15 @@ function toast(t){q('toast').textContent=t;q('toast').classList.add('on');clearT
 function cs(t,k='work'){q('cloud').className='cloud '+k;q('cloudText').textContent=t}function st(t,k=''){q('status').className='status'+(k?' '+k:'');q('status').textContent=t}
 function teamStats(s){const r=m[s].roster||[],starters=r.filter(p=>p.squadType==='STARTER'),photos=r.filter(p=>p.photo).length,gk=starters.filter(p=>p.role==='GK').length,nums=new Set(),dup=[];r.forEach(p=>{const x=String(p.number||'').trim();if(!x)return;if(nums.has(x))dup.push(x);else nums.add(x)});return{total:r.length,starters:starters.length,subs:r.filter(p=>p.squadType==='SUB').length,photos,gk,dup:[...new Set(dup)]}}
 function validate(){stash();const h=teamStats('HOME'),a=teamStats('AWAY'),info=!!(q('competition').value.trim()&&q('date').value&&q('kickoff').value&&q('venue').value.trim()&&m.HOME.name&&m.AWAY.name),hc=h.starters===n()&&h.gk===1&&!h.dup.length,ac=a.starters===n()&&a.gk===1&&!a.dup.length,ready=info&&hc&&ac;return{ready,info,hc,ac,h,a}}
-function refreshUX(){const v=validate(),cur=side==='HOME'?v.h:v.a;q('homeTabMeta').textContent=v.h.total+'人 · 首发'+v.h.starters+'/'+n()+' · 照片'+v.h.photos;q('awayTabMeta').textContent=v.a.total+'人 · 首发'+v.a.starters+'/'+n()+' · 照片'+v.a.photos;q('statSide').textContent=side==='HOME'?'主队 HOME':'客队 AWAY';q('statStarter').textContent=cur.starters+'/'+n();q('statPhotos').textContent=cur.photos+'/'+cur.total;q('statSubs').textContent=cur.subs;q('importTarget').textContent=side==='HOME'?'主队 HOME':'客队 AWAY';q('stepInfo').classList.toggle('done',v.info);q('stepHome').classList.toggle('done',v.hc);q('stepAway').classList.toggle('done',v.ac);q('stepCheck').classList.toggle('done',v.ready);['stepInfo','stepHome','stepAway','stepCheck'].forEach(x=>q(x).classList.remove('on'));q(!v.info?'stepInfo':!v.hc?'stepHome':!v.ac?'stepAway':'stepCheck').classList.add('on');q('stepInfoText').textContent=v.info?'比赛信息已完成':'赛事 / 日期 / 时间 / 场地';q('stepHomeText').textContent='首发'+v.h.starters+'/'+n()+' · 照片'+v.h.photos+'/'+v.h.total;q('stepAwayText').textContent='首发'+v.a.starters+'/'+n()+' · 照片'+v.a.photos+'/'+v.a.total;q('stepCheckText').textContent=v.ready?'READY FOR CLOUD':'等待完成';q('readyBadge').textContent=v.ready?'READY':'NOT READY';q('readyBadge').classList.toggle('ok',v.ready);const miss=[];if(!v.info)miss.push('比赛信息');if(!v.hc)miss.push('主队');if(!v.ac)miss.push('客队');q('readySummary').textContent=v.ready?'比赛资料完整，可下载 ZIP 或保存云端。':'待完成：'+miss.join(' · ');return v}
+function refreshUX(){const v=validate(),cur=side==='HOME'?v.h:v.a;q('homeTabMeta').textContent=v.h.total+'人 · 首发'+v.h.starters+'/'+n()+' · 照片'+v.h.photos;q('awayTabMeta').textContent=v.a.total+'人 · 首发'+v.a.starters+'/'+n()+' · 照片'+v.a.photos;q('statSide').textContent=side==='HOME'?'主队 HOME':'客队 AWAY';q('statStarter').textContent=cur.starters+'/'+n();q('statPhotos').textContent=cur.photos+'/'+cur.total;q('statSubs').textContent=cur.subs;q('importTarget').textContent=side==='HOME'?'主队 HOME':'客队 AWAY';q('stepInfo').classList.toggle('done',v.info);q('stepHome').classList.toggle('done',v.hc);q('stepAway').classList.toggle('done',v.ac);q('stepCheck').classList.toggle('done',v.ready);['stepInfo','stepHome','stepAway','stepCheck'].forEach(x=>q(x).classList.remove('on'));q(!v.info?'stepInfo':!v.hc?'stepHome':!v.ac?'stepAway':'stepCheck').classList.add('on');q('stepInfoText').textContent=v.info?'比赛信息已完成':'赛事 / 日期 / 时间 / 场地';q('stepHomeText').textContent='首发'+v.h.starters+'/'+n()+' · 照片'+v.h.photos+'/'+v.h.total;q('stepAwayText').textContent='首发'+v.a.starters+'/'+n()+' · 照片'+v.a.photos+'/'+v.a.total;q('stepCheckText').textContent=v.ready?'READY FOR CLOUD':'等待完成';q('readyBadge').textContent=v.ready?'READY':'NOT READY';q('readyBadge').classList.toggle('ok',v.ready);const miss=[];if(!v.info)miss.push('比赛信息');if(!v.hc)miss.push('主队');if(!v.ac)miss.push('客队');q('readySummary').textContent=v.ready?'比赛资料完整，可直接生成比赛包。':'待完成：'+miss.join(' · ');
+ if(q('packageHome'))q('packageHome').textContent=v.h.total+'人 · 首发'+v.h.starters+'/'+n()+' · 照片'+v.h.photos;
+ if(q('packageAway'))q('packageAway').textContent=v.a.total+'人 · 首发'+v.a.starters+'/'+n()+' · 照片'+v.a.photos;
+ if(q('packageCrests'))q('packageCrests').textContent='HOME '+(m.HOME.crest?'✓':'×')+' · AWAY '+(m.AWAY.crest?'✓':'×');
+ if(q('packageReady'))q('packageReady').textContent=v.ready?'READY FOR EXPORT':'NOT READY';
+ if(q('packageState')){q('packageState').textContent=v.ready?'READY':'WAITING';q('packageState').classList.toggle('ok',v.ready)}
+ if(q('packageGenerate'))q('packageGenerate').disabled=!v.ready;
+ if(q('packageHint'))q('packageHint').textContent=v.ready?'一键生成：比赛信息 + 双队名单 + 首发/替补 + 队徽 + 球员照片 + 名单备份。':'还差：'+miss.join(' · ');
+ return v}
 const n=()=>Math.max(3,Math.min(15,+q('count').value||11)),df=()=>((F[n()]||[])[0]||String(n()-1));
 function formations(){const a=F[n()]||[df()],old=m[side].formation;q('formation').innerHTML=a.map(x=>'<option>'+x+'</option>').join('');m[side].formation=a.includes(old)?old:a[0];q('formation').value=m[side].formation}
 function stash(){m[side].name=q('teamName').value.trim();m[side].formation=q('formation').value||df()}
@@ -114,6 +139,19 @@ function phoneDbOpen(){
 async function phoneDbPut(key,value){const db=await phoneDbOpen();return new Promise((resolve,reject)=>{const tx=db.transaction('packages','readwrite');tx.objectStore('packages').put(value,key);tx.oncomplete=()=>{db.close();resolve(true)};tx.onerror=()=>{db.close();reject(tx.error||new Error('本机保存失败'))}})}
 async function savePackageToDevice(){try{const p=project(),v=validate(),pack={schema:'sagi.prematch.package.v1',version:'1.1',savedOnDeviceAt:Date.now(),project:p};await phoneDbPut('current',pack);localStorage.setItem('sagi_prematch_phone_meta_v1',JSON.stringify({name:p.name,savedAt:Date.now(),ready:!!v.ready}));toast(v.ready?'已保存到本机 · 导播可直接读取':'草稿已保存到本机 · 导播可直接读取');return true}catch(e){toast('保存到本机失败 · '+(e&&e.message||'未知错误'));return false}}
 function safeFileName(s=''){return clean(s).replace(/[\\/:*?"<>|]+/g,'_').replace(/\s+/g,'_').slice(0,80)||'SAGI_MATCH'}
+async function generateMatchPackage(){
+ const v=refreshUX();
+ if(!v.ready){
+   const target=!v.info?'infoCard':(!v.hc?'teamCard':(!v.ac?'teamCard':'infoCard'));
+   if(!v.hc)switchSide('HOME');else if(!v.ac)switchSide('AWAY');
+   q(target).scrollIntoView({behavior:'smooth',block:'start'});
+   toast('比赛包未生成 · 请先完成顶部未通过的步骤');
+   return
+ }
+ q('packageGenerate').disabled=true;q('packageGenerate').textContent='正在生成比赛包…';
+ try{await saveToPhone()}
+ finally{q('packageGenerate').textContent='重新生成比赛包';refreshUX()}
+}
 async function saveToPhone(){
  try{
   stash();
@@ -144,7 +182,7 @@ async function saveToPhone(){
   const zip=new JSZip();
   zip.file('SAGI_PREMATCH.json',JSON.stringify(pack));
   zip.file('ROSTER_BACKUP.json',JSON.stringify(backup));
-  zip.file('README.txt','SAGI PRE-MATCH V2.5\n'+p.name+'\nHOME '+home.length+' / STARTERS '+hs+'\nAWAY '+away.length+' / STARTERS '+as+'\n'+(v.ready?'READY':'DRAFT')+'\n在 SAGI LIVE MATCH DIRECTOR 中使用“读取赛前 ZIP / 文件”导入。');
+  zip.file('README.txt','SAGI PRE-MATCH V2.6\n'+p.name+'\nHOME '+home.length+' / STARTERS '+hs+'\nAWAY '+away.length+' / STARTERS '+as+'\n'+(v.ready?'READY':'DRAFT')+'\n在 SAGI LIVE MATCH DIRECTOR 中使用“读取赛前 ZIP / 文件”导入。');
   const blob=await zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:6}});
   const name='SAGI_赛前_'+safeFileName(p.name)+'.zip',url=URL.createObjectURL(blob),a=document.createElement('a');
   a.href=url;a.download=name;a.style.display='none';document.body.appendChild(a);a.click();
@@ -160,7 +198,7 @@ q('home').onclick=()=>switchSide('HOME');q('away').onclick=()=>switchSide('AWAY'
 q('parse').onclick=()=>{const a=parseText(q('paste').value);a.length?showPreview(a,{},'粘贴名单'):st('没有识别到有效球员','bad')};
 q('file').onchange=async e=>{const f=e.target.files?.[0];if(f)try{if(ext(f)==='zip'||f.type==='application/zip'||f.type==='application/x-zip-compressed'){const z=await readZip(f);showPreview(z.rows,z.meta,f.name)}else{const a=await fileRows(f);a.length?showPreview(a,{},f.name):st('没有识别到有效球员','bad')}}catch(err){st('导入失败：'+err.message,'bad')}e.target.value=''};
 q('template').onclick=downloadTemplate;q('commitImport').onclick=commitPreview;q('cancelImport').onclick=cancelPreview;q('auto').onclick=arrange;q('add').onclick=()=>{m[side].roster.push({id:uid(),number:String(m[side].roster.length+1),name:'PLAYER',squadType:'SUB',role:'MF',position:'CM',captain:false,photo:''});renderRoster();draft()};
-q('crestFile').onchange=async e=>{const f=e.target.files?.[0];if(f){m[side].crest=await imgData(f);renderCrest();draft();refreshUX()}e.target.value=''};q('eventLogoFile').onchange=async e=>{const f=e.target.files?.[0];if(f){m.eventLogo=await imgData(f);renderLogo();draft()}e.target.value=''};q('save').onclick=save;q('savePhone').onclick=saveToPhone;q('new').onclick=fresh;q('check').onclick=()=>{const v=refreshUX();toast(v.ready?'赛前资料完整 · READY':'还有资料未完成，请看顶部步骤')};
+q('crestFile').onchange=async e=>{const f=e.target.files?.[0];if(f){m[side].crest=await imgData(f);renderCrest();draft();refreshUX()}e.target.value=''};q('eventLogoFile').onchange=async e=>{const f=e.target.files?.[0];if(f){m.eventLogo=await imgData(f);renderLogo();draft();refreshUX()}e.target.value=''};q('save').onclick=save;q('savePhone').onclick=generateMatchPackage;q('packageGenerate').onclick=generateMatchPackage;q('new').onclick=fresh;q('check').onclick=()=>{const v=refreshUX();toast(v.ready?'赛前资料完整 · READY':'还有资料未完成，请看顶部步骤')};
 q('stepInfo').onclick=()=>q('infoCard').scrollIntoView({behavior:'smooth',block:'start'});q('stepHome').onclick=()=>{switchSide('HOME');q('teamCard').scrollIntoView({behavior:'smooth',block:'start'})};q('stepAway').onclick=()=>{switchSide('AWAY');q('teamCard').scrollIntoView({behavior:'smooth',block:'start'})};q('stepCheck').onclick=()=>{refreshUX();q('readyBadge').scrollIntoView({behavior:'smooth',block:'center'})};q('cloudRetry').onclick=async()=>{q('cloudRetry').disabled=true;q('cloudRetry').textContent='连接中…';await list();q('cloudRetry').disabled=false;q('cloudRetry').textContent='重新连接'};
 restore();formations();renderRoster();renderCrest();renderLogo();refreshUX();list().then(ok=>{if(!ok)setTimeout(()=>list(),5000)});
 if('serviceWorker'in navigator&&window.isSecureContext)navigator.serviceWorker.register('./sw.js',{scope:'./',updateViaCache:'none'}).then(r=>r.update().catch(()=>{})).catch(()=>{});
