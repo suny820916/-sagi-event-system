@@ -17,13 +17,17 @@
 </head>
 <body>
 <div class="app">
-<header class="top"><div><div class="brand">SAGI POOL CLUB</div><div class="sub">球房直播与记分控制台 · V1.5</div></div><div class="pill">本机 CLUB MVP</div></header>
+<header class="top"><div><div class="brand">SAGI POOL CLUB</div><div class="sub">球房直播与记分控制台 · CHINA V2.0</div></div><div class="pill">本机 CLUB MVP</div></header>
 <section class="card">
   <div class="head"><h2>球房设置</h2><span class="small">每张球桌独立保存</span></div>
   <div class="settings">
     <div class="field"><label>球房名称</label><input id="club" maxlength="28" value="SAGI POOL CLUB"></div>
     <div class="field"><label>球桌数量</label><input id="count" type="number" min="1" max="12" value="8"></div>
     <button class="btn primary" id="save" type="button">保存并更新</button>
+    <div class="field" style="grid-column:1/-1"><label>国内同步服务器 HTTPS 地址</label><input id="syncUrl" inputmode="url" placeholder="https://pool-api.example.com"></div>
+    <div class="field"><label>球房同步ID</label><input id="clubId" maxlength="32" value="SAGI-DEMO"></div>
+    <div class="field"><label>同步密钥</label><input id="token" type="password" maxlength="80" placeholder="球房专属密钥"></div>
+    <button class="btn" id="cloudRefresh" type="button">刷新云端状态</button>
   </div>
 </section>
 <section class="card">
@@ -38,19 +42,22 @@
 </div>
 <script>
 (()=>{
-const SETTINGS='sagi_pool_club_settings_v1';
+const SETTINGS='sagi_pool_club_settings_v2';
 const $=s=>document.querySelector(s);
 const modeNames={ '8ball':'中式八球','chase4':'4球追分','chase6':'6球追分','chase9':'9球追分'};
-function loadSettings(){try{return Object.assign({club:'SAGI POOL CLUB',count:8},JSON.parse(localStorage.getItem(SETTINGS)||'{}'))}catch(e){return{club:'SAGI POOL CLUB',count:8}}}
+function loadSettings(){try{return Object.assign({club:'SAGI POOL CLUB',count:8,syncUrl:'',clubId:'SAGI-DEMO',token:''},JSON.parse(localStorage.getItem(SETTINGS)||'{}'))}catch(e){return{club:'SAGI POOL CLUB',count:8,syncUrl:'',clubId:'SAGI-DEMO',token:''}}}
 let cfg=loadSettings();
 function pad(n){return String(n).padStart(2,'0')}
 function age(ts){if(!ts)return'暂无记录';const d=Math.max(0,Date.now()-ts),m=Math.floor(d/60000);if(m<1)return'刚刚更新';if(m<60)return m+'分钟前';const h=Math.floor(m/60);if(h<24)return h+'小时前';return Math.floor(h/24)+'天前'}
-function readTable(no){try{return JSON.parse(localStorage.getItem('sagi_pool_live_v15_'+no)||'null')}catch(e){return null}}
+function readTable(no){try{return JSON.parse(localStorage.getItem('sagi_pool_live_v20_'+no)||'null')}catch(e){return null}}
+let cloudRooms={};
 function render(){
-  $('#club').value=cfg.club;$('#count').value=cfg.count;
+  $('#club').value=cfg.club;$('#count').value=cfg.count;$('#syncUrl').value=cfg.syncUrl||'';$('#clubId').value=cfg.clubId||'SAGI-DEMO';$('#token').value=cfg.token||'';
   const box=$('#tables');box.innerHTML='';let active=0;
   for(let i=1;i<=cfg.count;i++){
-    const no=pad(i),st=readTable(no);if(st&&st.log&&st.log.length)active++;
+    const no=pad(i),local=readTable(no),cloud=cloudRooms[no+'桌']||cloudRooms[no]||null,st=(cloud&&(!local||Number(cloud.updatedAt||0)>Number(local.updatedAt||0)))?cloud.state:local;
+    const updated=(cloud&&(!local||Number(cloud.updatedAt||0)>Number(local.updatedAt||0)))?cloud.updatedAt:local?.updatedAt;
+    if(st&&st.log&&st.log.length)active++;
     const card=document.createElement('div');card.className='tableCard';
     const top=document.createElement('div');top.className='tableTop';
     const n=document.createElement('div');n.className='tableNo';n.textContent=no+'桌';
@@ -60,16 +67,37 @@ function render(){
     const meta=document.createElement('div');meta.className='meta';
     if(st&&st.players&&st.players.length>=2){
       const a=st.players[0],b=st.players[1],is8=st.mode==='8ball';score.textContent=(is8?a.wins:a.score)+' : '+(is8?b.wins:b.score);
-      names.textContent=a.name+'  vs  '+b.name;meta.textContent=(modeNames[st.mode]||st.mode)+' · '+age(st.updatedAt);
+      names.textContent=a.name+'  vs  '+b.name;meta.textContent=(modeNames[st.mode]||st.mode)+' · '+age(updated);
     }else{score.textContent='— : —';names.textContent='尚未开始比赛';meta.textContent='点击进入本桌设置比赛'}
     const link=document.createElement('a');link.className='btn';link.href='./?table='+encodeURIComponent(no)+'&club='+encodeURIComponent(cfg.club);link.textContent='进入 '+no+'桌';
     card.append(top,score,names,meta,link);box.appendChild(card);
   }
   $('#summary').textContent=active+' / '+cfg.count+' 比赛中';
 }
-$('#save').addEventListener('click',()=>{cfg.club=$('#club').value.trim()||'SAGI POOL CLUB';cfg.count=Math.max(1,Math.min(12,Number($('#count').value)||8));localStorage.setItem(SETTINGS,JSON.stringify(cfg));render()});
-window.addEventListener('focus',render);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')render()});
-render();
+function saveCfg(){
+  cfg.club=$('#club').value.trim()||'SAGI POOL CLUB';
+  cfg.count=Math.max(1,Math.min(12,Number($('#count').value)||8));
+  cfg.syncUrl=($('#syncUrl').value||'').trim().replace(/\/+$/,'');
+  cfg.clubId=$('#clubId').value.trim()||'SAGI-DEMO';
+  cfg.token=$('#token').value;
+  localStorage.setItem(SETTINGS,JSON.stringify(cfg));
+}
+async function refreshCloud(){
+  saveCfg();
+  if(!cfg.syncUrl){$('#summary').textContent='未配置国内同步服务器';render();return}
+  try{
+    $('#summary').textContent='云端同步中…';
+    const r=await fetch(cfg.syncUrl+'/api/clubs/'+encodeURIComponent(cfg.clubId),{headers:{'X-SAGI-Token':cfg.token},cache:'no-store'});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const d=await r.json();cloudRooms={};
+    (d.rooms||[]).forEach(x=>{cloudRooms[x.table]=x});
+    render();
+  }catch(e){$('#summary').textContent='云端连接失败'}
+}
+$('#save').addEventListener('click',()=>{saveCfg();render()});
+$('#cloudRefresh').addEventListener('click',refreshCloud);
+window.addEventListener('focus',()=>{render();if(cfg.syncUrl)refreshCloud()});document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){render();if(cfg.syncUrl)refreshCloud()}});
+render();if(cfg.syncUrl)refreshCloud();
 })();
 </script>
 </body></html>
