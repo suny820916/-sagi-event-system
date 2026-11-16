@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#050706">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>SAGI POOL · 直播屏</title>
+<style>
+:root{--bg:#050706;--panel:#101412;--line:#29342d;--text:#f6f7f5;--muted:#9aa69e}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
+body{padding:calc(8px + env(safe-area-inset-top)) 8px calc(12px + env(safe-area-inset-bottom))}
+.app{max-width:1100px;margin:auto}.stage{position:relative;overflow:hidden;border-radius:16px;background:#0b0f0d;aspect-ratio:16/9;min-height:210px;border:1px solid #252e29}
+video{display:block;width:100%;height:100%;object-fit:cover;background:radial-gradient(circle at center,#1f3028,#080b09 72%)}
+.centerMsg{position:absolute;inset:0;display:grid;place-items:center;text-align:center;color:#a9b5ad;padding:30px;font-size:13px;pointer-events:none}
+.scoreWrap{position:absolute;top:10px;left:8px;right:8px;display:flex;justify-content:center;pointer-events:none}.scorebar{width:min(92%,720px);display:grid;grid-template-columns:1fr auto 1fr;background:rgba(6,8,7,.9);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.13);border-radius:11px;overflow:hidden;box-shadow:0 8px 26px rgba(0,0,0,.3)}
+.side{padding:9px 12px;min-width:0}.side.r{text-align:right}.name{font-weight:900;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sub{font-size:10px;color:#a9b3ad;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.score{background:#f1f3ef;color:#090b0a;font-size:24px;font-weight:950;padding:5px 14px;display:flex;align-items:center;gap:8px}
+.extra{position:absolute;top:64px;left:50%;transform:translateX(-50%);display:none;max-width:90%;padding:5px 10px;border-radius:999px;background:rgba(6,8,7,.86);border:1px solid rgba(255,255,255,.12);font-size:11px;font-weight:850;white-space:nowrap}.extra.show{display:block}
+.tag{position:absolute;bottom:9px;left:9px;border-radius:999px;background:rgba(5,7,6,.8);border:1px solid rgba(255,255,255,.13);padding:6px 9px;font-size:10px;font-weight:900;letter-spacing:.08em}.dot{color:#ff4d5a}
+.controls{position:absolute;right:8px;bottom:8px;display:flex;gap:7px}.stageBtn{min-height:38px;border:1px solid rgba(255,255,255,.15);background:rgba(7,9,8,.8);color:#fff;border-radius:10px;padding:7px 10px;font-size:12px;font-weight:850}
+.event{position:absolute;inset:0;background:rgba(3,4,3,.72);display:flex;flex-direction:column;justify-content:center;align-items:center;opacity:0;pointer-events:none;transition:.18s}.event.show{opacity:1}.event b{font-size:clamp(28px,8vw,60px);letter-spacing:.05em}.event span{margin-top:5px;color:#d9e0db;font-size:14px}
+.panel{margin-top:9px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px}.head{display:flex;justify-content:space-between;align-items:center;gap:8px}.head b{font-size:14px}.status{font-size:11px;color:var(--muted)}.setup{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.field{display:flex;flex-direction:column;gap:5px}.field.full{grid-column:1/-1}.field label{font-size:10px;color:var(--muted);font-weight:800}.field input{height:44px;border-radius:10px;border:1px solid #303a34;background:#0d110f;color:#fff;padding:0 10px;font-size:16px;outline:none}.btn{min-height:44px;border-radius:10px;border:1px solid #344039;background:#151b17;color:#eef2ef;font-weight:850;padding:8px 11px}.btn.primary{background:#eef2ee;color:#080a09;border-color:#eef2ee}.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}.hint{font-size:11px;color:#7f8c84;line-height:1.55;margin-top:9px}
+@media(orientation:landscape) and (max-height:520px){body{padding:3px}.stage{border-radius:10px}.panel{display:none}.controls{bottom:6px}.tag{bottom:6px}}
+@media(max-width:430px){.score{font-size:20px;padding:5px 9px}.side{padding:7px 9px}.name{font-size:12px}.setup{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+<section class="stage">
+  <video id="camera" autoplay muted playsinline></video>
+  <div class="centerMsg" id="cameraMsg">开启摄像头后，这台手机只负责直播画面。<br>比分会从记分手机自动同步。</div>
+  <div class="scoreWrap"><div class="scorebar">
+    <div class="side"><div class="name" id="p1">球员A</div><div class="sub" id="club">SAGI POOL</div></div>
+    <div class="score"><span id="s1">0</span><span>:</span><span id="s2">0</span></div>
+    <div class="side r"><div class="name" id="p2">球员B</div><div class="sub" id="mode">等待同步</div></div>
+  </div></div>
+  <div class="extra" id="extra"></div>
+  <div class="event" id="event"><b id="eventTitle">SYNC</b><span id="eventSub">比分更新</span></div>
+  <div class="tag"><span class="dot">●</span> LIVE · SAGI POOL</div>
+  <div class="controls"><button class="stageBtn" id="camBtn" type="button">开启摄像头</button><button class="stageBtn" id="swapBtn" type="button">切换镜头</button></div>
+</section>
+<section class="panel">
+  <div class="head"><b>SAGI 直播屏 · CHINA V2.0</b><span class="status" id="status">未连接</span></div>
+  <div class="setup">
+    <div class="field full"><label>国内同步服务器 HTTPS 地址</label><input id="syncUrl" inputmode="url" placeholder="https://pool-api.example.com"></div>
+    <div class="field"><label>球房同步ID</label><input id="clubId" maxlength="32" value="SAGI-DEMO"></div>
+    <div class="field"><label>球桌</label><input id="table" maxlength="10" value="01桌"></div>
+    <div class="field full"><label>同步密钥（首次设置一次）</label><input id="token" type="password" maxlength="80" placeholder="球房专属密钥"></div>
+  </div>
+  <div class="actions"><button class="btn primary" id="connectBtn" type="button">连接记分手机</button><a class="btn" id="scoreLink" href="./">打开记分端</a></div>
+  <div class="hint">国内正式使用时，这台手机只需要固定机位、开启摄像头并保持页面前台；另一台手机负责点“普胜 / 小金 / 大金 / 黄金9”。两台手机通过国内服务器同步，不依赖海外数据库。</div>
+</section>
+</div>
+<script>
+(()=>{
+const CFG_KEY='sagi_pool_live_screen_cfg_v1';
+const $=s=>document.querySelector(s);
+const params=new URLSearchParams(location.search);
+const modeNames={'8ball':'中式八球','chase4':'4球追分','chase6':'6球追分','chase9':'9球追分'};
+let cfg=loadCfg(), stream=null, facing='environment', timer=null, lastUpdated=0, lastScores='';
+function loadCfg(){try{return Object.assign({url:'',clubId:'SAGI-DEMO',table:'01桌',token:''},JSON.parse(localStorage.getItem(CFG_KEY)||'{}'),params.get('clubId')?{clubId:params.get('clubId')}:{},params.get('table')?{table:(params.get('table').endsWith('桌')?params.get('table'):params.get('table')+'桌')}:{})}catch(e){return{url:'',clubId:'SAGI-DEMO',table:'01桌',token:''}}}
+function norm(v){return String(v||'').trim().replace(/\/+$/,'')}
+function saveCfg(){cfg.url=norm($('#syncUrl').value);cfg.clubId=$('#clubId').value.trim()||'SAGI-DEMO';cfg.table=$('#table').value.trim()||'01桌';cfg.token=$('#token').value;localStorage.setItem(CFG_KEY,JSON.stringify(cfg));updateLink()}
+function fill(){ $('#syncUrl').value=cfg.url;$('#clubId').value=cfg.clubId;$('#table').value=cfg.table;$('#token').value=cfg.token;updateLink()}
+function updateLink(){ $('#scoreLink').href='./?table='+encodeURIComponent(cfg.table.replace(/桌$/,''))+'&club='+encodeURIComponent(cfg.clubId)}
+function setStatus(t){$('#status').textContent=t}
+function flash(title,sub){$('#eventTitle').textContent=title;$('#eventSub').textContent=sub;$('#event').classList.add('show');clearTimeout(flash.t);flash.t=setTimeout(()=>$('#event').classList.remove('show'),900)}
+function render(room){
+  const s=room?.state;if(!s)return;
+  const ps=Array.isArray(s.players)?s.players:[],a=ps[0]||{},b=ps[1]||{},is8=s.mode==='8ball';
+  $('#p1').textContent=a.name||'球员A';$('#p2').textContent=b.name||'球员B';
+  $('#s1').textContent=is8?Number(a.wins||0):Number(a.score||0);$('#s2').textContent=is8?Number(b.wins||0):Number(b.score||0);
+  $('#club').textContent=(s.club||cfg.clubId)+' · '+cfg.table;$('#mode').textContent=modeNames[s.mode]||'比赛中';
+  if(!is8&&ps.length>2){$('#extra').textContent=ps.slice(2).map(p=>(p.name||'球员')+' '+Number(p.score||0)).join('  ·  ');$('#extra').classList.add('show')}else{$('#extra').classList.remove('show')}
+  const signature=ps.map(p=>(is8?p.wins:p.score)).join(':');
+  if(lastScores&&signature!==lastScores) flash('SCORE UPDATE',signature);
+  lastScores=signature;lastUpdated=Number(room.updatedAt||0);
+}
+async function pull(){
+  if(!cfg.url){setStatus('请配置国内服务器');return}
+  try{
+    const url=cfg.url+'/api/rooms/'+encodeURIComponent(cfg.clubId)+'/'+encodeURIComponent(cfg.table);
+    const r=await fetch(url,{headers:{'X-SAGI-Token':cfg.token},cache:'no-store'});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const d=await r.json();
+    if(d.room){if(Number(d.room.updatedAt||0)>=lastUpdated)render(d.room);setStatus('已连接 · '+cfg.table)}
+    else setStatus('已连接 · 等待开台');
+  }catch(e){setStatus(navigator.onLine?'连接失败':'离线')}
+}
+function connect(){saveCfg();clearInterval(timer);pull();timer=setInterval(()=>{if(document.visibilityState==='visible')pull()},1200)}
+async function stopCam(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}$('#camera').srcObject=null;$('#cameraMsg').style.display='grid';$('#camBtn').textContent='开启摄像头'}
+async function startCam(){if(stream){await stopCam();return}if(!navigator.mediaDevices?.getUserMedia){flash('CAMERA','浏览器不支持摄像头');return}try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:facing},width:{ideal:1920},height:{ideal:1080},frameRate:{ideal:30,max:60}},audio:false});$('#camera').srcObject=stream;$('#cameraMsg').style.display='none';$('#camBtn').textContent='关闭摄像头'}catch(e){flash('CAMERA BLOCKED','请允许摄像头权限')}}
+async function swap(){facing=facing==='environment'?'user':'environment';if(stream){await stopCam();await startCam()}else flash('CAMERA',facing==='environment'?'后置镜头':'前置镜头')}
+$('#connectBtn').addEventListener('click',connect);$('#camBtn').addEventListener('click',startCam);$('#swapBtn').addEventListener('click',swap);
+['syncUrl','clubId','table','token'].forEach(id=>$('#'+id).addEventListener('change',saveCfg));
+window.addEventListener('online',pull);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')pull()});
+fill();if(cfg.url)connect();
+})();
+</script>
+</body>
+</html>
