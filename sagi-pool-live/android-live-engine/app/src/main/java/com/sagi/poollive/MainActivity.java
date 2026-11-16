@@ -400,6 +400,11 @@ public class MainActivity extends AppCompatActivity {
             public void onStatus(String message) {
                 if (!message.contains("已连接")) status.setText(message);
             }
+
+            @Override
+            public void onAuthorizationLost(String reason) {
+                stopLiveForAuthorization(reason);
+            }
         });
     }
 
@@ -556,6 +561,23 @@ public class MainActivity extends AppCompatActivity {
 
     private void stopKeepAliveService() {
         stopService(new Intent(this, LiveKeepAliveService.class));
+    }
+
+    private void stopLiveForAuthorization(String reason) {
+        if (!pushing) {
+            status.setText(reason);
+            return;
+        }
+        pushing = false;
+        stopKeepAliveService();
+        overlayHandler.removeCallbacksAndMessages(null);
+        pusher.stopPush();
+        pusher.setWatermark(null, 0f, 0f, 0f);
+        securePrefs.put("sync_token", "");
+        syncToken.setText("");
+        status.setText("直播已强制停止 · " + reason);
+        networkStatus.setText("设备已下线 · 需要重新安装授权");
+        saveConfig();
     }
 
     private void stopLive() {
