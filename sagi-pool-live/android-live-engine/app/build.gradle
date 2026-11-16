@@ -18,12 +18,13 @@ android {
         applicationId "com.sagi.poollive"
         minSdk 23
         targetSdk 35
-        versionCode 11
-        versionName "1.0.0-rc2"
+        versionCode 12
+        versionName "1.0.0-rc3"
 
         buildConfigField "String", "LIVE_LICENSE_URL", '"' + liveLicenceUrl.replace('"','\\\"') + '"'
         buildConfigField "String", "LIVE_LICENSE_KEY", '"' + liveLicenceKey.replace('"','\\\"') + '"'
         buildConfigField "String", "DEFAULT_SYNC_URL", '"' + defaultSyncUrl.replace('"','\\\"') + '"'
+        manifestPlaceholders = [usesCleartextTraffic: "true"]
     }
 
     buildFeatures { buildConfig true }
@@ -43,6 +44,7 @@ android {
         release {
             minifyEnabled false
             shrinkResources false
+            manifestPlaceholders = [usesCleartextTraffic: "false"]
             if (!releaseStorePath.isEmpty()) {
                 signingConfig signingConfigs.release
             }
