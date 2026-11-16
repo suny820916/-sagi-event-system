@@ -72,6 +72,72 @@ async function waitHealth(base){
   return false;
 }
 
+async function stopChild(child){
+  if(!child || child.exitCode!==null)return;
+  child.kill('SIGTERM');
+  await new Promise(resolve=>{
+    const timer=setTimeout(resolve,3000);
+    child.once('exit',()=>{clearTimeout(timer);resolve()});
+  });
+}
+
+function spawnPersistenceServer(port,tmp){
+  return spawn(process.execPath,[serverPath],{
+    env:{...process.env,PORT:String(port),HOST:'127.0.0.1',SAGI_DATA_FILE:tmp,SAGI_REQUIRE_LICENSE:'0'},
+    stdio:['ignore','pipe','pipe']
+  });
+}
+
+async function e2ePersistence(){
+  const port=18788;
+  const base='http://127.0.0.1:'+port;
+  const tmp=path.join(os.tmpdir(),'sagi-pool-persist-selftest-'+process.pid+'.json');
+  const backup=tmp+'.bak';
+  for(const p of [tmp,backup,tmp+'.tmp']){try{fs.rmSync(p,{force:true})}catch{}}
+  let child=null;
+  try{
+    child=spawnPersistenceServer(port,tmp);
+    check(await waitHealth(base),'Persistence server did not start');
+
+    const state={
+      mode:'8ball',
+      club:'持久化测试球房',
+      table:'01桌',
+      players:[{name:'A',score:0,wins:2},{name:'B',score:0,wins:1}],
+      log:[{type:'胜局'}],
+      updatedAt:Date.now()
+    };
+    const post=await fetch(base+'/api/rooms/PERSIST-CLUB/01%E6%A1%8C',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({state,updatedAt:state.updatedAt,deviceId:'persist-selftest'})
+    });
+    check(post.ok,'Persistence write failed');
+    await stopChild(child); child=null;
+    check(fs.existsSync(tmp),'Graceful shutdown did not persist main data file');
+    check(fs.existsSync(backup),'Graceful shutdown did not create backup file');
+
+    child=spawnPersistenceServer(port,tmp);
+    check(await waitHealth(base),'Persistence restart server did not start');
+    const restart=await fetch(base+'/api/rooms/PERSIST-CLUB/01%E6%A1%8C');
+    const restartData=await restart.json();
+    check(restart.ok&&restartData.room?.state?.players?.[0]?.wins===2,'Data did not survive server restart');
+    await stopChild(child); child=null;
+
+    fs.writeFileSync(tmp,'{corrupted-json');
+    child=spawnPersistenceServer(port,tmp);
+    check(await waitHealth(base),'Backup recovery server did not start');
+    const recovered=await fetch(base+'/api/rooms/PERSIST-CLUB/01%E6%A1%8C');
+    const recoveredData=await recovered.json();
+    check(recovered.ok&&recoveredData.room?.state?.players?.[0]?.wins===2,'Backup recovery failed after corrupt main file');
+  }catch(e){
+    failures.push('Persistence E2E error: '+e.message);
+  }finally{
+    await stopChild(child);
+    for(const p of [tmp,backup,tmp+'.tmp']){try{fs.rmSync(p,{force:true})}catch{}}
+  }
+}
+
 async function e2eCommercial(){
   const port=18787;
   const base='http://127.0.0.1:'+port;
@@ -271,13 +337,14 @@ async function e2eCommercial(){
 }
 
 await e2eCommercial();
+await e2ePersistence();
 
 if(failures.length){
   console.error('\nSAGI POOL LIVE SELF-CHECK: FAILED');
   failures.forEach((x,i)=>console.error((i+1)+'. '+x));
   process.exit(1);
 }
-console.log('SAGI POOL LIVE CHINA V2.5 SELF-CHECK: PASSED');
+console.log('SAGI POOL LIVE CHINA V2.6 SELF-CHECK: PASSED');
 console.log('✓ Scorer / club / live / seller JavaScript');
 console.log('✓ PWA cache and core billiards scoring');
 console.log('✓ China sync real read/write flow');
@@ -290,4 +357,6 @@ console.log('✓ Device inventory and per-device remote revoke');
 console.log('✓ Live start / heartbeat / stop telemetry');
 console.log('✓ Live session history and remote-revoke closure');
 console.log('✓ Stale live heartbeat timeout auto-close');
+console.log('✓ Graceful shutdown persistence and restart');
+console.log('✓ Corrupt main-file recovery from .bak');
 console.log('✓ Admin license listing and revoke');
