@@ -225,6 +225,18 @@ async function e2eCommercial(){
     const licData=await lic.json();
     check(lic.ok&&licData.license?.plan==='CLUB PRO','License verification failed');
 
+    const renewedExpiry=Date.now()+365*86400000;
+    const renew=await fetch(base+'/api/admin/licenses/TEST-CLUB/renew',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-SAGI-Admin':'admin-secret'},
+      body:JSON.stringify({expiresAt:renewedExpiry,plan:'CLUB PRO',maxTables:2})
+    });
+    const renewData=await renew.json();
+    check(renew.ok&&renewData.license?.active===true,'License renewal failed');
+    check(Number(renewData.license?.expiresAt||0)===renewedExpiry,'License renewal expiry failed');
+    const afterRenewMainToken=await fetch(base+'/api/license/TEST-CLUB',{headers:{'X-SAGI-Token':'club-secret'}});
+    check(afterRenewMainToken.ok,'License renewal must preserve main token');
+
     const wrong=await fetch(base+'/api/rooms/TEST-CLUB/01%E6%A1%8C',{headers:{'X-SAGI-Token':'wrong-token'}});
     check(wrong.status===401,'Wrong club token should be rejected');
 
@@ -370,6 +382,7 @@ async function e2eCommercial(){
     check(Number(adminStatusData.counts?.licenses||0)>=1,'Admin status license count failed');
     check(Number(adminStatusData.counts?.activeDevices||0)>=1,'Admin status active-device count failed');
     check(typeof adminStatusData.storage?.directoryWritable==='boolean','Admin status storage health missing');
+    check(typeof adminStatusData.counts?.expiringSoon==='number','Admin expiring-soon metric missing');
     const adminStatusUnauthorized=await fetch(base+'/api/admin/status',{headers:{'X-SAGI-Admin':'wrong-status'}});
     check(adminStatusUnauthorized.status===401,'Admin status must reject unauthorized access');
 
@@ -443,7 +456,7 @@ if(failures.length){
   failures.forEach((x,i)=>console.error((i+1)+'. '+x));
   process.exit(1);
 }
-console.log('SAGI POOL LIVE CHINA V2.10 SELF-CHECK: PASSED');
+console.log('SAGI POOL LIVE CHINA V2.11 SELF-CHECK: PASSED');
 console.log('✓ Scorer / club / live / seller JavaScript');
 console.log('✓ PWA cache and core billiards scoring');
 console.log('✓ China sync real read/write flow');
@@ -456,6 +469,7 @@ console.log('✓ Provision claim IP rate limiting');
 console.log('✓ Admin failed-auth rate limiting with valid-key recovery');
 console.log('✓ Admin service/storage health status');
 console.log('✓ Admin downloadable business backup without plaintext main token');
+console.log('✓ Key-preserving license renewal and expiry metrics');
 console.log('✓ Device inventory and per-device remote revoke');
 console.log('✓ Live start / heartbeat / stop telemetry');
 console.log('✓ Live session history and remote-revoke closure');
