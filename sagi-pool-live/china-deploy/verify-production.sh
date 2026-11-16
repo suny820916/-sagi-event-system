@@ -11,6 +11,15 @@ value(){
   local key="$1"
   awk -F= -v k="$key" '$1==k{sub(/^[^=]*=/,"");print;exit}' "$ENV_FILE" 2>/dev/null || true
 }
+service_writable(){
+  local dir="$1"
+  [ -d "$dir" ] || return 1
+  if command -v runuser >/dev/null 2>&1 && id www-data >/dev/null 2>&1; then
+    runuser -u www-data -- test -w "$dir"
+  else
+    test -w "$dir"
+  fi
+}
 
 echo "SAGI POOL V1.0 production verification"
 echo "-------------------------------------"
@@ -48,15 +57,15 @@ if [ -f "$ENV_FILE" ]; then
 
   DATA_FILE="$(value SAGI_DATA_FILE)"
   BACKUP_DIR="$(value SAGI_BACKUP_DIR)"
-  if [ -n "$DATA_FILE" ] && [ -d "$(dirname "$DATA_FILE")" ] && [ -w "$(dirname "$DATA_FILE")" ]; then
-    ok "Data directory writable"
+  if [ -n "$DATA_FILE" ] && service_writable "$(dirname "$DATA_FILE")"; then
+    ok "Data directory writable by service user"
   else
-    fail "Data directory missing or not writable"
+    fail "Data directory missing or not writable by service user"
   fi
-  if [ -n "$BACKUP_DIR" ] && [ -d "$BACKUP_DIR" ] && [ -w "$BACKUP_DIR" ]; then
-    ok "Backup directory writable"
+  if [ -n "$BACKUP_DIR" ] && service_writable "$BACKUP_DIR"; then
+    ok "Backup directory writable by service user"
   else
-    fail "Backup directory missing or not writable"
+    fail "Backup directory missing or not writable by service user"
   fi
 fi
 
