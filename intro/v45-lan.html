@@ -1554,7 +1554,7 @@ const BROADCAST_MANUAL=[
 
 let matchdayState={homeScore:0,awayScore:0,scoreboardVisible:false,scoreboardFrozen:false,period:'1H',clockBase:0,clockRunning:false,clockStartedAt:0,lastEvent:null,eventLog:[],replayMarkers:[],homeColor:'#d8b55b',awayColor:'#4c7dff',accentColor:'#f4f0e8',homeShort:'',awayShort:'',homeRedCards:0,awayRedCards:0,homePen:0,awayPen:0,stoppageTime:'',scoreTheme:'sagi-pro',overlayVisible:false};
 let technicalReady=false,matchModeActive=false,matchOperatorRole='FULL',mdMacroTimer=null,mdMacroSeq=0;
-let graphicsDirectorSettings={enabled:true,autoReplay:false,replayHold:3500,returnSlot:'cam1'},gdTimers=[],gdSequence=0,gdAutoCameraActive=false;
+let graphicsDirectorSettings={enabled:true,autoReplay:false,replayHold:3500,returnSlot:'cam1'},gdTimers=[],gdCameraTimers=[],gdSequence=0,gdAutoCameraActive=false;
 function mdPeriodName(p){return({'1H':'上半场','2H':'下半场','ET1':'加时上半场','ET2':'加时下半场','PEN':'点球大战'})[p]||p}
 function mdNowSeconds(){return Math.max(0,matchdayState.clockBase+(matchdayState.clockRunning?((Date.now()-matchdayState.clockStartedAt)/1000):0))}
 function mdFormat(sec){sec=Math.max(0,Math.floor(Number(sec)||0));return String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0')}
@@ -1717,11 +1717,15 @@ function gdSaveFromUI(){
  gdPersist();gdRefreshUI()
 }
 function gdClearTimers(){for(const t of gdTimers)clearTimeout(t);gdTimers=[]}
+function gdClearCameraTimers(){for(const t of gdCameraTimers)clearTimeout(t);gdCameraTimers=[]}
 function gdSchedule(fn,ms,seq=gdSequence){
  const id=setTimeout(()=>{if(seq!==gdSequence)return;fn()},Math.max(0,Number(ms)||0));gdTimers.push(id);return id
 }
+function gdScheduleCamera(fn,ms,seq=gdSequence){
+ const id=setTimeout(()=>{if(seq!==gdSequence||!gdAutoCameraActive)return;fn()},Math.max(0,Number(ms)||0));gdCameraTimers.push(id);return id
+}
 function gdAbort(showNote=true){
- gdSequence++;gdClearTimers();gdAutoCameraActive=false;clearTimeout(mdMacroTimer);mdMacroSeq++;
+ gdSequence++;gdClearTimers();gdClearCameraTimers();gdAutoCameraActive=false;clearTimeout(mdMacroTimer);mdMacroSeq++;
  gdSetStatus('AUTO FLOW ABORTED','manual');if(showNote)note('自动导播流程已终止')
 }
 async function gdEnsureOverlay(){
@@ -1751,10 +1755,10 @@ async function gdRunEvent(ev,holdMs=5200){
   },520,seq);
   if(graphicsDirectorSettings.autoReplay&&matchReady){
    gdAutoCameraActive=true;
-   gdSchedule(async()=>{
+   gdClearCameraTimers();gdScheduleCamera(async()=>{
     gdSetStatus('AUTO REPLAY · PROGRAM','busy');await gdTakeCamera('replay','AUTO GOAL REPLAY')
    },1450,seq);
-   gdSchedule(async()=>{
+   gdScheduleCamera(async()=>{
     await gdTakeCamera(graphicsDirectorSettings.returnSlot||'cam1','AUTO RETURN TO MATCH');gdAutoCameraActive=false;gdSetStatus('3/3 · RETURN SCOREBUG','busy')
    },1450+(Number(graphicsDirectorSettings.replayHold)||3500),seq)
   }
@@ -1947,7 +1951,7 @@ async function publishVmixDirector(functionName,input='',duration=0,label='',val
 }
 
 function vdTake(slot){
- if(gdAutoCameraActive){gdAbort(false);gdSetStatus('MANUAL CAMERA OVERRIDE','manual')}
+ if(gdAutoCameraActive){gdClearCameraTimers();gdAutoCameraActive=false;gdSetStatus('MANUAL CAMERA OVERRIDE','manual')}
  if(!requireMatchReady())return;vdSave();const input=vdInput(slot),fn=vmixDirectorSettings.transition,d=fn==='Fade'?vmixDirectorSettings.duration:0;publishVmixDirector(fn,input,d,'PROGRAM '+slot.toUpperCase());
 }
 function vdPreview(slot){publishVmixDirector('PreviewInput',vdInput(slot),0,'PREVIEW '+slot.toUpperCase())}
