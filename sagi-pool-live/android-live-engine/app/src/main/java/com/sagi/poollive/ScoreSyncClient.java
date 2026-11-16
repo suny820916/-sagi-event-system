@@ -17,6 +17,11 @@ public final class ScoreSyncClient {
     public interface Listener {
         void onScore(ScoreState state);
         void onStatus(String status);
+        void onAuthorizationLost(String reason);
+    }
+
+    private static final class AuthorizationException extends Exception {
+        AuthorizationException(String message) { super(message); }
     }
 
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -32,6 +37,11 @@ public final class ScoreSyncClient {
                     ScoreState state = fetch(baseUrl, clubId, table, token);
                     if (state != null) main.post(() -> listener.onScore(state));
                     main.post(() -> listener.onStatus("比分同步已连接"));
+                } catch (AuthorizationException e) {
+                    running = false;
+                    String msg = e.getMessage() == null ? "设备授权已失效" : e.getMessage();
+                    main.post(() -> listener.onAuthorizationLost(msg));
+                    break;
                 } catch (Exception e) {
                     String msg = e.getMessage() == null ? "同步失败" : e.getMessage();
                     main.post(() -> listener.onStatus(msg));
@@ -62,8 +72,8 @@ public final class ScoreSyncClient {
         c.setRequestProperty("Cache-Control", "no-store");
 
         int code = c.getResponseCode();
-        if (code == 401) throw new IllegalStateException("授权无效或已到期");
-        if (code == 403) throw new IllegalStateException("已超出授权球桌数");
+        if (code == 401) throw new AuthorizationException("设备授权无效、已到期或已被远程下线");
+        if (code == 403) throw new AuthorizationException("该设备已超出授权球桌范围");
         if (code < 200 || code >= 300) throw new IllegalStateException("同步错误 " + code);
 
         try (BufferedReader r = new BufferedReader(
