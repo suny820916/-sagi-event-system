@@ -1,0 +1,45 @@
+name: SAGI vMix V4.27.0 TORANHE Scorebug Self Test
+
+on:
+  push:
+    paths:
+      - "intro/vmix-v45-lan.html"
+      - "intro/v45-lan.html"
+      - "intro/assets/toranhe-event-logo.png"
+      - "intro/tests/v4270-browser-selftest.mjs"
+      - ".github/workflows/vmix-v4270-selftest.yml"
+      - "intro/SAGI_VMIX_LAN_V48_TORANHE_SCOREBUG_4270.bat"
+  workflow_dispatch:
+
+jobs:
+  browser-selftest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@latest
+          npx playwright install --with-deps chromium
+      - name: Run V4.27.0 broadcast self-test
+        run: |
+          mkdir -p selftest-artifacts
+          node intro/tests/v4270-browser-selftest.mjs
+      - name: Upload V4.27.0 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: SAGI_V4270_TORANHE_SCOREBUG_SELFTEST
+          path: selftest-artifacts
+          retention-days: 7
+      - name: Export certified launcher only after all tests pass
+        if: success() && hashFiles('intro/SAGI_VMIX_LAN_V48_TORANHE_SCOREBUG_4270.bat') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: SAGI_VMIX_V4270_TORANHE_SCOREBUG_CERTIFIED
+          path: intro/SAGI_VMIX_LAN_V48_TORANHE_SCOREBUG_4270.bat
+          if-no-files-found: error
+          retention-days: 7
