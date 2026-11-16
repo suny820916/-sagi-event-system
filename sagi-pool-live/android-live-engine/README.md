@@ -1,6 +1,6 @@
-# SAGI POOL LIVE ENGINE · Android V1.0 RC4\n\n面向中国大陆球房的原生台球直播推流引擎。
+# SAGI POOL LIVE ENGINE · Android V1.0 RC5\n\n面向中国大陆球房的原生台球直播推流引擎。\n\n## V1.0 RC5 直播误操作保护\n\n- 直播中按返回键必须二次确认。\n- 选择“继续直播”不会改变推流状态。\n- 选择“停止并退出”会先正常 stop RTMP / 前台服务 / 会话日志，再退出。\n- 诊断日志记录 user_exit_stop，用于区分人为停播与网络故障。
 
-## V1.0 RC4 安装安全收口
+## V1.0 RC5 直播误操作保护
 
 - LiteAV 原生重连优先。
 - SDK 最终进入 Disconnected 后，SAGI 看门狗再做应用层兜底恢复。
