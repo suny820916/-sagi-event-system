@@ -1,4 +1,4 @@
-# SAGI V4.7.2 STABLE LAN / FILTER ENGINE / MATCH SAFE Bridge
+# SAGI V4.7.3 STABLE LAN / RAW UPDATE / MATCH SAFE Bridge
 # Same-LAN control server + local vMix API bridge.
 # Phone Control: http://<PC-LAN-IP>:8099/
 # vMix Browser:  http://127.0.0.1:8099/vmix
@@ -16,7 +16,8 @@ $MatchdayStateFile = Join-Path $Root "matchday-state.json"
 $MatchProjectsFile = Join-Path $Root "match-projects.json"
 $ControlBackup = Join-Path $Root "control-backup.html"
 $OutputBackup  = Join-Path $Root "output-backup.html"
-$RemoteBase   = "https://suny820916.github.io/-sagi-event-system/intro"
+$RemoteBase   = "https://raw.githubusercontent.com/suny820916/-sagi-event-system/main/intro"
+$RemotePages  = "https://suny820916.github.io/-sagi-event-system/intro"
 
 $Allowed = @(
   "Cut","Fade","Stinger1","PreviewInput",
@@ -69,8 +70,14 @@ function Update-SagiLan {
   $controlDownload = $ControlCache + ".download"
   $outputDownload = $OutputCache + ".download"
   try {
-    Invoke-WebRequest -UseBasicParsing -Uri ($RemoteBase + "/v45-lan.html?t=" + $stamp) -TimeoutSec 8 -Headers @{"Cache-Control"="no-cache"} -OutFile $controlDownload
-    Invoke-WebRequest -UseBasicParsing -Uri ($RemoteBase + "/vmix-v45-lan.html?t=" + $stamp) -TimeoutSec 8 -Headers @{"Cache-Control"="no-cache"} -OutFile $outputDownload
+    try {
+      Invoke-WebRequest -UseBasicParsing -Uri ($RemoteBase + "/v45-lan.html?t=" + $stamp) -TimeoutSec 10 -Headers @{"Cache-Control"="no-cache"} -OutFile $controlDownload
+      Invoke-WebRequest -UseBasicParsing -Uri ($RemoteBase + "/vmix-v45-lan.html?t=" + $stamp) -TimeoutSec 10 -Headers @{"Cache-Control"="no-cache"} -OutFile $outputDownload
+    } catch {
+      Write-Host "[SAFE UPDATE] Raw GitHub unavailable, falling back to GitHub Pages..." -ForegroundColor DarkYellow
+      Invoke-WebRequest -UseBasicParsing -Uri ($RemotePages + "/v45-lan.html?t=" + $stamp) -TimeoutSec 10 -Headers @{"Cache-Control"="no-cache"} -OutFile $controlDownload
+      Invoke-WebRequest -UseBasicParsing -Uri ($RemotePages + "/vmix-v45-lan.html?t=" + $stamp) -TimeoutSec 10 -Headers @{"Cache-Control"="no-cache"} -OutFile $outputDownload
+    }
 
     if ((Get-Item $controlDownload).Length -lt 50000) { throw "Control update too small" }
     if ((Get-Item $outputDownload).Length -lt 20000) { throw "Graphics update too small" }
@@ -264,7 +271,7 @@ function State-Json {
 
 Write-Host ""
 Write-Host "============================================================" -ForegroundColor Cyan
-Write-Host "  SAGI V4.7.2 MATCH SAFE LAN DIRECT - vMix Bridge" -ForegroundColor Cyan
+Write-Host "  SAGI V4.7.3 MATCH SAFE LAN DIRECT - vMix Bridge" -ForegroundColor Cyan
 Write-Host "============================================================" -ForegroundColor Cyan
 
 if (-not (Test-Path $ControlCache) -or -not (Test-Path $OutputCache)) {
