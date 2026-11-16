@@ -235,6 +235,11 @@ public class MainActivity extends AppCompatActivity {
             status.setText("请填写国内同步服务器，正式版可预置");
             return;
         }
+        if (!BuildConfig.DEBUG && !base.startsWith("https://")) {
+            diagnostics.add("install_fail", "release_requires_https");
+            status.setText("正式版只允许 HTTPS 国内服务器");
+            return;
+        }
         if (code.length() < 6) {
             status.setText("请输入有效安装码");
             return;
@@ -290,6 +295,11 @@ public class MainActivity extends AppCompatActivity {
         if (api.isEmpty()) {
             diagnostics.add("preflight_fail", "sync_url_missing");
             status.setText("检测失败 · 未配置国内同步服务器");
+            return;
+        }
+        if (!BuildConfig.DEBUG && !api.startsWith("https://")) {
+            diagnostics.add("preflight_fail", "release_requires_https");
+            status.setText("检测失败 · 正式版同步服务器必须使用 HTTPS");
             return;
         }
         if (cid.isEmpty() || table.isEmpty() || token.isEmpty()) {
