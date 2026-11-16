@@ -63,6 +63,8 @@ check(html.includes("state.mode==='8ball'"),'8-ball mode logic missing');
 check(html.includes("sagi_pool_live_v20_"),'V2 per-table storage key missing');
 check(html.includes('授权无效或已到期'),'License error UI missing from scorer');
 check(club.includes('/api/clubs/'),'Club cloud endpoint missing');
+check(club.includes("setInterval(()=>{if(document.visibilityState==='visible'&&cfg.syncUrl&&!cloudAuthBlocked)refreshCloud()},3000)"),'Club dashboard 3-second cloud polling missing');
+check(club.includes('cloudLoading')&&club.includes('cloudAuthBlocked'),'Club dashboard polling guards missing');
 check(live.includes('/api/rooms/'),'Live screen cloud endpoint missing');
 check(html.includes('webDeviceId()'),'Scorer stable web device identity missing');
 check(html.includes("deviceLabel:'Web记分端"),'Scorer device label missing');
