@@ -8,6 +8,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.InputType;
+import android.text.method.PasswordTransformationMethod;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ArrayAdapter;
@@ -18,6 +20,7 @@ import android.widget.TextView;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.tencent.live2.V2TXLiveCode;
@@ -42,7 +45,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView status, networkStatus, player1, player2, score, zoomLabel;
     private EditText installCode, syncUrl, clubId, tableNo, syncToken, rtmpUrl;
     private Spinner qualitySpinner;
-    private Button audioButton, directorModeButton;
+    private Button audioButton, directorModeButton, configLockButton, claimInstallButton;
     private View controlPanel;
     private SecurePrefs securePrefs;
 
@@ -81,6 +84,8 @@ public class MainActivity extends AppCompatActivity {
         qualitySpinner = findViewById(R.id.qualitySpinner);
         audioButton = findViewById(R.id.audioButton);
         directorModeButton = findViewById(R.id.directorModeButton);
+        configLockButton = findViewById(R.id.configLockButton);
+        claimInstallButton = findViewById(R.id.claimInstallButton);
         controlPanel = findViewById(R.id.controlPanel);
         securePrefs = new SecurePrefs(this);
 
@@ -93,7 +98,7 @@ public class MainActivity extends AppCompatActivity {
 
         loadConfig();
 
-        ((Button)findViewById(R.id.claimInstallButton)).setOnClickListener(v -> claimInstall());
+        claimInstallButton.setOnClickListener(v -> claimInstall());
         ((Button)findViewById(R.id.healthButton)).setOnClickListener(v -> runPreflight(false));
         ((Button)findViewById(R.id.startButton)).setOnClickListener(v -> runPreflight(true));
         ((Button)findViewById(R.id.stopButton)).setOnClickListener(v -> stopLive());
@@ -103,6 +108,7 @@ public class MainActivity extends AppCompatActivity {
         ((Button)findViewById(R.id.zoomInButton)).setOnClickListener(v -> changeZoom(0.5f));
         audioButton.setOnClickListener(v -> toggleAudio());
         directorModeButton.setOnClickListener(v -> toggleDirectorMode());
+        configLockButton.setOnClickListener(v -> handleConfigLock());
 
         pusher = new V2TXLivePusherImpl(this, V2TXLiveDef.V2TXLiveMode.TXLiveMode_RTMP);
         pusher.setRenderView(preview);
@@ -126,6 +132,7 @@ public class MainActivity extends AppCompatActivity {
         String audio = securePrefs.get("audio_enabled");
         audioEnabled = audio.isEmpty() || "1".equals(audio);
         updateAudioButton();
+        applyConfigLockUI();
     }
 
     private void saveConfig() {
@@ -136,6 +143,67 @@ public class MainActivity extends AppCompatActivity {
         securePrefs.put("rtmp_url", rtmpUrl.getText().toString().trim());
         securePrefs.put("quality", String.valueOf(qualitySpinner.getSelectedItemPosition()));
         securePrefs.put("audio_enabled", audioEnabled ? "1" : "0");
+    }
+
+    private boolean isConfigLocked() {
+        return "1".equals(securePrefs.get("config_locked"));
+    }
+
+    private void handleConfigLock() {
+        final boolean locked = isConfigLocked();
+        final EditText pin = new EditText(this);
+        pin.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_VARIATION_PASSWORD);
+        pin.setTransformationMethod(PasswordTransformationMethod.getInstance());
+        pin.setHint(locked ? "输入管理 PIN" : "设置 4–8 位管理 PIN");
+
+        new AlertDialog.Builder(this)
+                .setTitle(locked ? "解锁直播配置" : "锁定直播配置")
+                .setMessage(locked
+                        ? "解锁后可修改同步密钥和 RTMP 地址。"
+                        : "锁定后普通员工仍可开播、切镜头和操作比分，但不能修改敏感配置。")
+                .setView(pin)
+                .setNegativeButton("取消", null)
+                .setPositiveButton(locked ? "解锁" : "锁定", (dialog, which) -> {
+                    String value = pin.getText().toString().trim();
+                    if (value.length() < 4 || value.length() > 8) {
+                        status.setText("管理 PIN 必须为 4–8 位");
+                        return;
+                    }
+
+                    if (locked) {
+                        String saved = securePrefs.get("config_pin");
+                        if (!value.equals(saved)) {
+                            status.setText("管理 PIN 不正确");
+                            return;
+                        }
+                        securePrefs.put("config_locked", "0");
+                        status.setText("配置已解锁");
+                    } else {
+                        securePrefs.put("config_pin", value);
+                        securePrefs.put("config_locked", "1");
+                        status.setText("配置已锁定");
+                    }
+                    applyConfigLockUI();
+                })
+                .show();
+    }
+
+    private void applyConfigLockUI() {
+        boolean locked = isConfigLocked();
+        syncUrl.setEnabled(!locked);
+        clubId.setEnabled(!locked);
+        tableNo.setEnabled(!locked);
+        syncToken.setEnabled(!locked);
+        rtmpUrl.setEnabled(!locked);
+        installCode.setEnabled(!locked);
+        claimInstallButton.setEnabled(!locked);
+
+        if (locked) {
+            rtmpUrl.setTransformationMethod(PasswordTransformationMethod.getInstance());
+        } else {
+            rtmpUrl.setTransformationMethod(null);
+        }
+        configLockButton.setText(locked ? "解锁配置" : "锁配置");
     }
 
     private int safeInt(String value, int fallback) {
