@@ -1,6 +1,6 @@
-# SAGI POOL LIVE ENGINE · Android V1.0 RC3\n\n面向中国大陆球房的原生台球直播推流引擎。
+# SAGI POOL LIVE ENGINE · Android V1.0 RC4\n\n面向中国大陆球房的原生台球直播推流引擎。
 
-## V1.0 RC3 商业传输安全收口
+## V1.0 RC4 安装安全收口
 
 - LiteAV 原生重连优先。
 - SDK 最终进入 Disconnected 后，SAGI 看门狗再做应用层兜底恢复。
@@ -11,6 +11,7 @@
 - SDK 错误文本中的 RTMP / RTMPS URL、token/secret/key 参数会二次自动脱敏。
 - Debug 构建允许 HTTP 便于本地测试；Release 构建禁止明文 HTTP。
 - Release 安装码领取和开播预检都强制国内同步地址使用 HTTPS。
+- 安装码接口被限速时，Android 明确提示稍后再试。
 - 诊断面板可查看、复制和清空最近日志。
 - 后端 60 秒心跳超时自动清理假直播。
 
