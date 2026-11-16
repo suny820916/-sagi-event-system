@@ -18,7 +18,7 @@
 </head>
 <body>
 <div class="app">
-<header class="top"><div><div class="brand">SAGI POOL SELLER</div><div class="sub">球房商业授权后台 · CHINA V2.3</div></div><div class="pill">仅 SAGI 管理员</div></header>
+<header class="top"><div><div class="brand">SAGI POOL SELLER</div><div class="sub">球房商业授权后台 · CHINA V2.4</div></div><div class="pill">仅 SAGI 管理员</div></header>
 
 <section class="card">
   <div class="head"><h2>国内授权服务器</h2><span class="small" id="serverStatus">未连接</span></div>
@@ -175,7 +175,19 @@ async function loadDevices(clubId,clubName){
       m.textContent='设备ID '+device.id+' · 最近 '+last;
       left.append(n,m);
       const right=document.createElement('div');right.style.cssText='display:flex;flex-direction:column;gap:6px;align-items:flex-end';
-      const st=document.createElement('div');st.className='status'+(device.revoked?' off':'');st.textContent=device.revoked?'已下线':'在线授权';right.appendChild(st);
+      const live=device.live||{};
+      const st=document.createElement('div');
+      st.className='status'+(device.revoked?' off':'');
+      st.textContent=device.revoked?'已下线':(live.active?'● 直播中':'在线授权');
+      right.appendChild(st);
+      if(live.active){
+        const liveMeta=document.createElement('div');liveMeta.className='meta';
+        liveMeta.textContent=(live.bitrate||0)+'kbps · '+(live.fps||0)+'fps · '+(live.width||0)+'×'+(live.height||0);
+        right.appendChild(liveMeta);
+      }
+      const sessions=document.createElement('button');sessions.className='btn';sessions.style.cssText='min-height:32px;padding:4px 8px;font-size:10px';sessions.textContent='直播记录 '+Number(device.sessionCount||0);
+      sessions.addEventListener('click',()=>loadSessions(clubId,device));
+      right.appendChild(sessions);
       if(!device.revoked){
         const revoke=document.createElement('button');revoke.className='btn';revoke.style.cssText='min-height:32px;padding:4px 8px;font-size:10px';revoke.textContent='远程下线';
         revoke.addEventListener('click',async()=>{
@@ -190,6 +202,28 @@ async function loadDevices(clubId,clubName){
       row.append(left,right);box.appendChild(row);
     });
   }catch(e){$('#deviceList').innerHTML='<div class="empty">'+e.message+'</div>'}
+}
+
+async function loadSessions(clubId,device){
+  try{
+    const d=await api('/api/admin/licenses/'+encodeURIComponent(clubId)+'/devices/'+encodeURIComponent(device.id)+'/sessions');
+    const box=$('#deviceList');
+    const wrap=document.createElement('div');wrap.style.cssText='grid-column:1/-1;border-top:1px solid #273029;margin-top:6px;padding-top:8px';
+    const title=document.createElement('div');title.className='small';title.style.marginBottom='6px';title.textContent=(device.label||device.id)+' · 最近直播记录';
+    wrap.appendChild(title);
+    if(!d.sessions?.length){
+      const e=document.createElement('div');e.className='empty';e.textContent='暂无已结束直播记录。';wrap.appendChild(e);
+    }else{
+      d.sessions.slice(0,10).forEach(x=>{
+        const line=document.createElement('div');line.className='meta';line.style.margin='5px 0';
+        const start=x.startedAt?new Date(x.startedAt).toLocaleString('zh-CN'):'未知';
+        const end=x.endedAt?new Date(x.endedAt).toLocaleString('zh-CN'):'未知';
+        line.textContent=start+' → '+end+' · '+(x.reason||'stop')+' · '+Number(x.maxBitrate||0)+'kbps峰值 · '+Number(x.lastFps||0)+'fps';
+        wrap.appendChild(line);
+      });
+    }
+    box.prepend(wrap);
+  }catch(e){setStatus('直播记录读取失败')}
 }
 
 async function refresh(){
