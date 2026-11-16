@@ -40,6 +40,7 @@ public class MainActivity extends AppCompatActivity {
     private final ScoreSyncClient syncClient = new ScoreSyncClient();
     private final ProvisionClient provisionClient = new ProvisionClient();
     private final HealthCheckClient healthCheckClient = new HealthCheckClient();
+    private final LiveSessionClient liveSessionClient = new LiveSessionClient();
     private final ScoreWatermarkRenderer watermarkRenderer = new ScoreWatermarkRenderer();
     private final Handler overlayHandler = new Handler(Looper.getMainLooper());
 
@@ -59,6 +60,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean audioEnabled = true;
     private boolean directorMode = false;
     private ScoreState latestState;
+    private long lastLiveHeartbeatAt = 0L;
 
     private final ActivityResultLauncher<String[]> permissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), this::onPermissions);
@@ -563,11 +565,26 @@ public class MainActivity extends AppCompatActivity {
         stopService(new Intent(this, LiveKeepAliveService.class));
     }
 
+    private void sendLiveTelemetry(String action, int bitrate, int fps, int width, int height, String error) {
+        liveSessionClient.send(
+                syncUrl.getText().toString().trim(),
+                clubId.getText().toString().trim(),
+                deviceId(),
+                syncToken.getText().toString(),
+                action,
+                bitrate,
+                fps,
+                width,
+                height,
+                error);
+    }
+
     private void stopLiveForAuthorization(String reason) {
         if (!pushing) {
             status.setText(reason);
             return;
         }
+        sendLiveTelemetry("stop", 0, 0, 0, 0, "authorization_lost");
         pushing = false;
         stopKeepAliveService();
         overlayHandler.removeCallbacksAndMessages(null);
@@ -581,6 +598,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void stopLive() {
+        if (pushing) sendLiveTelemetry("stop", 0, 0, 0, 0, "");
         pushing = false;
         stopKeepAliveService();
         overlayHandler.removeCallbacksAndMessages(null);
@@ -606,6 +624,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onError(int code, String msg, Bundle extraInfo) {
+            sendLiveTelemetry("error", 0, 0, 0, 0, code + " · " + msg);
             runOnUiThread(() -> status.setText("推流错误 " + code + " · " + msg));
         }
 
@@ -617,6 +636,7 @@ public class MainActivity extends AppCompatActivity {
             runOnUiThread(() -> {
                 if (pushStatus == V2TXLiveDef.V2TXLivePushStatus.V2TXLivePushStatusConnectSuccess) {
                     status.setText("● LIVE · 推流已连接");
+                    sendLiveTelemetry("start", 0, 0, 0, 0, "");
                 } else if (pushStatus == V2TXLiveDef.V2TXLivePushStatus.V2TXLivePushStatusReconnecting) {
                     status.setText("推流重连中…");
                 } else if (pushStatus == V2TXLiveDef.V2TXLivePushStatus.V2TXLivePushStatusConnecting) {
@@ -629,6 +649,17 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onStatisticsUpdate(V2TXLiveDef.V2TXLivePusherStatistics statistics) {
+            long now = System.currentTimeMillis();
+            if (pushing && now - lastLiveHeartbeatAt >= 15000L) {
+                lastLiveHeartbeatAt = now;
+                sendLiveTelemetry(
+                        "heartbeat",
+                        statistics.videoBitrate,
+                        statistics.fps,
+                        statistics.width,
+                        statistics.height,
+                        "");
+            }
             runOnUiThread(() -> networkStatus.setText(
                     "网络：" + statistics.videoBitrate + "kbps · "
                             + statistics.fps + "fps · "
@@ -645,6 +676,7 @@ public class MainActivity extends AppCompatActivity {
         syncClient.shutdown();
         provisionClient.shutdown();
         healthCheckClient.shutdown();
+        liveSessionClient.shutdown();
         if (pusher != null) {
             pusher.setObserver(null);
             pusher.stopPush();
