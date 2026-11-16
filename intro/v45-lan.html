@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#07090d">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" href="./sagi-app-icon.svg">
 <meta name="application-name" content="SAGI LIVE MATCH DIRECTOR">
@@ -2238,7 +2241,7 @@ installBtn.addEventListener('click',async()=>{
   }
 });
 
-if(false&&'serviceWorker' in navigator){
+if('serviceWorker' in navigator&&window.isSecureContext){
   navigator.serviceWorker.register('./sw.js',{scope:'./',updateViaCache:'none'}).then(reg=>{
     reg.update().catch(()=>{});
 
@@ -2285,6 +2288,32 @@ if(false&&'serviceWorker' in navigator){
 }
 
 setInstalledState();
+
+const HOME_SCREEN_BUILD='V4.8-HOME-20261116-01';
+async function homeScreenColdStartUpdate(){
+  if(!standalone||location.protocol!=='http:')return;
+  const once='sagi_homescreen_boot_'+HOME_SCREEN_BUILD;
+  try{if(sessionStorage.getItem(once))return;sessionStorage.setItem(once,'1')}catch(e){}
+  setStatus('主屏幕启动 · 正在同步最新 V4.8…');
+  try{
+    const r=await fetch('/api/update',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}',cache:'no-store'});
+    const x=await r.json().catch(()=>({}));
+    if(r.ok&&x.ok){
+      try{localStorage.setItem('sagi_homescreen_last_update',String(Date.now()))}catch(e){}
+      location.replace('/?homescreen='+Date.now());
+      return;
+    }
+  }catch(e){}
+  setStatus('主屏幕已打开 · 未连接到更新服务，继续使用本机版本');
+}
+if(standalone){
+  window.addEventListener('pageshow',e=>{
+    if(e.persisted){
+      try{location.replace('/?resume='+Date.now())}catch(_){}
+    }
+  });
+  setTimeout(homeScreenColdStartUpdate,350);
+}
 })();
 </script>
 
