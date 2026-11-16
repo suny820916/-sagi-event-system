@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="format-detection" content="telephone=no">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%2307090d%22/%3E%3Ctext x=%2232%22 y=%2243%22 text-anchor=%22middle%22 font-size=%2234%22 fill=%22%23d8b55b%22%3ES%3C/text%3E%3C/svg%3E">
-<title>SAGI V4.9 · MATCH SETUP UX · SMART ROSTER</title>
+<title>SAGI V4.10 · TEAM ZIP IMPORT · SMART ROSTER</title>
 <style>
 :root{--bg:#07090d;--panel:#11151c;--line:#2b3340;--text:#f4f0e8;--muted:#8f97a5;--gold:#d8b55b;--green:#72c79a}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
@@ -335,7 +335,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 </head>
 <body>
 <div class="app">
-  <div class="top"><div><div class="brand">SAGI LIVE MATCH DIRECTOR</div><div class="sub">V4.9.0 · MATCH SETUP UX · LAN DIRECT · 主客队独立工作流</div></div><div class="topRight"><div class="ver">V4.9.0</div><button id="mobileUpdateBtn" class="mobileUpdateBtn" type="button">↻ 安全更新</button><button id="mobileRollbackBtn" class="mobileRollbackBtn" type="button">↶ 回退上一版</button><div id="mobileUpdateStatus" class="mobileUpdateStatus">V4.9.0 · UX UPGRADE · Bridge 已锁定</div></div></div>
+  <div class="top"><div><div class="brand">SAGI LIVE MATCH DIRECTOR</div><div class="sub">V4.10.0 · TEAM ZIP IMPORT · MATCH SETUP UX</div></div><div class="topRight"><div class="ver">V4.10.0</div><button id="mobileUpdateBtn" class="mobileUpdateBtn" type="button">↻ 安全更新</button><button id="mobileRollbackBtn" class="mobileRollbackBtn" type="button">↶ 回退上一版</button><div id="mobileUpdateStatus" class="mobileUpdateStatus">V4.10.0 · TEAM ZIP IMPORT · Bridge 已锁定</div></div></div>
 
   <div id="pwaBar" class="pwaBar" style="display:none">
     <div class="pwaInfo">
@@ -357,7 +357,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 
   <div id="setupDesk" class="setupDesk">
     <div class="setupHead">
-      <div class="setupTitle">比赛设置 · MATCH SETUP ENGINE<small>V4.9.0 · 四步赛前流程 · 主客队状态 · READY GATE</small></div>
+      <div class="setupTitle">比赛设置 · MATCH SETUP ENGINE<small>V4.10.0 · 球队资料包 · 主客队状态 · READY GATE</small></div>
       <div id="setupReadyBadge" class="setupReadyBadge">NOT READY</div>
     </div>
     <div class="setupGrid">
@@ -784,14 +784,14 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
         <h2>球员名单 · <span id="rosterSideText">HOME 主队</span></h2>
         <div class="importTarget"><span>本次导入将替换</span><b id="importTargetBadge">HOME 主队</b></div>
         <div class="rosterImport">
-          <div class="riHead"><div><div class="riTitle">SMART ROSTER IMPORT · 智能名单导入</div><div class="riSub">照片 / JSON / Excel / CSV / Word / PDF / 文本 → 识别预览 → 一键替换当前球队名单</div></div><div class="riBadge">赛前工具 · 不影响直播核心</div></div>
+          <div class="riHead"><div><div class="riTitle">SMART ROSTER IMPORT · 智能名单导入</div><div class="riSub">推荐：球队 ZIP 资料包（Excel + photos + 队徽）→ 自动匹配 → 一键替换当前球队；同时兼容 JSON / Excel / CSV / Word / PDF / 文本</div></div><div class="riBadge">赛前工具 · 不影响直播核心</div></div>
           <div class="riButtons">
             <label class="fileBtn riCamera">📷 拍照识别<input id="rosterCameraFile" type="file" accept="image/*" capture="environment"></label>
-            <label class="fileBtn riFile">📁 导入文件<input id="rosterImportFile" type="file" accept="image/*,.txt,.csv,.tsv,.json,.xlsx,.xls,.docx,.pdf,text/plain,text/csv,application/json,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.wordprocessingml.document"></label>
+            <label class="fileBtn riFile">📦 导入球队资料包 / 文件<input id="rosterImportFile" type="file" accept=".zip,application/zip,application/x-zip-compressed,image/*,.txt,.csv,.tsv,.json,.xlsx,.xls,.docx,.pdf,text/plain,text/csv,application/json,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.wordprocessingml.document"></label>
             <button id="rosterPasteToggle" class="riPasteBtn" type="button">⌨ 粘贴名单</button>
           </div>
           <div id="rosterPaste" class="riPaste"><textarea id="rosterPasteText" placeholder="可直接粘贴：&#10;1  张三  GK  首发&#10;5  李四  CB  首发&#10;10 王五  CM  首发&#10;9  赵六  ST  首发&#10;18 阿力  MF  替补"></textarea><div class="riPasteActions"><button id="rosterParsePaste" class="ok" type="button">解析文字</button><button id="rosterPasteClear" type="button">清空</button></div></div>
-          <div id="rosterImportStatus" class="riStatus">支持本地直接解析 TXT/CSV；Excel、Word、PDF、照片在导入时按需加载识别模块。识别结果不会自动写入，必须确认。</div>
+          <div id="rosterImportStatus" class="riStatus">推荐球队资料包：ZIP 内放 1 个 Excel/CSV 名单 + photos 球员照片 + 可选队徽。系统自动按号码/姓名匹配照片；导入前会显示匹配结果。</div>
           <div id="rosterImportPreview" class="riPreview">
             <div class="riTools"><button id="riAllStarter" type="button">前 <span id="riStarterLimit">11</span> 人设首发</button><button id="riAutoRole" type="button">按阵型补位置</button><button id="riClearDraft" type="button">取消导入</button><span id="riCount" class="riCount">0 人</span></div>
             <div class="riTableWrap"><table class="riTable"><thead><tr><th>用</th><th>号码</th><th>姓名</th><th>身份</th><th>位置组</th><th>详细位置</th><th>队长</th><th>提示</th></tr></thead><tbody id="rosterImportBody"></tbody></table></div>
@@ -884,7 +884,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
             </div>
           </div>
         </div>
-        <div class="statusBar"><div id="status" class="status">V4.9.0 · MATCH SETUP UX 已就绪</div><div class="mini">1920 × 1080</div></div>
+        <div class="statusBar"><div id="status" class="status">V4.10.0 · TEAM ZIP IMPORT 已就绪</div><div class="mini">1920 × 1080</div></div>
       </div>
     </div>
   </div>
@@ -1751,11 +1751,12 @@ function initUXV49(){
  q('formation')&&q('formation').addEventListener('change',()=>{refreshUXDashboard();uxQueueAutoSave()});
 }
 
-let rosterImportDraft=[],rosterImportSeq=0;
+let rosterImportDraft=[],rosterImportSeq=0,rosterImportTeamMeta={name:'',crest:'',source:'',photoCount:0};
 const RI_LIBS={
  xlsx:'https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js',
  mammoth:'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.13.0/mammoth.browser.min.js',
- tesseract:'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'
+ tesseract:'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js',
+ jszip:'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js'
 };
 function riStatus(text,kind=''){const el=q('rosterImportStatus');if(!el)return;el.textContent=text;el.className='riStatus'+(kind?' '+kind:'')}
 function riLoadScript(src,globalName,timeout=20000){
@@ -1809,6 +1810,102 @@ function riParseLine(line,index=0){
  const meta=rest.join(' '),role=riRoleFrom(meta),position=riPositionFrom(meta,role),squadType=riSquadFrom(meta);
  return{use:true,number:number||String(index+1),name,role:role||'',position:position||'',squadType:squadType||'',captain:riCaptainFrom(raw),warning:(!number?'缺号码 · ':'')+(!role?'位置待确认':'')}
 }
+
+function riHeaderNorm(s=''){return riClean(s).toLowerCase().replace(/[\s_\-\/\\.（）()：:]+/g,'')}
+const RI_HEADER_ALIASES={
+ number:['号码','球衣号码','背号','no','number','jerseynumber','shirtno'],
+ name:['姓名','球员姓名','球员','name','player','playername'],
+ squad:['身份','名单身份','首发替补','首发/替补','status','squad','squadtype','starter'],
+ role:['位置组','位置类别','role','positiongroup'],
+ position:['详细位置','位置','position','pos'],
+ captain:['队长','captain','iscaptain'],
+ photo:['照片文件','照片文件名','照片','photo','photofile','image','imagefile'],
+ team:['球队名称','球队','队名','teamname','team']
+};
+function riHeaderKey(v){
+ const n=riHeaderNorm(v);for(const [k,arr] of Object.entries(RI_HEADER_ALIASES))if(arr.some(a=>riHeaderNorm(a)===n))return k;return''
+}
+function riSquadSmart(v=''){
+ const s=riClean(v),x=s.toUpperCase();
+ if(/替补|SUB|BENCH/.test(x)||/^(0|否|NO|N)$/i.test(s))return'SUB';
+ if(/首发|START|STARTER/.test(x)||/^(1|是|YES|Y)$/i.test(s))return'STARTER';
+ return riSquadFrom(s)
+}
+function riRowsFromSmartMatrix(matrix){
+ let headerRow=-1,map={};
+ for(let r=0;r<Math.min(12,matrix.length);r++){
+   const m={};(matrix[r]||[]).forEach((v,i)=>{const k=riHeaderKey(v);if(k&&!Object.prototype.hasOwnProperty.call(m,k))m[k]=i});
+   if(m.name!=null&&(m.number!=null||m.position!=null||m.role!=null)){headerRow=r;map=m;break}
+ }
+ if(headerRow<0)return riRowsFromMatrix(matrix);
+ const out=[];
+ for(let r=headerRow+1;r<matrix.length;r++){
+   const row=(matrix[r]||[]).map(riClean),get=k=>(map[k]!=null?riClean(row[map[k]]):'');
+   const name=get('name');if(!name||riLooksHeader(name))continue;
+   const number=get('number')||String(out.length+1),roleRaw=get('role'),posRaw=get('position'),role=riRoleFrom(roleRaw)||riRoleFrom(posRaw),position=riPositionFrom(posRaw||roleRaw,role);
+   const squadType=riSquadSmart(get('squad'))||'',photoRef=get('photo'),teamName=get('team');
+   out.push({use:true,number,name,role:role||'',position:position||role||'',squadType,captain:riCaptainFrom(get('captain')),photoRef,teamName,warning:(!role?'位置待确认':'')})
+ }
+ return out.length?out:riRowsFromMatrix(matrix)
+}
+function riImageMime(name=''){const e=riExt(name);return e==='png'?'image/png':e==='webp'?'image/webp':(e==='gif'?'image/gif':'image/jpeg')}
+function riZipStem(name=''){return String(name).split('/').pop().replace(/\.[^.]+$/,'')}
+function riPhotoKey(s=''){return riHeaderNorm(String(s).replace(/^0+(?=\d)/,''))}
+function riPhotoMatchScore(p,path){
+ const stem=riZipStem(path),key=riPhotoKey(stem),nameKey=riPhotoKey(p.name),num=String(Number(p.number)||p.number||'').replace(/^0+/,'')||'0';
+ if(p.photoRef){
+   const explicit=riPhotoKey(riZipStem(p.photoRef));if(explicit&&explicit===key)return 100;
+ }
+ let score=0;
+ const startNum=(stem.match(/^0*(\d{1,3})(?:[^0-9]|$)/)||[])[1];if(startNum&&String(Number(startNum))===String(Number(num)))score+=12;
+ if(nameKey&&key.includes(nameKey))score+=10;
+ if(nameKey&&nameKey===key)score+=5;
+ return score
+}
+async function riRowsFromWorkbookBuffer(buf){
+ await riLoadScript(RI_LIBS.xlsx,'XLSX',20000);
+ const wb=XLSX.read(buf,{type:'array'}),sheet=wb.Sheets[wb.SheetNames[0]],matrix=XLSX.utils.sheet_to_json(sheet,{header:1,raw:false,defval:''});
+ return riRowsFromSmartMatrix(matrix)
+}
+function riRowsFromJsonData(data){
+ const list=Array.isArray(data)?data:(data.starting_xi||data.players||data.roster||[]);
+ if(!Array.isArray(list)||!list.length)throw new Error('JSON 中没有球员数据');
+ return list.map((p,i)=>{
+   const pos=riClean(p.position_code||p.positionCode||p.position||p.pos||p.role||''),role=riRoleFrom(pos)||riRoleFrom(p.position||'')||'';
+   const starter=(p.starter===true||p.starter===1||String(p.starter).toLowerCase()==='true'||String(p.squadType||'').toUpperCase()==='STARTER');
+   return{use:p.use!==false,number:riClean(p.number||p.no||p.jersey_number||p.jerseyNumber)||String(i+1),name:riClean(p.name||p.player_name||p.playerName),role,position:pos||role,squadType:starter?'STARTER':(String(p.squadType||'').toUpperCase()==='SUB'?'SUB':'STARTER'),captain:!!p.captain,photo:String(p.photo||p.photo_data||p.photoData||p.image||''),photoRef:String(p.photo_file||p.photoFile||''),teamName:riClean(p.team_name||p.teamName||''),warning:''}
+ }).filter(p=>p.name)
+}
+async function riReadTeamZip(file){
+ riStatus('正在打开球队 ZIP 资料包…','work');await riLoadScript(RI_LIBS.jszip,'JSZip',20000);
+ const zip=await JSZip.loadAsync(await file.arrayBuffer()),entries=Object.values(zip.files).filter(x=>!x.dir&&!x.name.startsWith('__MACOSX/')&&!/\/\./.test(x.name));
+ const rosterFiles=entries.filter(x=>['xlsx','xls','csv','tsv','txt','json'].includes(riExt(x.name)));
+ if(!rosterFiles.length)throw new Error('ZIP 中没有找到 Excel/CSV/JSON 名单文件');
+ const pri=e=>{const ext=riExt(e.name),base=/名单|roster|player|team/i.test(e.name)?20:0;return base+({xlsx:9,xls:8,csv:7,tsv:6,json:5,txt:4}[ext]||0)};
+ rosterFiles.sort((a,b)=>pri(b)-pri(a));const rosterEntry=rosterFiles[0],ext=riExt(rosterEntry.name);let rows=[];
+ if(['xlsx','xls'].includes(ext))rows=await riRowsFromWorkbookBuffer(await rosterEntry.async('arraybuffer'));
+ else if(ext==='json')rows=riRowsFromJsonData(JSON.parse(await rosterEntry.async('string')));
+ else rows=riParseText(await rosterEntry.async('string'));
+ if(!rows.length)throw new Error('名单文件中没有识别到球员');
+ const imageEntries=entries.filter(x=>['jpg','jpeg','png','webp'].includes(riExt(x.name)));
+ const crest=imageEntries.find(x=>/队徽|logo|crest|badge/i.test(x.name));
+ const playerImages=imageEntries.filter(x=>x!==crest);
+ const used=new Set();
+ for(const p of rows){
+   let best=null,bestScore=0;
+   for(const img of playerImages){if(used.has(img.name))continue;const s=riPhotoMatchScore(p,img.name);if(s>bestScore){bestScore=s;best=img}}
+   if(best&&bestScore>=10){
+     const blob=await best.async('blob'),tmp=new File([blob],riZipStem(best.name)+'.'+riExt(best.name),{type:riImageMime(best.name)});
+     p.photo=await fileData(tmp,800,.82);p.warning='📷 已匹配';used.add(best.name)
+   }else p.warning=(p.warning?p.warning+' · ':'')+'无照片'
+ }
+ const teamNames=rows.map(x=>riClean(x.teamName)).filter(Boolean),teamName=teamNames[0]||riClean(riZipStem(file.name).replace(/资料包|名单|roster/ig,''));
+ let crestData='';if(crest){const blob=await crest.async('blob'),tmp=new File([blob],riZipStem(crest.name)+'.'+riExt(crest.name),{type:riImageMime(crest.name)});crestData=await fileData(tmp,600,.9)}
+ const matched=rows.filter(x=>x.photo).length;rosterImportTeamMeta={name:teamName,crest:crestData,source:file.name,photoCount:matched};
+ rows.forEach(p=>{if(!p.teamName&&teamName)p.teamName=teamName});
+ riStatus('球队资料包已解析 · '+rows.length+' 人 · 照片 '+matched+'/'+rows.length+(crestData?' · 队徽 ✓':' · 无队徽')+'。请检查后确认替换 '+sideLabel(activeSide)+'。','ok');
+ return rows
+}
 function riRowsFromMatrix(matrix){
  const out=[];for(let r=0;r<matrix.length;r++){
    const row=(matrix[r]||[]).map(riClean);if(!row.some(Boolean))continue;
@@ -1836,7 +1933,7 @@ function riSetDraft(rows,source=''){
  if(!rosterImportDraft.length){q('rosterImportPreview').classList.remove('on');riStatus('没有识别到有效球员。可换一张更清晰的照片，或使用“粘贴名单”。','bad');return}
  const limit=starterLimit();let starterCount=0;
  for(const p of rosterImportDraft){if(!p.squadType){p.squadType=starterCount<limit?'STARTER':'SUB'}if(p.squadType==='STARTER')starterCount++}
- q('rosterImportPreview').classList.add('on');q('riStarterLimit').textContent=limit;riRenderDraft();riStatus('已识别 '+rosterImportDraft.length+' 人'+(source?' · '+source:'')+'。请先检查号码、姓名、首发/替补和位置，再确认导入。','ok')
+ q('rosterImportPreview').classList.add('on');q('riStarterLimit').textContent=limit;riRenderDraft();if(!rosterImportTeamMeta.source)riStatus('已识别 '+rosterImportDraft.length+' 人'+(source?' · '+source:'')+'。请先检查号码、姓名、首发/替补和位置，再确认导入。','ok')
 }
 function riRenderDraft(){
  const body=q('rosterImportBody');if(!body)return;body.innerHTML='';
@@ -1856,30 +1953,10 @@ function riRenderDraft(){
 }
 function riReadTextFile(file){return new Promise((res,rej)=>{const r=new FileReader();r.onerror=()=>rej(r.error);r.onload=()=>res(String(r.result||''));r.readAsText(file,'utf-8')})}
 async function riReadJson(file){
- const raw=await riReadTextFile(file);let data;
- try{data=JSON.parse(raw)}catch(e){throw new Error('JSON 格式错误')}
- const list=Array.isArray(data)?data:(data.starting_xi||data.players||data.roster||[]);
- if(!Array.isArray(list)||!list.length)throw new Error('JSON 中没有球员数据');
- return list.map((p,i)=>{
-   const pos=riClean(p.position_code||p.positionCode||p.position||p.pos||p.role||'');
-   const role=riRoleFrom(pos)||riRoleFrom(p.position||'')||'';
-   const photo=String(p.photo||p.photo_data||p.photoData||p.image||'');
-   const starter=(p.starter===true||p.starter===1||String(p.starter).toLowerCase()==='true'||String(p.squadType||'').toUpperCase()==='STARTER');
-   return{
-     use:p.use!==false,
-     number:riClean(p.number||p.no||p.jersey_number||p.jerseyNumber)||String(i+1),
-     name:riClean(p.name||p.player_name||p.playerName),
-     role,
-     position:pos||role,
-     squadType:starter?'STARTER':(String(p.squadType||'').toUpperCase()==='SUB'?'SUB':'STARTER'),
-     captain:!!p.captain,
-     photo,
-     warning:photo?'📷 已含照片':'无照片'
-   }
- }).filter(p=>p.name)
+ const raw=await riReadTextFile(file);let data;try{data=JSON.parse(raw)}catch(e){throw new Error('JSON 格式错误')}return riRowsFromJsonData(data)
 }
 async function riReadSpreadsheet(file){
- riStatus('正在加载 Excel 解析模块…','work');await riLoadScript(RI_LIBS.xlsx,'XLSX',20000);const buf=await file.arrayBuffer(),wb=XLSX.read(buf,{type:'array'}),sheet=wb.Sheets[wb.SheetNames[0]],matrix=XLSX.utils.sheet_to_json(sheet,{header:1,raw:false,defval:''});return riRowsFromMatrix(matrix)
+ riStatus('正在加载 Excel 解析模块…','work');return riRowsFromWorkbookBuffer(await file.arrayBuffer())
 }
 async function riReadDocx(file){
  riStatus('正在加载 Word 解析模块…','work');await riLoadScript(RI_LIBS.mammoth,'mammoth',20000);const result=await mammoth.extractRawText({arrayBuffer:await file.arrayBuffer()});return riParseText(result.value||'')
@@ -1905,10 +1982,11 @@ async function riReadImage(file){
  try{const r=await worker.recognize(cv);return riParseText(r.data&&r.data.text||'')}finally{await worker.terminate()}
 }
 async function riHandleFile(file){
- if(!file)return;const seq=++rosterImportSeq,ext=riExt(file.name),type=String(file.type||'').toLowerCase();riStatus('读取 '+file.name+'…','work');
+ if(!file)return;const seq=++rosterImportSeq,ext=riExt(file.name),type=String(file.type||'').toLowerCase();rosterImportTeamMeta={name:'',crest:'',source:'',photoCount:0};riStatus('读取 '+file.name+'…','work');
  try{
    let rows=[];
-   if(type.startsWith('image/')||['jpg','jpeg','png','webp','heic','heif'].includes(ext))rows=await riReadImage(file);
+   if(ext==='zip'||type==='application/zip'||type==='application/x-zip-compressed')rows=await riReadTeamZip(file);
+   else if(type.startsWith('image/')||['jpg','jpeg','png','webp','heic','heif'].includes(ext))rows=await riReadImage(file);
    else if(ext==='json'||type==='application/json')rows=await riReadJson(file);
    else if(['csv','tsv','txt'].includes(ext)||type.startsWith('text/'))rows=riParseText(await riReadTextFile(file));
    else if(['xlsx','xls'].includes(ext))rows=await riReadSpreadsheet(file);
@@ -1928,12 +2006,15 @@ function riCommit(){
    const key=(String(x.number)+'|'+String(x.name)).toLowerCase();if(seen.has(key))continue;seen.add(key);
    next.push({id:uid(),name:riClean(x.name),number:riClean(x.number)||'00',squadType:x.squadType||'SUB',role:x.role||'MF',position:riClean(x.position)||x.role||'MF',captain:!!x.captain,statLabel:'',statValue:'',photo:String(x.photo||''),mediaBlob:null,mediaObjectUrl:'',mediaUrl:'',mediaAction:'STANDARD',directorIn:0,directorOut:0,directorSpeed:1,directorFreeze:false,directorFreezeMs:1000,directorCamera:'MEDIUM'})
  }
- roster=next;teamStore[activeSide].roster=roster;reconcileTeamStarters(activeSide,q('formation').value);
+ roster=next;teamStore[activeSide].roster=roster;
+ if(rosterImportTeamMeta.name){if(activeSide==='AWAY')q('matchAway').value=rosterImportTeamMeta.name;else q('matchHome').value=rosterImportTeamMeta.name;q('teamName').value=rosterImportTeamMeta.name}
+ if(rosterImportTeamMeta.crest){teamStore[activeSide].crest=rosterImportTeamMeta.crest;assets.crest=rosterImportTeamMeta.crest;dbPut('crest:'+activeSide,rosterImportTeamMeta.crest)}
+ reconcileTeamStarters(activeSide,q('formation').value);
  selected=roster.length?0:-1;if(selected>=0)writePlayer(roster[0]);else{assets.photo='';assets.mediaBlob=null;assets.mediaObjectUrl='';renderPreviews()}
  renderRoster();updateFormatUI();refreshMatchdayPlayers();renderStage(currentGroup);mdPersist();
  const photoCount=roster.filter(p=>p.photo).length;
  riStatus('已替换 '+sideLabel(activeSide)+' 名单 · '+roster.length+' 人 · 照片 '+photoCount+'/'+roster.length+'。','ok');
- q('rosterImportPreview').classList.remove('on');rosterImportDraft=[];if(typeof refreshUXDashboard==='function')refreshUXDashboard();if(typeof uxQueueAutoSave==='function')uxQueueAutoSave();note('名单替换完成 · '+roster.length+' 人 · 照片 '+photoCount)
+ q('rosterImportPreview').classList.remove('on');rosterImportDraft=[];rosterImportTeamMeta={name:'',crest:'',source:'',photoCount:0};syncMatchStage();renderPreviews();if(typeof refreshUXDashboard==='function')refreshUXDashboard();if(typeof uxQueueAutoSave==='function')uxQueueAutoSave();note('名单替换完成 · '+roster.length+' 人 · 照片 '+photoCount)
 }
 function initRosterImport(){
  q('rosterPasteToggle').onclick=()=>q('rosterPaste').classList.toggle('on');q('rosterPasteClear').onclick=()=>{q('rosterPasteText').value=''};
@@ -1941,7 +2022,7 @@ function initRosterImport(){
  q('rosterCameraFile').onchange=e=>{const f=e.target.files&&e.target.files[0];riHandleFile(f);e.target.value=''};
  q('rosterImportFile').onchange=e=>{const f=e.target.files&&e.target.files[0];riHandleFile(f);e.target.value=''};
  q('riAllStarter').onclick=()=>{const limit=starterLimit();let n=0;for(const p of rosterImportDraft){if(!p.use)continue;p.squadType=n++<limit?'STARTER':'SUB'}riRenderDraft()};
- q('riAutoRole').onclick=()=>riAutoFillRoles();q('riClearDraft').onclick=()=>{rosterImportDraft=[];q('rosterImportPreview').classList.remove('on');riStatus('已取消本次导入。')};q('rosterCommitImport').onclick=riCommit
+ q('riAutoRole').onclick=()=>riAutoFillRoles();q('riClearDraft').onclick=()=>{rosterImportDraft=[];rosterImportTeamMeta={name:'',crest:'',source:'',photoCount:0};q('rosterImportPreview').classList.remove('on');riStatus('已取消本次导入。')};q('rosterCommitImport').onclick=riCommit
 }
 function readPlayer(){return{id:selected>=0&&roster[selected]?roster[selected].id:'',name:q('playerName').value.trim()||'PLAYER',number:q('playerNo').value.trim()||'00',squadType:q('squadType').value||'STARTER',role:q('role').value,position:q('position').value.trim()||q('role').value,captain:q('captain').value==='1',statLabel:q('statLabel').value.trim()||'',statValue:q('statValue').value.trim()||'',photo:assets.photo||'',mediaBlob:assets.mediaBlob||null,mediaObjectUrl:assets.mediaObjectUrl||'',mediaUrl:q('mediaUrl').value.trim()||'',mediaAction:q('mediaAction').value||'STANDARD',directorIn:Math.max(0,parseFloat(q('directorIn').value)||0),directorOut:Math.max(0,parseFloat(q('directorOut').value)||0),directorSpeed:parseFloat(q('directorSpeed').value)||1,directorFreeze:q('directorFreeze').value==='1',directorFreezeMs:parseInt(q('directorFreezeMs').value,10)||1000,directorCamera:q('directorCamera').value||'MEDIUM'}}
 function writePlayer(p){q('playerName').value=p.name||'';q('playerNo').value=p.number||'';q('squadType').value=p.squadType||'STARTER';q('role').value=p.role||'MF';q('position').value=p.position||p.role||'';q('captain').value=p.captain?'1':'0';q('statLabel').value=p.statLabel||'';q('statValue').value=p.statValue||'';q('mediaUrl').value=p.mediaUrl||'';q('mediaAction').value=p.mediaAction||'STANDARD';q('directorIn').value=Number.isFinite(+p.directorIn)?+p.directorIn:0;q('directorOut').value=Number.isFinite(+p.directorOut)?+p.directorOut:0;q('directorSpeed').value=String(p.directorSpeed||1);q('directorFreeze').value=p.directorFreeze?'1':'0';q('directorFreezeMs').value=String(p.directorFreezeMs||1000);q('directorCamera').value=p.directorCamera||'MEDIUM';assets.photo=p.photo||'';assets.mediaBlob=p.mediaBlob||null;assets.mediaObjectUrl=p.mediaObjectUrl||'';renderPreviews()}
@@ -2463,12 +2544,12 @@ if('serviceWorker' in navigator&&window.isSecureContext){
 
 setInstalledState();
 
-const HOME_SCREEN_BUILD='V4.9-HOME-20261116-01';
+const HOME_SCREEN_BUILD='V4.10-HOME-20261116-01';
 async function homeScreenColdStartUpdate(){
   if(!standalone||location.protocol!=='http:')return;
   const once='sagi_homescreen_boot_'+HOME_SCREEN_BUILD;
   try{if(sessionStorage.getItem(once))return;sessionStorage.setItem(once,'1')}catch(e){}
-  setStatus('主屏幕启动 · 正在同步最新 V4.9…');
+  setStatus('主屏幕启动 · 正在同步最新 V4.10…');
   try{
     const r=await fetch('/api/update',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}',cache:'no-store'});
     const x=await r.json().catch(()=>({}));
