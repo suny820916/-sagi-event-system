@@ -1,0 +1,146 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#050706">
+
+    <com.tencent.rtmp.ui.TXCloudVideoView
+        android:id="@+id/preview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="54dp"
+        android:layout_gravity="top|center_horizontal"
+        android:layout_marginTop="16dp"
+        android:background="#E6080A09"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp">
+
+        <TextView
+            android:id="@+id/player1"
+            android:layout_width="150dp"
+            android:layout_height="match_parent"
+            android:ellipsize="end"
+            android:gravity="center_vertical"
+            android:maxLines="1"
+            android:text="球员A"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold"/>
+
+        <TextView
+            android:id="@+id/score"
+            android:layout_width="100dp"
+            android:layout_height="match_parent"
+            android:background="#F2F4F1"
+            android:gravity="center"
+            android:text="0 : 0"
+            android:textColor="#090B0A"
+            android:textSize="24sp"
+            android:textStyle="bold"/>
+
+        <TextView
+            android:id="@+id/player2"
+            android:layout_width="150dp"
+            android:layout_height="match_parent"
+            android:ellipsize="end"
+            android:gravity="center_vertical|end"
+            android:maxLines="1"
+            android:text="球员B"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="390dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="14dp"
+        android:background="#E6101412"
+        android:orientation="vertical"
+        android:padding="12dp">
+
+        <TextView
+            android:id="@+id/status"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="LIVE ENGINE · 未连接"
+            android:textColor="#B8C5BC"
+            android:textSize="12sp"
+            android:textStyle="bold"/>
+
+        <EditText
+            android:id="@+id/syncUrl"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:hint="国内同步服务器 HTTPS"
+            android:inputType="textUri"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#718078"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <EditText
+                android:id="@+id/clubId"
+                android:layout_width="0dp"
+                android:layout_height="44dp"
+                android:layout_weight="1"
+                android:hint="Club ID"
+                android:text="SAGI-DEMO"
+                android:textColor="#FFFFFF"
+                android:textColorHint="#718078"/>
+
+            <EditText
+                android:id="@+id/tableNo"
+                android:layout_width="100dp"
+                android:layout_height="44dp"
+                android:hint="球桌"
+                android:text="01桌"
+                android:textColor="#FFFFFF"
+                android:textColorHint="#718078"/>
+        </LinearLayout>
+
+        <EditText
+            android:id="@+id/syncToken"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:hint="球房同步密钥"
+            android:inputType="textPassword"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#718078"/>
+
+        <EditText
+            android:id="@+id/rtmpUrl"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:hint="rtmp:// 推流地址"
+            android:inputType="textUri"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#718078"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <Button
+                android:id="@+id/startButton"
+                android:layout_width="0dp"
+                android:layout_height="46dp"
+                android:layout_weight="1"
+                android:text="开始直播"/>
+            <Button
+                android:id="@+id/stopButton"
+                android:layout_width="0dp"
+                android:layout_height="46dp"
+                android:layout_weight="1"
+                android:text="停止"/>
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>
