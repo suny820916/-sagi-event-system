@@ -1,0 +1,11 @@
+[Unit]
+Description=Run SAGI POOL backup every day
+
+[Timer]
+OnCalendar=*-*-* 04:10:00
+Persistent=true
+RandomizedDelaySec=300
+Unit=sagi-pool-backup.service
+
+[Install]
+WantedBy=timers.target
