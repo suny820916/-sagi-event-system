@@ -83,3 +83,13 @@ V1 使用单进程 JSON 持久化；当门店数扩大后升级为 MySQL/Redis�
 - SIGTERM / SIGINT 时先同步持久化，再关闭 HTTP 服务。
 - 部署更新、systemd 重启和云服务器正常关机时减少最后状态丢失风险。
 - 自动自检会真实执行：写入 → 关机 → 重启 → 读取 → 故意破坏主文件 → .bak 恢复。
+
+
+## V2.7 安装码防刷
+
+- /api/provision/claim 按客户端 IP 做内存级速率限制。
+- 默认每 60 秒最多 20 次领取尝试。
+- 超限返回 HTTP 429 + Retry-After。
+- Web / Android 显示“安装码尝试过多，请稍后再试”。
+- 不引入 Redis，早期单机球房销售场景即可生效。
+- 可通过 SAGI_PROVISION_RATE_LIMIT / SAGI_PROVISION_RATE_WINDOW_MS 调整。
