@@ -1,12 +1,12 @@
 @echo off
 chcp 65001 >nul
 setlocal
-title SAGI VMIX LAN - V4.8 STABLE LAN / GOAL PLAYER 4.26.1
+title SAGI VMIX LAN - V4.8 STABLE LAN / SELF CHECK 4.26.3
 
 echo.
 echo ==========================================
 echo   SAGI LIVE MATCH DIRECTOR - LAN DIRECT
-echo      V4.8 STABLE LAN / GOAL PLAYER 4.26.1
+echo      V4.8 STABLE LAN / SELF CHECK 4.26.3
 echo ==========================================
 echo.
 echo [SAFE] Phone control starts even if vMix is offline.
@@ -34,10 +34,10 @@ powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -Command ^
  "[IO.File]::WriteAllText($env:SAGI_FB_CONTROL,$m.Groups[2].Value,$utf);" ^
  "[IO.File]::WriteAllText($env:SAGI_FB_OUTPUT,$m.Groups[3].Value,$utf);" ^
  "Copy-Item $env:SAGI_FB_BRIDGE $env:SAGI_BRIDGE -Force;" ^
- "$controlOk=$false;if(Test-Path $env:SAGI_CONTROL){try{$t=[IO.File]::ReadAllText($env:SAGI_CONTROL,[Text.Encoding]::UTF8);$controlOk=($t.Length -gt 100000 -and $t -match '<!doctype html>' -and $t -match 'V4\.26\.1' -and $t -match 'mdSyncDirectorPenaltyToSimple' -and $t -match 'simplePenaltyControl')}catch{}};" ^
- "if(-not $controlOk){Copy-Item $env:SAGI_FB_CONTROL $env:SAGI_CONTROL -Force;Write-Host '[REPAIR] Control Room upgraded/restored to V4.26.1 GOAL PLAYER.' -ForegroundColor Yellow}else{Write-Host '[SAFE] Existing unified V4.23.5 Control Room kept.' -ForegroundColor Green};" ^
- "$outputOk=$false;if(Test-Path $env:SAGI_OUTPUT){try{$t=[IO.File]::ReadAllText($env:SAGI_OUTPUT,[Text.Encoding]::UTF8);$outputOk=($t.Length -gt 50000 -and $t -match '<!doctype html>' -and $t -match 'V4\.26\.1' -and $t -match 'simplePenaltyBoard' -and $t -match 'penaltyShootout')}catch{}};" ^
- "if(-not $outputOk){Copy-Item $env:SAGI_FB_OUTPUT $env:SAGI_OUTPUT -Force;Write-Host '[REPAIR] vMix Graphics upgraded/restored to V4.26.1 GOAL PLAYER.' -ForegroundColor Yellow}else{Write-Host '[SAFE] Existing unified V4.23.5 vMix Graphics kept.' -ForegroundColor Green};"
+ "$controlOk=$false;if(Test-Path $env:SAGI_CONTROL){try{$t=[IO.File]::ReadAllText($env:SAGI_CONTROL,[Text.Encoding]::UTF8);$controlOk=($t.Length -gt 100000 -and $t -match '<!doctype html>' -and $t -match 'V4\.26\.3' -and $t -match 'mdSyncDirectorPenaltyToSimple' -and $t -match 'simplePenaltyControl')}catch{}};" ^
+ "if(-not $controlOk){Copy-Item $env:SAGI_FB_CONTROL $env:SAGI_CONTROL -Force;Write-Host '[REPAIR] Control Room upgraded/restored to V4.26.3 SELF CHECK.' -ForegroundColor Yellow}else{Write-Host '[SAFE] Existing unified V4.23.5 Control Room kept.' -ForegroundColor Green};" ^
+ "$outputOk=$false;if(Test-Path $env:SAGI_OUTPUT){try{$t=[IO.File]::ReadAllText($env:SAGI_OUTPUT,[Text.Encoding]::UTF8);$outputOk=($t.Length -gt 50000 -and $t -match '<!doctype html>' -and $t -match 'V4\.26\.3' -and $t -match 'simplePenaltyBoard' -and $t -match 'penaltyShootout')}catch{}};" ^
+ "if(-not $outputOk){Copy-Item $env:SAGI_FB_OUTPUT $env:SAGI_OUTPUT -Force;Write-Host '[REPAIR] vMix Graphics upgraded/restored to V4.26.3 SELF CHECK.' -ForegroundColor Yellow}else{Write-Host '[SAFE] Existing unified V4.23.5 vMix Graphics kept.' -ForegroundColor Green};"
 
 if errorlevel 1 (
   echo.
@@ -149,7 +149,7 @@ function Update-SagiLan {
     $script:OutputHtml = $outputText
 
     Write-Host "[SAFE UPDATE] Control Room + vMix Graphics updated. Bridge core unchanged." -ForegroundColor Green
-    return @{ok=$true;version="4.26.1";updated=@("control","output");bridgeLocked=$true;rollbackAvailable=$true}
+    return @{ok=$true;version="4.26.3";updated=@("control","output");bridgeLocked=$true;rollbackAvailable=$true}
   } catch {
     Write-Host ("[SAFE UPDATE ERROR] " + $_.Exception.Message) -ForegroundColor Red
     throw
@@ -168,7 +168,7 @@ function Restore-SagiLan {
   $script:ControlHtml = [IO.File]::ReadAllText($ControlCache,[Text.Encoding]::UTF8)
   $script:OutputHtml = [IO.File]::ReadAllText($OutputCache,[Text.Encoding]::UTF8)
   Write-Host "[ROLLBACK] Previous Control Room + vMix Graphics restored." -ForegroundColor Yellow
-  return @{ok=$true;version="4.26.1";rolledBack=$true}
+  return @{ok=$true;version="4.26.3";rolledBack=$true}
 }
 
 function Get-LanIPv4 {
@@ -550,7 +550,7 @@ while ($true) {
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="format-detection" content="telephone=no">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%2307090d%22/%3E%3Ctext x=%2232%22 y=%2243%22 text-anchor=%22middle%22 font-size=%2234%22 fill=%22%23d8b55b%22%3ES%3C/text%3E%3C/svg%3E">
-<title>SAGI V4.26.1 · 镜头安全引擎</title>
+<title>SAGI V4.26.3 · 镜头安全引擎</title>
 <style>
 :root{--bg:#07090d;--panel:#11151c;--line:#2b3340;--text:#f4f0e8;--muted:#8f97a5;--gold:#d8b55b;--green:#72c79a}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
@@ -866,7 +866,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 }
 
 
-/* ===== V4.26.1 SHOT SAFETY ENGINE ===== */
+/* ===== V4.26.3 SHOT SAFETY ENGINE ===== */
 .stage{--teamAccent:#d8b55b}
 .stage .teamSub,.stage .groupTitle,.stage .formationText{color:var(--teamAccent)}
 .stage .groupLine{background:linear-gradient(90deg,var(--teamAccent),#fff,transparent)}
@@ -910,7 +910,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 @keyframes plRowIn{from{opacity:0;transform:translateX(-24px)}to{opacity:1;transform:translateX(0)}}
 
 
-/* ===== V4.26.1 SHOT SAFETY ENGINE CONTROL ===== */
+/* ===== V4.26.3 SHOT SAFETY ENGINE CONTROL ===== */
 .matchdayDesk{border-color:#414a57;background:linear-gradient(180deg,#0e141c,#080b10);box-shadow:0 24px 64px #0008}
 .mdTitle{color:#f2f4f7;font-size:15px}.mdTitle:before{content:"LIVE";display:inline-flex;align-items:center;justify-content:center;margin-right:9px;padding:4px 7px;border-radius:5px;background:#ef343c;color:#fff;font-size:8px;letter-spacing:1.5px;vertical-align:2px}
 .mdPanel{background:linear-gradient(180deg,#0a0f15,#070a0f);border-color:#313a46;box-shadow:0 1px 0 #ffffff08 inset}
@@ -925,7 +925,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 .mdMvp{background:linear-gradient(135deg,#806424,#b78c34)!important}
 
 
-/* ===== V4.26.1 SHOT SAFETY ENGINE ===== */
+/* ===== V4.26.3 SHOT SAFETY ENGINE ===== */
 .gdBar{display:grid;grid-template-columns:minmax(210px,1.6fr) auto auto 120px 120px auto;gap:8px;align-items:center;margin:0 0 10px;padding:9px 10px;border:1px solid #33404d;border-radius:13px;background:linear-gradient(90deg,#071019,#0b131c)}
 .gdIdentity{min-width:0}.gdIdentity b{display:block;font-size:11px;letter-spacing:2px;color:#f3f5f7}.gdIdentity span{display:block;margin-top:3px;font-size:9px;letter-spacing:1px;color:#72d99c}.gdIdentity span.busy{color:#f0c96b}.gdIdentity span.manual{color:#77bfff}.gdIdentity span.error{color:#ff777d}
 .gdSwitch{margin:0;display:flex;align-items:center;gap:7px;height:38px;padding:0 10px;border:1px solid #303b48;border-radius:9px;background:#0a0f15;color:#cbd3dc;font-size:10px;font-weight:900;white-space:nowrap}.gdSwitch input{width:16px;height:16px;margin:0;accent-color:#d8b55b}
@@ -935,7 +935,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 @media(max-width:650px){.gdBar{grid-template-columns:1fr 1fr}.gdIdentity{grid-column:1/3}.gdAbort{grid-column:1/3}.gdField select{height:36px}}
 
 
-/* ===== V4.26.1 SHOT SAFETY ENGINE ===== */
+/* ===== V4.26.3 SHOT SAFETY ENGINE ===== */
 .smartDirector{margin:0 0 10px;padding:10px;border:1px solid #344250;border-radius:14px;background:linear-gradient(135deg,#071019,#0c1620)}
 .sdHead{display:flex;align-items:center;gap:8px;margin-bottom:8px}.sdHead>div:first-child{margin-right:auto}.sdHead b{display:block;font-size:11px;letter-spacing:2px;color:#f2f5f7}.sdHead span{font-size:9px;color:#7f8b98;letter-spacing:1px}
 .sdCue{display:grid;grid-template-columns:92px minmax(0,1fr) 74px 104px;gap:9px;align-items:center;padding:9px;border:1px solid #2b3743;border-radius:11px;background:#070c12}
@@ -947,7 +947,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 @media(max-width:760px){.sdHead{flex-wrap:wrap}.sdCue{grid-template-columns:80px 1fr 66px}.sdExecute{grid-column:1/4}.sdReason{white-space:normal}.sdSlot{height:44px}}
 
 
-/* ===== V4.26.1 SHOT SAFETY ENGINE ===== */
+/* ===== V4.26.3 SHOT SAFETY ENGINE ===== */
 .cameraRoleMap{align-items:stretch}.cameraRoleItem{display:grid;grid-template-columns:1fr;gap:5px}.cameraRoleItem input{font-weight:1000}.cameraRoleItem select{padding:7px 9px;border-radius:9px;font-size:11px;color:#d9e5ef;background:#0b1118;border-color:#344454}
 .cameraRoleHint{height:34px;display:flex;align-items:center;padding:0 9px;border:1px solid #2e3945;border-radius:9px;background:#0a0f15;color:#71808e;font-size:9px;font-weight:900;letter-spacing:1px}
 .cameraRoleSummary{display:flex;align-items:center;gap:10px;margin-top:8px;padding:8px 10px;border:1px solid #2d3c49;border-radius:10px;background:#081019}.cameraRoleSummary b{font-size:9px;letter-spacing:1.5px;color:#8fd2ff}.cameraRoleSummary span{min-width:0;font-size:9px;color:#92a0ad;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -957,7 +957,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 .sdSlot{flex-direction:column;line-height:1.05}.sdSlot small{display:block;margin-top:4px;font-size:7px;color:#788b9c;letter-spacing:.4px}
 
 
-/* ===== V4.26.1 SHOT SAFETY ENGINE ===== */
+/* ===== V4.26.3 SHOT SAFETY ENGINE ===== */
 .shotSafety{margin:0 0 10px;padding:10px;border:1px solid #36414c;border-radius:14px;background:linear-gradient(135deg,#0a0f14,#0a1219)}
 .ssHead{display:flex;align-items:center;gap:8px}.ssHead>div:first-child{margin-right:auto}.ssHead b{display:block;font-size:11px;letter-spacing:2px;color:#f1f4f6}.ssHead span{display:block;margin-top:3px;font-size:9px;color:#78dda4;letter-spacing:1px}.ssHead span.locked{color:#ffca6e}.ssHead span.blocked{color:#ff8187}
 .ssAttack{min-height:38px!important;background:linear-gradient(135deg,#8a5c13,#b87d1c)!important;color:#fff4d5!important;border:1px solid #c79237!important;font-size:10px!important}
@@ -968,7 +968,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 @media(max-width:760px){.ssHead{flex-wrap:wrap}.ssHead>div:first-child{width:100%;margin-right:0}.ssGrid{grid-template-columns:1fr 1fr}.ssAttack{flex:1}.ssNow{min-height:50px}}
 
 
-/* V4.26.1 本机预监：仅战术分组显示战术板 */
+/* V4.26.3 本机预监：仅战术分组显示战术板 */
 .stage.group-SUB .formationBox,
 .stage.group-TEAM .formationBox,
 .stage.group-STING .formationBox,
@@ -976,7 +976,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 .stage.group-COUNTDOWN .formationBox{display:none!important}
 
 
-/* ===== V4.26.1 职业节目导演台 ===== */
+/* ===== V4.26.3 职业节目导演台 ===== */
 .showDirectorPro{padding:14px;border:1px solid #374454;border-radius:18px;background:linear-gradient(180deg,#0a0f15,#070a0f);box-shadow:0 22px 55px #0007,0 1px 0 #ffffff08 inset}
 .proHead{margin-bottom:12px}.proHead>div:first-child b{display:block;font-size:14px;letter-spacing:1.6px;color:#f4f6f8}.proHead>div:first-child span{display:block;margin-top:4px;font-size:9px;color:#7f8b98;letter-spacing:1px}
 .pdLiveBadge{padding:6px 10px;border-radius:999px;border:1px solid #39434f;background:#121820;color:#8995a2;font-size:9px;font-weight:1000;letter-spacing:1.2px}.pdLiveBadge.live{background:#4c1115;border-color:#a83239;color:#ff8c92;box-shadow:0 0 22px #e8454533}.pdLiveBadge.hold{background:#4d3a12;border-color:#8a6d25;color:#f2d678}.pdLiveBadge.done{background:#123422;border-color:#2f6d49;color:#8ae0ad}
@@ -992,7 +992,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 @media(max-width:760px){.pdHero{grid-template-columns:1fr}.pdFlowArrow{display:none}.pdCue{min-height:86px}.pdStats{grid-template-columns:1fr 1fr}.pdTransport{grid-template-columns:1fr 1fr}.pdStart,.pdNextBtn{grid-column:span 1}.pdStop{grid-column:1/3}.pdTimelineLegend{display:none}.showDirectorPro .showStep{grid-template-columns:28px 48px 1fr 68px 72px}.showDirectorPro .showStep .showTransition,.showDirectorPro .showStep .showCue,.showDirectorPro .showStep .showEnable,.showDirectorPro .showStep .showMove{grid-column:auto}.showDirectorPro .showStep .showTake{grid-column:3/6}.showDirectorPro .showStep .showState{display:none}}
 
 
-/* ===== V4.26.1 赛前转播包装 PRO ===== */
+/* ===== V4.26.3 赛前转播包装 PRO ===== */
 .matchOverlay{--homeAccent:#d8b55b;--awayAccent:#4c7dff;align-items:center;justify-content:center;background:radial-gradient(circle at 14% 50%,var(--homeAccent) 0,transparent 24%),radial-gradient(circle at 86% 50%,var(--awayAccent) 0,transparent 24%),linear-gradient(120deg,#05070a 0,#0a1017 48%,#05070a 100%);overflow:hidden}
 .matchOverlay:before{content:"";position:absolute;inset:-20%;background:repeating-linear-gradient(118deg,#ffffff05 0 2px,transparent 2px 38px);transform:rotate(-4deg);opacity:.55}
 .matchCardStage{width:1540px;height:770px;padding:0;border:0;background:#080d13f2;box-shadow:0 40px 120px #000c;position:relative;overflow:hidden}
@@ -1026,7 +1026,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 .stage.group-DF .playerCard,.stage.group-MF .playerCard,.stage.group-FW .playerCard{max-width:285px}
 
 
-/* V4.26.1 开场标识 + 倒计时统一包装 */
+/* V4.26.3 开场标识 + 倒计时统一包装 */
 .stingOverlay{background:radial-gradient(circle at 50% 45%,#182633 0,#081018 42%,#020405 100%);overflow:hidden}
 .stingOverlay:before{content:"";position:absolute;inset:-20%;background:repeating-linear-gradient(112deg,#ffffff06 0 2px,transparent 2px 44px);opacity:.5}
 .stingCore{position:relative;z-index:2;min-width:720px;padding:70px 95px;border-top:1px solid #ffffff1f;border-bottom:1px solid #ffffff14;background:linear-gradient(90deg,transparent,#071019d9 15% 85%,transparent)}
@@ -1037,7 +1037,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 .countdownLabel{font-size:15px;letter-spacing:7px;color:#aab5c0}.countdownNumber{font-size:260px;letter-spacing:-13px;line-height:.9;text-shadow:none}.countdownSub{font-size:20px;color:#fff;letter-spacing:3px;margin-top:24px}
 
 
-/* ===== V4.26.1 点球大战导演 ===== */
+/* ===== V4.26.3 点球大战导演 ===== */
 .penaltyDirector{border-color:#44505c;background:linear-gradient(145deg,#0a1016,#080d12)}
 .penSetup{display:grid;grid-template-columns:1fr 1fr 1.2fr;gap:7px}.penSetup label span{display:block;margin-bottom:4px;font-size:8px;color:#7f8b97;letter-spacing:1px}.penSetup select,.penSetup button{height:40px}
 .penStart{background:linear-gradient(135deg,#1c6747,#3c9d6a)!important;color:#fff!important}
@@ -1051,7 +1051,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 @media(max-width:760px){.penSetup{grid-template-columns:1fr 1fr}.penStart{grid-column:1/3}.penScoreBoard{grid-template-columns:1fr 105px 1fr}.penTeam b{font-size:34px}.penKickGrid{grid-template-columns:1fr 1fr}.penOps{grid-template-columns:1fr 1fr}}
 
 
-/* ===== V4.26.1 SAGI PK ARENA · 创意点球记分牌 · 极简控制 ===== */
+/* ===== V4.26.3 SAGI PK ARENA · 创意点球记分牌 · 极简控制 ===== */
 .mmPenaltyDirector{display:none!important}
 .simplePenaltyControl{border-color:#415163;background:linear-gradient(145deg,#0a1016,#071019)}
 .spControlScore{display:grid;grid-template-columns:1fr 120px 1fr;gap:8px;align-items:center;padding:10px;border:1px solid #2f3c49;border-radius:12px;background:#060b10;text-align:center}
@@ -1063,7 +1063,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 @media(max-width:760px){.spControlScore{grid-template-columns:1fr 92px 1fr}.spBigButtons button{min-height:78px!important;font-size:22px!important}.spSmallButtons{grid-template-columns:1fr 1fr}.spSmallButtons .danger{grid-column:1/3}}
 
 
-/* V4.26.1 点球罚失显示 */
+/* V4.26.3 点球罚失显示 */
 .spMissButtons{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:7px}.spMissButtons .spMiss{min-height:42px!important;background:#3c171b!important;border-color:#763139!important;color:#ff9aa1!important;font-weight:1000!important}
 .spControlDot.miss{background:#e9525b;border-color:#ff9aa1;position:relative;box-shadow:0 0 8px #e9525b55}.spControlDot.miss:after{content:"×";position:absolute;left:50%;top:50%;transform:translate(-50%,-56%);font-size:8px;color:#fff;font-weight:1000}
 
@@ -1071,7 +1071,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 </head>
 <body>
 <div class="app">
-  <div class="top"><div><div class="brand">SAGI 赛事直播导播</div><div class="sub">V4.26.1 · 镜头安全引擎 · 比赛设置</div></div><div class="topRight"><div class="ver">V4.26.1</div><button id="mobileUpdateBtn" class="mobileUpdateBtn" type="button">↻ 安全更新</button><button id="mobileRollbackBtn" class="mobileRollbackBtn" type="button">↶ 回退上一版</button><div id="mobileUpdateStatus" class="mobileUpdateStatus">V4.26.1 · 镜头安全引擎 · 桥接服务已锁定</div></div></div>
+  <div class="top"><div><div class="brand">SAGI 赛事直播导播</div><div class="sub">V4.26.3 · 镜头安全引擎 · 比赛设置</div></div><div class="topRight"><div class="ver">V4.26.3</div><button id="mobileUpdateBtn" class="mobileUpdateBtn" type="button">↻ 安全更新</button><button id="mobileRollbackBtn" class="mobileRollbackBtn" type="button">↶ 回退上一版</button><div id="mobileUpdateStatus" class="mobileUpdateStatus">V4.26.3 · 镜头安全引擎 · 桥接服务已锁定</div></div></div>
 
   <div id="pwaBar" class="pwaBar" style="display:none">
     <div class="pwaInfo">
@@ -1093,7 +1093,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 
   <div id="setupDesk" class="setupDesk">
     <div class="setupHead">
-      <div class="setupTitle">比赛设置 · 比赛设置<small>V4.26.1 · 广播动效引擎 · 就绪检查</small></div>
+      <div class="setupTitle">比赛设置 · 比赛设置<small>V4.26.3 · 广播动效引擎 · 就绪检查</small></div>
       <div id="setupReadyBadge" class="setupReadyBadge">未就绪</div>
     </div>
     <div class="setupGrid">
@@ -1262,7 +1262,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 
   <div class="vmixDirector">
     <div class="vdHead">
-      <div class="vdTitle">V4.26.1 · vMix 导播控制 <small>赛事直播导播</small></div>
+      <div class="vdTitle">V4.26.3 · vMix 导播控制 <small>赛事直播导播</small></div>
       <div id="vdStatus" class="vdStatus">局域网桥接待命</div>
     </div>
     <div class="vdGrid">
@@ -1363,7 +1363,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 
   <div class="matchdayDesk">
     <div class="mdHead">
-      <div class="mdTitle">V4.26.1 · 比赛模式 <small>镜头安全引擎 · 安全自动</small></div>
+      <div class="mdTitle">V4.26.3 · 比赛模式 <small>镜头安全引擎 · 安全自动</small></div>
       <div id="mdSync" class="mdSync"><span id="mdSyncDot" class="mdLiveDot"></span>比赛图形待命</div>
     </div>
     <div class="gdBar">
@@ -1770,7 +1770,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
             </div>
           </div>
         </div>
-        <div class="statusBar"><div id="status" class="status">V4.26.1 · SHOT SAFETY ENGINE 已就绪</div><div class="mini">1920 × 1080</div></div>
+        <div class="statusBar"><div id="status" class="status">V4.26.3 · SHOT SAFETY ENGINE 已就绪</div><div class="mini">1920 × 1080</div></div>
       </div>
     </div>
   </div>
@@ -2213,7 +2213,7 @@ async function importPhonePrematchPackage(file){
 
   let hc=Array.isArray(core.teams.HOME.roster)?core.teams.HOME.roster.length:0,ac=Array.isArray(core.teams.AWAY.roster)?core.teams.AWAY.roster.length:0;
 
-  // V4.26.1 fallback: recover from ROSTER_BACKUP.json when primary core rosters are empty.
+  // V4.26.3 fallback: recover from ROSTER_BACKUP.json when primary core rosters are empty.
   if((!hc||!ac)&&backup&&backup.teams&&backup.teams.HOME&&backup.teams.AWAY){
     const bh=Array.isArray(backup.teams.HOME.roster)?backup.teams.HOME.roster:[],ba=Array.isArray(backup.teams.AWAY.roster)?backup.teams.AWAY.roster:[];
     if(!hc&&bh.length)core.teams.HOME={...(core.teams.HOME||{}),formation:backup.teams.HOME.formation||core.teams.HOME.formation,roster:bh};
@@ -2365,6 +2365,16 @@ let graphicsDirectorSettings={enabled:true,autoReplay:false,replayHold:3500,retu
 let smartDirectorSettings={enabled:true,autoTake:false},smartCue={slot:'cam1',title:'保持主机位',reason:'等待比赛事件',confidence:70,eventType:'IDLE'};
 let shotSafetySettings={enabled:true,minShotMs:3000,cooldownMs:2000,bounceMs:6000,attackLockMs:12000},shotSafetyState={currentSlot:'',previousSlot:'',lastSwitchAt:0,lastAutoSwitchAt:0,attackLockUntil:0,lastBlock:'',switchCount:0};
 function mdPeriodName(p){return({'1H':'上半场','2H':'下半场','ET1':'加时上半场','ET2':'加时下半场','PEN':'点球大战'})[p]||p}
+function mdNormalizeMatchMode(){
+ const period=String(matchdayState.period||'1H');
+ if(period!=='PEN'){
+  const simple=matchdayState.simplePenalty&&typeof matchdayState.simplePenalty==='object'?matchdayState.simplePenalty:(matchdayState.simplePenalty={});
+  simple.visible=false;
+  const pen=matchdayState.penaltyShootout&&typeof matchdayState.penaltyShootout==='object'?matchdayState.penaltyShootout:(matchdayState.penaltyShootout={});
+  pen.started=false;pen.finished=false;pen.winner='';
+  matchdayState.homePen=0;matchdayState.awayPen=0
+ }
+}
 function mdSimplePenaltyState(){
  let p=matchdayState.simplePenalty;if(!p||typeof p!=='object')p={};
  p.visible=!!p.visible;p.home=Math.max(0,Number(p.home)||0);p.away=Math.max(0,Number(p.away)||0);p.slots=Math.max(5,Number(p.slots)||5);if(!Array.isArray(p.history))p.history=[];
@@ -2397,36 +2407,47 @@ function mdSyncDirectorPenaltyToSimple(reset=false){
  mdRenderSimplePenalty();
 }
 function mdRenderSimplePenalty(){
- const p=mdSimplePenaltyState(),home=q('matchHome').value.trim()||'主队',away=q('matchAway').value.trim()||'客队';
+ const p=mdSimplePenaltyState(),director=mdPenaltyState(),home=q('matchHome').value.trim()||'主队',away=q('matchAway').value.trim()||'客队';
  const set=(id,val)=>{const e=q(id);if(e)e.textContent=val};
- const round=mdSimplePenaltyRound();set('spHomeName',matchdayState.homeShort||mdShortAuto(home,'主队'));set('spAwayName',matchdayState.awayShort||mdShortAuto(away,'客队'));set('spHomeScore',p.home);set('spAwayScore',p.away);set('spVisibleState',p.visible?(round>5?'突然死亡 · 第'+round+'轮':'直播中 · 第'+Math.max(1,round)+'轮'):'当前隐藏');
+ const round=mdSimplePenaltyRound(),next=director.started&&!director.finished?mdPenaltyNextSide():'';
+ set('spHomeName',matchdayState.homeShort||mdShortAuto(home,'主队'));set('spAwayName',matchdayState.awayShort||mdShortAuto(away,'客队'));set('spHomeScore',p.home);set('spAwayScore',p.away);set('spVisibleState',p.visible?(round>5?'突然死亡 · 第'+round+'轮':'直播中 · 第'+Math.max(1,round)+'轮'):'当前隐藏');
  if(q('spHomeDots'))q('spHomeDots').innerHTML=mdSimplePenaltyDots('HOME');if(q('spAwayDots'))q('spAwayDots').innerHTML=mdSimplePenaltyDots('AWAY');
- if(q('spToggle'))q('spToggle').textContent=p.visible?'隐藏点球记分牌':'显示点球记分牌';if(q('spUndo'))q('spUndo').disabled=!p.history.length
+ if(q('spToggle'))q('spToggle').textContent=p.visible?'隐藏点球记分牌':'显示点球记分牌';if(q('spUndo'))q('spUndo').disabled=!director.history.length;
+ const active=director.started&&!director.finished;[['spHomePlus','HOME'],['spHomeMiss','HOME'],['spAwayPlus','AWAY'],['spAwayMiss','AWAY']].forEach(([id,side])=>{if(q(id))q(id).disabled=active&&next!==side})
 }
 function mdSimplePenaltyEnsureOverlay(){
  const p=mdSimplePenaltyState();p.visible=true;matchdayState.period='PEN';matchdayState.clockRunning=false;matchdayState.clockStartedAt=0;
  if(!matchdayState.overlayVisible&&matchReady){vdSave();matchdayState.overlayVisible=true;publishVmixDirector('OverlayInput'+vmixDirectorSettings.overlay+'In',vmixDirectorSettings.graphics,0,'点球比分牌开启')}
 }
 async function mdSimplePenaltyKick(side,result='GOAL'){
- const p=mdSimplePenaltyState();mdSimplePenaltyEnsureOverlay();const cleanSide=side==='AWAY'?'AWAY':'HOME',cleanResult=result==='MISS'?'MISS':'GOAL';
- if(cleanResult==='GOAL'){if(cleanSide==='AWAY')p.away++;else p.home++}
- p.history.push({side:cleanSide,result:cleanResult,at:new Date().toISOString()});
- p.slots=Math.max(p.slots,mdSimplePenaltyTeamAttempts('HOME').length,mdSimplePenaltyTeamAttempts('AWAY').length,5);mdRenderSimplePenalty();await publishMatchday(null)
+ const cleanSide=side==='AWAY'?'AWAY':'HOME',cleanResult=result==='MISS'?'MISS':'GOAL',director=mdPenaltyState();
+ mdSimplePenaltyEnsureOverlay();
+ if(!director.started){
+  director.started=true;director.finished=false;director.winner='';director.rounds=[3,5].includes(Number(director.rounds))?Number(director.rounds):5;
+  if(!director.history.length)director.firstSide=cleanSide
+ }
+ if(director.finished){note('点球大战已经结束');return false}
+ const next=mdPenaltyNextSide();if(cleanSide!==next){note('当前应由 '+(next==='HOME'?'主队':'客队')+' 主罚');mdRenderSimplePenalty();return false}
+ director.history.push({side:cleanSide,result:cleanResult,at:new Date().toISOString()});const winner=mdPenaltyEvaluateWinner();
+ mdSyncDirectorPenaltyToSimple();mdRenderPenaltyDirector();await publishMatchday(null);
+ if(winner)note('点球大战结束 · '+(winner==='HOME'?(q('matchHome').value||'主队'):(q('matchAway').value||'客队'))+' 获胜');return true
 }
 async function mdSimplePenaltyAdd(side){return mdSimplePenaltyKick(side,'GOAL')}
 async function mdSimplePenaltyMiss(side){return mdSimplePenaltyKick(side,'MISS')}
 async function mdSimplePenaltyToggle(){
- const p=mdSimplePenaltyState();p.visible=!p.visible;if(p.visible&&!matchdayState.overlayVisible&&matchReady){vdSave();matchdayState.overlayVisible=true;publishVmixDirector('OverlayInput'+vmixDirectorSettings.overlay+'In',vmixDirectorSettings.graphics,0,'点球比分牌开启')}mdRenderSimplePenalty();await publishMatchday(null)
+ const simple=mdSimplePenaltyState(),director=mdPenaltyState(),show=!simple.visible;
+ if(show){
+  if(!director.started){director.started=true;director.finished=false;director.winner='';if(!director.history.length)director.firstSide=(q('mdPenFirst')&&q('mdPenFirst').value)==='AWAY'?'AWAY':'HOME'}
+  matchdayState.period='PEN';matchdayState.clockBase=mdNowSeconds();matchdayState.clockRunning=false;matchdayState.clockStartedAt=0;matchdayState.scoreboardVisible=true;
+  mdSyncDirectorPenaltyToSimple();mdSimplePenaltyState().visible=true;
+  if(!matchdayState.overlayVisible&&matchReady){vdSave();matchdayState.overlayVisible=true;publishVmixDirector('OverlayInput'+vmixDirectorSettings.overlay+'In',vmixDirectorSettings.graphics,0,'点球比分牌开启')}
+ }else{
+  simple.visible=false
+ }
+ mdRenderSimplePenalty();mdRenderPenaltyDirector();refreshMatchdayUI();await publishMatchday(null)
 }
-async function mdSimplePenaltyUndo(){
- const p=mdSimplePenaltyState(),last=p.history.pop();if(!last){note('没有可撤销的点球');return}
- const x=typeof last==='string'?{side:last,result:'GOAL'}:last;
- if(x.result==='GOAL'){if(x.side==='AWAY')p.away=Math.max(0,p.away-1);else p.home=Math.max(0,p.home-1)}
- mdRenderSimplePenalty();await publishMatchday(null)
-}
-async function mdSimplePenaltyReset(){
- const p=mdSimplePenaltyState();p.home=0;p.away=0;p.history=[];p.slots=5;mdRenderSimplePenalty();await publishMatchday(null)
-}
+async function mdSimplePenaltyUndo(){return mdPenaltyUndo()}
+async function mdSimplePenaltyReset(){return mdPenaltyReset()}
 function mdPenaltyState(){
  let p=matchdayState.penaltyShootout;if(!p||typeof p!=='object')p={};
  if(!Array.isArray(p.history))p.history=[];
@@ -2561,7 +2582,7 @@ function mdApplyRecovered(x){
    if(x.clock.running&&x.clock.startedAt){const t=Date.parse(x.clock.startedAt);if(Number.isFinite(t))sec+=Math.max(0,(Date.now()-t)/1000)}
    matchdayState.clockBase=sec;matchdayState.clockRunning=!!x.clock.running;matchdayState.clockStartedAt=x.clock.running?Date.now():0;matchdayState.period=x.clock.period||matchdayState.period;
  }
- return true
+ mdNormalizeMatchMode();return true
 }
 async function recoverMatchdayFromBridge(showNote=false){
  try{
@@ -2576,17 +2597,18 @@ async function mdLoad(){
    if(!x)x=JSON.parse(localStorage.getItem('sagi_matchday_graphics_v42')||'null');
    if(x){
      if(x.clockRunning&&x.savedAt){x.clockBase=(Number(x.clockBase)||0)+Math.max(0,(Date.now()-Number(x.savedAt))/1000);x.clockStartedAt=Date.now()}
-     matchdayState={...matchdayState,...x,eventLog:Array.isArray(x.eventLog)?x.eventLog:[],replayMarkers:Array.isArray(x.replayMarkers)?x.replayMarkers:[]};if(!x.scoreTheme||x.scoreTheme==='sagi')matchdayState.scoreTheme='sagi-pro';
+     matchdayState={...matchdayState,...x,eventLog:Array.isArray(x.eventLog)?x.eventLog:[],replayMarkers:Array.isArray(x.replayMarkers)?x.replayMarkers:[]};if(!x.scoreTheme||x.scoreTheme==='sagi')matchdayState.scoreTheme='sagi-pro';mdNormalizeMatchMode();
    }
  }catch(e){}
  refreshMatchdayUI();refreshMatchdayPlayers();mdRenderLog();
  await recoverMatchdayFromBridge(false);
+ if(matchdayState.period==='PEN'&&mdPenaltyState().started)mdSyncDirectorPenaltyToSimple()
 }
 function mdCloudSnapshot(event=null){
  const now=mdNowSeconds(),homeName=q('matchHome').value.trim()||'HOME',awayName=q('matchAway').value.trim()||'AWAY';
  return{
   commandId:Date.now()+'_'+Math.random().toString(36).slice(2,7),
-  visualVersion:'V4.26.1-PENALTY-SHOOTOUT-DIRECTOR',
+  visualVersion:'V4.26.3-LIVE-SCORE-GOAL-DIRECTOR',
   home:homeName,away:awayName,homeShort:matchdayState.homeShort||mdShortAuto(homeName,'HOME'),awayShort:matchdayState.awayShort||mdShortAuto(awayName,'AWAY'),
   homeCrest:(teamStore.HOME&&teamStore.HOME.crest)||'',awayCrest:(teamStore.AWAY&&teamStore.AWAY.crest)||'',competition:q('matchCompetition').value.trim()||'SAGI FOOTBALL',
   homeScore:matchdayState.homeScore,awayScore:matchdayState.awayScore,scoreboardVisible:!!matchdayState.scoreboardVisible,scoreboardFrozen:!!matchdayState.scoreboardFrozen,
@@ -2634,7 +2656,10 @@ function mdUndoLast(){
  if(e.type==='GOAL'||e.type==='RED'){const idx=(matchdayState.replayMarkers||[]).findIndex(m=>m.type===e.type);if(idx>=0)matchdayState.replayMarkers.splice(idx,1)}
  mdRenderLog();mdRenderMarkers();q('mdEventStatus').textContent='已撤销 · '+mdEventLabel(e);publishMatchday({type:'CLEAR_EVENT'});note('已撤销 '+mdEventLabel(e));
 }
-function mdScore(side,delta){if(side==='HOME')matchdayState.homeScore=Math.max(0,matchdayState.homeScore+delta);else matchdayState.awayScore=Math.max(0,matchdayState.awayScore+delta);publishMatchday(null)}
+function mdScore(side,delta){
+ if(matchdayState.period==='PEN'){note('点球大战中 · 常规比分已锁定，请使用点球按钮');return false}
+ if(side==='HOME')matchdayState.homeScore=Math.max(0,matchdayState.homeScore+delta);else matchdayState.awayScore=Math.max(0,matchdayState.awayScore+delta);publishMatchday(null);return true
+}
 function mdEventAutoClear(ms=5400){
  const seq=++mdMacroSeq;clearTimeout(mdMacroTimer);mdMacroTimer=setTimeout(()=>{if(seq!==mdMacroSeq)return;matchdayState.lastEvent=null;publishMatchday({type:'CLEAR_EVENT'})},ms)
 }
@@ -2696,14 +2721,18 @@ async function gdRunEvent(ev,holdMs=5200){
   gdSchedule(async()=>{
    gdSetStatus('2/3 · GOAL CARD','busy');await publishMatchday(ev);mdEventAutoClear(holdMs)
   },520,seq);
-  if(graphicsDirectorSettings.autoReplay&&matchReady){
+  const replaySlot=cameraSlotForRole('REPLAY','');
+  if(graphicsDirectorSettings.autoReplay&&matchReady&&replaySlot&&vdSlotAvailable(replaySlot)){
    gdAutoCameraActive=true;
    gdClearCameraTimers();gdScheduleCamera(async()=>{
-    const replaySlot=cameraSlotForRole('REPLAY','replay');gdSetStatus('AUTO REPLAY · '+cameraRoleLabel(cameraRoleOf(replaySlot)),'busy');await gdTakeCamera(replaySlot,'AUTO GOAL REPLAY · '+cameraRoleLabel(cameraRoleOf(replaySlot)),{source:'AUTO_REPLAY',eventType:'GOAL',force:true})
+    gdSetStatus('AUTO REPLAY · '+cameraRoleLabel(cameraRoleOf(replaySlot)),'busy');await gdTakeCamera(replaySlot,'AUTO GOAL REPLAY · '+cameraRoleLabel(cameraRoleOf(replaySlot)),{source:'AUTO_REPLAY',eventType:'GOAL',force:true})
    },1450,seq);
    gdScheduleCamera(async()=>{
-    await gdTakeCamera(graphicsDirectorSettings.returnSlot||'cam1','AUTO RETURN TO MATCH',{source:'AUTO_REPLAY',eventType:'RETURN',force:true});gdAutoCameraActive=false;gdSetStatus('3/3 · RETURN SCOREBUG','busy');smartCue={slot:graphicsDirectorSettings.returnSlot||'cam1',title:'回到比赛',reason:'自动回放结束，恢复主比赛画面',confidence:99,eventType:'RETURN'};sdRender()
+    const preferred=graphicsDirectorSettings.returnSlot||'cam1',returnSlot=vdSlotAvailable(preferred)?preferred:ssMainSlot();
+    await gdTakeCamera(returnSlot,'AUTO RETURN TO MATCH',{source:'AUTO_REPLAY',eventType:'RETURN',force:true});gdAutoCameraActive=false;gdSetStatus('3/3 · RETURN SCOREBUG','busy');smartCue={slot:returnSlot,title:'回到比赛',reason:'自动回放结束，恢复主比赛画面',confidence:99,eventType:'RETURN'};sdRender()
    },1450+(Number(graphicsDirectorSettings.replayHold)||3500),seq)
+  }else if(graphicsDirectorSettings.autoReplay&&type==='GOAL'){
+   gdAutoCameraActive=false;gdSetStatus('GOAL CARD · 无有效回放机位，已跳过自动回放','manual')
   }
   gdSchedule(()=>{if(seq===gdSequence)gdSetStatus('安全自动 · 就绪')},Math.max(holdMs+900,5200),seq);
   return
@@ -2854,6 +2883,7 @@ async function mdCopyMarkers(){
  try{await navigator.clipboard.writeText(txt);note('回放标记已复制')}catch(e){prompt('复制回放标记：',txt)}
 }
 function mdMacroEvent(type,side,playerId=''){
+ if(type==='GOAL'&&matchdayState.period==='PEN'){note('点球大战中 · 请使用点球罚进/罚失按钮');return false}
  const p=playerId?mdPlayer(side,playerId):null,before={homeScore:matchdayState.homeScore,awayScore:matchdayState.awayScore,homeRedCards:matchdayState.homeRedCards,awayRedCards:matchdayState.awayRedCards};
  if(type==='GOAL'){if(side==='HOME')matchdayState.homeScore++;else matchdayState.awayScore++;matchdayState.scoreboardVisible=true}
  if(type==='RED'){if(side==='HOME')matchdayState.homeRedCards=Math.min(5,(Number(matchdayState.homeRedCards)||0)+1);else matchdayState.awayRedCards=Math.min(5,(Number(matchdayState.awayRedCards)||0)+1)}
@@ -2862,7 +2892,7 @@ function mdMacroEvent(type,side,playerId=''){
  mdRecordEvent(ev,before);
  if(type==='GOAL'||type==='RED')mdAddReplayMarker(type,type==='GOAL'?'进球 · '+team:'红牌 · '+team);
  q('mdEventStatus').textContent=(type==='GOAL'?'进球':type==='YELLOW'?'黄牌':'红牌')+(p?' · #'+p.number+' '+p.name:' · '+team);
- gdRunEvent(ev,type==='GOAL'?5400:5000);refreshMatchdayUI();
+ gdRunEvent(ev,type==='GOAL'?5800:5000);refreshMatchdayUI();
 }
 function mdEvent(type){
  const side=q('mdEventSide').value,pid=q('mdEventPlayer').value;if(!pid){note('请先选择球员');return}mdMacroEvent(type,side,pid)
@@ -2970,7 +3000,7 @@ function initMatchdayGraphics(){
  q('mdPeriod').onchange=()=>{const p=q('mdPeriod').value;if(p==='PEN')mdPenaltyStart();else{matchdayState.period=p;const simple=mdSimplePenaltyState();simple.visible=false;const pen=mdPenaltyState();pen.started=false;pen.finished=false;pen.winner='';matchdayState.homePen=0;matchdayState.awayPen=0;matchdayState.scoreboardVisible=true;mdRenderSimplePenalty();mdRenderPenaltyDirector();publishMatchday(null);note('已退出点球模式 · 常规小比分牌恢复')}};
  q('mdGoalBtn').onclick=()=>mdEvent('GOAL');q('mdYellowBtn').onclick=()=>mdEvent('YELLOW');q('mdRedBtn').onclick=()=>mdEvent('RED');
  q('mdSubBtn').onclick=mdSubstitution;q('mdHalfBtn').onclick=()=>mdMatchState('HALF_TIME');q('mdFullBtn').onclick=()=>mdMatchState('FULL_TIME');q('mdMvpBtn').onclick=mdMvp;
- q('mdScoreReset').onclick=()=>{matchdayState.homeScore=0;matchdayState.awayScore=0;matchdayState.homePen=0;matchdayState.awayPen=0;matchdayState.penaltyShootout={started:false,rounds:5,firstSide:'HOME',history:[],winner:'',finished:false};mdSyncDirectorPenaltyToSimple(true);publishMatchday(null)};
+ q('mdScoreReset').onclick=()=>{matchdayState.homeScore=0;matchdayState.awayScore=0;matchdayState.homePen=0;matchdayState.awayPen=0;matchdayState.penaltyShootout={started:false,rounds:5,firstSide:'HOME',history:[],winner:'',finished:false};mdSyncDirectorPenaltyToSimple(true);if(matchdayState.period==='PEN')matchdayState.period='2H';matchdayState.scoreboardVisible=true;publishMatchday(null)};
  q('mdClearEventBtn').onclick=()=>{gdAbort(false);matchdayState.lastEvent=null;publishMatchday({type:'CLEAR_EVENT'})};q('mdPublishState').onclick=()=>publishMatchday(null);q('mdUndoLast').onclick=mdUndoLast;q('mdClearLog').onclick=()=>{matchdayState.eventLog=[];mdRenderLog();mdPersist();note('事件日志已清空')};
  q('spHomePlus').onclick=()=>mdSimplePenaltyAdd('HOME');q('spAwayPlus').onclick=()=>mdSimplePenaltyAdd('AWAY');q('spHomeMiss').onclick=()=>mdSimplePenaltyMiss('HOME');q('spAwayMiss').onclick=()=>mdSimplePenaltyMiss('AWAY');q('spToggle').onclick=mdSimplePenaltyToggle;q('spUndo').onclick=mdSimplePenaltyUndo;q('spReset').onclick=mdSimplePenaltyReset;
  q('mdPenStart').onclick=mdPenaltyStart;q('mdPenHomeGoal').onclick=()=>mdPenaltyKick('HOME','GOAL');q('mdPenHomeMiss').onclick=()=>mdPenaltyKick('HOME','MISS');q('mdPenAwayGoal').onclick=()=>mdPenaltyKick('AWAY','GOAL');q('mdPenAwayMiss').onclick=()=>mdPenaltyKick('AWAY','MISS');q('mdPenUndo').onclick=mdPenaltyUndo;q('mdPenReset').onclick=mdPenaltyReset;
@@ -2992,7 +3022,7 @@ const FILTER_SLOT={CLEAN:1,WARM:2,NIGHT:3};
 function filterSave(){try{localStorage.setItem('sagi_filter_engine_v471',JSON.stringify(filterSettings))}catch(e){}}
 function filterLoad(){try{const x=JSON.parse(localStorage.getItem('sagi_filter_engine_v471')||'null');if(x)filterSettings={...filterSettings,...x}}catch(e){}}
 function filterInputs(target=filterSettings.target){vdSave();const slots=target==='ALL'?['cam1','cam2','drone','replay']:[target],seen=new Set(),out=[];for(const slot of slots){const n=String(vmixDirectorSettings[slot]||'').trim();if(n&&n!==String(vmixDirectorSettings.graphics)&&!seen.has(n)){seen.add(n);out.push(n)}}return out}
-async function filterCommand(fn,input,value=''){const cmd={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,7),functionName:fn,input:String(input||''),duration:0,value:String(value??''),label:'FILTER '+fn,issuedAt:new Date().toISOString(),version:'V4.26.1-LAN'};try{await lanPost('/api/vmix',cmd);return true}catch(e){return false}}
+async function filterCommand(fn,input,value=''){const cmd={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,7),functionName:fn,input:String(input||''),duration:0,value:String(value??''),label:'FILTER '+fn,issuedAt:new Date().toISOString(),version:'V4.26.3-LAN'};try{await lanPost('/api/vmix',cmd);return true}catch(e){return false}}
 async function applyFilterPreset(preset,target=filterSettings.target){
  preset=['ORIGINAL','CLEAN','WARM','NIGHT'].includes(preset)?preset:'ORIGINAL';const inputs=filterInputs(target);if(!inputs.length){if(q('filterStatus'))q('filterStatus').textContent='没有可用摄像机 Input';note('没有可用摄像机 Input');return false}
  if(q('filterStatus'))q('filterStatus').textContent='正在应用 '+preset+'…';let ok=true;
@@ -3112,7 +3142,7 @@ function vdLoad(){
 }
 function vdInput(slot){vdSave();return vmixDirectorSettings[slot]||''}
 async function publishVmixDirector(functionName,input='',duration=0,label='',value=''){
- const cmd={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,7),functionName,input:String(input||''),duration:Math.max(0,Number(duration)||0),value:String(value??''),label,issuedAt:new Date().toISOString(),version:'V4.26.1-LAN'};
+ const cmd={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,7),functionName,input:String(input||''),duration:Math.max(0,Number(duration)||0),value:String(value??''),label,issuedAt:new Date().toISOString(),version:'V4.26.3-LAN'};
  q('vdStatus').textContent='LAN 发送中 · '+(label||functionName);
  try{
    await lanPost('/api/vmix',cmd);
@@ -3146,7 +3176,7 @@ async function refreshGraphicsBrowser(showNote=true){
  if(!input){if(showNote)note('请先设置图形输入编号');return false}
  let ok=false;
  try{
-   const cmd={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,7),functionName:'BrowserReload',input:String(input),duration:0,value:'',label:'刷新直播图形',issuedAt:new Date().toISOString(),version:'V4.26.1-LAN'};
+   const cmd={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,7),functionName:'BrowserReload',input:String(input),duration:0,value:'',label:'刷新直播图形',issuedAt:new Date().toISOString(),version:'V4.26.3-LAN'};
    const r=await lanPost('/api/vmix',cmd);ok=!!r
  }catch(e){}
  if(!ok){
@@ -3681,7 +3711,7 @@ function stopCountdown(){clearInterval(startCountdown.t)}
 function cloudAdmin(){try{const x=JSON.parse(localStorage.getItem('sagi_cloud_admin_v20')||'null')||{},b=window.SAGI_CLOUD||{};return{url:x.url||b.url||'',key:x.key||b.key||'',eventSlug:x.eventSlug||b.eventSlug||'',token:x.token||''}}catch(e){const b=window.SAGI_CLOUD||{};return{url:b.url||'',key:b.key||'',eventSlug:b.eventSlug||'',token:''}}}
 function compactPlayersForGroup(group){const src=group==='FULL'?validStarters():group==='SUB'?substitutes():(['GK','DF','MF','FW'].includes(group)?grouped(group):[]);return src.map(p=>({id:p.id,layoutKey:formationPlayerKey(p),name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',squadType:p.squadType||'STARTER',photo:(group==='FULL'||group==='SUB')?'':p.photo||'',mediaUrl:(group==='FULL'||group==='SUB')?'':p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'}))}
 async function publishGroup(group,duration,show=null){
- const state={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,6),group,side:activeSide,team:currentTeamName(),formation:q('formation').value,matchFormat:{mode:matchConfig.mode,playerCount:starterLimit()},playerCount:starterLimit(),startingLabel:startingLabel(),players:compactPlayersForGroup(group),formationLayout:currentFormationLayoutPayload(),allPlayers:validStarters().map(p=>({id:p.id,layoutKey:formationPlayerKey(p),name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',photo:p.photo||'',mediaUrl:p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'})),substitutes:substitutes().map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,statLabel:p.statLabel||'',statValue:p.statValue||''})),crest:assets.crest||'',stadium:assets.bg||'',background:q('outputBg').value,teamColor:(activeSide==='HOME'?(matchdayState.homeColor||'#d8b55b'):(matchdayState.awayColor||'#4c7dff')),visualVersion:'V4.26.1-PREMIER-BROADCAST',duration,show:show||null,package:packageData(),startedAt:new Date().toISOString()};
+ const state={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,6),group,side:activeSide,team:currentTeamName(),formation:q('formation').value,matchFormat:{mode:matchConfig.mode,playerCount:starterLimit()},playerCount:starterLimit(),startingLabel:startingLabel(),players:compactPlayersForGroup(group),formationLayout:currentFormationLayoutPayload(),allPlayers:validStarters().map(p=>({id:p.id,layoutKey:formationPlayerKey(p),name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',photo:p.photo||'',mediaUrl:p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'})),substitutes:substitutes().map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,statLabel:p.statLabel||'',statValue:p.statValue||''})),crest:assets.crest||'',stadium:assets.bg||'',background:q('outputBg').value,teamColor:(activeSide==='HOME'?(matchdayState.homeColor||'#d8b55b'):(matchdayState.awayColor||'#4c7dff')),visualVersion:'V4.26.3-PREMIER-BROADCAST',duration,show:show||null,package:packageData(),startedAt:new Date().toISOString()};
  try{
    await lanPost('/api/state',{lineupIntro:state});
    return{ok:true}
@@ -4109,12 +4139,12 @@ if('serviceWorker' in navigator&&window.isSecureContext){
 
 setInstalledState();
 
-const HOME_SCREEN_BUILD='V4.26.1-HOME-20261116-01';
+const HOME_SCREEN_BUILD='V4.26.3-HOME-20261116-01';
 async function homeScreenColdStartUpdate(){
   if(!standalone||location.protocol!=='http:')return;
   const once='sagi_homescreen_boot_'+HOME_SCREEN_BUILD;
   try{if(sessionStorage.getItem(once))return;sessionStorage.setItem(once,'1')}catch(e){}
-  setStatus('主屏幕启动 · 正在同步最新 V4.26.1…');
+  setStatus('主屏幕启动 · 正在同步最新 V4.26.3…');
   try{
     const r=await fetch('/api/update',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}',cache:'no-store'});
     const x=await r.json().catch(()=>({}));
@@ -4153,9 +4183,9 @@ if(standalone){
      if(!r.ok||!x.ok)throw new Error(x.error||('HTTP '+r.status));
      status.textContent='文件已下载 · 正在核对版本…';
      const verify=await fetch('/?verify='+Date.now(),{cache:'no-store'}).then(r=>r.text()).catch(()=> '');
-     if(!verify.includes('V4.26.1'))throw new Error('VERSION_VERIFY_FAILED');
-     status.textContent='已确认 V4.26.1 · 更新完成';
-     btn.textContent='V4.26.1 ✓';
+     if(!verify.includes('V4.26.3'))throw new Error('VERSION_VERIFY_FAILED');
+     status.textContent='已确认 V4.26.3 · 更新完成';
+     btn.textContent='V4.26.3 ✓';
      setTimeout(()=>location.replace('/?safe='+Date.now()),500);
    }catch(e){
      status.textContent='更新失败 · 当前版本未改变';
@@ -4184,7 +4214,7 @@ if(standalone){
 <!doctype html>
 <html lang="zh-CN"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SAGI V4.26.1 · 镜头安全引擎 · vMix</title>
+<title>SAGI V4.26.3 · 镜头安全引擎 · vMix</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%2307090d%22/%3E%3Ctext x=%2232%22 y=%2243%22 text-anchor=%22middle%22 font-size=%2234%22 fill=%22%23d8b55b%22%3ES%3C/text%3E%3C/svg%3E">
 <style>
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent;font-family:Arial,"PingFang SC","Microsoft YaHei",sans-serif}.stage{position:absolute;left:0;top:0;width:1920px;height:1080px;overflow:hidden;background:#07090c;transform-origin:0 0}.stadium{position:absolute;inset:0;background:radial-gradient(circle at 50% 0,#6f8294 0,#263442 18%,#111820 42%,#06080b 74%)}.stadium:before{content:"";position:absolute;left:-5%;right:-5%;top:165px;height:300px;background:linear-gradient(#19212a,#0b1016 68%,transparent),repeating-linear-gradient(90deg,#ffffff08 0 7px,transparent 7px 22px);clip-path:polygon(0 0,100% 0,92% 100%,8% 100%)}.stadium:after{content:"";position:absolute;left:0;right:0;bottom:-35px;height:430px;background:linear-gradient(180deg,#173421,#0a2716 70%,#05130a);clip-path:polygon(20% 0,80% 0,100% 100%,0 100%)}.stadiumPhoto{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}.shade{position:absolute;inset:0;background:linear-gradient(90deg,#030508e6 0,#05070a99 38%,#05070a55 58%,#030508c9 100%),linear-gradient(0deg,#040609c7 0,transparent 55%,#03050775 100%)}.pitchLines{position:absolute;left:320px;right:320px;bottom:0;height:360px;opacity:.22;transform:perspective(800px) rotateX(62deg);transform-origin:bottom;border:5px solid #fff;border-bottom:0}.pitchLines:before{content:"";position:absolute;left:50%;top:0;bottom:0;border-left:4px solid #fff}.pitchLines:after{content:"";position:absolute;width:170px;height:170px;border:4px solid #fff;border-radius:50%;left:50%;top:45%;transform:translate(-50%,-50%)}.light{position:absolute;width:760px;height:760px;border-radius:50%;filter:blur(100px);opacity:.22}.l1{left:-180px;top:-330px;background:#5cb4ff}.l2{right:-220px;top:-300px;background:#d7b051}.header{position:absolute;left:95px;top:72px;display:flex;align-items:center;gap:24px}.crest{width:96px;height:96px;object-fit:contain;filter:drop-shadow(0 12px 20px #0009)}.team{font-size:34px;font-weight:950;letter-spacing:2px;color:#fff}.sub{font-size:17px;color:#d8b55b;letter-spacing:5px;margin-top:7px;font-weight:850}.groupTitle{position:absolute;left:100px;top:205px;font-size:28px;letter-spacing:7px;color:#d8b55b;font-weight:900}.groupName{position:absolute;left:95px;top:245px;font-size:72px;line-height:1;font-weight:1000;letter-spacing:-2px;color:#fff}.line{position:absolute;left:98px;top:330px;width:400px;height:5px;background:linear-gradient(90deg,#d8b55b,#fff1b7)}.players{position:absolute;left:70px;top:350px;width:1240px;height:650px;display:flex;align-items:flex-end;justify-content:center;gap:18px}.card{position:relative;width:230px;height:570px;flex:0 0 auto}.card.one{width:520px}.cut{position:absolute;left:0;right:0;bottom:82px;height:490px;display:flex;align-items:flex-end;justify-content:center}.cut img{width:100%;height:100%;object-fit:contain;object-position:center bottom;filter:drop-shadow(0 20px 25px #000d)}
@@ -4289,7 +4319,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent
 .stateSplash{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:radial-gradient(circle at center,#0f151ddd,#020304f5 72%)}.stateSplash.on{display:flex}.stateBox{min-width:900px;text-align:center;padding:55px 70px;border:1px solid #ffffff22;background:#070b10e8;box-shadow:0 30px 100px #000c}.stateKicker{font-size:20px;letter-spacing:8px;color:#d8b55b;font-weight:1000}.stateTitle{font-size:92px;font-weight:1000;margin-top:12px;letter-spacing:-3px}.stateScore{font-size:74px;font-weight:1000;margin-top:25px}.stateTeams{font-size:22px;color:#aab4c0;margin-top:10px}.mvpName{font-size:82px;font-weight:1000;margin-top:18px}.mvpMeta{font-size:24px;color:#d8b55b;margin-top:8px;letter-spacing:3px}
 
 
-/* ===== V4.26.1 SHOT SAFETY ENGINE ===== */
+/* ===== V4.26.3 SHOT SAFETY ENGINE ===== */
 .stage{--teamAccent:#d8b55b}
 .stage .sub,.stage .groupTitle,.stage .formationText{color:var(--teamAccent)}
 .stage .line{background:linear-gradient(90deg,var(--teamAccent),#fff,transparent)}
@@ -4332,7 +4362,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent
 @keyframes plRowIn{from{opacity:0;transform:translateX(-24px)}to{opacity:1;transform:translateX(0)}}
 
 
-/* ===== V4.26.1 SHOT SAFETY ENGINE ===== */
+/* ===== V4.26.3 SHOT SAFETY ENGINE ===== */
 .scoreBug.theme-sagi-pro{height:72px;top:28px;border-radius:8px;background:#071019;border:1px solid #ffffff1f;box-shadow:0 14px 36px #0009;overflow:hidden;animation:sbIn .32s cubic-bezier(.2,.8,.2,1) both}
 .scoreBug.theme-sagi-pro .sbTeamBlock{min-width:210px;max-width:270px;padding:0 15px;background:#0a1119}
 .scoreBug.theme-sagi-pro .sbTeamBlock.home{border-left:5px solid var(--home)}
@@ -4377,7 +4407,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent
 @keyframes eventIn{from{opacity:0;transform:translateX(-48px) scale(.98)}to{opacity:1;transform:translateX(0) scale(1)}}
 
 
-/* ===== V4.26.1 SHOT SAFETY ENGINE ===== */
+/* ===== V4.26.3 SHOT SAFETY ENGINE ===== */
 .scoreBug{display:flex!important;opacity:0;visibility:hidden;pointer-events:none;transform:translateX(-50%) translateY(-18px) scale(.985);transition:opacity .24s ease,transform .36s cubic-bezier(.16,.84,.28,1),visibility 0s linear .36s}
 .scoreBug.on{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0) scale(1);transition-delay:0s}
 .scoreBug.theme-sagi-pro{animation:none}
@@ -4417,12 +4447,12 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent
 @keyframes goalFlash{0%{opacity:0}28%{opacity:1}100%{opacity:0}}
 
 
-/* ===== V4.26.1 CAMERA + GRAPHICS COORDINATION ===== */
+/* ===== V4.26.3 CAMERA + GRAPHICS COORDINATION ===== */
 .graphicsStage.eventActive .scoreBug.on{transform:translateX(-50%) translateY(0) scale(.96);filter:brightness(.92);transition:transform .32s cubic-bezier(.16,.84,.28,1),filter .25s ease}
 .graphicsStage.eventActive .scoreBug.on .sbMid{box-shadow:0 0 0 1px #ffffff0c inset}
 
 
-/* ===== V4.26.1 COMPACT SCOREBUG + GOAL EXPAND ===== */
+/* ===== V4.26.3 COMPACT SCOREBUG + GOAL EXPAND ===== */
 .scoreBug{
   left:58px!important;top:42px!important;transform:translateY(-14px) scale(.985)!important;
   height:68px!important;border-radius:10px!important;overflow:hidden!important;
@@ -4472,17 +4502,17 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent
 @media (prefers-reduced-motion:reduce){.scoreBug,.sbGoalBurst{transition:none!important}.scoreBug.goalExpand .sbGoalWord span,.scoreBug.goalExpand .sbGoalScorer,.scoreBug.goalExpand .sbGoalBurst:after{animation:none!important;opacity:1!important;transform:none!important}}
 
 
-/* ===== V4.26.1 GOAL PLAYER LOWER CARD ===== */
+/* ===== V4.26.3 GOAL PLAYER LOWER CARD ===== */
 .eventCard.goal{left:70px;bottom:64px;width:690px;min-height:154px;padding:22px 28px;gap:22px;background:linear-gradient(115deg,#070b10f7,#111923f4);border-left-width:7px}
-.eventCard.goal .eventPhotoWrap{width:132px;height:132px;flex:0 0 132px;overflow:hidden;border-radius:8px;background:#0a1017}
+.eventCard.goal .eventPhotoWrap{width:132px;min-width:132px;height:132px;flex:0 0 132px;overflow:hidden;border-radius:8px;background:#0a1017}
 .eventCard.goal .eventPhoto{width:100%;height:100%;object-fit:contain;object-position:center bottom}
-.eventCard.goal .eventIcon{width:74px;height:74px;min-width:74px;font-size:36px;border-radius:10px}
+.eventCard.goal .eventIcon{width:64px;height:64px;min-width:64px;font-size:32px;border-radius:10px;margin:0 4px 0 0;align-self:center}
 .eventCard.goal .eventKicker{font-size:13px;letter-spacing:4px}
 .eventCard.goal .eventName{font-size:36px;line-height:1.02;margin-top:5px}
 .eventCard.goal .eventMeta{font-size:14px;margin-top:7px}
 
 
-/* V4.26.1 LINEUP DISPLAY HOTFIX */
+/* V4.26.3 LINEUP DISPLAY HOTFIX */
 .stage.group-SUB .formation,
 .stage.group-TEAM .formation,
 .stage.group-STING .formation,
@@ -4490,7 +4520,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent
 .stage.group-COUNTDOWN .formation{display:none!important}
 
 
-/* ===== V4.26.1 赛前转播包装 PRO ===== */
+/* ===== V4.26.3 赛前转播包装 PRO ===== */
 .matchOverlay{--homeAccent:#d8b55b;--awayAccent:#4c7dff;align-items:center;justify-content:center;background:radial-gradient(circle at 14% 50%,var(--homeAccent) 0,transparent 24%),radial-gradient(circle at 86% 50%,var(--awayAccent) 0,transparent 24%),linear-gradient(120deg,#05070a 0,#0a1017 48%,#05070a 100%);overflow:hidden}
 .matchOverlay:before{content:"";position:absolute;inset:-20%;background:repeating-linear-gradient(118deg,#ffffff05 0 2px,transparent 2px 38px);transform:rotate(-4deg);opacity:.55}
 .matchCardStage{width:1540px;height:770px;padding:0;border:0;background:#080d13f2;box-shadow:0 40px 120px #000c;position:relative;overflow:hidden}
@@ -4524,7 +4554,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent
 .stage.group-DF .card,.stage.group-MF .card,.stage.group-FW .card{max-width:285px}
 
 
-/* V4.26.1 开场标识 + 倒计时统一包装 */
+/* V4.26.3 开场标识 + 倒计时统一包装 */
 .stingOverlay{background:radial-gradient(circle at 50% 45%,#182633 0,#081018 42%,#020405 100%);overflow:hidden}
 .stingOverlay:before{content:"";position:absolute;inset:-20%;background:repeating-linear-gradient(112deg,#ffffff06 0 2px,transparent 2px 44px);opacity:.5}
 .stingCore{position:relative;z-index:2;min-width:720px;padding:70px 95px;border-top:1px solid #ffffff1f;border-bottom:1px solid #ffffff14;background:linear-gradient(90deg,transparent,#071019d9 15% 85%,transparent)}
@@ -4535,7 +4565,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent
 .countdownLabel{font-size:15px;letter-spacing:7px;color:#aab5c0}.countdownNumber{font-size:260px;letter-spacing:-13px;line-height:.9;text-shadow:none}.countdownSub{font-size:20px;color:#fff;letter-spacing:3px;margin-top:24px}
 
 
-/* ===== V4.26.1 点球大战专用比分牌 ===== */
+/* ===== V4.26.3 点球大战专用比分牌 ===== */
 .scoreBug.penaltyMode{overflow:visible}
 .scoreBug.penaltyMode .sbClock{font-size:15px;letter-spacing:1px}.scoreBug.penaltyMode .sbPeriod{font-size:7px;max-width:112px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .scoreBug.penaltyMode .sbPenalty{display:block;font-size:8px;font-weight:1000;color:#303842;letter-spacing:.5px}
@@ -4548,7 +4578,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent
 .scoreBug.theme-uefa.penaltyMode .penaltyShootoutBar{background:#06172c;border-color:#31527b}.scoreBug.theme-uefa .penCenter b{color:#73b8ff}
 
 
-/* ===== V4.26.1 世界杯级独立点球记分牌 ===== */
+/* ===== V4.26.3 世界杯级独立点球记分牌 ===== */
 .simplePenaltyBoard{--home:#d8b55b;--away:#4c7dff;position:absolute;left:50%;bottom:54px;transform:translateX(-50%) translateY(34px) scale(.97);width:1240px;height:190px;color:#fff;opacity:0;pointer-events:none;transition:opacity .22s ease,transform .42s cubic-bezier(.16,.84,.28,1);filter:drop-shadow(0 24px 36px #000b);z-index:30}
 .simplePenaltyBoard.on{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
 .simplePenaltyBoard:before{content:"";position:absolute;left:50%;top:23px;width:520px;height:150px;transform:translateX(-50%);background:radial-gradient(ellipse at center,#ffffff12 0,#ffffff05 34%,transparent 70%);filter:blur(8px);pointer-events:none}
@@ -4579,7 +4609,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent
 .simplePenaltyBoard.sudden .spbHeader{box-shadow:0 10px 34px #000a,0 0 35px #f2c14f25 inset}.simplePenaltyBoard.sudden .spbCoreMeta b{background:#e4565f;color:#fff}
 @keyframes spOrbSpin{to{transform:translateX(-50%) rotate(360deg)}}@keyframes spRingSpin{to{transform:rotate(360deg)}}@keyframes spDotWorld{0%{transform:scale(.3);opacity:.1}55%{transform:scale(1.32);opacity:1}100%{transform:scale(1)}}@keyframes spScorePulse{0%{transform:scale(.72);opacity:.35}62%{transform:scale(1.15);opacity:1}100%{transform:scale(1)}}
 
-/* V4.26.1 世界杯级罚失红点 */
+/* V4.26.3 世界杯级罚失红点 */
 .spbDot.miss{background:#e94f59;border-color:#ff9aa1;box-shadow:0 0 0 3px #e94f591c,0 0 15px #e94f5966}
 .spbDot.miss:after{content:"×";position:absolute;left:50%;top:50%;transform:translate(-50%,-56%);font-size:12px;line-height:1;color:#fff;font-weight:1000}
 
@@ -4890,6 +4920,7 @@ function graphicsGoalFlash(){
  const g=q('graphicsStage');if(!g)return;g.classList.remove('goalFlash');void g.offsetWidth;g.classList.add('goalFlash');setTimeout(()=>g.classList.remove('goalFlash'),520)
 }
 function cleanupEventVisuals(){
+ clearTimeout(scorebugGoalTimer);scorebugGoalActive=false;const scorebug=q('scoreBug');if(scorebug)scorebug.classList.remove('goalExpand');
  q('graphicsStage').classList.remove('eventActive');const card=q('eventCard'),splash=q('stateSplash');
  card.className='eventCard';card.style.borderLeftColor='';q('eventIcon').style.background='';
  q('eventPhotoWrap').className='eventPhotoWrap';q('eventPhoto').removeAttribute('src');q('eventIcon').className='eventIcon';q('eventCopy').className='eventCopy';q('subRows').className='subRows';
@@ -4980,7 +5011,7 @@ function updateScoreBug(){
  q('sbCompetition').textContent=g.competition||'SAGI LIVE';
  const stoppage=String(g.stoppageTime||'').trim();q('sbStoppage').textContent=stoppage;q('sbStoppage').classList.toggle('on',!!stoppage);
  q('sbHomeReds').innerHTML=redCardsHtml(g.homeRedCards);q('sbAwayReds').innerHTML=redCardsHtml(g.awayRedCards);
- const penOn=penMode||Number(g.homePen)>0||Number(g.awayPen)>0;
+ const penOn=penMode;
  q('sbHomePen').textContent='点球 '+(Number(g.homePen)||0);q('sbAwayPen').textContent='点球 '+(Number(g.awayPen)||0);q('sbHomePen').classList.toggle('on',penOn);q('sbAwayPen').classList.toggle('on',penOn);
  setCrest('sbHomeCrest',g.homeCrest||'');setCrest('sbAwayCrest',g.awayCrest||'');
 }
@@ -5015,7 +5046,7 @@ function applyGraphics(g){
  currentGraphics=g;updateScoreBug();showEvent(g)
 }
 
-const OUTPUT_BUILD='V4.26.1';
+const OUTPUT_BUILD='V4.26.3';
 function versionParts(v){return String(v||'').replace(/^V/i,'').split('.').map(n=>Number(n)||0)}
 function versionIsNewer(a,b){const A=versionParts(a),B=versionParts(b);for(let i=0;i<3;i++){if((A[i]||0)>(B[i]||0))return true;if((A[i]||0)<(B[i]||0))return false}return false}
 async function checkOutputBuild(){
