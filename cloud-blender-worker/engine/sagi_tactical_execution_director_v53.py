@@ -1559,6 +1559,7 @@ def relation_camera_key(
     settle_sec=None,
     view_angle=None,
     landmark_point=None,
+    frame_shift_y_override=None,
 ):
     """Reframe from the actual tactical relationship instead of fixed coordinates."""
     global camera_last, camera_last_t
