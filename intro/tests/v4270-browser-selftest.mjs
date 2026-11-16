@@ -11,11 +11,11 @@ const AWAY='ALTAI YOUTH FOOTBALL CLUB';
 const crest=(fill,label)=>'data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><path d="M60 4 108 22v38c0 31-20 48-48 56C32 108 12 91 12 60V22Z" fill="'+fill+'"/><text x="60" y="70" text-anchor="middle" font-size="30" font-family="Arial" font-weight="900" fill="white">'+label+'</text></svg>');
 const HOME_CREST=crest('#0c8b55','H');
 const AWAY_CREST=crest('#3157b7','A');
-let seq=1,vmixCommands=[],graphics=makeGraphics();
+let seq=1,vmixCommands=[],matchdayPosts=[],graphics=makeGraphics();
 
 function makeGraphics(overrides={}){
  return {
-  commandId:'g_'+(seq++),visualVersion:'V4.27.0-SELFTEST',
+  commandId:'g_'+(seq++),visualVersion:'V4.27.1-SELFTEST',
   scoreboardVisible:true,scoreboardFrozen:false,scoreTheme:'sagi-pro',competition:'TORANHE CUP',
   home:HOME,away:AWAY,homeShort:HOME,awayShort:AWAY,
   homeCrest:HOME_CREST,awayCrest:AWAY_CREST,eventLogo:'',
@@ -36,12 +36,12 @@ const server=http.createServer(async(req,res)=>{
  try{
   if(u.pathname==='/api/state')return json(res,{lineupIntro:null});
   if(u.pathname==='/api/matchday'&&req.method==='GET')return json(res,graphics);
-  if(u.pathname==='/api/matchday'&&req.method==='POST'){const b=await readBody(req);try{graphics=JSON.parse(b)||graphics}catch{}return json(res,{ok:true})}
-  if(u.pathname==='/api/vmix/status')return json(res,{ok:true,active:'1',preview:'2',inputs:[{number:'1',key:'cam1',type:'Camera',title:'CAM 1',state:'Running'},{number:'2',key:'cam2',type:'Camera',title:'CAM 2',state:'Running'},{number:'5',key:'gfx',type:'Browser',title:'SAGI Browser',state:'Running'}],overlays:[]});
+  if(u.pathname==='/api/matchday'&&req.method==='POST'){const b=await readBody(req);try{graphics=JSON.parse(b)||graphics;matchdayPosts.push(graphics)}catch{}return json(res,{ok:true})}
+  if(u.pathname==='/api/vmix/status')return json(res,{ok:true,active:'1',preview:'2',inputs:[{number:'1',key:'cam1',type:'Camera',title:'CAM 1',state:'Running'},{number:'2',key:'cam2',type:'Camera',title:'CAM 2',state:'Running'},{number:'4',key:'replay',type:'Video',title:'REPLAY',state:'Running'},{number:'5',key:'gfx',type:'Browser',title:'SAGI Browser',state:'Running'}],overlays:[]});
   if(u.pathname==='/api/vmix'&&req.method==='POST'){const b=await readBody(req);let cmd={};try{cmd=JSON.parse(b)}catch{}vmixCommands.push(cmd);return json(res,{ok:true,command:cmd})}
   if(u.pathname==='/api/projects')return json(res,{projects:[]});
   if(u.pathname==='/health')return json(res,{ok:true,port:PORT});
-  if(u.pathname==='/')return text(res,'SAGI V4.27.0 SELFTEST');
+  if(u.pathname==='/')return text(res,'SAGI V4.27.1 SELFTEST');
   const rel=decodeURIComponent(u.pathname).replace(/^\/+/,'');const file=path.resolve(ROOT,rel);
   if(!file.startsWith(ROOT)||!fs.existsSync(file)||fs.statSync(file).isDirectory())return text(res,'Not found','text/plain',404);
   res.writeHead(200,{'Content-Type':mime(file),'Cache-Control':'no-store','Access-Control-Allow-Origin':'*'});res.end(fs.readFileSync(file));
@@ -128,8 +128,40 @@ server.listen(PORT,'127.0.0.1',async()=>{
   assert(cuts.length===2&&String(cuts[0].input)==='1'&&String(cuts[1].input)==='2','camera switching wrong: '+JSON.stringify(cuts));
   await page.screenshot({path:'selftest-artifacts/06-two-camera-control.png'});
 
+  console.log('TEST 6: event-logo replay stinger visual');
+  const replayPage=await browser.newPage({viewport:{width:1920,height:1080}});
+  const EVENT_LOGO='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><circle cx="150" cy="150" r="130" fill="#067347"/><path d="M80 170 150 55l70 115-70 75Z" fill="#6cff3f"/></svg>');
+  graphics=makeGraphics({eventLogo:EVENT_LOGO,event:{type:'REPLAY_STINGER',phase:'IN',title:'INSTANT REPLAY'}});
+  await replayPage.goto('http://127.0.0.1:'+PORT+'/intro/vmix-v45-lan.html',{waitUntil:'domcontentloaded'});
+  await replayPage.waitForFunction(()=>document.querySelector('#replayStinger')?.classList.contains('on'),null,{timeout:5000});
+  await wait(520);
+  const replayVisual=await replayPage.evaluate(()=>{const s=document.querySelector('#replayStinger'),logo=document.querySelector('#rsLogo');return{on:s.classList.contains('on'),src:logo.getAttribute('src')||'',title:document.querySelector('#rsTitle').textContent,kicker:document.querySelector('#rsKicker').textContent,left:document.querySelector('.rsLeft').getBoundingClientRect().width,right:document.querySelector('.rsRight').getBoundingClientRect().width,opacity:parseFloat(getComputedStyle(document.querySelector('.rsCenter')).opacity)}});
+  assert(replayVisual.on&&replayVisual.src.startsWith('data:image/svg+xml'),'replay stinger event logo missing');
+  assert(replayVisual.title==='INSTANT REPLAY'&&replayVisual.kicker==='精彩回放','replay labels wrong');
+  assert(replayVisual.left>1000&&replayVisual.right>1000&&replayVisual.opacity>.8,'replay stinger did not fully cover/display');
+  await replayPage.screenshot({path:'selftest-artifacts/07-replay-stinger-visual.png'});
+  await wait(1100);
+  assert(!(await replayPage.locator('#replayStinger').evaluate(el=>el.classList.contains('on'))),'replay stinger did not auto clear');
+  await replayPage.close();
+
+  console.log('TEST 7: manual replay uses logo stinger IN, then OUT back to live');
+  vmixCommands=[];matchdayPosts=[];
+  await page.evaluate(()=>localStorage.setItem('sagi_vmix_director_v42',JSON.stringify({cam1:'1',cam2:'2',drone:'',replay:'4',graphics:'5',transition:'Cut',duration:0,overlay:'1',cam1Role:'MAIN_WIDE',cam2Role:'SIDELINE_CLOSE',droneRole:'DRONE',replayRole:'REPLAY'})));
+  await page.reload({waitUntil:'domcontentloaded'});await wait(1800);
+  await page.locator('#matchCompetition').fill('SAGI SELF TEST CUP');await page.locator('#matchHome').fill('SELF TEST HOME');await page.locator('#matchAway').fill('SELF TEST AWAY');await page.locator('#matchKickoff').fill('2026-11-17T20:00');await page.locator('#matchVenue').fill('SELF TEST STADIUM');
+  await page.click('#setupValidateBtn');await page.waitForFunction(()=>!document.querySelector('#setupReadyBtn')?.disabled,null,{timeout:5000});await page.click('#setupReadyBtn');
+  await page.click('#vdTakeReplay');await wait(1900);
+  await page.click('#vdTakeCam1');await wait(1900);
+  const replayCuts=vmixCommands.filter(x=>['Cut','Fade','Stinger1'].includes(x.functionName));
+  const replayEvents=matchdayPosts.map(x=>x&&x.event).filter(Boolean);
+  assert(replayCuts.length>=2&&String(replayCuts[0].input)==='4'&&String(replayCuts[1].input)==='1','replay camera sequence wrong: '+JSON.stringify(replayCuts));
+  assert(replayEvents.some(e=>e.type==='REPLAY_STINGER'&&e.phase==='IN'),'missing replay IN stinger event');
+  assert(replayEvents.some(e=>e.type==='REPLAY_STINGER'&&e.phase==='OUT'),'missing replay OUT stinger event');
+  assert(replayEvents.filter(e=>e.type==='CLEAR_EVENT').length>=2,'replay stinger clear events missing');
+  await page.screenshot({path:'selftest-artifacts/08-replay-control.png'});
+
   assert(pageErrors.length===0,'browser page errors: '+pageErrors.join(' | '));
-  const report={ok:true,build:'V4.27.0',testedAt:new Date().toISOString(),tests:['regular white score ribbon + lower time/stoppage ribbon + TORANHE event logo','HOME goal enlarged HOME crest + complete GOAL + lower player card + collapse','AWAY goal enlarged AWAY crest','penalty >5 rounds/sudden death/miss/scores','two-camera Input 1 -> Input 2'],vmixCommands:cuts};
+  const report={ok:true,build:'V4.27.1',testedAt:new Date().toISOString(),tests:['regular white score ribbon + lower time/stoppage ribbon + TORANHE event logo','HOME goal enlarged HOME crest + complete GOAL + lower player card + collapse','AWAY goal enlarged AWAY crest','penalty >5 rounds/sudden death/miss/scores','two-camera Input 1 -> Input 2','event-logo replay stinger visual','manual replay stinger IN -> Input 4 -> OUT -> Input 1'],vmixCommands:cuts};
   fs.writeFileSync('selftest-artifacts/report.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
  }catch(e){
   fs.mkdirSync('selftest-artifacts',{recursive:true});try{await page.screenshot({path:'selftest-artifacts/FAIL.png',fullPage:true})}catch{}
