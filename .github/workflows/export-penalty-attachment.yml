@@ -1,9 +1,9 @@
-name: Export SAGI Auto vMix Input Attachment
+name: Export SAGI Scorebug Restore Attachment
 
 on:
   push:
     paths:
-      - "intro/SAGI_VMIX_LAN_V48_AUTO_INPUT_4250.bat"
+      - "intro/SAGI_VMIX_LAN_V48_SCOREBUG_RESTORE_4251.bat"
       - ".github/workflows/export-penalty-attachment.yml"
   workflow_dispatch:
 
@@ -15,7 +15,7 @@ jobs:
       - name: Upload BAT attachment
         uses: actions/upload-artifact@v4
         with:
-          name: SAGI_VMIX_LAN_V48_AUTO_INPUT_4250
-          path: intro/SAGI_VMIX_LAN_V48_AUTO_INPUT_4250.bat
+          name: SAGI_VMIX_LAN_V48_SCOREBUG_RESTORE_4251
+          path: intro/SAGI_VMIX_LAN_V48_SCOREBUG_RESTORE_4251.bat
           if-no-files-found: error
           retention-days: 7
