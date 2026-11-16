@@ -781,7 +781,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
         <div class="actions"><button id="addBtn" class="ok" type="button">加入首发</button><button id="updateBtn" type="button">更新当前</button><button id="removeBtn" class="danger" type="button">删除当前</button><button id="clearMediaBtn" type="button">清除视频</button></div>
         <div id="starterHint" class="muted" style="margin-top:8px">当前首发 0/11；替补人数独立，不受场上人数限制。</div>
         <div id="roster" class="roster" style="margin-top:10px"></div>
-        <div class="actions"><button id="saveBtn" type="button">保存阵容</button><button id="loadBtn" type="button">读取阵容</button><button id="demoBtn" type="button">载入当前赛制示例</button></div>
+        <div class="actions"><button id="saveBtn" type="button">保存当前队</button><button id="loadBtn" type="button">读取当前队</button><button id="demoBtn" type="button">载入当前赛制示例</button></div>
       </div>
 
       <div class="card">
@@ -2116,6 +2116,35 @@ async function save(){
  note('V4.8 双队阵容、音频与节目已保存')
 }
 async function hydrateRoster(list=[]){const out=[];for(const p of list){p.photo=await dbGet('photo:'+p.id);p.mediaBlob=await dbGet('media:'+p.id);p.mediaObjectUrl=p.mediaBlob instanceof Blob?URL.createObjectURL(p.mediaBlob):'';p.mediaAction=p.mediaAction||'STANDARD';p.directorIn=Number(p.directorIn)||0;p.directorOut=Number(p.directorOut)||0;p.directorSpeed=Number(p.directorSpeed)||1;p.directorFreeze=!!p.directorFreeze;p.directorFreezeMs=Number(p.directorFreezeMs)||1000;p.directorCamera=p.directorCamera||'MEDIUM';out.push(p)}return out}
+async function saveCurrentSideRoster(){
+ const side=activeSide==='AWAY'?'AWAY':'HOME';stashActiveTeam();const t=teamStore[side]||{roster:[],formation:defaultFormationForCount(starterLimit()),crest:'',customPositions:{}};
+ for(const p of (t.roster||[]))p.id=p.id||uid();
+ const playerMeta=p=>({id:p.id,name:p.name,number:p.number,squadType:p.squadType||'STARTER',role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',mediaUrl:p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'});
+ for(const p of (t.roster||[])){await dbPut('photo:'+p.id,p.photo||'');if(p.mediaBlob)await dbPut('media:'+p.id,p.mediaBlob);else await dbDel('media:'+p.id)}
+ await dbPut('crest:'+side,t.crest||'');
+ const snap={side,teamName:side==='AWAY'?(q('matchAway').value.trim()||q('teamName').value.trim()||'AWAY'):(q('matchHome').value.trim()||q('teamName').value.trim()||'HOME'),matchConfig:{...matchConfig},formation:t.formation||defaultFormationForCount(starterLimit()),customPositions:JSON.parse(JSON.stringify(t.customPositions||{})),roster:(t.roster||[]).map(playerMeta),savedAt:Date.now()};
+ localStorage.setItem('sagi_team_roster_v48_'+side,JSON.stringify(snap));note('已保存 '+sideLabel(side)+' 阵容 · '+snap.roster.length+' 人')
+}
+async function loadCurrentSideRoster(){
+ const side=(q('awaySideBtn')&&q('awaySideBtn').classList.contains('on'))?'AWAY':((q('homeSideBtn')&&q('homeSideBtn').classList.contains('on'))?'HOME':(activeSide==='AWAY'?'AWAY':'HOME'));
+ try{
+  let snap=JSON.parse(localStorage.getItem('sagi_team_roster_v48_'+side)||'null');
+  if(!snap){
+   let legacy=JSON.parse(localStorage.getItem('sagi_player_intro_v40')||'null');if(!legacy){try{legacy=JSON.parse(localStorage.getItem('sagi_player_intro_v36')||'null')}catch(_){}}
+   const lt=legacy&&legacy.teams&&legacy.teams[side];
+   if(lt)snap={side,teamName:side==='AWAY'?(legacy.package&&legacy.package.away||q('matchAway').value):(legacy.package&&legacy.package.home||q('matchHome').value),matchConfig:legacy.matchConfig||legacy.package?.matchFormat||null,formation:lt.formation,customPositions:lt.customPositions||{},roster:lt.roster||[]};
+  }
+  if(!snap||!Array.isArray(snap.roster)){note('还没有保存 '+sideLabel(side)+' 阵容');return}
+  if(snap.matchConfig)applyStoredMatchConfig(snap.matchConfig,true);
+  if(side==='AWAY'&&snap.teamName)q('matchAway').value=snap.teamName;if(side==='HOME'&&snap.teamName)q('matchHome').value=snap.teamName;
+  const loaded=await hydrateRoster(snap.roster.map(p=>({...p}))),formation=snap.formation||defaultFormationForCount(starterLimit()),crest=await dbGet('crest:'+side)||'';
+  teamStore[side]={formation,customPositions:snap.customPositions||{},roster:loaded,crest};
+  reconcileTeamStarters(side,formation);switchTeam(side,{silent:true,skipStash:true});
+  refreshSideUI();renderRoster();renderPreviews();updateFormatUI();updateFormationEditorUI();refreshMatchdayPlayers();syncMatchStage();renderStage(currentGroup);
+  setTimeout(()=>{if(activeSide!==side)switchTeam(side,{silent:true,skipStash:true});refreshSideUI()},0);
+  note('已读取 '+sideLabel(side)+' 阵容 · '+loaded.length+' 人')
+ }catch(e){note('读取 '+sideLabel(side)+' 阵容失败')}
+}
 async function load(){
  const requestedSide=activeSide==='AWAY'?'AWAY':'HOME';
  try{
@@ -2218,7 +2247,7 @@ q('eventLogoFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;ass
 q('musicFile').onchange=e=>{const f=e.target.files[0];if(!f)return;if(f.size>30*1024*1024){note('音乐建议控制在30MB以内');e.target.value='';return}if(assets.musicObjectUrl&&assets.musicObjectUrl.startsWith('blob:'))try{URL.revokeObjectURL(assets.musicObjectUrl)}catch(_){}assets.musicBlob=f;assets.musicObjectUrl=URL.createObjectURL(f);renderPreviews();q('audioStatus').textContent='LOCAL MUSIC READY · '+Math.round(f.size/1024)+'KB'};
 q('audioTestBtn').onclick=()=>ensureShowMusic();q('cueTestBtn').onclick=()=>triggerCue('HIT');q('audioStopBtn').onclick=()=>stopShowMusic();q('clearMusicBtn').onclick=()=>{stopShowMusic();if(assets.musicObjectUrl&&assets.musicObjectUrl.startsWith('blob:'))try{URL.revokeObjectURL(assets.musicObjectUrl)}catch(_){}assets.musicBlob=null;assets.musicObjectUrl='';renderPreviews();note('已清除本机音乐')};
 q('clearBgBtn').onclick=()=>{assets.bg='';renderPreviews();renderStage(currentGroup)};q('homeSideBtn').onclick=()=>switchTeam('HOME');q('awaySideBtn').onclick=()=>switchTeam('AWAY');
-q('addBtn').onclick=addPlayer;q('updateBtn').onclick=updatePlayer;q('removeBtn').onclick=removePlayer;q('saveBtn').onclick=save;q('loadBtn').onclick=load;q('demoBtn').onclick=demo;
+q('addBtn').onclick=addPlayer;q('updateBtn').onclick=updatePlayer;q('removeBtn').onclick=removePlayer;q('saveBtn').onclick=saveCurrentSideRoster;q('loadBtn').onclick=loadCurrentSideRoster;q('demoBtn').onclick=demo;
 q('teamBtn').onclick=()=>setBroadcastPreview('TEAM',activeSide,bcLabel('TEAM',activeSide),2500);q('gkBtn').onclick=()=>setBroadcastPreview('GK',activeSide,bcLabel('GK',activeSide),3000);q('dfBtn').onclick=()=>setBroadcastPreview('DF',activeSide,bcLabel('DF',activeSide),4000);q('mfBtn').onclick=()=>setBroadcastPreview('MF',activeSide,bcLabel('MF',activeSide),4000);q('fwBtn').onclick=()=>setBroadcastPreview('FW',activeSide,bcLabel('FW',activeSide),4000);q('fullBtn').onclick=()=>setBroadcastPreview('FULL',activeSide,bcLabel('FULL',activeSide),6000);q('subsBtn').onclick=()=>setBroadcastPreview('SUB',activeSide,bcLabel('SUB',activeSide),5000);q('showPlayBtn').onclick=startShow;q('showPrevBtn').onclick=prevShow;q('showNextBtn').onclick=nextShow;q('stopBtn').onclick=stopShow;q('showResetBtn').onclick=resetShow;q('showSaveBtn').onclick=saveShow;q('copyVmixBtn').onclick=copyVmix;
 q('matchFormat').onchange=()=>setMatchFormatFromUI();q('customPlayerCount').onchange=()=>{if(q('matchFormat').value==='CUSTOM')setMatchFormatFromUI()};q('applyCustomFormationBtn').onclick=applyCustomFormation;q('squadType').onchange=updateFormatUI;
 q('formation').onchange=()=>{teamStore[activeSide].formation=q('formation').value;const r=reconcileTeamStarters(activeSide,q('formation').value);roster=teamStore[activeSide].roster||roster;renderRoster();updateFormatUI();updateFormationEditorUI();renderStage(currentGroup);refreshMatchdayPlayers();if(matchReady){matchReady=false;setupReadySignature='';refreshSetupReadyUI()}note('阵型已切换 '+q('formation').value+(r.changed?' · '+syncSummary(r):''))};q('teamName').oninput=()=>{if(activeSide==='HOME')q('matchHome').value=q('teamName').value;else q('matchAway').value=q('teamName').value;renderStage(currentGroup)};q('outputBg').onchange=()=>renderStage(currentGroup);
@@ -2337,7 +2366,7 @@ if('serviceWorker' in navigator&&window.isSecureContext){
 
 setInstalledState();
 
-const HOME_SCREEN_BUILD='V4.8-HOME-20261116-01';
+const HOME_SCREEN_BUILD='V4.8-HOME-20261116-03';
 async function homeScreenColdStartUpdate(){
   if(!standalone||location.protocol!=='http:')return;
   const once='sagi_homescreen_boot_'+HOME_SCREEN_BUILD;
