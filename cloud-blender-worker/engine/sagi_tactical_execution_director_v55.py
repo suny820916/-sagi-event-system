@@ -236,7 +236,7 @@ def event_end(ev):
     if typ in (
         "player_move", "defender_shift", "dribble", "space", "face",
         "pass_link", "tactical_arrow", "channel_highlight",
-        "dashed_path", "zone_fill", "tactical_hold", "camera_drift", "coverage_arc"
+        "dashed_path", "zone_fill", "tactical_hold", "camera_drift"
     ):
         return event_start(ev) + float(ev.get("duration", 0.0))
     if typ == "defensive_unit":
@@ -787,7 +787,6 @@ for sy in (-1, 1):
 
 player_materials = {}
 tactical_labels = {}
-tactical_label_roots = {}
 
 
 def create_player(name, data):
@@ -938,41 +937,14 @@ def create_player(name, data):
     if label_cfg.get("enabled", False) and label_text:
         label_root = bpy.data.objects.new(name + "_TACTICAL_LABEL_ROOT", None)
         bpy.context.collection.objects.link(label_root)
-
-        if label_cfg.get("parent_to_player", False):
-            # V5.3: follow player position by parenting, but cancel root scale
-            # so the UI card keeps a stable world/screen size. The offset is
-            # above the player's head in the same local coordinate system as
-            # the body geometry.
-            label_root.parent = root
-            label_root.location = (
-                float(label_cfg.get("offset_x", 0.0)),
-                float(label_cfg.get("offset_y", 0.0)),
-                float(label_cfg.get("offset_z", 1.90)),
-            )
-            if label_cfg.get("cancel_parent_scale", True):
-                inv = 1.0 / max(1e-6, final_scale)
-                label_root.scale = (inv, inv, inv)
-        else:
-            if label_cfg.get("world_follow", False):
-                # V5.5: unparented UI follows world position only. The offset
-                # is expressed in player-local visual units but converted to a
-                # world-space height once, so card size/roll are independent
-                # from the player's root scale and yaw.
-                label_root.location = (
-                    float(label_cfg.get("offset_x", 0.0)),
-                    float(label_cfg.get("offset_y", 0.0)),
-                    float(label_cfg.get("offset_z_player_units", 1.96)) * final_scale,
-                )
-            else:
-                label_root.location = (
-                    float(label_cfg.get("offset_x", 0.0)),
-                    float(label_cfg.get("offset_y", 1.35)),
-                    float(label_cfg.get("offset_z", 0.18)),
-                )
-            copy_loc = label_root.constraints.new(type="COPY_LOCATION")
-            copy_loc.target = root
-            copy_loc.use_offset = True
+        label_root.location = (
+            float(label_cfg.get("offset_x", 0.0)),
+            float(label_cfg.get("offset_y", 1.35)),
+            float(label_cfg.get("offset_z", 0.18)),
+        )
+        copy_loc = label_root.constraints.new(type="COPY_LOCATION")
+        copy_loc.target = root
+        copy_loc.use_offset = True
 
         badge = cube(
             name + "_TACTICAL_LABEL_BADGE",
@@ -1003,7 +975,6 @@ def create_player(name, data):
         txt.hide_render = True
 
         tactical_labels[name] = (badge, txt)
-        tactical_label_roots[name] = label_root
 
     return root, ring, support_ring
 
@@ -1061,14 +1032,25 @@ scene.camera = cam
 # AUTO can narrow the horizontal field in portrait renders and crop subjects.
 cam.data.sensor_fit = "HORIZONTAL"
 
-# V5.2 role-tag billboard pass. Teactics role markers behave as screen-facing UI,
-# not as tiny text painted flat on the grass. Players and rings remain world-space.
+# V5.5 role-tag billboard fix. Copy the camera rotation onto the LABEL ROOT,
+# not onto each child object. The old TRACK_TO-on-child approach could make the
+# badge appear edge-on in oblique shots, producing yellow slivers instead of
+# readable CDM/CM/ST markers.
 if cfg.get("tactical_role_labels", {}).get("billboard_to_camera", False):
-    for _label_root in tactical_label_roots.values():
-        _track = _label_root.constraints.new(type="TRACK_TO")
-        _track.target = cam
-        _track.track_axis = "TRACK_Z"
-        _track.up_axis = "UP_Y"
+    _seen_label_roots = set()
+    for _label_objs in tactical_labels.values():
+        if not _label_objs:
+            continue
+        _label_root = _label_objs[0].parent
+        if _label_root is None or _label_root.name in _seen_label_roots:
+            continue
+        _seen_label_roots.add(_label_root.name)
+        _copy_rot = _label_root.constraints.new(type="COPY_ROTATION")
+        _copy_rot.target = cam
+        _copy_rot.use_x = True
+        _copy_rot.use_y = True
+        _copy_rot.use_z = True
+        _copy_rot.mix_mode = "REPLACE"
 
 camera_dna = {
     # V2 relation framing: preserve the tactical angle but crop much tighter.
@@ -1199,7 +1181,6 @@ def relation_camera_pose(
     field_scope=None,
     view_angle=None,
     landmark_point=None,
-    frame_shift_y_override=None,
 ):
     """Keep full trajectory in frame, but centre on the current tactical relation."""
     start_t = float(start_t)
@@ -1570,7 +1551,6 @@ def relation_camera_key(
     settle_sec=None,
     view_angle=None,
     landmark_point=None,
-    frame_shift_y_override=None,
 ):
     """Reframe from the actual tactical relationship instead of fixed coordinates."""
     global camera_last, camera_last_t
@@ -1585,8 +1565,6 @@ def relation_camera_key(
         p["lead"] = float(lead_sec)
     if settle_sec is not None:
         p["settle"] = float(settle_sec)
-    if frame_shift_y_override is not None:
-        p["frame_shift_y"] = float(frame_shift_y_override)
 
     # Spatial continuity: in an upfield attack, don't let the camera centre
     # suddenly jump backwards just because a supporting runner started deeper.
@@ -2272,36 +2250,6 @@ def add_zone_fill(ev):
         set_object_visibility_window(border, t0, t1)
 
 
-def add_coverage_arc(ev):
-    """Teactics-like semi-elliptical role/coverage arc on the tactical board."""
-    center = ev.get("center", [0.0, 0.0])
-    radius = ev.get("radius", [10.0, 6.0])
-    rx = float(radius[0])
-    ry = float(radius[1])
-    a0 = math.radians(float(ev.get("start_deg", 15.0)))
-    a1 = math.radians(float(ev.get("end_deg", 165.0)))
-    steps = max(8, int(ev.get("steps", 28)))
-    pts = []
-    for i in range(steps + 1):
-        u = i / float(steps)
-        a = a0 + (a1 - a0) * u
-        pts.append((
-            float(center[0]) + math.cos(a) * rx,
-            float(center[1]) + math.sin(a) * ry,
-        ))
-    arc = polyline(
-        "COVERAGE_ARC",
-        pts,
-        float(ev.get("width", .055)),
-        m_tactical_guide,
-        closed=False,
-        z=float(ev.get("z", .285)),
-    )
-    t0 = float(ev["t"])
-    t1 = t0 + float(ev.get("duration", 1.8))
-    set_object_visibility_window(arc, t0, t1)
-
-
 def tactical_hold(ev):
     global camera_last_t
     # V5.0 exact-reference reading hold:
@@ -2448,7 +2396,6 @@ for ev in cfg.get("events", []):
             ev.get("settle_sec"),
             ev.get("view_angle"),
             ev.get("landmark_point"),
-            ev.get("frame_shift_y"),
         )
 
     elif typ == "focus":
@@ -2456,13 +2403,6 @@ for ev in cfg.get("events", []):
             ev["player"],
             float(ev["t"]),
         )
-
-    elif typ == "focus_group":
-        set_emphasis({
-            "t": float(ev["t"]),
-            "focal": list(ev.get("players", [])),
-            "support": [],
-        })
 
     elif typ == "emphasis":
         set_emphasis(ev)
@@ -2548,9 +2488,6 @@ for ev in cfg.get("events", []):
     elif typ == "zone_fill":
         add_zone_fill(ev)
 
-    elif typ == "coverage_arc":
-        add_coverage_arc(ev)
-
 smooth_action(cam)
 
 blend_path = os.path.join(
@@ -2562,27 +2499,12 @@ bpy.ops.wm.save_as_mainfile(
     filepath=blend_path,
 )
 
-preview_seconds_raw = os.environ.get("SAGI_PREVIEW_SECONDS", "").strip()
-if preview_seconds_raw:
-    preview_seconds = []
-    for _token in preview_seconds_raw.split(","):
-        _token = _token.strip()
-        if not _token:
-            continue
-        preview_seconds.append(float(_token))
-    for _sec in preview_seconds:
-        _fr = max(scene.frame_start, min(scene.frame_end, 1 + round(_sec * fps)))
-        scene.frame_set(_fr)
-        _safe = ("%05.2f" % _sec).replace(".", "_")
-        scene.render.filepath = os.path.join(out_dir, "preview_" + _safe + ".png")
-        bpy.ops.render.render(write_still=True)
-    print("SAGI_PREVIEW_RENDER_DONE", preview_seconds, blend_path)
-else:
-    bpy.ops.render.render(
-        animation=True,
-    )
-    print(
-        "SAGI_RENDER_DONE",
-        scene.render.filepath,
-        blend_path,
-    )
+bpy.ops.render.render(
+    animation=True,
+)
+
+print(
+    "SAGI_RENDER_DONE",
+    scene.render.filepath,
+    blend_path,
+)
