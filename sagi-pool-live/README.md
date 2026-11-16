@@ -1,4 +1,4 @@
-# SAGI POOL LIVE · CHINA V2.6
+# SAGI POOL LIVE · CHINA V2.7
 
 面向中国大陆球房销售的手机台球直播、追分、球房管理、商业授权、设备管理和原生推流系统。
 
@@ -32,7 +32,7 @@
 - 一次性安装码
 - 国内同域 HTTPS 自动识别
 
-## CHINA SYNC V2.6
+## CHINA SYNC V2.7
 
 - Node.js 零第三方运行时依赖
 - 腾讯云 / 阿里云大陆服务器
@@ -52,10 +52,10 @@
 - 60 秒没有直播心跳自动结束假直播
 - 原子持久化 + 有效 .bak 备份
 - 主数据损坏自动从 .bak 恢复
-- SIGTERM/SIGINT 优雅落盘
+- SIGTERM/SIGINT 优雅落盘\n- 安装码按 IP 限速，超限 HTTP 429
 - remote_revoke 自动关闭服务器直播状态
 
-## Android LIVE ENGINE V1.0 RC1
+## Android LIVE ENGINE V1.0 RC4
 
 - RTMP / RTMPS 原生推流
 - 540P / 720P / 1080P
