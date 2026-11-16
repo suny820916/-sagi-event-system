@@ -29,3 +29,19 @@ SAGI_SYNC_TOKEN=change-me PORT=8787 node server.mjs
 正式域名使用大陆服务器时，需要按当地要求完成 ICP 备案并配置 HTTPS。建议前置 Nginx，Node 服务只监听内网端口。
 
 V1 使用单进程 JSON 持久化；当门店数扩大后升级为 MySQL/Redis，不改变前端 API。
+
+
+## V2.2 设备安装码
+
+销售后台可以为指定 Club ID + 球桌生成 8 位一次性安装码：
+
+- 10 分钟有效
+- 使用一次立即失效
+- Android 端领取后获得设备专属 token
+- 设备 token 只保存 SHA-256 哈希在服务器
+- 球房主授权密钥无需交给普通员工
+- 设备 token 同样受套餐到期与最大球桌数约束
+
+接口：
+- `POST /api/admin/provisions`（管理员）
+- `POST /api/provision/claim`（安装设备）
