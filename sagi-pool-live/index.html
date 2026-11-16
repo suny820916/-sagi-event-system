@@ -52,8 +52,8 @@ button{cursor:pointer}
 <body>
 <div class="app">
   <header class="top">
-    <div class="brand"><div class="mark">S</div><div>SAGI POOL LIVE<div class="ver">CLUB · V1.4</div></div></div>
-    <div class="statusPill" id="saveStatus">● 本地自动保存</div>
+    <div class="brand"><div class="mark">S</div><div>SAGI POOL LIVE<div class="ver">CLUB · V1.5</div></div></div>
+    <div style="display:flex;gap:7px;align-items:center"><a href="./club.html" class="statusPill" style="text-decoration:none;color:#b8c5bc">球房控制台</a><div class="statusPill" id="saveStatus">● 本地自动保存</div></div>
   </header>
 
   <section class="stage" id="stage">
@@ -154,9 +154,13 @@ button{cursor:pointer}
 </div>
 <script>
 (()=> {
-  const KEY='sagi_pool_live_v14';
+  const params=new URLSearchParams(location.search);
+  const tableParam=(params.get('table')||'').trim();
+  const clubParam=(params.get('club')||'').trim();
+  const tableLabel=tableParam?(tableParam.endsWith('桌')?tableParam:tableParam+'桌'):'01桌';
+  const KEY='sagi_pool_live_v15_'+(tableParam||'default');
   const defaults={
-    mode:'8ball', club:'SAGI POOL CLUB', table:'01桌', raceTo:5, settlement:'winner',
+    mode:'8ball', club:clubParam||'SAGI POOL CLUB', table:tableLabel, raceTo:5, settlement:'winner',
     points:{normal:1,small:2,big:3,gold9:4},
     players:[{id:1,name:'球员A',score:0,wins:0,big:0,small:0},{id:2,name:'球员B',score:0,wins:0,big:0,small:0}],
     active:0, history:[], log:[]
@@ -178,7 +182,7 @@ button{cursor:pointer}
     }catch(e){return clone(defaults)}
   }
   function save(){
-    try{localStorage.setItem(KEY,JSON.stringify(state));$('#saveStatus').textContent='● 已自动保存'}catch(e){$('#saveStatus').textContent='● 保存受限'}
+    try{state.updatedAt=Date.now();localStorage.setItem(KEY,JSON.stringify(state));$('#saveStatus').textContent='● '+state.table+' 已保存'}catch(e){$('#saveStatus').textContent='● 保存受限'}
   }
   function snapshot(){state.history.push({players:clone(state.players),log:clone(state.log),active:state.active});if(state.history.length>40)state.history.shift()}
   function now(){return new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})}
