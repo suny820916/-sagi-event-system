@@ -2181,7 +2181,7 @@ async function gdTakeCamera(slot,label,opts={}){
 
 const REPLAY_STINGER_SWITCH_MS=950,REPLAY_STINGER_CLEAR_MS=420;
 function replayStingerPayload(phase='IN'){
- return{type:'REPLAY_STINGER',phase:phase==='OUT'?'OUT':'IN',title:phase==='OUT'?'BACK TO LIVE':'INSTANT REPLAY',label:phase==='OUT'?'回到比赛':'精彩回放',at:mdClockText()}
+ return{type:'REPLAY_STINGER',phase:phase==='OUT'?'OUT':'IN',title:phase==='OUT'?'BACK TO LIVE':'INSTANT REPLAY',label:phase==='OUT'?'回到比赛':'精彩回放',at:mdFormat(mdNowSeconds())}
 }
 async function replayStingerTake(slot,phase='IN',source='MANUAL',label=''){
  if(!matchReady)return false;vdSave();
