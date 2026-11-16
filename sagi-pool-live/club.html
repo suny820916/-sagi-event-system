@@ -50,7 +50,7 @@ let cfg=loadSettings();
 function pad(n){return String(n).padStart(2,'0')}
 function age(ts){if(!ts)return'暂无记录';const d=Math.max(0,Date.now()-ts),m=Math.floor(d/60000);if(m<1)return'刚刚更新';if(m<60)return m+'分钟前';const h=Math.floor(m/60);if(h<24)return h+'小时前';return Math.floor(h/24)+'天前'}
 function readTable(no){try{return JSON.parse(localStorage.getItem('sagi_pool_live_v20_'+no)||'null')}catch(e){return null}}
-let cloudRooms={}, cloudLicense=null;
+let cloudRooms={}, cloudLicense=null, cloudLoading=false, cloudUpdatedAt=0;
 function licenseText(){
   if(!cloudLicense)return'';
   const plan=cloudLicense.plan||'CLUB';
@@ -81,7 +81,8 @@ function render(){
     card.append(top,score,names,meta,link);box.appendChild(card);
   }
   const lic=licenseText();
-  $('#summary').textContent=active+' / '+cfg.count+' 比赛中'+(lic?' · '+lic:'');
+  const updated=cloudUpdatedAt?(' · '+new Date(cloudUpdatedAt).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit',second:'2-digit'})+'更新'):'';
+  $('#summary').textContent=active+' / '+cfg.count+' 比赛中'+(lic?' · '+lic:'')+updated;
 }
 function saveCfg(){
   cfg.club=$('#club').value.trim()||'SAGI POOL CLUB';
@@ -92,8 +93,10 @@ function saveCfg(){
   localStorage.setItem(SETTINGS,JSON.stringify(cfg));
 }
 async function refreshCloud(){
+  if(cloudLoading)return;
   saveCfg();
   if(!cfg.syncUrl){$('#summary').textContent='未配置国内同步服务器';render();return}
+  cloudLoading=true;
   try{
     $('#summary').textContent='云端同步中…';
     const r=await fetch(cfg.syncUrl+'/api/clubs/'+encodeURIComponent(cfg.clubId),{headers:{'X-SAGI-Token':cfg.token},cache:'no-store'});
@@ -102,15 +105,17 @@ async function refreshCloud(){
       if(r.status===401)throw new Error('授权无效或已到期');
       throw new Error('云端连接失败 · '+r.status);
     }
-    cloudRooms={};cloudLicense=d.license||null;
+    cloudRooms={};cloudLicense=d.license||null;cloudUpdatedAt=Date.now();
     (d.rooms||[]).forEach(x=>{cloudRooms[x.table]=x});
     render();
   }catch(e){$('#summary').textContent=e.message||'云端连接失败'}
+  finally{cloudLoading=false}
 }
 $('#save').addEventListener('click',()=>{saveCfg();render()});
 $('#cloudRefresh').addEventListener('click',refreshCloud);
 window.addEventListener('focus',()=>{render();if(cfg.syncUrl)refreshCloud()});document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){render();if(cfg.syncUrl)refreshCloud()}});
 render();if(cfg.syncUrl)refreshCloud();
+setInterval(()=>{if(document.visibilityState==='visible'&&cfg.syncUrl)refreshCloud()},3000);
 })();
 </script>
 </body></html>
