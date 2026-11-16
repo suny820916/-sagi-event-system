@@ -232,8 +232,10 @@ function persistNow() {
     const tmp = DATA_FILE + '.tmp';
     const backup = DATA_FILE + '.bak';
     fs.writeFileSync(tmp, JSON.stringify(store, null, 2));
-    if (hasValidJsonFile(DATA_FILE)) fs.copyFileSync(DATA_FILE, backup);
+    const hadValidMain = hasValidJsonFile(DATA_FILE);
+    if (hadValidMain) fs.copyFileSync(DATA_FILE, backup);
     fs.renameSync(tmp, DATA_FILE);
+    if (!fs.existsSync(backup)) fs.copyFileSync(DATA_FILE, backup);
     return true;
   } catch (e) {
     console.error('Persist failed:', e.message);
