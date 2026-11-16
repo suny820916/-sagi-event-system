@@ -1,4 +1,4 @@
-# SAGI V4.7.3 STABLE LAN / RAW UPDATE / MATCH SAFE Bridge
+# SAGI V4.7.4 STABLE LAN / VERSION-VERIFIED SAFE UPDATE Bridge
 # Same-LAN control server + local vMix API bridge.
 # Phone Control: http://<PC-LAN-IP>:8099/
 # vMix Browser:  http://127.0.0.1:8099/vmix
@@ -86,7 +86,10 @@ function Update-SagiLan {
     $outputText = [Text.Encoding]::UTF8.GetString([IO.File]::ReadAllBytes($outputDownload))
     if ($controlText -notmatch "<!doctype html>") { throw "Control validation failed" }
     if ($outputText -notmatch "<!doctype html>") { throw "Graphics validation failed" }
-    if ($controlText -notmatch "SAGI LIVE MATCH DIRECTOR") { throw "Control identity validation failed" }
+    if (($controlText -notmatch "SAGI LIVE MATCH DIRECTOR") -and ($controlText -notmatch "SAGI 赛事直播导播")) { throw "Control identity validation failed" }
+    $controlVersion = if ($controlText -match "V4\.18\.2") { "V4.18.2" } elseif ($controlText -match "V\d+\.\d+(?:\.\d+)?") { $Matches[0] } else { "UNKNOWN" }
+    $outputVersion = if ($outputText -match "V4\.18\.2") { "V4.18.2" } elseif ($outputText -match "V\d+\.\d+(?:\.\d+)?") { $Matches[0] } else { "UNKNOWN" }
+    if ($controlVersion -ne $outputVersion) { throw ("Version mismatch: control=" + $controlVersion + " output=" + $outputVersion) }
 
     Copy-Item $ControlCache $ControlBackup -Force
     Copy-Item $OutputCache $OutputBackup -Force
@@ -97,7 +100,7 @@ function Update-SagiLan {
     $script:OutputHtml = $outputText
 
     Write-Host "[SAFE UPDATE] Control Room + vMix Graphics updated. Bridge core unchanged." -ForegroundColor Green
-    return @{ok=$true;version="4.7.0";updated=@("control","output");bridgeLocked=$true;rollbackAvailable=$true}
+    return @{ok=$true;version=$controlVersion;controlVersion=$controlVersion;outputVersion=$outputVersion;updated=@("control","output");bridgeLocked=$true;rollbackAvailable=$true}
   } catch {
     Write-Host ("[SAFE UPDATE ERROR] " + $_.Exception.Message) -ForegroundColor Red
     throw
@@ -271,7 +274,7 @@ function State-Json {
 
 Write-Host ""
 Write-Host "============================================================" -ForegroundColor Cyan
-Write-Host "  SAGI V4.7.3 MATCH SAFE LAN DIRECT - vMix Bridge" -ForegroundColor Cyan
+Write-Host "  SAGI V4.7.4 VERSION-VERIFIED SAFE UPDATE - vMix Bridge" -ForegroundColor Cyan
 Write-Host "============================================================" -ForegroundColor Cyan
 
 if (-not (Test-Path $ControlCache) -or -not (Test-Path $OutputCache)) {
