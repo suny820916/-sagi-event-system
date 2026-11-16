@@ -18,7 +18,7 @@
 </head>
 <body>
 <div class="app">
-<header class="top"><div><div class="brand">SAGI POOL SELLER</div><div class="sub">球房商业授权后台 · CHINA V2.9</div></div><div class="pill">仅 SAGI 管理员</div></header>
+<header class="top"><div><div class="brand">SAGI POOL SELLER</div><div class="sub">球房商业授权后台 · CHINA V2.10</div></div><div class="pill">仅 SAGI 管理员</div></header>
 
 <section class="card">
   <div class="head"><h2>国内授权服务器</h2><span class="small" id="serverStatus">未连接</span></div>
@@ -31,6 +31,10 @@
     <button class="btn" id="allRefresh" type="button">刷新全部</button>
   </div>
   <div class="result" id="serverHealth">尚未检查。这里会显示版本、运行时长、授权/设备/直播数量以及数据备份状态。</div>
+  <div class="actions">
+    <button class="btn gold" id="downloadBackup" type="button">下载业务备份</button>
+    <div class="small" style="align-self:center">备份包含比赛/授权哈希/设备状态，不包含明文主密钥。</div>
+  </div>
 </section>
 
 <section class="card">
@@ -179,6 +183,28 @@ function healthLine(k,v,ok=true){
   const span=document.createElement('span');span.textContent=v;span.style.color=ok?'#dbe5de':'#efb8bf';
   div.append(b,span);return div;
 }
+async function downloadBackup(){
+  try{
+    if(!server())throw new Error('请填写服务器地址');
+    setStatus('正在生成备份…');
+    const r=await fetch(server()+'/api/admin/backup',{headers:{'X-SAGI-Admin':admin()},cache:'no-store'});
+    if(!r.ok){
+      const d=await r.json().catch(()=>({}));
+      if(r.status===429)throw new Error('管理员密钥错误尝试过多，请稍后再试');
+      if(r.status===401)throw new Error('管理员密钥不正确');
+      throw new Error(d.error||('备份失败 · '+r.status));
+    }
+    const blob=await r.blob();
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    const stamp=new Date().toISOString().replace(/[:.]/g,'-');
+    a.href=url;a.download='SAGI-POOL-BACKUP-'+stamp+'.json';
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),2000);
+    setStatus('备份已下载');
+  }catch(e){setStatus('备份失败');alert(e.message)}
+}
+
 async function refreshServerHealth(){
   try{
     setStatus('健康检查中…');
@@ -298,6 +324,7 @@ async function refresh(){
     });setStatus('已连接 · '+d.licenses.length+' 家');
   }catch(e){setStatus('连接失败');$('#list').innerHTML='<div class="empty">'+e.message+'</div>'}
 }
+$('#downloadBackup').addEventListener('click',downloadBackup);
 $('#healthRefresh').addEventListener('click',refreshServerHealth);
 $('#allRefresh').addEventListener('click',()=>{refreshServerHealth();refresh()});
 $('#refresh').addEventListener('click',refresh);$('#serverUrl').addEventListener('change',saveServer);
