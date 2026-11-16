@@ -695,6 +695,7 @@ button,.fileBtn{border:0;border-radius:12px;background:#262d37;color:#fff;font-w
 .bcTransport .goLive{background:linear-gradient(135deg,#c62e2e,#f05a4e);color:white;font-size:16px;box-shadow:0 10px 26px #b5252540}
 .bcTransport .hold.on{background:#6b531d;color:#ffe39a;border-color:#aa8736}
 .bcTransport .clearAll{background:#2b1114;border-color:#71313a;color:#ff9ca5}
+.bcFullIntroBar{margin-top:10px}.bcFullIntroBtn{width:100%;min-height:64px;border:1px solid #e5c76c;background:linear-gradient(135deg,#7a6022,#e2c56c 58%,#f0da93);color:#0a0c0f;font-size:17px;font-weight:1000;letter-spacing:1px;box-shadow:0 12px 30px #d8b55b22}.bcFullIntroBtn span{display:block;margin-top:4px;font-size:10px;font-weight:900;letter-spacing:1.5px;opacity:.72}
 .bcQuick{display:grid;grid-template-columns:repeat(9,1fr);gap:7px;margin-top:9px}
 .bcQuick button{min-height:42px;padding:7px 5px;font-size:10px;background:#10161d;border:1px solid #2d3743}
 .bcQuick button.on{border-color:#d8b55b;color:#edd68d;background:#1a160d;box-shadow:0 0 0 1px #d8b55b22 inset}
@@ -744,7 +745,7 @@ button,.fileBtn{border:0;border-radius:12px;background:#262d37;color:#fff;font-w
 .setupHead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.setupTitle{font-size:17px;font-weight:1000;letter-spacing:.4px}.setupTitle small{display:block;color:#7f8a97;font-size:10px;letter-spacing:2px;margin-top:4px}
 .setupReadyBadge{padding:8px 12px;border:1px solid #5a3434;border-radius:999px;color:#e68c8c;background:#33161666;font-size:10px;font-weight:1000;letter-spacing:1.5px;white-space:nowrap}.setupReadyBadge.ready{border-color:#477861;color:#91e1b5;background:#14332499}
 .setupGrid{display:grid;grid-template-columns:1fr 1.35fr;gap:10px}.setupPanel{background:#090d12;border:1px solid #29333e;border-radius:14px;padding:11px}.setupPanelTitle{font-size:10px;color:#d8b55b;font-weight:1000;letter-spacing:2px;margin-bottom:9px}
-.setupProjectGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.setupProjectActions{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}.setupProjectActions button{min-height:38px;font-size:11px}
+.setupProjectGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.setupProjectActions{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}.setupProjectActions button{min-height:38px;font-size:11px}.setupProjectActions .recover{background:linear-gradient(135deg,#4d421f,#9b8032);color:#fff1b3;border:1px solid #b8973d}.projectRecoveryStatus{margin-top:7px;padding:7px 9px;border-radius:9px;background:#0a0e13;border:1px solid #29333e;color:#8995a2;font-size:9px;line-height:1.5}.projectRecoveryStatus.on{border-color:#79652d;color:#e6cd7d;background:#17130b}
 .setupChecks{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}.setupCheck{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 10px;border-radius:10px;border:1px solid #333e49;background:#0c1117;font-size:10px;color:#96a0ac}.setupCheck b{font-size:10px}.setupCheck.good{border-color:#315b47;background:#0d1c16;color:#9cd6b6}.setupCheck.bad{border-color:#603838;background:#241212;color:#e8a0a0}.setupCheck.warn{border-color:#6b592d;background:#211b0d;color:#e3ca7b}
 .setupSummary{margin-top:9px;padding:9px 10px;border-radius:10px;background:#070a0e;border:1px solid #27313b;color:#8e98a4;font-size:10px;line-height:1.55}.setupSummary.good{border-color:#315b47;color:#9cd6b6}.setupSummary.bad{border-color:#603838;color:#e8a0a0}
 .setupReadyActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}.setupReadyActions button{min-height:42px}.setupReadyActions .readyBtn{background:linear-gradient(135deg,#1f6545,#4a9b70);color:#fff}.setupReadyActions .readyBtn:disabled{opacity:.35;filter:saturate(.2)}.setupReadyActions .unlockBtn{background:#442322}
@@ -864,7 +865,9 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
           <button id="projectSaveBtn" class="ok" type="button">保存比赛项目</button>
           <button id="projectLoadBtn" type="button">读取项目</button>
           <button id="projectDeleteBtn" class="danger" type="button">删除项目</button>
+          <button id="projectRecoverBtn" class="recover" type="button">↻ 找回历史比赛</button>
         </div>
+        <div id="projectRecoveryStatus" class="projectRecoveryStatus">可扫描旧版本、旧端口与 Bridge 恢复库；找回后自动并入永久比赛库，不覆盖现有项目。</div>
         <div class="tiny" style="margin-top:8px">比赛项目保存赛事信息、赛制、主客队名单、阵型、节目时间线与比赛事件状态；球员照片/视频继续使用本机素材库。</div>
       </div>
       <div class="setupPanel">
@@ -890,6 +893,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
         <div class="bcStatusLine"><span>下一画面</span><b id="bcNextLabel">主队门将</b></div>
       </div>
     </div>
+    <div class="bcFullIntroBar"><button id="fullIntroBtn" class="bcFullIntroBtn" type="button">▶ 一键播放完整出场<span>赛事 LOGO → 主队首发/替补 → 客队首发/替补</span></button></div>
     <div class="bcTransport">
       <button id="prevLiveBtn" type="button">← 上一个</button>
       <button id="holdBtn" class="hold" type="button">保持</button>
@@ -1649,8 +1653,6 @@ function refreshSetupReadyUI(){
 }
 let matchProjectsCache=null;
 function localMatchProjects(){try{const x=JSON.parse(localStorage.getItem(MATCH_PROJECTS_KEY)||'[]');return Array.isArray(x)?x:[]}catch(e){return[]}}
-let matchProjectsCache=null;
-function localMatchProjects(){try{const x=JSON.parse(localStorage.getItem(MATCH_PROJECTS_KEY)||'[]');return Array.isArray(x)?x:[]}catch(e){return[]}}
 function getMatchProjects(){return Array.isArray(matchProjectsCache)?matchProjectsCache.slice():localMatchProjects()}
 function putMatchProjects(list){matchProjectsCache=(list||[]).slice(0,20);try{localStorage.setItem(MATCH_PROJECTS_KEY,JSON.stringify(matchProjectsCache))}catch(e){}}
 function mergeMatchProjects(a=[],b=[]){
@@ -1703,8 +1705,61 @@ async function loadMatchProject(){
 async function deleteMatchProject(){
  const id=q('projectSelect').value;if(!id){note('请选择比赛项目');return}let list=getMatchProjects(),p=list.find(x=>x.id===id);list=list.filter(x=>x.id!==id);putMatchProjects(list);refreshProjectList();await persistMatchProjectsBridge(list);note('已删除比赛项目'+(p?' · '+p.name:''))
 }
+function recoveryStatus(t,on=true){const el=q('projectRecoveryStatus');if(!el)return;el.textContent=t;el.classList.toggle('on',!!on)}
+function storageVersionValue(prefix){
+ try{
+  const keys=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith(prefix))keys.push(k)}
+  keys.sort((a,b)=>{const av=Number((a.match(/v(\d+)/i)||[])[1])||0,bv=Number((b.match(/v(\d+)/i)||[])[1])||0;return bv-av});
+  for(const k of keys){const v=localStorage.getItem(k);if(v)return v}
+ }catch(e){}return''
+}
+function legacySnapshotProject(){
+ try{
+  const core=storageVersionValue('sagi_player_intro_');if(!core)return null;const x=JSON.parse(core);if(!x||typeof x!=='object')return null;
+  const pkg=x.package||{},home=String(pkg.home||pkg.homeTeam||'主队'),away=String(pkg.away||pkg.awayTeam||'客队'),stamp=Date.now();
+  let h=2166136261;for(const ch of core.slice(0,4000)){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)}
+  return{id:'legacy_'+(h>>>0).toString(36),name:'历史快照 · '+home+' vs '+away,savedAt:stamp-1,core,show:storageVersionValue('sagi_show_director_'),matchday:storageVersionValue('sagi_matchday_graphics_'),vmix:storageVersionValue('sagi_vmix_director_'),recoveredFrom:'LOCAL_LEGACY'}
+ }catch(e){return null}
+}
+function scanLocalLegacyProjects(){
+ let out=[];try{
+  for(let i=0;i<localStorage.length;i++){
+   const k=localStorage.key(i);if(!k||!k.startsWith('sagi_match_projects_'))continue;
+   try{const x=JSON.parse(localStorage.getItem(k)||'[]');if(Array.isArray(x))out.push(...x.map(p=>({...p,recoveredFrom:p.recoveredFrom||('LOCAL '+k)})))}catch(_){}
+  }
+ }catch(e){}
+ const snap=legacySnapshotProject();if(snap)out.push(snap);return out
+}
+async function recoveryFetchJson(url,timeout=650){
+ const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),timeout);
+ try{const r=await fetch(url,{cache:'no-store',signal:ctl.signal,mode:'cors'});if(!r.ok)throw new Error('HTTP '+r.status);return await r.json()}finally{clearTimeout(tm)}
+}
+async function scanLegacyLanPorts(){
+ const host=location.hostname;if(!host||location.protocol!=='http:')return[];
+ const current=Number(location.port)||80,ports=[8099,8100,8101,8102,8103,8104,8105,8106,8107,8108,8109,8110,8111,8112,8113,8114,8115,8116,8117,8118,8119,8120].filter((v,i,a)=>a.indexOf(v)===i);
+ if(!ports.includes(current))ports.unshift(current);
+ const jobs=ports.map(async port=>{
+  const base='http://'+host+':'+port,out=[];
+  try{const x=await recoveryFetchJson(base+'/api/projects?recover='+Date.now());if(Array.isArray(x&&x.projects))out.push(...x.projects.map(p=>({...p,recoveredFrom:p.recoveredFrom||('BRIDGE '+port)})))}catch(e){}
+  try{const x=await recoveryFetchJson(base+'/api/matchday?recoverProjects='+Date.now());if(Array.isArray(x&&x.__sagiProjects))out.push(...x.__sagiProjects.map(p=>({...p,recoveredFrom:p.recoveredFrom||('BRIDGE STATE '+port)})))}catch(e){}
+  return out
+ });
+ const all=await Promise.all(jobs);return all.flat()
+}
+async function recoverHistoryProjects(){
+ const btn=q('projectRecoverBtn');if(btn){btn.disabled=true;btn.textContent='扫描中…'}recoveryStatus('正在扫描：当前手机旧版本 → Bridge 永久库 → 8099–8120 旧导播端口…',true);
+ try{
+  const before=getMatchProjects(),local=scanLocalLegacyProjects(),lan=await scanLegacyLanPorts(),merged=mergeMatchProjects(before,mergeMatchProjects(local,lan));
+  const oldIds=new Set(before.map(p=>String(p.id))),added=merged.filter(p=>!oldIds.has(String(p.id))).length;
+  putMatchProjects(merged);refreshProjectList();const saved=await persistMatchProjectsBridge(merged);
+  if(added>0){recoveryStatus('找回完成：新增 '+added+' 个历史比赛，共 '+merged.length+' 个项目'+(saved?'，已写入导播电脑永久库。':'。'));note('已找回 '+added+' 个历史比赛')}
+  else if(merged.length>before.length){recoveryStatus('找回完成：已合并历史记录，共 '+merged.length+' 个项目。');note('历史比赛已合并')}
+  else recoveryStatus('扫描完成：没有发现新的历史项目。若旧导播 IP 已变化，Safari 无法跨旧 IP 直接读取原浏览器存储；以后新保存的比赛不会再受地址变化影响。',true)
+ }catch(e){recoveryStatus('历史找回未完成 · 当前项目没有被修改。',true);note('历史比赛找回失败')}
+ finally{if(btn){btn.disabled=false;btn.textContent='↻ 找回历史比赛'}}
+}
 function initMatchSetup(){
- q('projectName').value=setupProjectDefaultName();refreshProjectList();q('projectSaveBtn').onclick=saveMatchProject;q('projectLoadBtn').onclick=loadMatchProject;q('projectDeleteBtn').onclick=deleteMatchProject;
+ q('projectName').value=setupProjectDefaultName();refreshProjectList();q('projectSaveBtn').onclick=saveMatchProject;q('projectLoadBtn').onclick=loadMatchProject;q('projectDeleteBtn').onclick=deleteMatchProject;q('projectRecoverBtn').onclick=recoverHistoryProjects;
  q('setupValidateBtn').onclick=()=>validateMatchSetup(true);q('setupReadyBtn').onclick=()=>setMatchReady(true);q('setupUnlockBtn').onclick=()=>setMatchReady(false);
  validateMatchSetup(true);refreshSetupReadyUI();syncMatchProjectsFromBridge()
 }
@@ -2518,6 +2573,11 @@ function runShowStep(i){
  if(i>=showSteps.length){playing=false;showIndex=-1;stopCountdown();stopShowMusic();q('status').textContent='节目播放结束';q('showNow').textContent='COMPLETE';q('showProgressBar').style.width='100%';renderShowTimeline();return}
  showIndex=i;const s=showSteps[i],d=Math.max(500,Number(s.duration)||1000);if(s.side&&s.side!==activeSide)switchTeam(s.side,{silent:true,noRender:true});renderShowTimeline();broadcastProgramFromShow(s,d);applyShowTransition(s.transition);triggerCue(s.cue);renderStage(s.group);animateStage();animatePackageGroup(s.group,d);showProgressTick(s,d);q('status').textContent='SHOW '+(i+1)+' / '+showSteps.length+' · '+s.label;publishGroup(s.group,d,showMeta(s));clearTimeout(showTimer);if(!broadcastHold)showTimer=setTimeout(()=>runShowStep(i+1),d)
 }
+function startFullIntro(){
+ broadcastHold=false;const hb=q('holdBtn');if(hb){hb.classList.remove('on');hb.textContent='保持'}broadcastManualIndex=0;
+ q('status').textContent='一键完整出场 · 赛事Logo → 客队替补';
+ startShow();
+}
 function startShow(){if(!requireMatchReady())return;if(roster.length<1){note('请先加入球员');return}stopShow(false);playing=true;showSession=Date.now().toString(36);ensureShowMusic();focusAndRun(()=>runShowStep(0))}
 function stopShow(update=true){playing=false;clearTimeout(showTimer);clearTimeout(seqTimer);stopCountdown();stopShowMusic();if(update){q('status').textContent='节目已停止';q('showNow').textContent='STOPPED'}renderShowTimeline()}
 function nextShow(){if(!requireMatchReady())return;if(!showSteps.length)return;playing=true;showSession=showSession||Date.now().toString(36);clearTimeout(showTimer);runShowStep(Math.min(showSteps.length,showIndex+1))}
@@ -2620,7 +2680,7 @@ function broadcastProgramFromShow(s,d){
 }
 function initBroadcastControl(){
  document.querySelectorAll('[data-bc-group]').forEach(b=>b.onclick=()=>setBroadcastPreview(b.dataset.bcGroup,b.dataset.bcSide||activeSide,b.dataset.bcLabel||'',bcDuration(b.dataset.bcGroup)));
- q('goLiveBtn').onclick=takeBroadcastLive;q('holdBtn').onclick=toggleBroadcastHold;q('prevLiveBtn').onclick=()=>stepBroadcastPreview(-1);q('nextLiveBtn').onclick=()=>stepBroadcastPreview(1);q('clearAllBtn').onclick=clearBroadcastAll;
+ q('fullIntroBtn').onclick=startFullIntro;q('goLiveBtn').onclick=takeBroadcastLive;q('holdBtn').onclick=toggleBroadcastHold;q('prevLiveBtn').onclick=()=>stepBroadcastPreview(-1);q('nextLiveBtn').onclick=()=>stepBroadcastPreview(1);q('clearAllBtn').onclick=clearBroadcastAll;
  document.addEventListener('keydown',e=>{const tag=(document.activeElement&&document.activeElement.tagName)||'';if(['INPUT','SELECT','TEXTAREA'].includes(tag))return;
   if(e.code==='Space'){e.preventDefault();takeBroadcastLive()}else if(e.key==='h'||e.key==='H'){toggleBroadcastHold()}else if(e.key==='ArrowRight'){stepBroadcastPreview(1)}else if(e.key==='ArrowLeft'){stepBroadcastPreview(-1)}else if(e.key==='Escape'){clearBroadcastAll()}
  });
