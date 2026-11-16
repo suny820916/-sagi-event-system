@@ -1,0 +1,92 @@
+name: SAGI VIEWPOINT V5.3 TEACTICS UI HIERARCHY PREVIEW
+
+concurrency:
+  group: sagi-viewpoint-v53-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "cloud-blender-worker/presets/christmas_tree_attack_viewpoint_v53_preview.json"
+      - "cloud-blender-worker/engine/sagi_tactical_execution_director_v53.py"
+      - ".github/workflows/sagi-viewpoint-v53-preview.yml"
+  workflow_dispatch:
+
+jobs:
+  render-viewpoint-v53-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Blender image
+        run: docker build -t sagi-viewpoint-v53 ./cloud-blender-worker
+
+      - name: Render V5.3 12fps visual preview
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p viewpoint_v53_out
+          docker run --rm \
+            -v "$PWD/viewpoint_v53_out:/out" \
+            sagi-viewpoint-v53 \
+            bash -lc '
+              set -euo pipefail
+              apt-get update -qq
+              apt-get install -y -qq --no-install-recommends fonts-dejavu-core fonts-lato >/dev/null
+
+              blender --background \
+                --python /app/engine/sagi_tactical_execution_director_v53.py \
+                -- \
+                /app/presets/christmas_tree_attack_viewpoint_v53_preview.json \
+                /out
+
+              ffmpeg -y -loglevel error \
+                -framerate 12 \
+                -i /out/frames/frame_%04d.png \
+                -f lavfi \
+                -i anullsrc=channel_layout=stereo:sample_rate=44100 \
+                -map 0:v:0 -map 1:a:0 \
+                -c:v libx264 -profile:v baseline -level 3.1 \
+                -pix_fmt yuv420p -preset veryfast -crf 19 \
+                -c:a aac -b:a 64k -shortest -movflags +faststart \
+                /out/SAGI_VIEWPOINT_V5_3_BASE.mp4
+
+              printf "%s" "W1NjcmlwdCBJbmZvXQpTY3JpcHRUeXBlOiB2NC4wMCsKUGxheVJlc1g6IDU0MApQbGF5UmVzWTogOTYwClNjYWxlZEJvcmRlckFuZFNoYWRvdzogeWVzCgpbVjQrIFN0eWxlc10KRm9ybWF0OiBOYW1lLCBGb250bmFtZSwgRm9udHNpemUsIFByaW1hcnlDb2xvdXIsIFNlY29uZGFyeUNvbG91ciwgT3V0bGluZUNvbG91ciwgQmFja0NvbG91ciwgQm9sZCwgSXRhbGljLCBVbmRlcmxpbmUsIFN0cmlrZU91dCwgU2NhbGVYLCBTY2FsZVksIFNwYWNpbmcsIEFuZ2xlLCBCb3JkZXJTdHlsZSwgT3V0bGluZSwgU2hhZG93LCBBbGlnbm1lbnQsIE1hcmdpbkwsIE1hcmdpblIsIE1hcmdpblYsIEVuY29kaW5nClN0eWxlOiBLVG9wLExhdG8sMTgsJkgwMEU3RTdFNywmSDAwRTdFN0U3LCZIMDAwMDAwMDAsJkgwMDAwMDAwMCwwLDAsMCwwLDkyLDEwMCwxLDAsMSwwLDAsNywzNiwyMCw4OCwxClN0eWxlOiBNVG9wLExhdG8gSGVhdnksNTYsJkgwMDFBRjJFNiwmSDAwMUFGMkU2LCZIMDAwMDAwMDAsJkgwMDAwMDAwMCwtMSwwLDAsMCw4OCwxMDAsMCwwLDEsMCwwLDcsMzYsMjAsMTE0LDEKU3R5bGU6IE1MVG9wLExhdG8gSGVhdnksNDgsJkgwMDFBRjJFNiwmSDAwMUFGMkU2LCZIMDAwMDAwMDAsJkgwMDAwMDAwMCwtMSwwLDAsMCw4NiwxMDAsMCwwLDEsMCwwLDcsMzYsMjAsMTE0LDEKU3R5bGU6IFNUb3AsTGF0bywxNiwmSDAwQjhCQ0JGLCZIMDBCOEJDQkYsJkgwMDAwMDAwMCwmSDAwMDAwMDAwLDAsMCwwLDAsOTIsMTAwLDAsMCwxLDAsMCw3LDM2LDIwLDE3OCwxClN0eWxlOiBLQXR0YWNrLExhdG8sMTgsJkgwMEU3RTdFNywmSDAwRTdFN0U3LCZIMDAwMDAwMDAsJkgwMDAwMDAwMCwwLDAsMCwwLDkyLDEwMCwxLDAsMSwwLDAsNywzNiwyMCwxNDIsMQpTdHlsZTogTUF0dGFjayxMYXRvIEhlYXZ5LDU4LCZIMDAxQUYyRTYsJkgwMDFBRjJFNiwmSDAwMDAwMDAwLCZIMDAwMDAwMDAsLTEsMCwwLDAsODgsMTAwLDAsMCwxLDAsMCw3LDM2LDIwLDE2OCwxClN0eWxlOiBNTEF0dGFjayxMYXRvIEhlYXZ5LDQ4LCZIMDAxQUYyRTYsJkgwMDFBRjJFNiwmSDAwMDAwMDAwLCZIMDAwMDAwMDAsLTEsMCwwLDAsODYsMTAwLDAsMCwxLDAsMCw3LDM2LDIwLDE2OCwxClN0eWxlOiBTQXR0YWNrLExhdG8sMTYsJkgwMEI4QkNCRiwmSDAwQjhCQ0JGLCZIMDAwMDAwMDAsJkgwMDAwMDAwMCwwLDAsMCwwLDkyLDEwMCwwLDAsMSwwLDAsNywzNiwyMCwyMzYsMQoKW0V2ZW50c10KRm9ybWF0OiBMYXllciwgU3RhcnQsIEVuZCwgU3R5bGUsIE5hbWUsIE1hcmdpbkwsIE1hcmdpblIsIE1hcmdpblYsIEVmZmVjdCwgVGV4dApEaWFsb2d1ZTogMCwwOjAwOjAwLjAwLDA6MDA6MDYuMDAsS1RvcCwsMCwwLDAsLHtcZmFkKDEwMCwxMDApfVRIRQpEaWFsb2d1ZTogMCwwOjAwOjAwLjAwLDA6MDA6MDYuMDAsTVRvcCwsMCwwLDAsLHtcZmFkKDEwMCwxMDApfTQtMy0yLTEKRGlhbG9ndWU6IDAsMDowMDowMC4wMCwwOjAwOjA2LjAwLFNUb3AsLDAsMCwwLCx7XGZhZCgxMDAsMTAwKX1USEUgQ0hSSVNUTUFTIFRSRUUKRGlhbG9ndWU6IDAsMDowMDowNi4wMCwwOjAwOjEyLjAwLEtUb3AsLDAsMCwwLCx7XGZhZCgxMDAsMTAwKX1USEUKRGlhbG9ndWU6IDAsMDowMDowNi4wMCwwOjAwOjEyLjAwLE1MVG9wLCwwLDAsMCwse1xmYWQoMTAwLDEwMCl9Q0hSSVNUTUFTIFRSRUUKRGlhbG9ndWU6IDAsMDowMDowNi4wMCwwOjAwOjEyLjAwLFNUb3AsLDAsMCwwLCx7XGZhZCgxMDAsMTAwKX1GT1VSLiBUSFJFRS4gVFdPLiBPTkUuCkRpYWxvZ3VlOiAwLDA6MDA6MTIuMDAsMDowMDoxNy4wMCxLQXR0YWNrLCwwLDAsMCwse1xmYWQoMTAwLDEwMCl9VEhFIERFRVAgUExBWU1BS0VSCkRpYWxvZ3VlOiAwLDA6MDA6MTIuMDAsMDowMDoxNy4wMCxNQXR0YWNrLCwwLDAsMCwse1xmYWQoMTAwLDEwMCl9UElSTE8KRGlhbG9ndWU6IDAsMDowMDoxMi4wMCwwOjAwOjE3LjAwLFNBdHRhY2ssLDAsMCwwLCx7XGZhZCgxMDAsMTAwKX1TRVRTIFRIRSBESVJFQ1RJT04uCkRpYWxvZ3VlOiAwLDA6MDA6MTcuMDAsMDowMDoyMS4wMCxLQXR0YWNrLCwwLDAsMCwse1xmYWQoMTAwLDEwMCl9TUlERklFTEQKRGlhbG9ndWU6IDAsMDowMDoxNy4wMCwwOjAwOjIxLjAwLE1BdHRhY2ssLDAsMCwwLCx7XGZhZCgxMDAsMTAwKX1USFJFRQpEaWFsb2d1ZTogMCwwOjAwOjE3LjAwLDA6MDA6MjEuMDAsU0F0dGFjaywsMCwwLDAsLHtcZmFkKDEwMCwxMDApfUNSRUFURSBUSEUgQU5HTEVTLgpEaWFsb2d1ZTogMCwwOjAwOjIxLjAwLDA6MDA6MjUuMDAsS0F0dGFjaywsMCwwLDAsLHtcZmFkKDEwMCwxMDApfUJFVFdFRU4gVEhFIExJTkVTCkRpYWxvZ3VlOiAwLDA6MDA6MjEuMDAsMDowMDoyNS4wMCxNTEF0dGFjaywsMCwwLDAsLHtcZmFkKDEwMCwxMDApfUtBS0EgKyBTRUVET1JGCkRpYWxvZ3VlOiAwLDA6MDA6MjEuMDAsMDowMDoyNS4wMCxTQXR0YWNrLCwwLDAsMCwse1xmYWQoMTAwLDEwMCl9Q09OTkVDVCBDT05UUk9MIFRPIEFUVEFDSy4KRGlhbG9ndWU6IDAsMDowMDoyNS4wMCwwOjAwOjMwLjAwLEtBdHRhY2ssLDAsMCwwLCx7XGZhZCgxMDAsMTAwKX1USEUKRGlhbG9ndWU6IDAsMDowMDoyNS4wMCwwOjAwOjMwLjAwLE1BdHRhY2ssLDAsMCwwLCx7XGZhZCgxMDAsMTAwKX1GVUxMLUJBQ0tTCkRpYWxvZ3VlOiAwLDA6MDA6MjUuMDAsMDowMDozMC4wMCxTQXR0YWNrLCwwLDAsMCwse1xmYWQoMTAwLDEwMCl9UFJPVklERSBUSEUgV0lEVEguCkRpYWxvZ3VlOiAwLDA6MDA6MzAuMDAsMDowMDozNi4wMCxLQXR0YWNrLCwwLDAsMCwse1xmYWQoMTAwLDEwMCl9VEhFIEFDQ0VMRVJBVE9SCkRpYWxvZ3VlOiAwLDA6MDA6MzAuMDAsMDowMDozNi4wMCxNQXR0YWNrLCwwLDAsMCwse1xmYWQoMTAwLDEwMCl9S0FLQQpEaWFsb2d1ZTogMCwwOjAwOjMwLjAwLDA6MDA6MzYuMDAsU0F0dGFjaywsMCwwLDAsLHtcZmFkKDEwMCwxMDApfUJSRUFLUyBUSEUgTElORS4KRGlhbG9ndWU6IDAsMDowMDozNi4wMCwwOjAwOjQzLjAwLEtBdHRhY2ssLDAsMCwwLCx7XGZhZCgxMDAsMTAwKX1USEUgRklOSVNIRVIKRGlhbG9ndWU6IDAsMDowMDozNi4wMCwwOjAwOjQzLjAwLE1BdHRhY2ssLDAsMCwwLCx7XGZhZCgxMDAsMTAwKX1JTlpBR0hJCkRpYWxvZ3VlOiAwLDA6MDA6MzYuMDAsMDowMDo0My4wMCxTQXR0YWNrLCwwLDAsMCwse1xmYWQoMTAwLDEwMCl9QVRUQUNLUyBUSEUgTU9NRU5ULgo=" | base64 -d > /out/v53_titles.ass
+
+              ffmpeg -y -loglevel error \
+                -i /out/SAGI_VIEWPOINT_V5_3_BASE.mp4 \
+                -vf "ass=/out/v53_titles.ass" \
+                -c:v libx264 -profile:v baseline -level 3.1 \
+                -pix_fmt yuv420p -preset veryfast -crf 19 \
+                -c:a copy -movflags +faststart \
+                /out/SAGI_VIEWPOINT_V5_3_PREVIEW_00_43.mp4
+
+              ffmpeg -y -loglevel error \
+                -ss 12 -t 31 \
+                -i /out/SAGI_VIEWPOINT_V5_3_PREVIEW_00_43.mp4 \
+                -c:v libx264 -pix_fmt yuv420p -crf 19 -preset veryfast -c:a aac \
+                /out/SAGI_VIEWPOINT_V5_3_PREVIEW_12_43.mp4
+
+              rm -f /out/SAGI_VIEWPOINT_V5_3_BASE.mp4
+            '
+
+          sudo chown -R "$USER":"$USER" viewpoint_v53_out
+          test -s viewpoint_v53_out/SAGI_VIEWPOINT_V5_3_PREVIEW_00_43.mp4
+          test -s viewpoint_v53_out/SAGI_VIEWPOINT_V5_3_PREVIEW_12_43.mp4
+          test -s viewpoint_v53_out/execution_report.json
+
+      - name: Upload V5.3 preview artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SAGI-VIEWPOINT-V5.3-TEACTICS-UI-HIERARCHY-PREVIEW
+          path: |
+            viewpoint_v53_out/SAGI_VIEWPOINT_V5_3_PREVIEW_00_43.mp4
+            viewpoint_v53_out/SAGI_VIEWPOINT_V5_3_PREVIEW_12_43.mp4
+            viewpoint_v53_out/execution_report.json
+            viewpoint_v53_out/scene.blend
+            viewpoint_v53_out/v53_titles.ass
+            cloud-blender-worker/presets/christmas_tree_attack_viewpoint_v53_preview.json
+          retention-days: 7
