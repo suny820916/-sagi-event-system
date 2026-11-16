@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#07090d"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="SAGI 赛前">
-<link rel="apple-touch-icon" href="./sagi-app-icon.svg"><title>SAGI PRE-MATCH V2.6 · 赛前准备</title>
+<link rel="apple-touch-icon" href="./sagi-app-icon.svg"><title>SAGI PRE-MATCH V2.7 · 赛前准备</title>
 <style>
 :root{--bg:#07090d;--p:#11161d;--l:#2c3742;--t:#f5f2eb;--m:#87929f;--g:#d8b75f}*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--t);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}body{padding-bottom:90px}.app{max-width:760px;margin:auto;padding:14px 12px 30px}.top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin:6px 0 14px}.brand{font-size:22px;font-weight:1000}.brand small{display:block;font-size:10px;color:var(--m);letter-spacing:2px;margin-top:5px}.ver{border:1px solid #725d2c;color:var(--g);border-radius:999px;padding:7px 10px;font-size:10px}.cloud{display:flex;gap:8px;align-items:center;padding:10px;border:1px solid var(--l);border-radius:13px;background:#0a0f15;color:var(--m);font-size:11px}.dot{width:8px;height:8px;border-radius:50%;background:#777}.cloud.ok .dot{background:#65d49c;box-shadow:0 0 10px #65d49c88}.cloud.work .dot{background:#e2c56f}.card{background:var(--p);border:1px solid var(--l);border-radius:18px;padding:13px;margin:11px 0}.title{font-size:13px;font-weight:1000;margin-bottom:10px}.title small{display:block;color:var(--m);font-size:9px;font-weight:600;margin-top:4px}.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}label{display:block;color:#8f9aa7;font-size:9px;margin-bottom:5px}input,select,textarea{width:100%;background:#080c11;color:#fff;border:1px solid #34404c;border-radius:11px;padding:10px;font-size:14px}textarea{min-height:100px;resize:vertical}button,.file{border:0;border-radius:11px;background:#252e38;color:#fff;font-weight:900;padding:9px 11px;min-height:40px;font-size:11px}.gold{background:linear-gradient(135deg,#82671f,#e0c46d);color:#111}.red{background:#55272a}.actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}.file{display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}.file input{position:absolute;inset:0;opacity:0}.projects{display:grid;gap:7px}.project{background:#0a0f15;border:1px solid #293540;border-radius:13px;padding:10px}.pn{font-size:13px;font-weight:950}.pm{font-size:9px;color:var(--m);margin-top:4px}.pb{display:flex;gap:6px;margin-top:8px}.pb button{min-height:32px;padding:6px 9px;font-size:9px}.tabs{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:10px}.tabs button.on{background:#342a0f;color:#efd77d;border:1px solid #8d7537}.team{display:grid;grid-template-columns:76px 1fr;gap:9px;align-items:center}.crest,.logo{border:1px dashed #3a4652;background:#090d12;border-radius:13px;display:flex;align-items:center;justify-content:center;color:#6f7883;overflow:hidden}.crest{height:76px}.logo{height:80px}.crest img,.logo img{width:100%;height:100%;object-fit:contain}.imp{margin-top:11px;padding:10px;border:1px solid #303b46;border-radius:13px;background:#0a0f15}.hint,.status,.sum{font-size:9px;color:var(--m);line-height:1.5}.status{margin-top:7px}.status.ok{color:#79d4a6}.status.bad{color:#e38c91}.status.work{color:#e0c56e}.rw{margin-top:10px;overflow:auto;border:1px solid #2b3641;border-radius:12px}table{width:100%;min-width:650px;border-collapse:collapse}th{position:sticky;top:0;background:#151d26;color:#8995a1;font-size:8px;text-align:left;padding:7px 5px}td{border-top:1px solid #222d37;padding:4px}td input,td select{padding:6px;font-size:10px;border-radius:7px;min-height:30px}.del{background:#4c2427;min-height:29px;padding:5px 8px;font-size:9px}.sticky{position:fixed;left:0;right:0;bottom:0;z-index:20;background:#090c11ee;border-top:1px solid #2c3540;padding:9px 12px calc(9px + env(safe-area-inset-bottom));backdrop-filter:blur(12px)}.si{max-width:760px;margin:auto;display:grid;grid-template-columns:1fr 1.4fr;gap:8px}.si button{min-height:48px}.toast{position:fixed;left:50%;bottom:85px;transform:translateX(-50%) translateY(10px);background:#151b23;border:1px solid #3a4551;padding:10px 13px;border-radius:12px;font-size:10px;opacity:0;transition:.2s;z-index:30;max-width:88%;text-align:center}.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 
@@ -19,6 +19,14 @@
 .packageGrid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px}.packageStat{padding:8px;border:1px solid #293540;border-radius:10px;background:#080d12}.packageStat span{display:block;color:#788492;font-size:8px}.packageStat b{display:block;margin-top:4px;font-size:11px}
 .packageBtn{width:100%;min-height:58px;margin-top:10px;border:1px solid #d8b75f!important;background:linear-gradient(135deg,#80651d,#d8b75f)!important;color:#090b0e!important;font-size:14px!important;font-weight:1000!important;letter-spacing:1px}.packageBtn:disabled{filter:saturate(.3);opacity:.45}
 .packageHint{margin-top:7px;color:#7f8b98;font-size:8px;line-height:1.45}
+.smartInbox{border-color:#3c5268!important;background:linear-gradient(180deg,#0d141c,#0a0f15)!important}
+.smartInbox textarea{min-height:150px;background:#070b10;border-color:#334555;line-height:1.55}
+.smartInboxHead{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:8px}.smartInboxHead b{font-size:12px;color:#b9ddff}.smartInboxHead span{font-size:8px;color:#7f8b98}
+.smartInboxActions{display:grid;grid-template-columns:1.4fr .8fr;gap:7px;margin-top:8px}.smartInboxActions button{min-height:44px}
+.smartInboxPreview{display:none;margin-top:9px;border:1px solid #344a5e;border-radius:12px;background:#081019;padding:10px}.smartInboxPreview.on{display:block}
+.smartInboxGrid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}.smartInboxItem{padding:8px;border:1px solid #2c3945;border-radius:9px;background:#090d12}.smartInboxItem span{display:block;color:#7d8997;font-size:8px}.smartInboxItem b{display:block;margin-top:4px;font-size:10px}
+.smartInboxWarnings{margin-top:8px;color:#e5c873;font-size:8px;line-height:1.5}.smartInboxApply{margin-top:9px;width:100%;min-height:46px;background:linear-gradient(135deg,#1d6548,#45a472)!important;color:#fff!important;font-weight:1000!important}
+@media(max-width:560px){.smartInboxGrid{grid-template-columns:1fr}.smartInboxActions{grid-template-columns:1fr 1fr}}
 .tabs.v2 button{min-height:58px;text-align:left;padding:9px 11px}.tabs.v2 b{font-size:12px}.tabs.v2 small{display:block;margin-top:5px;color:#7f8b98;font-size:8px}.tabs.v2 button.on small{color:#e0c879}
 .teamStats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0}.ts{background:#090e14;border:1px solid #293540;border-radius:10px;padding:7px}.ts span{display:block;color:#7b8794;font-size:8px}.ts b{display:block;margin-top:3px;font-size:11px}
 .impTarget{display:flex;justify-content:space-between;gap:8px;padding:8px 9px;margin:8px 0;border:1px solid #34414c;border-radius:10px;background:#080d12;font-size:9px;color:#8793a0}.impTarget b{color:#efd67f}
@@ -33,13 +41,30 @@
 </head>
 <body>
 <div class="app">
-<div class="top"><div class="brand">SAGI PRE-MATCH<small>赛前准备 · 球队资料收集 · 云端同步</small></div><div class="ver">V2.6</div></div>
+<div class="top"><div class="brand">SAGI PRE-MATCH<small>赛前准备 · 球队资料收集 · 云端同步</small></div><div class="ver">V2.7</div></div>
 <div id="cloud" class="cloud work"><span class="dot"></span><span id="cloudText">正在连接赛前云端…</span><button id="cloudRetry" type="button" style="margin-left:auto;min-height:30px;padding:5px 8px;font-size:9px">重新连接</button></div>
 <div class="flow">
   <button id="stepInfo" class="step on" type="button"><i>1</i><b>比赛信息</b><small id="stepInfoText">赛事 / 时间 / 场地</small></button>
   <button id="stepHome" class="step" type="button"><i>2</i><b>主队 HOME</b><small id="stepHomeText">等待名单</small></button>
   <button id="stepAway" class="step" type="button"><i>3</i><b>客队 AWAY</b><small id="stepAwayText">等待名单</small></button>
   <button id="stepCheck" class="step" type="button"><i>4</i><b>检查保存</b><small id="stepCheckText">NOT READY</small></button>
+</div>
+
+<div class="card smartInbox" id="smartInboxCard">
+  <div class="smartInboxHead"><div><b>SMART INBOX · 凌乱信息整理</b><span>微信群 / 报名信息 / 零散名单直接粘贴</span></div><div class="ver" style="font-size:8px">V2.7</div></div>
+  <textarea id="smartInboxText" placeholder="直接粘贴凌乱信息，例如：&#10;周六 17:00 乌苏体育馆&#10;主队 塔尔兰FC&#10;首发 1 张三 GK，4 李四 CB，8 王五 CM...&#10;替补 12 阿力 GK 18 努尔 ST&#10;客队 冰点FC&#10;1 王强 GK 首发..."></textarea>
+  <div class="smartInboxActions"><button id="smartInboxParse" class="gold" type="button">✨ 自动整理</button><button id="smartInboxClear" type="button">清空</button></div>
+  <div id="smartInboxPreview" class="smartInboxPreview">
+    <div class="previewTitle">整理预览 · 不会自动覆盖</div>
+    <div class="smartInboxGrid">
+      <div class="smartInboxItem"><span>比赛</span><b id="smartInboxMatch">待识别</b></div>
+      <div class="smartInboxItem"><span>主队 HOME</span><b id="smartInboxHome">待识别</b></div>
+      <div class="smartInboxItem"><span>客队 AWAY</span><b id="smartInboxAway">待识别</b></div>
+      <div class="smartInboxItem"><span>完成度</span><b id="smartInboxConfidence">待识别</b></div>
+    </div>
+    <div id="smartInboxWarnings" class="smartInboxWarnings"></div>
+    <button id="smartInboxApply" class="smartInboxApply" type="button">应用整理结果</button>
+  </div>
 </div>
 
 <div class="card"><div class="title">云端比赛项目<small>电脑关闭也可以提前设置；到现场 V4.10 同步云端项目即可。</small></div><div id="projects" class="projects"></div></div>
@@ -83,7 +108,7 @@
 const CLOUD='https://sagi-cloud-bridge-suny820916.onrender.com',q=id=>document.getElementById(id);
 const F={5:['1-2-1','2-1-1','2-2'],7:['2-3-1','3-2-1','2-2-2'],8:['2-3-2','3-2-2','3-3-1'],9:['3-3-2','3-2-3','2-3-3','4-2-2'],11:['4-3-3','4-4-2','4-2-3-1','3-5-2','3-4-3','5-3-2']};
 const SHOW=[['sting','STING','Logo Sting',2000,'FLASH','STING'],['match','MATCH','比赛信息',3000,'FADE','RISER'],['countdown','COUNTDOWN','开场倒计时',5000,'ZOOM','HIT'],['home_team','TEAM','主队开场',2500,'FADE','RISER','HOME'],['home_gk','GK','主队门将',3000,'ZOOM','HIT','HOME'],['home_df','DF','主队后卫',4000,'SLIDE','WHOOSH','HOME'],['home_mf','MF','主队中场',4000,'SLIDE','WHOOSH','HOME'],['home_fw','FW','主队前锋',4000,'FLASH','HIT','HOME'],['home_full','FULL','主队完整首发',6000,'ZOOM','CROWD','HOME'],['home_sub','SUB','主队替补名单',5000,'SLIDE','WHOOSH','HOME'],['away_team','TEAM','客队开场',2500,'FADE','RISER','AWAY'],['away_gk','GK','客队门将',3000,'ZOOM','HIT','AWAY'],['away_df','DF','客队后卫',4000,'SLIDE','WHOOSH','AWAY'],['away_mf','MF','客队中场',4000,'SLIDE','WHOOSH','AWAY'],['away_fw','FW','客队前锋',4000,'FLASH','HIT','AWAY'],['away_full','FULL','客队完整首发',6000,'ZOOM','CROWD','AWAY'],['away_sub','SUB','客队替补名单',5000,'SLIDE','WHOOSH','AWAY']].map(x=>({id:x[0],group:x[1],label:x[2],duration:x[3],transition:x[4],cue:x[5],side:x[6],enabled:true}));
-let side='HOME',id='',projects=[],importDraft=[],importMeta={name:'',crest:'',source:'',photoCount:0},m={HOME:{name:'',formation:'4-3-3',crest:'',roster:[]},AWAY:{name:'',formation:'4-3-3',crest:'',roster:[]},eventLogo:''};
+let side='HOME',id='',projects=[],importDraft=[],importMeta={name:'',crest:'',source:'',photoCount:0},smartInboxDraft=null,m={HOME:{name:'',formation:'4-3-3',crest:'',roster:[]},AWAY:{name:'',formation:'4-3-3',crest:'',roster:[]},eventLogo:''};
 const uid=()=>('p_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7)),esc=s=>String(s??'').replace(/[&<>"]/g,a=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[a]));
 function toast(t){q('toast').textContent=t;q('toast').classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>q('toast').classList.remove('on'),2200)}
 function cs(t,k='work'){q('cloud').className='cloud '+k;q('cloudText').textContent=t}function st(t,k=''){q('status').className='status'+(k?' '+k:'');q('status').textContent=t}
@@ -106,6 +131,102 @@ function renderCrest(){q('crest').innerHTML=m[side].crest?'<img src="'+m[side].c
 function renderRoster(){const r=m[side].roster,b=q('body');b.innerHTML='';r.forEach((p,i)=>{const tr=document.createElement('tr');tr.innerHTML='<td><div class="photoThumb">'+(p.photo?'<img src="'+p.photo+'">':'NO')+'</div></td><td><input data-k="number" data-i="'+i+'" value="'+esc(p.number)+'"></td><td><input data-k="name" data-i="'+i+'" value="'+esc(p.name)+'"></td><td><select data-k="squadType" data-i="'+i+'"><option value="STARTER" '+(p.squadType==='STARTER'?'selected':'')+'>首发</option><option value="SUB" '+(p.squadType==='SUB'?'selected':'')+'>替补</option></select></td><td><select data-k="role" data-i="'+i+'">'+['GK','DF','MF','FW'].map(x=>'<option '+(p.role===x?'selected':'')+'>'+x+'</option>').join('')+'</select></td><td><input data-k="position" data-i="'+i+'" value="'+esc(p.position||p.role)+'"></td><td><select data-k="captain" data-i="'+i+'"><option value="0" '+(!p.captain?'selected':'')+'>否</option><option value="1" '+(p.captain?'selected':'')+'>C</option></select></td><td><button class="del" data-d="'+i+'">删除</button></td>';b.appendChild(tr)});b.querySelectorAll('[data-k]').forEach(e=>e.onchange=()=>{const p=r[+e.dataset.i],k=e.dataset.k;p[k]=k==='captain'?e.value==='1':e.value;draft();refreshUX()});b.querySelectorAll('[data-d]').forEach(e=>e.onclick=()=>{r.splice(+e.dataset.d,1);renderRoster();draft();refreshUX()});const s=r.filter(x=>x.squadType==='STARTER').length,ph=r.filter(x=>x.photo).length;q('rosterCount').value=r.length+' 人';q('summary').textContent='共 '+r.length+' 人 · 首发 '+s+' · 替补 '+(r.length-s)+' · 照片 '+ph+'/'+r.length;refreshUX()}
 function clean(s){return String(s??'').replace(/[\u200b\ufeff]/g,'').replace(/\s+/g,' ').trim()}function role(s=''){const x=String(s).toUpperCase();if(/门将|守门|GK|GOAL/.test(x))return'GK';if(/后卫|DF|CB|LB|RB|BACK/.test(x))return'DF';if(/中场|MF|CM|DM|AM|MID/.test(x))return'MF';if(/前锋|边锋|FW|ST|CF|LW|RW|FORWARD/.test(x))return'FW';return''}
 function pos(s='',r=''){const x=String(s).toUpperCase();for(const t of ['GK','CB','LB','RB','DM','CDM','CM','CAM','AM','LM','RM','LW','RW','ST','CF','FW','DF','MF'])if(new RegExp('(^|[^A-Z])'+t+'([^A-Z]|$)').test(x))return t;return r||''}
+
+function smartDateFrom(text=''){
+ const m=String(text).match(/(?:20\d{2}[年\-\/.])?(\d{1,2})[月\-\/.](\d{1,2})日?/);
+ if(!m)return'';const y=(String(text).match(/20\d{2}/)||[])[0]||new Date().getFullYear();return y+'-'+String(m[1]).padStart(2,'0')+'-'+String(m[2]).padStart(2,'0')
+}
+function smartTimeFrom(text=''){const m=String(text).match(/(?:时间|开球|比赛时间)?\s*[:：]?\s*([01]?\d|2[0-3])[:：](\d{2})/);return m?String(m[1]).padStart(2,'0')+':'+m[2]:''}
+function smartField(text,labels=[]){
+ for(const l of labels){const re=new RegExp('(?:^|\\n)\\s*'+l+'\\s*[:：]?\\s*([^\\n，,；;]+)','i'),m=String(text).match(re);if(m)return clean(m[1])}return''
+}
+function smartTeamName(line,type){
+ const s=clean(line).replace(/[【】\[\]]/g,'');
+ const patterns=type==='HOME'?[/^(?:主队|HOME)\s*[:：\-]?\s*(.+)$/i,/^(.+?)\s*(?:主队)$/i]:[/^(?:客队|AWAY)\s*[:：\-]?\s*(.+)$/i,/^(.+?)\s*(?:客队)$/i];
+ for(const re of patterns){const m=s.match(re);if(m&&clean(m[1]))return clean(m[1])}return''
+}
+function smartPlayerFromLine(line,i,statusHint=''){
+ let s=clean(line);if(!s)return null;
+ s=s.replace(/^(?:首发|替补|先发|STARTERS?|SUBS?|BENCH)\s*[:：]?\s*/i,'');
+ const p=parseLine(s,i);if(!p)return null;
+ if(statusHint)p.squadType=statusHint;
+ else if(/替补|SUB|BENCH/i.test(line))p.squadType='SUB';
+ else if(/首发|先发|START/i.test(line))p.squadType='STARTER';
+ return p
+}
+function smartSplitInlinePlayers(line,statusHint=''){
+ let s=clean(line).replace(/^(?:首发|替补|先发|STARTERS?|SUBS?|BENCH)\s*[:：]?\s*/i,'');
+ const chunks=s.split(/[，,；;]+/).map(clean).filter(Boolean),out=[];
+ if(chunks.length>1){for(const x of chunks){const p=smartPlayerFromLine(x,out.length,statusHint);if(p)out.push(p)}}
+ else{const p=smartPlayerFromLine(s,0,statusHint);if(p)out.push(p)}
+ return out
+}
+function smartMergePhotos(rows,old=[]){
+ const map=new Map();for(const p of old||[]){map.set((String(p.number||'')+'|'+clean(p.name)).toLowerCase(),p);map.set(clean(p.name).toLowerCase(),p)}
+ return rows.map(p=>{const oldp=map.get((String(p.number||'')+'|'+clean(p.name)).toLowerCase())||map.get(clean(p.name).toLowerCase());return oldp&&oldp.photo?{...p,photo:oldp.photo,id:oldp.id||p.id}:p})
+}
+function smartNormalizeRoster(rows){
+ const seen=new Set(),out=[];for(const p of rows){if(!p||!p.name)continue;const k=(String(p.number||'')+'|'+clean(p.name)).toLowerCase();if(seen.has(k))continue;seen.add(k);out.push(p)}
+ let starterCount=out.filter(p=>p.squadType==='STARTER').length;
+ if(starterCount===0){out.forEach((p,i)=>p.squadType=i<n()?'STARTER':'SUB')}
+ else if(starterCount<n()){for(const p of out){if(starterCount>=n())break;if(!p.squadType){p.squadType='STARTER';starterCount++}}}
+ out.forEach(p=>{if(!p.squadType)p.squadType='SUB'});
+ const pl=plan();out.forEach((p,i)=>{if(!p.role)p.role=pl[Math.min(i,pl.length-1)]||'MF';if(!p.position)p.position=p.role});
+ return out
+}
+function smartInboxParseText(raw=''){
+ const text=String(raw||'').replace(/\r/g,'\n'),lines=text.split(/\n+/).map(clean).filter(Boolean),warnings=[];
+ const info={
+  competition:smartField(text,['赛事','比赛名称','联赛','杯赛']),
+  round:smartField(text,['轮次','场次','组别']),
+  date:smartDateFrom(text),
+  kickoff:smartTimeFrom(text),
+  venue:smartField(text,['场地','地点','球场','比赛地点'])
+ };
+ let homeName=smartField(text,['主队']),awayName=smartField(text,['客队']);
+ const vs=text.match(/([^\n，,；;]{2,24})\s+(?:VS|V\.?S\.?|对阵|vs\.)\s+([^\n，,；;]{2,24})/i);if(vs){homeName=homeName||clean(vs[1]);awayName=awayName||clean(vs[2])}
+ let current='',status='',home=[],away=[];
+ for(const line of lines){
+  const hn=smartTeamName(line,'HOME'),an=smartTeamName(line,'AWAY');
+  if(hn){homeName=homeName||hn;current='HOME';status='';continue}
+  if(an){awayName=awayName||an;current='AWAY';status='';continue}
+  if(/^主队(?:名单|阵容)?\s*[:：]?$/i.test(line)){current='HOME';status='';continue}
+  if(/^客队(?:名单|阵容)?\s*[:：]?$/i.test(line)){current='AWAY';status='';continue}
+  if(/^首发|^先发|^STARTERS?/i.test(line)){
+    status='STARTER';const ps=smartSplitInlinePlayers(line,status);if(current==='HOME')home.push(...ps);else if(current==='AWAY')away.push(...ps);continue
+  }
+  if(/^替补|^SUBS?|^BENCH/i.test(line)){
+    status='SUB';const ps=smartSplitInlinePlayers(line,status);if(current==='HOME')home.push(...ps);else if(current==='AWAY')away.push(...ps);continue
+  }
+  if(!current)continue;
+  if(/^(赛事|比赛名称|联赛|杯赛|轮次|场次|组别|日期|时间|开球|场地|地点|球场|比赛地点)\s*[:：]/.test(line))continue;
+  const ps=smartSplitInlinePlayers(line,status);if(current==='HOME')home.push(...ps);else away.push(...ps)
+ }
+ home=smartNormalizeRoster(home);away=smartNormalizeRoster(away);
+ if(!homeName)warnings.push('未识别主队名称');if(!awayName)warnings.push('未识别客队名称');
+ if(!home.length)warnings.push('未识别主队球员');if(!away.length)warnings.push('未识别客队球员');
+ if(!info.kickoff)warnings.push('未识别开球时间');if(!info.venue)warnings.push('未识别场地');
+ const score=[!!homeName,!!awayName,home.length>0,away.length>0,!!info.kickoff,!!info.venue].filter(Boolean).length;
+ return{info,HOME:{name:homeName,roster:home},AWAY:{name:awayName,roster:away},warnings,confidence:Math.round(score/6*100)}
+}
+function renderSmartInboxDraft(d){
+ smartInboxDraft=d;q('smartInboxPreview').classList.add('on');
+ const i=d.info||{},match=[i.competition,i.round,i.date,i.kickoff,i.venue].filter(Boolean).join(' · ')||'未识别比赛信息';
+ q('smartInboxMatch').textContent=match;
+ q('smartInboxHome').textContent=(d.HOME.name||'未识别队名')+' · '+d.HOME.roster.length+'人 · 首发'+d.HOME.roster.filter(p=>p.squadType==='STARTER').length;
+ q('smartInboxAway').textContent=(d.AWAY.name||'未识别队名')+' · '+d.AWAY.roster.length+'人 · 首发'+d.AWAY.roster.filter(p=>p.squadType==='STARTER').length;
+ q('smartInboxConfidence').textContent=d.confidence+'% · '+(d.warnings.length?'需要确认':'结构完整');
+ q('smartInboxWarnings').textContent=d.warnings.length?'需要确认：'+d.warnings.join(' · '):'已整理完成。应用前请快速核对队名与人数。'
+}
+function applySmartInbox(){
+ const d=smartInboxDraft;if(!d)return;
+ const i=d.info||{};if(i.competition)q('competition').value=i.competition;if(i.round)q('round').value=i.round;if(i.date)q('date').value=i.date;if(i.kickoff)q('kickoff').value=i.kickoff;if(i.venue)q('venue').value=i.venue;
+ if(d.HOME.name)m.HOME.name=d.HOME.name;if(d.AWAY.name)m.AWAY.name=d.AWAY.name;
+ if(d.HOME.roster.length)m.HOME.roster=smartMergePhotos(d.HOME.roster,m.HOME.roster);
+ if(d.AWAY.roster.length)m.AWAY.roster=smartMergePhotos(d.AWAY.roster,m.AWAY.roster);
+ if(!q('projectName').value.trim()&&(m.HOME.name||m.AWAY.name))q('projectName').value=(i.competition||'比赛')+' · '+(m.HOME.name||'HOME')+' vs '+(m.AWAY.name||'AWAY');
+ switchSide('HOME');draft();refreshUX();toast('整理结果已应用 · 请核对主客队名单')
+}
 function parseLine(line,i){let a=clean(line);if(!a)return null;a=a.replace(/[，；;|]+/g,'\t');let c=a.split(/\t+|\s{2,}/).map(clean).filter(Boolean);if(c.length<2)c=a.split(/\s+/).map(clean).filter(Boolean);let no='',name='',rest=[...c],ix=rest.findIndex(x=>/^#?\d{1,3}$/.test(x));if(ix>=0){no=rest[ix].replace('#','');rest.splice(ix,1)}ix=rest.findIndex(x=>/[\u3400-\u9fffA-Za-z\u0400-\u04ff]/.test(x)&&!/姓名|球员|号码|位置|首发|替补/i.test(x));if(ix>=0){name=rest[ix];rest.splice(ix,1)}if(!name)return null;const meta=rest.join(' '),r=role(meta);return{id:uid(),number:no||String(i+1),name,role:r,position:pos(meta,r),squadType:/替补|SUB|BENCH/i.test(meta)?'SUB':'',captain:/队长|CAPTAIN|\(C\)|（C）/i.test(a)}}
 function parseText(t){const out=[];String(t).replace(/\r/g,'\n').split(/\n+/).forEach(x=>{const p=parseLine(x,out.length);if(p)out.push(p)});return out}
 function plan(){const p=String(q('formation').value).split('-').map(Number),out=['GK'];if(p.length>1){for(let i=0;i<(p[0]||0);i++)out.push('DF');for(let i=0;i<p.slice(1,-1).reduce((a,b)=>a+b,0);i++)out.push('MF');for(let i=0;i<(p[p.length-1]||0);i++)out.push('FW')}while(out.length<n())out.push('MF');return out}
@@ -182,7 +303,7 @@ async function saveToPhone(){
   const zip=new JSZip();
   zip.file('SAGI_PREMATCH.json',JSON.stringify(pack));
   zip.file('ROSTER_BACKUP.json',JSON.stringify(backup));
-  zip.file('README.txt','SAGI PRE-MATCH V2.6\n'+p.name+'\nHOME '+home.length+' / STARTERS '+hs+'\nAWAY '+away.length+' / STARTERS '+as+'\n'+(v.ready?'READY':'DRAFT')+'\n在 SAGI LIVE MATCH DIRECTOR 中使用“读取赛前 ZIP / 文件”导入。');
+  zip.file('README.txt','SAGI PRE-MATCH V2.7\n'+p.name+'\nHOME '+home.length+' / STARTERS '+hs+'\nAWAY '+away.length+' / STARTERS '+as+'\n'+(v.ready?'READY':'DRAFT')+'\n在 SAGI LIVE MATCH DIRECTOR 中使用“读取赛前 ZIP / 文件”导入。');
   const blob=await zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:6}});
   const name='SAGI_赛前_'+safeFileName(p.name)+'.zip',url=URL.createObjectURL(blob),a=document.createElement('a');
   a.href=url;a.download=name;a.style.display='none';document.body.appendChild(a);a.click();
@@ -195,6 +316,7 @@ async function del(x){try{await api({fetch:{method:'POST',headers:{'Content-Type
 function snap(){stash();return{id,side,m,f:{projectName:q('projectName').value,competition:q('competition').value,round:q('round').value,date:q('date').value,kickoff:q('kickoff').value,venue:q('venue').value,count:q('count').value}}}function draft(){try{localStorage.setItem('sagi_prematch_draft_v2',JSON.stringify(snap()))}catch(e){}}function restore(){try{const x=JSON.parse(localStorage.getItem('sagi_prematch_draft_v2')||localStorage.getItem('sagi_prematch_draft_v1')||'null');if(!x)return;id=x.id||'';m=x.m||m;for(const k in x.f)if(q(k))q(k).value=x.f[k];side=x.side||'HOME';renderLogo();switchSide(side)}catch(e){}}
 function fresh(){id='';cancelPreview();m={HOME:{name:'',formation:df(),crest:'',roster:[]},AWAY:{name:'',formation:df(),crest:'',roster:[]},eventLogo:''};['projectName','round','date','kickoff','venue'].forEach(x=>q(x).value='');renderLogo();switchSide('HOME');draft();refreshUX();toast('已新建比赛')}
 q('home').onclick=()=>switchSide('HOME');q('away').onclick=()=>switchSide('AWAY');q('formation').onchange=()=>{m[side].formation=q('formation').value;draft();refreshUX()};q('count').onchange=()=>{for(const s of ['HOME','AWAY']){const a=F[n()]||[df()];if(!a.includes(m[s].formation))m[s].formation=a[0]}formations();draft();refreshUX()};q('teamName').oninput=()=>{m[side].name=q('teamName').value;draft();refreshUX()};['projectName','competition','round','date','kickoff','venue'].forEach(x=>q(x).addEventListener('input',()=>{draft();refreshUX()}));
+q('smartInboxParse').onclick=()=>{const raw=q('smartInboxText').value;if(!clean(raw)){toast('请先粘贴信息');return}renderSmartInboxDraft(smartInboxParseText(raw))};q('smartInboxClear').onclick=()=>{q('smartInboxText').value='';smartInboxDraft=null;q('smartInboxPreview').classList.remove('on')};q('smartInboxApply').onclick=applySmartInbox;
 q('parse').onclick=()=>{const a=parseText(q('paste').value);a.length?showPreview(a,{},'粘贴名单'):st('没有识别到有效球员','bad')};
 q('file').onchange=async e=>{const f=e.target.files?.[0];if(f)try{if(ext(f)==='zip'||f.type==='application/zip'||f.type==='application/x-zip-compressed'){const z=await readZip(f);showPreview(z.rows,z.meta,f.name)}else{const a=await fileRows(f);a.length?showPreview(a,{},f.name):st('没有识别到有效球员','bad')}}catch(err){st('导入失败：'+err.message,'bad')}e.target.value=''};
 q('template').onclick=downloadTemplate;q('commitImport').onclick=commitPreview;q('cancelImport').onclick=cancelPreview;q('auto').onclick=arrange;q('add').onclick=()=>{m[side].roster.push({id:uid(),number:String(m[side].roster.length+1),name:'PLAYER',squadType:'SUB',role:'MF',position:'CM',captain:false,photo:''});renderRoster();draft()};
