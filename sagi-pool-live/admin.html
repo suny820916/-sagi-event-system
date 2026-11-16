@@ -18,7 +18,7 @@
 </head>
 <body>
 <div class="app">
-<header class="top"><div><div class="brand">SAGI POOL SELLER</div><div class="sub">球房商业授权后台 · CHINA V2.8</div></div><div class="pill">仅 SAGI 管理员</div></header>
+<header class="top"><div><div class="brand">SAGI POOL SELLER</div><div class="sub">球房商业授权后台 · CHINA V2.9</div></div><div class="pill">仅 SAGI 管理员</div></header>
 
 <section class="card">
   <div class="head"><h2>国内授权服务器</h2><span class="small" id="serverStatus">未连接</span></div>
@@ -26,6 +26,11 @@
     <div class="field full"><label>服务器 HTTPS 地址</label><input id="serverUrl" inputmode="url" placeholder="https://pool-api.example.com"></div>
     <div class="field full"><label>管理员密钥</label><input id="adminToken" type="password" placeholder="SAGI_ADMIN_TOKEN"></div>
   </div>
+  <div class="actions">
+    <button class="btn primary" id="healthRefresh" type="button">检查服务健康</button>
+    <button class="btn" id="allRefresh" type="button">刷新全部</button>
+  </div>
+  <div class="result" id="serverHealth">尚未检查。这里会显示版本、运行时长、授权/设备/直播数量以及数据备份状态。</div>
 </section>
 
 <section class="card">
@@ -89,7 +94,11 @@ async function api(path,opt={}){
   const headers=Object.assign({'X-SAGI-Admin':admin()},opt.headers||{});
   const r=await fetch(server()+path,Object.assign({},opt,{headers}));
   const data=await r.json().catch(()=>({}));
-  if(!r.ok)throw new Error(data.error||('HTTP '+r.status));
+  if(!r.ok){
+    if(r.status===429&&data.error==='admin_rate_limited')throw new Error('管理员密钥错误尝试过多，请稍后再试');
+    if(r.status===401&&data.error==='admin_unauthorized')throw new Error('管理员密钥不正确');
+    throw new Error(data.error||('HTTP '+r.status));
+  }
   return data;
 }
 let latestProvisionCode='';
@@ -158,6 +167,39 @@ $('#copyProvision').addEventListener('click',async()=>{
     $('#copyProvision').textContent=latestProvisionCode;
   }
 });
+
+function durationText(seconds){
+  seconds=Math.max(0,Number(seconds||0));
+  const d=Math.floor(seconds/86400),h=Math.floor((seconds%86400)/3600),m=Math.floor((seconds%3600)/60);
+  return (d?d+'天 ':'')+(h?h+'小时 ':'')+m+'分钟';
+}
+function healthLine(k,v,ok=true){
+  const div=document.createElement('div');
+  const b=document.createElement('b');b.textContent=k+'：';
+  const span=document.createElement('span');span.textContent=v;span.style.color=ok?'#dbe5de':'#efb8bf';
+  div.append(b,span);return div;
+}
+async function refreshServerHealth(){
+  try{
+    setStatus('健康检查中…');
+    const d=await api('/api/admin/status');
+    const box=$('#serverHealth');box.innerHTML='';
+    box.append(
+      healthLine('服务',d.service+' · V'+d.version,true),
+      healthLine('运行',durationText(d.uptimeSeconds),true),
+      healthLine('授权',Number(d.counts?.activeLicenses||0)+' 有效 / '+Number(d.counts?.licenses||0)+' 总计',true),
+      healthLine('设备',Number(d.counts?.activeDevices||0)+' 台 · '+Number(d.counts?.liveDevices||0)+' 台直播中',true),
+      healthLine('球桌状态',Number(d.counts?.rooms||0)+' 个已同步',true),
+      healthLine('主数据',d.storage?.dataValid?'正常':'异常',Boolean(d.storage?.dataValid)),
+      healthLine('备份',d.storage?.backupValid?'正常':'未就绪/异常',Boolean(d.storage?.backupValid)),
+      healthLine('目录写入',d.storage?.directoryWritable?'正常':'不可写',Boolean(d.storage?.directoryWritable))
+    );
+    setStatus('服务正常 · V'+d.version);
+  }catch(e){
+    $('#serverHealth').textContent=e.message;
+    setStatus('健康检查失败');
+  }
+}
 
 async function loadDevices(clubId,clubName){
   try{
@@ -256,6 +298,8 @@ async function refresh(){
     });setStatus('已连接 · '+d.licenses.length+' 家');
   }catch(e){setStatus('连接失败');$('#list').innerHTML='<div class="empty">'+e.message+'</div>'}
 }
+$('#healthRefresh').addEventListener('click',refreshServerHealth);
+$('#allRefresh').addEventListener('click',()=>{refreshServerHealth();refresh()});
 $('#refresh').addEventListener('click',refresh);$('#serverUrl').addEventListener('change',saveServer);
 load();
 })();
