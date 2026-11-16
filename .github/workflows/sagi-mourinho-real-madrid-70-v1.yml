@@ -1,0 +1,88 @@
+name: SAGI MOURINHO REAL MADRID 70S V1
+
+concurrency:
+  group: sagi-mourinho-real-madrid-70-v1-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "cloud-blender-worker/presets/mourinho_real_madrid_4231_70s_v1.json"
+      - "cloud-blender-worker/engine/sagi_tactical_mourinho_70_v1.py"
+      - ".github/workflows/sagi-mourinho-real-madrid-70-v1.yml"
+  workflow_dispatch:
+
+jobs:
+  render-mourinho-70:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Blender image
+        run: docker build -t sagi-mourinho-70 ./cloud-blender-worker
+
+      - name: Render 70s tactical lesson
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p mourinho_70_out
+          docker run --rm \
+            -v "$PWD/mourinho_70_out:/out" \
+            sagi-mourinho-70 \
+            bash -lc '
+              set -euo pipefail
+
+              blender --background \
+                --python /app/engine/sagi_tactical_mourinho_70_v1.py \
+                -- \
+                /app/presets/mourinho_real_madrid_4231_70s_v1.json \
+                /out
+
+              ffmpeg -y -loglevel error \
+                -framerate 30 \
+                -i /out/frames/frame_%04d.png \
+                -f lavfi \
+                -i anullsrc=channel_layout=stereo:sample_rate=44100 \
+                -map 0:v:0 -map 1:a:0 \
+                -c:v libx264 -profile:v baseline -level 3.1 \
+                -pix_fmt yuv420p -preset veryfast -crf 20 \
+                -c:a aac -b:a 64k -shortest -movflags +faststart \
+                /out/SAGI_MOURINHO_REAL_MADRID_70S_V1.mp4
+
+              ffmpeg -y -loglevel error \
+                -ss 29 -t 29 \
+                -i /out/SAGI_MOURINHO_REAL_MADRID_70S_V1.mp4 \
+                -c:v libx264 -pix_fmt yuv420p -crf 20 -preset veryfast -c:a aac \
+                /out/SAGI_MOURINHO_REAL_MADRID_29_58_REVIEW.mp4
+            '
+
+          sudo chown -R "$USER":"$USER" mourinho_70_out
+
+          test -s mourinho_70_out/SAGI_MOURINHO_REAL_MADRID_70S_V1.mp4
+          test -s mourinho_70_out/SAGI_MOURINHO_REAL_MADRID_29_58_REVIEW.mp4
+          test -s mourinho_70_out/execution_report.json
+          test -s mourinho_70_out/scene.blend
+
+          python3 - <<'PY'
+          import json
+          with open("mourinho_70_out/execution_report.json", encoding="utf-8") as f:
+              r=json.load(f)
+          assert r["valid"] is True, r
+          assert r["errors"] == [], r
+          print(json.dumps(r, ensure_ascii=False, indent=2))
+          PY
+
+      - name: Upload Mourinho 70s artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SAGI-MOURINHO-REAL-MADRID-70S-V1
+          path: |
+            mourinho_70_out/SAGI_MOURINHO_REAL_MADRID_70S_V1.mp4
+            mourinho_70_out/SAGI_MOURINHO_REAL_MADRID_29_58_REVIEW.mp4
+            mourinho_70_out/execution_report.json
+            mourinho_70_out/scene.blend
+            cloud-blender-worker/presets/mourinho_real_madrid_4231_70s_v1.json
+          retention-days: 7
