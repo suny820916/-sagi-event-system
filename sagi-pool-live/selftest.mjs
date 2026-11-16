@@ -78,7 +78,7 @@ async function e2eCommercial(){
   const tmp=path.join(os.tmpdir(),'sagi-pool-selftest-'+process.pid+'.json');
   try{fs.rmSync(tmp,{force:true})}catch{}
   const child=spawn(process.execPath,[serverPath],{
-    env:{...process.env,PORT:String(port),HOST:'127.0.0.1',SAGI_REQUIRE_LICENSE:'1',SAGI_ADMIN_TOKEN:'admin-secret',SAGI_DATA_FILE:tmp},
+    env:{...process.env,PORT:String(port),HOST:'127.0.0.1',SAGI_REQUIRE_LICENSE:'1',SAGI_ADMIN_TOKEN:'admin-secret',SAGI_DATA_FILE:tmp,SAGI_LIVE_HEARTBEAT_TIMEOUT_MS:'1000'},
     stdio:['ignore','pipe','pipe']
   });
   let stderr='';child.stderr.on('data',d=>stderr+=d.toString());
@@ -192,6 +192,24 @@ async function e2eCommercial(){
     check(sessionsBeforeRevoke.ok&&sessionsBeforeRevokeData.sessions?.length===1,'Live session history creation failed');
     check(Number(sessionsBeforeRevokeData.sessions?.[0]?.maxBitrate||0)===1600,'Live max bitrate history failed');
 
+    const staleStart=await fetch(base+'/api/devices/TEST-CLUB/'+encodeURIComponent(claimData.config.deviceId)+'/live',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-SAGI-Token':deviceToken},
+      body:JSON.stringify({action:'start',bitrate:1100,fps:22,width:1280,height:720})
+    });
+    check(staleStart.ok,'Stale-session start failed');
+    await new Promise(r=>setTimeout(r,1150));
+    const staleDevices=await fetch(base+'/api/admin/licenses/TEST-CLUB/devices',{headers:{'X-SAGI-Admin':'admin-secret'}});
+    const staleDevicesData=await staleDevices.json();
+    check(staleDevices.ok&&staleDevicesData.devices?.[0]?.live?.active===false,'Heartbeat timeout should clear live-now state');
+    const staleSessions=await fetch(
+      base+'/api/admin/licenses/TEST-CLUB/devices/'+encodeURIComponent(claimData.config.deviceId)+'/sessions',
+      {headers:{'X-SAGI-Admin':'admin-secret'}}
+    );
+    const staleSessionsData=await staleSessions.json();
+    check(staleSessions.ok&&staleSessionsData.sessions?.length===2,'Heartbeat timeout should close stale session');
+    check(staleSessionsData.sessions?.[0]?.reason==='heartbeat_timeout','Heartbeat timeout reason missing');
+
     const over=await fetch(base+'/api/rooms/TEST-CLUB/03%E6%A1%8C',{headers:{'X-SAGI-Token':deviceToken}});
     const overData=await over.json();
     check(over.status===403&&overData.error==='table_limit_exceeded','Table limit enforcement failed for device token');
@@ -226,7 +244,7 @@ async function e2eCommercial(){
       {headers:{'X-SAGI-Admin':'admin-secret'}}
     );
     const sessionsAfterRevokeData=await sessionsAfterRevoke.json();
-    check(sessionsAfterRevoke.ok&&sessionsAfterRevokeData.sessions?.length===2,'Remote revoke should close active live session');
+    check(sessionsAfterRevoke.ok&&sessionsAfterRevokeData.sessions?.length===3,'Remote revoke should close active live session');
     check(sessionsAfterRevokeData.sessions?.[0]?.reason==='remote_revoke','Remote revoke session reason missing');
 
     const afterDeviceRevoke=await fetch(base+'/api/rooms/TEST-CLUB/02%E6%A1%8C',{
@@ -259,7 +277,7 @@ if(failures.length){
   failures.forEach((x,i)=>console.error((i+1)+'. '+x));
   process.exit(1);
 }
-console.log('SAGI POOL LIVE CHINA V2.4 SELF-CHECK: PASSED');
+console.log('SAGI POOL LIVE CHINA V2.5 SELF-CHECK: PASSED');
 console.log('✓ Scorer / club / live / seller JavaScript');
 console.log('✓ PWA cache and core billiards scoring');
 console.log('✓ China sync real read/write flow');
@@ -271,4 +289,5 @@ console.log('✓ Install code one-use enforcement');
 console.log('✓ Device inventory and per-device remote revoke');
 console.log('✓ Live start / heartbeat / stop telemetry');
 console.log('✓ Live session history and remote-revoke closure');
+console.log('✓ Stale live heartbeat timeout auto-close');
 console.log('✓ Admin license listing and revoke');
