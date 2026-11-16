@@ -359,7 +359,7 @@ const server=http.createServer(async (req,res)=>{
   const url=new URL(req.url,'http://localhost');
 
   if(url.pathname==='/health'){
-    json(res,200,{ok:true,service:'SAGI CHINA SYNC',version:'2.13.0,licensedMode:REQUIRE_LICENSE,time:Date.now()});
+    json(res,200,{ok:true,service:'SAGI CHINA SYNC',version:'2.13.0',licensedMode:REQUIRE_LICENSE,time:Date.now()});
     return;
   }
 
@@ -380,7 +380,7 @@ const server=http.createServer(async (req,res)=>{
     const payload={
       schemaVersion:1,
       service:'SAGI CHINA SYNC',
-      serviceVersion:'2.13.0,
+      serviceVersion:'2.13.0',
       exportedAt:Date.now(),
       store
     };
@@ -412,7 +412,7 @@ const server=http.createServer(async (req,res)=>{
     json(res,200,{
       ok:true,
       service:'SAGI CHINA SYNC',
-      version:'2.13.0,
+      version:'2.13.0',
       uptimeSeconds:Math.floor(process.uptime()),
       licensedMode:REQUIRE_LICENSE,
       counts:{
