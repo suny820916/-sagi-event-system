@@ -45,7 +45,7 @@
 const SETTINGS='sagi_pool_club_settings_v2';
 const $=s=>document.querySelector(s);
 const modeNames={ '8ball':'中式八球','chase4':'4球追分','chase6':'6球追分','chase9':'9球追分'};
-function loadSettings(){try{return Object.assign({club:'SAGI POOL CLUB',count:8,syncUrl:'',clubId:'SAGI-DEMO',token:''},JSON.parse(localStorage.getItem(SETTINGS)||'{}'))}catch(e){return{club:'SAGI POOL CLUB',count:8,syncUrl:'',clubId:'SAGI-DEMO',token:''}}}
+function loadSettings(){const auto=((location.protocol==='https:'&&!location.hostname.endsWith('github.io'))?location.origin:'');try{return Object.assign({club:'SAGI POOL CLUB',count:8,syncUrl:auto,clubId:'SAGI-DEMO',token:''},JSON.parse(localStorage.getItem(SETTINGS)||'{}'))}catch(e){return{club:'SAGI POOL CLUB',count:8,syncUrl:auto,clubId:'SAGI-DEMO',token:''}}}
 let cfg=loadSettings();
 function pad(n){return String(n).padStart(2,'0')}
 function age(ts){if(!ts)return'暂无记录';const d=Math.max(0,Date.now()-ts),m=Math.floor(d/60000);if(m<1)return'刚刚更新';if(m<60)return m+'分钟前';const h=Math.floor(m/60);if(h<24)return h+'小时前';return Math.floor(h/24)+'天前'}
