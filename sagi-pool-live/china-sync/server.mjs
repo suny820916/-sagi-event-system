@@ -10,6 +10,7 @@ const LEGACY_TOKEN = process.env.SAGI_SYNC_TOKEN || '';
 const ADMIN_TOKEN = process.env.SAGI_ADMIN_TOKEN || '';
 const REQUIRE_LICENSE = process.env.SAGI_REQUIRE_LICENSE === '1';
 const ALLOW_ORIGIN = process.env.SAGI_ALLOW_ORIGIN || '*';
+const LIVE_HEARTBEAT_TIMEOUT_MS = Math.max(1000, Number(process.env.SAGI_LIVE_HEARTBEAT_TIMEOUT_MS || 60000));
 const DATA_FILE = process.env.SAGI_DATA_FILE || path.join(path.dirname(fileURLToPath(import.meta.url)), 'data.json');
 
 let store = { rooms: {}, licenses: {} };
@@ -124,7 +125,7 @@ function deviceForToken(lic, deviceId, token) {
 function expireStaleLive(device, now=Date.now()) {
   if(!device || !device.live || device.live.active!==true) return false;
   const updatedAt=Number(device.live.updatedAt||device.live.startedAt||0);
-  if(!updatedAt || now-updatedAt<=60000) return false;
+  if(!updatedAt || now-updatedAt<=LIVE_HEARTBEAT_TIMEOUT_MS) return false;
   finishLiveSession(device,'heartbeat_timeout',now);
   return true;
 }
