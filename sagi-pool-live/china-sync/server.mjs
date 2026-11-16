@@ -76,7 +76,8 @@ function roomSummary(room) {
     mode: s.mode || '',
     players: players.slice(0,4).map(p=>({name:p.name||'',score:Number(p.score||0),wins:Number(p.wins||0)})),
     updatedAt: Number(room?.updatedAt||0),
-    logCount: Array.isArray(s.log)?s.log.length:0
+    logCount: Array.isArray(s.log)?s.log.length:0,
+    state: s
   };
 }
 
