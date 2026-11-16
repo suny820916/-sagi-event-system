@@ -36,7 +36,7 @@
 </section>
 <section class="card">
   <div class="head"><h2>球房商品化状态</h2><span class="small">CLUB MVP</span></div>
-  <div class="small" style="line-height:1.65">这版已经把单桌工具升级为球房产品：每桌独立入口、独立比分与历史记录、手机摄像头直播预览、中八/追分统一控制。下一层为云端多设备同步和真正平台推流。</div>
+  <div class="small" style="line-height:1.65">当前已接通：每桌独立比赛、中八/追分、国内多手机同步、一次性安装码、球房商业授权与 Android 原生 RTMP 推流。正式营业版只需绑定国内域名、直播 SDK License 和平台合法推流地址。</div>
 </section>
 <div class="foot">SAGI SPORTS · POOL LIVE SYSTEM</div>
 </div>
@@ -50,7 +50,15 @@ let cfg=loadSettings();
 function pad(n){return String(n).padStart(2,'0')}
 function age(ts){if(!ts)return'暂无记录';const d=Math.max(0,Date.now()-ts),m=Math.floor(d/60000);if(m<1)return'刚刚更新';if(m<60)return m+'分钟前';const h=Math.floor(m/60);if(h<24)return h+'小时前';return Math.floor(h/24)+'天前'}
 function readTable(no){try{return JSON.parse(localStorage.getItem('sagi_pool_live_v20_'+no)||'null')}catch(e){return null}}
-let cloudRooms={};
+let cloudRooms={}, cloudLicense=null;
+function licenseText(){
+  if(!cloudLicense)return'';
+  const plan=cloudLicense.plan||'CLUB';
+  const tables=Number(cloudLicense.maxTables||0);
+  const expiry=Number(cloudLicense.expiresAt||0);
+  const date=expiry?new Date(expiry).toLocaleDateString('zh-CN'):'长期';
+  return plan+' · 授权'+tables+'桌 · '+date+'到期';
+}
 function render(){
   $('#club').value=cfg.club;$('#count').value=cfg.count;$('#syncUrl').value=cfg.syncUrl||'';$('#clubId').value=cfg.clubId||'SAGI-DEMO';$('#token').value=cfg.token||'';
   const box=$('#tables');box.innerHTML='';let active=0;
@@ -72,7 +80,8 @@ function render(){
     const link=document.createElement('a');link.className='btn';link.href='./?table='+encodeURIComponent(no)+'&club='+encodeURIComponent(cfg.club);link.textContent='进入 '+no+'桌';
     card.append(top,score,names,meta,link);box.appendChild(card);
   }
-  $('#summary').textContent=active+' / '+cfg.count+' 比赛中';
+  const lic=licenseText();
+  $('#summary').textContent=active+' / '+cfg.count+' 比赛中'+(lic?' · '+lic:'');
 }
 function saveCfg(){
   cfg.club=$('#club').value.trim()||'SAGI POOL CLUB';
@@ -93,7 +102,7 @@ async function refreshCloud(){
       if(r.status===401)throw new Error('授权无效或已到期');
       throw new Error('云端连接失败 · '+r.status);
     }
-    cloudRooms={};
+    cloudRooms={};cloudLicense=d.license||null;
     (d.rooms||[]).forEach(x=>{cloudRooms[x.table]=x});
     render();
   }catch(e){$('#summary').textContent=e.message||'云端连接失败'}
