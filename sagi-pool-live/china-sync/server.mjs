@@ -13,6 +13,8 @@ const ALLOW_ORIGIN = process.env.SAGI_ALLOW_ORIGIN || '*';
 const LIVE_HEARTBEAT_TIMEOUT_MS = Math.max(1000, Number(process.env.SAGI_LIVE_HEARTBEAT_TIMEOUT_MS || 60000));
 const PROVISION_RATE_LIMIT = Math.max(3, Number(process.env.SAGI_PROVISION_RATE_LIMIT || 20));
 const PROVISION_RATE_WINDOW_MS = Math.max(10000, Number(process.env.SAGI_PROVISION_RATE_WINDOW_MS || 60000));
+const ADMIN_FAIL_LIMIT = Math.max(3, Number(process.env.SAGI_ADMIN_FAIL_LIMIT || 10));
+const ADMIN_FAIL_WINDOW_MS = Math.max(60000, Number(process.env.SAGI_ADMIN_FAIL_WINDOW_MS || 300000));
 const DATA_FILE = process.env.SAGI_DATA_FILE || path.join(path.dirname(fileURLToPath(import.meta.url)), 'data.json');
 
 function readJsonFile(file) {
@@ -47,6 +49,7 @@ if (!store.licenses) store.licenses = {};
 
 const provisions = new Map();
 const provisionRate = new Map();
+const adminFailRate = new Map();
 const clients = new Map();
 let persistTimer = null;
 
@@ -72,6 +75,29 @@ function requestToken(req, url) {
 }
 function adminAuthorized(req) {
   return Boolean(ADMIN_TOKEN) && String(req.headers['x-sagi-admin'] || '') === ADMIN_TOKEN;
+}
+
+function adminRequestAllowed(req) {
+  const ip=clientIp(req);
+  const now=Date.now();
+  let bucket=adminFailRate.get(ip);
+  if(bucket && now>=bucket.resetAt){
+    adminFailRate.delete(ip);
+    bucket=null;
+  }
+  if(bucket && bucket.count>=ADMIN_FAIL_LIMIT){
+    return {ok:false,limited:true,retryAfterMs:Math.max(0,bucket.resetAt-now)};
+  }
+  if(adminAuthorized(req)){
+    if(bucket) adminFailRate.delete(ip);
+    return {ok:true,limited:false,retryAfterMs:0};
+  }
+  if(!bucket){
+    bucket={count:0,resetAt:now+ADMIN_FAIL_WINDOW_MS};
+    adminFailRate.set(ip,bucket);
+  }
+  bucket.count++;
+  return {ok:false,limited:bucket.count>=ADMIN_FAIL_LIMIT,retryAfterMs:Math.max(0,bucket.resetAt-now)};
 }
 function publicLicense(lic) {
   if (!lic) return null;
@@ -314,8 +340,20 @@ const server=http.createServer(async (req,res)=>{
   const url=new URL(req.url,'http://localhost');
 
   if(url.pathname==='/health'){
-    json(res,200,{ok:true,service:'SAGI CHINA SYNC',version:'2.7.0',licensedMode:REQUIRE_LICENSE,time:Date.now()});
+    json(res,200,{ok:true,service:'SAGI CHINA SYNC',version:'2.8.0',licensedMode:REQUIRE_LICENSE,time:Date.now()});
     return;
+  }
+
+  if(url.pathname.startsWith('/api/admin/')){
+    const auth=adminRequestAllowed(req);
+    if(!auth.ok){
+      if(auth.limited){
+        const retryAfter=Math.max(1,Math.ceil(auth.retryAfterMs/1000));
+        res.setHeader('Retry-After',String(retryAfter));
+        json(res,429,{ok:false,error:'admin_rate_limited',retryAfter});return;
+      }
+      json(res,401,{ok:false,error:'admin_unauthorized'});return;
+    }
   }
 
   if(url.pathname==='/api/admin/licenses' && req.method==='GET'){
