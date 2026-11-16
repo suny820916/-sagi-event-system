@@ -19,7 +19,7 @@ if [ "$NODE_MAJOR" -lt 20 ]; then
   exit 1
 fi
 
-sudo mkdir -p /var/www/sagi-pool-live /opt/sagi-pool-sync /etc/nginx/ssl
+sudo mkdir -p /var/www/sagi-pool-live /opt/sagi-pool-sync /opt/sagi-pool-sync/backups /etc/nginx/ssl
 
 sudo cp "$APP_ROOT/index.html" /var/www/sagi-pool-live/
 sudo cp "$APP_ROOT/club.html" /var/www/sagi-pool-live/
@@ -30,6 +30,8 @@ sudo cp "$APP_ROOT/icon.svg" /var/www/sagi-pool-live/
 sudo cp "$APP_ROOT/sw.js" /var/www/sagi-pool-live/
 
 sudo cp "$APP_ROOT/china-sync/server.mjs" /opt/sagi-pool-sync/
+sudo cp "$APP_ROOT/china-sync/backup.mjs" /opt/sagi-pool-sync/
+sudo cp "$APP_ROOT/china-sync/restore.mjs" /opt/sagi-pool-sync/
 sudo cp "$APP_ROOT/china-sync/package.json" /opt/sagi-pool-sync/
 
 if [ ! -f /etc/sagi-pool-sync.env ]; then
@@ -38,6 +40,8 @@ if [ ! -f /etc/sagi-pool-sync.env ]; then
 fi
 
 sudo cp "$HERE/sagi-pool-sync.service" /etc/systemd/system/sagi-pool-sync.service
+sudo cp "$HERE/sagi-pool-backup.service" /etc/systemd/system/sagi-pool-backup.service
+sudo cp "$HERE/sagi-pool-backup.timer" /etc/systemd/system/sagi-pool-backup.timer
 sudo cp "$HERE/nginx-sagi-pool.conf" /etc/nginx/sites-available/sagi-pool.conf
 sudo ln -sfn /etc/nginx/sites-available/sagi-pool.conf /etc/nginx/sites-enabled/sagi-pool.conf
 
@@ -51,4 +55,6 @@ echo "1) Edit /etc/sagi-pool-sync.env"
 echo "2) Replace pool.example.com in /etc/nginx/sites-available/sagi-pool.conf"
 echo "3) Put TLS certs in /etc/nginx/ssl/fullchain.pem and privkey.pem"
 echo "4) sudo systemctl enable --now sagi-pool-sync"
-echo "5) sudo nginx -t && sudo systemctl reload nginx"
+echo "5) sudo systemctl enable --now sagi-pool-backup.timer"
+echo "6) sudo nginx -t && sudo systemctl reload nginx"
+echo "7) Test backup: sudo systemctl start sagi-pool-backup.service"
