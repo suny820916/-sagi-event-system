@@ -93,3 +93,12 @@ V1 使用单进程 JSON 持久化；当门店数扩大后升级为 MySQL/Redis�
 - Web / Android 显示“安装码尝试过多，请稍后再试”。
 - 不引入 Redis，早期单机球房销售场景即可生效。
 - 可通过 SAGI_PROVISION_RATE_LIMIT / SAGI_PROVISION_RATE_WINDOW_MS 调整。
+
+
+## V2.8 管理员防刷
+
+- /api/admin/* 统一经过管理员认证失败限速。
+- 默认 5 分钟窗口内最多 10 次错误管理员密钥尝试。
+- 超限返回 HTTP 429 + Retry-After。
+- 正确管理员密钥永远可立即通过并清零该 IP 的失败计数，避免共享 NAT 下被恶意错误请求锁死。
+- 可通过 SAGI_ADMIN_FAIL_LIMIT / SAGI_ADMIN_FAIL_WINDOW_MS 调整。
