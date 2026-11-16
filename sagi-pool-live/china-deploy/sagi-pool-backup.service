@@ -1,0 +1,14 @@
+[Unit]
+Description=SAGI POOL Daily Data Backup
+After=sagi-pool-sync.service
+
+[Service]
+Type=oneshot
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/sagi-pool-sync
+EnvironmentFile=/etc/sagi-pool-sync.env
+ExecStart=/usr/bin/node /opt/sagi-pool-sync/backup.mjs
+Nice=10
+NoNewPrivileges=true
+PrivateTmp=true
