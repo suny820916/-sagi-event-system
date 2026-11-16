@@ -46,6 +46,7 @@ function loadStore() {
 let store = loadStore();
 if (!store.rooms) store.rooms = {};
 if (!store.licenses) store.licenses = {};
+if (!Array.isArray(store.audit)) store.audit = [];
 
 const provisions = new Map();
 const provisionRate = new Map();
@@ -229,6 +230,24 @@ function clientIp(req) {
   return forwarded || String(req.headers['x-real-ip']||'').trim() || req.socket?.remoteAddress || 'unknown';
 }
 
+function auditEvent(req, action, details={}) {
+  const entry={
+    id:crypto.randomBytes(6).toString('hex'),
+    ts:Date.now(),
+    action:String(action||'unknown').slice(0,64),
+    clubId:safePart(details.clubId||''),
+    table:safePart(details.table||''),
+    deviceId:safePart(details.deviceId||''),
+    plan:String(details.plan||'').slice(0,30),
+    maxTables:details.maxTables===undefined?null:Number(details.maxTables),
+    sourceHash:hashToken(clientIp(req)).slice(0,16)
+  };
+  store.audit.unshift(entry);
+  if(store.audit.length>500) store.audit.length=500;
+  schedulePersist();
+  return entry;
+}
+
 function provisionRateAllowed(req) {
   const key=clientIp(req);
   const now=Date.now();
@@ -340,7 +359,7 @@ const server=http.createServer(async (req,res)=>{
   const url=new URL(req.url,'http://localhost');
 
   if(url.pathname==='/health'){
-    json(res,200,{ok:true,service:'SAGI CHINA SYNC',version:'2.11.0',licensedMode:REQUIRE_LICENSE,time:Date.now()});
+    json(res,200,{ok:true,service:'SAGI CHINA SYNC',version:'2.12.0',licensedMode:REQUIRE_LICENSE,time:Date.now()});
     return;
   }
 
@@ -357,10 +376,11 @@ const server=http.createServer(async (req,res)=>{
   }
 
   if(url.pathname==='/api/admin/backup' && req.method==='GET'){
+    auditEvent(req,'backup_export',{});
     const payload={
       schemaVersion:1,
       service:'SAGI CHINA SYNC',
-      serviceVersion:'2.11.0',
+      serviceVersion:'2.12.0',
       exportedAt:Date.now(),
       store
     };
@@ -392,7 +412,7 @@ const server=http.createServer(async (req,res)=>{
     json(res,200,{
       ok:true,
       service:'SAGI CHINA SYNC',
-      version:'2.11.0',
+      version:'2.12.0',
       uptimeSeconds:Math.floor(process.uptime()),
       licensedMode:REQUIRE_LICENSE,
       counts:{
@@ -412,6 +432,11 @@ const server=http.createServer(async (req,res)=>{
       },
       time:now
     });return;
+  }
+
+  if(url.pathname==='/api/admin/audit' && req.method==='GET'){
+    const limit=Math.max(1,Math.min(100,Number(url.searchParams.get('limit')||30)));
+    json(res,200,{ok:true,audit:store.audit.slice(0,limit)});return;
   }
 
   if(url.pathname==='/api/admin/licenses' && req.method==='GET'){
@@ -443,6 +468,7 @@ const server=http.createServer(async (req,res)=>{
         updatedAt:now
       };
       store.licenses[clubId]=lic;schedulePersist();
+      auditEvent(req,prev.clubId?'license_update':'license_issue',{clubId,plan:lic.plan,maxTables:lic.maxTables});
       json(res,200,{ok:true,license:publicLicense(lic)});return;
     }catch(e){json(res,e.message==='payload_too_large'?413:400,{ok:false,error:e.message});return;}
   }
@@ -461,6 +487,7 @@ const server=http.createServer(async (req,res)=>{
       lic.revoked=false;
       lic.updatedAt=Date.now();
       schedulePersist();
+      auditEvent(req,'license_renew',{clubId:club,plan:lic.plan,maxTables:lic.maxTables});
       json(res,200,{ok:true,license:publicLicense(lic)});return;
     }catch(e){json(res,e.message==='payload_too_large'?413:400,{ok:false,error:e.message});return;}
   }
@@ -489,6 +516,7 @@ const server=http.createServer(async (req,res)=>{
     const now=Date.now();
     finishLiveSession(device,'remote_revoke',now);
     device.revoked=true;lic.updatedAt=now;schedulePersist();
+    auditEvent(req,'device_revoke',{clubId:club,deviceId,table:device.table});
     json(res,200,{ok:true,device:publicDevice(device)});return;
   }
 
@@ -564,6 +592,7 @@ const server=http.createServer(async (req,res)=>{
       const deviceToken=crypto.randomBytes(24).toString('hex');
       const expiresAt=Date.now()+10*60*1000;
       provisions.set(code,{code,clubId,table,deviceToken,expiresAt,used:false});
+      auditEvent(req,'provision_create',{clubId,table});
       json(res,200,{
         ok:true,
         provision:{code,clubId,table,expiresAt,ttlSeconds:600}
@@ -617,6 +646,7 @@ const server=http.createServer(async (req,res)=>{
       item.used=true;
       provisions.delete(code);
       schedulePersist();
+      auditEvent(req,'device_provision',{clubId:item.clubId,table:item.table,deviceId:requestedDeviceId});
       json(res,200,{
         ok:true,
         config:{
@@ -639,6 +669,7 @@ const server=http.createServer(async (req,res)=>{
     const club=safePart(revokeMatch[1]),lic=store.licenses[club];
     if(!lic){json(res,404,{ok:false,error:'license_not_found'});return;}
     lic.revoked=true;lic.updatedAt=Date.now();schedulePersist();
+    auditEvent(req,'license_revoke',{clubId:club,plan:lic.plan,maxTables:lic.maxTables});
     json(res,200,{ok:true,license:publicLicense(lic)});return;
   }
 
