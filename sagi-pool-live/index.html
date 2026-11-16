@@ -176,6 +176,7 @@ button{cursor:pointer}
   const KEY='sagi_pool_live_v20_'+(tableParam||'default');
   const SYNC_KEY='sagi_pool_sync_config_v1';
   const DEVICE_KEY='sagi_pool_device_id_v1';
+  const WEB_DEVICE_KEY='sagi_pool_web_device_id_v1';
   const defaults={
     mode:'8ball', club:clubParam||'SAGI POOL CLUB', table:tableLabel, raceTo:5, settlement:'winner',
     points:{normal:1,small:2,big:3,gold9:4},
@@ -196,6 +197,11 @@ button{cursor:pointer}
   function deviceId(){
     let id=localStorage.getItem(DEVICE_KEY);
     if(!id){id='dev-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,9);localStorage.setItem(DEVICE_KEY,id)}
+    return id;
+  }
+  function webDeviceId(){
+    let id=localStorage.getItem(WEB_DEVICE_KEY);
+    if(!id){id='web-score-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,9);localStorage.setItem(WEB_DEVICE_KEY,id)}
     return id;
   }
   function loadSync(){
@@ -264,7 +270,7 @@ button{cursor:pointer}
       const r=await fetch(base+'/api/provision/claim',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({code})
+        body:JSON.stringify({code,deviceId:webDeviceId(),deviceLabel:'Web记分端 · '+(state.table||'球桌')})
       });
       const data=await r.json().catch(()=>({}));
       if(!r.ok){
