@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="format-detection" content="telephone=no">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%2307090d%22/%3E%3Ctext x=%2232%22 y=%2243%22 text-anchor=%22middle%22 font-size=%2234%22 fill=%22%23d8b55b%22%3ES%3C/text%3E%3C/svg%3E">
-<title>SAGI V4.16.0 · SMART MATCH DIRECTOR</title>
+<title>SAGI V4.17.0 · CAMERA ROLE ENGINE</title>
 <style>
 :root{--bg:#07090d;--panel:#11151c;--line:#2b3340;--text:#f4f0e8;--muted:#8f97a5;--gold:#d8b55b;--green:#72c79a}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
@@ -332,7 +332,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 }
 
 
-/* ===== V4.16.0 SMART MATCH DIRECTOR ===== */
+/* ===== V4.17.0 CAMERA ROLE ENGINE ===== */
 .stage{--teamAccent:#d8b55b}
 .stage .teamSub,.stage .groupTitle,.stage .formationText{color:var(--teamAccent)}
 .stage .groupLine{background:linear-gradient(90deg,var(--teamAccent),#fff,transparent)}
@@ -376,7 +376,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 @keyframes plRowIn{from{opacity:0;transform:translateX(-24px)}to{opacity:1;transform:translateX(0)}}
 
 
-/* ===== V4.16.0 SMART MATCH DIRECTOR CONTROL ===== */
+/* ===== V4.17.0 CAMERA ROLE ENGINE CONTROL ===== */
 .matchdayDesk{border-color:#414a57;background:linear-gradient(180deg,#0e141c,#080b10);box-shadow:0 24px 64px #0008}
 .mdTitle{color:#f2f4f7;font-size:15px}.mdTitle:before{content:"LIVE";display:inline-flex;align-items:center;justify-content:center;margin-right:9px;padding:4px 7px;border-radius:5px;background:#ef343c;color:#fff;font-size:8px;letter-spacing:1.5px;vertical-align:2px}
 .mdPanel{background:linear-gradient(180deg,#0a0f15,#070a0f);border-color:#313a46;box-shadow:0 1px 0 #ffffff08 inset}
@@ -391,7 +391,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 .mdMvp{background:linear-gradient(135deg,#806424,#b78c34)!important}
 
 
-/* ===== V4.16.0 SMART MATCH DIRECTOR ===== */
+/* ===== V4.17.0 CAMERA ROLE ENGINE ===== */
 .gdBar{display:grid;grid-template-columns:minmax(210px,1.6fr) auto auto 120px 120px auto;gap:8px;align-items:center;margin:0 0 10px;padding:9px 10px;border:1px solid #33404d;border-radius:13px;background:linear-gradient(90deg,#071019,#0b131c)}
 .gdIdentity{min-width:0}.gdIdentity b{display:block;font-size:11px;letter-spacing:2px;color:#f3f5f7}.gdIdentity span{display:block;margin-top:3px;font-size:9px;letter-spacing:1px;color:#72d99c}.gdIdentity span.busy{color:#f0c96b}.gdIdentity span.manual{color:#77bfff}.gdIdentity span.error{color:#ff777d}
 .gdSwitch{margin:0;display:flex;align-items:center;gap:7px;height:38px;padding:0 10px;border:1px solid #303b48;border-radius:9px;background:#0a0f15;color:#cbd3dc;font-size:10px;font-weight:900;white-space:nowrap}.gdSwitch input{width:16px;height:16px;margin:0;accent-color:#d8b55b}
@@ -401,7 +401,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 @media(max-width:650px){.gdBar{grid-template-columns:1fr 1fr}.gdIdentity{grid-column:1/3}.gdAbort{grid-column:1/3}.gdField select{height:36px}}
 
 
-/* ===== V4.16.0 SMART MATCH DIRECTOR ===== */
+/* ===== V4.17.0 CAMERA ROLE ENGINE ===== */
 .smartDirector{margin:0 0 10px;padding:10px;border:1px solid #344250;border-radius:14px;background:linear-gradient(135deg,#071019,#0c1620)}
 .sdHead{display:flex;align-items:center;gap:8px;margin-bottom:8px}.sdHead>div:first-child{margin-right:auto}.sdHead b{display:block;font-size:11px;letter-spacing:2px;color:#f2f5f7}.sdHead span{font-size:9px;color:#7f8b98;letter-spacing:1px}
 .sdCue{display:grid;grid-template-columns:92px minmax(0,1fr) 74px 104px;gap:9px;align-items:center;padding:9px;border:1px solid #2b3743;border-radius:11px;background:#070c12}
@@ -412,11 +412,19 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 .smartDirector.disabled{opacity:.52}.smartDirector.auto .sdExecute{box-shadow:0 0 0 1px #72d99c55 inset}.smartDirector.auto .sdConfidence:after{content:" · AUTO"}
 @media(max-width:760px){.sdHead{flex-wrap:wrap}.sdCue{grid-template-columns:80px 1fr 66px}.sdExecute{grid-column:1/4}.sdReason{white-space:normal}.sdSlot{height:44px}}
 
+
+/* ===== V4.17.0 CAMERA ROLE ENGINE ===== */
+.cameraRoleMap{align-items:stretch}.cameraRoleItem{display:grid;grid-template-columns:1fr;gap:5px}.cameraRoleItem input{font-weight:1000}.cameraRoleItem select{padding:7px 9px;border-radius:9px;font-size:11px;color:#d9e5ef;background:#0b1118;border-color:#344454}
+.cameraRoleHint{height:34px;display:flex;align-items:center;padding:0 9px;border:1px solid #2e3945;border-radius:9px;background:#0a0f15;color:#71808e;font-size:9px;font-weight:900;letter-spacing:1px}
+.cameraRoleSummary{display:flex;align-items:center;gap:10px;margin-top:8px;padding:8px 10px;border:1px solid #2d3c49;border-radius:10px;background:#081019}.cameraRoleSummary b{font-size:9px;letter-spacing:1.5px;color:#8fd2ff}.cameraRoleSummary span{min-width:0;font-size:9px;color:#92a0ad;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vdSource span{display:inline-block;margin-left:4px}.roleBadge{display:inline-flex;align-items:center;padding:3px 6px;border-radius:999px;background:#10202d;border:1px solid #27435a;color:#83cfff;font-size:8px;font-weight:1000;letter-spacing:.5px}
+.sdSlot{flex-direction:column;line-height:1.05}.sdSlot small{display:block;margin-top:4px;font-size:7px;color:#788b9c;letter-spacing:.4px}
+
 </style>
 </head>
 <body>
 <div class="app">
-  <div class="top"><div><div class="brand">SAGI LIVE MATCH DIRECTOR</div><div class="sub">V4.16.0 · SMART MATCH DIRECTOR · MATCH SETUP UX</div></div><div class="topRight"><div class="ver">V4.16.0</div><button id="mobileUpdateBtn" class="mobileUpdateBtn" type="button">↻ 安全更新</button><button id="mobileRollbackBtn" class="mobileRollbackBtn" type="button">↶ 回退上一版</button><div id="mobileUpdateStatus" class="mobileUpdateStatus">V4.16.0 · SMART MATCH DIRECTOR · Bridge 已锁定</div></div></div>
+  <div class="top"><div><div class="brand">SAGI LIVE MATCH DIRECTOR</div><div class="sub">V4.17.0 · CAMERA ROLE ENGINE · MATCH SETUP UX</div></div><div class="topRight"><div class="ver">V4.17.0</div><button id="mobileUpdateBtn" class="mobileUpdateBtn" type="button">↻ 安全更新</button><button id="mobileRollbackBtn" class="mobileRollbackBtn" type="button">↶ 回退上一版</button><div id="mobileUpdateStatus" class="mobileUpdateStatus">V4.17.0 · CAMERA ROLE ENGINE · Bridge 已锁定</div></div></div>
 
   <div id="pwaBar" class="pwaBar" style="display:none">
     <div class="pwaInfo">
@@ -438,7 +446,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 
   <div id="setupDesk" class="setupDesk">
     <div class="setupHead">
-      <div class="setupTitle">比赛设置 · MATCH SETUP ENGINE<small>V4.16.0 · 广播动效引擎 · READY GATE</small></div>
+      <div class="setupTitle">比赛设置 · MATCH SETUP ENGINE<small>V4.17.0 · 广播动效引擎 · READY GATE</small></div>
       <div id="setupReadyBadge" class="setupReadyBadge">NOT READY</div>
     </div>
     <div class="setupGrid">
@@ -579,19 +587,48 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 
   <div class="vmixDirector">
     <div class="vdHead">
-      <div class="vdTitle">V4.8.0 · vMix 导播控制 <small>LIVE MATCH DIRECTOR</small></div>
+      <div class="vdTitle">V4.17.0 · vMix 导播控制 <small>LIVE MATCH DIRECTOR</small></div>
       <div id="vdStatus" class="vdStatus">LAN Bridge 待命</div>
     </div>
     <div class="vdGrid">
       <div class="vdPanel">
         <div class="vdPanelTitle">输入映射 · INPUT MAP</div>
-        <div class="vdInputs">
-          <div><label>主机位 1</label><input id="vdCam1" value="1"></div>
-          <div><label>机位 2</label><input id="vdCam2" value="2"></div>
-          <div><label>无人机</label><input id="vdDrone" value="3"></div>
-          <div><label>回放输入</label><input id="vdReplay" value="4"></div>
-          <div><label>V4.8.0图形输入</label><input id="vdGraphics" value="5"></div>
+        <div class="vdInputs cameraRoleMap">
+          <div class="cameraRoleItem"><label>CAM 1 · Input</label><input id="vdCam1" value="1"><select id="vdCam1Role" aria-label="CAM1角色">
+            <option value="MAIN_WIDE">主全景</option>
+            <option value="SIDELINE_CLOSE">边线近景</option>
+            <option value="BENCH">教练席</option>
+            <option value="GOAL_BEHIND">球门后</option>
+            <option value="DRONE">无人机</option>
+            <option value="BEAUTY_WIDE">氛围宽景</option>
+            <option value="REPLAY">回放</option></select></div>
+          <div class="cameraRoleItem"><label>CAM 2 · Input</label><input id="vdCam2" value="2"><select id="vdCam2Role" aria-label="CAM2角色">
+            <option value="MAIN_WIDE">主全景</option>
+            <option value="SIDELINE_CLOSE">边线近景</option>
+            <option value="BENCH">教练席</option>
+            <option value="GOAL_BEHIND">球门后</option>
+            <option value="DRONE">无人机</option>
+            <option value="BEAUTY_WIDE">氛围宽景</option>
+            <option value="REPLAY">回放</option></select></div>
+          <div class="cameraRoleItem"><label>CAM 3 · Input</label><input id="vdDrone" value="3"><select id="vdDroneRole" aria-label="CAM3角色">
+            <option value="MAIN_WIDE">主全景</option>
+            <option value="SIDELINE_CLOSE">边线近景</option>
+            <option value="BENCH">教练席</option>
+            <option value="GOAL_BEHIND">球门后</option>
+            <option value="DRONE">无人机</option>
+            <option value="BEAUTY_WIDE">氛围宽景</option>
+            <option value="REPLAY">回放</option></select></div>
+          <div class="cameraRoleItem"><label>CAM 4 · Input</label><input id="vdReplay" value="4"><select id="vdReplayRole" aria-label="CAM4角色">
+            <option value="MAIN_WIDE">主全景</option>
+            <option value="SIDELINE_CLOSE">边线近景</option>
+            <option value="BENCH">教练席</option>
+            <option value="GOAL_BEHIND">球门后</option>
+            <option value="DRONE">无人机</option>
+            <option value="BEAUTY_WIDE">氛围宽景</option>
+            <option value="REPLAY">回放</option></select></div>
+          <div><label>V4.17 图形输入</label><input id="vdGraphics" value="5"><div class="cameraRoleHint">GRAPHICS · 固定图形职责</div></div>
         </div>
+        <div class="cameraRoleSummary"><b>CAMERA ROLE ENGINE</b><span id="cameraRoleSummary">主全景 · 边线近景 · 无人机 · 回放</span></div>
         <div class="vdInputs" style="grid-template-columns:1fr 1fr 1fr;margin-top:7px">
           <div><label>切换方式</label><select id="vdTransition"><option value="Cut">CUT 硬切</option><option value="Fade">FADE 淡变</option><option value="Stinger1">STINGER 1</option></select></div>
           <div><label>淡变时长 ms</label><input id="vdDuration" type="number" value="350" min="0" max="5000"></div>
@@ -602,16 +639,16 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
       <div class="vdPanel">
         <div class="vdPanelTitle">PROGRAM · 切入播出</div>
         <div class="vdSources">
-          <button class="vdSource" type="button" data-vd-take="cam1"><b>1</b>主机位</button>
-          <button class="vdSource" type="button" data-vd-take="cam2"><b>2</b>机位 2</button>
-          <button class="vdSource" type="button" data-vd-take="drone"><b>3</b>无人机</button>
-          <button class="vdSource" type="button" data-vd-take="replay"><b>4</b>回放</button>
+          <button class="vdSource" id="vdTakeCam1" type="button" data-vd-take="cam1"><b>1</b><span>主全景</span></button>
+          <button class="vdSource" id="vdTakeCam2" type="button" data-vd-take="cam2"><b>2</b><span>边线近景</span></button>
+          <button class="vdSource" id="vdTakeDrone" type="button" data-vd-take="drone"><b>3</b><span>无人机</span></button>
+          <button class="vdSource" id="vdTakeReplay" type="button" data-vd-take="replay"><b>4</b><span>回放</span></button>
         </div>
         <div class="vdPreview">
-          <button type="button" data-vd-preview="cam1">预监 1</button>
-          <button type="button" data-vd-preview="cam2">预监 2</button>
-          <button type="button" data-vd-preview="drone">预监无人机</button>
-          <button type="button" data-vd-preview="replay">预监回放</button>
+          <button id="vdPreviewCam1" type="button" data-vd-preview="cam1">预监 · 主全景</button>
+          <button id="vdPreviewCam2" type="button" data-vd-preview="cam2">预监 · 边线近景</button>
+          <button id="vdPreviewDrone" type="button" data-vd-preview="drone">预监 · 无人机</button>
+          <button id="vdPreviewReplay" type="button" data-vd-preview="replay">预监 · 回放</button>
         </div>
       </div>
 
@@ -645,7 +682,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 
   <div class="matchdayDesk">
     <div class="mdHead">
-      <div class="mdTitle">V4.16.0 · MATCH MODE <small>SMART MATCH DIRECTOR</small></div>
+      <div class="mdTitle">V4.17.0 · MATCH MODE <small>CAMERA ROLE ENGINE</small></div>
       <div id="mdSync" class="mdSync"><span id="mdSyncDot" class="mdLiveDot"></span>比赛图形待命</div>
     </div>
     <div class="gdBar">
@@ -658,7 +695,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
     </div>
     <div id="smartDirector" class="smartDirector">
       <div class="sdHead">
-        <div><b>SMART MATCH DIRECTOR</b><span>下一镜头智能建议</span></div>
+        <div><b>CAMERA ROLE ENGINE</b><span>按机位职责推荐下一镜头</span></div>
         <label class="gdSwitch"><input id="sdEnabled" type="checkbox" checked><span>智能建议</span></label>
         <label class="gdSwitch"><input id="sdAutoTake" type="checkbox"><span>AUTO TAKE</span></label>
       </div>
@@ -988,7 +1025,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
             </div>
           </div>
         </div>
-        <div class="statusBar"><div id="status" class="status">V4.16.0 · SMART MATCH DIRECTOR 已就绪</div><div class="mini">1920 × 1080</div></div>
+        <div class="statusBar"><div id="status" class="status">V4.17.0 · CAMERA ROLE ENGINE 已就绪</div><div class="mini">1920 × 1080</div></div>
       </div>
     </div>
   </div>
@@ -1431,7 +1468,7 @@ async function importPhonePrematchPackage(file){
 
   let hc=Array.isArray(core.teams.HOME.roster)?core.teams.HOME.roster.length:0,ac=Array.isArray(core.teams.AWAY.roster)?core.teams.AWAY.roster.length:0;
 
-  // V4.16.0 fallback: recover from ROSTER_BACKUP.json when primary core rosters are empty.
+  // V4.17.0 fallback: recover from ROSTER_BACKUP.json when primary core rosters are empty.
   if((!hc||!ac)&&backup&&backup.teams&&backup.teams.HOME&&backup.teams.AWAY){
     const bh=Array.isArray(backup.teams.HOME.roster)?backup.teams.HOME.roster:[],ba=Array.isArray(backup.teams.AWAY.roster)?backup.teams.AWAY.roster:[];
     if(!hc&&bh.length)core.teams.HOME={...(core.teams.HOME||{}),formation:backup.teams.HOME.formation||core.teams.HOME.formation,roster:bh};
@@ -1668,7 +1705,7 @@ function mdCloudSnapshot(event=null){
  const now=mdNowSeconds(),homeName=q('matchHome').value.trim()||'HOME',awayName=q('matchAway').value.trim()||'AWAY';
  return{
   commandId:Date.now()+'_'+Math.random().toString(36).slice(2,7),
-  visualVersion:'V4.16.0-BROADCAST-MOTION-ENGINE',
+  visualVersion:'V4.17.0-BROADCAST-MOTION-ENGINE',
   home:homeName,away:awayName,homeShort:matchdayState.homeShort||mdShortAuto(homeName,'HOME'),awayShort:matchdayState.awayShort||mdShortAuto(awayName,'AWAY'),
   homeCrest:(teamStore.HOME&&teamStore.HOME.crest)||'',awayCrest:(teamStore.AWAY&&teamStore.AWAY.crest)||'',competition:q('matchCompetition').value.trim()||'SAGI FOOTBALL',
   homeScore:matchdayState.homeScore,awayScore:matchdayState.awayScore,scoreboardVisible:!!matchdayState.scoreboardVisible,scoreboardFrozen:!!matchdayState.scoreboardFrozen,
@@ -1677,7 +1714,7 @@ function mdCloudSnapshot(event=null){
   stoppageTime:matchdayState.stoppageTime||'',scoreTheme:matchdayState.scoreTheme||'sagi-pro',overlayVisible:!!matchdayState.overlayVisible,
   replayMarkers:(matchdayState.replayMarkers||[]).slice(0,80),eventLog:(matchdayState.eventLog||[]).slice(0,40),
   clock:{baseSeconds:now,running:!!matchdayState.clockRunning,startedAt:matchdayState.clockRunning?new Date().toISOString():null,period:matchdayState.period},
-  controller:{operatorRole:matchOperatorRole,matchMode:matchModeActive,autoGraphics:!!graphicsDirectorSettings.enabled,autoReplay:!!graphicsDirectorSettings.autoReplay,smartDirector:!!smartDirectorSettings.enabled,autoTake:!!smartDirectorSettings.autoTake,smartCue:{slot:smartCue.slot,title:smartCue.title,confidence:smartCue.confidence}},event:event||null,updatedAt:new Date().toISOString()
+  controller:{operatorRole:matchOperatorRole,matchMode:matchModeActive,autoGraphics:!!graphicsDirectorSettings.enabled,autoReplay:!!graphicsDirectorSettings.autoReplay,smartDirector:!!smartDirectorSettings.enabled,autoTake:!!smartDirectorSettings.autoTake,smartCue:{slot:smartCue.slot,role:cameraRoleOf(smartCue.slot),title:smartCue.title,confidence:smartCue.confidence},cameraRoles:{cam1:cameraRoleOf('cam1'),cam2:cameraRoleOf('cam2'),drone:cameraRoleOf('drone'),replay:cameraRoleOf('replay')}},event:event||null,updatedAt:new Date().toISOString()
  };
 }
 async function publishMatchday(event=null){
@@ -1782,7 +1819,7 @@ async function gdRunEvent(ev,holdMs=5200){
   if(graphicsDirectorSettings.autoReplay&&matchReady){
    gdAutoCameraActive=true;
    gdClearCameraTimers();gdScheduleCamera(async()=>{
-    gdSetStatus('AUTO REPLAY · PROGRAM','busy');await gdTakeCamera('replay','AUTO GOAL REPLAY')
+    const replaySlot=cameraSlotForRole('REPLAY','replay');gdSetStatus('AUTO REPLAY · '+cameraRoleLabel(cameraRoleOf(replaySlot)),'busy');await gdTakeCamera(replaySlot,'AUTO GOAL REPLAY · '+cameraRoleLabel(cameraRoleOf(replaySlot)))
    },1450,seq);
    gdScheduleCamera(async()=>{
     await gdTakeCamera(graphicsDirectorSettings.returnSlot||'cam1','AUTO RETURN TO MATCH');gdAutoCameraActive=false;gdSetStatus('3/3 · RETURN SCOREBUG','busy');smartCue={slot:graphicsDirectorSettings.returnSlot||'cam1',title:'回到比赛',reason:'自动回放结束，恢复主比赛画面',confidence:99,eventType:'RETURN'};sdRender()
@@ -1794,44 +1831,55 @@ async function gdRunEvent(ev,holdMs=5200){
  gdSetStatus(type+' · GRAPHIC LIVE','busy');await publishMatchday(ev);mdEventAutoClear(holdMs);
  gdSchedule(()=>{if(seq===gdSequence)gdSetStatus('SAFE AUTO · READY')},holdMs+500,seq)
 }
-function sdSlotLabel(slot){return({cam1:'CAM 1',cam2:'CAM 2',drone:'DRONE',replay:'REPLAY'})[slot]||String(slot||'CAM 1').toUpperCase()}
+function sdSlotLabel(slot){return cameraRoleLabel(cameraRoleOf(slot))}
+function sdSlotTechnical(slot){return String(slot||'cam1').toUpperCase()+' · INPUT '+String(vmixDirectorSettings[slot]||'—')}
 function sdPersist(){try{localStorage.setItem('sagi_smart_director_v416',JSON.stringify(smartDirectorSettings))}catch(e){}}
 function sdLoad(){try{const x=JSON.parse(localStorage.getItem('sagi_smart_director_v416')||'null');if(x)smartDirectorSettings={...smartDirectorSettings,...x}}catch(e){}}
 function sdRender(){
  const box=q('sdCueSlot');if(!box)return;
  q('sdEnabled').checked=smartDirectorSettings.enabled!==false;q('sdAutoTake').checked=!!smartDirectorSettings.autoTake;
  q('smartDirector').classList.toggle('disabled',smartDirectorSettings.enabled===false);q('smartDirector').classList.toggle('auto',!!smartDirectorSettings.autoTake);
- box.textContent=sdSlotLabel(smartCue.slot);q('sdCueTitle').textContent=smartCue.title||'保持主机位';q('sdCueReason').textContent=smartCue.reason||'';
+ box.innerHTML='<span>'+esc(sdSlotLabel(smartCue.slot))+'</span><small>'+esc(sdSlotTechnical(smartCue.slot))+'</small>';q('sdCueTitle').textContent=smartCue.title||'保持主机位';q('sdCueReason').textContent=smartCue.reason||'';
  const c=Math.max(0,Math.min(100,Number(smartCue.confidence)||0)),ce=q('sdConfidence');ce.textContent=c>=88?('HIGH '+c+'%'):c>=75?('MED '+c+'%'):('SAFE '+c+'%');ce.className='sdConfidence '+(c>=88?'high':c>=75?'mid':'')
 }
 function sdHasSlot(slot){vdSave();return !!String(vmixDirectorSettings[slot]||'').trim()}
+function sdRoleSlot(role,fallback='cam1'){return cameraSlotForRole(role,'')||fallback}
+function sdHasRole(role){return cameraRoleAvailable(role)}
 function sdLateCloseGame(){
  const sec=mdNowSeconds(),period=matchdayState.period,diff=Math.abs((Number(matchdayState.homeScore)||0)-(Number(matchdayState.awayScore)||0));
  return (period==='2H'&&sec>=75*60&&diff<=1)||(period==='ET2'&&diff<=1)
 }
 function sdRecommend(ev=null){
  if(smartDirectorSettings.enabled===false)return smartCue;
- const type=ev&&ev.type||'IDLE',late=sdLateCloseGame();
- let cue={slot:'cam1',title:'保持主机位',reason:late?'比赛末段且比分接近，优先完整跟球':'保持比赛连续性',confidence:late?94:76,eventType:type};
+ vdSave();const type=ev&&ev.type||'IDLE',late=sdLateCloseGame(),main=sdRoleSlot('MAIN_WIDE','cam1');
+ let cue={slot:main,title:'保持主全景',reason:late?'比赛末段且比分接近，主全景优先完整跟球':'主全景保持比赛连续性',confidence:late?96:80,eventType:type,role:'MAIN_WIDE'};
  if(type==='GOAL'){
-  if(graphicsDirectorSettings.autoReplay){cue={slot:'cam1',title:'AUTO REPLAY 已接管',reason:'自动回放流程正在执行，结束后返回比赛机位',confidence:99,eventType:type}}
-  else if(sdHasSlot('replay')){cue={slot:'replay',title:'准备进球回放',reason:'进球后优先回放；确认回放已就绪再执行',confidence:97,eventType:type}}
-  else cue={slot:'cam1',title:'保持主机位',reason:'未配置回放输入，避免切到空源',confidence:98,eventType:type}
+  if(graphicsDirectorSettings.autoReplay){cue={slot:main,title:'AUTO REPLAY 已接管',reason:'自动回放流程正在执行，结束后回主比赛机位',confidence:99,eventType:type,role:'MAIN_WIDE'}}
+  else if(sdHasRole('REPLAY')){cue={slot:sdRoleSlot('REPLAY','replay'),title:'准备进球回放',reason:'检测到 REPLAY 职责机位；进球后优先回放',confidence:98,eventType:type,role:'REPLAY'}}
+  else cue={slot:main,title:'保持主全景',reason:'没有分配 REPLAY 职责，避免切到错误输入',confidence:99,eventType:type,role:'MAIN_WIDE'}
  }else if(type==='SUB'){
-  cue=sdHasSlot('cam2')?{slot:'cam2',title:'切机位2看换人',reason:'换人阶段适合近景/边线镜头；若机位2不是近景可保持主机位',confidence:82,eventType:type}:{slot:'cam1',title:'保持主机位',reason:'未配置第二机位',confidence:91,eventType:type}
+  if(sdHasRole('SIDELINE_CLOSE'))cue={slot:sdRoleSlot('SIDELINE_CLOSE',main),title:'边线近景看换人',reason:'换人阶段优先使用 SIDELINE CLOSE',confidence:91,eventType:type,role:'SIDELINE_CLOSE'};
+  else if(sdHasRole('BENCH'))cue={slot:sdRoleSlot('BENCH',main),title:'教练席/技术区',reason:'没有边线近景，使用 BENCH 职责补充换人画面',confidence:86,eventType:type,role:'BENCH'};
+  else cue={slot:main,title:'保持主全景',reason:'未配置边线近景或教练席职责',confidence:94,eventType:type,role:'MAIN_WIDE'}
  }else if(type==='YELLOW'){
-  cue={slot:'cam1',title:'保持主机位',reason:'黄牌后优先观察裁判与复赛位置，避免错过重新开球',confidence:91,eventType:type}
+  const close=sdHasRole('SIDELINE_CLOSE')?sdRoleSlot('SIDELINE_CLOSE',main):main;
+  cue={slot:late?main:close,title:late?'保持主全景':'裁判/球员近景',reason:late?'末段关键比赛优先不丢球':'黄牌死球阶段可短暂使用边线近景',confidence:late?97:(close===main?92:84),eventType:type,role:late?'MAIN_WIDE':cameraRoleOf(close)}
  }else if(type==='RED'){
-  cue={slot:'cam1',title:'保持主机位',reason:'红牌是高风险事件，主机位优先保留完整冲突与裁判画面',confidence:95,eventType:type}
+  cue={slot:main,title:'保持主全景',reason:'红牌属于高风险事件，优先保留冲突、裁判和重新开球完整信息',confidence:98,eventType:type,role:'MAIN_WIDE'}
  }else if(type==='HALF_TIME'){
-  cue=sdHasSlot('drone')?{slot:'drone',title:'半场建立镜头',reason:'比赛暂停，可切无人机/宽景建立场地氛围',confidence:88,eventType:type}:{slot:'cam1',title:'半场宽景',reason:'无人机未配置，主机位更安全',confidence:90,eventType:type}
+  if(sdHasRole('DRONE'))cue={slot:sdRoleSlot('DRONE',main),title:'半场无人机建立镜头',reason:'比赛暂停，DRONE 用于场地与氛围建立',confidence:94,eventType:type,role:'DRONE'};
+  else if(sdHasRole('BEAUTY_WIDE'))cue={slot:sdRoleSlot('BEAUTY_WIDE',main),title:'半场氛围宽景',reason:'使用 BEAUTY WIDE 完成半场建立镜头',confidence:90,eventType:type,role:'BEAUTY_WIDE'};
+  else cue={slot:main,title:'半场主全景',reason:'无无人机/氛围宽景职责，主全景最安全',confidence:95,eventType:type,role:'MAIN_WIDE'}
  }else if(type==='FULL_TIME'){
-  cue=sdHasSlot('drone')?{slot:'drone',title:'全场收尾建立镜头',reason:'终场后可用无人机/宽景完成赛事收尾',confidence:95,eventType:type}:{slot:'cam1',title:'全场收尾',reason:'无人机未配置，主机位收尾',confidence:93,eventType:type}
+  if(sdHasRole('DRONE'))cue={slot:sdRoleSlot('DRONE',main),title:'终场无人机收尾',reason:'终场后使用 DRONE 完成赛事环境收尾',confidence:97,eventType:type,role:'DRONE'};
+  else if(sdHasRole('BEAUTY_WIDE'))cue={slot:sdRoleSlot('BEAUTY_WIDE',main),title:'终场氛围宽景',reason:'使用 BEAUTY WIDE 完成赛事收尾',confidence:94,eventType:type,role:'BEAUTY_WIDE'};
+  else cue={slot:main,title:'终场主全景',reason:'没有环境建立机位，主全景收尾',confidence:96,eventType:type,role:'MAIN_WIDE'}
  }else if(type==='MVP'){
-  cue={slot:'cam1',title:'MVP 后返回主机位',reason:'MVP 全屏图形结束后回现场主画面',confidence:86,eventType:type}
+  const close=sdHasRole('SIDELINE_CLOSE')?sdRoleSlot('SIDELINE_CLOSE',main):main;
+  cue={slot:close,title:close===main?'MVP 后回主全景':'MVP 后球员近景',reason:close===main?'回到现场主画面':'边线近景更适合人物与颁奖画面',confidence:88,eventType:type,role:cameraRoleOf(close)}
  }
  smartCue=cue;sdRender();
- if(smartDirectorSettings.autoTake&&cue.confidence>=88&&!gdAutoCameraActive&&type!=='GOAL')sdExecuteCue(true);
+ if(smartDirectorSettings.autoTake&&cue.confidence>=90&&!gdAutoCameraActive&&type!=='GOAL')sdExecuteCue(true);
  return cue
 }
 async function sdExecuteCue(auto=false){
@@ -1987,13 +2035,13 @@ function initMatchdayGraphics(){
 
 
 
-let vmixDirectorSettings={cam1:'1',cam2:'2',drone:'3',replay:'4',graphics:'5',transition:'Cut',duration:350,overlay:'1'};
+let vmixDirectorSettings={cam1:'1',cam2:'2',drone:'3',replay:'4',graphics:'5',transition:'Cut',duration:350,overlay:'1',cam1Role:'MAIN_WIDE',cam2Role:'SIDELINE_CLOSE',droneRole:'DRONE',replayRole:'REPLAY'};
 let filterSettings={target:'ALL',preset:'ORIGINAL',strength:.65};
 const FILTER_SLOT={CLEAN:1,WARM:2,NIGHT:3};
 function filterSave(){try{localStorage.setItem('sagi_filter_engine_v471',JSON.stringify(filterSettings))}catch(e){}}
 function filterLoad(){try{const x=JSON.parse(localStorage.getItem('sagi_filter_engine_v471')||'null');if(x)filterSettings={...filterSettings,...x}}catch(e){}}
 function filterInputs(target=filterSettings.target){vdSave();const slots=target==='ALL'?['cam1','cam2','drone','replay']:[target],seen=new Set(),out=[];for(const slot of slots){const n=String(vmixDirectorSettings[slot]||'').trim();if(n&&n!==String(vmixDirectorSettings.graphics)&&!seen.has(n)){seen.add(n);out.push(n)}}return out}
-async function filterCommand(fn,input,value=''){const cmd={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,7),functionName:fn,input:String(input||''),duration:0,value:String(value??''),label:'FILTER '+fn,issuedAt:new Date().toISOString(),version:'V4.16.0-LAN'};try{await lanPost('/api/vmix',cmd);return true}catch(e){return false}}
+async function filterCommand(fn,input,value=''){const cmd={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,7),functionName:fn,input:String(input||''),duration:0,value:String(value??''),label:'FILTER '+fn,issuedAt:new Date().toISOString(),version:'V4.17.0-LAN'};try{await lanPost('/api/vmix',cmd);return true}catch(e){return false}}
 async function applyFilterPreset(preset,target=filterSettings.target){
  preset=['ORIGINAL','CLEAN','WARM','NIGHT'].includes(preset)?preset:'ORIGINAL';const inputs=filterInputs(target);if(!inputs.length){if(q('filterStatus'))q('filterStatus').textContent='没有可用摄像机 Input';note('没有可用摄像机 Input');return false}
  if(q('filterStatus'))q('filterStatus').textContent='正在应用 '+preset+'…';let ok=true;
@@ -2008,17 +2056,36 @@ function initFilterEngine(){
  if(q('filterStatus'))q('filterStatus').textContent=filterSettings.preset+' · '+Math.round(filterSettings.strength*100)+'%';
 }
 
+const CAMERA_ROLE_LABELS={MAIN_WIDE:'主全景',SIDELINE_CLOSE:'边线近景',BENCH:'教练席',GOAL_BEHIND:'球门后',DRONE:'无人机',BEAUTY_WIDE:'氛围宽景',REPLAY:'回放'};
+const CAMERA_SLOTS=['cam1','cam2','drone','replay'];
+function cameraRoleLabel(role){return CAMERA_ROLE_LABELS[role]||role||'未定义'}
+function cameraRoleKey(slot){return slot+'Role'}
+function cameraRoleOf(slot){return vmixDirectorSettings[cameraRoleKey(slot)]||({cam1:'MAIN_WIDE',cam2:'SIDELINE_CLOSE',drone:'DRONE',replay:'REPLAY'})[slot]||'MAIN_WIDE'}
+function cameraSlotForRole(role,fallback=''){
+ vdSave();const hit=CAMERA_SLOTS.find(slot=>String(vmixDirectorSettings[slot]||'').trim()&&cameraRoleOf(slot)===role);return hit||fallback
+}
+function cameraRoleAvailable(role){return !!cameraSlotForRole(role,'')}
+function cameraRoleSlotLabel(slot){return cameraRoleLabel(cameraRoleOf(slot))+' · '+String(slot||'').toUpperCase()}
+function refreshCameraRoleUI(){
+ const pairs=[['cam1','vdCam1Role','vdTakeCam1','vdPreviewCam1'],['cam2','vdCam2Role','vdTakeCam2','vdPreviewCam2'],['drone','vdDroneRole','vdTakeDrone','vdPreviewDrone'],['replay','vdReplayRole','vdTakeReplay','vdPreviewReplay']];
+ for(const [slot,selectId,takeId,previewId] of pairs){
+  const role=cameraRoleOf(slot),sel=q(selectId);if(sel)sel.value=role;
+  const take=q(takeId);if(take){const sp=take.querySelector('span');if(sp)sp.textContent=cameraRoleLabel(role)}
+  const prev=q(previewId);if(prev)prev.textContent='预监 · '+cameraRoleLabel(role)
+ }
+ const summary=q('cameraRoleSummary');if(summary)summary.textContent=CAMERA_SLOTS.map(slot=>String(vmixDirectorSettings[slot]||'—')+' '+cameraRoleLabel(cameraRoleOf(slot))).join(' · ')
+}
 function vdSave(){
- vmixDirectorSettings={cam1:q('vdCam1').value.trim()||'1',cam2:q('vdCam2').value.trim()||'2',drone:q('vdDrone').value.trim()||'3',replay:q('vdReplay').value.trim()||'4',graphics:q('vdGraphics').value.trim()||'5',transition:q('vdTransition').value||'Cut',duration:Math.max(0,Number(q('vdDuration').value)||0),overlay:q('vdOverlay').value||'1'};
+ vmixDirectorSettings={cam1:q('vdCam1').value.trim()||'1',cam2:q('vdCam2').value.trim()||'2',drone:q('vdDrone').value.trim()||'3',replay:q('vdReplay').value.trim()||'4',graphics:q('vdGraphics').value.trim()||'5',transition:q('vdTransition').value||'Cut',duration:Math.max(0,Number(q('vdDuration').value)||0),overlay:q('vdOverlay').value||'1',cam1Role:q('vdCam1Role').value||'MAIN_WIDE',cam2Role:q('vdCam2Role').value||'SIDELINE_CLOSE',droneRole:q('vdDroneRole').value||'DRONE',replayRole:q('vdReplayRole').value||'REPLAY'};
  try{localStorage.setItem('sagi_vmix_director_v42',JSON.stringify(vmixDirectorSettings))}catch(e){}
 }
 function vdLoad(){
  try{const x=JSON.parse(localStorage.getItem('sagi_vmix_director_v42')||'null');if(x)vmixDirectorSettings={...vmixDirectorSettings,...x}}catch(e){}
- q('vdCam1').value=vmixDirectorSettings.cam1;q('vdCam2').value=vmixDirectorSettings.cam2;q('vdDrone').value=vmixDirectorSettings.drone;q('vdReplay').value=vmixDirectorSettings.replay;q('vdGraphics').value=vmixDirectorSettings.graphics;q('vdTransition').value=vmixDirectorSettings.transition;q('vdDuration').value=vmixDirectorSettings.duration;q('vdOverlay').value=vmixDirectorSettings.overlay;
+ q('vdCam1').value=vmixDirectorSettings.cam1;q('vdCam2').value=vmixDirectorSettings.cam2;q('vdDrone').value=vmixDirectorSettings.drone;q('vdReplay').value=vmixDirectorSettings.replay;q('vdGraphics').value=vmixDirectorSettings.graphics;q('vdTransition').value=vmixDirectorSettings.transition;q('vdDuration').value=vmixDirectorSettings.duration;q('vdOverlay').value=vmixDirectorSettings.overlay;q('vdCam1Role').value=vmixDirectorSettings.cam1Role||'MAIN_WIDE';q('vdCam2Role').value=vmixDirectorSettings.cam2Role||'SIDELINE_CLOSE';q('vdDroneRole').value=vmixDirectorSettings.droneRole||'DRONE';q('vdReplayRole').value=vmixDirectorSettings.replayRole||'REPLAY';refreshCameraRoleUI();
 }
 function vdInput(slot){vdSave();return vmixDirectorSettings[slot]||''}
 async function publishVmixDirector(functionName,input='',duration=0,label='',value=''){
- const cmd={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,7),functionName,input:String(input||''),duration:Math.max(0,Number(duration)||0),value:String(value??''),label,issuedAt:new Date().toISOString(),version:'V4.16.0-LAN'};
+ const cmd={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,7),functionName,input:String(input||''),duration:Math.max(0,Number(duration)||0),value:String(value??''),label,issuedAt:new Date().toISOString(),version:'V4.17.0-LAN'};
  q('vdStatus').textContent='LAN 发送中 · '+(label||functionName);
  try{
    await lanPost('/api/vmix',cmd);
@@ -2032,7 +2099,7 @@ async function publishVmixDirector(functionName,input='',duration=0,label='',val
 
 function vdTake(slot){
  if(gdAutoCameraActive){gdClearCameraTimers();gdAutoCameraActive=false;gdSetStatus('MANUAL CAMERA OVERRIDE','manual')}
- if(!requireMatchReady())return;vdSave();smartCue={slot,title:'手动机位',reason:'你已手动接管导播',confidence:100,eventType:'MANUAL'};sdRender();const input=vdInput(slot),fn=vmixDirectorSettings.transition,d=fn==='Fade'?vmixDirectorSettings.duration:0;publishVmixDirector(fn,input,d,'PROGRAM '+slot.toUpperCase());
+ if(!requireMatchReady())return;vdSave();smartCue={slot,role:cameraRoleOf(slot),title:'手动 · '+cameraRoleLabel(cameraRoleOf(slot)),reason:'你已手动接管导播',confidence:100,eventType:'MANUAL'};sdRender();const input=vdInput(slot),fn=vmixDirectorSettings.transition,d=fn==='Fade'?vmixDirectorSettings.duration:0;publishVmixDirector(fn,input,d,'PROGRAM '+slot.toUpperCase());
 }
 function vdPreview(slot){publishVmixDirector('PreviewInput',vdInput(slot),0,'PREVIEW '+slot.toUpperCase())}
 function vdOverlayIn(){if(!requireMatchReady())return;vdSave();matchdayState.overlayVisible=true;mdPersist();publishVmixDirector('OverlayInput'+vmixDirectorSettings.overlay+'In',vmixDirectorSettings.graphics,0,'GRAPHICS ON')}
@@ -2043,7 +2110,7 @@ function initVmixDirector(){
  document.querySelectorAll('[data-vd-take]').forEach(b=>b.onclick=()=>vdTake(b.dataset.vdTake));
  document.querySelectorAll('[data-vd-preview]').forEach(b=>b.onclick=()=>vdPreview(b.dataset.vdPreview));
  q('vdGraphicsIn').onclick=vdOverlayIn;q('vdGraphicsOut').onclick=vdOverlayOut;q('vdAllOverlaysOff').onclick=()=>publishVmixDirector('OverlayInputAllOff','','0','ALL OVERLAYS OFF');q('vdTest').onclick=()=>vdPreview('cam1');
- ['vdCam1','vdCam2','vdDrone','vdReplay','vdGraphics','vdTransition','vdDuration','vdOverlay'].forEach(id=>q(id).addEventListener('change',vdSave));
+ ['vdCam1','vdCam2','vdDrone','vdReplay','vdGraphics','vdTransition','vdDuration','vdOverlay','vdCam1Role','vdCam2Role','vdDroneRole','vdReplayRole'].forEach(id=>q(id).addEventListener('change',()=>{vdSave();refreshCameraRoleUI();sdRecommend(null)}));
  addEventListener('keydown',e=>{const tag=(e.target&&e.target.tagName)||'';if(tag==='INPUT'||tag==='SELECT'||tag==='TEXTAREA')return;if(e.key==='1')vdTake('cam1');else if(e.key==='2')vdTake('cam2');else if(e.key==='3')vdTake('drone');else if(e.key==='4')vdTake('replay');else if(e.key.toLowerCase()==='g')vdOverlayIn();else if(e.key.toLowerCase()==='x')vdOverlayOut()});
 }
 
@@ -2547,7 +2614,7 @@ function stopCountdown(){clearInterval(startCountdown.t)}
 function cloudAdmin(){try{const x=JSON.parse(localStorage.getItem('sagi_cloud_admin_v20')||'null')||{},b=window.SAGI_CLOUD||{};return{url:x.url||b.url||'',key:x.key||b.key||'',eventSlug:x.eventSlug||b.eventSlug||'',token:x.token||''}}catch(e){const b=window.SAGI_CLOUD||{};return{url:b.url||'',key:b.key||'',eventSlug:b.eventSlug||'',token:''}}}
 function compactPlayersForGroup(group){const src=group==='FULL'?validStarters():group==='SUB'?substitutes():(['GK','DF','MF','FW'].includes(group)?grouped(group):[]);return src.map(p=>({id:p.id,layoutKey:formationPlayerKey(p),name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',squadType:p.squadType||'STARTER',photo:(group==='FULL'||group==='SUB')?'':p.photo||'',mediaUrl:(group==='FULL'||group==='SUB')?'':p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'}))}
 async function publishGroup(group,duration,show=null){
- const state={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,6),group,side:activeSide,team:currentTeamName(),formation:q('formation').value,matchFormat:{mode:matchConfig.mode,playerCount:starterLimit()},playerCount:starterLimit(),startingLabel:startingLabel(),players:compactPlayersForGroup(group),formationLayout:currentFormationLayoutPayload(),allPlayers:validStarters().map(p=>({id:p.id,layoutKey:formationPlayerKey(p),name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',photo:p.photo||'',mediaUrl:p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'})),substitutes:substitutes().map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,statLabel:p.statLabel||'',statValue:p.statValue||''})),crest:assets.crest||'',stadium:assets.bg||'',background:q('outputBg').value,teamColor:(activeSide==='HOME'?(matchdayState.homeColor||'#d8b55b'):(matchdayState.awayColor||'#4c7dff')),visualVersion:'V4.16.0-PREMIER-BROADCAST',duration,show:show||null,package:packageData(),startedAt:new Date().toISOString()};
+ const state={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,6),group,side:activeSide,team:currentTeamName(),formation:q('formation').value,matchFormat:{mode:matchConfig.mode,playerCount:starterLimit()},playerCount:starterLimit(),startingLabel:startingLabel(),players:compactPlayersForGroup(group),formationLayout:currentFormationLayoutPayload(),allPlayers:validStarters().map(p=>({id:p.id,layoutKey:formationPlayerKey(p),name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',photo:p.photo||'',mediaUrl:p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'})),substitutes:substitutes().map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,statLabel:p.statLabel||'',statValue:p.statValue||''})),crest:assets.crest||'',stadium:assets.bg||'',background:q('outputBg').value,teamColor:(activeSide==='HOME'?(matchdayState.homeColor||'#d8b55b'):(matchdayState.awayColor||'#4c7dff')),visualVersion:'V4.17.0-PREMIER-BROADCAST',duration,show:show||null,package:packageData(),startedAt:new Date().toISOString()};
  try{
    await lanPost('/api/state',{lineupIntro:state});
    return{ok:true}
@@ -2935,7 +3002,7 @@ if('serviceWorker' in navigator&&window.isSecureContext){
 
 setInstalledState();
 
-const HOME_SCREEN_BUILD='V4.16.0-HOME-20261116-01';
+const HOME_SCREEN_BUILD='V4.17.0-HOME-20261116-01';
 async function homeScreenColdStartUpdate(){
   if(!standalone||location.protocol!=='http:')return;
   const once='sagi_homescreen_boot_'+HOME_SCREEN_BUILD;
