@@ -1,0 +1,20 @@
+[Unit]
+Description=SAGI POOL China Sync Service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/sagi-pool-sync
+EnvironmentFile=/etc/sagi-pool-sync.env
+ExecStart=/usr/bin/node /opt/sagi-pool-sync/server.mjs
+Restart=always
+RestartSec=2
+TimeoutStopSec=10
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
