@@ -75,6 +75,26 @@ jobs:
           APK="sagi-pool-live/android-live-engine/app/build/outputs/apk/release/app-release-unsigned.apk"
           test -f "$APK"
 
+      - name: Verify commercial manifest security
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="sagi-pool-live/android-live-engine/app/build/outputs/apk/release/app-release-unsigned.apk"
+          APKANALYZER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name apkanalyzer 2>/dev/null | head -n 1 || true)"
+          if [ -z "$APKANALYZER" ]; then
+            echo "apkanalyzer not found"
+            exit 1
+          fi
+          "$APKANALYZER" manifest print "$APK" > "$RUNNER_TEMP/sagi-release-manifest.xml"
+          grep -q 'package="com.sagi.poollive"' "$RUNNER_TEMP/sagi-release-manifest.xml"
+          grep -q 'android:usesCleartextTraffic="false"' "$RUNNER_TEMP/sagi-release-manifest.xml"
+          grep -q 'android:allowBackup="false"' "$RUNNER_TEMP/sagi-release-manifest.xml"
+          if grep -q 'android:debuggable="true"' "$RUNNER_TEMP/sagi-release-manifest.xml"; then
+            echo "Release APK is debuggable"
+            exit 1
+          fi
+          echo "Release manifest security verified."
+
       - name: Prepare optional commercial signing key
         env:
           KEYSTORE_B64: ${{ secrets.SAGI_ANDROID_KEYSTORE_B64 }}
