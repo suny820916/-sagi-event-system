@@ -33,8 +33,8 @@ app = Flask(__name__)
 ALLOWED_ORIGIN = (os.getenv("SAGI_ALLOWED_ORIGIN") or "https://suny820916.github.io").rstrip("/")
 SERVER_SECRET = (os.getenv("SAGI_SERVER_SECRET") or os.getenv("SAGI_BRIDGE_TOKEN") or "").strip()
 PORT = int(os.getenv("PORT") or "10000")
-DEPLOY_REVISION = "2026-11-12-sagi-house-v130-owner-center"
-APP_VERSION = "3.9.4"
+DEPLOY_REVISION = "2026-11-16-prematch-v2-cloud-fix"
+APP_VERSION = "3.9.5"
 MAX_FILE_MB = int(os.getenv("SAGI_MAX_FILE_MB") or "300")
 JOB_TTL_MIN = int(os.getenv("SAGI_JOB_TTL_MIN") or "30")
 RATE_LIMIT_PER_HOUR = int(os.getenv("SAGI_RATE_LIMIT_PER_HOUR") or "20")
@@ -71,6 +71,7 @@ market_rate_lock = Lock()
 SAGI_PREMATCH_WRITE_TOKEN = (os.getenv("SAGI_PREMATCH_WRITE_TOKEN") or (hmac.new(SERVER_SECRET.encode("utf-8"), b"sagi-prematch-v1", hashlib.sha256).hexdigest() if SERVER_SECRET else "")).strip()
 SAGI_PREMATCH_SLUG = ("prematch-" + hmac.new(SERVER_SECRET.encode("utf-8"), b"sagi-prematch-slug-v1", hashlib.sha256).hexdigest()[:24]) if SERVER_SECRET else ""
 SAGI_PREMATCH_MAX_PROJECTS = max(10, min(100, int(os.getenv("SAGI_PREMATCH_MAX_PROJECTS") or "40")))
+SAGI_PREMATCH_MAX_MB = max(3, min(24, int(os.getenv("SAGI_PREMATCH_MAX_MB") or "16")))
 
 SAGI_HOUSE_WRITE_TOKEN = (os.getenv("SAGI_HOUSE_WRITE_TOKEN") or (hmac.new(SERVER_SECRET.encode("utf-8"), b"sagi-house-inbox-v1", hashlib.sha256).hexdigest() if SERVER_SECRET else "")).strip()
 SAGI_HOUSE_INBOX_SLUG = ("house-inbox-" + hmac.new(SERVER_SECRET.encode("utf-8"), b"sagi-house-inbox-slug-v1", hashlib.sha256).hexdigest()[:24]) if SERVER_SECRET else ""
@@ -5022,6 +5023,26 @@ def _prematch_response(data, status=200, public_read=False):
     return resp, status
 
 
+@app.get("/api/prematch/health")
+def prematch_health():
+    data = {
+        "ok": True,
+        "service": "SAGI PRE-MATCH CLOUD",
+        "version": "2.0",
+        "appVersion": APP_VERSION,
+        "deployRevision": DEPLOY_REVISION,
+        "configured": prematch_cloud_ready(),
+        "supabaseUrl": bool(SAGI_SUPABASE_URL),
+        "supabaseKey": bool(SAGI_SUPABASE_KEY),
+        "writeToken": bool(SAGI_PREMATCH_WRITE_TOKEN),
+        "slug": bool(SAGI_PREMATCH_SLUG),
+        "maxProjectMb": SAGI_PREMATCH_MAX_MB,
+    }
+    resp = jsonify(data)
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
+
 @app.get("/api/prematch")
 def prematch_list():
     if not prematch_cloud_ready():
@@ -5030,7 +5051,7 @@ def prematch_list():
         row = _prematch_ensure()
         items = [x for x in list(((row or {}).get("payload") or {}).get("items") or []) if isinstance(x, dict)]
         items = sorted(items, key=lambda x: int(x.get("savedAt") or 0), reverse=True)[:SAGI_PREMATCH_MAX_PROJECTS]
-        return _prematch_response({"ok": True, "items": items, "count": len(items), "version": "1.0"}, 200, True)
+        return _prematch_response({"ok": True, "items": items, "count": len(items), "version": "2.0", "appVersion": APP_VERSION, "deployRevision": DEPLOY_REVISION}, 200, True)
     except Exception as exc:
         return _prematch_response({"ok": False, "error": "读取赛前项目失败", "detail": str(exc)[:180]}, 503, True)
 
@@ -5043,8 +5064,8 @@ def prematch_save():
         return jsonify({"ok": False, "error": "PRE-MATCH 云端尚未配置"}), 503
     if not rate_allowed():
         return jsonify({"ok": False, "error": "提交过于频繁，请稍后再试"}), 429
-    if request.content_length and request.content_length > 3 * 1024 * 1024:
-        return jsonify({"ok": False, "error": "赛前项目过大，请压缩图片后再保存"}), 413
+    if request.content_length and request.content_length > SAGI_PREMATCH_MAX_MB * 1024 * 1024:
+        return jsonify({"ok": False, "error": f"赛前项目超过 {SAGI_PREMATCH_MAX_MB}MB，请压缩图片后再保存"}), 413
 
     body = request.get_json(silent=True) or {}
     action = str(body.get("action") or "upsert").strip().lower()
@@ -5070,7 +5091,7 @@ def prematch_save():
     safe["id"] = project_id
     safe["name"] = name
     safe["savedAt"] = int(time.time() * 1000)
-    safe["source"] = "SAGI_PREMATCH_V1"
+    safe["source"] = "SAGI_PREMATCH_V2"
     try:
         def upsert(items):
             rows = [x for x in items if str(x.get("id") or "") != project_id and str(x.get("name") or "") != name]
