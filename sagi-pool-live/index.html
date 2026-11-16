@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#0a0c0b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SAGI POOL">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<title>SAGI POOL LIVE · CLUB</title>
+<style>
+:root{--bg:#070908;--panel:#101412;--card:#151a17;--line:#263029;--text:#f6f7f5;--muted:#9ba79f;--green:#31d17c;--green2:#173a28;--red:#ff5c67;--gold:#d7b46a;--safe-top:env(safe-area-inset-top);--safe-bottom:env(safe-area-inset-bottom)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","PingFang SC","Microsoft YaHei",sans-serif}
+body{min-height:100vh;padding:calc(10px + var(--safe-top)) 12px calc(22px + var(--safe-bottom))}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.app{max-width:920px;margin:0 auto}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:2px 2px 12px}
+.brand{display:flex;align-items:center;gap:9px;font-weight:850;letter-spacing:.02em}.mark{width:34px;height:34px;border-radius:10px;background:linear-gradient(145deg,#253029,#0f1311);border:1px solid #39463e;display:grid;place-items:center;font-weight:950}.ver{font-size:12px;color:var(--muted);font-weight:700}
+.statusPill{font-size:12px;padding:7px 10px;border-radius:999px;background:#111713;border:1px solid #2d3b32;color:#b8c5bc;white-space:nowrap}
+.stage{position:relative;overflow:hidden;border-radius:18px;background:#101412;border:1px solid #26302a;aspect-ratio:16/9;min-height:190px}
+#camera{width:100%;height:100%;object-fit:cover;background:radial-gradient(circle at 50% 40%,#20342b,#0b0f0d 70%);display:block}
+.noCam{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:28px;color:#b2bdb6;font-size:14px;pointer-events:none}
+.scoreBug{position:absolute;top:10px;left:10px;right:10px;display:flex;justify-content:center;pointer-events:none}
+.scoreBar{min-width:min(95%,680px);max-width:95%;display:grid;grid-template-columns:1fr auto 1fr;background:rgba(8,10,9,.91);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.12);border-radius:11px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.28)}
+.playerSide{padding:8px 12px;min-width:0}.playerSide.right{text-align:right}.pname{font-size:13px;font-weight:850;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.psub{font-size:10px;color:#aab3ad;margin-top:2px}
+.scoreCenter{display:flex;align-items:center;gap:7px;padding:4px 13px;background:#f1f3ef;color:#0a0b0a;font-size:22px;font-weight:950;letter-spacing:.02em}
+.eventSplash{position:absolute;inset:0;background:rgba(4,5,4,.72);display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:.18s}.eventSplash.show{opacity:1}.eventSplash b{font-size:clamp(27px,7vw,54px);letter-spacing:.04em}.eventSplash span{margin-top:5px;color:#dbe2dd;font-size:14px}
+.liveTag{position:absolute;bottom:10px;left:10px;background:rgba(7,9,8,.8);border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:6px 9px;font-size:10px;font-weight:850;letter-spacing:.08em}.dot{color:#ff4d5a}
+.stageActions{position:absolute;bottom:9px;right:9px;display:flex;gap:7px}.stageBtn{border:1px solid rgba(255,255,255,.15);background:rgba(8,10,9,.78);color:#fff;border-radius:10px;padding:8px 10px;font-size:12px;font-weight:800}
+.grid{display:grid;gap:10px}.grid.two{grid-template-columns:1fr 1fr}.grid.four{grid-template-columns:repeat(4,1fr)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:13px;margin-top:11px}
+.sectionHead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}.sectionHead h2{font-size:15px;margin:0}.small{font-size:12px;color:var(--muted)}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}.tab{border:1px solid #2d3731;background:#121714;color:#bdc8c0;border-radius:11px;min-height:44px;font-size:13px;font-weight:800}.tab.on{background:#eff2ee;color:#0d0f0e;border-color:#eff2ee}
+.field{display:flex;flex-direction:column;gap:6px}.field label{font-size:11px;color:var(--muted);font-weight:750}.field input,.field select{width:100%;min-height:44px;border-radius:11px;border:1px solid #303a34;background:#0e1210;color:#fff;padding:0 11px;outline:none;font-size:16px}.field input:focus,.field select:focus{border-color:#617268}
+.players{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.playerCard{background:#0d110f;border:1px solid #263029;border-radius:13px;padding:10px}.playerCard.active{border-color:#6a7d71;box-shadow:inset 0 0 0 1px #6a7d71}.row{display:flex;gap:8px;align-items:center}.grow{flex:1;min-width:0}.scoreBig{font-size:28px;font-weight:950;line-height:1;margin:10px 0 6px}.miniStats{font-size:10px;color:var(--muted)}
+.btn{min-height:46px;border-radius:12px;border:1px solid #303a34;background:#151b17;color:#edf2ee;font-weight:850;padding:9px 11px}.btn:active{transform:scale(.985)}.btn.primary{background:#eef2ed;color:#0a0c0b;border-color:#eef2ed}.btn.green{background:#173822;border-color:#2c6943;color:#dff9e8}.btn.red{background:#34191c;border-color:#6b2c33;color:#ffdfe2}.btn.gold{background:#312817;border-color:#6d5830;color:#f6e5b8}.btn.ghost{background:transparent}.btn[disabled]{opacity:.45}
+.actionGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.chaseGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.chaseBtn{min-height:62px;display:flex;flex-direction:column;justify-content:center}.chaseBtn b{font-size:16px}.chaseBtn span{font-size:11px;color:#aeb9b2;margin-top:3px}
+.log{display:flex;flex-direction:column;gap:7px;max-height:210px;overflow:auto}.logItem{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid #202923;font-size:12px}.logItem:last-child{border-bottom:0}.logTime{color:#7f8d84}.logType{font-weight:800}.logDelta{font-weight:900}.empty{color:#78867d;font-size:12px;padding:8px 0}
+.toolbar{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.drawer{display:none}.drawer.open{display:block}
+.notice{border-left:3px solid #6b7e72;padding:9px 10px;background:#101713;color:#b9c4bd;border-radius:8px;font-size:12px;line-height:1.55}
+.footer{padding:17px 5px 6px;text-align:center;color:#657168;font-size:10px;letter-spacing:.08em}
+@media(min-width:700px){.controlLayout{display:grid;grid-template-columns:1.15fr .85fr;gap:11px}.controlLayout .card{margin-top:11px}.players{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:430px){body{padding-left:9px;padding-right:9px}.grid.four{grid-template-columns:1fr 1fr}.scoreCenter{padding:4px 9px;font-size:20px}.playerSide{padding:7px 9px}.pname{font-size:12px}.tabs{grid-template-columns:1fr 1fr}.toolbar{grid-template-columns:1fr 1fr}.toolbar .btn:last-child{grid-column:1/-1}}
+@media(orientation:landscape) and (max-height:520px){body{padding-top:5px}.top{display:none}.stage{min-height:0}.card{padding:10px}.stageActions{bottom:7px}.liveTag{bottom:8px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand"><div class="mark">S</div><div>SAGI POOL LIVE<div class="ver">CLUB · V1.3</div></div></div>
+    <div class="statusPill" id="saveStatus">● 本地自动保存</div>
+  </header>
+
+  <section class="stage" id="stage">
+    <video id="camera" autoplay muted playsinline></video>
+    <div class="noCam" id="noCam">点击“开启摄像头”，即可把后置摄像头作为直播画面。<br>比分牌会始终叠加在画面上。</div>
+    <div class="scoreBug"><div class="scoreBar">
+      <div class="playerSide"><div class="pname" id="overlayP1">球员A</div><div class="psub" id="overlayClub">SAGI POOL CLUB</div></div>
+      <div class="scoreCenter"><span id="overlayS1">0</span><span>:</span><span id="overlayS2">0</span></div>
+      <div class="playerSide right"><div class="pname" id="overlayP2">球员B</div><div class="psub" id="overlayMode">中式八球</div></div>
+    </div></div>
+    <div class="eventSplash" id="splash"><b id="splashTitle">BIG GOLDEN</b><span id="splashSub">大金 +3</span></div>
+    <div class="liveTag"><span class="dot">●</span> LIVE · SAGI</div>
+    <div class="stageActions">
+      <button class="stageBtn" id="cameraBtn" type="button">开启摄像头</button>
+      <button class="stageBtn" id="swapBtn" type="button">切换镜头</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="sectionHead"><h2>比赛模式</h2><span class="small" id="modeHint">标准中式八球</span></div>
+    <div class="tabs">
+      <button class="tab on" data-mode="8ball" type="button">中式八球</button>
+      <button class="tab" data-mode="chase4" type="button">4球追分</button>
+      <button class="tab" data-mode="chase6" type="button">6球追分</button>
+      <button class="tab" data-mode="chase9" type="button">9球追分</button>
+    </div>
+  </section>
+
+  <div class="controlLayout">
+    <div>
+      <section class="card">
+        <div class="sectionHead"><h2>球员与比分</h2><button class="btn ghost" id="addPlayer" type="button" style="min-height:36px;padding:5px 9px;font-size:12px">+ 球员</button></div>
+        <div class="players" id="players"></div>
+      </section>
+
+      <section class="card" id="eightPanel">
+        <div class="sectionHead"><h2>中式八球控制</h2><span class="small">一键结算本局</span></div>
+        <div class="actionGrid" id="eightWins"></div>
+        <div class="grid two" style="margin-top:8px">
+          <button class="btn" id="foulBtn" type="button">犯规 / 自由球</button>
+          <button class="btn red" id="eightFoulBtn" type="button">8号球犯规</button>
+        </div>
+      </section>
+
+      <section class="card" id="chasePanel" style="display:none">
+        <div class="sectionHead"><h2>追分一键结算</h2><span class="small">自动计算积分</span></div>
+        <div class="chaseGrid">
+          <button class="btn chaseBtn" data-chase="normal" type="button"><b>普胜</b><span id="vNormal">+1</span></button>
+          <button class="btn chaseBtn" data-chase="small" type="button"><b>小金</b><span id="vSmall">+2</span></button>
+          <button class="btn chaseBtn gold" data-chase="big" type="button"><b>大金</b><span id="vBig">+3</span></button>
+          <button class="btn chaseBtn gold" data-chase="gold9" type="button"><b>黄金9</b><span id="vGold9">+4</span></button>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="toolbar">
+          <button class="btn" id="undoBtn" type="button">↶ 撤销</button>
+          <button class="btn" id="newRackBtn" type="button">新一局</button>
+          <button class="btn red" id="resetBtn" type="button">比赛归零</button>
+        </div>
+      </section>
+    </div>
+
+    <div>
+      <section class="card">
+        <div class="sectionHead"><h2>球房设置</h2><button class="btn ghost" id="settingsToggle" type="button" style="min-height:36px;padding:5px 9px;font-size:12px">展开</button></div>
+        <div class="drawer" id="settings">
+          <div class="field"><label>球房名称</label><input id="clubName" value="SAGI POOL CLUB" maxlength="28"></div>
+          <div class="grid two" style="margin-top:9px">
+            <div class="field"><label>球桌编号</label><input id="tableNo" value="01桌" maxlength="10"></div>
+            <div class="field"><label>中八抢几</label><input id="raceTo" type="number" min="1" max="99" value="5"></div>
+          </div>
+          <div class="field" style="margin-top:9px"><label>追分结算方式</label>
+            <select id="settlement"><option value="winner">赢家加分</option><option value="transfer">赢家加分，其余玩家等额扣分</option></select>
+          </div>
+          <div class="grid four" style="margin-top:9px">
+            <div class="field"><label>普胜</label><input id="normalPts" type="number" min="-99" max="99" value="1"></div>
+            <div class="field"><label>小金</label><input id="smallPts" type="number" min="-99" max="99" value="2"></div>
+            <div class="field"><label>大金</label><input id="bigPts" type="number" min="-99" max="99" value="3"></div>
+            <div class="field"><label>黄金9</label><input id="gold9Pts" type="number" min="-99" max="99" value="4"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="sectionHead"><h2>本场记录</h2><span class="small" id="rackCount">0 条</span></div>
+        <div class="log" id="log"></div>
+      </section>
+
+      <section class="card">
+        <div class="sectionHead"><h2>商用状态</h2><span class="small">CLUB MVP</span></div>
+        <div class="notice">当前版本已覆盖：手机后置摄像头预览、直播比分包装、中八、4/6/9球追分、2–4人、可改计分规则、自动结算、撤销、历史记录、本地断网保存、PWA桌面安装。真正推送到抖音/视频号的 RTMP/SDK 输出属于下一层“LIVE ENGINE”，需接直播平台推流能力。</div>
+      </section>
+    </div>
+  </div>
+
+  <div class="footer">SAGI SPORTS · 为身边的运动加油</div>
+</div>
+<script>
+(()=> {
+  const KEY='sagi_pool_live_v13';
+  const defaults={
+    mode:'8ball', club:'SAGI POOL CLUB', table:'01桌', raceTo:5, settlement:'winner',
+    points:{normal:1,small:2,big:3,gold9:4},
+    players:[{id:1,name:'球员A',score:0,wins:0,big:0,small:0},{id:2,name:'球员B',score:0,wins:0,big:0,small:0}],
+    active:0, history:[], log:[]
+  };
+  let state=load();
+  let stream=null;
+  let facing='environment';
+  const $=s=>document.querySelector(s);
+  const modeNames={ '8ball':'中式八球','chase4':'4球追分','chase6':'6球追分','chase9':'9球追分'};
+  const chaseNames={normal:['WIN','普胜'],small:['SMALL GOLDEN','小金'],big:['BIG GOLDEN','大金'],gold9:['GOLDEN 9','黄金9']};
+
+  function clone(v){return JSON.parse(JSON.stringify(v))}
+  function load(){
+    try{
+      const raw=localStorage.getItem(KEY);
+      if(!raw) return clone(defaults);
+      const p=JSON.parse(raw);
+      return Object.assign(clone(defaults),p,{points:Object.assign({},defaults.points,p.points||{})});
+    }catch(e){return clone(defaults)}
+  }
+  function save(){
+    try{localStorage.setItem(KEY,JSON.stringify(state));$('#saveStatus').textContent='● 已自动保存'}catch(e){$('#saveStatus').textContent='● 保存受限'}
+  }
+  function snapshot(){state.history.push({players:clone(state.players),log:clone(state.log),active:state.active});if(state.history.length>40)state.history.shift()}
+  function now(){return new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})}
+  function addLog(type,text,delta=''){state.log.unshift({time:now(),type,text,delta});if(state.log.length>50)state.log.length=50}
+  function escText(el,txt){el.textContent=txt}
+  function clampNum(v,min,max,def){const n=Number(v);return Number.isFinite(n)?Math.max(min,Math.min(max,n)):def}
+
+  function render(){
+    document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.mode===state.mode));
+    $('#modeHint').textContent=modeNames[state.mode];
+    $('#eightPanel').style.display=state.mode==='8ball'?'block':'none';
+    $('#chasePanel').style.display=state.mode==='8ball'?'none':'block';
+    $('#addPlayer').style.display=state.mode==='8ball'?'none':'inline-block';
+    $('#clubName').value=state.club; $('#tableNo').value=state.table; $('#raceTo').value=state.raceTo; $('#settlement').value=state.settlement;
+    ['normal','small','big','gold9'].forEach(k=>{ const map={normal:'Normal',small:'Small',big:'Big',gold9:'Gold9'}; $('#'+k+'Pts').value=state.points[k]; $('#v'+map[k]).textContent=(state.points[k]>=0?'+':'')+state.points[k]});
+    renderPlayers(); renderOverlay(); renderLog(); renderEightWins(); save();
+  }
+
+  function renderPlayers(){
+    const box=$('#players');box.innerHTML='';
+    state.players.forEach((p,i)=>{
+      const c=document.createElement('div');c.className='playerCard'+(i===state.active?' active':'');
+      const top=document.createElement('div');top.className='row';
+      const input=document.createElement('input');input.value=p.name;input.maxLength=12;input.setAttribute('aria-label','球员姓名');input.style.cssText='width:100%;min-width:0;background:transparent;color:#fff;border:0;border-bottom:1px solid #2b352f;padding:5px 2px;font-size:16px;outline:none';
+      input.addEventListener('input',()=>{p.name=input.value.trim()||('球员'+(i+1));renderOverlay();renderEightWins();save()});
+      top.appendChild(input);
+      if(state.mode!=='8ball' && state.players.length>2){
+        const del=document.createElement('button');del.className='btn ghost';del.textContent='×';del.style.cssText='min-height:34px;min-width:34px;padding:0';del.addEventListener('click',()=>removePlayer(i));top.appendChild(del);
+      }
+      const sc=document.createElement('div');sc.className='scoreBig';sc.textContent=state.mode==='8ball'?p.wins:p.score;
+      const st=document.createElement('div');st.className='miniStats';st.textContent=state.mode==='8ball'?('抢'+state.raceTo+' · '+(p.wins>=state.raceTo?'已获胜':'进行中')):('大金 '+p.big+' · 小金 '+p.small);
+      c.append(top,sc,st);
+      if(state.mode!=='8ball'){
+        const choose=document.createElement('button');choose.className='btn '+(i===state.active?'primary':'');choose.style.cssText='width:100%;min-height:38px;margin-top:9px;font-size:12px';choose.textContent=i===state.active?'本局胜者':'设为胜者';choose.addEventListener('click',()=>{state.active=i;render()});c.appendChild(choose);
+      }
+      box.appendChild(c);
+    });
+  }
+
+  function renderOverlay(){
+    const a=state.players[0]||{name:'球员A',score:0,wins:0},b=state.players[1]||{name:'球员B',score:0,wins:0};
+    $('#overlayP1').textContent=a.name;$('#overlayP2').textContent=b.name;
+    $('#overlayS1').textContent=state.mode==='8ball'?a.wins:a.score;
+    $('#overlayS2').textContent=state.mode==='8ball'?b.wins:b.score;
+    $('#overlayClub').textContent=(state.club||'SAGI POOL CLUB')+' · '+state.table;
+    $('#overlayMode').textContent=modeNames[state.mode];
+  }
+
+  function renderLog(){
+    const box=$('#log');box.innerHTML='';$('#rackCount').textContent=state.log.length+' 条';
+    if(!state.log.length){const e=document.createElement('div');e.className='empty';e.textContent='比赛开始后，结算和犯规会记录在这里。';box.appendChild(e);return}
+    state.log.forEach(x=>{const r=document.createElement('div');r.className='logItem';
+      const t=document.createElement('span');t.className='logTime';t.textContent=x.time;
+      const m=document.createElement('span');const ty=document.createElement('span');ty.className='logType';ty.textContent=x.type+' ';const tx=document.createTextNode(x.text);m.append(ty,tx);
+      const d=document.createElement('span');d.className='logDelta';d.textContent=x.delta;r.append(t,m,d);box.appendChild(r)});
+  }
+
+  function renderEightWins(){
+    const box=$('#eightWins');box.innerHTML='';
+    state.players.slice(0,2).forEach((p,i)=>{const b=document.createElement('button');b.className='btn primary';b.textContent=p.name+' 赢下本局 +1';b.addEventListener('click',()=>winEight(i,'正常胜局'));box.appendChild(b)});
+  }
+
+  function flash(title,sub){
+    $('#splashTitle').textContent=title;$('#splashSub').textContent=sub;$('#splash').classList.add('show');
+    clearTimeout(flash.t);flash.t=setTimeout(()=>$('#splash').classList.remove('show'),1250);
+  }
+  function winEight(i,reason){
+    snapshot();const p=state.players[i];p.wins++;addLog('胜局',p.name+' · '+reason,'+1');flash('RACK WIN',p.name+' '+p.wins+' : '+state.players[1-i].wins);
+    if(p.wins>=state.raceTo) setTimeout(()=>flash('MATCH WINNER',p.name+' · 抢'+state.raceTo),250);render();
+  }
+  function eightFoul(){
+    const loser=state.active>1?0:state.active;const winner=loser===0?1:0;snapshot();state.players[winner].wins++;addLog('8号球犯规',state.players[loser].name+' 犯规，'+state.players[winner].name+' 获胜','+1');flash('8-BALL FOUL',state.players[winner].name+' WIN');render();
+  }
+  function chase(type){
+    if(state.mode==='8ball')return;
+    snapshot();const pts=state.points[type];const w=state.players[state.active];w.score+=pts;if(type==='big')w.big++;if(type==='small')w.small++;
+    if(state.settlement==='transfer'){state.players.forEach((p,i)=>{if(i!==state.active)p.score-=pts})}
+    const names=chaseNames[type];addLog(names[1],w.name+' 本局结算',(pts>=0?'+':'')+pts);flash(names[0],names[1]+' '+(pts>=0?'+':'')+pts+' · '+w.name);render();
+  }
+  function removePlayer(i){if(state.players.length<=2)return;snapshot();state.players.splice(i,1);state.active=Math.min(state.active,state.players.length-1);addLog('阵容','移除球员','');render()}
+  function resetMatch(){if(!confirm('确定把本场比分、统计和记录全部归零吗？'))return;snapshot();state.players.forEach(p=>{p.score=0;p.wins=0;p.big=0;p.small=0});state.log=[];state.active=0;render();flash('NEW MATCH','比分已归零')}
+  function newRack(){addLog('新一局','开始下一局','');state.active=(state.active+1)%state.players.length;render();flash('NEW RACK',state.players[state.active].name+' 准备')}
+  function undo(){const s=state.history.pop();if(!s){flash('NO HISTORY','没有可撤销操作');return}state.players=s.players;state.log=s.log;state.active=s.active;render();flash('UNDO','已撤销上一步')}
+
+  async function stopCamera(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}$('#camera').srcObject=null;$('#noCam').style.display='grid';$('#cameraBtn').textContent='开启摄像头'}
+  async function startCamera(){
+    if(stream){await stopCamera();return}
+    if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){flash('CAMERA','当前浏览器不支持摄像头');return}
+    try{
+      stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:facing},width:{ideal:1920},height:{ideal:1080}},audio:false});
+      $('#camera').srcObject=stream;$('#noCam').style.display='none';$('#cameraBtn').textContent='关闭摄像头';
+    }catch(e){flash('CAMERA BLOCKED','请允许浏览器访问摄像头')}
+  }
+  async function swapCamera(){facing=facing==='environment'?'user':'environment';if(stream){await stopCamera();await startCamera()}else flash('CAMERA',facing==='environment'?'后置镜头':'前置镜头')}
+
+  document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{snapshot();state.mode=b.dataset.mode;if(state.mode==='8ball'){state.players=state.players.slice(0,2);state.active=0}render()}));
+  document.querySelectorAll('[data-chase]').forEach(b=>b.addEventListener('click',()=>chase(b.dataset.chase)));
+  $('#addPlayer').addEventListener('click',()=>{if(state.players.length>=4){flash('MAX 4','最多4名球员');return}snapshot();const n=state.players.length+1;state.players.push({id:Date.now(),name:'球员'+n,score:0,wins:0,big:0,small:0});render()});
+  $('#foulBtn').addEventListener('click',()=>{snapshot();addLog('犯规',state.players[state.active]?.name+' · 对手自由球','');flash('FOUL','自由球');render()});
+  $('#eightFoulBtn').addEventListener('click',eightFoul);
+  $('#undoBtn').addEventListener('click',undo);$('#newRackBtn').addEventListener('click',newRack);$('#resetBtn').addEventListener('click',resetMatch);
+  $('#settingsToggle').addEventListener('click',()=>{const d=$('#settings');d.classList.toggle('open');$('#settingsToggle').textContent=d.classList.contains('open')?'收起':'展开'});
+  $('#clubName').addEventListener('input',e=>{state.club=e.target.value.trim()||'SAGI POOL CLUB';renderOverlay();save()});
+  $('#tableNo').addEventListener('input',e=>{state.table=e.target.value.trim()||'01桌';renderOverlay();save()});
+  $('#raceTo').addEventListener('change',e=>{state.raceTo=clampNum(e.target.value,1,99,5);render()});
+  $('#settlement').addEventListener('change',e=>{state.settlement=e.target.value;save()});
+  [['normalPts','normal'],['smallPts','small'],['bigPts','big'],['gold9Pts','gold9']].forEach(([id,k])=>$('#'+id).addEventListener('change',e=>{state.points[k]=clampNum(e.target.value,-99,99,defaults.points[k]);render()}));
+  $('#cameraBtn').addEventListener('click',startCamera);$('#swapBtn').addEventListener('click',swapCamera);
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')save()});
+  window.addEventListener('beforeunload',save);
+  if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  render();
+})();
+</script>
+</body>
+</html>
