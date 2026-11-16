@@ -451,6 +451,50 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent
 .spbDot.miss{background:#e94f59;border-color:#ff9aa1;box-shadow:0 0 0 3px #e94f591c,0 0 15px #e94f5966}
 .spbDot.miss:after{content:"×";position:absolute;left:50%;top:50%;transform:translate(-50%,-56%);font-size:12px;line-height:1;color:#fff;font-weight:1000}
 
+
+/* SAGI V4.27 TORANHE broadcast scorebug — event identity + team goal reveal */
+#scoreBug.scoreBug.sagiToranhe{
+ --toranheDeep:#073c2c;--toranheLime:#65ed38;
+ background:#fff!important;border:0!important;border-radius:0 9px 9px 0!important;
+ box-shadow:0 7px 24px #0008!important;overflow:visible!important;
+ height:62px!important;padding-left:60px!important;align-items:center!important;
+}
+#scoreBug.sagiToranhe .sbEventBrand{
+ position:absolute;left:-10px;top:-8px;width:76px;height:76px;z-index:12;
+ display:flex;align-items:center;justify-content:center;
+ background:linear-gradient(135deg,#08714d,#042f25);clip-path:polygon(50% 0,96% 20%,96% 76%,50% 100%,4% 76%,4% 20%);
+}
+#scoreBug.sagiToranhe .sbEventBrand img{width:66px;height:66px;object-fit:contain}
+#scoreBug.sagiToranhe .sbEventFallback{font-size:25px;color:#74ff50;font-weight:1000;letter-spacing:-2px}
+#scoreBug.sagiToranhe .sbTeamBlock{background:#fff!important;color:#092e25!important;height:62px!important}
+#scoreBug.sagiToranhe .sbTeam{color:#093d30!important}
+#scoreBug.sagiToranhe .sbScoreWrap{background:#fff!important;color:#182b25!important;height:62px!important}
+#scoreBug.sagiToranhe .sbScore{color:#182b25!important}
+#scoreBug.sagiToranhe .sbMid{
+ position:relative;background:var(--toranheDeep)!important;color:#fff!important;
+ height:62px!important;min-width:105px!important;width:105px!important;flex:0 0 105px!important;
+}
+#scoreBug.sagiToranhe .sbClock{color:#fff!important;font-size:18px!important}
+#scoreBug.sagiToranhe .sbStoppage.on{background:var(--toranheLime)!important;color:#082b21!important}
+#scoreBug.sagiToranhe .sbCompetition{color:#b4efcf!important}
+#scoreBug.sagiToranhe .sbPeriod{color:#fff!important}
+#scoreBug.sagiToranhe .sbGoalBurst{
+ height:62px!important;background:linear-gradient(115deg,var(--toranheDeep),#008b51)!important;
+ color:#fff!important;border:0!important;align-items:stretch!important;justify-content:center!important;
+}
+#scoreBug.sagiToranhe.goalExpand .sbGoalBurst{
+ width:330px!important;min-width:330px!important;max-width:330px!important;flex:0 0 330px!important;
+}
+#scoreBug.sagiToranhe .sbGoalCrest{
+ position:absolute;left:10px;top:3px;width:58px;height:56px;object-fit:contain;
+ opacity:0;transform:scale(.4);z-index:3;filter:drop-shadow(0 2px 5px #0007)
+}
+#scoreBug.sagiToranhe.goalExpand .sbGoalCrest.on{animation:toranheCrest .5s cubic-bezier(.15,1.4,.4,1) both}
+#scoreBug.sagiToranhe .sbGoalWord{margin-left:76px!important;width:calc(100% - 82px)!important;font-size:38px!important}
+#scoreBug.sagiToranhe .sbGoalScorer{margin-left:76px!important;text-align:center!important;max-width:235px!important;color:#fff!important}
+@keyframes toranheCrest{to{opacity:1;transform:scale(1)}}
+#scoreBug.sagiToranhe.goalExpand{max-width:calc(1920px - 60px)!important}
+
 </style></head>
 <body>
 <div id="stage" class="stage"><div id="transitionLayer" class="transitionLayer"></div><div id="cueBadgeStage" class="cueBadgeStage"></div><div id="showStepStage" class="showStepStage"></div><div id="sideBadgeStage" class="sideBadgeStage">主队</div>
@@ -501,13 +545,13 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent
     </div>
     <div class="spbRail"><span class="home"></span><span class="center"></span><span class="away"></span></div>
   </div>
-  <div id="scoreBug" class="scoreBug">
+  <div id="scoreBug" class="scoreBug sagiToranhe"><div class="sbEventBrand"><img id="sbEventLogo" alt=""><span id="sbEventFallback" class="sbEventFallback">SAGI</span></div>
     <div class="sbTeamBlock home"><img id="sbHomeCrest" class="sbCrest"><div class="sbTeamMeta"><div id="sbHome" class="sbTeam">主队</div><div id="sbHomeReds" class="sbReds"></div></div></div>
     <div id="sbHomeScoreWrap" class="sbScoreWrap"><div id="sbHomeScore" class="sbScore">0</div><div id="sbHomePen" class="sbPenalty">点球 0</div></div>
     <div class="sbMid"><div id="sbCompetition" class="sbCompetition">SAGI 直播</div><div class="sbClockRow"><div id="sbClock" class="sbClock">00:00</div><div id="sbStoppage" class="sbStoppage">+3</div></div><div id="sbPeriod" class="sbPeriod">1H</div></div>
     <div id="sbAwayScoreWrap" class="sbScoreWrap"><div id="sbAwayScore" class="sbScore">0</div><div id="sbAwayPen" class="sbPenalty">点球 0</div></div>
     <div class="sbTeamBlock away"><img id="sbAwayCrest" class="sbCrest"><div class="sbTeamMeta"><div id="sbAwayReds" class="sbReds"></div><div id="sbAway" class="sbTeam">客队</div></div></div>
-    <div id="sbGoalBurst" class="sbGoalBurst" aria-hidden="true">
+    <div id="sbGoalBurst" class="sbGoalBurst" aria-hidden="true"><img id="sbGoalCrest" class="sbGoalCrest" alt="">
       <div class="sbGoalWord"><span>G</span><span>O</span><span>A</span><span>L</span></div>
       <div id="sbGoalScorer" class="sbGoalScorer">进球</div>
     </div>
@@ -834,6 +878,9 @@ function scorebugGoalExpand(e,g){
  clearTimeout(scorebugGoalTimer);scorebugGoalActive=true;
  const accent=e&&e.side==='AWAY'?validHex(g&&g.awayColor,'#4c7dff'):validHex(g&&g.homeColor,'#d8b55b');
  bug.style.setProperty('--goalAccent',accent);
+ const goalCrest=q('sbGoalCrest'),goalSide=e&&e.side==='AWAY'?'AWAY':'HOME',goalSrc=goalSide==='AWAY'?(g&&g.awayCrest):(g&&g.homeCrest);
+ if(goalCrest){goalCrest.classList.remove('on');if(goalSrc){goalCrest.src=goalSrc;goalCrest.classList.add('on')}else{goalCrest.removeAttribute('src')}}
+
  const no=e&&e.player&&e.player.number?('#'+e.player.number+' · '):'',name=e&&e.player&&e.player.name||e&&e.team||'进球';
  if(scorer)scorer.textContent=no+name;
  bug.classList.remove('goalExpand');void bug.offsetWidth;bug.classList.add('goalExpand');
@@ -867,7 +914,7 @@ function updateScoreBug(){
  const g=(live.scoreboardFrozen&&frozenGraphics)?frozenGraphics:live,bug=q('scoreBug');
  const home=validHex(g.homeColor,'#d8b55b'),away=validHex(g.awayColor,'#4c7dff'),accent=validHex(g.accentColor,'#f4f0e8');
  bug.style.setProperty('--home',home);bug.style.setProperty('--away',away);bug.style.setProperty('--accent',accent);
- const ps=g.penaltyShootout||{},simpleOn=updateSimplePenaltyBoard(live),penMode=gfxPenaltyActive(g),displayPeriod=penMode?'PEN':(String(g.clock&&g.clock.period||'')==='PEN'?'2H':String(g.clock&&g.clock.period||''));bug.className='scoreBug'+((live.scoreboardVisible&&!simpleOn)?' on':'')+(live.scoreboardFrozen?' frozen':'')+' theme-'+(g.scoreTheme||'sagi-pro')+(penMode?' penaltyMode':'')+(scorebugGoalActive?' goalExpand':'');
+ const ps=g.penaltyShootout||{},simpleOn=updateSimplePenaltyBoard(live),penMode=gfxPenaltyActive(g),displayPeriod=penMode?'PEN':(String(g.clock&&g.clock.period||'')==='PEN'?'2H':String(g.clock&&g.clock.period||''));bug.className='scoreBug'+((live.scoreboardVisible&&!simpleOn)?' on':'')+(live.scoreboardFrozen?' frozen':'')+' theme-'+(g.scoreTheme||'sagi-pro')+' sagiToranhe'+(penMode?' penaltyMode':'')+(scorebugGoalActive?' goalExpand':'');
  fitBroadcastTeamName(q('sbHome'),g.homeShort||g.home||'主队','regular');fitBroadcastTeamName(q('sbAway'),g.awayShort||g.away||'客队','regular');
  const hs=Number(g.homeScore)||0,as=Number(g.awayScore)||0,hEl=q('sbHomeScore'),aEl=q('sbAwayScore');hEl.textContent=hs;aEl.textContent=as;scoreMotion(hEl,q('sbHomeScoreWrap'),lastHomeScore,hs);scoreMotion(aEl,q('sbAwayScoreWrap'),lastAwayScore,as);lastHomeScore=hs;lastAwayScore=as;lastScoreboardVisible=!!live.scoreboardVisible;
  if(penMode){const pst=gfxPenaltyStatus(ps,g);q('sbClock').textContent='点球大战';q('sbPeriod').textContent=pst.stage;q('sbPenStage').textContent=pst.stage;q('sbPenNext').textContent=pst.next;q('sbPenHomeDots').innerHTML=gfxPenaltyDots(ps,'HOME');q('sbPenAwayDots').innerHTML=gfxPenaltyDots(ps,'AWAY')}else{q('sbClock').textContent=gfxFormat(gfxSeconds(g));q('sbPeriod').textContent=gfxPeriodName(displayPeriod);q('sbPenHomeDots').innerHTML='';q('sbPenAwayDots').innerHTML=''}
@@ -877,6 +924,9 @@ function updateScoreBug(){
  const penOn=penMode;
  q('sbHomePen').textContent='点球 '+(Number(g.homePen)||0);q('sbAwayPen').textContent='点球 '+(Number(g.awayPen)||0);q('sbHomePen').classList.toggle('on',penOn);q('sbAwayPen').classList.toggle('on',penOn);
  setCrest('sbHomeCrest',g.homeCrest||'');setCrest('sbAwayCrest',g.awayCrest||'');
+ const eventLogo=q('sbEventLogo'),eventFallback=q('sbEventFallback'),eventSrc=g.eventLogo||g.logo||'';
+ if(eventLogo){if(eventSrc){eventLogo.src=eventSrc;eventLogo.style.display='block';eventFallback.style.display='none'}else{eventLogo.removeAttribute('src');eventLogo.style.display='none';eventFallback.style.display='block'}}
+
 }
 function showEvent(g){
  const e=g&&g.event;if(!e||e.type==='CLEAR_EVENT'){hideEvent(true);return}
