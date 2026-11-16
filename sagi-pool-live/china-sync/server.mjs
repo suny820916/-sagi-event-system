@@ -340,7 +340,7 @@ const server=http.createServer(async (req,res)=>{
   const url=new URL(req.url,'http://localhost');
 
   if(url.pathname==='/health'){
-    json(res,200,{ok:true,service:'SAGI CHINA SYNC',version:'2.10.0',licensedMode:REQUIRE_LICENSE,time:Date.now()});
+    json(res,200,{ok:true,service:'SAGI CHINA SYNC',version:'2.11.0',licensedMode:REQUIRE_LICENSE,time:Date.now()});
     return;
   }
 
@@ -360,7 +360,7 @@ const server=http.createServer(async (req,res)=>{
     const payload={
       schemaVersion:1,
       service:'SAGI CHINA SYNC',
-      serviceVersion:'2.10.0',
+      serviceVersion:'2.11.0',
       exportedAt:Date.now(),
       store
     };
@@ -382,17 +382,23 @@ const server=http.createServer(async (req,res)=>{
     let dataDirWritable=true;
     try{fs.accessSync(path.dirname(DATA_FILE),fs.constants.W_OK)}catch{dataDirWritable=false}
     const activeLicenses=licenses.filter(lic=>lic && lic.revoked!==true && (!lic.expiresAt || now<Number(lic.expiresAt))).length;
+    const expiringSoon=licenses.filter(lic=>{
+      if(!lic || lic.revoked===true || !lic.expiresAt)return false;
+      const remaining=Number(lic.expiresAt)-now;
+      return remaining>0 && remaining<=30*86400000;
+    }).length;
     const activeDevices=devices.filter(d=>d && d.revoked!==true).length;
     const liveDevices=devices.filter(d=>d && d.revoked!==true && d.live?.active===true && now-Number(d.live.updatedAt||0)<=LIVE_HEARTBEAT_TIMEOUT_MS).length;
     json(res,200,{
       ok:true,
       service:'SAGI CHINA SYNC',
-      version:'2.10.0',
+      version:'2.11.0',
       uptimeSeconds:Math.floor(process.uptime()),
       licensedMode:REQUIRE_LICENSE,
       counts:{
         licenses:licenses.length,
         activeLicenses,
+        expiringSoon,
         rooms:Object.keys(store.rooms).length,
         activeDevices,
         liveDevices
@@ -437,6 +443,24 @@ const server=http.createServer(async (req,res)=>{
         updatedAt:now
       };
       store.licenses[clubId]=lic;schedulePersist();
+      json(res,200,{ok:true,license:publicLicense(lic)});return;
+    }catch(e){json(res,e.message==='payload_too_large'?413:400,{ok:false,error:e.message});return;}
+  }
+
+  const renewMatch=url.pathname.match(/^\/api\/admin\/licenses\/([^/]+)\/renew$/);
+  if(renewMatch && req.method==='POST'){
+    try{
+      const club=safePart(renewMatch[1]),lic=store.licenses[club];
+      if(!lic){json(res,404,{ok:false,error:'license_not_found'});return;}
+      const body=JSON.parse(await readBody(req)||'{}');
+      const expiresAt=Math.max(0,Number(body.expiresAt||0));
+      if(!expiresAt || expiresAt<=Date.now()){json(res,400,{ok:false,error:'future_expiry_required'});return;}
+      lic.expiresAt=expiresAt;
+      if(body.plan) lic.plan=String(body.plan).slice(0,30);
+      if(body.maxTables!==undefined) lic.maxTables=Math.max(1,Math.min(99,Number(body.maxTables)||1));
+      lic.revoked=false;
+      lic.updatedAt=Date.now();
+      schedulePersist();
       json(res,200,{ok:true,license:publicLicense(lic)});return;
     }catch(e){json(res,e.message==='payload_too_large'?413:400,{ok:false,error:e.message});return;}
   }
