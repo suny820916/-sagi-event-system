@@ -52,7 +52,7 @@ button{cursor:pointer}
 <body>
 <div class="app">
   <header class="top">
-    <div class="brand"><div class="mark">S</div><div>SAGI POOL LIVE<div class="ver">CLUB · V1.5</div></div></div>
+    <div class="brand"><div class="mark">S</div><div>SAGI POOL LIVE<div class="ver">CHINA · V2.0</div></div></div>
     <div style="display:flex;gap:7px;align-items:center"><a href="./club.html" class="statusPill" style="text-decoration:none;color:#b8c5bc">球房控制台</a><div class="statusPill" id="saveStatus">● 本地自动保存</div></div>
   </header>
 
@@ -135,6 +135,17 @@ button{cursor:pointer}
             <div class="field"><label>大金</label><input id="bigPts" type="number" min="-99" max="99" value="3"></div>
             <div class="field"><label>黄金9</label><input id="gold9Pts" type="number" min="-99" max="99" value="4"></div>
           </div>
+          <div style="height:1px;background:#263029;margin:13px 0"></div>
+          <div class="sectionHead" style="margin-bottom:8px"><h2 style="font-size:13px">国内多手机同步</h2><span class="small" id="syncState">本机模式</span></div>
+          <div class="field"><label>国内同步服务器 HTTPS 地址</label><input id="syncUrl" inputmode="url" placeholder="https://pool-api.example.com"></div>
+          <div class="grid two" style="margin-top:9px">
+            <div class="field"><label>球房同步ID</label><input id="clubId" maxlength="32" value="SAGI-DEMO"></div>
+            <div class="field"><label>同步密钥</label><input id="syncToken" type="password" maxlength="80" placeholder="球房专属密钥"></div>
+          </div>
+          <div class="grid two" style="margin-top:9px">
+            <button class="btn" id="syncTestBtn" type="button">测试国内同步</button>
+            <a class="btn" id="liveScreenLink" href="./live.html">打开直播屏</a>
+          </div>
         </div>
       </section>
 
@@ -158,7 +169,9 @@ button{cursor:pointer}
   const tableParam=(params.get('table')||'').trim();
   const clubParam=(params.get('club')||'').trim();
   const tableLabel=tableParam?(tableParam.endsWith('桌')?tableParam:tableParam+'桌'):'01桌';
-  const KEY='sagi_pool_live_v15_'+(tableParam||'default');
+  const KEY='sagi_pool_live_v20_'+(tableParam||'default');
+  const SYNC_KEY='sagi_pool_sync_config_v1';
+  const DEVICE_KEY='sagi_pool_device_id_v1';
   const defaults={
     mode:'8ball', club:clubParam||'SAGI POOL CLUB', table:tableLabel, raceTo:5, settlement:'winner',
     points:{normal:1,small:2,big:3,gold9:4},
@@ -166,6 +179,9 @@ button{cursor:pointer}
     active:0, history:[], log:[]
   };
   let state=load();
+  let syncCfg=loadSync();
+  let applyingRemote=false;
+  let pushTimer=null;
   let stream=null;
   let facing='environment';
   const $=s=>document.querySelector(s);
@@ -173,6 +189,16 @@ button{cursor:pointer}
   const chaseNames={normal:['WIN','普胜'],small:['SMALL GOLDEN','小金'],big:['BIG GOLDEN','大金'],gold9:['GOLDEN 9','黄金9']};
 
   function clone(v){return JSON.parse(JSON.stringify(v))}
+  function deviceId(){
+    let id=localStorage.getItem(DEVICE_KEY);
+    if(!id){id='dev-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,9);localStorage.setItem(DEVICE_KEY,id)}
+    return id;
+  }
+  function loadSync(){
+    try{return Object.assign({url:'',clubId:'SAGI-DEMO',token:''},JSON.parse(localStorage.getItem(SYNC_KEY)||'{}'))}
+    catch(e){return{url:'',clubId:'SAGI-DEMO',token:''}}
+  }
+  function normUrl(v){return String(v||'').trim().replace(/\/+$/,'')}
   function load(){
     try{
       const raw=localStorage.getItem(KEY);
@@ -182,7 +208,59 @@ button{cursor:pointer}
     }catch(e){return clone(defaults)}
   }
   function save(){
-    try{state.updatedAt=Date.now();localStorage.setItem(KEY,JSON.stringify(state));$('#saveStatus').textContent='● '+state.table+' 已保存'}catch(e){$('#saveStatus').textContent='● 保存受限'}
+    try{
+      if(!applyingRemote) state.updatedAt=Date.now();
+      localStorage.setItem(KEY,JSON.stringify(state));
+      $('#saveStatus').textContent='● '+state.table+' 已保存';
+      if(!applyingRemote) schedulePush();
+    }catch(e){$('#saveStatus').textContent='● 保存受限'}
+  }
+  function saveSync(){
+    syncCfg.url=normUrl(syncCfg.url);
+    localStorage.setItem(SYNC_KEY,JSON.stringify(syncCfg));
+    updateSyncUI();
+  }
+  function updateSyncUI(text){
+    const el=$('#syncState'); if(!el)return;
+    if(text){el.textContent=text;return}
+    el.textContent=syncCfg.url?'国内云同步已配置':'本机模式';
+    const link=$('#liveScreenLink');
+    if(link) link.href='./live.html?table='+encodeURIComponent(state.table.replace(/桌$/,''))+'&clubId='+encodeURIComponent(syncCfg.clubId);
+  }
+  function schedulePush(){
+    if(!syncCfg.url||!navigator.onLine)return;
+    clearTimeout(pushTimer);
+    pushTimer=setTimeout(pushRemote,350);
+  }
+  async function pushRemote(){
+    if(!syncCfg.url||!navigator.onLine)return;
+    try{
+      updateSyncUI('同步中…');
+      const url=syncCfg.url+'/api/rooms/'+encodeURIComponent(syncCfg.clubId)+'/'+encodeURIComponent(state.table);
+      const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','X-SAGI-Token':syncCfg.token},body:JSON.stringify({state,updatedAt:state.updatedAt,deviceId:deviceId()})});
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const data=await r.json();
+      if(data.room?.updatedAt){state.updatedAt=data.room.updatedAt;localStorage.setItem(KEY,JSON.stringify(state))}
+      updateSyncUI('已同步');
+    }catch(e){updateSyncUI('同步失败');}
+  }
+  async function pullRemote(force=false){
+    if(!syncCfg.url||!navigator.onLine)return;
+    try{
+      const url=syncCfg.url+'/api/rooms/'+encodeURIComponent(syncCfg.clubId)+'/'+encodeURIComponent(state.table);
+      const r=await fetch(url,{headers:{'X-SAGI-Token':syncCfg.token},cache:'no-store'});
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const data=await r.json(), room=data.room;
+      if(room?.state && (force || Number(room.updatedAt||0)>Number(state.updatedAt||0))){
+        applyingRemote=true;
+        state=room.state;
+        state.updatedAt=room.updatedAt;
+        localStorage.setItem(KEY,JSON.stringify(state));
+        render();
+        applyingRemote=false;
+        updateSyncUI('已接收远端');
+      } else updateSyncUI('已连接');
+    }catch(e){updateSyncUI('连接失败')}
   }
   function snapshot(){state.history.push({players:clone(state.players),log:clone(state.log),active:state.active});if(state.history.length>40)state.history.shift()}
   function now(){return new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})}
@@ -197,6 +275,7 @@ button{cursor:pointer}
     $('#chasePanel').style.display=state.mode==='8ball'?'none':'block';
     $('#addPlayer').style.display=state.mode==='8ball'?'none':'inline-block';
     $('#clubName').value=state.club; $('#tableNo').value=state.table; $('#raceTo').value=state.raceTo; $('#settlement').value=state.settlement;
+    $('#syncUrl').value=syncCfg.url; $('#clubId').value=syncCfg.clubId; $('#syncToken').value=syncCfg.token; updateSyncUI();
     ['normal','small','big','gold9'].forEach(k=>{ const map={normal:'Normal',small:'Small',big:'Big',gold9:'Gold9'}; $('#'+k+'Pts').value=state.points[k]; $('#v'+map[k]).textContent=(state.points[k]>=0?'+':'')+state.points[k]});
     renderPlayers(); renderOverlay(); renderLog(); renderEightWins(); save();
   }
@@ -297,11 +376,19 @@ button{cursor:pointer}
   $('#raceTo').addEventListener('change',e=>{state.raceTo=clampNum(e.target.value,1,99,5);render()});
   $('#settlement').addEventListener('change',e=>{state.settlement=e.target.value;save()});
   [['normalPts','normal'],['smallPts','small'],['bigPts','big'],['gold9Pts','gold9']].forEach(([id,k])=>$('#'+id).addEventListener('change',e=>{state.points[k]=clampNum(e.target.value,-99,99,defaults.points[k]);render()}));
+  $('#syncUrl').addEventListener('change',e=>{syncCfg.url=normUrl(e.target.value);saveSync();pullRemote()});
+  $('#clubId').addEventListener('change',e=>{syncCfg.clubId=e.target.value.trim()||'SAGI-DEMO';saveSync();pullRemote()});
+  $('#syncToken').addEventListener('change',e=>{syncCfg.token=e.target.value;saveSync();pullRemote()});
+  $('#syncTestBtn').addEventListener('click',()=>pullRemote(true));
   $('#cameraBtn').addEventListener('click',startCamera);$('#swapBtn').addEventListener('click',swapCamera);
-  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')save()});
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')save();else pullRemote()});
+  window.addEventListener('online',()=>{updateSyncUI('网络已恢复');pullRemote();schedulePush()});
+  window.addEventListener('offline',()=>updateSyncUI('离线 · 本机继续'));
   window.addEventListener('beforeunload',save);
   if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
-  render();
+  applyingRemote=true;render();applyingRemote=false;
+  pullRemote();
+  setInterval(()=>{if(document.visibilityState==='visible')pullRemote()},3000);
 })();
 </script>
 </body>
