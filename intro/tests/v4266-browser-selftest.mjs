@@ -201,6 +201,15 @@ server.listen(PORT,'127.0.0.1',async()=>{
 
     console.log('TEST 4: two-camera manual switching sends distinct vMix inputs');
     vmixCommands=[];
+    // Seed the same saved vMix mapping a real operator already has on the device.
+    // The control room must restore it through its own normal startup path.
+    await page.evaluate(()=>{
+      localStorage.setItem('sagi_vmix_director_v42',JSON.stringify({
+        cam1:'1',cam2:'2',drone:'',replay:'',graphics:'5',
+        transition:'Cut',duration:0,overlay:'1',
+        cam1Role:'MAIN_WIDE',cam2Role:'SIDELINE_CLOSE',droneRole:'DRONE',replayRole:'REPLAY'
+      }));
+    });
     await page.goto('http://127.0.0.1:'+PORT+'/intro/v45-lan.html',{waitUntil:'domcontentloaded'});
     await wait(1800);
 
@@ -212,12 +221,9 @@ server.listen(PORT,'127.0.0.1',async()=>{
     await page.locator('#matchKickoff').fill('2026-11-17T20:00');
     await page.locator('#matchVenue').fill('SELF TEST STADIUM');
 
-    await page.locator('#vdCam1').selectOption('1');
-    await page.locator('#vdCam2').selectOption('2');
-    await page.locator('#vdGraphics').selectOption('5');
-    await page.locator('#vdDuration').fill('0');
-    await page.locator('#vdDuration').dispatchEvent('change');
-    await page.locator('#vdTransition').selectOption('Cut');
+    assert(await page.locator('#vdCam1').inputValue()==='1','saved CAM1 mapping was not restored');
+    assert(await page.locator('#vdCam2').inputValue()==='2','saved CAM2 mapping was not restored');
+    assert(await page.locator('#vdGraphics').inputValue()==='5','saved graphics input was not restored');
 
     await page.click('#setupValidateBtn');
     await page.waitForFunction(()=>!document.querySelector('#setupReadyBtn')?.disabled,null,{timeout:5000});
