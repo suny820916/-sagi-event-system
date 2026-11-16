@@ -35,7 +35,7 @@ button,.fileBtn{border:0;border-radius:12px;background:#262d37;color:#fff;font-w
 .playersArea{position:absolute;left:70px;top:350px;width:1240px;height:650px;display:flex;align-items:flex-end;justify-content:center;gap:18px}.playerCard{position:relative;width:230px;height:570px;opacity:1;transform:translateY(0);flex:0 0 auto}.playerCard.one{width:520px}.playerCut{position:absolute;left:0;right:0;bottom:82px;height:490px;display:flex;align-items:flex-end;justify-content:center}.playerCut img{width:100%;height:100%;object-fit:contain;object-position:center bottom;filter:drop-shadow(0 20px 25px #000d)}
 .mediaVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center bottom;filter:drop-shadow(0 20px 25px #000d);z-index:2;background:transparent}
 .mediaFallback{position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:center;z-index:1}
-.playerCard.hasMedia .playerCut:after{content:"MEDIA DAY";position:absolute;right:8%;top:8%;z-index:4;font-size:10px;font-weight:1000;letter-spacing:2px;color:#f3d77f;background:#07090db8;border:1px solid #d8b55b66;border-radius:999px;padding:6px 9px}
+.playerCard.hasMedia .playerCut:after{content:"球员定妆";position:absolute;right:8%;top:8%;z-index:4;font-size:10px;font-weight:1000;letter-spacing:2px;color:#f3d77f;background:#07090db8;border:1px solid #d8b55b66;border-radius:999px;padding:6px 9px}
 .playerCard.action-WALK_IN .mediaVideo{transform:scale(1.08);transform-origin:center bottom}
 .playerCard.action-ARMS .mediaVideo{transform:scale(1.03)}
 .playerCard.action-LOOK .mediaVideo{transform:scale(1.05)}
@@ -48,7 +48,7 @@ button,.fileBtn{border:0;border-radius:12px;background:#262d37;color:#fff;font-w
 .directorHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}.directorHead b{font-size:12px;letter-spacing:2px;color:#e2c46f}.directorHead span{font-size:10px;color:#8f98a7}
 .directorGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.directorGrid input,.directorGrid select{font-size:13px;padding:9px}
 .directorBadge{display:inline-flex;align-items:center;margin-top:5px;padding:4px 7px;border-radius:999px;background:#ffffff0b;border:1px solid #d8b55b45;color:#d8b55b;font-size:9px;font-weight:900;letter-spacing:.6px}
-.playerCard.directed .playerCut:before{content:"DIRECTOR";position:absolute;left:8%;top:8%;z-index:5;font-size:9px;font-weight:1000;letter-spacing:1.5px;color:#fff;background:#000a;border:1px solid #ffffff25;border-radius:999px;padding:5px 8px}
+.playerCard.directed .playerCut:before{content:"导演";position:absolute;left:8%;top:8%;z-index:5;font-size:9px;font-weight:1000;letter-spacing:1.5px;color:#fff;background:#000a;border:1px solid #ffffff25;border-radius:999px;padding:5px 8px}
 .freezeFlash{position:absolute;inset:0;pointer-events:none;z-index:20;background:#fff;opacity:0}.playerCut .fallback{width:84%;height:86%;border-radius:34px;background:linear-gradient(160deg,#222c38,#0c1118);display:flex;align-items:center;justify-content:center;font-size:80px;font-weight:1000;color:#ffffff24;border:1px solid #ffffff10}.playerLabel{position:absolute;left:0;right:0;bottom:0;text-align:center}.playerNo{font-size:34px;color:#d8b55b;font-weight:1000}.playerName{font-size:22px;font-weight:950;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.playerRole{font-size:12px;color:#9ba4b1;letter-spacing:3px;margin-top:5px}
 .roleBackdrop{position:absolute;left:60px;top:300px;width:1160px;height:560px;display:flex;align-items:center;justify-content:center;font-size:260px;font-weight:1000;letter-spacing:-18px;color:#ffffff08;z-index:0;pointer-events:none;user-select:none}
 .roleGlow{position:absolute;left:110px;top:330px;width:1120px;height:620px;border-radius:50%;filter:blur(72px);opacity:.22;z-index:0;pointer-events:none;background:radial-gradient(circle,#d8b55b66 0,transparent 68%)}
@@ -277,7 +277,7 @@ body.mmOn .top,body.mmOn .pwaBar,body.mmOn .setupDesk,body.mmOn .broadcastDesk,b
 .mmMarkerList{max-height:150px;overflow:auto;display:grid;gap:4px;margin-top:7px}.mmMarkerRow{display:grid;grid-template-columns:48px 68px 1fr auto;gap:6px;padding:6px;border-radius:8px;background:#0c1219;border:1px solid #27323e;font-size:9px}.mmMarkerTime{color:#e4ca78;font-weight:1000}
 .mmRecovery{font-size:8px;color:#778493;margin-top:7px}.mmRoleHint{font-size:8px;color:#72808e;margin-top:5px}
 body[data-operator-role="SCOREKEEPER"] .mmDirectorOnly{display:none!important}
-body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
+body[data-operator-role="导演"] .mmScoreOnly{display:none!important}
 .mdProEditor{margin-top:8px;padding:8px;border:1px solid #283440;border-radius:11px;background:#090e14}.mdProGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.mdProGrid label{font-size:8px}.mdProGrid input,.mdProGrid select{padding:7px;font-size:10px}
 @media(max-width:900px){.modeDock{align-items:flex-start;flex-direction:column}.modeDockRight{width:100%;justify-content:flex-start}.mmGrid{grid-template-columns:1fr}.mmStatus{grid-template-columns:1fr 1fr}.mmPreflightList{grid-template-columns:1fr 1fr}.mmEmergencyGrid{grid-template-columns:1fr 1fr 1fr}}
 @media(max-width:520px){body.mmOn .app{padding:8px 7px 30px}.mmTitle{font-size:16px}.mmHead{grid-template-columns:1fr}.mmHeadActions{justify-content:space-between}.mmStatus{grid-template-columns:1fr 1fr}.mmScore{font-size:42px}.mmClock{font-size:42px}.mdProGrid{grid-template-columns:1fr 1fr}}
@@ -435,7 +435,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 </head>
 <body>
 <div class="app">
-  <div class="top"><div><div class="brand">SAGI 赛事直播导播</div><div class="sub">V4.18.2 · 镜头安全引擎 · MATCH SETUP UX</div></div><div class="topRight"><div class="ver">V4.18.2</div><button id="mobileUpdateBtn" class="mobileUpdateBtn" type="button">↻ 安全更新</button><button id="mobileRollbackBtn" class="mobileRollbackBtn" type="button">↶ 回退上一版</button><div id="mobileUpdateStatus" class="mobileUpdateStatus">V4.18.2 · 镜头安全引擎 · Bridge 已锁定</div></div></div>
+  <div class="top"><div><div class="brand">SAGI 赛事直播导播</div><div class="sub">V4.18.2 · 镜头安全引擎 · 比赛设置</div></div><div class="topRight"><div class="ver">V4.18.2</div><button id="mobileUpdateBtn" class="mobileUpdateBtn" type="button">↻ 安全更新</button><button id="mobileRollbackBtn" class="mobileRollbackBtn" type="button">↶ 回退上一版</button><div id="mobileUpdateStatus" class="mobileUpdateStatus">V4.18.2 · 镜头安全引擎 · 桥接服务已锁定</div></div></div>
 
   <div id="pwaBar" class="pwaBar" style="display:none">
     <div class="pwaInfo">
@@ -450,19 +450,19 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 
   <div class="uxFlow" id="uxFlow">
     <button class="uxStep active" id="uxStepMatch" type="button"><span class="uxN">1</span><b>比赛信息</b><small id="uxMatchMeta">赛事 / 时间 / 场地</small></button>
-    <button class="uxStep" id="uxStepHome" type="button"><span class="uxN">2</span><b>主队 HOME</b><small id="uxHomeMeta">等待名单</small></button>
-    <button class="uxStep" id="uxStepAway" type="button"><span class="uxN">3</span><b>客队 AWAY</b><small id="uxAwayMeta">等待名单</small></button>
-    <button class="uxStep" id="uxStepReady" type="button"><span class="uxN">4</span><b>赛前检查</b><small id="uxReadyMeta">NOT 就绪</small></button>
+    <button class="uxStep" id="uxStepHome" type="button"><span class="uxN">2</span><b>主队</b><small id="uxHomeMeta">等待名单</small></button>
+    <button class="uxStep" id="uxStepAway" type="button"><span class="uxN">3</span><b>客队</b><small id="uxAwayMeta">等待名单</small></button>
+    <button class="uxStep" id="uxStepReady" type="button"><span class="uxN">4</span><b>赛前检查</b><small id="uxReadyMeta">未就绪</small></button>
   </div>
 
   <div id="setupDesk" class="setupDesk">
     <div class="setupHead">
-      <div class="setupTitle">比赛设置 · MATCH SETUP ENGINE<small>V4.18.2 · 广播动效引擎 · 就绪 GATE</small></div>
-      <div id="setupReadyBadge" class="setupReadyBadge">NOT 就绪</div>
+      <div class="setupTitle">比赛设置<small>V4.18.2 · 广播动效引擎 · 就绪检查</small></div>
+      <div id="setupReadyBadge" class="setupReadyBadge">未就绪</div>
     </div>
     <div class="setupGrid">
       <div class="setupPanel">
-        <div class="setupPanelTitle">比赛项目 · MATCH PROJECT</div>
+        <div class="setupPanelTitle">比赛项目</div>
         <div class="setupProjectGrid">
           <div><label>项目名称</label><input id="projectName" placeholder="例如：长风联赛 MD01 · TARLAN vs ICE POINT"></div>
           <div><label>已保存项目</label><select id="projectSelect"><option value="">选择比赛项目</option></select></div>
@@ -475,16 +475,16 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
           <button id="projectCloudSyncBtn" class="ok" type="button">☁ 同步赛前云端</button>
           <label class="setupPhoneImport">📦 读取赛前 ZIP / 文件<input id="projectPhoneImportFile" type="file" accept=".zip,.sagi,.json,application/zip,application/json"></label>
         </div>
-        <div id="projectRecoveryStatus" class="projectRecoveryStatus">可扫描旧版本、旧端口与 Bridge 恢复库；找回后自动并入永久比赛库，不覆盖现有项目。</div>
+        <div id="projectRecoveryStatus" class="projectRecoveryStatus">可扫描旧版本、旧端口与 桥接服务恢复库；找回后自动并入永久比赛库，不覆盖现有项目。</div>
         <div class="tiny" style="margin-top:8px">比赛项目保存赛事信息、赛制、主客队名单、阵型、节目时间线与比赛事件状态；赛前 ZIP 可携带主客队名单、首发/替补、队徽和球员照片；导入后直接写入本机素材库。</div>
       </div>
       <div class="setupPanel">
-        <div class="setupPanelTitle">赛前检查 · PRE-FLIGHT CHECK</div>
+        <div class="setupPanelTitle">赛前检查</div>
         <div id="setupChecks" class="setupChecks"></div>
         <div id="setupSummary" class="setupSummary">尚未检查。完成比赛信息和双队阵容后点击“检查比赛”。</div>
         <div class="setupReadyActions">
           <button id="setupValidateBtn" type="button">检查比赛</button>
-          <button id="setupReadyBtn" class="readyBtn" type="button" disabled>就绪 FOR BROADCAST</button>
+          <button id="setupReadyBtn" class="readyBtn" type="button" disabled>可以播出</button>
           <button id="setupUnlockBtn" class="unlockBtn" type="button">解除 就绪</button>
         </div>
       </div>
@@ -497,7 +497,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
       <div class="bcMonitor program"><div class="bcKicker">播出画面</div><div id="bcProgramLabel" class="bcBig">安全画面 / 未播出</div><div id="bcProgramMeta" class="bcMeta">等待切入播出</div></div>
       <div class="bcStatusBox">
         <div class="bcStatusLine"><span class="bcLamp ready" id="bcVmixLamp"><i></i>vMix 连接</span><b id="bcVmixStatus">检查中</b></div>
-        <div class="bcStatusLine"><span class="bcLamp" id="bcOnAirLamp"><i></i>正在播出</span><b id="bcOnAirStatus">SAFE</b></div>
+        <div class="bcStatusLine"><span class="bcLamp" id="bcOnAirLamp"><i></i>正在播出</span><b id="bcOnAirStatus">安全</b></div>
         <div class="bcStatusLine"><span>下一画面</span><b id="bcNextLabel">主队门将</b></div>
       </div>
     </div>
@@ -529,7 +529,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
   <div class="modeDock">
     <div class="modeDockLeft"><div><div class="modeDockTitle">V4.7 · 比赛模式</div><div class="modeDockSub">比赛驾驶舱 · 赛前自检 · 状态恢复 · 双角色 · 比赛安全</div></div></div>
     <div class="modeDockRight">
-      <select id="operatorRole"><option value="FULL">完整导演</option><option value="DIRECTOR">导演模式</option><option value="SCOREKEEPER">比分员模式</option></select>
+      <select id="operatorRole"><option value="FULL">完整导演</option><option value="导演">导演模式</option><option value="SCOREKEEPER">比分员模式</option></select>
       <button id="technicalPreflightBtn" class="preflightBtn" type="button">赛前技术自检</button>
       <button id="enterMatchModeBtn" class="modeEnter" type="button">进入比赛模式</button>
     </div>
@@ -538,25 +538,25 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
   <div id="matchCockpit" class="matchCockpit">
     <div class="mmHead">
       <div><div class="mmKicker">SAGI 赛事直播导播 · V4.7</div><div class="mmTitle"><b>比赛模式</b> · 比赛驾驶舱</div></div>
-      <div class="mmHeadActions"><select id="mmOperatorRole"><option value="FULL">完整导演</option><option value="DIRECTOR">导演</option><option value="SCOREKEEPER">比分员</option></select><button id="mmExit" class="mmExit" type="button">退出比赛模式</button></div>
+      <div class="mmHeadActions"><select id="mmOperatorRole"><option value="FULL">完整导演</option><option value="导演">导演</option><option value="SCOREKEEPER">比分员</option></select><button id="mmExit" class="mmExit" type="button">退出比赛模式</button></div>
     </div>
     <div class="mmStatus">
-      <div class="mmStatusCard"><span>BRIDGE</span><b id="mmBridgeStatus">检查中</b></div>
+      <div class="mmStatusCard"><span>桥接服务</span><b id="mmBridgeStatus">检查中</b></div>
       <div class="mmStatusCard"><span>VMIX</span><b id="mmVmixStatus">检查中</b></div>
-      <div class="mmStatusCard"><span>PRE-FLIGHT</span><b id="mmReadyStatus">NOT CHECKED</b></div>
-      <div class="mmStatusCard"><span>RECOVERY</span><b id="mmRecoveryStatus">LOCAL + BRIDGE</b></div>
+      <div class="mmStatusCard"><span>赛前自检</span><b id="mmReadyStatus">未检查</b></div>
+      <div class="mmStatusCard"><span>状态恢复</span><b id="mmRecoveryStatus">本机 + 桥接服务</b></div>
     </div>
 
     <div class="mmGrid">
       <div class="mmPanel mmScoreOnly">
-        <div class="mmPanelTitle">SCORE + CLOCK · 比分与计时</div>
+        <div class="mmPanelTitle">比分与计时</div>
         <div class="mmScoreTeams"><div><div id="mmHomeName" class="mmTeam">主队</div><div id="mmHomeScore" class="mmScore">0</div></div><div><div id="mmClock" class="mmClock" style="font-size:25px">00:00</div><div id="mmPeriod" class="mmPeriod">1H</div></div><div><div id="mmAwayName" class="mmTeam">客队</div><div id="mmAwayScore" class="mmScore">0</div></div></div>
         <div class="mmScoreBtns"><button id="mmHomeMinus" type="button">主队 −</button><button id="mmHomePlus" class="ok" type="button">主队 ＋</button><button id="mmAwayMinus" type="button">客队 −</button><button id="mmAwayPlus" class="ok" type="button">客队 ＋</button></div>
-        <div class="mmRow3" style="margin-top:6px"><button id="mmClockStart" class="ok" type="button">▶ 开始</button><button id="mmClockPause" type="button">Ⅱ 暂停</button><button id="mmScoreboardToggle" type="button">比分牌 ON/OFF</button></div>
+        <div class="mmRow3" style="margin-top:6px"><button id="mmClockStart" class="ok" type="button">▶ 开始</button><button id="mmClockPause" type="button">Ⅱ 暂停</button><button id="mmScoreboardToggle" type="button">比分牌 开/关</button></div>
       </div>
 
       <div class="mmPanel mmScoreOnly">
-        <div class="mmPanelTitle">EVENT MACRO · 一键事件宏</div>
+        <div class="mmPanelTitle">一键事件</div>
         <div class="mmRow"><select id="mmEventSide"><option value="HOME">主队</option><option value="AWAY">客队</option></select><select id="mmEventPlayer"><option value="">球员可选</option></select></div>
         <div class="mmRow3" style="margin-top:6px"><button id="mmGoalMacro" class="mmMacroGoal" type="button">⚽ 进球宏</button><button id="mmYellowMacro" class="mmMacroYellow" type="button">▮ 黄牌宏</button><button id="mmRedMacro" class="mmMacroRed" type="button">▮ 红牌宏</button></div>
         <div class="mmRow" style="margin-top:6px"><button id="mmHalf" type="button">半场结束</button><button id="mmFull" type="button">全场结束</button></div>
@@ -567,17 +567,17 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
       </div>
 
       <div class="mmPanel mmDirectorOnly">
-        <div class="mmPanelTitle">DIRECTOR · 机位导播</div>
+        <div class="mmPanelTitle">机位导播</div>
         <div class="mmRow"><button id="mmCam1" class="ok" type="button">1 主机位</button><button id="mmCam2" type="button">2 机位2</button><button id="mmDrone" type="button">3 无人机</button><button id="mmReplay" class="mmMarker" type="button">4 回放</button></div>
         <div class="mmRow" style="margin-top:6px"><button id="mmGraphicsOn" type="button">图形开启</button><button id="mmGraphicsOff" type="button">图形关闭</button></div>
-        <div class="mmFilter"><div class="mmPanelTitle" style="margin-top:10px">FILTER LOOK · 电影感</div><div class="filterPresets"><button class="filterOriginal" type="button" data-mm-filter="原始画面">原片</button><button class="filterClean" type="button" data-mm-filter="CLEAN">CLEAN</button><button class="filterWarm" type="button" data-mm-filter="WARM">WARM</button><button class="filterNight" type="button" data-mm-filter="NIGHT">NIGHT</button></div></div>
-        <div class="mmPanelTitle" style="margin-top:10px">REPLAY MARKER · 回放标记</div>
-        <div class="mmRow3"><button id="mmMarkSave" class="mmMarker" type="button">扑救 SAVE</button><button id="mmMarkIncident" class="mmMarker" type="button">对抗/冲突</button><button id="mmMarkKey" class="mmMarker" type="button">精彩 KEY</button></div>
+        <div class="mmFilter"><div class="mmPanelTitle" style="margin-top:10px">画面滤镜</div><div class="filterPresets"><button class="filterOriginal" type="button" data-mm-filter="原始画面">原片</button><button class="filterClean" type="button" data-mm-filter="CLEAN">清晰</button><button class="filterWarm" type="button" data-mm-filter="WARM">暖色</button><button class="filterNight" type="button" data-mm-filter="NIGHT">夜场</button></div></div>
+        <div class="mmPanelTitle" style="margin-top:10px">回放标记</div>
+        <div class="mmRow3"><button id="mmMarkSave" class="mmMarker" type="button">扑救</button><button id="mmMarkIncident" class="mmMarker" type="button">对抗/冲突</button><button id="mmMarkKey" class="mmMarker" type="button">精彩</button></div>
       </div>
     </div>
 
     <div class="mmPanel mmEmergency">
-      <div class="mmPanelTitle">EMERGENCY SAFE · 紧急保护区</div>
+      <div class="mmPanelTitle">紧急保护区</div>
       <div class="mmEmergencyGrid"><button id="mmFreeze" class="mmFreeze" type="button">冻结比分牌</button><button id="mmHideAll" class="mmHide" type="button">隐藏全部图形</button><button id="mmSafeCam" class="mmSafe" type="button">恢复安全主画面</button></div>
     </div>
 
@@ -585,8 +585,8 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
       <div class="mmPanel mmPreflight">
         <div class="mmPanelTitle">赛前技术自检</div>
         <div id="mmPreflightList" class="mmPreflightList"><div class="mmCheck warn"><b>尚未检查</b>点击“运行赛前自检”</div></div>
-        <div class="mmRow" style="margin-top:7px"><button id="mmRunPreflight" class="preflightBtn" type="button">运行赛前自检</button><button id="mmRestoreState" type="button">从 Bridge 恢复状态</button></div>
-        <div id="mmRecoveryInfo" class="mmRecovery">状态保护：手机本地 + Bridge 本地文件双重保存。</div>
+        <div class="mmRow" style="margin-top:7px"><button id="mmRunPreflight" class="preflightBtn" type="button">运行赛前自检</button><button id="mmRestoreState" type="button">从桥接服务恢复状态</button></div>
+        <div id="mmRecoveryInfo" class="mmRecovery">状态保护：手机本地 + 桥接服务本地文件双重保存。</div>
       </div>
       <div class="mmPanel">
         <div class="mmPanelTitle">回放记录 · 时间点</div>
@@ -599,7 +599,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
   <div class="vmixDirector">
     <div class="vdHead">
       <div class="vdTitle">V4.18.2 · vMix 导播控制 <small>赛事直播导播</small></div>
-      <div id="vdStatus" class="vdStatus">LAN Bridge 待命</div>
+      <div id="vdStatus" class="vdStatus">局域网桥接待命</div>
     </div>
     <div class="vdGrid">
       <div class="vdPanel">
@@ -641,9 +641,9 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
         </div>
         <div class="cameraRoleSummary"><b>机位角色引擎</b><span id="cameraRoleSummary">主全景 · 边线近景 · 无人机 · 回放</span></div>
         <div class="vdInputs" style="grid-template-columns:1fr 1fr 1fr;margin-top:7px">
-          <div><label>切换方式</label><select id="vdTransition"><option value="Cut">CUT 硬切</option><option value="Fade">FADE 淡变</option><option value="Stinger1">STINGER 1</option></select></div>
-          <div><label>淡变时长 ms</label><input id="vdDuration" type="number" value="350" min="0" max="5000"></div>
-          <div><label>Overlay 通道</label><select id="vdOverlay"><option value="1">Overlay 1</option><option value="2">Overlay 2</option><option value="3">Overlay 3</option><option value="4">Overlay 4</option></select></div>
+          <div><label>切换方式</label><select id="vdTransition"><option value="Cut">硬切</option><option value="Fade">淡变</option><option value="Stinger1">转场 1</option></select></div>
+          <div><label>淡变时长（毫秒）</label><input id="vdDuration" type="number" value="350" min="0" max="5000"></div>
+          <div><label>图形叠加通道</label><select id="vdOverlay"><option value="1">叠加 1</option><option value="2">叠加 2</option><option value="3">叠加 3</option><option value="4">叠加 4</option></select></div>
         </div>
       </div>
 
@@ -666,14 +666,14 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
       <div class="vdPanel">
         <div class="vdPanelTitle">图形叠加</div>
         <div class="vdOverlay">
-          <button id="vdGraphicsIn" class="on" type="button">图形 Overlay ON</button>
-          <button id="vdGraphicsOut" class="off" type="button">图形 Overlay OFF</button>
-          <button id="vdAllOverlaysOff" type="button">关闭全部 Overlay</button>
+          <button id="vdGraphicsIn" class="on" type="button">图形叠加开启</button>
+          <button id="vdGraphicsOut" class="off" type="button">图形叠加关闭</button>
+          <button id="vdAllOverlaysOff" type="button">关闭全部图形叠加</button>
           <button id="vdTest" type="button">测试桥接指令</button>
         </div>
         <div class="vdBridgeHelp">LAN DIRECT：手机与 vMix 电脑连接同一 Wi‑Fi。此页面由 Bridge 本机提供，所有导播指令与比赛图形直接走局域网，不依赖 Supabase。</div>
-        <a class="vdDownload" href="/health" target="_blank">检查 LAN Bridge</a>
-        <div class="vdKeys">快捷键：1/2/3/4 手动切机位 · G 图形ON · X 图形OFF · A 关键进攻保护。输入框正在编辑时快捷键自动停用。</div>
+        <a class="vdDownload" href="/health" target="_blank">检查局域网桥接</a>
+        <div class="vdKeys">快捷键：1/2/3/4 手动切机位 · G 图形开启 · X 图形关闭 · A 关键进攻保护。输入框正在编辑时快捷键自动停用。</div>
       </div>
       <div class="vdPanel">
         <div class="vdPanelTitle">画面滤镜 · 电影感</div>
@@ -681,7 +681,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
           <div class="filterHead"><div class="filterTitle">机位画面</div><div id="filterStatus" class="filterStatus">原始画面 · 待命</div></div>
           <div class="filterGrid">
             <div><label>作用机位</label><select id="filterTarget"><option value="ALL">全部机位</option><option value="cam1">主机位</option><option value="cam2">机位2</option><option value="drone">无人机</option><option value="replay">回放</option></select></div>
-            <div><label>LUT Effect 槽位</label><input value="1 CLEAN · 2 WARM · 3 NIGHT" readonly></div>
+            <div><label>LUT 滤镜槽位</label><input value="1 CLEAN · 2 WARM · 3 NIGHT" readonly></div>
           </div>
           <div class="filterPresets"><button class="filterOriginal" type="button" data-filter-preset="原始画面">原始画面</button><button class="filterClean" type="button" data-filter-preset="CLEAN">球场清晰</button><button class="filterWarm" type="button" data-filter-preset="WARM">电影暖色</button><button class="filterNight" type="button" data-filter-preset="NIGHT">夜场电影感</button></div>
           <div class="filterStrengthRow"><input id="filterStrength" type="range" min="0" max="100" value="65"><div id="filterStrengthValue" class="filterStrengthValue">65%</div></div>
@@ -711,15 +711,15 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
         <label class="gdSwitch"><input id="sdAutoTake" type="checkbox"><span>自动切换</span></label>
       </div>
       <div class="sdCue">
-        <div id="sdCueSlot" class="sdSlot">CAM 1</div>
+        <div id="sdCueSlot" class="sdSlot">机位 1</div>
         <div class="sdBody"><div id="sdCueTitle" class="sdTitle">保持主机位</div><div id="sdCueReason" class="sdReason">等待比赛事件</div></div>
-        <div id="sdConfidence" class="sdConfidence">SAFE</div>
+        <div id="sdConfidence" class="sdConfidence">安全</div>
         <button id="sdExecute" class="sdExecute" type="button">执行建议</button>
       </div>
     </div>
     <div id="shotSafety" class="shotSafety">
       <div class="ssHead">
-        <div><b>SHOT SAFETY</b><span id="ssStatus">安全 · 等待镜头</span></div>
+        <div><b>镜头安全</b><span id="ssStatus">安全 · 等待镜头</span></div>
         <label class="gdSwitch"><input id="ssEnabled" type="checkbox" checked><span>安全引擎</span></label>
         <button id="ssAttackLock" class="ssAttack" type="button">⚡ 关键进攻保护 12s</button>
       </div>
@@ -746,7 +746,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
         </div>
         <div class="mdScoreboardBtns"><button id="mdScoreboardShow" class="ok" type="button">显示比分牌</button><button id="mdScoreboardHide" type="button">隐藏比分牌</button></div>
         <div class="mdColorEditor">
-          <div class="mdColorTitle">比分牌配色 · SCOREBUG COLORS</div>
+          <div class="mdColorTitle">比分牌配色</div>
           <div class="mdColorGrid">
             <label class="mdColorField"><input id="mdHomeColor" type="color" value="#d8b55b"><span>主队颜色</span></label>
             <label class="mdColorField"><input id="mdAwayColor" type="color" value="#4c7dff"><span>客队颜色</span></label>
@@ -755,11 +755,11 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
           </div>
         </div>
         <div class="mdProEditor">
-          <div class="mdColorTitle">职业比分牌 · SCOREBUG V2</div>
+          <div class="mdColorTitle">职业比分牌 V2</div>
           <div class="mdProGrid">
             <div><label>主队简称</label><input id="mdHomeShort" maxlength="8" placeholder="HOME"></div>
             <div><label>客队简称</label><input id="mdAwayShort" maxlength="8" placeholder="AWAY"></div>
-            <div><label>模板</label><select id="mdScoreTheme"><option value="sagi-pro">SAGI PREMIER</option><option value="sagi">SAGI LIVE</option><option value="premier">PREMIER</option><option value="uefa">UEFA MINIMAL</option></select></div>
+            <div><label>模板</label><select id="mdScoreTheme"><option value="sagi-pro">SAGI 职业风格</option><option value="sagi">SAGI 直播风格</option><option value="premier">英超风格</option><option value="uefa">欧战极简</option></select></div>
             <div><label>补时</label><input id="mdStoppage" maxlength="4" placeholder="+3"></div>
             <div><label>主队红牌</label><input id="mdHomeRed" type="number" min="0" max="5" value="0"></div>
             <div><label>客队红牌</label><input id="mdAwayRed" type="number" min="0" max="5" value="0"></div>
@@ -781,7 +781,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
       </div>
 
       <div class="mdPanel">
-        <div class="mdPanelTitle">比赛事件 · EVENT</div>
+        <div class="mdPanelTitle">比赛事件</div>
         <div class="mdInputs">
           <select id="mdEventSide"><option value="HOME">主队</option><option value="AWAY">客队</option></select>
           <select id="mdEventPlayer"><option value="">选择球员</option></select>
@@ -797,7 +797,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 
     <div class="mdBottom">
       <div class="mdPanel">
-        <div class="mdPanelTitle">换人 · SUBSTITUTION</div>
+        <div class="mdPanelTitle">换人</div>
         <div class="mdSubGrid">
           <select id="mdSubSide"><option value="HOME">主队</option><option value="AWAY">客队</option></select>
           <select id="mdSubOff"><option value="">换下球员</option></select>
@@ -820,15 +820,15 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
         <div class="mdPanelTitle">本场最佳球员</div>
         <div class="mdInputs">
           <select id="mdMvpSide"><option value="HOME">主队</option><option value="AWAY">客队</option></select>
-          <select id="mdMvpPlayer"><option value="">选择MVP球员</option></select>
+          <select id="mdMvpPlayer"><option value="">选择本场最佳球员</option></select>
         </div>
-        <div class="mdActions" style="margin-top:8px"><button id="mdMvpBtn" class="mdMvp" type="button">★ 播放 MVP 图形</button><button id="mdPublishState" type="button">同步当前比分</button></div>
+        <div class="mdActions" style="margin-top:8px"><button id="mdMvpBtn" class="mdMvp" type="button">★ 播放本场最佳图形</button><button id="mdPublishState" type="button">同步当前比分</button></div>
       </div>
     </div>
 
     <div class="mdOpsRow">
       <div class="mdPanel">
-        <div class="mdPanelTitle">比赛事件日志 · EVENT LOG</div>
+        <div class="mdPanelTitle">比赛事件日志</div>
         <div id="mdEventLog" class="mdEventLog"><div class="mdEmpty">暂无比赛事件</div></div>
         <div class="mdActions" style="margin-top:8px">
           <button id="mdUndoLast" class="danger" type="button">↶ 撤销最近事件</button>
@@ -836,7 +836,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
         </div>
       </div>
       <div class="mdPanel">
-        <div class="mdPanelTitle">本场事件统计 · LIVE STATS</div>
+        <div class="mdPanelTitle">本场事件统计</div>
         <div class="mdStatGrid">
           <div class="mdStat"><b id="mdStatGoal">0</b><span>进球事件</span></div>
           <div class="mdStat"><b id="mdStatYellow">0</b><span>黄牌</span></div>
@@ -850,7 +850,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
   <div class="layout">
     <div class="controls">
       <div class="card">
-        <h2>比赛规格 · MATCH FORMAT <span id="formatBadge" class="teamSideBadge">11人制</span></h2>
+        <h2>比赛规格 <span id="formatBadge" class="teamSideBadge">11人制</span></h2>
         <div class="grid3">
           <div><label>比赛人数</label><select id="matchFormat"><option value="5">五人制</option><option value="7">七人制</option><option value="8">八人制</option><option value="9">九人制</option><option value="11" selected>十一人制</option><option value="CUSTOM">自定义</option></select></div>
           <div id="customCountWrap" style="display:none"><label>自定义场上人数（含门将）</label><input id="customPlayerCount" type="number" min="3" max="15" step="1" value="11"></div>
@@ -880,13 +880,13 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
       </div>
 
       <div class="card" id="teamCard">
-        <h2>双队阵容 <span id="activeSideBadge" class="teamSideBadge">HOME 主队</span></h2>
+        <h2>双队阵容 <span id="activeSideBadge" class="teamSideBadge">主队</span></h2>
         <div class="teamSwitch v49">
-          <button id="homeSideBtn" class="on" type="button"><span class="teamTabName">HOME 主队</span><span id="homeRosterMini" class="teamTabMeta">0 人 · 📷 0</span></button>
-          <button id="awaySideBtn" type="button"><span class="teamTabName">AWAY 客队</span><span id="awayRosterMini" class="teamTabMeta">0 人 · 📷 0</span></button>
+          <button id="homeSideBtn" class="on" type="button"><span class="teamTabName">主队</span><span id="homeRosterMini" class="teamTabMeta">0 人 · 📷 0</span></button>
+          <button id="awaySideBtn" type="button"><span class="teamTabName">客队</span><span id="awayRosterMini" class="teamTabMeta">0 人 · 📷 0</span></button>
         </div>
         <div class="teamQuick">
-          <div class="teamQuickItem"><span>当前编辑</span><b id="currentTeamQuick">HOME 主队</b></div>
+          <div class="teamQuickItem"><span>当前编辑</span><b id="currentTeamQuick">主队</b></div>
           <div class="teamQuickItem"><span>有效首发</span><b id="currentStarterQuick">0/11</b></div>
           <div class="teamQuickItem"><span>球员照片</span><b id="currentPhotoQuick">0/0</b></div>
           <div class="teamQuickItem"><span>替补</span><b id="currentBenchQuick">0</b></div>
@@ -906,39 +906,39 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
       <div class="card">
         <h2>比赛包装</h2>
         <div class="matchPackage">
-          <div class="packageHead"><b>比赛信息</b><span>赛事信息 · Logo动画 · 倒计时 · 音频</span></div>
+          <div class="packageHead"><b>比赛信息</b><span>赛事信息 · 标识动画 · 倒计时 · 音频</span></div>
           <div class="packageGrid">
-            <div><label>赛事名称</label><input id="matchCompetition" value="TFC WINTER LEAGUE"></div>
-            <div><label>轮次</label><input id="matchRound" value="MATCHDAY 01"></div>
+            <div><label>赛事名称</label><input id="matchCompetition" value="TFC 冬季联赛"></div>
+            <div><label>轮次</label><input id="matchRound" value="比赛日 01"></div>
             <div><label>主队</label><input id="matchHome" value="TARLAN FC"></div>
-            <div><label>客队</label><input id="matchAway" value="OPPONENT"></div>
+            <div><label>客队</label><input id="matchAway" value="对手"></div>
             <div><label>比赛时间</label><input id="matchKickoff" value="20:00"></div>
             <div><label>比赛场地</label><input id="matchVenue" value="TACHENG"></div>
           </div>
-          <div class="asset" style="margin-top:10px"><div class="assetPreview" id="eventLogoPreview">赛事LOGO</div><div><label>Logo Sting 赛事Logo</label><label class="fileBtn">上传赛事Logo<input id="eventLogoFile" type="file" accept="image/*"></label></div></div>
+          <div class="asset" style="margin-top:10px"><div class="assetPreview" id="eventLogoPreview">赛事标识</div><div><label>赛事标识转场</label><label class="fileBtn">上传赛事标识<input id="eventLogoFile" type="file" accept="image/*"></label></div></div>
           <div class="packageHead" style="margin-top:12px"><b>音频素材</b><span>主音乐 + 提示音效</span></div>
-          <div class="asset"><div class="assetPreview" id="musicPreview">MUSIC</div><div><label>本机主音乐</label><label class="fileBtn">上传音乐<input id="musicFile" type="file" accept="audio/*"></label></div></div>
+          <div class="asset"><div class="assetPreview" id="musicPreview">音乐</div><div><label>本机主音乐</label><label class="fileBtn">上传音乐<input id="musicFile" type="file" accept="audio/*"></label></div></div>
           <div class="packageGrid" style="margin-top:8px">
-            <div><label>vMix 主音乐URL</label><input id="musicUrl" placeholder="https://.../show-music.mp3"></div>
+            <div><label>vMix 主音乐链接</label><input id="musicUrl" placeholder="https://.../show-music.mp3"></div>
             <div><label>音乐音量</label><select id="musicVolume"><option value="0.35">35%</option><option value="0.5">50%</option><option value="0.65" selected>65%</option><option value="0.8">80%</option><option value="1">100%</option></select></div>
-            <div><label>WHOOSH 音效URL</label><input id="sfxWhoosh" placeholder="https://.../whoosh.mp3"></div>
-            <div><label>HIT 音效URL</label><input id="sfxHit" placeholder="https://.../hit.mp3"></div>
-            <div><label>RISER 音效URL</label><input id="sfxRiser" placeholder="https://.../riser.mp3"></div>
-            <div><label>CROWD 音效URL</label><input id="sfxCrowd" placeholder="https://.../crowd.mp3"></div>
-            <div><label>STING 音效URL</label><input id="sfxSting" placeholder="https://.../sting.mp3"></div>
+            <div><label>呼啸音效链接</label><input id="sfxWhoosh" placeholder="https://.../whoosh.mp3"></div>
+            <div><label>冲击音效链接</label><input id="sfxHit" placeholder="https://.../hit.mp3"></div>
+            <div><label>渐强音效链接</label><input id="sfxRiser" placeholder="https://.../riser.mp3"></div>
+            <div><label>观众音效链接</label><input id="sfxCrowd" placeholder="https://.../crowd.mp3"></div>
+            <div><label>转场音效链接</label><input id="sfxSting" placeholder="https://.../sting.mp3"></div>
           </div>
           <div class="audioEngine">
             <div class="audioEngineHead"><b>SAGI 音频引擎</b><span>主音乐总线 · 提示音 · 自动闪避 · 备用音效</span></div>
             <div class="audioEngineGrid">
               <div><label>音频模式</label><select id="audioMode"><option value="HYBRID" selected>混合模式</option><option value="EXTERNAL">仅外部素材</option><option value="BUILTIN">仅内置引擎</option><option value="MUTE">静音</option></select></div>
-              <div><label>内置主题</label><select id="audioTheme"><option value="SAGI_PULSE" selected>SAGI PULSE</option><option value="NORTH_WIND">NORTH WIND</option><option value="BLACK_GOLD">BLACK GOLD</option></select></div>
-              <div><label>音效强度</label><select id="audioIntensity"><option value="0.55">LOW</option><option value="0.75" selected>MEDIUM</option><option value="1">HIGH</option></select></div>
-              <div><label>音乐自动闪避</label><select id="audioDucking"><option value="0">OFF</option><option value="0.18">LIGHT</option><option value="0.35" selected>MEDIUM</option><option value="0.55">STRONG</option></select></div>
+              <div><label>内置主题</label><select id="audioTheme"><option value="SAGI_PULSE" selected>SAGI 节奏</option><option value="NORTH_WIND">北疆风</option><option value="BLACK_GOLD">黑金</option></select></div>
+              <div><label>音效强度</label><select id="audioIntensity"><option value="0.55">低</option><option value="0.75" selected>中</option><option value="1">高</option></select></div>
+              <div><label>音乐自动闪避</label><select id="audioDucking"><option value="0">关闭</option><option value="0.18">轻</option><option value="0.35" selected>中</option><option value="0.55">强</option></select></div>
               <div><label>提示音音量</label><select id="cueVolume"><option value="0.65">65%</option><option value="0.8">80%</option><option value="1" selected>100%</option></select></div>
               <div><label>倒计时节拍</label><select id="countdownBeat"><option value="1" selected>开启</option><option value="0">关闭</option></select></div>
             </div>
             <div class="audioMeters"><div><label>主音乐</label><div class="audioMeter"><i id="masterMeter"></i></div></div><div><label>提示音</label><div class="audioMeter"><i id="cueMeter"></i></div></div></div>
-            <div class="audioDiag"><span id="audioEngineState">ENGINE 就绪</span><span>备用音效 <b>开启</b></span></div>
+            <div class="audioDiag"><span id="audioEngineState">引擎就绪</span><span>备用音效 <b>开启</b></span></div>
           </div>
           <div class="actions"><button id="audioTestBtn" type="button">测试音乐</button><button id="cueTestBtn" type="button">测试重击音</button><button id="audioStopBtn" type="button">停止音频</button><button id="clearMusicBtn" type="button">清除本机音乐</button></div>
           <div id="audioStatus" class="audioStatus">音频已就绪 · 混合模式优先使用上传素材，缺失时自动使用 SAGI 内置音频</div>
@@ -946,10 +946,10 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
       </div>
 
       <div class="card" id="rosterCard">
-        <h2>球员名单 · <span id="rosterSideText">HOME 主队</span></h2>
-        <div class="importTarget"><span>本次导入将替换</span><b id="importTargetBadge">HOME 主队</b></div>
+        <h2>球员名单 · <span id="rosterSideText">主队</span></h2>
+        <div class="importTarget"><span>本次导入将替换</span><b id="importTargetBadge">主队</b></div>
         <div class="rosterImport">
-          <div class="riHead"><div><div class="riTitle">SMART ROSTER IMPORT · 智能名单导入</div><div class="riSub">推荐：球队 ZIP 资料包（Excel + photos + 队徽）→ 自动匹配 → 一键替换当前球队；同时兼容 JSON / Excel / CSV / Word / PDF / 文本</div></div><div class="riBadge">赛前工具 · 不影响直播核心</div></div>
+          <div class="riHead"><div><div class="riTitle">智能名单导入</div><div class="riSub">推荐：球队 ZIP 资料包（Excel + photos + 队徽）→ 自动匹配 → 一键替换当前球队；同时兼容 JSON / Excel / CSV / Word / PDF / 文本</div></div><div class="riBadge">赛前工具 · 不影响直播核心</div></div>
           <div class="riButtons">
             <label class="fileBtn riCamera">📷 拍照识别<input id="rosterCameraFile" type="file" accept="image/*" capture="environment"></label>
             <label class="fileBtn riFile">📦 导入球队资料包 / 文件<input id="rosterImportFile" type="file" accept=".zip,application/zip,application/x-zip-compressed,image/*,.txt,.csv,.tsv,.json,.xlsx,.xls,.docx,.pdf,text/plain,text/csv,application/json,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.wordprocessingml.document"></label>
@@ -957,7 +957,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
             <button id="rosterTemplateBtn" type="button">⬇ 球队填报 Excel 模板</button>
           </div>
           <div id="rosterPaste" class="riPaste"><textarea id="rosterPasteText" placeholder="可直接粘贴：&#10;1  张三  GK  首发&#10;5  李四  CB  首发&#10;10 王五  CM  首发&#10;9  赵六  ST  首发&#10;18 阿力  MF  替补"></textarea><div class="riPasteActions"><button id="rosterParsePaste" class="ok" type="button">解析文字</button><button id="rosterPasteClear" type="button">清空</button></div></div>
-          <div id="rosterImportStatus" class="riStatus">推荐球队资料包：ZIP 内放 1 个 Excel/CSV 名单 + photos 球员照片 + 可选队徽。系统自动按号码/姓名匹配照片；导入前会显示匹配结果。</div>
+          <div id="rosterImportStatus" class="riStatus">推荐球队资料包：ZIP 内放 1 个 Excel/CSV 名单 + 球员照片文件夹 + 可选队徽。系统自动按号码/姓名匹配照片；导入前会显示匹配结果。</div>
           <div id="rosterImportPreview" class="riPreview">
             <div class="riTools"><button id="riAllStarter" type="button">前 <span id="riStarterLimit">11</span> 人设首发</button><button id="riAutoRole" type="button">按阵型补位置</button><button id="riClearDraft" type="button">取消导入</button><span id="riCount" class="riCount">0 人</span></div>
             <div class="riTableWrap"><table class="riTable"><thead><tr><th>用</th><th>号码</th><th>姓名</th><th>身份</th><th>位置组</th><th>详细位置</th><th>队长</th><th>提示</th></tr></thead><tbody id="rosterImportBody"></tbody></table></div>
@@ -968,17 +968,17 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
           <div><label>姓名</label><input id="playerName" value="MARHULAN"></div>
           <div><label>号码</label><input id="playerNo" value="88"></div>
           <div><label>名单身份</label><select id="squadType"><option value="STARTER">首发</option><option value="SUB">替补</option></select></div>
-          <div><label>位置组</label><select id="role"><option value="GK">GK 门将</option><option value="DF">DF 后卫</option><option value="MF" selected>MF 中场</option><option value="FW">FW 前锋</option></select></div>
+          <div><label>位置组</label><select id="role"><option value="GK">门将</option><option value="DF">后卫</option><option value="MF" selected>中场</option><option value="FW">前锋</option></select></div>
           <div><label>详细位置</label><input id="position" value="CM"></div>
           <div><label>队长</label><select id="captain"><option value="0">否</option><option value="1">C 队长</option></select></div>
           <div><label>数据名称</label><input id="statLabel" value="APPS"></div>
           <div><label>数据值</label><input id="statValue" value="12"></div>
         </div>
         <div class="asset" style="margin-top:10px"><div class="assetPreview" id="photoPreview">球员</div><div><label>球员照片</label><label class="fileBtn">上传球员照片<input id="photoFile" type="file" accept="image/*"></label></div></div>
-        <div class="asset" style="margin-top:10px"><div class="assetPreview" id="mediaPreview">VIDEO</div><div><label>球员短视频</label><label class="fileBtn">上传3–5秒视频<input id="mediaFile" type="file" accept="video/mp4,video/webm,video/quicktime,video/*"></label></div></div>
+        <div class="asset" style="margin-top:10px"><div class="assetPreview" id="mediaPreview">视频</div><div><label>球员短视频</label><label class="fileBtn">上传3–5秒视频<input id="mediaFile" type="file" accept="video/mp4,video/webm,video/quicktime,video/*"></label></div></div>
         <div class="grid2" style="margin-top:10px">
           <div><label>动作类型</label><select id="mediaAction"><option value="STANDARD">标准站姿</option><option value="WALK_IN">走向镜头</option><option value="ARMS">抱臂站定</option><option value="LOOK">转身看镜头</option><option value="GK_GLOVES">门将整理手套</option><option value="CELEBRATE">庆祝动作</option></select></div>
-          <div><label>远端 vMix 视频URL</label><input id="mediaUrl" placeholder="https://.../player.mp4"></div>
+          <div><label>远端 vMix 视频链接</label><input id="mediaUrl" placeholder="https://.../player.mp4"></div>
         </div>
         <div class="mediaHelp">本机上传的视频保存在浏览器本地，用于手机/电脑预演；另一台电脑上的 vMix 优先读取上面的公开 HTTPS 视频URL。未填写时自动回退球员照片。</div>
         <div class="directorBox">
@@ -1002,10 +1002,10 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
         <h2>节目导演</h2>
         <div class="groupButtons">
           <button id="teamBtn" type="button">球队开场</button>
-          <button id="gkBtn" type="button">门将 GK</button>
-          <button id="dfBtn" type="button">后卫 DF</button>
-          <button id="mfBtn" type="button">中场 MF</button>
-          <button id="fwBtn" type="button">前锋 FW</button>
+          <button id="gkBtn" type="button">门将</button>
+          <button id="dfBtn" type="button">后卫</button>
+          <button id="mfBtn" type="button">中场</button>
+          <button id="fwBtn" type="button">前锋</button>
           <button id="fullBtn" type="button">完整首发</button><button id="subsBtn" type="button">替补名单</button>
         </div>
         <div class="showDirector">
@@ -1021,8 +1021,8 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
       <div class="card">
         <h2>vMix 直播输出</h2>
         <div class="grid2"><div><label>输出背景</label><select id="outputBg"><option value="tunnel" selected>球员通道</option><option value="stadium">球场背景</option><option value="transparent">透明背景叠加</option><option value="chroma">绿幕</option></select></div><div><label>画面</label><input value="1920 × 1080" readonly></div></div>
-        <div class="actions"><button id="copyVmixBtn" type="button">复制 LAN vMix 图形链接</button></div>
-        <div class="tiny" style="margin-top:8px">vMix：添加输入 → Web Browser（网页浏览器）→ 粘贴 LAN 专用图形链接。控制端点击“切入播出”后同步到直播电脑。</div>
+        <div class="actions"><button id="copyVmixBtn" type="button">复制局域网 vMix 图形链接</button></div>
+        <div class="tiny" style="margin-top:8px">vMix：添加输入 → 网页浏览器→ 粘贴 LAN 专用图形链接。控制端点击“切入播出”后同步到直播电脑。</div>
       </div>
     </div>
 
@@ -1032,9 +1032,9 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
           <div id="stageScale" class="stageScale">
             <div id="stage" class="stage">
               <div id="transitionLayer" class="transitionLayer"></div><div id="cueBadgeStage" class="cueBadgeStage"></div>
-              <div id="stingOverlay" class="stingOverlay"><div class="stingCore"><img id="stingLogo" class="stingLogo"><div class="stingLine"></div><div id="stingCompetition" class="stingComp">SAGI FOOTBALL</div></div></div>
-              <div id="matchOverlay" class="matchOverlay"><div class="matchCardStage"><div id="matchCompetitionStage" class="matchCompetition">TFC WINTER LEAGUE</div><div id="matchRoundStage" class="matchRound">MATCHDAY 01</div><div class="matchTeams"><div id="matchHomeStage" class="matchTeam">TARLAN FC</div><div class="matchVs">对</div><div id="matchAwayStage" class="matchTeam">OPPONENT</div></div><div class="matchMetaStage"><span id="matchKickoffStage">20:00</span><span>·</span><span id="matchVenueStage">TACHENG</span></div></div></div>
-              <div id="countdownOverlay" class="countdownOverlay"><div class="countdownCore"><div class="countdownLabel">KICKOFF SHOW</div><div id="countdownNumber" class="countdownNumber">5</div><div id="countdownSub" class="countdownSub">TFC WINTER LEAGUE</div></div></div>
+              <div id="stingOverlay" class="stingOverlay"><div class="stingCore"><img id="stingLogo" class="stingLogo"><div class="stingLine"></div><div id="stingCompetition" class="stingComp">SAGI 足球</div></div></div>
+              <div id="matchOverlay" class="matchOverlay"><div class="matchCardStage"><div id="matchCompetitionStage" class="matchCompetition">TFC 冬季联赛</div><div id="matchRoundStage" class="matchRound">比赛日 01</div><div class="matchTeams"><div id="matchHomeStage" class="matchTeam">TARLAN FC</div><div class="matchVs">对</div><div id="matchAwayStage" class="matchTeam">对手</div></div><div class="matchMetaStage"><span id="matchKickoffStage">20:00</span><span>·</span><span id="matchVenueStage">TACHENG</span></div></div></div>
+              <div id="countdownOverlay" class="countdownOverlay"><div class="countdownCore"><div class="countdownLabel">KICKOFF SHOW</div><div id="countdownNumber" class="countdownNumber">5</div><div id="countdownSub" class="countdownSub">TFC 冬季联赛</div></div></div>
               <div id="tunnelScene" class="tunnelScene">
                 <div class="tunnelBack"></div><div class="portal"></div><div class="wall left"></div><div class="wall right"></div><div class="ceiling"></div><div class="floor"></div>
                 <div class="led left"><div id="ledLeft" class="ledText">TARLAN FC<small>首发11人</small></div></div>
@@ -1320,24 +1320,24 @@ function setupSignatureRaw(){
 function renderSetupValidation(result){
  const w=q('setupChecks');w.innerHTML=result.checks.map(x=>'<div class="setupCheck '+(x.ok?'good':'bad')+'"><span>'+esc(x.label)+'</span><b>'+(x.ok?'PASS':'CHECK')+'</b><span style="display:none">'+esc(x.meta)+'</span></div>').join('');
  q('setupSummary').className='setupSummary '+(result.ok?'good':'bad');
- q('setupSummary').textContent=result.ok?'赛前检查通过。可以点击 就绪 FOR BROADCAST 解锁正式播出。':'未通过：'+result.checks.filter(x=>!x.ok).map(x=>x.label+'（'+x.meta+'）').join('；');
+ q('setupSummary').textContent=result.ok?'赛前检查通过。可以点击 可以播出 解锁正式播出。':'未通过：'+result.checks.filter(x=>!x.ok).map(x=>x.label+'（'+x.meta+'）').join('；');
  q('setupReadyBtn').disabled=!result.ok;
 }
 function setMatchReady(on){
  if(on){
    const r=validateMatchSetup(true);if(!r.ok){matchReady=false;refreshSetupReadyUI();note('赛前检查未通过');return false}
-   matchReady=true;setupReadySignature=r.signature;note('就绪 FOR BROADCAST · 已解锁正式播出')
+   matchReady=true;setupReadySignature=r.signature;note('可以播出 · 已解锁正式播出')
  }else{matchReady=false;setupReadySignature='';note('已解除 就绪 · 播出 已锁定')}
  refreshSetupReadyUI();return matchReady
 }
 function requireMatchReady(){
- if(!matchReady){note('请先完成 就绪 FOR BROADCAST');return false}
+ if(!matchReady){note('请先完成 可以播出');return false}
  const now=setupSignatureRaw();if(now!==setupReadySignature){matchReady=false;setupReadySignature='';validateMatchSetup(true);refreshSetupReadyUI();note('比赛设置已变化 · 就绪 自动解除');return false}
  const r=validateMatchSetup(false);if(!r.ok){matchReady=false;setupReadySignature='';renderSetupValidation(r);refreshSetupReadyUI();note('赛前检查状态已失效');return false}
  return true
 }
 function refreshSetupReadyUI(){
- const b=q('setupReadyBadge'),desk=q('setupDesk');b.textContent=matchReady?'就绪 FOR BROADCAST':'NOT 就绪';b.classList.toggle('ready',matchReady);desk.classList.toggle('ready',matchReady);
+ const b=q('setupReadyBadge'),desk=q('setupDesk');b.textContent=matchReady?'可以播出':'未就绪';b.classList.toggle('ready',matchReady);desk.classList.toggle('ready',matchReady);
  q('goLiveBtn').disabled=!matchReady;q('showPlayBtn').disabled=!matchReady;
  document.querySelectorAll('[data-vd-take]').forEach(x=>x.disabled=!matchReady);q('vdGraphicsIn').disabled=!matchReady;
  q('setupUnlockBtn').disabled=!matchReady;
@@ -1555,8 +1555,8 @@ async function scanLegacyLanPorts(){
  if(!ports.includes(current))ports.unshift(current);
  const jobs=ports.map(async port=>{
   const base='http://'+host+':'+port,out=[];
-  try{const x=await recoveryFetchJson(base+'/api/projects?recover='+Date.now());if(Array.isArray(x&&x.projects))out.push(...x.projects.map(p=>({...p,recoveredFrom:p.recoveredFrom||('BRIDGE '+port)})))}catch(e){}
-  try{const x=await recoveryFetchJson(base+'/api/matchday?recoverProjects='+Date.now());if(Array.isArray(x&&x.__sagiProjects))out.push(...x.__sagiProjects.map(p=>({...p,recoveredFrom:p.recoveredFrom||('BRIDGE STATE '+port)})))}catch(e){}
+  try{const x=await recoveryFetchJson(base+'/api/projects?recover='+Date.now());if(Array.isArray(x&&x.projects))out.push(...x.projects.map(p=>({...p,recoveredFrom:p.recoveredFrom||('桥接服务 '+port)})))}catch(e){}
+  try{const x=await recoveryFetchJson(base+'/api/matchday?recoverProjects='+Date.now());if(Array.isArray(x&&x.__sagiProjects))out.push(...x.__sagiProjects.map(p=>({...p,recoveredFrom:p.recoveredFrom||('桥接服务 STATE '+port)})))}catch(e){}
   return out
  });
  const all=await Promise.all(jobs);return all.flat()
@@ -1657,7 +1657,7 @@ function refreshMatchdayPlayers(){
  mdFillSelect('mdEventPlayer',q('mdEventSide').value,'选择球员');
  mdFillSelect('mdSubOff',q('mdSubSide').value,'换下球员');
  mdFillSelect('mdSubOn',q('mdSubSide').value,'换上球员');
- mdFillSelect('mdMvpPlayer',q('mdMvpSide').value,'选择MVP球员');
+ mdFillSelect('mdMvpPlayer',q('mdMvpSide').value,'选择本场最佳球员');
  if(q('mmEventPlayer'))mdFillSelect('mmEventPlayer',q('mmEventSide').value,'球员可选');
  if(q('mmSubSide')){mdFillSelect('mmSubOff',q('mmSubSide').value,'换下');mdFillSelect('mmSubOn',q('mmSubSide').value,'换上')}
 }
@@ -1733,7 +1733,7 @@ function mdCloudSnapshot(event=null){
   commandId:Date.now()+'_'+Math.random().toString(36).slice(2,7),
   visualVersion:'V4.18.2-SHOT-SAFETY-ENGINE',
   home:homeName,away:awayName,homeShort:matchdayState.homeShort||mdShortAuto(homeName,'HOME'),awayShort:matchdayState.awayShort||mdShortAuto(awayName,'AWAY'),
-  homeCrest:(teamStore.HOME&&teamStore.HOME.crest)||'',awayCrest:(teamStore.AWAY&&teamStore.AWAY.crest)||'',competition:q('matchCompetition').value.trim()||'SAGI FOOTBALL',
+  homeCrest:(teamStore.HOME&&teamStore.HOME.crest)||'',awayCrest:(teamStore.AWAY&&teamStore.AWAY.crest)||'',competition:q('matchCompetition').value.trim()||'SAGI 足球',
   homeScore:matchdayState.homeScore,awayScore:matchdayState.awayScore,scoreboardVisible:!!matchdayState.scoreboardVisible,scoreboardFrozen:!!matchdayState.scoreboardFrozen,
   homeColor:matchdayState.homeColor||'#d8b55b',awayColor:matchdayState.awayColor||'#4c7dff',accentColor:matchdayState.accentColor||'#f4f0e8',
   homeRedCards:Number(matchdayState.homeRedCards)||0,awayRedCards:Number(matchdayState.awayRedCards)||0,homePen:Number(matchdayState.homePen)||0,awayPen:Number(matchdayState.awayPen)||0,
@@ -2024,12 +2024,12 @@ function mdMatchState(type){
  mdRecordEvent(ev,before);q('mdEventStatus').textContent=type==='HALF_TIME'?'半场图形已触发':'全场图形已触发';gdRunEvent(ev,type==='FULL_TIME'?9000:6500)
 }
 function mdMvp(){
- const side=q('mdMvpSide').value,p=mdPlayer(side,q('mdMvpPlayer').value);if(!p){note('请选择MVP球员');return}
+ const side=q('mdMvpSide').value,p=mdPlayer(side,q('mdMvpPlayer').value);if(!p){note('请选择本场最佳球员');return}
  const before={homeScore:matchdayState.homeScore,awayScore:matchdayState.awayScore},ev={type:'MVP',side,team:side==='HOME'?(q('matchHome').value||'HOME'):(q('matchAway').value||'AWAY'),player:{id:p.id,name:p.name,number:p.number,position:p.position||p.role,photo:p.photo||''},score:matchdayState.homeScore+'-'+matchdayState.awayScore,at:mdFormat(mdNowSeconds())};
  mdRecordEvent(ev,before);q('mdEventStatus').textContent='MVP · #'+p.number+' '+p.name;gdRunEvent(ev,9000)
 }
 function applyOperatorRole(role,persist=true){
- matchOperatorRole=['FULL','DIRECTOR','SCOREKEEPER'].includes(role)?role:'FULL';document.body.dataset.operatorRole=matchOperatorRole;
+ matchOperatorRole=['FULL','导演','SCOREKEEPER'].includes(role)?role:'FULL';document.body.dataset.operatorRole=matchOperatorRole;
  if(q('operatorRole'))q('operatorRole').value=matchOperatorRole;if(q('mmOperatorRole'))q('mmOperatorRole').value=matchOperatorRole;
  if(persist)try{localStorage.setItem('sagi_operator_role_v47',matchOperatorRole)}catch(e){}
 }
@@ -2065,7 +2065,7 @@ async function runTechnicalPreflight(){
  checks.push({label:'比赛项目 就绪',level:matchReady?'good':'warn',meta:matchReady?'就绪':'尚未锁定'});
  technicalReady=!checks.some(x=>x.level==='bad');
  if(q('mmPreflightList'))q('mmPreflightList').innerHTML=checks.map(mmCheckHtml).join('');
- if(q('mmReadyStatus')){q('mmReadyStatus').textContent=technicalReady?'就绪 TO AIR':'NOT 就绪';q('mmReadyStatus').className=technicalReady?'mmGood':'mmBad'}
+ if(q('mmReadyStatus')){q('mmReadyStatus').textContent=technicalReady?'就绪 TO AIR':'未就绪';q('mmReadyStatus').className=technicalReady?'mmGood':'mmBad'}
  if(q('mmBridgeStatus')){q('mmBridgeStatus').textContent=h&&h.ok?'在线':'离线';q('mmBridgeStatus').className=h&&h.ok?'mmGood':'mmBad'}
  if(q('mmVmixStatus')){q('mmVmixStatus').textContent=vmixOk?'已连接':'离线';q('mmVmixStatus').className=vmixOk?'mmGood':'mmBad'}
  if(q('mmRecoveryStatus')){q('mmRecoveryStatus').textContent=h&&h.recovery?'SAVED':'ARMED';q('mmRecoveryStatus').className='mmGood'}
@@ -2210,7 +2210,7 @@ async function dbPut(k,v){try{const db=await openDB();await new Promise((res,rej
 async function dbGet(k){try{const db=await openDB();const v=await new Promise(res=>{const tx=db.transaction('assets','readonly'),r=tx.objectStore('assets').get(k);r.onsuccess=()=>res(r.result||'');r.onerror=()=>res('')});db.close();return v}catch(e){return''}}
 async function dbDel(k){try{const db=await openDB();await new Promise(res=>{const tx=db.transaction('assets','readwrite');tx.objectStore('assets').delete(k);tx.oncomplete=res;tx.onerror=res});db.close()}catch(e){}}
 function fileData(file,max=1100,quality=.82){return new Promise((res,rej)=>{const r=new FileReader();r.onerror=rej;r.onload=()=>{const im=new Image();im.onerror=()=>res(r.result);im.onload=()=>{const ratio=Math.min(1,max/im.width,max/im.height),w=Math.max(1,Math.round(im.width*ratio)),h=Math.max(1,Math.round(im.height*ratio)),cv=document.createElement('canvas');cv.width=w;cv.height=h;const cx=cv.getContext('2d');cx.clearRect(0,0,w,h);cx.drawImage(im,0,0,w,h);try{res(cv.toDataURL('image/webp',quality))}catch(e){res(r.result)}};im.src=r.result};r.readAsDataURL(file)})}
-function sideLabel(side){return side==='AWAY'?'客队 AWAY':'主队 HOME'}
+function sideLabel(side){return side==='AWAY'?'客队':'主队'}
 function currentTeamName(){return activeSide==='AWAY'?(q('matchAway').value.trim()||q('teamName').value.trim()||'AWAY'):(q('matchHome').value.trim()||q('teamName').value.trim()||'HOME')}
 function stashActiveTeam(){
  const t=teamStore[activeSide];t.roster=roster;t.formation=q('formation').value||defaultFormationForCount(starterLimit());t.crest=assets.crest||'';if(!t.customPositions)t.customPositions={};
@@ -2248,7 +2248,7 @@ function refreshUXDashboard(){
  const activeStep=!infoOK?'MATCH':(!homeOK?'HOME':(!awayOK?'AWAY':'就绪'));
  q('uxStepMatch').classList.toggle('active',activeStep==='MATCH');q('uxStepHome').classList.toggle('active',activeStep==='HOME');q('uxStepAway').classList.toggle('active',activeStep==='AWAY');q('uxStepReady').classList.toggle('active',activeStep==='就绪');
  q('uxHomeMeta').textContent='首发 '+h.valid+'/'+h.limit+' · 照片 '+h.photos+'/'+h.total;q('uxAwayMeta').textContent='首发 '+a.valid+'/'+a.limit+' · 照片 '+a.photos+'/'+a.total;
- q('uxMatchMeta').textContent=infoOK?'比赛信息已完成':'赛事 / 时间 / 场地待完善';q('uxReadyMeta').textContent=matchReady?'就绪 FOR BROADCAST':'等待赛前检查';
+ q('uxMatchMeta').textContent=infoOK?'比赛信息已完成':'赛事 / 时间 / 场地待完善';q('uxReadyMeta').textContent=matchReady?'可以播出':'等待赛前检查';
  ['currentStarterQuick','currentPhotoQuick'].forEach(id=>{const el=q(id);if(el&&el.parentElement)el.parentElement.classList.toggle('good',id==='currentStarterQuick'?cur.valid===cur.limit:(cur.total>0&&cur.photos===cur.total))});
 }
 function uxQueueAutoSave(){
@@ -2576,19 +2576,19 @@ function packageData(){
  return{matchFormat:{mode:matchConfig.mode,playerCount:starterLimit()},competition:q('matchCompetition').value.trim()||'MATCH',round:q('matchRound').value.trim()||'',home:q('matchHome').value.trim()||'HOME',away:q('matchAway').value.trim()||'AWAY',kickoff:q('matchKickoff').value.trim()||'',venue:q('matchVenue').value.trim()||'',eventLogo:assets.eventLogo||'',musicUrl:q('musicUrl').value.trim()||'',musicVolume:Math.max(0,Math.min(1,parseFloat(q('musicVolume').value)||.65)),audioEngine:{mode:q('audioMode').value||'HYBRID',theme:q('audioTheme').value||'SAGI_PULSE',intensity:Math.max(.1,Math.min(1,parseFloat(q('audioIntensity').value)||.75)),ducking:Math.max(0,Math.min(.8,parseFloat(q('audioDucking').value)||.35)),cueVolume:Math.max(.1,Math.min(1,parseFloat(q('cueVolume').value)||1)),countdownBeat:q('countdownBeat').value==='1'},sfx:{WHOOSH:q('sfxWhoosh').value.trim()||'',HIT:q('sfxHit').value.trim()||'',RISER:q('sfxRiser').value.trim()||'',CROWD:q('sfxCrowd').value.trim()||'',STING:q('sfxSting').value.trim()||''}}
 }
 function writePackage(p={}){
- if(p.matchFormat)applyStoredMatchConfig(p.matchFormat,true);q('matchCompetition').value=p.competition||'TFC WINTER LEAGUE';q('matchRound').value=p.round||'MATCHDAY 01';q('matchHome').value=p.home||'TARLAN FC';q('matchAway').value=p.away||'OPPONENT';q('matchKickoff').value=p.kickoff||'20:00';q('matchVenue').value=p.venue||'TACHENG';q('musicUrl').value=p.musicUrl||'';q('musicVolume').value=String(p.musicVolume||.65);const s=p.sfx||{};q('sfxWhoosh').value=s.WHOOSH||'';q('sfxHit').value=s.HIT||'';q('sfxRiser').value=s.RISER||'';q('sfxCrowd').value=s.CROWD||'';q('sfxSting').value=s.STING||'';const a=p.audioEngine||{};q('audioMode').value=a.mode||'HYBRID';q('audioTheme').value=a.theme||'SAGI_PULSE';q('audioIntensity').value=String(a.intensity||.75);q('audioDucking').value=String(a.ducking==null?.35:a.ducking);q('cueVolume').value=String(a.cueVolume||1);q('countdownBeat').value=a.countdownBeat===false?'0':'1'
+ if(p.matchFormat)applyStoredMatchConfig(p.matchFormat,true);q('matchCompetition').value=p.competition||'TFC 冬季联赛';q('matchRound').value=p.round||'比赛日 01';q('matchHome').value=p.home||'TARLAN FC';q('matchAway').value=p.away||'对手';q('matchKickoff').value=p.kickoff||'20:00';q('matchVenue').value=p.venue||'TACHENG';q('musicUrl').value=p.musicUrl||'';q('musicVolume').value=String(p.musicVolume||.65);const s=p.sfx||{};q('sfxWhoosh').value=s.WHOOSH||'';q('sfxHit').value=s.HIT||'';q('sfxRiser').value=s.RISER||'';q('sfxCrowd').value=s.CROWD||'';q('sfxSting').value=s.STING||'';const a=p.audioEngine||{};q('audioMode').value=a.mode||'HYBRID';q('audioTheme').value=a.theme||'SAGI_PULSE';q('audioIntensity').value=String(a.intensity||.75);q('audioDucking').value=String(a.ducking==null?.35:a.ducking);q('cueVolume').value=String(a.cueVolume||1);q('countdownBeat').value=a.countdownBeat===false?'0':'1'
 }
 function syncMatchStage(){
  const p=packageData();q('stingLogo').src=p.eventLogo||assets.crest||'';q('stingLogo').style.visibility=(p.eventLogo||assets.crest)?'visible':'hidden';q('stingCompetition').textContent=p.competition;q('matchCompetitionStage').textContent=p.competition;q('matchRoundStage').textContent=p.round;q('matchHomeStage').textContent=p.home;q('matchAwayStage').textContent=p.away;q('matchKickoffStage').textContent=p.kickoff;q('matchVenueStage').textContent=p.venue;q('countdownSub').textContent=p.competition;
 }
-function renderPreviews(){q('photoPreview').innerHTML=assets.photo?'<img src="'+assets.photo+'">':'球员';q('mediaPreview').innerHTML=assets.mediaObjectUrl?'<video src="'+assets.mediaObjectUrl+'" muted loop playsinline autoplay></video>':'VIDEO';q('crestPreview').innerHTML=assets.crest?'<img src="'+assets.crest+'" style="object-fit:contain">':'队徽';q('bgPreview').innerHTML=assets.bg?'<img src="'+assets.bg+'">':'球场';q('eventLogoPreview').innerHTML=assets.eventLogo?'<img src="'+assets.eventLogo+'" style="object-fit:contain">':'赛事LOGO';q('musicPreview').textContent=assets.musicObjectUrl?'AUDIO ✓':'MUSIC'}
+function renderPreviews(){q('photoPreview').innerHTML=assets.photo?'<img src="'+assets.photo+'">':'球员';q('mediaPreview').innerHTML=assets.mediaObjectUrl?'<video src="'+assets.mediaObjectUrl+'" muted loop playsinline autoplay></video>':'VIDEO';q('crestPreview').innerHTML=assets.crest?'<img src="'+assets.crest+'" style="object-fit:contain">':'队徽';q('bgPreview').innerHTML=assets.bg?'<img src="'+assets.bg+'">':'球场';q('eventLogoPreview').innerHTML=assets.eventLogo?'<img src="'+assets.eventLogo+'" style="object-fit:contain">':'赛事标识';q('musicPreview').textContent=assets.musicObjectUrl?'AUDIO ✓':'MUSIC'}
 function starters(){return rawStarters(roster)}
 function validStarters(){return effectiveStarters(roster,q('formation').value)}
 function substitutes(){return roster.filter(p=>p.squadType==='SUB')}
 function addPlayer(){const p=readPlayer(),limit=starterLimit();if(p.squadType==='STARTER'&&starters().length>=limit){note('首发最多'+limit+'人 · '+formatDisplay());return}if(roster.length>=30){note('整份名单最多30人');return}p.id=uid();roster.push(p);teamStore[activeSide].roster=roster;reconcileTeamStarters(activeSide,q('formation').value);selected=roster.length-1;renderRoster();updateFormatUI();dbPut('photo:'+p.id,p.photo||'');if(p.mediaBlob)dbPut('media:'+p.id,p.mediaBlob);note('已加入名单 '+roster.length+'人')}
 function updatePlayer(){if(selected<0||!roster[selected]){note('先选择一名球员');return}const p=readPlayer(),wasStarter=(roster[selected].squadType||'STARTER')==='STARTER';if(p.squadType==='STARTER'&&!wasStarter&&starters().length>=starterLimit()){note('首发最多'+starterLimit()+'人 · '+formatDisplay());return}p.id=roster[selected].id;roster[selected]=p;teamStore[activeSide].roster=roster;reconcileTeamStarters(activeSide,q('formation').value);renderRoster();updateFormatUI();dbPut('photo:'+p.id,p.photo||'');if(p.mediaBlob)dbPut('media:'+p.id,p.mediaBlob);else dbDel('media:'+p.id);note('已更新')}
 function removePlayer(){if(selected<0)return;const p=roster[selected];roster.splice(selected,1);if(p&&p.id){dbDel('photo:'+p.id);dbDel('media:'+p.id)}teamStore[activeSide].roster=roster;reconcileTeamStarters(activeSide,q('formation').value);selected=Math.min(selected,roster.length-1);if(selected>=0)writePlayer(roster[selected]);renderRoster();updateFormatUI();renderStage(currentGroup);note('已删除')}
-function renderRoster(){const w=q('roster');w.innerHTML='';if(!roster.length){w.innerHTML='<div class="muted">当前球队还没有球员。可直接导入名单，或手动添加球员。</div>';if(typeof refreshUXDashboard==='function')refreshUXDashboard();return}roster.forEach((p,i)=>{const d=document.createElement('div');d.className='playerRow'+(i===selected?' on':'');d.innerHTML='<div class="thumb">'+(p.photo?'<img src="'+p.photo+'">':p.role)+'</div><div><div class="pname">'+esc(p.name)+(p.captain?' <span style="color:#d8b55b">C</span>':'')+'</div><div class="pmeta">'+(p.squadType==='SUB'?'SUB · ':'')+esc(p.role)+' · '+esc(p.position)+(p.statValue?' · '+esc(p.statLabel)+' '+esc(p.statValue):'')+((p.mediaBlob||p.mediaUrl)?' · MEDIA '+(p.directorSpeed||1)+'×'+(p.directorFreeze?' · FREEZE':''):'')+'</div></div><div class="num">'+esc(p.number)+'</div>';d.onclick=()=>{selected=i;writePlayer(p);renderRoster()};w.appendChild(d)});if(typeof refreshUXDashboard==='function')refreshUXDashboard()}
+function renderRoster(){const w=q('roster');w.innerHTML='';if(!roster.length){w.innerHTML='<div class="muted">当前球队还没有球员。可直接导入名单，或手动添加球员。</div>';if(typeof refreshUXDashboard==='function')refreshUXDashboard();return}roster.forEach((p,i)=>{const d=document.createElement('div');d.className='playerRow'+(i===selected?' on':'');d.innerHTML='<div class="thumb">'+(p.photo?'<img src="'+p.photo+'">':p.role)+'</div><div><div class="pname">'+esc(p.name)+(p.captain?' <span style="color:#d8b55b">C</span>':'')+'</div><div class="pmeta">'+(p.squadType==='SUB'?'SUB · ':'')+esc(displayRoleLabel(p.role))+' · '+esc(p.position)+(p.statValue?' · '+esc(p.statLabel)+' '+esc(p.statValue):'')+((p.mediaBlob||p.mediaUrl)?' · MEDIA '+(p.directorSpeed||1)+'×'+(p.directorFreeze?' · 定格':''):'')+'</div></div><div class="num">'+esc(p.number)+'</div>';d.onclick=()=>{selected=i;writePlayer(p);renderRoster()};w.appendChild(d)});if(typeof refreshUXDashboard==='function')refreshUXDashboard()}
 function grouped(role){return validStarters().filter(p=>p.role===role)}
 function getFormationPoints(){return getFormationPointsFor(activeSide,q('formation').value)}
 function fallbackPoint(role,i,n){const y={GK:91,DF:72,MF:48,FW:22}[role]||50;return[((i+1)/(n+1))*100,y]}
@@ -2603,8 +2603,8 @@ function playerCard(p,n){
  const one=n===1?' one':'',media=mediaSource(p),action=' action-'+esc(p.mediaAction||'STANDARD'),hasMedia=media?' hasMedia':'',directed=media?' directed':'';
  const fallback=p.photo?'<img src="'+p.photo+'">':'<div class="fallback">'+esc(p.number)+'</div>';
  const visual=media?'<div class="mediaFallback">'+fallback+'</div><video class="mediaVideo" src="'+esc(media)+'" muted playsinline preload="auto"'+directorAttrs(p)+'></video>':fallback;
- const dirTag=media?'<div class="directorBadge">IN '+(Number(p.directorIn)||0).toFixed(1)+' · '+(Number(p.directorSpeed)||1).toFixed(2)+'×'+(p.directorFreeze?' · FREEZE':'')+'</div>':'';
- return '<div class="playerCard'+one+hasMedia+action+directed+'"><div class="playerCut">'+visual+'</div><div class="playerLabel"><div class="playerNo">#'+esc(p.number)+(p.captain?'<span class="captainBadge">C</span>':'')+'</div><div class="playerName">'+esc(p.name)+'</div><div class="playerRole">'+esc(p.position||p.role)+'</div>'+(p.statValue?'<div class="statPill">'+esc(p.statLabel)+' <strong>'+esc(p.statValue)+'</strong></div>':'')+(media?'<div class="mediaTag">MEDIA DAY · '+esc(p.mediaAction||'STANDARD')+'</div>':'')+dirTag+'</div></div>'
+ const dirTag=media?'<div class="directorBadge">IN '+(Number(p.directorIn)||0).toFixed(1)+' · '+(Number(p.directorSpeed)||1).toFixed(2)+'×'+(p.directorFreeze?' · 定格':'')+'</div>':'';
+ return '<div class="playerCard'+one+hasMedia+action+directed+'"><div class="playerCut">'+visual+'</div><div class="playerLabel"><div class="playerNo">#'+esc(p.number)+(p.captain?'<span class="captainBadge">C</span>':'')+'</div><div class="playerName">'+esc(p.name)+'</div><div class="playerRole">'+esc(displayRoleLabel(p.position||p.role))+'</div>'+(p.statValue?'<div class="statPill">'+esc(p.statLabel)+' <strong>'+esc(p.statValue)+'</strong></div>':'')+(media?'<div class="mediaTag">球员定妆 · '+esc(p.mediaAction||'STANDARD')+'</div>':'')+dirTag+'</div></div>'
 }
 function flashFreeze(){
  const f=q('freezeFlash');if(!f||!f.animate)return;
@@ -2620,12 +2620,12 @@ function configureDirectorVideo(v){
 }
 function playMediaVideos(){q('stage').querySelectorAll('video.mediaVideo').forEach(configureDirectorVideo)}
 function renderFull(){
- q('playersArea').style.display='none';q('subList').style.display='none';const list=q('fullList');list.style.display='grid';list.innerHTML=validStarters().map((p,i)=>'<div class="fullRow" style="--row-i:'+i+'"><div class="fullRole">'+esc(p.role)+'</div><div class="fullNo">'+esc(p.number)+'</div><div class="fullName">'+esc(p.name)+(p.captain?' <span class="captainBadge">C</span>':'')+'</div><div class="fullPos">'+esc(p.position)+(p.statValue?' · '+esc(p.statLabel)+' '+esc(p.statValue):'')+'</div></div>').join('');
+ q('playersArea').style.display='none';q('subList').style.display='none';const list=q('fullList');list.style.display='grid';list.innerHTML=validStarters().map((p,i)=>'<div class="fullRow" style="--row-i:'+i+'"><div class="fullRole">'+esc(displayRoleLabel(p.role))+'</div><div class="fullNo">'+esc(p.number)+'</div><div class="fullName">'+esc(p.name)+(p.captain?' <span class="captainBadge">C</span>':'')+'</div><div class="fullPos">'+esc(p.position)+(p.statValue?' · '+esc(p.statLabel)+' '+esc(p.statValue):'')+'</div></div>').join('');
 
 }
 function renderSubs(){
  q('playersArea').style.display='none';q('fullList').style.display='none';const list=q('subList');list.style.display='grid';
- const subs=substitutes();list.innerHTML=subs.length?subs.map(p=>'<div class="subRow"><div class="subNo">#'+esc(p.number)+'</div><div><div class="subName">'+esc(p.name)+'</div><div class="subStat">'+esc(p.role)+' · '+esc(p.position)+'</div></div><div class="subStat">'+(p.statValue?esc(p.statLabel)+' '+esc(p.statValue):'SUB')+'</div></div>').join(''):'<div class="muted">暂无替补球员</div>';
+ const subs=substitutes();list.innerHTML=subs.length?subs.map(p=>'<div class="subRow"><div class="subNo">#'+esc(p.number)+'</div><div><div class="subName">'+esc(p.name)+'</div><div class="subStat">'+esc(displayRoleLabel(p.role))+' · '+esc(p.position)+'</div></div><div class="subStat">'+(p.statValue?esc(p.statLabel)+' '+esc(p.statValue):'SUB')+'</div></div>').join(''):'<div class="muted">暂无替补球员</div>';
 }
 function updateTunnelLabels(group){
  const team=currentTeamName(),left=q('ledLeft'),right=q('ledRight'),lineup=startingLabel();
@@ -2797,7 +2797,7 @@ function ensureShowMusic(){
  if((s.mode==='BUILTIN')||(s.mode==='HYBRID'&&!src)){builtInThemeStart();q('stage').dataset.music='builtin'}else{builtInThemeStop();if(externalStarted)q('stage').dataset.music='external'}
  q('audioStatus').textContent=(externalStarted?'EXTERNAL MUSIC':'BUILT-IN MUSIC')+' · '+Math.round(p.musicVolume*100)+'%';q('audioEngineState').textContent=s.mode+' · '+s.theme; pulseMeter('masterMeter',.55,700)
 }
-function stopShowMusic(){const a=ensureShowMusic.audio;if(a){try{a.pause();a.currentTime=0}catch(e){}}builtInThemeStop();q('audioStatus').textContent='AUDIO 就绪';q('audioEngineState').textContent='ENGINE 就绪';pulseMeter('masterMeter',0,10);pulseMeter('cueMeter',0,10)}
+function stopShowMusic(){const a=ensureShowMusic.audio;if(a){try{a.pause();a.currentTime=0}catch(e){}}builtInThemeStop();q('audioStatus').textContent='AUDIO 就绪';q('audioEngineState').textContent='引擎就绪';pulseMeter('masterMeter',0,10);pulseMeter('cueMeter',0,10)}
 function triggerCue(cue){
  const b=q('cueBadgeStage');if(!b||cue==='NONE')return;q('stage').dataset.cue=cue;b.textContent=cue;b.animate([{opacity:0,transform:'translateY(-8px)'},{opacity:1,transform:'translateY(0)',offset:.25},{opacity:0}],{duration:900,easing:'ease-out'});
  const s=audioSettings();q('stage').dataset.cueSource='none';if(s.mode==='MUTE')return;const real=audioSrcForCue(cue);if((s.mode==='HYBRID'||s.mode==='EXTERNAL')&&real){q('stage').dataset.cueSource='real';duckMusic();pulseMeter('cueMeter',s.cueVolume,.7);playAudioUrl(real,s.cueVolume);return}
@@ -2897,7 +2897,7 @@ function demo(){
  const demoFormation=(teamStore[activeSide]&&formationOutfieldCount(teamStore[activeSide].formation)===starterLimit()-1)?teamStore[activeSide].formation:defaultFormationForCount(starterLimit());
  const buildDemo=(src)=>{const need=formationRoleCounts(demoFormation),used={GK:0,DF:0,MF:0,FW:0};return src.map(demoPlayer).map(p=>{if(p.squadType==='STARTER'){if((used[p.role]||0)<(need[p.role]||0))used[p.role]=(used[p.role]||0)+1;else p.squadType='SUB'}return p})};
  teamStore.HOME={roster:buildDemo(home),formation:demoFormation,crest:'',customPositions:{}};teamStore.AWAY={roster:buildDemo(away),formation:demoFormation,crest:'',customPositions:{}};
- writePackage({matchFormat:{...matchConfig},competition:'TFC WINTER LEAGUE',round:'MATCHDAY 01',home:'TARLAN FC',away:'ICE POINT FC',kickoff:'20:00',venue:'TACHENG',musicVolume:.65,audioEngine:{mode:'HYBRID',theme:'SAGI_PULSE',intensity:.75,ducking:.35,cueVolume:1,countdownBeat:true},sfx:{}});
+ writePackage({matchFormat:{...matchConfig},competition:'TFC 冬季联赛',round:'比赛日 01',home:'TARLAN FC',away:'ICE POINT FC',kickoff:'20:00',venue:'TACHENG',musicVolume:.65,audioEngine:{mode:'HYBRID',theme:'SAGI_PULSE',intensity:.75,ducking:.35,cueVolume:1,countdownBeat:true},sfx:{}});
  activeSide='HOME';roster=teamStore.HOME.roster;refreshFormationOptions(demoFormation);assets.crest='';selected=0;writePlayer(roster[0]);refreshSideUI();updateFormatUI();renderRoster();renderStage('FULL');syncMatchStage();note('已载入 '+formatDisplay()+' 双队示例 · '+demoFormation)
 }
 
