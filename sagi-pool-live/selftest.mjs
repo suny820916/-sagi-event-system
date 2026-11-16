@@ -2,18 +2,25 @@ import fs from 'node:fs';
 
 const root = new URL('./', import.meta.url);
 const html = fs.readFileSync(new URL('index.html', root), 'utf8');
-const club = fs.readFileSync(new URL('club.html', root), 'utf8');\nconst manifestText = fs.readFileSync(new URL('manifest.webmanifest', root), 'utf8');
+const club = fs.readFileSync(new URL('club.html', root), 'utf8');
+const manifestText = fs.readFileSync(new URL('manifest.webmanifest', root), 'utf8');
 const sw = fs.readFileSync(new URL('sw.js', root), 'utf8');
 
 const failures = [];
 function check(ok, msg){ if(!ok) failures.push(msg); }
 
-const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m=>m[1]);
-check(scripts.length === 1, 'index.html should contain exactly one inline app script');
-scripts.forEach((code,i)=>{
-  try { new Function(code); }
-  catch (e) { failures.push('App script '+(i+1)+' syntax error: '+e.message); }
-});
+function checkInlineScripts(source, label){
+  const scripts = [...source.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m=>m[1]);
+  check(scripts.length >= 1, label+' should contain an inline script');
+  scripts.forEach((code,i)=>{
+    try { new Function(code); }
+    catch (e) { failures.push(label+' script '+(i+1)+' syntax error: '+e.message); }
+  });
+  return scripts;
+}
+
+const scripts = checkInlineScripts(html, 'index.html');
+checkInlineScripts(club, 'club.html');
 
 try { JSON.parse(manifestText); }
 catch(e){ failures.push('manifest.webmanifest JSON error: '+e.message); }
@@ -44,6 +51,10 @@ check(html.includes("state.players.length>=4"),'4-player limit guard missing');
 check(html.includes("state.history.length>40"),'Undo history bound missing');
 check(html.includes("state.settlement==='transfer'"),'Transfer settlement logic missing');
 check(html.includes("state.mode==='8ball'"),'8-ball mode logic missing');
+check(html.includes("sagi_pool_live_v15_"),'Per-table storage key missing from scorer');
+check(club.includes('球桌状态'),'Club dashboard marker missing');
+check(club.includes('sagi_pool_live_v15_'),'Per-table storage isolation missing from club dashboard');
+check(sw.includes('./club.html'),'Club dashboard missing from offline cache');
 
 if(failures.length){
   console.error('\nSAGI POOL LIVE SELF-CHECK: FAILED');
@@ -56,6 +67,8 @@ console.log('✓ JavaScript syntax');
 console.log('✓ PWA manifest');
 console.log('✓ Service worker syntax');
 console.log('✓ DOM id integrity');
-console.log('✓ Core billiards modes');\nconsole.log('✓ Club dashboard / per-table isolation');
+console.log('✓ Core billiards modes');
 console.log('✓ 2-4 player chase scoring');
+console.log('✓ Active shooter / foul flow');
+console.log('✓ Club dashboard / per-table isolation');
 console.log('✓ Undo / persistence / camera markers');
