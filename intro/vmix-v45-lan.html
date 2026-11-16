@@ -743,8 +743,8 @@ function simplePenaltyScorePulse(el,previous,current){
 function fitBroadcastTeamName(el,text,mode='regular'){
  if(!el)return;const t=String(text||'');el.textContent=t;
  const len=[...t].length;
- const size=mode==='penalty'?(len>12?20:len>8?24:len>5?27:30):(len>12?15:len>9?17:len>6?20:23);
- el.style.fontSize=size+'px'
+ const size=mode==='penalty'?(len>12?20:len>8?24:len>5?27:30):(len>12?14:len>9?16:len>6?18:20);
+ el.style.setProperty('font-size',size+'px','important')
 }
 let scorebugGoalActive=false,scorebugGoalTimer=null;
 function scorebugGoalExpand(e,g){
