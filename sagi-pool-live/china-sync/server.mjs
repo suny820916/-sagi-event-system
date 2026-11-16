@@ -13,12 +13,33 @@ const ALLOW_ORIGIN = process.env.SAGI_ALLOW_ORIGIN || '*';
 const LIVE_HEARTBEAT_TIMEOUT_MS = Math.max(1000, Number(process.env.SAGI_LIVE_HEARTBEAT_TIMEOUT_MS || 60000));
 const DATA_FILE = process.env.SAGI_DATA_FILE || path.join(path.dirname(fileURLToPath(import.meta.url)), 'data.json');
 
-let store = { rooms: {}, licenses: {} };
-try {
-  if (fs.existsSync(DATA_FILE)) store = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
-} catch (e) {
-  console.error('Failed to load data file:', e.message);
+function readJsonFile(file) {
+  if (!fs.existsSync(file)) return null;
+  const parsed = JSON.parse(fs.readFileSync(file, 'utf8'));
+  return parsed && typeof parsed === 'object' ? parsed : null;
 }
+
+function loadStore() {
+  const backup = DATA_FILE + '.bak';
+  try {
+    const main = readJsonFile(DATA_FILE);
+    if (main) return main;
+  } catch (e) {
+    console.error('Failed to load data file:', e.message);
+  }
+  try {
+    const recovered = readJsonFile(backup);
+    if (recovered) {
+      console.error('Recovered SAGI data from backup file.');
+      return recovered;
+    }
+  } catch (e) {
+    console.error('Failed to load backup data file:', e.message);
+  }
+  return { rooms: {}, licenses: {} };
+}
+
+let store = loadStore();
 if (!store.rooms) store.rooms = {};
 if (!store.licenses) store.licenses = {};
 
@@ -197,16 +218,34 @@ function tableAllowed(club, table) {
   return existing.includes(table) || new Set(existing).size < max;
 }
 function keyOf(club, table) { return club + '::' + table; }
+function hasValidJsonFile(file) {
+  try {
+    return Boolean(readJsonFile(file));
+  } catch {
+    return false;
+  }
+}
+
+function persistNow() {
+  try {
+    fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
+    const tmp = DATA_FILE + '.tmp';
+    const backup = DATA_FILE + '.bak';
+    fs.writeFileSync(tmp, JSON.stringify(store, null, 2));
+    if (hasValidJsonFile(DATA_FILE)) fs.copyFileSync(DATA_FILE, backup);
+    fs.renameSync(tmp, DATA_FILE);
+    return true;
+  } catch (e) {
+    console.error('Persist failed:', e.message);
+    return false;
+  }
+}
+
 function schedulePersist() {
   clearTimeout(persistTimer);
   persistTimer = setTimeout(() => {
-    try {
-      const tmp = DATA_FILE + '.tmp';
-      fs.writeFileSync(tmp, JSON.stringify(store, null, 2));
-      fs.renameSync(tmp, DATA_FILE);
-    } catch (e) {
-      console.error('Persist failed:', e.message);
-    }
+    persistTimer = null;
+    persistNow();
   }, 150);
 }
 function notify(key, payload) {
@@ -249,7 +288,7 @@ const server=http.createServer(async (req,res)=>{
   const url=new URL(req.url,'http://localhost');
 
   if(url.pathname==='/health'){
-    json(res,200,{ok:true,service:'SAGI CHINA SYNC',version:'2.5.0',licensedMode:REQUIRE_LICENSE,time:Date.now()});
+    json(res,200,{ok:true,service:'SAGI CHINA SYNC',version:'2.6.0',licensedMode:REQUIRE_LICENSE,time:Date.now()});
     return;
   }
 
@@ -524,3 +563,17 @@ const server=http.createServer(async (req,res)=>{
 });
 
 server.listen(PORT,HOST,()=>console.log(`SAGI CHINA SYNC listening on http://${HOST}:${PORT}`));
+
+let shuttingDown=false;
+function gracefulShutdown(signal) {
+  if (shuttingDown) return;
+  shuttingDown=true;
+  console.log('SAGI CHINA SYNC shutting down:', signal);
+  clearTimeout(persistTimer);
+  persistTimer=null;
+  persistNow();
+  server.close(()=>process.exit(0));
+  setTimeout(()=>process.exit(0),2000).unref();
+}
+process.on('SIGTERM',()=>gracefulShutdown('SIGTERM'));
+process.on('SIGINT',()=>gracefulShutdown('SIGINT'));
