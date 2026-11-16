@@ -121,6 +121,14 @@ function deviceForToken(lic, deviceId, token) {
   return devices.find(d=>d && String(d.id)===String(deviceId) && d.tokenHash===hash && d.revoked!==true) || null;
 }
 
+function expireStaleLive(device, now=Date.now()) {
+  if(!device || !device.live || device.live.active!==true) return false;
+  const updatedAt=Number(device.live.updatedAt||device.live.startedAt||0);
+  if(!updatedAt || now-updatedAt<=60000) return false;
+  finishLiveSession(device,'heartbeat_timeout',now);
+  return true;
+}
+
 function finishLiveSession(device, reason, now=Date.now()) {
   if(!device) return;
   const live=device.live||{};
@@ -240,7 +248,7 @@ const server=http.createServer(async (req,res)=>{
   const url=new URL(req.url,'http://localhost');
 
   if(url.pathname==='/health'){
-    json(res,200,{ok:true,service:'SAGI CHINA SYNC',version:'2.4.0',licensedMode:REQUIRE_LICENSE,time:Date.now()});
+    json(res,200,{ok:true,service:'SAGI CHINA SYNC',version:'2.5.0',licensedMode:REQUIRE_LICENSE,time:Date.now()});
     return;
   }
 
@@ -282,7 +290,12 @@ const server=http.createServer(async (req,res)=>{
     if(!adminAuthorized(req)){json(res,401,{ok:false,error:'admin_unauthorized'});return;}
     const club=safePart(devicesMatch[1]),lic=store.licenses[club];
     if(!lic){json(res,404,{ok:false,error:'license_not_found'});return;}
-    const devices=(Array.isArray(lic.devices)?lic.devices:[]).map(publicDevice).filter(Boolean);
+    const now=Date.now();
+    let expired=false;
+    const rawDevices=Array.isArray(lic.devices)?lic.devices:[];
+    for(const d of rawDevices){if(expireStaleLive(d,now))expired=true}
+    if(expired){lic.updatedAt=now;schedulePersist()}
+    const devices=rawDevices.map(publicDevice).filter(Boolean);
     json(res,200,{ok:true,clubId:club,devices});return;
   }
 
@@ -306,6 +319,8 @@ const server=http.createServer(async (req,res)=>{
     if(!lic){json(res,404,{ok:false,error:'license_not_found'});return;}
     const device=(Array.isArray(lic.devices)?lic.devices:[]).find(d=>d&&String(d.id)===deviceId);
     if(!device){json(res,404,{ok:false,error:'device_not_found'});return;}
+    const now=Date.now();
+    if(expireStaleLive(device,now)){lic.updatedAt=now;schedulePersist()}
     json(res,200,{ok:true,clubId:club,deviceId,sessions:Array.isArray(device.sessions)?device.sessions:[]});return;
   }
 
