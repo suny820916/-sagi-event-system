@@ -1837,12 +1837,12 @@ function mdRenderPenaltyDirector(){
  if(q('mdPenFirst')){q('mdPenFirst').value=p.firstSide;q('mdPenFirst').disabled=p.started&&p.history.length>0}
  const active=p.started&&!p.finished;[['mdPenHomeGoal','HOME'],['mdPenHomeMiss','HOME'],['mdPenAwayGoal','AWAY'],['mdPenAwayMiss','AWAY']].forEach(([id,side])=>{if(q(id))q(id).disabled=!active||next!==side});
  if(q('mmPenGoal'))q('mmPenGoal').disabled=!active;if(q('mmPenMiss'))q('mmPenMiss').disabled=!active;if(q('mdPenUndo'))q('mdPenUndo').disabled=!p.history.length;if(q('mmPenUndo'))q('mmPenUndo').disabled=!p.history.length;
- if(q('mdPenStart'))q('mdPenStart').textContent=p.started?(p.finished?'点球大战已结束':'点球大战进行中'):'开始点球大战';
- if(q('mmPenStart'))q('mmPenStart').textContent=p.started?(p.finished?'已结束':'进行中'):'开始点球大战';
+ if(q('mdPenStart')){q('mdPenStart').textContent=p.started?(p.finished?'点球大战已结束':'点球大战进行中'):'开始点球大战';q('mdPenStart').disabled=!!p.started}
+ if(q('mmPenStart')){q('mmPenStart').textContent=p.started?(p.finished?'已结束':'进行中'):'开始点球大战';q('mmPenStart').disabled=!!p.started}
  const hint=q('mdPenHint');if(hint){hint.textContent=p.finished?status.next+' · 常规比分 '+matchdayState.homeScore+'-'+matchdayState.awayScore+' · 点球 '+st.homeGoals+'-'+st.awayGoals:(p.started?(mdPenaltySuddenDeath()?'已进入突然死亡 · 双方必须完成同轮后才能判胜':'系统自动轮换主罚方并判断是否提前结束'):'进入后常规比分不会被点球比分覆盖。');hint.classList.toggle('finished',p.finished)}
 }
 async function mdPenaltyStart(){
- const p=mdPenaltyState();if(!p.history.length){p.rounds=Number(q('mdPenRounds')&&q('mdPenRounds').value)||p.rounds;p.firstSide=(q('mdPenFirst')&&q('mdPenFirst').value)==='AWAY'?'AWAY':'HOME'}
+ const p=mdPenaltyState();if(p.finished&&p.history.length){note('点球大战已经结束 · 如需重来请先重置');return}if(p.started&&!p.finished){note('点球大战正在进行');return}if(!p.history.length){p.rounds=Number(q('mdPenRounds')&&q('mdPenRounds').value)||p.rounds;p.firstSide=(q('mdPenFirst')&&q('mdPenFirst').value)==='AWAY'?'AWAY':'HOME'}
  p.started=true;p.finished=false;p.winner='';matchdayState.period='PEN';matchdayState.clockBase=mdNowSeconds();matchdayState.clockRunning=false;matchdayState.clockStartedAt=0;matchdayState.scoreboardVisible=true;mdPenaltyEvaluateWinner();mdRenderPenaltyDirector();await publishMatchday(null);note('点球大战已开始')
 }
 async function mdPenaltyKick(side,result){
