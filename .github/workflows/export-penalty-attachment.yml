@@ -1,0 +1,21 @@
+name: Export SAGI Penalty Sync Attachment
+
+on:
+  push:
+    paths:
+      - "intro/SAGI_VMIX_LAN_V48_PENALTY_SYNC_4235.bat"
+      - ".github/workflows/export-penalty-attachment.yml"
+  workflow_dispatch:
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Upload BAT attachment
+        uses: actions/upload-artifact@v4
+        with:
+          name: SAGI_VMIX_LAN_V48_PENALTY_SYNC_4235
+          path: intro/SAGI_VMIX_LAN_V48_PENALTY_SYNC_4235.bat
+          if-no-files-found: error
+          retention-days: 7
