@@ -202,13 +202,27 @@ server.listen(PORT,'127.0.0.1',async()=>{
     console.log('TEST 4: two-camera manual switching sends distinct vMix inputs');
     vmixCommands=[];
     await page.goto('http://127.0.0.1:'+PORT+'/intro/v45-lan.html',{waitUntil:'domcontentloaded'});
-    await wait(1200);
-    await page.evaluate(()=>{
-      const set=(id,v)=>{const e=document.getElementById(id);if(e)e.value=v};
-      set('vdCam1','1'); set('vdCam2','2'); set('vdDrone',''); set('vdReplay',''); set('vdGraphics','5'); set('vdTransition','Cut'); set('vdDuration','0');
-      vdSave(); refreshCameraRoleUI();
-      setupReadySignature=setupSignatureRaw(); matchReady=true; refreshSetupReadyUI();
-    });
+    await wait(1800);
+
+    // Use only the real operator UI: fill match information, run preflight, press READY,
+    // then press the two camera buttons. No internal page functions are called.
+    await page.locator('#matchCompetition').fill('SAGI SELF TEST CUP');
+    await page.locator('#matchHome').fill('SELF TEST HOME');
+    await page.locator('#matchAway').fill('SELF TEST AWAY');
+    await page.locator('#matchKickoff').fill('2026-11-17T20:00');
+    await page.locator('#matchVenue').fill('SELF TEST STADIUM');
+
+    for (const [id,value] of [['vdCam1','1'],['vdCam2','2'],['vdDrone',''],['vdReplay',''],['vdGraphics','5'],['vdDuration','0']]) {
+      const el=page.locator('#'+id); await el.fill(value); await el.dispatchEvent('change');
+    }
+    await page.locator('#vdTransition').selectOption('Cut');
+    await page.locator('#vdTransition').dispatchEvent('change');
+
+    await page.click('#setupValidateBtn');
+    await page.waitForFunction(()=>!document.querySelector('#setupReadyBtn')?.disabled,null,{timeout:5000});
+    await page.click('#setupReadyBtn');
+    await page.waitForFunction(()=>document.querySelector('#setupReadyBadge')?.textContent.includes('可以播出'),null,{timeout:5000});
+
     await page.click('#vdTakeCam1');
     await page.waitForFunction(()=>document.querySelector('#vdStatus')?.textContent.includes('已执行'),null,{timeout:4000});
     await page.click('#vdTakeCam2');
