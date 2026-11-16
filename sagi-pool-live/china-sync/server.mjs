@@ -85,12 +85,12 @@ function adminRequestAllowed(req) {
     adminFailRate.delete(ip);
     bucket=null;
   }
-  if(bucket && bucket.count>=ADMIN_FAIL_LIMIT){
-    return {ok:false,limited:true,retryAfterMs:Math.max(0,bucket.resetAt-now)};
-  }
   if(adminAuthorized(req)){
     if(bucket) adminFailRate.delete(ip);
     return {ok:true,limited:false,retryAfterMs:0};
+  }
+  if(bucket && bucket.count>=ADMIN_FAIL_LIMIT){
+    return {ok:false,limited:true,retryAfterMs:Math.max(0,bucket.resetAt-now)};
   }
   if(!bucket){
     bucket={count:0,resetAt:now+ADMIN_FAIL_WINDOW_MS};
