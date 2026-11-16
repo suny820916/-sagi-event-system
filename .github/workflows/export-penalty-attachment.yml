@@ -1,9 +1,9 @@
-name: Export SAGI Self Check Attachment
+name: Export SAGI Scorebug Fix Attachment
 
 on:
   push:
     paths:
-      - "intro/SAGI_VMIX_LAN_V48_SELF_CHECK_4263.bat"
+      - "intro/SAGI_VMIX_LAN_V48_SCOREBUG_FIX_4264.bat"
       - ".github/workflows/export-penalty-attachment.yml"
   workflow_dispatch:
 
@@ -15,7 +15,7 @@ jobs:
       - name: Upload BAT attachment
         uses: actions/upload-artifact@v4
         with:
-          name: SAGI_VMIX_LAN_V48_SELF_CHECK_4263
-          path: intro/SAGI_VMIX_LAN_V48_SELF_CHECK_4263.bat
+          name: SAGI_VMIX_LAN_V48_SCOREBUG_FIX_4264
+          path: intro/SAGI_VMIX_LAN_V48_SCOREBUG_FIX_4264.bat
           if-no-files-found: error
           retention-days: 7
