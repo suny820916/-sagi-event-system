@@ -5,6 +5,10 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
     <uses-feature android:name="android.hardware.camera.any" android:required="true"/>
     <uses-feature android:name="android.hardware.microphone" android:required="false"/>
@@ -17,6 +21,11 @@
         android:label="SAGI POOL LIVE"
         android:theme="@style/Theme.SagiPool"
         android:usesCleartextTraffic="true">
+        <service
+            android:name=".LiveKeepAliveService"
+            android:exported="false"
+            android:foregroundServiceType="camera|microphone"/>
+
         <activity
             android:name=".MainActivity"
             android:configChanges="orientation|screenSize"
