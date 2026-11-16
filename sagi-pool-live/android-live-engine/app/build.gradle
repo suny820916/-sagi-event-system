@@ -5,6 +5,10 @@ plugins {
 def liveLicenceUrl = System.getenv("TENCENT_LIVE_LICENSE_URL") ?: ""
 def liveLicenceKey = System.getenv("TENCENT_LIVE_LICENSE_KEY") ?: ""
 def defaultSyncUrl = System.getenv("SAGI_DEFAULT_SYNC_URL") ?: ""
+def releaseStorePath = System.getenv("SAGI_KEYSTORE_PATH") ?: ""
+def releaseStorePassword = System.getenv("SAGI_KEYSTORE_PASSWORD") ?: ""
+def releaseKeyAlias = System.getenv("SAGI_KEY_ALIAS") ?: ""
+def releaseKeyPassword = System.getenv("SAGI_KEY_PASSWORD") ?: ""
 
 android {
     namespace 'com.sagi.poollive'
@@ -14,8 +18,8 @@ android {
         applicationId "com.sagi.poollive"
         minSdk 23
         targetSdk 35
-        versionCode 6
-        versionName "0.6.0"
+        versionCode 7
+        versionName "0.7.0"
 
         buildConfigField "String", "LIVE_LICENSE_URL", '"' + liveLicenceUrl.replace('"','\\\"') + '"'
         buildConfigField "String", "LIVE_LICENSE_KEY", '"' + liveLicenceKey.replace('"','\\\"') + '"'
@@ -23,6 +27,27 @@ android {
     }
 
     buildFeatures { buildConfig true }
+
+    signingConfigs {
+        if (!releaseStorePath.isEmpty()) {
+            release {
+                storeFile file(releaseStorePath)
+                storePassword releaseStorePassword
+                keyAlias releaseKeyAlias
+                keyPassword releaseKeyPassword
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            shrinkResources false
+            if (!releaseStorePath.isEmpty()) {
+                signingConfig signingConfigs.release
+            }
+        }
+    }
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
