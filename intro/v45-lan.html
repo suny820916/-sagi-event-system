@@ -789,6 +789,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
             <label class="fileBtn riCamera">📷 拍照识别<input id="rosterCameraFile" type="file" accept="image/*" capture="environment"></label>
             <label class="fileBtn riFile">📦 导入球队资料包 / 文件<input id="rosterImportFile" type="file" accept=".zip,application/zip,application/x-zip-compressed,image/*,.txt,.csv,.tsv,.json,.xlsx,.xls,.docx,.pdf,text/plain,text/csv,application/json,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.wordprocessingml.document"></label>
             <button id="rosterPasteToggle" class="riPasteBtn" type="button">⌨ 粘贴名单</button>
+            <button id="rosterTemplateBtn" type="button">⬇ 球队填报 Excel 模板</button>
           </div>
           <div id="rosterPaste" class="riPaste"><textarea id="rosterPasteText" placeholder="可直接粘贴：&#10;1  张三  GK  首发&#10;5  李四  CB  首发&#10;10 王五  CM  首发&#10;9  赵六  ST  首发&#10;18 阿力  MF  替补"></textarea><div class="riPasteActions"><button id="rosterParsePaste" class="ok" type="button">解析文字</button><button id="rosterPasteClear" type="button">清空</button></div></div>
           <div id="rosterImportStatus" class="riStatus">推荐球队资料包：ZIP 内放 1 个 Excel/CSV 名单 + photos 球员照片 + 可选队徽。系统自动按号码/姓名匹配照片；导入前会显示匹配结果。</div>
@@ -1877,6 +1878,7 @@ function riRowsFromJsonData(data){
  }).filter(p=>p.name)
 }
 async function riReadTeamZip(file){
+ if(file.size>120*1024*1024)throw new Error('ZIP 超过 120MB。请先压缩球员照片后重新打包');
  riStatus('正在打开球队 ZIP 资料包…','work');await riLoadScript(RI_LIBS.jszip,'JSZip',20000);
  const zip=await JSZip.loadAsync(await file.arrayBuffer()),entries=Object.values(zip.files).filter(x=>!x.dir&&!x.name.startsWith('__MACOSX/')&&!/\/\./.test(x.name));
  const rosterFiles=entries.filter(x=>['xlsx','xls','csv','tsv','txt','json'].includes(riExt(x.name)));
@@ -1981,6 +1983,32 @@ async function riReadImage(file){
  const worker=await Tesseract.createWorker('chi_sim+eng',1,{logger:m=>{if(m&&m.status){const pct=Number.isFinite(m.progress)?' '+Math.round(m.progress*100)+'%':'';riStatus('照片识别：'+m.status+pct,'work')}}});
  try{const r=await worker.recognize(cv);return riParseText(r.data&&r.data.text||'')}finally{await worker.terminate()}
 }
+
+async function riDownloadTeamTemplate(){
+ try{
+  riStatus('正在生成球队填报模板…','work');await riLoadScript(RI_LIBS.xlsx,'XLSX',20000);
+  const header=['球队名称','号码','姓名','首发/替补','位置组','详细位置','队长','照片文件名'];
+  const sample=[
+   ['示例足球队','1','张三','首发','GK','GK','否','01_张三.jpg'],
+   ['示例足球队','4','李四','首发','DF','CB','是','04_李四.jpg'],
+   ['示例足球队','8','王五','首发','MF','CM','否','08_王五.jpg'],
+   ['示例足球队','9','赵六','首发','FW','ST','否','09_赵六.jpg'],
+   ['示例足球队','18','阿力','替补','MF','CM','否','18_阿力.jpg']
+  ];
+  const ws=XLSX.utils.aoa_to_sheet([header,...sample]);ws['!cols']=[{wch:16},{wch:8},{wch:14},{wch:12},{wch:10},{wch:12},{wch:8},{wch:22}];
+  const guide=XLSX.utils.aoa_to_sheet([
+   ['SAGI 球队填报说明'],
+   ['1','填写“名单”工作表，每名球员一行。'],
+   ['2','位置组只填 GK / DF / MF / FW；详细位置可填 GK、CB、LB、RB、DM、CM、AM、LW、RW、ST 等。'],
+   ['3','照片建议使用 JPG/PNG，文件名使用“号码_姓名.jpg”，例如 10_马尔胡兰.jpg。'],
+   ['4','把 Excel、photos 文件夹、可选“队徽.png”放在同一个文件夹内，压缩成 ZIP 后发送。'],
+   ['5','导播收到 ZIP 后：选择 HOME/AWAY → 导入球队资料包 → 检查照片匹配 → 确认替换。'],
+   ['6','不要在同一个 ZIP 中放两支球队。建议单队 ZIP 控制在 120MB 以内。']
+  ]);guide['!cols']=[{wch:6},{wch:88}];
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'名单');XLSX.utils.book_append_sheet(wb,guide,'填报说明');
+  XLSX.writeFile(wb,'SAGI_球队大名单填报模板.xlsx');riStatus('球队填报模板已生成。填好后与 photos 文件夹、队徽一起压缩成 ZIP。','ok')
+ }catch(e){riStatus('模板生成失败：'+(e&&e.message||'未知错误'),'bad')}
+}
 async function riHandleFile(file){
  if(!file)return;const seq=++rosterImportSeq,ext=riExt(file.name),type=String(file.type||'').toLowerCase();rosterImportTeamMeta={name:'',crest:'',source:'',photoCount:0};riStatus('读取 '+file.name+'…','work');
  try{
@@ -2017,7 +2045,7 @@ function riCommit(){
  q('rosterImportPreview').classList.remove('on');rosterImportDraft=[];rosterImportTeamMeta={name:'',crest:'',source:'',photoCount:0};syncMatchStage();renderPreviews();if(typeof refreshUXDashboard==='function')refreshUXDashboard();if(typeof uxQueueAutoSave==='function')uxQueueAutoSave();note('名单替换完成 · '+roster.length+' 人 · 照片 '+photoCount)
 }
 function initRosterImport(){
- q('rosterPasteToggle').onclick=()=>q('rosterPaste').classList.toggle('on');q('rosterPasteClear').onclick=()=>{q('rosterPasteText').value=''};
+ q('rosterPasteToggle').onclick=()=>q('rosterPaste').classList.toggle('on');q('rosterPasteClear').onclick=()=>{q('rosterPasteText').value=''};q('rosterTemplateBtn').onclick=riDownloadTeamTemplate;
  q('rosterParsePaste').onclick=()=>riSetDraft(riParseText(q('rosterPasteText').value),'粘贴文字');
  q('rosterCameraFile').onchange=e=>{const f=e.target.files&&e.target.files[0];riHandleFile(f);e.target.value=''};
  q('rosterImportFile').onchange=e=>{const f=e.target.files&&e.target.files[0];riHandleFile(f);e.target.value=''};
