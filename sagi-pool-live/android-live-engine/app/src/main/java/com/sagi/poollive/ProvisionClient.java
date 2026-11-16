@@ -44,10 +44,10 @@ public final class ProvisionClient {
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final Handler main = new Handler(Looper.getMainLooper());
 
-    public void claim(String baseUrl, String code, Callback callback) {
+    public void claim(String baseUrl, String code, String deviceId, String deviceLabel, Callback callback) {
         executor.execute(() -> {
             try {
-                Config config = claimBlocking(baseUrl, code);
+                Config config = claimBlocking(baseUrl, code, deviceId, deviceLabel);
                 main.post(() -> callback.onSuccess(config));
             } catch (Exception e) {
                 String msg = e.getMessage() == null ? "安装码领取失败" : e.getMessage();
@@ -60,7 +60,7 @@ public final class ProvisionClient {
         executor.shutdownNow();
     }
 
-    private Config claimBlocking(String baseUrl, String code) throws Exception {
+    private Config claimBlocking(String baseUrl, String code, String deviceId, String deviceLabel) throws Exception {
         String base = baseUrl.replaceAll("/+$", "");
         HttpURLConnection c = (HttpURLConnection)
                 new URL(base + "/api/provision/claim").openConnection();
@@ -72,6 +72,8 @@ public final class ProvisionClient {
 
         JSONObject request = new JSONObject();
         request.put("code", code.trim().toUpperCase());
+        request.put("deviceId", deviceId == null ? "" : deviceId);
+        request.put("deviceLabel", deviceLabel == null ? "SAGI Android" : deviceLabel);
 
         try (OutputStream out = c.getOutputStream()) {
             out.write(request.toString().getBytes(StandardCharsets.UTF_8));
