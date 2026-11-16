@@ -147,7 +147,7 @@ function refreshUX(){const v=validate(),cur=side==='HOME'?v.h:v.a;q('homeTabMeta
  if(q('packageState')){q('packageState').textContent=v.ready?'READY':'WAITING';q('packageState').classList.toggle('ok',v.ready)}
  if(q('packageGenerate'))q('packageGenerate').disabled=!v.ready;
  if(q('packageHint'))q('packageHint').textContent=v.ready?'一键生成：比赛信息 + 双队名单 + 首发/替补 + 队徽 + 球员照片 + 名单备份。':'还差：'+miss.join(' · ');
- setTimeout(()=>{try{renderOps()}catch(e){}},0);return v
+ setTimeout(()=>{try{renderOps()}catch(e){}},0);return v}
 const n=()=>Math.max(3,Math.min(15,+q('count').value||11)),df=()=>((F[n()]||[])[0]||String(n()-1));
 function formations(){const a=F[n()]||[df()],old=m[side].formation;q('formation').innerHTML=a.map(x=>'<option>'+x+'</option>').join('');m[side].formation=a.includes(old)?old:a[0];q('formation').value=m[side].formation}
 function stash(){m[side].name=q('teamName').value.trim();m[side].formation=q('formation').value||df()}
