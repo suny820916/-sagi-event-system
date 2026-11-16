@@ -1,0 +1,93 @@
+name: SAGI VIEWPOINT V5.9 TEACTICS PIRLO ARC COLLISION FIX
+
+concurrency:
+  group: sagi-viewpoint-v59-attack-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "cloud-blender-worker/presets/christmas_tree_attack_viewpoint_v59.json"
+      - ".github/workflows/sagi-viewpoint-v59-attack.yml"
+      - "cloud-blender-worker/engine/sagi_tactical_execution_director_v57.py"
+  workflow_dispatch:
+
+jobs:
+  render-viewpoint-v59:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Blender image
+        run: docker build -t sagi-viewpoint-v59 ./cloud-blender-worker
+
+      - name: Render and compose V5.9
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p viewpoint_v59_out
+          docker run --rm \
+            -v "$PWD/viewpoint_v59_out:/out" \
+            sagi-viewpoint-v59 \
+            bash -lc '
+              set -euo pipefail
+              apt-get update -qq
+              apt-get install -y -qq --no-install-recommends fonts-dejavu-core >/dev/null
+
+              blender --background \
+                --python /app/engine/sagi_tactical_execution_director_v57.py \
+                -- \
+                /app/presets/christmas_tree_attack_viewpoint_v59.json \
+                /out
+
+              ffmpeg -y -loglevel error \
+                -framerate 30 \
+                -i /out/frames/frame_%04d.png \
+                -f lavfi \
+                -i anullsrc=channel_layout=stereo:sample_rate=44100 \
+                -map 0:v:0 -map 1:a:0 \
+                -c:v libx264 -profile:v baseline -level 3.1 \
+                -pix_fmt yuv420p -preset veryfast -crf 20 \
+                -c:a aac -b:a 64k -shortest -movflags +faststart \
+                /out/SAGI_VIEWPOINT_V5_9_BASE.mp4
+
+              cp /app/presets/v59_titles.ass /out/v59_titles.ass
+
+              ffmpeg -y -loglevel error \
+                -i /out/SAGI_VIEWPOINT_V5_9_BASE.mp4 \
+                -vf "ass=/out/v59_titles.ass" \
+                -c:v libx264 -profile:v baseline -level 3.1 \
+                -pix_fmt yuv420p -preset veryfast -crf 20 \
+                -c:a copy -movflags +faststart \
+                /out/SAGI_VIEWPOINT_V5_9_ATTACK_00_43.mp4
+
+              ffmpeg -y -loglevel error \
+                -ss 12 -t 31 \
+                -i /out/SAGI_VIEWPOINT_V5_9_ATTACK_00_43.mp4 \
+                -c:v libx264 -pix_fmt yuv420p -crf 20 -preset veryfast -c:a aac \
+                /out/SAGI_VIEWPOINT_V5_9_ATTACK_12_43.mp4
+
+              rm -f /out/SAGI_VIEWPOINT_V5_9_BASE.mp4
+            '
+
+          sudo chown -R "$USER":"$USER" viewpoint_v59_out
+          test -s viewpoint_v59_out/SAGI_VIEWPOINT_V5_9_ATTACK_00_43.mp4
+          test -s viewpoint_v59_out/SAGI_VIEWPOINT_V5_9_ATTACK_12_43.mp4
+          test -s viewpoint_v59_out/execution_report.json
+          test -s viewpoint_v59_out/scene.blend
+
+      - name: Upload V5.9 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SAGI-VIEWPOINT-V5.9-TEACTICS-PIRLO-ARC-COLLISION-FIX
+          path: |
+            viewpoint_v59_out/SAGI_VIEWPOINT_V5_9_ATTACK_00_43.mp4
+            viewpoint_v59_out/SAGI_VIEWPOINT_V5_9_ATTACK_12_43.mp4
+            viewpoint_v59_out/execution_report.json
+            viewpoint_v59_out/scene.blend
+            viewpoint_v59_out/v59_titles.ass
+            cloud-blender-worker/presets/christmas_tree_attack_viewpoint_v59.json
+          retention-days: 7
