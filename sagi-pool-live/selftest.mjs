@@ -309,6 +309,16 @@ async function e2eCommercial(){
     check(adminWrong3.status===429&&adminWrong3Data.error==='admin_rate_limited','Admin failure rate limit failed');
     const adminRecovery=await fetch(base+'/api/admin/licenses',{headers:{'X-SAGI-Admin':'admin-secret'}});
     check(adminRecovery.ok,'Valid admin credential must bypass and reset failure throttle');
+
+    await new Promise(r=>setTimeout(r,200));
+    const adminStatus=await fetch(base+'/api/admin/status',{headers:{'X-SAGI-Admin':'admin-secret'}});
+    const adminStatusData=await adminStatus.json();
+    check(adminStatus.ok&&adminStatusData.version==='2.9.0','Admin status endpoint/version failed');
+    check(Number(adminStatusData.counts?.licenses||0)>=1,'Admin status license count failed');
+    check(Number(adminStatusData.counts?.activeDevices||0)>=1,'Admin status active-device count failed');
+    check(typeof adminStatusData.storage?.directoryWritable==='boolean','Admin status storage health missing');
+    const adminStatusUnauthorized=await fetch(base+'/api/admin/status',{headers:{'X-SAGI-Admin':'wrong-status'}});
+    check(adminStatusUnauthorized.status===401,'Admin status must reject unauthorized access');
     const listedLicense=listData.licenses.find(x=>x.clubId==='TEST-CLUB');
     check(Number(listedLicense?.deviceCount||0)===1,'License device count failed');
 
@@ -370,7 +380,7 @@ if(failures.length){
   failures.forEach((x,i)=>console.error((i+1)+'. '+x));
   process.exit(1);
 }
-console.log('SAGI POOL LIVE CHINA V2.8 SELF-CHECK: PASSED');
+console.log('SAGI POOL LIVE CHINA V2.9 SELF-CHECK: PASSED');
 console.log('✓ Scorer / club / live / seller JavaScript');
 console.log('✓ PWA cache and core billiards scoring');
 console.log('✓ China sync real read/write flow');
@@ -381,6 +391,7 @@ console.log('✓ One-time install code → per-device token');
 console.log('✓ Install code one-use enforcement');
 console.log('✓ Provision claim IP rate limiting');
 console.log('✓ Admin failed-auth rate limiting with valid-key recovery');
+console.log('✓ Admin service/storage health status');
 console.log('✓ Device inventory and per-device remote revoke');
 console.log('✓ Live start / heartbeat / stop telemetry');
 console.log('✓ Live session history and remote-revoke closure');
