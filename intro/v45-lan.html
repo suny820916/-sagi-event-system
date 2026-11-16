@@ -2079,7 +2079,7 @@ function mdCloudSnapshot(event=null){
   commandId:Date.now()+'_'+Math.random().toString(36).slice(2,7),
   visualVersion:'V4.26.6-LIVE-SCORE-GOAL-DIRECTOR',
   home:homeName,away:awayName,homeShort:matchdayState.homeShort||homeName,awayShort:matchdayState.awayShort||awayName,
-  homeCrest:(teamStore.HOME&&teamStore.HOME.crest)||'',awayCrest:(teamStore.AWAY&&teamStore.AWAY.crest)||'',competition:q('matchCompetition').value.trim()||'SAGI FOOTBALL',
+  homeCrest:(teamStore.HOME&&teamStore.HOME.crest)||'',awayCrest:(teamStore.AWAY&&teamStore.AWAY.crest)||'',eventLogo:assets.eventLogo||'',competition:q('matchCompetition').value.trim()||'SAGI FOOTBALL',
   homeScore:matchdayState.homeScore,awayScore:matchdayState.awayScore,scoreboardVisible:!!matchdayState.scoreboardVisible,scoreboardFrozen:!!matchdayState.scoreboardFrozen,
   homeColor:matchdayState.homeColor||'#d8b55b',awayColor:matchdayState.awayColor||'#4c7dff',accentColor:matchdayState.accentColor||'#f4f0e8',
   homeRedCards:Number(matchdayState.homeRedCards)||0,awayRedCards:Number(matchdayState.awayRedCards)||0,homePen:Number(matchdayState.homePen)||0,awayPen:Number(matchdayState.awayPen)||0,penaltyShootout:mdPenaltySnapshot(),simplePenalty:mdSimplePenaltySnapshot(),
