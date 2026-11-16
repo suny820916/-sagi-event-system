@@ -13,6 +13,8 @@ const admin = read('admin.html');
 const manifestText = read('manifest.webmanifest');
 const sw = read('sw.js');
 const serverPath = fileURLToPath(new URL('china-sync/server.mjs', root));
+const backupToolPath = fileURLToPath(new URL('china-sync/backup.mjs', root));
+const restoreToolPath = fileURLToPath(new URL('china-sync/restore.mjs', root));
 
 const failures = [];
 function check(ok, msg){ if(!ok) failures.push(msg); }
@@ -33,6 +35,10 @@ try{new Function(sw)}catch(e){failures.push('sw.js syntax error: '+e.message)}
 
 const serverCheck=spawnSync(process.execPath,['--check',serverPath],{encoding:'utf8'});
 check(serverCheck.status===0,'China sync server syntax error: '+(serverCheck.stderr||serverCheck.stdout||'unknown'));
+const backupCheck=spawnSync(process.execPath,['--check',backupToolPath],{encoding:'utf8'});
+check(backupCheck.status===0,'Backup utility syntax error: '+(backupCheck.stderr||backupCheck.stdout||'unknown'));
+const restoreCheck=spawnSync(process.execPath,['--check',restoreToolPath],{encoding:'utf8'});
+check(restoreCheck.status===0,'Restore utility syntax error: '+(restoreCheck.stderr||restoreCheck.stdout||'unknown'));
 
 const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);
 const dup=[...new Set(ids.filter((x,i)=>ids.indexOf(x)!==i))];
@@ -138,6 +144,51 @@ async function e2ePersistence(){
   }finally{
     await stopChild(child);
     for(const p of [tmp,backup,tmp+'.tmp']){try{fs.rmSync(p,{force:true})}catch{}}
+  }
+}
+
+async function e2eBackupTools(){
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'sagi-pool-tools-selftest-'));
+  const source=path.join(dir,'data.json');
+  const backupDir=path.join(dir,'backups');
+  const restored=path.join(dir,'restored.json');
+  try{
+    const sourceStore={
+      rooms:{'TOOL-CLUB::01桌':{clubId:'TOOL-CLUB',table:'01桌',state:{mode:'8ball',players:[{name:'A',wins:3},{name:'B',wins:2}]},updatedAt:Date.now()}},
+      licenses:{'TOOL-CLUB':{clubId:'TOOL-CLUB',clubName:'工具测试球房',tokenHash:'hash-only',maxTables:2,devices:[],createdAt:Date.now(),updatedAt:Date.now()}}
+    };
+    fs.writeFileSync(source,JSON.stringify(sourceStore,null,2));
+
+    const backupRun=spawnSync(process.execPath,[backupToolPath],{
+      encoding:'utf8',
+      env:{...process.env,SAGI_DATA_FILE:source,SAGI_BACKUP_DIR:backupDir,SAGI_BACKUP_RETENTION_DAYS:'14'}
+    });
+    check(backupRun.status===0,'Backup utility execution failed: '+(backupRun.stderr||backupRun.stdout||'unknown'));
+    const backups=fs.existsSync(backupDir)?fs.readdirSync(backupDir).filter(n=>n.endsWith('.json.gz')):[];
+    check(backups.length===1,'Backup utility should create one gzip snapshot');
+    if(!backups.length)return;
+    const backupFile=path.join(backupDir,backups[0]);
+
+    const denied=spawnSync(process.execPath,[restoreToolPath,backupFile],{
+      encoding:'utf8',
+      env:{...process.env,SAGI_DATA_FILE:restored}
+    });
+    check(denied.status===4,'Restore utility must require explicit confirmation');
+
+    const restoredRun=spawnSync(process.execPath,[restoreToolPath,backupFile],{
+      encoding:'utf8',
+      env:{...process.env,SAGI_DATA_FILE:restored,SAGI_CONFIRM_RESTORE:'YES'}
+    });
+    check(restoredRun.status===0,'Confirmed restore failed: '+(restoredRun.stderr||restoredRun.stdout||'unknown'));
+    const restoredStore=JSON.parse(fs.readFileSync(restored,'utf8'));
+    check(Object.keys(restoredStore.rooms||{}).length===1,'Restored backup room count mismatch');
+    check(Object.keys(restoredStore.licenses||{}).length===1,'Restored backup license count mismatch');
+    check(restoredStore.licenses?.['TOOL-CLUB']?.tokenHash==='hash-only','Restored license data mismatch');
+    check(fs.existsSync(restored+'.bak'),'Restore utility should create post-restore .bak');
+  }catch(e){
+    failures.push('Backup/restore tools E2E error: '+e.message);
+  }finally{
+    try{fs.rmSync(dir,{recursive:true,force:true})}catch{}
   }
 }
 
@@ -385,6 +436,7 @@ async function e2eCommercial(){
 
 await e2eCommercial();
 await e2ePersistence();
+await e2eBackupTools();
 
 if(failures.length){
   console.error('\nSAGI POOL LIVE SELF-CHECK: FAILED');
@@ -410,4 +462,5 @@ console.log('✓ Live session history and remote-revoke closure');
 console.log('✓ Stale live heartbeat timeout auto-close');
 console.log('✓ Graceful shutdown persistence and restart');
 console.log('✓ Corrupt main-file recovery from .bak');
+console.log('✓ Scheduled backup and guarded restore utilities');
 console.log('✓ Admin license listing and revoke');
