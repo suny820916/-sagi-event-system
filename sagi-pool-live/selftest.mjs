@@ -56,6 +56,7 @@ check(html.includes('授权无效或已到期'),'License error UI missing from s
 check(club.includes('/api/clubs/'),'Club cloud endpoint missing');
 check(live.includes('/api/rooms/'),'Live screen cloud endpoint missing');
 check(admin.includes('/api/admin/licenses'),'Seller license endpoint missing');
+check(admin.includes('/api/admin/provisions'),'Seller installation-code endpoint missing');
 check(sw.includes('./club.html')&&sw.includes('./live.html')&&sw.includes('./admin.html'),'Offline cache missing product pages');
 
 async function waitHealth(base){
@@ -119,9 +120,41 @@ async function e2eCommercial(){
     check(all.ok&&allData.rooms?.length===1,'Club list failed');
     check(allData.rooms?.[0]?.state?.mode==='chase6','Club list missing full room state');
 
-    const over=await fetch(base+'/api/rooms/TEST-CLUB/03%E6%A1%8C',{headers:{'X-SAGI-Token':'club-secret'}});
+    const provision=await fetch(base+'/api/admin/provisions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-SAGI-Admin':'admin-secret'},
+      body:JSON.stringify({clubId:'TEST-CLUB',table:'02桌'})
+    });
+    const provisionData=await provision.json();
+    check(provision.ok&&/^[2-9A-HJ-NP-Z]{8}$/.test(provisionData.provision?.code||''),'Provision code creation failed');
+
+    const installCode=provisionData.provision.code;
+    const claim=await fetch(base+'/api/provision/claim',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({code:installCode})
+    });
+    const claimData=await claim.json();
+    check(claim.ok&&claimData.config?.clubId==='TEST-CLUB','Provision claim failed');
+    check(claimData.config?.table==='02桌','Provision table binding failed');
+    check((claimData.config?.token||'').length>=32,'Provision device token missing');
+
+    const reuse=await fetch(base+'/api/provision/claim',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({code:installCode})
+    });
+    check(reuse.status===404||reuse.status===410,'Provision code must be one-time');
+
+    const deviceToken=claimData.config.token;
+    const deviceRead=await fetch(base+'/api/rooms/TEST-CLUB/02%E6%A1%8C',{
+      headers:{'X-SAGI-Token':deviceToken}
+    });
+    check(deviceRead.ok,'Provisioned device token authorization failed');
+
+    const over=await fetch(base+'/api/rooms/TEST-CLUB/03%E6%A1%8C',{headers:{'X-SAGI-Token':deviceToken}});
     const overData=await over.json();
-    check(over.status===403&&overData.error==='table_limit_exceeded','Table limit enforcement failed');
+    check(over.status===403&&overData.error==='table_limit_exceeded','Table limit enforcement failed for device token');
 
     const list=await fetch(base+'/api/admin/licenses',{headers:{'X-SAGI-Admin':'admin-secret'}});
     const listData=await list.json();
@@ -147,11 +180,13 @@ if(failures.length){
   failures.forEach((x,i)=>console.error((i+1)+'. '+x));
   process.exit(1);
 }
-console.log('SAGI POOL LIVE CHINA V2.1 SELF-CHECK: PASSED');
+console.log('SAGI POOL LIVE CHINA V2.2 SELF-CHECK: PASSED');
 console.log('✓ Scorer / club / live / seller JavaScript');
 console.log('✓ PWA cache and core billiards scoring');
 console.log('✓ China sync real read/write flow');
 console.log('✓ Per-club license issuance');
 console.log('✓ Wrong-token rejection');
 console.log('✓ Purchased table-count enforcement');
+console.log('✓ One-time install code → per-device token');
+console.log('✓ Install code one-use enforcement');
 console.log('✓ Admin license listing and revoke');
