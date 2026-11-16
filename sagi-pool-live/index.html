@@ -195,8 +195,9 @@ button{cursor:pointer}
     return id;
   }
   function loadSync(){
-    try{return Object.assign({url:'',clubId:'SAGI-DEMO',token:''},JSON.parse(localStorage.getItem(SYNC_KEY)||'{}'))}
-    catch(e){return{url:'',clubId:'SAGI-DEMO',token:''}}
+    const auto=((location.protocol==='https:'&&!location.hostname.endsWith('github.io'))?location.origin:'');
+    try{return Object.assign({url:auto,clubId:'SAGI-DEMO',token:''},JSON.parse(localStorage.getItem(SYNC_KEY)||'{}'))}
+    catch(e){return{url:auto,clubId:'SAGI-DEMO',token:''}}
   }
   function normUrl(v){return String(v||'').trim().replace(/\/+$/,'')}
   function load(){
