@@ -1785,6 +1785,78 @@ let graphicsDirectorSettings={enabled:true,autoReplay:false,replayHold:3500,retu
 let smartDirectorSettings={enabled:true,autoTake:false},smartCue={slot:'cam1',title:'保持主机位',reason:'等待比赛事件',confidence:70,eventType:'IDLE'};
 let shotSafetySettings={enabled:true,minShotMs:3000,cooldownMs:2000,bounceMs:6000,attackLockMs:12000},shotSafetyState={currentSlot:'',previousSlot:'',lastSwitchAt:0,lastAutoSwitchAt:0,attackLockUntil:0,lastBlock:'',switchCount:0};
 function mdPeriodName(p){return({'1H':'上半场','2H':'下半场','ET1':'加时上半场','ET2':'加时下半场','PEN':'点球大战'})[p]||p}
+function mdPenaltyState(){
+ let p=matchdayState.penaltyShootout;if(!p||typeof p!=='object')p={};
+ if(!Array.isArray(p.history))p.history=[];
+ p.rounds=[3,5].includes(Number(p.rounds))?Number(p.rounds):5;
+ p.firstSide=p.firstSide==='AWAY'?'AWAY':'HOME';p.started=!!p.started;p.winner=p.winner==='AWAY'?'AWAY':p.winner==='HOME'?'HOME':'';p.finished=!!p.finished;matchdayState.penaltyShootout=p;return p
+}
+function mdPenaltyStats(){
+ const p=mdPenaltyState(),h=p.history||[],home=h.filter(x=>x.side==='HOME'),away=h.filter(x=>x.side==='AWAY');
+ return{homeAttempts:home.length,awayAttempts:away.length,homeGoals:home.filter(x=>x.result==='GOAL').length,awayGoals:away.filter(x=>x.result==='GOAL').length}
+}
+function mdPenaltyNextSide(){
+ const p=mdPenaltyState();if(p.finished)return'';const n=p.history.length;return n%2===0?p.firstSide:(p.firstSide==='HOME'?'AWAY':'HOME')
+}
+function mdPenaltyCurrentRound(){const st=mdPenaltyStats();return Math.min(st.homeAttempts,st.awayAttempts)+1}
+function mdPenaltySuddenDeath(){
+ const p=mdPenaltyState(),st=mdPenaltyStats(),r=p.rounds;return Math.min(st.homeAttempts,st.awayAttempts)>=r||Math.max(st.homeAttempts,st.awayAttempts)>r
+}
+function mdPenaltyEvaluateWinner(){
+ const p=mdPenaltyState(),st=mdPenaltyStats(),r=p.rounds;let winner='';
+ if(st.homeAttempts<=r&&st.awayAttempts<=r){
+  const remH=Math.max(0,r-st.homeAttempts),remA=Math.max(0,r-st.awayAttempts);
+  if(st.homeGoals>st.awayGoals+remA)winner='HOME';
+  else if(st.awayGoals>st.homeGoals+remH)winner='AWAY'
+ }
+ if(!winner&&st.homeAttempts===st.awayAttempts&&st.homeAttempts>=r&&st.homeGoals!==st.awayGoals)winner=st.homeGoals>st.awayGoals?'HOME':'AWAY';
+ p.winner=winner;p.finished=!!winner;matchdayState.homePen=st.homeGoals;matchdayState.awayPen=st.awayGoals;return winner
+}
+function mdPenaltyDots(side,compact=false){
+ const p=mdPenaltyState(),h=p.history.filter(x=>x.side===side),r=p.rounds,total=Math.max(r,h.length+(p.finished?0:1)),next=mdPenaltyNextSide(),st=mdPenaltyStats(),attempts=side==='HOME'?st.homeAttempts:st.awayAttempts;
+ return Array.from({length:Math.min(12,total)},(_,i)=>{const x=h[i],cls=x?(x.result==='GOAL'?'goal':'miss'):'pending'+((side===next&&i===attempts)?' current':'');return'<i class="penDot '+cls+'"></i>'}).join('')
+}
+function mdPenaltyStatus(){
+ const p=mdPenaltyState(),st=mdPenaltyStats(),home=q('matchHome').value.trim()||'主队',away=q('matchAway').value.trim()||'客队';
+ if(p.finished)return{stage:'点球大战结束',next:(p.winner==='HOME'?home:away)+' 获胜',winner:p.winner};
+ if(!p.started)return{stage:'等待开始',next:'常规比分保持不变',winner:''};
+ const sudden=mdPenaltySuddenDeath(),round=mdPenaltyCurrentRound(),next=mdPenaltyNextSide(),name=next==='HOME'?home:away;
+ return{stage:sudden?'突然死亡':'第 '+round+' 轮',next:'当前主罚 · '+name,winner:''}
+}
+function mdPenaltySnapshot(){
+ const p=mdPenaltyState(),st=mdPenaltyStats(),status=mdPenaltyStatus();
+ return{started:p.started,rounds:p.rounds,firstSide:p.firstSide,history:(p.history||[]).slice(0,24),winner:p.winner||'',finished:!!p.finished,nextSide:mdPenaltyNextSide(),currentRound:mdPenaltyCurrentRound(),suddenDeath:mdPenaltySuddenDeath(),homeAttempts:st.homeAttempts,awayAttempts:st.awayAttempts,homeGoals:st.homeGoals,awayGoals:st.awayGoals,status:status.stage}
+}
+function mdRenderPenaltyDirector(){
+ const p=mdPenaltyState(),st=mdPenaltyStats(),status=mdPenaltyStatus(),next=mdPenaltyNextSide(),home=q('matchHome').value.trim()||'主队',away=q('matchAway').value.trim()||'客队';
+ const set=(id,val)=>{const e=q(id);if(e)e.textContent=val};
+ set('mdPenHomeName',home);set('mdPenAwayName',away);set('mdPenHomeScore',st.homeGoals);set('mdPenAwayScore',st.awayGoals);set('mdPenStage',status.stage);set('mdPenNext',status.next);
+ set('mmPenHomeName',matchdayState.homeShort||mdShortAuto(home,'主队'));set('mmPenAwayName',matchdayState.awayShort||mdShortAuto(away,'客队'));set('mmPenHomeScore',st.homeGoals);set('mmPenAwayScore',st.awayGoals);set('mmPenStage',status.stage);set('mmPenNext',status.next);
+ ['mdPenHomeDots','mmPenHomeDots'].forEach(id=>{if(q(id))q(id).innerHTML=mdPenaltyDots('HOME',id.startsWith('mm'))});['mdPenAwayDots','mmPenAwayDots'].forEach(id=>{if(q(id))q(id).innerHTML=mdPenaltyDots('AWAY',id.startsWith('mm'))});
+ if(q('mdPenRounds')){q('mdPenRounds').value=String(p.rounds);q('mdPenRounds').disabled=p.started&&p.history.length>0}
+ if(q('mdPenFirst')){q('mdPenFirst').value=p.firstSide;q('mdPenFirst').disabled=p.started&&p.history.length>0}
+ const active=p.started&&!p.finished;[['mdPenHomeGoal','HOME'],['mdPenHomeMiss','HOME'],['mdPenAwayGoal','AWAY'],['mdPenAwayMiss','AWAY']].forEach(([id,side])=>{if(q(id))q(id).disabled=!active||next!==side});
+ if(q('mmPenGoal'))q('mmPenGoal').disabled=!active;if(q('mmPenMiss'))q('mmPenMiss').disabled=!active;if(q('mdPenUndo'))q('mdPenUndo').disabled=!p.history.length;if(q('mmPenUndo'))q('mmPenUndo').disabled=!p.history.length;
+ if(q('mdPenStart'))q('mdPenStart').textContent=p.started?(p.finished?'点球大战已结束':'点球大战进行中'):'开始点球大战';
+ if(q('mmPenStart'))q('mmPenStart').textContent=p.started?(p.finished?'已结束':'进行中'):'开始点球大战';
+ const hint=q('mdPenHint');if(hint){hint.textContent=p.finished?status.next+' · 常规比分 '+matchdayState.homeScore+'-'+matchdayState.awayScore+' · 点球 '+st.homeGoals+'-'+st.awayGoals:(p.started?(mdPenaltySuddenDeath()?'已进入突然死亡 · 双方必须完成同轮后才能判胜':'系统自动轮换主罚方并判断是否提前结束'):'进入后常规比分不会被点球比分覆盖。');hint.classList.toggle('finished',p.finished)}
+}
+async function mdPenaltyStart(){
+ const p=mdPenaltyState();if(!p.history.length){p.rounds=Number(q('mdPenRounds')&&q('mdPenRounds').value)||p.rounds;p.firstSide=(q('mdPenFirst')&&q('mdPenFirst').value)==='AWAY'?'AWAY':'HOME'}
+ p.started=true;p.finished=false;p.winner='';matchdayState.period='PEN';matchdayState.clockBase=mdNowSeconds();matchdayState.clockRunning=false;matchdayState.clockStartedAt=0;matchdayState.scoreboardVisible=true;mdPenaltyEvaluateWinner();mdRenderPenaltyDirector();await publishMatchday(null);note('点球大战已开始')
+}
+async function mdPenaltyKick(side,result){
+ const p=mdPenaltyState();if(!p.started)await mdPenaltyStart();if(p.finished){note('点球大战已经结束');return}
+ const next=mdPenaltyNextSide();if(side!==next){note('当前应由 '+(next==='HOME'?'主队':'客队')+' 主罚');return}
+ p.history.push({side,result:result==='MISS'?'MISS':'GOAL',at:new Date().toISOString()});const winner=mdPenaltyEvaluateWinner();mdRenderPenaltyDirector();await publishMatchday(null);
+ if(winner)note('点球大战结束 · '+(winner==='HOME'?(q('matchHome').value||'主队'):(q('matchAway').value||'客队'))+' 获胜')
+}
+async function mdPenaltyUndo(){
+ const p=mdPenaltyState();if(!p.history.length){note('没有可撤销的点球');return}p.history.pop();p.finished=false;p.winner='';mdPenaltyEvaluateWinner();mdRenderPenaltyDirector();await publishMatchday(null);note('已撤销上一罚')
+}
+async function mdPenaltyReset(){
+ matchdayState.penaltyShootout={started:false,rounds:Number(q('mdPenRounds')&&q('mdPenRounds').value)||5,firstSide:(q('mdPenFirst')&&q('mdPenFirst').value)==='AWAY'?'AWAY':'HOME',history:[],winner:'',finished:false};matchdayState.homePen=0;matchdayState.awayPen=0;if(matchdayState.period==='PEN')matchdayState.period='2H';mdRenderPenaltyDirector();await publishMatchday(null);note('点球大战已重置 · 常规比分未改变')
+}
 function mdNowSeconds(){return Math.max(0,matchdayState.clockBase+(matchdayState.clockRunning?((Date.now()-matchdayState.clockStartedAt)/1000):0))}
 function mdFormat(sec){sec=Math.max(0,Math.floor(Number(sec)||0));return String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0')}
 function mdParse(s){const m=String(s||'').trim().match(/^(\d{1,3})(?::(\d{1,2}))?$/);if(!m)return null;return Math.max(0,(+m[1])*60+(+(m[2]||0)))}
@@ -1829,7 +1901,7 @@ function refreshMatchdayUI(){
  if(q('mmPeriod'))q('mmPeriod').textContent=mdPeriodName(matchdayState.period)+(matchdayState.stoppageTime?' · '+matchdayState.stoppageTime:'');
  if(q('mmScoreboardToggle'))q('mmScoreboardToggle').textContent=matchdayState.scoreboardVisible?'隐藏比分牌':'显示比分牌';
  if(q('mmFreeze'))q('mmFreeze').textContent=matchdayState.scoreboardFrozen?'解除比分冻结':'冻结比分牌';
- mdRenderMarkers();applyOperatorRole(matchOperatorRole,false);
+ mdRenderMarkers();mdRenderPenaltyDirector();applyOperatorRole(matchOperatorRole,false);
 }
 function mdPersist(){
  try{
@@ -1871,12 +1943,12 @@ function mdCloudSnapshot(event=null){
  const now=mdNowSeconds(),homeName=q('matchHome').value.trim()||'HOME',awayName=q('matchAway').value.trim()||'AWAY';
  return{
   commandId:Date.now()+'_'+Math.random().toString(36).slice(2,7),
-  visualVersion:'V4.21.0-SHOT-SAFETY-ENGINE',
+  visualVersion:'V4.21.0-PENALTY-SHOOTOUT-DIRECTOR',
   home:homeName,away:awayName,homeShort:matchdayState.homeShort||mdShortAuto(homeName,'HOME'),awayShort:matchdayState.awayShort||mdShortAuto(awayName,'AWAY'),
   homeCrest:(teamStore.HOME&&teamStore.HOME.crest)||'',awayCrest:(teamStore.AWAY&&teamStore.AWAY.crest)||'',competition:q('matchCompetition').value.trim()||'SAGI FOOTBALL',
   homeScore:matchdayState.homeScore,awayScore:matchdayState.awayScore,scoreboardVisible:!!matchdayState.scoreboardVisible,scoreboardFrozen:!!matchdayState.scoreboardFrozen,
   homeColor:matchdayState.homeColor||'#d8b55b',awayColor:matchdayState.awayColor||'#4c7dff',accentColor:matchdayState.accentColor||'#f4f0e8',
-  homeRedCards:Number(matchdayState.homeRedCards)||0,awayRedCards:Number(matchdayState.awayRedCards)||0,homePen:Number(matchdayState.homePen)||0,awayPen:Number(matchdayState.awayPen)||0,
+  homeRedCards:Number(matchdayState.homeRedCards)||0,awayRedCards:Number(matchdayState.awayRedCards)||0,homePen:Number(matchdayState.homePen)||0,awayPen:Number(matchdayState.awayPen)||0,penaltyShootout:mdPenaltySnapshot(),
   stoppageTime:matchdayState.stoppageTime||'',scoreTheme:matchdayState.scoreTheme||'sagi-pro',overlayVisible:!!matchdayState.overlayVisible,
   replayMarkers:(matchdayState.replayMarkers||[]).slice(0,80),eventLog:(matchdayState.eventLog||[]).slice(0,40),
   clock:{baseSeconds:now,running:!!matchdayState.clockRunning,startedAt:matchdayState.clockRunning?new Date().toISOString():null,period:matchdayState.period},
@@ -2249,11 +2321,15 @@ function initMatchdayGraphics(){
  q('mdClockPause').onclick=()=>{matchdayState.clockBase=mdNowSeconds();matchdayState.clockRunning=false;matchdayState.clockStartedAt=0;publishMatchday(null)};
  q('mdClockReset').onclick=()=>{matchdayState.clockBase=0;matchdayState.clockRunning=false;matchdayState.clockStartedAt=0;publishMatchday(null)};
  q('mdClockSetBtn').onclick=()=>{const s=mdParse(q('mdSetClock').value);if(s==null){note('时间格式请使用 45:00');return}matchdayState.clockBase=s;matchdayState.clockStartedAt=matchdayState.clockRunning?Date.now():0;publishMatchday(null)};
- q('mdPeriod').onchange=()=>{matchdayState.period=q('mdPeriod').value;publishMatchday(null)};
+ q('mdPeriod').onchange=()=>{const p=q('mdPeriod').value;if(p==='PEN')mdPenaltyStart();else{matchdayState.period=p;publishMatchday(null)}};
  q('mdGoalBtn').onclick=()=>mdEvent('GOAL');q('mdYellowBtn').onclick=()=>mdEvent('YELLOW');q('mdRedBtn').onclick=()=>mdEvent('RED');
  q('mdSubBtn').onclick=mdSubstitution;q('mdHalfBtn').onclick=()=>mdMatchState('HALF_TIME');q('mdFullBtn').onclick=()=>mdMatchState('FULL_TIME');q('mdMvpBtn').onclick=mdMvp;
- q('mdScoreReset').onclick=()=>{matchdayState.homeScore=0;matchdayState.awayScore=0;publishMatchday(null)};
+ q('mdScoreReset').onclick=()=>{matchdayState.homeScore=0;matchdayState.awayScore=0;matchdayState.homePen=0;matchdayState.awayPen=0;matchdayState.penaltyShootout={started:false,rounds:5,firstSide:'HOME',history:[],winner:'',finished:false};publishMatchday(null)};
  q('mdClearEventBtn').onclick=()=>{gdAbort(false);matchdayState.lastEvent=null;publishMatchday({type:'CLEAR_EVENT'})};q('mdPublishState').onclick=()=>publishMatchday(null);q('mdUndoLast').onclick=mdUndoLast;q('mdClearLog').onclick=()=>{matchdayState.eventLog=[];mdRenderLog();mdPersist();note('事件日志已清空')};
+ q('mdPenStart').onclick=mdPenaltyStart;q('mdPenHomeGoal').onclick=()=>mdPenaltyKick('HOME','GOAL');q('mdPenHomeMiss').onclick=()=>mdPenaltyKick('HOME','MISS');q('mdPenAwayGoal').onclick=()=>mdPenaltyKick('AWAY','GOAL');q('mdPenAwayMiss').onclick=()=>mdPenaltyKick('AWAY','MISS');q('mdPenUndo').onclick=mdPenaltyUndo;q('mdPenReset').onclick=mdPenaltyReset;
+ q('mdPenRounds').onchange=()=>{const p=mdPenaltyState();if(!p.history.length){p.rounds=Number(q('mdPenRounds').value)||5;mdRenderPenaltyDirector();mdPersist()}};
+ q('mdPenFirst').onchange=()=>{const p=mdPenaltyState();if(!p.history.length){p.firstSide=q('mdPenFirst').value==='AWAY'?'AWAY':'HOME';mdRenderPenaltyDirector();mdPersist()}};
+ q('mmPenStart').onclick=mdPenaltyStart;q('mmPenGoal').onclick=()=>{const side=mdPenaltyNextSide();if(side)mdPenaltyKick(side,'GOAL')};q('mmPenMiss').onclick=()=>{const side=mdPenaltyNextSide();if(side)mdPenaltyKick(side,'MISS')};q('mmPenUndo').onclick=mdPenaltyUndo;
  q('mdEventSide').onchange=refreshMatchdayPlayers;q('mdSubSide').onchange=refreshMatchdayPlayers;q('mdMvpSide').onchange=refreshMatchdayPlayers;
  ['addBtn','updateBtn','removeBtn','demoBtn','loadBtn','homeSideBtn','awaySideBtn'].forEach(id=>q(id)&&q(id).addEventListener('click',()=>setTimeout(refreshMatchdayPlayers,60)));
  ['matchHome','matchAway'].forEach(id=>q(id)&&q(id).addEventListener('input',refreshMatchdayUI));
