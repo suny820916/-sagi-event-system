@@ -1,6 +1,9 @@
 package com.sagi.poollive;
 
 import android.Manifest;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -43,13 +46,15 @@ public class MainActivity extends AppCompatActivity {
     private final LiveSessionClient liveSessionClient = new LiveSessionClient();
     private final ScoreWatermarkRenderer watermarkRenderer = new ScoreWatermarkRenderer();
     private final Handler overlayHandler = new Handler(Looper.getMainLooper());
+    private final Handler reconnectHandler = new Handler(Looper.getMainLooper());
 
     private TextView status, networkStatus, player1, player2, score, zoomLabel;
     private EditText installCode, syncUrl, clubId, tableNo, syncToken, rtmpUrl;
     private Spinner qualitySpinner;
-    private Button audioButton, directorModeButton, configLockButton, claimInstallButton;
+    private Button audioButton, directorModeButton, configLockButton, claimInstallButton, diagnosticsButton;
     private View controlPanel;
     private SecurePrefs securePrefs;
+    private LiveDiagnostics diagnostics;
 
     private String lastSignature = "";
     private int lastLogCount = -1;
@@ -61,6 +66,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean directorMode = false;
     private ScoreState latestState;
     private long lastLiveHeartbeatAt = 0L;
+    private int appRestartAttempts = 0;
 
     private final ActivityResultLauncher<String[]> permissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), this::onPermissions);
@@ -89,8 +95,11 @@ public class MainActivity extends AppCompatActivity {
         directorModeButton = findViewById(R.id.directorModeButton);
         configLockButton = findViewById(R.id.configLockButton);
         claimInstallButton = findViewById(R.id.claimInstallButton);
+        diagnosticsButton = findViewById(R.id.diagnosticsButton);
         controlPanel = findViewById(R.id.controlPanel);
         securePrefs = new SecurePrefs(this);
+        diagnostics = new LiveDiagnostics(this);
+        diagnostics.add("app_open", "version=" + BuildConfig.VERSION_NAME);
 
         ArrayAdapter<String> qualityAdapter = new ArrayAdapter<>(
                 this,
@@ -112,6 +121,7 @@ public class MainActivity extends AppCompatActivity {
         audioButton.setOnClickListener(v -> toggleAudio());
         directorModeButton.setOnClickListener(v -> toggleDirectorMode());
         configLockButton.setOnClickListener(v -> handleConfigLock());
+        diagnosticsButton.setOnClickListener(v -> showDiagnostics());
 
         pusher = new V2TXLivePusherImpl(this, V2TXLiveDef.V2TXLiveMode.TXLiveMode_RTMP);
         pusher.setRenderView(preview);
@@ -249,6 +259,25 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private void showDiagnostics() {
+        String logs = diagnostics.exportText(60);
+        if (logs.isEmpty()) logs = "暂无诊断记录。";
+        final String export = logs;
+        new AlertDialog.Builder(this)
+                .setTitle("SAGI 直播诊断")
+                .setMessage(logs)
+                .setNegativeButton("关闭", null)
+                .setNeutralButton("清空", (d, w) -> diagnostics.clear())
+                .setPositiveButton("复制", (d, w) -> {
+                    ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                    if (cm != null) {
+                        cm.setPrimaryClip(ClipData.newPlainText("SAGI LIVE diagnostics", export));
+                        status.setText("诊断日志已复制");
+                    }
+                })
+                .show();
+    }
+
     private void runPreflight(boolean startAfter) {
         saveConfig();
 
@@ -259,23 +288,28 @@ public class MainActivity extends AppCompatActivity {
         String push = rtmpUrl.getText().toString().trim();
 
         if (api.isEmpty()) {
+            diagnostics.add("preflight_fail", "sync_url_missing");
             status.setText("检测失败 · 未配置国内同步服务器");
             return;
         }
         if (cid.isEmpty() || table.isEmpty() || token.isEmpty()) {
+            diagnostics.add("preflight_fail", "club_config_incomplete");
             status.setText("检测失败 · 球房安装配置不完整");
             return;
         }
         if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            diagnostics.add("preflight_fail", "camera_permission");
             status.setText("检测失败 · 缺少摄像头权限");
             return;
         }
         if (audioEnabled
                 && checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            diagnostics.add("preflight_fail", "microphone_permission");
             status.setText("检测失败 · 麦克风已开启但缺少权限");
             return;
         }
         if (startAfter && !push.startsWith("rtmp://") && !push.startsWith("rtmps://")) {
+            diagnostics.add("preflight_fail", "rtmp_invalid");
             status.setText("检测失败 · RTMP / RTMPS 推流地址无效");
             return;
         }
@@ -290,11 +324,13 @@ public class MainActivity extends AppCompatActivity {
                         !BuildConfig.LIVE_LICENSE_URL.isEmpty() && !BuildConfig.LIVE_LICENSE_KEY.isEmpty();
 
                 if (!sdkLicenceReady) {
+                    diagnostics.add("preflight_fail", "liteav_license_missing");
                     status.setText("同步正常 · 当前APK未注入直播SDK License");
                     networkStatus.setText("自检：服务器 " + serverVersion + " · SDK授权缺失");
                     return;
                 }
 
+                diagnostics.add("preflight_ok", "server=" + serverVersion);
                 networkStatus.setText("自检：全部通过 · 服务器 " + serverVersion);
                 status.setText(startAfter ? "自检通过 · 正在启动直播" : "✓ 开播条件全部通过");
                 if (startAfter) startLive();
@@ -302,6 +338,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onError(String message) {
+                diagnostics.add("preflight_fail", message);
                 status.setText("检测失败 · " + message);
                 networkStatus.setText("自检：未通过");
             }
@@ -381,14 +418,17 @@ public class MainActivity extends AppCompatActivity {
         }
 
         startKeepAliveService();
+        diagnostics.add("push_start", "quality=" + qualitySpinner.getSelectedItemPosition());
         int result = pusher.startPush(push);
         if (result != V2TXLiveCode.V2TXLIVE_OK) {
             stopKeepAliveService();
+            diagnostics.add("push_start_fail", "code=" + result);
             status.setText("推流启动失败 · " + result);
             return;
         }
 
         pushing = true;
+        appRestartAttempts = 0;
         status.setText("LIVE · 正在连接推流目标");
         networkStatus.setText("网络：连接中");
 
@@ -565,6 +605,40 @@ public class MainActivity extends AppCompatActivity {
         stopService(new Intent(this, LiveKeepAliveService.class));
     }
 
+    private void scheduleAppLevelRestart() {
+        if (!pushing) return;
+        if (appRestartAttempts >= 3) {
+            diagnostics.add("auto_restart_giveup", "attempts=" + appRestartAttempts);
+            status.setText("自动恢复已停止 · 请检查网络或推流地址");
+            networkStatus.setText("网络：需要人工处理");
+            return;
+        }
+        int nextAttempt = appRestartAttempts + 1;
+        long delay = 5000L * nextAttempt;
+        reconnectHandler.removeCallbacksAndMessages(null);
+        diagnostics.add("auto_restart_scheduled", "attempt=" + nextAttempt + " delay_ms=" + delay);
+        status.setText("推流已断开 · " + (delay / 1000L) + "秒后自动恢复");
+        reconnectHandler.postDelayed(() -> {
+            if (!pushing) return;
+            String push = rtmpUrl.getText().toString().trim();
+            if (!push.startsWith("rtmp://") && !push.startsWith("rtmps://")) {
+                diagnostics.add("auto_restart_abort", "rtmp_invalid");
+                status.setText("自动恢复失败 · 推流地址无效");
+                return;
+            }
+            appRestartAttempts++;
+            diagnostics.add("auto_restart_attempt", "attempt=" + appRestartAttempts);
+            pusher.stopPush();
+            int result = pusher.startPush(push);
+            if (result != V2TXLiveCode.V2TXLIVE_OK) {
+                diagnostics.add("auto_restart_fail", "code=" + result);
+                scheduleAppLevelRestart();
+            } else {
+                status.setText("自动恢复中…");
+            }
+        }, delay);
+    }
+
     private void sendLiveTelemetry(String action, int bitrate, int fps, int width, int height, String error) {
         liveSessionClient.send(
                 syncUrl.getText().toString().trim(),
@@ -580,6 +654,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void stopLiveForAuthorization(String reason) {
+        diagnostics.add("authorization_lost", reason);
+        reconnectHandler.removeCallbacksAndMessages(null);
         if (!pushing) {
             status.setText(reason);
             return;
@@ -598,7 +674,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void stopLive() {
-        if (pushing) sendLiveTelemetry("stop", 0, 0, 0, 0, "");
+        reconnectHandler.removeCallbacksAndMessages(null);
+        if (pushing) {
+            diagnostics.add("manual_stop", "");
+            sendLiveTelemetry("stop", 0, 0, 0, 0, "");
+        }
         pushing = false;
         stopKeepAliveService();
         overlayHandler.removeCallbacksAndMessages(null);
@@ -613,6 +693,7 @@ public class MainActivity extends AppCompatActivity {
     private final class SagiPusherObserver extends V2TXLivePusherObserver {
         @Override
         public void onWarning(int code, String msg, Bundle extraInfo) {
+            diagnostics.add("warning", "code=" + code);
             runOnUiThread(() -> {
                 if (code == V2TXLiveCode.V2TXLIVE_WARNING_NETWORK_BUSY) {
                     networkStatus.setText("网络：弱网 · 建议靠近 Wi-Fi / 检查 5G");
@@ -624,6 +705,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onError(int code, String msg, Bundle extraInfo) {
+            diagnostics.add("push_error", "code=" + code + " msg=" + msg);
             sendLiveTelemetry("error", 0, 0, 0, 0, code + " · " + msg);
             runOnUiThread(() -> status.setText("推流错误 " + code + " · " + msg));
         }
@@ -635,14 +717,21 @@ public class MainActivity extends AppCompatActivity {
                 Bundle extraInfo) {
             runOnUiThread(() -> {
                 if (pushStatus == V2TXLiveDef.V2TXLivePushStatus.V2TXLivePushStatusConnectSuccess) {
+                    reconnectHandler.removeCallbacksAndMessages(null);
+                    appRestartAttempts = 0;
+                    diagnostics.add("push_connected", "");
                     status.setText("● LIVE · 推流已连接");
                     sendLiveTelemetry("start", 0, 0, 0, 0, "");
                 } else if (pushStatus == V2TXLiveDef.V2TXLivePushStatus.V2TXLivePushStatusReconnecting) {
+                    diagnostics.add("sdk_reconnecting", "");
                     status.setText("推流重连中…");
                 } else if (pushStatus == V2TXLiveDef.V2TXLivePushStatus.V2TXLivePushStatusConnecting) {
+                    diagnostics.add("push_connecting", "");
                     status.setText("正在连接推流服务器…");
                 } else if (pushStatus == V2TXLiveDef.V2TXLivePushStatus.V2TXLivePushStatusDisconnected) {
+                    diagnostics.add("push_disconnected", "");
                     status.setText("推流已断开");
+                    scheduleAppLevelRestart();
                 }
             });
         }
@@ -673,6 +762,7 @@ public class MainActivity extends AppCompatActivity {
         pushing = false;
         stopKeepAliveService();
         overlayHandler.removeCallbacksAndMessages(null);
+        reconnectHandler.removeCallbacksAndMessages(null);
         syncClient.shutdown();
         provisionClient.shutdown();
         healthCheckClient.shutdown();
