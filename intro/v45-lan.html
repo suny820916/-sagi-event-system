@@ -3134,9 +3134,12 @@ if(standalone){
      const r=await fetch('/api/update',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}',cache:'no-store'});
      const x=await r.json().catch(()=>({}));
      if(!r.ok||!x.ok)throw new Error(x.error||('HTTP '+r.status));
-     status.textContent='安全更新完成 · 已保留上一版备份';
-     btn.textContent='更新完成 ✓';
-     setTimeout(()=>location.replace('/?safe='+Date.now()),650);
+     status.textContent='文件已下载 · 正在核对版本…';
+     const verify=await fetch('/?verify='+Date.now(),{cache:'no-store'}).then(r=>r.text()).catch(()=> '');
+     if(!verify.includes('V4.18.2'))throw new Error('VERSION_VERIFY_FAILED');
+     status.textContent='已确认 V4.18.2 · 更新完成';
+     btn.textContent='V4.18.2 ✓';
+     setTimeout(()=>location.replace('/?safe='+Date.now()),500);
    }catch(e){
      status.textContent='更新失败 · 当前版本未改变';
      btn.textContent='↻ 安全更新';btn.disabled=false;btn.classList.remove('busy');
