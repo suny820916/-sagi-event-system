@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="format-detection" content="telephone=no">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%2307090d%22/%3E%3Ctext x=%2232%22 y=%2243%22 text-anchor=%22middle%22 font-size=%2234%22 fill=%22%23d8b55b%22%3ES%3C/text%3E%3C/svg%3E">
-<title>SAGI V4.11.0 · PHOTO TACTICAL BOARD</title>
+<title>SAGI V4.12.0 · PREMIER BROADCAST PACK</title>
 <style>
 :root{--bg:#07090d;--panel:#11151c;--line:#2b3340;--text:#f4f0e8;--muted:#8f97a5;--gold:#d8b55b;--green:#72c79a}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
@@ -331,11 +331,55 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
  .teamSwitch.v49 button{min-height:62px}
 }
 
+
+/* ===== V4.12.0 PREMIER BROADCAST PACK ===== */
+.stage{--teamAccent:#d8b55b}
+.stage .teamSub,.stage .groupTitle,.stage .formationText{color:var(--teamAccent)}
+.stage .groupLine{background:linear-gradient(90deg,var(--teamAccent),#fff,transparent)}
+.stage .node.active{border-color:var(--teamAccent);box-shadow:0 0 0 4px #ffffff18,0 12px 28px #000b}
+.stage .node.active .nodeNo{background:var(--teamAccent);color:#090b0f}
+.stage .nodeVisual:after{content:"";position:absolute;left:0;right:0;bottom:0;height:4px;background:var(--teamAccent);opacity:.95}
+.stage.group-FULL .headerMark{left:88px;top:48px;z-index:12}
+.stage.group-FULL .teamCrest{width:82px;height:82px}
+.stage.group-FULL .teamHead{font-size:30px;letter-spacing:1px}
+.stage.group-FULL .teamSub{font-size:13px;letter-spacing:4px;margin-top:5px}
+.stage.group-FULL .groupTitle{left:90px;top:188px;font-size:16px;letter-spacing:5px}
+.stage.group-FULL .groupName{left:88px;top:224px;font-size:46px;letter-spacing:-1px}
+.stage.group-FULL .groupLine{left:90px;top:286px;width:310px;height:4px}
+.stage.group-FULL .fullList{left:86px;top:330px;width:348px;grid-template-columns:1fr;gap:5px}
+.stage.group-FULL .fullRow{grid-template-columns:34px 40px 1fr;gap:8px;padding:7px 9px;border:1px solid #ffffff12;border-left:3px solid var(--teamAccent);border-radius:8px;background:linear-gradient(90deg,#0a0f16e8,#0a0f169c);animation:plRowIn .42s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--row-i,0)*38ms + 120ms)}
+.stage.group-FULL .fullRole{font-size:9px;letter-spacing:1px;color:var(--teamAccent)}
+.stage.group-FULL .fullNo{font-size:16px}
+.stage.group-FULL .fullName{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stage.group-FULL .fullPos{display:none}
+.stage.group-FULL .captainBadge{min-width:20px;height:20px;font-size:10px;margin-left:4px}
+.stage.group-FULL .formationBox{left:470px;right:auto;top:84px;width:1368px;height:910px;padding:34px;border-radius:28px;background:linear-gradient(145deg,#080d13ee,#101923e8 58%,#070b10f2);border:1px solid #ffffff20;box-shadow:0 34px 90px #000a,0 0 0 1px #ffffff08 inset;backdrop-filter:blur(10px);animation:plBoardIn .62s cubic-bezier(.16,.84,.28,1) both}
+.stage.group-FULL .formationBox:before{content:"";position:absolute;left:34px;right:34px;top:0;height:5px;background:linear-gradient(90deg,var(--teamAccent),transparent 72%);border-radius:0 0 8px 8px}
+.stage.group-FULL .formationHead{align-items:center}
+.stage.group-FULL .formationTitle{font-size:18px;letter-spacing:5px}
+.stage.group-FULL .formationHead .muted{font-size:10px;letter-spacing:3px}
+.stage.group-FULL .formationText{font-size:50px;letter-spacing:-2px}
+.stage.group-FULL .pitch{left:42px;right:42px;top:118px;bottom:42px;border:2px solid #ffffff55;border-radius:12px;background:linear-gradient(90deg,#143824,#0e2f1d 50%,#143824);box-shadow:0 22px 55px #0008 inset,0 0 0 1px #0005}
+.stage.group-FULL .pitch:before{border-top-color:#ffffff48}
+.stage.group-FULL .pitch:after{border-color:#ffffff48;width:145px;height:145px}
+.stage.group-FULL .boxTop,.stage.group-FULL .boxBottom{width:280px;height:105px;border-color:#ffffff48}
+.stage.group-FULL .node{width:104px;height:118px;border-radius:17px;background:#0b1118e8;border-color:#ffffff30;box-shadow:0 12px 24px #000a;animation:plNodeIn .5s cubic-bezier(.16,.84,.28,1) both;animation-delay:calc(var(--node-i,0)*58ms + 220ms)}
+.stage.group-FULL .nodeVisual{height:88px;border-radius:14px;background:linear-gradient(180deg,#27394d,#121a24)}
+.stage.group-FULL .node small{top:94px;max-width:126px;font-size:11px;letter-spacing:.2px}
+.stage.group-FULL .nodeNo{left:6px;top:6px;min-width:27px;height:27px;font-size:11px}
+.stage.group-FULL .node:not(.hasPhoto){width:68px;height:68px}
+.stage.group-FULL .node:not(.hasPhoto) small{top:73px}
+.stage.group-FULL .node:not(.hasPhoto) .nodeFallbackNo{font-size:25px}
+.stage.group-FULL .node:not(.hasPhoto) .nodeVisual:after{display:none}
+@keyframes plBoardIn{from{opacity:0;transform:translateX(55px) scale(.975)}to{opacity:1;transform:translateX(0) scale(1)}}
+@keyframes plNodeIn{0%{opacity:0;transform:translate(-50%,-38%) scale(.72)}70%{opacity:1;transform:translate(-50%,-52%) scale(1.04)}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+@keyframes plRowIn{from{opacity:0;transform:translateX(-24px)}to{opacity:1;transform:translateX(0)}}
+
 </style>
 </head>
 <body>
 <div class="app">
-  <div class="top"><div><div class="brand">SAGI LIVE MATCH DIRECTOR</div><div class="sub">V4.11.0 · PHOTO TACTICAL BOARD · MATCH SETUP UX</div></div><div class="topRight"><div class="ver">V4.11.0</div><button id="mobileUpdateBtn" class="mobileUpdateBtn" type="button">↻ 安全更新</button><button id="mobileRollbackBtn" class="mobileRollbackBtn" type="button">↶ 回退上一版</button><div id="mobileUpdateStatus" class="mobileUpdateStatus">V4.11.0 · PHOTO TACTICAL BOARD · Bridge 已锁定</div></div></div>
+  <div class="top"><div><div class="brand">SAGI LIVE MATCH DIRECTOR</div><div class="sub">V4.12.0 · PREMIER BROADCAST PACK · MATCH SETUP UX</div></div><div class="topRight"><div class="ver">V4.12.0</div><button id="mobileUpdateBtn" class="mobileUpdateBtn" type="button">↻ 安全更新</button><button id="mobileRollbackBtn" class="mobileRollbackBtn" type="button">↶ 回退上一版</button><div id="mobileUpdateStatus" class="mobileUpdateStatus">V4.12.0 · PREMIER BROADCAST PACK · Bridge 已锁定</div></div></div>
 
   <div id="pwaBar" class="pwaBar" style="display:none">
     <div class="pwaInfo">
@@ -357,7 +401,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 
   <div id="setupDesk" class="setupDesk">
     <div class="setupHead">
-      <div class="setupTitle">比赛设置 · MATCH SETUP ENGINE<small>V4.11.0 · 照片战术板 · READY GATE</small></div>
+      <div class="setupTitle">比赛设置 · MATCH SETUP ENGINE<small>V4.12.0 · 英超级阵型包装 · READY GATE</small></div>
       <div id="setupReadyBadge" class="setupReadyBadge">NOT READY</div>
     </div>
     <div class="setupGrid">
@@ -886,7 +930,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
             </div>
           </div>
         </div>
-        <div class="statusBar"><div id="status" class="status">V4.11.0 · PHOTO TACTICAL BOARD 已就绪</div><div class="mini">1920 × 1080</div></div>
+        <div class="statusBar"><div id="status" class="status">V4.12.0 · PREMIER BROADCAST PACK 已就绪</div><div class="mini">1920 × 1080</div></div>
       </div>
     </div>
   </div>
@@ -1329,7 +1373,7 @@ async function importPhonePrematchPackage(file){
 
   let hc=Array.isArray(core.teams.HOME.roster)?core.teams.HOME.roster.length:0,ac=Array.isArray(core.teams.AWAY.roster)?core.teams.AWAY.roster.length:0;
 
-  // V4.11.0 fallback: recover from ROSTER_BACKUP.json when primary core rosters are empty.
+  // V4.12.0 fallback: recover from ROSTER_BACKUP.json when primary core rosters are empty.
   if((!hc||!ac)&&backup&&backup.teams&&backup.teams.HOME&&backup.teams.AWAY){
     const bh=Array.isArray(backup.teams.HOME.roster)?backup.teams.HOME.roster:[],ba=Array.isArray(backup.teams.AWAY.roster)?backup.teams.AWAY.roster:[];
     if(!hc&&bh.length)core.teams.HOME={...(core.teams.HOME||{}),formation:backup.teams.HOME.formation||core.teams.HOME.formation,roster:bh};
@@ -2200,7 +2244,7 @@ function grouped(role){return validStarters().filter(p=>p.role===role)}
 function getFormationPoints(){return getFormationPointsFor(activeSide,q('formation').value)}
 function fallbackPoint(role,i,n){const y={GK:91,DF:72,MF:48,FW:22}[role]||50;return[((i+1)/(n+1))*100,y]}
 function renderFormation(activeRole){
- q('formationText').textContent=q('formation').value;const box=q('formationNodes');box.innerHTML='';getFormationPoints().forEach(({p,role,xy,key})=>{const n=document.createElement('div'),hasPhoto=!!p.photo;n.className='node'+(hasPhoto?' hasPhoto':'')+((activeRole==='FULL'||activeRole===role)?' active':'')+(p.captain?' captainNode':'');n.style.left=xy[0]+'%';n.style.top=xy[1]+'%';n.dataset.playerKey=key;const visual=hasPhoto?'<img src="'+escAttr(p.photo)+'" alt="">':'<span class="nodeFallbackNo">'+esc(p.number)+'</span>';n.innerHTML='<div class="nodeVisual">'+visual+'</div><span class="nodeNo">'+esc(p.number)+'</span><small>'+esc(p.name)+'</small>';if(formationEditorActive)n.addEventListener('pointerdown',e=>beginFormationDrag(e,n,key));box.appendChild(n)});updateFormationEditorUI()
+ q('formationText').textContent=q('formation').value;const box=q('formationNodes');box.innerHTML='';getFormationPoints().forEach(({p,role,xy,key},i)=>{const n=document.createElement('div'),hasPhoto=!!p.photo;n.className='node'+(hasPhoto?' hasPhoto':'')+((activeRole==='FULL'||activeRole===role)?' active':'')+(p.captain?' captainNode':'');n.style.left=xy[0]+'%';n.style.top=xy[1]+'%';n.style.setProperty('--node-i',i);n.dataset.playerKey=key;const visual=hasPhoto?'<img src="'+escAttr(p.photo)+'" alt="">':'<span class="nodeFallbackNo">'+esc(p.number)+'</span>';n.innerHTML='<div class="nodeVisual">'+visual+'</div><span class="nodeNo">'+esc(p.number)+'</span><small>'+esc(p.name)+'</small>';if(formationEditorActive)n.addEventListener('pointerdown',e=>beginFormationDrag(e,n,key));box.appendChild(n)});updateFormationEditorUI()
 }
 function mediaSource(p){return p.mediaObjectUrl||p.mediaUrl||''}
 function directorAttrs(p){
@@ -2227,7 +2271,7 @@ function configureDirectorVideo(v){
 }
 function playMediaVideos(){q('stage').querySelectorAll('video.mediaVideo').forEach(configureDirectorVideo)}
 function renderFull(){
- q('playersArea').style.display='none';q('subList').style.display='none';const list=q('fullList');list.style.display='grid';list.innerHTML=validStarters().map(p=>'<div class="fullRow"><div class="fullRole">'+esc(p.role)+'</div><div class="fullNo">'+esc(p.number)+'</div><div class="fullName">'+esc(p.name)+(p.captain?' <span class="captainBadge">C</span>':'')+'</div><div class="fullPos">'+esc(p.position)+(p.statValue?' · '+esc(p.statLabel)+' '+esc(p.statValue):'')+'</div></div>').join('');
+ q('playersArea').style.display='none';q('subList').style.display='none';const list=q('fullList');list.style.display='grid';list.innerHTML=validStarters().map((p,i)=>'<div class="fullRow" style="--row-i:'+i+'"><div class="fullRole">'+esc(p.role)+'</div><div class="fullNo">'+esc(p.number)+'</div><div class="fullName">'+esc(p.name)+(p.captain?' <span class="captainBadge">C</span>':'')+'</div><div class="fullPos">'+esc(p.position)+(p.statValue?' · '+esc(p.statLabel)+' '+esc(p.statValue):'')+'</div></div>').join('');
 
 }
 function renderSubs(){
@@ -2250,7 +2294,7 @@ function applyVisualGroup(group){
  const packageGroup=['STING','MATCH','COUNTDOWN'].includes(group);q('roleGlow').style.display=(group==='FULL'||group==='SUB'||packageGroup)?'none':'block';code.style.display=(group==='FULL'||group==='SUB'||packageGroup)?'none':'flex';
 }
 function renderStage(group){
- currentGroup=group||'TEAM';applyVisualGroup(currentGroup);syncMatchStage();['stingOverlay','matchOverlay','countdownOverlay'].forEach(id=>q(id).classList.remove('on'));q('stageTeam').textContent=currentTeamName();q('stageCrest').src=assets.crest||'';q('stageCrest').style.visibility=assets.crest?'visible':'hidden';q('stadiumPhoto').src=assets.bg||'';q('stadiumPhoto').className='stadiumPhoto'+(assets.bg?' on':'');q('fullList').style.display='none';q('subList').style.display='none';q('playersArea').style.display='flex';
+ currentGroup=group||'TEAM';applyVisualGroup(currentGroup);q('stage').style.setProperty('--teamAccent',activeSide==='HOME'?(matchdayState.homeColor||'#d8b55b'):(matchdayState.awayColor||'#4c7dff'));syncMatchStage();['stingOverlay','matchOverlay','countdownOverlay'].forEach(id=>q(id).classList.remove('on'));q('stageTeam').textContent=currentTeamName();q('stageCrest').src=assets.crest||'';q('stageCrest').style.visibility=assets.crest?'visible':'hidden';q('stadiumPhoto').src=assets.bg||'';q('stadiumPhoto').className='stadiumPhoto'+(assets.bg?' on':'');q('fullList').style.display='none';q('subList').style.display='none';q('playersArea').style.display='flex';
  const lineupLabel=startingLabel();q('stageLineupLabel').textContent=lineupLabel;let title=lineupLabel,name='TEAM LINEUP',players=[];
  if(group==='STING'){title='MATCH SHOW';name='赛事Logo';q('playersArea').style.display='none';q('stingOverlay').classList.add('on')}
  else if(group==='MATCH'){title='MATCH SHOW';name='比赛信息';q('playersArea').style.display='none';q('matchOverlay').classList.add('on')}
@@ -2309,7 +2353,7 @@ function stopCountdown(){clearInterval(startCountdown.t)}
 function cloudAdmin(){try{const x=JSON.parse(localStorage.getItem('sagi_cloud_admin_v20')||'null')||{},b=window.SAGI_CLOUD||{};return{url:x.url||b.url||'',key:x.key||b.key||'',eventSlug:x.eventSlug||b.eventSlug||'',token:x.token||''}}catch(e){const b=window.SAGI_CLOUD||{};return{url:b.url||'',key:b.key||'',eventSlug:b.eventSlug||'',token:''}}}
 function compactPlayersForGroup(group){const src=group==='FULL'?validStarters():group==='SUB'?substitutes():(['GK','DF','MF','FW'].includes(group)?grouped(group):[]);return src.map(p=>({id:p.id,layoutKey:formationPlayerKey(p),name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',squadType:p.squadType||'STARTER',photo:(group==='FULL'||group==='SUB')?'':p.photo||'',mediaUrl:(group==='FULL'||group==='SUB')?'':p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'}))}
 async function publishGroup(group,duration,show=null){
- const state={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,6),group,side:activeSide,team:currentTeamName(),formation:q('formation').value,matchFormat:{mode:matchConfig.mode,playerCount:starterLimit()},playerCount:starterLimit(),startingLabel:startingLabel(),players:compactPlayersForGroup(group),formationLayout:currentFormationLayoutPayload(),allPlayers:validStarters().map(p=>({id:p.id,layoutKey:formationPlayerKey(p),name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',photo:p.photo||'',mediaUrl:p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'})),substitutes:substitutes().map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,statLabel:p.statLabel||'',statValue:p.statValue||''})),crest:assets.crest||'',stadium:assets.bg||'',background:q('outputBg').value,visualVersion:'V4.11.0-PHOTO-TACTICAL',duration,show:show||null,package:packageData(),startedAt:new Date().toISOString()};
+ const state={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,6),group,side:activeSide,team:currentTeamName(),formation:q('formation').value,matchFormat:{mode:matchConfig.mode,playerCount:starterLimit()},playerCount:starterLimit(),startingLabel:startingLabel(),players:compactPlayersForGroup(group),formationLayout:currentFormationLayoutPayload(),allPlayers:validStarters().map(p=>({id:p.id,layoutKey:formationPlayerKey(p),name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',photo:p.photo||'',mediaUrl:p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'})),substitutes:substitutes().map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,statLabel:p.statLabel||'',statValue:p.statValue||''})),crest:assets.crest||'',stadium:assets.bg||'',background:q('outputBg').value,teamColor:(activeSide==='HOME'?(matchdayState.homeColor||'#d8b55b'):(matchdayState.awayColor||'#4c7dff')),visualVersion:'V4.12.0-PREMIER-BROADCAST',duration,show:show||null,package:packageData(),startedAt:new Date().toISOString()};
  try{
    await lanPost('/api/state',{lineupIntro:state});
    return{ok:true}
@@ -2697,7 +2741,7 @@ if('serviceWorker' in navigator&&window.isSecureContext){
 
 setInstalledState();
 
-const HOME_SCREEN_BUILD='V4.11.0-HOME-20261116-01';
+const HOME_SCREEN_BUILD='V4.12.0-HOME-20261116-01';
 async function homeScreenColdStartUpdate(){
   if(!standalone||location.protocol!=='http:')return;
   const once='sagi_homescreen_boot_'+HOME_SCREEN_BUILD;
