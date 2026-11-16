@@ -145,7 +145,7 @@ async function e2eCommercial(){
   const tmp=path.join(os.tmpdir(),'sagi-pool-selftest-'+process.pid+'.json');
   try{fs.rmSync(tmp,{force:true})}catch{}
   const child=spawn(process.execPath,[serverPath],{
-    env:{...process.env,PORT:String(port),HOST:'127.0.0.1',SAGI_REQUIRE_LICENSE:'1',SAGI_ADMIN_TOKEN:'admin-secret',SAGI_DATA_FILE:tmp,SAGI_LIVE_HEARTBEAT_TIMEOUT_MS:'1000'},
+    env:{...process.env,PORT:String(port),HOST:'127.0.0.1',SAGI_REQUIRE_LICENSE:'1',SAGI_ADMIN_TOKEN:'admin-secret',SAGI_DATA_FILE:tmp,SAGI_LIVE_HEARTBEAT_TIMEOUT_MS:'1000',SAGI_PROVISION_RATE_LIMIT:'5',SAGI_PROVISION_RATE_WINDOW_MS:'10000'},
     stdio:['ignore','pipe','pipe']
   });
   let stderr='';child.stderr.on('data',d=>stderr+=d.toString());
@@ -218,6 +218,22 @@ async function e2eCommercial(){
       body:JSON.stringify({code:installCode})
     });
     check(reuse.status===404||reuse.status===410,'Provision code must be one-time');
+
+    for(let i=0;i<3;i++){
+      const invalid=await fetch(base+'/api/provision/claim',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({code:'BADCODE'+i})
+      });
+      check(invalid.status===404,'Invalid provision attempt should fail before rate limit');
+    }
+    const limited=await fetch(base+'/api/provision/claim',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({code:'BADCODEX'})
+    });
+    const limitedData=await limited.json();
+    check(limited.status===429&&limitedData.error==='provision_rate_limited','Provision claim rate limit failed');
 
     const deviceToken=claimData.config.token;
     const deviceRead=await fetch(base+'/api/rooms/TEST-CLUB/02%E6%A1%8C',{
@@ -345,7 +361,7 @@ if(failures.length){
   failures.forEach((x,i)=>console.error((i+1)+'. '+x));
   process.exit(1);
 }
-console.log('SAGI POOL LIVE CHINA V2.6 SELF-CHECK: PASSED');
+console.log('SAGI POOL LIVE CHINA V2.7 SELF-CHECK: PASSED');
 console.log('✓ Scorer / club / live / seller JavaScript');
 console.log('✓ PWA cache and core billiards scoring');
 console.log('✓ China sync real read/write flow');
@@ -354,6 +370,7 @@ console.log('✓ Wrong-token rejection');
 console.log('✓ Purchased table-count enforcement');
 console.log('✓ One-time install code → per-device token');
 console.log('✓ Install code one-use enforcement');
+console.log('✓ Provision claim IP rate limiting');
 console.log('✓ Device inventory and per-device remote revoke');
 console.log('✓ Live start / heartbeat / stop telemetry');
 console.log('✓ Live session history and remote-revoke closure');
