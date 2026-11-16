@@ -32,6 +32,7 @@ import com.tencent.rtmp.ui.TXCloudVideoView;
 
 import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
     private TXCloudVideoView preview;
@@ -228,7 +229,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         status.setText("正在领取球房配置…");
-        provisionClient.claim(base, code, new ProvisionClient.Callback() {
+        provisionClient.claim(base, code, deviceId(), deviceLabel(), new ProvisionClient.Callback() {
             @Override
             public void onSuccess(ProvisionClient.Config config) {
                 clubId.setText(config.clubId);
@@ -303,6 +304,22 @@ public class MainActivity extends AppCompatActivity {
                 networkStatus.setText("自检：未通过");
             }
         });
+    }
+
+    private String deviceId() {
+        String id = securePrefs.get("device_id");
+        if (id.isEmpty()) {
+            id = "android-" + UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+            securePrefs.put("device_id", id);
+        }
+        return id;
+    }
+
+    private String deviceLabel() {
+        String manufacturer = android.os.Build.MANUFACTURER == null ? "" : android.os.Build.MANUFACTURER.trim();
+        String model = android.os.Build.MODEL == null ? "Android" : android.os.Build.MODEL.trim();
+        String raw = (manufacturer + " " + model).trim();
+        return raw.isEmpty() ? "SAGI Android" : raw;
     }
 
     private void requestMediaPermissions() {
