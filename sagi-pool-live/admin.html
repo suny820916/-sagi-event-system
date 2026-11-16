@@ -162,7 +162,22 @@ async function refresh(){
       const row=document.createElement('div');row.className='item';
       const left=document.createElement('div');const n=document.createElement('div');n.className='name';n.textContent=(l.clubName||l.clubId)+' · '+l.clubId;
       const m=document.createElement('div');m.className='meta';m.textContent=l.plan+' · '+l.maxTables+'桌 · 到期 '+fmt(l.expiresAt);
-      left.append(n,m);const st=document.createElement('div');st.className='status'+(l.active?'':' off');st.textContent=l.active?'有效':'已到期/停用';row.append(left,st);box.appendChild(row);
+      left.append(n,m);
+      const right=document.createElement('div');right.style.cssText='display:flex;flex-direction:column;gap:6px;align-items:flex-end';
+      const st=document.createElement('div');st.className='status'+(l.active?'':' off');st.textContent=l.active?'有效':'已到期/停用';right.appendChild(st);
+      if(l.active){
+        const revoke=document.createElement('button');revoke.className='btn';revoke.style.cssText='min-height:32px;padding:4px 8px;font-size:10px';revoke.textContent='停用授权';
+        revoke.addEventListener('click',async()=>{
+          if(!confirm('确定停用 '+(l.clubName||l.clubId)+' 的授权吗？'))return;
+          try{
+            setStatus('正在停用…');
+            await api('/api/admin/licenses/'+encodeURIComponent(l.clubId)+'/revoke',{method:'POST'});
+            setStatus('授权已停用');refresh();
+          }catch(e){setStatus('停用失败');alert(e.message)}
+        });
+        right.appendChild(revoke);
+      }
+      row.append(left,right);box.appendChild(row);
     });setStatus('已连接 · '+d.licenses.length+' 家');
   }catch(e){setStatus('连接失败');$('#list').innerHTML='<div class="empty">'+e.message+'</div>'}
 }
