@@ -10,7 +10,7 @@ on:
     paths:
       - "cloud-blender-worker/presets/christmas_tree_attack_viewpoint_v58.json"
       - ".github/workflows/sagi-viewpoint-v58-attack.yml"
-      - "cloud-blender-worker/engine/sagi_tactical_execution_director_v58.py"
+      - "cloud-blender-worker/engine/sagi_tactical_execution_director_v57.py"
   workflow_dispatch:
 
 jobs:
@@ -38,7 +38,7 @@ jobs:
               apt-get install -y -qq --no-install-recommends fonts-dejavu-core >/dev/null
 
               blender --background \
-                --python /app/engine/sagi_tactical_execution_director_v58.py \
+                --python /app/engine/sagi_tactical_execution_director_v57.py \
                 -- \
                 /app/presets/christmas_tree_attack_viewpoint_v58.json \
                 /out
