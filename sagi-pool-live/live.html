@@ -111,6 +111,7 @@ async function claimProvision(){
     if(!r.ok){
       if(r.status===404||r.status===410)throw new Error('安装码无效、已使用或已过期');
       if(r.status===401)throw new Error('球房授权已失效');
+      if(r.status===429)throw new Error('安装码尝试过多，请稍后再试');
       throw new Error(d.error||('安装失败 · '+r.status));
     }
     const c=d.config||{};
