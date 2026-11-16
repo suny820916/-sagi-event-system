@@ -1613,7 +1613,7 @@ async function mdLoad(){
    if(!x)x=JSON.parse(localStorage.getItem('sagi_matchday_graphics_v42')||'null');
    if(x){
      if(x.clockRunning&&x.savedAt){x.clockBase=(Number(x.clockBase)||0)+Math.max(0,(Date.now()-Number(x.savedAt))/1000);x.clockStartedAt=Date.now()}
-     matchdayState={...matchdayState,...x,eventLog:Array.isArray(x.eventLog)?x.eventLog:[],replayMarkers:Array.isArray(x.replayMarkers)?x.replayMarkers:[]};
+     matchdayState={...matchdayState,...x,eventLog:Array.isArray(x.eventLog)?x.eventLog:[],replayMarkers:Array.isArray(x.replayMarkers)?x.replayMarkers:[]};if(!x.scoreTheme||x.scoreTheme==='sagi')matchdayState.scoreTheme='sagi-pro';
    }
  }catch(e){}
  refreshMatchdayUI();refreshMatchdayPlayers();mdRenderLog();
