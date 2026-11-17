@@ -1,4 +1,4 @@
-name: SAGI vMix V4.30.6 TORANHE Scorebug Self Test
+name: SAGI vMix V4.30.7 TORANHE Scorebug Self Test
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
       - "intro/assets/toranhe-event-logo.png"
       - "intro/tests/v4270-browser-selftest.mjs"
       - ".github/workflows/vmix-v4270-selftest.yml"
-      - "intro/SAGI_VMIX_LAN_V48_STAGE_4306.bat"
+      - "intro/SAGI_VMIX_LAN_V48_STAGE_4307.bat"
   workflow_dispatch:
 
 jobs:
@@ -24,23 +24,23 @@ jobs:
         run: |
           npm install --no-save playwright@latest
           npx playwright install --with-deps chromium
-      - name: Run V4.30.6 broadcast self-test
+      - name: Run V4.30.7 broadcast self-test
         run: |
           mkdir -p selftest-artifacts
           node intro/tests/v4270-browser-selftest.mjs
-      - name: Upload V4.30.6 evidence
+      - name: Upload V4.30.7 evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: SAGI_V4306_STAGE_SELFTEST
+          name: SAGI_V4307_STAGE_SELFTEST
           path: selftest-artifacts
           retention-days: 7
       - name: Export certified launcher only after all tests pass
-        if: success() && hashFiles('intro/SAGI_VMIX_LAN_V48_STAGE_4306.bat') != ''
+        if: success() && hashFiles('intro/SAGI_VMIX_LAN_V48_STAGE_4307.bat') != ''
         uses: actions/upload-artifact@v4
         with:
-          name: SAGI_VMIX_V4306_STAGE_CERTIFIED
-          path: intro/SAGI_VMIX_LAN_V48_STAGE_4306.bat
+          name: SAGI_VMIX_V4307_STAGE_CERTIFIED
+          path: intro/SAGI_VMIX_LAN_V48_STAGE_4307.bat
           if-no-files-found: error
           retention-days: 7
 
