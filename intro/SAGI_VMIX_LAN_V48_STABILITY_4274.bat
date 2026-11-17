@@ -2737,6 +2737,7 @@ async function mdConsistencyCheck(force=false){
  }catch(e){mdLastConsistencyState='OFFLINE';return false}finally{mdConsistencyBusy=false}
 }
 
+window.sagiMatchdayConsistencyCheck=(force=true)=>mdConsistencyCheck(!!force);
 function mdEventLabel(e){
  if(!e)return'事件';if(e.type==='GOAL')return'进球';if(e.type==='YELLOW')return'黄牌';if(e.type==='RED')return'红牌';if(e.type==='SUB')return'换人';if(e.type==='HALF_TIME')return'半场';if(e.type==='FULL_TIME')return'全场';if(e.type==='MVP')return'MVP';return e.type||'事件';
 }
