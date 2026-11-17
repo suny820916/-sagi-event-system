@@ -41,8 +41,9 @@ jobs:
           const output=lines.slice(idx.output+1).join('\n');
           if(!control.includes('V4.30.8')||!control.includes('sagiLiveHealthCheck')) throw new Error('V4.30.8 control payload missing');
           if(!output.includes('V4.30.8')||!output.includes('sagiOutputWatchdog')) throw new Error('V4.30.8 output payload missing');
-          if(s.includes('V4\\.30\\.5')) throw new Error('BAT still contains stale V4.30.5 validation logic');
-          if((s.match(/V4\\\\\.30\\\\\.8/g)||[]).length<2) throw new Error('BAT V4.30.8 validation guards missing');
+          const staleGuard='V4\\.30\\.5', currentGuard='V4\\.30\\.8';
+          if(s.includes(staleGuard)) throw new Error('BAT still contains stale V4.30.5 validation logic');
+          if(s.split(currentGuard).length-1<2) throw new Error('BAT V4.30.8 validation guards missing');
           if(!lines.some(x=>x.includes('powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -Command ^'))) throw new Error('BAT PowerShell bootstrap missing');
           console.log('BAT STRUCTURE PASS', {bytes:Buffer.byteLength(s),idx});
           NODE
