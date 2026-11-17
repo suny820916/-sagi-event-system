@@ -14,15 +14,15 @@
   "timeline_end_sec": 70,
   "palette": {
     "background": "#000000",
-    "pitch": "#15191B",
-    "pitch_line": "#6F777B",
+    "pitch": "#242A2D",
+    "pitch_line": "#939EA3",
     "own_primary": "#E1E5E7",
     "own_secondary": "#D2D7DA",
     "opponent": "#747C81",
     "ring": "#EAF51F",
-    "pitch_alt": "#191E20",
+    "pitch_alt": "#292F32",
     "tactical_floor": "#000000",
-    "pitch_edge": "#0B0E10",
+    "pitch_edge": "#171C1F",
     "pitch_shadow": "#000000",
     "ball": "#A8ACAF",
     "tactical_guide": "#EAF51F",
@@ -2443,7 +2443,7 @@
     "max_abs_screen_axis_deg": 4.5,
     "principle": "Allow only small authored screen-axis changes tied to tactical questions; never decorative roll."
   },
-  "build_revision": "V2.1-AXIS-LOCK-30FPS-R1",
+  "build_revision": "V2.0-R6 · visibility correction: raise pitch/line contrast based on 16 rendered key frames; retain 70s timeline and tactical events",
   "screen_scale_lock": {
     "enabled": true,
     "reference_lens_mm": 52,
@@ -3065,6 +3065,11 @@
     "no_replay": true,
     "no_celebration": true,
     "compact_block_collective_subject": true,
-    "timing_interpretation": "Authored chapter wall-clock is preserved; 5-7 sec transition rule is treated as perceived real-game/active football time because literal chapter timestamps otherwise conflict."
+    "timing_interpretation": "Authored chapter wall-clock is preserved; 5-7 sec transition rule is treated as perceived real-game/active football time because literal chapter timestamps otherwise conflict.",
+    "visual_review_r6": {
+      "basis": "Reviewed all 16 key frames from successful run 44007026436; field and players are low contrast on phone-sized portrait frames",
+      "scope": "Pitch/line readability only; no movement, timing, or camera changes",
+      "reference_sample_compared": false
+    }
   }
 }
