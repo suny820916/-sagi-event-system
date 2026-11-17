@@ -1407,8 +1407,8 @@ function fitBroadcastTeamName(el,text,mode='regular'){
  let size=18;const block=el.closest('.sbTeamBlock');
  el.style.setProperty('font-size',size+'px','important');
  const crest=block&&block.querySelector('.sbCrest.on'),reds=block?block.querySelectorAll('.sbRedCard').length:0;
- const chrome=(crest?37:8)+(reds*9)+22,maxBlock=360,minBlock=118;
- while(el.scrollWidth>maxBlock-chrome&&size>11){size--;el.style.setProperty('font-size',size+'px','important')}
+ const chrome=(crest?31:6)+(reds*9)+18,maxBlock=156,minBlock=96;
+ while(el.scrollWidth>maxBlock-chrome&&size>10){size--;el.style.setProperty('font-size',size+'px','important')}
  const target=Math.max(minBlock,Math.min(maxBlock,Math.ceil(el.scrollWidth)+chrome));
  if(block){
   block.style.setProperty('width',target+'px','important');
