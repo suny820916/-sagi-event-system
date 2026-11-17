@@ -566,7 +566,7 @@ jobs:
 
           # V1.2 validates real decodable audio instead of accepting arbitrary bytes.
           original_synth = mod.synthesize_voice
-          def fake_synth(text, mode, voice_id, output_path, speed=1.0, style="natural"):
+          def fake_synth(text, mode, voice_id, output_path, speed=1.0, style="natural", quality="fast", meta=None):
               duration = max(0.8, min(2.2, len(str(text or "")) / 5.0))
               exe = imageio_ffmpeg.get_ffmpeg_exe()
               subprocess.run([
@@ -574,6 +574,7 @@ jobs:
                   "-f", "lavfi", "-i", f"sine=frequency=620:duration={duration}",
                   "-c:a", "pcm_s16le", "-f", "wav", str(output_path)
               ], check=True)
+              if isinstance(meta, dict): meta.update({"provider":"CI Fake Voice","model":"ci-fake","quality":quality})
               return str(output_path)
           mod.synthesize_voice = fake_synth
           try:
