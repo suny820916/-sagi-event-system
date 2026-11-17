@@ -11,11 +11,11 @@ const AWAY='ALTAI YOUTH FOOTBALL CLUB';
 const crest=(fill,label)=>'data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><path d="M60 4 108 22v38c0 31-20 48-48 56C32 108 12 91 12 60V22Z" fill="'+fill+'"/><text x="60" y="70" text-anchor="middle" font-size="30" font-family="Arial" font-weight="900" fill="white">'+label+'</text></svg>');
 const HOME_CREST=crest('#0c8b55','H');
 const AWAY_CREST=crest('#3157b7','A');
-let seq=1,vmixCommands=[],matchdayPosts=[],graphics=makeGraphics();
+let seq=1,vmixCommands=[],matchdayPosts=[],graphics=makeGraphics(),reorderMatchdayWrites=false;
 
 function makeGraphics(overrides={}){
  return {
-  commandId:'g_'+(seq++),visualVersion:'V4.27.3-SELFTEST',
+  commandId:'g_'+(seq++),visualVersion:'V4.27.4-SELFTEST',
   scoreboardVisible:true,scoreboardFrozen:false,scoreTheme:'sagi-pro',competition:'TORANHE CUP',
   home:HOME,away:AWAY,homeShort:HOME,awayShort:AWAY,
   homeCrest:HOME_CREST,awayCrest:AWAY_CREST,eventLogo:'',
@@ -31,11 +31,11 @@ function makeValidRoster(prefix){
  const roles=[['1','GK','GK'],['2','DF','RB'],['3','DF','LB'],['4','DF','CB'],['5','DF','CB'],['6','MF','CM'],['8','MF','CM'],['10','MF','AM'],['7','FW','RW'],['9','FW','ST'],['11','FW','LW']];
  return roles.map(([number,role,position],i)=>({id:prefix+(i+1),name:prefix.toUpperCase()+' PLAYER '+(i+1),number,squadType:'STARTER',role,position,captain:i===3}));
 }
-function makeStoredProject(id='selftest_project_4273'){
+function makeStoredProject(id='selftest_project_4274'){
  const homeRoster=makeValidRoster('h'),awayRoster=makeValidRoster('a'),projectPhoto='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"><rect width="40" height="40" fill="#067347"/></svg>');
- const meta={competition:'TORANHE PROJECT CUP',round:'FINAL',home:'PROJECT HOME FC',away:'PROJECT AWAY FC',kickoff:'',venue:''};
+ const meta={competition:'TORANHE PROJECT CUP',round:'FINAL',home:'乌苏叶克备',away:'IPF',kickoff:'',venue:''};
  const core={activeSide:'HOME',matchConfig:{mode:'11',playerCount:11},package:{...meta,matchFormat:{mode:'11',playerCount:11}},teams:{HOME:{formation:'4-3-3',customPositions:{},roster:homeRoster},AWAY:{formation:'4-3-3',customPositions:{},roster:awayRoster}}};
- const matchday={homeScore:3,awayScore:1,scoreboardVisible:true,scoreboardFrozen:false,period:'2H',clockBase:4020,clockRunning:false,clockStartedAt:0,lastEvent:null,eventLog:[],replayMarkers:[],homeColor:'#0c8b55',awayColor:'#3157b7',accentColor:'#20ed82',homeShort:'PHF',awayShort:'PAF',homeRedCards:0,awayRedCards:0,homePen:0,awayPen:0,penaltyShootout:{started:false,rounds:5,firstSide:'HOME',history:[],winner:'',finished:false},simplePenalty:{visible:false,home:0,away:0,history:[],slots:5},stoppageTime:'',scoreTheme:'sagi-pro',overlayVisible:false,matchMeta:meta,savedAt:Date.now()};
+ const matchday={homeScore:3,awayScore:1,scoreboardVisible:true,scoreboardFrozen:false,period:'2H',clockBase:4020,clockRunning:false,clockStartedAt:0,lastEvent:null,eventLog:[],replayMarkers:[],homeColor:'#0c8b55',awayColor:'#3157b7',accentColor:'#20ed82',homeShort:'少林足球',awayShort:'旧客队',homeRedCards:0,awayRedCards:0,homePen:0,awayPen:0,penaltyShootout:{started:false,rounds:5,firstSide:'HOME',history:[],winner:'',finished:false},simplePenalty:{visible:false,home:0,away:0,history:[],slots:5},stoppageTime:'',scoreTheme:'sagi-pro',overlayVisible:false,matchMeta:meta,savedAt:Date.now()};
  return{id,name:'SELFTEST STORED MATCH',savedAt:Date.now(),meta,core:JSON.stringify(core),show:'',matchday:JSON.stringify(matchday),vmix:JSON.stringify({cam1:'1',cam2:'2',drone:'',replay:'4',graphics:'5',transition:'Cut',duration:0,overlay:'1',cam1Role:'MAIN_WIDE',cam2Role:'SIDELINE_CLOSE',droneRole:'DRONE',replayRole:'REPLAY'}),assets:{homeCrest:HOME_CREST,awayCrest:AWAY_CREST,stadium:'',eventLogo:'',photos:{HOME:{h1:projectPhoto},AWAY:{}}}}
 }
 function json(res,obj,status=200){const body=JSON.stringify(obj);res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','Access-Control-Allow-Origin':'*'});res.end(body)}
@@ -47,12 +47,12 @@ const server=http.createServer(async(req,res)=>{
  try{
   if(u.pathname==='/api/state')return json(res,{lineupIntro:null});
   if(u.pathname==='/api/matchday'&&req.method==='GET')return json(res,graphics);
-  if(u.pathname==='/api/matchday'&&req.method==='POST'){const b=await readBody(req);try{graphics=JSON.parse(b)||graphics;matchdayPosts.push(graphics)}catch{}return json(res,{ok:true})}
+  if(u.pathname==='/api/matchday'&&req.method==='POST'){const b=await readBody(req);try{const next=JSON.parse(b)||graphics;if(reorderMatchdayWrites&&Number(next.homeScore)===4)await new Promise(r=>setTimeout(r,450));graphics=next;matchdayPosts.push(graphics)}catch{}return json(res,{ok:true})}
   if(u.pathname==='/api/vmix/status')return json(res,{ok:true,active:'1',preview:'2',inputs:[{number:'1',key:'cam1',type:'Camera',title:'CAM 1',state:'Running'},{number:'2',key:'cam2',type:'Camera',title:'CAM 2',state:'Running'},{number:'4',key:'replay',type:'Video',title:'REPLAY',state:'Running'},{number:'5',key:'gfx',type:'Browser',title:'SAGI Browser',state:'Running'}],overlays:[]});
   if(u.pathname==='/api/vmix'&&req.method==='POST'){const b=await readBody(req);let cmd={};try{cmd=JSON.parse(b)}catch{}vmixCommands.push(cmd);return json(res,{ok:true,command:cmd})}
   if(u.pathname==='/api/projects')return json(res,{projects:[]});
   if(u.pathname==='/health')return json(res,{ok:true,port:PORT});
-  if(u.pathname==='/')return text(res,'SAGI V4.27.3 SELFTEST');
+  if(u.pathname==='/')return text(res,'SAGI V4.27.4 SELFTEST');
   const rel=decodeURIComponent(u.pathname).replace(/^\/+/,'');const file=path.resolve(ROOT,rel);
   if(!file.startsWith(ROOT)||!fs.existsSync(file)||fs.statSync(file).isDirectory())return text(res,'Not found','text/plain',404);
   res.writeHead(200,{'Content-Type':mime(file),'Cache-Control':'no-store','Access-Control-Allow-Origin':'*'});res.end(fs.readFileSync(file));
@@ -87,6 +87,13 @@ server.listen(PORT,'127.0.0.1',async()=>{
   assert(regular.stopText==='+3'&&regular.stopDisplay!=='none','stoppage-time ribbon missing');
   assert(regular.burstWidth<=2&&!regular.goalExpand,'goal panel visible during regular play');
   await page.screenshot({path:'selftest-artifacts/01-regular-toranhe-scorebug.png'});
+
+  console.log('TEST 1B: legacy stale short-name cache cannot override current fixture identity');
+  graphics=makeGraphics({home:'乌苏叶克备',away:'IPF',homeShort:'少林足球',awayShort:'旧客队',event:{type:'CLEAR_EVENT'}});
+  await page.waitForFunction(()=>document.querySelector('#sbHome')?.textContent==='乌苏叶克备'&&document.querySelector('#sbAway')?.textContent==='IPF',null,{timeout:5000});await wait(300);
+  const identityOutput=await page.evaluate(()=>({home:document.querySelector('#sbHome').textContent,away:document.querySelector('#sbAway').textContent}));
+  assert(identityOutput.home==='乌苏叶克备'&&identityOutput.away==='IPF','legacy short-name cache overrode vMix output: '+JSON.stringify(identityOutput));
+  await page.screenshot({path:'selftest-artifacts/01b-canonical-team-identity.png'});
 
   console.log('TEST 2: HOME goal = enlarged HOME crest + complete GOAL + lower player card');
   const photo='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="180" height="220"><rect width="100%" height="100%" fill="#17202a"/><circle cx="90" cy="70" r="35" fill="#d5a97a"/><rect x="45" y="110" width="90" height="105" rx="18" fill="#0c8b55"/></svg>');
@@ -209,9 +216,16 @@ server.listen(PORT,'127.0.0.1',async()=>{
     summary:document.querySelector('#setupSummary').textContent,
     mdHomeScore:document.querySelector('#mdHomeScore').textContent,
     mdAwayScore:document.querySelector('#mdAwayScore').textContent,
+    mmHomeName:document.querySelector('#mmHomeName').textContent,
+    mmAwayName:document.querySelector('#mmAwayName').textContent,
+    mirroredHome:document.querySelector('#mdHomeShort').value,
+    mirroredAway:document.querySelector('#mdAwayShort').value,
+    mirrorReadonly:document.querySelector('#mdHomeShort').readOnly&&document.querySelector('#mdAwayShort').readOnly,
     localProjects:localStorage.getItem('sagi_match_projects_v44')||''
   }));
-  assert(loadedProject.competition==='TORANHE PROJECT CUP'&&loadedProject.home==='PROJECT HOME FC'&&loadedProject.away==='PROJECT AWAY FC','stored project match identity was not restored: '+JSON.stringify(loadedProject));
+  assert(loadedProject.competition==='TORANHE PROJECT CUP'&&loadedProject.home==='乌苏叶克备'&&loadedProject.away==='IPF','stored project match identity was not restored: '+JSON.stringify(loadedProject));
+  assert(loadedProject.mmHomeName==='乌苏叶克备'&&loadedProject.mmAwayName==='IPF','mobile match control drifted from fixture identity: '+JSON.stringify(loadedProject));
+  assert(loadedProject.mirroredHome==='乌苏叶克备'&&loadedProject.mirroredAway==='IPF'&&loadedProject.mirrorReadonly,'legacy short-name fields are still independent/live-editable');
   assert(loadedProject.mdHomeScore==='3'&&loadedProject.mdAwayScore==='1','selected project matchday was overwritten by stale Bridge state: '+loadedProject.mdHomeScore+'-'+loadedProject.mdAwayScore);
   const compactProjects=JSON.parse(loadedProject.localProjects||'[]');
   const compactProject=compactProjects.find(x=>x.id===storedProject.id);
@@ -236,7 +250,7 @@ server.listen(PORT,'127.0.0.1',async()=>{
   await page.evaluate(()=>document.querySelector('#mmRestoreState').click());await wait(500);
   const afterStaleRestore=await page.evaluate(()=>({home:document.querySelector('#mdHomeScore').textContent,away:document.querySelector('#mdAwayScore').textContent,homeName:document.querySelector('#matchHome').value,awayName:document.querySelector('#matchAway').value}));
   assert(afterStaleRestore.home==='3'&&afterStaleRestore.away==='1','manual stale Bridge restore overwrote selected project: '+JSON.stringify(afterStaleRestore));
-  assert(afterStaleRestore.homeName==='PROJECT HOME FC'&&afterStaleRestore.awayName==='PROJECT AWAY FC','stale Bridge restore changed selected fixture identity');
+  assert(afterStaleRestore.homeName==='乌苏叶克备'&&afterStaleRestore.awayName==='IPF','stale Bridge restore changed selected fixture identity');
   await page.screenshot({path:'selftest-artifacts/09-project-load-ready.png'});
 
   console.log('TEST 8B: compact local project index rehydrates full project/photos from IndexedDB when Bridge project list is empty');
@@ -272,8 +286,34 @@ server.listen(PORT,'127.0.0.1',async()=>{
   assert(perf.penalty<=2&&perf.log<=1,'clock loop is still repainting heavy controls: '+JSON.stringify(perf));
   await page.screenshot({path:'selftest-artifacts/10-clock-stability.png'});
 
+  console.log('TEST 10: rapid score writes remain ordered even when the first network write is deliberately delayed');
+  await page.click('#mdClockPause');await wait(250);reorderMatchdayWrites=true;matchdayPosts=[];
+  await page.evaluate(()=>{document.querySelector('#mdHomePlus').click();document.querySelector('#mdHomePlus').click()});
+  await wait(1400);reorderMatchdayWrites=false;
+  const ordered=matchdayPosts.filter(x=>x&&x.home==='乌苏叶克备'&&x.away==='IPF').slice(-4);
+  assert(Number(graphics.homeScore)===5,'out-of-order network write rolled score backward: '+JSON.stringify(ordered.map(x=>({score:x.homeScore,revision:x.revision}))));
+  const orderedScores=ordered.map(x=>Number(x.homeScore)).filter(x=>x>=4);
+  assert(orderedScores.slice(-2).join(',')==='4,5','serialized score sequence failed: '+JSON.stringify(orderedScores));
+  await page.screenshot({path:'selftest-artifacts/11-ordered-score-sync.png'});
+
+  console.log('TEST 11: consistency watchdog repairs same-fixture Bridge corruption');
+  graphics={...graphics,commandId:'corrupt_same_fixture',home:'乌苏叶克备',away:'IPF',homeShort:'少林足球',awayShort:'旧客队',homeScore:99,awayScore:88};
+  const repaired=await page.evaluate(()=>mdConsistencyCheck(true));await wait(700);
+  const repairUI=await page.evaluate(()=>({sync:document.querySelector('#mdSync').textContent,home:document.querySelector('#mmHomeName').textContent,away:document.querySelector('#mmAwayName').textContent,score:document.querySelector('#mdHomeScore').textContent}));
+  assert(repaired&&Number(graphics.homeScore)===5&&Number(graphics.awayScore)===1,'watchdog failed to restore authoritative score state: '+JSON.stringify(graphics));
+  assert(repairUI.home==='乌苏叶克备'&&repairUI.away==='IPF'&&repairUI.score==='5','watchdog repair changed local control identity/state: '+JSON.stringify(repairUI));
+  await page.screenshot({path:'selftest-artifacts/12-watchdog-repair.png'});
+
+  console.log('TEST 12: accelerated long-session identity soak keeps names/scores stable');
+  const soak=await page.evaluate(()=>{
+    for(let i=0;i<1800;i++){mdEnforceCanonicalTeams();refreshMatchdayClockUI();if(i%60===0)refreshMatchdayUI()}
+    return{home:document.querySelector('#mmHomeName').textContent,away:document.querySelector('#mmAwayName').textContent,mirrorHome:document.querySelector('#mdHomeShort').value,mirrorAway:document.querySelector('#mdAwayShort').value,score:document.querySelector('#mdHomeScore').textContent}
+  });
+  assert(soak.home==='乌苏叶克备'&&soak.away==='IPF'&&soak.mirrorHome==='乌苏叶克备'&&soak.mirrorAway==='IPF'&&soak.score==='5','accelerated long-session soak drifted state: '+JSON.stringify(soak));
+  await page.screenshot({path:'selftest-artifacts/13-long-session-soak.png'});
+
   assert(pageErrors.length===0,'browser page errors: '+pageErrors.join(' | '));
-  const report={ok:true,build:'V4.27.3',testedAt:new Date().toISOString(),tests:['regular white score ribbon + lower time/stoppage ribbon + TORANHE event logo','HOME goal enlarged HOME crest + complete GOAL + lower player card + collapse','AWAY goal enlarged AWAY crest','yellow/red card event colors locked independently of team colors','penalty >5 rounds/sudden death/miss/scores','two-camera Input 1 -> Input 2','event-logo replay stinger visual','manual replay stinger IN -> Input 4 -> OUT -> Input 1','stored project load wins over stale Bridge + optional time/venue do not block READY','compact project index rehydrates full photos from IndexedDB with empty Bridge list','clock-only refresh avoids repeated heavy match-control repaints'],vmixCommands:cuts};
+  const report={ok:true,build:'V4.27.4',testedAt:new Date().toISOString(),tests:['regular white score ribbon + lower time/stoppage ribbon + TORANHE event logo','HOME goal enlarged HOME crest + complete GOAL + lower player card + collapse','AWAY goal enlarged AWAY crest','yellow/red card event colors locked independently of team colors','penalty >5 rounds/sudden death/miss/scores','two-camera Input 1 -> Input 2','event-logo replay stinger visual','manual replay stinger IN -> Input 4 -> OUT -> Input 1','stored project load wins over stale Bridge + optional time/venue do not block READY','compact project index rehydrates full photos from IndexedDB with empty Bridge list','clock-only refresh avoids repeated heavy match-control repaints','legacy stale short-name cache cannot override current vMix fixture identity','mobile match control mirrors current fixture identity and legacy fields are read-only','rapid score writes are serialized under deliberate network reordering','consistency watchdog repairs same-fixture Bridge corruption','accelerated 1800-cycle long-session identity soak'],vmixCommands:cuts};
   fs.writeFileSync('selftest-artifacts/report.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
  }catch(e){
   fs.mkdirSync('selftest-artifacts',{recursive:true});try{await page.screenshot({path:'selftest-artifacts/FAIL.png',fullPage:true})}catch{}
