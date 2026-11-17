@@ -131,7 +131,7 @@ const $=s=>document.querySelector(s);
 const KEY='sagi_pool_creator_v1';
 const CFG='sagi_pool_creator_sync_v1';
 const DEVICE='sagi_pool_creator_device_v1';
-const modes={8ball:'中式八球',chase4:'4球追分',chase6:'6球追分',chase9:'9球追分'};
+const modes={'8ball':'中式八球',chase4:'4球追分',chase6:'6球追分',chase9:'9球追分'};
 const chaseNames={normal:['WIN','普胜'],small:['SMALL GOLDEN','小金'],big:['BIG GOLDEN','大金'],gold9:['GOLDEN 9','黄金9']};
 const defaults={mode:'8ball',creator:'SAGI CREATOR',sponsor:'SAGI SPORTS',raceTo:5,settlement:'winner',points:{normal:1,small:2,big:3,gold9:4},players:[{id:1,name:'球员A',score:0,wins:0},{id:2,name:'球员B',score:0,wins:0}],active:0,history:[],updatedAt:0};
 let state=load(),cfg=loadCfg(),pushTimer=null,applying=false;
