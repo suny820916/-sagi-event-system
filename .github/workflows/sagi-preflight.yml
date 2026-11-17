@@ -179,7 +179,7 @@ jobs:
           c = mod.app.test_client()
           health = c.get("/health").get_json()
           print("health", health)
-          assert health["version"] == "3.9.6"
+          assert health["version"] == "3.9.7"
           assert health["captionMedia"] is True
           assert health["contextTranslate"] is True
           assert health["smartTranslate"] is True
@@ -211,7 +211,11 @@ jobs:
           assert health["aiSceneSyncSemanticCaptionMatch"] is True
           assert health["cloudRender"] is True
           assert health["smartCutCloud"] is True
-          assert health["smartCutCloudVersion"] == "1.0"
+          assert health["smartCutCloudVersion"] == "1.1"
+          assert health["smartCutLargeMedia"] is True
+          assert health["smartCutLowMemory"] is True
+          assert health["smartCutChunkUpload"] is True
+          assert health["smartCutChunkUploadVersion"] == "1.0"
           assert health["cloudDownload"] is True
           assert set(health["downloadPlatforms"]) >= {"Instagram","YouTube","TikTok","X"}
           assert health["instagramPostFallback"].startswith("btch -> parth-dl")
@@ -632,7 +636,7 @@ jobs:
               "/api/football/crest?url=",
               "IMAGE RECREATE · 图片二次创作",
               "SAGI SMART CUT · 智能剪辑导演",
-              "sagi-ffmpeg-worker.js?v=4130",
+              "sagi-ffmpeg-worker.js?v=4140",
               "const classWorkerURL=new URL",
               "/api/smart-render",
           ]
@@ -651,6 +655,10 @@ jobs:
           assert "SMART_CLOUD_JOB_KEY" in smart, "long SMART CUT cloud job must persist on iPhone"
           assert "smartCutResumePersistedJob" in smart, "long SMART CUT cloud job must auto-resume"
           assert "2*60*60*1000" in smart, "long cloud render polling window must be resilient"
+          assert "smartCutChunkedCloudSubmit" in smart, "large SMART CUT media must use chunk upload"
+          assert "/api/smart-upload/init" in smart
+          assert "/api/smart-upload/" in smart
+          assert "8*1024*1024" in smart
           print("frontend wiring OK")
           PY
           node --check /tmp/sagi-down.js
@@ -1500,7 +1508,7 @@ jobs:
           })
           job = mod.render_jobs[job_id]
           assert job["status"] == "ready", job
-          assert job.get("visualSyncStrategy") == "smart-cut-cloud", job
+          assert job.get("visualSyncStrategy") == "smart-cut-lowmem", job
           assert int(job.get("sceneSyncSegments") or 0) == 3, job
           out = pathlib.Path(job["path"])
           assert out.exists() and out.stat().st_size > 5000, out
