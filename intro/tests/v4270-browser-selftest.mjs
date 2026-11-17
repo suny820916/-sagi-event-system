@@ -15,7 +15,7 @@ let seq=1,vmixCommands=[],matchdayPosts=[],graphics=makeGraphics(),reorderMatchd
 
 function makeGraphics(overrides={}){
  return {
-  commandId:'g_'+(seq++),revision:seq,fixtureKey:'selftest|'+HOME+'|'+AWAY,visualVersion:'V4.30.0-SELFTEST',
+  commandId:'g_'+(seq++),revision:seq,fixtureKey:'selftest|'+HOME+'|'+AWAY,visualVersion:'V4.30.1-SELFTEST',
   scoreboardVisible:true,scoreboardFrozen:false,scoreTheme:'sagi-pro',competition:'TORANHE CUP',
   home:HOME,away:AWAY,homeShort:HOME,awayShort:AWAY,
   homeCrest:HOME_CREST,awayCrest:AWAY_CREST,eventLogo:'',
@@ -52,7 +52,7 @@ const server=http.createServer(async(req,res)=>{
   if(u.pathname==='/api/vmix'&&req.method==='POST'){const b=await readBody(req);let cmd={};try{cmd=JSON.parse(b)}catch{}vmixCommands.push(cmd);return json(res,{ok:true,command:cmd})}
   if(u.pathname==='/api/projects')return json(res,{projects:[]});
   if(u.pathname==='/health')return json(res,{ok:true,port:PORT});
-  if(u.pathname==='/')return text(res,'SAGI V4.30.0 SELFTEST');
+  if(u.pathname==='/')return text(res,'SAGI V4.30.1 SELFTEST');
   const rel=decodeURIComponent(u.pathname).replace(/^\/+/,'');const file=path.resolve(ROOT,rel);
   if(!file.startsWith(ROOT)||!fs.existsSync(file)||fs.statSync(file).isDirectory())return text(res,'Not found','text/plain',404);
   res.writeHead(200,{'Content-Type':mime(file),'Cache-Control':'no-store','Access-Control-Allow-Origin':'*'});res.end(fs.readFileSync(file));
@@ -79,12 +79,12 @@ server.listen(PORT,'127.0.0.1',async()=>{
   assert(regular.homeOverflow!=='ellipsis'&&regular.awayOverflow!=='ellipsis','ellipsis returned');
   assert(regular.homeFont>=11&&regular.awayFont>=11,'team name below readable floor');
   assert(regular.homeInside&&regular.awayInside,'team name clipped outside main scorebar');
-  assert(regular.bugRight<=1918,'regular scorebar exceeds frame');
+  assert((regular.bugRight-42)<=560,'regular scorebar is still too long: '+(regular.bugRight-42));
   assert(regular.midTop>=regular.bugTop+regular.bugHeight-1,'clock ribbon is not below main scorebar');
   assert(regular.brandWidth>=60&&regular.logoWidth>=60,'event logo is not visually large enough');
   assert(regular.logoSrc.startsWith('data:image/svg+xml'),'offline TORANHE event logo is not embedded');
   assert(regular.logoDisplay!=='none','event logo hidden');
-  assert(regular.stopText==='+3 补时'&&regular.stopDisplay!=='none','stoppage-time ribbon missing or ambiguous');
+  assert(regular.stopDisplay==='none','added-time block should stay hidden during normal regular play');
   assert(regular.burstWidth<=2&&!regular.goalExpand,'goal panel visible during regular play');
   const scoreHierarchy=await page.evaluate(()=>{
     const phase=document.querySelector('#sbPeriod'),clock=document.querySelector('#sbClock'),mid=document.querySelector('.sbMid'),home=document.querySelector('#sbHome'),away=document.querySelector('#sbAway');
@@ -161,10 +161,10 @@ server.listen(PORT,'127.0.0.1',async()=>{
   assert(staleGuard.home==='2'&&staleGuard.away==='1','stale lower revision rolled vMix output backward: '+JSON.stringify(staleGuard));
 
   console.log('TEST 3D: stoppage time is explicit and attached to the clock rail');
-  graphics=makeGraphics({commandId:'stoppage-info',revision:140,fixtureKey:'SELFTEST-STOPPAGE',stoppageTime:'2',clock:{period:'1H',baseSeconds:2700,running:false,startedAt:null},event:{type:'CLEAR_EVENT'}});
+  graphics=makeGraphics({commandId:'stoppage-info',revision:140,fixtureKey:'SELFTEST-STOPPAGE',stoppageTime:'3',clock:{period:'2H',baseSeconds:5460,running:false,startedAt:null},event:{type:'CLEAR_EVENT'}});
   await page.waitForFunction(()=>document.querySelector('#sbStoppage')?.classList.contains('on'),null,{timeout:4000});await wait(250);
   const stoppageInfo=await page.evaluate(()=>({text:document.querySelector('#sbStoppage').textContent,period:document.querySelector('#sbPeriod').textContent,clock:document.querySelector('#sbClock').textContent,aria:document.querySelector('#scoreBug').getAttribute('aria-label')||''}));
-  assert(stoppageInfo.text==='+2 补时'&&stoppageInfo.aria.includes('+2 补时'),'stoppage information is not explicit: '+JSON.stringify(stoppageInfo));
+  assert(stoppageInfo.text==='+3'&&stoppageInfo.aria.includes('补时 +3'),'added-time information is not explicit/compact: '+JSON.stringify(stoppageInfo));
 
   console.log('TEST 4: penalty shootout remains isolated and supports >5 rounds');
   const hist=[['HOME','GOAL'],['AWAY','GOAL'],['HOME','GOAL'],['AWAY','MISS'],['HOME','MISS'],['AWAY','GOAL'],['HOME','GOAL'],['AWAY','GOAL'],['HOME','GOAL'],['AWAY','GOAL'],['HOME','MISS'],['AWAY','GOAL']].map(([side,result],i)=>({side,result,at:String(i)}));
@@ -357,7 +357,7 @@ server.listen(PORT,'127.0.0.1',async()=>{
   await page.screenshot({path:'selftest-artifacts/13-long-session-soak.png'});
 
   assert(pageErrors.length===0,'browser page errors: '+pageErrors.join(' | '));
-  const report={ok:true,build:'V4.30.0',testedAt:new Date().toISOString(),tests:['score-intelligence hierarchy: team identity + score + clock + visible phase + explicit stoppage + TORANHE event logo','HOME goal enlarged HOME crest + complete GOAL + lower player card + collapse','AWAY goal enlarged AWAY crest','yellow/red referee-card shape + event colors + control icons','penalty >5 rounds/sudden death/miss/scores','two-camera Input 1 -> Input 2','event-logo replay stinger visual','manual replay stinger IN -> Input 4 -> OUT -> Input 1','stored project load wins over stale Bridge + optional time/venue do not block READY','compact project index rehydrates full photos from IndexedDB with empty Bridge list','clock-only refresh avoids repeated heavy match-control repaints','legacy stale short-name cache cannot override current vMix fixture identity','mobile match control mirrors current fixture identity and legacy fields are read-only','transient LAN failure retries automatically and records last-good state','rapid score writes are serialized under deliberate network reordering','duplicate operator events are gated before double-counting','vMix output ignores stale lower revisions within the same fixture','consistency watchdog repairs same-fixture Bridge corruption','accelerated 5000-cycle long-session identity soak'],vmixCommands:cuts};
+  const report={ok:true,build:'V4.30.1',testedAt:new Date().toISOString(),tests:['score-intelligence hierarchy: team identity + score + clock + visible phase + explicit stoppage + TORANHE event logo','HOME goal enlarged HOME crest + complete GOAL + lower player card + collapse','AWAY goal enlarged AWAY crest','yellow/red referee-card shape + event colors + control icons','penalty >5 rounds/sudden death/miss/scores','two-camera Input 1 -> Input 2','event-logo replay stinger visual','manual replay stinger IN -> Input 4 -> OUT -> Input 1','stored project load wins over stale Bridge + optional time/venue do not block READY','compact project index rehydrates full photos from IndexedDB with empty Bridge list','clock-only refresh avoids repeated heavy match-control repaints','legacy stale short-name cache cannot override current vMix fixture identity','mobile match control mirrors current fixture identity and legacy fields are read-only','transient LAN failure retries automatically and records last-good state','rapid score writes are serialized under deliberate network reordering','duplicate operator events are gated before double-counting','vMix output ignores stale lower revisions within the same fixture','consistency watchdog repairs same-fixture Bridge corruption','accelerated 5000-cycle long-session identity soak'],vmixCommands:cuts};
   fs.writeFileSync('selftest-artifacts/report.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
  }catch(e){
   fs.mkdirSync('selftest-artifacts',{recursive:true});try{await page.screenshot({path:'selftest-artifacts/FAIL.png',fullPage:true})}catch{}
