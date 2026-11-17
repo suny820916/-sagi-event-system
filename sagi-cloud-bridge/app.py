@@ -33,8 +33,8 @@ app = Flask(__name__)
 ALLOWED_ORIGIN = (os.getenv("SAGI_ALLOWED_ORIGIN") or "https://suny820916.github.io").rstrip("/")
 SERVER_SECRET = (os.getenv("SAGI_SERVER_SECRET") or os.getenv("SAGI_BRIDGE_TOKEN") or "").strip()
 PORT = int(os.getenv("PORT") or "10000")
-DEPLOY_REVISION = "2026-11-16-prematch-v2-cloud-fix"
-APP_VERSION = "3.9.5"
+DEPLOY_REVISION = "2026-11-17-smart-cut-cloud-v1"
+APP_VERSION = "3.9.6"
 MAX_FILE_MB = int(os.getenv("SAGI_MAX_FILE_MB") or "300")
 JOB_TTL_MIN = int(os.getenv("SAGI_JOB_TTL_MIN") or "30")
 RATE_LIMIT_PER_HOUR = int(os.getenv("SAGI_RATE_LIMIT_PER_HOUR") or "20")
@@ -1389,6 +1389,77 @@ def synthesize_voice_timeline(narration, mode, voice_id, work, speed=1.0, style=
     return out, meta
 
 
+def media_duration_seconds(path):
+    try:
+        import av
+        with av.open(str(path), metadata_errors="ignore") as container:
+            if getattr(container, "duration", None):
+                return max(0.0, float(container.duration) / 1000000.0)
+            for stream in container.streams.video:
+                if stream.duration is not None and stream.time_base is not None:
+                    return max(0.0, float(stream.duration * stream.time_base))
+    except TypeError:
+        try:
+            import av
+            with av.open(str(path)) as container:
+                if getattr(container, "duration", None):
+                    return max(0.0, float(container.duration) / 1000000.0)
+        except Exception:
+            pass
+    except Exception:
+        pass
+    return 0.0
+
+
+def normalize_smart_cut_plan(raw_plan, sources, target_duration=0):
+    if not isinstance(raw_plan, list) or not sources:
+        return []
+    durations = [media_duration_seconds(p) for p in sources]
+    rows = []
+    cursor = 0.0
+    for item in raw_plan[:240]:
+        if not isinstance(item, dict):
+            continue
+        try:
+            source_index = int(item.get("sourceIndex") or 0)
+            if source_index < 0 or source_index >= len(sources):
+                continue
+            source_duration = float(durations[source_index] or 0)
+            ss = max(0.0, float(item.get("sourceStart") or 0))
+            requested = max(0.05, float(item.get("duration") or 0))
+            if requested <= 0.05:
+                se_hint = float(item.get("sourceEnd") or ss + 0.05)
+                requested = max(0.05, se_hint - ss)
+            if source_duration > 0:
+                ss = min(ss, max(0.0, source_duration - 0.05))
+                se = min(source_duration, ss + requested)
+            else:
+                se = ss + requested
+            seg = max(0.05, se - ss)
+            if seg < 0.05:
+                continue
+            rows.append({
+                "sourceIndex": source_index,
+                "sourceStart": ss,
+                "sourceEnd": se,
+                "duration": seg,
+                "outputStart": cursor,
+                "outputEnd": cursor + seg,
+                "text": str(item.get("text") or "")[:240],
+            })
+            cursor += seg
+        except Exception:
+            continue
+    target = max(0.0, float(target_duration or 0))
+    if target > 0 and rows:
+        gap = target - cursor
+        if abs(gap) <= 0.18:
+            rows[-1]["duration"] = max(0.05, rows[-1]["duration"] + gap)
+            rows[-1]["sourceEnd"] = rows[-1]["sourceStart"] + rows[-1]["duration"]
+            rows[-1]["outputEnd"] = target
+    return rows
+
+
 def media_has_audio(path):
     try:
         import av
@@ -1870,6 +1941,161 @@ def run_cloud_render(job_id, options):
                 if job_id in render_jobs:
                     render_jobs[job_id].update({
                         "status": "failed", "stage": "失败", "progress": 0,
+                        "updated_at": iso(), "error": str(e)[:1200],
+                    })
+                    _persist_render_jobs_locked()
+        finally:
+            gc.collect()
+
+
+
+def run_smart_render(job_id, options):
+    """Cloud-first SMART CUT renderer. Designed for iPhone Safari: no browser FFmpeg required."""
+    with heavy_slot:
+        with render_jobs_lock:
+            job = render_jobs.get(job_id)
+            if not job:
+                return
+            job.update({"status": "processing", "stage": "SMART CUT 云端准备", "progress": 12, "updated_at": iso()})
+            _persist_render_jobs_locked()
+            work = Path(job["workdir"])
+            sources = [Path(x) for x in (job.get("sources") or [job.get("source")]) if x]
+        try:
+            if not sources or any(not p.exists() for p in sources):
+                raise RuntimeError("SMART_CUT_SOURCE_MISSING")
+            duration = max(0.2, min(180.0, float(options.get("duration") or 15)))
+            aspect = str(options.get("aspect") or "9:16")
+            quality = str(options.get("quality") or "fast")
+            captions = options.get("captions") or []
+            plan = normalize_smart_cut_plan(options.get("smart_plan") or [], sources, duration)
+            if not plan:
+                raise RuntimeError("SMART_CUT_PLAN_EMPTY")
+            total_plan = sum(float(x["duration"]) for x in plan)
+            if abs(total_plan - duration) > 0.25:
+                raise RuntimeError(f"SMART_CUT_DURATION_MISMATCH: plan={total_plan:.2f} target={duration:.2f}")
+
+            narration_path = None
+            uploaded_voice = options.get("uploaded_voice")
+            if uploaded_voice and Path(uploaded_voice).exists():
+                narration_path = Path(uploaded_voice)
+                voice_duration = audio_duration_seconds(narration_path)
+                if voice_duration > duration + 0.30:
+                    raise RuntimeError(f"VOICE_EXCEEDS_SMART_CUT: {voice_duration:.2f}s > {duration:.2f}s")
+            else:
+                voice_duration = 0.0
+
+            width, height = render_dimensions(aspect, quality)
+            subtitle_filter = ""
+            if bool(options.get("burn_subtitles", True)) and captions:
+                ensure_cjk_font()
+                ass_path = work / "smart_captions.ass"
+                write_ass(captions, ass_path, width, height)
+                ass_escaped = str(ass_path).replace("\\", "/").replace(":", r"\:").replace("'", r"\'")
+                font_escaped = str(FONT_DIR).replace("\\", "/").replace(":", r"\:").replace("'", r"\'")
+                subtitle_filter = f"subtitles='{ass_escaped}':fontsdir='{font_escaped}'"
+
+            exe = imageio_ffmpeg.get_ffmpeg_exe()
+            out = work / "SAGI_SMART_CUT_CLOUD.mp4"
+            cmd = [exe, "-hide_banner", "-y"]
+            for source in sources:
+                cmd += ["-i", str(source)]
+            voice_index = len(sources)
+            if narration_path:
+                cmd += ["-i", str(narration_path)]
+
+            filters, labels = [], []
+            for i, row in enumerate(plan):
+                si = int(row["sourceIndex"])
+                ss, se = float(row["sourceStart"]), float(row["sourceEnd"])
+                label = f"scv{i}"
+                filters.append(
+                    f"[{si}:v]trim=start={ss:.4f}:end={se:.4f},setpts=PTS-STARTPTS,"
+                    f"scale={width}:{height}:force_original_aspect_ratio=increase,"
+                    f"crop={width}:{height},fps=30,setsar=1[{label}]"
+                )
+                labels.append(f"[{label}]")
+            filters.append("".join(labels) + f"concat=n={len(labels)}:v=1:a=0[smartscene]")
+            if subtitle_filter:
+                filters.append(f"[smartscene]{subtitle_filter}[vout]")
+            else:
+                filters.append("[smartscene]null[vout]")
+
+            audio_map = None
+            if narration_path:
+                voice_volume = max(0.25, min(2.0, float(options.get("voice_volume") or 1.0)))
+                filters.append(f"[{voice_index}:a]volume={voice_volume}[aout]")
+                audio_map = "[aout]"
+
+            cmd += ["-filter_complex", ";".join(filters), "-map", "[vout]"]
+            if audio_map:
+                cmd += ["-map", audio_map]
+            else:
+                cmd += ["-an"]
+
+            if quality == "high":
+                preset, crf = "veryfast", "21"
+            elif quality == "balanced":
+                preset, crf = "veryfast", "23"
+            else:
+                preset, crf = "ultrafast", "26"
+            cmd += [
+                "-c:v", "libx264", "-preset", preset, "-tune", "zerolatency", "-crf", crf,
+                "-threads", str(FFMPEG_THREADS), "-filter_threads", "1", "-filter_complex_threads", "1",
+                "-pix_fmt", "yuv420p", "-r", "30",
+            ]
+            if audio_map:
+                cmd += ["-c:a", "aac", "-b:a", "128k"]
+            cmd += ["-movflags", "+faststart", "-t", str(duration), "-progress", "pipe:1", "-nostats", str(out)]
+
+            with render_jobs_lock:
+                render_jobs[job_id].update({
+                    "stage": f"SMART CUT 云端剪辑 · {len(plan)}镜头",
+                    "progress": 32, "updated_at": iso(),
+                    "voiceComplete": bool(narration_path),
+                    "voiceCoverage": 100 if narration_path else 0,
+                    "voiceSegments": len(captions) if captions else (1 if narration_path else 0),
+                    "voiceDuration": round(float(voice_duration or 0), 3),
+                    "visualSyncStrategy": "smart-cut-cloud",
+                    "sceneSyncSegments": len(plan),
+                    "sceneSyncInstances": len(plan),
+                })
+                _persist_render_jobs_locked()
+
+            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+            logs = []
+            for line in proc.stdout or []:
+                line = line.strip()
+                if line:
+                    logs.append(line)
+                    if len(logs) > 100:
+                        logs = logs[-100:]
+                if line.startswith("out_time_ms="):
+                    try:
+                        sec = float(line.split("=", 1)[1]) / 1_000_000.0
+                        pct = 32 + int(min(63, max(0, sec / max(0.2, duration) * 63)))
+                        with render_jobs_lock:
+                            if job_id in render_jobs:
+                                render_jobs[job_id].update({"progress": pct, "updated_at": iso()})
+                    except Exception:
+                        pass
+            code = proc.wait()
+            if code != 0 or not out.exists() or out.stat().st_size < 5000:
+                raise RuntimeError("SMART_CUT_FFMPEG_FAILED: " + " | ".join(logs[-14:]))
+
+            with render_jobs_lock:
+                render_jobs[job_id].update({
+                    "status": "ready", "stage": "SMART CUT 成片完成", "progress": 100,
+                    "updated_at": iso(), "path": str(out), "size": out.stat().st_size,
+                    "filename": "SAGI_SMART_CUT_CLOUD.mp4", "error": "",
+                    "visualSyncStrategy": "smart-cut-cloud",
+                    "sceneSyncSegments": len(plan), "sceneSyncInstances": len(plan),
+                })
+                _persist_render_jobs_locked()
+        except Exception as e:
+            with render_jobs_lock:
+                if job_id in render_jobs:
+                    render_jobs[job_id].update({
+                        "status": "failed", "stage": "SMART CUT 失败", "progress": 0,
                         "updated_at": iso(), "error": str(e)[:1200],
                     })
                     _persist_render_jobs_locked()
@@ -3022,6 +3248,8 @@ def health():
         "voiceClone": bool(ELEVENLABS_API_KEY),
         "cloudRender": True,
         "cloudRenderStable": True,
+        "smartCutCloud": True,
+        "smartCutCloudVersion": "1.0",
         "heavyTaskConcurrency": 1,
         "ffmpegThreads": FFMPEG_THREADS,
         "renderStateRecovery": True,
@@ -4247,6 +4475,85 @@ def voice_preview():
     except Exception as e:
         shutil.rmtree(work, ignore_errors=True)
         return jsonify({"ok": False, "error": str(e)[:700]}), 500
+
+@app.post("/api/smart-render")
+def create_smart_render_job():
+    if not authorized():
+        return jsonify({"ok": False, "error": "Unauthorized"}), 401
+    uploads = request.files.getlist("media")
+    if not uploads:
+        return jsonify({"ok": False, "error": "Media file required"}), 400
+    uploads = uploads[:12]
+    work = tempfile.mkdtemp(prefix="sagi_smart_render_")
+    sources = []
+    total_size = 0
+    try:
+        for i, upload in enumerate(uploads):
+            suffix = Path(upload.filename or f"source_{i}.mp4").suffix or ".mp4"
+            source = Path(work) / f"source_{i:02d}{suffix}"
+            upload.save(source)
+            size = source.stat().st_size if source.exists() else 0
+            if size <= 0:
+                raise ValueError(f"Empty media #{i+1}")
+            total_size += size
+            sources.append(str(source))
+        if total_size > RENDER_MAX_MB * 1024 * 1024:
+            raise OverflowError(f"Media exceeds {RENDER_MAX_MB}MB")
+
+        try:
+            smart_plan = json.loads(request.form.get("smart_plan") or "[]")
+            if not isinstance(smart_plan, list):
+                smart_plan = []
+        except Exception:
+            smart_plan = []
+        if not smart_plan:
+            raise ValueError("SMART CUT plan required")
+
+        try:
+            captions = json.loads(request.form.get("captions") or "[]")
+            if not isinstance(captions, list):
+                captions = []
+        except Exception:
+            captions = []
+
+        voice_upload = request.files.get("voice_audio")
+        uploaded_voice = ""
+        if voice_upload:
+            vp = Path(work) / ("voice" + (Path(voice_upload.filename or "voice.m4a").suffix or ".m4a"))
+            voice_upload.save(vp)
+            if vp.exists() and vp.stat().st_size > 0:
+                uploaded_voice = str(vp)
+
+        options = {
+            "duration": request.form.get("duration") or "15",
+            "aspect": request.form.get("aspect") or "9:16",
+            "quality": request.form.get("quality") or "fast",
+            "captions": captions[:300],
+            "smart_plan": smart_plan[:240],
+            "voice_volume": request.form.get("voice_volume") or "1",
+            "burn_subtitles": str(request.form.get("burn_subtitles") or "true").lower() in ("1", "true", "yes"),
+            "uploaded_voice": uploaded_voice,
+        }
+        job_id = secrets.token_urlsafe(10)
+        job = {
+            "id": job_id, "status": "queued", "stage": "SMART CUT 已上传 · 等待云端",
+            "progress": 8, "created_at": iso(), "updated_at": iso(),
+            "workdir": work, "source": sources[0], "sources": sources, "path": "",
+            "download_key": secrets.token_urlsafe(18), "filename": "SAGI_SMART_CUT_CLOUD.mp4",
+            "size": 0, "error": "", "options": options,
+        }
+        with render_jobs_lock:
+            render_jobs[job_id] = job
+            _persist_render_jobs_locked()
+        Thread(target=run_smart_render, args=(job_id, options), daemon=True).start()
+        return jsonify({"ok": True, "job": public_render_job(job)})
+    except OverflowError as e:
+        shutil.rmtree(work, ignore_errors=True)
+        return jsonify({"ok": False, "error": str(e)}), 413
+    except Exception as e:
+        shutil.rmtree(work, ignore_errors=True)
+        return jsonify({"ok": False, "error": str(e)[:500]}), 400
+
 
 @app.post("/api/render")
 def create_render_job():
