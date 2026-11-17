@@ -1361,6 +1361,7 @@ body{background:radial-gradient(circle at 78% -10%,#0a43c933,transparent 28%),li
 </div>
 <div id="notice" class="notice"></div>
 
+<script src="./sagi-signature-core-v432.js"></script>
 <script>
 (function(){
 'use strict';
@@ -2331,6 +2332,7 @@ async function mdPostMatchdayWithRetry(state){
 window.sagiMatchdayReliabilityDiagnostic=()=>({metrics:{...mdPublishMetrics},recovery:{...mdRecoveryMetrics},localRecoveryStamp:mdLocalRecoveryStamp,lastAckRevision:mdLastAckRevision,lastConsistencyState:mdLastConsistencyState,lastConsistencyAt:mdLastConsistencyAt,lastGood:!!mdLoadLastGood(),fixtureKey:mdFixtureKey()});
 function mdCloudSnapshot(event=null){
  const now=mdNowSeconds(),canonical=mdEnforceCanonicalTeams(),homeName=canonical.home||'HOME',awayName=canonical.away||'AWAY',revision=++mdPublishRevision;
+ const normalizedEvent=window.SAGISignatureCore?SAGISignatureCore.normalizeEvent(event,{home:homeName,away:awayName}):event;
  return{
   commandId:Date.now()+'_'+Math.random().toString(36).slice(2,7),
   revision,fixtureKey:mdFixtureKey(),
@@ -2343,11 +2345,11 @@ function mdCloudSnapshot(event=null){
   stoppageTime:matchdayState.stoppageTime||'',scoreTheme:matchdayState.scoreTheme||'sagi-pro',overlayVisible:!!matchdayState.overlayVisible,
   replayMarkers:(matchdayState.replayMarkers||[]).slice(0,80),eventLog:(matchdayState.eventLog||[]).slice(0,40),
   clock:{baseSeconds:now,running:!!matchdayState.clockRunning,startedAt:matchdayState.clockRunning?new Date().toISOString():null,period:matchdayState.period},
-  controller:{operatorRole:matchOperatorRole,matchMode:matchModeActive,autoGraphics:!!graphicsDirectorSettings.enabled,autoReplay:!!graphicsDirectorSettings.autoReplay,smartDirector:!!smartDirectorSettings.enabled,autoTake:!!smartDirectorSettings.autoTake,smartCue:{slot:smartCue.slot,role:cameraRoleOf(smartCue.slot),title:smartCue.title,confidence:smartCue.confidence},cameraRoles:{cam1:cameraRoleOf('cam1'),cam2:cameraRoleOf('cam2'),drone:cameraRoleOf('drone'),replay:cameraRoleOf('replay')},shotSafety:{enabled:!!shotSafetySettings.enabled,currentSlot:shotSafetyState.currentSlot,minShotMs:shotSafetySettings.minShotMs,cooldownMs:shotSafetySettings.cooldownMs,bounceMs:shotSafetySettings.bounceMs,attackLockUntil:shotSafetyState.attackLockUntil}},event:event||null,updatedAt:new Date().toISOString()
+  controller:{operatorRole:matchOperatorRole,matchMode:matchModeActive,autoGraphics:!!graphicsDirectorSettings.enabled,autoReplay:!!graphicsDirectorSettings.autoReplay,smartDirector:!!smartDirectorSettings.enabled,autoTake:!!smartDirectorSettings.autoTake,smartCue:{slot:smartCue.slot,role:cameraRoleOf(smartCue.slot),title:smartCue.title,confidence:smartCue.confidence},cameraRoles:{cam1:cameraRoleOf('cam1'),cam2:cameraRoleOf('cam2'),drone:cameraRoleOf('drone'),replay:cameraRoleOf('replay')},shotSafety:{enabled:!!shotSafetySettings.enabled,currentSlot:shotSafetyState.currentSlot,minShotMs:shotSafetySettings.minShotMs,cooldownMs:shotSafetySettings.cooldownMs,bounceMs:shotSafetySettings.bounceMs,attackLockUntil:shotSafetyState.attackLockUntil}},event:normalizedEvent||null,updatedAt:new Date().toISOString()
  };
 }
 async function publishMatchday(event=null){
- const state=mdCloudSnapshot(event),revision=state.revision;matchdayState.lastEvent=event;mdPersist();refreshMatchdayUI();
+ const state=mdCloudSnapshot(event),revision=state.revision;matchdayState.lastEvent=state.event;mdPersist();refreshMatchdayUI();
  const send=async()=>{
   try{
    const r=await mdPostMatchdayWithRetry(state);mdLastAckRevision=Math.max(mdLastAckRevision,revision);
