@@ -56,12 +56,12 @@ jobs:
                   market_intake = bool(data.get("marketIntake"))
                   market_version = str(data.get("marketIntakeVersion", ""))
                   print(f"check {i+1}/36: version={version} revision={deploy_revision} market={market_intake}/{market_version} voiceDirector={voice} localAI={local_ai} localVisual={local_visual} localPoster={local_poster}")
-                  if version == expected and deploy_revision == "2026-11-17-smart-cut-large-media-lowmem-v2" and bool(data.get("matchIntelligence")) and str(data.get("matchIntelligenceVersion", "")) == "1.1.2-tracking-core" and market_intake and market_version == "1.1" and voice == "2.4" and local_ai == "1.2" and local_visual == "1.2" and local_poster == "1.2.1" and bool(data.get("localVisual")) and bool(data.get("localPoster")) and bool(data.get("animationFirst")) and bool(data.get("voiceOneShot")) and bool(data.get("voiceCaptionFromFinalAudio")) and semantic and protected and exact and bool(data.get("voiceVideoDurationLock")) and bool(data.get("smartCutCloud")) and str(data.get("smartCutCloudVersion", "")) == "1.1" and bool(data.get("smartCutLargeMedia")) and bool(data.get("smartCutLowMemory")) and bool(data.get("smartCutChunkUpload")) and str(data.get("smartCutChunkUploadVersion", "")) == "1.0":
-                      print(f"SAGI Cloud 3.9.7 + LARGE SMART CUT + Match Intelligence + MARKET verified. AI configured={local_ai_configured}")
+                  if version == expected and deploy_revision == "2026-11-17-smart-cut-large-media-lowmem-v2" and bool(data.get("matchIntelligence")) and str(data.get("matchIntelligenceVersion", "")) == "1.1.2-tracking-core" and market_intake and market_version == "1.1" and voice == "2.4" and local_ai == "1.2" and local_visual == "1.2" and local_poster == "1.2.1" and bool(data.get("localVisual")) and bool(data.get("localPoster")) and bool(data.get("animationFirst")) and bool(data.get("voiceOneShot")) and bool(data.get("voiceCaptionFromFinalAudio")) and semantic and protected and exact and bool(data.get("voiceVideoDurationLock")) and bool(data.get("smartCutCloud")) and str(data.get("smartCutCloudVersion", "")) == "1.1" and bool(data.get("smartCutLargeMedia")) and bool(data.get("smartCutLowMemory")) and bool(data.get("smartCutChunkUpload")) and str(data.get("smartCutChunkUploadVersion", "")) == "1.0" and bool(data.get("voicePro")) and str(data.get("voiceProVersion", "")) == "1.0":
+                      print(f"SAGI Cloud 3.9.7 + LARGE SMART CUT + VOICE PRO 1.0 + Match Intelligence + MARKET verified. AI configured={local_ai_configured}")
                       sys.exit(0)
               except Exception as e:
                   print(f"check {i+1}/36 failed: {e}")
               time.sleep(10)
-          print("Expected SAGI Cloud 3.9.7 + LARGE SMART CUT was not observed.")
+          print("Expected SAGI Cloud 3.9.7 + LARGE SMART CUT + VOICE PRO 1.0 was not observed.")
           sys.exit(1)
           PY
