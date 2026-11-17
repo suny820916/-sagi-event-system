@@ -632,7 +632,7 @@ jobs:
               "/api/football/crest?url=",
               "IMAGE RECREATE · 图片二次创作",
               "SAGI SMART CUT · 智能剪辑导演",
-              "sagi-ffmpeg-worker.js?v=4120",
+              "sagi-ffmpeg-worker.js?v=4130",
               "const classWorkerURL=new URL",
               "/api/smart-render",
           ]
@@ -648,7 +648,11 @@ jobs:
           assert "/api/smart-render" in smart
           assert "xhr.timeout=0" in smart, "iPhone large upload must not use a fixed timeout"
           assert "smartCutCreateCloudJob(endpoint,fd,3)" in smart, "SMART CUT upload must auto-retry"
-          assert "35*60*1000" in smart, "long cloud renders must not false-timeout"
+          assert "xhr.timeout=0" in smart, "iPhone large upload must not use a fixed timeout"
+          assert "smartCutCreateCloudJob(endpoint,fd,3)" in smart, "SMART CUT upload must auto-retry"
+          assert "SMART_CLOUD_JOB_KEY" in smart, "long SMART CUT cloud job must persist on iPhone"
+          assert "smartCutResumePersistedJob" in smart, "long SMART CUT cloud job must auto-resume"
+          assert "2*60*60*1000" in smart, "long cloud render polling window must be resilient"
           print("frontend wiring OK")
           PY
           node --check /tmp/sagi-down.js
