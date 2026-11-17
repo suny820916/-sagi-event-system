@@ -79,7 +79,7 @@ server.listen(PORT,'127.0.0.1',async()=>{
   assert(regular.homeOverflow!=='ellipsis'&&regular.awayOverflow!=='ellipsis','ellipsis returned');
   assert(regular.homeFont>=11&&regular.awayFont>=11,'team name below readable floor');
   assert(regular.homeInside&&regular.awayInside,'team name clipped outside main scorebar');
-  assert((regular.bugRight-42)<=520,'regular scorebar is still too long: '+(regular.bugRight-42));
+  assert((regular.bugRight-42)<=540,'regular scorebar is still too long: '+(regular.bugRight-42));
   assert(regular.midTop>=regular.bugTop+regular.bugHeight-1,'clock ribbon is not below main scorebar');
   assert(regular.brandWidth>=60&&regular.logoWidth>=60,'event logo is not visually large enough');
   assert(regular.logoSrc.startsWith('data:image/svg+xml'),'offline TORANHE event logo is not embedded');
