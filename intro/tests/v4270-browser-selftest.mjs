@@ -450,14 +450,13 @@ server.listen(PORT,'127.0.0.1',async()=>{
   await page.screenshot({path:'selftest-artifacts/12-watchdog-repair.png'});
 
   console.log('TEST 11C: fresh director with no local matchday snapshot can atomically recover Bridge fixture identity');
-  const freshPage=await browser.newPage({viewport:{width:1440,height:1100}});
-  await freshPage.goto('http://127.0.0.1:'+PORT+'/intro/v45-lan.html',{waitUntil:'domcontentloaded'});
-  await freshPage.evaluate(()=>{localStorage.removeItem('sagi_matchday_graphics_v47');localStorage.removeItem('sagi_matchday_graphics_v42');localStorage.removeItem('sagi_matchday_last_good_v429')});
   graphics={...authoritative,commandId:'fresh_bridge_takeover',revision:(Number(authoritative.revision)||0)+40,home:'乌苏叶克备',away:'IPF',competition:'TORANHE PROJECT CUP',fixtureKey:'toranhe project cup|乌苏叶克备|ipf',homeScore:6,awayScore:1,updatedAt:new Date().toISOString(),event:{type:'CLEAR_EVENT'}};
-  await freshPage.reload({waitUntil:'domcontentloaded'});await wait(1800);
+  const freshContext=await browser.newContext({viewport:{width:1440,height:1100}});
+  const freshPage=await freshContext.newPage();
+  await freshPage.goto('http://127.0.0.1:'+PORT+'/intro/v45-lan.html',{waitUntil:'domcontentloaded'});await wait(1800);
   const freshRecovered=await freshPage.evaluate(()=>({home:document.querySelector('#matchHome')?.value,away:document.querySelector('#matchAway')?.value,competition:document.querySelector('#matchCompetition')?.value,score:document.querySelector('#mdHomeScore')?.textContent+'-'+document.querySelector('#mdAwayScore')?.textContent,diag:window.sagiMatchdayReliabilityDiagnostic()}));
   assert(freshRecovered.home==='乌苏叶克备'&&freshRecovered.away==='IPF'&&freshRecovered.competition==='TORANHE PROJECT CUP'&&freshRecovered.score==='6-1','fresh startup did not atomically recover Bridge fixture/state: '+JSON.stringify(freshRecovered));
-  await freshPage.close();
+  await freshContext.close();
   await page.evaluate(()=>window.sagiMatchdayConsistencyCheck(true));await wait(600);
 
   console.log('TEST 12: accelerated long-session identity soak keeps names/scores stable');
