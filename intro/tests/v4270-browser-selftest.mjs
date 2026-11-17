@@ -479,8 +479,32 @@ server.listen(PORT,'127.0.0.1',async()=>{
   assert(soak.home==='乌苏叶克备'&&soak.away==='IPF'&&soak.mirrorHome==='乌苏叶克备'&&soak.mirrorAway==='IPF'&&soak.score==='6','accelerated long-session soak drifted state: '+JSON.stringify(soak));
   await page.screenshot({path:'selftest-artifacts/13-long-session-soak.png'});
 
+  console.log('TEST 13: V4.32 Signature Core is available in both live pages and remains stable across reload');
+  const signatureBefore=await Promise.all([page,control].map(p=>p.evaluate(()=>{
+    const c=window.SAGISignatureCore;
+    if(!c)return null;
+    return {version:c.VERSION,goal:c.normalizeEvent({type:'GOAL',side:'AWAY',team:'Test'}).type,
+      yellow:c.eventAccent({type:'YELLOW'},{homeColor:'#123456'}),
+      red:c.eventAccent({type:'RED'},{homeColor:'#123456'}),
+      rejected:c.normalizeEvent({type:'UNKNOWN_EVENT'}).type,
+      sub:c.normalizeEvent({type:'SUBSTITUTION',off:{name:'A'},on:{name:'B'}}).type};
+  })));
+  for(const [i,x] of signatureBefore.entries()){
+    assert(x&&x.version==='4.32.0-rc.1'&&x.goal==='GOAL'&&x.yellow==='#f2d536'&&x.red==='#e33440'&&x.rejected==='CLEAR_EVENT'&&x.sub==='SUB',
+      'V4.32 Signature Core not integrated in '+(i===0?'output':'control')+': '+JSON.stringify(x));
+  }
+  await page.reload({waitUntil:'domcontentloaded'});
+  await wait(700);
+  const signatureAfter=await page.evaluate(()=>({
+    version:window.SAGISignatureCore?.VERSION,
+    normalized:window.SAGISignatureCore?.normalizeEvent({type:'RED_CARD',side:'AWAY'})?.type
+  }));
+  assert(signatureAfter.version==='4.32.0-rc.1'&&signatureAfter.normalized==='RED',
+    'V4.32 Signature Core not restored after output browser reload: '+JSON.stringify(signatureAfter));
+  await page.screenshot({path:'selftest-artifacts/14-signature-core-reload.png'});
+
   assert(pageErrors.length===0,'browser page errors: '+pageErrors.join(' | '));
-  const report={ok:true,build:'V4.31.0',testedAt:new Date().toISOString(),tests:['compact one-row full-name scorebug + SAGI signature palette/tag + unified score pair + restrained score roll + clock-only regular halves + conditional states','HOME goal enlarged HOME crest + complete GOAL + lower player card + collapse','AWAY goal enlarged AWAY crest','yellow/red referee-card shape + event colors + control icons','penalty >5 rounds/sudden death/miss/scores','two-camera Input 1 -> Input 2','event-logo replay stinger visual','manual replay stinger IN -> Input 4 -> OUT -> Input 1','stored project load wins over stale Bridge + optional time/venue do not block READY','compact project index rehydrates full photos from IndexedDB with empty Bridge list','clock-only refresh avoids repeated heavy match-control repaints','regular scorebug always uses canonical full team names even when backup aliases exist','mobile match control mirrors current fixture identity and legacy fields are read-only','transient LAN failure retries automatically and records last-good state','rapid score writes are serialized under deliberate network reordering','duplicate operator events are gated before double-counting','reopen recovery keeps newer local same-fixture state over stale Bridge','in-match health check is read-only and cannot mutate on-air state','vMix output ignores stale lower revisions within the same fixture','online/resume recovery repairs score/name/color/exceptional-state drift','Browser Input watchdog holds last good frame during longer outage and self-heals','fresh startup can atomically recover Bridge fixture identity when no local snapshot exists','accelerated 5000-cycle long-session identity soak'],vmixCommands:cuts};
+  const report={ok:true,build:'V4.31.0',testedAt:new Date().toISOString(),tests:['compact one-row full-name scorebug + SAGI signature palette/tag + unified score pair + restrained score roll + clock-only regular halves + conditional states','HOME goal enlarged HOME crest + complete GOAL + lower player card + collapse','AWAY goal enlarged AWAY crest','yellow/red referee-card shape + event colors + control icons','penalty >5 rounds/sudden death/miss/scores','two-camera Input 1 -> Input 2','event-logo replay stinger visual','manual replay stinger IN -> Input 4 -> OUT -> Input 1','stored project load wins over stale Bridge + optional time/venue do not block READY','compact project index rehydrates full photos from IndexedDB with empty Bridge list','clock-only refresh avoids repeated heavy match-control repaints','regular scorebug always uses canonical full team names even when backup aliases exist','mobile match control mirrors current fixture identity and legacy fields are read-only','transient LAN failure retries automatically and records last-good state','rapid score writes are serialized under deliberate network reordering','duplicate operator events are gated before double-counting','reopen recovery keeps newer local same-fixture state over stale Bridge','in-match health check is read-only and cannot mutate on-air state','vMix output ignores stale lower revisions within the same fixture','online/resume recovery repairs score/name/color/exceptional-state drift','Browser Input watchdog holds last good frame during longer outage and self-heals','fresh startup can atomically recover Bridge fixture identity when no local snapshot exists','accelerated 5000-cycle long-session identity soak','V4.32 shared Signature Core loaded in control and output, event normalization, referee-card colors, safe unknown-event handling, and reload recovery'],vmixCommands:cuts};
   fs.writeFileSync('selftest-artifacts/report.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
  }catch(e){
   fs.mkdirSync('selftest-artifacts',{recursive:true});try{await page.screenshot({path:'selftest-artifacts/FAIL.png',fullPage:true})}catch{}
