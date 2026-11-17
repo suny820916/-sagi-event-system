@@ -15,7 +15,7 @@ let seq=1,vmixCommands=[],matchdayPosts=[],graphics=makeGraphics(),reorderMatchd
 
 function makeGraphics(overrides={}){
  return {
-  commandId:'g_'+(seq++),revision:seq,fixtureKey:'selftest|'+HOME+'|'+AWAY,visualVersion:'V4.30.7-SELFTEST',
+  commandId:'g_'+(seq++),revision:seq,fixtureKey:'selftest|'+HOME+'|'+AWAY,visualVersion:'V4.30.8-SELFTEST',
   scoreboardVisible:true,scoreboardFrozen:false,scoreTheme:'sagi-pro',competition:'TORANHE CUP',
   home:HOME,away:AWAY,homeShort:HOME,awayShort:AWAY,scoreHomeName:'新疆塔城地区',scoreAwayName:'AYFC',
   homeCrest:HOME_CREST,awayCrest:AWAY_CREST,eventLogo:'',
@@ -24,7 +24,7 @@ function makeGraphics(overrides={}){
   clock:{period:'2H',baseSeconds:5480,running:false,startedAt:null},
   penaltyShootout:{started:false,finished:false,history:[],rounds:5,currentRound:1,nextSide:'HOME'},
   simplePenalty:{visible:false,home:0,away:0,history:[],round:1},
-  event:{type:'CLEAR_EVENT'},...overrides
+  event:{type:'CLEAR_EVENT'},updatedAt:new Date().toISOString(),...overrides
  };
 }
 function makeValidRoster(prefix){
@@ -52,7 +52,7 @@ const server=http.createServer(async(req,res)=>{
   if(u.pathname==='/api/vmix'&&req.method==='POST'){const b=await readBody(req);let cmd={};try{cmd=JSON.parse(b)}catch{}vmixCommands.push(cmd);return json(res,{ok:true,command:cmd})}
   if(u.pathname==='/api/projects')return json(res,{projects:[]});
   if(u.pathname==='/health')return json(res,{ok:true,port:PORT});
-  if(u.pathname==='/')return text(res,'SAGI V4.30.7 SELFTEST');
+  if(u.pathname==='/')return text(res,'SAGI V4.30.8 SELFTEST');
   const rel=decodeURIComponent(u.pathname).replace(/^\/+/,'');const file=path.resolve(ROOT,rel);
   if(!file.startsWith(ROOT)||!fs.existsSync(file)||fs.statSync(file).isDirectory())return text(res,'Not found','text/plain',404);
   res.writeHead(200,{'Content-Type':mime(file),'Cache-Control':'no-store','Access-Control-Allow-Origin':'*'});res.end(fs.readFileSync(file));
@@ -389,7 +389,25 @@ server.listen(PORT,'127.0.0.1',async()=>{
   await wait(350);
   const dupe=await page.evaluate(()=>({yellow:document.querySelector('#mdStatYellow').textContent,status:document.querySelector('#mdEventStatus').textContent}));
   assert(dupe.yellow==='1','duplicate yellow-card click created two events: '+JSON.stringify(dupe));
-  await page.click('#mdClearEventBtn');
+  await page.click('#mdClearEventBtn');await wait(400);
+
+  console.log('TEST 10D: reopening director refuses an older same-fixture Bridge snapshot');
+  const reopenBefore=await page.evaluate(()=>{window.dispatchEvent(new Event('pagehide'));const x=JSON.parse(localStorage.getItem('sagi_matchday_graphics_v47')||'null');return{x,diag:window.sagiMatchdayReliabilityDiagnostic()}});
+  assert(reopenBefore.x&&Number(reopenBefore.x.homeScore)===6,'pagehide checkpoint did not preserve current local score: '+JSON.stringify(reopenBefore));
+  graphics={...graphics,commandId:'stale_same_fixture_reopen',home:'乌苏叶克备',away:'IPF',competition:'TORANHE PROJECT CUP',fixtureKey:'toranhe project cup|乌苏叶克备|ipf',homeScore:2,awayScore:2,revision:1,updatedAt:new Date(Date.now()-60000).toISOString(),event:{type:'CLEAR_EVENT'}};
+  await page.reload({waitUntil:'domcontentloaded'});await wait(2200);
+  const reopenAfter=await page.evaluate(()=>({home:document.querySelector('#mdHomeScore')?.textContent,away:document.querySelector('#mdAwayScore')?.textContent,diag:window.sagiMatchdayReliabilityDiagnostic()}));
+  assert(reopenAfter.home==='6'&&reopenAfter.away==='1','older same-fixture Bridge snapshot rolled director backward after reopen: '+JSON.stringify(reopenAfter));
+  assert(Number(graphics.homeScore)===6&&Number(graphics.awayScore)===1,'local-newer recovery was not republished to Bridge: '+JSON.stringify(graphics));
+  assert(reopenAfter.diag.recovery.localWins>=1&&reopenAfter.diag.recovery.lastReason==='LOCAL_NEWER','local-newer arbitration diagnostics missing: '+JSON.stringify(reopenAfter.diag));
+
+  console.log('TEST 10E: in-match health check is read-only and cannot alter on-air state');
+  const healthBefore={commandId:graphics.commandId,homeScore:graphics.homeScore,awayScore:graphics.awayScore,posts:matchdayPosts.length,cuts:vmixCommands.length};
+  const liveHealth=await page.evaluate(()=>window.sagiLiveHealthCheck());
+  const healthAfter={commandId:graphics.commandId,homeScore:graphics.homeScore,awayScore:graphics.awayScore,posts:matchdayPosts.length,cuts:vmixCommands.length};
+  assert(liveHealth&&liveHealth.outputOk&&liveHealth.bridge,'live health check did not complete: '+JSON.stringify(liveHealth));
+  assert(healthAfter.commandId===healthBefore.commandId&&healthAfter.homeScore===healthBefore.homeScore&&healthAfter.awayScore===healthBefore.awayScore&&healthAfter.posts===healthBefore.posts&&healthAfter.cuts===healthBefore.cuts,'live health check mutated broadcast state: '+JSON.stringify({before:healthBefore,after:healthAfter}));
+  await page.screenshot({path:'selftest-artifacts/11e-live-health-readonly.png'});
 
   console.log('TEST 11: consistency watchdog repairs score, identity, colors and exceptional-state drift');
   const authoritative=JSON.parse(JSON.stringify(graphics));
@@ -406,20 +424,25 @@ server.listen(PORT,'127.0.0.1',async()=>{
   assert(repairUI.home==='乌苏叶克备'&&repairUI.away==='IPF'&&repairUI.score===String(authoritative.homeScore),'watchdog repair changed local control identity/state: '+JSON.stringify(repairUI));
   const diagPage=await browser.newPage({viewport:{width:1920,height:1080}});
   await diagPage.goto('http://127.0.0.1:'+PORT+'/intro/vmix-v45-lan.html',{waitUntil:'domcontentloaded'});
-  await diagPage.waitForFunction(()=>window.sagiScoreCenterDiagnostic&&window.sagiScoreCenterDiagnostic().build==='V4.30.7',null,{timeout:5000});
+  await diagPage.waitForFunction(()=>window.sagiScoreCenterDiagnostic&&window.sagiScoreCenterDiagnostic().build==='V4.30.8',null,{timeout:5000});
   const outputDiag=await diagPage.evaluate(()=>window.sagiScoreCenterDiagnostic());
-  assert(outputDiag&&outputDiag.build==='V4.30.7'&&outputDiag.home===authoritative.scoreHomeName,'vMix score-center diagnostic is not tracking authoritative state: '+JSON.stringify(outputDiag));
+  assert(outputDiag&&outputDiag.build==='V4.30.8'&&outputDiag.home===authoritative.scoreHomeName,'vMix score-center diagnostic is not tracking authoritative state: '+JSON.stringify(outputDiag));
   await diagPage.screenshot({path:'selftest-artifacts/12-output-diagnostic.png'});
 
-  console.log('TEST 11B: vMix output survives transient matchday read failures and catches up automatically');
+  console.log('TEST 11B: Browser Input watchdog holds last good frame through a longer state-channel outage, then self-heals');
+  const heldBefore=await diagPage.evaluate(()=>window.sagiScoreCenterDiagnostic());
   const recoveryScore=Number(authoritative.homeScore)+1;
-  failNextMatchdayGets=2;
-  graphics={...graphics,commandId:'output_get_recovery',revision:(Number(graphics.revision)||0)+20,homeScore:recoveryScore,event:{type:'CLEAR_EVENT'}};
-  await wait(2400);
+  failNextMatchdayGets=12;
+  graphics={...graphics,commandId:'output_watchdog_recovery',revision:(Number(graphics.revision)||0)+20,homeScore:recoveryScore,updatedAt:new Date().toISOString(),event:{type:'CLEAR_EVENT'}};
+  await wait(2600);
+  const heldDuring=await diagPage.evaluate(()=>window.sagiScoreCenterDiagnostic());
+  assert(Number(heldDuring.score[0])===Number(heldBefore.score[0])&&heldDuring.home===heldBefore.home,'vMix output changed/blanked during state-channel outage: '+JSON.stringify({before:heldBefore,during:heldDuring}));
+  assert(heldDuring.health.consecutiveFailures>=2,'output did not detect consecutive read failures: '+JSON.stringify(heldDuring.health));
+  await wait(5200);
   const outputRecovery=await diagPage.evaluate(()=>window.sagiScoreCenterDiagnostic());
-  assert(Number(outputRecovery.score[0])===recoveryScore,'vMix output did not catch up after transient GET failures: '+JSON.stringify(outputRecovery));
-  assert(outputRecovery.health.pollFail>=2&&outputRecovery.health.recoveries>=1&&outputRecovery.health.consecutiveFailures===0,'output recovery health metrics wrong: '+JSON.stringify(outputRecovery.health));
-  await diagPage.screenshot({path:'selftest-artifacts/12b-output-read-recovery.png'});
+  assert(Number(outputRecovery.score[0])===recoveryScore,'vMix output did not catch up after watchdog recovery: '+JSON.stringify(outputRecovery));
+  assert(outputRecovery.health.pollFail>=10&&outputRecovery.health.recoveries>=1&&outputRecovery.health.watchdogTrips>=1&&outputRecovery.health.softRepolls>=1&&outputRecovery.health.consecutiveFailures===0,'output watchdog health metrics wrong: '+JSON.stringify(outputRecovery.health));
+  await diagPage.screenshot({path:'selftest-artifacts/12b-output-watchdog-recovery.png'});
   await diagPage.close();
   await page.evaluate(()=>window.sagiMatchdayConsistencyCheck(true));await wait(800);
   assert(Number(graphics.homeScore)===Number(authoritative.homeScore),'control did not restore authoritative state after output recovery test');
@@ -431,7 +454,7 @@ server.listen(PORT,'127.0.0.1',async()=>{
   await page.screenshot({path:'selftest-artifacts/13-long-session-soak.png'});
 
   assert(pageErrors.length===0,'browser page errors: '+pageErrors.join(' | '));
-  const report={ok:true,build:'V4.30.7',testedAt:new Date().toISOString(),tests:['compact score intelligence + fused event identity + unified score pair + restrained score roll + clock-only regular halves + conditional states','HOME goal enlarged HOME crest + complete GOAL + lower player card + collapse','AWAY goal enlarged AWAY crest','yellow/red referee-card shape + event colors + control icons','penalty >5 rounds/sudden death/miss/scores','two-camera Input 1 -> Input 2','event-logo replay stinger visual','manual replay stinger IN -> Input 4 -> OUT -> Input 1','stored project load wins over stale Bridge + optional time/venue do not block READY','compact project index rehydrates full photos from IndexedDB with empty Bridge list','clock-only refresh avoids repeated heavy match-control repaints','legacy stale short-name cache cannot override current vMix fixture identity','mobile match control mirrors current fixture identity and legacy fields are read-only','transient LAN failure retries automatically and records last-good state','rapid score writes are serialized under deliberate network reordering','duplicate operator events are gated before double-counting','vMix output ignores stale lower revisions within the same fixture','online/resume recovery repairs score/name/color/exceptional-state drift','vMix output survives transient matchday read failures and catches up automatically','accelerated 5000-cycle long-session identity soak'],vmixCommands:cuts};
+  const report={ok:true,build:'V4.30.8',testedAt:new Date().toISOString(),tests:['compact score intelligence + fused event identity + unified score pair + restrained score roll + clock-only regular halves + conditional states','HOME goal enlarged HOME crest + complete GOAL + lower player card + collapse','AWAY goal enlarged AWAY crest','yellow/red referee-card shape + event colors + control icons','penalty >5 rounds/sudden death/miss/scores','two-camera Input 1 -> Input 2','event-logo replay stinger visual','manual replay stinger IN -> Input 4 -> OUT -> Input 1','stored project load wins over stale Bridge + optional time/venue do not block READY','compact project index rehydrates full photos from IndexedDB with empty Bridge list','clock-only refresh avoids repeated heavy match-control repaints','legacy stale short-name cache cannot override current vMix fixture identity','mobile match control mirrors current fixture identity and legacy fields are read-only','transient LAN failure retries automatically and records last-good state','rapid score writes are serialized under deliberate network reordering','duplicate operator events are gated before double-counting','reopen recovery keeps newer local same-fixture state over stale Bridge','in-match health check is read-only and cannot mutate on-air state','vMix output ignores stale lower revisions within the same fixture','online/resume recovery repairs score/name/color/exceptional-state drift','Browser Input watchdog holds last good frame during longer outage and self-heals','accelerated 5000-cycle long-session identity soak'],vmixCommands:cuts};
   fs.writeFileSync('selftest-artifacts/report.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
  }catch(e){
   fs.mkdirSync('selftest-artifacts',{recursive:true});try{await page.screenshot({path:'selftest-artifacts/FAIL.png',fullPage:true})}catch{}
