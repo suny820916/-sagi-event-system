@@ -5867,7 +5867,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent
 #scoreBug.scoreBug.sagiToranhe .sbSagiSignature{
  position:absolute!important;left:4px!important;right:4px!important;bottom:3px!important;z-index:8!important;
  display:block!important;text-align:center!important;color:var(--sagiGold)!important;
- font-size:5.6px!important;line-height:1!important;font-weight:1000!important;letter-spacing:.72px!important;
+ font-size:6.2px!important;line-height:1!important;font-weight:1000!important;letter-spacing:.42px!important;
  white-space:nowrap!important;text-shadow:none!important;pointer-events:none!important
 }
 #scoreBug.scoreBug.sagiToranhe .sbTeamBlock{
