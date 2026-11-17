@@ -1002,7 +1002,7 @@ Unbelievable finish."></textarea>
 
 <script>
 (()=>{'use strict';
-const SAGI_DOWN_BUILD='V4.1.0';
+const SAGI_DOWN_BUILD='V4.1.1';
 document.documentElement.dataset.sagiDownBuild=SAGI_DOWN_BUILD;
 const BTCH_PUBLIC='https://btch-downloader-api-green.vercel.app';
 const DOWNLOAD_ROUTER_VERSION='3.0';
@@ -4003,7 +4003,7 @@ async function ensureFFmpeg(){
  // iPhone/Safari: class worker must be same-origin. The stock bundled worker can
  // resolve blob: core URLs as webpack module ids and throw "Cannot find module blob:...".
  // SAGI's raw module worker uses the browser's native dynamic import instead.
- const classWorkerURL=new URL('./sagi-ffmpeg-worker.js?v=4100',window.location.href).href;
+ const classWorkerURL=new URL('./sagi-ffmpeg-worker.js?v=4110',window.location.href).href;
  const core='https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd';
  const coreURL=await toBlobURLRemote([core+'/ffmpeg-core.js','https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd/ffmpeg-core.js'],'text/javascript');
  const wasmURL=await toBlobURLRemote([core+'/ffmpeg-core.wasm','https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd/ffmpeg-core.wasm'],'application/wasm');
@@ -5779,45 +5779,18 @@ async function smartCutAssembleBase(){
  try{await ffmpeg.deleteFile('smart_concat.txt')}catch(e){}
  return new File([data.buffer],'SAGI_SMART_EDIT_BASE.mp4',{type:'video/mp4'})
 }
-async function smartCutCloudSubmit(finalVoice,duration){
- await voiceApiReady();
- const health=STUDIO.cloudHealth||{};
- if(health.smartCutCloud!==true)throw new Error('SAGI Cloud SMART CUT 尚未升级完成，请刷新新版后再试');
- const fd=new FormData();
- for(const meta of SMART_EDIT.metas){
-  fd.append('media',meta.file,meta.file.name||'video.mp4')
- }
- fd.append('duration',String(duration));
- fd.append('aspect',q('smartCutAspect')?.value||'9:16');
- fd.append('quality',q('exportQuality')?.value||'fast');
- fd.append('smart_plan',JSON.stringify(SMART_EDIT.plan.map(x=>({
-  sourceIndex:Number(x.fileIndex)||0,
-  sourceStart:Number(x.start)||0,
-  sourceEnd:(Number(x.start)||0)+(Number(x.duration)||0),
-  duration:Number(x.duration)||0,
-  outputStart:Number(x.outStart)||0,
-  outputEnd:Number(x.outEnd)||0,
-  text:String(x.text||'')
- }))));
- fd.append('captions',JSON.stringify((STUDIO.captions||[]).map(x=>({
-  start:Number(x.start)||0,end:Number(x.end)||0,text:String(x.text||'')
- }))));
- fd.append('voice_volume',q('aiVoiceVolume')?.value||'1');
- fd.append('burn_subtitles','true');
- if(finalVoice)fd.append('voice_audio',finalVoice,'sagi-smart-cut-voice.wav');
-
- smartCutStatus('③ 正在上传原始素材到 SAGI Cloud · iPhone 不再运行本地 FFmpeg…');
+async function smartCutSubmitJob(endpoint,fd){
  smartCutProgress(44);
  const job=await new Promise((resolve,reject)=>{
   const xhr=new XMLHttpRequest();
-  xhr.open('POST',CAPTION_CLOUD+'/api/smart-render');
+  xhr.open('POST',CAPTION_CLOUD+endpoint);
   xhr.setRequestHeader('Authorization','Bearer '+STUDIO.cloudCaptionToken);
   xhr.timeout=300000;
   xhr.upload.onprogress=e=>{
    if(e.lengthComputable){
     const p=Math.round(e.loaded/e.total*100);
     smartCutProgress(44+Math.round(p*.20));
-    smartCutStatus('③ 云端上传 '+p+'% · 手机只负责上传，不做本地编码')
+    smartCutStatus('③ 云端上传 '+p+'% · 手机不做本地编码')
    }
   };
   xhr.onload=()=>{
@@ -5855,6 +5828,70 @@ async function smartCutCloudSubmit(finalVoice,duration){
  throw new Error('云端成片等待超时，请重新提交')
 }
 
+async function smartCutCloudSubmit(finalVoice,duration){
+ await voiceApiReady();
+ const health=STUDIO.cloudHealth||{};
+ if(health.smartCutCloud===true){
+  const fd=new FormData();
+  for(const meta of SMART_EDIT.metas)fd.append('media',meta.file,meta.file.name||'video.mp4');
+  fd.append('duration',String(duration));
+  fd.append('aspect',q('smartCutAspect')?.value||'9:16');
+  fd.append('quality',q('exportQuality')?.value||'fast');
+  fd.append('smart_plan',JSON.stringify(SMART_EDIT.plan.map(x=>({
+   sourceIndex:Number(x.fileIndex)||0,
+   sourceStart:Number(x.start)||0,
+   sourceEnd:(Number(x.start)||0)+(Number(x.duration)||0),
+   duration:Number(x.duration)||0,
+   outputStart:Number(x.outStart)||0,
+   outputEnd:Number(x.outEnd)||0,
+   text:String(x.text||'')
+  }))));
+  fd.append('captions',JSON.stringify((STUDIO.captions||[]).map(x=>({
+   start:Number(x.start)||0,end:Number(x.end)||0,text:String(x.text||'')
+  }))));
+  fd.append('voice_volume',q('aiVoiceVolume')?.value||'1');
+  fd.append('burn_subtitles','true');
+  if(finalVoice)fd.append('voice_audio',finalVoice,'sagi-smart-cut-voice.wav');
+  smartCutStatus('③ SMART CUT CLOUD · 正在上传多段原始素材…');
+  return smartCutSubmitJob('/api/smart-render',fd)
+ }
+
+ // iPhone SAFE compatibility path for the currently deployed Cloud Render 3.9.4.
+ // One source can still be re-cut/repeated server-side with semantic scene_plan.
+ if(SMART_EDIT.metas.length!==1)throw new Error('多素材云端服务尚未上线。为避免iPhone本地FFmpeg报错，本次已安全停止；请先用1段素材成片。');
+ if(health.cloudRender!==true||health.aiSceneSync!==true)throw new Error('当前云端不具备安全剪辑能力，已停止本地FFmpeg回退');
+
+ const fd=new FormData();
+ fd.append('media',SMART_EDIT.metas[0].file,SMART_EDIT.metas[0].file.name||'video.mp4');
+ fd.append('start','0');fd.append('duration',String(duration));
+ fd.append('aspect',q('smartCutAspect')?.value||'9:16');
+ fd.append('quality',q('exportQuality')?.value||'fast');
+ fd.append('captions','[]');
+ fd.append('narration','');
+ fd.append('voice_timeline','[]');
+ fd.append('voice_mode','recorded');
+ fd.append('voice_id','');
+ fd.append('voice_speed','1');
+ fd.append('voice_style','football');
+ fd.append('voice_sync','clip_locked');
+ fd.append('meaning_first','false');
+ fd.append('meaning_audit','{}');
+ fd.append('visual_sync','auto');
+ fd.append('visual_sync_max_hold','0');
+ fd.append('scene_plan',JSON.stringify(SMART_EDIT.plan.slice(0,60).map((x,i)=>({
+  sceneId:i,sourceStart:Number(x.start)||0,
+  sourceEnd:(Number(x.start)||0)+(Number(x.duration)||0),
+  outputStart:Number(x.outStart)||0,outputEnd:Number(x.outEnd)||0,
+  label:String(x.text||'').slice(0,80),matchScore:30
+ }))));
+ fd.append('voice_volume',q('aiVoiceVolume')?.value||'1');
+ fd.append('original_volume','0');
+ fd.append('burn_subtitles','false');
+ if(finalVoice)fd.append('voice_audio',finalVoice,'sagi-smart-cut-voice.wav');
+ smartCutStatus('③ iPhone SAFE · 使用稳定云端剪辑，不加载手机FFmpeg…');
+ return smartCutSubmitJob('/api/render',fd)
+}
+
 async function smartCutRenderAll(){
  if(SMART_EDIT.busy)return;
  const script=String(q('smartCutScript')?.value||'').trim();
@@ -5868,7 +5905,6 @@ async function smartCutRenderAll(){
   await voiceApiReady();
   const health=STUDIO.cloudHealth||{};
   if(!health.aiVoice)throw new Error('当前云端AI Voice不可用');
-  if(health.smartCutCloud!==true)throw new Error('当前云端尚未部署 SMART CUT CLOUD，请刷新页面后再试');
   if(mode==='clone'&&!STUDIO.cloneVoiceId)throw new Error('请先在下方创建“我的克隆声音”');
 
   let voice=await generateCompleteAIVoice(script,mode,true,Number(q('aiVoiceSpeed')?.value)||1);
@@ -5935,11 +5971,11 @@ if('serviceWorker' in navigator){
  navigator.serviceWorker.addEventListener('controllerchange',()=>{
   if(swReloaded)return;swReloaded=true;
   try{
-   const key='sagi_sw_reload_v4100';
+   const key='sagi_sw_reload_v4110';
    if(sessionStorage.getItem(key)!=='1'){sessionStorage.setItem(key,'1');location.reload()}
   }catch(e){location.reload()}
  });
- navigator.serviceWorker.register('./sagi-down-sw.js?v=4100',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})
+ navigator.serviceWorker.register('./sagi-down-sw.js?v=4110',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})
 }
 })();
 </script>
