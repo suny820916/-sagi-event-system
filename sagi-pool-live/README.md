@@ -1,6 +1,6 @@
-# SAGI POOL LIVE · CHINA V2.13
+# SAGI POOL LIVE · CHINA V2.14
 
-面向中国大陆球房销售的手机台球直播、追分、球房管理、商业授权、设备管理和原生推流系统。
+面向中国大陆球房与台球主播销售的手机台球直播、追分、商业授权、设备管理和原生推流系统。
 
 ## 当前产品链路
 
@@ -138,3 +138,22 @@ CI 在缺少这些生产 Secrets 时只生成 Debug APK；配置完成后会自�
 - Debug APK 上传
 - 有生产 Secrets 时构建 Release APK
 - apksigner 校验 Release APK
+
+
+## SAGI POOL CREATOR V1.0
+
+面向个人台球主播的轻量商用模式，与球房版共用 CHINA SYNC 与授权底层。
+
+- 手机主播记分台：`/sagi-pool-live/creator.html`
+- OBS / vMix 透明比分牌：`/sagi-pool-live/creator-overlay.html`
+- 中式八球 + 4/6/9球追分
+- 2–4 人追分
+- 普胜 / 小金 / 大金 / 黄金9
+- 一键撤销 / 新一局 / 比赛归零
+- 主播名称与赞助位
+- 一次性安装码授权
+- 国内服务器同步
+- OBS / vMix 浏览器源地址自动生成
+- CREATOR / CREATOR PRO 授权套餐
+
+主播版 V1.0 的商业目标是：领取授权后，手机完成记分控制，电脑直播端只添加一次透明浏览器源。
