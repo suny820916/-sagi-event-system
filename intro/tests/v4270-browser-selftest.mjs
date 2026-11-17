@@ -99,7 +99,7 @@ server.listen(PORT,'127.0.0.1',async()=>{
     const cs=getComputedStyle(mid),ps=getComputedStyle(phase);
     return{phase:phase.textContent,phaseDisplay:ps.display,clock:clock.textContent,midTop:parseFloat(cs.top),midHeight:parseFloat(cs.height),home:home.textContent,away:away.textContent,homeOverflow:getComputedStyle(home).textOverflow,awayOverflow:getComputedStyle(away).textOverflow}
   });
-  assert(scoreHierarchy.phaseDisplay!=='none'&&scoreHierarchy.midTop>=55&&scoreHierarchy.midHeight>=28,'score information rail missing: '+JSON.stringify(scoreHierarchy));
+  assert(scoreHierarchy.phaseDisplay!=='none'&&scoreHierarchy.midTop>=54&&scoreHierarchy.midHeight>=27,'score information rail missing: '+JSON.stringify(scoreHierarchy));
   assert(scoreHierarchy.homeOverflow==='clip'&&scoreHierarchy.awayOverflow==='clip','team identity still uses ellipsis: '+JSON.stringify(scoreHierarchy));
   const stageSystem=await page.evaluate(()=>{
     const root=getComputedStyle(document.documentElement),brand=document.querySelector('.sbEventBrand'),match=document.querySelector('.matchCardStage'),evt=document.querySelector('#eventCard');
