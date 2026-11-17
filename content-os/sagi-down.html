@@ -706,11 +706,14 @@ AEK 2-3 皇马
       </label>
       <label>风格
         <select id="voiceExportStyle">
-          <option value="football" selected>足球热血 · 强节奏</option>
+          <option value="football_pro" selected>职业足球解说 · 稳定专业</option>
+          <option value="football_passion">激情攻防 · 高能推进</option>
+          <option value="football_goal">绝杀高燃 · 强情绪爆发</option>
+          <option value="football_warm">温情足球 · 克制温暖</option>
+          <option value="football_emotional">感人故事 · 情绪递进</option>
+          <option value="football_memory">纪录片回忆 · 沉稳有故事</option>
+          <option value="football">足球热血 · 通用</option>
           <option value="natural">自然解说 · 通用</option>
-          <option value="documentary">纪录片 · 沉稳</option>
-          <option value="news">新闻播报 · 清晰</option>
-          <option value="warm">温暖叙事 · 情绪</option>
         </select>
       </label>
       <label>语速
@@ -939,11 +942,17 @@ Unbelievable finish."></textarea>
           </label>
           <label>配音风格
             <select id="aiVoiceStyle">
-              <option value="football" selected>足球热血 · 强节奏</option>
+              <option value="football_pro" selected>职业足球解说 · 稳定专业</option>
+              <option value="football_passion">激情攻防 · 高能推进</option>
+              <option value="football_goal">绝杀高燃 · 强情绪爆发</option>
+              <option value="football_warm">温情足球 · 克制温暖</option>
+              <option value="football_emotional">感人故事 · 情绪递进</option>
+              <option value="football_memory">纪录片回忆 · 沉稳有故事</option>
+              <option value="football">足球热血 · 通用</option>
               <option value="natural">自然解说 · 通用</option>
               <option value="documentary">纪录片 · 沉稳</option>
               <option value="news">新闻播报 · 清晰</option>
-              <option value="warm">温暖叙事 · 情绪</option>
+              <option value="warm">温暖叙事 · 通用</option>
             </select>
           </label>
           <label>语速
@@ -1054,7 +1063,7 @@ Unbelievable finish."></textarea>
 
 <script>
 (()=>{'use strict';
-const SAGI_DOWN_BUILD='V4.2.0';
+const SAGI_DOWN_BUILD='V4.2.1';
 document.documentElement.dataset.sagiDownBuild=SAGI_DOWN_BUILD;
 const BTCH_PUBLIC='https://btch-downloader-api-green.vercel.app';
 const DOWNLOAD_ROUTER_VERSION='3.0';
@@ -4056,7 +4065,7 @@ async function ensureFFmpeg(){
  // iPhone/Safari: class worker must be same-origin. The stock bundled worker can
  // resolve blob: core URLs as webpack module ids and throw "Cannot find module blob:...".
  // SAGI's raw module worker uses the browser's native dynamic import instead.
- const classWorkerURL=new URL('./sagi-ffmpeg-worker.js?v=4200',window.location.href).href;
+ const classWorkerURL=new URL('./sagi-ffmpeg-worker.js?v=4210',window.location.href).href;
  const core='https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd';
  const coreURL=await toBlobURLRemote([core+'/ffmpeg-core.js','https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd/ffmpeg-core.js'],'text/javascript');
  const wasmURL=await toBlobURLRemote([core+'/ffmpeg-core.wasm','https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd/ffmpeg-core.wasm'],'application/wasm');
@@ -6264,11 +6273,11 @@ if('serviceWorker' in navigator){
  navigator.serviceWorker.addEventListener('controllerchange',()=>{
   if(swReloaded)return;swReloaded=true;
   try{
-   const key='sagi_sw_reload_v4200';
+   const key='sagi_sw_reload_v4210';
    if(sessionStorage.getItem(key)!=='1'){sessionStorage.setItem(key,'1');location.reload()}
   }catch(e){location.reload()}
  });
- navigator.serviceWorker.register('./sagi-down-sw.js?v=4200',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})
+ navigator.serviceWorker.register('./sagi-down-sw.js?v=4210',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})
 }
 })();
 </script>
