@@ -1002,14 +1002,14 @@ Unbelievable finish."></textarea>
 
 <script>
 (()=>{'use strict';
-const SAGI_DOWN_BUILD='V4.0.0';
+const SAGI_DOWN_BUILD='V4.0.1';
 document.documentElement.dataset.sagiDownBuild=SAGI_DOWN_BUILD;
 const BTCH_PUBLIC='https://btch-downloader-api-green.vercel.app';
 const DOWNLOAD_ROUTER_VERSION='3.0';
 const KEY='sagi_down_history_v2';
 const OLD_KEY='sagi_down_history_v1';
 const q=id=>document.getElementById(id);
-const buildBadge=q('sagiBuildBadge');if(buildBadge)buildBadge.textContent=SAGI_DOWN_BUILD+' · ANIMATION FIRST';
+const buildBadge=q('sagiBuildBadge');if(buildBadge)buildBadge.textContent=SAGI_DOWN_BUILD+' · SMART CUT';
 const input=q('url'),status=q('status'),platformName=q('platformName'),platformHint=q('platformHint'),platformType=q('platformType');
 
 function extractUrl(v){
@@ -5707,37 +5707,42 @@ function smartCutShotLength(style,index){
  if(style==='clean')return [4.4,5.2,4.8,5.6][index%4];
  return [2.8,3.4,3.8,3.1][index%4]
 }
-function smartCutBuildPlan(){
+function smartCutBuildPlan(targetOverride=null){
  const text=String(q('smartCutScript')?.value||'').trim();
  if(!SMART_EDIT.metas.length){smartCutStatus('请先选择至少一段视频素材。');return false}
  if(!text){smartCutStatus('请先粘贴完整文案。');return false}
  const style=q('smartCutStyle')?.value||'football',fixed=q('smartCutDuration')?.value||'auto';
  const estimate=smartCutEstimateVoice(text);
- let target=fixed==='auto'?estimate:Number(fixed);
+ let target=Number(targetOverride)>0?Number(targetOverride):(fixed==='auto'?estimate:Number(fixed));
  target=Math.max(6,Math.min(180,target));
  SMART_EDIT.target=target;
+ const usable=SMART_EDIT.metas.map((m,i)=>({...m,sourceIndex:i})).filter(m=>Number(m.duration)>.35);
+ if(!usable.length){smartCutStatus('素材时长太短或无法读取，请重新选择视频。');return false}
  const sentences=smartCutSentences(text),totalChars=Math.max(1,sentences.reduce((a,s)=>a+smartCutCharCount(s),0));
  const sentenceWindows=[];let st=0;
  sentences.forEach(s=>{const d=target*(smartCutCharCount(s)/totalChars);sentenceWindows.push({start:st,end:st+d,text:s});st+=d});
- const plan=[];let t=0,i=0;
- while(t<target-.05&&i<80){
-  const d=Math.min(smartCutShotLength(style,i),target-t),meta=SMART_EDIT.metas[i%SMART_EDIT.metas.length];
+ const plan=[];let t=0,i=0,guard=0;
+ while(t<target-.04&&guard<160){
+  const meta=usable[i%usable.length],wanted=smartCutShotLength(style,i);
+  const maxClip=Math.max(.25,Number(meta.duration)-.08);
+  const d=Math.min(wanted,target-t,maxClip);
+  if(d<.18){i++;guard++;continue}
   const maxStart=Math.max(0,meta.duration-d-.05),phase=(i*0.38196601125)%1;
-  const start=maxStart*phase;
+  const sourceStart=maxStart*phase;
   const mid=t+d*.5,sen=sentenceWindows.find(x=>mid>=x.start&&mid<x.end)||sentenceWindows[sentenceWindows.length-1];
-  plan.push({index:i,fileIndex:i%SMART_EDIT.metas.length,start,duration:d,outStart:t,outEnd:t+d,text:sen?.text||'',name:meta.file.name});
-  t+=d;i++
+  plan.push({index:plan.length,fileIndex:meta.sourceIndex,start:sourceStart,duration:d,outStart:t,outEnd:t+d,text:sen?.text||'',name:meta.file.name});
+  t+=d;i++;guard++
  }
+ if(target-t>.12){smartCutStatus('现有素材无法覆盖目标时长，请增加可用视频素材。');return false}
  SMART_EDIT.plan=plan;
- const totalSource=SMART_EDIT.metas.reduce((a,x)=>a+x.duration,0);
  q('smartCutFacts').innerHTML=
-  '<div class="smartCutFact"><span>素材</span><b>'+SMART_EDIT.metas.length+' 段</b></div>'+
-  '<div class="smartCutFact"><span>预计成片</span><b>'+target.toFixed(1)+'s</b></div>'+
+  '<div class="smartCutFact"><span>素材</span><b>'+usable.length+' 段</b></div>'+
+  '<div class="smartCutFact"><span>成片</span><b>'+target.toFixed(1)+'s</b></div>'+
   '<div class="smartCutFact"><span>镜头</span><b>'+plan.length+' 个</b></div>';
  q('smartCutPlan').innerHTML=plan.map(x=>
   '<div class="smartCutRow"><time>'+x.outStart.toFixed(1)+'–'+x.outEnd.toFixed(1)+'</time><span>'+escapeHtml(x.text||'画面过渡')+'</span><em>'+escapeHtml((x.fileIndex+1)+'号 · '+x.start.toFixed(1)+'s')+'</em></div>'
  ).join('');
- smartCutStatus('方案完成 · 文案预计 '+estimate.toFixed(1)+' 秒 · 输出 '+target.toFixed(1)+' 秒 · '+plan.length+' 个镜头。素材不足时会轮换取景，不使用长尾帧。');
+ smartCutStatus('方案完成 · '+(Number(targetOverride)>0?'真实配音锁定 ':'文案预计 ')+target.toFixed(1)+' 秒 · '+plan.length+' 个镜头。素材会循环取不同时间段，不使用长尾帧。');
  smartCutProgress(0);return true
 }
 function smartCutOutputSize(){
@@ -5777,31 +5782,59 @@ async function smartCutAssembleBase(){
 }
 async function smartCutRenderAll(){
  if(SMART_EDIT.busy)return;
- if(!SMART_EDIT.plan.length&&!smartCutBuildPlan())return;
+ const script=String(q('smartCutScript')?.value||'').trim();
+ if(!SMART_EDIT.metas.length){smartCutStatus('请先选择至少一段视频素材。');return}
+ if(!script){smartCutStatus('请先粘贴完整文案。');return}
  SMART_EDIT.busy=true;const btn=q('smartCutRenderBtn');btn.disabled=true;btn.textContent='智能成片处理中…';
  try{
-  smartCutProgress(28);smartCutStatus('开始智能剪辑 · 正在按文案重排画面…');
+  const mode=q('smartCutVoice')?.value||'ai_male',fixed=q('smartCutDuration')?.value||'auto';
+  q('aiVoiceMode').value=mode;q('narrationText').value=script;
+  smartCutProgress(8);smartCutStatus('① 正在生成真实AI配音 · 成片时长以最终声音为准…');
+  await voiceApiReady();
+  if(!(STUDIO.cloudHealth||{}).aiVoice)throw new Error('当前云端AI Voice不可用');
+  if(mode==='clone'&&!STUDIO.cloneVoiceId)throw new Error('请先在下方创建“我的克隆声音”');
+  let voice=await generateCompleteAIVoice(script,mode,true,Number(q('aiVoiceSpeed')?.value)||1);
+  let target=voice.duration;
+
+  if(fixed!=='auto'){
+   const requested=Math.max(6,Number(fixed)||target);
+   const ratio=voice.duration/requested;
+   if(Math.abs(ratio-1)>.08){
+    const adjusted=Math.max(.82,Math.min(1.18,(Number(q('aiVoiceSpeed')?.value)||1)*ratio));
+    voice=await generateCompleteAIVoice(script,mode,true,adjusted);
+   }
+   if(voice.duration>requested+.35)throw new Error('完整文案配音需要 '+voice.duration.toFixed(1)+' 秒，超过你选择的 '+requested+' 秒；为保护文案不自动删词，请改用 AUTO 或更长时长');
+   target=requested
+  }
+
+  if(!smartCutBuildPlan(target))throw new Error('无法建立与配音一致的剪辑方案');
+  smartCutProgress(28);smartCutStatus('② 配音完成 '+voice.duration.toFixed(1)+'秒 · 正在按声音时间轴重排画面…');
   const base=await smartCutAssembleBase();
   const [ow,oh]=smartCutOutputSize(),duration=SMART_EDIT.plan.reduce((a,x)=>a+x.duration,0);
   STUDIO.file=base;STUDIO.duration=duration;STUDIO.width=ow;STUDIO.height=oh;STUDIO.sceneAnalysis=null;STUDIO.scenePlan=[];
   if(STUDIO.url)URL.revokeObjectURL(STUDIO.url);STUDIO.url=URL.createObjectURL(base);
   q('studioVideo').src=STUDIO.url;q('studioVideo').classList.add('show');q('studioFileTitle').textContent='SAGI SMART CUT 已生成基础片';q('studioFileHint').textContent=duration.toFixed(1)+' 秒 · '+SMART_EDIT.plan.length+' 镜头';
-  q('trimStart').value='0';q('trimEnd').value=duration.toFixed(2);
-  q('studioAspect').value=q('smartCutAspect').value;
-  q('narrationText').value=String(q('smartCutScript').value||'').trim();
-  q('aiVoiceMode').value=q('smartCutVoice').value;
+  q('trimStart').value='0';q('trimEnd').value=duration.toFixed(2);q('studioAspect').value=q('smartCutAspect').value;
   q('burnSubtitle').value='yes';q('originalAudio').value='0';
-  smartCutProgress(76);smartCutStatus('画面完成 · 正在生成AI配音，并把字幕锁定到最终声音…');
-  const voice=await runSimpleSyncVoice(false);
-  STUDIO.voiceBlob=voice.blob;STUDIO.voiceMime=voice.blob?.type||'audio/mpeg';STUDIO.voiceUrl=STUDIO.lockstepVoiceUrl||STUDIO.generatedVoiceUrl||'';
-  if(Array.isArray(STUDIO.voiceTimeline)&&STUDIO.voiceTimeline.length){
-   STUDIO.captions=STUDIO.voiceTimeline.map(x=>({start:Number(x.start)||0,end:Number(x.end)||0,text:String(x.text||'')}));
-   STUDIO.captionRangeKey=captionKey();
-   renderCaptionTimeline?.()
+
+  let finalVoice=voice.blob,finalDuration=voice.duration;
+  if(duration>voice.duration+.08){
+   const padded=await padVoiceBlobToDuration(voice.blob,duration);
+   finalVoice=padded.blob;finalDuration=duration
   }
-  smartCutProgress(88);smartCutStatus('配音与字幕完成 · 正在合成最终成片…');
+  STUDIO.voiceBlob=finalVoice;STUDIO.voiceMime=finalVoice?.type||'audio/mpeg';
+  if(STUDIO.voiceUrl&&STUDIO.voiceUrl!==STUDIO.generatedVoiceUrl)try{URL.revokeObjectURL(STUDIO.voiceUrl)}catch(e){}
+  STUDIO.voiceUrl=URL.createObjectURL(finalVoice);
+  STUDIO.generatedVoiceBlob=finalVoice;STUDIO.generatedVoiceDuration=finalDuration;
+  rebuildVoiceTimelineToDuration(Math.min(voice.duration,duration),'voice_master',script);
+  STUDIO.captions=(STUDIO.voiceTimeline||[]).map(x=>({start:Number(x.start)||0,end:Math.min(duration,Number(x.end)||0),text:String(x.text||'')})).filter(x=>x.end>x.start&&x.text);
+  STUDIO.captionRangeKey=captionKey();
+  if(typeof renderCaptionTimeline==='function')renderCaptionTimeline();
+
+  smartCutProgress(88);smartCutStatus('③ 画面、配音、字幕时间轴已锁定 · 正在输出最终成片…');
   await exportStudio();
-  smartCutProgress(100);smartCutStatus('完成 · 智能剪辑、AI配音、字幕和最终成片已经生成。');
+  if(!STUDIO.resultBlob&&!STUDIO.resultUrl)throw new Error('最终成片没有生成');
+  smartCutProgress(100);smartCutStatus('自检通过 · 智能剪辑、AI配音、字幕、成片全部完成 · 无尾帧拖时。');
   q('resultVideo')?.scrollIntoView({behavior:'smooth',block:'center'})
  }catch(e){
   console.error('SMART CUT',e);smartCutStatus('智能成片失败：'+(e.message||e));smartCutProgress(0)
@@ -5830,11 +5863,11 @@ if('serviceWorker' in navigator){
  navigator.serviceWorker.addEventListener('controllerchange',()=>{
   if(swReloaded)return;swReloaded=true;
   try{
-   const key='sagi_sw_reload_v4000';
+   const key='sagi_sw_reload_v4001';
    if(sessionStorage.getItem(key)!=='1'){sessionStorage.setItem(key,'1');location.reload()}
   }catch(e){location.reload()}
  });
- navigator.serviceWorker.register('./sagi-down-sw.js?v=4000',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})
+ navigator.serviceWorker.register('./sagi-down-sw.js?v=4001',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})
 }
 })();
 </script>
