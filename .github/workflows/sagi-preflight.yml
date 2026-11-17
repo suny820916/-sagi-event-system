@@ -641,7 +641,7 @@ jobs:
           # attack duplicate transition frontend
           assert "攻防攻防转换" in s or "footballPolishZh" in s
           assert "814.ffmpeg.js" not in s, "stock blob class worker must not return on iPhone"
-          smart=s[s.index("async function smartCutRenderAll(){"):s.index("if(q('smartCutFiles'))")]
+          smart=s[s.index("async function smartCutCloudSubmit("):s.index("if(q('smartCutFiles'))")]
           assert "smartCutAssembleBase(" not in smart, "SMART CUT must not assemble locally on iPhone"
           assert "exportStudio(" not in smart, "SMART CUT must not export with browser FFmpeg"
           assert "ensureFFmpeg(" not in smart, "SMART CUT must be cloud-first"
