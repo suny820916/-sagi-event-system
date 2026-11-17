@@ -5726,7 +5726,7 @@ function smartCutBuildPlan(targetOverride=null){
   const meta=usable[i%usable.length],wanted=smartCutShotLength(style,i);
   const maxClip=Math.max(.25,Number(meta.duration)-.08);
   const d=Math.min(wanted,target-t,maxClip);
-  if(d<.18){i++;guard++;continue}
+  if(d<.05){i++;guard++;continue}
   const maxStart=Math.max(0,meta.duration-d-.05),phase=(i*0.38196601125)%1;
   const sourceStart=maxStart*phase;
   const mid=t+d*.5,sen=sentenceWindows.find(x=>mid>=x.start&&mid<x.end)||sentenceWindows[sentenceWindows.length-1];
