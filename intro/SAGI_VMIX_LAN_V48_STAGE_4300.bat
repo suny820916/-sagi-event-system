@@ -5332,16 +5332,16 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent
    identity -> score -> clock -> phase -> exceptional state. */
 #scoreBug.sagiToranhe{
  --scorePaper:#f8f9fc;--scoreInk:#071638;--scoreNavy:#061744;--scoreBlue:#0a43c9;--scoreRed:#ed3348;
- height:56px!important;filter:drop-shadow(0 10px 24px #01081d80)
+ height:58px!important;filter:drop-shadow(0 10px 24px #01081d80)
 }
 #scoreBug.sagiToranhe .sbEventBrand{
- width:58px!important;height:56px!important;flex-basis:58px!important;border-radius:12px 0 0 12px!important
+ width:60px!important;height:58px!important;flex-basis:60px!important;border-radius:12px 0 0 12px!important
 }
 #scoreBug.sagiToranhe .sbEventBrand:before{border-radius:12px 0 0 12px!important}
-#scoreBug.sagiToranhe .sbEventBrand img{left:-2px!important;top:-5px!important;width:65px!important;height:65px!important}
+#scoreBug.sagiToranhe .sbEventBrand img{left:-2px!important;top:-5px!important;width:68px!important;height:68px!important}
 #scoreBug.sagiToranhe .sbEventBrand:after{left:7px!important;right:7px!important;bottom:4px!important;height:3px!important}
 #scoreBug.sagiToranhe .sbTeamBlock{
- height:56px!important;min-width:124px!important;padding:0 11px!important;gap:7px!important;
+ height:58px!important;min-width:124px!important;padding:0 11px!important;gap:7px!important;
  background:var(--scorePaper)!important;color:var(--scoreInk)!important
 }
 #scoreBug.sagiToranhe .sbTeamBlock.home{border-radius:0!important}
@@ -5358,7 +5358,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent
  transform:rotate(-2deg)!important;box-shadow:0 2px 5px #0005,inset 0 0 0 1px #ffffff45!important
 }
 #scoreBug.sagiToranhe .sbScoreWrap{
- width:44px!important;min-width:44px!important;height:56px!important;flex:0 0 44px!important;
+ width:44px!important;min-width:44px!important;height:58px!important;flex:0 0 44px!important;
  background:var(--scorePaper)!important;color:var(--scoreInk)!important
 }
 #scoreBug.sagiToranhe .sbScore{
@@ -5377,7 +5377,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent
  width:14px!important;text-align:center!important;color:#4e5c76!important;font-size:17px!important;font-weight:900!important;z-index:9!important
 }
 #scoreBug.sagiToranhe .sbMid{
- left:calc(58px + 124px + 44px + 2px)!important;top:56px!important;transform:none!important;
+ left:calc(60px + 124px + 44px + 2px)!important;top:58px!important;transform:none!important;
  width:auto!important;min-width:198px!important;height:30px!important;padding:0 8px!important;
  display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:center!important;gap:8px!important;
  background:linear-gradient(105deg,#041235,#071d57 60%,#0a2e86)!important;border-radius:0 0 11px 11px!important;
@@ -5405,7 +5405,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent
 #scoreBug.sagiToranhe .sbStoppage.on{display:flex!important}
 #scoreBug.sagiToranhe .sbPenalty{font-size:7px!important;letter-spacing:.2px!important;margin-top:2px!important}
 #scoreBug.sagiToranhe.goalExpand .sbGoalBurst{
- top:0!important;height:56px!important;border-radius:0 12px 12px 0!important
+ top:0!important;height:58px!important;border-radius:0 12px 12px 0!important
 }
 #scoreBug.sagiToranhe .sbGoalCrest{top:-15px!important;width:84px!important;height:84px!important}
 #scoreBug.sagiToranhe .sbGoalWord{top:5px!important;font-size:37px!important}
