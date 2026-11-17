@@ -8,7 +8,7 @@ on:
   push:
     branches: [main]
     paths:
-      - "cloud-blender-worker/presets/mourinho_real_madrid_4231_70s_v24_v513_frame_guard.json"
+      - "cloud-blender-worker/presets/mourinho_real_madrid_4231_70s_v24_v513_local_frame_recovery.json"
       - "cloud-blender-worker/engine/sagi_tactical_mourinho_70_v13.py"
       - ".github/workflows/sagi-mourinho-real-madrid-70-v24-v513-local-frame-recovery.yml"
   workflow_dispatch:
@@ -24,7 +24,7 @@ jobs:
       - name: Build Blender image
         run: docker build -t sagi-mourinho-v22-v513 ./cloud-blender-worker
 
-      - name: Render V2.4 V5.13 frame guard
+      - name: Render V2.4 V5.13 local frame recovery
         shell: bash
         run: |
           set -euo pipefail
@@ -38,7 +38,7 @@ jobs:
               blender --background \
                 --python /app/engine/sagi_tactical_mourinho_70_v13.py \
                 -- \
-                /app/presets/mourinho_real_madrid_4231_70s_v24_v513_frame_guard.json \
+                /app/presets/mourinho_real_madrid_4231_70s_v24_v513_local_frame_recovery.json \
                 /out
 
               ffmpeg -y -loglevel error \
@@ -69,7 +69,7 @@ jobs:
 
           python3 - <<'PY'
           import json
-          preset="cloud-blender-worker/presets/mourinho_real_madrid_4231_70s_v24_v513_frame_guard.json"
+          preset="cloud-blender-worker/presets/mourinho_real_madrid_4231_70s_v24_v513_local_frame_recovery.json"
           with open("mourinho_v24_out/execution_report.json",encoding="utf-8") as f:
               r=json.load(f)
           with open(preset,encoding="utf-8") as f:
@@ -83,7 +83,7 @@ jobs:
           assert p.get("cn_title_overlay",{}).get("enabled") is False
           assert p["palette"]["pitch"] == "#202629"
           assert p["palette"]["own_primary"] == "#A8B63D"
-          assert p["screen_scale_lock"]["distance_band_by_scale"]["WIDE_STRUCTURE"] == [145,157], "V2.4 frame guard band mismatch"
+          assert p["screen_scale_lock"]["distance_band_by_scale"]["WIDE_STRUCTURE"] == [145,157], "V2.4 local frame recovery band mismatch"
           print(json.dumps({
             "valid":r["valid"],
             "duration_sec":r["duration_sec"],
@@ -102,5 +102,5 @@ jobs:
             mourinho_v24_out/critical_frames/*.jpg
             mourinho_v24_out/execution_report.json
             mourinho_v24_out/scene.blend
-            cloud-blender-worker/presets/mourinho_real_madrid_4231_70s_v24_v513_frame_guard.json
+            cloud-blender-worker/presets/mourinho_real_madrid_4231_70s_v24_v513_local_frame_recovery.json
           retention-days: 7
