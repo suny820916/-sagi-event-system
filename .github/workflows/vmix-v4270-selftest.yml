@@ -8,6 +8,7 @@ on:
       - "intro/assets/toranhe-event-logo.png"
       - "intro/tests/v4270-browser-selftest.mjs"
       - "intro/tests/v432-signature-core-selftest.mjs"
+      - "intro/tests/v432-event-identity-gate.mjs"
       - "intro/sagi-signature-core-v432.js"
       - ".github/workflows/vmix-v4270-selftest.yml"
       - "intro/SAGI_VMIX_LAN_V48_STAGE_4310.bat"
@@ -18,6 +19,7 @@ on:
       - "intro/assets/toranhe-event-logo.png"
       - "intro/tests/v4270-browser-selftest.mjs"
       - "intro/tests/v432-signature-core-selftest.mjs"
+      - "intro/tests/v432-event-identity-gate.mjs"
       - "intro/sagi-signature-core-v432.js"
       - ".github/workflows/vmix-v4270-selftest.yml"
       - "intro/SAGI_VMIX_LAN_V48_STAGE_4310.bat"
@@ -62,6 +64,9 @@ jobs:
       - name: Validate V4.32 Signature Core RC
         run: |
           node intro/tests/v432-signature-core-selftest.mjs
+      - name: Block V4.32 release on missing event identity
+        run: |
+          node intro/tests/v432-event-identity-gate.mjs
       - name: Run V4.31.0 broadcast compatibility self-test
         run: |
           mkdir -p selftest-artifacts
