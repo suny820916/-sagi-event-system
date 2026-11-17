@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SAGI POOL CREATOR · 透明比分牌</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent!important;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
+.wrap{position:absolute;left:4.2%;top:4.5%;width:52%;min-width:620px;max-width:1020px;transform-origin:left top}
+.bar{height:74px;display:grid;grid-template-columns:1fr 132px 1fr;border-radius:13px;overflow:hidden;background:rgba(5,7,6,.94);border:1px solid rgba(255,255,255,.18);box-shadow:0 10px 34px rgba(0,0,0,.32);transition:.28s cubic-bezier(.2,.8,.2,1)}
+.side{display:flex;flex-direction:column;justify-content:center;padding:0 18px;min-width:0}.side.r{text-align:right}.name{font-size:25px;line-height:1.08;font-weight:950;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sub{font-size:13px;color:#b2bcb5;margin-top:5px;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.score{display:flex;align-items:center;justify-content:center;gap:10px;background:#f2f4f1;color:#090b0a;font-size:37px;font-weight:950}
+.sponsor{display:inline-flex;margin-top:8px;padding:8px 13px;border-radius:999px;background:rgba(5,7,6,.88);border:1px solid rgba(255,255,255,.15);color:#fff;font-size:14px;font-weight:850;letter-spacing:.01em}
+.event{position:absolute;left:0;top:0;width:100%;height:74px;border-radius:13px;display:flex;align-items:center;justify-content:center;gap:14px;background:#eef1ed;color:#080a09;opacity:0;transform:scaleX(.75);transition:.22s cubic-bezier(.2,.8,.2,1);pointer-events:none}.event.show{opacity:1;transform:scaleX(1)}.event b{font-size:26px;letter-spacing:.05em}.event span{font-size:17px;font-weight:850}
+.status{position:fixed;right:18px;bottom:14px;font-size:11px;color:rgba(255,255,255,.42);opacity:0}.debug .status{opacity:1}
+@media(max-width:900px){.wrap{min-width:0;width:92%}.bar{height:62px;grid-template-columns:1fr 108px 1fr}.name{font-size:18px}.sub{font-size:10px}.score{font-size:28px}.event{height:62px}.event b{font-size:21px}.event span{font-size:14px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="bar">
+    <div class="side"><div class="name" id="p1">球员A</div><div class="sub" id="creator">SAGI CREATOR</div></div>
+    <div class="score"><span id="s1">0</span><span>:</span><span id="s2">0</span></div>
+    <div class="side r"><div class="name" id="p2">球员B</div><div class="sub" id="mode">中式八球</div></div>
+  </div>
+  <div class="event" id="event"><b id="eventTitle">SCORE</b><span id="eventSub">比分更新</span></div>
+  <div class="sponsor" id="sponsor">SAGI SPORTS</div>
+</div>
+<div class="status" id="status">未连接</div>
+<script>
+(()=>{
+const $=s=>document.querySelector(s),q=new URLSearchParams(location.search);
+const cfg={url:String(q.get('sync')||'').replace(/\/+$/,''),clubId:q.get('creator')||'',table:q.get('room')||'LIVE',token:q.get('token')||''};
+const modes={8ball:'中式八球',chase4:'4球追分',chase6:'6球追分',chase9:'9球追分'};
+let lastSig='',lastUpdate=0,timer=null;
+if(q.get('debug')==='1')document.body.classList.add('debug');
+function flash(title,sub){$('#eventTitle').textContent=title;$('#eventSub').textContent=sub;$('#event').classList.add('show');clearTimeout(flash.t);flash.t=setTimeout(()=>$('#event').classList.remove('show'),1000)}
+function setStatus(v){$('#status').textContent=v}
+function render(room){
+ const s=room&&room.state;if(!s)return;
+ const ps=Array.isArray(s.players)?s.players:[],a=ps[0]||{},b=ps[1]||{},is8=s.mode==='8ball';
+ $('#p1').textContent=a.name||'球员A';$('#p2').textContent=b.name||'球员B';
+ $('#s1').textContent=is8?Number(a.wins||0):Number(a.score||0);$('#s2').textContent=is8?Number(b.wins||0):Number(b.score||0);
+ $('#creator').textContent=s.creator||'SAGI CREATOR';$('#mode').textContent=modes[s.mode]||'比赛中';$('#sponsor').textContent=s.sponsor||'SAGI SPORTS';
+ const sig=[s.mode].concat(ps.map(p=>is8?Number(p.wins||0):Number(p.score||0))).join('|');
+ if(lastSig&&sig!==lastSig){
+   const leader=ps.slice().sort((x,y)=>Number(is8?y.wins:y.score)-Number(is8?x.wins:x.score))[0];
+   flash(is8?'RACK WIN':'SCORE UPDATE',(leader&&leader.name?leader.name:'比分')+' · '+sig.split('|').slice(1).join(' : '));
+ }
+ lastSig=sig;lastUpdate=Number(room.updatedAt||0);setStatus('已连接');
+}
+async function pull(){
+ if(!cfg.url||!cfg.clubId||!cfg.token){setStatus('缺少连接参数');return}
+ try{
+  const r=await fetch(cfg.url+'/api/rooms/'+encodeURIComponent(cfg.clubId)+'/'+encodeURIComponent(cfg.table),{headers:{'X-SAGI-Token':cfg.token},cache:'no-store'});
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error('HTTP '+r.status);
+  if(d.room&&Number(d.room.updatedAt||0)>=lastUpdate)render(d.room);else setStatus('已连接 · 等待比分');
+ }catch(e){setStatus('连接失败')}
+}
+pull();timer=setInterval(()=>{if(document.visibilityState==='visible')pull()},700);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')pull()});
+})();
+</script>
+</body>
+</html>
