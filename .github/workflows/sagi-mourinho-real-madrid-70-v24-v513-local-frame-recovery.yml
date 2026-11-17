@@ -1,0 +1,106 @@
+name: SAGI MOURINHO REAL MADRID 70S V2.4 V5.13 LOCAL FRAME RECOVERY
+
+concurrency:
+  group: sagi-mourinho-v24-v513-local-frame-recovery-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "cloud-blender-worker/presets/mourinho_real_madrid_4231_70s_v24_v513_frame_guard.json"
+      - "cloud-blender-worker/engine/sagi_tactical_mourinho_70_v13.py"
+      - ".github/workflows/sagi-mourinho-real-madrid-70-v24-v513-local-frame-recovery.yml"
+  workflow_dispatch:
+
+jobs:
+  render-v24-v513-local-frame-recovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Blender image
+        run: docker build -t sagi-mourinho-v22-v513 ./cloud-blender-worker
+
+      - name: Render V2.4 V5.13 frame guard
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p mourinho_v24_out/critical_frames
+
+          docker run --rm \
+            -v "$PWD/mourinho_v24_out:/out" \
+            sagi-mourinho-v22-v513 \
+            bash -lc '
+              set -euo pipefail
+              blender --background \
+                --python /app/engine/sagi_tactical_mourinho_70_v13.py \
+                -- \
+                /app/presets/mourinho_real_madrid_4231_70s_v24_v513_frame_guard.json \
+                /out
+
+              ffmpeg -y -loglevel error \
+                -framerate 30 \
+                -i /out/frames/frame_%04d.png \
+                -f lavfi \
+                -i anullsrc=channel_layout=stereo:sample_rate=44100 \
+                -map 0:v:0 -map 1:a:0 \
+                -c:v libx264 -profile:v baseline -level 3.1 \
+                -pix_fmt yuv420p -preset veryfast -crf 20 \
+                -c:a aac -b:a 64k -shortest -movflags +faststart \
+                /out/SAGI_MOURINHO_REAL_MADRID_70S_V24_V513_LOCAL_FRAME_RECOVERY.mp4
+
+              for spec in \
+                "04.0 04_0" "12.0 12_0" "20.0 20_0" "28.0 28_0" \
+                "36.0 36_0" "44.0 44_0" "52.0 52_0" "60.0 60_0" "68.0 68_0"; do
+                set -- $spec
+                ffmpeg -y -loglevel error -ss "$1" \
+                  -i /out/SAGI_MOURINHO_REAL_MADRID_70S_V24_V513_LOCAL_FRAME_RECOVERY.mp4 \
+                  -frames:v 1 /out/critical_frames/"$2".jpg
+              done
+            '
+
+          sudo chown -R "$USER":"$USER" mourinho_v24_out
+          test -s mourinho_v24_out/SAGI_MOURINHO_REAL_MADRID_70S_V24_V513_LOCAL_FRAME_RECOVERY.mp4
+          test -s mourinho_v24_out/execution_report.json
+          test -s mourinho_v24_out/scene.blend
+
+          python3 - <<'PY'
+          import json
+          preset="cloud-blender-worker/presets/mourinho_real_madrid_4231_70s_v24_v513_frame_guard.json"
+          with open("mourinho_v24_out/execution_report.json",encoding="utf-8") as f:
+              r=json.load(f)
+          with open(preset,encoding="utf-8") as f:
+              p=json.load(f)
+          assert r["valid"] is True, r
+          assert r["errors"] == [], r
+          assert abs(r["duration_sec"]-70.0) < 1e-6, r
+          assert p["v22_change_scope"]["baseline_run_id"] == 43913991590
+          assert p["tactical_role_labels"]["enabled"] is False
+          assert p.get("chapter_titles",[]) == []
+          assert p.get("cn_title_overlay",{}).get("enabled") is False
+          assert p["palette"]["pitch"] == "#202629"
+          assert p["palette"]["own_primary"] == "#A8B63D"
+          assert p["screen_scale_lock"]["distance_band_by_scale"]["WIDE_STRUCTURE"] == [145,157], "V2.4 frame guard band mismatch"
+          print(json.dumps({
+            "valid":r["valid"],
+            "duration_sec":r["duration_sec"],
+            "baseline":"V5.13",
+            "baseline_run":43913991590,
+            "no_text":True
+          },ensure_ascii=False,indent=2))
+          PY
+
+      - name: Upload V2.4 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SAGI-MOURINHO-REAL-MADRID-70S-V2.4-V5.13-FRAME-GUARD
+          path: |
+            mourinho_v24_out/SAGI_MOURINHO_REAL_MADRID_70S_V24_V513_LOCAL_FRAME_RECOVERY.mp4
+            mourinho_v24_out/critical_frames/*.jpg
+            mourinho_v24_out/execution_report.json
+            mourinho_v24_out/scene.blend
+            cloud-blender-worker/presets/mourinho_real_madrid_4231_70s_v24_v513_frame_guard.json
+          retention-days: 7
