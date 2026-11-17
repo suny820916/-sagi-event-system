@@ -213,7 +213,10 @@ server.listen(PORT,'127.0.0.1',async()=>{
   }));
   assert(loadedProject.competition==='TORANHE PROJECT CUP'&&loadedProject.home==='PROJECT HOME FC'&&loadedProject.away==='PROJECT AWAY FC','stored project match identity was not restored: '+JSON.stringify(loadedProject));
   assert(loadedProject.mdHomeScore==='3'&&loadedProject.mdAwayScore==='1','selected project matchday was overwritten by stale Bridge state: '+loadedProject.mdHomeScore+'-'+loadedProject.mdAwayScore);
-  assert(!loadedProject.localProjects.includes('data:image/svg+xml'),'large project photos were duplicated into synchronous localStorage');
+  const compactProjects=JSON.parse(loadedProject.localProjects||'[]');
+  const compactProject=compactProjects.find(x=>x.id===storedProject.id);
+  const compactPhotos=compactProject&&compactProject.assets&&compactProject.assets.photos||{};
+  assert(Object.keys(compactPhotos.HOME||{}).length===0&&Object.keys(compactPhotos.AWAY||{}).length===0,'large project photos were duplicated into synchronous localStorage');
 
   // Whatever defaults the UI chooses for old projects, explicitly clear the optional fields
   // and verify that daily broadcast READY remains available.
