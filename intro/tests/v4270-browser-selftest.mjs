@@ -20,7 +20,7 @@ function makeGraphics(overrides={}){
   home:HOME,away:AWAY,homeShort:HOME,awayShort:AWAY,
   homeCrest:HOME_CREST,awayCrest:AWAY_CREST,eventLogo:'',
   homeColor:'#0c8b55',awayColor:'#3157b7',accentColor:'#20ed82',
-  homeScore:0,awayScore:0,homePen:0,awayPen:0,homeRedCards:0,awayRedCards:0,stoppageTime:'+3',
+  homeScore:0,awayScore:0,homePen:0,awayPen:0,homeRedCards:0,awayRedCards:0,stoppageTime:'',
   clock:{period:'2H',baseSeconds:5480,running:false,startedAt:null},
   penaltyShootout:{started:false,finished:false,history:[],rounds:5,currentRound:1,nextSide:'HOME'},
   simplePenalty:{visible:false,home:0,away:0,history:[],round:1},
