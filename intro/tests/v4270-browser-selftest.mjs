@@ -84,7 +84,7 @@ server.listen(PORT,'127.0.0.1',async()=>{
   assert(regular.brandWidth>=60&&regular.logoWidth>=60,'event logo is not visually large enough');
   assert(regular.logoSrc.startsWith('data:image/svg+xml'),'offline TORANHE event logo is not embedded');
   assert(regular.logoDisplay!=='none','event logo hidden');
-  assert(regular.stopText==='+3'&&regular.stopDisplay!=='none','stoppage-time ribbon missing');
+  assert(regular.stopText==='+3 补时'&&regular.stopDisplay!=='none','stoppage-time ribbon missing or ambiguous');
   assert(regular.burstWidth<=2&&!regular.goalExpand,'goal panel visible during regular play');
   const scoreHierarchy=await page.evaluate(()=>{
     const phase=document.querySelector('#sbPeriod'),clock=document.querySelector('#sbClock'),mid=document.querySelector('.sbMid'),home=document.querySelector('#sbHome'),away=document.querySelector('#sbAway');
