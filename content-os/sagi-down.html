@@ -1002,7 +1002,7 @@ Unbelievable finish."></textarea>
 
 <script>
 (()=>{'use strict';
-const SAGI_DOWN_BUILD='V4.0.1';
+const SAGI_DOWN_BUILD='V4.0.2';
 document.documentElement.dataset.sagiDownBuild=SAGI_DOWN_BUILD;
 const BTCH_PUBLIC='https://btch-downloader-api-green.vercel.app';
 const DOWNLOAD_ROUTER_VERSION='3.0';
@@ -4000,14 +4000,13 @@ async function ensureFFmpeg(){
  if(!window.FFmpegWASM?.FFmpeg)throw new Error('FFmpeg 主模块未加载');
  const ffmpeg=new window.FFmpegWASM.FFmpeg();STUDIO.ffmpeg=ffmpeg;let ffmpegLastError='';ffmpeg.on('log',({type,message})=>{if(type==='stderr'&&/error|failed|invalid|unknown encoder|out of memory/i.test(message||''))ffmpegLastError=String(message).slice(0,220)});STUDIO.ffmpegLastError=()=>ffmpegLastError;
  ffmpeg.on('progress',({progress})=>{if(STUDIO.exporting&&Number.isFinite(progress))setProgress(20+Math.max(0,Math.min(.78,progress))*75)});
- const classWorkerURL=await toBlobURLRemote([
-   'https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.15/dist/umd/814.ffmpeg.js',
-   'https://unpkg.com/@ffmpeg/ffmpeg@0.12.15/dist/umd/814.ffmpeg.js'
- ],'text/javascript');
+ // iPhone/Safari: class worker must be same-origin. The stock bundled worker can
+ // resolve blob: core URLs as webpack module ids and throw "Cannot find module blob:...".
+ // SAGI's raw module worker uses the browser's native dynamic import instead.
+ const classWorkerURL=new URL('./sagi-ffmpeg-worker.js?v=4002',window.location.href).href;
  const core='https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd';
  const coreURL=await toBlobURLRemote([core+'/ffmpeg-core.js','https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd/ffmpeg-core.js'],'text/javascript');
  const wasmURL=await toBlobURLRemote([core+'/ffmpeg-core.wasm','https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd/ffmpeg-core.wasm'],'application/wasm');
- // 0.12.15 expects classWorkerURL; the old workerLoadURL key was ignored on iPhone.
  await ffmpeg.load({classWorkerURL,coreURL,wasmURL});
  STUDIO.ffmpegLoaded=true;setProgress(18);return ffmpeg
 }
@@ -5865,11 +5864,11 @@ if('serviceWorker' in navigator){
  navigator.serviceWorker.addEventListener('controllerchange',()=>{
   if(swReloaded)return;swReloaded=true;
   try{
-   const key='sagi_sw_reload_v4001';
+   const key='sagi_sw_reload_v4002';
    if(sessionStorage.getItem(key)!=='1'){sessionStorage.setItem(key,'1');location.reload()}
   }catch(e){location.reload()}
  });
- navigator.serviceWorker.register('./sagi-down-sw.js?v=4001',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})
+ navigator.serviceWorker.register('./sagi-down-sw.js?v=4002',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})
 }
 })();
 </script>
