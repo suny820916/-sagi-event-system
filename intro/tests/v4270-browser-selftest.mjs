@@ -15,7 +15,7 @@ let seq=1,vmixCommands=[],matchdayPosts=[],graphics=makeGraphics(),reorderMatchd
 
 function makeGraphics(overrides={}){
  return {
-  commandId:'g_'+(seq++),revision:seq,fixtureKey:'selftest|'+HOME+'|'+AWAY,visualVersion:'V4.30.9-SELFTEST',
+  commandId:'g_'+(seq++),revision:seq,fixtureKey:'selftest|'+HOME+'|'+AWAY,visualVersion:'V4.31.0-SELFTEST',
   scoreboardVisible:true,scoreboardFrozen:false,scoreTheme:'sagi-pro',competition:'TORANHE CUP',
   home:HOME,away:AWAY,homeShort:HOME,awayShort:AWAY,scoreHomeName:'新疆塔城地区',scoreAwayName:'AYFC',
   homeCrest:HOME_CREST,awayCrest:AWAY_CREST,eventLogo:'',
@@ -52,7 +52,7 @@ const server=http.createServer(async(req,res)=>{
   if(u.pathname==='/api/vmix'&&req.method==='POST'){const b=await readBody(req);let cmd={};try{cmd=JSON.parse(b)}catch{}vmixCommands.push(cmd);return json(res,{ok:true,command:cmd})}
   if(u.pathname==='/api/projects')return json(res,{projects:[]});
   if(u.pathname==='/health')return json(res,{ok:true,port:PORT});
-  if(u.pathname==='/')return text(res,'SAGI V4.30.9 SELFTEST');
+  if(u.pathname==='/')return text(res,'SAGI V4.31.0 SELFTEST');
   const rel=decodeURIComponent(u.pathname).replace(/^\/+/,'');const file=path.resolve(ROOT,rel);
   if(!file.startsWith(ROOT)||!fs.existsSync(file)||fs.statSync(file).isDirectory())return text(res,'Not found','text/plain',404);
   res.writeHead(200,{'Content-Type':mime(file),'Cache-Control':'no-store','Access-Control-Allow-Origin':'*'});res.end(fs.readFileSync(file));
@@ -150,6 +150,18 @@ server.listen(PORT,'127.0.0.1',async()=>{
   const fullLock=await page.evaluate(()=>({home:document.querySelector('#sbHome').textContent,away:document.querySelector('#sbAway').textContent}));
   assert(fullLock.home===canonicalBefore.home&&fullLock.away===canonicalBefore.away,'backup alias overrode regular full-name scorebug: '+JSON.stringify(fullLock));
   await page.screenshot({path:'selftest-artifacts/01c-full-name-lock.png'});
+
+
+  console.log('TEST 1D: SAGI signature colors and persistent brand tag are present');
+  graphics=makeGraphics({event:{type:'CLEAR_EVENT'}});await wait(300);
+  const sig=await page.evaluate(()=>{
+    const root=getComputedStyle(document.documentElement),brand=document.querySelector('.sbEventBrand'),tag=document.querySelector('.sbSagiSignature'),hs=document.querySelector('#sbHomeScoreWrap'),mid=document.querySelector('.sbMid');
+    return{tag:tag?.textContent||'',tagDisplay:getComputedStyle(tag).display,ink:root.getPropertyValue('--sagiInk').trim(),gold:root.getPropertyValue('--sagiGold').trim(),pamir:root.getPropertyValue('--sagiPamir').trim(),brandBg:getComputedStyle(brand,':before').backgroundImage,scoreBg:getComputedStyle(hs).backgroundColor,midBg:getComputedStyle(mid).backgroundImage};
+  });
+  assert(sig.tag==='SAGI SPORTS'&&sig.tagDisplay!=='none','SAGI scorebug signature tag missing: '+JSON.stringify(sig));
+  assert(sig.ink==='#080A0F'&&sig.gold==='#D3AE5B'&&sig.pamir==='#0A2E88','SAGI signature palette missing: '+JSON.stringify(sig));
+  assert(sig.brandBg!=='none'&&sig.midBg!=='none','SAGI signature surfaces not applied: '+JSON.stringify(sig));
+  await page.screenshot({path:'selftest-artifacts/01d-sagi-signature.png'});
 
   console.log('TEST 2: HOME goal = enlarged HOME crest + complete GOAL + lower player card');
   const photo='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="180" height="220"><rect width="100%" height="100%" fill="#17202a"/><circle cx="90" cy="70" r="35" fill="#d5a97a"/><rect x="45" y="110" width="90" height="105" rx="18" fill="#0c8b55"/></svg>');
@@ -428,9 +440,9 @@ server.listen(PORT,'127.0.0.1',async()=>{
   assert(repairUI.home==='乌苏叶克备'&&repairUI.away==='IPF'&&repairUI.score===String(authoritative.homeScore),'watchdog repair changed local control identity/state: '+JSON.stringify(repairUI));
   const diagPage=await browser.newPage({viewport:{width:1920,height:1080}});
   await diagPage.goto('http://127.0.0.1:'+PORT+'/intro/vmix-v45-lan.html',{waitUntil:'domcontentloaded'});
-  await diagPage.waitForFunction(()=>window.sagiScoreCenterDiagnostic&&window.sagiScoreCenterDiagnostic().build==='V4.30.9',null,{timeout:5000});
+  await diagPage.waitForFunction(()=>window.sagiScoreCenterDiagnostic&&window.sagiScoreCenterDiagnostic().build==='V4.31.0',null,{timeout:5000});
   const outputDiag=await diagPage.evaluate(()=>window.sagiScoreCenterDiagnostic());
-  assert(outputDiag&&outputDiag.build==='V4.30.9'&&outputDiag.home===authoritative.scoreHomeName,'vMix score-center diagnostic is not tracking authoritative state: '+JSON.stringify(outputDiag));
+  assert(outputDiag&&outputDiag.build==='V4.31.0'&&outputDiag.home===authoritative.scoreHomeName,'vMix score-center diagnostic is not tracking authoritative state: '+JSON.stringify(outputDiag));
   await diagPage.screenshot({path:'selftest-artifacts/12-output-diagnostic.png'});
 
   console.log('TEST 11B: Browser Input watchdog holds last good frame through a longer state-channel outage, then self-heals');
@@ -468,7 +480,7 @@ server.listen(PORT,'127.0.0.1',async()=>{
   await page.screenshot({path:'selftest-artifacts/13-long-session-soak.png'});
 
   assert(pageErrors.length===0,'browser page errors: '+pageErrors.join(' | '));
-  const report={ok:true,build:'V4.30.9',testedAt:new Date().toISOString(),tests:['compact one-row full-name scorebug + fused event identity + unified score pair + restrained score roll + clock-only regular halves + conditional states','HOME goal enlarged HOME crest + complete GOAL + lower player card + collapse','AWAY goal enlarged AWAY crest','yellow/red referee-card shape + event colors + control icons','penalty >5 rounds/sudden death/miss/scores','two-camera Input 1 -> Input 2','event-logo replay stinger visual','manual replay stinger IN -> Input 4 -> OUT -> Input 1','stored project load wins over stale Bridge + optional time/venue do not block READY','compact project index rehydrates full photos from IndexedDB with empty Bridge list','clock-only refresh avoids repeated heavy match-control repaints','regular scorebug always uses canonical full team names even when backup aliases exist','mobile match control mirrors current fixture identity and legacy fields are read-only','transient LAN failure retries automatically and records last-good state','rapid score writes are serialized under deliberate network reordering','duplicate operator events are gated before double-counting','reopen recovery keeps newer local same-fixture state over stale Bridge','in-match health check is read-only and cannot mutate on-air state','vMix output ignores stale lower revisions within the same fixture','online/resume recovery repairs score/name/color/exceptional-state drift','Browser Input watchdog holds last good frame during longer outage and self-heals','fresh startup can atomically recover Bridge fixture identity when no local snapshot exists','accelerated 5000-cycle long-session identity soak'],vmixCommands:cuts};
+  const report={ok:true,build:'V4.31.0',testedAt:new Date().toISOString(),tests:['compact one-row full-name scorebug + SAGI signature palette/tag + unified score pair + restrained score roll + clock-only regular halves + conditional states','HOME goal enlarged HOME crest + complete GOAL + lower player card + collapse','AWAY goal enlarged AWAY crest','yellow/red referee-card shape + event colors + control icons','penalty >5 rounds/sudden death/miss/scores','two-camera Input 1 -> Input 2','event-logo replay stinger visual','manual replay stinger IN -> Input 4 -> OUT -> Input 1','stored project load wins over stale Bridge + optional time/venue do not block READY','compact project index rehydrates full photos from IndexedDB with empty Bridge list','clock-only refresh avoids repeated heavy match-control repaints','regular scorebug always uses canonical full team names even when backup aliases exist','mobile match control mirrors current fixture identity and legacy fields are read-only','transient LAN failure retries automatically and records last-good state','rapid score writes are serialized under deliberate network reordering','duplicate operator events are gated before double-counting','reopen recovery keeps newer local same-fixture state over stale Bridge','in-match health check is read-only and cannot mutate on-air state','vMix output ignores stale lower revisions within the same fixture','online/resume recovery repairs score/name/color/exceptional-state drift','Browser Input watchdog holds last good frame during longer outage and self-heals','fresh startup can atomically recover Bridge fixture identity when no local snapshot exists','accelerated 5000-cycle long-session identity soak'],vmixCommands:cuts};
   fs.writeFileSync('selftest-artifacts/report.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
  }catch(e){
   fs.mkdirSync('selftest-artifacts',{recursive:true});try{await page.screenshot({path:'selftest-artifacts/FAIL.png',fullPage:true})}catch{}
