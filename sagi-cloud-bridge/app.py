@@ -3289,6 +3289,8 @@ def health():
         "smartCutCloudVersion": "1.1",
         "smartCutLargeMedia": True,
         "smartCutLowMemory": True,
+        "smartCutChunkUpload": True,
+        "smartCutChunkUploadVersion": "1.0",
         "heavyTaskConcurrency": 1,
         "ffmpegThreads": FFMPEG_THREADS,
         "renderStateRecovery": True,
@@ -4514,6 +4516,183 @@ def voice_preview():
     except Exception as e:
         shutil.rmtree(work, ignore_errors=True)
         return jsonify({"ok": False, "error": str(e)[:700]}), 500
+
+SMART_UPLOAD_CHUNK_BYTES = 8 * 1024 * 1024
+
+def _smart_upload_dir(upload_id):
+    safe = re.sub(r"[^A-Za-z0-9_-]", "", str(upload_id or ""))[:80]
+    if not safe:
+        raise ValueError("Invalid upload id")
+    return Path(tempfile.gettempdir()) / ("sagi_smart_upload_" + safe)
+
+def _smart_upload_meta_path(upload_id):
+    return _smart_upload_dir(upload_id) / "meta.json"
+
+def _smart_upload_read_meta(upload_id):
+    p = _smart_upload_meta_path(upload_id)
+    if not p.exists():
+        raise FileNotFoundError("Upload session not found")
+    return json.loads(p.read_text(encoding="utf-8"))
+
+def _smart_upload_write_meta(upload_id, meta):
+    d = _smart_upload_dir(upload_id)
+    d.mkdir(parents=True, exist_ok=True)
+    _smart_upload_meta_path(upload_id).write_text(json.dumps(meta, ensure_ascii=False), encoding="utf-8")
+
+@app.post("/api/smart-upload/init")
+def smart_upload_init():
+    if not authorized():
+        return jsonify({"ok": False, "error": "Unauthorized"}), 401
+    data = request.get_json(silent=True) or {}
+    filename = str(data.get("filename") or "source.mp4")
+    try:
+        size = int(data.get("size") or 0)
+    except Exception:
+        size = 0
+    if size <= 0:
+        return jsonify({"ok": False, "error": "Invalid media size"}), 400
+    if size > SMART_CUT_MAX_MB * 1024 * 1024:
+        return jsonify({"ok": False, "error": f"Media exceeds {SMART_CUT_MAX_MB}MB"}), 413
+    upload_id = secrets.token_urlsafe(12)
+    work = _smart_upload_dir(upload_id)
+    work.mkdir(parents=True, exist_ok=True)
+    suffix = Path(filename).suffix or ".mp4"
+    source = work / ("source" + suffix)
+    source.touch()
+    meta = {
+        "id": upload_id, "filename": filename[:220], "size": size,
+        "source": str(source), "created_at": iso(), "updated_at": iso(),
+    }
+    _smart_upload_write_meta(upload_id, meta)
+    return jsonify({
+        "ok": True, "uploadId": upload_id, "offset": 0,
+        "chunkBytes": SMART_UPLOAD_CHUNK_BYTES, "maxMB": SMART_CUT_MAX_MB,
+    })
+
+@app.get("/api/smart-upload/<upload_id>")
+def smart_upload_status(upload_id):
+    if not authorized():
+        return jsonify({"ok": False, "error": "Unauthorized"}), 401
+    try:
+        meta = _smart_upload_read_meta(upload_id)
+        source = Path(meta["source"])
+        offset = source.stat().st_size if source.exists() else 0
+        return jsonify({
+            "ok": True, "uploadId": upload_id, "offset": offset,
+            "size": int(meta.get("size") or 0), "complete": offset == int(meta.get("size") or 0),
+        })
+    except FileNotFoundError:
+        return jsonify({"ok": False, "error": "Upload session not found"}), 404
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)[:300]}), 400
+
+@app.post("/api/smart-upload/<upload_id>/chunk")
+def smart_upload_chunk(upload_id):
+    if not authorized():
+        return jsonify({"ok": False, "error": "Unauthorized"}), 401
+    try:
+        meta = _smart_upload_read_meta(upload_id)
+        source = Path(meta["source"])
+        expected_total = int(meta.get("size") or 0)
+        current = source.stat().st_size if source.exists() else 0
+        try:
+            supplied_offset = int(request.headers.get("X-SAGI-Offset") or current)
+        except Exception:
+            supplied_offset = current
+        if supplied_offset != current:
+            return jsonify({"ok": False, "error": "OFFSET_MISMATCH", "offset": current}), 409
+        content_length = int(request.content_length or 0)
+        if content_length <= 0 or content_length > SMART_UPLOAD_CHUNK_BYTES + 1024:
+            return jsonify({"ok": False, "error": "Invalid chunk size"}), 413
+        if current + content_length > expected_total:
+            return jsonify({"ok": False, "error": "Chunk exceeds declared media size"}), 400
+
+        source.parent.mkdir(parents=True, exist_ok=True)
+        written = 0
+        with source.open("ab") as out:
+            while True:
+                block = request.stream.read(1024 * 1024)
+                if not block:
+                    break
+                out.write(block)
+                written += len(block)
+        new_offset = current + written
+        meta["updated_at"] = iso()
+        _smart_upload_write_meta(upload_id, meta)
+        return jsonify({
+            "ok": True, "uploadId": upload_id, "offset": new_offset,
+            "size": expected_total, "complete": new_offset == expected_total,
+        })
+    except FileNotFoundError:
+        return jsonify({"ok": False, "error": "Upload session not found"}), 404
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)[:500]}), 400
+
+@app.post("/api/smart-upload/<upload_id>/complete")
+def smart_upload_complete(upload_id):
+    if not authorized():
+        return jsonify({"ok": False, "error": "Unauthorized"}), 401
+    try:
+        meta = _smart_upload_read_meta(upload_id)
+        work = _smart_upload_dir(upload_id)
+        source = Path(meta["source"])
+        expected = int(meta.get("size") or 0)
+        actual = source.stat().st_size if source.exists() else 0
+        if actual != expected:
+            return jsonify({"ok": False, "error": "UPLOAD_INCOMPLETE", "offset": actual, "size": expected}), 409
+
+        try:
+            smart_plan = json.loads(request.form.get("smart_plan") or "[]")
+            if not isinstance(smart_plan, list):
+                smart_plan = []
+        except Exception:
+            smart_plan = []
+        if not smart_plan:
+            raise ValueError("SMART CUT plan required")
+
+        try:
+            captions = json.loads(request.form.get("captions") or "[]")
+            if not isinstance(captions, list):
+                captions = []
+        except Exception:
+            captions = []
+
+        voice_upload = request.files.get("voice_audio")
+        uploaded_voice = ""
+        if voice_upload:
+            vp = work / ("voice" + (Path(voice_upload.filename or "voice.m4a").suffix or ".m4a"))
+            voice_upload.save(vp)
+            if vp.exists() and vp.stat().st_size > 0:
+                uploaded_voice = str(vp)
+
+        options = {
+            "duration": request.form.get("duration") or "15",
+            "aspect": request.form.get("aspect") or "9:16",
+            "quality": request.form.get("quality") or "fast",
+            "captions": captions[:300],
+            "smart_plan": smart_plan[:240],
+            "voice_volume": request.form.get("voice_volume") or "1",
+            "burn_subtitles": str(request.form.get("burn_subtitles") or "true").lower() in ("1", "true", "yes"),
+            "uploaded_voice": uploaded_voice,
+        }
+        job_id = secrets.token_urlsafe(10)
+        job = {
+            "id": job_id, "status": "queued", "stage": "SMART CUT 大文件上传完成 · 等待低内存渲染",
+            "progress": 8, "created_at": iso(), "updated_at": iso(),
+            "workdir": str(work), "source": str(source), "sources": [str(source)], "path": "",
+            "download_key": secrets.token_urlsafe(18), "filename": "SAGI_SMART_CUT_CLOUD.mp4",
+            "size": 0, "error": "", "options": options,
+        }
+        with render_jobs_lock:
+            render_jobs[job_id] = job
+            _persist_render_jobs_locked()
+        Thread(target=run_smart_render, args=(job_id, options), daemon=True).start()
+        return jsonify({"ok": True, "job": public_render_job(job)})
+    except FileNotFoundError:
+        return jsonify({"ok": False, "error": "Upload session not found"}), 404
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)[:500]}), 400
+
 
 @app.post("/api/smart-render")
 def create_smart_render_job():
