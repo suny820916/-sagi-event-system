@@ -15,7 +15,7 @@ let seq=1,vmixCommands=[],matchdayPosts=[],graphics=makeGraphics(),reorderMatchd
 
 function makeGraphics(overrides={}){
  return {
-  commandId:'g_'+(seq++),revision:seq,fixtureKey:'selftest|'+HOME+'|'+AWAY,visualVersion:'V4.30.1-SELFTEST',
+  commandId:'g_'+(seq++),revision:seq,fixtureKey:'selftest|'+HOME+'|'+AWAY,visualVersion:'V4.30.2-SELFTEST',
   scoreboardVisible:true,scoreboardFrozen:false,scoreTheme:'sagi-pro',competition:'TORANHE CUP',
   home:HOME,away:AWAY,homeShort:HOME,awayShort:AWAY,
   homeCrest:HOME_CREST,awayCrest:AWAY_CREST,eventLogo:'',
@@ -52,7 +52,7 @@ const server=http.createServer(async(req,res)=>{
   if(u.pathname==='/api/vmix'&&req.method==='POST'){const b=await readBody(req);let cmd={};try{cmd=JSON.parse(b)}catch{}vmixCommands.push(cmd);return json(res,{ok:true,command:cmd})}
   if(u.pathname==='/api/projects')return json(res,{projects:[]});
   if(u.pathname==='/health')return json(res,{ok:true,port:PORT});
-  if(u.pathname==='/')return text(res,'SAGI V4.30.1 SELFTEST');
+  if(u.pathname==='/')return text(res,'SAGI V4.30.2 SELFTEST');
   const rel=decodeURIComponent(u.pathname).replace(/^\/+/,'');const file=path.resolve(ROOT,rel);
   if(!file.startsWith(ROOT)||!fs.existsSync(file)||fs.statSync(file).isDirectory())return text(res,'Not found','text/plain',404);
   res.writeHead(200,{'Content-Type':mime(file),'Cache-Control':'no-store','Access-Control-Allow-Origin':'*'});res.end(fs.readFileSync(file));
@@ -84,6 +84,14 @@ server.listen(PORT,'127.0.0.1',async()=>{
   assert(regular.brandWidth>=60&&regular.logoWidth>=60,'event logo is not visually large enough');
   assert(regular.logoSrc.startsWith('data:image/svg+xml'),'offline TORANHE event logo is not embedded');
   assert(regular.logoDisplay!=='none','event logo hidden');
+  const identityFusion=await page.evaluate(()=>{
+    const brand=document.querySelector('.sbEventBrand'),mid=document.querySelector('.sbMid'),home=document.querySelector('.sbTeamBlock.home'),bug=document.querySelector('#scoreBug');
+    const br=brand.getBoundingClientRect(),mr=mid.getBoundingClientRect(),hr=home.getBoundingClientRect(),bugr=bug.getBoundingClientRect();
+    return{brandH:br.height,brandW:br.width,brandBottom:br.bottom,midTop:mr.top,midLeft:mr.left,brandRight:br.right,homeLeft:hr.left,bugLeft:bugr.left,homeClip:getComputedStyle(home).clipPath};
+  });
+  assert(identityFusion.brandH>=78&&identityFusion.brandW>=64,'event identity block is not integrated/tall enough: '+JSON.stringify(identityFusion));
+  assert(identityFusion.midLeft<=identityFusion.brandRight-4&&Math.abs(identityFusion.midTop-(identityFusion.brandBottom-27))<=2,'clock rail is not fused into event identity: '+JSON.stringify(identityFusion));
+  assert(identityFusion.homeLeft<identityFusion.brandRight&&identityFusion.homeClip!=='none','score ribbon does not tuck into event identity: '+JSON.stringify(identityFusion));
   assert(regular.stopDisplay==='none','added-time block should stay hidden during normal regular play');
   assert(regular.burstWidth<=2&&!regular.goalExpand,'goal panel visible during regular play');
   const scoreHierarchy=await page.evaluate(()=>{
@@ -357,7 +365,7 @@ server.listen(PORT,'127.0.0.1',async()=>{
   await page.screenshot({path:'selftest-artifacts/13-long-session-soak.png'});
 
   assert(pageErrors.length===0,'browser page errors: '+pageErrors.join(' | '));
-  const report={ok:true,build:'V4.30.1',testedAt:new Date().toISOString(),tests:['score-intelligence hierarchy: team identity + score + clock + visible phase + explicit stoppage + TORANHE event logo','HOME goal enlarged HOME crest + complete GOAL + lower player card + collapse','AWAY goal enlarged AWAY crest','yellow/red referee-card shape + event colors + control icons','penalty >5 rounds/sudden death/miss/scores','two-camera Input 1 -> Input 2','event-logo replay stinger visual','manual replay stinger IN -> Input 4 -> OUT -> Input 1','stored project load wins over stale Bridge + optional time/venue do not block READY','compact project index rehydrates full photos from IndexedDB with empty Bridge list','clock-only refresh avoids repeated heavy match-control repaints','legacy stale short-name cache cannot override current vMix fixture identity','mobile match control mirrors current fixture identity and legacy fields are read-only','transient LAN failure retries automatically and records last-good state','rapid score writes are serialized under deliberate network reordering','duplicate operator events are gated before double-counting','vMix output ignores stale lower revisions within the same fixture','consistency watchdog repairs same-fixture Bridge corruption','accelerated 5000-cycle long-session identity soak'],vmixCommands:cuts};
+  const report={ok:true,build:'V4.30.2',testedAt:new Date().toISOString(),tests:['compact score intelligence + event-logo/score-ribbon/clock-rail fusion + conditional added time','HOME goal enlarged HOME crest + complete GOAL + lower player card + collapse','AWAY goal enlarged AWAY crest','yellow/red referee-card shape + event colors + control icons','penalty >5 rounds/sudden death/miss/scores','two-camera Input 1 -> Input 2','event-logo replay stinger visual','manual replay stinger IN -> Input 4 -> OUT -> Input 1','stored project load wins over stale Bridge + optional time/venue do not block READY','compact project index rehydrates full photos from IndexedDB with empty Bridge list','clock-only refresh avoids repeated heavy match-control repaints','legacy stale short-name cache cannot override current vMix fixture identity','mobile match control mirrors current fixture identity and legacy fields are read-only','transient LAN failure retries automatically and records last-good state','rapid score writes are serialized under deliberate network reordering','duplicate operator events are gated before double-counting','vMix output ignores stale lower revisions within the same fixture','consistency watchdog repairs same-fixture Bridge corruption','accelerated 5000-cycle long-session identity soak'],vmixCommands:cuts};
   fs.writeFileSync('selftest-artifacts/report.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
  }catch(e){
   fs.mkdirSync('selftest-artifacts',{recursive:true});try{await page.screenshot({path:'selftest-artifacts/FAIL.png',fullPage:true})}catch{}
