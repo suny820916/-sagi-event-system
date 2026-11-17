@@ -179,7 +179,7 @@ jobs:
           c = mod.app.test_client()
           health = c.get("/health").get_json()
           print("health", health)
-          assert health["version"] == "3.9.5"
+          assert health["version"] == "3.9.6"
           assert health["captionMedia"] is True
           assert health["contextTranslate"] is True
           assert health["smartTranslate"] is True
@@ -210,6 +210,8 @@ jobs:
           assert health["aiSceneSyncLocalFrameAnalysis"] is True
           assert health["aiSceneSyncSemanticCaptionMatch"] is True
           assert health["cloudRender"] is True
+          assert health["smartCutCloud"] is True
+          assert health["smartCutCloudVersion"] == "1.0"
           assert health["cloudDownload"] is True
           assert set(health["downloadPlatforms"]) >= {"Instagram","YouTube","TikTok","X"}
           assert health["instagramPostFallback"].startswith("btch -> parth-dl")
@@ -630,14 +632,20 @@ jobs:
               "/api/football/crest?url=",
               "IMAGE RECREATE · 图片二次创作",
               "SAGI SMART CUT · 智能剪辑导演",
-              "sagi-ffmpeg-worker.js?v=4002",
+              "sagi-ffmpeg-worker.js?v=4100",
               "const classWorkerURL=new URL",
+              "/api/smart-render",
           ]
           for x in required:
               assert x in s, x
           # attack duplicate transition frontend
           assert "攻防攻防转换" in s or "footballPolishZh" in s
           assert "814.ffmpeg.js" not in s, "stock blob class worker must not return on iPhone"
+          smart=s[s.index("async function smartCutRenderAll(){"):s.index("if(q('smartCutFiles'))")]
+          assert "smartCutAssembleBase(" not in smart, "SMART CUT must not assemble locally on iPhone"
+          assert "exportStudio(" not in smart, "SMART CUT must not export with browser FFmpeg"
+          assert "ensureFFmpeg(" not in smart, "SMART CUT must be cloud-first"
+          assert "/api/smart-render" in smart
           print("frontend wiring OK")
           PY
           node --check /tmp/sagi-down.js
@@ -1425,6 +1433,77 @@ jobs:
           assert bad_job["status"] == "failed", bad_job
           assert "MEANING_FIRST_REQUIRED" in bad_job["error"], bad_job
           print("meaning-first sub-100 render correctly blocked")
+          PY
+
+      - name: Real SMART CUT cloud render smoke test
+        run: |
+          cd sagi-cloud-bridge
+          python - <<'PY'
+          import tempfile, pathlib, subprocess
+          import imageio_ffmpeg
+          import app as mod
+
+          work = pathlib.Path(tempfile.mkdtemp(prefix="sagi_smart_cut_test_"))
+          exe = imageio_ffmpeg.get_ffmpeg_exe()
+          a = work / "a.mp4"
+          b = work / "b.mp4"
+          voice = work / "voice.m4a"
+
+          subprocess.run([
+              exe, "-hide_banner", "-y",
+              "-f", "lavfi", "-i", "color=c=red:s=640x360:d=3",
+              "-f", "lavfi", "-i", "sine=frequency=330:duration=3",
+              "-map", "0:v", "-map", "1:a", "-c:v", "libx264", "-preset", "ultrafast",
+              "-pix_fmt", "yuv420p", "-c:a", "aac", "-shortest", str(a)
+          ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+          subprocess.run([
+              exe, "-hide_banner", "-y",
+              "-f", "lavfi", "-i", "color=c=blue:s=640x360:d=3",
+              "-f", "lavfi", "-i", "sine=frequency=440:duration=3",
+              "-map", "0:v", "-map", "1:a", "-c:v", "libx264", "-preset", "ultrafast",
+              "-pix_fmt", "yuv420p", "-c:a", "aac", "-shortest", str(b)
+          ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+          subprocess.run([
+              exe, "-hide_banner", "-y",
+              "-f", "lavfi", "-i", "sine=frequency=660:duration=5.8",
+              "-c:a", "aac", str(voice)
+          ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+          mod.ensure_cjk_font = lambda: "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+          mod.FONT_DIR = pathlib.Path("/usr/share/fonts/truetype/dejavu")
+          job_id = "smart-cut-smoke"
+          mod.render_jobs[job_id] = {
+              "id": job_id, "status": "queued", "stage": "", "progress": 0,
+              "created_at": mod.iso(), "updated_at": mod.iso(),
+              "workdir": str(work), "source": str(a), "sources": [str(a), str(b)],
+              "path": "", "download_key": "smart-key", "size": 0, "error": "",
+          }
+          plan = [
+              {"sourceIndex":0,"sourceStart":0.0,"duration":2.0,"outputStart":0.0,"outputEnd":2.0,"text":"第一镜头"},
+              {"sourceIndex":1,"sourceStart":0.5,"duration":2.0,"outputStart":2.0,"outputEnd":4.0,"text":"第二镜头"},
+              {"sourceIndex":0,"sourceStart":1.0,"duration":2.0,"outputStart":4.0,"outputEnd":6.0,"text":"第三镜头"},
+          ]
+          mod.run_smart_render(job_id, {
+              "duration": 6, "aspect": "9:16", "quality": "fast",
+              "smart_plan": plan,
+              "captions": [
+                  {"start":0.1,"end":1.9,"text":"第一段字幕"},
+                  {"start":2.1,"end":3.9,"text":"第二段字幕"},
+                  {"start":4.1,"end":5.8,"text":"第三段字幕"},
+              ],
+              "uploaded_voice": str(voice), "voice_volume": 1, "burn_subtitles": True,
+          })
+          job = mod.render_jobs[job_id]
+          assert job["status"] == "ready", job
+          assert job.get("visualSyncStrategy") == "smart-cut-cloud", job
+          assert int(job.get("sceneSyncSegments") or 0) == 3, job
+          out = pathlib.Path(job["path"])
+          assert out.exists() and out.stat().st_size > 5000, out
+          import av
+          with av.open(str(out)) as container:
+              rendered = float(container.duration or 0) / 1_000_000.0
+          assert 5.90 <= rendered <= 6.15, rendered
+          print("SMART CUT CLOUD OK", round(rendered,2), "seconds", out.stat().st_size, "bytes")
           PY
 
       - name: Python compile check
