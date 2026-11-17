@@ -629,14 +629,19 @@ jobs:
               "function sdDataLoadMatchLogos",
               "/api/football/crest?url=",
               "IMAGE RECREATE · 图片二次创作",
+              "SAGI SMART CUT · 智能剪辑导演",
+              "sagi-ffmpeg-worker.js?v=4002",
+              "const classWorkerURL=new URL",
           ]
           for x in required:
               assert x in s, x
           # attack duplicate transition frontend
           assert "攻防攻防转换" in s or "footballPolishZh" in s
+          assert "814.ffmpeg.js" not in s, "stock blob class worker must not return on iPhone"
           print("frontend wiring OK")
           PY
           node --check /tmp/sagi-down.js
+          node --check content-os/sagi-ffmpeg-worker.js
 
       - name: SAGI AI LOCAL V1.3 design frontend smoke
         run: |
