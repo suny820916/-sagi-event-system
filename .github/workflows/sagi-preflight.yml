@@ -648,8 +648,6 @@ jobs:
           assert "/api/smart-render" in smart
           assert "xhr.timeout=0" in smart, "iPhone large upload must not use a fixed timeout"
           assert "smartCutCreateCloudJob(endpoint,fd,3)" in smart, "SMART CUT upload must auto-retry"
-          assert "xhr.timeout=0" in smart, "iPhone large upload must not use a fixed timeout"
-          assert "smartCutCreateCloudJob(endpoint,fd,3)" in smart, "SMART CUT upload must auto-retry"
           assert "SMART_CLOUD_JOB_KEY" in smart, "long SMART CUT cloud job must persist on iPhone"
           assert "smartCutResumePersistedJob" in smart, "long SMART CUT cloud job must auto-resume"
           assert "2*60*60*1000" in smart, "long cloud render polling window must be resilient"
