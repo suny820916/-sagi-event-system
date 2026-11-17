@@ -1,4 +1,4 @@
-name: SAGI vMix V4.30.8 TORANHE Scorebug Self Test
+name: SAGI vMix V4.30.9 TORANHE Scorebug Self Test
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
       - "intro/assets/toranhe-event-logo.png"
       - "intro/tests/v4270-browser-selftest.mjs"
       - ".github/workflows/vmix-v4270-selftest.yml"
-      - "intro/SAGI_VMIX_LAN_V48_STAGE_4308.bat"
+      - "intro/SAGI_VMIX_LAN_V48_STAGE_4309.bat"
   workflow_dispatch:
 
 jobs:
@@ -24,11 +24,11 @@ jobs:
         run: |
           npm install --no-save playwright@latest
           npx playwright install --with-deps chromium
-      - name: Validate V4.30.8 BAT launcher structure
+      - name: Validate V4.30.9 BAT launcher structure
         run: |
           node - <<'NODE'
           const fs=require('fs');
-          const p='intro/SAGI_VMIX_LAN_V48_STAGE_4308.bat';
+          const p='intro/SAGI_VMIX_LAN_V48_STAGE_4309.bat';
           const s=fs.readFileSync(p,'utf8');
           const lines=s.split(/\r?\n/);
           const idx={ps:lines.indexOf('###SAGI_PS###'),control:lines.indexOf('###SAGI_CONTROL###'),output:lines.indexOf('###SAGI_OUTPUT###')};
@@ -39,31 +39,31 @@ jobs:
           if(!rx||!rx.includes('###SAGI_PS###')||!rx.includes('###SAGI_CONTROL###')||!rx.includes('###SAGI_OUTPUT###')) throw new Error('BAT PowerShell extraction command is truncated');
           const control=lines.slice(idx.control+1,idx.output).join('\n');
           const output=lines.slice(idx.output+1).join('\n');
-          if(!control.includes('V4.30.8')||!control.includes('sagiLiveHealthCheck')) throw new Error('V4.30.8 control payload missing');
-          if(!output.includes('V4.30.8')||!output.includes('sagiOutputWatchdog')) throw new Error('V4.30.8 output payload missing');
+          if(!control.includes('V4.30.9')||!control.includes('sagiLiveHealthCheck')) throw new Error('V4.30.9 control payload missing');
+          if(!output.includes('V4.30.9')||!output.includes('sagiOutputWatchdog')) throw new Error('V4.30.9 output payload missing');
           const staleGuard='V4\\.30\\.5', currentGuard='V4\\.30\\.8';
-          if(s.includes(staleGuard)) throw new Error('BAT still contains stale V4.30.5 validation logic');
-          if(s.split(currentGuard).length-1<2) throw new Error('BAT V4.30.8 validation guards missing');
+          if(s.includes(staleGuard)) throw new Error('BAT still contains stale V4.30.8 validation logic');
+          if(s.split(currentGuard).length-1<2) throw new Error('BAT V4.30.9 validation guards missing');
           if(!lines.some(x=>x.includes('powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -Command ^'))) throw new Error('BAT PowerShell bootstrap missing');
           console.log('BAT STRUCTURE PASS', {bytes:Buffer.byteLength(s),idx});
           NODE
-      - name: Run V4.30.8 broadcast self-test
+      - name: Run V4.30.9 broadcast self-test
         run: |
           mkdir -p selftest-artifacts
           node intro/tests/v4270-browser-selftest.mjs
-      - name: Upload V4.30.8 evidence
+      - name: Upload V4.30.9 evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: SAGI_V4308_STAGE_SELFTEST
+          name: SAGI_V4309_STAGE_SELFTEST
           path: selftest-artifacts
           retention-days: 7
       - name: Export certified launcher only after all tests pass
-        if: success() && hashFiles('intro/SAGI_VMIX_LAN_V48_STAGE_4308.bat') != ''
+        if: success() && hashFiles('intro/SAGI_VMIX_LAN_V48_STAGE_4309.bat') != ''
         uses: actions/upload-artifact@v4
         with:
-          name: SAGI_VMIX_V4308_STAGE_CERTIFIED
-          path: intro/SAGI_VMIX_LAN_V48_STAGE_4308.bat
+          name: SAGI_VMIX_V4309_STAGE_CERTIFIED
+          path: intro/SAGI_VMIX_LAN_V48_STAGE_4309.bat
           if-no-files-found: error
           retention-days: 7
 
