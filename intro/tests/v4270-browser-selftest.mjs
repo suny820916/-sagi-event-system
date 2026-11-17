@@ -233,7 +233,7 @@ server.listen(PORT,'127.0.0.1',async()=>{
   assert(!optionalCheck.readyDisabled&&optionalCheck.summary.includes('赛前检查通过')&&optionalCheck.summary.includes('不影响'),'optional time/venue incorrectly blocked READY: '+optionalCheck.summary);
 
   // Manual restore from Bridge must also reject a different fixture instead of overwriting 3-1.
-  await page.locator('#mmRestoreState').click({force:true});await wait(500);
+  await page.evaluate(()=>document.querySelector('#mmRestoreState').click());await wait(500);
   const afterStaleRestore=await page.evaluate(()=>({home:document.querySelector('#mdHomeScore').textContent,away:document.querySelector('#mdAwayScore').textContent,homeName:document.querySelector('#matchHome').value,awayName:document.querySelector('#matchAway').value}));
   assert(afterStaleRestore.home==='3'&&afterStaleRestore.away==='1','manual stale Bridge restore overwrote selected project: '+JSON.stringify(afterStaleRestore));
   assert(afterStaleRestore.homeName==='PROJECT HOME FC'&&afterStaleRestore.awayName==='PROJECT AWAY FC','stale Bridge restore changed selected fixture identity');
