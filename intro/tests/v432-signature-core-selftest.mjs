@@ -23,4 +23,15 @@ const replay=c.normalizeEvent({type:'REPLAY_STINGER',phase:'weird'});
 assert(replay.phase==='IN'&&replay.title==='INSTANT REPLAY','replay phase fail-safe failed');
 const long=c.normalizeEvent({type:'GOAL',team:'X'.repeat(500),player:{name:'Y'.repeat(500),photo:'z'.repeat(5000)}});
 assert(long.team.length<=80&&long.player.name.length<=80&&long.player.photo.length<=2048,'payload bounds failed');
+const control=fs.readFileSync(new URL('../v45-lan.html',import.meta.url),'utf8');
+const output=fs.readFileSync(new URL('../vmix-v45-lan.html',import.meta.url),'utf8');
+for(const [name,html] of [['control',control],['output',output]]){
+  assert(!html.includes('<script src="./sagi-signature-core-v432.js">'),'external Signature Core dependency breaks offline BAT: '+name);
+  const match=html.match(/<script data-sagi-signature-core="v432">\s*([\s\S]*?)\s*<\/script>/);
+  assert(match,'embedded Signature Core missing from '+name);
+  assert(match[1].trim()===code.trim(),'embedded Signature Core drift in '+name);
+  const offline={};offline.globalThis=offline;
+  vm.runInNewContext(match[1],offline,{filename:name+'-embedded-core'});
+  assert(offline.SAGISignatureCore?.VERSION===c.VERSION,'offline embedded core fails in '+name);
+}
 console.log('SAGI SIGNATURE CORE V4.32 RC PASS', {version:c.VERSION,types:c.EVENT_TYPES.length});
