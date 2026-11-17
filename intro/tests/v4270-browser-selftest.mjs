@@ -15,7 +15,7 @@ let seq=1,vmixCommands=[],matchdayPosts=[],graphics=makeGraphics(),reorderMatchd
 
 function makeGraphics(overrides={}){
  return {
-  commandId:'g_'+(seq++),revision:seq,fixtureKey:'selftest|'+HOME+'|'+AWAY,visualVersion:'V4.30.4-SELFTEST',
+  commandId:'g_'+(seq++),revision:seq,fixtureKey:'selftest|'+HOME+'|'+AWAY,visualVersion:'V4.30.5-SELFTEST',
   scoreboardVisible:true,scoreboardFrozen:false,scoreTheme:'sagi-pro',competition:'TORANHE CUP',
   home:HOME,away:AWAY,homeShort:HOME,awayShort:AWAY,scoreHomeName:'新疆塔城地区',scoreAwayName:'AYFC',
   homeCrest:HOME_CREST,awayCrest:AWAY_CREST,eventLogo:'',
@@ -52,7 +52,7 @@ const server=http.createServer(async(req,res)=>{
   if(u.pathname==='/api/vmix'&&req.method==='POST'){const b=await readBody(req);let cmd={};try{cmd=JSON.parse(b)}catch{}vmixCommands.push(cmd);return json(res,{ok:true,command:cmd})}
   if(u.pathname==='/api/projects')return json(res,{projects:[]});
   if(u.pathname==='/health')return json(res,{ok:true,port:PORT});
-  if(u.pathname==='/')return text(res,'SAGI V4.30.4 SELFTEST');
+  if(u.pathname==='/')return text(res,'SAGI V4.30.5 SELFTEST');
   const rel=decodeURIComponent(u.pathname).replace(/^\/+/,'');const file=path.resolve(ROOT,rel);
   if(!file.startsWith(ROOT)||!fs.existsSync(file)||fs.statSync(file).isDirectory())return text(res,'Not found','text/plain',404);
   res.writeHead(200,{'Content-Type':mime(file),'Cache-Control':'no-store','Access-Control-Allow-Origin':'*'});res.end(fs.readFileSync(file));
@@ -93,6 +93,13 @@ server.listen(PORT,'127.0.0.1',async()=>{
   assert(identityFusion.brandH>=78&&identityFusion.brandW>=64,'event identity block is not integrated/tall enough: '+JSON.stringify(identityFusion));
   assert(identityFusion.midLeft<=identityFusion.brandRight-4&&Math.abs(identityFusion.midTop-(identityFusion.brandBottom-27))<=2,'clock rail is not fused into event identity: '+JSON.stringify(identityFusion));
   assert(identityFusion.homeLeft<identityFusion.brandRight&&identityFusion.homeClip!=='none','score ribbon does not tuck into event identity: '+JSON.stringify(identityFusion));
+  const scorePair=await page.evaluate(()=>{
+    const h=document.querySelector('#sbHomeScoreWrap'),a=document.querySelector('#sbAwayScoreWrap'),hc=getComputedStyle(h),ac=getComputedStyle(a),dash=getComputedStyle(h,':before');
+    const hr=h.getBoundingClientRect(),ar=a.getBoundingClientRect(),crest=document.querySelector('#sbHomeCrest').getBoundingClientRect(),team=document.querySelector('.sbTeamBlock.home').getBoundingClientRect();
+    return{gap:Math.round((ar.left-hr.right)*100)/100,combined:ar.right-hr.left,hBg:hc.backgroundColor,aBg:ac.backgroundColor,dash:dash.content,crestW:crest.width,teamW:team.width};
+  });
+  assert(Math.abs(scorePair.gap)<=1&&scorePair.combined<=78&&scorePair.hBg===scorePair.aBg&&scorePair.dash.includes('–'),'score pair is not visually unified: '+JSON.stringify(scorePair));
+  assert(scorePair.crestW<=24&&scorePair.teamW<=150,'team identity spacing is not compact: '+JSON.stringify(scorePair));
   assert(regular.stopDisplay==='none','added-time block should stay hidden during normal regular play');
   assert(regular.burstWidth<=2&&!regular.goalExpand,'goal panel visible during regular play');
   const scoreHierarchy=await page.evaluate(()=>{
@@ -108,6 +115,19 @@ server.listen(PORT,'127.0.0.1',async()=>{
   });
   assert(stageSystem.blue==='#071d57'&&stageSystem.brandRadius>=12&&stageSystem.matchRadius>=24&&stageSystem.eventRadius>=14&&stageSystem.timeLeftRadius===0&&stageSystem.timeRightRadius>=8,'SAGI STAGE integrated broadcast system not applied: '+JSON.stringify(stageSystem));
   await page.screenshot({path:'selftest-artifacts/01-regular-toranhe-scorebug.png'});
+
+  console.log('TEST 1A: score change uses restrained vertical roll without moving the clock rail');
+  const railBefore=await page.evaluate(()=>{const r=document.querySelector('.sbMid').getBoundingClientRect();return{left:r.left,top:r.top,width:r.width}});
+  graphics=makeGraphics({homeScore:1,event:{type:'CLEAR_EVENT'}});
+  await page.waitForFunction(()=>document.querySelector('#sbHomeScoreWrap')?.classList.contains('scoreRolling'),null,{timeout:3000});
+  const rolling=await page.evaluate(()=>{const w=document.querySelector('#sbHomeScoreWrap'),s=document.querySelector('#sbHomeScore'),r=document.querySelector('.sbMid').getBoundingClientRect();return{old:w.dataset.oldScore,newScore:s.textContent,wrapRolling:w.classList.contains('scoreRolling'),scoreRolling:s.classList.contains('scoreRolling'),rail:{left:r.left,top:r.top,width:r.width}}});
+  assert(rolling.old==='0'&&rolling.newScore==='1'&&rolling.wrapRolling&&rolling.scoreRolling,'score roll state missing: '+JSON.stringify(rolling));
+  assert(Math.abs(rolling.rail.left-railBefore.left)<1&&Math.abs(rolling.rail.top-railBefore.top)<1,'score change moved clock rail: '+JSON.stringify({before:railBefore,after:rolling.rail}));
+  await page.screenshot({path:'selftest-artifacts/01a-score-roll.png'});
+  await wait(650);
+  const rollDone=await page.evaluate(()=>({wrap:document.querySelector('#sbHomeScoreWrap').classList.contains('scoreRolling'),score:document.querySelector('#sbHomeScore').classList.contains('scoreRolling')}));
+  assert(!rollDone.wrap&&!rollDone.score,'score roll did not clean up');
+  graphics=makeGraphics({homeScore:0,event:{type:'CLEAR_EVENT'}});await wait(650);
 
   console.log('TEST 1B: legacy stale short-name cache cannot override current fixture identity');
   graphics=makeGraphics({home:'乌苏叶克备',away:'IPF',homeShort:'少林足球',awayShort:'旧客队',scoreHomeName:'乌苏叶克备',scoreAwayName:'IPF',event:{type:'CLEAR_EVENT'}});
@@ -385,7 +405,7 @@ server.listen(PORT,'127.0.0.1',async()=>{
   await page.screenshot({path:'selftest-artifacts/13-long-session-soak.png'});
 
   assert(pageErrors.length===0,'browser page errors: '+pageErrors.join(' | '));
-  const report={ok:true,build:'V4.30.4',testedAt:new Date().toISOString(),tests:['compact score intelligence + fused event identity + clock-only regular halves + conditional added time + exceptional phase labels','HOME goal enlarged HOME crest + complete GOAL + lower player card + collapse','AWAY goal enlarged AWAY crest','yellow/red referee-card shape + event colors + control icons','penalty >5 rounds/sudden death/miss/scores','two-camera Input 1 -> Input 2','event-logo replay stinger visual','manual replay stinger IN -> Input 4 -> OUT -> Input 1','stored project load wins over stale Bridge + optional time/venue do not block READY','compact project index rehydrates full photos from IndexedDB with empty Bridge list','clock-only refresh avoids repeated heavy match-control repaints','legacy stale short-name cache cannot override current vMix fixture identity','mobile match control mirrors current fixture identity and legacy fields are read-only','transient LAN failure retries automatically and records last-good state','rapid score writes are serialized under deliberate network reordering','duplicate operator events are gated before double-counting','vMix output ignores stale lower revisions within the same fixture','consistency watchdog repairs same-fixture Bridge corruption','accelerated 5000-cycle long-session identity soak'],vmixCommands:cuts};
+  const report={ok:true,build:'V4.30.5',testedAt:new Date().toISOString(),tests:['compact score intelligence + fused event identity + unified score pair + restrained score roll + clock-only regular halves + conditional states','HOME goal enlarged HOME crest + complete GOAL + lower player card + collapse','AWAY goal enlarged AWAY crest','yellow/red referee-card shape + event colors + control icons','penalty >5 rounds/sudden death/miss/scores','two-camera Input 1 -> Input 2','event-logo replay stinger visual','manual replay stinger IN -> Input 4 -> OUT -> Input 1','stored project load wins over stale Bridge + optional time/venue do not block READY','compact project index rehydrates full photos from IndexedDB with empty Bridge list','clock-only refresh avoids repeated heavy match-control repaints','legacy stale short-name cache cannot override current vMix fixture identity','mobile match control mirrors current fixture identity and legacy fields are read-only','transient LAN failure retries automatically and records last-good state','rapid score writes are serialized under deliberate network reordering','duplicate operator events are gated before double-counting','vMix output ignores stale lower revisions within the same fixture','consistency watchdog repairs same-fixture Bridge corruption','accelerated 5000-cycle long-session identity soak'],vmixCommands:cuts};
   fs.writeFileSync('selftest-artifacts/report.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
  }catch(e){
   fs.mkdirSync('selftest-artifacts',{recursive:true});try{await page.screenshot({path:'selftest-artifacts/FAIL.png',fullPage:true})}catch{}
