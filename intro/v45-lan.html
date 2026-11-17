@@ -2205,6 +2205,11 @@ async function mdConsistencyCheck(force=false){
 }
 
 window.sagiMatchdayConsistencyCheck=(force=true)=>mdConsistencyCheck(!!force);
+window.sagiMatchdaySoakDiagnostic=(cycles=1800)=>{
+ const n=Math.max(1,Math.min(10000,Number(cycles)||1800));
+ for(let i=0;i<n;i++){mdEnforceCanonicalTeams();refreshMatchdayClockUI();if(i%60===0)refreshMatchdayUI()}
+ const t=mdCanonicalTeams();return{cycles:n,home:t.home,away:t.away,mirrorHome:q('mdHomeShort')?q('mdHomeShort').value:'',mirrorAway:q('mdAwayShort')?q('mdAwayShort').value:'',score:q('mdHomeScore')?q('mdHomeScore').textContent:''}
+};
 function mdEventLabel(e){
  if(!e)return'事件';if(e.type==='GOAL')return'进球';if(e.type==='YELLOW')return'黄牌';if(e.type==='RED')return'红牌';if(e.type==='SUB')return'换人';if(e.type==='HALF_TIME')return'半场';if(e.type==='FULL_TIME')return'全场';if(e.type==='MVP')return'MVP';return e.type||'事件';
 }
