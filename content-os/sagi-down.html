@@ -1002,7 +1002,7 @@ Unbelievable finish."></textarea>
 
 <script>
 (()=>{'use strict';
-const SAGI_DOWN_BUILD='V4.1.2';
+const SAGI_DOWN_BUILD='V4.1.3';
 document.documentElement.dataset.sagiDownBuild=SAGI_DOWN_BUILD;
 const BTCH_PUBLIC='https://btch-downloader-api-green.vercel.app';
 const DOWNLOAD_ROUTER_VERSION='3.0';
@@ -4003,7 +4003,7 @@ async function ensureFFmpeg(){
  // iPhone/Safari: class worker must be same-origin. The stock bundled worker can
  // resolve blob: core URLs as webpack module ids and throw "Cannot find module blob:...".
  // SAGI's raw module worker uses the browser's native dynamic import instead.
- const classWorkerURL=new URL('./sagi-ffmpeg-worker.js?v=4120',window.location.href).href;
+ const classWorkerURL=new URL('./sagi-ffmpeg-worker.js?v=4130',window.location.href).href;
  const core='https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd';
  const coreURL=await toBlobURLRemote([core+'/ffmpeg-core.js','https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd/ffmpeg-core.js'],'text/javascript');
  const wasmURL=await toBlobURLRemote([core+'/ffmpeg-core.wasm','https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd/ffmpeg-core.wasm'],'application/wasm');
@@ -5835,18 +5835,29 @@ async function smartCutCreateCloudJob(endpoint,fd,maxAttempts=3){
  throw new Error((lastError?.message||'云端上传失败')+' · 已自动重试，素材仍保留在页面中')
 }
 
-async function smartCutSubmitJob(endpoint,fd){
- smartCutProgress(44);
- const job=await smartCutCreateCloudJob(endpoint,fd,3);
- STUDIO.cloudRenderJobId=job.id;
-
- // Long football clips can legitimately take more than 12 minutes on a small cloud worker.
- // Keep polling instead of presenting a false timeout.
- const deadline=Date.now()+35*60*1000;
+const SMART_CLOUD_JOB_KEY='sagi_smart_cut_cloud_job_v1';
+function smartCutSaveCloudJob(id){
+ if(!id)return;
+ try{localStorage.setItem(SMART_CLOUD_JOB_KEY,JSON.stringify({id:String(id),at:Date.now()}))}catch(e){}
+}
+function smartCutClearCloudJob(){
+ try{localStorage.removeItem(SMART_CLOUD_JOB_KEY)}catch(e){}
+}
+function smartCutReadCloudJob(){
+ try{
+  const d=JSON.parse(localStorage.getItem(SMART_CLOUD_JOB_KEY)||'null');
+  if(!d?.id)return null;
+  if(Date.now()-Number(d.at||0)>6*60*60*1000){smartCutClearCloudJob();return null}
+  return d
+ }catch(e){return null}
+}
+async function smartCutPollCloudJob(jobId,resuming=false){
+ STUDIO.cloudRenderJobId=jobId;
+ const deadline=Date.now()+2*60*60*1000;
  let pollErrors=0;
  while(Date.now()<deadline){
   try{
-   const r=await fetch(CAPTION_CLOUD+'/api/render-jobs/'+encodeURIComponent(job.id),{
+   const r=await fetch(CAPTION_CLOUD+'/api/render-jobs/'+encodeURIComponent(jobId),{
     headers:{Authorization:'Bearer '+STUDIO.cloudCaptionToken},cache:'no-store'
    });
    const d=await r.json().catch(()=>({}));
@@ -5857,6 +5868,7 @@ async function smartCutSubmitJob(endpoint,fd){
      await new Promise(x=>setTimeout(x,3000));
      continue
     }
+    smartCutClearCloudJob();STUDIO.cloudRenderJobId='';
     throw new Error('云端任务在服务重启后未恢复')
    }
    if(!r.ok||!d?.ok){
@@ -5867,24 +5879,51 @@ async function smartCutSubmitJob(endpoint,fd){
    pollErrors=0;
    const j=d.job||{},p=Math.max(64,Math.min(99,Number(j.progress)||64));
    smartCutProgress(p);
-   smartCutStatus('④ '+(j.stage||'云端智能剪辑')+(j.progress?' · '+j.progress+'%':''));
+   smartCutStatus('④ '+(resuming?'已恢复 · ':'')+(j.stage||'云端智能剪辑')+(j.progress?' · '+j.progress+'%':''));
    if(j.status==='ready'&&j.downloadUrl){
     STUDIO.cloudRenderJobId='';STUDIO.cloudResultUrl=j.previewUrl||j.downloadUrl;
+    smartCutClearCloudJob();
     q('resultVideo').src=j.previewUrl||j.downloadUrl;q('resultVideo').classList.add('show');
     q('saveResultBtn').href=j.downloadUrl;q('saveResultBtn').download='SAGI_SMART_CUT_CLOUD.mp4';
     q('resultActions').classList.add('show');
+    smartCutProgress(100);
+    if(resuming){smartCutStatus('已恢复云端任务 · 成片完成 · 可以直接保存');toast('云端成片已恢复')}
     return j
    }
-   if(j.status==='failed'){STUDIO.cloudRenderJobId='';throw new Error(j.error||'云端智能剪辑失败')}
+   if(j.status==='failed'){
+    STUDIO.cloudRenderJobId='';smartCutClearCloudJob();
+    throw new Error(j.error||'云端智能剪辑失败')
+   }
   }catch(e){
    pollErrors++;
    if(pollErrors>10){STUDIO.cloudRenderJobId='';throw e}
-   smartCutStatus('④ 网络波动 · 成片任务仍在云端 · 自动重连 '+pollErrors+'/10');
+   smartCutStatus('④ 网络波动 · 成片仍在云端 · 自动重连 '+pollErrors+'/10');
   }
   await new Promise(r=>setTimeout(r,1800))
  }
  STUDIO.cloudRenderJobId='';
- throw new Error('云端任务处理时间异常过长；已停止查询，但不会切回手机FFmpeg')
+ throw new Error('云端仍在处理，任务编号已保存在本机；刷新页面后会自动继续查询')
+}
+async function smartCutSubmitJob(endpoint,fd){
+ smartCutProgress(44);
+ const job=await smartCutCreateCloudJob(endpoint,fd,3);
+ STUDIO.cloudRenderJobId=job.id;
+ smartCutSaveCloudJob(job.id);
+ return smartCutPollCloudJob(job.id,false)
+}
+async function smartCutResumePersistedJob(){
+ const saved=smartCutReadCloudJob();
+ if(!saved?.id||STUDIO.cloudRenderJobId)return;
+ try{
+  const ok=await wakeCaptionCloud(true);
+  if(!ok||!STUDIO.cloudCaptionToken)return;
+  smartCutProgress(64);
+  smartCutStatus('检测到上次未完成的云端长片 · 正在自动恢复任务…');
+  await smartCutPollCloudJob(saved.id,true)
+ }catch(e){
+  if(/未恢复|failed|失败/i.test(String(e?.message||e)))smartCutClearCloudJob();
+  else smartCutStatus('云端长片任务已保存 · 网络恢复后刷新页面会继续查询')
+ }
 }
 
 async function smartCutCloudSubmit(finalVoice,duration){
@@ -6022,7 +6061,7 @@ input.addEventListener('input',updateDetect);
 renderHistory();updateDetect();renderRecreatePreset();renderCapabilities();
 if(q('captionSpeed'))q('captionSpeed').value='fast';
 if(q('captionRange'))q('captionRange').value='trim';
-setTimeout(async()=>{await wakeCaptionCloud();refreshAIVoiceStatus(false)},180);
+setTimeout(async()=>{await wakeCaptionCloud();refreshAIVoiceStatus(false);smartCutResumePersistedJob()},180);
 updateSimpleSyncUi();
 
 if('serviceWorker' in navigator){
@@ -6030,11 +6069,11 @@ if('serviceWorker' in navigator){
  navigator.serviceWorker.addEventListener('controllerchange',()=>{
   if(swReloaded)return;swReloaded=true;
   try{
-   const key='sagi_sw_reload_v4120';
+   const key='sagi_sw_reload_v4130';
    if(sessionStorage.getItem(key)!=='1'){sessionStorage.setItem(key,'1');location.reload()}
   }catch(e){location.reload()}
  });
- navigator.serviceWorker.register('./sagi-down-sw.js?v=4120',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})
+ navigator.serviceWorker.register('./sagi-down-sw.js?v=4130',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})
 }
 })();
 </script>
