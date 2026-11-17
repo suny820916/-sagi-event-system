@@ -3265,6 +3265,8 @@ def health():
         "aiVoice": True,
         "aiVoiceFallback": True,
         "voiceDirectorVersion": "2.4",
+        "voiceEmotionPresets": True,
+        "voiceEmotionPresetsVersion": "2.0",
         "animationFirst": True,
         "voiceOneShot": True,
         "voiceCaptionFromFinalAudio": True,
