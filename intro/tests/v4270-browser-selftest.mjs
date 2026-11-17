@@ -103,9 +103,9 @@ server.listen(PORT,'127.0.0.1',async()=>{
   assert(scoreHierarchy.homeOverflow==='clip'&&scoreHierarchy.awayOverflow==='clip','team identity still uses ellipsis: '+JSON.stringify(scoreHierarchy));
   const stageSystem=await page.evaluate(()=>{
     const root=getComputedStyle(document.documentElement),brand=document.querySelector('.sbEventBrand'),match=document.querySelector('.matchCardStage'),evt=document.querySelector('#eventCard');
-    return{blue:root.getPropertyValue('--sagiStageBlue').trim(),brandRadius:parseFloat(getComputedStyle(brand,':before').borderTopLeftRadius),matchRadius:parseFloat(getComputedStyle(match).borderTopLeftRadius),eventRadius:parseFloat(getComputedStyle(evt).borderTopLeftRadius),timeRadius:parseFloat(getComputedStyle(document.querySelector('.sbMid')).borderBottomLeftRadius)}
+    const midStyle=getComputedStyle(document.querySelector('.sbMid'));return{blue:root.getPropertyValue('--sagiStageBlue').trim(),brandRadius:parseFloat(getComputedStyle(brand,':before').borderTopLeftRadius),matchRadius:parseFloat(getComputedStyle(match).borderTopLeftRadius),eventRadius:parseFloat(getComputedStyle(evt).borderTopLeftRadius),timeLeftRadius:parseFloat(midStyle.borderBottomLeftRadius),timeRightRadius:parseFloat(midStyle.borderBottomRightRadius)}
   });
-  assert(stageSystem.blue==='#071d57'&&stageSystem.brandRadius>=12&&stageSystem.matchRadius>=24&&stageSystem.eventRadius>=14&&stageSystem.timeRadius>=10,'SAGI STAGE broadcast system not applied: '+JSON.stringify(stageSystem));
+  assert(stageSystem.blue==='#071d57'&&stageSystem.brandRadius>=12&&stageSystem.matchRadius>=24&&stageSystem.eventRadius>=14&&stageSystem.timeLeftRadius===0&&stageSystem.timeRightRadius>=8,'SAGI STAGE integrated broadcast system not applied: '+JSON.stringify(stageSystem));
   await page.screenshot({path:'selftest-artifacts/01-regular-toranhe-scorebug.png'});
 
   console.log('TEST 1B: legacy stale short-name cache cannot override current fixture identity');
