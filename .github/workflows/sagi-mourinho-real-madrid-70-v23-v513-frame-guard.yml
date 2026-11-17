@@ -24,7 +24,7 @@ jobs:
       - name: Build Blender image
         run: docker build -t sagi-mourinho-v22-v513 ./cloud-blender-worker
 
-      - name: Render V2.2 V5.13 rebase
+      - name: Render V2.3 V5.13 frame guard
         shell: bash
         run: |
           set -euo pipefail
@@ -83,7 +83,7 @@ jobs:
           assert p.get("cn_title_overlay",{}).get("enabled") is False
           assert p["palette"]["pitch"] == "#202629"
           assert p["palette"]["own_primary"] == "#A8B63D"
-          assert p["screen_scale_lock"]["distance_band_by_scale"]["WIDE_STRUCTURE"] == [138,150]
+          assert p["screen_scale_lock"]["distance_band_by_scale"]["WIDE_STRUCTURE"] == [145,157], "V2.3 frame guard band mismatch"
           print(json.dumps({
             "valid":r["valid"],
             "duration_sec":r["duration_sec"],
@@ -93,7 +93,7 @@ jobs:
           },ensure_ascii=False,indent=2))
           PY
 
-      - name: Upload V2.2 artifact
+      - name: Upload V2.3 artifact
         uses: actions/upload-artifact@v4
         with:
           name: SAGI-MOURINHO-REAL-MADRID-70S-V2.3-V5.13-FRAME-GUARD
