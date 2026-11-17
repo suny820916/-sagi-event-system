@@ -1969,6 +1969,8 @@ def run_smart_render(job_id, options):
     bounded on small Render instances.
     """
     with heavy_slot:
+        release_caption_model()
+        gc.collect()
         with render_jobs_lock:
             job = render_jobs.get(job_id)
             if not job:
@@ -4681,10 +4683,6 @@ def smart_upload_complete(upload_id):
         job_id = secrets.token_urlsafe(10)
         job = {
             "kind": "smart_cut",
-            "kind": "smart_cut",
-            "kind": "smart_cut",
-            "kind": "smart_cut",
-            "kind": "smart_cut",
             "id": job_id, "status": "queued", "stage": "SMART CUT 大文件上传完成 · 等待低内存渲染",
             "progress": 8, "created_at": iso(), "updated_at": iso(),
             "workdir": str(work), "source": str(source), "sources": [str(source)], "path": "",
@@ -4762,6 +4760,7 @@ def create_smart_render_job():
         }
         job_id = secrets.token_urlsafe(10)
         job = {
+            "kind": "smart_cut",
             "id": job_id, "status": "queued", "stage": "SMART CUT 已上传 · 等待云端",
             "progress": 8, "created_at": iso(), "updated_at": iso(),
             "workdir": work, "source": sources[0], "sources": sources, "path": "",
