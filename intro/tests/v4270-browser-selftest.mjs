@@ -11,11 +11,11 @@ const AWAY='ALTAI YOUTH FOOTBALL CLUB';
 const crest=(fill,label)=>'data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><path d="M60 4 108 22v38c0 31-20 48-48 56C32 108 12 91 12 60V22Z" fill="'+fill+'"/><text x="60" y="70" text-anchor="middle" font-size="30" font-family="Arial" font-weight="900" fill="white">'+label+'</text></svg>');
 const HOME_CREST=crest('#0c8b55','H');
 const AWAY_CREST=crest('#3157b7','A');
-let seq=1,vmixCommands=[],matchdayPosts=[],graphics=makeGraphics(),reorderMatchdayWrites=false;
+let seq=1,vmixCommands=[],matchdayPosts=[],graphics=makeGraphics(),reorderMatchdayWrites=false,failNextMatchdayPosts=0;
 
 function makeGraphics(overrides={}){
  return {
-  commandId:'g_'+(seq++),visualVersion:'V4.28.0-SELFTEST',
+  commandId:'g_'+(seq++),revision:seq,fixtureKey:'selftest|'+HOME+'|'+AWAY,visualVersion:'V4.29.0-SELFTEST',
   scoreboardVisible:true,scoreboardFrozen:false,scoreTheme:'sagi-pro',competition:'TORANHE CUP',
   home:HOME,away:AWAY,homeShort:HOME,awayShort:AWAY,
   homeCrest:HOME_CREST,awayCrest:AWAY_CREST,eventLogo:'',
@@ -31,7 +31,7 @@ function makeValidRoster(prefix){
  const roles=[['1','GK','GK'],['2','DF','RB'],['3','DF','LB'],['4','DF','CB'],['5','DF','CB'],['6','MF','CM'],['8','MF','CM'],['10','MF','AM'],['7','FW','RW'],['9','FW','ST'],['11','FW','LW']];
  return roles.map(([number,role,position],i)=>({id:prefix+(i+1),name:prefix.toUpperCase()+' PLAYER '+(i+1),number,squadType:'STARTER',role,position,captain:i===3}));
 }
-function makeStoredProject(id='selftest_project_4280'){
+function makeStoredProject(id='selftest_project_4290'){
  const homeRoster=makeValidRoster('h'),awayRoster=makeValidRoster('a'),projectPhoto='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"><rect width="40" height="40" fill="#067347"/></svg>');
  const meta={competition:'TORANHE PROJECT CUP',round:'FINAL',home:'乌苏叶克备',away:'IPF',kickoff:'',venue:''};
  const core={activeSide:'HOME',matchConfig:{mode:'11',playerCount:11},package:{...meta,matchFormat:{mode:'11',playerCount:11}},teams:{HOME:{formation:'4-3-3',customPositions:{},roster:homeRoster},AWAY:{formation:'4-3-3',customPositions:{},roster:awayRoster}}};
@@ -47,12 +47,12 @@ const server=http.createServer(async(req,res)=>{
  try{
   if(u.pathname==='/api/state')return json(res,{lineupIntro:null});
   if(u.pathname==='/api/matchday'&&req.method==='GET')return json(res,graphics);
-  if(u.pathname==='/api/matchday'&&req.method==='POST'){const b=await readBody(req);try{const next=JSON.parse(b)||graphics;if(reorderMatchdayWrites&&Number(next.homeScore)===4)await new Promise(r=>setTimeout(r,450));graphics=next;matchdayPosts.push(graphics)}catch{}return json(res,{ok:true})}
+  if(u.pathname==='/api/matchday'&&req.method==='POST'){const b=await readBody(req);if(failNextMatchdayPosts>0){failNextMatchdayPosts--;return json(res,{ok:false,error:'SIMULATED_TRANSIENT_FAILURE'},503)}try{const next=JSON.parse(b)||graphics;if(reorderMatchdayWrites&&Number(next.homeScore)===5)await new Promise(r=>setTimeout(r,450));graphics=next;matchdayPosts.push(graphics)}catch{}return json(res,{ok:true})}
   if(u.pathname==='/api/vmix/status')return json(res,{ok:true,active:'1',preview:'2',inputs:[{number:'1',key:'cam1',type:'Camera',title:'CAM 1',state:'Running'},{number:'2',key:'cam2',type:'Camera',title:'CAM 2',state:'Running'},{number:'4',key:'replay',type:'Video',title:'REPLAY',state:'Running'},{number:'5',key:'gfx',type:'Browser',title:'SAGI Browser',state:'Running'}],overlays:[]});
   if(u.pathname==='/api/vmix'&&req.method==='POST'){const b=await readBody(req);let cmd={};try{cmd=JSON.parse(b)}catch{}vmixCommands.push(cmd);return json(res,{ok:true,command:cmd})}
   if(u.pathname==='/api/projects')return json(res,{projects:[]});
   if(u.pathname==='/health')return json(res,{ok:true,port:PORT});
-  if(u.pathname==='/')return text(res,'SAGI V4.28.0 SELFTEST');
+  if(u.pathname==='/')return text(res,'SAGI V4.29.0 SELFTEST');
   const rel=decodeURIComponent(u.pathname).replace(/^\/+/,'');const file=path.resolve(ROOT,rel);
   if(!file.startsWith(ROOT)||!fs.existsSync(file)||fs.statSync(file).isDirectory())return text(res,'Not found','text/plain',404);
   res.writeHead(200,{'Content-Type':mime(file),'Cache-Control':'no-store','Access-Control-Allow-Origin':'*'});res.end(fs.readFileSync(file));
@@ -144,6 +144,14 @@ server.listen(PORT,'127.0.0.1',async()=>{
   assert(redCard.bg==='rgb(227, 52, 64)'&&redCard.kicker==='rgb(227, 52, 64)','red card inherited yellow/team color: '+JSON.stringify(redCard));
   assert(redCard.h>=80&&redCard.w<=60&&redCard.h/redCard.w>=1.35&&redCard.radius<=8&&redCard.glyph==='','red card is not a clear referee-card shape: '+JSON.stringify(redCard));
   await page.screenshot({path:'selftest-artifacts/04b-red-card.png'});
+
+  console.log('TEST 4C: vMix output ignores stale lower revisions for the same fixture');
+  graphics=makeGraphics({commandId:'rev120',revision:120,fixtureKey:'SELFTEST-REVISION-GUARD',homeScore:2,awayScore:1,event:{type:'CLEAR_EVENT'}});
+  await page.waitForFunction(()=>document.querySelector('#sbHomeScore')?.textContent==='2',null,{timeout:5000});await wait(250);
+  graphics=makeGraphics({commandId:'rev119-stale',revision:119,fixtureKey:'SELFTEST-REVISION-GUARD',homeScore:9,awayScore:9,event:{type:'CLEAR_EVENT'}});
+  await wait(900);
+  const staleGuard=await page.evaluate(()=>({home:document.querySelector('#sbHomeScore').textContent,away:document.querySelector('#sbAwayScore').textContent}));
+  assert(staleGuard.home==='2'&&staleGuard.away==='1','stale lower revision rolled vMix output backward: '+JSON.stringify(staleGuard));
 
   console.log('TEST 4: penalty shootout remains isolated and supports >5 rounds');
   const hist=[['HOME','GOAL'],['AWAY','GOAL'],['HOME','GOAL'],['AWAY','MISS'],['HOME','MISS'],['AWAY','GOAL'],['HOME','GOAL'],['AWAY','GOAL'],['HOME','GOAL'],['AWAY','GOAL'],['HOME','MISS'],['AWAY','GOAL']].map(([side,result],i)=>({side,result,at:String(i)}));
@@ -295,31 +303,48 @@ server.listen(PORT,'127.0.0.1',async()=>{
   assert(perf.penalty<=2&&perf.log<=1,'clock loop is still repainting heavy controls: '+JSON.stringify(perf));
   await page.screenshot({path:'selftest-artifacts/10-clock-stability.png'});
 
-  console.log('TEST 10: rapid score writes remain ordered even when the first network write is deliberately delayed');
-  await page.click('#mdClockPause');await wait(250);reorderMatchdayWrites=true;matchdayPosts=[];
+  console.log('TEST 10: transient LAN failure is retried and last-good state is recorded');
+  await page.click('#mdClockPause');await wait(250);failNextMatchdayPosts=1;matchdayPosts=[];
+  await page.click('#mdHomePlus');
+  await page.waitForFunction(()=>document.querySelector('#mdHomeScore')?.textContent==='4',null,{timeout:3000});await wait(1200);
+  const reliability=await page.evaluate(()=>window.sagiMatchdayReliabilityDiagnostic());
+  assert(Number(graphics.homeScore)===4,'retry did not deliver score state after transient failure: '+JSON.stringify(graphics));
+  assert(reliability.metrics.retried>=1&&reliability.lastGood,'reliability retry/LKG diagnostics missing: '+JSON.stringify(reliability));
+
+  console.log('TEST 10B: rapid score writes remain ordered even when the first network write is deliberately delayed');
+  reorderMatchdayWrites=true;matchdayPosts=[];
   await page.evaluate(()=>{document.querySelector('#mdHomePlus').click();document.querySelector('#mdHomePlus').click()});
-  await wait(1400);reorderMatchdayWrites=false;
+  await wait(1500);reorderMatchdayWrites=false;
   const ordered=matchdayPosts.filter(x=>x&&x.home==='乌苏叶克备'&&x.away==='IPF').slice(-4);
-  assert(Number(graphics.homeScore)===5,'out-of-order network write rolled score backward: '+JSON.stringify(ordered.map(x=>({score:x.homeScore,revision:x.revision}))));
-  const orderedScores=ordered.map(x=>Number(x.homeScore)).filter(x=>x>=4);
-  assert(orderedScores.slice(-2).join(',')==='4,5','serialized score sequence failed: '+JSON.stringify(orderedScores));
+  assert(Number(graphics.homeScore)===6,'out-of-order network write rolled score backward: '+JSON.stringify(ordered.map(x=>({score:x.homeScore,revision:x.revision}))));
+  const orderedScores=ordered.map(x=>Number(x.homeScore)).filter(x=>x>=5);
+  assert(orderedScores.slice(-2).join(',')==='5,6','serialized score sequence failed: '+JSON.stringify(orderedScores));
   await page.screenshot({path:'selftest-artifacts/11-ordered-score-sync.png'});
+
+  console.log('TEST 10C: duplicate operator event is blocked before it can double-count');
+  await page.selectOption('#mdEventSide','HOME');
+  await page.selectOption('#mdEventPlayer',{index:1});
+  await page.evaluate(()=>{document.querySelector('#mdYellowBtn').click();document.querySelector('#mdYellowBtn').click()});
+  await wait(350);
+  const dupe=await page.evaluate(()=>({yellow:document.querySelector('#mdStatYellow').textContent,status:document.querySelector('#mdEventStatus').textContent}));
+  assert(dupe.yellow==='1','duplicate yellow-card click created two events: '+JSON.stringify(dupe));
+  await page.click('#mdClearEventBtn');
 
   console.log('TEST 11: consistency watchdog repairs same-fixture Bridge corruption');
   graphics={...graphics,commandId:'corrupt_same_fixture',home:'乌苏叶克备',away:'IPF',homeShort:'少林足球',awayShort:'旧客队',homeScore:99,awayScore:88};
   const repaired=await page.evaluate(()=>window.sagiMatchdayConsistencyCheck(true));await wait(700);
   const repairUI=await page.evaluate(()=>({sync:document.querySelector('#mdSync').textContent,home:document.querySelector('#mmHomeName').textContent,away:document.querySelector('#mmAwayName').textContent,score:document.querySelector('#mdHomeScore').textContent}));
-  assert(repaired&&Number(graphics.homeScore)===5&&Number(graphics.awayScore)===1,'watchdog failed to restore authoritative score state: '+JSON.stringify(graphics));
-  assert(repairUI.home==='乌苏叶克备'&&repairUI.away==='IPF'&&repairUI.score==='5','watchdog repair changed local control identity/state: '+JSON.stringify(repairUI));
+  assert(repaired&&Number(graphics.homeScore)===6&&Number(graphics.awayScore)===1,'watchdog failed to restore authoritative score state: '+JSON.stringify(graphics));
+  assert(repairUI.home==='乌苏叶克备'&&repairUI.away==='IPF'&&repairUI.score==='6','watchdog repair changed local control identity/state: '+JSON.stringify(repairUI));
   await page.screenshot({path:'selftest-artifacts/12-watchdog-repair.png'});
 
   console.log('TEST 12: accelerated long-session identity soak keeps names/scores stable');
-  const soak=await page.evaluate(()=>window.sagiMatchdaySoakDiagnostic(1800));
-  assert(soak.home==='乌苏叶克备'&&soak.away==='IPF'&&soak.mirrorHome==='乌苏叶克备'&&soak.mirrorAway==='IPF'&&soak.score==='5','accelerated long-session soak drifted state: '+JSON.stringify(soak));
+  const soak=await page.evaluate(()=>window.sagiMatchdaySoakDiagnostic(5000));
+  assert(soak.home==='乌苏叶克备'&&soak.away==='IPF'&&soak.mirrorHome==='乌苏叶克备'&&soak.mirrorAway==='IPF'&&soak.score==='6','accelerated long-session soak drifted state: '+JSON.stringify(soak));
   await page.screenshot({path:'selftest-artifacts/13-long-session-soak.png'});
 
   assert(pageErrors.length===0,'browser page errors: '+pageErrors.join(' | '));
-  const report={ok:true,build:'V4.28.0',testedAt:new Date().toISOString(),tests:['regular white score ribbon + lower time/stoppage ribbon + TORANHE event logo','HOME goal enlarged HOME crest + complete GOAL + lower player card + collapse','AWAY goal enlarged AWAY crest','yellow/red referee-card shape + event colors + control icons','penalty >5 rounds/sudden death/miss/scores','two-camera Input 1 -> Input 2','event-logo replay stinger visual','manual replay stinger IN -> Input 4 -> OUT -> Input 1','stored project load wins over stale Bridge + optional time/venue do not block READY','compact project index rehydrates full photos from IndexedDB with empty Bridge list','clock-only refresh avoids repeated heavy match-control repaints','legacy stale short-name cache cannot override current vMix fixture identity','mobile match control mirrors current fixture identity and legacy fields are read-only','rapid score writes are serialized under deliberate network reordering','consistency watchdog repairs same-fixture Bridge corruption','accelerated 1800-cycle long-session identity soak'],vmixCommands:cuts};
+  const report={ok:true,build:'V4.29.0',testedAt:new Date().toISOString(),tests:['regular white score ribbon + lower time/stoppage ribbon + TORANHE event logo','HOME goal enlarged HOME crest + complete GOAL + lower player card + collapse','AWAY goal enlarged AWAY crest','yellow/red referee-card shape + event colors + control icons','penalty >5 rounds/sudden death/miss/scores','two-camera Input 1 -> Input 2','event-logo replay stinger visual','manual replay stinger IN -> Input 4 -> OUT -> Input 1','stored project load wins over stale Bridge + optional time/venue do not block READY','compact project index rehydrates full photos from IndexedDB with empty Bridge list','clock-only refresh avoids repeated heavy match-control repaints','legacy stale short-name cache cannot override current vMix fixture identity','mobile match control mirrors current fixture identity and legacy fields are read-only','transient LAN failure retries automatically and records last-good state','rapid score writes are serialized under deliberate network reordering','duplicate operator events are gated before double-counting','vMix output ignores stale lower revisions within the same fixture','consistency watchdog repairs same-fixture Bridge corruption','accelerated 5000-cycle long-session identity soak'],vmixCommands:cuts};
   fs.writeFileSync('selftest-artifacts/report.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
  }catch(e){
   fs.mkdirSync('selftest-artifacts',{recursive:true});try{await page.screenshot({path:'selftest-artifacts/FAIL.png',fullPage:true})}catch{}
