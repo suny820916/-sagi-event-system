@@ -27,7 +27,510 @@ if not exist "%SAGI_ROOT%" mkdir "%SAGI_ROOT%"
 
 powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -Command ^
  "$s=[IO.File]::ReadAllText($env:SAGI_SELF,[Text.Encoding]::UTF8);" ^
- "$m=[regex]::Match($s,'(?s)###SAGI_PS###\r?\n(.*?)\r?\n###SAGI_CONTROL###
+ "$m=[regex]::Match($s,'(?s)###SAGI_PS###\r?\n(.*?)\r?\n###SAGI_CONTROL###\r?\n(.*?)\r?\n###SAGI_OUTPUT###\r?\n(.*)$');" ^
+ "if(-not $m.Success){Write-Host '[ERROR] Embedded stable payload not found.' -ForegroundColor Red;exit 2};" ^
+ "$utf=New-Object Text.UTF8Encoding($false);" ^
+ "[IO.File]::WriteAllText($env:SAGI_FB_BRIDGE,$m.Groups[1].Value,$utf);" ^
+ "[IO.File]::WriteAllText($env:SAGI_FB_CONTROL,$m.Groups[2].Value,$utf);" ^
+ "[IO.File]::WriteAllText($env:SAGI_FB_OUTPUT,$m.Groups[3].Value,$utf);" ^
+ "Copy-Item $env:SAGI_FB_BRIDGE $env:SAGI_BRIDGE -Force;" ^
+ "$controlOk=$false;if(Test-Path $env:SAGI_CONTROL){try{$t=[IO.File]::ReadAllText($env:SAGI_CONTROL,[Text.Encoding]::UTF8);$controlOk=($t.Length -gt 100000 -and $t -match '<!doctype html>' -and $t -match 'V4\.30\.5' -and $t -match 'mdSyncDirectorPenaltyToSimple' -and $t -match 'simplePenaltyControl' -and $t -match 'replayStinger' -and $t -match 'data:image/svg\+xml')}catch{}};" ^
+ "if(-not $controlOk){Copy-Item $env:SAGI_FB_CONTROL $env:SAGI_CONTROL -Force;Write-Host '[REPAIR] Control Room upgraded/restored to V4.30.8 STABILITY.' -ForegroundColor Yellow}else{Write-Host '[SAFE] Existing V4.30.8 Control Room kept.' -ForegroundColor Green};" ^
+ "$outputOk=$false;if(Test-Path $env:SAGI_OUTPUT){try{$t=[IO.File]::ReadAllText($env:SAGI_OUTPUT,[Text.Encoding]::UTF8);$outputOk=($t.Length -gt 50000 -and $t -match '<!doctype html>' -and $t -match 'V4\.30\.5' -and $t -match 'simplePenaltyBoard' -and $t -match 'penaltyShootout' -and $t -match 'sagiToranhe' -and $t -match 'eventCleanupTimer' -and $t -match 'data:image/svg\+xml')}catch{}};" ^
+ "if(-not $outputOk){Copy-Item $env:SAGI_FB_OUTPUT $env:SAGI_OUTPUT -Force;Write-Host '[REPAIR] vMix Graphics upgraded/restored to V4.30.8 TORANHE SCOREBUG.' -ForegroundColor Yellow}else{Write-Host '[SAFE] Existing V4.30.8 vMix Graphics kept.' -ForegroundColor Green};"
+
+if errorlevel 1 (
+  echo.
+  echo [ERROR] Unable to prepare stable local files.
+  pause
+  exit /b 1
+)
+
+echo.
+echo [READY] Starting SAGI LAN Bridge...
+echo.
+
+powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%SAGI_BRIDGE%"
+
+echo.
+pause
+exit /b
+
+###SAGI_PS###
+# SAGI V4.7.2 STABLE LAN / FILTER ENGINE / MATCH SAFE Bridge
+# Same-LAN control server + local vMix API bridge.
+# Phone Control: http://<PC-LAN-IP>:8099/
+# vMix Browser:  http://127.0.0.1:8099/vmix
+
+$PreferredPort = 8100
+$Port = $PreferredPort
+$VmixApi = "http://127.0.0.1:8088/api/"
+$Root = Join-Path $env:LOCALAPPDATA "SAGI\LiveMatchDirector"
+New-Item -ItemType Directory -Force -Path $Root | Out-Null
+
+$ControlCache = Join-Path $Root "control-latest.html"
+$OutputCache  = Join-Path $Root "output-latest.html"
+$BridgeCache  = Join-Path $Root "bridge-stable.ps1"
+$MatchdayStateFile = Join-Path $Root "matchday-state.json"
+$MatchProjectsFile = Join-Path $Root "match-projects.json"
+$ControlBackup = Join-Path $Root "control-backup.html"
+$OutputBackup  = Join-Path $Root "output-backup.html"
+$RemoteBase   = "https://suny820916.github.io/-sagi-event-system/intro"
+
+$Allowed = @(
+  "Cut","Fade","Stinger1","PreviewInput",
+  "OverlayInput1In","OverlayInput1Out","OverlayInput1Off",
+  "OverlayInput2In","OverlayInput2Out","OverlayInput2Off",
+  "OverlayInput3In","OverlayInput3Out","OverlayInput3Off",
+  "OverlayInput4In","OverlayInput4Out","OverlayInput4Off",
+  "OverlayInputAllOff",
+  "Effect1On","Effect1Off","Effect2On","Effect2Off","Effect3On","Effect3Off","Effect4On","Effect4Off",
+  "SetEffect1Strength","SetEffect2Strength","SetEffect3Strength","SetEffect4Strength"
+)
+
+$State = @{
+  lineupIntro = $null
+  matchdayGraphics = $null
+}
+$MatchdayJson = "null"
+if (Test-Path $MatchdayStateFile) {
+  try {
+    $savedMatchday = [IO.File]::ReadAllText($MatchdayStateFile,[Text.Encoding]::UTF8)
+    if (-not [string]::IsNullOrWhiteSpace($savedMatchday)) {
+      $null = $savedMatchday | ConvertFrom-Json
+      $MatchdayJson = $savedMatchday
+      Write-Host "[RECOVERY] Saved match state loaded." -ForegroundColor Green
+    }
+  } catch {
+    Write-Host "[RECOVERY WARN] Saved match state could not be loaded." -ForegroundColor DarkYellow
+  }
+}
+
+$MatchProjectsJson = '{"projects":[]}'
+if (Test-Path $MatchProjectsFile) {
+  try {
+    $savedProjects = [IO.File]::ReadAllText($MatchProjectsFile,[Text.Encoding]::UTF8)
+    if (-not [string]::IsNullOrWhiteSpace($savedProjects)) {
+      $probeProjects = $savedProjects | ConvertFrom-Json
+      if ($probeProjects.PSObject.Properties.Name -contains "projects") {
+        $MatchProjectsJson = $savedProjects
+        Write-Host "[RECOVERY] Saved match projects loaded." -ForegroundColor Green
+      }
+    }
+  } catch {
+    Write-Host "[RECOVERY WARN] Saved match projects could not be loaded." -ForegroundColor DarkYellow
+  }
+}
+
+function Update-SagiLan {
+  $ProgressPreference = "SilentlyContinue"
+  $stamp = [DateTime]::UtcNow.Ticks
+  $controlDownload = $ControlCache + ".download"
+  $outputDownload = $OutputCache + ".download"
+  try {
+    Invoke-WebRequest -UseBasicParsing -Uri ($RemoteBase + "/v45-lan.html?t=" + $stamp) -TimeoutSec 8 -Headers @{"Cache-Control"="no-cache"} -OutFile $controlDownload
+    Invoke-WebRequest -UseBasicParsing -Uri ($RemoteBase + "/vmix-v45-lan.html?t=" + $stamp) -TimeoutSec 8 -Headers @{"Cache-Control"="no-cache"} -OutFile $outputDownload
+
+    if ((Get-Item $controlDownload).Length -lt 50000) { throw "Control update too small" }
+    if ((Get-Item $outputDownload).Length -lt 20000) { throw "Graphics update too small" }
+
+    $controlText = [Text.Encoding]::UTF8.GetString([IO.File]::ReadAllBytes($controlDownload))
+    $outputText = [Text.Encoding]::UTF8.GetString([IO.File]::ReadAllBytes($outputDownload))
+    if ($controlText -notmatch "<!doctype html>") { throw "Control validation failed" }
+    if ($outputText -notmatch "<!doctype html>") { throw "Graphics validation failed" }
+    if ($controlText -notmatch "SAGI LIVE MATCH DIRECTOR") { throw "Control identity validation failed" }
+
+    Copy-Item $ControlCache $ControlBackup -Force
+    Copy-Item $OutputCache $OutputBackup -Force
+
+    [IO.File]::WriteAllText($ControlCache,$controlText,(New-Object Text.UTF8Encoding($false)))
+    [IO.File]::WriteAllText($OutputCache,$outputText,(New-Object Text.UTF8Encoding($false)))
+    $script:ControlHtml = $controlText
+    $script:OutputHtml = $outputText
+
+    Write-Host "[SAFE UPDATE] Control Room + vMix Graphics updated. Bridge core unchanged." -ForegroundColor Green
+    return @{ok=$true;version="4.26.6";updated=@("control","output");bridgeLocked=$true;rollbackAvailable=$true}
+  } catch {
+    Write-Host ("[SAFE UPDATE ERROR] " + $_.Exception.Message) -ForegroundColor Red
+    throw
+  } finally {
+    Remove-Item $controlDownload -Force -ErrorAction SilentlyContinue
+    Remove-Item $outputDownload -Force -ErrorAction SilentlyContinue
+  }
+}
+
+function Restore-SagiLan {
+  if (-not (Test-Path $ControlBackup) -or -not (Test-Path $OutputBackup)) {
+    throw "No backup available"
+  }
+  Copy-Item $ControlBackup $ControlCache -Force
+  Copy-Item $OutputBackup $OutputCache -Force
+  $script:ControlHtml = [IO.File]::ReadAllText($ControlCache,[Text.Encoding]::UTF8)
+  $script:OutputHtml = [IO.File]::ReadAllText($OutputCache,[Text.Encoding]::UTF8)
+  Write-Host "[ROLLBACK] Previous Control Room + vMix Graphics restored." -ForegroundColor Yellow
+  return @{ok=$true;version="4.26.6";rolledBack=$true}
+}
+
+function Get-LanIPv4 {
+  try {
+    $ips = [System.Net.Dns]::GetHostAddresses([System.Net.Dns]::GetHostName()) |
+      Where-Object { $_.AddressFamily -eq [System.Net.Sockets.AddressFamily]::InterNetwork -and $_.IPAddressToString -notlike "169.254.*" -and $_.IPAddressToString -ne "127.0.0.1" } |
+      ForEach-Object { $_.IPAddressToString }
+
+    $pick = $ips | Where-Object { $_ -like "192.168.*" } | Select-Object -First 1
+    if (-not $pick) { $pick = $ips | Where-Object { $_ -like "10.*" } | Select-Object -First 1 }
+    if (-not $pick) {
+      $pick = $ips | Where-Object {
+        $parts = $_.Split(".")
+        if ($parts.Count -ne 4) { return $false }
+        $a=[int]$parts[0];$b=[int]$parts[1]
+        return ($a -eq 172 -and $b -ge 16 -and $b -le 31)
+      } | Select-Object -First 1
+    }
+    if (-not $pick) { $pick = $ips | Select-Object -First 1 }
+    if ($pick) { return [string]$pick }
+  } catch {}
+  return "127.0.0.1"
+}
+function Test-Vmix {
+  try {
+    Invoke-WebRequest -UseBasicParsing -Uri $VmixApi -TimeoutSec 3 | Out-Null
+    return $true
+  } catch { return $false }
+}
+
+function Get-VmixStatusInfo {
+  try {
+    $r = Invoke-WebRequest -UseBasicParsing -Uri $VmixApi -TimeoutSec 3
+    [xml]$xml = [string]$r.Content
+    $inputs = @()
+    foreach ($inputNode in $xml.vmix.inputs.input) {
+      $inputs += @{number=[string]$inputNode.number;key=[string]$inputNode.key;type=[string]$inputNode.type;title=[string]$inputNode.title;state=[string]$inputNode.state}
+    }
+    $overlays = @()
+    foreach ($overlayNode in $xml.vmix.overlays.overlay) {
+      $overlays += @{number=[string]$overlayNode.number;value=[string]$overlayNode.InnerText}
+    }
+    return @{ok=$true;active=[string]$xml.vmix.active;preview=[string]$xml.vmix.preview;inputs=$inputs;overlays=$overlays}
+  } catch {
+    return @{ok=$false;active="";preview="";inputs=@();overlays=@()}
+  }
+}
+
+function Invoke-VmixCommand($cmd) {
+  $fn = [string]$cmd.functionName
+  if ([string]::IsNullOrWhiteSpace($fn) -or -not ($Allowed -contains $fn)) {
+    throw ("Unsupported vMix function: " + $fn)
+  }
+
+  $pairs = New-Object System.Collections.Generic.List[string]
+  $pairs.Add("Function=" + [uri]::EscapeDataString($fn))
+
+  $inputValue = [string]$cmd.input
+  if (-not [string]::IsNullOrWhiteSpace($inputValue)) {
+    $pairs.Add("Input=" + [uri]::EscapeDataString($inputValue))
+  }
+
+  $durationValue = 0
+  if ($null -ne $cmd.duration) { [void][int]::TryParse([string]$cmd.duration,[ref]$durationValue) }
+  if ($durationValue -gt 0) { $pairs.Add("Duration=" + $durationValue) }
+
+  $value = [string]$cmd.value
+  if (-not [string]::IsNullOrWhiteSpace($value)) {
+    $pairs.Add("Value=" + [uri]::EscapeDataString($value))
+  }
+
+  $url = $VmixApi + "?" + ($pairs -join "&")
+  Invoke-WebRequest -UseBasicParsing -Uri $url -TimeoutSec 3 | Out-Null
+  $label = [string]$cmd.label
+  Write-Host ("[vMix] " + $fn + " Input=" + $inputValue + " " + $label) -ForegroundColor Green
+}
+
+function Read-HttpRequest($stream) {
+  $headerBytes = New-Object System.Collections.Generic.List[byte]
+  $match = 0
+  $pattern = [byte[]](13,10,13,10)
+
+  while ($headerBytes.Count -lt 65536) {
+    $b = $stream.ReadByte()
+    if ($b -lt 0) { break }
+    $headerBytes.Add([byte]$b)
+    if ($b -eq $pattern[$match]) {
+      $match++
+      if ($match -eq 4) { break }
+    } else {
+      if ($b -eq 13) { $match = 1 } else { $match = 0 }
+    }
+  }
+
+  if ($headerBytes.Count -eq 0) { return $null }
+
+  $headerText = [Text.Encoding]::ASCII.GetString($headerBytes.ToArray())
+  $lines = $headerText -split "\r\n"
+  $first = $lines[0] -split " "
+  if ($first.Count -lt 2) { return $null }
+
+  $method = $first[0].ToUpperInvariant()
+  $target = $first[1]
+  $headers = @{}
+
+  for ($i=1; $i -lt $lines.Count; $i++) {
+    $line = $lines[$i]
+    if ([string]::IsNullOrWhiteSpace($line)) { continue }
+    $pos = $line.IndexOf(":")
+    if ($pos -gt 0) {
+      $name = $line.Substring(0,$pos).Trim().ToLowerInvariant()
+      $value = $line.Substring($pos+1).Trim()
+      $headers[$name] = $value
+    }
+  }
+
+  $len = 0
+  if ($headers.ContainsKey("content-length")) { [void][int]::TryParse($headers["content-length"],[ref]$len) }
+  if ($len -gt 20971520) { throw "Request body too large" }
+
+  $body = ""
+  if ($len -gt 0) {
+    $bodyBytes = New-Object byte[] $len
+    $offset = 0
+    while ($offset -lt $len) {
+      $n = $stream.Read($bodyBytes,$offset,$len-$offset)
+      if ($n -le 0) { break }
+      $offset += $n
+    }
+    $body = [Text.Encoding]::UTF8.GetString($bodyBytes,0,$offset)
+  }
+
+  return @{ method=$method; target=$target; headers=$headers; body=$body }
+}
+
+function Write-HttpResponse($stream,[int]$Status,[string]$ContentType,[string]$Body) {
+  $statusText = switch ($Status) {
+    200 {"OK"} 204 {"No Content"} 400 {"Bad Request"} 404 {"Not Found"} 500 {"Internal Server Error"} default {"OK"}
+  }
+  if ($null -eq $Body) { $Body = "" }
+  $bytes = [Text.Encoding]::UTF8.GetBytes($Body)
+  $head = "HTTP/1.1 $Status $statusText`r`nContent-Type: $ContentType; charset=utf-8`r`nContent-Length: $($bytes.Length)`r`nCache-Control: no-store`r`nAccess-Control-Allow-Origin: *`r`nAccess-Control-Allow-Headers: Content-Type`r`nAccess-Control-Allow-Methods: GET, POST, OPTIONS`r`nConnection: close`r`n`r`n"
+  $headBytes = [Text.Encoding]::ASCII.GetBytes($head)
+  $stream.Write($headBytes,0,$headBytes.Length)
+  if ($bytes.Length -gt 0) { $stream.Write($bytes,0,$bytes.Length) }
+  $stream.Flush()
+}
+
+function State-Json {
+  return ($State | ConvertTo-Json -Depth 50 -Compress)
+}
+
+Write-Host ""
+Write-Host "============================================================" -ForegroundColor Cyan
+Write-Host "  SAGI V4.7.2 MATCH SAFE LAN DIRECT - vMix Bridge" -ForegroundColor Cyan
+Write-Host "============================================================" -ForegroundColor Cyan
+
+if (-not (Test-Path $ControlCache) -or -not (Test-Path $OutputCache)) {
+  Write-Host "[ERROR] Embedded LAN UI files were not extracted." -ForegroundColor Red
+  Read-Host "Press Enter to close"
+  exit 1
+}
+$ControlHtml = [IO.File]::ReadAllText($ControlCache,[Text.Encoding]::UTF8)
+$OutputHtml = [IO.File]::ReadAllText($OutputCache,[Text.Encoding]::UTF8)
+Write-Host "[READY] Embedded LAN UI loaded." -ForegroundColor Green
+
+$vmixReady = Test-Vmix
+if ($vmixReady) {
+  Write-Host "[READY] vMix API connected on 127.0.0.1:8088" -ForegroundColor Green
+} else {
+  Write-Host "[WARN] vMix API is not available on 127.0.0.1:8088" -ForegroundColor Yellow
+  Write-Host "[READY] LAN Control will still start. Open vMix / enable Web Controller 8088 when needed." -ForegroundColor Green
+}
+
+$lanIp = Get-LanIPv4
+$listener = $null
+$started = $false
+for ($candidate = $PreferredPort; $candidate -le 8120; $candidate++) {
+  try {
+    $tryListener = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Any,$candidate)
+    $tryListener.Start()
+    $listener = $tryListener
+    $Port = $candidate
+    $started = $true
+    if ($Port -ne $PreferredPort) {
+      Write-Host ("[INFO] Port " + $PreferredPort + " is busy. Using port " + $Port + " instead.") -ForegroundColor Yellow
+    }
+    break
+  } catch {
+    try { if ($null -ne $tryListener) { $tryListener.Stop() } } catch {}
+  }
+}
+if (-not $started -or $null -eq $listener) {
+  Write-Host ("[ERROR] No free LAN port found.") -ForegroundColor Red
+  Read-Host "Press Enter to close"
+  exit 1
+}
+
+Write-Host "[READY] LAN DIRECT server is running." -ForegroundColor Green
+Write-Host ""
+Write-Host ("PHONE CONTROL : http://" + $lanIp + ":" + $Port + "/") -ForegroundColor Cyan
+Write-Host ("PC CONTROL    : http://127.0.0.1:" + $Port + "/") -ForegroundColor Cyan
+Write-Host ("VMIX BROWSER  : http://127.0.0.1:" + $Port + "/vmix") -ForegroundColor Cyan
+Write-Host ""
+Write-Host "Phone and vMix PC must be on the same Wi-Fi/LAN." -ForegroundColor White
+Write-Host "If Windows Firewall asks, allow PowerShell on Private networks." -ForegroundColor Yellow
+Write-Host "Keep this window open during the match." -ForegroundColor White
+Write-Host ""
+try {
+  Start-Process ("http://127.0.0.1:" + $Port + "/")
+  Write-Host "[READY] PC Control Room opened automatically." -ForegroundColor Green
+} catch {
+  Write-Host "[INFO] Open the PC CONTROL address manually." -ForegroundColor Yellow
+}
+
+
+while ($true) {
+  if (-not $listener.Pending()) {
+    Start-Sleep -Milliseconds 25
+    continue
+  }
+
+  $client = $null
+  try {
+    $client = $listener.AcceptTcpClient()
+    $client.ReceiveTimeout = 5000
+    $client.SendTimeout = 5000
+    $stream = $client.GetStream()
+    $req = Read-HttpRequest $stream
+
+    if ($null -eq $req) {
+      Write-HttpResponse $stream 400 "text/plain" "Bad Request"
+      continue
+    }
+
+    $method = [string]$req.method
+    $rawTarget = [string]$req.target
+    $path = ($rawTarget -split "\?")[0]
+
+    if ($method -eq "OPTIONS") {
+      Write-HttpResponse $stream 204 "text/plain" ""
+    }
+    elseif ($method -eq "GET" -and ($path -eq "/" -or $path -eq "/index.html")) {
+      Write-HttpResponse $stream 200 "text/html" $ControlHtml
+    }
+    elseif ($method -eq "GET" -and $path -eq "/vmix") {
+      Write-HttpResponse $stream 200 "text/html" $OutputHtml
+    }
+    elseif ($method -eq "GET" -and $path -eq "/api/state") {
+      Write-HttpResponse $stream 200 "application/json" (State-Json)
+    }
+    elseif ($method -eq "POST" -and $path -eq "/api/state") {
+      try {
+        $patch = $req.body | ConvertFrom-Json
+        if ($patch.PSObject.Properties.Name -contains "lineupIntro") { $State["lineupIntro"] = $patch.lineupIntro }
+        if ($patch.PSObject.Properties.Name -contains "matchdayGraphics") { $State["matchdayGraphics"] = $patch.matchdayGraphics }
+        Write-HttpResponse $stream 200 "application/json" '{"ok":true}'
+      } catch {
+        $err = $_.Exception.Message | ConvertTo-Json -Compress
+        Write-HttpResponse $stream 400 "application/json" ('{"ok":false,"error":' + $err + '}')
+      }
+    }
+    elseif ($method -eq "GET" -and $path -eq "/api/projects") {
+      Write-HttpResponse $stream 200 "application/json" $MatchProjectsJson
+    }
+    elseif ($method -eq "POST" -and $path -eq "/api/projects") {
+      try {
+        $projectsPayload = $req.body | ConvertFrom-Json
+        if (-not ($projectsPayload.PSObject.Properties.Name -contains "projects")) { throw "Missing projects" }
+        $projects = @($projectsPayload.projects)
+        if ($projects.Count -gt 20) { $projects = @($projects | Select-Object -First 20) }
+        $safePayload = @{projects=$projects;savedAt=[DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds();schema="SAGI_MATCH_PROJECTS_V1"} | ConvertTo-Json -Depth 80 -Compress
+        $tmpProjects = $MatchProjectsFile + ".new"
+        [IO.File]::WriteAllText($tmpProjects,$safePayload,(New-Object Text.UTF8Encoding($false)))
+        Move-Item $tmpProjects $MatchProjectsFile -Force
+        $MatchProjectsJson = $safePayload
+        Write-Host ("[PROJECTS] Saved " + $projects.Count + " match project(s).") -ForegroundColor Green
+        Write-HttpResponse $stream 200 "application/json" '{"ok":true}'
+      } catch {
+        $err = $_.Exception.Message | ConvertTo-Json -Compress
+        Write-HttpResponse $stream 400 "application/json" ('{"ok":false,"error":' + $err + '}')
+      }
+    }
+    elseif ($method -eq "GET" -and $path -eq "/api/matchday") {
+      Write-HttpResponse $stream 200 "application/json" $MatchdayJson
+    }
+    elseif ($method -eq "POST" -and $path -eq "/api/matchday") {
+      try {
+        $probe = $req.body | ConvertFrom-Json
+        $MatchdayJson = $req.body
+        $tmpState = $MatchdayStateFile + ".new"
+        [IO.File]::WriteAllText($tmpState,$MatchdayJson,(New-Object Text.UTF8Encoding($false)))
+        Move-Item $tmpState $MatchdayStateFile -Force
+        $hs = [string]$probe.homeScore
+        $as = [string]$probe.awayScore
+        $vis = [string]$probe.scoreboardVisible
+        Write-Host ("[SCORE] " + $hs + ":" + $as + " visible=" + $vis) -ForegroundColor Cyan
+        Write-HttpResponse $stream 200 "application/json" '{"ok":true}'
+      } catch {
+        $err = $_.Exception.Message | ConvertTo-Json -Compress
+        Write-HttpResponse $stream 400 "application/json" ('{"ok":false,"error":' + $err + '}')
+      }
+    }
+    elseif ($method -eq "POST" -and $path -eq "/api/recovery/reset") {
+      try {
+        $MatchdayJson = "null"
+        Remove-Item $MatchdayStateFile -Force -ErrorAction SilentlyContinue
+        Write-HttpResponse $stream 200 "application/json" '{"ok":true}'
+      } catch {
+        $err = $_.Exception.Message | ConvertTo-Json -Compress
+        Write-HttpResponse $stream 500 "application/json" ('{"ok":false,"error":' + $err + '}')
+      }
+    }
+    elseif ($method -eq "POST" -and $path -eq "/api/vmix") {
+      try {
+        $cmd = $req.body | ConvertFrom-Json
+        Invoke-VmixCommand $cmd
+        Write-HttpResponse $stream 200 "application/json" '{"ok":true}'
+      } catch {
+        Write-Host ("[vMix ERROR] " + $_.Exception.Message) -ForegroundColor Red
+        $err = $_.Exception.Message | ConvertTo-Json -Compress
+        Write-HttpResponse $stream 500 "application/json" ('{"ok":false,"error":' + $err + '}')
+      }
+    }
+    elseif ($method -eq "POST" -and $path -eq "/api/update") {
+      try {
+        $result = Update-SagiLan
+        Write-HttpResponse $stream 200 "application/json" ($result | ConvertTo-Json -Compress)
+      } catch {
+        Write-Host ("[UPDATE ERROR] " + $_.Exception.Message) -ForegroundColor Red
+        $err = $_.Exception.Message | ConvertTo-Json -Compress
+        Write-HttpResponse $stream 500 "application/json" ('{"ok":false,"error":' + $err + '}')
+      }
+    }
+    elseif ($method -eq "POST" -and $path -eq "/api/rollback") {
+      try {
+        $result = Restore-SagiLan
+        Write-HttpResponse $stream 200 "application/json" ($result | ConvertTo-Json -Compress)
+      } catch {
+        Write-Host ("[ROLLBACK ERROR] " + $_.Exception.Message) -ForegroundColor Red
+        $err = $_.Exception.Message | ConvertTo-Json -Compress
+        Write-HttpResponse $stream 500 "application/json" ('{"ok":false,"error":' + $err + '}')
+      }
+    }
+    elseif ($method -eq "GET" -and $path -eq "/health") {
+      $vmixInfo = Get-VmixStatusInfo
+      $health = @{ok=$true;vmix=[bool]$vmixInfo.ok;vmixInfo=$vmixInfo;lan=$true;ip=$lanIp;port=$Port;version="4.7.0";mode="MATCH_MODE";bridgeLocked=$true;recovery=(Test-Path $MatchdayStateFile);projectLibrary=(Test-Path $MatchProjectsFile)} | ConvertTo-Json -Depth 8 -Compress
+      Write-HttpResponse $stream 200 "application/json" $health
+    }
+    else {
+      Write-HttpResponse $stream 404 "text/plain" "Not Found"
+    }
+  }
+  catch {
+    Write-Host ("[LAN WARN] " + $_.Exception.Message) -ForegroundColor DarkYellow
+  }
+  finally {
+    if ($null -ne $client) { try { $client.Close() } catch {} }
+  }
+}
+
+###SAGI_CONTROL###
 <!doctype html>
 <html lang="zh-CN">
 <head>
