@@ -2254,9 +2254,9 @@ function mdPersist(){
   localStorage.setItem('sagi_matchday_graphics_v47',JSON.stringify(s));mdLocalRecoveryStamp=Math.max(mdLocalRecoveryStamp||0,savedAt);
  }catch(e){}
 }
-function mdApplyRecovered(x){
+function mdApplyRecovered(x,overwriteMeta=false){
  if(!x||typeof x!=='object')return false;
- applyMatchMeta({...((x.matchMeta&&typeof x.matchMeta==='object')?x.matchMeta:{}),competition:(x.matchMeta&&x.matchMeta.competition)||x.competition||'',home:(x.matchMeta&&x.matchMeta.home)||x.home||'',away:(x.matchMeta&&x.matchMeta.away)||x.away||''},false);
+ applyMatchMeta({...((x.matchMeta&&typeof x.matchMeta==='object')?x.matchMeta:{}),competition:(x.matchMeta&&x.matchMeta.competition)||x.competition||'',home:(x.matchMeta&&x.matchMeta.home)||x.home||'',away:(x.matchMeta&&x.matchMeta.away)||x.away||''},!!overwriteMeta);
  const copy={...x};delete copy.__sagiProjects;delete copy.commandId;delete copy.visualVersion;delete copy.home;delete copy.away;delete copy.event;delete copy.clock;delete copy.updatedAt;delete copy.homeCrest;delete copy.awayCrest;delete copy.competition;delete copy.matchMeta;
  matchdayState={...matchdayState,...copy,eventLog:Array.isArray(x.eventLog)?x.eventLog:(matchdayState.eventLog||[]),replayMarkers:Array.isArray(x.replayMarkers)?x.replayMarkers:(matchdayState.replayMarkers||[])};
  if(x.clock){
@@ -2280,7 +2280,8 @@ function mdRecoveryTimestamp(x){
 async function recoverMatchdayFromBridge(showNote=false,opts={}){
  try{
    const x=await lanJson('/api/matchday?recover='+Date.now());
-   if(x&&x.commandId&&!mdBridgeMatchesCurrent(x)){if(showNote)note('Bridge 是另一场比赛 · 已忽略旧比分状态');return false}
+   const bridgeMatches=!!(x&&x.commandId&&mdBridgeMatchesCurrent(x));
+   if(x&&x.commandId&&!bridgeMatches&&!opts.allowIdentityTakeover){if(showNote)note('Bridge 是另一场比赛 · 已忽略旧比分状态');return false}
    if(x&&x.commandId){
      const remoteStamp=mdRecoveryTimestamp(x),localStamp=Math.max(Number(opts.localStamp)||0,mdLocalRecoveryStamp||0);
      if(opts.preferNewest&&localStamp&&(!remoteStamp||localStamp>remoteStamp+250)){
@@ -2289,7 +2290,7 @@ async function recoverMatchdayFromBridge(showNote=false,opts={}){
        if(showNote)note('本机比赛状态更新 · 已阻止旧 Bridge 回退');
        return true
      }
-     if(mdApplyRecovered(x)){
+     if(mdApplyRecovered(x,!!opts.allowIdentityTakeover)){
        if(opts.preferNewest)mdRecoveryMetrics.bridgeWins++;
        mdLocalRecoveryStamp=Math.max(mdLocalRecoveryStamp||0,remoteStamp);
        refreshMatchdayUI();mdRenderLog();mdPersist();
@@ -2311,13 +2312,13 @@ async function mdLoad(opts={}){
    if(!x)x=JSON.parse(localStorage.getItem('sagi_matchday_graphics_v42')||'null');
    if(x){
      localStamp=mdRecoveryTimestamp(x);mdLocalRecoveryStamp=Math.max(mdLocalRecoveryStamp||0,localStamp);
-     if(x.matchMeta)applyMatchMeta(x.matchMeta,false);
+     if(x.matchMeta)applyMatchMeta(x.matchMeta,true);
      if(x.clockRunning&&x.savedAt){x.clockBase=(Number(x.clockBase)||0)+Math.max(0,(Date.now()-Number(x.savedAt))/1000);x.clockStartedAt=Date.now()}
      matchdayState={...matchdayState,...x,eventLog:Array.isArray(x.eventLog)?x.eventLog:[],replayMarkers:Array.isArray(x.replayMarkers)?x.replayMarkers:[]};delete matchdayState.matchMeta;if(!x.scoreTheme||x.scoreTheme==='sagi')matchdayState.scoreTheme='sagi-pro';mdNormalizeMatchMode();
    }
  }catch(e){}
  refreshMatchdayUI();refreshMatchdayPlayers();mdRenderLog();
- if(opts.recoverBridge!==false)await recoverMatchdayFromBridge(false,{preferNewest:true,localStamp});
+ if(opts.recoverBridge!==false)await recoverMatchdayFromBridge(false,{preferNewest:true,localStamp,allowIdentityTakeover:!localStamp});
  if(matchdayState.period==='PEN'&&mdPenaltyState().started)mdSyncDirectorPenaltyToSimple()
 }
 const MD_LAST_GOOD_KEY='sagi_matchday_last_good_v429';
@@ -2807,6 +2808,7 @@ async function runLiveHealthCheck(){
  const stateAligned=!!(sameFixture&&mdConsistencyComparable(remote)===mdConsistencyComparable(mdHealthLocalView()));
  checks.push({label:'比分状态',level:stateAligned?'good':remote&&remote.commandId?'warn':'bad',meta:stateAligned?'一致':remote&&remote.commandId?'检测到差异 · 未自动改动':'不可读'});
  try{outputOk=(await fetch('/vmix?liveHealth='+Date.now(),{cache:'no-store'})).ok}catch(e){}
+ if(!outputOk)try{outputOk=(await fetch('/intro/vmix-v45-lan.html?liveHealth='+Date.now(),{cache:'no-store'})).ok}catch(e){}
  checks.push({label:'Browser Input',level:outputOk?'good':'bad',meta:outputOk?'页面可读取':'页面不可读取'});
  checks.push({label:'本机恢复点',level:mdLoadLastGood()?'good':'warn',meta:mdLoadLastGood()?'已保存':'尚未保存'});
  const safe=checks.every(x=>x.level!=='bad');
