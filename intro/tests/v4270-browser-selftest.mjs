@@ -212,10 +212,28 @@ server.listen(PORT,'127.0.0.1',async()=>{
     localProjects:localStorage.getItem('sagi_match_projects_v44')||''
   }));
   assert(loadedProject.competition==='TORANHE PROJECT CUP'&&loadedProject.home==='PROJECT HOME FC'&&loadedProject.away==='PROJECT AWAY FC','stored project match identity was not restored: '+JSON.stringify(loadedProject));
-  assert(loadedProject.kickoff===''&&loadedProject.venue==='','test project should intentionally omit optional time/venue');
-  assert(!loadedProject.readyDisabled&&loadedProject.summary.includes('赛前检查通过'),'optional time/venue incorrectly blocked READY: '+loadedProject.summary);
   assert(loadedProject.mdHomeScore==='3'&&loadedProject.mdAwayScore==='1','selected project matchday was overwritten by stale Bridge state: '+loadedProject.mdHomeScore+'-'+loadedProject.mdAwayScore);
   assert(!loadedProject.localProjects.includes('data:image/svg+xml'),'large project photos were duplicated into synchronous localStorage');
+
+  // Whatever defaults the UI chooses for old projects, explicitly clear the optional fields
+  // and verify that daily broadcast READY remains available.
+  await page.locator('#matchKickoff').fill('');
+  await page.locator('#matchVenue').fill('');
+  await page.click('#setupValidateBtn');await wait(300);
+  const optionalCheck=await page.evaluate(()=>({
+    kickoff:document.querySelector('#matchKickoff').value,
+    venue:document.querySelector('#matchVenue').value,
+    readyDisabled:document.querySelector('#setupReadyBtn').disabled,
+    summary:document.querySelector('#setupSummary').textContent
+  }));
+  assert(optionalCheck.kickoff===''&&optionalCheck.venue==='','optional metadata fields could not be cleared');
+  assert(!optionalCheck.readyDisabled&&optionalCheck.summary.includes('赛前检查通过')&&optionalCheck.summary.includes('不影响'),'optional time/venue incorrectly blocked READY: '+optionalCheck.summary);
+
+  // Manual restore from Bridge must also reject a different fixture instead of overwriting 3-1.
+  await page.locator('#mmRestoreState').click({force:true});await wait(500);
+  const afterStaleRestore=await page.evaluate(()=>({home:document.querySelector('#mdHomeScore').textContent,away:document.querySelector('#mdAwayScore').textContent,homeName:document.querySelector('#matchHome').value,awayName:document.querySelector('#matchAway').value}));
+  assert(afterStaleRestore.home==='3'&&afterStaleRestore.away==='1','manual stale Bridge restore overwrote selected project: '+JSON.stringify(afterStaleRestore));
+  assert(afterStaleRestore.homeName==='PROJECT HOME FC'&&afterStaleRestore.awayName==='PROJECT AWAY FC','stale Bridge restore changed selected fixture identity');
   await page.screenshot({path:'selftest-artifacts/09-project-load-ready.png'});
 
   console.log('TEST 9: running clock updates clock only without repeatedly repainting heavy match controls');
