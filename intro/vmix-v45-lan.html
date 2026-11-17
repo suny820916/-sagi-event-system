@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="zh-CN"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SAGI V4.27.5 · 镜头安全引擎 · vMix</title>
+<title>SAGI V4.28.0 · STAGE 广播系统 · vMix</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%2307090d%22/%3E%3Ctext x=%2232%22 y=%2243%22 text-anchor=%22middle%22 font-size=%2234%22 fill=%22%23d8b55b%22%3ES%3C/text%3E%3C/svg%3E">
 <style>
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent;font-family:Arial,"PingFang SC","Microsoft YaHei",sans-serif}.stage{position:absolute;left:0;top:0;width:1920px;height:1080px;overflow:hidden;background:#07090c;transform-origin:0 0}.stadium{position:absolute;inset:0;background:radial-gradient(circle at 50% 0,#6f8294 0,#263442 18%,#111820 42%,#06080b 74%)}.stadium:before{content:"";position:absolute;left:-5%;right:-5%;top:165px;height:300px;background:linear-gradient(#19212a,#0b1016 68%,transparent),repeating-linear-gradient(90deg,#ffffff08 0 7px,transparent 7px 22px);clip-path:polygon(0 0,100% 0,92% 100%,8% 100%)}.stadium:after{content:"";position:absolute;left:0;right:0;bottom:-35px;height:430px;background:linear-gradient(180deg,#173421,#0a2716 70%,#05130a);clip-path:polygon(20% 0,80% 0,100% 100%,0 100%)}.stadiumPhoto{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}.shade{position:absolute;inset:0;background:linear-gradient(90deg,#030508e6 0,#05070a99 38%,#05070a55 58%,#030508c9 100%),linear-gradient(0deg,#040609c7 0,transparent 55%,#03050775 100%)}.pitchLines{position:absolute;left:320px;right:320px;bottom:0;height:360px;opacity:.22;transform:perspective(800px) rotateX(62deg);transform-origin:bottom;border:5px solid #fff;border-bottom:0}.pitchLines:before{content:"";position:absolute;left:50%;top:0;bottom:0;border-left:4px solid #fff}.pitchLines:after{content:"";position:absolute;width:170px;height:170px;border:4px solid #fff;border-radius:50%;left:50%;top:45%;transform:translate(-50%,-50%)}.light{position:absolute;width:760px;height:760px;border-radius:50%;filter:blur(100px);opacity:.22}.l1{left:-180px;top:-330px;background:#5cb4ff}.l2{right:-220px;top:-300px;background:#d7b051}.header{position:absolute;left:95px;top:72px;display:flex;align-items:center;gap:24px}.crest{width:96px;height:96px;object-fit:contain;filter:drop-shadow(0 12px 20px #0009)}.team{font-size:34px;font-weight:950;letter-spacing:2px;color:#fff}.sub{font-size:17px;color:#d8b55b;letter-spacing:5px;margin-top:7px;font-weight:850}.groupTitle{position:absolute;left:100px;top:205px;font-size:28px;letter-spacing:7px;color:#d8b55b;font-weight:900}.groupName{position:absolute;left:95px;top:245px;font-size:72px;line-height:1;font-weight:1000;letter-spacing:-2px;color:#fff}.line{position:absolute;left:98px;top:330px;width:400px;height:5px;background:linear-gradient(90deg,#d8b55b,#fff1b7)}.players{position:absolute;left:70px;top:350px;width:1240px;height:650px;display:flex;align-items:flex-end;justify-content:center;gap:18px}.card{position:relative;width:230px;height:570px;flex:0 0 auto}.card.one{width:520px}.cut{position:absolute;left:0;right:0;bottom:82px;height:490px;display:flex;align-items:flex-end;justify-content:center}.cut img{width:100%;height:100%;object-fit:contain;object-position:center bottom;filter:drop-shadow(0 20px 25px #000d)}
@@ -106,7 +106,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent
 .stateSplash{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:radial-gradient(circle at center,#0f151ddd,#020304f5 72%)}.stateSplash.on{display:flex}.stateBox{min-width:900px;text-align:center;padding:55px 70px;border:1px solid #ffffff22;background:#070b10e8;box-shadow:0 30px 100px #000c}.stateKicker{font-size:20px;letter-spacing:8px;color:#d8b55b;font-weight:1000}.stateTitle{font-size:92px;font-weight:1000;margin-top:12px;letter-spacing:-3px}.stateScore{font-size:74px;font-weight:1000;margin-top:25px}.stateTeams{font-size:22px;color:#aab4c0;margin-top:10px}.mvpName{font-size:82px;font-weight:1000;margin-top:18px}.mvpMeta{font-size:24px;color:#d8b55b;margin-top:8px;letter-spacing:3px}
 
 
-/* ===== V4.27.5 SHOT SAFETY ENGINE ===== */
+/* ===== V4.28.0 SHOT SAFETY ENGINE ===== */
 .stage{--teamAccent:#d8b55b}
 .stage .sub,.stage .groupTitle,.stage .formationText{color:var(--teamAccent)}
 .stage .line{background:linear-gradient(90deg,var(--teamAccent),#fff,transparent)}
@@ -149,7 +149,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent
 @keyframes plRowIn{from{opacity:0;transform:translateX(-24px)}to{opacity:1;transform:translateX(0)}}
 
 
-/* ===== V4.27.5 SHOT SAFETY ENGINE ===== */
+/* ===== V4.28.0 SHOT SAFETY ENGINE ===== */
 .scoreBug.theme-sagi-pro{height:72px;top:28px;border-radius:8px;background:#071019;border:1px solid #ffffff1f;box-shadow:0 14px 36px #0009;overflow:hidden;animation:sbIn .32s cubic-bezier(.2,.8,.2,1) both}
 .scoreBug.theme-sagi-pro .sbTeamBlock{min-width:210px;max-width:270px;padding:0 15px;background:#0a1119}
 .scoreBug.theme-sagi-pro .sbTeamBlock.home{border-left:5px solid var(--home)}
@@ -198,7 +198,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent
 @keyframes eventIn{from{opacity:0;transform:translateX(-48px) scale(.98)}to{opacity:1;transform:translateX(0) scale(1)}}
 
 
-/* ===== V4.27.5 SHOT SAFETY ENGINE ===== */
+/* ===== V4.28.0 SHOT SAFETY ENGINE ===== */
 .scoreBug{display:flex!important;opacity:0;visibility:hidden;pointer-events:none;transform:translateX(-50%) translateY(-18px) scale(.985);transition:opacity .24s ease,transform .36s cubic-bezier(.16,.84,.28,1),visibility 0s linear .36s}
 .scoreBug.on{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0) scale(1);transition-delay:0s}
 .scoreBug.theme-sagi-pro{animation:none}
@@ -238,12 +238,12 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent
 @keyframes goalFlash{0%{opacity:0}28%{opacity:1}100%{opacity:0}}
 
 
-/* ===== V4.27.5 CAMERA + GRAPHICS COORDINATION ===== */
+/* ===== V4.28.0 CAMERA + GRAPHICS COORDINATION ===== */
 .graphicsStage.eventActive .scoreBug.on{transform:translateX(-50%) translateY(0) scale(.96);filter:brightness(.92);transition:transform .32s cubic-bezier(.16,.84,.28,1),filter .25s ease}
 .graphicsStage.eventActive .scoreBug.on .sbMid{box-shadow:0 0 0 1px #ffffff0c inset}
 
 
-/* ===== V4.27.5 COMPACT SCOREBUG + GOAL EXPAND ===== */
+/* ===== V4.28.0 COMPACT SCOREBUG + GOAL EXPAND ===== */
 .scoreBug{
   left:58px!important;top:42px!important;transform:translateY(-14px) scale(.985)!important;
   height:68px!important;border-radius:10px!important;overflow:hidden!important;
@@ -293,7 +293,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent
 @media (prefers-reduced-motion:reduce){.scoreBug,.sbGoalBurst{transition:none!important}.scoreBug.goalExpand .sbGoalWord span,.scoreBug.goalExpand .sbGoalScorer,.scoreBug.goalExpand .sbGoalBurst:after{animation:none!important;opacity:1!important;transform:none!important}}
 
 
-/* ===== V4.27.5 GOAL PLAYER LOWER CARD ===== */
+/* ===== V4.28.0 GOAL PLAYER LOWER CARD ===== */
 .eventCard.goal{left:70px;bottom:64px;width:690px;min-height:154px;padding:22px 28px;gap:22px;background:linear-gradient(115deg,#070b10f7,#111923f4);border-left-width:7px}
 .eventCard.goal .eventPhotoWrap{width:132px;min-width:132px;height:132px;flex:0 0 132px;overflow:hidden;border-radius:8px;background:#0a1017}
 .eventCard.goal .eventPhoto{width:100%;height:100%;object-fit:contain;object-position:center bottom}
@@ -303,7 +303,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent
 .eventCard.goal .eventMeta{font-size:14px;margin-top:7px}
 
 
-/* ===== V4.27.5 FINAL SCOREBUG LAYOUT ===== */
+/* ===== V4.28.0 FINAL SCOREBUG LAYOUT ===== */
 #scoreBug.scoreBug{
  left:42px!important;right:auto!important;top:34px!important;
  width:auto!important;min-width:0!important;max-width:none!important;
@@ -354,7 +354,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent
 }
 
 
-/* V4.27.5 LINEUP DISPLAY HOTFIX */
+/* V4.28.0 LINEUP DISPLAY HOTFIX */
 .stage.group-SUB .formation,
 .stage.group-TEAM .formation,
 .stage.group-STING .formation,
@@ -362,7 +362,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent
 .stage.group-COUNTDOWN .formation{display:none!important}
 
 
-/* ===== V4.27.5 赛前转播包装 PRO ===== */
+/* ===== V4.28.0 赛前转播包装 PRO ===== */
 .matchOverlay{--homeAccent:#d8b55b;--awayAccent:#4c7dff;align-items:center;justify-content:center;background:radial-gradient(circle at 14% 50%,var(--homeAccent) 0,transparent 24%),radial-gradient(circle at 86% 50%,var(--awayAccent) 0,transparent 24%),linear-gradient(120deg,#05070a 0,#0a1017 48%,#05070a 100%);overflow:hidden}
 .matchOverlay:before{content:"";position:absolute;inset:-20%;background:repeating-linear-gradient(118deg,#ffffff05 0 2px,transparent 2px 38px);transform:rotate(-4deg);opacity:.55}
 .matchCardStage{width:1540px;height:770px;padding:0;border:0;background:#080d13f2;box-shadow:0 40px 120px #000c;position:relative;overflow:hidden}
@@ -396,7 +396,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent
 .stage.group-DF .card,.stage.group-MF .card,.stage.group-FW .card{max-width:285px}
 
 
-/* V4.27.5 开场标识 + 倒计时统一包装 */
+/* V4.28.0 开场标识 + 倒计时统一包装 */
 .stingOverlay{background:radial-gradient(circle at 50% 45%,#182633 0,#081018 42%,#020405 100%);overflow:hidden}
 .stingOverlay:before{content:"";position:absolute;inset:-20%;background:repeating-linear-gradient(112deg,#ffffff06 0 2px,transparent 2px 44px);opacity:.5}
 .stingCore{position:relative;z-index:2;min-width:720px;padding:70px 95px;border-top:1px solid #ffffff1f;border-bottom:1px solid #ffffff14;background:linear-gradient(90deg,transparent,#071019d9 15% 85%,transparent)}
@@ -407,7 +407,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent
 .countdownLabel{font-size:15px;letter-spacing:7px;color:#aab5c0}.countdownNumber{font-size:260px;letter-spacing:-13px;line-height:.9;text-shadow:none}.countdownSub{font-size:20px;color:#fff;letter-spacing:3px;margin-top:24px}
 
 
-/* ===== V4.27.5 点球大战专用比分牌 ===== */
+/* ===== V4.28.0 点球大战专用比分牌 ===== */
 .scoreBug.penaltyMode{overflow:visible}
 .scoreBug.penaltyMode .sbClock{font-size:15px;letter-spacing:1px}.scoreBug.penaltyMode .sbPeriod{font-size:7px;max-width:112px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .scoreBug.penaltyMode .sbPenalty{display:block;font-size:8px;font-weight:1000;color:#303842;letter-spacing:.5px}
@@ -420,7 +420,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent
 .scoreBug.theme-uefa.penaltyMode .penaltyShootoutBar{background:#06172c;border-color:#31527b}.scoreBug.theme-uefa .penCenter b{color:#73b8ff}
 
 
-/* ===== V4.27.5 世界杯级独立点球记分牌 ===== */
+/* ===== V4.28.0 世界杯级独立点球记分牌 ===== */
 .simplePenaltyBoard{--home:#d8b55b;--away:#4c7dff;position:absolute;left:50%;bottom:54px;transform:translateX(-50%) translateY(34px) scale(.97);width:1240px;height:190px;color:#fff;opacity:0;pointer-events:none;transition:opacity .22s ease,transform .42s cubic-bezier(.16,.84,.28,1);filter:drop-shadow(0 24px 36px #000b);z-index:30}
 .simplePenaltyBoard.on{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
 .simplePenaltyBoard:before{content:"";position:absolute;left:50%;top:23px;width:520px;height:150px;transform:translateX(-50%);background:radial-gradient(ellipse at center,#ffffff12 0,#ffffff05 34%,transparent 70%);filter:blur(8px);pointer-events:none}
@@ -451,7 +451,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent
 .simplePenaltyBoard.sudden .spbHeader{box-shadow:0 10px 34px #000a,0 0 35px #f2c14f25 inset}.simplePenaltyBoard.sudden .spbCoreMeta b{background:#e4565f;color:#fff}
 @keyframes spOrbSpin{to{transform:translateX(-50%) rotate(360deg)}}@keyframes spRingSpin{to{transform:rotate(360deg)}}@keyframes spDotWorld{0%{transform:scale(.3);opacity:.1}55%{transform:scale(1.32);opacity:1}100%{transform:scale(1)}}@keyframes spScorePulse{0%{transform:scale(.72);opacity:.35}62%{transform:scale(1.15);opacity:1}100%{transform:scale(1)}}
 
-/* V4.27.5 世界杯级罚失红点 */
+/* V4.28.0 世界杯级罚失红点 */
 .spbDot.miss{background:#e94f59;border-color:#ff9aa1;box-shadow:0 0 0 3px #e94f591c,0 0 15px #e94f5966}
 .spbDot.miss:after{content:"×";position:absolute;left:50%;top:50%;transform:translate(-50%,-56%);font-size:12px;line-height:1;color:#fff;font-weight:1000}
 
@@ -500,7 +500,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent
 #scoreBug.sagiToranhe.goalExpand{max-width:calc(1920px - 60px)!important}
 
 
-/* ===== V4.27.5 FINAL · TORANHE SCOREBUG ===== */
+/* ===== V4.28.0 FINAL · TORANHE SCOREBUG ===== */
 #scoreBug.scoreBug.sagiToranhe{
  --toranheDeep:#26052f;--toranheGreen:#0d6b45;--toranheLime:#20ed82;--toranhePaper:#f6f4f2;--toranheInk:#25052e;
  left:42px!important;right:auto!important;top:34px!important;
@@ -616,7 +616,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent
 /* Keep the detailed goal-player photo/information card below exactly as before. */
 
 
-/* ===== V4.27.5 CERTIFICATION FIX · LOGO SCALE + GOAL CREST POP ===== */
+/* ===== V4.28.0 CERTIFICATION FIX · LOGO SCALE + GOAL CREST POP ===== */
 #scoreBug.sagiToranhe .sbEventBrand{
  background:transparent!important;clip-path:none!important;box-shadow:none!important;overflow:visible!important
 }
@@ -647,7 +647,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent
 #scoreBug.sagiToranhe .sbGoalWord{left:106px!important}
 
 
-/* ===== V4.27.5 EVENT LOGO REPLAY STINGER ===== */
+/* ===== V4.28.0 EVENT LOGO REPLAY STINGER ===== */
 .replayStinger{position:absolute;inset:0;display:none;z-index:20000;overflow:hidden;pointer-events:none}
 .replayStinger.on{display:block}
 .rsPanel{position:absolute;top:-12%;height:124%;width:62%;background:linear-gradient(135deg,#032b20 0%,#076b45 48%,#65ed38 100%);will-change:transform;box-shadow:0 0 70px #001c16aa inset}
@@ -669,6 +669,132 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent
 @keyframes rsRightSweep{0%{transform:translateX(110%)}18%{transform:translateX(0)}72%{transform:translateX(0)}100%{transform:translateX(110%)}}
 @keyframes rsCenterPulse{0%,16%{opacity:0;transform:scale(.7)}28%{opacity:1;transform:scale(1.08)}38%,66%{opacity:1;transform:scale(1)}78%,100%{opacity:0;transform:scale(.86)}}
 @media (prefers-reduced-motion:reduce){.replayStinger.on .rsLeft,.replayStinger.on .rsRight,.replayStinger.on .rsCenter{animation-duration:1.45s!important}}
+
+
+/* ===== V4.28.0 · SAGI STAGE BROADCAST SYSTEM =====
+   Inspired by modern 2025 sports-broadcast system principles:
+   modular stage surfaces, strict grid, type hierarchy and unified motion.
+   SAGI/TORANHE identity remains original. */
+:root{
+ --sagiStageBlue:#071d57;--sagiStageBlue2:#0a43c9;--sagiStageBlue3:#19a7ff;
+ --sagiStageRed:#f33b4b;--sagiStagePaper:#f7f8fc;--sagiStageInk:#071638;
+ --sagiStageLine:#ffffff24;--sagiStageRadius:16px
+}
+#graphicsStage:before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.11;background:
+ linear-gradient(115deg,transparent 0 58%,#ffffff10 58% 58.15%,transparent 58.15%),
+ repeating-linear-gradient(90deg,transparent 0 119px,#ffffff08 119px 120px)}
+#scoreBug.sagiToranhe .sbEventBrand{border-radius:14px 0 0 14px!important}
+#scoreBug.sagiToranhe .sbEventBrand:before{
+ background:linear-gradient(145deg,#04163d 0,var(--sagiStageBlue) 54%,var(--sagiStageBlue2) 100%)!important;
+ clip-path:none!important;border-radius:14px 0 0 14px!important;box-shadow:0 12px 30px #020b24a8!important
+}
+#scoreBug.sagiToranhe .sbEventBrand:after{left:8px!important;right:8px!important;bottom:5px!important;height:3px!important;border-radius:3px!important;background:var(--sagiStageRed)!important;box-shadow:0 0 13px #f33b4b75!important}
+#scoreBug.sagiToranhe .sbTeamBlock{background:var(--sagiStagePaper)!important;color:var(--sagiStageInk)!important}
+#scoreBug.sagiToranhe .sbTeamBlock.home{border-top:1px solid #fff!important;border-bottom:4px solid var(--home)!important;box-shadow:none!important}
+#scoreBug.sagiToranhe .sbTeamBlock.away{border-top:1px solid #fff!important;border-bottom:4px solid var(--away)!important;box-shadow:none!important;border-radius:0 12px 12px 0!important}
+#scoreBug.sagiToranhe .sbTeam,#scoreBug.sagiToranhe .sbScore{color:var(--sagiStageInk)!important}
+#scoreBug.sagiToranhe .sbScoreWrap{background:var(--sagiStagePaper)!important;color:var(--sagiStageInk)!important}
+#scoreBug.sagiToranhe .sbMid{
+ background:linear-gradient(105deg,var(--sagiStageBlue),#0a2e86 60%,var(--sagiStageBlue2))!important;
+ clip-path:none!important;border-radius:0 0 12px 12px!important;box-shadow:0 12px 28px #020b2580!important
+}
+#scoreBug.sagiToranhe .sbStoppage{background:var(--sagiStageRed)!important;color:#fff!important;clip-path:none!important;border-radius:0 0 10px 0!important}
+#scoreBug.sagiToranhe .sbGoalBurst{
+ background:linear-gradient(112deg,var(--sagiStageBlue) 0,#0b3fb4 55%,color-mix(in srgb,var(--goalAccent) 60%,#0b3fb4) 100%)!important;
+ clip-path:none!important;border-radius:0 14px 14px 0!important;box-shadow:0 12px 34px #020b25a0!important
+}
+#scoreBug.sagiToranhe .sbGoalBurst:before{background:linear-gradient(118deg,#ffffff2d,transparent 28%,#ffffff0f 55%,transparent 76%)!important}
+#scoreBug.sagiToranhe .sbGoalBurst:after{left:96px!important;right:22px!important;height:4px!important;background:var(--goalAccent)!important;border-radius:5px!important}
+#scoreBug.sagiToranhe .sbGoalWord{font-style:normal!important;font-weight:1000!important;letter-spacing:.5px!important}
+.eventCard{
+ left:64px!important;bottom:60px!important;width:780px!important;height:176px!important;min-height:176px!important;
+ border-radius:var(--sagiStageRadius)!important;background:linear-gradient(108deg,#061744 0,var(--sagiStageBlue) 45%,#0a2e86 100%)!important;
+ box-shadow:0 28px 70px #01091fc9!important;border:1px solid #ffffff20!important;overflow:hidden!important
+}
+.eventCard:before{left:0!important;right:0!important;top:0!important;height:5px!important;background:var(--eventAccent)!important}
+.eventCard:after{content:"";position:absolute;inset:0;pointer-events:none;opacity:.16;background:
+ linear-gradient(118deg,transparent 0 60%,#ffffff2a 60% 60.4%,transparent 60.4%),
+ repeating-linear-gradient(90deg,transparent 0 92px,#ffffff12 92px 93px)}
+.eventPhotoWrap{width:176px!important;min-width:176px!important;height:176px!important;background:linear-gradient(150deg,#0b3aa9,#061744)!important}
+.eventIcon{margin-top:45px!important;box-shadow:0 0 0 6px #ffffff0c,0 14px 26px #020819a0!important}
+.eventCopy{position:relative;z-index:2;padding-right:22px!important}
+.eventKicker{font-size:12px!important;letter-spacing:3.2px!important;font-weight:1000!important;text-transform:uppercase}
+.eventName{font-size:38px!important;line-height:1!important;margin-top:8px!important;color:#fff!important;letter-spacing:-.6px!important}
+.eventMeta{font-size:13px!important;margin-top:10px!important;color:#c7d5ee!important}
+.eventCard.goal{width:780px!important;height:176px!important;min-height:176px!important;padding:0!important;border-left:0!important}
+.eventCard.goal .eventPhotoWrap{width:176px!important;min-width:176px!important;height:176px!important}
+.eventCard.goal .eventPhoto{width:100%!important;height:100%!important}
+.eventCard.goal .eventCopy{padding:0 28px!important}
+.eventCard.goal .eventKicker{color:#fff!important}
+.eventCard.yellow .eventIcon,.eventCard.red .eventIcon{
+ width:58px!important;height:82px!important;min-width:58px!important;border-radius:7px!important;margin:47px 36px 0 32px!important;transform:rotate(-3deg)!important
+}
+.eventCard.sub .eventIcon{background:#fff!important;color:var(--sagiStageBlue)!important}
+.subRowG{font-size:19px!important}
+.stateSplash{background:radial-gradient(circle at 72% 36%,#0c45bc66,transparent 34%),linear-gradient(135deg,#020a22f5,#071d57f4 55%,#0a2f84f4)!important}
+.stateBox{
+ width:1260px!important;height:560px!important;border-radius:24px!important;border:1px solid #ffffff25!important;
+ background:linear-gradient(112deg,#061744f7,var(--sagiStageBlue) 56%,#0a3aaaf5)!important;box-shadow:0 42px 120px #010618db!important
+}
+.stateBox:after{content:"";position:absolute;inset:0;pointer-events:none;opacity:.17;background:repeating-linear-gradient(90deg,transparent 0 119px,#ffffff16 119px 120px)}
+.stateAccent{width:8px!important;background:var(--stateAccent)!important}
+.stateCopy{padding:58px 70px!important}
+.stateKicker{font-size:14px!important;letter-spacing:6px!important;color:#bcd0f8!important}
+.stateTitle{font-size:76px!important;letter-spacing:-2.5px!important;color:#fff!important}
+.stateScore{font-size:74px!important;color:#fff!important}
+.stateTeams{color:#c2d0e9!important}
+.stateSplash.mvp .mvpPhoto{width:420px!important;min-width:420px!important;height:560px!important;background:linear-gradient(155deg,#0b3aa9,#041235)!important}
+.stateSplash.mvp .mvpName{font-size:64px!important;color:#fff!important}
+.matchOverlay{
+ background:radial-gradient(circle at 10% 50%,color-mix(in srgb,var(--homeAccent) 34%,transparent),transparent 30%),
+ radial-gradient(circle at 90% 50%,color-mix(in srgb,var(--awayAccent) 34%,transparent),transparent 30%),
+ linear-gradient(130deg,#020a22 0,var(--sagiStageBlue) 52%,#06143a 100%)!important
+}
+.matchOverlay:before{inset:0!important;transform:none!important;opacity:.22!important;background:
+ repeating-linear-gradient(90deg,transparent 0 119px,#ffffff13 119px 120px),
+ linear-gradient(116deg,transparent 0 64%,#ffffff12 64% 64.25%,transparent 64.25%)!important}
+.matchCardStage{
+ width:1500px!important;height:750px!important;border-radius:28px!important;background:linear-gradient(118deg,#071947f2,#0a2c7af5)!important;
+ border:1px solid #ffffff26!important;box-shadow:0 44px 125px #01071bde!important
+}
+.matchCardStage:before{height:6px!important;background:linear-gradient(90deg,var(--homeAccent) 0 48%,#fff 48% 52%,var(--awayAccent) 52% 100%)!important}
+.matchTopLine{height:132px!important;padding:22px 38px!important;border-bottom:1px solid #ffffff1b!important}
+.matchBroadcastTag{background:var(--sagiStageRed)!important;border:0!important;color:#fff!important;border-radius:10px!important}
+.matchTeams{height:500px!important;padding:32px 48px!important;grid-template-columns:1fr 230px 1fr!important}
+.matchTeamBlock{
+ min-height:340px;padding:30px 24px!important;border-radius:22px!important;background:var(--sagiStagePaper)!important;
+ box-shadow:0 22px 54px #01071c80!important;border:1px solid #fff!important
+}
+.matchHomeBlock{box-shadow:inset 0 -7px 0 var(--homeAccent),0 22px 54px #01071c80!important}
+.matchAwayBlock{box-shadow:inset 0 -7px 0 var(--awayAccent),0 22px 54px #01071c80!important}
+.matchCrestShell{width:150px!important;height:150px!important;margin-bottom:20px!important;background:#fff!important;border-color:#d7deea!important}
+.matchTeamRole{color:#60708c!important}.matchTeam{font-size:38px!important;color:var(--sagiStageInk)!important}
+.matchCenterStage{color:#fff}.matchVs{font-size:32px!important}.matchKickoffStage{font-size:58px!important}
+.matchMetaStage{height:118px!important;background:#041235!important;border-top:1px solid #ffffff1a!important;border-radius:0 0 28px 28px!important}
+.stage.group-GK:before,.stage.group-DF:before,.stage.group-MF:before,.stage.group-FW:before{
+ background:linear-gradient(118deg,var(--sagiStageBlue2) 0 18%,transparent 18% 72%,#ffffff0c 72% 72.3%,transparent 72.3% 100%)!important;opacity:.28!important
+}
+.label,.playerLabel{
+ border-radius:14px!important;background:var(--sagiStagePaper)!important;color:var(--sagiStageInk)!important;
+ box-shadow:0 18px 38px #01071ca8!important;border:1px solid #ffffffaa!important
+}
+.label:before,.playerLabel:before{width:6px!important;border-radius:14px 0 0 14px!important}
+.name,.playerName,.no,.playerNo{color:var(--sagiStageInk)!important}
+.role,.playerRole{color:#56657e!important}
+.stingOverlay,.countdownOverlay{background:linear-gradient(132deg,#020a22,var(--sagiStageBlue) 54%,#0a2f86)!important}
+.stingOverlay:before,.countdownOverlay:before{opacity:.18!important;background:repeating-linear-gradient(90deg,transparent 0 119px,#ffffff15 119px 120px)!important}
+.stingCore,.countdownCore{border-radius:24px!important;background:#061744df!important;border:1px solid #ffffff24!important;box-shadow:0 34px 100px #01061ad0!important}
+.stingLine{background:linear-gradient(90deg,transparent,var(--sagiStageRed),#fff,var(--sagiStageRed),transparent)!important}
+.replayStinger .rsPanel{background:linear-gradient(135deg,#020b26 0,var(--sagiStageBlue) 48%,var(--sagiStageBlue2) 100%)!important;box-shadow:0 0 80px #01081f inset!important}
+.replayStinger .rsLeft{clip-path:polygon(0 0,100% 0,78% 100%,0 100%)!important;border-right:8px solid var(--sagiStageRed)!important}
+.replayStinger .rsRight{clip-path:polygon(22% 0,100% 0,100% 100%,0 100%)!important;border-left:8px solid #fff!important}
+.rsKicker{color:#bcd0f8!important}.rsRule{background:var(--sagiStageRed)!important;box-shadow:0 0 22px #f33b4b88!important}
+.rsTitle{font-style:normal!important;letter-spacing:1px!important}
+.simplePenaltyBoard{filter:drop-shadow(0 28px 42px #01071cbc)!important}
+.spbHeader,.spbWing,.spbCore:before{background:linear-gradient(180deg,#071c52f5,#041235fa)!important}
+.spbHeader{border-radius:14px!important;clip-path:none!important;border-color:#ffffff2b!important}
+.spbWing.home{clip-path:polygon(0 0,93% 0,100% 50%,93% 100%,0 100%)!important}
+.spbWing.away{clip-path:polygon(7% 0,100% 0,100% 100%,7% 100%,0 50%)!important}
 
 </style></head>
 <body>
@@ -1159,7 +1285,7 @@ function applyGraphics(g){
  currentGraphics=g;updateScoreBug();showEvent(g)
 }
 
-const OUTPUT_BUILD='V4.27.5';
+const OUTPUT_BUILD='V4.28.0';
 function versionParts(v){return String(v||'').replace(/^V/i,'').split('.').map(n=>Number(n)||0)}
 function versionIsNewer(a,b){const A=versionParts(a),B=versionParts(b);for(let i=0;i<3;i++){if((A[i]||0)>(B[i]||0))return true;if((A[i]||0)<(B[i]||0))return false}return false}
 async function checkOutputBuild(){
