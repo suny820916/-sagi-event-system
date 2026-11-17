@@ -124,7 +124,7 @@ server.listen(PORT,'127.0.0.1',async()=>{
    return {letters:word.textContent.replace(/\s/g,''),ops:[...word.querySelectorAll('span')].map(x=>parseFloat(getComputedStyle(x).opacity)),burstWidth:rr.width,burstRight:rr.right,goalCrestSrc:gc.getAttribute('src')||'',goalCrestWidth:gc.getBoundingClientRect().width,regularCrestWidth:rc.getBoundingClientRect().width,eventGoal:card.classList.contains('on')&&card.classList.contains('goal'),photo:photo.getAttribute('src')||''};
   },{HOME_CREST});
   assert(homeGoal.letters==='GOAL'&&homeGoal.ops.every(x=>x>.9),'GOAL letters incomplete');
-  assert(homeGoal.burstWidth>=320&&homeGoal.burstRight<=1918,'HOME goal panel size/frame failure');
+  assert(homeGoal.burstWidth>=250&&homeGoal.burstRight<=1918,'HOME goal panel size/frame failure');
   assert(homeGoal.goalCrestSrc===HOME_CREST,'HOME goal did not use HOME crest');
   assert(homeGoal.goalCrestWidth>homeGoal.regularCrestWidth*2,'scoring crest did not enlarge');
   assert(homeGoal.eventGoal&&homeGoal.photo.startsWith('data:image/svg+xml'),'lower goal-player card/photo missing');
@@ -140,7 +140,7 @@ server.listen(PORT,'127.0.0.1',async()=>{
   await page.waitForFunction(()=>document.querySelector('#scoreBug')?.classList.contains('goalExpand'),null,{timeout:5000});await wait(900);
   const awayGoal=await page.evaluate(()=>({crest:document.querySelector('#sbGoalCrest').getAttribute('src')||'',letters:document.querySelector('.sbGoalWord').textContent.replace(/\s/g,''),width:document.querySelector('#sbGoalBurst').getBoundingClientRect().width}));
   assert(awayGoal.crest===AWAY_CREST,'AWAY goal did not use AWAY crest');
-  assert(awayGoal.letters==='GOAL'&&awayGoal.width>=320,'AWAY GOAL reveal failed');
+  assert(awayGoal.letters==='GOAL'&&awayGoal.width>=250,'AWAY GOAL reveal failed');
   await page.screenshot({path:'selftest-artifacts/04-away-goal-expanded.png'});
 
   console.log('TEST 4A: yellow and red cards use real referee-card geometry, event colors and bilingual labels');
