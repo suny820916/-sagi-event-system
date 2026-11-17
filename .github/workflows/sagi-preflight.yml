@@ -1519,5 +1519,38 @@ jobs:
           print("SMART CUT CLOUD OK", round(rendered,2), "seconds", out.stat().st_size, "bytes")
           PY
 
+      - name: SMART CUT resumable chunk upload regression
+        run: |
+          cd sagi-cloud-bridge
+          python - <<'PY'
+          import io, os, shutil
+          import app as mod
+
+          mod.authorized = lambda: True
+          c = mod.app.test_client()
+          total = 17 * 1024 * 1024
+          r = c.post("/api/smart-upload/init", json={"filename":"large.mp4","size":total})
+          assert r.status_code == 200, r.get_data(as_text=True)
+          d = r.get_json()
+          assert d["ok"] and d["chunkBytes"] == 8 * 1024 * 1024
+          uid = d["uploadId"]
+          offset = 0
+          for size in (8*1024*1024, 8*1024*1024, 1*1024*1024):
+              payload = b"x" * size
+              rr = c.post(
+                  f"/api/smart-upload/{uid}/chunk",
+                  data=payload,
+                  headers={"X-SAGI-Offset":str(offset),"Content-Type":"application/octet-stream"},
+              )
+              assert rr.status_code == 200, rr.get_data(as_text=True)
+              offset = rr.get_json()["offset"]
+          assert offset == total
+          s = c.get(f"/api/smart-upload/{uid}")
+          sd = s.get_json()
+          assert s.status_code == 200 and sd["complete"] is True and sd["offset"] == total, sd
+          shutil.rmtree(mod._smart_upload_dir(uid), ignore_errors=True)
+          print("SMART CUT CHUNK UPLOAD OK", offset)
+          PY
+
       - name: Python compile check
         run: python -m compileall -q sagi-cloud-bridge
