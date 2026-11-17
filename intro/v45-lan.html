@@ -1553,15 +1553,20 @@ function applyMatchMeta(meta={},overwrite=false){
 }
 function compactProjectForLocal(p={}){
  const a=p.assets&&typeof p.assets==='object'?p.assets:{};
- return{...p,assets:{...a,photos:{HOME:{},AWAY:{}}}}
+ return{...p,__compact:true,assets:{...a,photos:{HOME:{},AWAY:{}}}}
 }
-async function cacheMatchProjectsFull(list=[]){await dbPutMany((list||[]).filter(p=>p&&p.id).map(p=>['matchProject:'+p.id,p]))}
+async function cacheMatchProjectsFull(list=[]){
+ const full=(list||[]).filter(p=>p&&p.id&&!p.__compact);if(!full.length)return;
+ await dbPutMany(full.map(p=>['matchProject:'+p.id,p]))
+}
 let matchProjectsCache=null;
 function localMatchProjects(){try{const x=JSON.parse(localStorage.getItem(MATCH_PROJECTS_KEY)||'[]');return Array.isArray(x)?x:[]}catch(e){return[]}}
 function getMatchProjects(){return Array.isArray(matchProjectsCache)?matchProjectsCache.slice():localMatchProjects()}
 async function resolveMatchProject(id){
  const p=getMatchProjects().find(x=>x.id===id);if(!p)return null;
- const full=await dbGet('matchProject:'+id);return full&&typeof full==='object'&&Number(full.savedAt||0)>=Number(p.savedAt||0)?{...p,...full}:p
+ const full=await dbGet('matchProject:'+id);
+ if(full&&typeof full==='object'&&Number(full.savedAt||0)>=Number(p.savedAt||0)){const merged={...p,...full};delete merged.__compact;return merged}
+ const fallback={...p};delete fallback.__compact;return fallback
 }
 function putMatchProjects(list){
  matchProjectsCache=(list||[]).slice(0,20);
@@ -1582,7 +1587,8 @@ async function persistMatchProjectsBridge(list){
  }catch(e){return false}
 }
 async function syncMatchProjectsFromBridge(){
- const local=localMatchProjects();let remoteList=[];
+ const localIndex=localMatchProjects();matchProjectsCache=localIndex.slice();
+ const local=await Promise.all(localIndex.map(async p=>(await resolveMatchProject(p.id))||p));let remoteList=[];
  try{
   const remote=await lanJson('/api/projects?ts='+Date.now());remoteList=Array.isArray(remote&&remote.projects)?remote.projects:[]
  }catch(e){
@@ -1612,7 +1618,8 @@ async function saveMatchProject(){
   const id='match_'+Date.now().toString(36),project={id,name,savedAt:Date.now(),meta:currentMatchMeta(),core:localStorage.getItem('sagi_player_intro_v40')||'',show:localStorage.getItem('sagi_show_director_v40')||'',matchday:localStorage.getItem('sagi_matchday_graphics_v47')||localStorage.getItem('sagi_matchday_graphics_v42')||'',vmix:localStorage.getItem('sagi_vmix_director_v42')||'',assets:projectAssetsSnapshot()};
   let list=getMatchProjects();const same=list.findIndex(p=>p.name===name);if(same>=0){project.id=list[same].id;list.splice(same,1)}
   await dbPut('matchProject:'+project.id,project);list.unshift(project);putMatchProjects(list);refreshProjectList(project.id);
-  note('比赛项目已保存 · '+name);const safe=await persistMatchProjectsBridge(list);if(!safe)note('Bridge 同步失败 · 本机项目仍已安全保存')
+  note('比赛项目已保存 · '+name+' · 本机已安全落盘');
+  persistMatchProjectsBridge(list).then(safe=>{if(!safe)note('Bridge 同步失败 · 本机项目不受影响')}).catch(()=>note('Bridge 同步失败 · 本机项目不受影响'))
  }finally{projectSaveBusy=false;if(btn){btn.disabled=false;btn.textContent='保存比赛项目'}}
 }
 function portablePlayer(p={},photo=''){
