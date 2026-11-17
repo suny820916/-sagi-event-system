@@ -119,6 +119,7 @@ server.listen(PORT,'127.0.0.1',async()=>{
   console.log('TEST 1C: director can edit broadcast short names without changing canonical fixture identity');
   await control.goto('http://127.0.0.1:'+PORT+'/intro/v45-lan.html',{waitUntil:'domcontentloaded'});
   await control.waitForFunction(()=>document.querySelector('#mdHomeShort')&&document.querySelector('#mdAwayShort'),null,{timeout:8000});
+  await wait(900);
   const canonicalBefore={home:graphics.home,away:graphics.away,fixtureKey:graphics.fixtureKey};
   await control.fill('#mdHomeShort','塔城地区');await control.dispatchEvent('#mdHomeShort','change');
   await control.fill('#mdAwayShort','阿勒泰');await control.dispatchEvent('#mdAwayShort','change');await wait(900);
