@@ -403,8 +403,13 @@ server.listen(PORT,'127.0.0.1',async()=>{
   assert(graphics.homeColor===authoritative.homeColor&&graphics.awayColor===authoritative.awayColor&&graphics.accentColor===authoritative.accentColor,'watchdog failed to restore broadcast colors');
   assert(String(graphics.stoppageTime||'')===String(authoritative.stoppageTime||'')&&!!graphics.scoreboardFrozen===!!authoritative.scoreboardFrozen&&Number(graphics.homePen||0)===Number(authoritative.homePen||0)&&Number(graphics.awayPen||0)===Number(authoritative.awayPen||0),'watchdog failed to restore exceptional score-center state');
   assert(repairUI.home==='乌苏叶克备'&&repairUI.away==='IPF'&&repairUI.score===String(authoritative.homeScore),'watchdog repair changed local control identity/state: '+JSON.stringify(repairUI));
-  const outputDiag=await page.evaluate(()=>window.sagiScoreCenterDiagnostic&&window.sagiScoreCenterDiagnostic());
+  const diagPage=await browser.newPage({viewport:{width:1920,height:1080}});
+  await diagPage.goto('http://127.0.0.1:'+PORT+'/intro/vmix-v45-lan.html',{waitUntil:'domcontentloaded'});
+  await diagPage.waitForFunction(()=>window.sagiScoreCenterDiagnostic&&window.sagiScoreCenterDiagnostic().build==='V4.30.6',null,{timeout:5000});
+  const outputDiag=await diagPage.evaluate(()=>window.sagiScoreCenterDiagnostic());
   assert(outputDiag&&outputDiag.build==='V4.30.6'&&outputDiag.home===authoritative.scoreHomeName,'vMix score-center diagnostic is not tracking authoritative state: '+JSON.stringify(outputDiag));
+  await diagPage.screenshot({path:'selftest-artifacts/12-output-diagnostic.png'});
+  await diagPage.close();
   await page.screenshot({path:'selftest-artifacts/12-watchdog-repair.png'});
 
   console.log('TEST 12: accelerated long-session identity soak keeps names/scores stable');
