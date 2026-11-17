@@ -81,7 +81,7 @@ server.listen(PORT,'127.0.0.1',async()=>{
   assert(regular.homeFont>=11&&regular.awayFont>=11,'team name below readable floor');
   assert(regular.homeInside&&regular.awayInside,'team name clipped outside main scorebar');
   assert(Math.abs(regular.midTop-regular.bugTop)<1&&regular.bugHeight===50,'clock is not on the same 50px score row: '+JSON.stringify({midTop:regular.midTop,bugTop:regular.bugTop,bugHeight:regular.bugHeight}));
-  assert(regular.brandWidth>=44&&regular.brandWidth<=48&&regular.logoWidth>=38&&regular.logoWidth<=44,'event identity is not compact enough: '+JSON.stringify({brandWidth:regular.brandWidth,logoWidth:regular.logoWidth}));
+  assert(regular.brandWidth>=44&&regular.brandWidth<=48&&regular.logoWidth>=35&&regular.logoWidth<=38,'event identity is not compact enough: '+JSON.stringify({brandWidth:regular.brandWidth,logoWidth:regular.logoWidth}));
   assert(regular.logoSrc.startsWith('data:image/svg+xml'),'offline TORANHE event logo is not embedded');
   assert(regular.logoDisplay!=='none','event logo hidden');
   const identityFusion=await page.evaluate(()=>{
