@@ -246,9 +246,9 @@ server.listen(PORT,'127.0.0.1',async()=>{
   await page.click('#projectLoadBtn');
   await page.waitForFunction(()=>document.querySelector('#projectLoadBtn')?.textContent==='读取项目'&&document.querySelector('#projectName')?.value==='SELFTEST STORED MATCH',null,{timeout:8000});
   const photoReload=await page.evaluate(()=>{
-    const first=(teamStore&&teamStore.HOME&&teamStore.HOME.roster||[])[0];
     const raw=localStorage.getItem('sagi_match_projects_v44')||'[]',idx=JSON.parse(raw),p=idx[0]||{};
-    return{photo:first&&first.photo||'',compact:!!p.__compact,localPhotoCount:Object.keys(p.assets&&p.assets.photos&&p.assets.photos.HOME||{}).length}
+    const img=document.querySelector('#roster .playerRow:first-child .thumb img');
+    return{photo:img&&img.getAttribute('src')||'',compact:!!p.__compact,localPhotoCount:Object.keys(p.assets&&p.assets.photos&&p.assets.photos.HOME||{}).length}
   });
   assert(photoReload.compact&&photoReload.localPhotoCount===0,'local project index did not stay compact after reload');
   assert(photoReload.photo.startsWith('data:image/svg+xml'),'full project/player photo did not rehydrate from IndexedDB when Bridge list was empty');
