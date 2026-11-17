@@ -1,0 +1,50 @@
+name: SAGI VOICE Emotion Live E2E
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/sagi-voice-emotion-live-e2e.yml"
+
+jobs:
+  voice-emotion:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Install ffmpeg jq
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg jq
+
+      - name: Verify old-cloud compatibility styles are audibly different
+        run: |
+          set -euo pipefail
+          BASE="https://sagi-cloud-bridge-suny820916.onrender.com"
+          ORIGIN="https://suny820916.github.io"
+          TEXT="这是足球最残酷也最动人的地方。最后一分钟，机会出现了。他没有犹豫，射门，进球！看台沸腾了，而另一边，有人低下了头。"
+
+          ACT="$(curl -fsS --max-time 30 --retry 3 -X POST -H "Origin: $ORIGIN" "$BASE/api/activate")"
+          echo "$ACT" | jq -e '.ok == true'
+          TOKEN="$(echo "$ACT" | jq -r '.token')"
+
+          curl -fsS --max-time 180 \
+            -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+            --data "$(jq -nc --arg t "$TEXT" '{text:$t,mode:"ai_male",voice_id:"",speed:1.15,style:"football"}')" \
+            "$BASE/api/voice/preview" -o /tmp/goal.m4a
+
+          curl -fsS --max-time 180 \
+            -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+            --data "$(jq -nc --arg t "$TEXT" '{text:$t,mode:"ai_male",voice_id:"",speed:0.90,style:"warm"}')" \
+            "$BASE/api/voice/preview" -o /tmp/emotional.m4a
+
+          G="$(ffprobe -v error -show_entries format=duration -of csv=p=0 /tmp/goal.m4a)"
+          E="$(ffprobe -v error -show_entries format=duration -of csv=p=0 /tmp/emotional.m4a)"
+          echo "goal=$G emotional=$E"
+          python - "$G" "$E" <<'PY'
+          import sys
+          g,e=map(float,sys.argv[1:])
+          assert g > 0 and e > 0
+          assert e > g * 1.12, (g,e)
+          print("SAGI VOICE EMOTION LIVE OK", round(g,2), round(e,2))
+          PY
