@@ -18,7 +18,7 @@
 </head>
 <body>
 <div class="app">
-<header class="top"><div><div class="brand">SAGI POOL SELLER</div><div class="sub">球房商业授权后台 · CHINA V2.13</div></div><div class="pill">仅 SAGI 管理员</div></header>
+<header class="top"><div><div class="brand">SAGI POOL SELLER</div><div class="sub">球房 / 主播商业授权后台 · CHINA V2.14</div></div><div class="pill">仅 SAGI 管理员</div></header>
 
 <section class="card">
   <div class="head"><h2>国内授权服务器</h2><span class="small" id="serverStatus">未连接</span></div>
@@ -38,37 +38,37 @@
 </section>
 
 <section class="card">
-  <div class="head"><h2>开通 / 续费球房</h2><span class="small">一店一授权</span></div>
+  <div class="head"><h2>开通 / 续费客户</h2><span class="small">球房 / 主播统一授权</span></div>
   <div class="grid">
-    <div class="field"><label>球房名称</label><input id="clubName" maxlength="40" placeholder="XX台球俱乐部"></div>
-    <div class="field"><label>Club ID</label><input id="clubId" maxlength="32" placeholder="TC-001"></div>
-    <div class="field"><label>套餐</label><select id="plan"><option>TRIAL</option><option selected>CLUB</option><option>CLUB PRO</option></select></div>
+    <div class="field"><label>客户名称</label><input id="clubName" maxlength="40" placeholder="XX台球俱乐部 / 主播昵称"></div>
+    <div class="field"><label>客户 ID</label><input id="clubId" maxlength="32" placeholder="TC-001 / CREATOR-001"></div>
+    <div class="field"><label>套餐</label><select id="plan"><option>TRIAL</option><option selected>CLUB</option><option>CLUB PRO</option><option>CREATOR</option><option>CREATOR PRO</option></select></div>
     <div class="field"><label>最大球桌数</label><input id="maxTables" type="number" min="1" max="99" value="8"></div>
     <div class="field"><label>到期日期</label><input id="expires" type="date"></div>
     <div class="field"><label>球房同步密钥</label><input id="clubToken" maxlength="80" placeholder="点击生成"></div>
   </div>
   <div class="actions">
-    <button class="btn gold" id="generate" type="button">生成球房密钥</button>
+    <button class="btn gold" id="generate" type="button">生成客户密钥</button>
     <button class="btn primary" id="issue" type="button">开通 / 更新授权</button>
   </div>
-  <div class="result" id="result">开通后，这里会显示需要交给球房老板的 <b>Club ID + 同步密钥</b>。</div>
+  <div class="result" id="result">开通后，这里会显示需要交给客户的 <b>客户 ID + 同步密钥</b>。</div>
 </section>
 
 <section class="card">
   <div class="head"><h2>生成设备安装码</h2><span class="small">10分钟 · 一次性</span></div>
   <div class="grid">
-    <div class="field"><label>Club ID</label><input id="provisionClubId" maxlength="32" placeholder="TC-001"></div>
-    <div class="field"><label>球桌编号</label><input id="provisionTable" maxlength="12" value="01桌"></div>
+    <div class="field"><label>客户 ID</label><input id="provisionClubId" maxlength="32" placeholder="TC-001 / CREATOR-001"></div>
+    <div class="field"><label>球桌 / 直播间</label><input id="provisionTable" maxlength="12" value="01桌"></div>
   </div>
   <div class="actions">
     <button class="btn primary" id="createProvision" type="button">生成安装码</button>
     <button class="btn" id="copyProvision" type="button" disabled>复制安装码</button>
   </div>
-  <div class="result" id="provisionResult">给球房安装 Android LIVE ENGINE 时，只需要输入这里生成的 <b>8位安装码</b>。主授权密钥不用交给普通员工。</div>
+  <div class="result" id="provisionResult">球房设备或主播端只需要输入这里生成的 <b>8位安装码</b>。主授权密钥无需交给使用者。</div>
 </section>
 
 <section class="card">
-  <div class="head"><h2>已开通球房</h2><button class="btn" id="refresh" type="button" style="min-height:36px;padding:5px 9px;font-size:12px">刷新</button></div>
+  <div class="head"><h2>已开通客户</h2><button class="btn" id="refresh" type="button" style="min-height:36px;padding:5px 9px;font-size:12px">刷新</button></div>
   <div class="list" id="list"><div class="empty">连接服务器后显示授权列表。</div></div>
 </section>
 
@@ -334,7 +334,7 @@ async function refreshAudit(){
 async function refresh(){
   try{
     setStatus('读取中…');const d=await api('/api/admin/licenses');const box=$('#list');box.innerHTML='';
-    if(!d.licenses?.length){box.innerHTML='<div class="empty">暂无球房授权。</div>';setStatus('已连接');return}
+    if(!d.licenses?.length){box.innerHTML='<div class="empty">暂无客户授权。</div>';setStatus('已连接');return}
     d.licenses.forEach(l=>{
       const row=document.createElement('div');row.className='item';
       const left=document.createElement('div');const n=document.createElement('div');n.className='name';n.textContent=(l.clubName||l.clubId)+' · '+l.clubId;
@@ -375,14 +375,14 @@ async function refresh(){
         right.appendChild(revoke);
       }
       row.append(left,right);box.appendChild(row);
-    });setStatus('已连接 · '+d.licenses.length+' 家');
+    });setStatus('已连接 · '+d.licenses.length+' 个客户');
   }catch(e){setStatus('连接失败');$('#list').innerHTML='<div class="empty">'+e.message+'</div>'}
 }
 $('#downloadBackup').addEventListener('click',downloadBackup);
 $('#healthRefresh').addEventListener('click',refreshServerHealth);
 $('#allRefresh').addEventListener('click',()=>{refreshServerHealth();refresh();refreshAudit()});
 $('#auditRefresh').addEventListener('click',refreshAudit);
-$('#refresh').addEventListener('click',refresh);$('#serverUrl').addEventListener('change',saveServer);
+$('#refresh').addEventListener('click',refresh);$('#serverUrl').addEventListener('change',saveServer);$('#plan').addEventListener('change',()=>{const creator=$('#plan').value.startsWith('CREATOR');if(creator){$('#maxTables').value='1';$('#provisionTable').value='LIVE'}else if($('#provisionTable').value==='LIVE'){$('#provisionTable').value='01桌'}});
 load();
 })();
 </script>
