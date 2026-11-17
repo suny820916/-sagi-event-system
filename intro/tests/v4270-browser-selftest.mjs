@@ -119,9 +119,10 @@ server.listen(PORT,'127.0.0.1',async()=>{
   console.log('TEST 1C: director can edit broadcast short names without changing canonical fixture identity');
   await control.goto('http://127.0.0.1:'+PORT+'/intro/v45-lan.html',{waitUntil:'domcontentloaded'});
   await control.waitForFunction(()=>document.querySelector('#mdHomeShort')&&document.querySelector('#mdAwayShort'),null,{timeout:8000});
+  const canonicalBefore={home:graphics.home,away:graphics.away,fixtureKey:graphics.fixtureKey};
   await control.fill('#mdHomeShort','塔城地区');await control.dispatchEvent('#mdHomeShort','change');
   await control.fill('#mdAwayShort','阿勒泰');await control.dispatchEvent('#mdAwayShort','change');await wait(900);
-  assert(graphics.home==='新疆塔城地区青年足球俱乐部'&&graphics.away==='ALTAI YOUTH FOOTBALL CLUB','editing broadcast name changed canonical fixture identity');
+  assert(graphics.home===canonicalBefore.home&&graphics.away===canonicalBefore.away,'editing broadcast name changed canonical fixture identity: '+JSON.stringify({before:canonicalBefore,after:{home:graphics.home,away:graphics.away,fixtureKey:graphics.fixtureKey}}));
   assert(graphics.scoreHomeName==='塔城地区'&&graphics.scoreAwayName==='阿勒泰','broadcast short names were not published: '+JSON.stringify({home:graphics.scoreHomeName,away:graphics.scoreAwayName}));
   await page.waitForFunction(()=>document.querySelector('#sbHome')?.textContent==='塔城地区'&&document.querySelector('#sbAway')?.textContent==='阿勒泰',null,{timeout:5000});
   await page.screenshot({path:'selftest-artifacts/01c-broadcast-short-names.png'});
