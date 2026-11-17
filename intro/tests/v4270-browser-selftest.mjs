@@ -276,7 +276,7 @@ server.listen(PORT,'127.0.0.1',async()=>{
   }));
   assert(loadedProject.competition==='TORANHE PROJECT CUP'&&loadedProject.home==='乌苏叶克备'&&loadedProject.away==='IPF','stored project match identity was not restored: '+JSON.stringify(loadedProject));
   assert(loadedProject.mmHomeName==='乌苏叶克备'&&loadedProject.mmAwayName==='IPF','mobile match control drifted from fixture identity: '+JSON.stringify(loadedProject));
-  assert(loadedProject.mirroredHome==='乌苏叶克备'&&loadedProject.mirroredAway==='IPF'&&loadedProject.mirrorReadonly,'legacy short-name fields are still independent/live-editable');
+  assert(loadedProject.mirroredHome==='乌苏叶克备'&&loadedProject.mirroredAway==='IPF'&&!loadedProject.mirrorReadonly,'broadcast short-name fields did not remain editable after project load: '+JSON.stringify(loadedProject));
   assert(loadedProject.mdHomeScore==='3'&&loadedProject.mdAwayScore==='1','selected project matchday was overwritten by stale Bridge state: '+loadedProject.mdHomeScore+'-'+loadedProject.mdAwayScore);
   const compactProjects=JSON.parse(loadedProject.localProjects||'[]');
   const compactProject=compactProjects.find(x=>x.id===storedProject.id);
