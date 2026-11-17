@@ -2101,9 +2101,17 @@ function mdApplyRecovered(x){
  }
  mdNormalizeMatchMode();return true
 }
+function mdIdentityNorm(v){return String(v||'').trim().toLowerCase().replace(/\s+/g,' ')}
+function mdIdentityGeneric(v){return !v||['home','away','主队','客队','team home','team away'].includes(mdIdentityNorm(v))}
+function mdBridgeMatchesCurrent(x){
+ const ch=String(q('matchHome').value||'').trim(),ca=String(q('matchAway').value||'').trim(),bh=String(x&&x.home||'').trim(),ba=String(x&&x.away||'').trim();
+ if(mdIdentityGeneric(ch)||mdIdentityGeneric(ca)||mdIdentityGeneric(bh)||mdIdentityGeneric(ba))return true;
+ return mdIdentityNorm(ch)===mdIdentityNorm(bh)&&mdIdentityNorm(ca)===mdIdentityNorm(ba)
+}
 async function recoverMatchdayFromBridge(showNote=false){
  try{
    const x=await lanJson('/api/matchday?recover='+Date.now());
+   if(x&&x.commandId&&!mdBridgeMatchesCurrent(x)){if(showNote)note('Bridge 是另一场比赛 · 已忽略旧比分状态');return false}
    if(x&&x.commandId&&mdApplyRecovered(x)){refreshMatchdayUI();mdRenderLog();mdPersist();if(showNote){vdSave();if(matchdayState.overlayVisible)publishVmixDirector('OverlayInput'+vmixDirectorSettings.overlay+'In',vmixDirectorSettings.graphics,0,'RESTORE 图形开启');else publishVmixDirector('OverlayInput'+vmixDirectorSettings.overlay+'Out','',0,'RESTORE 图形关闭');note('已从 Bridge 恢复比赛状态与 Overlay')}return true}
  }catch(e){}
  if(showNote)note('Bridge 暂无可恢复比赛状态');return false
