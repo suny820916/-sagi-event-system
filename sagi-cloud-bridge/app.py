@@ -1076,10 +1076,10 @@ def synthesize_eleven(text, voice_id, output_path, speed=1.0, style="natural", m
     voice_settings = {
         "stability": cfg["stability"],
         "similarity_boost": cfg["similarity"],
-        "use_speaker_boost": True,
     }
     # Eleven v4 intentionally exposes only stability/similarity controls.
     if not model_id.startswith("eleven_v4"):
+        voice_settings["use_speaker_boost"] = True
         voice_settings["style"] = cfg["style"]
         voice_settings["speed"] = max(0.75, min(1.25, float(speed or 1.0) * float(cfg.get("speed_bias") or 1.0)))
     payload = {
