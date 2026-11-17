@@ -1464,6 +1464,8 @@ function normalizeEvent(raw,context={}){
     side,
     team:safeText(raw.team||teamFallback,80),
     at:safeText(raw.at,24),
+    eventId:safeText(raw.eventId,128),
+    sequence:(Number.isSafeInteger(raw.sequence)&&raw.sequence>=0)?raw.sequence:null,
     __signatureVersion:VERSION
   };
   if(type==='CLEAR_EVENT'){
@@ -1508,6 +1510,9 @@ function holdMs(type,fallback=5200){
 }
 function eventKey(event){
   const e=normalizeEvent(event)||{type:'CLEAR_EVENT'};
+  if(e.eventId) return 'id|'+e.eventId;
+  if(e.sequence!==null&&e.sequence!==undefined) return 'seq|'+String(e.sequence);
+  // Legacy metadata fallback: not a reliable identity for scoring or deduplication.
   const player=e.player&&e.player.id||e.player&&e.player.number||'';
   const on=e.on&&e.on.id||e.on&&e.on.number||'';
   const off=e.off&&e.off.id||e.off&&e.off.number||'';
