@@ -76,25 +76,24 @@ server.listen(PORT,'127.0.0.1',async()=>{
    const br=bug.getBoundingClientRect(),hr=h.getBoundingClientRect(),ar=a.getBoundingClientRect(),mr=mid.getBoundingClientRect(),brandr=brand.getBoundingClientRect(),logoStyle=getComputedStyle(logo);
    return {home:h.textContent,away:a.textContent,homeOverflow:getComputedStyle(h).textOverflow,awayOverflow:getComputedStyle(a).textOverflow,homeFont:parseFloat(getComputedStyle(h).fontSize),awayFont:parseFloat(getComputedStyle(a).fontSize),homeInside:hr.left>=br.left-1&&hr.right<=br.right+1,awayInside:ar.left>=br.left-1&&ar.right<=br.right+1,bugRight:br.right,midTop:mr.top,bugTop:br.top,bugHeight:br.height,brandWidth:brandr.width,logoWidth:logo.getBoundingClientRect().width,logoSrc:logo.getAttribute('src')||'',logoDisplay:logoStyle.display,stopText:stop.textContent,stopDisplay:getComputedStyle(stop).display,burstWidth:burst.getBoundingClientRect().width,goalExpand:bug.classList.contains('goalExpand'),paper:getComputedStyle(document.querySelector('.sbTeamBlock.home')).backgroundColor};
   },{HOME,AWAY});
-  assert(regular.home==='新疆塔城地区'&&regular.away==='AYFC','broadcast score names changed: '+JSON.stringify({home:regular.home,away:regular.away}));
+  assert(regular.home===HOME&&regular.away===AWAY,'regular scorebug did not preserve full canonical team names: '+JSON.stringify({home:regular.home,away:regular.away}));
   assert(regular.homeOverflow!=='ellipsis'&&regular.awayOverflow!=='ellipsis','ellipsis returned');
   assert(regular.homeFont>=11&&regular.awayFont>=11,'team name below readable floor');
   assert(regular.homeInside&&regular.awayInside,'team name clipped outside main scorebar');
-  assert((regular.bugRight-42)<=540,'regular scorebar is still too long: '+(regular.bugRight-42));
-  assert(regular.midTop>=regular.bugTop+regular.bugHeight-1,'clock ribbon is not below main scorebar');
-  assert(regular.brandWidth>=60&&regular.logoWidth>=60,'event logo is not visually large enough');
+  assert(Math.abs(regular.midTop-regular.bugTop)<1&&regular.bugHeight===50,'clock is not on the same 50px score row: '+JSON.stringify({midTop:regular.midTop,bugTop:regular.bugTop,bugHeight:regular.bugHeight}));
+  assert(regular.brandWidth>=44&&regular.brandWidth<=48&&regular.logoWidth>=38&&regular.logoWidth<=44,'event identity is not compact enough: '+JSON.stringify({brandWidth:regular.brandWidth,logoWidth:regular.logoWidth}));
   assert(regular.logoSrc.startsWith('data:image/svg+xml'),'offline TORANHE event logo is not embedded');
   assert(regular.logoDisplay!=='none','event logo hidden');
   const identityFusion=await page.evaluate(()=>{
     const brand=document.querySelector('.sbEventBrand'),mid=document.querySelector('.sbMid'),home=document.querySelector('.sbTeamBlock.home'),bug=document.querySelector('#scoreBug');
     const br=brand.getBoundingClientRect(),mr=mid.getBoundingClientRect(),hr=home.getBoundingClientRect(),bugr=bug.getBoundingClientRect();
-    return{brandH:br.height,brandW:br.width,brandBottom:br.bottom,midTop:mr.top,midLeft:mr.left,brandRight:br.right,homeLeft:hr.left,bugLeft:bugr.left,homeClip:getComputedStyle(home).clipPath};
+    return{brandH:br.height,brandW:br.width,brandTop:br.top,midTop:mr.top,brandRight:br.right,homeLeft:hr.left,bugLeft:bugr.left,homeClip:getComputedStyle(home).clipPath};
   });
-  assert(identityFusion.brandH>=78&&identityFusion.brandW>=64,'event identity block is not integrated/tall enough: '+JSON.stringify(identityFusion));
-  assert(identityFusion.midLeft<=identityFusion.brandRight-4&&Math.abs(identityFusion.midTop-(identityFusion.brandBottom-27))<=2,'clock rail is not fused into event identity: '+JSON.stringify(identityFusion));
-  assert(identityFusion.homeLeft<identityFusion.brandRight&&identityFusion.homeClip!=='none','score ribbon does not tuck into event identity: '+JSON.stringify(identityFusion));
+  assert(identityFusion.brandH===50&&identityFusion.brandW>=44&&identityFusion.brandW<=48,'event identity block is not compact 50px geometry: '+JSON.stringify(identityFusion));
+  assert(Math.abs(identityFusion.midTop-identityFusion.brandTop)<1,'clock is not aligned to event identity row: '+JSON.stringify(identityFusion));
+  assert(Math.abs(identityFusion.homeLeft-identityFusion.brandRight)<2&&identityFusion.homeClip==='none','full-name team ribbon is not cleanly fused to event identity: '+JSON.stringify(identityFusion));
   const scorePair=await page.evaluate(()=>{
-    const h=document.querySelector('#sbHomeScoreWrap'),a=document.querySelector('#sbAwayScoreWrap'),hc=getComputedStyle(h),ac=getComputedStyle(a),dash=getComputedStyle(h,':before');
+    const h=document.querySelector('#sbHomeScoreWrap'),a=document.querySelector('#sbAwayScoreWrap'),hc=getComputedStyle(h),ac=getComputedStyle(a),dash=getComputedStyle(h,':after');
     const hr=h.getBoundingClientRect(),ar=a.getBoundingClientRect(),crest=document.querySelector('#sbHomeCrest').getBoundingClientRect(),team=document.querySelector('.sbTeamBlock.home').getBoundingClientRect();
     return{gap:Math.round((ar.left-hr.right)*100)/100,combined:ar.right-hr.left,hBg:hc.backgroundColor,aBg:ac.backgroundColor,dash:dash.content,crestW:crest.width,teamW:team.width};
   });
@@ -115,7 +114,7 @@ server.listen(PORT,'127.0.0.1',async()=>{
     const root=getComputedStyle(document.documentElement),brand=document.querySelector('.sbEventBrand'),match=document.querySelector('.matchCardStage'),evt=document.querySelector('#eventCard');
     const midStyle=getComputedStyle(document.querySelector('.sbMid'));return{blue:root.getPropertyValue('--sagiStageBlue').trim(),brandRadius:parseFloat(getComputedStyle(brand,':before').borderTopLeftRadius),matchRadius:parseFloat(getComputedStyle(match).borderTopLeftRadius),eventRadius:parseFloat(getComputedStyle(evt).borderTopLeftRadius),timeLeftRadius:parseFloat(midStyle.borderBottomLeftRadius),timeRightRadius:parseFloat(midStyle.borderBottomRightRadius)}
   });
-  assert(stageSystem.blue==='#071d57'&&stageSystem.brandRadius>=12&&stageSystem.matchRadius>=24&&stageSystem.eventRadius>=14&&stageSystem.timeLeftRadius===0&&stageSystem.timeRightRadius>=8,'SAGI STAGE integrated broadcast system not applied: '+JSON.stringify(stageSystem));
+  assert(stageSystem.blue==='#071d57'&&stageSystem.brandRadius>=8&&stageSystem.matchRadius>=24&&stageSystem.eventRadius>=14&&stageSystem.timeLeftRadius===0&&stageSystem.timeRightRadius>=8,'SAGI STAGE compact broadcast system not applied: '+JSON.stringify(stageSystem));
   await page.screenshot({path:'selftest-artifacts/01-regular-toranhe-scorebug.png'});
 
   console.log('TEST 1A: score change uses restrained vertical roll without moving the clock rail');
