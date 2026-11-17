@@ -17,7 +17,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="format-detection" content="telephone=no">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%2307090d%22/%3E%3Ctext x=%2232%22 y=%2243%22 text-anchor=%22middle%22 font-size=%2234%22 fill=%22%23d8b55b%22%3ES%3C/text%3E%3C/svg%3E">
-<title>SAGI V4.27.4 · 镜头安全引擎</title>
+<title>SAGI V4.27.5 · 镜头安全引擎</title>
 <style>
 :root{--bg:#07090d;--panel:#11151c;--line:#2b3340;--text:#f4f0e8;--muted:#8f97a5;--gold:#d8b55b;--green:#72c79a}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
@@ -186,6 +186,11 @@ button,.fileBtn{border:0;border-radius:12px;background:#262d37;color:#fff;font-w
 .mdClock{font-size:42px;font-weight:1000;text-align:center;font-variant-numeric:tabular-nums;letter-spacing:1px}.mdPeriod{text-align:center;color:#d8b55b;font-size:10px;font-weight:900;letter-spacing:2px;margin-top:2px}
 .mdClockBtns,.mdEventBtns{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}.mdClockBtns button,.mdEventBtns button{min-height:38px;font-size:10px;padding:6px}
 .mdGoal{background:#1c5137!important}.mdYellow{background:#6c5b12!important;color:#fff0a5!important}.mdRed{background:#63252b!important}.mdSub{background:#173e55!important}.mdMvp{background:#5b4720!important;color:#f3d98f!important}.mdState{background:#252c36!important}
+.mdYellow,.mdRed,.mmMacroYellow,.mmMacroRed{display:flex!important;align-items:center;justify-content:center;gap:8px}
+.refCardIcon{display:inline-block;width:12px;height:17px;flex:0 0 12px;border-radius:2px;transform:rotate(-3deg);box-shadow:0 3px 8px #0008,inset 0 0 0 1px #ffffff45}
+.refCardIcon.yellow{background:linear-gradient(155deg,#ffe85b,#f2d536 55%,#d8b900)}
+.refCardIcon.red{background:linear-gradient(155deg,#ff5c66,#e33440 55%,#b81724)}
+.mmMacroYellow .refCardIcon,.mmMacroRed .refCardIcon{width:11px;height:16px;flex-basis:11px}
 .mdInputs{display:grid;grid-template-columns:1fr 1.5fr;gap:7px}.mdInputs select,.mdInputs input{padding:8px;font-size:12px}
 .mdBottom{display:grid;grid-template-columns:1.35fr 1fr 1fr;gap:10px;margin-top:10px}.mdSubGrid{display:grid;grid-template-columns:.8fr 1.2fr 1.2fr;gap:7px}
 .mdActions{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}.mdActions button{min-height:42px;font-size:11px}
@@ -333,7 +338,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 }
 
 
-/* ===== V4.27.4 SHOT SAFETY ENGINE ===== */
+/* ===== V4.27.5 SHOT SAFETY ENGINE ===== */
 .stage{--teamAccent:#d8b55b}
 .stage .teamSub,.stage .groupTitle,.stage .formationText{color:var(--teamAccent)}
 .stage .groupLine{background:linear-gradient(90deg,var(--teamAccent),#fff,transparent)}
@@ -377,7 +382,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 @keyframes plRowIn{from{opacity:0;transform:translateX(-24px)}to{opacity:1;transform:translateX(0)}}
 
 
-/* ===== V4.27.4 SHOT SAFETY ENGINE CONTROL ===== */
+/* ===== V4.27.5 SHOT SAFETY ENGINE CONTROL ===== */
 .matchdayDesk{border-color:#414a57;background:linear-gradient(180deg,#0e141c,#080b10);box-shadow:0 24px 64px #0008}
 .mdTitle{color:#f2f4f7;font-size:15px}.mdTitle:before{content:"LIVE";display:inline-flex;align-items:center;justify-content:center;margin-right:9px;padding:4px 7px;border-radius:5px;background:#ef343c;color:#fff;font-size:8px;letter-spacing:1.5px;vertical-align:2px}
 .mdPanel{background:linear-gradient(180deg,#0a0f15,#070a0f);border-color:#313a46;box-shadow:0 1px 0 #ffffff08 inset}
@@ -392,7 +397,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 .mdMvp{background:linear-gradient(135deg,#806424,#b78c34)!important}
 
 
-/* ===== V4.27.4 SHOT SAFETY ENGINE ===== */
+/* ===== V4.27.5 SHOT SAFETY ENGINE ===== */
 .gdBar{display:grid;grid-template-columns:minmax(210px,1.6fr) auto auto 120px 120px auto;gap:8px;align-items:center;margin:0 0 10px;padding:9px 10px;border:1px solid #33404d;border-radius:13px;background:linear-gradient(90deg,#071019,#0b131c)}
 .gdIdentity{min-width:0}.gdIdentity b{display:block;font-size:11px;letter-spacing:2px;color:#f3f5f7}.gdIdentity span{display:block;margin-top:3px;font-size:9px;letter-spacing:1px;color:#72d99c}.gdIdentity span.busy{color:#f0c96b}.gdIdentity span.manual{color:#77bfff}.gdIdentity span.error{color:#ff777d}
 .gdSwitch{margin:0;display:flex;align-items:center;gap:7px;height:38px;padding:0 10px;border:1px solid #303b48;border-radius:9px;background:#0a0f15;color:#cbd3dc;font-size:10px;font-weight:900;white-space:nowrap}.gdSwitch input{width:16px;height:16px;margin:0;accent-color:#d8b55b}
@@ -402,7 +407,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 @media(max-width:650px){.gdBar{grid-template-columns:1fr 1fr}.gdIdentity{grid-column:1/3}.gdAbort{grid-column:1/3}.gdField select{height:36px}}
 
 
-/* ===== V4.27.4 SHOT SAFETY ENGINE ===== */
+/* ===== V4.27.5 SHOT SAFETY ENGINE ===== */
 .smartDirector{margin:0 0 10px;padding:10px;border:1px solid #344250;border-radius:14px;background:linear-gradient(135deg,#071019,#0c1620)}
 .sdHead{display:flex;align-items:center;gap:8px;margin-bottom:8px}.sdHead>div:first-child{margin-right:auto}.sdHead b{display:block;font-size:11px;letter-spacing:2px;color:#f2f5f7}.sdHead span{font-size:9px;color:#7f8b98;letter-spacing:1px}
 .sdCue{display:grid;grid-template-columns:92px minmax(0,1fr) 74px 104px;gap:9px;align-items:center;padding:9px;border:1px solid #2b3743;border-radius:11px;background:#070c12}
@@ -414,7 +419,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 @media(max-width:760px){.sdHead{flex-wrap:wrap}.sdCue{grid-template-columns:80px 1fr 66px}.sdExecute{grid-column:1/4}.sdReason{white-space:normal}.sdSlot{height:44px}}
 
 
-/* ===== V4.27.4 SHOT SAFETY ENGINE ===== */
+/* ===== V4.27.5 SHOT SAFETY ENGINE ===== */
 .cameraRoleMap{align-items:stretch}.cameraRoleItem{display:grid;grid-template-columns:1fr;gap:5px}.cameraRoleItem input{font-weight:1000}.cameraRoleItem select{padding:7px 9px;border-radius:9px;font-size:11px;color:#d9e5ef;background:#0b1118;border-color:#344454}
 .cameraRoleHint{height:34px;display:flex;align-items:center;padding:0 9px;border:1px solid #2e3945;border-radius:9px;background:#0a0f15;color:#71808e;font-size:9px;font-weight:900;letter-spacing:1px}
 .cameraRoleSummary{display:flex;align-items:center;gap:10px;margin-top:8px;padding:8px 10px;border:1px solid #2d3c49;border-radius:10px;background:#081019}.cameraRoleSummary b{font-size:9px;letter-spacing:1.5px;color:#8fd2ff}.cameraRoleSummary span{min-width:0;font-size:9px;color:#92a0ad;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -424,7 +429,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 .sdSlot{flex-direction:column;line-height:1.05}.sdSlot small{display:block;margin-top:4px;font-size:7px;color:#788b9c;letter-spacing:.4px}
 
 
-/* ===== V4.27.4 SHOT SAFETY ENGINE ===== */
+/* ===== V4.27.5 SHOT SAFETY ENGINE ===== */
 .shotSafety{margin:0 0 10px;padding:10px;border:1px solid #36414c;border-radius:14px;background:linear-gradient(135deg,#0a0f14,#0a1219)}
 .ssHead{display:flex;align-items:center;gap:8px}.ssHead>div:first-child{margin-right:auto}.ssHead b{display:block;font-size:11px;letter-spacing:2px;color:#f1f4f6}.ssHead span{display:block;margin-top:3px;font-size:9px;color:#78dda4;letter-spacing:1px}.ssHead span.locked{color:#ffca6e}.ssHead span.blocked{color:#ff8187}
 .ssAttack{min-height:38px!important;background:linear-gradient(135deg,#8a5c13,#b87d1c)!important;color:#fff4d5!important;border:1px solid #c79237!important;font-size:10px!important}
@@ -435,7 +440,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 @media(max-width:760px){.ssHead{flex-wrap:wrap}.ssHead>div:first-child{width:100%;margin-right:0}.ssGrid{grid-template-columns:1fr 1fr}.ssAttack{flex:1}.ssNow{min-height:50px}}
 
 
-/* V4.27.4 本机预监：仅战术分组显示战术板 */
+/* V4.27.5 本机预监：仅战术分组显示战术板 */
 .stage.group-SUB .formationBox,
 .stage.group-TEAM .formationBox,
 .stage.group-STING .formationBox,
@@ -443,7 +448,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 .stage.group-COUNTDOWN .formationBox{display:none!important}
 
 
-/* ===== V4.27.4 职业节目导演台 ===== */
+/* ===== V4.27.5 职业节目导演台 ===== */
 .showDirectorPro{padding:14px;border:1px solid #374454;border-radius:18px;background:linear-gradient(180deg,#0a0f15,#070a0f);box-shadow:0 22px 55px #0007,0 1px 0 #ffffff08 inset}
 .proHead{margin-bottom:12px}.proHead>div:first-child b{display:block;font-size:14px;letter-spacing:1.6px;color:#f4f6f8}.proHead>div:first-child span{display:block;margin-top:4px;font-size:9px;color:#7f8b98;letter-spacing:1px}
 .pdLiveBadge{padding:6px 10px;border-radius:999px;border:1px solid #39434f;background:#121820;color:#8995a2;font-size:9px;font-weight:1000;letter-spacing:1.2px}.pdLiveBadge.live{background:#4c1115;border-color:#a83239;color:#ff8c92;box-shadow:0 0 22px #e8454533}.pdLiveBadge.hold{background:#4d3a12;border-color:#8a6d25;color:#f2d678}.pdLiveBadge.done{background:#123422;border-color:#2f6d49;color:#8ae0ad}
@@ -459,7 +464,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 @media(max-width:760px){.pdHero{grid-template-columns:1fr}.pdFlowArrow{display:none}.pdCue{min-height:86px}.pdStats{grid-template-columns:1fr 1fr}.pdTransport{grid-template-columns:1fr 1fr}.pdStart,.pdNextBtn{grid-column:span 1}.pdStop{grid-column:1/3}.pdTimelineLegend{display:none}.showDirectorPro .showStep{grid-template-columns:28px 48px 1fr 68px 72px}.showDirectorPro .showStep .showTransition,.showDirectorPro .showStep .showCue,.showDirectorPro .showStep .showEnable,.showDirectorPro .showStep .showMove{grid-column:auto}.showDirectorPro .showStep .showTake{grid-column:3/6}.showDirectorPro .showStep .showState{display:none}}
 
 
-/* ===== V4.27.4 赛前转播包装 PRO ===== */
+/* ===== V4.27.5 赛前转播包装 PRO ===== */
 .matchOverlay{--homeAccent:#d8b55b;--awayAccent:#4c7dff;align-items:center;justify-content:center;background:radial-gradient(circle at 14% 50%,var(--homeAccent) 0,transparent 24%),radial-gradient(circle at 86% 50%,var(--awayAccent) 0,transparent 24%),linear-gradient(120deg,#05070a 0,#0a1017 48%,#05070a 100%);overflow:hidden}
 .matchOverlay:before{content:"";position:absolute;inset:-20%;background:repeating-linear-gradient(118deg,#ffffff05 0 2px,transparent 2px 38px);transform:rotate(-4deg);opacity:.55}
 .matchCardStage{width:1540px;height:770px;padding:0;border:0;background:#080d13f2;box-shadow:0 40px 120px #000c;position:relative;overflow:hidden}
@@ -493,7 +498,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 .stage.group-DF .playerCard,.stage.group-MF .playerCard,.stage.group-FW .playerCard{max-width:285px}
 
 
-/* V4.27.4 开场标识 + 倒计时统一包装 */
+/* V4.27.5 开场标识 + 倒计时统一包装 */
 .stingOverlay{background:radial-gradient(circle at 50% 45%,#182633 0,#081018 42%,#020405 100%);overflow:hidden}
 .stingOverlay:before{content:"";position:absolute;inset:-20%;background:repeating-linear-gradient(112deg,#ffffff06 0 2px,transparent 2px 44px);opacity:.5}
 .stingCore{position:relative;z-index:2;min-width:720px;padding:70px 95px;border-top:1px solid #ffffff1f;border-bottom:1px solid #ffffff14;background:linear-gradient(90deg,transparent,#071019d9 15% 85%,transparent)}
@@ -504,7 +509,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 .countdownLabel{font-size:15px;letter-spacing:7px;color:#aab5c0}.countdownNumber{font-size:260px;letter-spacing:-13px;line-height:.9;text-shadow:none}.countdownSub{font-size:20px;color:#fff;letter-spacing:3px;margin-top:24px}
 
 
-/* ===== V4.27.4 点球大战导演 ===== */
+/* ===== V4.27.5 点球大战导演 ===== */
 .penaltyDirector{border-color:#44505c;background:linear-gradient(145deg,#0a1016,#080d12)}
 .penSetup{display:grid;grid-template-columns:1fr 1fr 1.2fr;gap:7px}.penSetup label span{display:block;margin-bottom:4px;font-size:8px;color:#7f8b97;letter-spacing:1px}.penSetup select,.penSetup button{height:40px}
 .penStart{background:linear-gradient(135deg,#1c6747,#3c9d6a)!important;color:#fff!important}
@@ -518,7 +523,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 @media(max-width:760px){.penSetup{grid-template-columns:1fr 1fr}.penStart{grid-column:1/3}.penScoreBoard{grid-template-columns:1fr 105px 1fr}.penTeam b{font-size:34px}.penKickGrid{grid-template-columns:1fr 1fr}.penOps{grid-template-columns:1fr 1fr}}
 
 
-/* ===== V4.27.4 SAGI PK ARENA · 创意点球记分牌 · 极简控制 ===== */
+/* ===== V4.27.5 SAGI PK ARENA · 创意点球记分牌 · 极简控制 ===== */
 .mmPenaltyDirector{display:none!important}
 .simplePenaltyControl{border-color:#415163;background:linear-gradient(145deg,#0a1016,#071019)}
 .spControlScore{display:grid;grid-template-columns:1fr 120px 1fr;gap:8px;align-items:center;padding:10px;border:1px solid #2f3c49;border-radius:12px;background:#060b10;text-align:center}
@@ -530,7 +535,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 @media(max-width:760px){.spControlScore{grid-template-columns:1fr 92px 1fr}.spBigButtons button{min-height:78px!important;font-size:22px!important}.spSmallButtons{grid-template-columns:1fr 1fr}.spSmallButtons .danger{grid-column:1/3}}
 
 
-/* V4.27.4 点球罚失显示 */
+/* V4.27.5 点球罚失显示 */
 .spMissButtons{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:7px}.spMissButtons .spMiss{min-height:42px!important;background:#3c171b!important;border-color:#763139!important;color:#ff9aa1!important;font-weight:1000!important}
 .spControlDot.miss{background:#e9525b;border-color:#ff9aa1;position:relative;box-shadow:0 0 8px #e9525b55}.spControlDot.miss:after{content:"×";position:absolute;left:50%;top:50%;transform:translate(-50%,-56%);font-size:8px;color:#fff;font-weight:1000}
 
@@ -538,7 +543,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 </head>
 <body>
 <div class="app">
-  <div class="top"><div><div class="brand">SAGI 赛事直播导播</div><div class="sub">V4.27.4 · 镜头安全引擎 · 比赛设置</div></div><div class="topRight"><div class="ver">V4.27.4</div><button id="mobileUpdateBtn" class="mobileUpdateBtn" type="button">↻ 安全更新</button><button id="mobileRollbackBtn" class="mobileRollbackBtn" type="button">↶ 回退上一版</button><div id="mobileUpdateStatus" class="mobileUpdateStatus">V4.27.4 · 镜头安全引擎 · 桥接服务已锁定</div></div></div>
+  <div class="top"><div><div class="brand">SAGI 赛事直播导播</div><div class="sub">V4.27.5 · 镜头安全引擎 · 比赛设置</div></div><div class="topRight"><div class="ver">V4.27.5</div><button id="mobileUpdateBtn" class="mobileUpdateBtn" type="button">↻ 安全更新</button><button id="mobileRollbackBtn" class="mobileRollbackBtn" type="button">↶ 回退上一版</button><div id="mobileUpdateStatus" class="mobileUpdateStatus">V4.27.5 · 镜头安全引擎 · 桥接服务已锁定</div></div></div>
 
   <div id="pwaBar" class="pwaBar" style="display:none">
     <div class="pwaInfo">
@@ -560,7 +565,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 
   <div id="setupDesk" class="setupDesk">
     <div class="setupHead">
-      <div class="setupTitle">比赛设置 · 比赛设置<small>V4.27.4 · 广播动效引擎 · 就绪检查</small></div>
+      <div class="setupTitle">比赛设置 · 比赛设置<small>V4.27.5 · 广播动效引擎 · 就绪检查</small></div>
       <div id="setupReadyBadge" class="setupReadyBadge">未就绪</div>
     </div>
     <div class="setupGrid">
@@ -689,7 +694,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
       <div class="mmPanel mmScoreOnly">
         <div class="mmPanelTitle">一键事件</div>
         <div class="mmRow"><select id="mmEventSide"><option value="HOME">主队</option><option value="AWAY">客队</option></select><select id="mmEventPlayer"><option value="">球员可选</option></select></div>
-        <div class="mmRow3" style="margin-top:6px"><button id="mmGoalMacro" class="mmMacroGoal" type="button">⚽ 进球宏</button><button id="mmYellowMacro" class="mmMacroYellow" type="button">▮ 黄牌宏</button><button id="mmRedMacro" class="mmMacroRed" type="button">▮ 红牌宏</button></div>
+        <div class="mmRow3" style="margin-top:6px"><button id="mmGoalMacro" class="mmMacroGoal" type="button">⚽ 进球宏</button><button id="mmYellowMacro" class="mmMacroYellow" type="button"><span class="refCardIcon yellow" aria-hidden="true"></span><span>黄牌宏</span></button><button id="mmRedMacro" class="mmMacroRed" type="button"><span class="refCardIcon red" aria-hidden="true"></span><span>红牌宏</span></button></div>
         <div class="mmRow" style="margin-top:6px"><button id="mmHalf" type="button">半场结束</button><button id="mmFull" type="button">全场结束</button></div>
         <div class="mmPanelTitle" style="margin-top:9px">换人快捷操作</div>
         <div class="mmRow3"><select id="mmSubSide"><option value="HOME">主队</option><option value="AWAY">客队</option></select><select id="mmSubOff"><option value="">换下</option></select><select id="mmSubOn"><option value="">换上</option></select></div>
@@ -729,7 +734,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 
   <div class="vmixDirector">
     <div class="vdHead">
-      <div class="vdTitle">V4.27.4 · vMix 导播控制 <small>赛事直播导播</small></div>
+      <div class="vdTitle">V4.27.5 · vMix 导播控制 <small>赛事直播导播</small></div>
       <div id="vdStatus" class="vdStatus">局域网桥接待命</div>
     </div>
     <div class="vdGrid">
@@ -830,7 +835,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 
   <div class="matchdayDesk">
     <div class="mdHead">
-      <div class="mdTitle">V4.27.4 · 比赛模式 <small>镜头安全引擎 · 安全自动</small></div>
+      <div class="mdTitle">V4.27.5 · 比赛模式 <small>镜头安全引擎 · 安全自动</small></div>
       <div id="mdSync" class="mdSync"><span id="mdSyncDot" class="mdLiveDot"></span>比赛图形待命</div>
     </div>
     <div class="gdBar">
@@ -946,8 +951,8 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
         </div>
         <div class="mdEventBtns">
           <button id="mdGoalBtn" class="mdGoal" type="button">⚽ 进球</button>
-          <button id="mdYellowBtn" class="mdYellow" type="button">▮ 黄牌</button>
-          <button id="mdRedBtn" class="mdRed" type="button">▮ 红牌</button>
+          <button id="mdYellowBtn" class="mdYellow" type="button"><span class="refCardIcon yellow" aria-hidden="true"></span><span>黄牌</span></button>
+          <button id="mdRedBtn" class="mdRed" type="button"><span class="refCardIcon red" aria-hidden="true"></span><span>红牌</span></button>
         </div>
         <div id="mdEventStatus" class="mdEventStatus">选择球队和球员后触发直播图形</div>
       </div>
@@ -1237,7 +1242,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
             </div>
           </div>
         </div>
-        <div class="statusBar"><div id="status" class="status">V4.27.4 · SHOT SAFETY ENGINE 已就绪</div><div class="mini">1920 × 1080</div></div>
+        <div class="statusBar"><div id="status" class="status">V4.27.5 · SHOT SAFETY ENGINE 已就绪</div><div class="mini">1920 × 1080</div></div>
       </div>
     </div>
   </div>
@@ -1731,7 +1736,7 @@ async function importPhonePrematchPackage(file){
 
   let hc=Array.isArray(core.teams.HOME.roster)?core.teams.HOME.roster.length:0,ac=Array.isArray(core.teams.AWAY.roster)?core.teams.AWAY.roster.length:0;
 
-  // V4.27.4 fallback: recover from ROSTER_BACKUP.json when primary core rosters are empty.
+  // V4.27.5 fallback: recover from ROSTER_BACKUP.json when primary core rosters are empty.
   if((!hc||!ac)&&backup&&backup.teams&&backup.teams.HOME&&backup.teams.AWAY){
     const bh=Array.isArray(backup.teams.HOME.roster)?backup.teams.HOME.roster:[],ba=Array.isArray(backup.teams.AWAY.roster)?backup.teams.AWAY.roster:[];
     if(!hc&&bh.length)core.teams.HOME={...(core.teams.HOME||{}),formation:backup.teams.HOME.formation||core.teams.HOME.formation,roster:bh};
@@ -2156,7 +2161,7 @@ function mdCloudSnapshot(event=null){
  return{
   commandId:Date.now()+'_'+Math.random().toString(36).slice(2,7),
   revision,fixtureKey:mdFixtureKey(),
-  visualVersion:'V4.27.4-LIVE-SCORE-GOAL-DIRECTOR',
+  visualVersion:'V4.27.5-LIVE-SCORE-GOAL-DIRECTOR',
   home:homeName,away:awayName,homeShort:homeName,awayShort:awayName,
   homeCrest:(teamStore.HOME&&teamStore.HOME.crest)||'',awayCrest:(teamStore.AWAY&&teamStore.AWAY.crest)||'',eventLogo:assets.eventLogo||'data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20256%20239%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2348cf35%22%2F%3E%3Cstop%20offset%3D%22.45%22%20stop-color%3D%22%230a8b4a%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23005432%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Cpath%20d%3D%22M%20133%20184%20L%20133%20213%20L%20134%20214%20L%20134%20222%20L%20135%20223%20L%20136%20231%20L%20137%20232%20L%20144%20232%20L%20164%20226%20L%20165%20224%20L%20162%20219%20L%20142%20199%20Z%20M%20129%20184%20L%20120%20199%20L%20113%20207%20L%20101%20218%20L%2097%20225%20L%20103%20228%20L%20109%20229%20L%20113%20231%20L%20126%20232%20L%20126%20228%20L%20128%20222%20L%20128%20216%20L%20129%20215%20Z%20M%2028%2083%20L%2029%2096%20L%2034%20108%20L%2041%20118%20L%2050%20126%20L%2061%20132%20L%2070%20133%20L%2071%20134%20L%20102%20134%20L%20103%20133%20L%20101%20127%20L%2092%20119%20L%2083%20116%20L%2071%20115%20L%2063%20111%20L%2052%2099%20L%2052%2097%20L%2049%2091%20L%2048%2083%20Z%20M%20234%2082%20L%20214%2082%20L%20214%2087%20L%20211%2097%20L%20203%20108%20L%20196%20113%20L%20194%20113%20L%20191%20115%20L%20178%20116%20L%20168%20120%20L%20161%20127%20L%20159%20133%20L%20196%20133%20L%20203%20131%20L%20212%20126%20L%20222%20117%20L%20227%20110%20L%20233%2096%20L%20233%2093%20L%20234%2092%20Z%20M%20227%2053%20L%20200%2053%20L%20198%2054%20L%20139%20112%20L%20134%20121%20L%20134%20173%20L%20137%20182%20L%20147%20195%20L%20153%20200%20L%20169%20210%20L%20175%20216%20L%20177%20220%20L%20181%20219%20L%20194%20209%20L%20194%20207%20L%20191%20203%20L%20184%20197%20L%20176%20193%20L%20173%20193%20L%20164%20190%20L%20157%20186%20L%20158%20185%20L%20161%20186%20L%20175%20186%20L%20185%20189%20L%20193%20194%20L%20201%20201%20L%20205%20199%20L%20215%20189%20L%20214%20187%20L%20203%20179%20L%20191%20174%20L%20179%20173%20L%20178%20172%20L%20159%20172%20L%20157%20171%20L%20153%20166%20L%20153%20161%20L%20154%20159%20L%20158%20156%20L%20206%20156%20L%20207%20155%20L%20212%20155%20L%20219%20153%20L%20228%20148%20L%20233%20144%20L%20239%20137%20L%20246%20124%20L%20248%20118%20L%20248%20114%20L%20239%20116%20L%20226%20121%20L%20223%20126%20L%20217%20132%20L%20208%20137%20L%20201%20138%20L%20200%20139%20L%20159%20139%20L%20153%20142%20L%20152%20141%20L%20153%20131%20L%20155%20127%20L%20211%2072%20Z%20M%20156%20185%20L%20157%20184%20L%20158%20185%20L%20157%20186%20Z%20M%2035%2053%20L%2038%2058%20L%2048%2069%20L%20107%20127%20L%20109%20131%20L%20109%20134%20L%20110%20135%20L%20110%20140%20L%20109%20141%20L%20104%20139%20L%2062%20139%20L%2061%20138%20L%2054%20137%20L%2045%20132%20L%2039%20126%20L%2036%20121%20L%2014%20114%20L%2014%20117%20L%2017%20126%20L%2023%20137%20L%2032%20147%20L%2042%20153%20L%2048%20155%20L%2053%20155%20L%2054%20156%20L%20104%20156%20L%20109%20160%20L%20110%20163%20L%20109%20167%20L%20103%20172%20L%2087%20172%20L%2086%20173%20L%2076%20173%20L%2075%20174%20L%2072%20174%20L%2056%20181%20L%2048%20188%20L%2048%20189%20L%2061%20201%20L%2068%20195%20L%2080%20188%20L%2087%20187%20L%2088%20186%20L%20102%20186%20L%20103%20187%20L%2098%20190%20L%2080%20196%20L%2068%20207%20L%2069%20210%20L%2085%20221%20L%2086%20218%20L%2091%20212%20L%20113%20197%20L%20120%20190%20L%20126%20180%20L%20128%20174%20L%20128%20167%20L%20129%20166%20L%20129%20125%20L%20128%20124%20L%20128%20121%20L%20126%20116%20L%2064%2054%20L%2061%2053%20Z%20M%20102%20186%20L%20103%20185%20L%20105%20186%20L%20104%20187%20Z%20M%2093%2024%20L%2075%2035%20L%2075%2045%20L%2076%2046%20L%2076%2050%20L%2078%2056%20L%2084%2066%20L%20129%20110%20L%20129%2093%20L%20128%2092%20L%20127%2084%20L%20124%2079%20L%2098%2052%20L%2095%2046%20L%2095%2042%20L%2094%2041%20L%2094%2024%20Z%20M%20169%2023%20L%20168%2023%20L%20168%2043%20L%20165%2051%20L%20159%2059%20L%20138%2079%20L%20135%2084%20L%20134%2092%20L%20133%2093%20L%20133%20110%20L%20178%2066%20L%20185%2054%20L%20186%2047%20L%20187%2046%20L%20187%2034%20Z%20M%20134%205%20L%20133%206%20L%20133%2074%20L%20142%2067%20L%20150%2059%20L%20150%2016%20L%20147%2013%20Z%20M%20128%205%20L%20118%2012%20L%20115%2013%20L%20112%2017%20L%20112%2059%20L%20129%2074%20L%20129%205%20Z%22%20fill%3D%22url(%23g)%22%20fill-rule%3D%22evenodd%22%2F%3E%3C%2Fsvg%3E',competition:q('matchCompetition').value.trim()||'SAGI FOOTBALL',
   homeScore:matchdayState.homeScore,awayScore:matchdayState.awayScore,scoreboardVisible:!!matchdayState.scoreboardVisible,scoreboardFrozen:!!matchdayState.scoreboardFrozen,
@@ -2629,7 +2634,7 @@ const FILTER_SLOT={CLEAN:1,WARM:2,NIGHT:3};
 function filterSave(){try{localStorage.setItem('sagi_filter_engine_v471',JSON.stringify(filterSettings))}catch(e){}}
 function filterLoad(){try{const x=JSON.parse(localStorage.getItem('sagi_filter_engine_v471')||'null');if(x)filterSettings={...filterSettings,...x}}catch(e){}}
 function filterInputs(target=filterSettings.target){vdSave();const slots=target==='ALL'?['cam1','cam2','drone','replay']:[target],seen=new Set(),out=[];for(const slot of slots){const n=String(vmixDirectorSettings[slot]||'').trim();if(n&&n!==String(vmixDirectorSettings.graphics)&&!seen.has(n)){seen.add(n);out.push(n)}}return out}
-async function filterCommand(fn,input,value=''){const cmd={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,7),functionName:fn,input:String(input||''),duration:0,value:String(value??''),label:'FILTER '+fn,issuedAt:new Date().toISOString(),version:'V4.27.4-LAN'};try{await lanPost('/api/vmix',cmd);return true}catch(e){return false}}
+async function filterCommand(fn,input,value=''){const cmd={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,7),functionName:fn,input:String(input||''),duration:0,value:String(value??''),label:'FILTER '+fn,issuedAt:new Date().toISOString(),version:'V4.27.5-LAN'};try{await lanPost('/api/vmix',cmd);return true}catch(e){return false}}
 async function applyFilterPreset(preset,target=filterSettings.target){
  preset=['ORIGINAL','CLEAN','WARM','NIGHT'].includes(preset)?preset:'ORIGINAL';const inputs=filterInputs(target);if(!inputs.length){if(q('filterStatus'))q('filterStatus').textContent='没有可用摄像机 Input';note('没有可用摄像机 Input');return false}
  if(q('filterStatus'))q('filterStatus').textContent='正在应用 '+preset+'…';let ok=true;
@@ -2749,7 +2754,7 @@ function vdLoad(){
 }
 function vdInput(slot){vdSave();return vmixDirectorSettings[slot]||''}
 async function publishVmixDirector(functionName,input='',duration=0,label='',value=''){
- const cmd={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,7),functionName,input:String(input||''),duration:Math.max(0,Number(duration)||0),value:String(value??''),label,issuedAt:new Date().toISOString(),version:'V4.27.4-LAN'};
+ const cmd={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,7),functionName,input:String(input||''),duration:Math.max(0,Number(duration)||0),value:String(value??''),label,issuedAt:new Date().toISOString(),version:'V4.27.5-LAN'};
  q('vdStatus').textContent='LAN 发送中 · '+(label||functionName);
  try{
    await lanPost('/api/vmix',cmd);
@@ -2787,7 +2792,7 @@ async function refreshGraphicsBrowser(showNote=true){
  if(!input){if(showNote)note('请先设置图形输入编号');return false}
  let ok=false;
  try{
-   const cmd={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,7),functionName:'BrowserReload',input:String(input),duration:0,value:'',label:'刷新直播图形',issuedAt:new Date().toISOString(),version:'V4.27.4-LAN'};
+   const cmd={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,7),functionName:'BrowserReload',input:String(input),duration:0,value:'',label:'刷新直播图形',issuedAt:new Date().toISOString(),version:'V4.27.5-LAN'};
    const r=await lanPost('/api/vmix',cmd);ok=!!r
  }catch(e){}
  if(!ok){
@@ -3339,7 +3344,7 @@ function stopCountdown(){clearInterval(startCountdown.t)}
 function cloudAdmin(){try{const x=JSON.parse(localStorage.getItem('sagi_cloud_admin_v20')||'null')||{},b=window.SAGI_CLOUD||{};return{url:x.url||b.url||'',key:x.key||b.key||'',eventSlug:x.eventSlug||b.eventSlug||'',token:x.token||''}}catch(e){const b=window.SAGI_CLOUD||{};return{url:b.url||'',key:b.key||'',eventSlug:b.eventSlug||'',token:''}}}
 function compactPlayersForGroup(group){const src=group==='FULL'?validStarters():group==='SUB'?substitutes():(['GK','DF','MF','FW'].includes(group)?grouped(group):[]);return src.map(p=>({id:p.id,layoutKey:formationPlayerKey(p),name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',squadType:p.squadType||'STARTER',photo:(group==='FULL'||group==='SUB')?'':p.photo||'',mediaUrl:(group==='FULL'||group==='SUB')?'':p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'}))}
 async function publishGroup(group,duration,show=null){
- const state={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,6),group,side:activeSide,team:currentTeamName(),formation:q('formation').value,matchFormat:{mode:matchConfig.mode,playerCount:starterLimit()},playerCount:starterLimit(),startingLabel:startingLabel(),players:compactPlayersForGroup(group),formationLayout:currentFormationLayoutPayload(),allPlayers:validStarters().map(p=>({id:p.id,layoutKey:formationPlayerKey(p),name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',photo:p.photo||'',mediaUrl:p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'})),substitutes:substitutes().map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,statLabel:p.statLabel||'',statValue:p.statValue||''})),crest:assets.crest||'',stadium:assets.bg||'',background:q('outputBg').value,teamColor:(activeSide==='HOME'?(matchdayState.homeColor||'#d8b55b'):(matchdayState.awayColor||'#4c7dff')),visualVersion:'V4.27.4-PREMIER-BROADCAST',duration,show:show||null,package:packageData(),startedAt:new Date().toISOString()};
+ const state={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,6),group,side:activeSide,team:currentTeamName(),formation:q('formation').value,matchFormat:{mode:matchConfig.mode,playerCount:starterLimit()},playerCount:starterLimit(),startingLabel:startingLabel(),players:compactPlayersForGroup(group),formationLayout:currentFormationLayoutPayload(),allPlayers:validStarters().map(p=>({id:p.id,layoutKey:formationPlayerKey(p),name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',photo:p.photo||'',mediaUrl:p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'})),substitutes:substitutes().map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,statLabel:p.statLabel||'',statValue:p.statValue||''})),crest:assets.crest||'',stadium:assets.bg||'',background:q('outputBg').value,teamColor:(activeSide==='HOME'?(matchdayState.homeColor||'#d8b55b'):(matchdayState.awayColor||'#4c7dff')),visualVersion:'V4.27.5-PREMIER-BROADCAST',duration,show:show||null,package:packageData(),startedAt:new Date().toISOString()};
  try{
    await lanPost('/api/state',{lineupIntro:state});
    return{ok:true}
@@ -3765,12 +3770,12 @@ if('serviceWorker' in navigator&&window.isSecureContext){
 
 setInstalledState();
 
-const HOME_SCREEN_BUILD='V4.27.4-HOME-20261116-01';
+const HOME_SCREEN_BUILD='V4.27.5-HOME-20261116-01';
 async function homeScreenColdStartUpdate(){
   if(!standalone||location.protocol!=='http:')return;
   const once='sagi_homescreen_boot_'+HOME_SCREEN_BUILD;
   try{if(sessionStorage.getItem(once))return;sessionStorage.setItem(once,'1')}catch(e){}
-  setStatus('主屏幕启动 · 正在同步最新 V4.27.4…');
+  setStatus('主屏幕启动 · 正在同步最新 V4.27.5…');
   try{
     const r=await fetch('/api/update',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}',cache:'no-store'});
     const x=await r.json().catch(()=>({}));
@@ -3809,9 +3814,9 @@ if(standalone){
      if(!r.ok||!x.ok)throw new Error(x.error||('HTTP '+r.status));
      status.textContent='文件已下载 · 正在核对版本…';
      const verify=await fetch('/?verify='+Date.now(),{cache:'no-store'}).then(r=>r.text()).catch(()=> '');
-     if(!verify.includes('V4.27.4'))throw new Error('VERSION_VERIFY_FAILED');
-     status.textContent='已确认 V4.27.4 · 更新完成';
-     btn.textContent='V4.27.4 ✓';
+     if(!verify.includes('V4.27.5'))throw new Error('VERSION_VERIFY_FAILED');
+     status.textContent='已确认 V4.27.5 · 更新完成';
+     btn.textContent='V4.27.5 ✓';
      setTimeout(()=>location.replace('/?safe='+Date.now()),500);
    }catch(e){
      status.textContent='更新失败 · 当前版本未改变';
