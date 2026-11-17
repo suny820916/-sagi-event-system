@@ -298,7 +298,7 @@ server.listen(PORT,'127.0.0.1',async()=>{
 
   console.log('TEST 11: consistency watchdog repairs same-fixture Bridge corruption');
   graphics={...graphics,commandId:'corrupt_same_fixture',home:'乌苏叶克备',away:'IPF',homeShort:'少林足球',awayShort:'旧客队',homeScore:99,awayScore:88};
-  const repaired=await page.evaluate(()=>mdConsistencyCheck(true));await wait(700);
+  const repaired=await page.evaluate(()=>window.sagiMatchdayConsistencyCheck(true));await wait(700);
   const repairUI=await page.evaluate(()=>({sync:document.querySelector('#mdSync').textContent,home:document.querySelector('#mmHomeName').textContent,away:document.querySelector('#mmAwayName').textContent,score:document.querySelector('#mdHomeScore').textContent}));
   assert(repaired&&Number(graphics.homeScore)===5&&Number(graphics.awayScore)===1,'watchdog failed to restore authoritative score state: '+JSON.stringify(graphics));
   assert(repairUI.home==='乌苏叶克备'&&repairUI.away==='IPF'&&repairUI.score==='5','watchdog repair changed local control identity/state: '+JSON.stringify(repairUI));
