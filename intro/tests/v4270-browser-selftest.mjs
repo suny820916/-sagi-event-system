@@ -15,7 +15,7 @@ let seq=1,vmixCommands=[],matchdayPosts=[],graphics=makeGraphics(),reorderMatchd
 
 function makeGraphics(overrides={}){
  return {
-  commandId:'g_'+(seq++),revision:seq,fixtureKey:'selftest|'+HOME+'|'+AWAY,visualVersion:'V4.30.5-SELFTEST',
+  commandId:'g_'+(seq++),revision:seq,fixtureKey:'selftest|'+HOME+'|'+AWAY,visualVersion:'V4.30.6-SELFTEST',
   scoreboardVisible:true,scoreboardFrozen:false,scoreTheme:'sagi-pro',competition:'TORANHE CUP',
   home:HOME,away:AWAY,homeShort:HOME,awayShort:AWAY,scoreHomeName:'新疆塔城地区',scoreAwayName:'AYFC',
   homeCrest:HOME_CREST,awayCrest:AWAY_CREST,eventLogo:'',
@@ -52,7 +52,7 @@ const server=http.createServer(async(req,res)=>{
   if(u.pathname==='/api/vmix'&&req.method==='POST'){const b=await readBody(req);let cmd={};try{cmd=JSON.parse(b)}catch{}vmixCommands.push(cmd);return json(res,{ok:true,command:cmd})}
   if(u.pathname==='/api/projects')return json(res,{projects:[]});
   if(u.pathname==='/health')return json(res,{ok:true,port:PORT});
-  if(u.pathname==='/')return text(res,'SAGI V4.30.5 SELFTEST');
+  if(u.pathname==='/')return text(res,'SAGI V4.30.6 SELFTEST');
   const rel=decodeURIComponent(u.pathname).replace(/^\/+/,'');const file=path.resolve(ROOT,rel);
   if(!file.startsWith(ROOT)||!fs.existsSync(file)||fs.statSync(file).isDirectory())return text(res,'Not found','text/plain',404);
   res.writeHead(200,{'Content-Type':mime(file),'Cache-Control':'no-store','Access-Control-Allow-Origin':'*'});res.end(fs.readFileSync(file));
@@ -391,12 +391,20 @@ server.listen(PORT,'127.0.0.1',async()=>{
   assert(dupe.yellow==='1','duplicate yellow-card click created two events: '+JSON.stringify(dupe));
   await page.click('#mdClearEventBtn');
 
-  console.log('TEST 11: consistency watchdog repairs same-fixture Bridge corruption');
-  graphics={...graphics,commandId:'corrupt_same_fixture',home:'乌苏叶克备',away:'IPF',homeShort:'少林足球',awayShort:'旧客队',homeScore:99,awayScore:88};
+  console.log('TEST 11: consistency watchdog repairs score, identity, colors and exceptional-state drift');
+  const authoritative=JSON.parse(JSON.stringify(graphics));
+  graphics={...graphics,commandId:'corrupt_same_fixture',home:'乌苏叶克备',away:'IPF',homeShort:'少林足球',awayShort:'旧客队',
+    scoreHomeName:'错误主队',scoreAwayName:'错误客队',homeScore:99,awayScore:88,homeColor:'#ff0000',awayColor:'#00ff00',accentColor:'#0000ff',
+    stoppageTime:'99',scoreboardFrozen:!authoritative.scoreboardFrozen,homePen:7,awayPen:8,scoreTheme:'uefa'};
   const repaired=await page.evaluate(()=>window.sagiMatchdayConsistencyCheck(true));await wait(700);
   const repairUI=await page.evaluate(()=>({sync:document.querySelector('#mdSync').textContent,home:document.querySelector('#mmHomeName').textContent,away:document.querySelector('#mmAwayName').textContent,score:document.querySelector('#mdHomeScore').textContent}));
-  assert(repaired&&Number(graphics.homeScore)===6&&Number(graphics.awayScore)===1,'watchdog failed to restore authoritative score state: '+JSON.stringify(graphics));
-  assert(repairUI.home==='乌苏叶克备'&&repairUI.away==='IPF'&&repairUI.score==='6','watchdog repair changed local control identity/state: '+JSON.stringify(repairUI));
+  assert(repaired&&Number(graphics.homeScore)===Number(authoritative.homeScore)&&Number(graphics.awayScore)===Number(authoritative.awayScore),'watchdog failed to restore authoritative score state: '+JSON.stringify(graphics));
+  assert(graphics.scoreHomeName===authoritative.scoreHomeName&&graphics.scoreAwayName===authoritative.scoreAwayName,'watchdog failed to restore broadcast team names: '+JSON.stringify({expected:[authoritative.scoreHomeName,authoritative.scoreAwayName],actual:[graphics.scoreHomeName,graphics.scoreAwayName]}));
+  assert(graphics.homeColor===authoritative.homeColor&&graphics.awayColor===authoritative.awayColor&&graphics.accentColor===authoritative.accentColor,'watchdog failed to restore broadcast colors');
+  assert(String(graphics.stoppageTime||'')===String(authoritative.stoppageTime||'')&&!!graphics.scoreboardFrozen===!!authoritative.scoreboardFrozen&&Number(graphics.homePen||0)===Number(authoritative.homePen||0)&&Number(graphics.awayPen||0)===Number(authoritative.awayPen||0),'watchdog failed to restore exceptional score-center state');
+  assert(repairUI.home==='乌苏叶克备'&&repairUI.away==='IPF'&&repairUI.score===String(authoritative.homeScore),'watchdog repair changed local control identity/state: '+JSON.stringify(repairUI));
+  const outputDiag=await page.evaluate(()=>window.sagiScoreCenterDiagnostic&&window.sagiScoreCenterDiagnostic());
+  assert(outputDiag&&outputDiag.build==='V4.30.6'&&outputDiag.home===authoritative.scoreHomeName,'vMix score-center diagnostic is not tracking authoritative state: '+JSON.stringify(outputDiag));
   await page.screenshot({path:'selftest-artifacts/12-watchdog-repair.png'});
 
   console.log('TEST 12: accelerated long-session identity soak keeps names/scores stable');
@@ -405,7 +413,7 @@ server.listen(PORT,'127.0.0.1',async()=>{
   await page.screenshot({path:'selftest-artifacts/13-long-session-soak.png'});
 
   assert(pageErrors.length===0,'browser page errors: '+pageErrors.join(' | '));
-  const report={ok:true,build:'V4.30.5',testedAt:new Date().toISOString(),tests:['compact score intelligence + fused event identity + unified score pair + restrained score roll + clock-only regular halves + conditional states','HOME goal enlarged HOME crest + complete GOAL + lower player card + collapse','AWAY goal enlarged AWAY crest','yellow/red referee-card shape + event colors + control icons','penalty >5 rounds/sudden death/miss/scores','two-camera Input 1 -> Input 2','event-logo replay stinger visual','manual replay stinger IN -> Input 4 -> OUT -> Input 1','stored project load wins over stale Bridge + optional time/venue do not block READY','compact project index rehydrates full photos from IndexedDB with empty Bridge list','clock-only refresh avoids repeated heavy match-control repaints','legacy stale short-name cache cannot override current vMix fixture identity','mobile match control mirrors current fixture identity and legacy fields are read-only','transient LAN failure retries automatically and records last-good state','rapid score writes are serialized under deliberate network reordering','duplicate operator events are gated before double-counting','vMix output ignores stale lower revisions within the same fixture','consistency watchdog repairs same-fixture Bridge corruption','accelerated 5000-cycle long-session identity soak'],vmixCommands:cuts};
+  const report={ok:true,build:'V4.30.6',testedAt:new Date().toISOString(),tests:['compact score intelligence + fused event identity + unified score pair + restrained score roll + clock-only regular halves + conditional states','HOME goal enlarged HOME crest + complete GOAL + lower player card + collapse','AWAY goal enlarged AWAY crest','yellow/red referee-card shape + event colors + control icons','penalty >5 rounds/sudden death/miss/scores','two-camera Input 1 -> Input 2','event-logo replay stinger visual','manual replay stinger IN -> Input 4 -> OUT -> Input 1','stored project load wins over stale Bridge + optional time/venue do not block READY','compact project index rehydrates full photos from IndexedDB with empty Bridge list','clock-only refresh avoids repeated heavy match-control repaints','legacy stale short-name cache cannot override current vMix fixture identity','mobile match control mirrors current fixture identity and legacy fields are read-only','transient LAN failure retries automatically and records last-good state','rapid score writes are serialized under deliberate network reordering','duplicate operator events are gated before double-counting','vMix output ignores stale lower revisions within the same fixture','consistency watchdog repairs score/name/color/exceptional-state drift','accelerated 5000-cycle long-session identity soak'],vmixCommands:cuts};
   fs.writeFileSync('selftest-artifacts/report.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
  }catch(e){
   fs.mkdirSync('selftest-artifacts',{recursive:true});try{await page.screenshot({path:'selftest-artifacts/FAIL.png',fullPage:true})}catch{}
