@@ -1,0 +1,106 @@
+name: SAGI SMART CUT iPhone Safe Live E2E
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "content-os/sagi-down.html"
+      - ".github/workflows/smart-cut-live-e2e.yml"
+  workflow_dispatch:
+
+jobs:
+  live-smart-cut:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Install ffmpeg
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg jq
+
+      - name: Create real test media
+        run: |
+          ffmpeg -hide_banner -loglevel error -y \
+            -f lavfi -i "testsrc2=s=640x360:r=30:d=8" \
+            -f lavfi -i "sine=frequency=330:duration=8" \
+            -map 0:v -map 1:a -c:v libx264 -preset ultrafast -pix_fmt yuv420p -c:a aac -shortest /tmp/source.mp4
+          ffmpeg -hide_banner -loglevel error -y \
+            -f lavfi -i "sine=frequency=660:duration=5.8" \
+            -c:a aac /tmp/voice.m4a
+          test -s /tmp/source.mp4
+          test -s /tmp/voice.m4a
+
+      - name: Activate live SAGI Cloud and submit iPhone-safe render
+        run: |
+          set -euo pipefail
+          BASE="https://sagi-cloud-bridge-suny820916.onrender.com"
+          ORIGIN="https://suny820916.github.io"
+
+          ACT=""
+          for i in $(seq 1 12); do
+            ACT="$(curl -fsS --max-time 30 --retry 2 -X POST -H "Origin: $ORIGIN" "$BASE/api/activate" || true)"
+            if echo "$ACT" | jq -e '.ok == true and (.token|length) > 10' >/dev/null 2>&1; then break; fi
+            sleep 5
+          done
+          echo "$ACT" | jq -e '.ok == true'
+          TOKEN="$(echo "$ACT" | jq -r '.token')"
+          VERSION="$(echo "$ACT" | jq -r '.version')"
+          echo "Live cloud version: $VERSION"
+
+          PLAN='[
+            {"sceneId":0,"sourceStart":0.0,"sourceEnd":2.0,"outputStart":0.0,"outputEnd":2.0,"label":"第一镜头","matchScore":30},
+            {"sceneId":1,"sourceStart":3.0,"sourceEnd":5.0,"outputStart":2.0,"outputEnd":4.0,"label":"第二镜头","matchScore":30},
+            {"sceneId":2,"sourceStart":5.5,"sourceEnd":7.5,"outputStart":4.0,"outputEnd":6.0,"label":"第三镜头","matchScore":30}
+          ]'
+
+          RESP="$(curl -fsS --max-time 180 \
+            -H "Authorization: Bearer $TOKEN" \
+            -F "media=@/tmp/source.mp4;type=video/mp4" \
+            -F "voice_audio=@/tmp/voice.m4a;type=audio/mp4" \
+            -F "start=0" \
+            -F "duration=6" \
+            -F "aspect=9:16" \
+            -F "quality=fast" \
+            -F "captions=[]" \
+            -F "narration=" \
+            -F "voice_timeline=[]" \
+            -F "voice_mode=recorded" \
+            -F "voice_sync=clip_locked" \
+            -F "meaning_first=false" \
+            -F "meaning_audit={}" \
+            -F "visual_sync=auto" \
+            -F "visual_sync_max_hold=0" \
+            -F "scene_plan=$PLAN" \
+            -F "voice_volume=1" \
+            -F "original_volume=0" \
+            -F "burn_subtitles=false" \
+            "$BASE/api/render")"
+          echo "$RESP" | jq -e '.ok == true and .job.id'
+          JOB="$(echo "$RESP" | jq -r '.job.id')"
+
+          READY=""
+          for i in $(seq 1 90); do
+            READY="$(curl -fsS --max-time 30 -H "Authorization: Bearer $TOKEN" "$BASE/api/render-jobs/$JOB")"
+            STATUS="$(echo "$READY" | jq -r '.job.status // ""')"
+            STAGE="$(echo "$READY" | jq -r '.job.stage // ""')"
+            PROGRESS="$(echo "$READY" | jq -r '.job.progress // 0')"
+            echo "poll $i status=$STATUS progress=$PROGRESS stage=$STAGE"
+            if [ "$STATUS" = "ready" ]; then break; fi
+            if [ "$STATUS" = "failed" ]; then
+              echo "$READY" | jq .
+              exit 1
+            fi
+            sleep 3
+          done
+
+          echo "$READY" | jq -e '.job.status == "ready" and (.job.downloadUrl|length) > 10'
+          URL="$(echo "$READY" | jq -r '.job.downloadUrl')"
+          curl -fsSL --max-time 120 "$URL" -o /tmp/result.mp4
+          test "$(stat -c%s /tmp/result.mp4)" -gt 5000
+          DURATION="$(ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 /tmp/result.mp4)"
+          python - "$DURATION" <<'PY'
+          import sys
+          d=float(sys.argv[1])
+          assert 5.8 <= d <= 6.2, d
+          print("LIVE IPHONE SAFE SMART CUT OK", round(d,3), "seconds")
+          PY
