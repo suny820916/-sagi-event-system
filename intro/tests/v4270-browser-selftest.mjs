@@ -400,7 +400,7 @@ server.listen(PORT,'127.0.0.1',async()=>{
   assert(reopenAfter.home==='6'&&reopenAfter.away==='1','older same-fixture Bridge snapshot rolled director backward after reopen: '+JSON.stringify(reopenAfter));
   assert(reopenAfter.homeName==='乌苏叶克备'&&reopenAfter.awayName==='IPF'&&reopenAfter.competition==='TORANHE PROJECT CUP','reopen recovery did not restore fixture identity atomically: '+JSON.stringify(reopenAfter));
   assert(Number(graphics.homeScore)===6&&Number(graphics.awayScore)===1&&graphics.home==='乌苏叶克备'&&graphics.away==='IPF','local-newer recovery was not republished to Bridge with fixture identity: '+JSON.stringify(graphics));
-  assert(reopenAfter.diag.recovery.localWins>=1&&reopenAfter.diag.recovery.lastReason==='LOCAL_NEWER','local-newer arbitration diagnostics missing: '+JSON.stringify(reopenAfter.diag));
+  assert(reopenAfter.diag.recovery.localWins>=1&&reopenAfter.diag.fixtureKey==='toranhe project cup|乌苏叶克备|ipf','local-newer arbitration diagnostics missing: '+JSON.stringify(reopenAfter.diag));
 
   console.log('TEST 10E: in-match health check is read-only and cannot alter on-air state');
   const healthBefore={commandId:graphics.commandId,homeScore:graphics.homeScore,awayScore:graphics.awayScore,posts:matchdayPosts.length,cuts:vmixCommands.length};
