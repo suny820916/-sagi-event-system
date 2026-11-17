@@ -239,6 +239,21 @@ server.listen(PORT,'127.0.0.1',async()=>{
   assert(afterStaleRestore.homeName==='PROJECT HOME FC'&&afterStaleRestore.awayName==='PROJECT AWAY FC','stale Bridge restore changed selected fixture identity');
   await page.screenshot({path:'selftest-artifacts/09-project-load-ready.png'});
 
+  console.log('TEST 8B: compact local project index rehydrates full project/photos from IndexedDB when Bridge project list is empty');
+  await wait(500);
+  await page.reload({waitUntil:'domcontentloaded'});await wait(2200);
+  await page.selectOption('#projectSelect',storedProject.id);
+  await page.click('#projectLoadBtn');
+  await page.waitForFunction(()=>document.querySelector('#projectLoadBtn')?.textContent==='读取项目'&&document.querySelector('#projectName')?.value==='SELFTEST STORED MATCH',null,{timeout:8000});
+  const photoReload=await page.evaluate(()=>{
+    const first=(teamStore&&teamStore.HOME&&teamStore.HOME.roster||[])[0];
+    const raw=localStorage.getItem('sagi_match_projects_v44')||'[]',idx=JSON.parse(raw),p=idx[0]||{};
+    return{photo:first&&first.photo||'',compact:!!p.__compact,localPhotoCount:Object.keys(p.assets&&p.assets.photos&&p.assets.photos.HOME||{}).length}
+  });
+  assert(photoReload.compact&&photoReload.localPhotoCount===0,'local project index did not stay compact after reload');
+  assert(photoReload.photo.startsWith('data:image/svg+xml'),'full project/player photo did not rehydrate from IndexedDB when Bridge list was empty');
+  await page.screenshot({path:'selftest-artifacts/09b-project-photo-rehydrate.png'});
+
   console.log('TEST 9: running clock updates clock only without repeatedly repainting heavy match controls');
   await page.click('#setupReadyBtn');await page.waitForFunction(()=>document.querySelector('#setupReadyBadge')?.textContent.includes('可以播出'),null,{timeout:3000});
   const perfStart=await page.evaluate(()=>{
@@ -258,7 +273,7 @@ server.listen(PORT,'127.0.0.1',async()=>{
   await page.screenshot({path:'selftest-artifacts/10-clock-stability.png'});
 
   assert(pageErrors.length===0,'browser page errors: '+pageErrors.join(' | '));
-  const report={ok:true,build:'V4.27.3',testedAt:new Date().toISOString(),tests:['regular white score ribbon + lower time/stoppage ribbon + TORANHE event logo','HOME goal enlarged HOME crest + complete GOAL + lower player card + collapse','AWAY goal enlarged AWAY crest','yellow/red card event colors locked independently of team colors','penalty >5 rounds/sudden death/miss/scores','two-camera Input 1 -> Input 2','event-logo replay stinger visual','manual replay stinger IN -> Input 4 -> OUT -> Input 1','stored project load wins over stale Bridge + optional time/venue do not block READY','clock-only refresh avoids repeated heavy match-control repaints'],vmixCommands:cuts};
+  const report={ok:true,build:'V4.27.3',testedAt:new Date().toISOString(),tests:['regular white score ribbon + lower time/stoppage ribbon + TORANHE event logo','HOME goal enlarged HOME crest + complete GOAL + lower player card + collapse','AWAY goal enlarged AWAY crest','yellow/red card event colors locked independently of team colors','penalty >5 rounds/sudden death/miss/scores','two-camera Input 1 -> Input 2','event-logo replay stinger visual','manual replay stinger IN -> Input 4 -> OUT -> Input 1','stored project load wins over stale Bridge + optional time/venue do not block READY','compact project index rehydrates full photos from IndexedDB with empty Bridge list','clock-only refresh avoids repeated heavy match-control repaints'],vmixCommands:cuts};
   fs.writeFileSync('selftest-artifacts/report.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
  }catch(e){
   fs.mkdirSync('selftest-artifacts',{recursive:true});try{await page.screenshot({path:'selftest-artifacts/FAIL.png',fullPage:true})}catch{}
