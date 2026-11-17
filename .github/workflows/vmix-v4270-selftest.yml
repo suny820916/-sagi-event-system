@@ -24,6 +24,26 @@ jobs:
         run: |
           npm install --no-save playwright@latest
           npx playwright install --with-deps chromium
+      - name: Validate V4.30.8 BAT launcher structure
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const p='intro/SAGI_VMIX_LAN_V48_STAGE_4308.bat';
+          const s=fs.readFileSync(p,'utf8');
+          const lines=s.split(/\r?\n/);
+          const idx={ps:lines.indexOf('###SAGI_PS###'),control:lines.indexOf('###SAGI_CONTROL###'),output:lines.indexOf('###SAGI_OUTPUT###')};
+          const markers=lines.filter(x=>/^###SAGI_(PS|CONTROL|OUTPUT)###$/.test(x));
+          if(JSON.stringify(markers)!==JSON.stringify(['###SAGI_PS###','###SAGI_CONTROL###','###SAGI_OUTPUT###'])) throw new Error('BAT embedded marker structure is broken: '+JSON.stringify(markers));
+          if(!(idx.ps>0&&idx.control>idx.ps&&idx.output>idx.control)) throw new Error('BAT payload marker order is invalid: '+JSON.stringify(idx));
+          const rx=lines.find(x=>x.includes('$m=[regex]::Match'));
+          if(!rx||!rx.includes('###SAGI_PS###')||!rx.includes('###SAGI_CONTROL###')||!rx.includes('###SAGI_OUTPUT###')) throw new Error('BAT PowerShell extraction command is truncated');
+          const control=lines.slice(idx.control+1,idx.output).join('\n');
+          const output=lines.slice(idx.output+1).join('\n');
+          if(!control.includes('V4.30.8')||!control.includes('sagiLiveHealthCheck')) throw new Error('V4.30.8 control payload missing');
+          if(!output.includes('V4.30.8')||!output.includes('sagiOutputWatchdog')) throw new Error('V4.30.8 output payload missing');
+          if(!lines.some(x=>x.includes('powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -Command ^'))) throw new Error('BAT PowerShell bootstrap missing');
+          console.log('BAT STRUCTURE PASS', {bytes:Buffer.byteLength(s),idx});
+          NODE
       - name: Run V4.30.8 broadcast self-test
         run: |
           mkdir -p selftest-artifacts
