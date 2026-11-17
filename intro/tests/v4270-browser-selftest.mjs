@@ -305,10 +305,7 @@ server.listen(PORT,'127.0.0.1',async()=>{
   await page.screenshot({path:'selftest-artifacts/12-watchdog-repair.png'});
 
   console.log('TEST 12: accelerated long-session identity soak keeps names/scores stable');
-  const soak=await page.evaluate(()=>{
-    for(let i=0;i<1800;i++){mdEnforceCanonicalTeams();refreshMatchdayClockUI();if(i%60===0)refreshMatchdayUI()}
-    return{home:document.querySelector('#mmHomeName').textContent,away:document.querySelector('#mmAwayName').textContent,mirrorHome:document.querySelector('#mdHomeShort').value,mirrorAway:document.querySelector('#mdAwayShort').value,score:document.querySelector('#mdHomeScore').textContent}
-  });
+  const soak=await page.evaluate(()=>window.sagiMatchdaySoakDiagnostic(1800));
   assert(soak.home==='乌苏叶克备'&&soak.away==='IPF'&&soak.mirrorHome==='乌苏叶克备'&&soak.mirrorAway==='IPF'&&soak.score==='5','accelerated long-session soak drifted state: '+JSON.stringify(soak));
   await page.screenshot({path:'selftest-artifacts/13-long-session-soak.png'});
 
