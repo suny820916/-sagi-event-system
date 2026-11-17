@@ -1,0 +1,121 @@
+name: SAGI SMART CUT 168s Long Live E2E
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/smart-cut-long-live-e2e.yml"
+
+jobs:
+  long-live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Install ffmpeg jq
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg jq
+
+      - name: Create 168.6s football-style source and voice
+        run: |
+          ffmpeg -hide_banner -loglevel error -y \
+            -f lavfi -i "testsrc2=s=320x180:r=15:d=168.6" \
+            -f lavfi -i "sine=frequency=330:duration=168.6" \
+            -map 0:v -map 1:a -c:v libx264 -preset ultrafast -crf 30 -pix_fmt yuv420p \
+            -c:a aac -b:a 64k -shortest /tmp/source.mp4
+          ffmpeg -hide_banner -loglevel error -y \
+            -f lavfi -i "sine=frequency=660:duration=168.2" \
+            -c:a aac -b:a 96k /tmp/voice.m4a
+          ls -lh /tmp/source.mp4 /tmp/voice.m4a
+          test -s /tmp/source.mp4
+          test -s /tmp/voice.m4a
+
+      - name: Generate 52-shot plan
+        run: |
+          python - <<'PY'
+          import json
+          total=168.6
+          n=52
+          step=total/n
+          rows=[]
+          for i in range(n):
+              s=i*step
+              e=total if i==n-1 else (i+1)*step
+              rows.append({
+                  "sceneId":i,
+                  "sourceStart":round(s,4),
+                  "sourceEnd":round(e,4),
+                  "outputStart":round(s,4),
+                  "outputEnd":round(e,4),
+                  "label":f"shot-{i+1}",
+                  "matchScore":30,
+              })
+          open("/tmp/plan.json","w",encoding="utf-8").write(json.dumps(rows,ensure_ascii=False))
+          print("shots",len(rows),"duration",rows[-1]["outputEnd"])
+          PY
+
+      - name: Live upload + 52-shot cloud render
+        run: |
+          set -euo pipefail
+          BASE="https://sagi-cloud-bridge-suny820916.onrender.com"
+          ORIGIN="https://suny820916.github.io"
+
+          ACT=""
+          for i in $(seq 1 12); do
+            ACT="$(curl -fsS --max-time 30 --retry 2 -X POST -H "Origin: $ORIGIN" "$BASE/api/activate" || true)"
+            if echo "$ACT" | jq -e '.ok == true and (.token|length) > 10' >/dev/null 2>&1; then break; fi
+            sleep 5
+          done
+          echo "$ACT" | jq -e '.ok == true'
+          TOKEN="$(echo "$ACT" | jq -r '.token')"
+          echo "live version $(echo "$ACT" | jq -r '.version')"
+
+          RESP="$(curl -fsS --max-time 1200 \
+            -H "Authorization: Bearer $TOKEN" \
+            -F "media=@/tmp/source.mp4;type=video/mp4" \
+            -F "voice_audio=@/tmp/voice.m4a;type=audio/mp4" \
+            -F "start=0" \
+            -F "duration=168.6" \
+            -F "aspect=9:16" \
+            -F "quality=fast" \
+            -F "captions=[]" \
+            -F "narration=" \
+            -F "voice_timeline=[]" \
+            -F "voice_mode=recorded" \
+            -F "voice_sync=clip_locked" \
+            -F "meaning_first=false" \
+            -F "meaning_audit={}" \
+            -F "visual_sync=auto" \
+            -F "visual_sync_max_hold=0" \
+            -F "scene_plan=</tmp/plan.json" \
+            -F "voice_volume=1" \
+            -F "original_volume=0" \
+            -F "burn_subtitles=false" \
+            "$BASE/api/render")"
+          echo "$RESP" | jq -e '.ok == true and .job.id'
+          JOB="$(echo "$RESP" | jq -r '.job.id')"
+
+          READY=""
+          for i in $(seq 1 600); do
+            READY="$(curl -fsS --max-time 30 -H "Authorization: Bearer $TOKEN" "$BASE/api/render-jobs/$JOB" || true)"
+            STATUS="$(echo "$READY" | jq -r '.job.status // ""' 2>/dev/null || true)"
+            PROGRESS="$(echo "$READY" | jq -r '.job.progress // 0' 2>/dev/null || true)"
+            STAGE="$(echo "$READY" | jq -r '.job.stage // ""' 2>/dev/null || true)"
+            echo "poll $i status=$STATUS progress=$PROGRESS stage=$STAGE"
+            if [ "$STATUS" = "ready" ]; then break; fi
+            if [ "$STATUS" = "failed" ]; then echo "$READY" | jq .; exit 1; fi
+            sleep 3
+          done
+
+          echo "$READY" | jq -e '.job.status == "ready" and (.job.downloadUrl|length) > 10'
+          URL="$(echo "$READY" | jq -r '.job.downloadUrl')"
+          curl -fsSL --max-time 180 "$URL" -o /tmp/result.mp4
+          test "$(stat -c%s /tmp/result.mp4)" -gt 5000
+          DURATION="$(ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 /tmp/result.mp4)"
+          python - "$DURATION" <<'PY'
+          import sys
+          d=float(sys.argv[1])
+          assert 168.0 <= d <= 169.2, d
+          print("LONG LIVE 168.6s / 52 SHOTS OK", round(d,3))
+          PY
