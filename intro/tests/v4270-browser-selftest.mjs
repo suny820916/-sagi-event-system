@@ -15,7 +15,7 @@ let seq=1,vmixCommands=[],matchdayPosts=[],graphics=makeGraphics(),reorderMatchd
 
 function makeGraphics(overrides={}){
  return {
-  commandId:'g_'+(seq++),visualVersion:'V4.27.4-SELFTEST',
+  commandId:'g_'+(seq++),visualVersion:'V4.27.5-SELFTEST',
   scoreboardVisible:true,scoreboardFrozen:false,scoreTheme:'sagi-pro',competition:'TORANHE CUP',
   home:HOME,away:AWAY,homeShort:HOME,awayShort:AWAY,
   homeCrest:HOME_CREST,awayCrest:AWAY_CREST,eventLogo:'',
@@ -31,7 +31,7 @@ function makeValidRoster(prefix){
  const roles=[['1','GK','GK'],['2','DF','RB'],['3','DF','LB'],['4','DF','CB'],['5','DF','CB'],['6','MF','CM'],['8','MF','CM'],['10','MF','AM'],['7','FW','RW'],['9','FW','ST'],['11','FW','LW']];
  return roles.map(([number,role,position],i)=>({id:prefix+(i+1),name:prefix.toUpperCase()+' PLAYER '+(i+1),number,squadType:'STARTER',role,position,captain:i===3}));
 }
-function makeStoredProject(id='selftest_project_4274'){
+function makeStoredProject(id='selftest_project_4275'){
  const homeRoster=makeValidRoster('h'),awayRoster=makeValidRoster('a'),projectPhoto='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"><rect width="40" height="40" fill="#067347"/></svg>');
  const meta={competition:'TORANHE PROJECT CUP',round:'FINAL',home:'乌苏叶克备',away:'IPF',kickoff:'',venue:''};
  const core={activeSide:'HOME',matchConfig:{mode:'11',playerCount:11},package:{...meta,matchFormat:{mode:'11',playerCount:11}},teams:{HOME:{formation:'4-3-3',customPositions:{},roster:homeRoster},AWAY:{formation:'4-3-3',customPositions:{},roster:awayRoster}}};
@@ -52,7 +52,7 @@ const server=http.createServer(async(req,res)=>{
   if(u.pathname==='/api/vmix'&&req.method==='POST'){const b=await readBody(req);let cmd={};try{cmd=JSON.parse(b)}catch{}vmixCommands.push(cmd);return json(res,{ok:true,command:cmd})}
   if(u.pathname==='/api/projects')return json(res,{projects:[]});
   if(u.pathname==='/health')return json(res,{ok:true,port:PORT});
-  if(u.pathname==='/')return text(res,'SAGI V4.27.4 SELFTEST');
+  if(u.pathname==='/')return text(res,'SAGI V4.27.5 SELFTEST');
   const rel=decodeURIComponent(u.pathname).replace(/^\/+/,'');const file=path.resolve(ROOT,rel);
   if(!file.startsWith(ROOT)||!fs.existsSync(file)||fs.statSync(file).isDirectory())return text(res,'Not found','text/plain',404);
   res.writeHead(200,{'Content-Type':mime(file),'Cache-Control':'no-store','Access-Control-Allow-Origin':'*'});res.end(fs.readFileSync(file));
@@ -123,19 +123,21 @@ server.listen(PORT,'127.0.0.1',async()=>{
   assert(awayGoal.letters==='GOAL'&&awayGoal.width>=320,'AWAY GOAL reveal failed');
   await page.screenshot({path:'selftest-artifacts/04-away-goal-expanded.png'});
 
-  console.log('TEST 4A: yellow and red cards use event colors, not team colors');
+  console.log('TEST 4A: yellow and red cards use real referee-card geometry, event colors and bilingual labels');
   graphics=makeGraphics({homeColor:'#d8b55b',event:{type:'YELLOW',side:'HOME',team:HOME,at:"55'",player:{number:'8',name:'CARD TEST'}}});
   await page.waitForFunction(()=>document.querySelector('#eventCard')?.classList.contains('yellow'),null,{timeout:5000});await wait(500);
-  const yellowCard=await page.evaluate(()=>({bg:getComputedStyle(document.querySelector('#eventIcon')).backgroundColor,kicker:getComputedStyle(document.querySelector('#eventKicker')).color,label:document.querySelector('#eventKicker').textContent,cls:document.querySelector('#eventCard').className}));
-  assert(yellowCard.label==='黄牌'&&yellowCard.cls.includes('yellow'),'yellow card event class/label wrong');
+  const yellowCard=await page.evaluate(()=>{const el=document.querySelector('#eventIcon'),cs=getComputedStyle(el);return{bg:cs.backgroundColor,kicker:getComputedStyle(document.querySelector('#eventKicker')).color,label:document.querySelector('#eventKicker').textContent,cls:document.querySelector('#eventCard').className,w:parseFloat(cs.width),h:parseFloat(cs.height),radius:parseFloat(cs.borderRadius),glyph:el.textContent.trim()}});
+  assert(yellowCard.label==='黄牌 · YELLOW CARD'&&yellowCard.cls.includes('yellow'),'yellow card event class/label wrong');
   assert(yellowCard.bg==='rgb(242, 213, 54)'&&yellowCard.kicker==='rgb(242, 213, 54)','yellow card inherited team color: '+JSON.stringify(yellowCard));
+  assert(yellowCard.h>=80&&yellowCard.w<=60&&yellowCard.h/yellowCard.w>=1.35&&yellowCard.radius<=8&&yellowCard.glyph==='','yellow card is not a clear referee-card shape: '+JSON.stringify(yellowCard));
   await page.screenshot({path:'selftest-artifacts/04a-yellow-card.png'});
 
   graphics=makeGraphics({homeColor:'#d8b55b',event:{type:'RED',side:'HOME',team:HOME,at:"56'",player:{number:'8',name:'CARD TEST'}}});
   await page.waitForFunction(()=>document.querySelector('#eventCard')?.classList.contains('red'),null,{timeout:5000});await wait(500);
-  const redCard=await page.evaluate(()=>({bg:getComputedStyle(document.querySelector('#eventIcon')).backgroundColor,kicker:getComputedStyle(document.querySelector('#eventKicker')).color,label:document.querySelector('#eventKicker').textContent,cls:document.querySelector('#eventCard').className}));
-  assert(redCard.label==='红牌'&&redCard.cls.includes('red'),'red card event class/label wrong');
+  const redCard=await page.evaluate(()=>{const el=document.querySelector('#eventIcon'),cs=getComputedStyle(el);return{bg:cs.backgroundColor,kicker:getComputedStyle(document.querySelector('#eventKicker')).color,label:document.querySelector('#eventKicker').textContent,cls:document.querySelector('#eventCard').className,w:parseFloat(cs.width),h:parseFloat(cs.height),radius:parseFloat(cs.borderRadius),glyph:el.textContent.trim()}});
+  assert(redCard.label==='红牌 · RED CARD'&&redCard.cls.includes('red'),'red card event class/label wrong');
   assert(redCard.bg==='rgb(227, 52, 64)'&&redCard.kicker==='rgb(227, 52, 64)','red card inherited yellow/team color: '+JSON.stringify(redCard));
+  assert(redCard.h>=80&&redCard.w<=60&&redCard.h/redCard.w>=1.35&&redCard.radius<=8&&redCard.glyph==='','red card is not a clear referee-card shape: '+JSON.stringify(redCard));
   await page.screenshot({path:'selftest-artifacts/04b-red-card.png'});
 
   console.log('TEST 4: penalty shootout remains isolated and supports >5 rounds');
@@ -153,6 +155,8 @@ server.listen(PORT,'127.0.0.1',async()=>{
   vmixCommands=[];
   await page.evaluate(()=>localStorage.setItem('sagi_vmix_director_v42',JSON.stringify({cam1:'1',cam2:'2',drone:'',replay:'',graphics:'5',transition:'Cut',duration:0,overlay:'1',cam1Role:'MAIN_WIDE',cam2Role:'SIDELINE_CLOSE',droneRole:'DRONE',replayRole:'REPLAY'})));
   await page.goto('http://127.0.0.1:'+PORT+'/intro/v45-lan.html',{waitUntil:'domcontentloaded'});await wait(1800);
+  const controlCards=await page.evaluate(()=>{const y=document.querySelector('#mdYellowBtn .refCardIcon'),r=document.querySelector('#mdRedBtn .refCardIcon'),ys=y?getComputedStyle(y):null,rs=r?getComputedStyle(r):null;return{yellow:!!y,red:!!r,yw:ys?parseFloat(ys.width):0,yh:ys?parseFloat(ys.height):0,rw:rs?parseFloat(rs.width):0,rh:rs?parseFloat(rs.height):0,yText:document.querySelector('#mdYellowBtn')?.textContent.trim()||'',rText:document.querySelector('#mdRedBtn')?.textContent.trim()||''}});
+  assert(controlCards.yellow&&controlCards.red&&controlCards.yh>controlCards.yw&&controlCards.rh>controlCards.rw&&controlCards.yText==='黄牌'&&controlCards.rText==='红牌','director card controls unclear: '+JSON.stringify(controlCards));
   await page.locator('#matchCompetition').fill('SAGI SELF TEST CUP');await page.locator('#matchHome').fill('SELF TEST HOME');await page.locator('#matchAway').fill('SELF TEST AWAY');await page.locator('#matchKickoff').fill('2026-11-17T20:00');await page.locator('#matchVenue').fill('SELF TEST STADIUM');
   assert(await page.locator('#vdCam1').inputValue()==='1'&&await page.locator('#vdCam2').inputValue()==='2','saved camera mapping not restored');
   await page.click('#setupValidateBtn');await page.waitForFunction(()=>!document.querySelector('#setupReadyBtn')?.disabled,null,{timeout:5000});await page.click('#setupReadyBtn');await page.waitForFunction(()=>document.querySelector('#setupReadyBadge')?.textContent.includes('可以播出'),null,{timeout:5000});
@@ -310,7 +314,7 @@ server.listen(PORT,'127.0.0.1',async()=>{
   await page.screenshot({path:'selftest-artifacts/13-long-session-soak.png'});
 
   assert(pageErrors.length===0,'browser page errors: '+pageErrors.join(' | '));
-  const report={ok:true,build:'V4.27.4',testedAt:new Date().toISOString(),tests:['regular white score ribbon + lower time/stoppage ribbon + TORANHE event logo','HOME goal enlarged HOME crest + complete GOAL + lower player card + collapse','AWAY goal enlarged AWAY crest','yellow/red card event colors locked independently of team colors','penalty >5 rounds/sudden death/miss/scores','two-camera Input 1 -> Input 2','event-logo replay stinger visual','manual replay stinger IN -> Input 4 -> OUT -> Input 1','stored project load wins over stale Bridge + optional time/venue do not block READY','compact project index rehydrates full photos from IndexedDB with empty Bridge list','clock-only refresh avoids repeated heavy match-control repaints','legacy stale short-name cache cannot override current vMix fixture identity','mobile match control mirrors current fixture identity and legacy fields are read-only','rapid score writes are serialized under deliberate network reordering','consistency watchdog repairs same-fixture Bridge corruption','accelerated 1800-cycle long-session identity soak'],vmixCommands:cuts};
+  const report={ok:true,build:'V4.27.5',testedAt:new Date().toISOString(),tests:['regular white score ribbon + lower time/stoppage ribbon + TORANHE event logo','HOME goal enlarged HOME crest + complete GOAL + lower player card + collapse','AWAY goal enlarged AWAY crest','yellow/red referee-card shape + event colors + control icons','penalty >5 rounds/sudden death/miss/scores','two-camera Input 1 -> Input 2','event-logo replay stinger visual','manual replay stinger IN -> Input 4 -> OUT -> Input 1','stored project load wins over stale Bridge + optional time/venue do not block READY','compact project index rehydrates full photos from IndexedDB with empty Bridge list','clock-only refresh avoids repeated heavy match-control repaints','legacy stale short-name cache cannot override current vMix fixture identity','mobile match control mirrors current fixture identity and legacy fields are read-only','rapid score writes are serialized under deliberate network reordering','consistency watchdog repairs same-fixture Bridge corruption','accelerated 1800-cycle long-session identity soak'],vmixCommands:cuts};
   fs.writeFileSync('selftest-artifacts/report.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
  }catch(e){
   fs.mkdirSync('selftest-artifacts',{recursive:true});try{await page.screenshot({path:'selftest-artifacts/FAIL.png',fullPage:true})}catch{}
