@@ -30,7 +30,7 @@
 (()=>{
 const $=s=>document.querySelector(s),q=new URLSearchParams(location.search);
 const cfg={url:String(q.get('sync')||'').replace(/\/+$/,''),clubId:q.get('creator')||'',table:q.get('room')||'LIVE',token:q.get('token')||''};
-const modes={8ball:'中式八球',chase4:'4球追分',chase6:'6球追分',chase9:'9球追分'};
+const modes={'8ball':'中式八球',chase4:'4球追分',chase6:'6球追分',chase9:'9球追分'};
 let lastSig='',lastUpdate=0,timer=null;
 if(q.get('debug')==='1')document.body.classList.add('debug');
 function flash(title,sub){$('#eventTitle').textContent=title;$('#eventSub').textContent=sub;$('#event').classList.add('show');clearTimeout(flash.t);flash.t=setTimeout(()=>$('#event').classList.remove('show'),1000)}
