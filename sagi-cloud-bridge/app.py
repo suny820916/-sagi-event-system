@@ -33,8 +33,8 @@ app = Flask(__name__)
 ALLOWED_ORIGIN = (os.getenv("SAGI_ALLOWED_ORIGIN") or "https://suny820916.github.io").rstrip("/")
 SERVER_SECRET = (os.getenv("SAGI_SERVER_SECRET") or os.getenv("SAGI_BRIDGE_TOKEN") or "").strip()
 PORT = int(os.getenv("PORT") or "10000")
-DEPLOY_REVISION = "2026-11-17-smart-cut-cloud-v1"
-APP_VERSION = "3.9.6"
+DEPLOY_REVISION = "2026-11-17-smart-cut-large-media-lowmem-v2"
+APP_VERSION = "3.9.7"
 MAX_FILE_MB = int(os.getenv("SAGI_MAX_FILE_MB") or "300")
 JOB_TTL_MIN = int(os.getenv("SAGI_JOB_TTL_MIN") or "30")
 RATE_LIMIT_PER_HOUR = int(os.getenv("SAGI_RATE_LIMIT_PER_HOUR") or "20")
@@ -126,6 +126,7 @@ ELEVENLABS_FEMALE_VOICE_ID = (os.getenv("ELEVENLABS_FEMALE_VOICE_ID") or "").str
 ELEVENLABS_BASE = "https://api.elevenlabs.io"
 VOICE_SAMPLE_MAX_MB = int(os.getenv("SAGI_VOICE_SAMPLE_MAX_MB") or "25")
 RENDER_MAX_MB = int(os.getenv("SAGI_RENDER_MAX_MB") or "300")
+SMART_CUT_MAX_MB = int(os.getenv("SAGI_SMART_CUT_MAX_MB") or "900")
 FONT_URL = os.getenv("SAGI_CJK_FONT_URL") or "https://raw.githubusercontent.com/notofonts/noto-cjk/main/Sans/OTF/SimplifiedChinese/NotoSansCJKsc-Regular.otf"
 FONT_DIR = Path(tempfile.gettempdir()) / "sagi_fonts"
 FONT_PATH = FONT_DIR / "NotoSansCJKsc-Regular.otf"
@@ -1949,20 +1950,34 @@ def run_cloud_render(job_id, options):
 
 
 
+def _run_ffmpeg_checked(cmd, error_prefix="FFMPEG_FAILED"):
+    proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    if proc.returncode != 0:
+        tail = " | ".join((proc.stdout or "").splitlines()[-14:])
+        raise RuntimeError(error_prefix + ": " + tail)
+    return proc
+
+
 def run_smart_render(job_id, options):
-    """Cloud-first SMART CUT renderer. Designed for iPhone Safari: no browser FFmpeg required."""
+    """Low-memory cloud SMART CUT.
+
+    Large source files are never split into dozens of simultaneous trim branches.
+    Each shot is rendered independently, then concatenated. This keeps peak RAM
+    bounded on small Render instances.
+    """
     with heavy_slot:
         with render_jobs_lock:
             job = render_jobs.get(job_id)
             if not job:
                 return
-            job.update({"status": "processing", "stage": "SMART CUT 云端准备", "progress": 12, "updated_at": iso()})
+            job.update({"status": "processing", "stage": "SMART CUT 低内存准备", "progress": 12, "updated_at": iso()})
             _persist_render_jobs_locked()
             work = Path(job["workdir"])
             sources = [Path(x) for x in (job.get("sources") or [job.get("source")]) if x]
         try:
             if not sources or any(not p.exists() for p in sources):
                 raise RuntimeError("SMART_CUT_SOURCE_MISSING")
+
             duration = max(0.2, min(180.0, float(options.get("duration") or 15)))
             aspect = str(options.get("aspect") or "9:16")
             quality = str(options.get("quality") or "fast")
@@ -1985,110 +2000,132 @@ def run_smart_render(job_id, options):
                 voice_duration = 0.0
 
             width, height = render_dimensions(aspect, quality)
-            subtitle_filter = ""
-            if bool(options.get("burn_subtitles", True)) and captions:
-                ensure_cjk_font()
-                ass_path = work / "smart_captions.ass"
-                write_ass(captions, ass_path, width, height)
-                ass_escaped = str(ass_path).replace("\\", "/").replace(":", r"\:").replace("'", r"\'")
-                font_escaped = str(FONT_DIR).replace("\\", "/").replace(":", r"\:").replace("'", r"\'")
-                subtitle_filter = f"subtitles='{ass_escaped}':fontsdir='{font_escaped}'"
-
-            exe = imageio_ffmpeg.get_ffmpeg_exe()
-            out = work / "SAGI_SMART_CUT_CLOUD.mp4"
-            cmd = [exe, "-hide_banner", "-y"]
-            for source in sources:
-                cmd += ["-i", str(source)]
-            voice_index = len(sources)
-            if narration_path:
-                cmd += ["-i", str(narration_path)]
-
-            filters, labels = [], []
-            for i, row in enumerate(plan):
-                si = int(row["sourceIndex"])
-                ss, se = float(row["sourceStart"]), float(row["sourceEnd"])
-                label = f"scv{i}"
-                filters.append(
-                    f"[{si}:v]trim=start={ss:.4f}:end={se:.4f},setpts=PTS-STARTPTS,"
-                    f"scale={width}:{height}:force_original_aspect_ratio=increase,"
-                    f"crop={width}:{height},fps=30,setsar=1[{label}]"
-                )
-                labels.append(f"[{label}]")
-            filters.append("".join(labels) + f"concat=n={len(labels)}:v=1:a=0[smartscene]")
-            if subtitle_filter:
-                filters.append(f"[smartscene]{subtitle_filter}[vout]")
-            else:
-                filters.append("[smartscene]null[vout]")
-
-            audio_map = None
-            if narration_path:
-                voice_volume = max(0.25, min(2.0, float(options.get("voice_volume") or 1.0)))
-                filters.append(f"[{voice_index}:a]volume={voice_volume}[aout]")
-                audio_map = "[aout]"
-
-            cmd += ["-filter_complex", ";".join(filters), "-map", "[vout]"]
-            if audio_map:
-                cmd += ["-map", audio_map]
-            else:
-                cmd += ["-an"]
-
             if quality == "high":
                 preset, crf = "veryfast", "21"
             elif quality == "balanced":
                 preset, crf = "veryfast", "23"
             else:
                 preset, crf = "ultrafast", "26"
-            cmd += [
-                "-c:v", "libx264", "-preset", preset, "-tune", "zerolatency", "-crf", crf,
-                "-threads", str(FFMPEG_THREADS), "-filter_threads", "1", "-filter_complex_threads", "1",
-                "-pix_fmt", "yuv420p", "-r", "30",
-            ]
-            if audio_map:
-                cmd += ["-c:a", "aac", "-b:a", "128k"]
-            cmd += ["-movflags", "+faststart", "-t", str(duration), "-progress", "pipe:1", "-nostats", str(out)]
+
+            exe = imageio_ffmpeg.get_ffmpeg_exe()
+            shot_paths = []
+            total_shots = len(plan)
 
             with render_jobs_lock:
                 render_jobs[job_id].update({
-                    "stage": f"SMART CUT 云端剪辑 · {len(plan)}镜头",
-                    "progress": 32, "updated_at": iso(),
+                    "stage": f"SMART CUT 低内存切片 · 0/{total_shots}",
+                    "progress": 18, "updated_at": iso(),
                     "voiceComplete": bool(narration_path),
                     "voiceCoverage": 100 if narration_path else 0,
                     "voiceSegments": len(captions) if captions else (1 if narration_path else 0),
                     "voiceDuration": round(float(voice_duration or 0), 3),
-                    "visualSyncStrategy": "smart-cut-cloud",
-                    "sceneSyncSegments": len(plan),
-                    "sceneSyncInstances": len(plan),
+                    "visualSyncStrategy": "smart-cut-lowmem",
+                    "sceneSyncSegments": total_shots,
+                    "sceneSyncInstances": total_shots,
                 })
                 _persist_render_jobs_locked()
 
-            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
-            logs = []
-            for line in proc.stdout or []:
-                line = line.strip()
-                if line:
-                    logs.append(line)
-                    if len(logs) > 100:
-                        logs = logs[-100:]
-                if line.startswith("out_time_ms="):
-                    try:
-                        sec = float(line.split("=", 1)[1]) / 1_000_000.0
-                        pct = 32 + int(min(63, max(0, sec / max(0.2, duration) * 63)))
-                        with render_jobs_lock:
-                            if job_id in render_jobs:
-                                render_jobs[job_id].update({"progress": pct, "updated_at": iso()})
-                    except Exception:
-                        pass
-            code = proc.wait()
-            if code != 0 or not out.exists() or out.stat().st_size < 5000:
-                raise RuntimeError("SMART_CUT_FFMPEG_FAILED: " + " | ".join(logs[-14:]))
+            for i, row in enumerate(plan):
+                si = int(row["sourceIndex"])
+                ss = max(0.0, float(row["sourceStart"]))
+                seg = max(0.05, float(row["duration"]))
+                shot = work / f"smart_shot_{i:03d}.mp4"
+                cmd = [
+                    exe, "-hide_banner", "-y",
+                    "-ss", f"{ss:.4f}", "-t", f"{seg:.4f}", "-i", str(sources[si]),
+                    "-vf",
+                    f"scale={width}:{height}:force_original_aspect_ratio=increase,"
+                    f"crop={width}:{height},fps=30,setsar=1",
+                    "-an",
+                    "-c:v", "libx264", "-preset", preset, "-tune", "zerolatency", "-crf", crf,
+                    "-threads", str(FFMPEG_THREADS), "-filter_threads", "1",
+                    "-pix_fmt", "yuv420p", "-r", "30",
+                    "-movflags", "+faststart", str(shot),
+                ]
+                _run_ffmpeg_checked(cmd, f"SMART_SHOT_{i+1}_FAILED")
+                if not shot.exists() or shot.stat().st_size < 1000:
+                    raise RuntimeError(f"SMART_SHOT_{i+1}_EMPTY")
+                shot_paths.append(shot)
+
+                pct = 18 + int(((i + 1) / max(1, total_shots)) * 56)
+                with render_jobs_lock:
+                    if job_id in render_jobs:
+                        render_jobs[job_id].update({
+                            "stage": f"SMART CUT 低内存切片 · {i+1}/{total_shots}",
+                            "progress": pct, "updated_at": iso(),
+                        })
+
+            concat_list = work / "smart_concat.txt"
+            concat_list.write_text(
+                "\n".join("file '" + str(p).replace("'", "'\\''") + "'" for p in shot_paths),
+                encoding="utf-8",
+            )
+            picture = work / "smart_picture.mp4"
+            concat_cmd = [
+                exe, "-hide_banner", "-y", "-f", "concat", "-safe", "0",
+                "-i", str(concat_list), "-c", "copy", "-movflags", "+faststart", str(picture)
+            ]
+            _run_ffmpeg_checked(concat_cmd, "SMART_CONCAT_FAILED")
+            if not picture.exists() or picture.stat().st_size < 5000:
+                raise RuntimeError("SMART_CONCAT_EMPTY")
+
+            with render_jobs_lock:
+                render_jobs[job_id].update({
+                    "stage": "SMART CUT 合成配音与字幕", "progress": 80, "updated_at": iso()
+                })
+                _persist_render_jobs_locked()
+
+            out = work / "SAGI_SMART_CUT_CLOUD.mp4"
+            final_cmd = [exe, "-hide_banner", "-y", "-i", str(picture)]
+            voice_index = None
+            if narration_path:
+                voice_index = 1
+                final_cmd += ["-i", str(narration_path)]
+
+            vf = f"scale={width}:{height}:force_original_aspect_ratio=increase,crop={width}:{height},setsar=1"
+            if bool(options.get("burn_subtitles", True)) and captions:
+                ensure_cjk_font()
+                ass_path = work / "smart_captions.ass"
+                write_ass(captions, ass_path, width, height)
+                ass_escaped = str(ass_path).replace("\\", "/").replace(":", r"\:").replace("'", r"\'")
+                font_escaped = str(FONT_DIR).replace("\\", "/").replace(":", r"\:").replace("'", r"\'")
+                vf += f",subtitles='{ass_escaped}':fontsdir='{font_escaped}'"
+
+            final_cmd += ["-vf", vf, "-map", "0:v:0"]
+            if voice_index is not None:
+                voice_volume = max(0.25, min(2.0, float(options.get("voice_volume") or 1.0)))
+                final_cmd += ["-map", f"{voice_index}:a:0", "-af", f"volume={voice_volume}", "-c:a", "aac", "-b:a", "128k"]
+            else:
+                final_cmd += ["-an"]
+
+            final_cmd += [
+                "-c:v", "libx264", "-preset", preset, "-tune", "zerolatency", "-crf", crf,
+                "-threads", str(FFMPEG_THREADS), "-filter_threads", "1",
+                "-pix_fmt", "yuv420p", "-r", "30",
+                "-movflags", "+faststart", "-t", str(duration), str(out),
+            ]
+            _run_ffmpeg_checked(final_cmd, "SMART_FINAL_FAILED")
+            if not out.exists() or out.stat().st_size < 5000:
+                raise RuntimeError("SMART_FINAL_EMPTY")
+
+            for p in shot_paths:
+                try:
+                    p.unlink(missing_ok=True)
+                except Exception:
+                    pass
+            try:
+                picture.unlink(missing_ok=True)
+                concat_list.unlink(missing_ok=True)
+            except Exception:
+                pass
 
             with render_jobs_lock:
                 render_jobs[job_id].update({
                     "status": "ready", "stage": "SMART CUT 成片完成", "progress": 100,
                     "updated_at": iso(), "path": str(out), "size": out.stat().st_size,
                     "filename": "SAGI_SMART_CUT_CLOUD.mp4", "error": "",
-                    "visualSyncStrategy": "smart-cut-cloud",
-                    "sceneSyncSegments": len(plan), "sceneSyncInstances": len(plan),
+                    "visualSyncStrategy": "smart-cut-lowmem",
+                    "sceneSyncSegments": total_shots, "sceneSyncInstances": total_shots,
                 })
                 _persist_render_jobs_locked()
         except Exception as e:
@@ -3249,7 +3286,9 @@ def health():
         "cloudRender": True,
         "cloudRenderStable": True,
         "smartCutCloud": True,
-        "smartCutCloudVersion": "1.0",
+        "smartCutCloudVersion": "1.1",
+        "smartCutLargeMedia": True,
+        "smartCutLowMemory": True,
         "heavyTaskConcurrency": 1,
         "ffmpegThreads": FFMPEG_THREADS,
         "renderStateRecovery": True,
@@ -4497,8 +4536,8 @@ def create_smart_render_job():
                 raise ValueError(f"Empty media #{i+1}")
             total_size += size
             sources.append(str(source))
-        if total_size > RENDER_MAX_MB * 1024 * 1024:
-            raise OverflowError(f"Media exceeds {RENDER_MAX_MB}MB")
+        if total_size > SMART_CUT_MAX_MB * 1024 * 1024:
+            raise OverflowError(f"Media exceeds {SMART_CUT_MAX_MB}MB")
 
         try:
             smart_plan = json.loads(request.form.get("smart_plan") or "[]")
