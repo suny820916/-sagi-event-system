@@ -175,11 +175,19 @@ RENDER_STATE_FILE = STATE_DIR / "render_jobs.json"
 voice_cache = {"at": 0.0, "voices": []}
 
 VOICE_STYLE_PRESETS = {
-    "football": {"stability": 0.34, "similarity": 0.80, "style": 0.42, "pitch": 4, "volume": 5},
-    "natural": {"stability": 0.48, "similarity": 0.78, "style": 0.12, "pitch": 0, "volume": 0},
-    "documentary": {"stability": 0.64, "similarity": 0.77, "style": 0.08, "pitch": -4, "volume": 0},
-    "news": {"stability": 0.72, "similarity": 0.80, "style": 0.04, "pitch": 0, "volume": 2},
-    "warm": {"stability": 0.54, "similarity": 0.82, "style": 0.22, "pitch": 2, "volume": 1},
+    # SAGI FOOTBALL VOICE family. speed_bias is intentionally modest so the
+    # user's manual speed setting remains authoritative.
+    "football": {"stability": 0.34, "similarity": 0.80, "style": 0.42, "pitch": 4, "volume": 5, "speed_bias": 1.00},
+    "football_pro": {"stability": 0.42, "similarity": 0.84, "style": 0.34, "pitch": 2, "volume": 4, "speed_bias": 1.00},
+    "football_passion": {"stability": 0.24, "similarity": 0.80, "style": 0.66, "pitch": 7, "volume": 9, "speed_bias": 1.06},
+    "football_goal": {"stability": 0.20, "similarity": 0.79, "style": 0.82, "pitch": 9, "volume": 12, "speed_bias": 1.10},
+    "football_warm": {"stability": 0.58, "similarity": 0.84, "style": 0.24, "pitch": 1, "volume": 0, "speed_bias": 0.98},
+    "football_emotional": {"stability": 0.66, "similarity": 0.86, "style": 0.34, "pitch": -2, "volume": 1, "speed_bias": 0.94},
+    "football_memory": {"stability": 0.70, "similarity": 0.84, "style": 0.18, "pitch": -4, "volume": -1, "speed_bias": 0.95},
+    "natural": {"stability": 0.48, "similarity": 0.78, "style": 0.12, "pitch": 0, "volume": 0, "speed_bias": 1.00},
+    "documentary": {"stability": 0.64, "similarity": 0.77, "style": 0.08, "pitch": -4, "volume": 0, "speed_bias": 0.97},
+    "news": {"stability": 0.72, "similarity": 0.80, "style": 0.04, "pitch": 0, "volume": 2, "speed_bias": 1.00},
+    "warm": {"stability": 0.54, "similarity": 0.82, "style": 0.22, "pitch": 2, "volume": 1, "speed_bias": 0.98},
 }
 
 EDGE_VOICE_MAP = {
@@ -1069,7 +1077,7 @@ def synthesize_eleven(text, voice_id, output_path, speed=1.0, style="natural"):
             "similarity_boost": cfg["similarity"],
             "style": cfg["style"],
             "use_speaker_boost": True,
-            "speed": max(0.75, min(1.25, float(speed or 1.0))),
+            "speed": max(0.75, min(1.25, float(speed or 1.0) * float(cfg.get("speed_bias") or 1.0))),
         },
     }
     r = requests.post(
@@ -1101,7 +1109,8 @@ def synthesize_edge_tts(text, mode, output_path, speed=1.0, style="natural", exp
         voice = EDGE_VOICE_MAP.get(str(explicit_voice or "").strip())
         if not voice:
             voice = "zh-CN-YunjianNeural" if mode == "ai_male" else "zh-CN-XiaoxiaoNeural"
-        rate = int(round((max(0.75, min(1.25, float(speed or 1.0))) - 1.0) * 100))
+        effective_speed = max(0.75, min(1.25, float(speed or 1.0) * float(cfg.get("speed_bias") or 1.0)))
+        rate = int(round((effective_speed - 1.0) * 100))
         pitch = int(cfg.get("pitch") or 0)
         volume = int(cfg.get("volume") or 0)
         async def _save():
