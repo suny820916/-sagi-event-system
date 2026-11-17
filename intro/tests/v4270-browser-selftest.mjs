@@ -15,9 +15,9 @@ let seq=1,vmixCommands=[],matchdayPosts=[],graphics=makeGraphics(),reorderMatchd
 
 function makeGraphics(overrides={}){
  return {
-  commandId:'g_'+(seq++),revision:seq,fixtureKey:'selftest|'+HOME+'|'+AWAY,visualVersion:'V4.30.2-SELFTEST',
+  commandId:'g_'+(seq++),revision:seq,fixtureKey:'selftest|'+HOME+'|'+AWAY,visualVersion:'V4.30.3-SELFTEST',
   scoreboardVisible:true,scoreboardFrozen:false,scoreTheme:'sagi-pro',competition:'TORANHE CUP',
-  home:HOME,away:AWAY,homeShort:HOME,awayShort:AWAY,
+  home:HOME,away:AWAY,homeShort:HOME,awayShort:AWAY,scoreHomeName:'新疆塔城地区',scoreAwayName:'AYFC',
   homeCrest:HOME_CREST,awayCrest:AWAY_CREST,eventLogo:'',
   homeColor:'#0c8b55',awayColor:'#3157b7',accentColor:'#20ed82',
   homeScore:0,awayScore:0,homePen:0,awayPen:0,homeRedCards:0,awayRedCards:0,stoppageTime:'',
@@ -52,7 +52,7 @@ const server=http.createServer(async(req,res)=>{
   if(u.pathname==='/api/vmix'&&req.method==='POST'){const b=await readBody(req);let cmd={};try{cmd=JSON.parse(b)}catch{}vmixCommands.push(cmd);return json(res,{ok:true,command:cmd})}
   if(u.pathname==='/api/projects')return json(res,{projects:[]});
   if(u.pathname==='/health')return json(res,{ok:true,port:PORT});
-  if(u.pathname==='/')return text(res,'SAGI V4.30.2 SELFTEST');
+  if(u.pathname==='/')return text(res,'SAGI V4.30.3 SELFTEST');
   const rel=decodeURIComponent(u.pathname).replace(/^\/+/,'');const file=path.resolve(ROOT,rel);
   if(!file.startsWith(ROOT)||!fs.existsSync(file)||fs.statSync(file).isDirectory())return text(res,'Not found','text/plain',404);
   res.writeHead(200,{'Content-Type':mime(file),'Cache-Control':'no-store','Access-Control-Allow-Origin':'*'});res.end(fs.readFileSync(file));
@@ -64,6 +64,7 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
 server.listen(PORT,'127.0.0.1',async()=>{
  const browser=await chromium.launch({headless:true});
  const page=await browser.newPage({viewport:{width:1920,height:1080}});
+ const control=await browser.newPage({viewport:{width:1440,height:1100}});
  const pageErrors=[];page.on('pageerror',e=>pageErrors.push(String(e)));
  try{
   console.log('TEST 1: regular TORANHE scorebug composition');
@@ -75,7 +76,7 @@ server.listen(PORT,'127.0.0.1',async()=>{
    const br=bug.getBoundingClientRect(),hr=h.getBoundingClientRect(),ar=a.getBoundingClientRect(),mr=mid.getBoundingClientRect(),brandr=brand.getBoundingClientRect(),logoStyle=getComputedStyle(logo);
    return {home:h.textContent,away:a.textContent,homeOverflow:getComputedStyle(h).textOverflow,awayOverflow:getComputedStyle(a).textOverflow,homeFont:parseFloat(getComputedStyle(h).fontSize),awayFont:parseFloat(getComputedStyle(a).fontSize),homeInside:hr.left>=br.left-1&&hr.right<=br.right+1,awayInside:ar.left>=br.left-1&&ar.right<=br.right+1,bugRight:br.right,midTop:mr.top,bugTop:br.top,bugHeight:br.height,brandWidth:brandr.width,logoWidth:logo.getBoundingClientRect().width,logoSrc:logo.getAttribute('src')||'',logoDisplay:logoStyle.display,stopText:stop.textContent,stopDisplay:getComputedStyle(stop).display,burstWidth:burst.getBoundingClientRect().width,goalExpand:bug.classList.contains('goalExpand'),paper:getComputedStyle(document.querySelector('.sbTeamBlock.home')).backgroundColor};
   },{HOME,AWAY});
-  assert(regular.home===HOME&&regular.away===AWAY,'team names changed');
+  assert(regular.home==='新疆塔城地区'&&regular.away==='AYFC','broadcast score names changed: '+JSON.stringify({home:regular.home,away:regular.away}));
   assert(regular.homeOverflow!=='ellipsis'&&regular.awayOverflow!=='ellipsis','ellipsis returned');
   assert(regular.homeFont>=11&&regular.awayFont>=11,'team name below readable floor');
   assert(regular.homeInside&&regular.awayInside,'team name clipped outside main scorebar');
@@ -109,11 +110,21 @@ server.listen(PORT,'127.0.0.1',async()=>{
   await page.screenshot({path:'selftest-artifacts/01-regular-toranhe-scorebug.png'});
 
   console.log('TEST 1B: legacy stale short-name cache cannot override current fixture identity');
-  graphics=makeGraphics({home:'乌苏叶克备',away:'IPF',homeShort:'少林足球',awayShort:'旧客队',event:{type:'CLEAR_EVENT'}});
+  graphics=makeGraphics({home:'乌苏叶克备',away:'IPF',homeShort:'少林足球',awayShort:'旧客队',scoreHomeName:'乌苏叶克备',scoreAwayName:'IPF',event:{type:'CLEAR_EVENT'}});
   await page.waitForFunction(()=>document.querySelector('#sbHome')?.textContent==='乌苏叶克备'&&document.querySelector('#sbAway')?.textContent==='IPF',null,{timeout:5000});await wait(300);
   const identityOutput=await page.evaluate(()=>({home:document.querySelector('#sbHome').textContent,away:document.querySelector('#sbAway').textContent}));
   assert(identityOutput.home==='乌苏叶克备'&&identityOutput.away==='IPF','legacy short-name cache overrode vMix output: '+JSON.stringify(identityOutput));
   await page.screenshot({path:'selftest-artifacts/01b-canonical-team-identity.png'});
+
+  console.log('TEST 1C: director can edit broadcast short names without changing canonical fixture identity');
+  await control.goto('http://127.0.0.1:'+PORT+'/intro/v45-lan.html',{waitUntil:'domcontentloaded'});
+  await control.waitForFunction(()=>document.querySelector('#mdHomeShort')&&document.querySelector('#mdAwayShort'),null,{timeout:8000});
+  await control.fill('#mdHomeShort','塔城地区');await control.dispatchEvent('#mdHomeShort','change');
+  await control.fill('#mdAwayShort','阿勒泰');await control.dispatchEvent('#mdAwayShort','change');await wait(900);
+  assert(graphics.home==='新疆塔城地区青年足球俱乐部'&&graphics.away==='ALTAI YOUTH FOOTBALL CLUB','editing broadcast name changed canonical fixture identity');
+  assert(graphics.scoreHomeName==='塔城地区'&&graphics.scoreAwayName==='阿勒泰','broadcast short names were not published: '+JSON.stringify({home:graphics.scoreHomeName,away:graphics.scoreAwayName}));
+  await page.waitForFunction(()=>document.querySelector('#sbHome')?.textContent==='塔城地区'&&document.querySelector('#sbAway')?.textContent==='阿勒泰',null,{timeout:5000});
+  await page.screenshot({path:'selftest-artifacts/01c-broadcast-short-names.png'});
 
   console.log('TEST 2: HOME goal = enlarged HOME crest + complete GOAL + lower player card');
   const photo='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="180" height="220"><rect width="100%" height="100%" fill="#17202a"/><circle cx="90" cy="70" r="35" fill="#d5a97a"/><rect x="45" y="110" width="90" height="105" rx="18" fill="#0c8b55"/></svg>');
@@ -365,7 +376,7 @@ server.listen(PORT,'127.0.0.1',async()=>{
   await page.screenshot({path:'selftest-artifacts/13-long-session-soak.png'});
 
   assert(pageErrors.length===0,'browser page errors: '+pageErrors.join(' | '));
-  const report={ok:true,build:'V4.30.2',testedAt:new Date().toISOString(),tests:['compact score intelligence + event-logo/score-ribbon/clock-rail fusion + conditional added time','HOME goal enlarged HOME crest + complete GOAL + lower player card + collapse','AWAY goal enlarged AWAY crest','yellow/red referee-card shape + event colors + control icons','penalty >5 rounds/sudden death/miss/scores','two-camera Input 1 -> Input 2','event-logo replay stinger visual','manual replay stinger IN -> Input 4 -> OUT -> Input 1','stored project load wins over stale Bridge + optional time/venue do not block READY','compact project index rehydrates full photos from IndexedDB with empty Bridge list','clock-only refresh avoids repeated heavy match-control repaints','legacy stale short-name cache cannot override current vMix fixture identity','mobile match control mirrors current fixture identity and legacy fields are read-only','transient LAN failure retries automatically and records last-good state','rapid score writes are serialized under deliberate network reordering','duplicate operator events are gated before double-counting','vMix output ignores stale lower revisions within the same fixture','consistency watchdog repairs same-fixture Bridge corruption','accelerated 5000-cycle long-session identity soak'],vmixCommands:cuts};
+  const report={ok:true,build:'V4.30.3',testedAt:new Date().toISOString(),tests:['compact score intelligence + event-logo/score-ribbon/clock-rail fusion + conditional added time','HOME goal enlarged HOME crest + complete GOAL + lower player card + collapse','AWAY goal enlarged AWAY crest','yellow/red referee-card shape + event colors + control icons','penalty >5 rounds/sudden death/miss/scores','two-camera Input 1 -> Input 2','event-logo replay stinger visual','manual replay stinger IN -> Input 4 -> OUT -> Input 1','stored project load wins over stale Bridge + optional time/venue do not block READY','compact project index rehydrates full photos from IndexedDB with empty Bridge list','clock-only refresh avoids repeated heavy match-control repaints','legacy stale short-name cache cannot override current vMix fixture identity','mobile match control mirrors current fixture identity and legacy fields are read-only','transient LAN failure retries automatically and records last-good state','rapid score writes are serialized under deliberate network reordering','duplicate operator events are gated before double-counting','vMix output ignores stale lower revisions within the same fixture','consistency watchdog repairs same-fixture Bridge corruption','accelerated 5000-cycle long-session identity soak'],vmixCommands:cuts};
   fs.writeFileSync('selftest-artifacts/report.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
  }catch(e){
   fs.mkdirSync('selftest-artifacts',{recursive:true});try{await page.screenshot({path:'selftest-artifacts/FAIL.png',fullPage:true})}catch{}
