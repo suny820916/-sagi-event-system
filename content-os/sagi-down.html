@@ -1002,7 +1002,7 @@ Unbelievable finish."></textarea>
 
 <script>
 (()=>{'use strict';
-const SAGI_DOWN_BUILD='V4.1.1';
+const SAGI_DOWN_BUILD='V4.1.2';
 document.documentElement.dataset.sagiDownBuild=SAGI_DOWN_BUILD;
 const BTCH_PUBLIC='https://btch-downloader-api-green.vercel.app';
 const DOWNLOAD_ROUTER_VERSION='3.0';
@@ -4003,7 +4003,7 @@ async function ensureFFmpeg(){
  // iPhone/Safari: class worker must be same-origin. The stock bundled worker can
  // resolve blob: core URLs as webpack module ids and throw "Cannot find module blob:...".
  // SAGI's raw module worker uses the browser's native dynamic import instead.
- const classWorkerURL=new URL('./sagi-ffmpeg-worker.js?v=4110',window.location.href).href;
+ const classWorkerURL=new URL('./sagi-ffmpeg-worker.js?v=4120',window.location.href).href;
  const core='https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd';
  const coreURL=await toBlobURLRemote([core+'/ffmpeg-core.js','https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd/ffmpeg-core.js'],'text/javascript');
  const wasmURL=await toBlobURLRemote([core+'/ffmpeg-core.wasm','https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd/ffmpeg-core.wasm'],'application/wasm');
@@ -5779,53 +5779,112 @@ async function smartCutAssembleBase(){
  try{await ffmpeg.deleteFile('smart_concat.txt')}catch(e){}
  return new File([data.buffer],'SAGI_SMART_EDIT_BASE.mp4',{type:'video/mp4'})
 }
+async function smartCutCreateCloudJob(endpoint,fd,maxAttempts=3){
+ let lastError=null;
+ for(let attempt=1;attempt<=maxAttempts;attempt++){
+  try{
+   return await new Promise((resolve,reject)=>{
+    const xhr=new XMLHttpRequest();
+    xhr.open('POST',CAPTION_CLOUD+endpoint);
+    xhr.setRequestHeader('Authorization','Bearer '+STUDIO.cloudCaptionToken);
+
+    // iPhone Safari + large football videos:
+    // never kill a healthy upload with a fixed 5-minute timer.
+    xhr.timeout=0;
+    const started=Date.now();
+    let lastLoaded=0,lastAt=started;
+    xhr.upload.onprogress=e=>{
+     if(!e.lengthComputable)return;
+     const now=Date.now(),dt=Math.max(.25,(now-lastAt)/1000),delta=Math.max(0,e.loaded-lastLoaded);
+     const mb=e.loaded/1048576,total=e.total/1048576,p=Math.round(e.loaded/e.total*100);
+     const speed=delta/1048576/dt;
+     lastLoaded=e.loaded;lastAt=now;
+     smartCutProgress(44+Math.round(p*.20));
+     smartCutStatus('③ 云端上传 '+p+'% · '+mb.toFixed(1)+'/'+total.toFixed(1)+' MB · '+speed.toFixed(1)+' MB/s')
+    };
+    xhr.upload.onload=()=>{
+     smartCutProgress(64);
+     smartCutStatus('③ 原视频上传100% · 云端正在确认文件并创建剪辑任务…')
+    };
+    xhr.onload=()=>{
+     let d={};try{d=JSON.parse(xhr.responseText||'{}')}catch(e){}
+     if(xhr.status>=200&&xhr.status<300&&d?.ok&&d?.job?.id)return resolve(d.job);
+     const err=new Error(d?.error||('云端提交失败 HTTP '+xhr.status));
+     err.retryable=xhr.status===0||xhr.status===408||xhr.status===425||xhr.status===429||xhr.status>=500;
+     reject(err)
+    };
+    xhr.onerror=()=>{
+     const err=new Error('上传连接中断');
+     err.retryable=true;reject(err)
+    };
+    xhr.onabort=()=>{
+     const err=new Error('上传被系统中断');
+     err.retryable=true;reject(err)
+    };
+    xhr.send(fd)
+   })
+  }catch(e){
+   lastError=e;
+   if(e?.retryable===false||attempt>=maxAttempts)break;
+   smartCutStatus('③ 网络发生波动 · 自动恢复上传 '+attempt+'/'+maxAttempts+' · 不需要重新操作');
+   smartCutProgress(Math.max(44,Math.min(63,Number(q('smartCutProgressBar')?.style?.width?.replace('%',''))||44)));
+   try{await wakeCaptionCloud(true)}catch(_){}
+   await new Promise(r=>setTimeout(r,1800*attempt))
+  }
+ }
+ throw new Error((lastError?.message||'云端上传失败')+' · 已自动重试，素材仍保留在页面中')
+}
+
 async function smartCutSubmitJob(endpoint,fd){
  smartCutProgress(44);
- const job=await new Promise((resolve,reject)=>{
-  const xhr=new XMLHttpRequest();
-  xhr.open('POST',CAPTION_CLOUD+endpoint);
-  xhr.setRequestHeader('Authorization','Bearer '+STUDIO.cloudCaptionToken);
-  xhr.timeout=300000;
-  xhr.upload.onprogress=e=>{
-   if(e.lengthComputable){
-    const p=Math.round(e.loaded/e.total*100);
-    smartCutProgress(44+Math.round(p*.20));
-    smartCutStatus('③ 云端上传 '+p+'% · 手机不做本地编码')
-   }
-  };
-  xhr.onload=()=>{
-   let d={};try{d=JSON.parse(xhr.responseText||'{}')}catch(e){}
-   if(xhr.status<200||xhr.status>=300||!d?.ok||!d?.job?.id)return reject(new Error(d?.error||('云端提交失败 HTTP '+xhr.status)));
-   resolve(d.job)
-  };
-  xhr.onerror=()=>reject(new Error('云端上传网络错误'));
-  xhr.ontimeout=()=>reject(new Error('云端上传超时，请检查网络后重试'));
-  xhr.send(fd)
- });
+ const job=await smartCutCreateCloudJob(endpoint,fd,3);
  STUDIO.cloudRenderJobId=job.id;
- const deadline=Date.now()+12*60*1000;
+
+ // Long football clips can legitimately take more than 12 minutes on a small cloud worker.
+ // Keep polling instead of presenting a false timeout.
+ const deadline=Date.now()+35*60*1000;
+ let pollErrors=0;
  while(Date.now()<deadline){
-  const r=await fetch(CAPTION_CLOUD+'/api/render-jobs/'+encodeURIComponent(job.id),{
-   headers:{Authorization:'Bearer '+STUDIO.cloudCaptionToken},cache:'no-store'
-  });
-  const d=await r.json().catch(()=>({}));
-  if(!r.ok||!d?.ok)throw new Error(d?.error||('云端进度查询失败 HTTP '+r.status));
-  const j=d.job||{};
-  const p=Math.max(64,Math.min(99,Number(j.progress)||64));
-  smartCutProgress(p);
-  smartCutStatus('④ '+(j.stage||'云端智能剪辑')+(j.progress?' · '+j.progress+'%':''));
-  if(j.status==='ready'&&j.downloadUrl){
-   STUDIO.cloudRenderJobId='';STUDIO.cloudResultUrl=j.previewUrl||j.downloadUrl;
-   q('resultVideo').src=j.previewUrl||j.downloadUrl;q('resultVideo').classList.add('show');
-   q('saveResultBtn').href=j.downloadUrl;q('saveResultBtn').download='SAGI_SMART_CUT_CLOUD.mp4';
-   q('resultActions').classList.add('show');
-   return j
+  try{
+   const r=await fetch(CAPTION_CLOUD+'/api/render-jobs/'+encodeURIComponent(job.id),{
+    headers:{Authorization:'Bearer '+STUDIO.cloudCaptionToken},cache:'no-store'
+   });
+   const d=await r.json().catch(()=>({}));
+   if(r.status===404){
+    pollErrors++;
+    if(pollErrors<=8){
+     smartCutStatus('④ 云端正在恢复任务 · 自动继续确认 '+pollErrors+'/8');
+     await new Promise(x=>setTimeout(x,3000));
+     continue
+    }
+    throw new Error('云端任务在服务重启后未恢复')
+   }
+   if(!r.ok||!d?.ok){
+    const err=new Error(d?.error||('云端进度查询失败 HTTP '+r.status));
+    if(r.status>=500||r.status===429){pollErrors++;if(pollErrors<=10){await new Promise(x=>setTimeout(x,3000));continue}}
+    throw err
+   }
+   pollErrors=0;
+   const j=d.job||{},p=Math.max(64,Math.min(99,Number(j.progress)||64));
+   smartCutProgress(p);
+   smartCutStatus('④ '+(j.stage||'云端智能剪辑')+(j.progress?' · '+j.progress+'%':''));
+   if(j.status==='ready'&&j.downloadUrl){
+    STUDIO.cloudRenderJobId='';STUDIO.cloudResultUrl=j.previewUrl||j.downloadUrl;
+    q('resultVideo').src=j.previewUrl||j.downloadUrl;q('resultVideo').classList.add('show');
+    q('saveResultBtn').href=j.downloadUrl;q('saveResultBtn').download='SAGI_SMART_CUT_CLOUD.mp4';
+    q('resultActions').classList.add('show');
+    return j
+   }
+   if(j.status==='failed'){STUDIO.cloudRenderJobId='';throw new Error(j.error||'云端智能剪辑失败')}
+  }catch(e){
+   pollErrors++;
+   if(pollErrors>10){STUDIO.cloudRenderJobId='';throw e}
+   smartCutStatus('④ 网络波动 · 成片任务仍在云端 · 自动重连 '+pollErrors+'/10');
   }
-  if(j.status==='failed'){STUDIO.cloudRenderJobId='';throw new Error(j.error||'云端智能剪辑失败')}
-  await new Promise(r=>setTimeout(r,1500))
+  await new Promise(r=>setTimeout(r,1800))
  }
  STUDIO.cloudRenderJobId='';
- throw new Error('云端成片等待超时，请重新提交')
+ throw new Error('云端任务处理时间异常过长；已停止查询，但不会切回手机FFmpeg')
 }
 
 async function smartCutCloudSubmit(finalVoice,duration){
@@ -5971,11 +6030,11 @@ if('serviceWorker' in navigator){
  navigator.serviceWorker.addEventListener('controllerchange',()=>{
   if(swReloaded)return;swReloaded=true;
   try{
-   const key='sagi_sw_reload_v4110';
+   const key='sagi_sw_reload_v4120';
    if(sessionStorage.getItem(key)!=='1'){sessionStorage.setItem(key,'1');location.reload()}
   }catch(e){location.reload()}
  });
- navigator.serviceWorker.register('./sagi-down-sw.js?v=4110',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})
+ navigator.serviceWorker.register('./sagi-down-sw.js?v=4120',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})
 }
 })();
 </script>
