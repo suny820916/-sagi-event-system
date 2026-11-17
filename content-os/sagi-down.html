@@ -48,7 +48,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 .voiceExportCard{border-color:#5d4d2d;background:linear-gradient(180deg,#16130c,#0a1013)}
 .voiceExportHead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.voiceExportHead b{font-size:12px}.voiceExportHead span{display:block;margin-top:3px;font-size:8px;color:#9b8b62;line-height:1.45}
 .voiceExportScript{width:100%;min-height:135px;margin-top:9px;border:1px solid #4d432c;background:#080a09;color:#fff;border-radius:11px;padding:11px;font-size:11px;line-height:1.6;resize:vertical;outline:none}
-.voiceExportGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:8px}.voiceExportGrid label{font-size:8px;color:#8d805d}.voiceExportGrid select{width:100%;margin-top:4px;border:1px solid #433b28;background:#080a09;color:#fff;border-radius:10px;padding:10px;font-size:10px}
+.voiceExportGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:8px}.voiceExportGrid label{font-size:8px;color:#8d805d}.voiceExportGrid select{width:100%;margin-top:4px;border:1px solid #433b28;background:#080a09;color:#fff;border-radius:10px;padding:10px;font-size:10px}
 .voiceExportActions{display:grid;grid-template-columns:1.2fr .9fr .9fr;gap:7px;margin-top:9px}.voiceExportPreview{display:none;width:100%;height:38px;margin-top:9px}.voiceExportPreview.show{display:block}
 .voiceExportStatus{margin-top:8px;font-size:9px;color:#a59363;line-height:1.55}.voiceExportMeta{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}.voiceExportMeta span{font-size:8px;border:1px solid #4c402a;border-radius:99px;padding:4px 7px;color:#b39a61}
 @media(max-width:420px){.voiceExportGrid{grid-template-columns:1fr 1fr}.voiceExportGrid label:last-child{grid-column:1/-1}.voiceExportActions{grid-template-columns:1fr 1fr}.voiceExportActions .primary{grid-column:1/-1}}
@@ -716,6 +716,13 @@ AEK 2-3 皇马
           <option value="natural">自然解说 · 通用</option>
         </select>
       </label>
+      <label>质量
+        <select id="voiceExportQuality">
+          <option value="fast">极速 · 国内稳定</option>
+          <option value="pro" selected>专业 · 体育解说</option>
+          <option value="cinema">电影级 · 高表现力</option>
+        </select>
+      </label>
       <label>语速
         <select id="voiceExportSpeed">
           <option value="0.88">慢速 0.88×</option>
@@ -955,6 +962,13 @@ Unbelievable finish."></textarea>
               <option value="warm">温暖叙事 · 通用</option>
             </select>
           </label>
+          <label>质量
+            <select id="aiVoiceQuality">
+              <option value="fast">极速 · 国内稳定</option>
+              <option value="pro" selected>专业 · 体育解说</option>
+              <option value="cinema">电影级 · 高表现力</option>
+            </select>
+          </label>
           <label>语速
             <select id="aiVoiceSpeed">
               <option value="0.88">慢速 0.88×</option>
@@ -1063,7 +1077,7 @@ Unbelievable finish."></textarea>
 
 <script>
 (()=>{'use strict';
-const SAGI_DOWN_BUILD='V4.2.2';
+const SAGI_DOWN_BUILD='V4.2.3';
 document.documentElement.dataset.sagiDownBuild=SAGI_DOWN_BUILD;
 const BTCH_PUBLIC='https://btch-downloader-api-green.vercel.app';
 const DOWNLOAD_ROUTER_VERSION='3.0';
@@ -1376,7 +1390,7 @@ const STUDIO={
  lockstepReady:false,lockstepSegments:[],lockstepVoiceBlob:null,lockstepVoiceUrl:'',lockstepDuration:0,voiceOneShotFallback:false,
  cloudRenderJobId:'',cloudRenderTimer:null,cloudResultUrl:'',cloudRenderRecoveries:0,cloudRenderRecovering:false,
  pendingTranslateZh:false,
- voiceExportBlob:null,voiceExportUrl:'',voiceExportDuration:0,voiceExportText:'',
+ voiceExportBlob:null,voiceExportUrl:'',voiceExportDuration:0,voiceExportText:'',voiceLastProvider:'',voiceLastModel:'',voiceLastQuality:'',
  cloudHealth:null,cloudLastError:''
 };
 
@@ -1949,7 +1963,7 @@ function voiceEmotionText(text,style,native){
 }
 function voiceGenerationKey(text,mode,speedOverride=null){
  const speed=speedOverride==null?(q('aiVoiceSpeed')?.value||'1'):String(speedOverride);
- return [String(text||'').trim(),mode||'',q('aiVoiceVoice')?.value||'',speed,q('aiVoiceStyle')?.value||'football'].join('|')
+ return [String(text||'').trim(),mode||'',q('aiVoiceVoice')?.value||'',speed,q('aiVoiceStyle')?.value||'football',q('aiVoiceQuality')?.value||'pro'].join('|')
 }
 async function mergeVoiceChunks(blobs,texts,gapSeconds=.08){
  const Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)throw new Error('WEB_AUDIO_UNAVAILABLE');
@@ -2201,7 +2215,7 @@ async function requestLockstepVoice(text,mode,speed){
   const r=await fetch(CAPTION_CLOUD+'/api/voice/preview',{
    method:'POST',
    headers:{'Content-Type':'application/json',Authorization:'Bearer '+STUDIO.cloudCaptionToken},
-   body:JSON.stringify({text:chunks[i],mode,voice_id:mode==='clone'?STUDIO.cloneVoiceId:(q('aiVoiceVoice')?.value||''),speed:profile.speed,style:profile.style})
+   body:JSON.stringify({text:chunks[i],mode,voice_id:mode==='clone'?STUDIO.cloneVoiceId:(q('aiVoiceVoice')?.value||''),speed:profile.speed,style:profile.style,quality:q('aiVoiceQuality')?.value||'pro'})
   });
   if(!r.ok){const d=await r.json().catch(()=>({}));throw new Error(d?.error||('HTTP '+r.status))}
   const blob=await r.blob();if(blob.size<1000)throw new Error('配音返回为空');
@@ -2285,7 +2299,8 @@ async function requestOneShotVoice(text,mode,speed){
   mode,
   voice_id:mode==='clone'?STUDIO.cloneVoiceId:(q('aiVoiceVoice')?.value||''),
   speed:profile.speed,
-  style:profile.style
+  style:profile.style,
+  quality:q('aiVoiceQuality')?.value||'pro'
  };
  const headers={'Content-Type':'application/json',Authorization:'Bearer '+STUDIO.cloudCaptionToken};
 
@@ -2311,7 +2326,10 @@ async function requestOneShotVoice(text,mode,speed){
   const mono=await decodeVoiceMono(blob,24000);duration=mono.length/24000
  }
  STUDIO.voiceOneShotFallback=fallback;
- return{blob,duration,fallback,endpoint}
+ STUDIO.voiceLastProvider=r.headers.get('X-SAGI-Voice-Provider')||'';
+ STUDIO.voiceLastModel=r.headers.get('X-SAGI-Voice-Model')||'';
+ STUDIO.voiceLastQuality=r.headers.get('X-SAGI-Voice-Quality')||(q('aiVoiceQuality')?.value||'pro');
+ return{blob,duration,fallback,endpoint,provider:STUDIO.voiceLastProvider,model:STUDIO.voiceLastModel,quality:STUDIO.voiceLastQuality}
 }
 function voiceMasterLanguage(text){
  const s=String(text||'');
@@ -2612,10 +2630,15 @@ async function generateCompleteAIVoice(text,mode,force=false,speedOverride=null)
   const r=await fetch(CAPTION_CLOUD+'/api/voice/preview',{
    method:'POST',
    headers:{'Content-Type':'application/json',Authorization:'Bearer '+STUDIO.cloudCaptionToken},
-   body:JSON.stringify({text:chunks[i],mode,voice_id:mode==='clone'?STUDIO.cloneVoiceId:(q('aiVoiceVoice')?.value||''),speed:actualSpeed,style:profile.style})
+   body:JSON.stringify({text:chunks[i],mode,voice_id:mode==='clone'?STUDIO.cloneVoiceId:(q('aiVoiceVoice')?.value||''),speed:actualSpeed,style:profile.style,quality:q('aiVoiceQuality')?.value||'pro'})
   });
   if(!r.ok){const d=await r.json().catch(()=>({}));throw new Error('第'+(i+1)+'段生成失败：'+(d?.error||('HTTP '+r.status)))}
   const blob=await r.blob();if(blob.size<1000)throw new Error('第'+(i+1)+'段配音为空');
+  if(i===0){
+   STUDIO.voiceLastProvider=r.headers.get('X-SAGI-Voice-Provider')||'';
+   STUDIO.voiceLastModel=r.headers.get('X-SAGI-Voice-Model')||'';
+   STUDIO.voiceLastQuality=r.headers.get('X-SAGI-Voice-Quality')||(q('aiVoiceQuality')?.value||'pro');
+  }
   blobs.push(blob)
  }
  setVoiceState('完整配音保护 · 正在合并 '+chunks.length+' 段音频…');
@@ -4113,7 +4136,7 @@ async function ensureFFmpeg(){
  // iPhone/Safari: class worker must be same-origin. The stock bundled worker can
  // resolve blob: core URLs as webpack module ids and throw "Cannot find module blob:...".
  // SAGI's raw module worker uses the browser's native dynamic import instead.
- const classWorkerURL=new URL('./sagi-ffmpeg-worker.js?v=4220',window.location.href).href;
+ const classWorkerURL=new URL('./sagi-ffmpeg-worker.js?v=4230',window.location.href).href;
  const core='https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd';
  const coreURL=await toBlobURLRemote([core+'/ffmpeg-core.js','https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd/ffmpeg-core.js'],'text/javascript');
  const wasmURL=await toBlobURLRemote([core+'/ffmpeg-core.wasm','https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd/ffmpeg-core.wasm'],'application/wasm');
@@ -6188,13 +6211,14 @@ function voiceExportMeta(){
  const el=q('voiceExportMeta');if(!el)return;
  if(!STUDIO.voiceExportBlob){el.innerHTML='';return}
  const kb=Math.round((STUDIO.voiceExportBlob.size||0)/1024);
- el.innerHTML='<span>'+STUDIO.voiceExportDuration.toFixed(1)+' 秒</span><span>WAV · 24kHz · Mono</span><span>'+kb+' KB</span>'
+ el.innerHTML='<span>'+STUDIO.voiceExportDuration.toFixed(1)+' 秒</span><span>WAV · 24kHz · Mono</span><span>'+kb+' KB</span>'+(STUDIO.voiceLastProvider?'<span>'+escapeHtml(STUDIO.voiceLastProvider)+'</span>':'')+(STUDIO.voiceLastModel?'<span>'+escapeHtml(STUDIO.voiceLastModel)+'</span>':'')
 }
 async function generateStandaloneVoice(){
  const text=String(q('voiceExportText')?.value||'').trim();
  const mode=q('voiceExportMode')?.value||'ai_male';
  const style=q('voiceExportStyle')?.value||'football';
  const speed=Number(q('voiceExportSpeed')?.value)||1;
+ const quality=q('voiceExportQuality')?.value||'pro';
  const btn=q('voiceExportGenerateBtn');
  if(!text){voiceExportStatus('请先粘贴要配音的文案。');return}
  if(mode==='clone'&&!STUDIO.cloneVoiceId){voiceExportStatus('请先在下方创建“我的克隆声音”，再使用克隆配音。');return}
@@ -6202,23 +6226,25 @@ async function generateStandaloneVoice(){
  try{
   await voiceApiReady();
   if(!(STUDIO.cloudHealth||{}).aiVoice)throw new Error('当前云端 AI Voice 不可用');
-  const oldMode=q('aiVoiceMode')?.value,oldStyle=q('aiVoiceStyle')?.value,oldSpeed=q('aiVoiceSpeed')?.value;
+  const oldMode=q('aiVoiceMode')?.value,oldStyle=q('aiVoiceStyle')?.value,oldSpeed=q('aiVoiceSpeed')?.value,oldQuality=q('aiVoiceQuality')?.value;
   if(q('aiVoiceMode'))q('aiVoiceMode').value=mode;
   if(q('aiVoiceStyle'))q('aiVoiceStyle').value=style;
   if(q('aiVoiceSpeed'))q('aiVoiceSpeed').value=String(speed);
+  if(q('aiVoiceQuality'))q('aiVoiceQuality').value=quality;
   const ep=voiceEmotionProfile(style,speed);
   voiceExportStatus('正在生成 '+ep.label+' · '+(ep.native?'情绪引擎 V2.0':'旧云端兼容导演')+' · 长文自动分段合并…');
   const result=await generateCompleteAIVoice(text,mode,true,speed);
   if(oldMode!=null&&q('aiVoiceMode'))q('aiVoiceMode').value=oldMode;
   if(oldStyle!=null&&q('aiVoiceStyle'))q('aiVoiceStyle').value=oldStyle;
   if(oldSpeed!=null&&q('aiVoiceSpeed'))q('aiVoiceSpeed').value=oldSpeed;
+  if(oldQuality!=null&&q('aiVoiceQuality'))q('aiVoiceQuality').value=oldQuality;
   if(STUDIO.voiceExportUrl){try{URL.revokeObjectURL(STUDIO.voiceExportUrl)}catch(e){}}
   STUDIO.voiceExportBlob=result.blob;STUDIO.voiceExportDuration=result.duration;STUDIO.voiceExportText=text;
   STUDIO.voiceExportUrl=URL.createObjectURL(result.blob);
   const audio=q('voiceExportPreview');audio.src=STUDIO.voiceExportUrl;audio.classList.add('show');
   const dl=q('voiceExportDownloadBtn');dl.href=STUDIO.voiceExportUrl;dl.download='SAGI_VOICE_'+new Date().toISOString().slice(0,10)+'.wav';dl.style.pointerEvents='auto';dl.style.opacity='1';
   voiceExportMeta();
-  voiceExportStatus('完成 · '+result.duration.toFixed(1)+'秒 · 可以试听或直接下载 WAV 配音文件。');
+  voiceExportStatus('完成 · '+result.duration.toFixed(1)+'秒 · '+(STUDIO.voiceLastProvider||'兼容语音引擎')+(STUDIO.voiceLastModel?(' · '+STUDIO.voiceLastModel):'')+' · 可以试听或下载 WAV。');
   toast('独立配音已生成')
  }catch(e){
   voiceExportStatus('配音生成失败：'+(e.message||e))
@@ -6231,6 +6257,7 @@ function voiceExportToSmartCut(){
  if(!text){voiceExportStatus('没有可发送的配音文案。');return}
  q('smartCutScript').value=text;
  q('smartCutVoice').value=q('voiceExportMode')?.value||'ai_male';
+ if(q('aiVoiceQuality'))q('aiVoiceQuality').value=q('voiceExportQuality')?.value||'pro';
  if(q('narrationText'))q('narrationText').value=text;
  if(STUDIO.voiceExportBlob){
   STUDIO.generatedVoiceBlob=STUDIO.voiceExportBlob;
@@ -6322,11 +6349,11 @@ if('serviceWorker' in navigator){
  navigator.serviceWorker.addEventListener('controllerchange',()=>{
   if(swReloaded)return;swReloaded=true;
   try{
-   const key='sagi_sw_reload_v4220';
+   const key='sagi_sw_reload_v4230';
    if(sessionStorage.getItem(key)!=='1'){sessionStorage.setItem(key,'1');location.reload()}
   }catch(e){location.reload()}
  });
- navigator.serviceWorker.register('./sagi-down-sw.js?v=4220',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})
+ navigator.serviceWorker.register('./sagi-down-sw.js?v=4230',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})
 }
 })();
 </script>
