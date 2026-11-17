@@ -15,7 +15,7 @@ let seq=1,vmixCommands=[],matchdayPosts=[],graphics=makeGraphics();
 
 function makeGraphics(overrides={}){
  return {
-  commandId:'g_'+(seq++),visualVersion:'V4.27.2-SELFTEST',
+  commandId:'g_'+(seq++),visualVersion:'V4.27.3-SELFTEST',
   scoreboardVisible:true,scoreboardFrozen:false,scoreTheme:'sagi-pro',competition:'TORANHE CUP',
   home:HOME,away:AWAY,homeShort:HOME,awayShort:AWAY,
   homeCrest:HOME_CREST,awayCrest:AWAY_CREST,eventLogo:'',
@@ -26,6 +26,17 @@ function makeGraphics(overrides={}){
   simplePenalty:{visible:false,home:0,away:0,history:[],round:1},
   event:{type:'CLEAR_EVENT'},...overrides
  };
+}
+function makeValidRoster(prefix){
+ const roles=[['1','GK','GK'],['2','DF','RB'],['3','DF','LB'],['4','DF','CB'],['5','DF','CB'],['6','MF','CM'],['8','MF','CM'],['10','MF','AM'],['7','FW','RW'],['9','FW','ST'],['11','FW','LW']];
+ return roles.map(([number,role,position],i)=>({id:prefix+(i+1),name:prefix.toUpperCase()+' PLAYER '+(i+1),number,squadType:'STARTER',role,position,captain:i===3}));
+}
+function makeStoredProject(id='selftest_project_4273'){
+ const homeRoster=makeValidRoster('h'),awayRoster=makeValidRoster('a'),projectPhoto='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"><rect width="40" height="40" fill="#067347"/></svg>');
+ const meta={competition:'TORANHE PROJECT CUP',round:'FINAL',home:'PROJECT HOME FC',away:'PROJECT AWAY FC',kickoff:'',venue:''};
+ const core={activeSide:'HOME',matchConfig:{mode:'11',playerCount:11},package:{...meta,matchFormat:{mode:'11',playerCount:11}},teams:{HOME:{formation:'4-3-3',customPositions:{},roster:homeRoster},AWAY:{formation:'4-3-3',customPositions:{},roster:awayRoster}}};
+ const matchday={homeScore:3,awayScore:1,scoreboardVisible:true,scoreboardFrozen:false,period:'2H',clockBase:4020,clockRunning:false,clockStartedAt:0,lastEvent:null,eventLog:[],replayMarkers:[],homeColor:'#0c8b55',awayColor:'#3157b7',accentColor:'#20ed82',homeShort:'PHF',awayShort:'PAF',homeRedCards:0,awayRedCards:0,homePen:0,awayPen:0,penaltyShootout:{started:false,rounds:5,firstSide:'HOME',history:[],winner:'',finished:false},simplePenalty:{visible:false,home:0,away:0,history:[],slots:5},stoppageTime:'',scoreTheme:'sagi-pro',overlayVisible:false,matchMeta:meta,savedAt:Date.now()};
+ return{id,name:'SELFTEST STORED MATCH',savedAt:Date.now(),meta,core:JSON.stringify(core),show:'',matchday:JSON.stringify(matchday),vmix:JSON.stringify({cam1:'1',cam2:'2',drone:'',replay:'4',graphics:'5',transition:'Cut',duration:0,overlay:'1',cam1Role:'MAIN_WIDE',cam2Role:'SIDELINE_CLOSE',droneRole:'DRONE',replayRole:'REPLAY'}),assets:{homeCrest:HOME_CREST,awayCrest:AWAY_CREST,stadium:'',eventLogo:'',photos:{HOME:{h1:projectPhoto},AWAY:{}}}}
 }
 function json(res,obj,status=200){const body=JSON.stringify(obj);res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','Access-Control-Allow-Origin':'*'});res.end(body)}
 function text(res,body,type='text/plain; charset=utf-8',status=200){res.writeHead(status,{'Content-Type':type,'Cache-Control':'no-store','Access-Control-Allow-Origin':'*'});res.end(body)}
@@ -41,7 +52,7 @@ const server=http.createServer(async(req,res)=>{
   if(u.pathname==='/api/vmix'&&req.method==='POST'){const b=await readBody(req);let cmd={};try{cmd=JSON.parse(b)}catch{}vmixCommands.push(cmd);return json(res,{ok:true,command:cmd})}
   if(u.pathname==='/api/projects')return json(res,{projects:[]});
   if(u.pathname==='/health')return json(res,{ok:true,port:PORT});
-  if(u.pathname==='/')return text(res,'SAGI V4.27.2 SELFTEST');
+  if(u.pathname==='/')return text(res,'SAGI V4.27.3 SELFTEST');
   const rel=decodeURIComponent(u.pathname).replace(/^\/+/,'');const file=path.resolve(ROOT,rel);
   if(!file.startsWith(ROOT)||!fs.existsSync(file)||fs.statSync(file).isDirectory())return text(res,'Not found','text/plain',404);
   res.writeHead(200,{'Content-Type':mime(file),'Cache-Control':'no-store','Access-Control-Allow-Origin':'*'});res.end(fs.readFileSync(file));
@@ -175,8 +186,58 @@ server.listen(PORT,'127.0.0.1',async()=>{
   assert(replayEvents.filter(e=>e.type==='CLEAR_EVENT').length>=2,'replay stinger clear events missing');
   await page.screenshot({path:'selftest-artifacts/08-replay-control.png'});
 
+  console.log('TEST 8: stored project load is deterministic and optional match metadata does not block READY');
+  graphics=makeGraphics({commandId:'stale_bridge_state',home:'STALE BRIDGE HOME',away:'STALE BRIDGE AWAY',homeScore:9,awayScore:9,scoreboardVisible:true,clock:{period:'2H',baseSeconds:5399,running:false,startedAt:null},event:{type:'CLEAR_EVENT'}});
+  const storedProject=makeStoredProject();
+  await page.evaluate(({storedProject})=>{
+    localStorage.setItem('sagi_match_projects_v44',JSON.stringify([storedProject]));
+    localStorage.removeItem('sagi_player_intro_v40');
+    localStorage.removeItem('sagi_matchday_graphics_v47');
+  },{storedProject});
+  await page.reload({waitUntil:'domcontentloaded'});await wait(2200);
+  await page.selectOption('#projectSelect',storedProject.id);
+  await page.click('#projectLoadBtn');
+  await page.waitForFunction(()=>document.querySelector('#projectLoadBtn')?.textContent==='读取项目'&&document.querySelector('#projectName')?.value==='SELFTEST STORED MATCH',null,{timeout:8000});
+  await page.click('#setupValidateBtn');await wait(350);
+  const loadedProject=await page.evaluate(()=>({
+    competition:document.querySelector('#matchCompetition').value,
+    home:document.querySelector('#matchHome').value,
+    away:document.querySelector('#matchAway').value,
+    kickoff:document.querySelector('#matchKickoff').value,
+    venue:document.querySelector('#matchVenue').value,
+    readyDisabled:document.querySelector('#setupReadyBtn').disabled,
+    summary:document.querySelector('#setupSummary').textContent,
+    mdHomeScore:document.querySelector('#mdHomeScore').textContent,
+    mdAwayScore:document.querySelector('#mdAwayScore').textContent,
+    localProjects:localStorage.getItem('sagi_match_projects_v44')||''
+  }));
+  assert(loadedProject.competition==='TORANHE PROJECT CUP'&&loadedProject.home==='PROJECT HOME FC'&&loadedProject.away==='PROJECT AWAY FC','stored project match identity was not restored: '+JSON.stringify(loadedProject));
+  assert(loadedProject.kickoff===''&&loadedProject.venue==='','test project should intentionally omit optional time/venue');
+  assert(!loadedProject.readyDisabled&&loadedProject.summary.includes('赛前检查通过'),'optional time/venue incorrectly blocked READY: '+loadedProject.summary);
+  assert(loadedProject.mdHomeScore==='3'&&loadedProject.mdAwayScore==='1','selected project matchday was overwritten by stale Bridge state: '+loadedProject.mdHomeScore+'-'+loadedProject.mdAwayScore);
+  assert(!loadedProject.localProjects.includes('data:image/svg+xml'),'large project photos were duplicated into synchronous localStorage');
+  await page.screenshot({path:'selftest-artifacts/09-project-load-ready.png'});
+
+  console.log('TEST 9: running clock updates clock only without repeatedly repainting heavy match controls');
+  await page.click('#setupReadyBtn');await page.waitForFunction(()=>document.querySelector('#setupReadyBadge')?.textContent.includes('可以播出'),null,{timeout:3000});
+  const perfStart=await page.evaluate(()=>{
+    window.__sagiPerf={clock:0,penalty:0,log:0};
+    const watch=(sel,key,opt={childList:true,subtree:true,characterData:true})=>{const el=document.querySelector(sel);if(!el)return null;const ob=new MutationObserver(ms=>window.__sagiPerf[key]+=ms.length);ob.observe(el,opt);return ob};
+    window.__sagiPerfObservers=[watch('#mdClock','clock'),watch('#spHomeDots','penalty'),watch('#mdEventLog','log')].filter(Boolean);
+    return !!document.querySelector('#mdClockStart');
+  });
+  assert(perfStart,'clock start button missing');
+  await page.click('#mdClockStart');await wait(1800);
+  const perf=await page.evaluate(()=>{
+    for(const ob of window.__sagiPerfObservers||[])ob.disconnect();
+    return window.__sagiPerf;
+  });
+  assert(perf.clock>=2,'running clock did not visibly update');
+  assert(perf.penalty<=2&&perf.log<=1,'clock loop is still repainting heavy controls: '+JSON.stringify(perf));
+  await page.screenshot({path:'selftest-artifacts/10-clock-stability.png'});
+
   assert(pageErrors.length===0,'browser page errors: '+pageErrors.join(' | '));
-  const report={ok:true,build:'V4.27.2',testedAt:new Date().toISOString(),tests:['regular white score ribbon + lower time/stoppage ribbon + TORANHE event logo','HOME goal enlarged HOME crest + complete GOAL + lower player card + collapse','AWAY goal enlarged AWAY crest','yellow/red card event colors locked independently of team colors','penalty >5 rounds/sudden death/miss/scores','two-camera Input 1 -> Input 2','event-logo replay stinger visual','manual replay stinger IN -> Input 4 -> OUT -> Input 1'],vmixCommands:cuts};
+  const report={ok:true,build:'V4.27.3',testedAt:new Date().toISOString(),tests:['regular white score ribbon + lower time/stoppage ribbon + TORANHE event logo','HOME goal enlarged HOME crest + complete GOAL + lower player card + collapse','AWAY goal enlarged AWAY crest','yellow/red card event colors locked independently of team colors','penalty >5 rounds/sudden death/miss/scores','two-camera Input 1 -> Input 2','event-logo replay stinger visual','manual replay stinger IN -> Input 4 -> OUT -> Input 1','stored project load wins over stale Bridge + optional time/venue do not block READY','clock-only refresh avoids repeated heavy match-control repaints'],vmixCommands:cuts};
   fs.writeFileSync('selftest-artifacts/report.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
  }catch(e){
   fs.mkdirSync('selftest-artifacts',{recursive:true});try{await page.screenshot({path:'selftest-artifacts/FAIL.png',fullPage:true})}catch{}
