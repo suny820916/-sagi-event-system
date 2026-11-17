@@ -124,6 +124,9 @@ ELEVENLABS_API_KEY = (os.getenv("ELEVENLABS_API_KEY") or "").strip()
 ELEVENLABS_MALE_VOICE_ID = (os.getenv("ELEVENLABS_MALE_VOICE_ID") or "").strip()
 ELEVENLABS_FEMALE_VOICE_ID = (os.getenv("ELEVENLABS_FEMALE_VOICE_ID") or "").strip()
 ELEVENLABS_BASE = "https://api.elevenlabs.io"
+AZURE_SPEECH_KEY = (os.getenv("AZURE_SPEECH_KEY") or "").strip()
+AZURE_SPEECH_REGION = (os.getenv("AZURE_SPEECH_REGION") or "").strip().lower()
+AZURE_SPEECH_ENDPOINT = (os.getenv("AZURE_SPEECH_ENDPOINT") or "").strip().rstrip("/")
 VOICE_SAMPLE_MAX_MB = int(os.getenv("SAGI_VOICE_SAMPLE_MAX_MB") or "25")
 RENDER_MAX_MB = int(os.getenv("SAGI_RENDER_MAX_MB") or "300")
 SMART_CUT_MAX_MB = int(os.getenv("SAGI_SMART_CUT_MAX_MB") or "900")
@@ -1062,34 +1065,38 @@ def resolve_voice_id(mode, explicit=""):
         return voices[0]["voice_id"]
     raise RuntimeError("NO_ELEVENLABS_VOICE_AVAILABLE")
 
-def synthesize_eleven(text, voice_id, output_path, speed=1.0, style="natural"):
+def synthesize_eleven(text, voice_id, output_path, speed=1.0, style="natural", model_id="eleven_flash_v2_5"):
     if not text.strip():
         raise RuntimeError("EMPTY_NARRATION")
     voice_id = voice_id.strip()
     if not voice_id:
         raise RuntimeError("VOICE_ID_REQUIRED")
     cfg = voice_style_settings(style)
+    model_id = str(model_id or "eleven_flash_v2_5")
+    voice_settings = {
+        "stability": cfg["stability"],
+        "similarity_boost": cfg["similarity"],
+        "use_speaker_boost": True,
+    }
+    # Eleven v4 intentionally exposes only stability/similarity controls.
+    if not model_id.startswith("eleven_v4"):
+        voice_settings["style"] = cfg["style"]
+        voice_settings["speed"] = max(0.75, min(1.25, float(speed or 1.0) * float(cfg.get("speed_bias") or 1.0)))
     payload = {
         "text": text[:10000],
-        "model_id": "eleven_flash_v2_5",
-        "voice_settings": {
-            "stability": cfg["stability"],
-            "similarity_boost": cfg["similarity"],
-            "style": cfg["style"],
-            "use_speaker_boost": True,
-            "speed": max(0.75, min(1.25, float(speed or 1.0) * float(cfg.get("speed_bias") or 1.0))),
-        },
+        "model_id": model_id,
+        "voice_settings": voice_settings,
     }
     r = requests.post(
         ELEVENLABS_BASE + f"/v1/text-to-speech/{voice_id}",
         headers={**_eleven_headers(), "Content-Type": "application/json", "Accept": "audio/mpeg"},
         params={"output_format": "mp3_44100_128"},
         json=payload,
-        timeout=120,
+        timeout=180,
         stream=True,
     )
     if r.status_code >= 400:
-        raise RuntimeError("ELEVENLABS_TTS: " + r.text[:400])
+        raise RuntimeError("ELEVENLABS_TTS: " + r.text[:500])
     with Path(output_path).open("wb") as out:
         for chunk in r.iter_content(chunk_size=64 * 1024):
             if chunk:
@@ -1097,6 +1104,98 @@ def synthesize_eleven(text, voice_id, output_path, speed=1.0, style="natural"):
     if Path(output_path).stat().st_size < 1000:
         raise RuntimeError("ELEVENLABS_EMPTY_AUDIO")
     return str(output_path)
+
+
+AZURE_STYLE_MAP = {
+    "football": "sports-commentary",
+    "football_pro": "sports-commentary",
+    "football_passion": "sports-commentary-excited",
+    "football_goal": "sports-commentary-excited",
+    "football_warm": "narration-relaxed",
+    "football_emotional": "sad",
+    "football_memory": "documentary-narration",
+    "documentary": "documentary-narration",
+    "news": "serious",
+    "warm": "narration-relaxed",
+    "natural": "narration-relaxed",
+}
+
+def azure_speech_ready():
+    return bool(AZURE_SPEECH_KEY and (AZURE_SPEECH_ENDPOINT or AZURE_SPEECH_REGION))
+
+def azure_tts_endpoint():
+    if AZURE_SPEECH_ENDPOINT:
+        base = AZURE_SPEECH_ENDPOINT
+        return base if base.endswith("/cognitiveservices/v1") else base + "/cognitiveservices/v1"
+    region = AZURE_SPEECH_REGION
+    if region in ("chinaeast2", "chinanorth2", "chinanorth3"):
+        return f"https://{region}.tts.speech.azure.cn/cognitiveservices/v1"
+    return f"https://{region}.tts.speech.microsoft.com/cognitiveservices/v1"
+
+def synthesize_azure(text, mode, output_path, speed=1.0, style="football_pro"):
+    if not azure_speech_ready():
+        raise RuntimeError("AZURE_SPEECH_NOT_CONFIGURED")
+    cfg = voice_style_settings(style)
+    male = str(mode or "ai_male") != "ai_female"
+    azure_style = AZURE_STYLE_MAP.get(str(style or ""), "narration-relaxed")
+    # Yunjian is the dedicated Mandarin sports-commentary voice.
+    if male:
+        voice = "zh-CN-YunjianNeural"
+    else:
+        voice = "zh-CN-XiaoxiaoNeural"
+        if azure_style.startswith("sports-commentary"):
+            azure_style = "excited"
+    effective_speed = max(0.75, min(1.25, float(speed or 1.0) * float(cfg.get("speed_bias") or 1.0)))
+    rate_pct = int(round((effective_speed - 1.0) * 100))
+    degree = 1.35 if style == "football_goal" else (1.18 if style == "football_passion" else 1.0)
+    escaped = html_lib.escape(str(text)[:10000], quote=False)
+    ssml = (
+        "<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' "
+        "xmlns:mstts='https://www.w3.org/2001/mstts' xml:lang='zh-CN'>"
+        f"<voice name='{voice}'><mstts:express-as style='{azure_style}' styledegree='{degree:.2f}'>"
+        f"<prosody rate='{rate_pct:+d}%'>{escaped}</prosody>"
+        "</mstts:express-as></voice></speak>"
+    )
+    r = requests.post(
+        azure_tts_endpoint(),
+        headers={
+            "Ocp-Apim-Subscription-Key": AZURE_SPEECH_KEY,
+            "Content-Type": "application/ssml+xml",
+            "X-Microsoft-OutputFormat": "audio-24khz-160kbitrate-mono-mp3",
+            "User-Agent": "SAGI-VOICE-PRO",
+        },
+        data=ssml.encode("utf-8"),
+        timeout=120,
+    )
+    if r.status_code >= 400:
+        raise RuntimeError("AZURE_TTS: " + (r.text or "")[:500])
+    Path(output_path).write_bytes(r.content)
+    if Path(output_path).stat().st_size < 1000:
+        raise RuntimeError("AZURE_TTS_EMPTY_AUDIO")
+    return str(output_path)
+
+def voice_quality_plan(mode, quality):
+    q = str(quality or "fast").strip().lower()
+    if q not in ("fast", "pro", "cinema"):
+        q = "fast"
+    if str(mode or "") == "clone":
+        if not ELEVENLABS_API_KEY:
+            raise RuntimeError("VOICE_CLONE_REQUIRES_ELEVENLABS")
+        return ("elevenlabs", "eleven_v4" if q == "cinema" else ("eleven_multilingual_v2" if q == "pro" else "eleven_flash_v2_5"))
+    if q == "cinema":
+        if ELEVENLABS_API_KEY:
+            return ("elevenlabs", "eleven_v4")
+        if azure_speech_ready():
+            return ("azure", "azure-neural")
+        return ("edge", "edge-neural")
+    if q == "pro":
+        if azure_speech_ready():
+            return ("azure", "azure-neural-sports")
+        if ELEVENLABS_API_KEY:
+            return ("elevenlabs", "eleven_multilingual_v2")
+        return ("edge", "edge-neural")
+    return ("edge", "edge-neural")
+
 
 
 def synthesize_edge_tts(text, mode, output_path, speed=1.0, style="natural", explicit_voice=""):
@@ -1130,27 +1229,33 @@ def synthesize_edge_tts(text, mode, output_path, speed=1.0, style="natural", exp
         raise RuntimeError("EDGE_TTS: " + str(e)[:500])
 
 
-def synthesize_voice(text, mode, voice_id, output_path, speed=1.0, style="natural"):
+def synthesize_voice(text, mode, voice_id, output_path, speed=1.0, style="natural", quality="fast", meta=None):
     mode = str(mode or "ai_male")
     voice_id = str(voice_id or "").strip()
+    meta = meta if isinstance(meta, dict) else {}
+    provider, model = voice_quality_plan(mode, quality)
+
+    # Explicit Edge voice remains authoritative for manual voice selection.
     if voice_id in EDGE_VOICE_MAP:
         edge_mode = "ai_female" if voice_id in ("edge-zh-xiaoxiao", "edge-zh-xiaoyi") else "ai_male"
+        meta.update({"provider": "Microsoft Edge Neural", "model": EDGE_VOICE_MAP[voice_id], "quality": "fast"})
         return synthesize_edge_tts(text, edge_mode, output_path, speed, style, voice_id)
-    if mode == "clone":
-        if not ELEVENLABS_API_KEY:
-            raise RuntimeError("VOICE_CLONE_REQUIRES_ELEVENLABS")
-        selected = resolve_voice_id(mode, voice_id)
-        return synthesize_eleven(text, selected, output_path, speed, style)
 
-    # Premium path first; generic AI voices fall back automatically to keyless Edge Neural.
-    if ELEVENLABS_API_KEY:
-        try:
+    try:
+        if provider == "azure":
+            meta.update({"provider": "Microsoft Azure Speech", "model": "zh-CN-YunjianNeural" if mode != "ai_female" else "zh-CN-XiaoxiaoNeural", "quality": str(quality)})
+            return synthesize_azure(text, mode, output_path, speed, style)
+        if provider == "elevenlabs":
             selected = resolve_voice_id(mode, voice_id)
-            return synthesize_eleven(text, selected, output_path, speed, style)
-        except Exception as e:
-            print("ElevenLabs generic TTS fallback:", str(e)[:300], flush=True)
+            meta.update({"provider": "ElevenLabs", "model": model, "quality": str(quality)})
+            return synthesize_eleven(text, selected, output_path, speed, style, model)
+    except Exception as e:
+        print("VOICE PRO fallback:", str(e)[:350], flush=True)
 
+    # China-friendly no-key fallback: always keep a usable path.
+    meta.update({"provider": "Microsoft Edge Neural", "model": "edge-neural", "quality": "fast-fallback"})
     return synthesize_edge_tts(text, mode, output_path, speed, style, voice_id)
+
 
 
 def audio_duration_seconds(path):
@@ -1314,7 +1419,7 @@ def normalize_voice_timeline(raw_timeline, narration, clip_duration=0):
 
 
 def synthesize_voice_timeline(narration, mode, voice_id, work, speed=1.0, style="natural",
-                              clip_duration=0, raw_timeline=None, sync_mode="fit"):
+                              clip_duration=0, raw_timeline=None, sync_mode="fit", quality="fast"):
     """
     VOICE DIRECTOR V1.2:
     synthesize every sentence independently, validate every segment, then place
@@ -1332,7 +1437,8 @@ def synthesize_voice_timeline(narration, mode, voice_id, work, speed=1.0, style=
     for i, row in enumerate(timeline):
         text = str(row["text"]).strip()
         seg_path = Path(work) / f"voice_seg_{i:03d}.mp3"
-        synthesize_voice(text, mode, voice_id, seg_path, speed, style)
+        provider_meta = {}
+        synthesize_voice(text, mode, voice_id, seg_path, speed, style, quality, provider_meta)
         seg_duration = audio_duration_seconds(seg_path)
         char_count = len(re.findall(r"[\u3400-\u9fffA-Za-z0-9]", text))
         # Very permissive sanity floor: catches empty/provider-truncated segments.
@@ -1396,6 +1502,9 @@ def synthesize_voice_timeline(narration, mode, voice_id, work, speed=1.0, style=
         "chars": spoken_chars,
         "duration": round(final_duration, 3),
         "timeline": actual_rows,
+        "provider": provider_meta.get("provider", ""),
+        "model": provider_meta.get("model", ""),
+        "quality": provider_meta.get("quality", quality),
     }
     return out, meta
 
@@ -3267,6 +3376,10 @@ def health():
         "voiceDirectorVersion": "2.4",
         "voiceEmotionPresets": True,
         "voiceEmotionPresetsVersion": "2.0",
+        "voicePro": True,
+        "voiceProVersion": "1.0",
+        "voiceAzureConfigured": azure_speech_ready(),
+        "voiceElevenV4Configured": bool(ELEVENLABS_API_KEY),
         "animationFirst": True,
         "voiceOneShot": True,
         "voiceCaptionFromFinalAudio": True,
@@ -4403,8 +4516,11 @@ def voice_status():
         "configured": True,
         "premiumConfigured": bool(ELEVENLABS_API_KEY),
         "cloneConfigured": bool(ELEVENLABS_API_KEY),
-        "provider": "ElevenLabs + Microsoft Edge" if ELEVENLABS_API_KEY else "Microsoft Edge Neural",
-        "model": "eleven_flash_v2_5" if ELEVENLABS_API_KEY else "edge-neural",
+        "provider": "SAGI VOICE PRO Router",
+        "model": "auto",
+        "qualityModes": ["fast", "pro", "cinema"],
+        "azureConfigured": azure_speech_ready(),
+        "elevenV4Configured": bool(ELEVENLABS_API_KEY),
         "voiceCount": len(voices) + len(fallback_voices),
         "voices": (voices[:28] + fallback_voices) if ELEVENLABS_API_KEY else fallback_voices,
         "error": error,
@@ -4475,6 +4591,7 @@ def voice_one_shot():
     except Exception:
         speed = 1.0
     style = str(data.get("style") or "documentary")
+    quality = str(data.get("quality") or "fast")
 
     if not text:
         return jsonify({"ok": False, "error": "Text required"}), 400
@@ -4486,7 +4603,8 @@ def voice_one_shot():
     work = tempfile.mkdtemp(prefix="sagi_voice_one_shot_")
     path = Path(work) / "one_shot.mp3"
     try:
-        synthesize_voice(text, mode, voice_id, path, speed, style)
+        provider_meta = {}
+        synthesize_voice(text, mode, voice_id, path, speed, style, quality, provider_meta)
         duration = audio_duration_seconds(path)
         if duration <= 0.1 or not path.exists() or path.stat().st_size < 1000:
             raise RuntimeError("ONE_SHOT_EMPTY_AUDIO")
@@ -4494,7 +4612,10 @@ def voice_one_shot():
         resp.headers["X-SAGI-Voice-Complete"] = "1"
         resp.headers["X-SAGI-Voice-Mode"] = "one-shot"
         resp.headers["X-SAGI-Voice-Duration"] = str(round(duration, 3))
-        resp.headers["Access-Control-Expose-Headers"] = "X-SAGI-Voice-Complete, X-SAGI-Voice-Mode, X-SAGI-Voice-Duration"
+        resp.headers["X-SAGI-Voice-Provider"] = provider_meta.get("provider", "")
+        resp.headers["X-SAGI-Voice-Model"] = provider_meta.get("model", "")
+        resp.headers["X-SAGI-Voice-Quality"] = provider_meta.get("quality", quality)
+        resp.headers["Access-Control-Expose-Headers"] = "X-SAGI-Voice-Complete, X-SAGI-Voice-Mode, X-SAGI-Voice-Duration, X-SAGI-Voice-Provider, X-SAGI-Voice-Model, X-SAGI-Voice-Quality"
         resp.call_on_close(lambda: shutil.rmtree(work, ignore_errors=True))
         return resp
     except Exception as e:
@@ -4512,6 +4633,7 @@ def voice_preview():
     voice_id = str(data.get("voice_id") or "").strip()
     speed = float(data.get("speed") or 1.0)
     style = str(data.get("style") or "football")
+    quality = str(data.get("quality") or "fast")
     if not text:
         return jsonify({"ok": False, "error": "Text required"}), 400
     work = tempfile.mkdtemp(prefix="sagi_voice_preview_")
@@ -4519,14 +4641,17 @@ def voice_preview():
     try:
         preview_path, meta = synthesize_voice_timeline(
             text, mode, voice_id, Path(work), speed, style,
-            clip_duration=0, raw_timeline=None, sync_mode="natural",
+            clip_duration=0, raw_timeline=None, sync_mode="natural", quality=quality,
         )
         resp = send_file(preview_path, mimetype="audio/mp4", as_attachment=False)
         resp.headers["X-SAGI-Voice-Complete"] = "1"
         resp.headers["X-SAGI-Voice-Coverage"] = "100"
         resp.headers["X-SAGI-Voice-Segments"] = str(meta.get("segments") or 0)
         resp.headers["X-SAGI-Voice-Duration"] = str(meta.get("duration") or 0)
-        resp.headers["Access-Control-Expose-Headers"] = "X-SAGI-Voice-Complete, X-SAGI-Voice-Coverage, X-SAGI-Voice-Segments, X-SAGI-Voice-Duration"
+        resp.headers["X-SAGI-Voice-Provider"] = str(meta.get("provider") or "")
+        resp.headers["X-SAGI-Voice-Model"] = str(meta.get("model") or "")
+        resp.headers["X-SAGI-Voice-Quality"] = str(meta.get("quality") or quality)
+        resp.headers["Access-Control-Expose-Headers"] = "X-SAGI-Voice-Complete, X-SAGI-Voice-Coverage, X-SAGI-Voice-Segments, X-SAGI-Voice-Duration, X-SAGI-Voice-Provider, X-SAGI-Voice-Model, X-SAGI-Voice-Quality"
         resp.call_on_close(lambda: shutil.rmtree(work, ignore_errors=True))
         return resp
     except Exception as e:
