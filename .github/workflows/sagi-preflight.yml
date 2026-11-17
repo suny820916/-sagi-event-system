@@ -127,6 +127,53 @@ jobs:
           assert mp4.exists() and mp4.stat().st_size > 1000, mp4.stat().st_size if mp4.exists() else 0
 
           c = mod.app.test_client()
+          # SAGI VOICE PRO provider contracts: validate Azure sports SSML and Eleven v4 payload
+          # without requiring real provider secrets in CI.
+          original_post = mod.requests.post
+          original_azure_key = mod.AZURE_SPEECH_KEY
+          original_azure_region = mod.AZURE_SPEECH_REGION
+          original_eleven_key = mod.ELEVENLABS_API_KEY
+          captured = []
+          class FakeResp:
+              status_code = 200
+              content = b"ID3" + b"x" * 2048
+              text = ""
+              def iter_content(self, chunk_size=65536):
+                  yield self.content
+          def fake_post(url, **kwargs):
+              captured.append((url, kwargs))
+              return FakeResp()
+          try:
+              mod.requests.post = fake_post
+              mod.AZURE_SPEECH_KEY = "test-key"
+              mod.AZURE_SPEECH_REGION = "chinanorth3"
+              with mod.tempfile.TemporaryDirectory() as td:
+                  out = mod.Path(td) / "azure.mp3"
+                  mod.synthesize_azure("最后一分钟，绝杀！", "ai_male", out, 1.0, "football_goal")
+                  assert out.exists() and out.stat().st_size > 1000
+              url, kw = captured[-1]
+              assert ".tts.speech.azure.cn/cognitiveservices/v1" in url, url
+              body = kw["data"].decode("utf-8")
+              assert "zh-CN-YunjianNeural" in body
+              assert "sports-commentary-excited" in body
+
+              captured.clear()
+              mod.ELEVENLABS_API_KEY = "test-eleven"
+              with mod.tempfile.TemporaryDirectory() as td:
+                  out = mod.Path(td) / "v4.mp3"
+                  mod.synthesize_eleven("这就是足球。", "voice-test", out, 1.0, "football_emotional", "eleven_v4")
+                  assert out.exists() and out.stat().st_size > 1000
+              url, kw = captured[-1]
+              payload = kw["json"]
+              assert payload["model_id"] == "eleven_v4"
+              assert set(payload["voice_settings"].keys()) == {"stability","similarity_boost"}, payload
+              print("VOICE PRO provider contracts OK")
+          finally:
+              mod.requests.post = original_post
+              mod.AZURE_SPEECH_KEY = original_azure_key
+              mod.AZURE_SPEECH_REGION = original_azure_region
+              mod.ELEVENLABS_API_KEY = original_eleven_key
+
           token = mod.client_token()
           headers = {
               "Authorization": "Bearer " + token,
@@ -185,6 +232,16 @@ jobs:
           assert health["smartTranslate"] is True
           assert health["aiVoice"] is True
           assert health["voiceDirectorVersion"] == "2.4"
+          assert health["voiceEmotionPresets"] is True
+          assert health["voiceEmotionPresetsVersion"] == "2.0"
+          assert health["voicePro"] is True
+          assert health["voiceProVersion"] == "1.0"
+          assert isinstance(health["voiceAzureConfigured"], bool)
+          assert isinstance(health["voiceElevenV4Configured"], bool)
+          assert mod.AZURE_STYLE_MAP["football_goal"] == "sports-commentary-excited"
+          assert mod.voice_quality_plan("ai_male", "fast")[0] in ("edge","azure","elevenlabs")
+          assert mod.voice_quality_plan("ai_male", "pro")[0] in ("edge","azure","elevenlabs")
+          assert mod.voice_quality_plan("ai_male", "cinema")[0] in ("edge","azure","elevenlabs")
           assert health["voiceNarrationNoCut"] is False
           assert health["voiceNarrationMeaningProtected"] is True
           assert health["voiceSentenceTimeline"] is True
