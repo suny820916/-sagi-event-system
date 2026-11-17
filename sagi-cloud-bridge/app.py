@@ -926,7 +926,7 @@ def _restore_render_jobs():
                         "updated_at": iso(),
                         "error": "",
                     })
-                    resume.append((job["id"], job.get("options") or {}))
+                    resume.append((job["id"], job.get("options") or {}, str(job.get("kind") or "cloud_render")))
                 else:
                     # Keep the record so the phone receives a recoverable failure instead of 404.
                     job.update({
@@ -939,8 +939,9 @@ def _restore_render_jobs():
             render_jobs[job["id"]] = job
         _persist_render_jobs_locked()
 
-    for jid, options in resume:
-        Thread(target=run_cloud_render, args=(jid, options), daemon=True).start()
+    for jid, options, kind in resume:
+        target = run_smart_render if kind == "smart_cut" else run_cloud_render
+        Thread(target=target, args=(jid, options), daemon=True).start()
 
 
 def release_caption_model():
@@ -1677,6 +1678,8 @@ def build_semantic_audio_filters(instances, original_volume):
 def run_cloud_render(job_id, options):
     # Cloud render is intentionally serialized with caption transcription.
     with heavy_slot:
+        release_caption_model()
+        gc.collect()
         with render_jobs_lock:
             job = render_jobs.get(job_id)
             if not job:
@@ -4677,6 +4680,11 @@ def smart_upload_complete(upload_id):
         }
         job_id = secrets.token_urlsafe(10)
         job = {
+            "kind": "smart_cut",
+            "kind": "smart_cut",
+            "kind": "smart_cut",
+            "kind": "smart_cut",
+            "kind": "smart_cut",
             "id": job_id, "status": "queued", "stage": "SMART CUT 大文件上传完成 · 等待低内存渲染",
             "progress": 8, "created_at": iso(), "updated_at": iso(),
             "workdir": str(work), "source": str(source), "sources": [str(source)], "path": "",
@@ -4853,6 +4861,7 @@ def create_render_job():
     }
     job_id = secrets.token_urlsafe(10)
     job = {
+        "kind": "cloud_render",
         "id": job_id, "status": "queued", "stage": "已上传 · 等待云端",
         "progress": 8, "created_at": iso(), "updated_at": iso(),
         "workdir": work, "source": str(source), "path": "",
