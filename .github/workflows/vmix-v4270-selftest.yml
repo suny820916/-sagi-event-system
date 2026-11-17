@@ -41,7 +41,7 @@ jobs:
           const output=lines.slice(idx.output+1).join('\n');
           if(!control.includes('V4.30.9')||!control.includes('sagiLiveHealthCheck')) throw new Error('V4.30.9 control payload missing');
           if(!output.includes('V4.30.9')||!output.includes('sagiOutputWatchdog')) throw new Error('V4.30.9 output payload missing');
-          const staleGuard='V4\\.30\\.5', currentGuard='V4\\.30\\.8';
+          const staleGuard='V4\\.30\\.8', currentGuard='V4\\.30\\.9';
           if(s.includes(staleGuard)) throw new Error('BAT still contains stale V4.30.8 validation logic');
           if(s.split(currentGuard).length-1<2) throw new Error('BAT V4.30.9 validation guards missing');
           if(!lines.some(x=>x.includes('powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -Command ^'))) throw new Error('BAT PowerShell bootstrap missing');
