@@ -45,6 +45,14 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 .voiceActions{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:8px}.voiceActions .btn{padding:11px 6px}
 .voiceTiming{margin-top:8px;border:1px solid #2a414a;background:#091217;border-radius:10px;padding:8px 9px;font-size:8px;color:#8ba2ab;line-height:1.5}.voiceTiming b{color:#d8c280}
 .voiceState{margin-top:8px;font-size:9px;color:#7f9aa5;line-height:1.5}.voicePreview{display:none;width:100%;margin-top:8px;height:34px}.voicePreview.show{display:block}
+.voiceExportCard{border-color:#5d4d2d;background:linear-gradient(180deg,#16130c,#0a1013)}
+.voiceExportHead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.voiceExportHead b{font-size:12px}.voiceExportHead span{display:block;margin-top:3px;font-size:8px;color:#9b8b62;line-height:1.45}
+.voiceExportScript{width:100%;min-height:135px;margin-top:9px;border:1px solid #4d432c;background:#080a09;color:#fff;border-radius:11px;padding:11px;font-size:11px;line-height:1.6;resize:vertical;outline:none}
+.voiceExportGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:8px}.voiceExportGrid label{font-size:8px;color:#8d805d}.voiceExportGrid select{width:100%;margin-top:4px;border:1px solid #433b28;background:#080a09;color:#fff;border-radius:10px;padding:10px;font-size:10px}
+.voiceExportActions{display:grid;grid-template-columns:1.2fr .9fr .9fr;gap:7px;margin-top:9px}.voiceExportPreview{display:none;width:100%;height:38px;margin-top:9px}.voiceExportPreview.show{display:block}
+.voiceExportStatus{margin-top:8px;font-size:9px;color:#a59363;line-height:1.55}.voiceExportMeta{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}.voiceExportMeta span{font-size:8px;border:1px solid #4c402a;border-radius:99px;padding:4px 7px;color:#b39a61}
+@media(max-width:420px){.voiceExportGrid{grid-template-columns:1fr 1fr}.voiceExportGrid label:last-child{grid-column:1/-1}.voiceExportActions{grid-template-columns:1fr 1fr}.voiceExportActions .primary{grid-column:1/-1}}
+
 .voiceTimelineBox{margin-top:8px;border:1px solid #314852;border-radius:11px;background:#071014;padding:9px}
 .voiceTimelineHead{display:grid;grid-template-columns:1fr auto auto;gap:7px;align-items:center}.voiceTimelineHead b{font-size:9px;color:#d4dfe2}.voiceTimelineHead span{font-size:8px;color:#82959d}.voiceTimelineHead span.ok{color:#94bd9e}.voiceTimelineHead .btn{padding:7px 9px;font-size:8px}
 .voiceTimelineList{display:grid;gap:5px;margin-top:7px;max-height:190px;overflow:auto}.voiceSentenceRow{display:grid;grid-template-columns:64px 1fr;gap:7px;border:1px solid #22363f;border-radius:9px;padding:7px;background:#091318}.voiceSentenceRow time{font-size:8px;color:#c5aa68;font-variant-numeric:tabular-nums}.voiceSentenceRow span{font-size:9px;line-height:1.4;color:#c8d2d5}.voiceSentenceRow em{font-style:normal;color:#6f858e;font-size:8px;margin-right:5px}.voiceTimelineHint{margin-top:6px;font-size:8px;color:#667c85;line-height:1.45}
@@ -682,6 +690,50 @@ AEK 2-3 皇马
     <div id="recreateStatus" class="status">可以先下载，再回来选择视频；也可以只用当前链接创建任务。</div>
   </section>
 
+  <section class="card voiceExportCard" id="sagiVoiceExport">
+    <div class="voiceExportHead">
+      <div><b>SAGI VOICE · 独立配音下载</b><span>不需要视频 · 粘贴文案 → AI配音 → 试听 → 单独保存 WAV</span></div>
+      <span class="badge">VOICE</span>
+    </div>
+    <textarea id="voiceExportText" class="voiceExportScript" placeholder="把要配音的完整文案粘贴到这里。可以单独生成配音文件，不需要导入视频。"></textarea>
+    <div class="voiceExportGrid">
+      <label>声音
+        <select id="voiceExportMode">
+          <option value="ai_male" selected>AI专业男声</option>
+          <option value="ai_female">AI专业女声</option>
+          <option value="clone">我的克隆声音</option>
+        </select>
+      </label>
+      <label>风格
+        <select id="voiceExportStyle">
+          <option value="football" selected>足球热血 · 强节奏</option>
+          <option value="natural">自然解说 · 通用</option>
+          <option value="documentary">纪录片 · 沉稳</option>
+          <option value="news">新闻播报 · 清晰</option>
+          <option value="warm">温暖叙事 · 情绪</option>
+        </select>
+      </label>
+      <label>语速
+        <select id="voiceExportSpeed">
+          <option value="0.88">慢速 0.88×</option>
+          <option value="0.94">沉稳 0.94×</option>
+          <option value="1" selected>自然 1.00×</option>
+          <option value="1.08">短视频 1.08×</option>
+          <option value="1.16">快速 1.16×</option>
+          <option value="1.24">冲刺 1.24×</option>
+        </select>
+      </label>
+    </div>
+    <div class="voiceExportActions">
+      <button class="btn gold primary" id="voiceExportGenerateBtn" type="button">生成独立配音</button>
+      <a class="btn blue" id="voiceExportDownloadBtn" download="SAGI_VOICE.wav" style="pointer-events:none;opacity:.45">下载 WAV</a>
+      <button class="btn" id="voiceExportToSmartBtn" type="button">送到 SMART CUT</button>
+    </div>
+    <audio id="voiceExportPreview" class="voiceExportPreview" controls></audio>
+    <div class="voiceExportStatus" id="voiceExportStatus">等待文案。生成后的配音可直接单独下载，不必制作视频。</div>
+    <div class="voiceExportMeta" id="voiceExportMeta"></div>
+  </section>
+
   <section class="card studioCard" id="mobileStudio">
     <div class="studioHero">
       <div><b>MOBILE STUDIO · 手机再创作</b><span>云端识别翻译 · 本地剪辑导出</span></div>
@@ -1002,7 +1054,7 @@ Unbelievable finish."></textarea>
 
 <script>
 (()=>{'use strict';
-const SAGI_DOWN_BUILD='V4.1.4';
+const SAGI_DOWN_BUILD='V4.2.0';
 document.documentElement.dataset.sagiDownBuild=SAGI_DOWN_BUILD;
 const BTCH_PUBLIC='https://btch-downloader-api-green.vercel.app';
 const DOWNLOAD_ROUTER_VERSION='3.0';
@@ -1315,6 +1367,7 @@ const STUDIO={
  lockstepReady:false,lockstepSegments:[],lockstepVoiceBlob:null,lockstepVoiceUrl:'',lockstepDuration:0,voiceOneShotFallback:false,
  cloudRenderJobId:'',cloudRenderTimer:null,cloudResultUrl:'',cloudRenderRecoveries:0,cloudRenderRecovering:false,
  pendingTranslateZh:false,
+ voiceExportBlob:null,voiceExportUrl:'',voiceExportDuration:0,voiceExportText:'',
  cloudHealth:null,cloudLastError:''
 };
 
@@ -4003,7 +4056,7 @@ async function ensureFFmpeg(){
  // iPhone/Safari: class worker must be same-origin. The stock bundled worker can
  // resolve blob: core URLs as webpack module ids and throw "Cannot find module blob:...".
  // SAGI's raw module worker uses the browser's native dynamic import instead.
- const classWorkerURL=new URL('./sagi-ffmpeg-worker.js?v=4140',window.location.href).href;
+ const classWorkerURL=new URL('./sagi-ffmpeg-worker.js?v=4200',window.location.href).href;
  const core='https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd';
  const coreURL=await toBlobURLRemote([core+'/ffmpeg-core.js','https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd/ffmpeg-core.js'],'text/javascript');
  const wasmURL=await toBlobURLRemote([core+'/ffmpeg-core.wasm','https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd/ffmpeg-core.wasm'],'application/wasm');
@@ -6072,6 +6125,64 @@ async function smartCutCloudSubmit(finalVoice,duration){
  return smartCutSubmitJob('/api/render',fd)
 }
 
+
+function voiceExportStatus(text){const el=q('voiceExportStatus');if(el)el.textContent=text}
+function voiceExportMeta(){
+ const el=q('voiceExportMeta');if(!el)return;
+ if(!STUDIO.voiceExportBlob){el.innerHTML='';return}
+ const kb=Math.round((STUDIO.voiceExportBlob.size||0)/1024);
+ el.innerHTML='<span>'+STUDIO.voiceExportDuration.toFixed(1)+' 秒</span><span>WAV · 24kHz · Mono</span><span>'+kb+' KB</span>'
+}
+async function generateStandaloneVoice(){
+ const text=String(q('voiceExportText')?.value||'').trim();
+ const mode=q('voiceExportMode')?.value||'ai_male';
+ const style=q('voiceExportStyle')?.value||'football';
+ const speed=Number(q('voiceExportSpeed')?.value)||1;
+ const btn=q('voiceExportGenerateBtn');
+ if(!text){voiceExportStatus('请先粘贴要配音的文案。');return}
+ if(mode==='clone'&&!STUDIO.cloneVoiceId){voiceExportStatus('请先在下方创建“我的克隆声音”，再使用克隆配音。');return}
+ btn.disabled=true;btn.textContent='正在生成配音…';
+ try{
+  await voiceApiReady();
+  if(!(STUDIO.cloudHealth||{}).aiVoice)throw new Error('当前云端 AI Voice 不可用');
+  const oldMode=q('aiVoiceMode')?.value,oldStyle=q('aiVoiceStyle')?.value,oldSpeed=q('aiVoiceSpeed')?.value;
+  if(q('aiVoiceMode'))q('aiVoiceMode').value=mode;
+  if(q('aiVoiceStyle'))q('aiVoiceStyle').value=style;
+  if(q('aiVoiceSpeed'))q('aiVoiceSpeed').value=String(speed);
+  voiceExportStatus('正在生成完整配音 · 长文会自动分段并无损合并…');
+  const result=await generateCompleteAIVoice(text,mode,true,speed);
+  if(oldMode!=null&&q('aiVoiceMode'))q('aiVoiceMode').value=oldMode;
+  if(oldStyle!=null&&q('aiVoiceStyle'))q('aiVoiceStyle').value=oldStyle;
+  if(oldSpeed!=null&&q('aiVoiceSpeed'))q('aiVoiceSpeed').value=oldSpeed;
+  if(STUDIO.voiceExportUrl){try{URL.revokeObjectURL(STUDIO.voiceExportUrl)}catch(e){}}
+  STUDIO.voiceExportBlob=result.blob;STUDIO.voiceExportDuration=result.duration;STUDIO.voiceExportText=text;
+  STUDIO.voiceExportUrl=URL.createObjectURL(result.blob);
+  const audio=q('voiceExportPreview');audio.src=STUDIO.voiceExportUrl;audio.classList.add('show');
+  const dl=q('voiceExportDownloadBtn');dl.href=STUDIO.voiceExportUrl;dl.download='SAGI_VOICE_'+new Date().toISOString().slice(0,10)+'.wav';dl.style.pointerEvents='auto';dl.style.opacity='1';
+  voiceExportMeta();
+  voiceExportStatus('完成 · '+result.duration.toFixed(1)+'秒 · 可以试听或直接下载 WAV 配音文件。');
+  toast('独立配音已生成')
+ }catch(e){
+  voiceExportStatus('配音生成失败：'+(e.message||e))
+ }finally{
+  btn.disabled=false;btn.textContent='生成独立配音'
+ }
+}
+function voiceExportToSmartCut(){
+ const text=String(q('voiceExportText')?.value||'').trim();
+ if(!text){voiceExportStatus('没有可发送的配音文案。');return}
+ q('smartCutScript').value=text;
+ q('smartCutVoice').value=q('voiceExportMode')?.value||'ai_male';
+ if(q('narrationText'))q('narrationText').value=text;
+ if(STUDIO.voiceExportBlob){
+  STUDIO.generatedVoiceBlob=STUDIO.voiceExportBlob;
+  STUDIO.generatedVoiceDuration=STUDIO.voiceExportDuration;
+ }
+ voiceExportStatus('已把文案和声音模式送到 SMART CUT。');
+ q('smartCutSuite')?.scrollIntoView({behavior:'smooth',block:'start'});
+ toast('已送到 SMART CUT')
+}
+
 async function smartCutRenderAll(){
  if(SMART_EDIT.busy)return;
  const script=String(q('smartCutScript')?.value||'').trim();
@@ -6130,6 +6241,8 @@ async function smartCutRenderAll(){
  }
 }
 
+if(q('voiceExportGenerateBtn'))q('voiceExportGenerateBtn').onclick=generateStandaloneVoice;
+if(q('voiceExportToSmartBtn'))q('voiceExportToSmartBtn').onclick=voiceExportToSmartCut;
 if(q('smartCutFiles'))q('smartCutFiles').onchange=smartCutFilesChanged;
 if(q('smartCutPlanBtn'))q('smartCutPlanBtn').onclick=smartCutBuildPlan;
 if(q('smartCutRenderBtn'))q('smartCutRenderBtn').onclick=smartCutRenderAll;
@@ -6151,11 +6264,11 @@ if('serviceWorker' in navigator){
  navigator.serviceWorker.addEventListener('controllerchange',()=>{
   if(swReloaded)return;swReloaded=true;
   try{
-   const key='sagi_sw_reload_v4140';
+   const key='sagi_sw_reload_v4200';
    if(sessionStorage.getItem(key)!=='1'){sessionStorage.setItem(key,'1');location.reload()}
   }catch(e){location.reload()}
  });
- navigator.serviceWorker.register('./sagi-down-sw.js?v=4140',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})
+ navigator.serviceWorker.register('./sagi-down-sw.js?v=4200',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})
 }
 })();
 </script>
