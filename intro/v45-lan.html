@@ -1364,7 +1364,7 @@ body{background:radial-gradient(circle at 78% -10%,#0a43c933,transparent 28%),li
 <script data-sagi-signature-core="v432">
 (function(root){
 'use strict';
-const VERSION='4.32.0-rc.1';
+const VERSION='4.32.0-rc.2';
 const EVENT_TYPES=Object.freeze(['CLEAR_EVENT','GOAL','YELLOW','RED','SUB','HALF_TIME','FULL_TIME','MVP','REPLAY_STINGER']);
 const TOKENS=Object.freeze({
   bg:'#07090d',
@@ -1487,16 +1487,13 @@ function eventKey(event){
   const e=normalizeEvent(event)||{type:'CLEAR_EVENT'};
   if(e.eventId) return 'id|'+e.eventId;
   if(e.sequence!==null&&e.sequence!==undefined) return 'seq|'+String(e.sequence);
-  // Legacy metadata fallback: not a reliable identity for scoring or deduplication.
-  const player=e.player&&e.player.id||e.player&&e.player.number||'';
-  const on=e.on&&e.on.id||e.on&&e.on.number||'';
-  const off=e.off&&e.off.id||e.off&&e.off.number||'';
-  return [e.type,e.side,e.at,player,on,off].map(x=>safeText(x,80)).join('|');
+  // Fail open for legacy events without a reliable identity.
+  // Revision/command guards still prevent stale rollback; never collapse two real events by metadata guesswork.
+  return '';
 }
 const api=Object.freeze({VERSION,TOKENS,EVENT_TYPES,HOLD_MS,safeText,validHex,normalizeSide,normalizeType,normalizeEvent,eventAccent,holdMs,eventKey});
 root.SAGISignatureCore=api;
 })(typeof window!=='undefined'?window:globalThis);
-
 </script>
 <script>
 (function(){
@@ -2439,6 +2436,11 @@ async function mdLoad(opts={}){
 const MD_LAST_GOOD_KEY='sagi_matchday_last_good_v429';
 let mdPublishRevision=0,mdLastAckRevision=0,mdPublishChain=Promise.resolve(),mdConsistencyBusy=false,mdLastConsistencyAt=0,mdLastConsistencyState='INIT',mdLocalRecoveryStamp=0;
 let mdPublishMetrics={ok:0,failed:0,retried:0,recovered:0,lastOkAt:0,lastErrorAt:0,lastAttempts:0},mdEventGateSig='',mdEventGateAt=0;
+function mdNextEventIdentity(type='EVENT'){
+ const sequence=Math.max(0,Number(matchdayState.eventSequence)||0)+1;
+ matchdayState.eventSequence=sequence;
+ return{eventId:'evt_'+Date.now().toString(36)+'_'+sequence.toString(36),sequence}
+}
 let mdRecoveryMetrics={resumeChecks:0,networkRestores:0,forcedRepairs:0,localWins:0,bridgeWins:0,lastRecoveryAt:0,lastReason:'INIT'},mdRecoveryTimer=null;
 function mdDelay(ms){return new Promise(r=>setTimeout(r,Math.max(0,Number(ms)||0)))}
 function mdSaveLastGood(){
@@ -2836,7 +2838,7 @@ function mdMacroEvent(type,side,playerId=''){
  if(type==='GOAL'){if(side==='HOME')matchdayState.homeScore++;else matchdayState.awayScore++;matchdayState.scoreboardVisible=true}
  if(type==='RED'){if(side==='HOME')matchdayState.homeRedCards=Math.min(5,(Number(matchdayState.homeRedCards)||0)+1);else matchdayState.awayRedCards=Math.min(5,(Number(matchdayState.awayRedCards)||0)+1)}
  const team=side==='HOME'?(q('matchHome').value||'HOME'):(q('matchAway').value||'AWAY');
- const ev={type,side,team,player:p?{id:p.id,name:p.name,number:p.number,position:p.position||p.role,photo:p.photo||''}:{id:'',name:team,number:'',position:'',photo:''},at:mdFormat(mdNowSeconds())};
+ const ev={type,side,team,player:p?{id:p.id,name:p.name,number:p.number,position:p.position||p.role,photo:p.photo||''}:{id:'',name:team,number:'',position:'',photo:''},at:mdFormat(mdNowSeconds()),...mdNextEventIdentity(type)};
  mdRecordEvent(ev,before);
  if(type==='GOAL'||type==='RED')mdAddReplayMarker(type,type==='GOAL'?'进球 · '+team:'红牌 · '+team);
  q('mdEventStatus').textContent=(type==='GOAL'?'进球':type==='YELLOW'?'黄牌':'红牌')+(p?' · #'+p.number+' '+p.name:' · '+team);
@@ -2850,7 +2852,7 @@ function mdSubstitutionByIds(side,offId,onId){
  if(!mdAcceptOperatorEvent(['SUB',side,offId,onId].join('|'),1000))return false;
  const off=mdPlayer(side,offId),on=mdPlayer(side,onId);if(!off||!on){note('请选择换下和换上球员');return}
  const before={homeScore:matchdayState.homeScore,awayScore:matchdayState.awayScore,homeRedCards:matchdayState.homeRedCards,awayRedCards:matchdayState.awayRedCards};
- const ev={type:'SUB',side,team:side==='HOME'?(q('matchHome').value||'HOME'):(q('matchAway').value||'AWAY'),off:{id:off.id,name:off.name,number:off.number,position:off.position||off.role,photo:off.photo||''},on:{id:on.id,name:on.name,number:on.number,position:on.position||on.role,photo:on.photo||''},at:mdFormat(mdNowSeconds())};
+ const ev={type:'SUB',side,team:side==='HOME'?(q('matchHome').value||'HOME'):(q('matchAway').value||'AWAY'),off:{id:off.id,name:off.name,number:off.number,position:off.position||off.role,photo:off.photo||''},on:{id:on.id,name:on.name,number:on.number,position:on.position||on.role,photo:on.photo||''},at:mdFormat(mdNowSeconds()),...mdNextEventIdentity('SUB')};
  mdRecordEvent(ev,before);q('mdEventStatus').textContent='换人 · #'+off.number+' '+off.name+' → #'+on.number+' '+on.name;gdRunEvent(ev,6200)
 }
 function mdSubstitution(){mdSubstitutionByIds(q('mdSubSide').value,q('mdSubOff').value,q('mdSubOn').value)}
@@ -2858,14 +2860,14 @@ function mdSubstitution(){mdSubstitutionByIds(q('mdSubSide').value,q('mdSubOff')
 function mdMatchState(type){
  if(!mdAcceptOperatorEvent('MATCH_STATE|'+type,1200))return false;
  const before={homeScore:matchdayState.homeScore,awayScore:matchdayState.awayScore},sec=mdNowSeconds();matchdayState.clockBase=sec;matchdayState.clockRunning=false;matchdayState.clockStartedAt=0;
- const ev={type,home:q('matchHome').value||'HOME',away:q('matchAway').value||'AWAY',homeScore:matchdayState.homeScore,awayScore:matchdayState.awayScore,at:mdFormat(sec)};
+ const ev={type,home:q('matchHome').value||'HOME',away:q('matchAway').value||'AWAY',homeScore:matchdayState.homeScore,awayScore:matchdayState.awayScore,at:mdFormat(sec),...mdNextEventIdentity(type)};
  mdRecordEvent(ev,before);q('mdEventStatus').textContent=type==='HALF_TIME'?'半场图形已触发':'全场图形已触发';gdRunEvent(ev,type==='FULL_TIME'?9000:6500)
 }
 function mdMvp(){
  const side=q('mdMvpSide').value,pid=q('mdMvpPlayer').value;
  if(!mdAcceptOperatorEvent(['MVP',side,pid].join('|'),1200))return false;
  const p=mdPlayer(side,pid);if(!p){note('请选择本场最佳球员');return}
- const before={homeScore:matchdayState.homeScore,awayScore:matchdayState.awayScore},ev={type:'MVP',side,team:side==='HOME'?(q('matchHome').value||'HOME'):(q('matchAway').value||'AWAY'),player:{id:p.id,name:p.name,number:p.number,position:p.position||p.role,photo:p.photo||''},score:matchdayState.homeScore+'-'+matchdayState.awayScore,at:mdFormat(mdNowSeconds())};
+ const before={homeScore:matchdayState.homeScore,awayScore:matchdayState.awayScore},ev={type:'MVP',side,team:side==='HOME'?(q('matchHome').value||'HOME'):(q('matchAway').value||'AWAY'),player:{id:p.id,name:p.name,number:p.number,position:p.position||p.role,photo:p.photo||''},score:matchdayState.homeScore+'-'+matchdayState.awayScore,at:mdFormat(mdNowSeconds()),...mdNextEventIdentity('MVP')};
  mdRecordEvent(ev,before);q('mdEventStatus').textContent='MVP · #'+p.number+' '+p.name;gdRunEvent(ev,9000)
 }
 function applyOperatorRole(role,persist=true){
