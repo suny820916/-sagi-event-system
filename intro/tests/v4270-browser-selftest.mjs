@@ -261,22 +261,24 @@ server.listen(PORT,'127.0.0.1',async()=>{
   assert(await page.locator('#vdCam1').inputValue()==='1'&&await page.locator('#vdCam2').inputValue()==='2','saved camera mapping not restored');
   await page.click('#setupValidateBtn');await page.waitForFunction(()=>!document.querySelector('#setupReadyBtn')?.disabled,null,{timeout:5000});await page.click('#setupReadyBtn');await page.waitForFunction(()=>document.querySelector('#setupReadyBadge')?.textContent.includes('可以播出'),null,{timeout:5000});
 
-  console.log('TEST 4E: V4.33 control uses one canonical penalty history for kick, mirror, and undo');
-  const penaltySsot=await page.evaluate(async()=>{
-    matchdayState.penaltyShootout={started:true,visible:true,rounds:5,firstSide:'HOME',history:[],winner:'',finished:false,sourceVersion:'V4.33'};
-    matchdayState.simplePenalty={visible:true,home:99,away:88,history:[{side:'HOME',result:'GOAL'}],round:9};
-    matchdayState.period='PEN';mdPenaltyEvaluateWinner();mdSyncDirectorPenaltyToSimple();await publishMatchday(null);
-    const before=window.sagiPenaltySingleSourceDiagnostic();
-    await mdPenaltyKick('HOME','GOAL');const afterHome=window.sagiPenaltySingleSourceDiagnostic();
-    await mdPenaltyKick('AWAY','MISS');const afterAway=window.sagiPenaltySingleSourceDiagnostic();
-    await mdPenaltyUndo();const afterUndo=window.sagiPenaltySingleSourceDiagnostic();
-    await mdPenaltyReset();return{before,afterHome,afterAway,afterUndo,period:matchdayState.period}
-  });
-  assert(penaltySsot.before.source==='penaltyShootout'&&penaltySsot.before.consistent&&penaltySsot.before.homeGoals===0&&penaltySsot.before.compat.home===0,'corrupted legacy mirror affected canonical control source: '+JSON.stringify(penaltySsot.before));
-  assert(penaltySsot.afterHome.history.length===1&&penaltySsot.afterHome.homeGoals===1&&penaltySsot.afterHome.compat.home===1,'HOME penalty did not update one source: '+JSON.stringify(penaltySsot.afterHome));
-  assert(penaltySsot.afterAway.history.length===2&&penaltySsot.afterAway.awayGoals===0&&penaltySsot.afterAway.compat.history.length===2,'AWAY miss drifted compatibility view: '+JSON.stringify(penaltySsot.afterAway));
-  assert(penaltySsot.afterUndo.history.length===1&&penaltySsot.afterUndo.consistent,'penalty undo did not roll back one source atomically: '+JSON.stringify(penaltySsot.afterUndo));
-  assert(penaltySsot.period==='2H','penalty reset did not return to regular match phase');
+  console.log('TEST 4E: V4.33 real penalty buttons share one canonical history for kick, mirror, and undo');
+  await page.selectOption('#mdPenRounds','5');await page.selectOption('#mdPenFirst','HOME');
+  await page.click('#mdPenStart');await wait(800);
+  const penaltyBefore=await page.evaluate(()=>window.sagiPenaltySingleSourceDiagnostic());
+  await page.click('#mdPenHomeGoal');await wait(500);
+  const penaltyAfterHome=await page.evaluate(()=>window.sagiPenaltySingleSourceDiagnostic());
+  await page.click('#mdPenAwayMiss');await wait(500);
+  const penaltyAfterAway=await page.evaluate(()=>window.sagiPenaltySingleSourceDiagnostic());
+  await page.click('#mdPenUndo');await wait(500);
+  const penaltyAfterUndo=await page.evaluate(()=>window.sagiPenaltySingleSourceDiagnostic());
+  await page.click('#mdPenReset');await wait(500);
+  const penaltyAfterReset=await page.evaluate(()=>window.sagiPenaltySingleSourceDiagnostic());
+  const penaltyPeriod=await page.locator('#mdPeriod').inputValue();
+  assert(penaltyBefore.source==='penaltyShootout'&&penaltyBefore.consistent&&penaltyBefore.history.length===0,'penalty start did not establish canonical source: '+JSON.stringify(penaltyBefore));
+  assert(penaltyAfterHome.history.length===1&&penaltyAfterHome.homeGoals===1&&penaltyAfterHome.compat.home===1&&penaltyAfterHome.consistent,'HOME penalty did not update one source: '+JSON.stringify(penaltyAfterHome));
+  assert(penaltyAfterAway.history.length===2&&penaltyAfterAway.awayGoals===0&&penaltyAfterAway.compat.history.length===2&&penaltyAfterAway.consistent,'AWAY miss drifted compatibility view: '+JSON.stringify(penaltyAfterAway));
+  assert(penaltyAfterUndo.history.length===1&&penaltyAfterUndo.homeGoals===1&&penaltyAfterUndo.consistent,'penalty undo did not roll back one source atomically: '+JSON.stringify(penaltyAfterUndo));
+  assert(penaltyAfterReset.history.length===0&&penaltyAfterReset.homeGoals===0&&penaltyAfterReset.awayGoals===0&&penaltyAfterReset.consistent&&penaltyPeriod==='2H','penalty reset did not clear one source / return to regular phase: '+JSON.stringify({penaltyAfterReset,penaltyPeriod}));
 
   await page.click('#vdTakeCam1');await page.waitForFunction(()=>document.querySelector('#vdStatus')?.textContent.includes('已执行'),null,{timeout:4000});await page.click('#vdTakeCam2');await wait(800);
   const cuts=vmixCommands.filter(x=>['Cut','Fade','Stinger1'].includes(x.functionName));
