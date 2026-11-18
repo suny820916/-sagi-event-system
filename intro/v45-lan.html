@@ -1961,21 +1961,21 @@ function initMatchSetup(){
 }
 
 const DEFAULT_SHOW=[
- {id:'sting',group:'STING',label:'赛事标识',duration:2000,transition:'FLASH',cue:'STING',enabled:true},
+ {id:'sting',group:'STING',label:'赛事标识',duration:2000,transition:'FADE',cue:'STING',enabled:true},
  {id:'match',group:'MATCH',label:'比赛信息',duration:3000,transition:'FADE',cue:'RISER',enabled:true},
  {id:'countdown',group:'COUNTDOWN',label:'开场倒计时',duration:5000,transition:'ZOOM',cue:'HIT',enabled:true},
  {id:'home_team',side:'HOME',group:'TEAM',label:'主队开场',duration:2500,transition:'FADE',cue:'RISER',enabled:true},
  {id:'home_gk',side:'HOME',group:'GK',label:'主队门将',duration:3000,transition:'ZOOM',cue:'HIT',enabled:true},
  {id:'home_df',side:'HOME',group:'DF',label:'主队后卫',duration:4000,transition:'SLIDE',cue:'WHOOSH',enabled:true},
  {id:'home_mf',side:'HOME',group:'MF',label:'主队中场',duration:4000,transition:'SLIDE',cue:'WHOOSH',enabled:true},
- {id:'home_fw',side:'HOME',group:'FW',label:'主队前锋',duration:4000,transition:'FLASH',cue:'HIT',enabled:true},
+ {id:'home_fw',side:'HOME',group:'FW',label:'主队前锋',duration:4000,transition:'FADE',cue:'HIT',enabled:true},
  {id:'home_full',side:'HOME',group:'FULL',label:'主队完整首发',duration:6000,transition:'ZOOM',cue:'CROWD',enabled:true},
  {id:'home_sub',side:'HOME',group:'SUB',label:'主队替补名单',duration:5000,transition:'SLIDE',cue:'WHOOSH',enabled:true},
  {id:'away_team',side:'AWAY',group:'TEAM',label:'客队开场',duration:2500,transition:'FADE',cue:'RISER',enabled:true},
  {id:'away_gk',side:'AWAY',group:'GK',label:'客队门将',duration:3000,transition:'ZOOM',cue:'HIT',enabled:true},
  {id:'away_df',side:'AWAY',group:'DF',label:'客队后卫',duration:4000,transition:'SLIDE',cue:'WHOOSH',enabled:true},
  {id:'away_mf',side:'AWAY',group:'MF',label:'客队中场',duration:4000,transition:'SLIDE',cue:'WHOOSH',enabled:true},
- {id:'away_fw',side:'AWAY',group:'FW',label:'客队前锋',duration:4000,transition:'FLASH',cue:'HIT',enabled:true},
+ {id:'away_fw',side:'AWAY',group:'FW',label:'客队前锋',duration:4000,transition:'FADE',cue:'HIT',enabled:true},
  {id:'away_full',side:'AWAY',group:'FULL',label:'客队完整首发',duration:6000,transition:'ZOOM',cue:'CROWD',enabled:true},
  {id:'away_sub',side:'AWAY',group:'SUB',label:'客队替补名单',duration:5000,transition:'SLIDE',cue:'WHOOSH',enabled:true}
 ];
@@ -3666,13 +3666,13 @@ function normalizeShowSteps(list){
    if(i>=0)src.splice(i,0,{...homeSub});else src.push({...homeSub});
  }
  if(!src.some(s=>s.id==='away_sub'))src.push({...awaySub});
- return src.map(s=>({...s,duration:Math.max(500,Number(s.duration)||1000),enabled:s.enabled!==false}));
+ return src.map(s=>({...s,transition:s.transition==='FLASH'?'FADE':(s.transition||'FADE'),duration:Math.max(500,Number(s.duration)||1000),enabled:s.enabled!==false}));
 }
 function showEnabled(){return showSteps.filter(s=>s.enabled)}
 function showTotalMs(){return showEnabled().reduce((a,s)=>a+(Number(s.duration)||0),0)}
-function showTransitionLabel(v){return({CUT:'硬切',FADE:'淡变',SLIDE:'滑动',ZOOM:'推进',FLASH:'闪白'})[v]||v}
+function showTransitionLabel(v){return({CUT:'硬切',FADE:'淡变',SLIDE:'滑动',ZOOM:'推进',FLASH:'淡变（兼容）'})[v]||v}
 function showCueLabel(v){return({NONE:'无',WHOOSH:'呼啸',HIT:'冲击',RISER:'渐强',CROWD:'观众',STING:'转场'})[v]||v}
-function showTransitionOptions(v){return ['CUT','FADE','SLIDE','ZOOM','FLASH'].map(x=>'<option value="'+x+'"'+(x===v?' selected':'')+'>'+showTransitionLabel(x)+'</option>').join('')}
+function showTransitionOptions(v){v=v==='FLASH'?'FADE':v;return ['CUT','FADE','SLIDE','ZOOM'].map(x=>'<option value="'+x+'"'+(x===v?' selected':'')+'>'+showTransitionLabel(x)+'</option>').join('')}
 function showCueOptions(v){return ['NONE','WHOOSH','HIT','RISER','CROWD','STING'].map(x=>'<option value="'+x+'"'+(x===v?' selected':'')+'>'+showCueLabel(x)+'</option>').join('')}
 function showNextEnabledIndex(from){let i=Math.max(0,Number(from)||0);while(i<showSteps.length&&!showSteps[i].enabled)i++;return i<showSteps.length?i:-1}
 function showRemainingMs(){
