@@ -262,6 +262,9 @@ server.listen(PORT,'127.0.0.1',async()=>{
   await page.click('#setupValidateBtn');await page.waitForFunction(()=>!document.querySelector('#setupReadyBtn')?.disabled,null,{timeout:5000});await page.click('#setupReadyBtn');await page.waitForFunction(()=>document.querySelector('#setupReadyBadge')?.textContent.includes('可以播出'),null,{timeout:5000});
 
   console.log('TEST 4E: V4.33 real penalty buttons share one canonical history for kick, mirror, and undo');
+  // TEST 4D intentionally left an active penalty state in the Bridge. A fresh operator must reset it
+  // before changing rounds/first kicker; the disabled selectors are a safety feature, not a failure.
+  await page.click('#mdPenReset');await wait(600);
   await page.selectOption('#mdPenRounds','5');await page.selectOption('#mdPenFirst','HOME');
   await page.click('#mdPenStart');await wait(800);
   const penaltyBefore=await page.evaluate(()=>window.sagiPenaltySingleSourceDiagnostic());
