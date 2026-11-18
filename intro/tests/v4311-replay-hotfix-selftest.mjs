@@ -114,3 +114,15 @@ assert(control8.includes("Cleanup is deliberately asynchronous"),'stinger cleanu
 assert(control8.includes("return replayStingerAction("),'manual/auto replay stinger must share timing engine');
 assert(control8.includes("clearTimeout(replayStingerCleanupTimer)"),'transition cleanup timer cancel guard missing');
 console.log('replay stinger cut-point timing PASS');
+
+// humanized live-flow layout
+const control9=fs.readFileSync(new URL('../v45-lan.html',import.meta.url),'utf8');
+for(const token of ['LIVE FLOW · 比赛事件主链','⚽ 1 · 进球','⏪ 2 · 生成回放','▶ 3 · 最近回放','👤 4 · 进球队员','↩ 5 · 回主画面'])assert(control9.includes(token),'missing LIVE FLOW token: '+token);
+assert(control9.includes('function mdShowGoalPlayer()'),'display-only scorer action missing');
+assert(control9.includes('displayOnly:true'),'scorer action must not mutate score');
+assert(control9.includes('async function instantReplayReturnLiveNow()'),'manual return-live action missing');
+assert(control9.includes("q('mmUndoEvent').onclick=mdUndoLast"),'undo must be in primary workflow');
+assert(control9.includes("q('mmClearEvent').onclick"),'clear-current-graphic quick action missing');
+assert(control9.includes("cockpit.classList.toggle('penaltyActive'"),'penalty panels must collapse outside penalty mode');
+assert(!control9.includes('<div class="mmPanelTitle">一键事件</div>'),'legacy event panel should be removed');
+console.log('humanized live-flow layout PASS');
