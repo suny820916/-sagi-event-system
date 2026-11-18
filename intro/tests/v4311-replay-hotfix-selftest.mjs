@@ -103,3 +103,14 @@ assert(control8.includes("['irGenerate','mmGenerateReplay','mmReplay','vdTakeRep
 assert(control8.includes("结束最近回放"),'ReplayStopEvents before live return missing');
 assert(control8.includes("return ssTake(returnSlot,'INSTANT REPLAY RETURN'"),'live return camera command missing');
 console.log('replay busy lock and stop-before-return PASS');
+
+// replay stinger cut-point timing: cut must stay inside full-cover window and replay duration starts at actual switch.
+const control8=fs.readFileSync(new URL('../v45-lan.html',import.meta.url),'utf8');
+assert(control8.includes("REPLAY_STINGER_SWITCH_MS=920"),'replay stinger safe cut point must be 920ms');
+assert(control8.includes("REPLAY_STINGER_POST_SWITCH_CLEAN_MS=1380"),'stinger cleanup safety margin missing');
+assert(control8.includes("seconds*1000-REPLAY_STINGER_SWITCH_MS"),'OUT transition must be scheduled from true replay start');
+assert(!control8.includes("seconds*1000-REPLAY_STINGER_CLEAR_MS-returnLeadMs"),'old late-return timing still present');
+assert(control8.includes("Cleanup is deliberately asynchronous"),'stinger cleanup must not block replay timing');
+assert(control8.includes("return replayStingerAction("),'manual/auto replay stinger must share timing engine');
+assert(control8.includes("clearTimeout(replayStingerCleanupTimer)"),'transition cleanup timer cancel guard missing');
+console.log('replay stinger cut-point timing PASS');
