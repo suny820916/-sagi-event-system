@@ -289,7 +289,12 @@ server.listen(PORT,'127.0.0.1',async()=>{
   assert(replayFns.filter(x=>x.functionName==='ReplayStopEvents').length>=2,'replay stop guards missing before play/return: '+JSON.stringify(replayFns));
   assert(replayEvents.some(e=>e.type==='REPLAY_STINGER'&&e.phase==='IN'),'missing replay IN stinger event');
   assert(replayEvents.some(e=>e.type==='REPLAY_STINGER'&&e.phase==='OUT'),'missing replay OUT stinger event');
-  assert(replayEvents.filter(e=>e.type==='CLEAR_EVENT').length>=2,'replay stinger clear events missing');
+  const midClears=replayEvents.filter(e=>e.type==='CLEAR_EVENT').length;
+  assert(midClears>=1,'replay IN stinger cleanup missing before live return: '+JSON.stringify(replayEvents.map(e=>({type:e.type,phase:e.phase,eventId:e.eventId}))));
+  await wait(1900);
+  const finalReplayEvents=matchdayPosts.map(x=>x&&x.event).filter(Boolean);
+  const finalClears=finalReplayEvents.filter(e=>e.type==='CLEAR_EVENT').length;
+  assert(finalClears>=2,'replay OUT stinger final cleanup missing after transition tail: '+JSON.stringify(finalReplayEvents.map(e=>({type:e.type,phase:e.phase,eventId:e.eventId}))));
   await page.screenshot({path:'selftest-artifacts/08-replay-control.png'});
 
   console.log('TEST 8: stored project load is deterministic and optional match metadata does not block READY');
