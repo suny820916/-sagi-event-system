@@ -5,7 +5,7 @@ const code=fs.readFileSync(new URL('../sagi-signature-core-v432.js',import.meta.
 const sandbox={};sandbox.globalThis=sandbox;
 vm.runInNewContext(code,sandbox,{filename:'sagi-signature-core-v432.js'});
 const c=sandbox.SAGISignatureCore;
-assert(c&&c.VERSION==='4.32.0-rc.1','core version missing');
+assert(c&&c.VERSION==='4.32.0-rc.2','core version missing');
 assert(c.TOKENS.gold==='#d8b55b'&&c.TOKENS.yellow==='#f2d536'&&c.TOKENS.red==='#e33440','signature palette drift');
 assert(c.normalizeEvent(null)===null,'null event must stay null');
 const sub=c.normalizeEvent({type:'SUBSTITUTION',side:'AWAY',team:'A',on:{id:'2',name:'IN'},off:{id:'9',name:'OUT'}});
@@ -23,6 +23,7 @@ const replay=c.normalizeEvent({type:'REPLAY_STINGER',phase:'weird'});
 assert(replay.phase==='IN'&&replay.title==='INSTANT REPLAY','replay phase fail-safe failed');
 const long=c.normalizeEvent({type:'GOAL',team:'X'.repeat(500),player:{name:'Y'.repeat(500),photo:'z'.repeat(5000)}});
 assert(long.team.length<=80&&long.player.name.length<=80&&long.player.photo.length<=2048,'payload bounds failed');
+assert(c.eventKey({type:'GOAL',side:'HOME',team:'HOME',at:'',player:null})==='','legacy metadata must not be treated as reliable event identity');
 const control=fs.readFileSync(new URL('../v45-lan.html',import.meta.url),'utf8');
 const output=fs.readFileSync(new URL('../vmix-v45-lan.html',import.meta.url),'utf8');
 for(const [name,html] of [['control',control],['output',output]]){
