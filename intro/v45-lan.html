@@ -642,6 +642,13 @@ body{background:radial-gradient(circle at 78% -10%,#0a43c933,transparent 28%),li
 .mdProEditor:after{content:"常规比分牌固定读取“比赛信息”中的球队全名；备用简称不会覆盖常规直播队名。";display:block;margin-top:8px;padding:8px 10px;border:1px solid #214f8d;border-radius:9px;background:#061a3b;color:#9bc7ff;font-size:9px;line-height:1.55}
 
 
+/* V4.32 SAGI FOOTBALL control-room lockup */
+.sagiControlLockup{display:flex;align-items:center;gap:10px}
+.sagiControlLogo{display:inline-flex;align-items:baseline;color:#fff;font-size:25px;font-weight:1000;letter-spacing:-1px;line-height:1}
+.sagiControlA{position:relative;display:inline-block}
+.sagiControlA i{position:absolute;width:7px;height:7px;border-radius:50%;background:#ff1a1a;left:50%;bottom:-4px;transform:translateX(-50%);box-shadow:0 0 10px #ff1a1a55}
+.sagiControlName{font-size:12px;color:#c7ccd5;font-weight:850;letter-spacing:1px}
+
 /* V4.31.0 SAGI Signature system */
 .mdProEditor:before{content:"SAGI SIGNATURE · 黑金 / 天山白 / 帕米尔蓝";display:block;margin:-1px 0 9px;padding:7px 9px;border-left:3px solid #d3ae5b;background:#080a0f;color:#d3ae5b;font-size:9px;font-weight:1000;letter-spacing:1.1px}
 
@@ -649,7 +656,7 @@ body{background:radial-gradient(circle at 78% -10%,#0a43c933,transparent 28%),li
 </head>
 <body>
 <div class="app">
-  <div class="top"><div><div class="brand">SAGI 赛事直播导播</div><div class="sub">V4.31.0 · STAGE 广播系统 · 比赛设置</div></div><div class="topRight"><div class="ver">V4.31.0</div><button id="mobileUpdateBtn" class="mobileUpdateBtn" type="button">↻ 安全更新</button><button id="mobileRollbackBtn" class="mobileRollbackBtn" type="button">↶ 回退上一版</button><div id="mobileUpdateStatus" class="mobileUpdateStatus">V4.31.0 · STAGE 广播系统 · 桥接服务已锁定</div></div></div>
+  <div class="top"><div><div class="brand sagiControlLockup"><span class="sagiControlLogo"><span>S</span><span class="sagiControlA">A<i></i></span><span>GI</span></span><span class="sagiControlName">赛事直播导播</span></div><div class="sub">V4.31.0 · STAGE 广播系统 · 比赛设置</div></div><div class="topRight"><div class="ver">V4.31.0</div><button id="mobileUpdateBtn" class="mobileUpdateBtn" type="button">↻ 安全更新</button><button id="mobileRollbackBtn" class="mobileRollbackBtn" type="button">↶ 回退上一版</button><div id="mobileUpdateStatus" class="mobileUpdateStatus">V4.31.0 · STAGE 广播系统 · 桥接服务已锁定</div></div></div>
 
   <div id="pwaBar" class="pwaBar" style="display:none">
     <div class="pwaInfo">
