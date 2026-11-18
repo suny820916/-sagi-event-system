@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
-<meta name="sagi-build" content="SAGI4311_FLASHFIX_04">
+<meta name="sagi-build" content="SAGI4311_REPLAYFLOW_05">
 <!-- SAGI LIVE MATCH DIRECTOR · SAFE UPDATE COMPATIBILITY MARKER -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -816,7 +816,7 @@ body{background:radial-gradient(circle at 78% -10%,#0a43c933,transparent 28%),li
 
       <div class="mmPanel mmDirectorOnly">
         <div class="mmPanelTitle">机位导播</div>
-        <div class="mmRow"><button id="mmCam1" class="ok" type="button" data-camera-slot="cam1">1 主机位</button><button id="mmCam2" type="button" data-camera-slot="cam2">2 机位2</button><button id="mmDrone" type="button" data-camera-slot="drone">3 无人机</button><button id="mmReplay" class="mmMarker" type="button" data-camera-slot="replay">4 回放</button></div>
+        <div class="mmRow"><button id="mmCam1" class="ok" type="button" data-camera-slot="cam1">1 主机位</button><button id="mmCam2" type="button" data-camera-slot="cam2">2 机位2</button><button id="mmDrone" type="button" data-camera-slot="drone">3 无人机</button><button id="mmReplay" class="mmMarker" type="button" data-camera-slot="replay">4 最近回放</button></div>
         <div class="mmRow" style="margin-top:6px"><button id="mmGraphicsOn" type="button">图形开启</button><button id="mmGraphicsOff" type="button">图形关闭</button></div>
         <div class="mmPanelTitle" style="margin-top:10px">即时回放生成</div>
         <div class="mmRow3"><button id="mmReplayRecord" class="ok" type="button">● 启动录制</button><select id="mmReplaySeconds"><option value="5">5秒</option><option value="8" selected>8秒</option><option value="12">12秒</option></select><button id="mmGenerateReplay" class="mmMarker" type="button">⏪ 生成回放</button></div>
@@ -908,7 +908,7 @@ body{background:radial-gradient(circle at 78% -10%,#0a43c933,transparent 28%),li
           <button class="vdSource" id="vdTakeCam1" type="button" data-vd-take="cam1"><b>1</b><span>主全景</span></button>
           <button class="vdSource" id="vdTakeCam2" type="button" data-vd-take="cam2"><b>2</b><span>边线近景</span></button>
           <button class="vdSource" id="vdTakeDrone" type="button" data-vd-take="drone"><b>3</b><span>无人机</span></button>
-          <button class="vdSource" id="vdTakeReplay" type="button" data-vd-take="replay"><b>4</b><span>回放</span></button>
+          <button class="vdSource" id="vdTakeReplay" type="button" data-vd-take="replay"><b>4</b><span>最近回放</span></button>
         </div>
         <div class="vdPreview">
           <button id="vdPreviewCam1" type="button" data-vd-preview="cam1">预监 · 主全景</button>
@@ -929,7 +929,7 @@ body{background:radial-gradient(circle at 78% -10%,#0a43c933,transparent 28%),li
         </div>
         <div class="vdBridgeHelp">局域网直连：手机与 vMix 电脑连接同一 Wi‑Fi。此页面由桥接服务在本机提供，所有导播指令与比赛图形直接走局域网，不依赖 Supabase。</div>
         <a class="vdDownload" href="/health" target="_blank">检查局域网桥接</a>
-        <div class="vdKeys">快捷键：1/2/3/4 手动切机位 · G 图形开启 · X 图形关闭 · A 关键进攻保护。输入框正在编辑时快捷键自动停用。</div>
+        <div class="vdKeys">快捷键：1/2/3 切机位 · 4 播放最近回放 · G 图形开启 · X 图形关闭 · A 关键进攻保护。输入框正在编辑时快捷键自动停用。</div>
       </div>
       <div class="vdPanel">
         <div class="vdPanelTitle">画面滤镜 · 电影感</div>
@@ -2481,6 +2481,10 @@ function gdSaveFromUI(){
  gdPersist();gdRefreshUI()
 }
 let instantReplayBusy=false,instantReplayTimer=null,instantReplayRecordingRequested=false;
+const IR_LAST_DURATION_KEY='sagi_instant_replay_last_duration_v4311';
+function irSaveLastDuration(seconds){const n=[5,8,12].includes(Number(seconds))?Number(seconds):8;try{localStorage.setItem(IR_LAST_DURATION_KEY,String(n))}catch(e){}return n}
+function irLastDuration(){let n=8;try{n=Number(localStorage.getItem(IR_LAST_DURATION_KEY)||0)||Number(q('irSeconds')&&q('irSeconds').value)||Number(q('mmReplaySeconds')&&q('mmReplaySeconds').value)||8}catch(e){}return[5,8,12].includes(n)?n:8}
+function irFinishBusy(text,state=''){instantReplayBusy=false;clearTimeout(instantReplayTimer);instantReplayTimer=null;irSyncButtons();if(text)irSetStatus(text,state)}
 function irSyncButtons(){
  const busy=!!instantReplayBusy;
  for(const id of ['irGenerate','mmGenerateReplay']){const b=q(id);if(b){b.disabled=busy;b.classList.toggle('busy',busy)}}
@@ -2497,6 +2501,45 @@ async function instantReplayStartRecording(){
  if(ok)note('Instant Replay 录制启动命令已发送');
  return !!ok
 }
+async function replayStingerAction(phase='IN',switchAction=null,label=''){
+ if(!matchReady)return false;vdSave();
+ const overlayWasVisible=!!matchdayState.overlayVisible;
+ if(!overlayWasVisible){
+   matchdayState.overlayVisible=true;mdPersist();
+   await publishVmixDirector('OverlayInput'+vmixDirectorSettings.overlay+'In',vmixDirectorSettings.graphics,0,'REPLAY TRANSITION ON')
+ }
+ gdSetStatus((phase==='OUT'?'BACK TO LIVE':'INSTANT REPLAY')+' · SAGI TRANSITION','busy');
+ await publishMatchday(replayStingerPayload(phase));
+ await new Promise(r=>setTimeout(r,REPLAY_STINGER_SWITCH_MS));
+ let ok=false;try{ok=switchAction?!!(await switchAction()):true}catch(e){ok=false}
+ await new Promise(r=>setTimeout(r,REPLAY_STINGER_CLEAR_MS));
+ await publishMatchday({type:'CLEAR_EVENT'});
+ if(!overlayWasVisible){
+   await new Promise(r=>setTimeout(r,120));
+   matchdayState.overlayVisible=false;mdPersist();
+   await publishVmixDirector('OverlayInput'+vmixDirectorSettings.overlay+'Out','',0,'REPLAY TRANSITION RESTORE')
+ }
+ return !!ok
+}
+async function instantReplayBeginLatest(seconds=8,label='最近回放'){
+ seconds=irSaveLastDuration(seconds);
+ const played=await replayStingerAction('IN',()=>publishVmixDirector('ReplayPlayLastEventToOutput','',0,label+' · 只播放最近一条'),'PLAY LATEST');
+ if(!played)throw new Error('PLAY_FAILED');
+ irSetStatus(label+'播放中 · '+seconds+' 秒 · 自动返回比赛','busy');
+ clearTimeout(instantReplayTimer);
+ // Start BACK TO LIVE slightly before the replay endpoint so the cut is hidden by the transition.
+ const returnLeadMs=650,delay=Math.max(900,seconds*1000-REPLAY_STINGER_CLEAR_MS-returnLeadMs);
+ instantReplayTimer=setTimeout(async()=>{
+   const preferred=graphicsDirectorSettings.returnSlot||'cam1';
+   const returnSlot=vdSlotAvailable(preferred)?preferred:ssMainSlot();
+   let returned=false;
+   if(returnSlot&&vdSlotAvailable(returnSlot)){
+     returned=await replayStingerAction('OUT',()=>ssTake(returnSlot,'INSTANT REPLAY RETURN','OPERATOR',true,'RETURN'),'BACK TO LIVE');
+   }
+   irFinishBusy(returned?'回放完成 · SAGI 转场已返回比赛':'回放结束 · 请手动切回主机位',returned?'ok':'error');
+ },delay);
+ return true
+}
 async function instantReplayGenerate(seconds=8){
  if(instantReplayBusy){note('回放流程正在执行');return false}
  if(!requireMatchReady())return false;
@@ -2504,29 +2547,31 @@ async function instantReplayGenerate(seconds=8){
  instantReplayBusy=true;irSyncButtons();gdClearCameraTimers();gdAutoCameraActive=false;
  irSetStatus('正在生成前 '+seconds+' 秒回放…','busy');
  try{
+  // Stop any prior replay playback first; this never deletes recorded events.
+  await publishVmixDirector('ReplayStopEvents','','','停止旧回放播放');
   const marked=await publishVmixDirector('ReplayMarkInOutLive','',0,'生成回放 · 前 '+seconds+' 秒',String(seconds));
   if(!marked)throw new Error('MARK_FAILED');
-  await new Promise(r=>setTimeout(r,160));
-  const played=await publishVmixDirector('ReplayPlayLastEventToOutput','',0,'播放最近生成的回放');
-  if(!played)throw new Error('PLAY_FAILED');
   mdAddReplayMarker('REPLAY','生成回放 · '+seconds+'秒');
-  irSetStatus('回放播放中 · '+seconds+' 秒 · 将自动回到比赛','busy');
-  clearTimeout(instantReplayTimer);
-  instantReplayTimer=setTimeout(async()=>{
-    const preferred=graphicsDirectorSettings.returnSlot||'cam1';
-    const returnSlot=vdSlotAvailable(preferred)?preferred:ssMainSlot();
-    let returned=false;
-    if(returnSlot&&vdSlotAvailable(returnSlot)){
-      returned=await ssTake(returnSlot,'INSTANT REPLAY RETURN','OPERATOR',true,'RETURN');
-    }
-    instantReplayBusy=false;instantReplayTimer=null;irSyncButtons();
-    irSetStatus(returned?'回放完成 · 已自动回到比赛':'回放完成 · 请手动切回主机位',returned?'ok':'error');
-  },seconds*1000+900);
-  return true
+  await new Promise(r=>setTimeout(r,180));
+  return await instantReplayBeginLatest(seconds,'刚生成的回放')
  }catch(e){
-  instantReplayBusy=false;clearTimeout(instantReplayTimer);instantReplayTimer=null;irSyncButtons();
-  irSetStatus('生成失败 · 确认 vMix Instant Replay 已在录制','error');
+  irFinishBusy('生成失败 · 确认 vMix Instant Replay 已在录制','error');
   note('回放生成失败 · 请确认 vMix Instant Replay 已开始录制');
+  return false
+ }
+}
+async function instantReplayPlayLatest(){
+ if(instantReplayBusy){note('回放流程正在执行');return false}
+ if(!requireMatchReady())return false;
+ const seconds=irLastDuration();
+ instantReplayBusy=true;irSyncButtons();gdClearCameraTimers();gdAutoCameraActive=false;
+ irSetStatus('准备播放最近一条回放…','busy');
+ try{
+  await publishVmixDirector('ReplayStopEvents','','','停止旧回放播放');
+  return await instantReplayBeginLatest(seconds,'最近一条回放')
+ }catch(e){
+  irFinishBusy('最近回放播放失败 · 请先生成一条回放','error');
+  note('最近回放播放失败 · 请先生成一条回放');
   return false
  }
 }
@@ -2885,7 +2930,7 @@ function initMatchMode(){
  q('mmEventSide').onchange=refreshMatchdayPlayers;q('mmGoalMacro').onclick=()=>mdMacroEvent('GOAL',q('mmEventSide').value,q('mmEventPlayer').value);q('mmYellowMacro').onclick=()=>mdMacroEvent('YELLOW',q('mmEventSide').value,q('mmEventPlayer').value);q('mmRedMacro').onclick=()=>mdMacroEvent('RED',q('mmEventSide').value,q('mmEventPlayer').value);
  q('mmHalf').onclick=()=>mdMatchState('HALF_TIME');q('mmFull').onclick=()=>mdMatchState('FULL_TIME');
  q('mmSubSide').onchange=refreshMatchdayPlayers;q('mmSubMacro').onclick=()=>mdSubstitutionByIds(q('mmSubSide').value,q('mmSubOff').value,q('mmSubOn').value);
- q('mmCam1').onclick=()=>vdTake('cam1');q('mmCam2').onclick=()=>vdTake('cam2');q('mmDrone').onclick=()=>vdTake('drone');q('mmReplay').onclick=()=>vdTake('replay');q('mmGraphicsOn').onclick=vdOverlayIn;q('mmGraphicsOff').onclick=vdOverlayOut;
+ q('mmCam1').onclick=()=>vdTake('cam1');q('mmCam2').onclick=()=>vdTake('cam2');q('mmDrone').onclick=()=>vdTake('drone');q('mmReplay').onclick=instantReplayPlayLatest;q('mmGraphicsOn').onclick=vdOverlayIn;q('mmGraphicsOff').onclick=vdOverlayOut;
  q('mmReplayRecord').onclick=instantReplayStartRecording;q('mmGenerateReplay').onclick=()=>instantReplayGenerate(Number(q('mmReplaySeconds').value)||8);
  q('mmReplaySeconds').onchange=()=>{if(q('irSeconds'))q('irSeconds').value=q('mmReplaySeconds').value};
  q('mmMarkSave').onclick=()=>{mdAddReplayMarker('SAVE','精彩扑救');note('已标记扑救')};q('mmMarkIncident').onclick=()=>{mdAddReplayMarker('INCIDENT','对抗/冲突');note('已标记事件')};q('mmMarkKey').onclick=()=>{mdAddReplayMarker('KEY','精彩时刻');note('已标记精彩时刻')};
@@ -3073,6 +3118,7 @@ async function publishVmixDirector(functionName,input='',duration=0,label='',val
 }
 
 async function vdTake(slot){
+ if(slot==='replay')return instantReplayPlayLatest();
  if(gdAutoCameraActive){gdClearCameraTimers();gdAutoCameraActive=false;gdSetStatus('MANUAL CAMERA OVERRIDE','manual')}
  if(!requireMatchReady())return false;vdSave();
  if(!vdSlotAvailable(slot)){note('该机位未分配，不能切换');refreshCameraRoleUI();return false}
@@ -3121,18 +3167,18 @@ function initVmixDirector(){
  vdReadVmixInputs(false);
  setTimeout(async()=>{
   try{
-   vdLoad();const input=String(vmixDirectorSettings.graphics||'').trim(),key='sagi_graphics_loaded_SAGI4311_FLASHFIX_04';
+   vdLoad();const input=String(vmixDirectorSettings.graphics||'').trim(),key='sagi_graphics_loaded_SAGI4311_REPLAYFLOW_05';
    if(input&&localStorage.getItem(key)!==input){
     const ok=await refreshGraphicsBrowser(false);
-    if(ok){localStorage.setItem(key,input);q('vdStatus').textContent='FLASHFIX 04 已强制刷新 vMix 图形 · Input '+input}
+    if(ok){localStorage.setItem(key,input);q('vdStatus').textContent='REPLAYFLOW 05 已强制刷新 vMix 图形 · Input '+input}
    }
   }catch(e){}
  },1800);
- document.querySelectorAll('[data-vd-take]').forEach(b=>b.onclick=()=>vdTake(b.dataset.vdTake));
+ document.querySelectorAll('[data-vd-take]').forEach(b=>b.onclick=()=>b.dataset.vdTake==='replay'?instantReplayPlayLatest():vdTake(b.dataset.vdTake));
  document.querySelectorAll('[data-vd-preview]').forEach(b=>b.onclick=()=>vdPreview(b.dataset.vdPreview));
  q('vdGraphicsIn').onclick=vdOverlayIn;q('vdGraphicsOut').onclick=vdOverlayOut;q('vdReloadGraphics').onclick=()=>refreshGraphicsBrowser(true);q('vdAllOverlaysOff').onclick=()=>publishVmixDirector('OverlayInputAllOff','','0','ALL OVERLAYS OFF');q('vdTest').onclick=()=>vdPreview('cam1');
  ['vdCam1','vdCam2','vdDrone','vdReplay','vdGraphics','vdTransition','vdDuration','vdOverlay','vdCam1Role','vdCam2Role','vdDroneRole','vdReplayRole'].forEach(id=>q(id).addEventListener('change',()=>{vdSave();refreshCameraRoleUI();sdRecommend(null)}));
- addEventListener('keydown',e=>{const tag=(e.target&&e.target.tagName)||'';if(tag==='INPUT'||tag==='SELECT'||tag==='TEXTAREA')return;if(e.key==='1')vdTake('cam1');else if(e.key==='2')vdTake('cam2');else if(e.key==='3')vdTake('drone');else if(e.key==='4')vdTake('replay');else if(e.key.toLowerCase()==='g')vdOverlayIn();else if(e.key.toLowerCase()==='x')vdOverlayOut();else if(e.key.toLowerCase()==='a')ssAttackLock()});
+ addEventListener('keydown',e=>{const tag=(e.target&&e.target.tagName)||'';if(tag==='INPUT'||tag==='SELECT'||tag==='TEXTAREA')return;if(e.key==='1')vdTake('cam1');else if(e.key==='2')vdTake('cam2');else if(e.key==='3')vdTake('drone');else if(e.key==='4')instantReplayPlayLatest();else if(e.key.toLowerCase()==='g')vdOverlayIn();else if(e.key.toLowerCase()==='x')vdOverlayOut();else if(e.key.toLowerCase()==='a')ssAttackLock()});
  const params=new URLSearchParams(location.search);if(params.has('safe')||params.has('homescreen'))setTimeout(()=>refreshGraphicsBrowser(false),900);
 }
 
