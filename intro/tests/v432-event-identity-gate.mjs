@@ -21,6 +21,12 @@ assert(core.eventKey(seqA)!==core.eventKey(seqB),
   'BLOCK RELEASE: distinct sequence numbers must not collapse');
 assert(core.eventKey({...seqA,fixtureKey:'fixture-B'})!==core.eventKey(seqA),
   'BLOCK RELEASE: sequence identity must be scoped to fixture');
+const normalizedFixture=core.normalizeEvent({...sameMetadata,fixtureKey:'fixture-A',sequence:100});
+assert(normalizedFixture.fixtureKey==='fixture-A','BLOCK RELEASE: normalized events must retain fixture identity');
+assert(core.eventKey(normalizedFixture)===core.eventKey({...sameMetadata,fixtureKey:'fixture-A',sequence:100}),
+  'BLOCK RELEASE: normalization must not destroy fixture-scoped deduplication');
+assert(core.eventKey(core.normalizeEvent({...sameMetadata,fixtureKey:'fixture-B',sequence:100}))!==core.eventKey(normalizedFixture),
+  'BLOCK RELEASE: normalized fixture identities must remain isolated');
 assert(core.eventKey({...sameMetadata,sequence:100})==='',
   'BLOCK RELEASE: sequence-only events cannot safely dedupe without fixture identity');
 const normalized=core.normalizeEvent(first);
