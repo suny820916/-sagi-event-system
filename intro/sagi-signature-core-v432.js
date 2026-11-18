@@ -1,6 +1,6 @@
 (function(root){
 'use strict';
-const VERSION='4.32.0-rc.1';
+const VERSION='4.32.0-rc.2';
 const EVENT_TYPES=Object.freeze(['CLEAR_EVENT','GOAL','YELLOW','RED','SUB','HALF_TIME','FULL_TIME','MVP','REPLAY_STINGER']);
 const TOKENS=Object.freeze({
   bg:'#07090d',
@@ -123,11 +123,9 @@ function eventKey(event){
   const e=normalizeEvent(event)||{type:'CLEAR_EVENT'};
   if(e.eventId) return 'id|'+e.eventId;
   if(e.sequence!==null&&e.sequence!==undefined) return 'seq|'+String(e.sequence);
-  // Legacy metadata fallback: not a reliable identity for scoring or deduplication.
-  const player=e.player&&e.player.id||e.player&&e.player.number||'';
-  const on=e.on&&e.on.id||e.on&&e.on.number||'';
-  const off=e.off&&e.off.id||e.off&&e.off.number||'';
-  return [e.type,e.side,e.at,player,on,off].map(x=>safeText(x,80)).join('|');
+  // Fail open for legacy events without a reliable identity.
+  // Revision/command guards still prevent stale rollback; never collapse two real events by metadata guesswork.
+  return '';
 }
 const api=Object.freeze({VERSION,TOKENS,EVENT_TYPES,HOLD_MS,safeText,validHex,normalizeSide,normalizeType,normalizeEvent,eventAccent,holdMs,eventKey});
 root.SAGISignatureCore=api;
