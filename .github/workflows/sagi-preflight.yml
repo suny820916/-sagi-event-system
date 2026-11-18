@@ -657,7 +657,7 @@ jobs:
           for module in ("down","voice","cut","subtitle","image","studio"):
               assert f"module={module}" in hub, module
           manifest = __import__("json").loads(pathlib.Path("content-os/sagi-down-manifest.webmanifest").read_text(encoding="utf-8"))
-          assert manifest["start_url"] == "./sagi-hub.html?v=4300", manifest["start_url"]
+          assert manifest["start_url"] == "./sagi-hub.html?v=4310", manifest["start_url"]
           m = re.search(r"<script>([\s\S]*?)</script>", s)
           assert m, "inline script missing"
           pathlib.Path("/tmp/sagi-down.js").write_text(m.group(1), encoding="utf-8")
@@ -717,12 +717,13 @@ jobs:
               "voiceLastProvider",
               "voiceLastModel",
               "SAGI_MODULES",
+              "if(mode===\'voice\'){sagiShow(voice,true)}",
               "moduleModeBar",
               "SAGI SMART CUT",
               "SAGI SUBTITLE",
               "SAGI IMAGE",
               "SAGI STUDIO",
-              "sagi-ffmpeg-worker.js?v=4300",
+              "sagi-ffmpeg-worker.js?v=4310",
               "const classWorkerURL=new URL",
               "/api/smart-render",
           ]
