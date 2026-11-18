@@ -11,7 +11,7 @@ const AWAY='ALTAI YOUTH FOOTBALL CLUB';
 const crest=(fill,label)=>'data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><path d="M60 4 108 22v38c0 31-20 48-48 56C32 108 12 91 12 60V22Z" fill="'+fill+'"/><text x="60" y="70" text-anchor="middle" font-size="30" font-family="Arial" font-weight="900" fill="white">'+label+'</text></svg>');
 const HOME_CREST=crest('#0c8b55','H');
 const AWAY_CREST=crest('#3157b7','A');
-let seq=1,vmixCommands=[],matchdayPosts=[],graphics=makeGraphics(),reorderMatchdayWrites=false,failNextMatchdayPosts=0,failNextMatchdayGets=0;
+let seq=1,vmixCommands=[],matchdayPosts=[],matchdayAttempts=[],graphics=makeGraphics(),reorderMatchdayWrites=false,failNextMatchdayPosts=0,failNextMatchdayGets=0;
 
 function makeGraphics(overrides={}){
  return {
@@ -47,7 +47,7 @@ const server=http.createServer(async(req,res)=>{
  try{
   if(u.pathname==='/api/state')return json(res,{lineupIntro:null});
   if(u.pathname==='/api/matchday'&&req.method==='GET'){if(failNextMatchdayGets>0){failNextMatchdayGets--;return json(res,{ok:false,error:'SIMULATED_TRANSIENT_GET_FAILURE'},503)}return json(res,graphics)}
-  if(u.pathname==='/api/matchday'&&req.method==='POST'){const b=await readBody(req);if(failNextMatchdayPosts>0){failNextMatchdayPosts--;return json(res,{ok:false,error:'SIMULATED_TRANSIENT_FAILURE'},503)}try{const next=JSON.parse(b)||graphics;if(reorderMatchdayWrites&&Number(next.homeScore)===5)await new Promise(r=>setTimeout(r,450));graphics=next;matchdayPosts.push(graphics)}catch{}return json(res,{ok:true})}
+  if(u.pathname==='/api/matchday'&&req.method==='POST'){const b=await readBody(req);let next=null;try{next=JSON.parse(b)||graphics;matchdayAttempts.push(next)}catch{}if(failNextMatchdayPosts>0){failNextMatchdayPosts--;return json(res,{ok:false,error:'SIMULATED_TRANSIENT_FAILURE'},503)}try{if(next){if(reorderMatchdayWrites&&Number(next.homeScore)===5)await new Promise(r=>setTimeout(r,450));graphics=next;matchdayPosts.push(graphics)}}catch{}return json(res,{ok:true})}
   if(u.pathname==='/api/vmix/status')return json(res,{ok:true,active:'1',preview:'2',inputs:[{number:'1',key:'cam1',type:'Camera',title:'CAM 1',state:'Running'},{number:'2',key:'cam2',type:'Camera',title:'CAM 2',state:'Running'},{number:'4',key:'replay',type:'Video',title:'REPLAY',state:'Running'},{number:'5',key:'gfx',type:'Browser',title:'SAGI Browser',state:'Running'}],overlays:[]});
   if(u.pathname==='/api/vmix'&&req.method==='POST'){const b=await readBody(req);let cmd={};try{cmd=JSON.parse(b)}catch{}vmixCommands.push(cmd);return json(res,{ok:true,command:cmd})}
   if(u.pathname==='/api/projects')return json(res,{projects:[]});
@@ -411,6 +411,50 @@ server.listen(PORT,'127.0.0.1',async()=>{
   const dupe=await page.evaluate(()=>({yellow:document.querySelector('#mdStatYellow').textContent,status:document.querySelector('#mdEventStatus').textContent}));
   assert(dupe.yellow==='1','duplicate yellow-card click created two events: '+JSON.stringify(dupe));
   await page.click('#mdClearEventBtn');await wait(400);
+
+  console.log('TEST 10C2: network retry preserves one event identity, while two real identical events get distinct identities');
+  matchdayAttempts=[];failNextMatchdayPosts=1;
+  await page.selectOption('#mdEventSide','HOME');await page.selectOption('#mdEventPlayer',{index:1});
+  await page.click('#mdYellowBtn');await wait(1600);
+  const retryAttempts=matchdayAttempts.filter(x=>x&&x.event&&x.event.type==='YELLOW');
+  assert(retryAttempts.length>=2,'retry did not attempt the same event twice: '+JSON.stringify(retryAttempts));
+  const retryIds=retryAttempts.slice(0,2).map(x=>x.event&&x.event.eventId);
+  const retrySeq=retryAttempts.slice(0,2).map(x=>x.event&&x.event.sequence);
+  assert(retryIds[0]&&retryIds[0]===retryIds[1]&&retrySeq[0]===retrySeq[1],'network retry changed event identity: '+JSON.stringify({ids:retryIds,seq:retrySeq}));
+  assert(retryAttempts[0].event.fixtureKey===retryAttempts[1].event.fixtureKey,'retry changed fixture-scoped identity');
+
+  matchdayAttempts=[];
+  await page.click('#mdYellowBtn');await wait(1600);await page.click('#mdYellowBtn');await wait(700);
+  const realEvents=matchdayAttempts.filter(x=>x&&x.event&&x.event.type==='YELLOW');
+  const distinctIds=[...new Set(realEvents.map(x=>x.event.eventId).filter(Boolean))];
+  assert(distinctIds.length>=2,'two real identical-looking events collapsed to one identity: '+JSON.stringify(realEvents.map(x=>x.event)));
+  await page.click('#mdClearEventBtn');await wait(400);
+
+  console.log('TEST 10C3: vMix output does not replay the same eventId after retry/state refresh, but accepts a new eventId');
+  const idemPage=await browser.newPage({viewport:{width:1920,height:1080}});
+  const fixture=graphics.fixtureKey||'toranhe project cup|乌苏叶克备|ipf';
+  const baseRevision=(Number(graphics.revision)||0)+30;
+  const idemEvent={type:'YELLOW',side:'HOME',team:'乌苏叶克备',at:'55:00',eventId:'browser-idem-1',fixtureKey:fixture,sequence:900,player:{id:'h1',name:'H PLAYER 1',number:'1',position:'GK',photo:''}};
+  graphics={...graphics,commandId:'idem_first',revision:baseRevision,fixtureKey:fixture,event:idemEvent,updatedAt:new Date().toISOString()};
+  await idemPage.goto('http://127.0.0.1:'+PORT+'/intro/vmix-v45-lan.html',{waitUntil:'domcontentloaded'});
+  await idemPage.waitForFunction(()=>document.querySelector('#eventCard')?.classList.contains('on'),null,{timeout:5000});
+  await idemPage.evaluate(()=>{
+    window.__idemMutations=0;
+    const el=document.querySelector('#eventCard');
+    window.__idemObserver=new MutationObserver(ms=>window.__idemMutations+=ms.length);
+    window.__idemObserver.observe(el,{attributes:true,childList:true,subtree:true,characterData:true});
+  });
+  graphics={...graphics,commandId:'idem_retry',revision:baseRevision+1,event:{...idemEvent},updatedAt:new Date().toISOString()};
+  await wait(1400);
+  const retryMutations=await idemPage.evaluate(()=>window.__idemMutations);
+  assert(retryMutations===0,'same eventId replayed event animation after state refresh: '+retryMutations);
+  graphics={...graphics,commandId:'idem_second',revision:baseRevision+2,event:{...idemEvent,eventId:'browser-idem-2',sequence:901},updatedAt:new Date().toISOString()};
+  await wait(1400);
+  const secondMutations=await idemPage.evaluate(()=>window.__idemMutations);
+  assert(secondMutations>retryMutations,'new eventId did not trigger a new event render: '+JSON.stringify({retryMutations,secondMutations}));
+  await idemPage.evaluate(()=>window.__idemObserver&&window.__idemObserver.disconnect());
+  await idemPage.close();
+  graphics={...graphics,commandId:'idem_clear',revision:baseRevision+3,event:{type:'CLEAR_EVENT'},updatedAt:new Date().toISOString()};
 
   console.log('TEST 10D: reopening director refuses an older same-fixture Bridge snapshot');
   const reopenBefore=await page.evaluate(()=>{window.dispatchEvent(new Event('pagehide'));const x=JSON.parse(localStorage.getItem('sagi_matchday_graphics_v47')||'null');return{x,diag:window.sagiMatchdayReliabilityDiagnostic()}});
