@@ -2487,7 +2487,7 @@ function irLastDuration(){let n=8;try{n=Number(localStorage.getItem(IR_LAST_DURA
 function irFinishBusy(text,state=''){instantReplayBusy=false;clearTimeout(instantReplayTimer);instantReplayTimer=null;irSyncButtons();if(text)irSetStatus(text,state)}
 function irSyncButtons(){
  const busy=!!instantReplayBusy;
- for(const id of ['irGenerate','mmGenerateReplay']){const b=q(id);if(b){b.disabled=busy;b.classList.toggle('busy',busy)}}
+ for(const id of ['irGenerate','mmGenerateReplay','mmReplay','vdTakeReplay']){const b=q(id);if(b){b.disabled=busy;b.classList.toggle('busy',busy)}}
 }
 function irSetStatus(text,state=''){
  const el=q('irStatus');if(el){el.textContent=text;el.className='irStatus'+(state?' '+state:'')}
@@ -2534,7 +2534,7 @@ async function instantReplayBeginLatest(seconds=8,label='最近回放'){
    const returnSlot=vdSlotAvailable(preferred)?preferred:ssMainSlot();
    let returned=false;
    if(returnSlot&&vdSlotAvailable(returnSlot)){
-     returned=await replayStingerAction('OUT',()=>ssTake(returnSlot,'INSTANT REPLAY RETURN','OPERATOR',true,'RETURN'),'BACK TO LIVE');
+     returned=await replayStingerAction('OUT',async()=>{await publishVmixDirector('ReplayStopEvents','','','结束最近回放');return ssTake(returnSlot,'INSTANT REPLAY RETURN','OPERATOR',true,'RETURN')},'BACK TO LIVE');
    }
    irFinishBusy(returned?'回放完成 · SAGI 转场已返回比赛':'回放结束 · 请手动切回主机位',returned?'ok':'error');
  },delay);
