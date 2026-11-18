@@ -3796,7 +3796,7 @@ function showMeta(step){const en=showEnabled(),pos=en.indexOf(step);return{sessi
 function runShowStep(i){
  if(!playing)return;
  while(i<showSteps.length&&!showSteps[i].enabled)i++;
- if(i>=showSteps.length){playing=false;showIndex=showSteps.length-1;stopCountdown();stopShowMusic();q('status').textContent='节目播放结束';q('showNow').textContent='节目完成 · 已播出全部启用段落';q('showProgressBar').style.width='100%';renderShowTimeline();renderShowDirectorMonitor();return}
+ if(i>=showSteps.length){playing=false;showIndex=showSteps.length-1;stopCountdown();stopShowMusic();q('status').textContent='节目播放结束';q('showNow').textContent='节目完成 · 已播出全部启用段落';q('showProgressBar').style.width='100%';renderShowTimeline();renderShowDirectorMonitor();broadcastProgram=null;const clearMeta={sessionId:showSession||('auto-clear-'+Date.now().toString(36)),stepIndex:-1,sequenceIndex:-1,stepTotal:1,label:'完整出场结束自动清屏',side:activeSide,transition:'CUT',cue:'NONE',autoNext:false,isFirst:false,isLast:true,controlRoom:true};publishGroup('CLEAR',200,clearMeta).then(()=>refreshBroadcastStatus()).catch(()=>{});return}
  showIndex=i;showHoldElapsed=0;const s=showSteps[i],d=Math.max(500,Number(s.duration)||1000);if(s.side&&s.side!==activeSide)switchTeam(s.side,{silent:true,noRender:true});renderShowTimeline();broadcastProgramFromShow(s,d);applyShowTransition(s.transition);triggerCue(s.cue);renderStage(s.group);animateStage();animatePackageGroup(s.group,d);showProgressTick(s,d);q('status').textContent='节目 '+(i+1)+' / '+showSteps.length+' · '+s.label;publishGroup(s.group,d,showMeta(s));clearTimeout(showTimer);if(!broadcastHold)showTimer=setTimeout(()=>runShowStep(i+1),d)
 }
 function startFullIntro(){
