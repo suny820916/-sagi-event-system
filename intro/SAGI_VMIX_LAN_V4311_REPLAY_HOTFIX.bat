@@ -1,12 +1,12 @@
 @echo off
 chcp 65001 >nul
 setlocal
-title SAGI VMIX LAN - V4.31.1 INSTANT REPLAY HOTFIX
+title SAGI VMIX LAN - V4.31.1 FLASHFIX 04
 
 echo.
 echo ==========================================
 echo   SAGI LIVE MATCH DIRECTOR - LAN DIRECT
-echo      V4.31.1 INSTANT REPLAY HOTFIX
+echo      V4.31.1 FLASHFIX 04
 echo ==========================================
 echo.
 echo [SAFE] Phone control starts even if vMix is offline.
@@ -34,10 +34,10 @@ powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -Command ^
  "[IO.File]::WriteAllText($env:SAGI_FB_CONTROL,$m.Groups[2].Value,$utf);" ^
  "[IO.File]::WriteAllText($env:SAGI_FB_OUTPUT,$m.Groups[3].Value,$utf);" ^
  "Copy-Item $env:SAGI_FB_BRIDGE $env:SAGI_BRIDGE -Force;" ^
- "$controlOk=$false;if(Test-Path $env:SAGI_CONTROL){try{$t=[IO.File]::ReadAllText($env:SAGI_CONTROL,[Text.Encoding]::UTF8);$controlOk=($t.Length -gt 100000 -and $t -match '<!doctype html>' -and $t -match 'V4\.31\.1' -and $t -match 'instantReplayGenerate' -and $t -match 'ReplayMarkInOutLive' -and $t -match 'mdSyncDirectorPenaltyToSimple' -and $t -match 'simplePenaltyControl' -and $t -match 'replayStinger' -and $t -match 'data:image/svg\+xml')}catch{}};" ^
- "if(-not $controlOk){Copy-Item $env:SAGI_FB_CONTROL $env:SAGI_CONTROL -Force;Write-Host '[REPAIR] Control Room upgraded/restored to V4.31.1 REPLAY HOTFIX.' -ForegroundColor Yellow}else{Write-Host '[SAFE] Existing V4.31.0 Control Room kept.' -ForegroundColor Green};" ^
- "$outputOk=$false;if(Test-Path $env:SAGI_OUTPUT){try{$t=[IO.File]::ReadAllText($env:SAGI_OUTPUT,[Text.Encoding]::UTF8);$outputOk=($t.Length -gt 50000 -and $t -match '<!doctype html>' -and $t -match 'V4\.31\.0' -and $t -match 'simplePenaltyBoard' -and $t -match 'penaltyShootout' -and $t -match 'sagiToranhe' -and $t -match 'eventCleanupTimer' -and $t -match 'data:image/svg\+xml')}catch{}};" ^
- "if(-not $outputOk){Copy-Item $env:SAGI_FB_OUTPUT $env:SAGI_OUTPUT -Force;Write-Host '[REPAIR] vMix Graphics upgraded/restored to V4.31.0 TORANHE SCOREBUG.' -ForegroundColor Yellow}else{Write-Host '[SAFE] Existing V4.31.0 vMix Graphics kept.' -ForegroundColor Green};"
+ "$controlOk=$false;if(Test-Path $env:SAGI_CONTROL){try{$t=[IO.File]::ReadAllText($env:SAGI_CONTROL,[Text.Encoding]::UTF8);$controlOk=($t.Length -gt 100000 -and $t -match '<!doctype html>' -and $t -match 'SAGI4311_FLASHFIX_04' -and $t -match 'V4\.31\.1' -and $t -match 'instantReplayGenerate' -and $t -match 'ReplayMarkInOutLive' -and $t -match 'mdSyncDirectorPenaltyToSimple' -and $t -match 'simplePenaltyControl' -and $t -match 'replayStinger' -and $t -match 'data:image/svg\+xml')}catch{}};" ^
+ "if(-not $controlOk){Copy-Item $env:SAGI_FB_CONTROL $env:SAGI_CONTROL -Force;Write-Host '[REPAIR] FLASHFIX 04 Control installed over stale cache.' -ForegroundColor Yellow}else{Write-Host '[SAFE] FLASHFIX 04 Control cache verified.' -ForegroundColor Green};" ^
+ "$outputOk=$false;if(Test-Path $env:SAGI_OUTPUT){try{$t=[IO.File]::ReadAllText($env:SAGI_OUTPUT,[Text.Encoding]::UTF8);$outputOk=($t.Length -gt 50000 -and $t -match '<!doctype html>' -and $t -match 'SAGI4311_FLASHFIX_04' -and $t -match 'V4\.31\.0' -and $t -match 'introStateAllowed' -and $t -match 'simplePenaltyBoard' -and $t -match 'penaltyShootout' -and $t -match 'sagiToranhe' -and $t -match 'eventCleanupTimer' -and $t -match 'data:image/svg\+xml')}catch{}};" ^
+ "if(-not $outputOk){Copy-Item $env:SAGI_FB_OUTPUT $env:SAGI_OUTPUT -Force;Write-Host '[REPAIR] FLASHFIX 04 vMix output installed over stale cache.' -ForegroundColor Yellow}else{Write-Host '[SAFE] FLASHFIX 04 vMix output cache verified.' -ForegroundColor Green};"
 
 if errorlevel 1 (
   echo.
@@ -139,7 +139,8 @@ function Update-SagiLan {
     $outputText = [Text.Encoding]::UTF8.GetString([IO.File]::ReadAllBytes($outputDownload))
     if ($controlText -notmatch "<!doctype html>") { throw "Control validation failed" }
     if ($outputText -notmatch "<!doctype html>") { throw "Graphics validation failed" }
-    if ($controlText -notmatch "SAGI LIVE MATCH DIRECTOR" -or $controlText -notmatch "V4\.31\.1" -or $controlText -notmatch "instantReplayGenerate") { throw "Control hotfix validation failed; current replay hotfix kept" }
+    if ($controlText -notmatch "SAGI LIVE MATCH DIRECTOR" -or $controlText -notmatch "SAGI4311_FLASHFIX_04" -or $controlText -notmatch "V4\.31\.1" -or $controlText -notmatch "instantReplayGenerate") { throw "Remote control build is older than FLASHFIX 04; local fixed build kept" }
+    if ($outputText -notmatch "SAGI4311_FLASHFIX_04" -or $outputText -notmatch "introStateAllowed") { throw "Remote vMix output is older than FLASHFIX 04; local fixed build kept" }
 
     Copy-Item $ControlCache $ControlBackup -Force
     Copy-Item $OutputCache $OutputBackup -Force
@@ -535,6 +536,7 @@ while ($true) {
 <!doctype html>
 <html lang="zh-CN">
 <head>
+<meta name="sagi-build" content="SAGI4311_FLASHFIX_04">
 <!-- SAGI LIVE MATCH DIRECTOR · SAFE UPDATE COMPATIBILITY MARKER -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -4684,6 +4686,7 @@ if(standalone){
 ###SAGI_OUTPUT###
 <!doctype html>
 <html lang="zh-CN"><head>
+<meta name="sagi-build" content="SAGI4311_FLASHFIX_04">
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SAGI V4.31.0 · STAGE 广播系统 · vMix</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%2307090d%22/%3E%3Ctext x=%2232%22 y=%2243%22 text-anchor=%22middle%22 font-size=%2234%22 fill=%22%23d8b55b%22%3ES%3C/text%3E%3C/svg%3E">
