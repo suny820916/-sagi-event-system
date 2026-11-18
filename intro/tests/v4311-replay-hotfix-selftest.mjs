@@ -44,3 +44,15 @@ assert(output3.includes("q('stage').style.opacity='0'"),'CLEAR must hide opening
 assert(control3.includes("完整出场结束自动清屏"),'full intro completion must clear stale opening state');
 assert(control3.includes("publishGroup('CLEAR',200,clearMeta)"),'full intro completion CLEAR publish missing');
 console.log('opening boot transparency PASS');
+
+// lineup program gate: stale Bridge lineup states must never flash on air
+const control4=fs.readFileSync(new URL('../v45-lan.html',import.meta.url),'utf8');
+const output4=fs.readFileSync(new URL('../vmix-v45-lan.html',import.meta.url),'utf8');
+assert(control4.includes("programGate:'SAGI4311_PROGRAM'"),'control must stamp explicit PROGRAM gate');
+assert(control4.includes("onAir:true"),'control must stamp onAir state');
+assert(control4.includes("expiresAtMs"),'control must publish lineup expiry');
+assert(output4.includes("function introStateAllowed"),'output PROGRAM gate missing');
+assert(output4.includes("x.programGate!=='SAGI4311_PROGRAM'"),'legacy/stale lineup state rejection missing');
+assert(output4.includes("hideIntroStage('STALE_STATE')"),'poll stale-state hide guard missing');
+assert(output4.includes("hideIntroStage('EXPIRED')"),'expired lineup auto-hide missing');
+console.log('lineup program gate PASS');
