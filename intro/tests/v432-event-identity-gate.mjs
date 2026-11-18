@@ -32,4 +32,23 @@ assert(control.includes("...mdNextEventIdentity(type)")&&control.includes("...md
   'BLOCK RELEASE: live event creators must attach explicit identity');
 assert(/eventSequence\)\|\|0\)\+1/.test(control),
   'BLOCK RELEASE: event sequence must advance from persisted matchday state');
+// V4.32 regression: duplicate delivery must retain identity, while two real
+// events with identical display metadata must never be collapsed.
+const distinctTypes=['GOAL','YELLOW','RED','SUB','HALF_TIME','FULL_TIME','MVP'];
+for(const type of distinctTypes){
+ const base={type,side:'HOME',team:'主队',at:'45:00',player:{id:'9',name:'球员九'}};
+ const a=core.normalizeEvent({...base,eventId:'fixtureA-'+type+'-1',sequence:1});
+ const retry=core.normalizeEvent({...base,eventId:'fixtureA-'+type+'-1',sequence:1});
+ const b=core.normalizeEvent({...base,eventId:'fixtureA-'+type+'-2',sequence:2});
+ assert(core.eventKey(a)===core.eventKey(retry),'BLOCK RELEASE: '+type+' retransmission changed event identity');
+ assert(core.eventKey(a)!==core.eventKey(b),'BLOCK RELEASE: '+type+' distinct events collapsed');
+ assert(a.__signatureVersion===core.VERSION,'BLOCK RELEASE: '+type+' normalization lost version');
+}
+const badSeq=core.normalizeEvent({type:'GOAL',sequence:-1});
+assert(badSeq.sequence===null&&core.eventKey(badSeq)==='','BLOCK RELEASE: invalid sequence used as event identity');
+const unsafeSeq=core.normalizeEvent({type:'GOAL',sequence:Number.MAX_SAFE_INTEGER+1});
+assert(unsafeSeq.sequence===null&&core.eventKey(unsafeSeq)==='','BLOCK RELEASE: unsafe sequence used as event identity');
+const bounded=core.normalizeEvent({type:'GOAL',eventId:'x'.repeat(300)});
+assert(bounded.eventId.length===128&&core.eventKey(bounded).length===131,'BLOCK RELEASE: eventId payload bound failed');
+assert(core.normalizeEvent({type:'UNRECOGNIZED'}).type==='CLEAR_EVENT','BLOCK RELEASE: unknown event must fail closed');
 console.log('V4.32 EVENT IDENTITY GATE PASS');
