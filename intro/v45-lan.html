@@ -2480,7 +2480,7 @@ async function mdPostMatchdayWithRetry(state){
 window.sagiMatchdayReliabilityDiagnostic=()=>({metrics:{...mdPublishMetrics},recovery:{...mdRecoveryMetrics},localRecoveryStamp:mdLocalRecoveryStamp,lastAckRevision:mdLastAckRevision,lastConsistencyState:mdLastConsistencyState,lastConsistencyAt:mdLastConsistencyAt,lastGood:!!mdLoadLastGood(),fixtureKey:mdFixtureKey()});
 function mdCloudSnapshot(event=null){
  const now=mdNowSeconds(),canonical=mdEnforceCanonicalTeams(),homeName=canonical.home||'HOME',awayName=canonical.away||'AWAY',revision=++mdPublishRevision;
- const normalizedEvent=window.SAGISignatureCore?SAGISignatureCore.normalizeEvent(event,{home:homeName,away:awayName}):event;
+ const normalizedEvent=window.SAGISignatureCore?SAGISignatureCore.normalizeEvent(event,{home:homeName,away:awayName,fixtureKey:mdFixtureKey()}):event;
  return{
   commandId:Date.now()+'_'+Math.random().toString(36).slice(2,7),
   revision,fixtureKey:mdFixtureKey(),
