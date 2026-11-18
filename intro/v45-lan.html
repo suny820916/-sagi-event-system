@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
-<meta name="sagi-build" content="SAGI433_PENALTY_SSOT_RC1">
+<meta name="sagi-build" content="SAGI434_REPLAY_BRAND_RC1">
 <!-- SAGI LIVE MATCH DIRECTOR · SAFE UPDATE COMPATIBILITY MARKER -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -18,7 +18,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="format-detection" content="telephone=no">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%2307090d%22/%3E%3Ctext x=%2232%22 y=%2243%22 text-anchor=%22middle%22 font-size=%2234%22 fill=%22%23d8b55b%22%3ES%3C/text%3E%3C/svg%3E">
-<title>SAGI V4.33 RC · PENALTY SINGLE SOURCE</title>
+<title>SAGI V4.34 RC · REPLAY BRAND TRANSITION</title>
 <style>
 :root{--bg:#07090d;--panel:#11151c;--line:#2b3340;--text:#f4f0e8;--muted:#8f97a5;--gold:#d8b55b;--green:#72c79a}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
@@ -671,7 +671,7 @@ body{background:radial-gradient(circle at 78% -10%,#0a43c933,transparent 28%),li
 </head>
 <body>
 <div class="app">
-  <div class="top"><div><div class="brand"><span class="sagiControlLogo"><span class="sagiControlWord"><span>S</span><span class="sagiControlA">A<i></i></span><span>GI</span></span><span class="sagiControlSub">FOOTBALL</span></span> 赛事直播导播</div><div class="sub">V4.33 RC · PENALTY SINGLE SOURCE · 比赛设置</div></div><div class="topRight"><div class="ver">V4.33 RC</div><button id="mobileUpdateBtn" class="mobileUpdateBtn" type="button">↻ 安全更新</button><button id="mobileRollbackBtn" class="mobileRollbackBtn" type="button">↶ 回退上一版</button><div id="mobileUpdateStatus" class="mobileUpdateStatus">V4.31.0 · STAGE 广播系统 · 桥接服务已锁定</div></div></div>
+  <div class="top"><div><div class="brand"><span class="sagiControlLogo"><span class="sagiControlWord"><span>S</span><span class="sagiControlA">A<i></i></span><span>GI</span></span><span class="sagiControlSub">FOOTBALL</span></span> 赛事直播导播</div><div class="sub">V4.34 RC · REPLAY BRAND TRANSITION · 比赛设置</div></div><div class="topRight"><div class="ver">V4.34 RC</div><button id="mobileUpdateBtn" class="mobileUpdateBtn" type="button">↻ 安全更新</button><button id="mobileRollbackBtn" class="mobileRollbackBtn" type="button">↶ 回退上一版</button><div id="mobileUpdateStatus" class="mobileUpdateStatus">V4.31.0 · STAGE 广播系统 · 桥接服务已锁定</div></div></div>
 
   <div id="pwaBar" class="pwaBar" style="display:none">
     <div class="pwaInfo">
@@ -975,7 +975,7 @@ body{background:radial-gradient(circle at 78% -10%,#0a43c933,transparent 28%),li
 
   <div class="matchdayDesk">
     <div class="mdHead">
-      <div class="mdTitle">V4.33 RC · 比赛模式 <small>REPLAY HOTFIX · 安全自动</small></div>
+      <div class="mdTitle">V4.34 RC · 比赛模式 <small>REPLAY HOTFIX · 安全自动</small></div>
       <div id="mdSync" class="mdSync"><span id="mdSyncDot" class="mdLiveDot"></span>比赛图形待命</div>
     </div>
     <div class="gdBar">
@@ -3337,7 +3337,7 @@ function initVmixDirector(){
  vdReadVmixInputs(false);
  setTimeout(async()=>{
   try{
-   vdLoad();const input=String(vmixDirectorSettings.graphics||'').trim(),key='sagi_graphics_loaded_SAGI433_PENALTY_SSOT_RC1';
+   vdLoad();const input=String(vmixDirectorSettings.graphics||'').trim(),key='sagi_graphics_loaded_SAGI434_REPLAY_BRAND_RC1';
    if(input&&localStorage.getItem(key)!==input){
     const ok=await refreshGraphicsBrowser(false);
     if(ok){localStorage.setItem(key,input);q('vdStatus').textContent='LIVEFLOW 07 已强制刷新 vMix 图形 · Input '+input}
@@ -3876,7 +3876,7 @@ function cloudAdmin(){try{const x=JSON.parse(localStorage.getItem('sagi_cloud_ad
 function compactPlayersForGroup(group){const src=group==='FULL'?validStarters():group==='SUB'?substitutes():(['GK','DF','MF','FW'].includes(group)?grouped(group):[]);return src.map(p=>({id:p.id,layoutKey:formationPlayerKey(p),name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',squadType:p.squadType||'STARTER',photo:(group==='FULL'||group==='SUB')?'':p.photo||'',mediaUrl:(group==='FULL'||group==='SUB')?'':p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'}))}
 async function publishGroup(group,duration,show=null){
  const issuedAtMs=Date.now(),safeDuration=Math.max(200,Number(duration)||1000),autoNext=!!(show&&show.autoNext),expiresAtMs=group==='CLEAR'?issuedAtMs+500:(issuedAtMs+safeDuration+(autoNext?1800:60000));
- const state={commandId:issuedAtMs+'_'+Math.random().toString(36).slice(2,6),programGate:'SAGI4311_PROGRAM',onAir:true,issuedAtMs,expiresAtMs,group,side:activeSide,team:currentTeamName(),formation:q('formation').value,matchFormat:{mode:matchConfig.mode,playerCount:starterLimit()},playerCount:starterLimit(),startingLabel:startingLabel(),players:compactPlayersForGroup(group),formationLayout:currentFormationLayoutPayload(),allPlayers:validStarters().map(p=>({id:p.id,layoutKey:formationPlayerKey(p),name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',photo:p.photo||'',mediaUrl:p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'})),substitutes:substitutes().map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,statLabel:p.statLabel||'',statValue:p.statValue||''})),crest:assets.crest||'',stadium:assets.bg||'',background:q('outputBg').value,teamColor:(activeSide==='HOME'?(matchdayState.homeColor||'#d8b55b'):(matchdayState.awayColor||'#4c7dff')),visualVersion:'V4.33 RC-PROGRAM-GATE',duration:safeDuration,show:show||null,package:packageData(),startedAt:new Date(issuedAtMs).toISOString()};
+ const state={commandId:issuedAtMs+'_'+Math.random().toString(36).slice(2,6),programGate:'SAGI4311_PROGRAM',onAir:true,issuedAtMs,expiresAtMs,group,side:activeSide,team:currentTeamName(),formation:q('formation').value,matchFormat:{mode:matchConfig.mode,playerCount:starterLimit()},playerCount:starterLimit(),startingLabel:startingLabel(),players:compactPlayersForGroup(group),formationLayout:currentFormationLayoutPayload(),allPlayers:validStarters().map(p=>({id:p.id,layoutKey:formationPlayerKey(p),name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',photo:p.photo||'',mediaUrl:p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'})),substitutes:substitutes().map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,statLabel:p.statLabel||'',statValue:p.statValue||''})),crest:assets.crest||'',stadium:assets.bg||'',background:q('outputBg').value,teamColor:(activeSide==='HOME'?(matchdayState.homeColor||'#d8b55b'):(matchdayState.awayColor||'#4c7dff')),visualVersion:'V4.34 RC-PROGRAM-GATE',duration:safeDuration,show:show||null,package:packageData(),startedAt:new Date(issuedAtMs).toISOString()};
  try{
    await lanPost('/api/state',{lineupIntro:state});
    return{ok:true}
