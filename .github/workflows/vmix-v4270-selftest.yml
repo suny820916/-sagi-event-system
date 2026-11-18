@@ -7,6 +7,18 @@ on:
       - "intro/v45-lan.html"
       - "intro/assets/toranhe-event-logo.png"
       - "intro/tests/v4270-browser-selftest.mjs"
+      - "intro/tests/v4311-replay-hotfix-selftest.mjs"
+      - "intro/SAGI_VMIX_LAN_V4311_REPLAY_HOTFIX.bat"
+      - ".github/workflows/vmix-v4270-selftest.yml"
+      - "intro/SAGI_VMIX_LAN_V48_STAGE_4310.bat"
+  pull_request:
+    paths:
+      - "intro/vmix-v45-lan.html"
+      - "intro/v45-lan.html"
+      - "intro/assets/toranhe-event-logo.png"
+      - "intro/tests/v4270-browser-selftest.mjs"
+      - "intro/tests/v4311-replay-hotfix-selftest.mjs"
+      - "intro/SAGI_VMIX_LAN_V4311_REPLAY_HOTFIX.bat"
       - ".github/workflows/vmix-v4270-selftest.yml"
       - "intro/SAGI_VMIX_LAN_V48_STAGE_4310.bat"
   workflow_dispatch:
@@ -47,6 +59,10 @@ jobs:
           if(!lines.some(x=>x.includes('powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -Command ^'))) throw new Error('BAT PowerShell bootstrap missing');
           console.log('BAT STRUCTURE PASS', {bytes:Buffer.byteLength(s),idx});
           NODE
+      - name: Validate V4.31.1 replay hotfix when present
+        if: hashFiles('intro/tests/v4311-replay-hotfix-selftest.mjs') != ''
+        run: |
+          node intro/tests/v4311-replay-hotfix-selftest.mjs
       - name: Run V4.31.0 broadcast self-test
         run: |
           mkdir -p selftest-artifacts
@@ -64,6 +80,14 @@ jobs:
         with:
           name: SAGI_VMIX_V4310_STAGE_CERTIFIED
           path: intro/SAGI_VMIX_LAN_V48_STAGE_4310.bat
+          if-no-files-found: error
+          retention-days: 7
+      - name: Export V4.31.1 replay hotfix after compatibility gate
+        if: success() && hashFiles('intro/SAGI_VMIX_LAN_V4311_REPLAY_HOTFIX.bat') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: SAGI_VMIX_V4311_REPLAY_HOTFIX_CERTIFIED
+          path: intro/SAGI_VMIX_LAN_V4311_REPLAY_HOTFIX.bat
           if-no-files-found: error
           retention-days: 7
 
