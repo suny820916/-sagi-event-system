@@ -25,6 +25,11 @@ set "SAGI_FB_OUTPUT=%SAGI_ROOT%\fallback-output.html"
 
 if not exist "%SAGI_ROOT%" mkdir "%SAGI_ROOT%"
 
+echo [TAKEOVER] Closing previous SAGI Bridge instance if present...
+powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -Command ^
+ "$me=$PID; Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object { $_.ProcessId -ne $me -and $_.CommandLine -match 'bridge-stable\.ps1' -and $_.CommandLine -match 'SAGI' } | ForEach-Object { try { Stop-Process -Id $_.ProcessId -Force -ErrorAction Stop } catch {} }; Start-Sleep -Milliseconds 350"
+echo [TAKEOVER] Port 8100 reserved for this build.
+
 powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -Command ^
  "$s=[IO.File]::ReadAllText($env:SAGI_SELF,[Text.Encoding]::UTF8);" ^
  "$m=[regex]::Match($s,'(?s)###SAGI_PS###\r?\n(.*?)\r?\n###SAGI_CONTROL###\r?\n(.*?)\r?\n###SAGI_OUTPUT###\r?\n(.*)$');" ^
@@ -348,7 +353,7 @@ if ($vmixReady) {
 $lanIp = Get-LanIPv4
 $listener = $null
 $started = $false
-for ($candidate = $PreferredPort; $candidate -le 8120; $candidate++) {
+for ($candidate = $PreferredPort; $candidate -le $PreferredPort; $candidate++) {
   try {
     $tryListener = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Any,$candidate)
     $tryListener.Start()
@@ -364,7 +369,7 @@ for ($candidate = $PreferredPort; $candidate -le 8120; $candidate++) {
   }
 }
 if (-not $started -or $null -eq $listener) {
-  Write-Host ("[ERROR] No free LAN port found.") -ForegroundColor Red
+  Write-Host ("[ERROR] Port 8100 is busy. Close the conflicting app and run SAGI again.") -ForegroundColor Red
   Read-Host "Press Enter to close"
   exit 1
 }
