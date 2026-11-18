@@ -470,7 +470,11 @@ server.listen(PORT,'127.0.0.1',async()=>{
   const freshPage=await freshContext.newPage();
   await freshPage.goto('http://127.0.0.1:'+PORT+'/intro/v45-lan.html',{waitUntil:'domcontentloaded'});await wait(1800);
   const freshRecovered=await freshPage.evaluate(()=>({home:document.querySelector('#matchHome')?.value,away:document.querySelector('#matchAway')?.value,competition:document.querySelector('#matchCompetition')?.value,score:document.querySelector('#mdHomeScore')?.textContent+'-'+document.querySelector('#mdAwayScore')?.textContent,diag:window.sagiMatchdayReliabilityDiagnostic()}));
-  assert(freshRecovered.home==='乌苏叶克备'&&freshRecovered.away==='IPF'&&freshRecovered.competition==='TORANHE PROJECT CUP'&&freshRecovered.score==='6-1','fresh startup did not atomically recover Bridge fixture/state: '+JSON.stringify(freshRecovered));
+  if(!(freshRecovered.home==='乌苏叶克备'&&freshRecovered.away==='IPF'&&freshRecovered.competition==='TORANHE PROJECT CUP'&&freshRecovered.score==='6-1')){
+    const bridgeAtFailure=await freshPage.evaluate(async()=>{try{const r=await fetch('/api/matchday?diagnostic='+Date.now(),{cache:'no-store'});const x=await r.json();return{status:r.status,home:x.home,away:x.away,competition:x.competition,fixtureKey:x.fixtureKey,revision:x.revision,commandId:x.commandId,updatedAt:x.updatedAt,homeScore:x.homeScore,awayScore:x.awayScore}}catch(e){return{error:String(e)}}});
+    const localAtFailure=await freshPage.evaluate(()=>({matchday:localStorage.getItem('sagi_matchday_graphics_v47'),lastGood:localStorage.getItem('sagi_matchday_last_good_v429'),legacy:localStorage.getItem('sagi_matchday_graphics_v42')})).then(x=>Object.fromEntries(Object.entries(x).map(([k,v])=>[k,v?{bytes:v.length,savedAt:(()=>{try{return JSON.parse(v).savedAt}catch{return null}})()}:null])));
+    throw new Error('ASSERT FAILED: fresh startup did not atomically recover Bridge fixture/state: '+JSON.stringify({freshRecovered,bridgeAtFailure,localAtFailure}));
+  }
   await freshContext.close();
   await page.evaluate(()=>window.sagiMatchdayConsistencyCheck(true));await wait(600);
 
