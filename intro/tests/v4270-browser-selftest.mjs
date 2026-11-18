@@ -418,6 +418,9 @@ server.listen(PORT,'127.0.0.1',async()=>{
   await page.click('#mdClearEventBtn');await wait(400);
 
   console.log('TEST 10C2: network retry preserves one event identity, while two real identical events get distinct identities');
+  // TEST 10C deliberately exercised the 1400ms operator debounce using the same YELLOW signature.
+  // Cross that safety window before starting the transport-retry identity test.
+  await wait(1100);
   matchdayAttempts=[];failNextMatchdayPosts=1;
   await page.selectOption('#mdEventSide','HOME');await page.selectOption('#mdEventPlayer',{index:1});
   await page.click('#mdYellowBtn');await wait(1600);
