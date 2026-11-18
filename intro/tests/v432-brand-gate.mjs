@@ -8,5 +8,8 @@ assert(html.includes('FOOTBALL'),'SAGI FOOTBALL lockup missing');
 assert(html.includes('#ff1a1a'),'SAGI signature red dot token missing');
 assert(control.includes('sagiControlLogo')&&control.includes('sagiControlA')&&control.includes('#ff1a1a'),'SAGI control-room logo element missing');
 assert(html.includes('#e33440'),'match red-card token missing');
+assert('#ff1a1a'!=='#e33440','brand red dot and referee red card must remain distinct');
+// The broadcast overlay must keep both independently styled tokens available.
+assert(html.includes('sagiBrandA')&&html.includes('#ff1a1a')&&html.includes('#e33440'),'brand/red-card separation regression');
 assert(!/<img[^>]+class="[^"]*sagiBrand/i.test(html),'brand identity must not depend on external image loading');
 console.log('V4.32 SAGI BRAND GATE PASS');
