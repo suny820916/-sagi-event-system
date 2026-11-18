@@ -8,6 +8,8 @@ const c=sandbox.SAGISignatureCore;
 assert(c&&c.VERSION==='4.32.0-rc.2','core version missing');
 assert(c.TOKENS.gold==='#d8b55b'&&c.TOKENS.yellow==='#f2d536'&&c.TOKENS.red==='#e33440','signature palette drift');
 assert(c.normalizeEvent(null)===null,'null event must stay null');
+assert(c.eventKey({type:'GOAL',sequence:1})==='','sequence without fixture must not dedupe');
+assert(c.eventKey({type:'GOAL',sequence:1,fixtureKey:'A'})!==c.eventKey({type:'GOAL',sequence:1,fixtureKey:'B'}),'fixture sequence collision');
 const sub=c.normalizeEvent({type:'SUBSTITUTION',side:'AWAY',team:'A',on:{id:'2',name:'IN'},off:{id:'9',name:'OUT'}});
 assert(sub.type==='SUB'&&sub.side==='AWAY'&&sub.on.name==='IN'&&sub.off.name==='OUT','substitution normalization failed');
 const bad=c.normalizeEvent({type:'DROP_TABLE',side:'HOME'});
