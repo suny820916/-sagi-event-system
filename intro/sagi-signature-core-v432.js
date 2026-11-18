@@ -122,7 +122,9 @@ function holdMs(type,fallback=5200){
 function eventKey(event){
   const e=normalizeEvent(event)||{type:'CLEAR_EVENT'};
   if(e.eventId) return 'id|'+e.eventId;
-  if(e.sequence!==null&&e.sequence!==undefined) return 'seq|'+String(e.sequence);
+  // Sequence numbers restart for each fixture: never dedupe across fixtures.
+  const fixtureKey=safeText(event&&event.fixtureKey,128);
+  if(fixtureKey&&e.sequence!==null&&e.sequence!==undefined) return 'seq|'+fixtureKey+'|'+String(e.sequence);
   // Fail open for legacy events without a reliable identity.
   // Revision/command guards still prevent stale rollback; never collapse two real events by metadata guesswork.
   return '';
