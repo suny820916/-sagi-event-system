@@ -1,4 +1,4 @@
-name: SAGI vMix V4.31.0 TORANHE Scorebug Self Test
+name: SAGI vMix V4.32 SIGNATURE RC Certification
 
 on:
   push:
@@ -7,6 +7,12 @@ on:
       - "intro/v45-lan.html"
       - "intro/assets/toranhe-event-logo.png"
       - "intro/tests/v4270-browser-selftest.mjs"
+      - "intro/sagi-signature-core-v432.js"
+      - "intro/tests/v432-signature-core-selftest.mjs"
+      - "intro/tests/v432-event-identity-gate.mjs"
+      - "intro/tests/v432-brand-gate.mjs"
+      - "intro/tests/v432-integration-gate.mjs"
+      - "intro/SAGI_VMIX_LAN_V432_SIGNATURE_RC.bat"
       - "intro/tests/v4311-replay-hotfix-selftest.mjs"
       - "intro/SAGI_VMIX_LAN_V4311_REPLAY_HOTFIX.bat"
       - ".github/workflows/vmix-v4270-selftest.yml"
@@ -17,6 +23,12 @@ on:
       - "intro/v45-lan.html"
       - "intro/assets/toranhe-event-logo.png"
       - "intro/tests/v4270-browser-selftest.mjs"
+      - "intro/sagi-signature-core-v432.js"
+      - "intro/tests/v432-signature-core-selftest.mjs"
+      - "intro/tests/v432-event-identity-gate.mjs"
+      - "intro/tests/v432-brand-gate.mjs"
+      - "intro/tests/v432-integration-gate.mjs"
+      - "intro/SAGI_VMIX_LAN_V432_SIGNATURE_RC.bat"
       - "intro/tests/v4311-replay-hotfix-selftest.mjs"
       - "intro/SAGI_VMIX_LAN_V4311_REPLAY_HOTFIX.bat"
       - ".github/workflows/vmix-v4270-selftest.yml"
@@ -63,7 +75,15 @@ jobs:
         if: hashFiles('intro/tests/v4311-replay-hotfix-selftest.mjs') != ''
         run: |
           node intro/tests/v4311-replay-hotfix-selftest.mjs
-      - name: Run V4.31.0 broadcast self-test
+      - name: Validate V4.32 Signature Core
+        run: node intro/tests/v432-signature-core-selftest.mjs
+      - name: Validate V4.32 event identity
+        run: node intro/tests/v432-event-identity-gate.mjs
+      - name: Validate V4.32 SAGI brand integration
+        run: node intro/tests/v432-brand-gate.mjs
+      - name: Validate V4.32 clean integration and package
+        run: node intro/tests/v432-integration-gate.mjs
+      - name: Run V4.31.0 broadcast compatibility self-test
         run: |
           mkdir -p selftest-artifacts
           node intro/tests/v4270-browser-selftest.mjs
@@ -88,6 +108,14 @@ jobs:
         with:
           name: SAGI_VMIX_V4311_REPLAY_HOTFIX_CERTIFIED
           path: intro/SAGI_VMIX_LAN_V4311_REPLAY_HOTFIX.bat
+          if-no-files-found: error
+          retention-days: 7
+      - name: Export V4.32 SIGNATURE RC after all certification gates
+        if: success() && hashFiles('intro/SAGI_VMIX_LAN_V432_SIGNATURE_RC.bat') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: SAGI_VMIX_V432_SIGNATURE_RC_CERTIFIED
+          path: intro/SAGI_VMIX_LAN_V432_SIGNATURE_RC.bat
           if-no-files-found: error
           retention-days: 7
 
