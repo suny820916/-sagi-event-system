@@ -1086,7 +1086,7 @@ Unbelievable finish."></textarea>
 
 <script>
 (()=>{'use strict';
-const SAGI_DOWN_BUILD='V4.3.1';
+const SAGI_DOWN_BUILD='V4.3.2';
 document.documentElement.dataset.sagiDownBuild=SAGI_DOWN_BUILD;
 const BTCH_PUBLIC='https://btch-downloader-api-green.vercel.app';
 const DOWNLOAD_ROUTER_VERSION='3.0';
@@ -1119,7 +1119,12 @@ function applySagiModuleMode(){
 
  if(mode==='down'){sagiShow(download,true);sagiShow(recent,true)}
  if(mode==='image'){sagiShow(image,true);sagiShow(recreate,true)}
- if(mode==='voice'){sagiShow(voice,true)}
+ if(mode==='voice'){
+  sagiShow(voice,true);
+  // Standalone VOICE is a pure audio tool. Remove the entire video studio DOM
+  // so stale styles / late renders cannot make "06 · 解说" reappear.
+  if(studio)studio.remove();
+ }
  if(mode==='cut'||mode==='subtitle'||mode==='studio')sagiShow(studio,true);
 
  if(studio&&mode!=='studio'&&mode!=='voice'){
@@ -4193,7 +4198,7 @@ async function ensureFFmpeg(){
  // iPhone/Safari: class worker must be same-origin. The stock bundled worker can
  // resolve blob: core URLs as webpack module ids and throw "Cannot find module blob:...".
  // SAGI's raw module worker uses the browser's native dynamic import instead.
- const classWorkerURL=new URL('./sagi-ffmpeg-worker.js?v=4310',window.location.href).href;
+ const classWorkerURL=new URL('./sagi-ffmpeg-worker.js?v=4320',window.location.href).href;
  const core='https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd';
  const coreURL=await toBlobURLRemote([core+'/ffmpeg-core.js','https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd/ffmpeg-core.js'],'text/javascript');
  const wasmURL=await toBlobURLRemote([core+'/ffmpeg-core.wasm','https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd/ffmpeg-core.wasm'],'application/wasm');
@@ -6406,11 +6411,11 @@ if('serviceWorker' in navigator){
  navigator.serviceWorker.addEventListener('controllerchange',()=>{
   if(swReloaded)return;swReloaded=true;
   try{
-   const key='sagi_sw_reload_v4310';
+   const key='sagi_sw_reload_v4320';
    if(sessionStorage.getItem(key)!=='1'){sessionStorage.setItem(key,'1');location.reload()}
   }catch(e){location.reload()}
  });
- navigator.serviceWorker.register('./sagi-down-sw.js?v=4310',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})
+ navigator.serviceWorker.register('./sagi-down-sw.js?v=4320',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})
 }
 window.addEventListener('DOMContentLoaded',()=>setTimeout(applySagiModuleMode,0));
 })();
