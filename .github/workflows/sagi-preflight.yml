@@ -6,6 +6,7 @@ on:
     paths:
       - "sagi-cloud-bridge/**"
       - "content-os/sagi-down.html"
+      - "content-os/sagi-hub.html"
       - "content-os/sagi-down-sw.js"
       - "render.yaml"
       - ".github/workflows/sagi-preflight.yml"
@@ -14,6 +15,7 @@ on:
     paths:
       - "sagi-cloud-bridge/**"
       - "content-os/sagi-down.html"
+      - "content-os/sagi-hub.html"
       - "content-os/sagi-down-sw.js"
       - ".github/workflows/sagi-preflight.yml"
   workflow_dispatch:
@@ -651,6 +653,11 @@ jobs:
           import re, pathlib
           p = pathlib.Path("content-os/sagi-down.html")
           s = p.read_text(encoding="utf-8")
+          hub = pathlib.Path("content-os/sagi-hub.html").read_text(encoding="utf-8")
+          for module in ("down","voice","cut","subtitle","image","studio"):
+              assert f"module={module}" in hub, module
+          manifest = __import__("json").loads(pathlib.Path("content-os/sagi-down-manifest.webmanifest").read_text(encoding="utf-8"))
+          assert manifest["start_url"] == "./sagi-hub.html?v=4300", manifest["start_url"]
           m = re.search(r"<script>([\s\S]*?)</script>", s)
           assert m, "inline script missing"
           pathlib.Path("/tmp/sagi-down.js").write_text(m.group(1), encoding="utf-8")
