@@ -7,6 +7,22 @@ on:
       - "intro/v45-lan.html"
       - "intro/assets/toranhe-event-logo.png"
       - "intro/tests/v4270-browser-selftest.mjs"
+      - "intro/tests/v432-signature-core-selftest.mjs"
+      - "intro/tests/v432-event-identity-gate.mjs"
+      - "intro/tests/v432-brand-gate.mjs"
+      - "intro/sagi-signature-core-v432.js"
+      - ".github/workflows/vmix-v4270-selftest.yml"
+      - "intro/SAGI_VMIX_LAN_V48_STAGE_4310.bat"
+  pull_request:
+    paths:
+      - "intro/vmix-v45-lan.html"
+      - "intro/v45-lan.html"
+      - "intro/assets/toranhe-event-logo.png"
+      - "intro/tests/v4270-browser-selftest.mjs"
+      - "intro/tests/v432-signature-core-selftest.mjs"
+      - "intro/tests/v432-event-identity-gate.mjs"
+      - "intro/tests/v432-brand-gate.mjs"
+      - "intro/sagi-signature-core-v432.js"
       - ".github/workflows/vmix-v4270-selftest.yml"
       - "intro/SAGI_VMIX_LAN_V48_STAGE_4310.bat"
   workflow_dispatch:
@@ -47,7 +63,16 @@ jobs:
           if(!lines.some(x=>x.includes('powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -Command ^'))) throw new Error('BAT PowerShell bootstrap missing');
           console.log('BAT STRUCTURE PASS', {bytes:Buffer.byteLength(s),idx});
           NODE
-      - name: Run V4.31.0 broadcast self-test
+      - name: Validate V4.32 Signature Core RC
+        run: |
+          node intro/tests/v432-signature-core-selftest.mjs
+      - name: Validate V4.32 event identity source
+        run: |
+          node intro/tests/v432-event-identity-gate.mjs
+      - name: Validate V4.32 SAGI brand integration
+        run: |
+          node intro/tests/v432-brand-gate.mjs
+      - name: Run V4.31.0 broadcast compatibility self-test
         run: |
           mkdir -p selftest-artifacts
           node intro/tests/v4270-browser-selftest.mjs

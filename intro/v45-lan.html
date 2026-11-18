@@ -642,6 +642,13 @@ body{background:radial-gradient(circle at 78% -10%,#0a43c933,transparent 28%),li
 .mdProEditor:after{content:"常规比分牌固定读取“比赛信息”中的球队全名；备用简称不会覆盖常规直播队名。";display:block;margin-top:8px;padding:8px 10px;border:1px solid #214f8d;border-radius:9px;background:#061a3b;color:#9bc7ff;font-size:9px;line-height:1.55}
 
 
+/* V4.32 SAGI FOOTBALL control-room lockup */
+.sagiControlLockup{display:flex;align-items:center;gap:10px}
+.sagiControlLogo{display:inline-flex;align-items:baseline;color:#fff;font-size:25px;font-weight:1000;letter-spacing:-1px;line-height:1}
+.sagiControlA{position:relative;display:inline-block}
+.sagiControlA i{position:absolute;width:7px;height:7px;border-radius:50%;background:#ff1a1a;left:50%;bottom:-4px;transform:translateX(-50%);box-shadow:0 0 10px #ff1a1a55}
+.sagiControlName{font-size:12px;color:#c7ccd5;font-weight:850;letter-spacing:1px}
+
 /* V4.31.0 SAGI Signature system */
 .mdProEditor:before{content:"SAGI SIGNATURE · 黑金 / 天山白 / 帕米尔蓝";display:block;margin:-1px 0 9px;padding:7px 9px;border-left:3px solid #d3ae5b;background:#080a0f;color:#d3ae5b;font-size:9px;font-weight:1000;letter-spacing:1.1px}
 
@@ -649,7 +656,7 @@ body{background:radial-gradient(circle at 78% -10%,#0a43c933,transparent 28%),li
 </head>
 <body>
 <div class="app">
-  <div class="top"><div><div class="brand">SAGI 赛事直播导播</div><div class="sub">V4.31.0 · STAGE 广播系统 · 比赛设置</div></div><div class="topRight"><div class="ver">V4.31.0</div><button id="mobileUpdateBtn" class="mobileUpdateBtn" type="button">↻ 安全更新</button><button id="mobileRollbackBtn" class="mobileRollbackBtn" type="button">↶ 回退上一版</button><div id="mobileUpdateStatus" class="mobileUpdateStatus">V4.31.0 · STAGE 广播系统 · 桥接服务已锁定</div></div></div>
+  <div class="top"><div><div class="brand sagiControlLockup"><span class="sagiControlLogo"><span>S</span><span class="sagiControlA">A<i></i></span><span>GI</span></span><span class="sagiControlName">赛事直播导播</span></div><div class="sub">V4.31.0 · STAGE 广播系统 · 比赛设置</div></div><div class="topRight"><div class="ver">V4.31.0</div><button id="mobileUpdateBtn" class="mobileUpdateBtn" type="button">↻ 安全更新</button><button id="mobileRollbackBtn" class="mobileRollbackBtn" type="button">↶ 回退上一版</button><div id="mobileUpdateStatus" class="mobileUpdateStatus">V4.31.0 · STAGE 广播系统 · 桥接服务已锁定</div></div></div>
 
   <div id="pwaBar" class="pwaBar" style="display:none">
     <div class="pwaInfo">
@@ -1361,6 +1368,143 @@ body{background:radial-gradient(circle at 78% -10%,#0a43c933,transparent 28%),li
 </div>
 <div id="notice" class="notice"></div>
 
+<script data-sagi-signature-core="v432">
+(function(root){
+'use strict';
+const VERSION='4.32.0-rc.2';
+const EVENT_TYPES=Object.freeze(['CLEAR_EVENT','GOAL','YELLOW','RED','SUB','HALF_TIME','FULL_TIME','MVP','REPLAY_STINGER']);
+const TOKENS=Object.freeze({
+  bg:'#07090d',
+  panel:'#11151c',
+  line:'#2b3340',
+  text:'#f4f0e8',
+  muted:'#8f97a5',
+  gold:'#d8b55b',
+  green:'#72c79a',
+  blue:'#39a7db',
+  yellow:'#f2d536',
+  red:'#e33440',
+  homeFallback:'#d8b55b',
+  awayFallback:'#4c7dff',
+  motionEnterMs:460,
+  motionExitMs:300
+});
+const HOLD_MS=Object.freeze({
+  GOAL:5600,
+  YELLOW:5200,
+  RED:5200,
+  SUB:6500,
+  HALF_TIME:6500,
+  FULL_TIME:9000,
+  MVP:9000,
+  REPLAY_STINGER:1520,
+  CLEAR_EVENT:0
+});
+const ALIAS=Object.freeze({
+  SUBSTITUTION:'SUB',
+  SUBSTITUTE:'SUB',
+  YELLOW_CARD:'YELLOW',
+  RED_CARD:'RED',
+  HT:'HALF_TIME',
+  FT:'FULL_TIME'
+});
+function safeText(value,max=120){
+  const s=String(value==null?'':value).replace(/[\u0000-\u001f\u007f]/g,' ').replace(/\s+/g,' ').trim();
+  return s.slice(0,Math.max(0,Number(max)||0));
+}
+function validHex(value,fallback=''){
+  const s=safeText(value,16);
+  return /^#[0-9a-fA-F]{6}$/.test(s)?s:fallback;
+}
+function normalizeSide(value){
+  return String(value||'').toUpperCase()==='AWAY'?'AWAY':'HOME';
+}
+function normalizePlayer(p){
+  if(!p||typeof p!=='object') return null;
+  return {
+    id:safeText(p.id,80),
+    name:safeText(p.name,80),
+    number:safeText(p.number,12),
+    position:safeText(p.position||p.role,24),
+    photo:safeText(p.photo,2048)
+  };
+}
+function normalizeType(value){
+  let t=safeText(value,40).toUpperCase();
+  if(ALIAS[t]) t=ALIAS[t];
+  return EVENT_TYPES.includes(t)?t:'CLEAR_EVENT';
+}
+function normalizeEvent(raw,context={}){
+  if(raw==null) return null;
+  if(typeof raw!=='object') return {type:'CLEAR_EVENT',__signatureVersion:VERSION,__rejectedType:safeText(raw,40)};
+  const originalType=safeText(raw.type,40).toUpperCase();
+  const type=normalizeType(originalType);
+  const side=normalizeSide(raw.side);
+  const teamFallback=side==='AWAY'?safeText(context.away,80):safeText(context.home,80);
+  const e={
+    type,
+    side,
+    team:safeText(raw.team||teamFallback,80),
+    at:safeText(raw.at,24),
+    eventId:safeText(raw.eventId,128),
+    fixtureKey:safeText(raw.fixtureKey||context.fixtureKey,128),
+    sequence:(Number.isSafeInteger(raw.sequence)&&raw.sequence>=0)?raw.sequence:null,
+    __signatureVersion:VERSION
+  };
+  if(type==='CLEAR_EVENT'){
+    if(originalType && originalType!=='CLEAR_EVENT') e.__rejectedType=originalType;
+    return e;
+  }
+  if(type==='GOAL'||type==='YELLOW'||type==='RED'){
+    e.player=normalizePlayer(raw.player);
+  }
+  if(type==='SUB'){
+    e.on=normalizePlayer(raw.on);
+    e.off=normalizePlayer(raw.off);
+  }
+  if(type==='HALF_TIME'||type==='FULL_TIME'){
+    e.home=safeText(raw.home||context.home,80);
+    e.away=safeText(raw.away||context.away,80);
+    e.homeScore=Math.max(0,Math.floor(Number(raw.homeScore)||0));
+    e.awayScore=Math.max(0,Math.floor(Number(raw.awayScore)||0));
+  }
+  if(type==='MVP'){
+    e.player=normalizePlayer(raw.player);
+    e.score=safeText(raw.score,40);
+  }
+  if(type==='REPLAY_STINGER'){
+    e.phase=String(raw.phase||'IN').toUpperCase()==='OUT'?'OUT':'IN';
+    e.title=safeText(raw.title||(e.phase==='OUT'?'BACK TO LIVE':'INSTANT REPLAY'),80);
+    e.label=safeText(raw.label||(e.phase==='OUT'?'回到比赛':'精彩回放'),40);
+  }
+  return e;
+}
+function eventAccent(event,graphics={}){
+  const type=normalizeType(event&&event.type);
+  if(type==='YELLOW') return TOKENS.yellow;
+  if(type==='RED') return TOKENS.red;
+  if(type==='SUB') return TOKENS.blue;
+  const side=normalizeSide(event&&event.side);
+  return side==='AWAY'?validHex(graphics.awayColor,TOKENS.awayFallback):validHex(graphics.homeColor,TOKENS.homeFallback);
+}
+function holdMs(type,fallback=5200){
+  const t=normalizeType(type);
+  return Object.prototype.hasOwnProperty.call(HOLD_MS,t)?HOLD_MS[t]:Math.max(0,Number(fallback)||0);
+}
+function eventKey(event){
+  const e=normalizeEvent(event)||{type:'CLEAR_EVENT'};
+  if(e.eventId) return 'id|'+e.eventId;
+  // Sequence numbers restart for each fixture: never dedupe across fixtures.
+  const fixtureKey=safeText(event&&event.fixtureKey,128);
+  if(fixtureKey&&e.sequence!==null&&e.sequence!==undefined) return 'seq|'+fixtureKey+'|'+String(e.sequence);
+  // Fail open for legacy events without a reliable identity.
+  // Revision/command guards still prevent stale rollback; never collapse two real events by metadata guesswork.
+  return '';
+}
+const api=Object.freeze({VERSION,TOKENS,EVENT_TYPES,HOLD_MS,safeText,validHex,normalizeSide,normalizeType,normalizeEvent,eventAccent,holdMs,eventKey});
+root.SAGISignatureCore=api;
+})(typeof window!=='undefined'?window:globalThis);
+</script>
 <script>
 (function(){
 'use strict';
@@ -2302,6 +2446,11 @@ async function mdLoad(opts={}){
 const MD_LAST_GOOD_KEY='sagi_matchday_last_good_v429';
 let mdPublishRevision=0,mdLastAckRevision=0,mdPublishChain=Promise.resolve(),mdConsistencyBusy=false,mdLastConsistencyAt=0,mdLastConsistencyState='INIT',mdLocalRecoveryStamp=0;
 let mdPublishMetrics={ok:0,failed:0,retried:0,recovered:0,lastOkAt:0,lastErrorAt:0,lastAttempts:0},mdEventGateSig='',mdEventGateAt=0;
+function mdNextEventIdentity(type='EVENT'){
+ const sequence=Math.max(0,Number(matchdayState.eventSequence)||0)+1;
+ matchdayState.eventSequence=sequence;
+ return{eventId:'evt_'+Date.now().toString(36)+'_'+sequence.toString(36),sequence}
+}
 let mdRecoveryMetrics={resumeChecks:0,networkRestores:0,forcedRepairs:0,localWins:0,bridgeWins:0,lastRecoveryAt:0,lastReason:'INIT'},mdRecoveryTimer=null;
 function mdDelay(ms){return new Promise(r=>setTimeout(r,Math.max(0,Number(ms)||0)))}
 function mdSaveLastGood(){
@@ -2331,6 +2480,7 @@ async function mdPostMatchdayWithRetry(state){
 window.sagiMatchdayReliabilityDiagnostic=()=>({metrics:{...mdPublishMetrics},recovery:{...mdRecoveryMetrics},localRecoveryStamp:mdLocalRecoveryStamp,lastAckRevision:mdLastAckRevision,lastConsistencyState:mdLastConsistencyState,lastConsistencyAt:mdLastConsistencyAt,lastGood:!!mdLoadLastGood(),fixtureKey:mdFixtureKey()});
 function mdCloudSnapshot(event=null){
  const now=mdNowSeconds(),canonical=mdEnforceCanonicalTeams(),homeName=canonical.home||'HOME',awayName=canonical.away||'AWAY',revision=++mdPublishRevision;
+ const normalizedEvent=window.SAGISignatureCore?SAGISignatureCore.normalizeEvent(event,{home:homeName,away:awayName,fixtureKey:mdFixtureKey()}):event;
  return{
   commandId:Date.now()+'_'+Math.random().toString(36).slice(2,7),
   revision,fixtureKey:mdFixtureKey(),
@@ -2343,11 +2493,11 @@ function mdCloudSnapshot(event=null){
   stoppageTime:matchdayState.stoppageTime||'',scoreTheme:matchdayState.scoreTheme||'sagi-pro',overlayVisible:!!matchdayState.overlayVisible,
   replayMarkers:(matchdayState.replayMarkers||[]).slice(0,80),eventLog:(matchdayState.eventLog||[]).slice(0,40),
   clock:{baseSeconds:now,running:!!matchdayState.clockRunning,startedAt:matchdayState.clockRunning?new Date().toISOString():null,period:matchdayState.period},
-  controller:{operatorRole:matchOperatorRole,matchMode:matchModeActive,autoGraphics:!!graphicsDirectorSettings.enabled,autoReplay:!!graphicsDirectorSettings.autoReplay,smartDirector:!!smartDirectorSettings.enabled,autoTake:!!smartDirectorSettings.autoTake,smartCue:{slot:smartCue.slot,role:cameraRoleOf(smartCue.slot),title:smartCue.title,confidence:smartCue.confidence},cameraRoles:{cam1:cameraRoleOf('cam1'),cam2:cameraRoleOf('cam2'),drone:cameraRoleOf('drone'),replay:cameraRoleOf('replay')},shotSafety:{enabled:!!shotSafetySettings.enabled,currentSlot:shotSafetyState.currentSlot,minShotMs:shotSafetySettings.minShotMs,cooldownMs:shotSafetySettings.cooldownMs,bounceMs:shotSafetySettings.bounceMs,attackLockUntil:shotSafetyState.attackLockUntil}},event:event||null,updatedAt:new Date().toISOString()
+  controller:{operatorRole:matchOperatorRole,matchMode:matchModeActive,autoGraphics:!!graphicsDirectorSettings.enabled,autoReplay:!!graphicsDirectorSettings.autoReplay,smartDirector:!!smartDirectorSettings.enabled,autoTake:!!smartDirectorSettings.autoTake,smartCue:{slot:smartCue.slot,role:cameraRoleOf(smartCue.slot),title:smartCue.title,confidence:smartCue.confidence},cameraRoles:{cam1:cameraRoleOf('cam1'),cam2:cameraRoleOf('cam2'),drone:cameraRoleOf('drone'),replay:cameraRoleOf('replay')},shotSafety:{enabled:!!shotSafetySettings.enabled,currentSlot:shotSafetyState.currentSlot,minShotMs:shotSafetySettings.minShotMs,cooldownMs:shotSafetySettings.cooldownMs,bounceMs:shotSafetySettings.bounceMs,attackLockUntil:shotSafetyState.attackLockUntil}},event:normalizedEvent||null,updatedAt:new Date().toISOString()
  };
 }
 async function publishMatchday(event=null){
- const state=mdCloudSnapshot(event),revision=state.revision;matchdayState.lastEvent=event;mdPersist();refreshMatchdayUI();
+ const state=mdCloudSnapshot(event),revision=state.revision;matchdayState.lastEvent=state.event;mdPersist();refreshMatchdayUI();
  const send=async()=>{
   try{
    const r=await mdPostMatchdayWithRetry(state);mdLastAckRevision=Math.max(mdLastAckRevision,revision);
@@ -2698,7 +2848,7 @@ function mdMacroEvent(type,side,playerId=''){
  if(type==='GOAL'){if(side==='HOME')matchdayState.homeScore++;else matchdayState.awayScore++;matchdayState.scoreboardVisible=true}
  if(type==='RED'){if(side==='HOME')matchdayState.homeRedCards=Math.min(5,(Number(matchdayState.homeRedCards)||0)+1);else matchdayState.awayRedCards=Math.min(5,(Number(matchdayState.awayRedCards)||0)+1)}
  const team=side==='HOME'?(q('matchHome').value||'HOME'):(q('matchAway').value||'AWAY');
- const ev={type,side,team,player:p?{id:p.id,name:p.name,number:p.number,position:p.position||p.role,photo:p.photo||''}:{id:'',name:team,number:'',position:'',photo:''},at:mdFormat(mdNowSeconds())};
+ const ev={type,side,team,player:p?{id:p.id,name:p.name,number:p.number,position:p.position||p.role,photo:p.photo||''}:{id:'',name:team,number:'',position:'',photo:''},at:mdFormat(mdNowSeconds()),...mdNextEventIdentity(type)};
  mdRecordEvent(ev,before);
  if(type==='GOAL'||type==='RED')mdAddReplayMarker(type,type==='GOAL'?'进球 · '+team:'红牌 · '+team);
  q('mdEventStatus').textContent=(type==='GOAL'?'进球':type==='YELLOW'?'黄牌':'红牌')+(p?' · #'+p.number+' '+p.name:' · '+team);
@@ -2712,7 +2862,7 @@ function mdSubstitutionByIds(side,offId,onId){
  if(!mdAcceptOperatorEvent(['SUB',side,offId,onId].join('|'),1000))return false;
  const off=mdPlayer(side,offId),on=mdPlayer(side,onId);if(!off||!on){note('请选择换下和换上球员');return}
  const before={homeScore:matchdayState.homeScore,awayScore:matchdayState.awayScore,homeRedCards:matchdayState.homeRedCards,awayRedCards:matchdayState.awayRedCards};
- const ev={type:'SUB',side,team:side==='HOME'?(q('matchHome').value||'HOME'):(q('matchAway').value||'AWAY'),off:{id:off.id,name:off.name,number:off.number,position:off.position||off.role,photo:off.photo||''},on:{id:on.id,name:on.name,number:on.number,position:on.position||on.role,photo:on.photo||''},at:mdFormat(mdNowSeconds())};
+ const ev={type:'SUB',side,team:side==='HOME'?(q('matchHome').value||'HOME'):(q('matchAway').value||'AWAY'),off:{id:off.id,name:off.name,number:off.number,position:off.position||off.role,photo:off.photo||''},on:{id:on.id,name:on.name,number:on.number,position:on.position||on.role,photo:on.photo||''},at:mdFormat(mdNowSeconds()),...mdNextEventIdentity('SUB')};
  mdRecordEvent(ev,before);q('mdEventStatus').textContent='换人 · #'+off.number+' '+off.name+' → #'+on.number+' '+on.name;gdRunEvent(ev,6200)
 }
 function mdSubstitution(){mdSubstitutionByIds(q('mdSubSide').value,q('mdSubOff').value,q('mdSubOn').value)}
@@ -2720,14 +2870,14 @@ function mdSubstitution(){mdSubstitutionByIds(q('mdSubSide').value,q('mdSubOff')
 function mdMatchState(type){
  if(!mdAcceptOperatorEvent('MATCH_STATE|'+type,1200))return false;
  const before={homeScore:matchdayState.homeScore,awayScore:matchdayState.awayScore},sec=mdNowSeconds();matchdayState.clockBase=sec;matchdayState.clockRunning=false;matchdayState.clockStartedAt=0;
- const ev={type,home:q('matchHome').value||'HOME',away:q('matchAway').value||'AWAY',homeScore:matchdayState.homeScore,awayScore:matchdayState.awayScore,at:mdFormat(sec)};
+ const ev={type,home:q('matchHome').value||'HOME',away:q('matchAway').value||'AWAY',homeScore:matchdayState.homeScore,awayScore:matchdayState.awayScore,at:mdFormat(sec),...mdNextEventIdentity(type)};
  mdRecordEvent(ev,before);q('mdEventStatus').textContent=type==='HALF_TIME'?'半场图形已触发':'全场图形已触发';gdRunEvent(ev,type==='FULL_TIME'?9000:6500)
 }
 function mdMvp(){
  const side=q('mdMvpSide').value,pid=q('mdMvpPlayer').value;
  if(!mdAcceptOperatorEvent(['MVP',side,pid].join('|'),1200))return false;
  const p=mdPlayer(side,pid);if(!p){note('请选择本场最佳球员');return}
- const before={homeScore:matchdayState.homeScore,awayScore:matchdayState.awayScore},ev={type:'MVP',side,team:side==='HOME'?(q('matchHome').value||'HOME'):(q('matchAway').value||'AWAY'),player:{id:p.id,name:p.name,number:p.number,position:p.position||p.role,photo:p.photo||''},score:matchdayState.homeScore+'-'+matchdayState.awayScore,at:mdFormat(mdNowSeconds())};
+ const before={homeScore:matchdayState.homeScore,awayScore:matchdayState.awayScore},ev={type:'MVP',side,team:side==='HOME'?(q('matchHome').value||'HOME'):(q('matchAway').value||'AWAY'),player:{id:p.id,name:p.name,number:p.number,position:p.position||p.role,photo:p.photo||''},score:matchdayState.homeScore+'-'+matchdayState.awayScore,at:mdFormat(mdNowSeconds()),...mdNextEventIdentity('MVP')};
  mdRecordEvent(ev,before);q('mdEventStatus').textContent='MVP · #'+p.number+' '+p.name;gdRunEvent(ev,9000)
 }
 function applyOperatorRole(role,persist=true){
