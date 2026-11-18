@@ -86,7 +86,7 @@ $Allowed = @(
   "OverlayInputAllOff",
   "Effect1On","Effect1Off","Effect2On","Effect2Off","Effect3On","Effect3Off","Effect4On","Effect4Off",
   "SetEffect1Strength","SetEffect2Strength","SetEffect3Strength","SetEffect4Strength",
-  "ReplayStartRecording","ReplayMarkInOutLive","ReplayPlayLastEventToOutput","ReplayStopEvents"
+  "ReplayStartRecording","ReplayMarkInOutLive","ReplayPlayLastEventToOutput","ReplayStopEvents","BrowserReload"
 )
 
 $State = @{
@@ -3654,6 +3654,15 @@ function initVmixDirector(){
  vdLoad();
  if(q('vdAutoReadInputs'))q('vdAutoReadInputs').onclick=()=>vdReadVmixInputs(true);
  vdReadVmixInputs(false);
+ setTimeout(async()=>{
+  try{
+   vdLoad();const input=String(vmixDirectorSettings.graphics||'').trim(),key='sagi_graphics_loaded_SAGI4311_FLASHFIX_04';
+   if(input&&localStorage.getItem(key)!==input){
+    const ok=await refreshGraphicsBrowser(false);
+    if(ok){localStorage.setItem(key,input);q('vdStatus').textContent='FLASHFIX 04 已强制刷新 vMix 图形 · Input '+input}
+   }
+  }catch(e){}
+ },1800);
  document.querySelectorAll('[data-vd-take]').forEach(b=>b.onclick=()=>vdTake(b.dataset.vdTake));
  document.querySelectorAll('[data-vd-preview]').forEach(b=>b.onclick=()=>vdPreview(b.dataset.vdPreview));
  q('vdGraphicsIn').onclick=vdOverlayIn;q('vdGraphicsOut').onclick=vdOverlayOut;q('vdReloadGraphics').onclick=()=>refreshGraphicsBrowser(true);q('vdAllOverlaysOff').onclick=()=>publishVmixDirector('OverlayInputAllOff','','0','ALL OVERLAYS OFF');q('vdTest').onclick=()=>vdPreview('cam1');
