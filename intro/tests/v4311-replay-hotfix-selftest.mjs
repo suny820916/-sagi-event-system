@@ -56,3 +56,14 @@ assert(output4.includes("x.programGate!=='SAGI4311_PROGRAM'"),'legacy/stale line
 assert(output4.includes("hideIntroStage('STALE_STATE')"),'poll stale-state hide guard missing');
 assert(output4.includes("hideIntroStage('EXPIRED')"),'expired lineup auto-hide missing');
 console.log('lineup program gate PASS');
+
+// stale-cache install gate: every distributed BAT must force old cached UI/output out.
+const bat5=fs.readFileSync(new URL('../SAGI_VMIX_LAN_V4311_REPLAY_HOTFIX.bat',import.meta.url),'utf8');
+const control5=fs.readFileSync(new URL('../v45-lan.html',import.meta.url),'utf8');
+const output5=fs.readFileSync(new URL('../vmix-v45-lan.html',import.meta.url),'utf8');
+assert(control5.includes('SAGI4311_FLASHFIX_04'),'control build fingerprint missing');
+assert(output5.includes('SAGI4311_FLASHFIX_04'),'output build fingerprint missing');
+assert(bat5.includes("$t -match 'SAGI4311_FLASHFIX_04'"),'BAT bootstrap must require current build fingerprint');
+assert(bat5.includes("FLASHFIX 04 vMix output installed over stale cache"),'stale output replacement message missing');
+assert(bat5.includes("Remote vMix output is older than FLASHFIX 04"),'remote downgrade guard missing');
+console.log('stale-cache install gate PASS');
