@@ -29,6 +29,13 @@ assert(c.normalizeEvent({type:'GOAL',sequence:1.5}).sequence===null,'fractional 
 assert(c.normalizeEvent({type:'GOAL',sequence:Number.MAX_SAFE_INTEGER+1}).sequence===null,'unsafe sequence accepted');
 assert(c.normalizeType('YELLOW_CARD')==='YELLOW'&&c.normalizeType('RED_CARD')==='RED','referee card aliases regressed');
 assert(c.eventAccent({type:'RED',side:'AWAY'},{awayColor:'#00ff00'})===c.TOKENS.red,'referee red card confused with team/brand color');
+// Non-finite or enormous score values must not leak into broadcast graphics.
+for(const bad of [Infinity,-Infinity,NaN,'Infinity','not-a-number']){
+ const x=c.normalizeEvent({type:'FULL_TIME',homeScore:bad,awayScore:bad});
+ assert(x.homeScore===0&&x.awayScore===0,'non-finite score leaked into broadcast');
+}
+const boundedScore=c.normalizeEvent({type:'HALF_TIME',homeScore:1e100,awayScore:-30});
+assert(boundedScore.homeScore===9999&&boundedScore.awayScore===0,'score clamping failed');
 const replay=c.normalizeEvent({type:'REPLAY_STINGER',phase:'weird'});
 assert(replay.phase==='IN'&&replay.title==='INSTANT REPLAY','replay phase fail-safe failed');
 const long=c.normalizeEvent({type:'GOAL',team:'X'.repeat(500),player:{name:'Y'.repeat(500),photo:'z'.repeat(5000)}});
