@@ -1,7 +1,7 @@
 @echo off
 chcp 65001 >nul
 setlocal
-title SAGI VMIX LAN - V4.31.1 REPLAYFLOW 05
+title SAGI VMIX LAN - V4.31.1 REPLAYFLOW 06
 
 echo.
 echo ==========================================
@@ -39,8 +39,8 @@ powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -Command ^
  "[IO.File]::WriteAllText($env:SAGI_FB_CONTROL,$m.Groups[2].Value,$utf);" ^
  "[IO.File]::WriteAllText($env:SAGI_FB_OUTPUT,$m.Groups[3].Value,$utf);" ^
  "Copy-Item $env:SAGI_FB_BRIDGE $env:SAGI_BRIDGE -Force;" ^
- "$controlOk=$false;if(Test-Path $env:SAGI_CONTROL){try{$t=[IO.File]::ReadAllText($env:SAGI_CONTROL,[Text.Encoding]::UTF8);$controlOk=($t.Length -gt 100000 -and $t -match '<!doctype html>' -and $t -match 'SAGI4311_REPLAYFLOW_05' -and $t -match 'V4\.31\.1' -and $t -match 'instantReplayGenerate' -and $t -match 'ReplayMarkInOutLive' -and $t -match 'mdSyncDirectorPenaltyToSimple' -and $t -match 'simplePenaltyControl' -and $t -match 'replayStinger' -and $t -match 'data:image/svg\+xml')}catch{}};" ^
- "if(-not $controlOk){Copy-Item $env:SAGI_FB_CONTROL $env:SAGI_CONTROL -Force;Write-Host '[REPAIR] REPLAYFLOW 05 Control installed over stale cache.' -ForegroundColor Yellow}else{Write-Host '[SAFE] REPLAYFLOW 05 Control cache verified.' -ForegroundColor Green};" ^
+ "$controlOk=$false;if(Test-Path $env:SAGI_CONTROL){try{$t=[IO.File]::ReadAllText($env:SAGI_CONTROL,[Text.Encoding]::UTF8);$controlOk=($t.Length -gt 100000 -and $t -match '<!doctype html>' -and $t -match 'SAGI4311_REPLAYFLOW_06' -and $t -match 'V4\.31\.1' -and $t -match 'instantReplayGenerate' -and $t -match 'ReplayMarkInOutLive' -and $t -match 'mdSyncDirectorPenaltyToSimple' -and $t -match 'simplePenaltyControl' -and $t -match 'replayStinger' -and $t -match 'data:image/svg\+xml')}catch{}};" ^
+ "if(-not $controlOk){Copy-Item $env:SAGI_FB_CONTROL $env:SAGI_CONTROL -Force;Write-Host '[REPAIR] REPLAYFLOW 06 Control installed over stale cache.' -ForegroundColor Yellow}else{Write-Host '[SAFE] REPLAYFLOW 06 Control cache verified.' -ForegroundColor Green};" ^
  "$outputOk=$false;if(Test-Path $env:SAGI_OUTPUT){try{$t=[IO.File]::ReadAllText($env:SAGI_OUTPUT,[Text.Encoding]::UTF8);$outputOk=($t.Length -gt 50000 -and $t -match '<!doctype html>' -and $t -match 'SAGI4311_FLASHFIX_04' -and $t -match 'V4\.31\.0' -and $t -match 'introStateAllowed' -and $t -match 'simplePenaltyBoard' -and $t -match 'penaltyShootout' -and $t -match 'sagiToranhe' -and $t -match 'eventCleanupTimer' -and $t -match 'data:image/svg\+xml')}catch{}};" ^
  "if(-not $outputOk){Copy-Item $env:SAGI_FB_OUTPUT $env:SAGI_OUTPUT -Force;Write-Host '[REPAIR] FLASHFIX 04 vMix output installed over stale cache.' -ForegroundColor Yellow}else{Write-Host '[SAFE] FLASHFIX 04 vMix output cache verified.' -ForegroundColor Green};"
 
@@ -144,7 +144,7 @@ function Update-SagiLan {
     $outputText = [Text.Encoding]::UTF8.GetString([IO.File]::ReadAllBytes($outputDownload))
     if ($controlText -notmatch "<!doctype html>") { throw "Control validation failed" }
     if ($outputText -notmatch "<!doctype html>") { throw "Graphics validation failed" }
-    if ($controlText -notmatch "SAGI LIVE MATCH DIRECTOR" -or $controlText -notmatch "SAGI4311_REPLAYFLOW_05" -or $controlText -notmatch "V4\.31\.1" -or $controlText -notmatch "instantReplayGenerate") { throw "Remote control build is older than REPLAYFLOW 05; local fixed build kept" }
+    if ($controlText -notmatch "SAGI LIVE MATCH DIRECTOR" -or $controlText -notmatch "SAGI4311_REPLAYFLOW_06" -or $controlText -notmatch "V4\.31\.1" -or $controlText -notmatch "instantReplayGenerate") { throw "Remote control build is older than REPLAYFLOW 06; local fixed build kept" }
     if ($outputText -notmatch "SAGI4311_FLASHFIX_04" -or $outputText -notmatch "introStateAllowed") { throw "Remote vMix output is older than FLASHFIX 04; local fixed build kept" }
 
     Copy-Item $ControlCache $ControlBackup -Force
@@ -541,7 +541,7 @@ while ($true) {
 <!doctype html>
 <html lang="zh-CN">
 <head>
-<meta name="sagi-build" content="SAGI4311_REPLAYFLOW_05">
+<meta name="sagi-build" content="SAGI4311_REPLAYFLOW_06">
 <!-- SAGI LIVE MATCH DIRECTOR · SAFE UPDATE COMPATIBILITY MARKER -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -3020,7 +3020,7 @@ function gdSaveFromUI(){
  graphicsDirectorSettings.returnSlot=q('gdReturnSlot').value==='cam2'?'cam2':'cam1';
  gdPersist();gdRefreshUI()
 }
-let instantReplayBusy=false,instantReplayTimer=null,instantReplayRecordingRequested=false;
+let instantReplayBusy=false,instantReplayTimer=null,instantReplayRecordingRequested=false,replayStingerCleanupTimer=null,replayStingerSeq=0;
 const IR_LAST_DURATION_KEY='sagi_instant_replay_last_duration_v4311';
 function irSaveLastDuration(seconds){const n=[5,8,12].includes(Number(seconds))?Number(seconds):8;try{localStorage.setItem(IR_LAST_DURATION_KEY,String(n))}catch(e){}return n}
 function irLastDuration(){let n=8;try{n=Number(localStorage.getItem(IR_LAST_DURATION_KEY)||0)||Number(q('irSeconds')&&q('irSeconds').value)||Number(q('mmReplaySeconds')&&q('mmReplaySeconds').value)||8}catch(e){}return[5,8,12].includes(n)?n:8}
@@ -3043,6 +3043,7 @@ async function instantReplayStartRecording(){
 }
 async function replayStingerAction(phase='IN',switchAction=null,label=''){
  if(!matchReady)return false;vdSave();
+ const seq=++replayStingerSeq;clearTimeout(replayStingerCleanupTimer);replayStingerCleanupTimer=null;
  const overlayWasVisible=!!matchdayState.overlayVisible;
  if(!overlayWasVisible){
    matchdayState.overlayVisible=true;mdPersist();
@@ -3050,15 +3051,20 @@ async function replayStingerAction(phase='IN',switchAction=null,label=''){
  }
  gdSetStatus((phase==='OUT'?'BACK TO LIVE':'INSTANT REPLAY')+' · SAGI TRANSITION','busy');
  await publishMatchday(replayStingerPayload(phase));
+ // 1.45s stinger panels fully cover 18%-72% (261-1044ms).
+ // 920ms keeps the actual switch inside that cover window even with up to ~650ms output poll latency.
  await new Promise(r=>setTimeout(r,REPLAY_STINGER_SWITCH_MS));
+ if(seq!==replayStingerSeq)return false;
  let ok=false;try{ok=switchAction?!!(await switchAction()):true}catch(e){ok=false}
- await new Promise(r=>setTimeout(r,REPLAY_STINGER_CLEAR_MS));
- await publishMatchday({type:'CLEAR_EVENT'});
- if(!overlayWasVisible){
-   await new Promise(r=>setTimeout(r,120));
-   matchdayState.overlayVisible=false;mdPersist();
-   await publishVmixDirector('OverlayInput'+vmixDirectorSettings.overlay+'Out','',0,'REPLAY TRANSITION RESTORE')
- }
+ // Cleanup is deliberately asynchronous. The caller can start replay timing from the real switch point.
+ replayStingerCleanupTimer=setTimeout(async()=>{
+   if(seq!==replayStingerSeq)return;
+   try{await publishMatchday({type:'CLEAR_EVENT'})}catch(e){}
+   if(!overlayWasVisible){
+     try{matchdayState.overlayVisible=false;mdPersist();await publishVmixDirector('OverlayInput'+vmixDirectorSettings.overlay+'Out','',0,'REPLAY TRANSITION RESTORE')}catch(e){}
+   }
+   replayStingerCleanupTimer=null
+ },REPLAY_STINGER_POST_SWITCH_CLEAN_MS);
  return !!ok
 }
 async function instantReplayBeginLatest(seconds=8,label='最近回放'){
@@ -3068,7 +3074,7 @@ async function instantReplayBeginLatest(seconds=8,label='最近回放'){
  irSetStatus(label+'播放中 · '+seconds+' 秒 · 自动返回比赛','busy');
  clearTimeout(instantReplayTimer);
  // Start BACK TO LIVE slightly before the replay endpoint so the cut is hidden by the transition.
- const returnLeadMs=650,delay=Math.max(900,seconds*1000-REPLAY_STINGER_CLEAR_MS-returnLeadMs);
+ const delay=Math.max(0,seconds*1000-REPLAY_STINGER_SWITCH_MS);
  instantReplayTimer=setTimeout(async()=>{
    const preferred=graphicsDirectorSettings.returnSlot||'cam1';
    const returnSlot=vdSlotAvailable(preferred)?preferred:ssMainSlot();
@@ -3125,7 +3131,7 @@ function gdScheduleCamera(fn,ms,seq=gdSequence){
 }
 function gdAbort(showNote=true){
  gdSequence++;gdClearTimers();gdClearCameraTimers();gdAutoCameraActive=false;clearTimeout(mdMacroTimer);mdMacroSeq++;
- clearTimeout(instantReplayTimer);instantReplayTimer=null;instantReplayBusy=false;irSyncButtons();
+ clearTimeout(instantReplayTimer);instantReplayTimer=null;clearTimeout(replayStingerCleanupTimer);replayStingerCleanupTimer=null;replayStingerSeq++;instantReplayBusy=false;irSyncButtons();
  if(showNote)publishVmixDirector('ReplayStopEvents','','','停止正在播放的回放').catch(()=>{});
  gdSetStatus('AUTO FLOW ABORTED','manual');if(showNote)note('自动导播流程已终止')
 }
@@ -3142,30 +3148,18 @@ async function gdTakeCamera(slot,label,opts={}){
  return ssTake(slot,label,source,force,eventType)
 }
 
-const REPLAY_STINGER_SWITCH_MS=950,REPLAY_STINGER_CLEAR_MS=420;
+const REPLAY_STINGER_SWITCH_MS=920,REPLAY_STINGER_POST_SWITCH_CLEAN_MS=1380,REPLAY_STINGER_TOTAL_MS=1450;
 function replayStingerPayload(phase='IN'){
  return{type:'REPLAY_STINGER',phase:phase==='OUT'?'OUT':'IN',title:phase==='OUT'?'BACK TO LIVE':'INSTANT REPLAY',label:phase==='OUT'?'回到比赛':'精彩回放',at:mdFormat(mdNowSeconds())}
 }
 async function replayStingerTake(slot,phase='IN',source='MANUAL',label=''){
  if(!matchReady)return false;vdSave();
  if(!vdSlotAvailable(slot)){note('回放/返回机位未分配，无法执行转场');return false}
- const overlayWasVisible=!!matchdayState.overlayVisible;
- if(!overlayWasVisible){
-   matchdayState.overlayVisible=true;mdPersist();
-   await publishVmixDirector('OverlayInput'+vmixDirectorSettings.overlay+'In',vmixDirectorSettings.graphics,0,'REPLAY LOGO STINGER ON')
- }
- gdSetStatus((phase==='OUT'?'RETURN':'REPLAY')+' · LOGO STINGER','busy');
- await publishMatchday(replayStingerPayload(phase));
- await new Promise(r=>setTimeout(r,REPLAY_STINGER_SWITCH_MS));
- const ok=await ssTake(slot,label||(phase==='OUT'?'REPLAY RETURN':'INSTANT REPLAY'),source,true,phase==='OUT'?'RETURN':'REPLAY');
- await new Promise(r=>setTimeout(r,REPLAY_STINGER_CLEAR_MS));
- await publishMatchday({type:'CLEAR_EVENT'});
- if(!overlayWasVisible){
-   await new Promise(r=>setTimeout(r,120));
-   matchdayState.overlayVisible=false;mdPersist();
-   await publishVmixDirector('OverlayInput'+vmixDirectorSettings.overlay+'Out','',0,'REPLAY LOGO STINGER RESTORE')
- }
- return !!ok
+ return replayStingerAction(
+   phase,
+   ()=>ssTake(slot,label||(phase==='OUT'?'REPLAY RETURN':'INSTANT REPLAY'),source,true,phase==='OUT'?'RETURN':'REPLAY'),
+   label
+ )
 }
 async function gdRunEvent(ev,holdMs=5200){
  sdRecommend(ev);const seq=++gdSequence;gdClearTimers();clearTimeout(mdMacroTimer);mdMacroSeq++;
@@ -3707,10 +3701,10 @@ function initVmixDirector(){
  vdReadVmixInputs(false);
  setTimeout(async()=>{
   try{
-   vdLoad();const input=String(vmixDirectorSettings.graphics||'').trim(),key='sagi_graphics_loaded_SAGI4311_REPLAYFLOW_05';
+   vdLoad();const input=String(vmixDirectorSettings.graphics||'').trim(),key='sagi_graphics_loaded_SAGI4311_REPLAYFLOW_06';
    if(input&&localStorage.getItem(key)!==input){
     const ok=await refreshGraphicsBrowser(false);
-    if(ok){localStorage.setItem(key,input);q('vdStatus').textContent='REPLAYFLOW 05 已强制刷新 vMix 图形 · Input '+input}
+    if(ok){localStorage.setItem(key,input);q('vdStatus').textContent='REPLAYFLOW 06 已强制刷新 vMix 图形 · Input '+input}
    }
   }catch(e){}
  },1800);
@@ -4746,7 +4740,7 @@ if(standalone){
 ###SAGI_OUTPUT###
 <!doctype html>
 <html lang="zh-CN"><head>
-<meta name="sagi-build" content="SAGI4311_REPLAYFLOW_05">
+<meta name="sagi-build" content="SAGI4311_REPLAYFLOW_06">
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SAGI V4.31.0 · STAGE 广播系统 · vMix</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%2307090d%22/%3E%3Ctext x=%2232%22 y=%2243%22 text-anchor=%22middle%22 font-size=%2234%22 fill=%22%23d8b55b%22%3ES%3C/text%3E%3C/svg%3E">
