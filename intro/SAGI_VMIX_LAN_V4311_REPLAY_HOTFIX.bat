@@ -1,7 +1,7 @@
 @echo off
 chcp 65001 >nul
 setlocal
-title SAGI VMIX LAN - V4.31.1 REPLAYFLOW 06
+title SAGI VMIX LAN - V4.31.1 LIVEFLOW 07
 
 echo.
 echo ==========================================
@@ -39,8 +39,8 @@ powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -Command ^
  "[IO.File]::WriteAllText($env:SAGI_FB_CONTROL,$m.Groups[2].Value,$utf);" ^
  "[IO.File]::WriteAllText($env:SAGI_FB_OUTPUT,$m.Groups[3].Value,$utf);" ^
  "Copy-Item $env:SAGI_FB_BRIDGE $env:SAGI_BRIDGE -Force;" ^
- "$controlOk=$false;if(Test-Path $env:SAGI_CONTROL){try{$t=[IO.File]::ReadAllText($env:SAGI_CONTROL,[Text.Encoding]::UTF8);$controlOk=($t.Length -gt 100000 -and $t -match '<!doctype html>' -and $t -match 'SAGI4311_REPLAYFLOW_06' -and $t -match 'V4\.31\.1' -and $t -match 'instantReplayGenerate' -and $t -match 'ReplayMarkInOutLive' -and $t -match 'mdSyncDirectorPenaltyToSimple' -and $t -match 'simplePenaltyControl' -and $t -match 'replayStinger' -and $t -match 'data:image/svg\+xml')}catch{}};" ^
- "if(-not $controlOk){Copy-Item $env:SAGI_FB_CONTROL $env:SAGI_CONTROL -Force;Write-Host '[REPAIR] REPLAYFLOW 06 Control installed over stale cache.' -ForegroundColor Yellow}else{Write-Host '[SAFE] REPLAYFLOW 06 Control cache verified.' -ForegroundColor Green};" ^
+ "$controlOk=$false;if(Test-Path $env:SAGI_CONTROL){try{$t=[IO.File]::ReadAllText($env:SAGI_CONTROL,[Text.Encoding]::UTF8);$controlOk=($t.Length -gt 100000 -and $t -match '<!doctype html>' -and $t -match 'SAGI4311_LIVEFLOW_07' -and $t -match 'V4\.31\.1' -and $t -match 'instantReplayGenerate' -and $t -match 'ReplayMarkInOutLive' -and $t -match 'mdSyncDirectorPenaltyToSimple' -and $t -match 'simplePenaltyControl' -and $t -match 'replayStinger' -and $t -match 'data:image/svg\+xml')}catch{}};" ^
+ "if(-not $controlOk){Copy-Item $env:SAGI_FB_CONTROL $env:SAGI_CONTROL -Force;Write-Host '[REPAIR] LIVEFLOW 07 Control installed over stale cache.' -ForegroundColor Yellow}else{Write-Host '[SAFE] LIVEFLOW 07 Control cache verified.' -ForegroundColor Green};" ^
  "$outputOk=$false;if(Test-Path $env:SAGI_OUTPUT){try{$t=[IO.File]::ReadAllText($env:SAGI_OUTPUT,[Text.Encoding]::UTF8);$outputOk=($t.Length -gt 50000 -and $t -match '<!doctype html>' -and $t -match 'SAGI4311_FLASHFIX_04' -and $t -match 'V4\.31\.0' -and $t -match 'introStateAllowed' -and $t -match 'simplePenaltyBoard' -and $t -match 'penaltyShootout' -and $t -match 'sagiToranhe' -and $t -match 'eventCleanupTimer' -and $t -match 'data:image/svg\+xml')}catch{}};" ^
  "if(-not $outputOk){Copy-Item $env:SAGI_FB_OUTPUT $env:SAGI_OUTPUT -Force;Write-Host '[REPAIR] FLASHFIX 04 vMix output installed over stale cache.' -ForegroundColor Yellow}else{Write-Host '[SAFE] FLASHFIX 04 vMix output cache verified.' -ForegroundColor Green};"
 
@@ -144,7 +144,7 @@ function Update-SagiLan {
     $outputText = [Text.Encoding]::UTF8.GetString([IO.File]::ReadAllBytes($outputDownload))
     if ($controlText -notmatch "<!doctype html>") { throw "Control validation failed" }
     if ($outputText -notmatch "<!doctype html>") { throw "Graphics validation failed" }
-    if ($controlText -notmatch "SAGI LIVE MATCH DIRECTOR" -or $controlText -notmatch "SAGI4311_REPLAYFLOW_06" -or $controlText -notmatch "V4\.31\.1" -or $controlText -notmatch "instantReplayGenerate") { throw "Remote control build is older than REPLAYFLOW 06; local fixed build kept" }
+    if ($controlText -notmatch "SAGI LIVE MATCH DIRECTOR" -or $controlText -notmatch "SAGI4311_LIVEFLOW_07" -or $controlText -notmatch "V4\.31\.1" -or $controlText -notmatch "instantReplayGenerate") { throw "Remote control build is older than LIVEFLOW 07; local fixed build kept" }
     if ($outputText -notmatch "SAGI4311_FLASHFIX_04" -or $outputText -notmatch "introStateAllowed") { throw "Remote vMix output is older than FLASHFIX 04; local fixed build kept" }
 
     Copy-Item $ControlCache $ControlBackup -Force
@@ -541,7 +541,7 @@ while ($true) {
 <!doctype html>
 <html lang="zh-CN">
 <head>
-<meta name="sagi-build" content="SAGI4311_REPLAYFLOW_06">
+<meta name="sagi-build" content="SAGI4311_LIVEFLOW_07">
 <!-- SAGI LIVE MATCH DIRECTOR · SAFE UPDATE COMPATIBILITY MARKER -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -1192,6 +1192,20 @@ body{background:radial-gradient(circle at 78% -10%,#0a43c933,transparent 28%),li
 .mdProEditor:before{content:"SAGI SIGNATURE · 黑金 / 天山白 / 帕米尔蓝";display:block;margin:-1px 0 9px;padding:7px 9px;border-left:3px solid #d3ae5b;background:#080a0f;color:#d3ae5b;font-size:9px;font-weight:1000;letter-spacing:1.1px}
 
 </style>
+<style>
+/* ===== SAGI LIVE FLOW 07 · HUMANIZED FOOTBALL EVENT ORDER ===== */
+.mmLiveFlow{margin:10px 0 12px;padding:12px;border:1px solid #35506a;border-radius:18px;background:linear-gradient(180deg,#0d1620,#080d13);box-shadow:0 18px 42px #0007;position:relative}
+.mmFlowHead{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-bottom:9px}.mmFlowHead b{font-size:15px;letter-spacing:2px;color:#fff}.mmFlowHead span{font-size:9px;color:#8292a2;letter-spacing:.5px}
+.mmFlowSelectors{display:grid;grid-template-columns:140px minmax(180px,1fr);gap:7px;margin-bottom:8px}.mmFlowSelectors select{min-height:42px;font-size:12px}
+.mmFlowPrimary{display:grid;grid-template-columns:1.15fr 1.15fr 1fr 1fr 1fr;gap:7px}.mmFlowPrimary button{min-height:58px!important;font-size:12px!important;font-weight:1000!important;letter-spacing:.3px}.mmFlowPrimary .goal{background:linear-gradient(135deg,#17603b,#258e59)!important;color:#fff}.mmFlowPrimary .replay{background:linear-gradient(135deg,#164b76,#237eb4)!important;color:#fff}.mmFlowPrimary .player{background:linear-gradient(135deg,#4a3b19,#8c6b22)!important;color:#ffe6a3}.mmFlowPrimary .live{background:linear-gradient(135deg,#52222a,#8a303b)!important;color:#fff}
+.mmFlowReplaySetup{display:grid;grid-template-columns:150px 105px 1fr;gap:7px;align-items:center;margin-top:7px}.mmFlowReplaySetup button,.mmFlowReplaySetup select{min-height:40px!important}.mmFlowHint{font-size:9px;color:#778695;line-height:1.35}
+.mmFlowSecondary{display:grid;grid-template-columns:1fr 1fr 1.25fr 1fr 1fr;gap:7px;margin-top:9px;padding-top:9px;border-top:1px solid #273645}.mmFlowSecondary button{min-height:46px!important;font-size:10px!important}.mmFlowSecondary .undo{border-color:#a47b34!important;color:#ffd98a!important}.mmFlowSecondary .clear{border-color:#6f3d46!important;color:#ff9da6!important}
+.mmFlowSub{display:grid;grid-template-columns:120px 1fr 1fr 1.15fr;gap:7px;margin-top:7px}.mmFlowSub select,.mmFlowSub button{min-height:42px!important}
+.mmDirectorOnly .mmPanelTitle:first-child{margin-bottom:8px}
+#matchCockpit:not(.penaltyActive) .simplePenaltyControl,#matchCockpit:not(.penaltyActive) .mmPenaltyDirector{display:none!important}
+@media(max-width:850px){.mmFlowHead{align-items:flex-start;flex-direction:column}.mmFlowPrimary{grid-template-columns:1fr 1fr}.mmFlowPrimary .goal{grid-column:1/2}.mmFlowPrimary .live{grid-column:1/3}.mmFlowSelectors{grid-template-columns:1fr 1fr}.mmFlowSecondary{grid-template-columns:1fr 1fr}.mmFlowSub{grid-template-columns:1fr 1fr}.mmFlowReplaySetup{grid-template-columns:1fr 90px}.mmFlowHint{grid-column:1/3}.mmFlowPrimary button{min-height:56px!important}}
+@media(max-width:520px){.mmLiveFlow{padding:9px}.mmFlowPrimary button{font-size:11px!important}.mmFlowSecondary button,.mmFlowSub button{min-height:48px!important}}
+</style>
 </head>
 <body>
 <div class="app">
@@ -1307,12 +1321,34 @@ body{background:radial-gradient(circle at 78% -10%,#0a43c933,transparent 28%),li
       <div class="mmStatusCard"><span>状态恢复</span><b id="mmRecoveryStatus">本机 + 桥接服务</b></div>
     </div>
 
+    <div class="mmLiveFlow mmScoreOnly">
+      <div class="mmFlowHead"><b>LIVE FLOW · 比赛事件主链</b><span>按比赛发生顺序操作，不再跨区域找按钮</span></div>
+      <div class="mmFlowSelectors"><select id="mmEventSide"><option value="HOME">主队</option><option value="AWAY">客队</option></select><select id="mmEventPlayer"><option value="">选择球员 / 进球后可补选进球队员</option></select></div>
+      <div class="mmFlowPrimary">
+        <button id="mmGoalMacro" class="goal" type="button">⚽ 1 · 进球</button>
+        <button id="mmGenerateReplay" class="replay" type="button">⏪ 2 · 生成回放</button>
+        <button id="mmReplay" class="replay" type="button" data-camera-slot="replay">▶ 3 · 最近回放</button>
+        <button id="mmGoalPlayer" class="player" type="button">👤 4 · 进球队员</button>
+        <button id="mmReturnLive" class="live" type="button">↩ 5 · 回主画面</button>
+      </div>
+      <div class="mmFlowReplaySetup"><button id="mmReplayRecord" class="ok" type="button">● 启动回放录制</button><select id="mmReplaySeconds"><option value="5">前 5 秒</option><option value="8" selected>前 8 秒</option><option value="12">前 12 秒</option></select><span class="mmFlowHint">进球后可先按「进球」立即更新比分，再生成回放；回放期间选择球员，回来后按「进球队员」。</span></div>
+      <div class="mmFlowSecondary">
+        <button id="mmYellowMacro" class="mmMacroYellow" type="button"><span class="refCardIcon yellow" aria-hidden="true"></span><span>黄牌</span></button>
+        <button id="mmRedMacro" class="mmMacroRed" type="button"><span class="refCardIcon red" aria-hidden="true"></span><span>红牌</span></button>
+        <button id="mmUndoEvent" class="undo" type="button">↶ 撤销上一事件</button>
+        <button id="mmClearEvent" class="clear" type="button">清当前图形</button>
+        <button id="mmGraphicsToggleQuick" type="button">比分牌 开/关</button>
+      </div>
+      <div class="mmFlowSub"><select id="mmSubSide"><option value="HOME">主队换人</option><option value="AWAY">客队换人</option></select><select id="mmSubOff"><option value="">换下球员</option></select><select id="mmSubOn"><option value="">换上球员</option></select><button id="mmSubMacro" type="button">↕ 换人</button></div>
+    </div>
+
     <div class="mmGrid">
       <div class="mmPanel mmScoreOnly">
         <div class="mmPanelTitle">比分与计时</div>
         <div class="mmScoreTeams"><div><div id="mmHomeName" class="mmTeam">HOME</div><div id="mmHomeScore" class="mmScore">0</div></div><div><div id="mmClock" class="mmClock" style="font-size:25px">00:00</div><div id="mmPeriod" class="mmPeriod">1H</div></div><div><div id="mmAwayName" class="mmTeam">AWAY</div><div id="mmAwayScore" class="mmScore">0</div></div></div>
         <div class="mmScoreBtns"><button id="mmHomeMinus" type="button">主队 −</button><button id="mmHomePlus" class="ok" type="button">主队 ＋</button><button id="mmAwayMinus" type="button">客队 −</button><button id="mmAwayPlus" class="ok" type="button">客队 ＋</button></div>
         <div class="mmRow3" style="margin-top:6px"><button id="mmClockStart" class="ok" type="button">▶ 开始</button><button id="mmClockPause" type="button">Ⅱ 暂停</button><button id="mmScoreboardToggle" type="button">比分牌 开/关</button></div>
+        <div class="mmRow" style="margin-top:6px"><button id="mmHalf" type="button">半场结束</button><button id="mmFull" type="button">全场结束</button></div>
       </div>
       <div class="mmPanel mmScoreOnly simplePenaltyControl">
         <div class="mmPanelTitle">世界杯级点球记分牌</div>
@@ -1343,23 +1379,11 @@ body{background:radial-gradient(circle at 78% -10%,#0a43c933,transparent 28%),li
         <div class="mmRow" style="margin-top:6px"><button id="mmPenStart" type="button">开始点球大战</button><button id="mmPenUndo" type="button">↶ 撤销上一罚</button></div>
       </div>
 
-      <div class="mmPanel mmScoreOnly">
-        <div class="mmPanelTitle">一键事件</div>
-        <div class="mmRow"><select id="mmEventSide"><option value="HOME">主队</option><option value="AWAY">客队</option></select><select id="mmEventPlayer"><option value="">球员可选</option></select></div>
-        <div class="mmRow3" style="margin-top:6px"><button id="mmGoalMacro" class="mmMacroGoal" type="button">⚽ 进球宏</button><button id="mmYellowMacro" class="mmMacroYellow" type="button"><span class="refCardIcon yellow" aria-hidden="true"></span><span>黄牌宏</span></button><button id="mmRedMacro" class="mmMacroRed" type="button"><span class="refCardIcon red" aria-hidden="true"></span><span>红牌宏</span></button></div>
-        <div class="mmRow" style="margin-top:6px"><button id="mmHalf" type="button">半场结束</button><button id="mmFull" type="button">全场结束</button></div>
-        <div class="mmPanelTitle" style="margin-top:9px">换人快捷操作</div>
-        <div class="mmRow3"><select id="mmSubSide"><option value="HOME">主队</option><option value="AWAY">客队</option></select><select id="mmSubOff"><option value="">换下</option></select><select id="mmSubOn"><option value="">换上</option></select></div>
-        <button id="mmSubMacro" style="width:100%;margin-top:6px" type="button">↕ 一键播放换人</button>
-        <div class="mmRoleHint">进球宏：自动加分 → 记录回放点 → 播放事件 → 自动回到比分牌。换人同样自动收起。</div>
-      </div>
 
       <div class="mmPanel mmDirectorOnly">
         <div class="mmPanelTitle">机位导播</div>
-        <div class="mmRow"><button id="mmCam1" class="ok" type="button" data-camera-slot="cam1">1 主机位</button><button id="mmCam2" type="button" data-camera-slot="cam2">2 机位2</button><button id="mmDrone" type="button" data-camera-slot="drone">3 无人机</button><button id="mmReplay" class="mmMarker" type="button" data-camera-slot="replay">4 最近回放</button></div>
+        <div class="mmRow3"><button id="mmCam1" class="ok" type="button" data-camera-slot="cam1">1 主机位</button><button id="mmCam2" type="button" data-camera-slot="cam2">2 机位2</button><button id="mmDrone" type="button" data-camera-slot="drone">3 无人机</button></div>
         <div class="mmRow" style="margin-top:6px"><button id="mmGraphicsOn" type="button">图形开启</button><button id="mmGraphicsOff" type="button">图形关闭</button></div>
-        <div class="mmPanelTitle" style="margin-top:10px">即时回放生成</div>
-        <div class="mmRow3"><button id="mmReplayRecord" class="ok" type="button">● 启动录制</button><select id="mmReplaySeconds"><option value="5">5秒</option><option value="8" selected>8秒</option><option value="12">12秒</option></select><button id="mmGenerateReplay" class="mmMarker" type="button">⏪ 生成回放</button></div>
         <div class="mmFilter"><div class="mmPanelTitle" style="margin-top:10px">画面滤镜 · 电影感</div><div class="filterPresets"><button class="filterOriginal" type="button" data-mm-filter="ORIGINAL">原片</button><button class="filterClean" type="button" data-mm-filter="CLEAN">清晰</button><button class="filterWarm" type="button" data-mm-filter="WARM">暖色</button><button class="filterNight" type="button" data-mm-filter="NIGHT">夜场</button></div></div>
         <div class="mmPanelTitle" style="margin-top:10px">回放标记</div>
         <div class="mmRow3"><button id="mmMarkSave" class="mmMarker" type="button">扑救</button><button id="mmMarkIncident" class="mmMarker" type="button">对抗/冲突</button><button id="mmMarkKey" class="mmMarker" type="button">精彩</button></div>
@@ -2775,6 +2799,7 @@ function refreshMatchdayUI(){
  if(q('mmHomeScore'))q('mmHomeScore').textContent=matchdayState.homeScore;
  if(q('mmAwayScore'))q('mmAwayScore').textContent=matchdayState.awayScore;
  if(q('mmPeriod'))q('mmPeriod').textContent=mdPeriodName(matchdayState.period)+(matchdayState.stoppageTime?' · '+matchdayState.stoppageTime:'');
+ const cockpit=q('matchCockpit');if(cockpit)cockpit.classList.toggle('penaltyActive',matchdayState.period==='PEN'||!!(matchdayState.penaltyShootout&&matchdayState.penaltyShootout.started)||!!(matchdayState.simplePenalty&&matchdayState.simplePenalty.visible));
  if(q('mmScoreboardToggle'))q('mmScoreboardToggle').textContent=matchdayState.scoreboardVisible?'隐藏比分牌':'显示比分牌';
  if(q('mmFreeze'))q('mmFreeze').textContent=matchdayState.scoreboardFrozen?'解除比分冻结':'冻结比分牌';
  mdRenderMarkers();mdRenderSimplePenalty();mdRenderPenaltyDirector();applyOperatorRole(matchOperatorRole,false);
@@ -3357,6 +3382,23 @@ function mdEvent(type){
  const side=q('mdEventSide').value,pid=q('mdEventPlayer').value;if(!pid){note('请先选择球员');return}mdMacroEvent(type,side,pid)
 }
 
+function mdShowGoalPlayer(){
+ const side=q('mmEventSide').value,pid=q('mmEventPlayer').value,p=pid?mdPlayer(side,pid):null;
+ if(!p){note('请选择进球队员');return false}
+ const team=side==='HOME'?(q('matchHome').value||'HOME'):(q('matchAway').value||'AWAY');
+ const ev={type:'GOAL',displayOnly:true,side,team,player:{id:p.id,name:p.name,number:p.number,position:p.position||p.role,photo:p.photo||''},at:mdFormat(mdNowSeconds())};
+ q('mdEventStatus').textContent='进球队员 · #'+p.number+' '+p.name;
+ publishMatchday(ev);mdEventAutoClear(4600);return true
+}
+async function instantReplayReturnLiveNow(){
+ clearTimeout(instantReplayTimer);instantReplayTimer=null;
+ await publishVmixDirector('ReplayStopEvents','','','手动结束回放');
+ const preferred=graphicsDirectorSettings.returnSlot||'cam1',returnSlot=vdSlotAvailable(preferred)?preferred:ssMainSlot();
+ let ok=false;
+ if(returnSlot&&vdSlotAvailable(returnSlot))ok=await replayStingerAction('OUT',()=>ssTake(returnSlot,'MANUAL RETURN LIVE','OPERATOR',true,'RETURN'),'MANUAL BACK TO LIVE');
+ irFinishBusy(ok?'已回到主画面':'无法回主画面 · 检查主机位',ok?'ok':'error');return !!ok
+}
+
 function mdSubstitutionByIds(side,offId,onId){
  if(!mdAcceptOperatorEvent(['SUB',side,offId,onId].join('|'),1000))return false;
  const off=mdPlayer(side,offId),on=mdPlayer(side,onId);if(!off||!on){note('请选择换下和换上球员');return}
@@ -3462,6 +3504,7 @@ function initMatchMode(){
  q('mmHomeMinus').onclick=()=>mdScore('HOME',-1);q('mmHomePlus').onclick=()=>mdScore('HOME',1);q('mmAwayMinus').onclick=()=>mdScore('AWAY',-1);q('mmAwayPlus').onclick=()=>mdScore('AWAY',1);
  q('mmClockStart').onclick=()=>q('mdClockStart').click();q('mmClockPause').onclick=()=>q('mdClockPause').click();q('mmScoreboardToggle').onclick=()=>{matchdayState.scoreboardVisible=!matchdayState.scoreboardVisible;publishMatchday(null)};
  q('mmEventSide').onchange=refreshMatchdayPlayers;q('mmGoalMacro').onclick=()=>mdMacroEvent('GOAL',q('mmEventSide').value,q('mmEventPlayer').value);q('mmYellowMacro').onclick=()=>mdMacroEvent('YELLOW',q('mmEventSide').value,q('mmEventPlayer').value);q('mmRedMacro').onclick=()=>mdMacroEvent('RED',q('mmEventSide').value,q('mmEventPlayer').value);
+ q('mmGoalPlayer').onclick=mdShowGoalPlayer;q('mmReturnLive').onclick=instantReplayReturnLiveNow;q('mmUndoEvent').onclick=mdUndoLast;q('mmClearEvent').onclick=()=>{gdAbort(false);matchdayState.lastEvent=null;publishMatchday({type:'CLEAR_EVENT'});note('当前事件图形已清除')};q('mmGraphicsToggleQuick').onclick=()=>q('mmScoreboardToggle').click();
  q('mmHalf').onclick=()=>mdMatchState('HALF_TIME');q('mmFull').onclick=()=>mdMatchState('FULL_TIME');
  q('mmSubSide').onchange=refreshMatchdayPlayers;q('mmSubMacro').onclick=()=>mdSubstitutionByIds(q('mmSubSide').value,q('mmSubOff').value,q('mmSubOn').value);
  q('mmCam1').onclick=()=>vdTake('cam1');q('mmCam2').onclick=()=>vdTake('cam2');q('mmDrone').onclick=()=>vdTake('drone');q('mmReplay').onclick=instantReplayPlayLatest;q('mmGraphicsOn').onclick=vdOverlayIn;q('mmGraphicsOff').onclick=vdOverlayOut;
@@ -3701,10 +3744,10 @@ function initVmixDirector(){
  vdReadVmixInputs(false);
  setTimeout(async()=>{
   try{
-   vdLoad();const input=String(vmixDirectorSettings.graphics||'').trim(),key='sagi_graphics_loaded_SAGI4311_REPLAYFLOW_06';
+   vdLoad();const input=String(vmixDirectorSettings.graphics||'').trim(),key='sagi_graphics_loaded_SAGI4311_LIVEFLOW_07';
    if(input&&localStorage.getItem(key)!==input){
     const ok=await refreshGraphicsBrowser(false);
-    if(ok){localStorage.setItem(key,input);q('vdStatus').textContent='REPLAYFLOW 06 已强制刷新 vMix 图形 · Input '+input}
+    if(ok){localStorage.setItem(key,input);q('vdStatus').textContent='LIVEFLOW 07 已强制刷新 vMix 图形 · Input '+input}
    }
   }catch(e){}
  },1800);
@@ -4740,7 +4783,7 @@ if(standalone){
 ###SAGI_OUTPUT###
 <!doctype html>
 <html lang="zh-CN"><head>
-<meta name="sagi-build" content="SAGI4311_REPLAYFLOW_06">
+<meta name="sagi-build" content="SAGI4311_LIVEFLOW_07">
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SAGI V4.31.0 · STAGE 广播系统 · vMix</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%2307090d%22/%3E%3Ctext x=%2232%22 y=%2243%22 text-anchor=%22middle%22 font-size=%2234%22 fill=%22%23d8b55b%22%3ES%3C/text%3E%3C/svg%3E">
