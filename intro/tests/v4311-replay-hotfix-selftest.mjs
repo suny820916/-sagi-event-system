@@ -96,3 +96,10 @@ assert(control7.includes("else if(e.key==='4')instantReplayPlayLatest()"),'keybo
 assert(!control7.includes("q('mmReplay').onclick=()=>vdTake('replay')"),'old full Replay-input switch binding still present');
 assert(control7.includes("ReplayStopEvents"),'old replay playback stop guard missing');
 console.log('replay latest-only transition flow PASS');
+
+// replay controls are locked during playback and playback is stopped before returning live
+const control8=fs.readFileSync(new URL('../v45-lan.html',import.meta.url),'utf8');
+assert(control8.includes("['irGenerate','mmGenerateReplay','mmReplay','vdTakeReplay']"),'replay control busy lock incomplete');
+assert(control8.includes("结束最近回放"),'ReplayStopEvents before live return missing');
+assert(control8.includes("return ssTake(returnSlot,'INSTANT REPLAY RETURN'"),'live return camera command missing');
+console.log('replay busy lock and stop-before-return PASS');
