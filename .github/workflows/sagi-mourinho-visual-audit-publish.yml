@@ -1,0 +1,49 @@
+name: SAGI MOURINHO V2.8 VISUAL AUDIT PUBLISH
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/sagi-mourinho-visual-audit-publish.yml"
+permissions:
+  actions: read
+  contents: write
+concurrency:
+  group: sagi-mourinho-audit-publish
+  cancel-in-progress: false
+jobs:
+  publish-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Fetch actual completed visual audit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/sagi-audit
+          gh api repos/${{ github.repository }}/actions/artifacts/14459724041/zip > /tmp/sagi-audit.zip
+          unzip -q /tmp/sagi-audit.zip -d /tmp/sagi-audit
+          test -s /tmp/sagi-audit/visual_diff_report.json
+      - name: Publish measured results as readable repository JSON
+        run: |
+          set -euo pipefail
+          mkdir -p cloud-blender-worker/reports
+          cp /tmp/sagi-audit/visual_diff_report.json cloud-blender-worker/reports/mourinho_v27_v28_visual_diff.json
+          python3 - <<'PY'
+          import json
+          p='cloud-blender-worker/reports/mourinho_v27_v28_visual_diff.json'
+          r=json.load(open(p))
+          assert len(r['frames'])==9
+          print(json.dumps(r,ensure_ascii=False,indent=2))
+          PY
+          git config user.name "sagi-audit-bot"
+          git config user.email "sagi-audit-bot@users.noreply.github.com"
+          git add cloud-blender-worker/reports/mourinho_v27_v28_visual_diff.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Publish measured V2.7 versus V2.8 frame diagnostics"
+            git push
+          fi
