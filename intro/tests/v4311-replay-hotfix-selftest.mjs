@@ -18,3 +18,9 @@ assert(embedded===control.trim().replace(/\r/g,''),'BAT embedded control drift')
 assert(lines.slice(0,c).join('\n').includes('"ReplayMarkInOutLive"'),'bridge allowlist missing replay generation');
 assert(lines.slice(o+1).join('\n').includes('V4.31.0'),'certified V4.31.0 graphics baseline missing');
 console.log('SAGI V4.31.1 INSTANT REPLAY HOTFIX GATE PASS');
+
+// output build route isolation: vMix output must not compare itself against the control UI version.
+const output=fs.readFileSync(new URL('../vmix-v45-lan.html',import.meta.url),'utf8');
+assert(output.includes("fetch('/vmix?graphicsBuild='"),'output build checker must read /vmix, not control root');
+assert(!output.includes("fetch('/?graphicsBuild='"),'control-root version check would cause reload flashing when UI hotfix is newer');
+console.log('output build route isolation PASS');
