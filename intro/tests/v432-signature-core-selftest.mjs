@@ -21,6 +21,14 @@ assert(c.eventAccent(red,{homeColor:'#123456'})==='#e33440','red inherited team 
 const goal=c.normalizeEvent({type:'GOAL',side:'AWAY',team:'Away',player:{name:'Striker'}});
 assert(c.eventAccent(goal,{awayColor:'#13579b'})==='#13579b','goal team accent failed');
 assert(c.holdMs('GOAL')===5600&&c.holdMs('SUB')===6500&&c.holdMs('FULL_TIME')===9000,'hold timing drift');
+// Regression: valid zero sequence must remain usable, while unsafe identities are rejected.
+const seqZero=c.normalizeEvent({type:'GOAL',fixtureKey:'fixture-zero',sequence:0,eventId:''});
+assert(seqZero.sequence===0&&c.eventKey(seqZero)==='seq|fixture-zero|0','zero sequence identity lost');
+assert(c.normalizeEvent({type:'GOAL',sequence:-1}).sequence===null,'negative sequence accepted');
+assert(c.normalizeEvent({type:'GOAL',sequence:1.5}).sequence===null,'fractional sequence accepted');
+assert(c.normalizeEvent({type:'GOAL',sequence:Number.MAX_SAFE_INTEGER+1}).sequence===null,'unsafe sequence accepted');
+assert(c.normalizeType('YELLOW_CARD')==='YELLOW'&&c.normalizeType('RED_CARD')==='RED','referee card aliases regressed');
+assert(c.eventAccent({type:'RED',side:'AWAY'},{awayColor:'#00ff00'})===c.TOKENS.red,'referee red card confused with team/brand color');
 const replay=c.normalizeEvent({type:'REPLAY_STINGER',phase:'weird'});
 assert(replay.phase==='IN'&&replay.title==='INSTANT REPLAY','replay phase fail-safe failed');
 const long=c.normalizeEvent({type:'GOAL',team:'X'.repeat(500),player:{name:'Y'.repeat(500),photo:'z'.repeat(5000)}});
