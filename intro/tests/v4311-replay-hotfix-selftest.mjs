@@ -75,3 +75,11 @@ assert(control6.includes("sagi_graphics_loaded_SAGI4311_FLASHFIX_04"),'per-build
 assert(control6.includes("refreshGraphicsBrowser(false)"),'startup graphics reload call missing');
 assert(bat6.includes('"BrowserReload"'),'Bridge BrowserReload allowlist missing');
 console.log('startup vMix BrowserReload PASS');
+
+// single-instance port takeover: never leave vMix pointing at an older bridge on 8100.
+const bat7=fs.readFileSync(new URL('../SAGI_VMIX_LAN_V4311_REPLAY_HOTFIX.bat',import.meta.url),'utf8');
+assert(bat7.includes('[TAKEOVER] Closing previous SAGI Bridge instance'),'old bridge takeover missing');
+assert(bat7.includes("Stop-Process -Id $_.ProcessId -Force"),'old bridge termination missing');
+assert(bat7.includes('$candidate -le $PreferredPort'),'port must be locked to 8100');
+assert(!bat7.includes('$candidate -le 8120'),'silent 8101+ fallback must be disabled');
+console.log('single-instance port takeover PASS');
