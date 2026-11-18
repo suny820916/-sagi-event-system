@@ -63,6 +63,10 @@ function normalizeType(value){
   if(ALIAS[t]) t=ALIAS[t];
   return EVENT_TYPES.includes(t)?t:'CLEAR_EVENT';
 }
+function safeScore(value){
+  const n=Number(value);
+  return Number.isFinite(n)?Math.min(9999,Math.max(0,Math.floor(n))):0;
+}
 function normalizeEvent(raw,context={}){
   if(raw==null) return null;
   if(typeof raw!=='object') return {type:'CLEAR_EVENT',__signatureVersion:VERSION,__rejectedType:safeText(raw,40)};
@@ -94,8 +98,8 @@ function normalizeEvent(raw,context={}){
   if(type==='HALF_TIME'||type==='FULL_TIME'){
     e.home=safeText(raw.home||context.home,80);
     e.away=safeText(raw.away||context.away,80);
-    e.homeScore=Math.max(0,Math.floor(Number(raw.homeScore)||0));
-    e.awayScore=Math.max(0,Math.floor(Number(raw.awayScore)||0));
+    e.homeScore=safeScore(raw.homeScore);
+    e.awayScore=safeScore(raw.awayScore);
   }
   if(type==='MVP'){
     e.player=normalizePlayer(raw.player);
