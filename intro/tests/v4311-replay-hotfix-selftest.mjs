@@ -67,3 +67,11 @@ assert(bat5.includes("$t -match 'SAGI4311_FLASHFIX_04'"),'BAT bootstrap must req
 assert(bat5.includes("FLASHFIX 04 vMix output installed over stale cache"),'stale output replacement message missing');
 assert(bat5.includes("Remote vMix output is older than FLASHFIX 04"),'remote downgrade guard missing');
 console.log('stale-cache install gate PASS');
+
+// startup vMix BrowserReload: after stale-cache replacement, force the running vMix Browser Input to load it.
+const control6=fs.readFileSync(new URL('../v45-lan.html',import.meta.url),'utf8');
+const bat6=fs.readFileSync(new URL('../SAGI_VMIX_LAN_V4311_REPLAY_HOTFIX.bat',import.meta.url),'utf8');
+assert(control6.includes("sagi_graphics_loaded_SAGI4311_FLASHFIX_04"),'per-build browser reload marker missing');
+assert(control6.includes("refreshGraphicsBrowser(false)"),'startup graphics reload call missing');
+assert(bat6.includes('"BrowserReload"'),'Bridge BrowserReload allowlist missing');
+console.log('startup vMix BrowserReload PASS');
