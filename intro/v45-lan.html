@@ -17,7 +17,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="format-detection" content="telephone=no">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%2307090d%22/%3E%3Ctext x=%2232%22 y=%2243%22 text-anchor=%22middle%22 font-size=%2234%22 fill=%22%23d8b55b%22%3ES%3C/text%3E%3C/svg%3E">
-<title>SAGI V4.31.0 · STAGE 广播系统</title>
+<title>SAGI V4.31.1 · REPLAY HOTFIX</title>
 <style>
 :root{--bg:#07090d;--panel:#11151c;--line:#2b3340;--text:#f4f0e8;--muted:#8f97a5;--gold:#d8b55b;--green:#72c79a}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
@@ -403,6 +403,11 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 .gdSwitch{margin:0;display:flex;align-items:center;gap:7px;height:38px;padding:0 10px;border:1px solid #303b48;border-radius:9px;background:#0a0f15;color:#cbd3dc;font-size:10px;font-weight:900;white-space:nowrap}.gdSwitch input{width:16px;height:16px;margin:0;accent-color:#d8b55b}
 .gdField{margin:0}.gdField span{display:block;margin:0 0 3px;font-size:8px;color:#7f8996;letter-spacing:1px}.gdField select{height:30px;padding:4px 7px;border-radius:8px;font-size:10px}
 .gdAbort{min-height:38px!important;padding:6px 10px!important;background:#3a2024!important;color:#ff9a9f!important;border:1px solid #6a3038!important;font-size:10px!important}
+.irQuick{grid-column:1/-1;display:grid;grid-template-columns:auto 100px minmax(140px,190px) minmax(150px,1fr);gap:8px;align-items:center;padding-top:8px;border-top:1px solid #25303b}
+.irRecord,.irGenerate{min-height:38px!important;font-size:10px!important}.irRecord{background:#183a2a!important;color:#86e0aa!important;border:1px solid #2f6549!important}.irGenerate{background:linear-gradient(135deg,#155f8c,#238fbd)!important;color:#fff!important;border:1px solid #329bc6!important}
+.irGenerate.busy{opacity:.65;pointer-events:none}.irStatus{font-size:9px;color:#8f9aa7;line-height:1.35}.irStatus.ok{color:#78dda4}.irStatus.busy{color:#f0c96b}.irStatus.error{color:#ff858a}
+.irSeconds{height:38px!important;padding:6px 8px!important;font-size:11px!important}
+@media(max-width:650px){.irQuick{grid-template-columns:1fr 88px}.irStatus{grid-column:1/3}.irRecord,.irGenerate{min-height:44px!important}}
 @media(max-width:1050px){.gdBar{grid-template-columns:1fr 1fr 1fr}.gdIdentity{grid-column:1/4}.gdAbort{grid-column:3/4}}
 @media(max-width:650px){.gdBar{grid-template-columns:1fr 1fr}.gdIdentity{grid-column:1/3}.gdAbort{grid-column:1/3}.gdField select{height:36px}}
 
@@ -649,7 +654,7 @@ body{background:radial-gradient(circle at 78% -10%,#0a43c933,transparent 28%),li
 </head>
 <body>
 <div class="app">
-  <div class="top"><div><div class="brand">SAGI 赛事直播导播</div><div class="sub">V4.31.0 · STAGE 广播系统 · 比赛设置</div></div><div class="topRight"><div class="ver">V4.31.0</div><button id="mobileUpdateBtn" class="mobileUpdateBtn" type="button">↻ 安全更新</button><button id="mobileRollbackBtn" class="mobileRollbackBtn" type="button">↶ 回退上一版</button><div id="mobileUpdateStatus" class="mobileUpdateStatus">V4.31.0 · STAGE 广播系统 · 桥接服务已锁定</div></div></div>
+  <div class="top"><div><div class="brand">SAGI 赛事直播导播</div><div class="sub">V4.31.1 · REPLAY HOTFIX · 比赛设置</div></div><div class="topRight"><div class="ver">V4.31.1</div><button id="mobileUpdateBtn" class="mobileUpdateBtn" type="button">↻ 安全更新</button><button id="mobileRollbackBtn" class="mobileRollbackBtn" type="button">↶ 回退上一版</button><div id="mobileUpdateStatus" class="mobileUpdateStatus">V4.31.0 · STAGE 广播系统 · 桥接服务已锁定</div></div></div>
 
   <div id="pwaBar" class="pwaBar" style="display:none">
     <div class="pwaInfo">
@@ -812,6 +817,8 @@ body{background:radial-gradient(circle at 78% -10%,#0a43c933,transparent 28%),li
         <div class="mmPanelTitle">机位导播</div>
         <div class="mmRow"><button id="mmCam1" class="ok" type="button" data-camera-slot="cam1">1 主机位</button><button id="mmCam2" type="button" data-camera-slot="cam2">2 机位2</button><button id="mmDrone" type="button" data-camera-slot="drone">3 无人机</button><button id="mmReplay" class="mmMarker" type="button" data-camera-slot="replay">4 回放</button></div>
         <div class="mmRow" style="margin-top:6px"><button id="mmGraphicsOn" type="button">图形开启</button><button id="mmGraphicsOff" type="button">图形关闭</button></div>
+        <div class="mmPanelTitle" style="margin-top:10px">即时回放生成</div>
+        <div class="mmRow3"><button id="mmReplayRecord" class="ok" type="button">● 启动录制</button><select id="mmReplaySeconds"><option value="5">5秒</option><option value="8" selected>8秒</option><option value="12">12秒</option></select><button id="mmGenerateReplay" class="mmMarker" type="button">⏪ 生成回放</button></div>
         <div class="mmFilter"><div class="mmPanelTitle" style="margin-top:10px">画面滤镜 · 电影感</div><div class="filterPresets"><button class="filterOriginal" type="button" data-mm-filter="ORIGINAL">原片</button><button class="filterClean" type="button" data-mm-filter="CLEAN">清晰</button><button class="filterWarm" type="button" data-mm-filter="WARM">暖色</button><button class="filterNight" type="button" data-mm-filter="NIGHT">夜场</button></div></div>
         <div class="mmPanelTitle" style="margin-top:10px">回放标记</div>
         <div class="mmRow3"><button id="mmMarkSave" class="mmMarker" type="button">扑救</button><button id="mmMarkIncident" class="mmMarker" type="button">对抗/冲突</button><button id="mmMarkKey" class="mmMarker" type="button">精彩</button></div>
@@ -941,7 +948,7 @@ body{background:radial-gradient(circle at 78% -10%,#0a43c933,transparent 28%),li
 
   <div class="matchdayDesk">
     <div class="mdHead">
-      <div class="mdTitle">V4.31.0 · 比赛模式 <small>STAGE 广播系统 · 安全自动</small></div>
+      <div class="mdTitle">V4.31.1 · 比赛模式 <small>REPLAY HOTFIX · 安全自动</small></div>
       <div id="mdSync" class="mdSync"><span id="mdSyncDot" class="mdLiveDot"></span>比赛图形待命</div>
     </div>
     <div class="gdBar">
@@ -951,6 +958,12 @@ body{background:radial-gradient(circle at 78% -10%,#0a43c933,transparent 28%),li
       <label class="gdField"><span>回放停留</span><select id="gdReplayHold"><option value="2500">2.5s</option><option value="3500" selected>3.5s</option><option value="5000">5s</option></select></label>
       <label class="gdField"><span>返回机位</span><select id="gdReturnSlot"><option value="cam1" selected>主机位</option><option value="cam2">机位 2</option></select></label>
       <button id="gdAbort" class="gdAbort" type="button">■ 终止自动流程</button>
+      <div class="irQuick">
+        <button id="irStartRecording" class="irRecord" type="button">● 启动回放录制</button>
+        <select id="irSeconds" class="irSeconds" aria-label="生成回放长度"><option value="5">前 5 秒</option><option value="8" selected>前 8 秒</option><option value="12">前 12 秒</option></select>
+        <button id="irGenerate" class="irGenerate" type="button">⏪ 生成回放</button>
+        <span id="irStatus" class="irStatus">赛前先启动 vMix Instant Replay 录制</span>
+      </div>
     </div>
     <div id="smartDirector" class="smartDirector">
       <div class="sdHead">
@@ -2466,6 +2479,56 @@ function gdSaveFromUI(){
  graphicsDirectorSettings.returnSlot=q('gdReturnSlot').value==='cam2'?'cam2':'cam1';
  gdPersist();gdRefreshUI()
 }
+let instantReplayBusy=false,instantReplayTimer=null,instantReplayRecordingRequested=false;
+function irSyncButtons(){
+ const busy=!!instantReplayBusy;
+ for(const id of ['irGenerate','mmGenerateReplay']){const b=q(id);if(b){b.disabled=busy;b.classList.toggle('busy',busy)}}
+}
+function irSetStatus(text,state=''){
+ const el=q('irStatus');if(el){el.textContent=text;el.className='irStatus'+(state?' '+state:'')}
+}
+async function instantReplayStartRecording(){
+ if(!requireMatchReady())return false;
+ irSetStatus('正在启动 Instant Replay 录制…','busy');
+ const ok=await publishVmixDirector('ReplayStartRecording','','','启动 Instant Replay 录制');
+ instantReplayRecordingRequested=!!ok;
+ irSetStatus(ok?'Instant Replay 已发送录制启动命令':'启动失败 · 检查 vMix Replay 输入',''+(ok?'ok':'error'));
+ if(ok)note('Instant Replay 录制启动命令已发送');
+ return !!ok
+}
+async function instantReplayGenerate(seconds=8){
+ if(instantReplayBusy){note('回放流程正在执行');return false}
+ if(!requireMatchReady())return false;
+ seconds=[5,8,12].includes(Number(seconds))?Number(seconds):8;
+ instantReplayBusy=true;irSyncButtons();gdClearCameraTimers();gdAutoCameraActive=false;
+ irSetStatus('正在生成前 '+seconds+' 秒回放…','busy');
+ try{
+  const marked=await publishVmixDirector('ReplayMarkInOutLive','',0,'生成回放 · 前 '+seconds+' 秒',String(seconds));
+  if(!marked)throw new Error('MARK_FAILED');
+  await new Promise(r=>setTimeout(r,160));
+  const played=await publishVmixDirector('ReplayPlayLastEventToOutput','',0,'播放最近生成的回放');
+  if(!played)throw new Error('PLAY_FAILED');
+  mdAddReplayMarker('REPLAY','生成回放 · '+seconds+'秒');
+  irSetStatus('回放播放中 · '+seconds+' 秒 · 将自动回到比赛','busy');
+  clearTimeout(instantReplayTimer);
+  instantReplayTimer=setTimeout(async()=>{
+    const preferred=graphicsDirectorSettings.returnSlot||'cam1';
+    const returnSlot=vdSlotAvailable(preferred)?preferred:ssMainSlot();
+    let returned=false;
+    if(returnSlot&&vdSlotAvailable(returnSlot)){
+      returned=await ssTake(returnSlot,'INSTANT REPLAY RETURN','OPERATOR',true,'RETURN');
+    }
+    instantReplayBusy=false;instantReplayTimer=null;irSyncButtons();
+    irSetStatus(returned?'回放完成 · 已自动回到比赛':'回放完成 · 请手动切回主机位',returned?'ok':'error');
+  },seconds*1000+900);
+  return true
+ }catch(e){
+  instantReplayBusy=false;clearTimeout(instantReplayTimer);instantReplayTimer=null;irSyncButtons();
+  irSetStatus('生成失败 · 确认 vMix Instant Replay 已在录制','error');
+  note('回放生成失败 · 请确认 vMix Instant Replay 已开始录制');
+  return false
+ }
+}
 function gdClearTimers(){for(const t of gdTimers)clearTimeout(t);gdTimers=[]}
 function gdClearCameraTimers(){for(const t of gdCameraTimers)clearTimeout(t);gdCameraTimers=[]}
 function gdSchedule(fn,ms,seq=gdSequence){
@@ -2476,6 +2539,8 @@ function gdScheduleCamera(fn,ms,seq=gdSequence){
 }
 function gdAbort(showNote=true){
  gdSequence++;gdClearTimers();gdClearCameraTimers();gdAutoCameraActive=false;clearTimeout(mdMacroTimer);mdMacroSeq++;
+ clearTimeout(instantReplayTimer);instantReplayTimer=null;instantReplayBusy=false;irSyncButtons();
+ if(showNote)publishVmixDirector('ReplayStopEvents','','','停止正在播放的回放').catch(()=>{});
  gdSetStatus('AUTO FLOW ABORTED','manual');if(showNote)note('自动导播流程已终止')
 }
 async function gdEnsureOverlay(){
@@ -2677,7 +2742,11 @@ function sdInit(){
 function gdInit(){
  gdLoad();
  q('gdEnabled').onchange=gdSaveFromUI;q('gdAutoReplay').onchange=gdSaveFromUI;q('gdReplayHold').onchange=gdSaveFromUI;q('gdReturnSlot').onchange=gdSaveFromUI;
- q('gdAbort').onclick=()=>gdAbort(true)
+ q('gdAbort').onclick=()=>gdAbort(true);
+ if(q('irStartRecording'))q('irStartRecording').onclick=instantReplayStartRecording;
+ if(q('irGenerate'))q('irGenerate').onclick=()=>instantReplayGenerate(Number(q('irSeconds').value)||8);
+ if(q('irSeconds'))q('irSeconds').onchange=()=>{if(q('mmReplaySeconds'))q('mmReplaySeconds').value=q('irSeconds').value};
+ irSyncButtons()
 }
 function mdAddReplayMarker(type,label=''){
  const sec=mdNowSeconds(),m={id:'mk_'+Date.now().toString(36),type:String(type||'KEY'),label:String(label||type||'KEY'),at:mdFormat(sec),seconds:Math.floor(sec),score:matchdayState.homeScore+'-'+matchdayState.awayScore,createdAt:new Date().toISOString()};
@@ -2816,6 +2885,8 @@ function initMatchMode(){
  q('mmHalf').onclick=()=>mdMatchState('HALF_TIME');q('mmFull').onclick=()=>mdMatchState('FULL_TIME');
  q('mmSubSide').onchange=refreshMatchdayPlayers;q('mmSubMacro').onclick=()=>mdSubstitutionByIds(q('mmSubSide').value,q('mmSubOff').value,q('mmSubOn').value);
  q('mmCam1').onclick=()=>vdTake('cam1');q('mmCam2').onclick=()=>vdTake('cam2');q('mmDrone').onclick=()=>vdTake('drone');q('mmReplay').onclick=()=>vdTake('replay');q('mmGraphicsOn').onclick=vdOverlayIn;q('mmGraphicsOff').onclick=vdOverlayOut;
+ q('mmReplayRecord').onclick=instantReplayStartRecording;q('mmGenerateReplay').onclick=()=>instantReplayGenerate(Number(q('mmReplaySeconds').value)||8);
+ q('mmReplaySeconds').onchange=()=>{if(q('irSeconds'))q('irSeconds').value=q('mmReplaySeconds').value};
  q('mmMarkSave').onclick=()=>{mdAddReplayMarker('SAVE','精彩扑救');note('已标记扑救')};q('mmMarkIncident').onclick=()=>{mdAddReplayMarker('INCIDENT','对抗/冲突');note('已标记事件')};q('mmMarkKey').onclick=()=>{mdAddReplayMarker('KEY','精彩时刻');note('已标记精彩时刻')};
  q('mmCopyMarkers').onclick=mdCopyMarkers;q('mmClearMarkers').onclick=()=>{matchdayState.replayMarkers=[];mdPersist();mdRenderMarkers();note('回放标记已清空')};
  q('mmFreeze').onclick=emergencyFreeze;q('mmHideAll').onclick=emergencyHideAll;q('mmSafeCam').onclick=emergencySafeCamera;
