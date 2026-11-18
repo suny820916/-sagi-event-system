@@ -4183,7 +4183,8 @@ function stopCountdown(){clearInterval(startCountdown.t)}
 function cloudAdmin(){try{const x=JSON.parse(localStorage.getItem('sagi_cloud_admin_v20')||'null')||{},b=window.SAGI_CLOUD||{};return{url:x.url||b.url||'',key:x.key||b.key||'',eventSlug:x.eventSlug||b.eventSlug||'',token:x.token||''}}catch(e){const b=window.SAGI_CLOUD||{};return{url:b.url||'',key:b.key||'',eventSlug:b.eventSlug||'',token:''}}}
 function compactPlayersForGroup(group){const src=group==='FULL'?validStarters():group==='SUB'?substitutes():(['GK','DF','MF','FW'].includes(group)?grouped(group):[]);return src.map(p=>({id:p.id,layoutKey:formationPlayerKey(p),name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',squadType:p.squadType||'STARTER',photo:(group==='FULL'||group==='SUB')?'':p.photo||'',mediaUrl:(group==='FULL'||group==='SUB')?'':p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'}))}
 async function publishGroup(group,duration,show=null){
- const state={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,6),group,side:activeSide,team:currentTeamName(),formation:q('formation').value,matchFormat:{mode:matchConfig.mode,playerCount:starterLimit()},playerCount:starterLimit(),startingLabel:startingLabel(),players:compactPlayersForGroup(group),formationLayout:currentFormationLayoutPayload(),allPlayers:validStarters().map(p=>({id:p.id,layoutKey:formationPlayerKey(p),name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',photo:p.photo||'',mediaUrl:p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'})),substitutes:substitutes().map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,statLabel:p.statLabel||'',statValue:p.statValue||''})),crest:assets.crest||'',stadium:assets.bg||'',background:q('outputBg').value,teamColor:(activeSide==='HOME'?(matchdayState.homeColor||'#d8b55b'):(matchdayState.awayColor||'#4c7dff')),visualVersion:'V4.31.0-PREMIER-BROADCAST',duration,show:show||null,package:packageData(),startedAt:new Date().toISOString()};
+ const issuedAtMs=Date.now(),safeDuration=Math.max(200,Number(duration)||1000),autoNext=!!(show&&show.autoNext),expiresAtMs=group==='CLEAR'?issuedAtMs+500:(issuedAtMs+safeDuration+(autoNext?1800:60000));
+ const state={commandId:issuedAtMs+'_'+Math.random().toString(36).slice(2,6),programGate:'SAGI4311_PROGRAM',onAir:true,issuedAtMs,expiresAtMs,group,side:activeSide,team:currentTeamName(),formation:q('formation').value,matchFormat:{mode:matchConfig.mode,playerCount:starterLimit()},playerCount:starterLimit(),startingLabel:startingLabel(),players:compactPlayersForGroup(group),formationLayout:currentFormationLayoutPayload(),allPlayers:validStarters().map(p=>({id:p.id,layoutKey:formationPlayerKey(p),name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',photo:p.photo||'',mediaUrl:p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'})),substitutes:substitutes().map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,statLabel:p.statLabel||'',statValue:p.statValue||''})),crest:assets.crest||'',stadium:assets.bg||'',background:q('outputBg').value,teamColor:(activeSide==='HOME'?(matchdayState.homeColor||'#d8b55b'):(matchdayState.awayColor||'#4c7dff')),visualVersion:'V4.31.1-PROGRAM-GATE',duration:safeDuration,show:show||null,package:packageData(),startedAt:new Date(issuedAtMs).toISOString()};
  try{
    await lanPost('/api/state',{lineupIntro:state});
    return{ok:true}
@@ -6248,15 +6249,35 @@ function animatePackage(x){
  else if(x.group==='MATCH'){const card=q('matchOverlay').querySelector('.matchCardStage');if(card&&card.animate)card.animate([{opacity:0,transform:'translateY(24px) scale(.985)'},{opacity:1,transform:'translateY(0) scale(1)'}],{duration:520,fill:'forwards',easing:'cubic-bezier(.16,.84,.28,1)'});q('matchOverlay').querySelectorAll('.matchTopLine,.matchTeamBlock,.matchCenterStage,.matchMetaStage').forEach((el,i)=>{if(el&&el.animate)el.animate([{opacity:0,transform:'translateY('+(i?18:-12)+'px)'},{opacity:1,transform:'translateY(0)'}],{duration:460,delay:90+i*90,fill:'forwards',easing:'ease-out'})})}
  else if(x.group==='COUNTDOWN')startCountdown(x.duration)
 }
+let introExpiryTimer=null;
+function introStateAllowed(x,now=Date.now()){
+ if(!x||!x.commandId)return false;
+ if(x.group==='CLEAR')return true;
+ if(x.programGate!=='SAGI4311_PROGRAM'||x.onAir!==true)return false;
+ const issued=Math.max(0,Number(x.issuedAtMs)||0),expires=Math.max(0,Number(x.expiresAtMs)||0);
+ if(!issued||!expires)return false;
+ if(now<issued-5000)return false;
+ if(now>expires)return false;
+ return true
+}
+function hideIntroStage(reason='SAFE'){
+ clearTimeout(introExpiryTimer);introExpiryTimer=null;
+ q('stage').style.opacity='0';q('stage').dataset.program='clear';q('stage').dataset.guard=reason;
+}
 function render(x){
+ if(!introStateAllowed(x)){hideIntroStage('REJECTED');return false}
+ clearTimeout(introExpiryTimer);introExpiryTimer=null;
  if(x&&x.group==='CLEAR'){
   current=x;clearInterval(startCountdown.t);clearTimeout(hideTimer);clearTimeout(manageShowMusic.stopTimer);
   try{if(manageShowMusic.audio){manageShowMusic.audio.pause();manageShowMusic.audio.currentTime=0}}catch(e){}
   builtInThemeStop();['stingOverlay','matchOverlay','countdownOverlay'].forEach(id=>q(id).classList.remove('on'));
   q('players').innerHTML='';q('fullList').innerHTML='';q('subList').innerHTML='';q('nodes').innerHTML='';
-  q('stage').style.opacity='0';q('stage').dataset.program='clear';return;
+  hideIntroStage('CLEAR');return true;
  }
- q('stage').style.opacity='1';q('stage').dataset.program='on';q('stage').style.setProperty('--teamAccent',x.teamColor||'#d8b55b');
+ q('stage').style.opacity='1';q('stage').dataset.program='on';q('stage').dataset.guard='PROGRAM';
+ const ttl=Math.max(0,(Number(x.expiresAtMs)||0)-Date.now());
+ if(ttl>0)introExpiryTimer=setTimeout(()=>hideIntroStage('EXPIRED'),ttl);
+q('stage').style.setProperty('--teamAccent',x.teamColor||'#d8b55b');
  current=x;q('stage').dataset.side=x.side||'HOME';q('sideBadgeStage').textContent=(x.side==='AWAY'?'AWAY · 客队':'HOME · 主队');clearInterval(startCountdown.t);['stingOverlay','matchOverlay','countdownOverlay'].forEach(id=>q(id).classList.remove('on'));syncPackageStage(x);manageShowMusic(x);playRealCue(x);applyShowTransition(x.show&&x.show.transition);showCueDisplay(x.show||null);q('stage').dataset.showStep=x.show&&Number.isFinite(+x.show.stepIndex)?String(x.show.stepIndex):'';applyVisualGroup(x.group||'TEAM',x);updateTunnelLabels(x);q('stageLineupLabel').textContent=startingLabel(x);q('team').textContent=x.team||'TEAM';applyBg(x);const tacticalOn=['GK','DF','MF','FW','FULL'].includes(x.group);q('formationPanel').style.display=tacticalOn?'block':'none';q('fullList').style.display='none';q('subList').style.display='none';q('players').style.display='flex';
  if(x.group==='STING'){q('groupTitle').textContent='赛事包装';q('groupName').textContent='赛事标识';q('players').style.display='none';q('stingOverlay').classList.add('on')}
  else if(x.group==='MATCH'){q('groupTitle').textContent='赛事包装';q('groupName').textContent='比赛信息';q('players').style.display='none';q('matchOverlay').classList.add('on')}
@@ -6507,7 +6528,7 @@ async function checkOutputBuild(){
 async function poll(){
  try{
    const p=await lanState(),x=p.lineupIntro;
-   if(x&&x.commandId&&x.commandId!==last){last=x.commandId;render(x)}
+   if(x&&x.commandId&&x.commandId!==last){last=x.commandId;if(introStateAllowed(x))render(x);else hideIntroStage('STALE_STATE')}
  }catch(e){}
  try{
    const g=await lanMatchday();
