@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
+<meta name="sagi-build" content="SAGI4311_LIVEFLOW_07">
 <!-- SAGI LIVE MATCH DIRECTOR · SAFE UPDATE COMPATIBILITY MARKER -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -17,7 +18,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="format-detection" content="telephone=no">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%2307090d%22/%3E%3Ctext x=%2232%22 y=%2243%22 text-anchor=%22middle%22 font-size=%2234%22 fill=%22%23d8b55b%22%3ES%3C/text%3E%3C/svg%3E">
-<title>SAGI V4.31.0 · STAGE 广播系统</title>
+<title>SAGI V4.31.1 · REPLAY HOTFIX</title>
 <style>
 :root{--bg:#07090d;--panel:#11151c;--line:#2b3340;--text:#f4f0e8;--muted:#8f97a5;--gold:#d8b55b;--green:#72c79a}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
@@ -403,6 +404,11 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 .gdSwitch{margin:0;display:flex;align-items:center;gap:7px;height:38px;padding:0 10px;border:1px solid #303b48;border-radius:9px;background:#0a0f15;color:#cbd3dc;font-size:10px;font-weight:900;white-space:nowrap}.gdSwitch input{width:16px;height:16px;margin:0;accent-color:#d8b55b}
 .gdField{margin:0}.gdField span{display:block;margin:0 0 3px;font-size:8px;color:#7f8996;letter-spacing:1px}.gdField select{height:30px;padding:4px 7px;border-radius:8px;font-size:10px}
 .gdAbort{min-height:38px!important;padding:6px 10px!important;background:#3a2024!important;color:#ff9a9f!important;border:1px solid #6a3038!important;font-size:10px!important}
+.irQuick{grid-column:1/-1;display:grid;grid-template-columns:auto 100px minmax(140px,190px) minmax(150px,1fr);gap:8px;align-items:center;padding-top:8px;border-top:1px solid #25303b}
+.irRecord,.irGenerate{min-height:38px!important;font-size:10px!important}.irRecord{background:#183a2a!important;color:#86e0aa!important;border:1px solid #2f6549!important}.irGenerate{background:linear-gradient(135deg,#155f8c,#238fbd)!important;color:#fff!important;border:1px solid #329bc6!important}
+.irGenerate.busy{opacity:.65;pointer-events:none}.irStatus{font-size:9px;color:#8f9aa7;line-height:1.35}.irStatus.ok{color:#78dda4}.irStatus.busy{color:#f0c96b}.irStatus.error{color:#ff858a}
+.irSeconds{height:38px!important;padding:6px 8px!important;font-size:11px!important}
+@media(max-width:650px){.irQuick{grid-template-columns:1fr 88px}.irStatus{grid-column:1/3}.irRecord,.irGenerate{min-height:44px!important}}
 @media(max-width:1050px){.gdBar{grid-template-columns:1fr 1fr 1fr}.gdIdentity{grid-column:1/4}.gdAbort{grid-column:3/4}}
 @media(max-width:650px){.gdBar{grid-template-columns:1fr 1fr}.gdIdentity{grid-column:1/3}.gdAbort{grid-column:1/3}.gdField select{height:36px}}
 
@@ -646,10 +652,24 @@ body{background:radial-gradient(circle at 78% -10%,#0a43c933,transparent 28%),li
 .mdProEditor:before{content:"SAGI SIGNATURE · 黑金 / 天山白 / 帕米尔蓝";display:block;margin:-1px 0 9px;padding:7px 9px;border-left:3px solid #d3ae5b;background:#080a0f;color:#d3ae5b;font-size:9px;font-weight:1000;letter-spacing:1.1px}
 
 </style>
+<style>
+/* ===== SAGI LIVE FLOW 07 · HUMANIZED FOOTBALL EVENT ORDER ===== */
+.mmLiveFlow{margin:10px 0 12px;padding:12px;border:1px solid #35506a;border-radius:18px;background:linear-gradient(180deg,#0d1620,#080d13);box-shadow:0 18px 42px #0007;position:relative}
+.mmFlowHead{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-bottom:9px}.mmFlowHead b{font-size:15px;letter-spacing:2px;color:#fff}.mmFlowHead span{font-size:9px;color:#8292a2;letter-spacing:.5px}
+.mmFlowSelectors{display:grid;grid-template-columns:140px minmax(180px,1fr);gap:7px;margin-bottom:8px}.mmFlowSelectors select{min-height:42px;font-size:12px}
+.mmFlowPrimary{display:grid;grid-template-columns:1.15fr 1.15fr 1fr 1fr 1fr;gap:7px}.mmFlowPrimary button{min-height:58px!important;font-size:12px!important;font-weight:1000!important;letter-spacing:.3px}.mmFlowPrimary .goal{background:linear-gradient(135deg,#17603b,#258e59)!important;color:#fff}.mmFlowPrimary .replay{background:linear-gradient(135deg,#164b76,#237eb4)!important;color:#fff}.mmFlowPrimary .player{background:linear-gradient(135deg,#4a3b19,#8c6b22)!important;color:#ffe6a3}.mmFlowPrimary .live{background:linear-gradient(135deg,#52222a,#8a303b)!important;color:#fff}
+.mmFlowReplaySetup{display:grid;grid-template-columns:150px 105px 1fr;gap:7px;align-items:center;margin-top:7px}.mmFlowReplaySetup button,.mmFlowReplaySetup select{min-height:40px!important}.mmFlowHint{font-size:9px;color:#778695;line-height:1.35}
+.mmFlowSecondary{display:grid;grid-template-columns:1fr 1fr 1.25fr 1fr 1fr;gap:7px;margin-top:9px;padding-top:9px;border-top:1px solid #273645}.mmFlowSecondary button{min-height:46px!important;font-size:10px!important}.mmFlowSecondary .undo{border-color:#a47b34!important;color:#ffd98a!important}.mmFlowSecondary .clear{border-color:#6f3d46!important;color:#ff9da6!important}
+.mmFlowSub{display:grid;grid-template-columns:120px 1fr 1fr 1.15fr;gap:7px;margin-top:7px}.mmFlowSub select,.mmFlowSub button{min-height:42px!important}
+.mmDirectorOnly .mmPanelTitle:first-child{margin-bottom:8px}
+#matchCockpit:not(.penaltyActive) .simplePenaltyControl,#matchCockpit:not(.penaltyActive) .mmPenaltyDirector{display:none!important}
+@media(max-width:850px){.mmFlowHead{align-items:flex-start;flex-direction:column}.mmFlowPrimary{grid-template-columns:1fr 1fr}.mmFlowPrimary .goal{grid-column:1/2}.mmFlowPrimary .live{grid-column:1/3}.mmFlowSelectors{grid-template-columns:1fr 1fr}.mmFlowSecondary{grid-template-columns:1fr 1fr}.mmFlowSub{grid-template-columns:1fr 1fr}.mmFlowReplaySetup{grid-template-columns:1fr 90px}.mmFlowHint{grid-column:1/3}.mmFlowPrimary button{min-height:56px!important}}
+@media(max-width:520px){.mmLiveFlow{padding:9px}.mmFlowPrimary button{font-size:11px!important}.mmFlowSecondary button,.mmFlowSub button{min-height:48px!important}}
+</style>
 </head>
 <body>
 <div class="app">
-  <div class="top"><div><div class="brand">SAGI 赛事直播导播</div><div class="sub">V4.31.0 · STAGE 广播系统 · 比赛设置</div></div><div class="topRight"><div class="ver">V4.31.0</div><button id="mobileUpdateBtn" class="mobileUpdateBtn" type="button">↻ 安全更新</button><button id="mobileRollbackBtn" class="mobileRollbackBtn" type="button">↶ 回退上一版</button><div id="mobileUpdateStatus" class="mobileUpdateStatus">V4.31.0 · STAGE 广播系统 · 桥接服务已锁定</div></div></div>
+  <div class="top"><div><div class="brand">SAGI 赛事直播导播</div><div class="sub">V4.31.1 · REPLAY HOTFIX · 比赛设置</div></div><div class="topRight"><div class="ver">V4.31.1</div><button id="mobileUpdateBtn" class="mobileUpdateBtn" type="button">↻ 安全更新</button><button id="mobileRollbackBtn" class="mobileRollbackBtn" type="button">↶ 回退上一版</button><div id="mobileUpdateStatus" class="mobileUpdateStatus">V4.31.0 · STAGE 广播系统 · 桥接服务已锁定</div></div></div>
 
   <div id="pwaBar" class="pwaBar" style="display:none">
     <div class="pwaInfo">
@@ -761,12 +781,34 @@ body{background:radial-gradient(circle at 78% -10%,#0a43c933,transparent 28%),li
       <div class="mmStatusCard"><span>状态恢复</span><b id="mmRecoveryStatus">本机 + 桥接服务</b></div>
     </div>
 
+    <div class="mmLiveFlow mmScoreOnly">
+      <div class="mmFlowHead"><b>LIVE FLOW · 比赛事件主链</b><span>按比赛发生顺序操作，不再跨区域找按钮</span></div>
+      <div class="mmFlowSelectors"><select id="mmEventSide"><option value="HOME">主队</option><option value="AWAY">客队</option></select><select id="mmEventPlayer"><option value="">选择球员 / 进球后可补选进球队员</option></select></div>
+      <div class="mmFlowPrimary">
+        <button id="mmGoalMacro" class="goal" type="button">⚽ 1 · 进球</button>
+        <button id="mmGenerateReplay" class="replay" type="button">⏪ 2 · 生成回放</button>
+        <button id="mmReplay" class="replay" type="button" data-camera-slot="replay">▶ 3 · 最近回放</button>
+        <button id="mmGoalPlayer" class="player" type="button">👤 4 · 进球队员</button>
+        <button id="mmReturnLive" class="live" type="button">↩ 5 · 回主画面</button>
+      </div>
+      <div class="mmFlowReplaySetup"><button id="mmReplayRecord" class="ok" type="button">● 启动回放录制</button><select id="mmReplaySeconds"><option value="5">前 5 秒</option><option value="8" selected>前 8 秒</option><option value="12">前 12 秒</option></select><span class="mmFlowHint">进球后可先按「进球」立即更新比分，再生成回放；回放期间选择球员，回来后按「进球队员」。</span></div>
+      <div class="mmFlowSecondary">
+        <button id="mmYellowMacro" class="mmMacroYellow" type="button"><span class="refCardIcon yellow" aria-hidden="true"></span><span>黄牌</span></button>
+        <button id="mmRedMacro" class="mmMacroRed" type="button"><span class="refCardIcon red" aria-hidden="true"></span><span>红牌</span></button>
+        <button id="mmUndoEvent" class="undo" type="button">↶ 撤销上一事件</button>
+        <button id="mmClearEvent" class="clear" type="button">清当前图形</button>
+        <button id="mmGraphicsToggleQuick" type="button">比分牌 开/关</button>
+      </div>
+      <div class="mmFlowSub"><select id="mmSubSide"><option value="HOME">主队换人</option><option value="AWAY">客队换人</option></select><select id="mmSubOff"><option value="">换下球员</option></select><select id="mmSubOn"><option value="">换上球员</option></select><button id="mmSubMacro" type="button">↕ 换人</button></div>
+    </div>
+
     <div class="mmGrid">
       <div class="mmPanel mmScoreOnly">
         <div class="mmPanelTitle">比分与计时</div>
         <div class="mmScoreTeams"><div><div id="mmHomeName" class="mmTeam">HOME</div><div id="mmHomeScore" class="mmScore">0</div></div><div><div id="mmClock" class="mmClock" style="font-size:25px">00:00</div><div id="mmPeriod" class="mmPeriod">1H</div></div><div><div id="mmAwayName" class="mmTeam">AWAY</div><div id="mmAwayScore" class="mmScore">0</div></div></div>
         <div class="mmScoreBtns"><button id="mmHomeMinus" type="button">主队 −</button><button id="mmHomePlus" class="ok" type="button">主队 ＋</button><button id="mmAwayMinus" type="button">客队 −</button><button id="mmAwayPlus" class="ok" type="button">客队 ＋</button></div>
         <div class="mmRow3" style="margin-top:6px"><button id="mmClockStart" class="ok" type="button">▶ 开始</button><button id="mmClockPause" type="button">Ⅱ 暂停</button><button id="mmScoreboardToggle" type="button">比分牌 开/关</button></div>
+        <div class="mmRow" style="margin-top:6px"><button id="mmHalf" type="button">半场结束</button><button id="mmFull" type="button">全场结束</button></div>
       </div>
       <div class="mmPanel mmScoreOnly simplePenaltyControl">
         <div class="mmPanelTitle">世界杯级点球记分牌</div>
@@ -797,20 +839,10 @@ body{background:radial-gradient(circle at 78% -10%,#0a43c933,transparent 28%),li
         <div class="mmRow" style="margin-top:6px"><button id="mmPenStart" type="button">开始点球大战</button><button id="mmPenUndo" type="button">↶ 撤销上一罚</button></div>
       </div>
 
-      <div class="mmPanel mmScoreOnly">
-        <div class="mmPanelTitle">一键事件</div>
-        <div class="mmRow"><select id="mmEventSide"><option value="HOME">主队</option><option value="AWAY">客队</option></select><select id="mmEventPlayer"><option value="">球员可选</option></select></div>
-        <div class="mmRow3" style="margin-top:6px"><button id="mmGoalMacro" class="mmMacroGoal" type="button">⚽ 进球宏</button><button id="mmYellowMacro" class="mmMacroYellow" type="button"><span class="refCardIcon yellow" aria-hidden="true"></span><span>黄牌宏</span></button><button id="mmRedMacro" class="mmMacroRed" type="button"><span class="refCardIcon red" aria-hidden="true"></span><span>红牌宏</span></button></div>
-        <div class="mmRow" style="margin-top:6px"><button id="mmHalf" type="button">半场结束</button><button id="mmFull" type="button">全场结束</button></div>
-        <div class="mmPanelTitle" style="margin-top:9px">换人快捷操作</div>
-        <div class="mmRow3"><select id="mmSubSide"><option value="HOME">主队</option><option value="AWAY">客队</option></select><select id="mmSubOff"><option value="">换下</option></select><select id="mmSubOn"><option value="">换上</option></select></div>
-        <button id="mmSubMacro" style="width:100%;margin-top:6px" type="button">↕ 一键播放换人</button>
-        <div class="mmRoleHint">进球宏：自动加分 → 记录回放点 → 播放事件 → 自动回到比分牌。换人同样自动收起。</div>
-      </div>
 
       <div class="mmPanel mmDirectorOnly">
         <div class="mmPanelTitle">机位导播</div>
-        <div class="mmRow"><button id="mmCam1" class="ok" type="button" data-camera-slot="cam1">1 主机位</button><button id="mmCam2" type="button" data-camera-slot="cam2">2 机位2</button><button id="mmDrone" type="button" data-camera-slot="drone">3 无人机</button><button id="mmReplay" class="mmMarker" type="button" data-camera-slot="replay">4 回放</button></div>
+        <div class="mmRow3"><button id="mmCam1" class="ok" type="button" data-camera-slot="cam1">1 主机位</button><button id="mmCam2" type="button" data-camera-slot="cam2">2 机位2</button><button id="mmDrone" type="button" data-camera-slot="drone">3 无人机</button></div>
         <div class="mmRow" style="margin-top:6px"><button id="mmGraphicsOn" type="button">图形开启</button><button id="mmGraphicsOff" type="button">图形关闭</button></div>
         <div class="mmFilter"><div class="mmPanelTitle" style="margin-top:10px">画面滤镜 · 电影感</div><div class="filterPresets"><button class="filterOriginal" type="button" data-mm-filter="ORIGINAL">原片</button><button class="filterClean" type="button" data-mm-filter="CLEAN">清晰</button><button class="filterWarm" type="button" data-mm-filter="WARM">暖色</button><button class="filterNight" type="button" data-mm-filter="NIGHT">夜场</button></div></div>
         <div class="mmPanelTitle" style="margin-top:10px">回放标记</div>
@@ -900,7 +932,7 @@ body{background:radial-gradient(circle at 78% -10%,#0a43c933,transparent 28%),li
           <button class="vdSource" id="vdTakeCam1" type="button" data-vd-take="cam1"><b>1</b><span>主全景</span></button>
           <button class="vdSource" id="vdTakeCam2" type="button" data-vd-take="cam2"><b>2</b><span>边线近景</span></button>
           <button class="vdSource" id="vdTakeDrone" type="button" data-vd-take="drone"><b>3</b><span>无人机</span></button>
-          <button class="vdSource" id="vdTakeReplay" type="button" data-vd-take="replay"><b>4</b><span>回放</span></button>
+          <button class="vdSource" id="vdTakeReplay" type="button" data-vd-take="replay"><b>4</b><span>最近回放</span></button>
         </div>
         <div class="vdPreview">
           <button id="vdPreviewCam1" type="button" data-vd-preview="cam1">预监 · 主全景</button>
@@ -921,7 +953,7 @@ body{background:radial-gradient(circle at 78% -10%,#0a43c933,transparent 28%),li
         </div>
         <div class="vdBridgeHelp">局域网直连：手机与 vMix 电脑连接同一 Wi‑Fi。此页面由桥接服务在本机提供，所有导播指令与比赛图形直接走局域网，不依赖 Supabase。</div>
         <a class="vdDownload" href="/health" target="_blank">检查局域网桥接</a>
-        <div class="vdKeys">快捷键：1/2/3/4 手动切机位 · G 图形开启 · X 图形关闭 · A 关键进攻保护。输入框正在编辑时快捷键自动停用。</div>
+        <div class="vdKeys">快捷键：1/2/3 切机位 · 4 播放最近回放 · G 图形开启 · X 图形关闭 · A 关键进攻保护。输入框正在编辑时快捷键自动停用。</div>
       </div>
       <div class="vdPanel">
         <div class="vdPanelTitle">画面滤镜 · 电影感</div>
@@ -941,7 +973,7 @@ body{background:radial-gradient(circle at 78% -10%,#0a43c933,transparent 28%),li
 
   <div class="matchdayDesk">
     <div class="mdHead">
-      <div class="mdTitle">V4.31.0 · 比赛模式 <small>STAGE 广播系统 · 安全自动</small></div>
+      <div class="mdTitle">V4.31.1 · 比赛模式 <small>REPLAY HOTFIX · 安全自动</small></div>
       <div id="mdSync" class="mdSync"><span id="mdSyncDot" class="mdLiveDot"></span>比赛图形待命</div>
     </div>
     <div class="gdBar">
@@ -951,6 +983,12 @@ body{background:radial-gradient(circle at 78% -10%,#0a43c933,transparent 28%),li
       <label class="gdField"><span>回放停留</span><select id="gdReplayHold"><option value="2500">2.5s</option><option value="3500" selected>3.5s</option><option value="5000">5s</option></select></label>
       <label class="gdField"><span>返回机位</span><select id="gdReturnSlot"><option value="cam1" selected>主机位</option><option value="cam2">机位 2</option></select></label>
       <button id="gdAbort" class="gdAbort" type="button">■ 终止自动流程</button>
+      <div class="irQuick">
+        <button id="irStartRecording" class="irRecord" type="button">● 启动回放录制</button>
+        <select id="irSeconds" class="irSeconds" aria-label="生成回放长度"><option value="5">前 5 秒</option><option value="8" selected>前 8 秒</option><option value="12">前 12 秒</option></select>
+        <button id="irGenerate" class="irGenerate" type="button">⏪ 生成回放</button>
+        <span id="irStatus" class="irStatus">赛前先启动 vMix Instant Replay 录制</span>
+      </div>
     </div>
     <div id="smartDirector" class="smartDirector">
       <div class="sdHead">
@@ -1948,21 +1986,21 @@ function initMatchSetup(){
 }
 
 const DEFAULT_SHOW=[
- {id:'sting',group:'STING',label:'赛事标识',duration:2000,transition:'FLASH',cue:'STING',enabled:true},
+ {id:'sting',group:'STING',label:'赛事标识',duration:2000,transition:'FADE',cue:'STING',enabled:true},
  {id:'match',group:'MATCH',label:'比赛信息',duration:3000,transition:'FADE',cue:'RISER',enabled:true},
  {id:'countdown',group:'COUNTDOWN',label:'开场倒计时',duration:5000,transition:'ZOOM',cue:'HIT',enabled:true},
  {id:'home_team',side:'HOME',group:'TEAM',label:'主队开场',duration:2500,transition:'FADE',cue:'RISER',enabled:true},
  {id:'home_gk',side:'HOME',group:'GK',label:'主队门将',duration:3000,transition:'ZOOM',cue:'HIT',enabled:true},
  {id:'home_df',side:'HOME',group:'DF',label:'主队后卫',duration:4000,transition:'SLIDE',cue:'WHOOSH',enabled:true},
  {id:'home_mf',side:'HOME',group:'MF',label:'主队中场',duration:4000,transition:'SLIDE',cue:'WHOOSH',enabled:true},
- {id:'home_fw',side:'HOME',group:'FW',label:'主队前锋',duration:4000,transition:'FLASH',cue:'HIT',enabled:true},
+ {id:'home_fw',side:'HOME',group:'FW',label:'主队前锋',duration:4000,transition:'FADE',cue:'HIT',enabled:true},
  {id:'home_full',side:'HOME',group:'FULL',label:'主队完整首发',duration:6000,transition:'ZOOM',cue:'CROWD',enabled:true},
  {id:'home_sub',side:'HOME',group:'SUB',label:'主队替补名单',duration:5000,transition:'SLIDE',cue:'WHOOSH',enabled:true},
  {id:'away_team',side:'AWAY',group:'TEAM',label:'客队开场',duration:2500,transition:'FADE',cue:'RISER',enabled:true},
  {id:'away_gk',side:'AWAY',group:'GK',label:'客队门将',duration:3000,transition:'ZOOM',cue:'HIT',enabled:true},
  {id:'away_df',side:'AWAY',group:'DF',label:'客队后卫',duration:4000,transition:'SLIDE',cue:'WHOOSH',enabled:true},
  {id:'away_mf',side:'AWAY',group:'MF',label:'客队中场',duration:4000,transition:'SLIDE',cue:'WHOOSH',enabled:true},
- {id:'away_fw',side:'AWAY',group:'FW',label:'客队前锋',duration:4000,transition:'FLASH',cue:'HIT',enabled:true},
+ {id:'away_fw',side:'AWAY',group:'FW',label:'客队前锋',duration:4000,transition:'FADE',cue:'HIT',enabled:true},
  {id:'away_full',side:'AWAY',group:'FULL',label:'客队完整首发',duration:6000,transition:'ZOOM',cue:'CROWD',enabled:true},
  {id:'away_sub',side:'AWAY',group:'SUB',label:'客队替补名单',duration:5000,transition:'SLIDE',cue:'WHOOSH',enabled:true}
 ];
@@ -2221,6 +2259,7 @@ function refreshMatchdayUI(){
  if(q('mmHomeScore'))q('mmHomeScore').textContent=matchdayState.homeScore;
  if(q('mmAwayScore'))q('mmAwayScore').textContent=matchdayState.awayScore;
  if(q('mmPeriod'))q('mmPeriod').textContent=mdPeriodName(matchdayState.period)+(matchdayState.stoppageTime?' · '+matchdayState.stoppageTime:'');
+ const cockpit=q('matchCockpit');if(cockpit)cockpit.classList.toggle('penaltyActive',matchdayState.period==='PEN'||!!(matchdayState.penaltyShootout&&matchdayState.penaltyShootout.started)||!!(matchdayState.simplePenalty&&matchdayState.simplePenalty.visible));
  if(q('mmScoreboardToggle'))q('mmScoreboardToggle').textContent=matchdayState.scoreboardVisible?'隐藏比分牌':'显示比分牌';
  if(q('mmFreeze'))q('mmFreeze').textContent=matchdayState.scoreboardFrozen?'解除比分冻结':'冻结比分牌';
  mdRenderMarkers();mdRenderSimplePenalty();mdRenderPenaltyDirector();applyOperatorRole(matchOperatorRole,false);
@@ -2466,6 +2505,107 @@ function gdSaveFromUI(){
  graphicsDirectorSettings.returnSlot=q('gdReturnSlot').value==='cam2'?'cam2':'cam1';
  gdPersist();gdRefreshUI()
 }
+let instantReplayBusy=false,instantReplayTimer=null,instantReplayRecordingRequested=false,replayStingerCleanupTimer=null,replayStingerSeq=0;
+const IR_LAST_DURATION_KEY='sagi_instant_replay_last_duration_v4311';
+function irSaveLastDuration(seconds){const n=[5,8,12].includes(Number(seconds))?Number(seconds):8;try{localStorage.setItem(IR_LAST_DURATION_KEY,String(n))}catch(e){}return n}
+function irLastDuration(){let n=8;try{n=Number(localStorage.getItem(IR_LAST_DURATION_KEY)||0)||Number(q('irSeconds')&&q('irSeconds').value)||Number(q('mmReplaySeconds')&&q('mmReplaySeconds').value)||8}catch(e){}return[5,8,12].includes(n)?n:8}
+function irFinishBusy(text,state=''){instantReplayBusy=false;clearTimeout(instantReplayTimer);instantReplayTimer=null;irSyncButtons();if(text)irSetStatus(text,state)}
+function irSyncButtons(){
+ const busy=!!instantReplayBusy;
+ for(const id of ['irGenerate','mmGenerateReplay','mmReplay','vdTakeReplay']){const b=q(id);if(b){b.disabled=busy;b.classList.toggle('busy',busy)}}
+}
+function irSetStatus(text,state=''){
+ const el=q('irStatus');if(el){el.textContent=text;el.className='irStatus'+(state?' '+state:'')}
+}
+async function instantReplayStartRecording(){
+ if(!requireMatchReady())return false;
+ irSetStatus('正在启动 Instant Replay 录制…','busy');
+ const ok=await publishVmixDirector('ReplayStartRecording','','','启动 Instant Replay 录制');
+ instantReplayRecordingRequested=!!ok;
+ irSetStatus(ok?'Instant Replay 已发送录制启动命令':'启动失败 · 检查 vMix Replay 输入',''+(ok?'ok':'error'));
+ if(ok)note('Instant Replay 录制启动命令已发送');
+ return !!ok
+}
+async function replayStingerAction(phase='IN',switchAction=null,label=''){
+ if(!matchReady)return false;vdSave();
+ const seq=++replayStingerSeq;clearTimeout(replayStingerCleanupTimer);replayStingerCleanupTimer=null;
+ const overlayWasVisible=!!matchdayState.overlayVisible;
+ if(!overlayWasVisible){
+   matchdayState.overlayVisible=true;mdPersist();
+   await publishVmixDirector('OverlayInput'+vmixDirectorSettings.overlay+'In',vmixDirectorSettings.graphics,0,'REPLAY TRANSITION ON')
+ }
+ gdSetStatus((phase==='OUT'?'BACK TO LIVE':'INSTANT REPLAY')+' · SAGI TRANSITION','busy');
+ await publishMatchday(replayStingerPayload(phase));
+ // 1.45s stinger panels fully cover 18%-72% (261-1044ms).
+ // 920ms keeps the actual switch inside that cover window even with up to ~650ms output poll latency.
+ await new Promise(r=>setTimeout(r,REPLAY_STINGER_SWITCH_MS));
+ if(seq!==replayStingerSeq)return false;
+ let ok=false;try{ok=switchAction?!!(await switchAction()):true}catch(e){ok=false}
+ // Cleanup is deliberately asynchronous. The caller can start replay timing from the real switch point.
+ replayStingerCleanupTimer=setTimeout(async()=>{
+   if(seq!==replayStingerSeq)return;
+   try{await publishMatchday({type:'CLEAR_EVENT'})}catch(e){}
+   if(!overlayWasVisible){
+     try{matchdayState.overlayVisible=false;mdPersist();await publishVmixDirector('OverlayInput'+vmixDirectorSettings.overlay+'Out','',0,'REPLAY TRANSITION RESTORE')}catch(e){}
+   }
+   replayStingerCleanupTimer=null
+ },REPLAY_STINGER_POST_SWITCH_CLEAN_MS);
+ return !!ok
+}
+async function instantReplayBeginLatest(seconds=8,label='最近回放'){
+ seconds=irSaveLastDuration(seconds);
+ const played=await replayStingerAction('IN',()=>publishVmixDirector('ReplayPlayLastEventToOutput','',0,label+' · 只播放最近一条'),'PLAY LATEST');
+ if(!played)throw new Error('PLAY_FAILED');
+ irSetStatus(label+'播放中 · '+seconds+' 秒 · 自动返回比赛','busy');
+ clearTimeout(instantReplayTimer);
+ // Start BACK TO LIVE slightly before the replay endpoint so the cut is hidden by the transition.
+ const delay=Math.max(0,seconds*1000-REPLAY_STINGER_SWITCH_MS);
+ instantReplayTimer=setTimeout(async()=>{
+   const preferred=graphicsDirectorSettings.returnSlot||'cam1';
+   const returnSlot=vdSlotAvailable(preferred)?preferred:ssMainSlot();
+   let returned=false;
+   if(returnSlot&&vdSlotAvailable(returnSlot)){
+     returned=await replayStingerAction('OUT',async()=>{await publishVmixDirector('ReplayStopEvents','','','结束最近回放');return ssTake(returnSlot,'INSTANT REPLAY RETURN','OPERATOR',true,'RETURN')},'BACK TO LIVE');
+   }
+   irFinishBusy(returned?'回放完成 · SAGI 转场已返回比赛':'回放结束 · 请手动切回主机位',returned?'ok':'error');
+ },delay);
+ return true
+}
+async function instantReplayGenerate(seconds=8){
+ if(instantReplayBusy){note('回放流程正在执行');return false}
+ if(!requireMatchReady())return false;
+ seconds=[5,8,12].includes(Number(seconds))?Number(seconds):8;
+ instantReplayBusy=true;irSyncButtons();gdClearCameraTimers();gdAutoCameraActive=false;
+ irSetStatus('正在生成前 '+seconds+' 秒回放…','busy');
+ try{
+  // Stop any prior replay playback first; this never deletes recorded events.
+  await publishVmixDirector('ReplayStopEvents','','','停止旧回放播放');
+  const marked=await publishVmixDirector('ReplayMarkInOutLive','',0,'生成回放 · 前 '+seconds+' 秒',String(seconds));
+  if(!marked)throw new Error('MARK_FAILED');
+  mdAddReplayMarker('REPLAY','生成回放 · '+seconds+'秒');
+  await new Promise(r=>setTimeout(r,180));
+  return await instantReplayBeginLatest(seconds,'刚生成的回放')
+ }catch(e){
+  irFinishBusy('生成失败 · 确认 vMix Instant Replay 已在录制','error');
+  note('回放生成失败 · 请确认 vMix Instant Replay 已开始录制');
+  return false
+ }
+}
+async function instantReplayPlayLatest(){
+ if(instantReplayBusy){note('回放流程正在执行');return false}
+ if(!requireMatchReady())return false;
+ const seconds=irLastDuration();
+ instantReplayBusy=true;irSyncButtons();gdClearCameraTimers();gdAutoCameraActive=false;
+ irSetStatus('准备播放最近一条回放…','busy');
+ try{
+  await publishVmixDirector('ReplayStopEvents','','','停止旧回放播放');
+  return await instantReplayBeginLatest(seconds,'最近一条回放')
+ }catch(e){
+  irFinishBusy('最近回放播放失败 · 请先生成一条回放','error');
+  note('最近回放播放失败 · 请先生成一条回放');
+  return false
+ }
+}
 function gdClearTimers(){for(const t of gdTimers)clearTimeout(t);gdTimers=[]}
 function gdClearCameraTimers(){for(const t of gdCameraTimers)clearTimeout(t);gdCameraTimers=[]}
 function gdSchedule(fn,ms,seq=gdSequence){
@@ -2476,6 +2616,8 @@ function gdScheduleCamera(fn,ms,seq=gdSequence){
 }
 function gdAbort(showNote=true){
  gdSequence++;gdClearTimers();gdClearCameraTimers();gdAutoCameraActive=false;clearTimeout(mdMacroTimer);mdMacroSeq++;
+ clearTimeout(instantReplayTimer);instantReplayTimer=null;clearTimeout(replayStingerCleanupTimer);replayStingerCleanupTimer=null;replayStingerSeq++;instantReplayBusy=false;irSyncButtons();
+ if(showNote)publishVmixDirector('ReplayStopEvents','','','停止正在播放的回放').catch(()=>{});
  gdSetStatus('AUTO FLOW ABORTED','manual');if(showNote)note('自动导播流程已终止')
 }
 async function gdEnsureOverlay(){
@@ -2491,30 +2633,18 @@ async function gdTakeCamera(slot,label,opts={}){
  return ssTake(slot,label,source,force,eventType)
 }
 
-const REPLAY_STINGER_SWITCH_MS=950,REPLAY_STINGER_CLEAR_MS=420;
+const REPLAY_STINGER_SWITCH_MS=920,REPLAY_STINGER_POST_SWITCH_CLEAN_MS=1380,REPLAY_STINGER_TOTAL_MS=1450;
 function replayStingerPayload(phase='IN'){
  return{type:'REPLAY_STINGER',phase:phase==='OUT'?'OUT':'IN',title:phase==='OUT'?'BACK TO LIVE':'INSTANT REPLAY',label:phase==='OUT'?'回到比赛':'精彩回放',at:mdFormat(mdNowSeconds())}
 }
 async function replayStingerTake(slot,phase='IN',source='MANUAL',label=''){
  if(!matchReady)return false;vdSave();
  if(!vdSlotAvailable(slot)){note('回放/返回机位未分配，无法执行转场');return false}
- const overlayWasVisible=!!matchdayState.overlayVisible;
- if(!overlayWasVisible){
-   matchdayState.overlayVisible=true;mdPersist();
-   await publishVmixDirector('OverlayInput'+vmixDirectorSettings.overlay+'In',vmixDirectorSettings.graphics,0,'REPLAY LOGO STINGER ON')
- }
- gdSetStatus((phase==='OUT'?'RETURN':'REPLAY')+' · LOGO STINGER','busy');
- await publishMatchday(replayStingerPayload(phase));
- await new Promise(r=>setTimeout(r,REPLAY_STINGER_SWITCH_MS));
- const ok=await ssTake(slot,label||(phase==='OUT'?'REPLAY RETURN':'INSTANT REPLAY'),source,true,phase==='OUT'?'RETURN':'REPLAY');
- await new Promise(r=>setTimeout(r,REPLAY_STINGER_CLEAR_MS));
- await publishMatchday({type:'CLEAR_EVENT'});
- if(!overlayWasVisible){
-   await new Promise(r=>setTimeout(r,120));
-   matchdayState.overlayVisible=false;mdPersist();
-   await publishVmixDirector('OverlayInput'+vmixDirectorSettings.overlay+'Out','',0,'REPLAY LOGO STINGER RESTORE')
- }
- return !!ok
+ return replayStingerAction(
+   phase,
+   ()=>ssTake(slot,label||(phase==='OUT'?'REPLAY RETURN':'INSTANT REPLAY'),source,true,phase==='OUT'?'RETURN':'REPLAY'),
+   label
+ )
 }
 async function gdRunEvent(ev,holdMs=5200){
  sdRecommend(ev);const seq=++gdSequence;gdClearTimers();clearTimeout(mdMacroTimer);mdMacroSeq++;
@@ -2677,7 +2807,11 @@ function sdInit(){
 function gdInit(){
  gdLoad();
  q('gdEnabled').onchange=gdSaveFromUI;q('gdAutoReplay').onchange=gdSaveFromUI;q('gdReplayHold').onchange=gdSaveFromUI;q('gdReturnSlot').onchange=gdSaveFromUI;
- q('gdAbort').onclick=()=>gdAbort(true)
+ q('gdAbort').onclick=()=>gdAbort(true);
+ if(q('irStartRecording'))q('irStartRecording').onclick=instantReplayStartRecording;
+ if(q('irGenerate'))q('irGenerate').onclick=()=>instantReplayGenerate(Number(q('irSeconds').value)||8);
+ if(q('irSeconds'))q('irSeconds').onchange=()=>{if(q('mmReplaySeconds'))q('mmReplaySeconds').value=q('irSeconds').value};
+ irSyncButtons()
 }
 function mdAddReplayMarker(type,label=''){
  const sec=mdNowSeconds(),m={id:'mk_'+Date.now().toString(36),type:String(type||'KEY'),label:String(label||type||'KEY'),at:mdFormat(sec),seconds:Math.floor(sec),score:matchdayState.homeScore+'-'+matchdayState.awayScore,createdAt:new Date().toISOString()};
@@ -2706,6 +2840,23 @@ function mdMacroEvent(type,side,playerId=''){
 }
 function mdEvent(type){
  const side=q('mdEventSide').value,pid=q('mdEventPlayer').value;if(!pid){note('请先选择球员');return}mdMacroEvent(type,side,pid)
+}
+
+function mdShowGoalPlayer(){
+ const side=q('mmEventSide').value,pid=q('mmEventPlayer').value,p=pid?mdPlayer(side,pid):null;
+ if(!p){note('请选择进球队员');return false}
+ const team=side==='HOME'?(q('matchHome').value||'HOME'):(q('matchAway').value||'AWAY');
+ const ev={type:'GOAL',displayOnly:true,side,team,player:{id:p.id,name:p.name,number:p.number,position:p.position||p.role,photo:p.photo||''},at:mdFormat(mdNowSeconds())};
+ q('mdEventStatus').textContent='进球队员 · #'+p.number+' '+p.name;
+ publishMatchday(ev);mdEventAutoClear(4600);return true
+}
+async function instantReplayReturnLiveNow(){
+ clearTimeout(instantReplayTimer);instantReplayTimer=null;
+ await publishVmixDirector('ReplayStopEvents','','','手动结束回放');
+ const preferred=graphicsDirectorSettings.returnSlot||'cam1',returnSlot=vdSlotAvailable(preferred)?preferred:ssMainSlot();
+ let ok=false;
+ if(returnSlot&&vdSlotAvailable(returnSlot))ok=await replayStingerAction('OUT',()=>ssTake(returnSlot,'MANUAL RETURN LIVE','OPERATOR',true,'RETURN'),'MANUAL BACK TO LIVE');
+ irFinishBusy(ok?'已回到主画面':'无法回主画面 · 检查主机位',ok?'ok':'error');return !!ok
 }
 
 function mdSubstitutionByIds(side,offId,onId){
@@ -2813,9 +2964,12 @@ function initMatchMode(){
  q('mmHomeMinus').onclick=()=>mdScore('HOME',-1);q('mmHomePlus').onclick=()=>mdScore('HOME',1);q('mmAwayMinus').onclick=()=>mdScore('AWAY',-1);q('mmAwayPlus').onclick=()=>mdScore('AWAY',1);
  q('mmClockStart').onclick=()=>q('mdClockStart').click();q('mmClockPause').onclick=()=>q('mdClockPause').click();q('mmScoreboardToggle').onclick=()=>{matchdayState.scoreboardVisible=!matchdayState.scoreboardVisible;publishMatchday(null)};
  q('mmEventSide').onchange=refreshMatchdayPlayers;q('mmGoalMacro').onclick=()=>mdMacroEvent('GOAL',q('mmEventSide').value,q('mmEventPlayer').value);q('mmYellowMacro').onclick=()=>mdMacroEvent('YELLOW',q('mmEventSide').value,q('mmEventPlayer').value);q('mmRedMacro').onclick=()=>mdMacroEvent('RED',q('mmEventSide').value,q('mmEventPlayer').value);
+ q('mmGoalPlayer').onclick=mdShowGoalPlayer;q('mmReturnLive').onclick=instantReplayReturnLiveNow;q('mmUndoEvent').onclick=mdUndoLast;q('mmClearEvent').onclick=()=>{gdAbort(false);matchdayState.lastEvent=null;publishMatchday({type:'CLEAR_EVENT'});note('当前事件图形已清除')};q('mmGraphicsToggleQuick').onclick=()=>q('mmScoreboardToggle').click();
  q('mmHalf').onclick=()=>mdMatchState('HALF_TIME');q('mmFull').onclick=()=>mdMatchState('FULL_TIME');
  q('mmSubSide').onchange=refreshMatchdayPlayers;q('mmSubMacro').onclick=()=>mdSubstitutionByIds(q('mmSubSide').value,q('mmSubOff').value,q('mmSubOn').value);
- q('mmCam1').onclick=()=>vdTake('cam1');q('mmCam2').onclick=()=>vdTake('cam2');q('mmDrone').onclick=()=>vdTake('drone');q('mmReplay').onclick=()=>vdTake('replay');q('mmGraphicsOn').onclick=vdOverlayIn;q('mmGraphicsOff').onclick=vdOverlayOut;
+ q('mmCam1').onclick=()=>vdTake('cam1');q('mmCam2').onclick=()=>vdTake('cam2');q('mmDrone').onclick=()=>vdTake('drone');q('mmReplay').onclick=instantReplayPlayLatest;q('mmGraphicsOn').onclick=vdOverlayIn;q('mmGraphicsOff').onclick=vdOverlayOut;
+ q('mmReplayRecord').onclick=instantReplayStartRecording;q('mmGenerateReplay').onclick=()=>instantReplayGenerate(Number(q('mmReplaySeconds').value)||8);
+ q('mmReplaySeconds').onchange=()=>{if(q('irSeconds'))q('irSeconds').value=q('mmReplaySeconds').value};
  q('mmMarkSave').onclick=()=>{mdAddReplayMarker('SAVE','精彩扑救');note('已标记扑救')};q('mmMarkIncident').onclick=()=>{mdAddReplayMarker('INCIDENT','对抗/冲突');note('已标记事件')};q('mmMarkKey').onclick=()=>{mdAddReplayMarker('KEY','精彩时刻');note('已标记精彩时刻')};
  q('mmCopyMarkers').onclick=mdCopyMarkers;q('mmClearMarkers').onclick=()=>{matchdayState.replayMarkers=[];mdPersist();mdRenderMarkers();note('回放标记已清空')};
  q('mmFreeze').onclick=emergencyFreeze;q('mmHideAll').onclick=emergencyHideAll;q('mmSafeCam').onclick=emergencySafeCamera;
@@ -3001,6 +3155,7 @@ async function publishVmixDirector(functionName,input='',duration=0,label='',val
 }
 
 async function vdTake(slot){
+ if(slot==='replay')return instantReplayPlayLatest();
  if(gdAutoCameraActive){gdClearCameraTimers();gdAutoCameraActive=false;gdSetStatus('MANUAL CAMERA OVERRIDE','manual')}
  if(!requireMatchReady())return false;vdSave();
  if(!vdSlotAvailable(slot)){note('该机位未分配，不能切换');refreshCameraRoleUI();return false}
@@ -3047,11 +3202,20 @@ function initVmixDirector(){
  vdLoad();
  if(q('vdAutoReadInputs'))q('vdAutoReadInputs').onclick=()=>vdReadVmixInputs(true);
  vdReadVmixInputs(false);
- document.querySelectorAll('[data-vd-take]').forEach(b=>b.onclick=()=>vdTake(b.dataset.vdTake));
+ setTimeout(async()=>{
+  try{
+   vdLoad();const input=String(vmixDirectorSettings.graphics||'').trim(),key='sagi_graphics_loaded_SAGI4311_LIVEFLOW_07';
+   if(input&&localStorage.getItem(key)!==input){
+    const ok=await refreshGraphicsBrowser(false);
+    if(ok){localStorage.setItem(key,input);q('vdStatus').textContent='LIVEFLOW 07 已强制刷新 vMix 图形 · Input '+input}
+   }
+  }catch(e){}
+ },1800);
+ document.querySelectorAll('[data-vd-take]').forEach(b=>b.onclick=()=>b.dataset.vdTake==='replay'?instantReplayPlayLatest():vdTake(b.dataset.vdTake));
  document.querySelectorAll('[data-vd-preview]').forEach(b=>b.onclick=()=>vdPreview(b.dataset.vdPreview));
  q('vdGraphicsIn').onclick=vdOverlayIn;q('vdGraphicsOut').onclick=vdOverlayOut;q('vdReloadGraphics').onclick=()=>refreshGraphicsBrowser(true);q('vdAllOverlaysOff').onclick=()=>publishVmixDirector('OverlayInputAllOff','','0','ALL OVERLAYS OFF');q('vdTest').onclick=()=>vdPreview('cam1');
  ['vdCam1','vdCam2','vdDrone','vdReplay','vdGraphics','vdTransition','vdDuration','vdOverlay','vdCam1Role','vdCam2Role','vdDroneRole','vdReplayRole'].forEach(id=>q(id).addEventListener('change',()=>{vdSave();refreshCameraRoleUI();sdRecommend(null)}));
- addEventListener('keydown',e=>{const tag=(e.target&&e.target.tagName)||'';if(tag==='INPUT'||tag==='SELECT'||tag==='TEXTAREA')return;if(e.key==='1')vdTake('cam1');else if(e.key==='2')vdTake('cam2');else if(e.key==='3')vdTake('drone');else if(e.key==='4')vdTake('replay');else if(e.key.toLowerCase()==='g')vdOverlayIn();else if(e.key.toLowerCase()==='x')vdOverlayOut();else if(e.key.toLowerCase()==='a')ssAttackLock()});
+ addEventListener('keydown',e=>{const tag=(e.target&&e.target.tagName)||'';if(tag==='INPUT'||tag==='SELECT'||tag==='TEXTAREA')return;if(e.key==='1')vdTake('cam1');else if(e.key==='2')vdTake('cam2');else if(e.key==='3')vdTake('drone');else if(e.key==='4')instantReplayPlayLatest();else if(e.key.toLowerCase()==='g')vdOverlayIn();else if(e.key.toLowerCase()==='x')vdOverlayOut();else if(e.key.toLowerCase()==='a')ssAttackLock()});
  const params=new URLSearchParams(location.search);if(params.has('safe')||params.has('homescreen'))setTimeout(()=>refreshGraphicsBrowser(false),900);
 }
 
@@ -3578,7 +3742,8 @@ function stopCountdown(){clearInterval(startCountdown.t)}
 function cloudAdmin(){try{const x=JSON.parse(localStorage.getItem('sagi_cloud_admin_v20')||'null')||{},b=window.SAGI_CLOUD||{};return{url:x.url||b.url||'',key:x.key||b.key||'',eventSlug:x.eventSlug||b.eventSlug||'',token:x.token||''}}catch(e){const b=window.SAGI_CLOUD||{};return{url:b.url||'',key:b.key||'',eventSlug:b.eventSlug||'',token:''}}}
 function compactPlayersForGroup(group){const src=group==='FULL'?validStarters():group==='SUB'?substitutes():(['GK','DF','MF','FW'].includes(group)?grouped(group):[]);return src.map(p=>({id:p.id,layoutKey:formationPlayerKey(p),name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',squadType:p.squadType||'STARTER',photo:(group==='FULL'||group==='SUB')?'':p.photo||'',mediaUrl:(group==='FULL'||group==='SUB')?'':p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'}))}
 async function publishGroup(group,duration,show=null){
- const state={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,6),group,side:activeSide,team:currentTeamName(),formation:q('formation').value,matchFormat:{mode:matchConfig.mode,playerCount:starterLimit()},playerCount:starterLimit(),startingLabel:startingLabel(),players:compactPlayersForGroup(group),formationLayout:currentFormationLayoutPayload(),allPlayers:validStarters().map(p=>({id:p.id,layoutKey:formationPlayerKey(p),name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',photo:p.photo||'',mediaUrl:p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'})),substitutes:substitutes().map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,statLabel:p.statLabel||'',statValue:p.statValue||''})),crest:assets.crest||'',stadium:assets.bg||'',background:q('outputBg').value,teamColor:(activeSide==='HOME'?(matchdayState.homeColor||'#d8b55b'):(matchdayState.awayColor||'#4c7dff')),visualVersion:'V4.31.0-PREMIER-BROADCAST',duration,show:show||null,package:packageData(),startedAt:new Date().toISOString()};
+ const issuedAtMs=Date.now(),safeDuration=Math.max(200,Number(duration)||1000),autoNext=!!(show&&show.autoNext),expiresAtMs=group==='CLEAR'?issuedAtMs+500:(issuedAtMs+safeDuration+(autoNext?1800:60000));
+ const state={commandId:issuedAtMs+'_'+Math.random().toString(36).slice(2,6),programGate:'SAGI4311_PROGRAM',onAir:true,issuedAtMs,expiresAtMs,group,side:activeSide,team:currentTeamName(),formation:q('formation').value,matchFormat:{mode:matchConfig.mode,playerCount:starterLimit()},playerCount:starterLimit(),startingLabel:startingLabel(),players:compactPlayersForGroup(group),formationLayout:currentFormationLayoutPayload(),allPlayers:validStarters().map(p=>({id:p.id,layoutKey:formationPlayerKey(p),name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',photo:p.photo||'',mediaUrl:p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'})),substitutes:substitutes().map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,statLabel:p.statLabel||'',statValue:p.statValue||''})),crest:assets.crest||'',stadium:assets.bg||'',background:q('outputBg').value,teamColor:(activeSide==='HOME'?(matchdayState.homeColor||'#d8b55b'):(matchdayState.awayColor||'#4c7dff')),visualVersion:'V4.31.1-PROGRAM-GATE',duration:safeDuration,show:show||null,package:packageData(),startedAt:new Date(issuedAtMs).toISOString()};
  try{
    await lanPost('/api/state',{lineupIntro:state});
    return{ok:true}
@@ -3595,13 +3760,13 @@ function normalizeShowSteps(list){
    if(i>=0)src.splice(i,0,{...homeSub});else src.push({...homeSub});
  }
  if(!src.some(s=>s.id==='away_sub'))src.push({...awaySub});
- return src.map(s=>({...s,duration:Math.max(500,Number(s.duration)||1000),enabled:s.enabled!==false}));
+ return src.map(s=>({...s,transition:s.transition==='FLASH'?'FADE':(s.transition||'FADE'),duration:Math.max(500,Number(s.duration)||1000),enabled:s.enabled!==false}));
 }
 function showEnabled(){return showSteps.filter(s=>s.enabled)}
 function showTotalMs(){return showEnabled().reduce((a,s)=>a+(Number(s.duration)||0),0)}
-function showTransitionLabel(v){return({CUT:'硬切',FADE:'淡变',SLIDE:'滑动',ZOOM:'推进',FLASH:'闪白'})[v]||v}
+function showTransitionLabel(v){return({CUT:'硬切',FADE:'淡变',SLIDE:'滑动',ZOOM:'推进',FLASH:'淡变（兼容）'})[v]||v}
 function showCueLabel(v){return({NONE:'无',WHOOSH:'呼啸',HIT:'冲击',RISER:'渐强',CROWD:'观众',STING:'转场'})[v]||v}
-function showTransitionOptions(v){return ['CUT','FADE','SLIDE','ZOOM','FLASH'].map(x=>'<option value="'+x+'"'+(x===v?' selected':'')+'>'+showTransitionLabel(x)+'</option>').join('')}
+function showTransitionOptions(v){v=v==='FLASH'?'FADE':v;return ['CUT','FADE','SLIDE','ZOOM'].map(x=>'<option value="'+x+'"'+(x===v?' selected':'')+'>'+showTransitionLabel(x)+'</option>').join('')}
 function showCueOptions(v){return ['NONE','WHOOSH','HIT','RISER','CROWD','STING'].map(x=>'<option value="'+x+'"'+(x===v?' selected':'')+'>'+showCueLabel(x)+'</option>').join('')}
 function showNextEnabledIndex(from){let i=Math.max(0,Number(from)||0);while(i<showSteps.length&&!showSteps[i].enabled)i++;return i<showSteps.length?i:-1}
 function showRemainingMs(){
@@ -3725,7 +3890,7 @@ function showMeta(step){const en=showEnabled(),pos=en.indexOf(step);return{sessi
 function runShowStep(i){
  if(!playing)return;
  while(i<showSteps.length&&!showSteps[i].enabled)i++;
- if(i>=showSteps.length){playing=false;showIndex=showSteps.length-1;stopCountdown();stopShowMusic();q('status').textContent='节目播放结束';q('showNow').textContent='节目完成 · 已播出全部启用段落';q('showProgressBar').style.width='100%';renderShowTimeline();renderShowDirectorMonitor();return}
+ if(i>=showSteps.length){playing=false;showIndex=showSteps.length-1;stopCountdown();stopShowMusic();q('status').textContent='节目播放结束';q('showNow').textContent='节目完成 · 已播出全部启用段落';q('showProgressBar').style.width='100%';renderShowTimeline();renderShowDirectorMonitor();broadcastProgram=null;const clearMeta={sessionId:showSession||('auto-clear-'+Date.now().toString(36)),stepIndex:-1,sequenceIndex:-1,stepTotal:1,label:'完整出场结束自动清屏',side:activeSide,transition:'CUT',cue:'NONE',autoNext:false,isFirst:false,isLast:true,controlRoom:true};publishGroup('CLEAR',200,clearMeta).then(()=>refreshBroadcastStatus()).catch(()=>{});return}
  showIndex=i;showHoldElapsed=0;const s=showSteps[i],d=Math.max(500,Number(s.duration)||1000);if(s.side&&s.side!==activeSide)switchTeam(s.side,{silent:true,noRender:true});renderShowTimeline();broadcastProgramFromShow(s,d);applyShowTransition(s.transition);triggerCue(s.cue);renderStage(s.group);animateStage();animatePackageGroup(s.group,d);showProgressTick(s,d);q('status').textContent='节目 '+(i+1)+' / '+showSteps.length+' · '+s.label;publishGroup(s.group,d,showMeta(s));clearTimeout(showTimer);if(!broadcastHold)showTimer=setTimeout(()=>runShowStep(i+1),d)
 }
 function startFullIntro(){
