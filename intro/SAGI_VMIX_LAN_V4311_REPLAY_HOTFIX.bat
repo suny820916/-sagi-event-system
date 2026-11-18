@@ -6498,7 +6498,9 @@ function versionParts(v){return String(v||'').replace(/^V/i,'').split('.').map(n
 function versionIsNewer(a,b){const A=versionParts(a),B=versionParts(b);for(let i=0;i<3;i++){if((A[i]||0)>(B[i]||0))return true;if((A[i]||0)<(B[i]||0))return false}return false}
 async function checkOutputBuild(){
  try{
-  const t=await fetch('/?graphicsBuild='+Date.now(),{cache:'no-store'}).then(r=>r.text());
+  // IMPORTANT: compare against the vMix output route, never the control page.
+  // Control UI may have a hotfix version while the certified graphics output stays on V4.31.0.
+  const t=await fetch('/vmix?graphicsBuild='+Date.now(),{cache:'no-store'}).then(r=>r.text());
   const m=t.match(/V\d+\.\d+\.\d+/);if(m&&versionIsNewer(m[0],OUTPUT_BUILD)){location.reload();return}
  }catch(e){}
 }
