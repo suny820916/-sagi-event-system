@@ -1,4 +1,4 @@
-name: SAGI vMix V4.32 SIGNATURE RC Certification
+name: SAGI vMix V4.33 PENALTY SSOT RC Certification
 
 on:
   push:
@@ -12,6 +12,8 @@ on:
       - "intro/tests/v432-event-identity-gate.mjs"
       - "intro/tests/v432-brand-gate.mjs"
       - "intro/tests/v432-integration-gate.mjs"
+      - "intro/tests/v433-penalty-single-source-gate.mjs"
+      - "intro/SAGI_VMIX_LAN_V433_PENALTY_RC.bat"
       - "intro/SAGI_VMIX_LAN_V432_SIGNATURE_RC.bat"
       - "intro/tests/v4311-replay-hotfix-selftest.mjs"
       - "intro/SAGI_VMIX_LAN_V4311_REPLAY_HOTFIX.bat"
@@ -28,6 +30,8 @@ on:
       - "intro/tests/v432-event-identity-gate.mjs"
       - "intro/tests/v432-brand-gate.mjs"
       - "intro/tests/v432-integration-gate.mjs"
+      - "intro/tests/v433-penalty-single-source-gate.mjs"
+      - "intro/SAGI_VMIX_LAN_V433_PENALTY_RC.bat"
       - "intro/SAGI_VMIX_LAN_V432_SIGNATURE_RC.bat"
       - "intro/tests/v4311-replay-hotfix-selftest.mjs"
       - "intro/SAGI_VMIX_LAN_V4311_REPLAY_HOTFIX.bat"
@@ -83,6 +87,8 @@ jobs:
         run: node intro/tests/v432-brand-gate.mjs
       - name: Validate V4.32 clean integration and package
         run: node intro/tests/v432-integration-gate.mjs
+      - name: Validate V4.33 penalty single source
+        run: node intro/tests/v433-penalty-single-source-gate.mjs
       - name: Run V4.31.0 broadcast compatibility self-test
         run: |
           mkdir -p selftest-artifacts
@@ -116,6 +122,14 @@ jobs:
         with:
           name: SAGI_VMIX_V432_SIGNATURE_RC_CERTIFIED
           path: intro/SAGI_VMIX_LAN_V432_SIGNATURE_RC.bat
+          if-no-files-found: error
+          retention-days: 7
+      - name: Export V4.33 PENALTY SSOT RC after all certification gates
+        if: success() && hashFiles('intro/SAGI_VMIX_LAN_V433_PENALTY_RC.bat') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: SAGI_VMIX_V433_PENALTY_SSOT_RC_CERTIFIED
+          path: intro/SAGI_VMIX_LAN_V433_PENALTY_RC.bat
           if-no-files-found: error
           retention-days: 7
 
