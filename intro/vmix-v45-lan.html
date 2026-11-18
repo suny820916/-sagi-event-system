@@ -1302,6 +1302,15 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent
 .eventBrandTag{top:11px;right:16px}
 .splashBrandTag{top:28px;right:52px}
 .replayStinger .sagiPackageTag{top:70px;right:70px}
+
+/* ===== V4.32 SAGI FOOTBALL BRAND ELEMENT ===== */
+.sagiPackageTag{display:flex!important;align-items:center;gap:7px!important;color:#fff!important;border-color:#ffffff2a!important;background:#06080ddd!important}
+.sagiBrandWord{display:inline-flex;align-items:baseline;font-size:10px;font-weight:1000;letter-spacing:.6px;line-height:1;color:#fff}
+.sagiBrandA{position:relative;display:inline-block}
+.sagiBrandA i{position:absolute;width:4px;height:4px;border-radius:50%;background:#ff1a1a;left:50%;bottom:-3px;transform:translateX(-50%);box-shadow:0 0 8px #ff1a1a66}
+.sagiBrandSub{font-size:6px;font-weight:900;letter-spacing:1.5px;color:#ffffffb8;line-height:1}
+.replayStinger .sagiPackageTag{padding:7px 10px 6px!important}
+.replayStinger .sagiBrandWord{font-size:14px}.replayStinger .sagiBrandSub{font-size:7px}
 .rsPanel{background:linear-gradient(135deg,var(--sagiInk) 0,var(--sagiPamir) 56%,var(--sagiGold) 100%)!important}
 .rsRight{background:linear-gradient(225deg,var(--sagiInk) 0,var(--sagiPamir2) 58%,var(--sagiGold) 100%)!important}
 .rsKicker{color:var(--sagiGold)!important}
@@ -1375,21 +1384,21 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent
   </div>
   <div id="replayStinger" class="replayStinger" aria-hidden="true">
     <div class="rsPanel rsLeft"></div><div class="rsPanel rsRight"></div>
-    <div class="rsCenter"><div class="sagiPackageTag">SAGI SPORTS</div>
+    <div class="rsCenter"><div class="sagiPackageTag"><span class="sagiBrandWord"><span>S</span><span class="sagiBrandA">A<i></i></span><span>GI</span></span><span class="sagiBrandSub">FOOTBALL</span></div>
       <div class="rsLogoWrap"><img id="rsLogo" class="rsLogo" alt=""><div id="rsLogoFallback" class="rsLogoFallback">SAGI</div></div>
       <div id="rsKicker" class="rsKicker">精彩回放</div>
       <div id="rsTitle" class="rsTitle">INSTANT REPLAY</div>
       <div class="rsRule"></div>
     </div>
   </div>
-  <div id="eventCard" class="eventCard"><div class="sagiPackageTag eventBrandTag">SAGI SPORTS</div><div id="eventPhotoWrap" class="eventPhotoWrap"><img id="eventPhoto" class="eventPhoto"></div><div id="eventIcon" class="eventIcon">⚽</div><div id="eventCopy" class="eventCopy"><div id="eventKicker" class="eventKicker">进球</div><div id="eventName" class="eventName"></div><div id="eventMeta" class="eventMeta"></div><div id="subRows" class="subRows"></div></div></div>
-  <div id="stateSplash" class="stateSplash"><div class="sagiPackageTag splashBrandTag">SAGI SPORTS</div><div id="stateBox" class="stateBox"><div class="stateAccent"></div><img id="mvpPhoto" class="mvpPhoto"><div id="stateCopy" class="stateCopy"><div id="stateKicker" class="stateKicker"></div><div id="stateTitle" class="stateTitle"></div><div id="stateScore" class="stateScore"></div><div id="stateTeams" class="stateTeams"></div><div id="mvpName" class="mvpName"></div><div id="mvpMeta" class="mvpMeta"></div></div></div></div>
+  <div id="eventCard" class="eventCard"><div class="sagiPackageTag eventBrandTag"><span class="sagiBrandWord"><span>S</span><span class="sagiBrandA">A<i></i></span><span>GI</span></span><span class="sagiBrandSub">FOOTBALL</span></div><div id="eventPhotoWrap" class="eventPhotoWrap"><img id="eventPhoto" class="eventPhoto"></div><div id="eventIcon" class="eventIcon">⚽</div><div id="eventCopy" class="eventCopy"><div id="eventKicker" class="eventKicker">进球</div><div id="eventName" class="eventName"></div><div id="eventMeta" class="eventMeta"></div><div id="subRows" class="subRows"></div></div></div>
+  <div id="stateSplash" class="stateSplash"><div class="sagiPackageTag splashBrandTag"><span class="sagiBrandWord"><span>S</span><span class="sagiBrandA">A<i></i></span><span>GI</span></span><span class="sagiBrandSub">FOOTBALL</span></div><div id="stateBox" class="stateBox"><div class="stateAccent"></div><img id="mvpPhoto" class="mvpPhoto"><div id="stateCopy" class="stateCopy"><div id="stateKicker" class="stateKicker"></div><div id="stateTitle" class="stateTitle"></div><div id="stateScore" class="stateScore"></div><div id="stateTeams" class="stateTeams"></div><div id="mvpName" class="mvpName"></div><div id="mvpMeta" class="mvpMeta"></div></div></div></div>
 </div>
 
 <script data-sagi-signature-core="v432">
 (function(root){
 'use strict';
-const VERSION='4.32.0-rc.1';
+const VERSION='4.32.0-rc.2';
 const EVENT_TYPES=Object.freeze(['CLEAR_EVENT','GOAL','YELLOW','RED','SUB','HALF_TIME','FULL_TIME','MVP','REPLAY_STINGER']);
 const TOKENS=Object.freeze({
   bg:'#07090d',
@@ -1512,16 +1521,13 @@ function eventKey(event){
   const e=normalizeEvent(event)||{type:'CLEAR_EVENT'};
   if(e.eventId) return 'id|'+e.eventId;
   if(e.sequence!==null&&e.sequence!==undefined) return 'seq|'+String(e.sequence);
-  // Legacy metadata fallback: not a reliable identity for scoring or deduplication.
-  const player=e.player&&e.player.id||e.player&&e.player.number||'';
-  const on=e.on&&e.on.id||e.on&&e.on.number||'';
-  const off=e.off&&e.off.id||e.off&&e.off.number||'';
-  return [e.type,e.side,e.at,player,on,off].map(x=>safeText(x,80)).join('|');
+  // Fail open for legacy events without a reliable identity.
+  // Revision/command guards still prevent stale rollback; never collapse two real events by metadata guesswork.
+  return '';
 }
 const api=Object.freeze({VERSION,TOKENS,EVENT_TYPES,HOLD_MS,safeText,validHex,normalizeSide,normalizeType,normalizeEvent,eventAccent,holdMs,eventKey});
 root.SAGISignatureCore=api;
 })(typeof window!=='undefined'?window:globalThis);
-
 </script>
 <script>
 (function(){
