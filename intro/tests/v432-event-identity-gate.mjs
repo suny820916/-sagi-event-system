@@ -36,6 +36,8 @@ const noIdentity=core.eventKey(sameMetadata);
 assert(noIdentity==='',
   'BLOCK RELEASE: metadata-only legacy events must not be treated as reliable identity');
 const control=fs.readFileSync(new URL('../v45-lan.html',import.meta.url),'utf8');
+assert(control.includes("normalizeEvent(event,{home:homeName,away:awayName,fixtureKey:mdFixtureKey()})"),
+  'BLOCK RELEASE: published snapshots must carry fixture identity into normalization');
 assert(control.includes("function mdNextEventIdentity(type='EVENT')"),
   'BLOCK RELEASE: control source must generate persistent in-match event identity');
 assert(control.includes("...mdNextEventIdentity(type)")&&control.includes("...mdNextEventIdentity('SUB')")&&control.includes("...mdNextEventIdentity('MVP')"),
