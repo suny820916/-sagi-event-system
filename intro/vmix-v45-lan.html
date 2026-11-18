@@ -1501,7 +1501,7 @@ function applyVisualGroup(group,x){
 function applyShowTransition(type){
  const l=q('transitionLayer');if(!l||!l.animate)return;l.className='transitionLayer';l.style.opacity='0';
  if(type==='CUT'||!type)return;
- if(type==='FLASH'){l.classList.add('white');l.animate([{opacity:0},{opacity:.82,offset:.28},{opacity:0}],{duration:380,easing:'ease-out'});return}
+ if(type==='FLASH'){type='FADE'} // legacy saved timelines: never white-flash on air
  if(type==='SLIDE'){l.classList.add('gold');l.animate([{opacity:.78,transform:'translateX(-105%)'},{opacity:.78,transform:'translateX(0)',offset:.48},{opacity:0,transform:'translateX(105%)'}],{duration:650,easing:'cubic-bezier(.2,.8,.2,1)'});return}
  if(type==='ZOOM'){q('stage').animate([{filter:'brightness(.55)',transform:'scale(1.035)'},{filter:'brightness(1)',transform:'scale(1)'}],{duration:620,easing:'ease-out'});return}
  l.classList.add('dark');l.animate([{opacity:.85},{opacity:0}],{duration:520,easing:'ease-out'})
