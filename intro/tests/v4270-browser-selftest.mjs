@@ -270,17 +270,23 @@ server.listen(PORT,'127.0.0.1',async()=>{
   assert(!(await replayPage.locator('#replayStinger').evaluate(el=>el.classList.contains('on'))),'replay stinger did not auto clear');
   await replayPage.close();
 
-  console.log('TEST 7: manual replay uses logo stinger IN, then OUT back to live');
+  console.log('TEST 7: replay key plays only latest Replay Event with SAGI IN/OUT transitions, then returns live');
   vmixCommands=[];matchdayPosts=[];
-  await page.evaluate(()=>localStorage.setItem('sagi_vmix_director_v42',JSON.stringify({cam1:'1',cam2:'2',drone:'',replay:'4',graphics:'5',transition:'Cut',duration:0,overlay:'1',cam1Role:'MAIN_WIDE',cam2Role:'SIDELINE_CLOSE',droneRole:'DRONE',replayRole:'REPLAY'})));
+  await page.evaluate(()=>{
+    localStorage.setItem('sagi_vmix_director_v42',JSON.stringify({cam1:'1',cam2:'2',drone:'',replay:'4',graphics:'5',transition:'Cut',duration:0,overlay:'1',cam1Role:'MAIN_WIDE',cam2Role:'SIDELINE_CLOSE',droneRole:'DRONE',replayRole:'REPLAY'}));
+    localStorage.setItem('sagi_instant_replay_last_duration_v4311','5');
+  });
   await page.reload({waitUntil:'domcontentloaded'});await wait(1800);
   await page.locator('#matchCompetition').fill('SAGI SELF TEST CUP');await page.locator('#matchHome').fill('SELF TEST HOME');await page.locator('#matchAway').fill('SELF TEST AWAY');await page.locator('#matchKickoff').fill('2026-11-17T20:00');await page.locator('#matchVenue').fill('SELF TEST STADIUM');
   await page.click('#setupValidateBtn');await page.waitForFunction(()=>!document.querySelector('#setupReadyBtn')?.disabled,null,{timeout:5000});await page.click('#setupReadyBtn');
-  await page.click('#vdTakeReplay');await wait(1900);
-  await page.click('#vdTakeCam1');await wait(1900);
+  await page.click('#vdTakeReplay');await wait(6500);
   const replayCuts=vmixCommands.filter(x=>['Cut','Fade','Stinger1'].includes(x.functionName));
+  const replayFns=vmixCommands.filter(x=>['ReplayStopEvents','ReplayPlayLastEventToOutput'].includes(x.functionName));
   const replayEvents=matchdayPosts.map(x=>x&&x.event).filter(Boolean);
-  assert(replayCuts.length>=2&&String(replayCuts[0].input)==='4'&&String(replayCuts[1].input)==='1','replay camera sequence wrong: '+JSON.stringify(replayCuts));
+  assert(replayFns.some(x=>x.functionName==='ReplayPlayLastEventToOutput'),'latest Replay Event command missing: '+JSON.stringify(replayFns));
+  assert(!replayCuts.some(x=>String(x.input)==='4'),'replay key must not cut to whole Replay input: '+JSON.stringify(replayCuts));
+  assert(replayCuts.some(x=>String(x.input)==='1'),'automatic return to main camera missing: '+JSON.stringify(replayCuts));
+  assert(replayFns.filter(x=>x.functionName==='ReplayStopEvents').length>=2,'replay stop guards missing before play/return: '+JSON.stringify(replayFns));
   assert(replayEvents.some(e=>e.type==='REPLAY_STINGER'&&e.phase==='IN'),'missing replay IN stinger event');
   assert(replayEvents.some(e=>e.type==='REPLAY_STINGER'&&e.phase==='OUT'),'missing replay OUT stinger event');
   assert(replayEvents.filter(e=>e.type==='CLEAR_EVENT').length>=2,'replay stinger clear events missing');
