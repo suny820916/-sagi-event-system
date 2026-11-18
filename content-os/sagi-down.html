@@ -1086,7 +1086,7 @@ Unbelievable finish."></textarea>
 
 <script>
 (()=>{'use strict';
-const SAGI_DOWN_BUILD='V4.3.0';
+const SAGI_DOWN_BUILD='V4.3.1';
 document.documentElement.dataset.sagiDownBuild=SAGI_DOWN_BUILD;
 const BTCH_PUBLIC='https://btch-downloader-api-green.vercel.app';
 const DOWNLOAD_ROUTER_VERSION='3.0';
@@ -1095,7 +1095,7 @@ const OLD_KEY='sagi_down_history_v1';
 const q=id=>document.getElementById(id);
 const SAGI_MODULES={
  down:{title:'SAGI DOWN',sub:'链接下载 · 文件整理 · 最近任务'},
- voice:{title:'SAGI VOICE PRO',sub:'专业配音 · 情绪导演 · 克隆声音 · 独立导出'},
+ voice:{title:'SAGI VOICE PRO',sub:'独立配音工作台 · 不包含视频解说流程'},
  cut:{title:'SAGI SMART CUT',sub:'素材 + 文案 → AI分镜 → 配音 → 字幕 → 成片'},
  subtitle:{title:'SAGI SUBTITLE',sub:'AI识别 · 翻译 · 时间轴 · 字幕导出 / 烧录'},
  image:{title:'SAGI IMAGE',sub:'图片处理 · 参考图 · AI再创作'},
@@ -1119,10 +1119,10 @@ function applySagiModuleMode(){
 
  if(mode==='down'){sagiShow(download,true);sagiShow(recent,true)}
  if(mode==='image'){sagiShow(image,true);sagiShow(recreate,true)}
- if(mode==='voice'){sagiShow(voice,true);sagiShow(studio,true)}
+ if(mode==='voice'){sagiShow(voice,true)}
  if(mode==='cut'||mode==='subtitle'||mode==='studio')sagiShow(studio,true);
 
- if(studio&&mode!=='studio'){
+ if(studio&&mode!=='studio'&&mode!=='voice'){
   const steps=[...studio.querySelectorAll('.studioStep')];
   steps.forEach(step=>{
    const txt=(step.textContent||'').replace(/\s+/g,' ');
@@ -4193,7 +4193,7 @@ async function ensureFFmpeg(){
  // iPhone/Safari: class worker must be same-origin. The stock bundled worker can
  // resolve blob: core URLs as webpack module ids and throw "Cannot find module blob:...".
  // SAGI's raw module worker uses the browser's native dynamic import instead.
- const classWorkerURL=new URL('./sagi-ffmpeg-worker.js?v=4300',window.location.href).href;
+ const classWorkerURL=new URL('./sagi-ffmpeg-worker.js?v=4310',window.location.href).href;
  const core='https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd';
  const coreURL=await toBlobURLRemote([core+'/ffmpeg-core.js','https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd/ffmpeg-core.js'],'text/javascript');
  const wasmURL=await toBlobURLRemote([core+'/ffmpeg-core.wasm','https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd/ffmpeg-core.wasm'],'application/wasm');
@@ -6406,11 +6406,11 @@ if('serviceWorker' in navigator){
  navigator.serviceWorker.addEventListener('controllerchange',()=>{
   if(swReloaded)return;swReloaded=true;
   try{
-   const key='sagi_sw_reload_v4300';
+   const key='sagi_sw_reload_v4310';
    if(sessionStorage.getItem(key)!=='1'){sessionStorage.setItem(key,'1');location.reload()}
   }catch(e){location.reload()}
  });
- navigator.serviceWorker.register('./sagi-down-sw.js?v=4300',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})
+ navigator.serviceWorker.register('./sagi-down-sw.js?v=4310',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})
 }
 window.addEventListener('DOMContentLoaded',()=>setTimeout(applySagiModuleMode,0));
 })();
