@@ -657,7 +657,7 @@ jobs:
           for module in ("down","voice","cut","subtitle","image","studio"):
               assert f"module={module}" in hub, module
           manifest = __import__("json").loads(pathlib.Path("content-os/sagi-down-manifest.webmanifest").read_text(encoding="utf-8"))
-          assert manifest["start_url"] == "./sagi-hub.html?v=4310", manifest["start_url"]
+          assert manifest["start_url"] == "./sagi-hub.html?v=4320", manifest["start_url"]
           m = re.search(r"<script>([\s\S]*?)</script>", s)
           assert m, "inline script missing"
           pathlib.Path("/tmp/sagi-down.js").write_text(m.group(1), encoding="utf-8")
@@ -717,13 +717,13 @@ jobs:
               "voiceLastProvider",
               "voiceLastModel",
               "SAGI_MODULES",
-              "if(mode===\'voice\'){sagiShow(voice,true)}",
+              "if(studio)studio.remove()",
               "moduleModeBar",
               "SAGI SMART CUT",
               "SAGI SUBTITLE",
               "SAGI IMAGE",
               "SAGI STUDIO",
-              "sagi-ffmpeg-worker.js?v=4310",
+              "sagi-ffmpeg-worker.js?v=4320",
               "const classWorkerURL=new URL",
               "/api/smart-render",
           ]
@@ -750,6 +750,23 @@ jobs:
           PY
           node --check /tmp/sagi-down.js
           node --check content-os/sagi-ffmpeg-worker.js
+
+      - name: VOICE module runtime isolation smoke
+        run: |
+          set -e
+          CHROME="$(command -v google-chrome || command -v chromium-browser || command -v chromium || true)"
+          test -n "$CHROME"
+          python -m http.server 8765 --directory content-os >/tmp/sagi-content-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID || true' EXIT
+          sleep 1
+          "$CHROME" --headless=new --no-sandbox --disable-gpu --virtual-time-budget=2500             --dump-dom "http://127.0.0.1:8765/sagi-down.html?module=voice&v=4320" > /tmp/voice-module-dom.html
+          grep -q 'id="sagiVoiceExport"' /tmp/voice-module-dom.html
+          ! grep -q 'id="mobileStudio"' /tmp/voice-module-dom.html
+          ! grep -q '06 · 解说' /tmp/voice-module-dom.html
+          grep -q 'SAGI VOICE PRO' /tmp/voice-module-dom.html
+          grep -q '独立配音工作台 · 不包含视频解说流程' /tmp/voice-module-dom.html
+          echo "VOICE module runtime isolation smoke OK"
 
       - name: SAGI AI LOCAL V1.3 design frontend smoke
         run: |
