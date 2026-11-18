@@ -480,6 +480,8 @@ server.listen(PORT,'127.0.0.1',async()=>{
   await page.screenshot({path:'selftest-artifacts/13-long-session-soak.png'});
 
   console.log('TEST 13: V4.32 Signature Core is available in both live pages and remains stable across reload');
+  const expectedSignatureVersion=(await import('node:fs')).readFileSync(new URL('../sagi-signature-core-v432.js',import.meta.url),'utf8').match(/const VERSION='([^']+)'/)?.[1];
+  assert(expectedSignatureVersion,'V4.32 source version missing');
   const signatureBefore=await Promise.all([page,control].map(p=>p.evaluate(()=>{
     const c=window.SAGISignatureCore;
     if(!c)return null;
@@ -490,7 +492,7 @@ server.listen(PORT,'127.0.0.1',async()=>{
       sub:c.normalizeEvent({type:'SUBSTITUTION',off:{name:'A'},on:{name:'B'}}).type};
   })));
   for(const [i,x] of signatureBefore.entries()){
-    assert(x&&x.version==='4.32.0-rc.1'&&x.goal==='GOAL'&&x.yellow==='#f2d536'&&x.red==='#e33440'&&x.rejected==='CLEAR_EVENT'&&x.sub==='SUB',
+    assert(x&&x.version===expectedSignatureVersion&&x.goal==='GOAL'&&x.yellow==='#f2d536'&&x.red==='#e33440'&&x.rejected==='CLEAR_EVENT'&&x.sub==='SUB',
       'V4.32 Signature Core not integrated in '+(i===0?'output':'control')+': '+JSON.stringify(x));
   }
   await page.reload({waitUntil:'domcontentloaded'});
@@ -499,7 +501,7 @@ server.listen(PORT,'127.0.0.1',async()=>{
     version:window.SAGISignatureCore?.VERSION,
     normalized:window.SAGISignatureCore?.normalizeEvent({type:'RED_CARD',side:'AWAY'})?.type
   }));
-  assert(signatureAfter.version==='4.32.0-rc.1'&&signatureAfter.normalized==='RED',
+  assert(signatureAfter.version===expectedSignatureVersion&&signatureAfter.normalized==='RED',
     'V4.32 Signature Core not restored after output browser reload: '+JSON.stringify(signatureAfter));
   await page.screenshot({path:'selftest-artifacts/14-signature-core-reload.png'});
 
