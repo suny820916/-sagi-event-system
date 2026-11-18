@@ -83,3 +83,16 @@ assert(bat7.includes("Stop-Process -Id $_.ProcessId -Force"),'old bridge termina
 assert(bat7.includes('$candidate -le $PreferredPort'),'port must be locked to 8100');
 assert(!bat7.includes('$candidate -le 8120'),'silent 8101+ fallback must be disabled');
 console.log('single-instance port takeover PASS');
+
+// replay latest-only + SAGI IN/OUT transition flow
+const control7=fs.readFileSync(new URL('../v45-lan.html',import.meta.url),'utf8');
+assert(control7.includes("async function replayStingerAction"),'shared replay transition action missing');
+assert(control7.includes("replayStingerAction('IN'"),'INSTANT REPLAY transition missing');
+assert(control7.includes("replayStingerAction('OUT'"),'BACK TO LIVE transition missing');
+assert(control7.includes("ReplayPlayLastEventToOutput"),'latest-event replay command missing');
+assert(control7.includes("if(slot==='replay')return instantReplayPlayLatest()"),'Replay slot must play latest event only');
+assert(control7.includes("q('mmReplay').onclick=instantReplayPlayLatest"),'match replay button latest-only binding missing');
+assert(control7.includes("else if(e.key==='4')instantReplayPlayLatest()"),'keyboard 4 latest-only binding missing');
+assert(!control7.includes("q('mmReplay').onclick=()=>vdTake('replay')"),'old full Replay-input switch binding still present');
+assert(control7.includes("ReplayStopEvents"),'old replay playback stop guard missing');
+console.log('replay latest-only transition flow PASS');
