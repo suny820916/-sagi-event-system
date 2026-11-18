@@ -34,3 +34,13 @@ assert(!control2.includes("['CUT','FADE','SLIDE','ZOOM','FLASH']"),'operator mus
 assert(output2.includes("if(type==='FLASH'){type='FADE'}"),'legacy output FLASH must degrade to FADE');
 assert(!output2.includes("opacity:.82,offset:.28"),'white flash animation must be removed');
 console.log('opening white-flash protection PASS');
+
+// opening boot transparency and stale-state cleanup
+const control3=fs.readFileSync(new URL('../v45-lan.html',import.meta.url),'utf8');
+const output3=fs.readFileSync(new URL('../vmix-v45-lan.html',import.meta.url),'utf8');
+assert(output3.includes("background:#07090c;transform-origin:0 0;opacity:0"),'opening stage must be hidden on first paint');
+assert(output3.includes("q('stage').style.opacity='1'"),'valid opening state must explicitly reveal stage');
+assert(output3.includes("q('stage').style.opacity='0'"),'CLEAR must hide opening stage');
+assert(control3.includes("完整出场结束自动清屏"),'full intro completion must clear stale opening state');
+assert(control3.includes("publishGroup('CLEAR',200,clearMeta)"),'full intro completion CLEAR publish missing');
+console.log('opening boot transparency PASS');
