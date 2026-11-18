@@ -23,6 +23,13 @@ const normalized=core.normalizeEvent(first);
 assert(normalized.eventId==='match-42-event-100',
   'BLOCK RELEASE: normalization must preserve bounded eventId');
 const noIdentity=core.eventKey(sameMetadata);
-assert(noIdentity!==core.eventKey({...sameMetadata,at:'00:01'}),
-  'timestamp metadata must not erase distinct event identity');
+assert(noIdentity==='',
+  'BLOCK RELEASE: metadata-only legacy events must not be treated as reliable identity');
+const control=fs.readFileSync(new URL('../v45-lan.html',import.meta.url),'utf8');
+assert(control.includes("function mdNextEventIdentity(type='EVENT')"),
+  'BLOCK RELEASE: control source must generate persistent in-match event identity');
+assert(control.includes("...mdNextEventIdentity(type)")&&control.includes("...mdNextEventIdentity('SUB')")&&control.includes("...mdNextEventIdentity('MVP')"),
+  'BLOCK RELEASE: live event creators must attach explicit identity');
+assert(/eventSequence\)\|\|0\)\+1/.test(control),
+  'BLOCK RELEASE: event sequence must advance from persisted matchday state');
 console.log('V4.32 EVENT IDENTITY GATE PASS');
