@@ -13,8 +13,8 @@ assert('#ff1a1a'!=='#e33440','brand red dot and referee red card must remain dis
 // Validate the actual style bindings, not merely the presence of two color literals.
 const brandDotRule=html.match(/\.sagiBrandA\s+i\s*\{([^}]*)\}/);
 assert(brandDotRule && /background\s*:\s*#ff1a1a\b/i.test(brandDotRule[1]),'SAGI A red dot must retain its own brand color');
-const redEventRule=html.match(/\.eventCard\.red\s*\{([^}]*)\}/);
-assert(redEventRule && /--eventAccent\s*:\s*#e33440\b/i.test(redEventRule[1]),'referee red event must retain independent match red');
+const redEventRules=[...html.matchAll(/\.eventCard\.red\s*\{([^}]*)\}/g)];
+assert(redEventRules.some(rule=>/--eventAccent\s*:\s*#e33440\b/i.test(rule[1])),'referee red event must retain independent match red');
 assert(/function\s+redCardsHtml\s*\(/.test(html) && html.includes('class="sbRedCard"'),'scoreboard red-card indicator renderer missing');
 assert(/\.sbRedCard\s*\{/.test(html),'scoreboard red-card indicator CSS missing');
 
