@@ -238,10 +238,19 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
 .smartCutPlan{display:grid;gap:5px;margin-top:8px;max-height:220px;overflow:auto}.smartCutRow{display:grid;grid-template-columns:54px 1fr 58px;gap:7px;align-items:center;border:1px solid #302c20;border-radius:9px;background:#090b09;padding:7px}.smartCutRow time{font-size:8px;color:#d2b66e;font-variant-numeric:tabular-nums}.smartCutRow span{font-size:8px;color:#c2c5bd;line-height:1.4}.smartCutRow em{font-style:normal;font-size:7px;color:#82775b;text-align:right}
 @media(max-width:420px){.smartCutActions{grid-template-columns:1fr}.smartCutFacts{grid-template-columns:1fr 1fr 1fr}}
 
+
+.moduleModeBar{display:none;position:sticky;top:calc(env(safe-area-inset-top) + 2px);z-index:80;margin:0 0 10px;padding:9px 10px;border:1px solid #2d3538;border-radius:12px;background:rgba(5,8,9,.94);backdrop-filter:blur(14px);align-items:center;justify-content:space-between;gap:8px}
+.moduleModeBar.show{display:flex}.moduleModeBar b{display:block;font-size:11px;letter-spacing:.08em}.moduleModeBar span{display:block;margin-top:2px;font-size:8px;color:#7f9096}.moduleModeBar a{font-size:9px;color:#d8b867;text-decoration:none;border:1px solid #50472e;border-radius:9px;padding:7px 9px;white-space:nowrap}
+.moduleHidden{display:none!important}
 </style>
 </head>
 <body>
 <div class="wrap">
+  <div class="moduleModeBar" id="moduleModeBar">
+    <div><b id="moduleModeTitle">SAGI TOOLS</b><span id="moduleModeSub">独立模块</span></div>
+    <a href="./sagi-hub.html?v=4300">返回工具主屏</a>
+  </div>
+
   <div class="top">
     <div class="brand"><b>SAGI DOWN</b><span>DOWNLOAD · IMAGE AI · VIDEO</span></div>
     <span class="badge" id="sagiBuildBadge">V3.9.2.5 · ADAPTIVE LOCK</span>
@@ -259,7 +268,7 @@ button,input{font:inherit}.wrap{max-width:620px;margin:0 auto}.top{display:flex;
     </div>
   </section>
 
-  <section class="card">
+  <section class="card" id="downloadCard">
     <div class="sectionHead"><div class="label">视频链接 / 分享文案</div><div class="mini">自动提取 URL</div></div>
     <div class="inputWrap">
       <textarea id="url" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="粘贴链接，或直接粘贴整段分享文案…"></textarea>
@@ -1063,7 +1072,7 @@ Unbelievable finish."></textarea>
     </div>
   </section>
 
-  <section class="card">
+  <section class="card" id="recentDownloadsCard">
     <div class="sectionHead">
       <div><div class="label">最近下载</div><div class="mini" id="historyCount">0 条记录</div></div>
       <div class="historyTools"><button class="btn danger" id="clearHistoryBtn" type="button">清空记录</button></div>
@@ -1077,13 +1086,61 @@ Unbelievable finish."></textarea>
 
 <script>
 (()=>{'use strict';
-const SAGI_DOWN_BUILD='V4.2.3';
+const SAGI_DOWN_BUILD='V4.3.0';
 document.documentElement.dataset.sagiDownBuild=SAGI_DOWN_BUILD;
 const BTCH_PUBLIC='https://btch-downloader-api-green.vercel.app';
 const DOWNLOAD_ROUTER_VERSION='3.0';
 const KEY='sagi_down_history_v2';
 const OLD_KEY='sagi_down_history_v1';
 const q=id=>document.getElementById(id);
+const SAGI_MODULES={
+ down:{title:'SAGI DOWN',sub:'链接下载 · 文件整理 · 最近任务'},
+ voice:{title:'SAGI VOICE PRO',sub:'专业配音 · 情绪导演 · 克隆声音 · 独立导出'},
+ cut:{title:'SAGI SMART CUT',sub:'素材 + 文案 → AI分镜 → 配音 → 字幕 → 成片'},
+ subtitle:{title:'SAGI SUBTITLE',sub:'AI识别 · 翻译 · 时间轴 · 字幕导出 / 烧录'},
+ image:{title:'SAGI IMAGE',sub:'图片处理 · 参考图 · AI再创作'},
+ studio:{title:'SAGI STUDIO',sub:'完整手机后期工作台'}
+};
+function sagiModuleMode(){
+ const key=new URLSearchParams(location.search).get('module')||'';
+ return SAGI_MODULES[key]?key:'';
+}
+function sagiShow(el,yes){if(el)el.classList.toggle('moduleHidden',!yes)}
+function applySagiModuleMode(){
+ const mode=sagiModuleMode();if(!mode)return;
+ const meta=SAGI_MODULES[mode];
+ q('moduleModeBar')?.classList.add('show');
+ if(q('moduleModeTitle'))q('moduleModeTitle').textContent=meta.title;
+ if(q('moduleModeSub'))q('moduleModeSub').textContent=meta.sub;
+ document.title=meta.title+' · SAGI SPORTS';
+
+ const download=q('downloadCard'),recent=q('recentDownloadsCard'),image=q('imageStudioCard'),recreate=q('recreateCard'),voice=q('sagiVoiceExport'),studio=q('mobileStudio');
+ [download,recent,image,recreate,voice,studio].forEach(x=>sagiShow(x,false));
+
+ if(mode==='down'){sagiShow(download,true);sagiShow(recent,true)}
+ if(mode==='image'){sagiShow(image,true);sagiShow(recreate,true)}
+ if(mode==='voice'){sagiShow(voice,true);sagiShow(studio,true)}
+ if(mode==='cut'||mode==='subtitle'||mode==='studio')sagiShow(studio,true);
+
+ if(studio&&mode!=='studio'){
+  const steps=[...studio.querySelectorAll('.studioStep')];
+  steps.forEach(step=>{
+   const txt=(step.textContent||'').replace(/\s+/g,' ');
+   let show=false;
+   if(mode==='cut')show=step.classList.contains('smartCutSuite')||step.id==='smartCutSuite';
+   if(mode==='voice')show=!!step.querySelector('#aiVoiceMode')||/06 · 解说/.test(txt);
+   if(mode==='subtitle')show=/01 · 导入视频|02 · 裁剪与画幅|05 · 字幕 \+ 翻译|07 · 导出成片/.test(txt);
+   sagiShow(step,show)
+  });
+  sagiShow(studio.querySelector('.studioHero'),false)
+ }
+
+ document.querySelector('.top')?.classList.add('moduleHidden');
+ document.querySelector('section.hero')?.classList.add('moduleHidden');
+ const install=document.querySelector('.install');if(install)install.textContent='SAGI 模块模式 · 返回工具主屏可切换其他功能。';
+ window.scrollTo(0,0)
+}
+
 const buildBadge=q('sagiBuildBadge');if(buildBadge)buildBadge.textContent=SAGI_DOWN_BUILD+' · SMART CUT';
 const input=q('url'),status=q('status'),platformName=q('platformName'),platformHint=q('platformHint'),platformType=q('platformType');
 
@@ -4136,7 +4193,7 @@ async function ensureFFmpeg(){
  // iPhone/Safari: class worker must be same-origin. The stock bundled worker can
  // resolve blob: core URLs as webpack module ids and throw "Cannot find module blob:...".
  // SAGI's raw module worker uses the browser's native dynamic import instead.
- const classWorkerURL=new URL('./sagi-ffmpeg-worker.js?v=4230',window.location.href).href;
+ const classWorkerURL=new URL('./sagi-ffmpeg-worker.js?v=4300',window.location.href).href;
  const core='https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd';
  const coreURL=await toBlobURLRemote([core+'/ffmpeg-core.js','https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd/ffmpeg-core.js'],'text/javascript');
  const wasmURL=await toBlobURLRemote([core+'/ffmpeg-core.wasm','https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd/ffmpeg-core.wasm'],'application/wasm');
@@ -6349,12 +6406,13 @@ if('serviceWorker' in navigator){
  navigator.serviceWorker.addEventListener('controllerchange',()=>{
   if(swReloaded)return;swReloaded=true;
   try{
-   const key='sagi_sw_reload_v4230';
+   const key='sagi_sw_reload_v4300';
    if(sessionStorage.getItem(key)!=='1'){sessionStorage.setItem(key,'1');location.reload()}
   }catch(e){location.reload()}
  });
- navigator.serviceWorker.register('./sagi-down-sw.js?v=4230',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})
+ navigator.serviceWorker.register('./sagi-down-sw.js?v=4300',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})
 }
+window.addEventListener('DOMContentLoaded',()=>setTimeout(applySagiModuleMode,0));
 })();
 </script>
 </body>
