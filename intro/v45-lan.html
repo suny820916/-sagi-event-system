@@ -1447,6 +1447,7 @@ function normalizeEvent(raw,context={}){
     team:safeText(raw.team||teamFallback,80),
     at:safeText(raw.at,24),
     eventId:safeText(raw.eventId,128),
+    fixtureKey:safeText(raw.fixtureKey||context.fixtureKey,128),
     sequence:(Number.isSafeInteger(raw.sequence)&&raw.sequence>=0)?raw.sequence:null,
     __signatureVersion:VERSION
   };
