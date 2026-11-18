@@ -24,3 +24,13 @@ const output=fs.readFileSync(new URL('../vmix-v45-lan.html',import.meta.url),'ut
 assert(output.includes("fetch('/vmix?graphicsBuild='"),'output build checker must read /vmix, not control root');
 assert(!output.includes("fetch('/?graphicsBuild='"),'control-root version check would cause reload flashing when UI hotfix is newer');
 console.log('output build route isolation PASS');
+
+// opening white-flash protection
+const control2=fs.readFileSync(new URL('../v45-lan.html',import.meta.url),'utf8');
+const output2=fs.readFileSync(new URL('../vmix-v45-lan.html',import.meta.url),'utf8');
+assert(!control2.includes("transition:'FLASH'"),'default opening show must not use FLASH');
+assert(control2.includes("s.transition==='FLASH'?'FADE'"),'saved FLASH timelines must normalize to FADE');
+assert(!control2.includes("['CUT','FADE','SLIDE','ZOOM','FLASH']"),'operator must not be offered white FLASH transition');
+assert(output2.includes("if(type==='FLASH'){type='FADE'}"),'legacy output FLASH must degrade to FADE');
+assert(!output2.includes("opacity:.82,offset:.28"),'white flash animation must be removed');
+console.log('opening white-flash protection PASS');
