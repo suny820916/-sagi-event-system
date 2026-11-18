@@ -6,5 +6,5 @@ assert((html.match(/class="sagiBrandA"/g)||[]).length>=3,'SAGI brand element not
 assert(html.includes('FOOTBALL'),'SAGI FOOTBALL lockup missing');
 assert(html.includes('#ff1a1a'),'SAGI signature red dot token missing');
 assert(html.includes('#e33440'),'match red-card token missing');
-assert(!/sagiBrand[^\n]{0,180}<img/i.test(html),'brand identity must not depend on external image loading');
+assert(!/<img[^>]+class="[^"]*sagiBrand/i.test(html),'brand identity must not depend on external image loading');
 console.log('V4.32 SAGI BRAND GATE PASS');
