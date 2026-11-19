@@ -10,19 +10,19 @@
 </style>
 </head>
 <body><main class="app">
-<div class="top"><div class="brand"><img src="./brand-mark.svg" alt="SAGI KIT"><div><b>SAGI KIT</b><small>商用自检 V1.5</small></div></div><a class="back" href="./start.html">返回工作台</a></div>
+<div class="top"><div class="brand"><img src="./brand-mark.svg" alt="SAGI KIT"><div><b>SAGI KIT</b><small>商用自检 V1.6 RC1</small></div></div><a class="back" href="./start.html">返回工作台</a></div>
 <section class="hero"><h1>直播前要自检，接单前也一样。</h1><p>这页只做检查和备份，不修改订单。建议正式给客户操作前点一次；全部通过再开始当天接单。</p></section>
 <div id="overall" class="overall"><span>当前设备</span><strong id="overallText">正在自检…</strong></div>
 <div class="metrics"><div class="metric"><span>本机订单</span><b id="mOrders">0</b></div><div class="metric"><span>本机报价</span><b id="mQuotes">0</b></div><div class="metric"><span>业务数据估算</span><b id="mBytes">0 KB</b></div></div>
 <div id="grid" class="grid"></div>
 
-<section class="card"><h2>验收操作</h2><p>业务备份不会包含老板私有成本表；成本仍需在利润中心单独导出。</p><div class="actions"><button id="rerun" class="btn primary">重新自检</button><button id="exportReport" class="btn">导出自检报告</button><button id="backup" class="btn">导出业务备份</button></div></section>
+<section class="card"><h2>验收操作</h2><p>业务备份不会包含老板私有成本表；成本仍需在利润中心单独导出。</p><div class="actions"><button id="rerun" class="btn primary">重新自检</button><button id="exportReport" class="btn">导出自检报告</button><button id="backup" class="btn">导出业务备份</button><button id="restore" class="btn">恢复业务备份</button><input id="restoreFile" type="file" accept="application/json,.json" hidden></div></section>
 <section class="card"><h2>详细报告</h2><div id="report" class="report">--</div></section>
-<div class="foot">SAGI KIT COMMERCIAL ACCEPTANCE V1.5 · 自检 PASS 代表浏览器级关键能力和当前本地数据结构通过；它不能替代真实 iPhone 的人工点击验收、系统更新兼容测试或服务器端安全审计。</div>
+<div class="foot">SAGI KIT RELEASE CANDIDATE V1.6 RC1 · 自检 PASS 代表浏览器级关键能力和当前本地数据结构通过；真实 iPhone Safari / 微信内置浏览器的人工点击验收仍需在设备上完成。</div>
 </main>
 <script>
-const ESSENTIAL=['./start.html','./catalog.html','./quote.html','./index.html','./order-history.html','./production-center.html','./delivery-center.html','./profit-center.html','./brand-mark.svg','./catalog-data.js','./cloud-sync.js'];
-const q=s=>document.querySelector(s);let lastReport=null;
+const ESSENTIAL=['./start.html','./catalog.html','./quote.html','./index.html','./order-history.html','./production-center.html','./delivery-center.html','./profit-center.html','./commercial-check.html','./release.json','./manifest.webmanifest','./brand-mark.svg','./catalog-data.js','./cloud-sync.js'];
+const q=s=>document.querySelector(s);let lastReport=null;const BUSINESS_KEYS=['sagi-kit-draft','sagi-kit-last-order','sagi-kit-orders','sagi-kit-quotes','sagi-kit-quote-settings','sagi-kit-sync-queue','sagi-kit-sync-config'];
 function parseKey(k,fallback){try{const raw=localStorage.getItem(k);if(raw==null)return {ok:true,value:fallback,raw:null};return {ok:true,value:JSON.parse(raw),raw}}catch(e){return {ok:false,value:fallback,raw:localStorage.getItem(k)}}}
 function bytes(s){return new Blob([s||'']).size}
 function fmtBytes(n){return n<1024?n+' B':n<1048576?(n/1024).toFixed(1)+' KB':(n/1048576).toFixed(2)+' MB'}
@@ -55,10 +55,12 @@ async function run(){
  rs.push(result('image','队徽压缩能力',canvasOK&&typeof FileReader!=='undefined'?'pass':'warn',canvasOK?'Canvas/FileReader 可用，上传队徽会先压缩':'图片压缩能力不完整，建议不要上传大图'));
  rs.push(result('share','手机分享',navigator.share?'pass':'warn',navigator.share?'支持系统分享菜单':'不支持 Web Share；仍可使用复制报价/订单'));
  rs.push(result('network','当前网络',navigator.onLine?'pass':'warn',navigator.onLine?'当前在线':'当前离线；核心页面可继续使用，但云同步会排队'));
+ const ua=navigator.userAgent||'',isWeChat=/MicroMessenger/i.test(ua),isIOS=/iPhone|iPad|iPod/i.test(ua),isSafari=isIOS&&/Safari/i.test(ua)&&!/CriOS|FxiOS|EdgiOS|MicroMessenger/i.test(ua),standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+ rs.push(result('browser','接单浏览器',isWeChat?'warn':(isIOS&&!isSafari&&!standalone?'warn':'pass'),isWeChat?'当前为微信内置浏览器；正式接单、备份恢复、打印和PWA更新建议改用Safari':(isIOS&&!isSafari&&!standalone?'iPhone上建议使用Safari或已添加主屏幕的SAGI KIT':'当前浏览器环境适合正式接单')));
+ rs.push(result('pwa','主屏幕/PWA',standalone?'pass':'warn',standalone?'当前以主屏幕应用模式运行':'可继续使用；长期接单建议从Safari“添加到主屏幕”'));
  let usageText='浏览器未提供存储额度';try{if(navigator.storage&&navigator.storage.estimate){const e=await navigator.storage.estimate();usageText='浏览器估算 '+fmtBytes(e.usage||0)+' / '+fmtBytes(e.quota||0)}}catch(e){}
  rs.push(result('quota','浏览器存储额度','pass',usageText));
- const businessKeys=['sagi-kit-draft','sagi-kit-last-order','sagi-kit-orders','sagi-kit-quotes','sagi-kit-quote-settings','sagi-kit-sync-queue','sagi-kit-sync-config'];
- const businessBytes=businessKeys.reduce((n,k)=>n+bytes(localStorage.getItem(k)||''),0);q('#mBytes').textContent=fmtBytes(businessBytes);q('#mOrders').textContent=ordersArray?orders.value.length:'--';q('#mQuotes').textContent=quotesArray?quotes.value.length:'--';
+ const businessBytes=BUSINESS_KEYS.reduce((n,k)=>n+bytes(localStorage.getItem(k)||''),0);q('#mBytes').textContent=fmtBytes(businessBytes);q('#mOrders').textContent=ordersArray?orders.value.length:'--';q('#mQuotes').textContent=quotesArray?quotes.value.length:'--';
  const fail=rs.filter(x=>x.state==='fail').length,warn=rs.filter(x=>x.state==='warn').length,overall=fail?'fail':warn?'warn':'pass';
  q('#overall').className='overall '+overall;q('#overallText').textContent=fail?'不建议开始接单 · '+fail+' 项失败':warn?'可以使用，但有 '+warn+' 项提醒':'PASS · 可以开始当天接单';
  q('#grid').innerHTML=rs.map(x=>'<div class="item '+x.state+'"><div class="dot">'+(x.state==='pass'?'✓':x.state==='warn'?'!':'×')+'</div><div class="name"><b>'+x.name+'</b><span>'+x.detail+'</span></div><div class="state">'+x.state.toUpperCase()+'</div></div>').join('');
@@ -67,6 +69,8 @@ async function run(){
 }
 function downloadJSON(name,obj){const blob=new Blob([JSON.stringify(obj,null,2)],{type:'application/json;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500)}
 q('#rerun').onclick=run;q('#exportReport').onclick=()=>{if(lastReport)downloadJSON('SAGI-KIT-V1.5-CHECK.json',lastReport)};
-q('#backup').onclick=()=>{const keys=['sagi-kit-draft','sagi-kit-last-order','sagi-kit-orders','sagi-kit-quotes','sagi-kit-quote-settings','sagi-kit-sync-queue','sagi-kit-sync-config'];const data={schema:'SAGI-KIT-BUSINESS-BACKUP-1',exportedAt:new Date().toISOString(),data:{}};keys.forEach(k=>{const v=localStorage.getItem(k);if(v!=null)data.data[k]=v});downloadJSON('SAGI-KIT-BUSINESS-BACKUP.json',data)};
+q('#backup').onclick=()=>{const data={schema:'SAGI-KIT-BUSINESS-BACKUP-1',version:'1.6.0-rc1',exportedAt:new Date().toISOString(),data:{}};BUSINESS_KEYS.forEach(k=>{const v=localStorage.getItem(k);if(v!=null)data.data[k]=v});downloadJSON('SAGI-KIT-BUSINESS-BACKUP.json',data)};
+q('#restore').onclick=()=>q('#restoreFile').click();
+q('#restoreFile').onchange=async()=>{const f=q('#restoreFile').files&&q('#restoreFile').files[0];if(!f)return;try{const b=JSON.parse(await f.text());if(b.schema!=='SAGI-KIT-BUSINESS-BACKUP-1'||!b.data||typeof b.data!=='object')throw new Error('INVALID');const incoming=Object.keys(b.data),blocked=incoming.filter(k=>!BUSINESS_KEYS.includes(k));if(blocked.length)throw new Error('UNSAFE_KEYS');for(const k of BUSINESS_KEYS){if(!(k in b.data))continue;const v=b.data[k];if(typeof v!=='string')throw new Error('INVALID_VALUE');JSON.parse(v)}if(!confirm('恢复业务备份会覆盖当前草稿、订单、报价和同步队列。老板私有成本不会被修改。确定继续？'))return;for(const k of BUSINESS_KEYS){if(k in b.data)localStorage.setItem(k,b.data[k])}alert('业务备份已恢复。页面将重新载入。');location.reload()}catch(e){console.error(e);alert(e&&e.message==='UNSAFE_KEYS'?'备份包含非白名单数据，已拒绝恢复。':'备份文件无效或数据损坏，未进行任何覆盖。')}finally{q('#restoreFile').value=''}};
 run();
 </script></body></html>
