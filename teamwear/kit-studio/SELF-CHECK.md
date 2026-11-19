@@ -6,20 +6,17 @@ Branch: kit-studio-v1-china
 ## Result
 PASS
 
-## Order Workflow Status
-- Six-stage workflow: PASS
-- New orders start at 待确认: PASS
-- Quick advance from order card: PASS
-- Manual status selector: PASS
-- Status timeline/history: PASS
-- Filter orders by status: PASS
-- Status persists locally: PASS
-- Latest queued payload replaces older pending payload: PASS
-- Status change queues optional cloud sync: PASS
-- Legacy local orders remain compatible: PASS
-- Shared order text includes current status: PASS
+## Daily Task Dashboard
+- 今日待办 panel: PASS
+- Production >7 days detection: PASS
+- Click task to filter orders: PASS
+- Normal date/status filters reset task filter: PASS
+- Home screen live task summary: PASS
+- Four task categories summarized on home: PASS
+- Reads orders locally without server: PASS
+- No external runtime dependency: PASS
 - Offline cache refreshed: PASS
-- No supplier mapping leaked: PASS
+- Supplier data remains isolated: PASS
 
 ## Note
-Static source-level validation passed. iPhone Safari tap/print/share behavior and real cloud API sync remain device/server QA items before production release.
+Static source-level validation passed. Real iPhone Safari interaction remains a device QA item before production release.
