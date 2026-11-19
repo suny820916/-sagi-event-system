@@ -72,7 +72,7 @@ export class FileMatchStore {
     // complete line and make subsequent recovery fail closed.
     try {
       const existing = await readFile(this.journalPath, "utf8");
-      if (existing.length && !existing.endsWith("\\n")) {
+      if (existing.length && !existing.endsWith("\n")) {
         throw new Error("TORN_JOURNAL_REQUIRES_REPAIR");
       }
     } catch (error) {
