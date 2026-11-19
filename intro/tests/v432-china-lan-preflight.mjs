@@ -12,8 +12,9 @@ function check(name,ok,detail=''){
   if(!ok)failures.push(name);
 }
 const markers=['###SAGI_PS###','###SAGI_CONTROL###','###SAGI_OUTPUT###'];
-const positions=markers.map(x=>bat.indexOf(x));
-check('BAT contains exactly one of each payload delimiter',markers.every(x=>bat.indexOf(x)===bat.lastIndexOf(x)));
+const positions=markers.map(x=>bat.lastIndexOf(x));
+const delimiterLines=bat.split(/\\r?\\n/).filter(line=>markers.includes(line.trim()));
+check('BAT contains exactly one actual payload delimiter per section',JSON.stringify(delimiterLines)===JSON.stringify(markers));
 check('BAT embeds Bridge/control/output in order',positions.every(x=>x>=0)&&positions[0]<positions[1]&&positions[1]<positions[2]);
 const embeddedControl=bat.slice(positions[1]+markers[1].length,positions[2]);
 const embeddedOutput=bat.slice(positions[2]+markers[2].length);
