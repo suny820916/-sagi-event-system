@@ -219,3 +219,32 @@ This validates the web integration and brand references at source level. The sup
 ## RC1 Decision
 SOURCE-LEVEL RELEASE CANDIDATE: PASS
 STABLE RELEASE: NOT YET APPROVED
+
+
+## V1.6 Stable Real-Device QA Gate
+- stable-qa.html created: PASS
+- stable-qa.html script syntax: PASS
+- Mobile launcher entry: PASS
+- Offline cache entry: PASS
+- release.json remains 1.6.0-rc1 / stable=false: PASS
+- Auto localStorage write check: PASS
+- Auto temporary 512KB storage check: PASS
+- Auto JSON round-trip check: PASS
+- Auto offline cache check: PASS
+- Auto Service Worker control check: PASS
+- Auto RC1 version-lock check: PASS
+- Auto browser/device environment check: PASS
+- Auto quota/share checks: PASS
+- 6 manual real-device acceptance items defined: PASS
+- Stable gate requires zero auto FAIL/WARN + all 6 manual PASS: PASS
+- QA report export: PASS
+- Stable QA page does not write business orders/quotes: PASS
+- Stable QA page does not mutate release.json: PASS
+- Stable QA page has no GitHub write capability: PASS
+- Source-level gate date: 2026-11-19
+
+## Stable Decision
+SOURCE-LEVEL STABLE QA HARNESS: PASS
+REAL-DEVICE STABLE QA: PENDING
+RELEASE.JSON STABLE FLAG: FALSE
+PR MERGE: NOT PERFORMED
