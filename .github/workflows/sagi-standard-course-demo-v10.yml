@@ -1,0 +1,59 @@
+name: SAGI STANDARD COURSE DEMO V1.0
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/sagi-standard-course-demo-v10.yml"
+      - "cloud-blender-worker/engine/sagi_event_flow_standard_v1.py"
+      - "cloud-blender-worker/presets/sagi_standard_course_demo_v10.json"
+      - "cloud-blender-worker/overlay/sagi_standard_course_demo_v10.ass"
+jobs:
+  render-and-package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Blender image
+        run: docker build -t sagi-standard-v10 ./cloud-blender-worker
+      - name: Render 45s event-flow base
+        run: |
+          set -euo pipefail
+          mkdir -p sagi_standard_v10_out/critical_frames
+          docker run --rm -v "$PWD/sagi_standard_v10_out:/out" sagi-standard-v10 bash -lc '
+            set -euo pipefail
+            blender --background --python /app/engine/sagi_event_flow_standard_v1.py -- /app/presets/sagi_standard_course_demo_v10.json /out
+            ffmpeg -y -loglevel error -framerate 30 -i /out/frames/frame_%04d.png -f lavfi -i anullsrc=channel_layout=stereo:sample_rate=44100 -map 0:v:0 -map 1:a:0 -c:v libx264 -profile:v baseline -level 3.1 -pix_fmt yuv420p -preset veryfast -crf 20 -c:a aac -b:a 64k -shortest -movflags +faststart /out/BASE.mp4
+          '
+          sudo chown -R "$USER":"$USER" sagi_standard_v10_out
+      - name: Add SAGI titles and validate
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq fonts-noto-cjk ffmpeg
+          ffmpeg -y -loglevel error -i sagi_standard_v10_out/BASE.mp4 -vf "ass=cloud-blender-worker/overlay/sagi_standard_course_demo_v10.ass" -c:v libx264 -profile:v baseline -level 3.1 -pix_fmt yuv420p -preset veryfast -crf 20 -c:a copy -movflags +faststart sagi_standard_v10_out/SAGI_STANDARD_COURSE_DEMO_V10.mp4
+          for t in 2 6.7 11 15.4 23.2 27 37.2 40 43.5; do
+            ffmpeg -y -loglevel error -ss "$t" -i sagi_standard_v10_out/SAGI_STANDARD_COURSE_DEMO_V10.mp4 -frames:v 1 "sagi_standard_v10_out/critical_frames/$t.jpg"
+          done
+          python3 - <<'PY'
+          import json,subprocess
+          p='sagi_standard_v10_out/'
+          r=json.load(open(p+'execution_report.json'))
+          assert r['valid'] and r['duration_sec']==45 and not r['errors'],r
+          d=float(subprocess.check_output(['ffprobe','-v','error','-show_entries','format=duration','-of','default=noprint_wrappers=1:nokey=1',p+'SAGI_STANDARD_COURSE_DEMO_V10.mp4']).decode())
+          assert abs(d-45)<0.08,d
+          r['final_mp4_duration_sec']=d
+          r['packaging_version']='SAGI STANDARD COURSE DEMO V1.0'
+          json.dump(r,open(p+'execution_report_v10.json','w'),ensure_ascii=False,indent=2)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SAGI-STANDARD-COURSE-DEMO-V1.0
+          path: |
+            sagi_standard_v10_out/SAGI_STANDARD_COURSE_DEMO_V10.mp4
+            sagi_standard_v10_out/critical_frames/*.jpg
+            sagi_standard_v10_out/execution_report_v10.json
+            sagi_standard_v10_out/scene.blend
+            cloud-blender-worker/presets/sagi_standard_course_demo_v10.json
+            cloud-blender-worker/overlay/sagi_standard_course_demo_v10.ass
+          retention-days: 7
