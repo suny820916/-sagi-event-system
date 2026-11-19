@@ -121,3 +121,10 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Deliberately **disabled** HTTP pairing-code issuance: local loopback access alone is not proof of physical operator approval. Codes may only be issued by a trusted desktop integration.
 - Added gateway checks to LAN pairing CI. Local isolated HTTP prototype test passed on Node 22; CI result remains unverified.
 - **Not production-ready:** gateway is not wired to the canonical Local Engine; no LAN TLS or authenticated operator UI, no device permission scopes, no persistent rate limiting, no real Windows/vMix testing. Treat source IP throttling as defense-in-depth, not an authentication boundary.
+
+## 2026-11-20 — Authenticated LAN command bridge
+- Added `POST /api/v1/lan/command` to experimental LAN gateway. Requires an active paired bearer token and a bounded command envelope (`commandId`, `expectedRevision`, `type`).
+- The bridge delegates to an injected `submitCommand` callback; it does **not** independently mutate match state or execute vMix commands. The canonical Local Engine must enforce the command allowlist, revision checks and durable idempotency.
+- Added self-test for unauthorized access, invalid envelopes, duplicate IDs, stale revision conflict, state read-back and revoked session.
+- Added command self-test to the existing LAN CI workflow.
+- **Not yet integrated:** canonical Local Engine callback wiring, per-device scopes, encrypted LAN transport, mobile UI, Windows/vMix hardware validation. HTTP status 200 only confirms the injected callback response, not broadcast/on-air confirmation. CI result not verified in this run.
