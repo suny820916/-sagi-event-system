@@ -1,0 +1,30 @@
+name: SAGI Commercial V1 Core Self Test
+
+on:
+  push:
+    branches:
+      - commercial-v1.0
+    paths:
+      - "commercial/**"
+      - ".github/workflows/commercial-v1-selftest.yml"
+  pull_request:
+    paths:
+      - "commercial/**"
+      - ".github/workflows/commercial-v1-selftest.yml"
+  workflow_dispatch:
+
+jobs:
+  core-selftest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Run deterministic match core self-test
+        run: node commercial/tests/match-core-selftest.mjs
