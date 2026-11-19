@@ -147,10 +147,22 @@ const state=safeJSON(localStorage.getItem('sagi-kit-draft')||'{}',{});
 state.step=state.step||1;state.product=state.product||null;state.roster=Array.isArray(state.roster)?state.roster:[];state.custom=state.custom&&typeof state.custom==='object'?state.custom:{};state.shortlist=Array.isArray(state.shortlist)?state.shortlist:[];state.filter='全部';
 const qs=s=>document.querySelector(s),qsa=s=>[...document.querySelectorAll(s)];
 function save(){return safeSet('sagi-kit-draft',JSON.stringify(state))}
-const presetProduct=new URLSearchParams(location.search).get('product');
+const launchParams=new URLSearchParams(location.search),presetProduct=launchParams.get('product'),fromQuote=launchParams.get('fromQuote');
 if(presetProduct){
   const preset=PRODUCTS.find(p=>p.id===presetProduct);
-  if(preset){state.product=preset.id;state.custom.color=preset.colors[0];state.step=1;save()}
+  if(preset){
+    const validQuoteHandoff=!!fromQuote&&state.sourceQuote===fromQuote&&state.product===preset.id;
+    state.product=preset.id;
+    if(validQuoteHandoff){
+      state.step=Math.max(2,Number(state.step)||2);
+      if(!state.custom.color)state.custom.color=preset.colors[0];
+    }else{
+      state.custom.color=preset.colors[0];
+      state.step=1;
+      delete state.sourceQuote;
+    }
+    save()
+  }
 }
 function palette(name){let h=0;for(const c of name)h=(h*31+c.charCodeAt(0))>>>0;return ['hsl('+(h%360)+' 55% 35%)','hsl('+((h+55)%360)+' 52% 18%)']}
 function renderProgress(){qs('#progress').innerHTML=['选款','定制','名单','核对','完成'].map((x,i)=>'<div class="prog '+(i+1===state.step?'on':i+1<state.step?'done':'')+'">'+(i+1)+' '+x+'</div>').join('')}
