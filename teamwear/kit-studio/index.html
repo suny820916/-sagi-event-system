@@ -100,31 +100,30 @@ button,input,select,textarea{font:inherit}.app{max-width:980px;margin:auto;paddi
 </div>
 <script>
 const PRODUCTS=[
-['SK-001','SAGI LION 01','01-狮头系列一',['蓝红','红白','白黑','黄绿','蓝白','紫白'],'经典'],
-['SK-002','SAGI LION 02','01-狮头系列二',['白红黑','浅绿','粉黑','蓝红复古','绿黑经典','紫黑沉稳'],'个性'],
-['SK-003','SAGI CROSS','03-交错系列',['粉色','紫色','灰粉','绿色','红黄','蓝粉'],'个性'],
-['SK-004','SAGI ZEBRA','04-斑马纹系列',['蓝黑经典','浅蛋黄','水蓝','柔粉','黑金','激情红','粉黑'],'个性'],
-['SK-005','SAGI LINE','05-折线系列',['红色','荧光绿','浅蛋黄','紫色','黑色','蓝色','绿色'],'动感'],
-['SK-006','SAGI STRUCTURE','06-结构系列',['蓝白经典','黑粉','紫白','黑金','活力绿','淡黄','激情红'],'经典'],
-['SK-007','SAGI STAR','07-星耀系列',['经典红白','粉黑','粉黄','蓝黄','紫白','绿白','蓝白'],'年轻'],
-['SK-008','SAGI CITY','08-城邦系列',['蓝白经典','红色','黑金','亮粉','紫色','绿色','黄色'],'经典'],
-['SK-009','SAGI DUAL LINE','09-双色线条',['红蓝双线','活力橘','蓝色','白灰','紫色','绿色','黑色'],'简约'],
-['SK-010','SAGI LION PRO','10-雄狮系列',['绿白','紫白','黑白','蓝白','红白'],'经典'],
-['SK-011','SAGI HOLIDAY','11-假日风情',['经典红白','绿白','蓝白','紫白','蒂芙尼蓝','黄黑','粉白'],'年轻'],
-['SK-012','SAGI FRAGMENT','12-碎线系列',['蓝红经典','蒂芙尼蓝','黄绿','红白','黑粉','绿黄','紫白'],'个性'],
-['SK-013','SAGI BLOCK','13-块面暗纹',['经典红','紫色','绿色','蓝色','黄色','白紫','白绿','白蓝','白红'],'简约'],
-['SK-014','SAGI CROSS 02','14-交错系列',['蓝白经典','粉白','紫白','绿白','红白','黄绿','白红','蓝白'],'年轻'],
-['SK-015','SAGI MOTION','15-动势系列',['蓝色','水蓝','蛋黄','赤红','白黑','紫色','绿色'],'动感'],
-['SK-016','SAGI GRADIENT','16-线条渐变',['白紫','橙色','深蓝','绿色','蓝黄','红黄'],'动感'],
-['SK-017','SAGI VERTICAL','17-脉络竖纹',['蓝黑','奇幻紫','葱郁绿','热力红','淡粉','大黄蜂','灰白'],'简约'],
-['SK-018','SAGI CLASSIC','18-经典系列',['天蓝','深邃紫','焕新绿','活力红','温柔粉','白蓝','白红','白绿'],'经典'],
-['SK-019','SAGI DIAMOND','19-菱形暗花',['活力红黄','沉稳墨黑','奇幻紫','魅力蓝','清透蒂芙尼','柔和肉桂粉','青翠黄绿'],'高级'],
-['SK-020','SAGI TOWER','20-塔系列',['红白','柔黄','复古红蓝','深紫','绿黄','粉白','浅蓝','深蓝亮粉'],'个性'],
-['SK-021','SAGI DRAGON','21-水龙吟系列',['水蓝','荧黄绿黄','黑金','赤龙','白粉','清爽芭乐'],'东方'],
-['SK-022','SAGI DRAGON RING','22-围龙系列',['蓝白经典','莹绿','淡粉','水蓝','红色','黑金','紫色'],'东方']
-].map((x,i)=>({id:x[0],name:x[1],supplier:x[2],colors:x[3],style:x[4],
-    supplierPage:i+7,image:"./assets/"+x[0]+".webp",
-    privateLabel:true,customerVisibleSupplier:false}));
+['SK-001','SAGI LION 01',['蓝红','红白','白黑','黄绿','蓝白','紫白'],'经典'],
+['SK-002','SAGI LION 02',['白红黑','浅绿','粉黑','蓝红复古','绿黑经典','紫黑沉稳'],'个性'],
+['SK-003','SAGI CROSS',['粉色','紫色','灰粉','绿色','红黄','蓝粉'],'个性'],
+['SK-004','SAGI ZEBRA',['蓝黑经典','浅蛋黄','水蓝','柔粉','黑金','激情红','粉黑'],'个性'],
+['SK-005','SAGI LINE',['红色','荧光绿','浅蛋黄','紫色','黑色','蓝色','绿色'],'动感'],
+['SK-006','SAGI STRUCTURE',['蓝白经典','黑粉','紫白','黑金','活力绿','淡黄','激情红'],'经典'],
+['SK-007','SAGI STAR',['经典红白','粉黑','粉黄','蓝黄','紫白','绿白','蓝白'],'年轻'],
+['SK-008','SAGI CITY',['蓝白经典','红色','黑金','亮粉','紫色','绿色','黄色'],'经典'],
+['SK-009','SAGI DUAL LINE',['红蓝双线','活力橘','蓝色','白灰','紫色','绿色','黑色'],'简约'],
+['SK-010','SAGI LION PRO',['绿白','紫白','黑白','蓝白','红白'],'经典'],
+['SK-011','SAGI HOLIDAY',['经典红白','绿白','蓝白','紫白','蒂芙尼蓝','黄黑','粉白'],'年轻'],
+['SK-012','SAGI FRAGMENT',['蓝红经典','蒂芙尼蓝','黄绿','红白','黑粉','绿黄','紫白'],'个性'],
+['SK-013','SAGI BLOCK',['经典红','紫色','绿色','蓝色','黄色','白紫','白绿','白蓝','白红'],'简约'],
+['SK-014','SAGI CROSS 02',['蓝白经典','粉白','紫白','绿白','红白','黄绿','白红','蓝白'],'年轻'],
+['SK-015','SAGI MOTION',['蓝色','水蓝','蛋黄','赤红','白黑','紫色','绿色'],'动感'],
+['SK-016','SAGI GRADIENT',['白紫','橙色','深蓝','绿色','蓝黄','红黄'],'动感'],
+['SK-017','SAGI VERTICAL',['蓝黑','奇幻紫','葱郁绿','热力红','淡粉','大黄蜂','灰白'],'简约'],
+['SK-018','SAGI CLASSIC',['天蓝','深邃紫','焕新绿','活力红','温柔粉','白蓝','白红','白绿'],'经典'],
+['SK-019','SAGI DIAMOND',['活力红黄','沉稳墨黑','奇幻紫','魅力蓝','清透蒂芙尼','柔和肉桂粉','青翠黄绿'],'高级'],
+['SK-020','SAGI TOWER',['红白','柔黄','复古红蓝','深紫','绿黄','粉白','浅蓝','深蓝亮粉'],'个性'],
+['SK-021','SAGI DRAGON',['水蓝','荧黄绿黄','黑金','赤龙','白粉','清爽芭乐'],'东方'],
+['SK-022','SAGI DRAGON RING',['蓝白经典','莹绿','淡粉','水蓝','红色','黑金','紫色'],'东方']
+].map((x,i)=>({id:x[0],name:x[1],colors:x[2],style:x[3],
+    image:"./assets/"+x[0]+".webp",privateLabel:true}));
 const state=JSON.parse(localStorage.getItem('sagi-kit-draft')||'{}');
 state.step=state.step||1;state.product=state.product||null;state.roster=state.roster||[];state.custom=state.custom||{};state.filter='全部';
 const qs=s=>document.querySelector(s),qsa=s=>[...document.querySelectorAll(s)];
@@ -145,8 +144,8 @@ function sizes(){return (state.custom.ageGroup||'adult')==='child'
 function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function checkRoster(){const nums=state.roster.map(r=>String(r.number).trim()).filter(Boolean);const dup=[...new Set(nums.filter((n,i)=>nums.indexOf(n)!==i))];const missing=state.roster.filter(r=>!r.name||!r.number||!r.size).length;let msg=[];if(dup.length)msg.push('重复号码：'+dup.join('、'));if(missing)msg.push('有 '+missing+' 人信息未填完整');const box=qs('#rosterIssue');box.textContent=msg.join('；');box.classList.toggle('show',!!msg.length);return !msg.length&&state.roster.length>0}
 function parseRoster(){const t=qs('#pasteRoster').value.trim();if(!t)return;const lines=t.split(/\n+/);lines.forEach(line=>{let a=line.trim().split(/[，,\t\s]+/).filter(Boolean);if(a.length>=2)addRow({name:a[0],number:a[1],size:a[2]||((state.custom.ageGroup||'adult')==='child'?'140':'L')})});qs('#pasteRoster').value=''}
-function renderSummary(){const p=PRODUCTS.find(x=>x.id===state.product);const c=state.custom;const rows=[['款式',p?p.id+' · '+p.name:'未选择'],['主配色',c.color||'未选择'],['球队',c.teamName||'未填写'],['适用人群',(c.ageGroup||'adult')==='child'?'儿童 / 青少年':'成人'],['领型',c.collar||'常规V圆领'],['面料',({standard:'标准版',comfort:'舒适版',pro:'专业版',elite:'高性能版'})[c.fabric||'standard']],['队员数量',state.roster.length+' 人'],['联系人',(c.contact||'')+' '+(c.phone||'')]];qs('#summary').innerHTML=rows.map(r=>'<div class="sum"><span>'+r[0]+'</span><b>'+r[1]+'</b></div>').join('')+'<div class="okbox">系统会在后台保留厂家对应款号，但客户侧不会显示供应链信息。提交前请重点检查号码和尺码。</div>';qs('#confirmCheck').checked=false}
-function orderPayload(){const p=PRODUCTS.find(x=>x.id===state.product);return {version:'SAGI KIT STUDIO V1.0 CHINA READY',createdAt:new Date().toISOString(),orderCode:'SK'+Date.now().toString().slice(-10),customer:{team:state.custom.teamName||'',contact:state.custom.contact||'',phone:state.custom.phone||''},product:{sagiCode:p.id,sagiName:p.name,ageGroup:state.custom.ageGroup||'adult',supplierMapping:p.supplier,supplierPage:p.supplierPage,privateLabel:true,color:state.custom.color||p.colors[0],collar:state.custom.collar||'常规V圆领',fabric:state.custom.fabric||'standard',sponsor:state.custom.sponsor||''},roster:state.roster}}
+function renderSummary(){const p=PRODUCTS.find(x=>x.id===state.product);const c=state.custom;const rows=[['款式',p?p.id+' · '+p.name:'未选择'],['主配色',c.color||'未选择'],['球队',c.teamName||'未填写'],['适用人群',(c.ageGroup||'adult')==='child'?'儿童 / 青少年':'成人'],['领型',c.collar||'常规V圆领'],['面料',({standard:'标准版',comfort:'舒适版',pro:'专业版',elite:'高性能版'})[c.fabric||'standard']],['队员数量',state.roster.length+' 人'],['联系人',(c.contact||'')+' '+(c.phone||'')]];qs('#summary').innerHTML=rows.map(r=>'<div class="sum"><span>'+r[0]+'</span><b>'+r[1]+'</b></div>').join('')+'<div class="okbox">客户订单只保存 SAGI 款号；厂家映射不会进入客户页面、订单文本或导出文件。提交前请重点检查号码和尺码。</div>';qs('#confirmCheck').checked=false}
+function orderPayload(){const p=PRODUCTS.find(x=>x.id===state.product);return {schema:'SAGI-KIT-ORDER-1',version:'SAGI KIT STUDIO V1.0 CHINA READY',createdAt:new Date().toISOString(),orderCode:'SK'+Date.now().toString().slice(-10),customer:{team:state.custom.teamName||'',contact:state.custom.contact||'',phone:state.custom.phone||''},product:{sagiCode:p.id,sagiName:p.name,ageGroup:state.custom.ageGroup||'adult',privateLabel:true,color:state.custom.color||p.colors[0],collar:state.custom.collar||'常规V圆领',fabric:state.custom.fabric||'standard',sponsor:state.custom.sponsor||''},roster:state.roster}}
 function textOrder(o){return 'SAGI KIT 订单 '+o.orderCode+'\n球队：'+o.customer.team+'\n款式：'+o.product.sagiCode+' '+o.product.sagiName+'\n配色：'+o.product.color+'\n领型：'+o.product.collar+'\n面料：'+o.product.fabric+'\n人数：'+o.roster.length+'\n\n名单：\n'+o.roster.map((r,i)=>(i+1)+'. '+r.name+' / '+r.number+' / '+r.size).join('\n')+'\n\n联系人：'+o.customer.contact+' '+o.customer.phone}
 function submit(){if(!state.product)return alert('请先选择款式');if(!state.custom.teamName)return alert('请填写球队名称');if(!checkRoster())return alert('请先修正名单信息');if(!qs('#confirmCheck').checked)return alert('请勾选“我已核对”');const o=orderPayload();localStorage.setItem('sagi-kit-last-order',JSON.stringify(o));let history=JSON.parse(localStorage.getItem('sagi-kit-orders')||'[]');history.unshift(o);localStorage.setItem('sagi-kit-orders',JSON.stringify(history.slice(0,100)));qs('#orderCode').textContent=o.orderCode;qs('#orderText').value=textOrder(o);goto(5)}
 function download(){const o=JSON.parse(localStorage.getItem('sagi-kit-last-order'));const blob=new Blob([JSON.stringify(o,null,2)],{type:'application/json;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=o.orderCode+'.json';a.click();URL.revokeObjectURL(a.href)}
