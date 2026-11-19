@@ -97,7 +97,7 @@ scene.render.fps=fps; scene.frame_start=1; scene.frame_end=round(dur*fps)
 scene.render.engine="BLENDER_WORKBENCH"
 scene.render.image_settings.file_format="PNG"; scene.render.image_settings.color_mode="RGB"
 frames=os.path.join(out_dir,"frames"); os.makedirs(frames,exist_ok=True); scene.render.filepath=os.path.join(frames,"frame_")
-scene.world.color=(0,0,0)
+if scene.world is None:\n    scene.world = bpy.data.worlds.new("SAGI_WORLD")\nscene.world.color=(0,0,0)
 try:
     scene.display.shading.light="STUDIO"; scene.display.shading.color_type="MATERIAL"
     scene.display.shading.show_cavity=True; scene.display.shading.cavity_type="WORLD"
