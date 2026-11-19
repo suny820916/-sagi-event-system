@@ -28,7 +28,7 @@ async function readBody(req) {
 // Experimental HTTP gateway. Never bind a public wildcard interface.
 // Local operator approval is deliberately NOT exposed as a remote HTTP command.
 export function createLanGateway({
-  pairing = new LanPairing(), getState = () => ({}),
+  pairing = new LanPairing(), getState = () => ({}), submitCommand = null,
   host = '127.0.0.1', now = () => Date.now(),
   maxAttemptsPerWindow = 8, windowMs = 60_000,
 } = {}) {
@@ -58,6 +58,27 @@ export function createLanGateway({
         return reply(res, 200, pairing.redeem(body?.code));
       } catch (err) {
         return reply(res, err.message === 'BODY_TOO_LARGE' ? 413 : 400, { error: err.message });
+      }
+    }
+    if (path === '/api/v1/lan/command' && req.method === 'POST') {
+      const auth = req.headers.authorization || '';
+      const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
+      if (!pairing.verify(token)) return reply(res, 401, { error: 'UNAUTHORIZED' });
+      if (typeof submitCommand !== 'function') return reply(res, 503, { error: 'COMMANDS_UNAVAILABLE' });
+      try {
+        const body = await readBody(req);
+        if (!body || typeof body !== 'object' || Array.isArray(body) ||
+            typeof body.commandId !== 'string' || !/^[a-zA-Z0-9_-]{8,128}$/.test(body.commandId) ||
+            !Number.isSafeInteger(body.expectedRevision) || body.expectedRevision < 0 ||
+            typeof body.type !== 'string' || !/^[A-Z_]{2,48}$/.test(body.type))
+          return reply(res, 400, { error: 'INVALID_COMMAND' });
+        const result = await submitCommand(body);
+        return reply(res, 200, { result });
+      } catch (err) {
+        if (err.message === 'BODY_TOO_LARGE') return reply(res, 413, { error: 'BODY_TOO_LARGE' });
+        if (err.message === 'INVALID_JSON') return reply(res, 400, { error: 'INVALID_JSON' });
+        if (err.code === 'REVISION_CONFLICT') return reply(res, 409, { error: 'REVISION_CONFLICT' });
+        return reply(res, 503, { error: 'COMMAND_FAILED' });
       }
     }
     if (path === '/api/v1/lan/state' && req.method === 'GET') {
