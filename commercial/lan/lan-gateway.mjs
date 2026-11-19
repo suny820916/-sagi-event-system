@@ -38,7 +38,7 @@ export function createLanGateway({
     const path = new URL(req.url || '/', 'http://localhost').pathname;
     const ip = keyOf(req.socket.remoteAddress);
     if (req.headers.origin) return reply(res, 403, { error: 'ORIGIN_FORBIDDEN' });
-    if (req.headers['content-type'] && !String(req.headers['content-type']).toLowerCase().startsWith('application/json'))
+    if (req.method === 'POST' && !/^application\/json(?:\s*;|\s*$)/i.test(String(req.headers['content-type'] || '')))
       return reply(res, 415, { error: 'JSON_REQUIRED' });
     if (path === '/api/v1/lan/health' && req.method === 'GET')
       return reply(res, 200, { ok: true });
@@ -72,7 +72,7 @@ export function createLanGateway({
             !Number.isSafeInteger(body.expectedRevision) || body.expectedRevision < 0 ||
             typeof body.type !== 'string' || !/^[A-Z_]{2,48}$/.test(body.type))
           return reply(res, 400, { error: 'INVALID_COMMAND' });
-        const result = await submitCommand(body);
+        // Only football state commands may cross this mobile gateway. Never forward\n        // arbitrary vMix or administrative operations from a paired phone.\n        const allowed = new Set(['GOAL', 'SCORE_CORRECTION', 'YELLOW_CARD', 'RED_CARD', 'SUBSTITUTION', 'PENALTY', 'START_CLOCK', 'PAUSE_CLOCK', 'RESUME_CLOCK', 'END_MATCH']);\n        if (!allowed.has(body.type)) return reply(res, 403, { error: 'COMMAND_NOT_ALLOWED' });\n        const result = await submitCommand(body);
         return reply(res, 200, { result });
       } catch (err) {
         if (err.message === 'BODY_TOO_LARGE') return reply(res, 413, { error: 'BODY_TOO_LARGE' });
