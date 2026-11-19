@@ -139,12 +139,12 @@ react_choices=["LEFT","RIGHT","LEFT"]
 react_highlights=[]
 for idx,(cx,cy) in enumerate(react_stations,1):
     cube(f"TRIGGER_{idx}",(cx,cy-.65,.24),(1.6,.025,.02),m_line)
-    gate(f"R{idx}_L",cx-1.05,cy,.95,m_dim); gate(f"R{idx}_R",cx+1.05,cy,.95,m_dim)
+    gate(f"R{idx}_L",cx-1.05,cy,1.4,m_dim); gate(f"R{idx}_R",cx+1.05,cy,1.4,m_dim)
     hx=cx-1.05 if react_choices[idx-1]=="LEFT" else cx+1.05
     parts=[]
-    for suffix,dx in (("L",-0.95/2),("R",0.95/2)):
+    for suffix,dx in (("L",-1.4/2),("R",1.4/2)):
         parts.append(cube(f"R{idx}_HI_{suffix}",(hx+dx,cy,.51),(.055,.055,.31),m_y))
-    parts.append(cube(f"R{idx}_HI_T",(hx,cy,.82),(.53,.055,.055),m_y))
+    parts.append(cube(f"R{idx}_HI_T",(hx,cy,.82),(.755,.055,.055),m_y))
     react_highlights.append(parts)
     for o in parts:
         hide_at(o,1,True)
@@ -152,7 +152,7 @@ for idx,(cx,cy) in enumerate(react_stations,1):
 # 04 PASS
 pass_box=(0,5.0)
 cube("PASS_BOX",(pass_box[0],pass_box[1],.23),(1,1,.018),m_line)
-pass_targets={"LEFT":(-5.0,13.8),"CENTER":(0,13.8),"RIGHT":(5.0,13.8)}
+pass_targets={"LEFT":(-4.5,13.5),"CENTER":(0,13.5),"RIGHT":(4.5,13.5)}
 for k,(x,y) in pass_targets.items(): gate("PASS_"+k,x,y,1.5,m_y)
 
 # 05 FINISH
