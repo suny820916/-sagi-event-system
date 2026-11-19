@@ -32,8 +32,9 @@ function textOrder(o){const c=o.customer||{},p=o.product||{},r=o.roster||[];retu
 function persistOrder(o,newStatus){
  const all=orders(),i=all.findIndex(x=>x.orderCode===o.orderCode);if(i<0)return;
  const old=statusOf(all[i]),next=STATUSES.includes(newStatus)?newStatus:old,now=new Date().toISOString();
- all[i]={...all[i],status:next,statusUpdatedAt:now,statusHistory:Array.isArray(all[i].statusHistory)?all[i].statusHistory:[]};
- if(old!==next)all[i].statusHistory=[...all[i].statusHistory,{status:next,at:now}];
+ const baseHistory=Array.isArray(all[i].statusHistory)&&all[i].statusHistory.length?all[i].statusHistory:[{status:old,at:all[i].statusUpdatedAt||all[i].createdAt||now}];
+ all[i]={...all[i],status:next,statusUpdatedAt:now,statusHistory:baseHistory};
+ if(old!==next)all[i].statusHistory=[...baseHistory,{status:next,at:now}];
  localStorage.setItem(KEY,JSON.stringify(all));
  try{const last=JSON.parse(localStorage.getItem('sagi-kit-last-order')||'null');if(last&&last.orderCode===all[i].orderCode)localStorage.setItem('sagi-kit-last-order',JSON.stringify(all[i]))}catch(e){}
  if(window.SAGICloud){SAGICloud.enqueue(all[i]);SAGICloud.flush()}
