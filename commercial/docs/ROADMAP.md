@@ -75,3 +75,9 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - In-process commit serialization prevents concurrent writes to the same store instance.
 - Added test coverage for stale snapshots, duplicate command recovery, torn trailing journal record, malformed complete journal line, and stale revision rejection.
 - **Known limits:** this is a development milestone, not certified commercial durability. Torn journal tail must be repaired/truncated before accepting new commits; concurrent separate processes writing the same store require a lock; disk-full and power-loss tests on Windows remain pending. A process restart must be gated by recovery checks before live use.
+
+## 2026-11-19 — Local Engine API milestone
+- Added dependency-free Node HTTP Local Engine, loopback by default, token auth, health endpoint, canonical state GET and serialized command POST.
+- Commands commit durably before state is published; duplicate command IDs are idempotent and stale expectedRevision returns HTTP 409.
+- Added self-test for authentication, concurrent duplicate goals, revision conflict and restart recovery.
+- **Not yet production-ready:** LAN device pairing, token storage, CSRF/origin policy, transport security, WebSocket sync, multi-process locking, vMix adapter and actual Windows endurance tests remain open. CI result pending.
