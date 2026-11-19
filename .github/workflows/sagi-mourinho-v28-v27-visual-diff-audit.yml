@@ -1,0 +1,76 @@
+name: SAGI MOURINHO V2.8 vs V2.7 VISUAL DIFF AUDIT
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/sagi-mourinho-v28-v27-visual-diff-audit.yml"
+permissions:
+  actions: read
+  contents: read
+jobs:
+  compare-actual-renders:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Fetch V2.7 and V2.8 real artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p old new audit
+          gh api repos/${{ github.repository }}/actions/artifacts/14331450839/zip > /tmp/old.zip
+          gh api repos/${{ github.repository }}/actions/artifacts/14455441653/zip > /tmp/new.zip
+          unzip -q /tmp/old.zip -d old
+          unzip -q /tmp/new.zip -d new
+          find old new -type f | sort > audit/artifact_files.txt
+      - name: Compare frames and generate visual diagnostics
+        run: |
+          set -euo pipefail
+          python3 -m pip install --quiet --break-system-packages pillow
+          python3 - <<'PY'
+          import os,glob,json,math
+          from PIL import Image,ImageDraw
+          times=[4,12,20,28,36,44,52,60,68]
+          out={'method':'actual V2.7 and V2.8 rendered critical frames, pixel-space diagnostics; not Teactics source comparison','frames':[]}
+          sheet=Image.new('RGB',(540*2,960*len(times)),(0,0,0))
+          def metrics(im):
+            w,h=im.size
+            pix=im.convert('RGB')
+            # pitch / non-black occupancy excludes text at the top; use tactical-stage ROI
+            pts=[]
+            for y in range(int(h*.30),int(h*.92),3):
+              for x in range(0,w,3):
+                r,g,b=pix.getpixel((x,y))
+                if 20<max(r,g,b)<190 and min(r,g,b)>12:
+                  pts.append((x,y))
+            if not pts: return {'stage_bbox':None,'stage_fraction':0}
+            x0=min(p[0] for p in pts);x1=max(p[0] for p in pts)
+            y0=min(p[1] for p in pts);y1=max(p[1] for p in pts)
+            return {'stage_bbox':[x0,y0,x1,y1],'stage_fraction':round(((x1-x0+1)*(y1-y0+1))/(w*h),4)}
+          for i,t in enumerate(times):
+            row={'t':t}
+            for k,folder,col in [('v27','old',0),('v28','new',1)]:
+              files=glob.glob(folder+'/**/'+str(t)+'.jpg',recursive=True)
+              if not files: raise RuntimeError('Missing actual critical frame '+folder+' '+str(t))
+              im=Image.open(files[0]).convert('RGB')
+              row[k]=metrics(im)
+              sheet.paste(im.resize((540,960)),(col*540,i*960))
+            row['stage_fraction_delta']=round(row['v28']['stage_fraction']-row['v27']['stage_fraction'],4)
+            out['frames'].append(row)
+          sheet.save('audit/v27_v28_actual_frames_side_by_side.jpg',quality=84)
+          oldr=glob.glob('old/**/execution_report_v27.json',recursive=True)
+          newr=glob.glob('new/**/execution_report_v28.json',recursive=True)
+          if not oldr or not newr: raise RuntimeError('Execution report missing')
+          a=json.load(open(oldr[0]));b=json.load(open(newr[0]))
+          out['execution_reports']={'v27':{k:a.get(k) for k in ['version','director_mode','duration_sec','valid','errors','packaging_version']},'v28':{k:b.get(k) for k in ['version','director_mode','duration_sec','valid','errors','packaging_version']}}
+          out['source_visual_acceptance']='NOT_VERIFIED: exact Teactics source not available'
+          out['acceptance']='DIAGNOSTIC_ONLY: review crop and landmarks manually before next camera change'
+          json.dump(out,open('audit/visual_diff_report.json','w'),ensure_ascii=False,indent=2)
+          print(json.dumps(out,ensure_ascii=False,indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SAGI-MOURINHO-V27-V28-ACTUAL-VISUAL-DIFF
+          path: audit/
+          retention-days: 7

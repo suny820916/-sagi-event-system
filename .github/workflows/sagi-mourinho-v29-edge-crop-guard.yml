@@ -1,0 +1,69 @@
+name: SAGI MOURINHO V2.9 EDGE CROP GUARD
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/sagi-mourinho-v29-edge-crop-guard.yml"
+permissions:
+  actions: read
+  contents: read
+jobs:
+  inspect-real-frames:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Download V2.9 rendered artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p source audit
+          gh api repos/${{ github.repository }}/actions/artifacts/14471048247/zip > /tmp/v29.zip
+          unzip -q /tmp/v29.zip -d source
+      - name: Inspect true frame-edge evidence
+        run: |
+          python3 -m pip install --quiet --break-system-packages pillow
+          python3 - <<'PY'
+          import glob,json
+          from PIL import Image
+          times=[4,12,20,28,36,44,52,60,68]
+          results=[]
+          for t in times:
+            files=glob.glob(f'source/**/{t}.jpg',recursive=True)
+            if len(files)!=1: raise RuntimeError(f'Expected one frame for {t}s, found {len(files)}')
+            im=Image.open(files[0]).convert('RGB')
+            w,h=im.size
+            # Analyze pitch-only central vertical ROI; avoid the Chinese titles and video black letterboxing.
+            ya,yb=int(h*.32),int(h*.89)
+            def is_stage(rgb):
+              r,g,b=rgb
+              return 20<max(rgb)<190 and min(rgb)>12
+            def side_band(xa,xb):
+              count=total=0
+              for y in range(ya,yb,2):
+                for x in range(xa,xb,2):
+                  total+=1
+                  count+=is_stage(im.getpixel((x,y)))
+              return round(count/total,5)
+            bands={'left_0_3pct':side_band(0,max(2,int(w*.03))),
+                   'right_97_100pct':side_band(int(w*.97),w),
+                   'left_3_8pct':side_band(int(w*.03),int(w*.08)),
+                   'right_92_97pct':side_band(int(w*.92),int(w*.97))}
+            risk= bands['left_0_3pct']>.025 or bands['right_97_100pct']>.025
+            results.append({'t':t,'image_size':[w,h],'stage_edge_band_density':bands,
+              'possible_lateral_crop':risk,
+              'interpretation':'EDGE_CONTACT_RISK_NOT_PROOF_OF_PLAYER_CROP' if risk else 'NO_STRONG_EDGE_CONTACT'})
+          out={'version':'V2.9','method':'actual artifact JPG frames, pixel band measurements; not Teactics comparison',
+            'threshold':0.025,'frames':results,
+            'notes':['Edge occupancy is a diagnostic, not proof of missing pitch or players.',
+                     'Do not change locked V5.13 camera parameters without visually checking the flagged frames.',
+                     'Teactics exact source is required for 99 percent certification.']}
+          with open('audit/v29_edge_crop_guard.json','w') as f:json.dump(out,f,indent=2)
+          print(json.dumps(out,indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SAGI-MOURINHO-V29-EDGE-CROP-DIAGNOSTICS
+          path: audit/
+          retention-days: 7

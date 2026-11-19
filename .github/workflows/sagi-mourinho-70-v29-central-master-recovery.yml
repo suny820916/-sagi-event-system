@@ -1,0 +1,71 @@
+name: SAGI MOURINHO 70S V2.9 V5.13 CENTRAL MASTER RECOVERY
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/sagi-mourinho-70-v29-central-master-recovery.yml"
+      - "cloud-blender-worker/presets/mourinho_real_madrid_4231_70s_v29_central_master_recovery.json"
+      - "cloud-blender-worker/overlay/mourinho_70s_v27_cn_title_lock.ass"
+concurrency:
+  group: sagi-mourinho-v29-v513-central-master-recovery-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  render-and-package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Blender image
+        run: docker build -t sagi-mourinho-v29 ./cloud-blender-worker
+      - name: Render V2.9 with verified V5.13 screen-scale bands
+        run: |
+          set -euo pipefail
+          mkdir -p mourinho_v29_out/critical_frames
+          docker run --rm -v "$PWD/mourinho_v29_out:/out" sagi-mourinho-v29 bash -lc '
+            set -euo pipefail
+            blender --background --python /app/engine/sagi_tactical_mourinho_70_v13.py -- /app/presets/mourinho_real_madrid_4231_70s_v29_central_master_recovery.json /out
+            ffmpeg -y -loglevel error -framerate 30 -i /out/frames/frame_%04d.png -f lavfi -i anullsrc=channel_layout=stereo:sample_rate=44100 -map 0:v:0 -map 1:a:0 -c:v libx264 -profile:v baseline -level 3.1 -pix_fmt yuv420p -preset veryfast -crf 20 -c:a aac -b:a 64k -shortest -movflags +faststart /out/V29_BASE_NO_TITLES.mp4
+          '
+          sudo chown -R "$USER":"$USER" mourinho_v29_out
+      - name: Add locked Chinese title and subtitle system
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq fonts-noto-cjk ffmpeg
+          ffmpeg -y -loglevel error -i mourinho_v29_out/V29_BASE_NO_TITLES.mp4 -vf "ass=cloud-blender-worker/overlay/mourinho_70s_v27_cn_title_lock.ass" -c:v libx264 -profile:v baseline -level 3.1 -pix_fmt yuv420p -preset veryfast -crf 20 -c:a copy -movflags +faststart mourinho_v29_out/SAGI_MOURINHO_70S_V29_CENTRAL_MASTER_RECOVERY.mp4
+          for t in 4 12 20 28 36 44 52 60 68; do
+            ffmpeg -y -loglevel error -ss "$t" -i mourinho_v29_out/SAGI_MOURINHO_70S_V29_CENTRAL_MASTER_RECOVERY.mp4 -frames:v 1 "mourinho_v29_out/critical_frames/${t}.jpg"
+          done
+          python3 - <<'PY'
+          import json,subprocess
+          p='mourinho_v29_out/'
+          r=json.load(open(p+'execution_report.json'))
+          assert r['valid'] and r['duration_sec']==70 and not r['errors'],r
+          d=float(subprocess.check_output(['ffprobe','-v','error','-show_entries','format=duration','-of','default=noprint_wrappers=1:nokey=1',p+'SAGI_MOURINHO_70S_V29_CENTRAL_MASTER_RECOVERY.mp4']).decode())
+          assert abs(d-70)<0.05,d
+          preset=json.load(open('cloud-blender-worker/presets/mourinho_real_madrid_4231_70s_v29_central_master_recovery.json'))
+          expected={
+            'CENTRAL_MASTER':[148,160],'WIDE_STRUCTURE':[138,150],'STRUCTURE':[100,112],
+            'RELATION':[86,98],'RESULT_RELATION':[84,96],'FOCUS_RELATION':[80,92],'FINISH_FOCUS':[78,90]
+          }
+          assert preset['screen_scale_lock']['distance_band_by_scale']==expected
+          assert 'V2.9' in preset['version']
+          assert preset['director_mode']=='MOURINHO_70S_V29_CENTRAL_MASTER_RECOVERY'
+          r['packaging_version']='V2.9 V5.13 CENTRAL MASTER RECOVERY'
+          r['preset_version']=preset['version']
+          r['final_mp4_duration_sec']=d
+          r['teactics_exact_source_visual_acceptance']='NOT_VERIFIED'
+          json.dump(r,open(p+'execution_report_v29.json','w'),ensure_ascii=False,indent=2)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SAGI-MOURINHO-70S-V2.9-V5.13-CENTRAL-MASTER-RECOVERY
+          path: |
+            mourinho_v29_out/SAGI_MOURINHO_70S_V29_CENTRAL_MASTER_RECOVERY.mp4
+            mourinho_v29_out/critical_frames/*.jpg
+            mourinho_v29_out/execution_report_v29.json
+            mourinho_v29_out/scene.blend
+            cloud-blender-worker/presets/mourinho_real_madrid_4231_70s_v29_central_master_recovery.json
+            cloud-blender-worker/overlay/mourinho_70s_v27_cn_title_lock.ass
+          retention-days: 7

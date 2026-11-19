@@ -1,0 +1,50 @@
+name: SAGI MOURINHO V2.9 VISUAL AUDIT PUBLISH
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/sagi-mourinho-v29-visual-audit-publish.yml"
+permissions:
+  actions: read
+  contents: write
+concurrency:
+  group: sagi-mourinho-v29-audit-publish
+  cancel-in-progress: false
+jobs:
+  publish-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Fetch actual V2.9 vs V2.8 audit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/sagi-v29-audit
+          gh api repos/${{ github.repository }}/actions/artifacts/14476091107/zip > /tmp/sagi-v29-audit.zip
+          unzip -q /tmp/sagi-v29-audit.zip -d /tmp/sagi-v29-audit
+          test -s /tmp/sagi-v29-audit/visual_diff_report.json
+      - name: Publish real measured diagnostics
+        run: |
+          set -euo pipefail
+          mkdir -p cloud-blender-worker/reports
+          cp /tmp/sagi-v29-audit/visual_diff_report.json cloud-blender-worker/reports/mourinho_v28_v29_visual_diff.json
+          python3 - <<'PY'
+          import json
+          p='cloud-blender-worker/reports/mourinho_v28_v29_visual_diff.json'
+          r=json.load(open(p))
+          assert len(r['frames'])==9
+          assert r['source_visual_acceptance'].startswith('NOT_VERIFIED')
+          print(json.dumps(r,ensure_ascii=False,indent=2))
+          PY
+          git config user.name "sagi-audit-bot"
+          git config user.email "sagi-audit-bot@users.noreply.github.com"
+          git add cloud-blender-worker/reports/mourinho_v28_v29_visual_diff.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Publish measured V2.8 versus V2.9 visual diagnostics"
+            git push
+          fi
