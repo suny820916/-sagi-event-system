@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>SAGI KIT · 订单导入</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#080a0d;color:#f3f1eb;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",Arial,sans-serif}.app{max-width:720px;margin:auto;padding:18px 14px 70px}.brand{font-weight:1000;font-size:21px}.brand i{font-style:normal;color:#e74444}.sub{font-size:10px;color:#89939d;margin-top:4px}.card{margin-top:16px;padding:14px;border:1px solid #2c3640;border-radius:16px;background:#10151b}.card h2{font-size:15px;margin:0 0 5px}.hint{font-size:10px;color:#89939d;line-height:1.7}.drop{margin-top:12px;border:1px dashed #4a5662;border-radius:13px;padding:22px;text-align:center;background:#090d11}input{width:100%;margin-top:10px}.btn{display:inline-flex;margin-top:12px;text-decoration:none;border:1px solid #4a5965;border-radius:10px;background:#151c22;color:#e7eaec;padding:10px 13px;font-size:11px;font-weight:900}.btn.primary{background:linear-gradient(135deg,#92762f,#d6b75b);border-color:#b99a46;color:#111}.status{margin-top:12px;padding:11px;border:1px solid #34414a;border-radius:11px;background:#0a0f13;color:#9da8b1;font-size:10px;line-height:1.7}.status.good{border-color:#3a624a;background:#0c1b13;color:#a4d8b6}.status.bad{border-color:#643d3d;background:#211313;color:#e0a0a0}.preview{display:grid;gap:7px;margin-top:10px}.row{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid #252e36;padding:8px 0;font-size:10px}.row span{color:#7f8b95}.row b{text-align:right}.warn{margin-top:10px;padding:10px;border:1px solid #5b4f2d;border-radius:10px;color:#d4be79;background:#17140d;font-size:9px;line-height:1.6}
+</style>
+</head>
+<body><div class="app">
+<div class="brand">SAGI<i>●</i> KIT · 后台导入桥</div><div class="sub">CHINA READY · 本机处理 · 不上传第三方</div>
+<div class="card"><h2>导入客户订单</h2><div class="hint">选择客户从 SAGI KIT STUDIO 导出的 JSON 文件。系统会校验格式并写入现有 TEAMWEAR 后台订单库。</div>
+<div class="drop"><b>选择订单文件</b><input id="file" type="file" accept=".json,application/json"></div>
+<div id="status" class="status">等待选择文件。</div><div id="preview" class="preview"></div>
+<div class="warn">供应商、厂家原款号和成本不会从客户订单传入。后台只接收 SAGI 款号、定制信息和名单，供应链映射继续由管理端处理。</div>
+<a class="btn primary" href="../index.html">打开 TEAMWEAR 后台</a>
+</div></div>
+<script>
+const KEY='sagi_teamwear_sales_v122',q=id=>document.getElementById(id);let pending=null;
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function tier(f){return ({standard:'CLUB',comfort:'MATCH',pro:'PRO',elite:'ELITE'})[f]||'CLUB'}
+function normalizeSize(s){const x=String(s||'').toUpperCase();return x==='XXL'?'2XL':x==='XXXL'?'3XL':x}
+function toTeamwear(src){
+ const p=src.product||{},cus=src.customer||{},now=Date.now(),created=Date.parse(src.createdAt||'')||now;
+ return {
+  id:'tw_kit_'+String(src.orderCode||now).replace(/[^a-zA-Z0-9_-]/g,''),
+  projectName:(cus.team||'球队')+' · '+(p.sagiCode||'SAGI KIT'),
+  teamName:cus.team||'',source:'SAGI KIT STUDIO 客户提交',contact:cus.contact||'',contactInfo:cus.phone||'',
+  city:'',competition:'',season:'2026-2027',deadline:'',teamLogo:'',customerNotes:'客户已在 KIT STUDIO 核对款式/配色/号码/尺码。',
+  shippingRecipient:'',shippingPhone:'',shippingAddress:'',salesStage:'已确认',leadTemperature:'hot',
+  lastContactDate:'',nextFollowUp:'',nextAction:'后台确认报价与生产信息',lostReason:'',quoteSentAt:'',depositPaidAt:'',
+  followUpHistory:[],activityTimeline:[{type:'kit-studio',title:'客户提交 KIT STUDIO 订单',detail:src.orderCode||'',at:new Date(created).toISOString()}],
+  mediaArchive:{design:'',poster:'',jersey:'',delivery:''},
+  series:(p.sagiCode||'SAGI KIT')+' '+(p.sagiName||''),supplierTier:tier(p.fabric),ageGroup:p.ageGroup==='child'?'child':'adult',
+  productType:'kit',priceStrategy:'fixed',targetMargin:.5,salesUnitPrice:0,
+  primaryColor:p.color||'',accentColor:'',printFee:0,designFee:0,discount:0,poloAddon:0,pocketAddon:0,longSleeveAddon:0,otherCraftCost:0,
+  factoryShippingCost:0,shippingFee:0,shippingZone:'remote',depositRate:1,frontText:p.sponsor||'',nameRule:'客户名单',numberStyle:'SAGI 欧赛事字体',
+  productNotes:['SAGI款号：'+(p.sagiCode||''),'款名：'+(p.sagiName||''),'配色：'+(p.color||''),'领型：'+(p.collar||''),'赞助/队名：'+(p.sponsor||'无')].join('\n'),
+  roster:(src.roster||[]).map(r=>({name:r.name||'',number:String(r.number||''),size:normalizeSize(r.size),type:'球员'})),
+  catalogItems:[],packageTargetQty:0,packageTeamSize:(src.roster||[]).length,packageBudget:0,packageAge:p.ageGroup==='child'?'child':'adult',packageMargin:.4,
+  confirmation:{quoteConfirmed:true,quoteConfirmedAt:src.createdAt||new Date().toISOString(),customerConfirmName:cus.contact||''},
+  productionTracker:{},publicContact:'',publicQuoteNote:'',quoteValidDays:7,quoteShowPackages:'yes',quoteShowPayment:'yes',extraQty:0,
+  status:'客户已确认',owner:'SAGI',pinned:true,actualOrderTotal:0,actualCostTotal:0,feedbackStatus:'',customerFeedback:'',
+  marketingTitle:'',marketingTagline:'',momentsCopy:'',douyinCopy:'',caseCopy:'',caseTags:'',marketingStatus:{sentClient:false,momentsPublished:false,douyinPublished:false,posterReady:false},
+  publicCaseEnabled:false,marketingInCaseLibrary:false,contentPlan:{nextDate:'',channel:'douyin',priority:'normal',note:'',matrix:{}},contentPerformanceHistory:[],
+  douyinContent:{mode:'image',angle:'launch',goal:'retention',status:'draft',hook:'',coverTitle:'',cta:'',hashtags:'',scheduleAt:'',plan:[],packageGeneratedAt:'',publishedAt:'',workId:''},
+  createdAt:created,updatedAt:now,kitStudioOrderCode:src.orderCode||''
+ }
+}
+function show(src){
+ const p=src.product||{},c=src.customer||{};
+ q('preview').innerHTML=[['订单号',src.orderCode],['球队',c.team],['SAGI款号',p.sagiCode+' · '+(p.sagiName||'')],['配色',p.color],['人数',(src.roster||[]).length+' 人'],['联系人',(c.contact||'')+' '+(c.phone||'')]].map(x=>'<div class="row"><span>'+esc(x[0])+'</span><b>'+esc(x[1]||'')+'</b></div>').join('');
+}
+function importOrder(src){
+ let db={orders:[]};try{db=JSON.parse(localStorage.getItem(KEY)||'{"orders":[]}');if(!Array.isArray(db.orders))db={orders:[]}}catch(e){db={orders:[]}}
+ const o=toTeamwear(src),i=db.orders.findIndex(x=>x.id===o.id||x.kitStudioOrderCode===o.kitStudioOrderCode);
+ if(i>=0)db.orders[i]={...db.orders[i],...o,createdAt:db.orders[i].createdAt||o.createdAt};else db.orders.unshift(o);
+ localStorage.setItem(KEY,JSON.stringify(db));return i>=0?'订单已更新到 TEAMWEAR 后台。':'订单已导入 TEAMWEAR 后台。'
+}
+q('file').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const src=JSON.parse(r.result);if(src.schema!=='SAGI-KIT-ORDER-1')throw new Error('不是 SAGI KIT 标准订单');if(!src.product?.sagiCode||!src.customer?.team||!Array.isArray(src.roster))throw new Error('订单关键信息不完整');pending=src;show(src);const msg=importOrder(src);q('status').className='status good';q('status').textContent=msg+' 可以直接打开后台继续报价/生产。'}catch(err){q('status').className='status bad';q('status').textContent='导入失败：'+err.message;q('preview').innerHTML=''}};r.readAsText(f)};
+</script></body></html>
