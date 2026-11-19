@@ -277,3 +277,35 @@ REAL-DEVICE QA REPORT: NOT YET PROVIDED
 STABLE PROMOTION REQUEST: NOT YET GENERATED ON REAL DEVICE
 RELEASE.JSON: 1.6.0-rc1 / stable=false
 PR MERGE: NOT PERFORMED
+
+
+## V1.6 RC2 China/HK Minimal Sync
+- release.json = 1.6.0-rc2 / stable=false: PASS
+- cloud-sync.js syntax: PASS
+- sync-settings.html syntax: PASS
+- start.html syntax: PASS
+- stable-qa.html syntax: PASS
+- stable-promotion.html syntax: PASS
+- sw.js syntax: PASS
+- compliance mode = cn-hk-minimal-v1: PASS
+- cloud schema = SAGI-KIT-CLOUD-MIN-1: PASS
+- customer object blocked: PASS
+- roster blocked: PASS
+- contact / phone blocked: PASS
+- signedBy blocked: PASS
+- logoPreview blocked: PASS
+- sponsor / notes / issue descriptions blocked: PASS
+- private cost / supplier fields blocked: PASS
+- legacy queue migration to redacted cloud summary: PASS
+- send-time redaction guard: PASS
+- youth/child stricter cloud summary: PASS
+- settings page cloud-preview tool: PASS
+- PWA cache bumped for RC2: PASS
+- Stable QA / Promotion version lock moved to RC2: PASS
+- Source-level verification date: 2026-11-19
+
+## RC2 Decision
+SOURCE-LEVEL CHINA/HK MINIMAL SYNC: PASS
+REAL HONG KONG SERVER INTEGRATION: NOT YET CONFIGURED
+REAL-DEVICE RC2 QA: PENDING
+STABLE RELEASE: NOT YET APPROVED
