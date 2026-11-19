@@ -70,3 +70,24 @@ This validates the web integration and brand references at source level. The sup
 - 客户公开代码未发现厂家名称、原厂款号映射、成本字段或供应链字段: PASS
 - 无外部 CDN / 第三方运行时依赖: PASS
 - Source-level verification date: 2026-11-19
+
+
+## SAGI KIT 成交与利润中心 V1.2
+- 老板入口使用 4–6 位本机 PIN: PASS
+- PIN 明确标注为界面级隐私保护，不冒充服务器级安全: PASS
+- 私有成本使用独立 localStorage 键: PASS
+- 支持默认成本 + 22 款单款成本覆盖: PASS
+- 本月成交额来自“已成交”报价: PASS
+- 毛利润 / 毛利率自动计算: PASS
+- 未配置成本时显示待补成本与覆盖率，不伪造完整利润: PASS
+- 本月成交明细: PASS
+- 最畅销款式按成交套数排名: PASS
+- 私有成本导出 / 导入备份: PASS
+- 手机工作台老板入口: PASS
+- 利润中心加入离线缓存: PASS
+- profit-center.html 内联脚本语法检查: PASS
+- 客户商品库 / 报价页 / 定制页未引用私有成本键: PASS
+- cloud-sync.js 未引用私有成本键: PASS
+- cloud-sync.js 只上传显式订单对象，不枚举 localStorage: PASS
+- 未在公开源码中硬编码真实业务成本数字: PASS
+- Source-level verification date: 2026-11-19
