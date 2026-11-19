@@ -9,7 +9,7 @@ function queue(){return read(QUEUE_KEY,[])}
 function status(){const q=queue(),c=config(),s=read(STATUS_KEY,{});return Object.assign({enabled:c.enabled&&!!c.endpoint,pending:q.length,lastSyncedAt:null,lastError:''},s,{enabled:c.enabled&&!!c.endpoint,pending:q.length})}
 function setStatus(p){write(STATUS_KEY,Object.assign(status(),p));notify()}
 function notify(){try{window.dispatchEvent(new CustomEvent('sagi-cloud-status',{detail:status()}))}catch(e){}}
-function enqueue(order){if(!order||!order.orderCode)return false;let q=queue();if(!q.some(x=>x.order&&x.order.orderCode===order.orderCode))q.push({order,queuedAt:new Date().toISOString(),attempts:0,lastError:''});q=q.slice(-200);const ok=write(QUEUE_KEY,q);notify();return ok}
+function enqueue(order){if(!order||!order.orderCode)return false;let q=queue();const i=q.findIndex(x=>x.order&&x.order.orderCode===order.orderCode);const item={order,queuedAt:new Date().toISOString(),attempts:i>=0?(q[i].attempts||0):0,lastError:''};if(i>=0)q[i]=item;else q.push(item);q=q.slice(-200);const ok=write(QUEUE_KEY,q);notify();return ok}
 function headers(){const c=config(),h={'Content-Type':'application/json','X-SAGI-Device':deviceId()};if(c.token)h.Authorization='Bearer '+c.token;return h}
 async function ping(){const c=config();if(!c.enabled||!c.endpoint)throw new Error('云端备份尚未启用');const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),7000);try{const r=await fetch(c.endpoint+'/api/health',{headers:headers(),cache:'no-store',signal:ctl.signal});if(!r.ok)throw new Error('服务器返回 '+r.status);return true}finally{clearTimeout(tm)}}
 let flushing=false;
