@@ -235,3 +235,37 @@ V1.5 的 PASS 仍属于浏览器和源码级验收，不等同于真实 iPhone �
 - 私有云服务器未启用，因此多设备冲突与服务器安全测试：NOT APPLICABLE
 
 因此 V1.6 当前应称为 **RC1 源码发布候选通过**，不应称为最终 Stable。
+
+
+## V1.6 Stable 真机验收门
+
+入口：`stable-qa.html`
+
+RC1 不能自动升级 Stable。真机验收页只负责在当前设备执行检查、记录人工结果和导出 QA 报告。
+
+### 自动检查
+- localStorage 基础写入
+- 临时 512KB 写入/删除
+- 临时 JSON 写入 → 读取 → 解析 → 清理往返
+- 离线核心缓存
+- Service Worker/PWA 控制状态
+- `release.json` 是否仍为 `1.6.0-rc1 / stable=false`
+- 当前设备/浏览器环境
+- 浏览器存储额度
+- 系统分享能力
+
+### 必须人工确认的 6 项
+1. iPhone Safari 全业务流程
+2. 微信内置浏览器行为
+3. 旧 PWA → RC1 更新
+4. 离线完整回合
+5. 业务备份真实导出 → 恢复 → 核对
+6. 低存储 / 连续使用
+
+### Stable Gate
+只有“自动检查无 FAIL/WARN + 6 项人工验收全部 PASS”时，本机才显示 `READY FOR STABLE`。
+
+验收结果可导出为：
+`SAGI-KIT-V1.6-STABLE-QA.json`
+
+该页面不会修改 `release.json`、不会合并 PR、不会写入正式订单/报价。最终 Stable 仍需在仓库中单独发布。
