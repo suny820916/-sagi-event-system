@@ -40,7 +40,7 @@
   <div><label>目标交付日期</label><input id="due" type="date"></div>
   <div class="wide"><label>内部生产备注</label><textarea id="note" placeholder="例如：11月20日已确认印号；等待成衣到货。不要填写厂家联系方式或成本。"></textarea></div>
  </div>
- <div class="actions"><button id="save" class="btn primary">保存生产进度</button><button id="next" class="btn good">推进下一阶段</button><button id="openOrder" class="btn">打开订单中心</button></div>
+ <div class="actions"><button id="save" class="btn primary">保存生产进度</button><button id="next" class="btn good">推进下一阶段</button><button id="openOrder" class="btn">打开订单中心</button><button id="openDelivery" class="btn">进入交付/售后</button></div>
  <div class="timeline"><h3>生产进度记录</h3><div id="timeline"></div></div>
 </div></div>
 
@@ -73,7 +73,7 @@ function openJob(code){const o=find(code);if(!o)return;selected=o;const c=o.cust
 function renderTimeline(p){const h=(p.history||[]).slice().reverse();q('#timeline').innerHTML=h.length?h.map(x=>'<div class="tl"><b>'+esc(x.stage||'')+'</b><span>'+new Date(x.at||Date.now()).toLocaleString('zh-CN',{hour12:false})+'</span></div>').join(''):'<div class="empty">暂无生产阶段记录。</div>'}
 q('#save').onclick=()=>{if(!selected)return;const u=saveProduction(selected,q('#stage').value,q('#due').value,q('#note').value.trim());if(u)openJob(u.orderCode)};
 q('#next').onclick=()=>{if(!selected)return;const i=STAGES.indexOf(q('#stage').value);if(i<0||i>=STAGES.length-1)return alert('已经是最后阶段');q('#stage').value=STAGES[i+1];q('#save').click()};
-q('#openOrder').onclick=()=>{location.href='./order-history.html?order='+encodeURIComponent(selected&&selected.orderCode||'')};
+q('#openOrder').onclick=()=>{location.href='./order-history.html?order='+encodeURIComponent(selected&&selected.orderCode||'')};q('#openDelivery').onclick=()=>{location.href='./delivery-center.html?order='+encodeURIComponent(selected&&selected.orderCode||'')};
 q('#close').onclick=()=>q('#modal').classList.remove('show');q('#modal').onclick=e=>{if(e.target.id==='modal')q('#modal').classList.remove('show')};
 q('#search').oninput=render;qa('[data-view]').forEach(b=>b.onclick=()=>{view=b.dataset.view;qa('[data-view]').forEach(x=>x.classList.toggle('on',x===b));render()});window.addEventListener('storage',render);window.addEventListener('sagi-cloud-status',render);render();
 </script></body></html>
