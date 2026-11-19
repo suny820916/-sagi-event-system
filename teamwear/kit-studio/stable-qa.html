@@ -11,7 +11,7 @@
 </head>
 <body><main class="app">
 <div class="top"><div class="brand"><img src="./brand-mark.svg" alt="SAGI KIT"><div><b>SAGI KIT</b><small>V1.6 Stable 真机验收</small></div></div><a class="back" href="./start.html">返回工作台</a></div>
-<section class="hero"><h1>Stable 不是我说了算，要手机自己通过。</h1><p>自动检查由当前设备执行；必须人工确认的项目由你在真实 iPhone / 微信环境完成。全部 PASS 后导出报告，再决定是否把 RC1 升级为 Stable。</p></section>
+<section class="hero"><h1>Stable 不是我说了算，要手机自己通过。</h1><p>自动检查由当前设备执行；必须人工确认的项目由你在真实 iPhone / 微信环境完成。全部 PASS 后导出报告，再决定是否把 RC2 升级为 Stable。</p></section>
 <div id="gate" class="gate"><span>Stable Gate</span><strong id="gateText">正在检查…</strong></div>
 
 <section class="section"><h2>自动真机检查</h2><p>这些项目由当前浏览器直接执行，不会修改正式订单。</p><div id="autoGrid" class="grid"></div><div class="actions"><button id="rerun" class="btn primary">重新自动检查</button></div></section>
@@ -23,11 +23,11 @@
 </main>
 <script>
 const q=s=>document.querySelector(s),QA_KEY='sagi-kit-stable-qa-v16';
-const ESSENTIAL=['./start.html','./catalog.html','./quote.html','./index.html','./order-history.html','./production-center.html','./delivery-center.html','./profit-center.html','./commercial-check.html','./release.json','./manifest.webmanifest','./brand-mark.svg','./catalog-data.js','./cloud-sync.js'];
+const ESSENTIAL=['./start.html','./catalog.html','./quote.html','./index.html','./order-history.html','./production-center.html','./delivery-center.html','./profit-center.html','./commercial-check.html','./sync-settings.html','./release.json','./manifest.webmanifest','./brand-mark.svg','./catalog-data.js','./cloud-sync.js'];
 const MANUAL=[
  {id:'safari_flow',name:'iPhone Safari 全流程',detail:'商品库 → 报价 → 成交 → 订单 → 生产 → 到货 → 签收。测试单完成后确认没有丢数据、死链或状态冲突。'},
  {id:'wechat_flow',name:'微信内置浏览器',detail:'用微信打开系统，确认环境提示正常；浏览与基础填写正常；文件导出/打印等受限操作能明确提示改用 Safari。'},
- {id:'pwa_upgrade',name:'旧 PWA → RC1 更新',detail:'从已经添加到主屏幕的旧版本打开，确认能更新到 V1.6 RC1，更新后工作台和本地订单仍在。'},
+ {id:'pwa_upgrade',name:'旧 PWA → RC2 更新',detail:'从已经添加到主屏幕的旧版本打开，确认能更新到 V1.6 RC2，更新后工作台和本地订单仍在。'},
  {id:'offline_round',name:'离线完整回合',detail:'联网打开一次后关闭网络，重新打开工作台，进入商品库/订单/生产/售后并确认核心数据可查看。'},
  {id:'backup_restore',name:'真实备份恢复演练',detail:'先导出业务备份；在测试环境制造一条临时数据变化，再恢复备份，核对订单/报价数量和关键记录一致。'},
  {id:'low_storage',name:'低存储 / 连续使用',detail:'连续创建多份报价、上传压缩队徽、切换页面并刷新；确认没有白屏、无限刷新或保存成功假象。'}
@@ -46,11 +46,11 @@ async function runAuto(){
  let round=false;try{const k='sagi-kit-qa-round',payload=JSON.stringify({schema:'QA',n:17,list:['A','B','C'],t:Date.now()});localStorage.setItem(k,payload);const x=JSON.parse(localStorage.getItem(k));round=x.schema==='QA'&&x.n===17&&x.list.length===3;localStorage.removeItem(k)}catch(e){}
  r.push(autoResult('round','备份恢复内核往返',round?'pass':'fail',round?'临时 JSON 写入→读取→解析→清理完整':'本机 JSON 往返测试失败'));
  let cache='warn',miss=[];if('caches'in window){try{for(const a of ESSENTIAL){if(!await caches.match(a))miss.push(a)}cache=miss.length?'warn':'pass'}catch(e){}}
- r.push(autoResult('cache','离线核心缓存',cache,miss.length?'缺 '+miss.length+' 项：'+miss.join(' / '):'RC1 核心缓存完整'));
+ r.push(autoResult('cache','离线核心缓存',cache,miss.length?'缺 '+miss.length+' 项：'+miss.join(' / '):'RC2 核心缓存完整'));
  const sw='serviceWorker'in navigator,controlled=!!navigator.serviceWorker?.controller;
  r.push(autoResult('sw','PWA 服务控制',!sw?'fail':controlled?'pass':'warn',!sw?'浏览器不支持 Service Worker':controlled?'当前页已由 Service Worker 控制':'支持但当前页尚未受控制；联网刷新一次后重测'));
- let releaseOK=false,releaseDetail='无法读取 release.json';try{const x=await fetch('./release.json',{cache:'no-store'}).then(x=>x.json());releaseOK=x.version==='1.6.0-rc1'&&x.stable===false;releaseDetail='当前 '+x.version+' / '+x.channel+' / stable='+x.stable}catch(e){}
- r.push(autoResult('release','RC1 版本锁',releaseOK?'pass':'warn',releaseDetail));
+ let releaseOK=false,releaseDetail='无法读取 release.json';try{const x=await fetch('./release.json',{cache:'no-store'}).then(x=>x.json());releaseOK=x.version==='1.6.0-rc2'&&x.stable===false;releaseDetail='当前 '+x.version+' / '+x.channel+' / stable='+x.stable}catch(e){}
+ r.push(autoResult('release','RC2 版本锁',releaseOK?'pass':'warn',releaseDetail));
  const envState=isWeChat?'warn':isIOS?(isSafari||standalone?'pass':'warn'):'warn';
  r.push(autoResult('env','当前设备环境',envState,isWeChat?'当前是微信内置浏览器，用于微信专项验收；正式主接单环境仍建议 Safari/PWA':isIOS?(standalone?'当前是 iPhone/iPad 主屏幕 PWA':isSafari?'当前是 iPhone/iPad Safari':'当前 iOS 非 Safari 浏览器'):'当前不是 iPhone/iPad，不能代替 iPhone Stable 真机验收'));
  let quota='未提供';try{if(navigator.storage?.estimate){const e=await navigator.storage.estimate();quota=fmtBytes(e.usage||0)+' / '+fmtBytes(e.quota||0)}}catch(e){}
@@ -65,8 +65,8 @@ function render(){
  const ms=manualState();q('#manualGrid').innerHTML=MANUAL.map(x=>{const st=ms[x.id]?.state||'pending';return '<div class="item '+(st==='pass'?'pass':st==='fail'?'fail':'warn')+'"><div class="itemHead"><b>'+x.name+'</b><span class="state">'+(st==='pending'?'未验收':st==='pass'?'PASS':'FAIL')+'</span></div><div class="detail">'+x.detail+'</div><div class="manual"><button data-id="'+x.id+'" data-state="pass" class="'+(st==='pass'?'on pass':'')+'">已通过</button><button data-id="'+x.id+'" data-state="fail" class="'+(st==='fail'?'on fail':'')+'">有问题</button></div></div>'}).join('');
  document.querySelectorAll('[data-id]').forEach(b=>b.onclick=()=>setManual(b.dataset.id,b.dataset.state));
  const autoFail=auto.filter(x=>x.state==='fail').length,autoWarn=auto.filter(x=>x.state==='warn').length,manualPass=MANUAL.filter(x=>ms[x.id]?.state==='pass').length,manualFail=MANUAL.filter(x=>ms[x.id]?.state==='fail').length,ready=auto.length>0&&autoFail===0&&autoWarn===0&&manualPass===MANUAL.length;
- const gate=q('#gate');gate.className='gate '+(ready?'pass':autoFail||manualFail?'fail':'warn');q('#gateText').textContent=ready?'READY FOR STABLE':autoFail||manualFail?'NOT READY · 仍有失败项':'RC1 验收中 · 人工 '+manualPass+'/'+MANUAL.length+' · 自动提醒 '+autoWarn;
- report={schema:'SAGI-KIT-STABLE-QA-1',version:'1.6.0-rc1',generatedAt:new Date().toISOString(),readyForStable:ready,autoChecks:auto,manualChecks:MANUAL.map(x=>({id:x.id,name:x.name,state:ms[x.id]?.state||'pending',at:ms[x.id]?.at||null})),device:{userAgent:navigator.userAgent,online:navigator.onLine,standalone:matchMedia('(display-mode: standalone)').matches||navigator.standalone===true,language:navigator.language||''}};
+ const gate=q('#gate');gate.className='gate '+(ready?'pass':autoFail||manualFail?'fail':'warn');q('#gateText').textContent=ready?'READY FOR STABLE':autoFail||manualFail?'NOT READY · 仍有失败项':'RC2 验收中 · 人工 '+manualPass+'/'+MANUAL.length+' · 自动提醒 '+autoWarn;
+ report={schema:'SAGI-KIT-STABLE-QA-1',version:'1.6.0-rc2',generatedAt:new Date().toISOString(),readyForStable:ready,autoChecks:auto,manualChecks:MANUAL.map(x=>({id:x.id,name:x.name,state:ms[x.id]?.state||'pending',at:ms[x.id]?.at||null})),device:{userAgent:navigator.userAgent,online:navigator.onLine,standalone:matchMedia('(display-mode: standalone)').matches||navigator.standalone===true,language:navigator.language||''}};
  q('#report').textContent=JSON.stringify(report,null,2)
 }
 function download(obj){const blob=new Blob([JSON.stringify(obj,null,2)],{type:'application/json;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='SAGI-KIT-V1.6-STABLE-QA.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500)}
