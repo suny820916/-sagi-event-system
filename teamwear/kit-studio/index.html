@@ -13,7 +13,7 @@ button,input,select,textarea{font:inherit}.app{max-width:980px;margin:auto;paddi
 .progress{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:15px 0}.prog{padding:8px 5px;text-align:center;border:1px solid #2b333d;border-radius:9px;color:#6f7a84;font-size:9px;background:#0c1014}.prog.on{border-color:#8d7638;color:#efd481;background:#211b0d}.prog.done{border-color:#345a44;color:#9ed6b3;background:#0e1c14}
 .card{background:linear-gradient(180deg,#11161c,#0d1116);border:1px solid var(--line);border-radius:16px;padding:13px;margin-top:10px;box-shadow:0 16px 44px #0005}.card h2{font-size:15px;margin:0 0 5px}.hint{font-size:10px;color:var(--muted);line-height:1.6}
 .toolbar{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0}.chip{border:1px solid #333d47;background:#0c1115;color:#9aa5af;border-radius:999px;padding:7px 10px;font-size:9px;font-weight:900}.chip.on{border-color:#8d7638;color:#edd17b;background:#231d0e}
-.recommend{width:100%;padding:13px;border-radius:12px;border:1px solid #6e5c31;background:linear-gradient(135deg,#332814,#17130b);color:#f0d98d;font-weight:1000;margin:8px 0}
+.recommend{width:100%;padding:13px;border-radius:12px;border:1px solid #6e5c31;background:linear-gradient(135deg,#332814,#17130b);color:#f0d98d;font-weight:1000;margin:8px 0}.recommendPanel{display:none;margin:9px 0;padding:11px;border:1px solid #54492e;border-radius:12px;background:#15130d}.recommendPanel.show{display:block}.recommendGrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}.recommendResult{margin-top:9px;font-size:9px;color:#c9b875;line-height:1.6}@media(max-width:640px){.recommendGrid{grid-template-columns:1fr}}
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}.product{border:1px solid #2c3640;background:#0b1014;border-radius:14px;padding:10px;cursor:pointer;position:relative}.product.on{border-color:#d0ad52;box-shadow:0 0 0 1px #d0ad5230 inset}.thumb{aspect-ratio:4/3;border-radius:10px;border:1px solid #273039;background:linear-gradient(145deg,var(--c1,#252c35),var(--c2,#101318));position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}.thumb:before{content:"";width:54%;height:78%;background:linear-gradient(135deg,#ffffff10,#ffffff00 45%),repeating-linear-gradient(125deg,#ffffff12 0 8px,#0000 8px 19px);clip-path:polygon(25% 4%,38% 0,50% 8%,62% 0,75% 4%,96% 22%,83% 37%,74% 29%,73% 100%,27% 100%,26% 29%,17% 37%,4% 22%);border-radius:8px}.thumb b{position:absolute;bottom:8px;left:8px;font-size:10px;background:#0009;padding:4px 7px;border-radius:999px}.product h3{font-size:12px;margin:9px 0 4px}.meta{font-size:9px;color:#7d8993}.swatches{display:flex;gap:4px;margin-top:8px;flex-wrap:wrap}.sw{width:15px;height:15px;border-radius:50%;border:1px solid #ffffff40}
 .form2{display:grid;grid-template-columns:1fr 1fr;gap:9px}label{display:block;font-size:9px;color:#83909a;margin-bottom:5px;font-weight:900}input,select,textarea{width:100%;background:#080c10;border:1px solid #303a44;border-radius:10px;color:#f4f1e9;padding:10px;outline:none}textarea{min-height:88px;resize:vertical}.wide{grid-column:1/-1}
 .logoBox{display:grid;grid-template-columns:82px 1fr;gap:10px;align-items:center}.logoPreview{height:82px;border:1px dashed #3b4650;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#68747e;overflow:hidden}.logoPreview img{width:100%;height:100%;object-fit:contain}
@@ -34,6 +34,15 @@ button,input,select,textarea{font:inherit}.app{max-width:980px;margin:auto;paddi
     <div class="card">
       <h2>先选一款喜欢的</h2><div class="hint">不用研究参数。先看风格和配色，后面都可以继续改。</div>
       <button class="recommend" id="recommendBtn">我不会选，帮我推荐 3 款</button>
+      <div class="recommendPanel" id="recommendPanel">
+        <div class="recommendGrid">
+          <div><label>给谁穿</label><select id="recommendAge"><option value="adult">成人球队</option><option value="child">青少年球队</option></select></div>
+          <div><label>球队主色</label><select id="recommendColor"><option>蓝色</option><option>红色</option><option>白色</option><option>黑色</option><option>绿色</option><option>黄色</option><option>紫色</option><option>粉色</option><option>不限</option></select></div>
+          <div><label>喜欢什么感觉</label><select id="recommendStyle"><option value="simple">简约耐看</option><option value="bold">个性醒目</option><option value="classic">经典比赛感</option><option value="oriental">东方元素</option><option value="any">都可以</option></select></div>
+        </div>
+        <div class="actions"><button class="primary" id="runRecommend">给我推荐</button></div>
+        <div class="recommendResult" id="recommendResult">只需要回答这3个问题，系统会把22款缩到最适合的3款。</div>
+      </div>
       <div class="toolbar" id="filters"></div>
       <div class="grid" id="products"></div>
       <div class="actions"><button class="primary" data-next>选好了，下一步</button></div>
@@ -47,7 +56,7 @@ button,input,select,textarea{font:inherit}.app{max-width:980px;margin:auto;paddi
         <div><label>球队名称</label><input id="teamName" placeholder="例如：塔城长风"></div>
         <div><label>联系人</label><input id="contact" placeholder="姓名 / 微信称呼"></div>
         <div><label>联系电话</label><input id="phone" inputmode="tel" placeholder="用于订单确认"></div>
-        <div><label>主配色</label><select id="colorSelect"></select></div>
+        <div><label>适用人群</label><select id="ageGroup"><option value="adult">成人</option><option value="child">儿童 / 青少年</option></select></div><div><label>主配色</label><select id="colorSelect"></select></div>
         <div><label>领型</label><select id="collar"><option>常规V圆领</option><option>交叉V圆领</option><option>缺口V圆领</option><option>平口V领</option><option>翻领（无扣）</option><option>POLO领（有扣）</option></select></div>
         <div><label>面料等级</label><select id="fabric"><option value="standard">标准版</option><option value="comfort">舒适版</option><option value="pro">专业版</option><option value="elite">高性能版</option></select></div>
         <div class="wide"><label>胸前赞助 / 队名（可不填）</label><input id="sponsor" placeholder="没有可以留空"></div>
@@ -113,7 +122,9 @@ const PRODUCTS=[
 ['SK-020','SAGI TOWER','20-塔系列',['红白','柔黄','复古红蓝','深紫','绿黄','粉白','浅蓝','深蓝亮粉'],'个性'],
 ['SK-021','SAGI DRAGON','21-水龙吟系列',['水蓝','荧黄绿黄','黑金','赤龙','白粉','清爽芭乐'],'东方'],
 ['SK-022','SAGI DRAGON RING','22-围龙系列',['蓝白经典','莹绿','淡粉','水蓝','红色','黑金','紫色'],'东方']
-].map(x=>({id:x[0],name:x[1],supplier:x[2],colors:x[3],style:x[4]}));
+].map((x,i)=>({id:x[0],name:x[1],supplier:x[2],colors:x[3],style:x[4],
+    supplierPage:i+7,image:"./assets/"+x[0]+".webp",
+    privateLabel:true,customerVisibleSupplier:false}));
 const state=JSON.parse(localStorage.getItem('sagi-kit-draft')||'{}');
 state.step=state.step||1;state.product=state.product||null;state.roster=state.roster||[];state.custom=state.custom||{};state.filter='全部';
 const qs=s=>document.querySelector(s),qsa=s=>[...document.querySelectorAll(s)];
@@ -125,21 +136,44 @@ function renderFilters(){let fs=['全部',...new Set(PRODUCTS.map(p=>p.style))];
 function renderProducts(list){const ps=list||PRODUCTS.filter(p=>state.filter==='全部'||p.style===state.filter);qs('#products').innerHTML=ps.map(p=>{const c=palette(p.name);return '<div class="product '+(state.product===p.id?'on':'')+'" data-p="'+p.id+'"><div class="thumb" style="--c1:'+c[0]+';--c2:'+c[1]+'"><b>'+p.id+'</b></div><h3>'+p.name+'</h3><div class="meta">'+p.style+' · '+p.colors.length+'种配色</div><div class="swatches">'+p.colors.slice(0,6).map((x,i)=>'<i class="sw" title="'+x+'" style="background:'+palette(x)[0]+'"></i>').join('')+'</div></div>'}).join('');qsa('[data-p]').forEach(el=>el.onclick=()=>selectProduct(el.dataset.p))}
 function selectProduct(id){state.product=id;const p=PRODUCTS.find(x=>x.id===id);state.custom.color=p.colors[0];save();renderProducts();fillColor();navigator.vibrate&&navigator.vibrate(15)}
 function fillColor(){const p=PRODUCTS.find(x=>x.id===state.product);qs('#colorSelect').innerHTML=p?p.colors.map(c=>'<option>'+c+'</option>').join(''):'<option>请先选款</option>';if(state.custom.color)qs('#colorSelect').value=state.custom.color}
-function bindFields(){['teamName','contact','phone','sponsor','collar','fabric','colorSelect'].forEach(id=>{const el=qs('#'+id);if(state.custom[id]!==undefined)el.value=state.custom[id];el.oninput=()=>{state.custom[id]=el.value;if(id==='colorSelect')state.custom.color=el.value;save()}})}
+function bindFields(){['teamName','contact','phone','sponsor','collar','fabric','ageGroup','colorSelect'].forEach(id=>{const el=qs('#'+id);if(state.custom[id]!==undefined)el.value=state.custom[id];el.oninput=()=>{state.custom[id]=el.value;if(id==='colorSelect')state.custom.color=el.value;save();if(id==='ageGroup')renderRows()}})}
 function addRow(r={name:'',number:'',size:'L'}){state.roster.push(r);save();renderRows()}
 function renderRows(){qs('#rows').innerHTML=state.roster.map((r,i)=>'<div class="row"><div class="idx">'+(i+1)+'</div><input data-r="'+i+'" data-k="name" placeholder="姓名" value="'+esc(r.name)+'"><input data-r="'+i+'" data-k="number" inputmode="numeric" placeholder="号码" value="'+esc(r.number)+'"><select data-r="'+i+'" data-k="size">'+sizes().map(s=>'<option '+(s===r.size?'selected':'')+'>'+s+'</option>').join('')+'</select><button class="rm" data-rm="'+i+'">×</button></div>').join('');qsa('[data-r][data-k]').forEach(el=>el.oninput=()=>{state.roster[+el.dataset.r][el.dataset.k]=el.value;save();checkRoster()});qsa('[data-rm]').forEach(b=>b.onclick=()=>{state.roster.splice(+b.dataset.rm,1);save();renderRows()});checkRoster()}
-function sizes(){return ['YXXS/110','YXS/120','YS/130','YM/140','YL/150','YXL/160','XS','S','M','L','XL','XXL','XXXL','4XL','5XL']}
+function sizes(){return (state.custom.ageGroup||'adult')==='child'
+    ?['110','120','130','140','150','160']
+    :['XS','S','M','L','XL','XXL','XXXL','4XL','5XL']}
 function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function checkRoster(){const nums=state.roster.map(r=>String(r.number).trim()).filter(Boolean);const dup=[...new Set(nums.filter((n,i)=>nums.indexOf(n)!==i))];const missing=state.roster.filter(r=>!r.name||!r.number||!r.size).length;let msg=[];if(dup.length)msg.push('重复号码：'+dup.join('、'));if(missing)msg.push('有 '+missing+' 人信息未填完整');const box=qs('#rosterIssue');box.textContent=msg.join('；');box.classList.toggle('show',!!msg.length);return !msg.length&&state.roster.length>0}
-function parseRoster(){const t=qs('#pasteRoster').value.trim();if(!t)return;const lines=t.split(/\n+/);lines.forEach(line=>{let a=line.trim().split(/[，,\t\s]+/).filter(Boolean);if(a.length>=2)addRow({name:a[0],number:a[1],size:a[2]||'L'})});qs('#pasteRoster').value=''}
-function renderSummary(){const p=PRODUCTS.find(x=>x.id===state.product);const c=state.custom;const rows=[['款式',p?p.id+' · '+p.name:'未选择'],['主配色',c.color||'未选择'],['球队',c.teamName||'未填写'],['领型',c.collar||'常规V圆领'],['面料',({standard:'标准版',comfort:'舒适版',pro:'专业版',elite:'高性能版'})[c.fabric||'standard']],['队员数量',state.roster.length+' 人'],['联系人',(c.contact||'')+' '+(c.phone||'')]];qs('#summary').innerHTML=rows.map(r=>'<div class="sum"><span>'+r[0]+'</span><b>'+r[1]+'</b></div>').join('')+'<div class="okbox">系统会在后台保留厂家对应款号，但客户侧不会显示供应链信息。提交前请重点检查号码和尺码。</div>';qs('#confirmCheck').checked=false}
-function orderPayload(){const p=PRODUCTS.find(x=>x.id===state.product);return {version:'SAGI KIT STUDIO V1.0 CHINA READY',createdAt:new Date().toISOString(),orderCode:'SK'+Date.now().toString().slice(-10),customer:{team:state.custom.teamName||'',contact:state.custom.contact||'',phone:state.custom.phone||''},product:{sagiCode:p.id,sagiName:p.name,supplierMapping:p.supplier,color:state.custom.color||p.colors[0],collar:state.custom.collar||'常规V圆领',fabric:state.custom.fabric||'standard',sponsor:state.custom.sponsor||''},roster:state.roster}}
+function parseRoster(){const t=qs('#pasteRoster').value.trim();if(!t)return;const lines=t.split(/\n+/);lines.forEach(line=>{let a=line.trim().split(/[，,\t\s]+/).filter(Boolean);if(a.length>=2)addRow({name:a[0],number:a[1],size:a[2]||((state.custom.ageGroup||'adult')==='child'?'140':'L')})});qs('#pasteRoster').value=''}
+function renderSummary(){const p=PRODUCTS.find(x=>x.id===state.product);const c=state.custom;const rows=[['款式',p?p.id+' · '+p.name:'未选择'],['主配色',c.color||'未选择'],['球队',c.teamName||'未填写'],['适用人群',(c.ageGroup||'adult')==='child'?'儿童 / 青少年':'成人'],['领型',c.collar||'常规V圆领'],['面料',({standard:'标准版',comfort:'舒适版',pro:'专业版',elite:'高性能版'})[c.fabric||'standard']],['队员数量',state.roster.length+' 人'],['联系人',(c.contact||'')+' '+(c.phone||'')]];qs('#summary').innerHTML=rows.map(r=>'<div class="sum"><span>'+r[0]+'</span><b>'+r[1]+'</b></div>').join('')+'<div class="okbox">系统会在后台保留厂家对应款号，但客户侧不会显示供应链信息。提交前请重点检查号码和尺码。</div>';qs('#confirmCheck').checked=false}
+function orderPayload(){const p=PRODUCTS.find(x=>x.id===state.product);return {version:'SAGI KIT STUDIO V1.0 CHINA READY',createdAt:new Date().toISOString(),orderCode:'SK'+Date.now().toString().slice(-10),customer:{team:state.custom.teamName||'',contact:state.custom.contact||'',phone:state.custom.phone||''},product:{sagiCode:p.id,sagiName:p.name,ageGroup:state.custom.ageGroup||'adult',supplierMapping:p.supplier,supplierPage:p.supplierPage,privateLabel:true,color:state.custom.color||p.colors[0],collar:state.custom.collar||'常规V圆领',fabric:state.custom.fabric||'standard',sponsor:state.custom.sponsor||''},roster:state.roster}}
 function textOrder(o){return 'SAGI KIT 订单 '+o.orderCode+'\n球队：'+o.customer.team+'\n款式：'+o.product.sagiCode+' '+o.product.sagiName+'\n配色：'+o.product.color+'\n领型：'+o.product.collar+'\n面料：'+o.product.fabric+'\n人数：'+o.roster.length+'\n\n名单：\n'+o.roster.map((r,i)=>(i+1)+'. '+r.name+' / '+r.number+' / '+r.size).join('\n')+'\n\n联系人：'+o.customer.contact+' '+o.customer.phone}
 function submit(){if(!state.product)return alert('请先选择款式');if(!state.custom.teamName)return alert('请填写球队名称');if(!checkRoster())return alert('请先修正名单信息');if(!qs('#confirmCheck').checked)return alert('请勾选“我已核对”');const o=orderPayload();localStorage.setItem('sagi-kit-last-order',JSON.stringify(o));let history=JSON.parse(localStorage.getItem('sagi-kit-orders')||'[]');history.unshift(o);localStorage.setItem('sagi-kit-orders',JSON.stringify(history.slice(0,100)));qs('#orderCode').textContent=o.orderCode;qs('#orderText').value=textOrder(o);goto(5)}
 function download(){const o=JSON.parse(localStorage.getItem('sagi-kit-last-order'));const blob=new Blob([JSON.stringify(o,null,2)],{type:'application/json;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=o.orderCode+'.json';a.click();URL.revokeObjectURL(a.href)}
 function updateNet(){qs('#net').textContent=navigator.onLine?'在线 · 已自动保存':'离线 · 可继续填写';qs('#net').classList.toggle('off',!navigator.onLine)}
-qs('#recommendBtn').onclick=()=>{const picks=[...PRODUCTS].sort(()=>Math.random()-.5).slice(0,3);state.filter='全部';renderFilters();renderProducts(picks);qs('#recommendBtn').textContent='已为你挑出 3 款 · 不喜欢可再换';}
-qsa('[data-next]').forEach(b=>b.onclick=()=>{if(state.step===1&&!state.product)return alert('请先选一款球衣');goto(state.step+1)});qsa('[data-prev]').forEach(b=>b.onclick=()=>goto(state.step-1));
+
+const STYLE_GROUPS={simple:['简约','经典','高级'],bold:['个性','动感','年轻'],classic:['经典','简约'],oriental:['东方'],any:[]};
+function colorScore(p,color){
+ if(color==='不限')return 0;
+ const key=color.replace('色','');
+ return p.colors.some(c=>c.includes(key))?3:0
+}
+function recommendProducts(){
+ const age=qs('#recommendAge').value,color=qs('#recommendColor').value,style=qs('#recommendStyle').value;
+ state.custom.ageGroup=age;qs('#ageGroup').value=age;
+ const groups=STYLE_GROUPS[style]||[];
+ const ranked=PRODUCTS.map(p=>({p,score:colorScore(p,color)+(groups.includes(p.style)?4:0)+(p.privateLabel?1:0)}))
+   .sort((a,b)=>b.score-a.score||a.p.id.localeCompare(b.p.id));
+ let picks=ranked.slice(0,3).map(x=>x.p);
+ if(!ranked[0].score)picks=[PRODUCTS[5],PRODUCTS[17],PRODUCTS[20]];
+ state.filter='全部';renderFilters();renderProducts(picks);
+ qs('#recommendResult').innerHTML='推荐理由：优先匹配 <b>'+color+'</b> + <b>'+qs('#recommendStyle').selectedOptions[0].textContent+'</b>。先从这3款看，仍然可以返回全部22款。';
+ qs('#recommendBtn').textContent='已推荐 3 款 · 点这里重新选择条件';
+ save();
+}
+qs('#recommendBtn').onclick=()=>qs('#recommendPanel').classList.toggle('show');
+qs('#runRecommend').onclick=recommendProducts;
+qsa('[data-next]').forEach(b=>b.onclick=()=>{if(state.step===1&&!state.product)return alert('请先选一款球衣');if(state.step===2){state.custom.ageGroup=qs('#ageGroup').value;save();renderRows()}goto(state.step+1)});qsa('[data-prev]').forEach(b=>b.onclick=()=>goto(state.step-1));
 qs('#addRow').onclick=()=>addRow();qs('#parseRoster').onclick=parseRoster;qs('#submitOrder').onclick=submit;qs('#downloadOrder').onclick=download;
 qs('#copyOrder').onclick=async()=>{await navigator.clipboard.writeText(qs('#orderText').value);alert('订单已复制')};
 qs('#shareOrder').onclick=async()=>{if(navigator.share)await navigator.share({title:'SAGI KIT 订单',text:qs('#orderText').value});else alert('当前浏览器不支持系统分享，请使用“复制订单”')};
