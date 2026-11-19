@@ -111,7 +111,7 @@ button,input,select,textarea{font:inherit}.app{max-width:980px;margin:auto;paddi
     </div>
   </section>
 </div>
-<div class="photoModal" id="photoModal"><div class="photoDialog"><img id="largePhoto" alt="款式放大预览"><p>原款参考图 · 最终 SAGI 贴牌效果以确认稿为准</p><button id="closePhoto">关闭预览</button></div></div>\n<script src="./assets.js"></script>
+<div class="photoModal" id="photoModal"><div class="photoDialog"><img id="largePhoto" alt="款式放大预览"><p>原款参考图 · 最终 SAGI 贴牌效果以确认稿为准</p><button id="closePhoto">关闭预览</button></div></div>\n<script src="./assets.js"></script>\n<script src="./cloud-sync.js"></script>
 <script>
 const PRODUCTS=[
 ['SK-001','SAGI LION 01',['蓝红','红白','白黑','黄绿','蓝白','紫白'],'经典'],
@@ -170,9 +170,14 @@ function renderConfirmSheet(o){
  qs('#sheetRoster').innerHTML=(o.roster||[]).map((r,i)=>'<tr><td>'+(i+1)+'</td><td>'+esc(r.name)+'</td><td>'+esc(r.number)+'</td><td>'+esc(r.size)+'</td></tr>').join('');
 }
 function textOrder(o){return 'SAGI KIT 订单 '+o.orderCode+'\n球队：'+o.customer.team+'\n款式：'+o.product.sagiCode+' '+o.product.sagiName+'\n配色：'+o.product.color+'\n领型：'+o.product.collar+'\n面料：'+o.product.fabric+'\n人数：'+o.roster.length+'\n\n名单：\n'+o.roster.map((r,i)=>(i+1)+'. '+r.name+' / '+r.number+' / '+r.size).join('\n')+'\n\n联系人：'+o.customer.contact+' '+o.customer.phone}
-function submit(){if(!state.product)return alert('请先选择款式');if(!state.custom.teamName)return alert('请填写球队名称');if(!checkRoster())return alert('请先修正名单信息');if(!qs('#confirmCheck').checked)return alert('请勾选“我已核对”');const o=orderPayload();localStorage.setItem('sagi-kit-last-order',JSON.stringify(o));let history=JSON.parse(localStorage.getItem('sagi-kit-orders')||'[]');history.unshift(o);localStorage.setItem('sagi-kit-orders',JSON.stringify(history.slice(0,100)));qs('#orderCode').textContent=o.orderCode;qs('#orderText').value=textOrder(o);renderConfirmSheet(o);goto(5)}
+function submit(){if(!state.product)return alert('请先选择款式');if(!state.custom.teamName)return alert('请填写球队名称');if(!checkRoster())return alert('请先修正名单信息');if(!qs('#confirmCheck').checked)return alert('请勾选“我已核对”');const o=orderPayload();localStorage.setItem('sagi-kit-last-order',JSON.stringify(o));let history=JSON.parse(localStorage.getItem('sagi-kit-orders')||'[]');history.unshift(o);localStorage.setItem('sagi-kit-orders',JSON.stringify(history.slice(0,100)));if(window.SAGICloud){SAGICloud.enqueue(o);SAGICloud.flush()}qs('#orderCode').textContent=o.orderCode;qs('#orderText').value=textOrder(o);renderConfirmSheet(o);goto(5);updateNet()}
 function download(){const o=JSON.parse(localStorage.getItem('sagi-kit-last-order'));const blob=new Blob([JSON.stringify(o,null,2)],{type:'application/json;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=o.orderCode+'.json';a.click();URL.revokeObjectURL(a.href)}
-function updateNet(){qs('#net').textContent=navigator.onLine?'在线 · 已自动保存':'离线 · 可继续填写';qs('#net').classList.toggle('off',!navigator.onLine)}
+function updateNet(){
+ const el=qs('#net');if(!navigator.onLine){el.textContent='离线 · 本地已保存';el.classList.add('off');return}
+ el.classList.remove('off');
+ if(window.SAGICloud){const s=SAGICloud.status();if(s.enabled){el.textContent=s.pending?('在线 · 本地已保存 · 待同步 '+s.pending+' 笔'):'在线 · 本地已保存 · 云端已同步';return}}
+ el.textContent='在线 · 本地已保存';
+}
 
 const STYLE_GROUPS={simple:['简约','经典','高级'],bold:['个性','动感','年轻'],classic:['经典','简约'],oriental:['东方'],any:[]};
 function colorScore(p,color){
@@ -202,7 +207,7 @@ qs('#shareOrder').onclick=async()=>{if(navigator.share)await navigator.share({ti
 qs('#closePhoto').onclick=()=>qs('#photoModal').classList.remove('show');qs('#photoModal').onclick=e=>{if(e.target.id==='photoModal')qs('#photoModal').classList.remove('show')};
 qs('#newOrder').onclick=()=>{localStorage.removeItem('sagi-kit-draft');location.reload()};
 qs('#logoFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{qs('#logoPreview').innerHTML='<img alt="队徽" src="'+r.result+'">';state.custom.logoPreview=r.result;save()};r.readAsDataURL(f)};
-window.addEventListener('online',updateNet);window.addEventListener('offline',updateNet);
+window.addEventListener('online',updateNet);window.addEventListener('offline',updateNet);window.addEventListener('sagi-cloud-status',updateNet);
 renderProgress();renderFilters();renderShortlist();renderProducts();fillColor();bindFields();renderRows();updateNet();if(state.step===5){try{const o=JSON.parse(localStorage.getItem('sagi-kit-last-order')||'null');if(o){qs('#orderCode').textContent=o.orderCode;qs('#orderText').value=textOrder(o);renderConfirmSheet(o)}}catch(e){}}if(state.custom.logoPreview)qs('#logoPreview').innerHTML='<img alt="队徽" src="'+state.custom.logoPreview+'">';goto(state.step);
 if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
 </script>
