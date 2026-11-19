@@ -4,17 +4,17 @@
 - [x] Create isolated commercial branch
 - [x] Define offline-first architecture
 - [x] Define Dev / Beta / Stable release policy
-- [ ] Inventory current V4.40 functions
+- [ ] Inventory current V4.40 functions (V4.31 baseline inventory completed; re-run after V4.40 Stable lands)
 - [ ] Identify code that can be reused safely
-- [ ] Build dependency and open-source license inventory
+- [ ] Build dependency and open-source license inventory (initial inventory created; full inherited asset scan pending)
 
 ## Phase 1 — Local Core
-- [ ] Define canonical MatchState schema
-- [ ] Define Event schema
-- [ ] Add append-only event journal
-- [ ] Add local persistence
+- [x] Define canonical MatchState schema
+- [x] Define Event schema
+- [x] Add append-only event journal
+- [x] Add local persistence
 - [ ] Add crash recovery
-- [ ] Add command idempotency
+- [x] Add command idempotency
 - [ ] Add health endpoint
 
 ## Phase 2 — vMix Adapter
