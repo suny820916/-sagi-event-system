@@ -151,9 +151,22 @@ for idx,(cx,cy) in enumerate(react_stations,1):
 
 # 04 PASS
 pass_box=(0,5.0)
-cube("PASS_BOX",(pass_box[0],pass_box[1],.23),(1,1,.018),m_line)
+# PASS BOX must be a visible 2m x 2m outline, not an opaque filled slab.
+for side,xx in (("L",-1.0),("R",1.0)):
+    cube("PASS_BOX_"+side,(pass_box[0]+xx,pass_box[1],.245),(.025,1.0,.015),m_line)
+for side,yy in (("NEAR",-1.0),("FAR",1.0)):
+    cube("PASS_BOX_"+side,(pass_box[0],pass_box[1]+yy,.245),(1.0,.025,.015),m_line)
 pass_targets={"LEFT":(-4.5,13.5),"CENTER":(0,13.5),"RIGHT":(4.5,13.5)}
-for k,(x,y) in pass_targets.items(): gate("PASS_"+k,x,y,1.5,m_y)
+pass_target_highlights={}
+for k,(x,y) in pass_targets.items():
+    gate("PASS_"+k,x,y,1.5,m_dim)
+    parts=[
+      cube("PASS_HI_"+k+"_L",(x-.75,y,.51),(.055,.055,.31),m_y),
+      cube("PASS_HI_"+k+"_R",(x+.75,y,.51),(.055,.055,.31),m_y),
+      cube("PASS_HI_"+k+"_T",(x,y,.82),(.805,.055,.055),m_y)
+    ]
+    pass_target_highlights[k]=parts
+    for o in parts: hide_at(o,1,True)
 
 # 05 FINISH
 goal_y=17.1
@@ -192,6 +205,11 @@ for idx,parts in enumerate(react_highlights):
 seq=["LEFT","RIGHT","CENTER","CENTER","LEFT","RIGHT"]
 pass_times=[22.4,23.75,25.10,26.45,27.80,29.15]
 for i,(target,t0) in enumerate(zip(seq,pass_times),1):
+    # The direction gate lights only when this pass is called, then fades.
+    for part in pass_target_highlights[target]:
+        hide_at(part,1+round((t0-.23)*fps),True)
+        hide_at(part,1+round((t0-.20)*fps),False)
+        hide_at(part,1+round((t0+.80)*fps),True)
     b=sphere(f"PASS_BALL_{i}",(pass_box[0]+(-.7+.28*i),pass_box[1],.38),.20,m_ball)
     hide_at(b,1,True); hide_at(b,1+round((t0-.04)*fps),True); hide_at(b,1+round(t0*fps),False)
     tx,ty=pass_targets[target]
@@ -207,6 +225,21 @@ for i,(t0,to) in enumerate(zip(shot_times,shot_targets),1):
     hide_at(b,1,True); hide_at(b,1+round((t0-.04)*fps),True); hide_at(b,1+round(t0*fps),False)
     key_loc(b,t0,b.location,fps); key_loc(b,t0+.85,to,fps)
     hide_at(b,1+round((t0+.90)*fps),False); hide_at(b,1+round((t0+.93)*fps),True)
+
+# Animate planted-leg / striking-leg follow-through for all six passes and three shots.
+# One player remains within the PASS BOX throughout the pass sequence.
+right_leg=bpy.data.objects.get("ATHLETE_RL")
+left_leg=bpy.data.objects.get("ATHLETE_LL")
+torso=bpy.data.objects.get("ATHLETE_TORSO")
+for t0 in pass_times + shot_times:
+    for dt,ang in [(-.18,-.38),(-.07,-.64),(0,.45),(.16,.65),(.40,0)]:
+        fr=1+round((t0+dt)*fps)
+        right_leg.rotation_euler[0]=ang
+        right_leg.keyframe_insert("rotation_euler",frame=fr)
+    for dt,ang in [(-.18,.10),(0,-.10),(.35,0)]:
+        fr=1+round((t0+dt)*fps)
+        torso.rotation_euler[0]=ang
+        torso.keyframe_insert("rotation_euler",frame=fr)
 
 # lights
 bpy.ops.object.light_add(type="AREA",location=(0,-6,32)); L=bpy.context.object; L.data.energy=900; L.data.size=24; look_at(L,(0,0,0))
