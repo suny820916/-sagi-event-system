@@ -18,6 +18,8 @@
 
 <section class="section"><h2>人工验收</h2><p class="hint">每项都要在对应真实场景做完后再点“通过”。不要为了变绿而直接点。</p><div id="manualGrid" class="grid"></div></section>
 
+<section class="section"><h2>测试订单工具</h2><p class="hint">仅用于真机验收。它会把选中的测试订单恢复到“已付款”，清除 production / delivery 测试轨道，并移除该订单的待同步队列项。正式订单不要使用。</p><div class="actions"><select id="qaOrder" class="btn" style="text-align:left"></select><button id="qaResetOrder" class="btn primary">一键恢复测试起点</button><a href="./production-center.html" class="btn" style="text-decoration:none;text-align:center">打开生产中心</a></div><div id="qaResetNote" class="detail"></div></section>
+
 <section class="section"><h2>验收报告</h2><p>报告不包含客户名单正文、老板成本或 PIN。它只记录设备环境和验收结果。</p><div class="actions"><button id="export" class="btn good">导出 V1.6 Stable QA 报告</button><button id="clear" class="btn">重置人工验收</button></div><div id="report" class="report">--</div></section>
 <div class="foot">只有“自动检查全部 PASS + 人工验收全部 PASS”时，本页才会显示 READY FOR STABLE。它仍不会自行修改 GitHub release.json 或合并 PR；Stable 发布必须在代码仓库中单独执行。</div>
 </main>
@@ -70,7 +72,10 @@ function render(){
  q('#report').textContent=JSON.stringify(report,null,2)
 }
 function download(obj){const blob=new Blob([JSON.stringify(obj,null,2)],{type:'application/json;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='SAGI-KIT-V1.6-STABLE-QA.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500)}
-q('#rerun').onclick=runAuto;q('#export').onclick=()=>report&&download(report);q('#clear').onclick=()=>{if(confirm('重置全部人工验收记录？')){localStorage.removeItem(QA_KEY);render()}};
-runAuto();
+function qaOrders(){try{const a=JSON.parse(localStorage.getItem('sagi-kit-orders')||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}}
+function renderQaOrders(){const a=qaOrders();q('#qaOrder').innerHTML=a.length?a.map(o=>'<option value="'+String(o.orderCode||'').replace(/"/g,'&quot;')+'">'+(o.orderCode||'--')+' · '+((o.customer&&o.customer.team)||'未命名球队')+' · '+(o.status||'待确认')+'</option>').join(''):'<option value="">没有本机订单</option>'}
+function resetQaOrder(){const code=q('#qaOrder').value;if(!code)return alert('没有可重置的订单');const all=qaOrders(),i=all.findIndex(o=>o.orderCode===code);if(i<0)return alert('找不到该订单');if(!confirm('仅用于测试：将 '+code+' 恢复到“已付款 / 待下单”，并清除这笔订单的生产与交付测试记录。继续？'))return;const now=new Date().toISOString(),o={...all[i]};o.status='已付款';o.statusUpdatedAt=now;o.statusHistory=[...(Array.isArray(o.statusHistory)?o.statusHistory:[]),{status:'已付款',at:now,source:'stable-qa-reset'}];delete o.production;delete o.delivery;all[i]=o;try{localStorage.setItem('sagi-kit-orders',JSON.stringify(all));const last=JSON.parse(localStorage.getItem('sagi-kit-last-order')||'null');if(last&&last.orderCode===code)localStorage.setItem('sagi-kit-last-order',JSON.stringify(o));const queue=JSON.parse(localStorage.getItem('sagi-kit-sync-queue')||'[]');if(Array.isArray(queue))localStorage.setItem('sagi-kit-sync-queue',JSON.stringify(queue.filter(x=>(x&&x.orderCode)!==code&&!(x&&x.order&&x.order.orderCode===code)));q('#qaResetNote').textContent='已恢复 '+code+'：主订单=已付款；生产轨道=待下单（未创建）；交付轨道=未创建。';renderQaOrders();alert('测试订单已恢复。现在进入生产中心继续验收。')}catch(e){console.error(e);alert('恢复失败：本地存储写入异常，请不要继续测试')}}
+q('#rerun').onclick=runAuto;q('#export').onclick=()=>report&&download(report);q('#clear').onclick=()=>{if(confirm('重置全部人工验收记录？')){localStorage.removeItem(QA_KEY);render()}};q('#qaResetOrder').onclick=resetQaOrder;
+renderQaOrders();runAuto();
 </script>
 </body></html>
