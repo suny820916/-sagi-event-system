@@ -13,7 +13,7 @@
 - [x] Define Event schema
 - [x] Add append-only event journal
 - [x] Add local persistence
-- [ ] Add crash recovery
+- [x] Add crash recovery (durable full-state journal; stale snapshot/torn tail tests added; CI verification pending)
 - [x] Add command idempotency
 - [ ] Add health endpoint
 
@@ -68,3 +68,10 @@
 ## V1.0 acceptance goal
 
 A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR code with a phone, run a full football match including a penalty shootout, survive temporary internet loss, restart the app without losing the match state, and export a complete event log.
+
+## 2026-11-19 — Recovery hardening
+- Added fsynced full-state commit records to journal, including non-event commands.
+- Recovery prioritizes latest complete journal commit over stale/corrupted snapshots.
+- In-process commit serialization prevents concurrent writes to the same store instance.
+- Added test coverage for stale snapshots, duplicate command recovery, torn trailing journal record, malformed complete journal line, and stale revision rejection.
+- **Known limits:** this is a development milestone, not certified commercial durability. Torn journal tail must be repaired/truncated before accepting new commits; concurrent separate processes writing the same store require a lock; disk-full and power-loss tests on Windows remain pending. A process restart must be gated by recovery checks before live use.
