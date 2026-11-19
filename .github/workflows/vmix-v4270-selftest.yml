@@ -12,6 +12,7 @@ on:
       - "intro/tests/v432-event-identity-gate.mjs"
       - "intro/tests/v432-brand-gate.mjs"
       - "intro/tests/v432-integration-gate.mjs"
+      - "intro/tests/v432-china-lan-preflight.mjs"
       - "intro/SAGI_VMIX_LAN_V432_SIGNATURE_RC.bat"
       - "intro/tests/v4311-replay-hotfix-selftest.mjs"
       - "intro/SAGI_VMIX_LAN_V4311_REPLAY_HOTFIX.bat"
@@ -28,6 +29,7 @@ on:
       - "intro/tests/v432-event-identity-gate.mjs"
       - "intro/tests/v432-brand-gate.mjs"
       - "intro/tests/v432-integration-gate.mjs"
+      - "intro/tests/v432-china-lan-preflight.mjs"
       - "intro/SAGI_VMIX_LAN_V432_SIGNATURE_RC.bat"
       - "intro/tests/v4311-replay-hotfix-selftest.mjs"
       - "intro/SAGI_VMIX_LAN_V4311_REPLAY_HOTFIX.bat"
@@ -113,6 +115,8 @@ jobs:
         run: node intro/tests/v432-brand-gate.mjs
       - name: Validate V4.32 clean integration and package
         run: node intro/tests/v432-integration-gate.mjs
+      - name: Validate China LAN-first packaged core dependency gate
+        run: node intro/tests/v432-china-lan-preflight.mjs
       - name: Run V4.31.0 broadcast compatibility self-test
         run: |
           mkdir -p selftest-artifacts
@@ -218,3 +222,4 @@ jobs:
           node intro/tests/v432-event-identity-gate.mjs
           node intro/tests/v432-brand-gate.mjs
           node intro/tests/v432-integration-gate.mjs
+          node intro/tests/v432-china-lan-preflight.mjs
