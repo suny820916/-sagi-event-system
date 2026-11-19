@@ -269,3 +269,36 @@ RC1 不能自动升级 Stable。真机验收页只负责在当前设备执行检
 `SAGI-KIT-V1.6-STABLE-QA.json`
 
 该页面不会修改 `release.json`、不会合并 PR、不会写入正式订单/报价。最终 Stable 仍需在仓库中单独发布。
+
+
+## Stable Promotion Gate
+
+入口：`stable-promotion.html`
+
+该页面用于把真实 iPhone 导出的 Stable QA 报告转换为仓库发布申请包。
+
+### 接受条件
+- QA schema 必须为 `SAGI-KIT-STABLE-QA-1`
+- QA version 必须为 `1.6.0-rc1`
+- `readyForStable=true`
+- 自动检查必须全部 PASS
+- 六项人工真机验收必须全部 PASS
+- 报告时间有效
+- 必须包含设备信息
+
+### 输出
+通过后生成：
+`SAGI-KIT-V1.6-STABLE-PROMOTION.json`
+
+申请包包含：
+- 请求从 `1.6.0-rc1` 升级到 `1.6.0`
+- QA 生成时间
+- QA 自动检查 / 人工检查通过数量
+- 原 QA 文件 SHA-256（浏览器支持 WebCrypto 时）
+- 设备环境摘要
+- 明确声明：需要仓库侧单独发布、不会自动合并、不会自动修改 release.json
+
+### 安全边界
+Stable Promotion Gate 没有 GitHub API 写入能力，不会修改订单/报价，不会修改 `release.json`，也不会把 RC1 自动升级为 Stable。
+
+真正 Stable 发布必须在收到通过的 QA 报告和 Promotion 文件后由仓库侧单独执行。
