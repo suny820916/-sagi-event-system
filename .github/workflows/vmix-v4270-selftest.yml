@@ -48,6 +48,19 @@ jobs:
         run: |
           npm install --no-save playwright@latest
           npx playwright install --with-deps chromium
+      - name: Diagnose main integration merge without modifying branch
+        shell: bash
+        run: |
+          git fetch --no-tags origin main
+          echo "Current PR HEAD: $(git rev-parse HEAD)"
+          echo "Current main: $(git rev-parse FETCH_HEAD)"
+          echo "Merge base: $(git merge-base HEAD FETCH_HEAD)"
+          if git merge-tree --write-tree HEAD FETCH_HEAD > /tmp/sagi-v432-merge-tree.txt 2>&1; then
+            echo "V4.32 main integration rehearsal: CLEAN"
+          else
+            echo "::warning::V4.32 main integration rehearsal reports conflicts. Inspect merge-tree diagnostic."
+            sed -n '1,120p' /tmp/sagi-v432-merge-tree.txt
+          fi
       - name: Validate V4.31.0 BAT launcher structure
         run: |
           node - <<'NODE'
