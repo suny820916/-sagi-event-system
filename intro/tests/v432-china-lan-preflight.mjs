@@ -1,0 +1,36 @@
+// V4.32 China LAN-first production preflight (static package gate).
+// This gate does NOT replace offline physical Windows/vMix acceptance.
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+
+const read=p=>fs.readFileSync(p,'utf8');
+const bat=read('intro/SAGI_VMIX_LAN_V432_SIGNATURE_RC.bat');
+const control=read('intro/v45-lan.html');
+const output=read('intro/vmix-v45-lan.html');
+const failures=[];
+function check(name,ok,detail=''){
+  console.log((ok?'PASS':'FAIL')+' '+name+(detail?' — '+detail:''));
+  if(!ok)failures.push(name);
+}
+const markers=['###SAGI_PS###','###SAGI_CONTROL###','###SAGI_OUTPUT###'];
+const positions=markers.map(x=>bat.indexOf(x));
+check('BAT embeds Bridge/control/output in order',positions.every(x=>x>=0)&&positions[0]<positions[1]&&positions[1]<positions[2]);
+const embeddedControl=bat.slice(positions[1]+markers[1].length,positions[2]);
+const embeddedOutput=bat.slice(positions[2]+markers[2].length);
+check('Embedded control includes local match operation',embeddedControl.includes('mdMacroEvent')&&embeddedControl.includes('mdRecordEvent'));
+check('Embedded output includes local scoreboard',embeddedOutput.includes('scoreBug')&&embeddedOutput.includes('simplePenaltyBoard'));
+check('Bridge uses loopback vMix API',bat.includes('http://127.0.0.1:8088/api/'));
+check('Bridge provides LAN phone URL',bat.includes('PHONE CONTROL')&&bat.includes(':8099'));
+for(const [name,html] of [['control',control],['output',output],['packaged control',embeddedControl],['packaged output',embeddedOutput]]){
+  // The core entrypoints must never load a remote executable or stylesheet as a hard prerequisite.
+  const remoteScripts=[...html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["'](https?:)?\/\/[^"']+/gi)];
+  const remoteCss=[...html.matchAll(/<link\b[^>]*\brel\s*=\s*["']stylesheet["'][^>]*\bhref\s*=\s*["'](https?:)?\/\/[^"']+/gi)];
+  check(name+' no mandatory remote script tags',remoteScripts.length===0,remoteScripts.map(x=>x[0]).join(', '));
+  check(name+' no mandatory remote CSS tags',remoteCss.length===0,remoteCss.map(x=>x[0]).join(', '));
+}
+const externalUrls=[...new Set((control.match(/https?:\/\/[^\s'"<>]+/g)||[]).filter(x=>!/(127\.0\.0\.1|localhost)/.test(x)))];
+console.log('OPTIONAL_EXTERNAL_REFERENCES '+JSON.stringify(externalUrls.slice(0,30)));
+check('Optional external dependencies are explicitly visible to audit',externalUrls.length>0);
+check('Local event persistence exists',control.includes('mdPersist()')&&control.includes('mdRecordEvent('));
+if(failures.length){console.error('CHINA_LAN_PREFLIGHT_FAILED '+failures.join('; '));process.exit(1)}
+console.log('CHINA_LAN_PREFLIGHT_STATIC_PASS — physical offline soak still required');
