@@ -150,14 +150,45 @@ jobs:
           retention-days: 7
 
 
-
-
-
-
-
-
-
-
-
-
-
+  windows-package-validation:
+    runs-on: windows-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Validate V4.32 package extraction and PowerShell syntax on Windows
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $path = 'intro/SAGI_VMIX_LAN_V432_SIGNATURE_RC.bat'
+          $source = [IO.File]::ReadAllText((Resolve-Path $path), [Text.Encoding]::UTF8)
+          $pattern = '(?s)###SAGI_PS###\r?\n(.*?)\r?\n###SAGI_CONTROL###\r?\n(.*?)\r?\n###SAGI_OUTPUT###\r?\n(.*)$'
+          $match = [regex]::Match($source, $pattern)
+          if (-not $match.Success) { throw 'Embedded BAT payload extraction failed' }
+          $bridge = $match.Groups[1].Value
+          $control = $match.Groups[2].Value
+          $output = $match.Groups[3].Value
+          if ($bridge.Length -lt 1000 -or $control.Length -lt 100000 -or $output.Length -lt 50000) { throw 'Extracted payload is truncated' }
+          $tokens = $null
+          $parseErrors = $null
+          [void][System.Management.Automation.Language.Parser]::ParseInput($bridge, [ref]$tokens, [ref]$parseErrors)
+          if ($parseErrors.Count -gt 0) { throw ('Embedded bridge PowerShell syntax errors: ' + ($parseErrors | Out-String)) }
+          foreach ($marker in @('SAGI432_SIGNATURE_RC3','SAGISignatureCore')) {
+            if (-not $control.Contains($marker) -or -not $output.Contains($marker)) { throw "Missing shared package marker: $marker" }
+          }
+          foreach ($marker in @('mdNextEventIdentity','instantReplayGenerate')) {
+            if (-not $control.Contains($marker)) { throw "Control payload missing: $marker" }
+          }
+          foreach ($marker in @('introStateAllowed','lastRenderedSignatureEventKey')) {
+            if (-not $output.Contains($marker)) { throw "Output payload missing: $marker" }
+          }
+          Write-Host "Windows BAT extraction and embedded PowerShell parser PASS"
+      - name: Run V4.32 portable regression gates on Windows
+        shell: pwsh
+        run: |
+          node intro/tests/v432-signature-core-selftest.mjs
+          node intro/tests/v432-event-identity-gate.mjs
+          node intro/tests/v432-brand-gate.mjs
+          node intro/tests/v432-integration-gate.mjs
