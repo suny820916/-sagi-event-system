@@ -11,10 +11,10 @@
 </head>
 <body><main class="app">
 <div class="top"><div class="brand"><img src="./brand-mark.svg" alt="SAGI KIT"><div><b>SAGI KIT</b><small>Stable Promotion Gate</small></div></div><a class="back" href="./start.html">返回工作台</a></div>
-<section class="hero"><h1>真机通过之后，才进入发布。</h1><p>上传 iPhone 导出的 Stable QA 报告。本页只验证并生成发布申请包，不会修改 release.json、不会合并 PR、不会把 RC1 自动变成 Stable。</p></section>
+<section class="hero"><h1>真机通过之后，才进入发布。</h1><p>上传 iPhone 导出的 Stable QA 报告。本页只验证并生成发布申请包，不会修改 release.json、不会合并 PR、不会把 RC2 自动变成 Stable。</p></section>
 <div id="gate" class="gate warn"><span>Promotion Gate</span><strong id="gateText">等待 Stable QA 报告</strong></div>
 
-<section class="card"><h2>导入真机验收报告</h2><p class="warning">只接受 <b>SAGI-KIT-STABLE-QA-1</b>、版本 <b>1.6.0-rc1</b>、readyForStable=true 的报告。报告里的人工验收属于真实操作者确认，本页不会伪造或代替真机测试。</p><div class="drop"><input id="file" type="file" accept="application/json,.json"></div></section>
+<section class="card"><h2>导入真机验收报告</h2><p class="warning">只接受 <b>SAGI-KIT-STABLE-QA-1</b>、版本 <b>1.6.0-rc2</b>、readyForStable=true 的报告。报告里的人工验收属于真实操作者确认，本页不会伪造或代替真机测试。</p><div class="drop"><input id="file" type="file" accept="application/json,.json"></div></section>
 
 <section class="card"><h2>发布条件</h2><div id="checks" class="grid"></div></section>
 
@@ -30,7 +30,7 @@ async function sha256(text){if(!crypto?.subtle)return'';return hex(await crypto.
 function validate(x){
  const rows=[];
  rows.push(row('报告 schema',x?.schema==='SAGI-KIT-STABLE-QA-1'?'pass':'fail',String(x?.schema||'缺失')));
- rows.push(row('RC1 版本',x?.version==='1.6.0-rc1'?'pass':'fail',String(x?.version||'缺失')));
+ rows.push(row('RC2 版本',x?.version==='1.6.0-rc2'?'pass':'fail',String(x?.version||'缺失')));
  rows.push(row('Stable Gate',x?.readyForStable===true?'pass':'fail','readyForStable='+String(x?.readyForStable)));
  const autos=Array.isArray(x?.autoChecks)?x.autoChecks:[];
  const autoBad=autos.filter(a=>a?.state!=='pass');
@@ -50,7 +50,7 @@ function render(rows){
  const ok=rows.length>0&&rows.every(x=>x.state==='pass');q('#gate').className='gate '+(ok?'pass':'fail');q('#gateText').textContent=ok?'QA VERIFIED · READY TO REQUEST STABLE':'NOT READY FOR STABLE';q('#export').disabled=!ok;return ok
 }
 q('#file').onchange=async()=>{promotion=null;q('#report').textContent='正在验证…';const f=q('#file').files&&q('#file').files[0];if(!f)return;try{raw=await f.text();parsed=JSON.parse(raw);hash=await sha256(raw);const rows=validate(parsed),ok=render(rows);q('#report').textContent=ok?('QA文件 SHA-256\n'+(hash||'当前浏览器不支持 WebCrypto SHA-256')):'报告未通过 Stable Promotion Gate'}catch(e){console.error(e);parsed=null;hash='';render([row('QA 文件','fail','文件不是有效 JSON 或无法读取')]);q('#report').textContent='报告读取失败'}};
-q('#export').onclick=()=>{if(!parsed)return;const rows=validate(parsed);if(!rows.every(x=>x.state==='pass'))return;promotion={schema:'SAGI-KIT-STABLE-PROMOTION-REQUEST-1',product:'SAGI KIT',fromVersion:'1.6.0-rc1',requestedVersion:'1.6.0',requestedChannel:'stable',requestedAt:new Date().toISOString(),qa:{schema:parsed.schema,generatedAt:parsed.generatedAt,readyForStable:parsed.readyForStable,sha256:hash||null,autoPass:parsed.autoChecks.length,manualPass:parsed.manualChecks.filter(x=>x.state==='pass').length},device:{userAgent:parsed.device?.userAgent||'',standalone:!!parsed.device?.standalone,language:parsed.device?.language||''},constraints:{requiresRepositoryRelease:true,doesNotAutoMerge:true,doesNotAutoModifyReleaseJson:true}};q('#report').textContent=JSON.stringify(promotion,null,2);const blob=new Blob([JSON.stringify(promotion,null,2)],{type:'application/json;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='SAGI-KIT-V1.6-STABLE-PROMOTION.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500)};
+q('#export').onclick=()=>{if(!parsed)return;const rows=validate(parsed);if(!rows.every(x=>x.state==='pass'))return;promotion={schema:'SAGI-KIT-STABLE-PROMOTION-REQUEST-1',product:'SAGI KIT',fromVersion:'1.6.0-rc2',requestedVersion:'1.6.0',requestedChannel:'stable',requestedAt:new Date().toISOString(),qa:{schema:parsed.schema,generatedAt:parsed.generatedAt,readyForStable:parsed.readyForStable,sha256:hash||null,autoPass:parsed.autoChecks.length,manualPass:parsed.manualChecks.filter(x=>x.state==='pass').length},device:{userAgent:parsed.device?.userAgent||'',standalone:!!parsed.device?.standalone,language:parsed.device?.language||''},constraints:{requiresRepositoryRelease:true,doesNotAutoMerge:true,doesNotAutoModifyReleaseJson:true}};q('#report').textContent=JSON.stringify(promotion,null,2);const blob=new Blob([JSON.stringify(promotion,null,2)],{type:'application/json;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='SAGI-KIT-V1.6-STABLE-PROMOTION.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500)};
 render([row('Stable QA 报告','warn','等待上传')]);
 </script>
 </body></html>
