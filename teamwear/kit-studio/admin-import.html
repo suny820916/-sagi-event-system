@@ -5,10 +5,10 @@
 <title>SAGI KIT · 订单导入</title>
 <style>
 *{box-sizing:border-box}body{margin:0;background:#080a0d;color:#f3f1eb;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",Arial,sans-serif}.app{max-width:720px;margin:auto;padding:18px 14px 70px}.brand{font-weight:1000;font-size:21px}.brand i{font-style:normal;color:#e74444}.sub{font-size:10px;color:#89939d;margin-top:4px}.card{margin-top:16px;padding:14px;border:1px solid #2c3640;border-radius:16px;background:#10151b}.card h2{font-size:15px;margin:0 0 5px}.hint{font-size:10px;color:#89939d;line-height:1.7}.drop{margin-top:12px;border:1px dashed #4a5662;border-radius:13px;padding:22px;text-align:center;background:#090d11}input{width:100%;margin-top:10px}.btn{display:inline-flex;margin-top:12px;text-decoration:none;border:1px solid #4a5965;border-radius:10px;background:#151c22;color:#e7eaec;padding:10px 13px;font-size:11px;font-weight:900}.btn.primary{background:linear-gradient(135deg,#92762f,#d6b75b);border-color:#b99a46;color:#111}.status{margin-top:12px;padding:11px;border:1px solid #34414a;border-radius:11px;background:#0a0f13;color:#9da8b1;font-size:10px;line-height:1.7}.status.good{border-color:#3a624a;background:#0c1b13;color:#a4d8b6}.status.bad{border-color:#643d3d;background:#211313;color:#e0a0a0}.preview{display:grid;gap:7px;margin-top:10px}.row{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid #252e36;padding:8px 0;font-size:10px}.row span{color:#7f8b95}.row b{text-align:right}.warn{margin-top:10px;padding:10px;border:1px solid #5b4f2d;border-radius:10px;color:#d4be79;background:#17140d;font-size:9px;line-height:1.6}
-</style>
+.brandLockup{display:flex;align-items:center;gap:9px}.brandLockup img{width:38px;height:38px;object-fit:contain}.brandLockup b{font-size:18px}.brandLockup small{display:block;font-size:8px;color:#89939d;margin-top:2px}</style>
 </head>
 <body><div class="app">
-<div class="brand">SAGI<i>●</i> KIT · 后台导入桥</div><div class="sub">CHINA READY · 本机处理 · 不上传第三方</div>
+<div class="brandLockup"><img src="./brand-mark.svg" alt="SAGI KIT"><div><b>SAGI KIT</b><small>订单导入桥</small></div></div><div class="sub">CHINA READY · 本机处理 · 不上传第三方</div>
 <div class="card"><h2>导入客户订单</h2><div class="hint">选择客户从 SAGI KIT STUDIO 导出的 JSON 文件。系统会校验格式并写入现有 TEAMWEAR 后台订单库。</div>
 <div class="drop"><b>选择订单文件</b><input id="file" type="file" accept=".json,application/json"></div>
 <div id="status" class="status">等待选择文件。</div><div id="preview" class="preview"></div>
