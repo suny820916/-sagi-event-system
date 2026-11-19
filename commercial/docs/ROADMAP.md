@@ -19,7 +19,7 @@
 
 ## Phase 2 — vMix Adapter
 - [ ] Standardize vMix connection
-- [ ] Input discovery
+- [x] Input discovery (read-only XML snapshot parser; real vMix verification pending)
 - [ ] overlay commands
 - [ ] camera switching
 - [ ] replay trigger
@@ -87,3 +87,9 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Added structured timeout/disconnect handling; no blind retries of ambiguous vMix side effects.
 - Added isolated fake-transport tests and CI invocation.
 - **Open:** real vMix hardware validation, input discovery, XML state reconciliation, durable cue outbox and Local Engine integration. Adapter alone is not an end-to-end live workflow.
+
+## 2026-11-20 — vMix read-only input discovery
+- Added bounded, dependency-free vMix XML status parser with active/preview input and input key/title/type/state discovery.
+- Added fake-adapter tests for XML entities, duplicate/invalid inputs, disconnected vMix and malformed response.
+- Added test to commercial CI.
+- **Limits:** XML parser is intentionally narrow, not a full standards-compliant XML parser; no actual vMix Windows session was available. Input discovery is not yet wired to the Local Engine API and should not be marked live-certified.
