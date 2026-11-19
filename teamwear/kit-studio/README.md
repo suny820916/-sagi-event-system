@@ -32,3 +32,16 @@ GitHub 只用于代码版本管理。正式商业部署不得让客户关键链�
 3. 接入现有 teamwear 后台订单池。
 4. 建立云端订单 API、队徽上传、自有对象存储。
 5. 增加后台价格策略与客户报价层。
+
+
+## V1.0 privacy / supply-chain boundary
+The current GitHub repository is public. Therefore:
+- Customer bundle MUST contain only SAGI product codes.
+- Supplier names, supplier item mappings, negotiated costs and factory contact details MUST NOT be added to KIT STUDIO frontend source.
+- Customer JSON export uses schema `SAGI-KIT-ORDER-1` and contains no supplier mapping.
+- `admin-import.html` imports customer orders into the existing TEAMWEAR local order store without revealing supplier information.
+- Production supplier mapping must later live in a private backend/private repository or another access-controlled store.
+
+## Offline admin bridge
+Open `kit-studio/admin-import.html`, choose a customer JSON order, then open `../index.html`.
+The bridge merges the customer submission into `sagi_teamwear_sales_v122` without overwriting unrelated orders.
