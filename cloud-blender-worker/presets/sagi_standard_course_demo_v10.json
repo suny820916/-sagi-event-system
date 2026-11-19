@@ -1,0 +1,118 @@
+{
+  "project": "SAGI STANDARD",
+  "template": "SAGI_EVENT_FLOW",
+  "version": "SAGI STANDARD COURSE DEMO V1.0",
+  "fps": 30,
+  "duration_sec": 45,
+  "resolution": [
+    540,
+    960
+  ],
+  "field_m": [
+    35,
+    20
+  ],
+  "palette": {
+    "pitch": "#202629",
+    "pitch_alt": "#252B2D",
+    "line": "#8D969A",
+    "accent": "#E6F21A",
+    "dim": "#697276",
+    "player": "#A8B63D"
+  },
+  "dimensions": {
+    "burst_m": 15,
+    "control_gate_width_m": 1.4,
+    "react_gate_width_m": 1.4,
+    "pass_box_m": [
+      2,
+      2
+    ],
+    "pass_gate_width_m": 1.5,
+    "pass_distance_m": [
+      8,
+      10
+    ],
+    "finish_distance_m": 12
+  },
+  "penalties": {
+    "control_missed_gate_sec": 3,
+    "react_wrong_gate_sec": 5,
+    "pass_miss_sec": 4,
+    "finish_wrong_zone_sec": 2,
+    "finish_off_target_sec": 5
+  },
+  "timeline": [
+    {
+      "name": "MASTER",
+      "start": 0,
+      "end": 3
+    },
+    {
+      "name": "BURST",
+      "start": 3,
+      "end": 7
+    },
+    {
+      "name": "CONTROL",
+      "start": 7,
+      "end": 14
+    },
+    {
+      "name": "REACT",
+      "start": 14,
+      "end": 22,
+      "sequence": [
+        "LEFT",
+        "RIGHT",
+        "LEFT"
+      ]
+    },
+    {
+      "name": "PASS",
+      "start": 22,
+      "end": 31,
+      "sequence": [
+        "LEFT",
+        "RIGHT",
+        "CENTER",
+        "CENTER",
+        "LEFT",
+        "RIGHT"
+      ],
+      "intentional_miss_index": 4
+    },
+    {
+      "name": "FINISH",
+      "start": 31,
+      "end": 39,
+      "sequence": [
+        "LEFT",
+        "RIGHT",
+        "LEFT"
+      ]
+    },
+    {
+      "name": "STOP",
+      "start": 39,
+      "end": 42
+    },
+    {
+      "name": "SCORE",
+      "start": 42,
+      "end": 45
+    }
+  ],
+  "demo_score": {
+    "raw_time": "63.48",
+    "penalty": "+4.00",
+    "official": "67.48"
+  },
+  "acceptance": {
+    "continuous_route": true,
+    "stop_after_third_shot_judged": true,
+    "ball_readable": true,
+    "chapter_titles": true,
+    "intentional_pass_miss": true
+  }
+}
