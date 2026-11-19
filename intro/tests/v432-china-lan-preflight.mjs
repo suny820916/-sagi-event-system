@@ -13,7 +13,7 @@ function check(name,ok,detail=''){
   if(!ok)failures.push(name);
 }
 const markers=['###SAGI_PS###','###SAGI_CONTROL###','###SAGI_OUTPUT###'];
-const positions=markers.map(x=>bat.indexOf(x));
+const positions=markers.map(x=>bat.lastIndexOf(x));
 check('BAT embeds Bridge/control/output in order',positions.every(x=>x>=0)&&positions[0]<positions[1]&&positions[1]<positions[2]);
 const embeddedControl=bat.slice(positions[1]+markers[1].length,positions[2]);
 const embeddedOutput=bat.slice(positions[2]+markers[2].length);
