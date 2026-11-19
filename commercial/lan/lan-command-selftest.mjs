@@ -37,7 +37,7 @@ try {
   const goal = { commandId: 'goal_00000001', expectedRevision: 0, type: 'GOAL', team: 'home' };
   assert.equal((await post(goal)).status, 401);
   assert.equal((await post({ type: 'GOAL' }, token)).status, 400);
-  assert.equal((await post(goal, token)).status, 200);
+  assert.equal((await post({ ...goal, type: 'VMIX_RECORD_START' }, token)).status, 403);\n  assert.equal((await post({ ...goal, type: 'ADMIN_RESET' }, token)).status, 403);\n  assert.equal((await fetch(base + '/api/v1/lan/command', { method: 'POST', headers: { authorization: `Bearer ${token}` }, body: JSON.stringify(goal) })).status, 415);\n  assert.equal((await post(goal, token)).status, 200);
   assert.equal((await post(goal, token)).status, 200);
   assert.equal(accepted.length, 1);
   assert.equal((await post({ ...goal, commandId: 'goal_00000002' }, token)).status, 409);
