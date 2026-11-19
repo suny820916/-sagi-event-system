@@ -1,0 +1,1 @@
+window.SAGI_KIT_IMAGES=window.SAGI_KIT_IMAGES||{};
