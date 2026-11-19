@@ -140,11 +140,11 @@ jobs:
           path: intro/SAGI_VMIX_LAN_V4311_REPLAY_HOTFIX.bat
           if-no-files-found: error
           retention-days: 7
-      - name: Export V4.32 SIGNATURE RC after all certification gates
+      - name: Export V4.32 SIGNATURE RC after automated gates (not production certified)
         if: success() && hashFiles('intro/SAGI_VMIX_LAN_V432_SIGNATURE_RC.bat') != ''
         uses: actions/upload-artifact@v4
         with:
-          name: SAGI_VMIX_V432_SIGNATURE_RC_CERTIFIED
+          name: SAGI_VMIX_V432_SIGNATURE_RC_CI_PASSED_NOT_PRODUCTION_CERTIFIED
           path: intro/SAGI_VMIX_LAN_V432_SIGNATURE_RC.bat
           if-no-files-found: error
           retention-days: 7
@@ -183,6 +183,14 @@ jobs:
           }
           foreach ($marker in @('introStateAllowed','lastRenderedSignatureEventKey')) {
             if (-not $output.Contains($marker)) { throw "Output payload missing: $marker" }
+          }
+          # Validate that the packaged HTML actually contains the expected live-control and output roots.
+          # This is a package integrity gate, not a real vMix hardware certification.
+          foreach ($marker in @('id="mdGoalBtn"','id="mdRedBtn"','id="mdYellowBtn"','id="mdSubBtn"')) {
+            if (-not $control.Contains($marker)) { throw "Packaged operator control missing: $marker" }
+          }
+          foreach ($marker in @('id="scoreBug"','id="simplePenaltyBoard"')) {
+            if (-not $output.Contains($marker)) { throw "Packaged live output missing: $marker" }
           }
           Write-Host "Windows BAT extraction and embedded PowerShell parser PASS"
       - name: Run V4.32 portable regression gates on Windows
