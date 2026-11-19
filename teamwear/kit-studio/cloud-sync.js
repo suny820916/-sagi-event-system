@@ -20,23 +20,31 @@ function sanitizeOrder(order){
   status:order.status||'待确认',
   statusUpdatedAt:order.statusUpdatedAt||null,
   quantity:roster.length,
-  product:{
+  product:youth?{
+   sagiCode:p.sagiCode||''
+  }:{
    sagiCode:p.sagiCode||'',
    color:p.color||'',
    collar:p.collar||'',
    fabric:p.fabric||''
   },
-  production:{
+  production:youth?{
+   stage:prod.stage||'',
+   updatedAt:prod.updatedAt||null
+  }:{
    stage:prod.stage||'',
    dueDate:prod.dueDate||'',
    updatedAt:prod.updatedAt||null
   },
-  delivery:{
+  delivery:youth?{
+   stage:del.stage||'',
+   updatedAt:del.updatedAt||null
+  }:{
    stage:del.stage||'',
    deliveredAt:del.deliveredAt||'',
    signedAt:del.signedAt||'',
    reorderAt:del.reorderAt||'',
-   unresolvedIssueCount:issues.filter(x=>!x||!x.resolved).length,
+   unresolvedIssueCount:issues.filter(x=>x&&!x.resolved).length,
    updatedAt:del.updatedAt||null
   },
   updatedAt:del.updatedAt||prod.updatedAt||order.statusUpdatedAt||order.createdAt||null
@@ -47,6 +55,18 @@ function forbiddenCloudFields(payload){
  return ['"customer"','"roster"','"contact"','"phone"','"signedby"','"logopreview"','"sponsor"','"note"','"desc"','sagi-kit-private-cost-v1','costprice','suppliermapping','factorycontact'].filter(k=>raw.includes(k));
 }
 function queue(){const q=read(QUEUE_KEY,[]);return Array.isArray(q)?q:[]}
+function migrateQueue(){
+ const old=queue();let changed=false;
+ const next=old.map(item=>{
+  if(item&&item.cloud&&item.orderCode)return item;
+  const source=item&&item.order?item.order:item,cloud=sanitizeOrder(source);
+  if(!cloud||!source||!source.orderCode)return null;
+  changed=true;
+  return {orderCode:source.orderCode,cloud,queuedAt:item&&item.queuedAt||new Date().toISOString(),attempts:item&&item.attempts||0,lastError:item&&item.lastError||''}
+ }).filter(Boolean).slice(-200);
+ if(changed||next.length!==old.length)write(QUEUE_KEY,next);
+ return next
+}
 function status(){const q=queue(),c=config(),s=read(STATUS_KEY,{});return Object.assign({enabled:c.enabled&&!!c.endpoint,pending:q.length,lastSyncedAt:null,lastError:'',complianceMode:COMPLIANCE_MODE},s,{enabled:c.enabled&&!!c.endpoint,pending:q.length,complianceMode:COMPLIANCE_MODE})}
 function setStatus(p){write(STATUS_KEY,Object.assign(status(),p));notify()}
 function notify(){try{window.dispatchEvent(new CustomEvent('sagi-cloud-status',{detail:status()}))}catch(e){}}
@@ -71,5 +91,5 @@ async function flush(){const c=config();if(flushing||!c.enabled||!c.endpoint||!n
 function preview(order){const cloud=sanitizeOrder(order);return {cloud,forbidden:forbiddenCloudFields(cloud)}}
 window.SAGICloud={config,setConfig,status,enqueue,flush,ping,deviceId,sanitizeOrder,preview,complianceMode:COMPLIANCE_MODE};
 window.addEventListener('online',()=>flush());
-setTimeout(()=>{notify();flush()},350);
+migrateQueue();setTimeout(()=>{notify();flush()},350);
 })();
