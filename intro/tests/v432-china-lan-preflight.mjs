@@ -13,7 +13,7 @@ function check(name,ok,detail=''){
 }
 const markers=['###SAGI_PS###','###SAGI_CONTROL###','###SAGI_OUTPUT###'];
 const positions=markers.map(x=>bat.lastIndexOf(x));
-const delimiterLines=bat.split(/\\r?\\n/).filter(line=>markers.includes(line.trim()));
+const delimiterLines=bat.split(/\r?\n/).filter(line=>markers.includes(line.trim()));
 check('BAT contains exactly one actual payload delimiter per section',JSON.stringify(delimiterLines)===JSON.stringify(markers));
 check('BAT embeds Bridge/control/output in order',positions.every(x=>x>=0)&&positions[0]<positions[1]&&positions[1]<positions[2]);
 const embeddedControl=bat.slice(positions[1]+markers[1].length,positions[2]);
@@ -34,12 +34,14 @@ for(const [name,html] of [['control',control],['output',output],['packaged contr
   check(name+' no mandatory remote CSS tags',remoteCss.length===0,remoteCss.map(x=>x[0]).join(', '));
   // Dynamic imports and workers are reported as audit findings, not assumed to be core dependencies:
   // file-import/OCR tools may load these only when explicitly invoked by an operator.
+  const remoteImports=[...html.matchAll(/\bimport\s*\(\s*['"]https?:\/\/[^'"]+/gi)];
+  const remoteWorkers=[...html.matchAll(/\bworkerSrc\s*=\s*['"]https?:\/\/[^'"]+/gi)];
   console.log('OPTIONAL_DYNAMIC_REMOTE_REFERENCES '+name+' '+JSON.stringify([...remoteImports,...remoteWorkers].map(x=>x[0]).slice(0,12)));
 }
 const externalUrls=[...new Set((control.match(/https?:\/\/[^\s'"<>]+/g)||[]).filter(x=>!/(127\.0\.0\.1|localhost)/.test(x)))];
 console.log('OPTIONAL_EXTERNAL_REFERENCES '+JSON.stringify(externalUrls.slice(0,30)));
 check('Optional external dependencies are explicitly visible to audit',externalUrls.length>0);
-check('No external scripts in live output',!/<script\\b[^>]*\\bsrc\\s*=\\s*["']https?:/i.test(output));
+check('No external scripts in live output',!/<script\b[^>]*\bsrc\s*=\s*["']https?:/i.test(output));
 check('Local event persistence exists',control.includes('mdPersist()')&&control.includes('mdRecordEvent('));
 if(failures.length){console.error('CHINA_LAN_PREFLIGHT_FAILED '+failures.join('; '));process.exit(1)}
 console.log('CHINA_LAN_PREFLIGHT_STATIC_PASS — physical offline soak still required');
