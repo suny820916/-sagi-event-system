@@ -81,3 +81,9 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Commands commit durably before state is published; duplicate command IDs are idempotent and stale expectedRevision returns HTTP 409.
 - Added self-test for authentication, concurrent duplicate goals, revision conflict and restart recovery.
 - **Not yet production-ready:** LAN device pairing, token storage, CSRF/origin policy, transport security, WebSocket sync, multi-process locking, vMix adapter and actual Windows endurance tests remain open. CI result pending.
+
+## 2026-11-19 — vMix adapter foundation
+- Added dependency-free allowlisted vMix HTTP API adapter for Cut, Fade, overlays and recording controls.
+- Added structured timeout/disconnect handling; no blind retries of ambiguous vMix side effects.
+- Added isolated fake-transport tests and CI invocation.
+- **Open:** real vMix hardware validation, input discovery, XML state reconciliation, durable cue outbox and Local Engine integration. Adapter alone is not an end-to-end live workflow.
