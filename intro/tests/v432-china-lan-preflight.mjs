@@ -20,7 +20,9 @@ const embeddedControl=bat.slice(positions[1]+markers[1].length,positions[2]);
 const embeddedOutput=bat.slice(positions[2]+markers[2].length);
 check('Packaged control is not truncated',embeddedControl.length>100000);
 check('Packaged output is not truncated',embeddedOutput.length>50000);
-// Catch accidentally shipping stale standalone HTML while the BAT embeds a different UI.\n// Compare the actual embedded payload after removing only BAT delimiter boundary newlines.\nconst normalizePayload=s=>s.replace(/^\r?\n/,'').replace(/\r?\n$/,'').replace(/\r\n/g,'\n');
+// Catch accidentally shipping stale standalone HTML while the BAT embeds a different UI.
+// Compare the actual embedded payload after removing only BAT delimiter boundary newlines.
+const normalizePayload=s=>s.replace(/^\r?\n/,'').replace(/\r?\n$/,'').replace(/\r\n/g,'\n');
 check('BAT packaged control matches standalone source',normalizePayload(embeddedControl)===normalizePayload(control));
 check('BAT packaged output matches standalone source',normalizePayload(embeddedOutput)===normalizePayload(output));
 check('Packaged control includes V4.32 Signature Core',embeddedControl.includes('SAGISignatureCore'));
@@ -53,7 +55,9 @@ for(const [name,html] of [['control',control],['output',output],['packaged contr
 }
 const externalUrls=[...new Set((control.match(/https?:\/\/[^\s'"<>]+/g)||[]).filter(x=>!/(127\.0\.0\.1|localhost)/.test(x)))];
 console.log('OPTIONAL_EXTERNAL_REFERENCES '+JSON.stringify(externalUrls.slice(0,30)));
-// A fully offline build may legitimately contain zero external references.\n// Audit visibility is informational; do not require remote dependencies to exist.\ncheck('External dependency audit produces a deterministic list',Array.isArray(externalUrls));
+// A fully offline build may legitimately contain zero external references.
+// Audit visibility is informational; do not require remote dependencies to exist.
+check('External dependency audit produces a deterministic list',Array.isArray(externalUrls));
 check('No external scripts in live output',!/<script\b[^>]*\bsrc\s*=\s*["']https?:/i.test(output));
 check('Local event persistence exists',control.includes('mdPersist()')&&control.includes('mdRecordEvent('));
 if(failures.length){console.error('CHINA_LAN_PREFLIGHT_FAILED '+failures.join('; '));process.exit(1)}
