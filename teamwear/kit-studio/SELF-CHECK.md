@@ -21,3 +21,14 @@ FAIL
 
 ## Note
 This validates the web integration and brand references at source level. The supplied bitmap master should remain the visual source of truth for future production artwork and garment printing.
+
+
+## Brand placement production standard V1.0
+- Brand standard page exists: PASS
+- Five fixed applications defined (right chest / back neck / shorts / hangtag / packaging): PASS
+- Mobile launcher entry added: PASS
+- Launcher uses A + red-dot mark: PASS
+- Old launcher SAGI-dot text mark removed: PASS
+- Brand standard included in offline cache: PASS
+- Supplier confidentiality rule included in production checklist: PASS
+- Source-level verification date: 2026-11-19
