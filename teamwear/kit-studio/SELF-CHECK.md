@@ -134,3 +134,42 @@ This validates the web integration and brand references at source level. The sup
 - 交付中心未发现供应商身份或成本字段: PASS
 - cloud-sync.js 仍只同步显式订单对象: PASS
 - Source-level verification date: 2026-11-19
+
+
+## SAGI KIT 商用验收 V1.5
+- index.html 内联脚本语法检查: PASS
+- quote.html 内联脚本语法检查: PASS
+- start.html 内联脚本语法检查: PASS
+- production-center.html 内联脚本语法检查: PASS
+- delivery-center.html 内联脚本语法检查: PASS
+- commercial-check.html 内联脚本语法检查: PASS
+- 草稿 JSON 损坏安全兜底: PASS
+- localStorage 写入失败报警: PASS
+- 队徽最长边 640px 浏览器压缩: PASS
+- 12MB 超大队徽拒绝: PASS
+- 订单确认防重复点击: PASS
+- 订单保存失败不进入成功页: PASS
+- 报价保存 / 转订单存储保护: PASS
+- 生产进度存储保护: PASS
+- 交付 / 售后存储保护: PASS
+- 离线导航失败回到 start.html: PASS
+- 商用自检页加入离线缓存: PASS
+- 手机工作台商用自检入口: PASS
+- 今日待办统一生产 / 售后 / 复购信号: PASS
+- 自检检测重复订单号: PASS
+- 自检检测订单关键字段: PASS
+- 自检检测生产 / 售后阶段: PASS
+- 自检检测离线缓存 / Service Worker: PASS
+- 自检检测队徽压缩能力: PASS
+- 自检检测 Web Share / 网络 / 存储额度: PASS
+- 自检报告 JSON 导出: PASS
+- 客户业务备份 JSON 导出: PASS
+- 业务备份不包含老板私有成本表: PASS
+- cloud-sync.js 仍只同步显式订单对象: PASS
+- Source-level verification date: 2026-11-19
+
+## V1.5 remaining acceptance boundary
+- Real iPhone Safari manual tap-through: NOT YET VERIFIED
+- WeChat built-in browser manual tap-through: NOT YET VERIFIED
+- Long-session / low-storage physical-device stress test: NOT YET VERIFIED
+- Real cloud server multi-device conflict test: NOT APPLICABLE until private server is enabled
