@@ -248,3 +248,32 @@ SOURCE-LEVEL STABLE QA HARNESS: PASS
 REAL-DEVICE STABLE QA: PENDING
 RELEASE.JSON STABLE FLAG: FALSE
 PR MERGE: NOT PERFORMED
+
+
+## Stable Promotion Gate
+- stable-promotion.html created: PASS
+- stable-promotion.html script syntax: PASS
+- Mobile launcher entry: PASS
+- Offline cache entry: PASS
+- release.json remains 1.6.0-rc1 / stable=false: PASS
+- QA schema validation: PASS
+- QA version validation: PASS
+- readyForStable=true required: PASS
+- All auto checks must be PASS: PASS
+- Six required manual checks must be PASS: PASS
+- QA generatedAt validation: PASS
+- QA device object validation: PASS
+- SHA-256 digest generation when WebCrypto available: PASS
+- Stable promotion request schema: PASS
+- Promotion output file: PASS
+- No GitHub API host: PASS
+- No POST/PUT/PATCH/DELETE GitHub/network write path: PASS
+- No release.json mutation: PASS
+- No business order/quote mutation: PASS
+- Source-level gate date: 2026-11-19
+
+## Current Stable Release State
+REAL-DEVICE QA REPORT: NOT YET PROVIDED
+STABLE PROMOTION REQUEST: NOT YET GENERATED ON REAL DEVICE
+RELEASE.JSON: 1.6.0-rc1 / stable=false
+PR MERGE: NOT PERFORMED
