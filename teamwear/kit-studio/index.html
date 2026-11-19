@@ -91,7 +91,7 @@ button,input,select,textarea{font:inherit}.app{max-width:980px;margin:auto;paddi
       <span class="badge good">订单已保存在本机</span>
       <h2 style="margin-top:10px">订单已生成</h2>
       <div class="orderCode" id="orderCode"></div>
-      <div class="hint" style="margin-top:6px">当前为 V1.0 安全原型：不会把客户数据偷偷发到境外服务。正式服务器接入后，再启用真正的在线提交。</div>
+      <div class="hint" style="margin-top:6px">订单已安全保存在本机。若启用香港云同步，RC2 仅上传脱敏运营摘要；完整客户名单、联系方式、号码和尺码不上云。</div>
       <div class="sharebox"><textarea id="orderText" readonly></textarea></div>
       <div id="confirmSheet" class="confirmSheet">
         <div class="confirmHead">
@@ -216,7 +216,7 @@ function renderConfirmSheet(o){
  qs('#sheetInfo').innerHTML=items.map(x=>'<div class="confirmBox"><span>'+esc(x[0])+'</span><b>'+esc(x[1])+'</b></div>').join('');
  qs('#sheetRoster').innerHTML=(o.roster||[]).map((r,i)=>'<tr><td>'+(i+1)+'</td><td>'+esc(r.name)+'</td><td>'+esc(r.number)+'</td><td>'+esc(r.size)+'</td></tr>').join('');
 }
-function textOrder(o){return 'SAGI KIT 订单 '+o.orderCode+'\n球队：'+o.customer.team+'\n款式：'+o.product.sagiCode+' '+o.product.sagiName+'\n配色：'+o.product.color+'\n领型：'+o.product.collar+'\n面料：'+o.product.fabric+'\n人数：'+o.roster.length+'\n\n名单：\n'+o.roster.map((r,i)=>(i+1)+'. '+r.name+' / '+r.number+' / '+r.size).join('\n')+'\n\n联系人：'+o.customer.contact+' '+o.customer.phone}
+function fabricLabel(v){return ({standard:'标准版',comfort:'舒适版',pro:'专业版',elite:'高性能版'})[v]||v||''}\nfunction textOrder(o){return 'SAGI KIT 订单 '+o.orderCode+'\n球队：'+o.customer.team+'\n款式：'+o.product.sagiCode+' '+o.product.sagiName+'\n配色：'+o.product.color+'\n领型：'+o.product.collar+'\n面料：'+fabricLabel(o.product.fabric)+'\n人数：'+o.roster.length+'\n\n名单：\n'+o.roster.map((r,i)=>(i+1)+'. '+r.name+' / '+r.number+' / '+r.size).join('\n')+'\n\n联系人：'+o.customer.contact+' '+o.customer.phone}
 let submitting=false;
 function submit(){if(submitting)return;if(!state.product)return alert('请先选择款式');if(!state.custom.teamName)return alert('请填写球队名称');if(!checkRoster())return alert('请先修正名单信息');if(!qs('#confirmCheck').checked)return alert('请勾选“我已核对”');submitting=true;const btn=qs('#submitOrder');if(btn){btn.disabled=true;btn.textContent='正在生成订单…'}try{const o=orderPayload();let history=safeJSON(localStorage.getItem('sagi-kit-orders')||'[]',[]);if(!Array.isArray(history))history=[];history=history.filter(x=>x&&x.orderCode!==o.orderCode);history.unshift(o);const ok1=safeSet('sagi-kit-last-order',JSON.stringify(o)),ok2=safeSet('sagi-kit-orders',JSON.stringify(history.slice(0,100)));if(!ok1||!ok2)throw new Error('STORAGE_FULL');if(window.SAGICloud){SAGICloud.enqueue(o);SAGICloud.flush()}qs('#orderCode').textContent=o.orderCode;qs('#orderText').value=textOrder(o);renderConfirmSheet(o);goto(5);updateNet()}catch(e){console.error(e);alert(e&&e.message==='STORAGE_FULL'?'手机本地存储空间不足。请先删除超大队徽或导出旧订单备份后再试。':'订单保存失败，请不要退出页面，检查手机存储后重试。')}finally{submitting=false;if(btn){btn.disabled=false;btn.textContent='确认并生成订单'}}}
 function download(){const o=safeJSON(localStorage.getItem('sagi-kit-last-order')||'null',null);if(!o)return alert('没有可导出的订单');const blob=new Blob([JSON.stringify(o,null,2)],{type:'application/json;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=o.orderCode+'.json';a.click();URL.revokeObjectURL(a.href)}
