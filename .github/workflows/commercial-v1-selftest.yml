@@ -20,11 +20,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "22"
-
       - name: Run deterministic match core self-test
         run: node commercial/tests/match-core-selftest.mjs
+      - name: Run journal crash recovery self-test
+        run: node commercial/tests/journal-recovery-selftest.mjs
