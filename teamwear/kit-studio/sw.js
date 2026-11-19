@@ -1,5 +1,5 @@
-const CACHE='sagi-kit-v1-china-20261119c';
-const ASSETS=['./','./index.html','./start.html','./admin-import.html','./sync-settings.html','./assets.js','./cloud-sync.js','./manifest.webmanifest'];
+const CACHE='sagi-kit-v1-china-20261119d';
+const ASSETS=['./','./index.html','./start.html','./admin-import.html','./sync-settings.html','./order-history.html','./assets.js','./cloud-sync.js','./manifest.webmanifest'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;
