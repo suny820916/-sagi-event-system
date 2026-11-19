@@ -1,0 +1,19 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#080a0d"><title>SAGI KIT · 云端备份</title><style>
+*{box-sizing:border-box}body{margin:0;background:#080a0d;color:#f2efe8;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",Arial,sans-serif}.app{max-width:620px;margin:auto;padding:18px 14px 70px}.brand{font-size:21px;font-weight:1000}.brand i{font-style:normal;color:#e34242}.sub{font-size:10px;color:#86919a;margin-top:4px}.card{margin-top:16px;padding:14px;border:1px solid #2d3740;border-radius:16px;background:#10151b}.card h2{font-size:15px;margin:0 0 6px}.hint{font-size:10px;color:#87939d;line-height:1.7}.row{margin-top:12px}label{display:block;font-size:9px;color:#9ba5ad;margin-bottom:5px}input{width:100%;padding:11px;border-radius:10px;border:1px solid #3a4650;background:#080d11;color:#eef2f3;font-size:12px}.switch{display:flex;align-items:center;gap:9px;margin-top:12px;font-size:11px}.switch input{width:auto}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.btn{border:1px solid #47535d;border-radius:10px;background:#151c22;color:#edf0f2;padding:10px 13px;font-weight:900;font-size:10px}.btn.primary{background:linear-gradient(135deg,#92752e,#d5b65b);border-color:#b69843;color:#111}.status{margin-top:12px;padding:11px;border:1px solid #34414a;border-radius:11px;background:#0a0f13;color:#99a5ae;font-size:10px;line-height:1.7}.status.good{border-color:#3f664d;color:#a8d6b4;background:#0c1811}.status.bad{border-color:#643e3e;color:#e1a3a3;background:#211313}.note{margin-top:12px;padding:10px;border-radius:10px;border:1px solid #574b2f;background:#17140d;color:#cbb97e;font-size:9px;line-height:1.7}.back{display:inline-block;margin-top:14px;color:#d8bf76;text-decoration:none;font-size:10px}
+</style></head><body><div class="app"><div class="brand">SAGI<i>●</i> KIT · 云端备份</div><div class="sub">LOCAL FIRST · 香港节点可选</div>
+<div class="card"><h2>现在可以不启用</h2><div class="hint">不开启时，SAGI KIT 仍按现在方式在手机本地正常使用。以后有香港服务器，只需要在这里填同步地址和配对密钥。</div>
+<div class="switch"><input id="enabled" type="checkbox"><span>启用云端自动备份</span></div>
+<div class="row"><label>同步地址</label><input id="endpoint" placeholder="https://sync.example.com"></div>
+<div class="row"><label>配对密钥</label><input id="token" type="password" placeholder="服务器开通后填写"></div>
+<div class="actions"><button class="btn primary" id="save">保存设置</button><button class="btn" id="test">测试连接</button><button class="btn" id="sync">立即同步</button></div>
+<div class="status" id="status">读取状态中…</div>
+<div class="note">重要：本地保存始终是第一层。云端只做第二份备份和多设备同步。网络断开不会阻止选款、填名单、生成确认单。</div>
+<a class="back" href="./start.html">← 返回 SAGI KIT</a></div></div><script src="./cloud-sync.js"></script><script>
+const q=id=>document.getElementById(id);
+function fill(){const c=SAGICloud.config();q('enabled').checked=!!c.enabled;q('endpoint').value=c.endpoint||'';q('token').value=c.token||'';show()}
+function show(extra){const s=SAGICloud.status();q('status').className='status'+(s.lastError?' bad':s.enabled&&!s.pending?' good':'');q('status').textContent=extra||(!s.enabled?'云端备份未启用 · 当前仅本地保存':('待同步：'+s.pending+' 笔'+(s.lastSyncedAt?' · 最近同步 '+new Date(s.lastSyncedAt).toLocaleString('zh-CN',{hour12:false}):'')+(s.lastError?' · '+s.lastError:'')))}
+q('save').onclick=()=>{SAGICloud.setConfig({enabled:q('enabled').checked,endpoint:q('endpoint').value,token:q('token').value});show('设置已保存。')};
+q('test').onclick=async()=>{q('status').className='status';q('status').textContent='正在测试连接…';try{await SAGICloud.ping();q('status').className='status good';q('status').textContent='连接成功，可以启用自动备份。'}catch(e){q('status').className='status bad';q('status').textContent='连接失败：'+e.message}};
+q('sync').onclick=async()=>{show('正在同步…');await SAGICloud.flush();show()};
+window.addEventListener('sagi-cloud-status',()=>show());fill();
+</script></body></html>
