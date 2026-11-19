@@ -74,7 +74,44 @@ function render(){
 function download(obj){const blob=new Blob([JSON.stringify(obj,null,2)],{type:'application/json;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='SAGI-KIT-V1.6-STABLE-QA.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500)}
 function qaOrders(){try{const a=JSON.parse(localStorage.getItem('sagi-kit-orders')||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}}
 function renderQaOrders(){const a=qaOrders();q('#qaOrder').innerHTML=a.length?a.map(o=>'<option value="'+String(o.orderCode||'').replace(/"/g,'&quot;')+'">'+(o.orderCode||'--')+' · '+((o.customer&&o.customer.team)||'未命名球队')+' · '+(o.status||'待确认')+'</option>').join(''):'<option value="">没有本机订单</option>'}
-function resetQaOrder(){const code=q('#qaOrder').value;if(!code)return alert('没有可重置的订单');const all=qaOrders(),i=all.findIndex(o=>o.orderCode===code);if(i<0)return alert('找不到该订单');if(!confirm('仅用于测试：将 '+code+' 恢复到“已付款 / 待下单”，并清除这笔订单的生产与交付测试记录。继续？'))return;const now=new Date().toISOString(),o={...all[i]};o.status='已付款';o.statusUpdatedAt=now;o.statusHistory=[...(Array.isArray(o.statusHistory)?o.statusHistory:[]),{status:'已付款',at:now,source:'stable-qa-reset'}];delete o.production;delete o.delivery;all[i]=o;try{localStorage.setItem('sagi-kit-orders',JSON.stringify(all));const last=JSON.parse(localStorage.getItem('sagi-kit-last-order')||'null');if(last&&last.orderCode===code)localStorage.setItem('sagi-kit-last-order',JSON.stringify(o));const queue=JSON.parse(localStorage.getItem('sagi-kit-sync-queue')||'[]');if(Array.isArray(queue))localStorage.setItem('sagi-kit-sync-queue',JSON.stringify(queue.filter(x=>(x&&x.orderCode)!==code&&!(x&&x.order&&x.order.orderCode===code)));q('#qaResetNote').textContent='已恢复 '+code+'：主订单=已付款；生产轨道=待下单（未创建）；交付轨道=未创建。';renderQaOrders();alert('测试订单已恢复。现在进入生产中心继续验收。')}catch(e){console.error(e);alert('恢复失败：本地存储写入异常，请不要继续测试')}}
+function resetQaOrder(){
+ const code=q('#qaOrder').value;
+ if(!code){alert('没有可重置的订单');return}
+ const all=qaOrders();
+ const i=all.findIndex(function(o){return o.orderCode===code});
+ if(i<0){alert('找不到该订单');return}
+ const ok=confirm('仅用于测试：将 '+code+' 恢复到“已付款 / 待下单”，并清除这笔订单的生产与交付测试记录。继续？');
+ if(!ok)return;
+ const now=new Date().toISOString();
+ const o={...all[i]};
+ o.status='已付款';
+ o.statusUpdatedAt=now;
+ const history=Array.isArray(o.statusHistory)?o.statusHistory:[];
+ o.statusHistory=history.concat([{status:'已付款',at:now,source:'stable-qa-reset'}]);
+ delete o.production;
+ delete o.delivery;
+ all[i]=o;
+ try{
+  localStorage.setItem('sagi-kit-orders',JSON.stringify(all));
+  const last=JSON.parse(localStorage.getItem('sagi-kit-last-order')||'null');
+  if(last&&last.orderCode===code)localStorage.setItem('sagi-kit-last-order',JSON.stringify(o));
+  const queue=JSON.parse(localStorage.getItem('sagi-kit-sync-queue')||'[]');
+  if(Array.isArray(queue)){
+   const nextQueue=queue.filter(function(x){
+    const direct=x&&x.orderCode===code;
+    const nested=x&&x.order&&x.order.orderCode===code;
+    return !direct&&!nested;
+   });
+   localStorage.setItem('sagi-kit-sync-queue',JSON.stringify(nextQueue));
+  }
+  q('#qaResetNote').textContent='已恢复 '+code+'：主订单=已付款；生产轨道=待下单（未创建）；交付轨道=未创建。';
+  renderQaOrders();
+  alert('测试订单已恢复。现在进入生产中心继续验收。');
+ }catch(e){
+  console.error(e);
+  alert('恢复失败：本地存储写入异常，请不要继续测试');
+ }
+}
 q('#rerun').onclick=runAuto;q('#export').onclick=()=>report&&download(report);q('#clear').onclick=()=>{if(confirm('重置全部人工验收记录？')){localStorage.removeItem(QA_KEY);render()}};q('#qaResetOrder').onclick=resetQaOrder;
 renderQaOrders();runAuto();
 </script>
