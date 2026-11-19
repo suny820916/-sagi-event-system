@@ -15,10 +15,10 @@
 - [x] Add local persistence
 - [x] Add crash recovery (durable full-state journal; stale snapshot/torn tail tests added; CI verification pending)
 - [x] Add command idempotency
-- [ ] Add health endpoint
+- [x] Add health endpoint (loopback Local Engine)
 
 ## Phase 2 — vMix Adapter
-- [ ] Standardize vMix connection
+- [ ] Standardize vMix connection (authenticated read-only status integrated; cue path still separate)
 - [x] Input discovery (read-only XML snapshot parser; real vMix verification pending)
 - [ ] overlay commands
 - [ ] camera switching
@@ -93,3 +93,10 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Added fake-adapter tests for XML entities, duplicate/invalid inputs, disconnected vMix and malformed response.
 - Added test to commercial CI.
 - **Limits:** XML parser is intentionally narrow, not a full standards-compliant XML parser; no actual vMix Windows session was available. Input discovery is not yet wired to the Local Engine API and should not be marked live-certified.
+
+## 2026-11-20 — Local Engine vMix status integration
+- Added authenticated GET /api/v1/vmix/status, backed by injected vMix adapter and existing bounded XML parser.
+- vMix not configured/disconnected/invalid status returns 503 without blocking local match state or score commands.
+- Added test for unauthorized status access, Chinese camera names, active/preview discovery, disconnected vMix and match state availability.
+- Wired new test into commercial CI. CI result and real Windows/vMix validation pending.
+- **Next:** durable cue outbox, explicit input allowlist, read-back verification, LAN pairing and state synchronization. Do not treat vMix HTTP acknowledgement as confirmed on-air transition.
