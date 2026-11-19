@@ -45,3 +45,23 @@ The current GitHub repository is public. Therefore:
 ## Offline admin bridge
 Open `kit-studio/admin-import.html`, choose a customer JSON order, then open `../index.html`.
 The bridge merges the customer submission into `sagi_teamwear_sales_v122` without overwriting unrelated orders.
+
+
+## 商品库 V1.0
+
+入口：`catalog.html`
+
+- 22 款 SAGI 客户商品档案（SK-001 ~ SK-022）
+- 已对照当前用户图册核验款式配色、成人/青少年尺码与领型
+- 支持款号、名称、配色和标签搜索
+- 支持经典、个性、动感、年轻、简约、高级、东方分类
+- 最多保留 3 款候选，适合客户与球队内部比较
+- “选这款”会把 SAGI 款号带入 `index.html` 定制流程
+- 商品库与数据文件已加入离线缓存
+- SAGI推荐/青训推荐/上镜醒目等属于 SAGI 自有销售标签，不作为厂家销量声明
+
+### 商品图片说明
+当前商品图使用已核对图册的原款参考画面。界面会明确提示原有图片标识不代表最终 SAGI 贴牌成品，最终品牌位置以 SAGI A+红点确认稿为准。
+
+### 供应链边界
+公开商品库禁止出现厂家名称、厂家原始款号、成本、采购联系人或供应链映射。未来如需维护成本与供应商信息，必须放到私有服务或私有仓库。
