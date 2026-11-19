@@ -34,7 +34,7 @@ function initReleaseRuntime(){
  else if(isIOS&&!isSafari&&!standalone){box.textContent='当前不是 Safari/PWA 环境。正式接单建议使用 Safari 或已添加到主屏幕的 SAGI KIT。';box.classList.add('show')}
  if('serviceWorker' in navigator){
    navigator.serviceWorker.register('./sw.js').then(reg=>{reg.update().catch(()=>{});}).catch(()=>{});
-   let reloading=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(reloading)return;reloading=true;if(sessionStorage.getItem('sagi-kit-rc1-reloaded')!=='1'){sessionStorage.setItem('sagi-kit-rc1-reloaded','1');location.reload()}});
+   let reloading=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(reloading)return;reloading=true;if(sessionStorage.getItem('sagi-kit-rc1-reloaded')!=='1'){sessionStorage.setItem('sagi-kit-rc1-reloaded','1');sessionStorage.setItem('sagi-kit-updated','1');location.reload()}});
    setTimeout(()=>sessionStorage.removeItem('sagi-kit-rc1-reloaded'),8000);
  }
  if(sessionStorage.getItem('sagi-kit-updated')==='1'){sessionStorage.removeItem('sagi-kit-updated');const t=document.getElementById('updateToast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3500)}
