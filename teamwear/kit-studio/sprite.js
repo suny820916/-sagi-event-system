@@ -1,0 +1,1 @@
+window.SAGI_KIT_SPRITE_PARTS=[];
