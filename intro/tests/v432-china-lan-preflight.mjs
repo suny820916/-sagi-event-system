@@ -19,7 +19,10 @@ check('BAT embeds Bridge/control/output in order',positions.every(x=>x>=0)&&posi
 const embeddedControl=bat.slice(positions[1]+markers[1].length,positions[2]);
 const embeddedOutput=bat.slice(positions[2]+markers[2].length);
 check('Packaged control is not truncated',embeddedControl.length>100000);
-check('Packaged output is not truncated',embeddedOutput.length>50000);\n// Catch accidentally shipping stale standalone HTML while the BAT embeds a different UI.\n// Compare the actual embedded payload after removing only BAT delimiter boundary newlines.\nconst normalizePayload=s=>s.replace(/^\\r?\\n/,'').replace(/\\r?\\n$/,'').replace(/\\r\\n/g,'\\n');\ncheck('BAT packaged control matches standalone source',normalizePayload(embeddedControl)===normalizePayload(control));\ncheck('BAT packaged output matches standalone source',normalizePayload(embeddedOutput)===normalizePayload(output));
+check('Packaged output is not truncated',embeddedOutput.length>50000);
+// Catch accidentally shipping stale standalone HTML while the BAT embeds a different UI.\n// Compare the actual embedded payload after removing only BAT delimiter boundary newlines.\nconst normalizePayload=s=>s.replace(/^\r?\n/,'').replace(/\r?\n$/,'').replace(/\r\n/g,'\n');
+check('BAT packaged control matches standalone source',normalizePayload(embeddedControl)===normalizePayload(control));
+check('BAT packaged output matches standalone source',normalizePayload(embeddedOutput)===normalizePayload(output));
 check('Packaged control includes V4.32 Signature Core',embeddedControl.includes('SAGISignatureCore'));
 check('Packaged output includes V4.32 Signature Core',embeddedOutput.includes('SAGISignatureCore'));
 check('Embedded control includes local match operation',embeddedControl.includes('mdMacroEvent')&&embeddedControl.includes('mdRecordEvent'));
