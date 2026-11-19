@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#080a0d">
+<title>SAGI KIT 商品库 V1.0</title>
+<style>
+:root{--bg:#080a0d;--panel:#10151b;--line:#2b343d;--text:#f4f1e9;--muted:#89949d;--gold:#d6b75f;--red:#ff1717}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 25% -5%,#2a2418 0,#0d1014 28%,#07090c 68%);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",Arial,sans-serif}
+button,input{font:inherit}.app{max-width:900px;margin:auto;padding:16px 12px 80px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px}.brand{display:flex;gap:10px;align-items:center}.brand img{width:44px;height:44px;object-fit:contain}.brand b{font-size:19px;letter-spacing:.4px}.brand small{display:block;font-size:8px;color:#85919a;letter-spacing:.7px;margin-top:3px}.back{color:#e2ca7d;text-decoration:none;border:1px solid #574a2e;border-radius:999px;padding:8px 10px;font-size:9px}
+.hero{padding:22px 2px 12px}.hero h1{font-size:29px;line-height:1.07;margin:0}.hero p{font-size:10px;color:#8d98a1;line-height:1.7;margin:10px 0 0}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}.stat{border:1px solid #29323a;border-radius:13px;padding:11px;background:#0d1217}.stat strong{font-size:20px;display:block}.stat span{font-size:8px;color:#7e8992}
+.notice{font-size:9px;line-height:1.65;color:#cbb474;background:#211a0c;border:1px solid #5a4927;border-radius:12px;padding:10px;margin:12px 0}
+.tools{position:sticky;top:0;z-index:12;padding:10px 0;background:linear-gradient(180deg,#080a0df5 0,#080a0de9 80%,#080a0d00)}.search{display:flex;gap:8px}.search input{flex:1;border:1px solid #303943;background:#0b1015;color:#fff;border-radius:12px;padding:12px;outline:none}.favToggle{border:1px solid #4b5139;background:#10160f;color:#b8c99b;border-radius:12px;padding:0 12px;font-size:9px;font-weight:900}.favToggle.on{border-color:#a48842;color:#efd27e;background:#251f10}.chips{display:flex;gap:6px;overflow:auto;padding:8px 0 3px;scrollbar-width:none}.chips::-webkit-scrollbar{display:none}.chip{white-space:nowrap;border:1px solid #303a43;background:#0d1217;color:#929da6;border-radius:999px;padding:7px 10px;font-size:8px;font-weight:900}.chip.on{border-color:#8b7437;color:#efd27c;background:#231c0d}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.product{border:1px solid var(--line);background:linear-gradient(180deg,#11171d,#0b0f13);border-radius:15px;padding:9px;min-width:0}.visual{aspect-ratio:4/3;border-radius:10px;overflow:hidden;position:relative;background:#fff;border:1px solid #29323a;background-image:var(--kit-sprite);background-size:400% 600%;background-repeat:no-repeat}.visual.empty{background:#12181e}.mask{position:absolute;background:rgba(10,13,16,.76);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);border-radius:4px}.mask.a{left:9%;top:29%;width:31%;height:14%}.mask.b{left:42%;top:29%;width:33%;height:16%}.mark{position:absolute;left:51%;top:30%;width:24px;height:24px;object-fit:contain;z-index:3}.code{position:absolute;left:7px;bottom:7px;background:#000c;color:#fff;border-radius:999px;padding:4px 7px;font-size:8px;font-weight:1000;z-index:4}.ref{position:absolute;right:7px;top:7px;background:#122017df;color:#a7d4b1;border:1px solid #3b6248;border-radius:999px;padding:4px 6px;font-size:7px;font-weight:1000;z-index:4}.product h3{font-size:12px;margin:9px 0 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.style{font-size:8px;color:#83909a}.tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px}.tag{font-size:7px;border:1px solid #38434c;border-radius:999px;padding:4px 6px;color:#9ba7b0}.tag.gold{border-color:#65542f;color:#d9c17a;background:#1b170e}.colors{font-size:8px;color:#7e8992;line-height:1.5;margin-top:7px;min-height:24px}.actions{display:grid;grid-template-columns:.9fr 1.1fr;gap:6px;margin-top:8px}.actions button,.actions a{text-decoration:none;text-align:center;border:1px solid #36414b;background:#12181e;color:#dfe4e7;border-radius:9px;padding:8px 5px;font-size:8px;font-weight:1000}.actions .custom{border-color:#8b7437;background:linear-gradient(135deg,#2d2513,#18140c);color:#efd27d}.fav.on{border-color:#7f6a34;color:#e7c970;background:#251e0e}.emptyState{grid-column:1/-1;padding:28px;border:1px dashed #34404a;border-radius:14px;text-align:center;color:#7f8b94;font-size:10px}
+.modal{position:fixed;inset:0;background:#000e;z-index:30;display:none;align-items:center;justify-content:center;padding:15px}.modal.show{display:flex}.dialog{width:min(94vw,680px);max-height:90vh;overflow:auto;background:#10151b;border:1px solid #3a4650;border-radius:16px;padding:12px}.bigVisual{aspect-ratio:4/3;border-radius:12px;background-color:#fff;background-image:var(--kit-sprite);background-size:400% 600%;background-repeat:no-repeat;position:relative;overflow:hidden}.dialog h2{font-size:18px;margin:12px 0 4px}.dialog .desc{font-size:9px;color:#8f9aa3;line-height:1.7}.detailGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.detail{border:1px solid #29333c;border-radius:11px;padding:9px}.detail span{font-size:8px;color:#7f8b94;display:block}.detail b{font-size:10px;display:block;margin-top:4px;line-height:1.5}.dialogBtns{display:flex;gap:7px;margin-top:12px}.dialogBtns a,.dialogBtns button{flex:1;border:1px solid #3b4650;border-radius:10px;padding:11px;background:#151b21;color:#fff;text-decoration:none;text-align:center;font-weight:1000;font-size:9px}.dialogBtns .go{border-color:#91783a;background:#b99a49;color:#111}
+.footer{margin-top:18px;color:#66717a;font-size:8px;line-height:1.7}
+@media(max-width:700px){.grid{grid-template-columns:repeat(2,1fr)}.stats{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:380px){.grid{grid-template-columns:1fr 1fr}.product{padding:7px}.product h3{font-size:11px}.hero h1{font-size:25px}.mark{width:20px;height:20px}}
+</style>
+</head>
+<body>
+<main class="app">
+  <div class="top">
+    <div class="brand"><img src="./brand-mark.svg" alt="SAGI KIT"><div><b>SAGI KIT</b><small>商品库 V1.0 · 22 款</small></div></div>
+    <a class="back" href="./start.html">返回工作台</a>
+  </div>
+
+  <section class="hero">
+    <h1>先看款，再成交。</h1>
+    <p>这是 SAGI 自己的客户商品库。客户只需要选喜欢的款式和配色，供应链信息不会进入客户界面。</p>
+    <div class="stats">
+      <div class="stat"><strong id="styleCount">22</strong><span>在售款式</span></div>
+      <div class="stat"><strong id="colorCount">0</strong><span>配色选项</span></div>
+      <div class="stat"><strong>2</strong><span>成人 / 青训</span></div>
+    </div>
+  </section>
+
+  <div class="notice">图册原款图片仅用于版型与配色参考；图片中的原有标识不代表最终 SAGI 成品。实际生产以客户确认稿与 SAGI A+红点品牌位标准为准。</div>
+
+  <section class="tools">
+    <div class="search"><input id="q" type="search" placeholder="搜索：SK-021 / 蓝色 / 东方 / 经典"><button id="favToggle" class="favToggle">只看候选</button></div>
+    <div class="chips" id="chips"></div>
+  </section>
+
+  <section class="grid" id="grid"></section>
+
+  <div class="footer">SAGI KIT 商品库 V1.0 · 款式与配色已对照当前图册核验。SAGI 推荐、青训推荐、上镜醒目等为 SAGI 自有销售标签，不代表厂家销量或第三方评级。</div>
+</main>
+
+<div class="modal" id="modal"><div class="dialog">
+  <div class="bigVisual" id="bigVisual"><span class="mask a"></span><span class="mask b"></span><img class="mark" src="./brand-mark.svg" alt="SAGI"></div>
+  <h2 id="modalName"></h2><div class="desc" id="modalDesc"></div>
+  <div class="detailGrid">
+    <div class="detail"><span>成人尺码</span><b>XS / S / M / L / XL / XXL / XXXL / 4XL / 5XL</b></div>
+    <div class="detail"><span>青少年尺码</span><b>110 / 120 / 130 / 140 / 150 / 160</b></div>
+    <div class="detail"><span>可选领型</span><b>6 种领型</b></div>
+    <div class="detail"><span>品牌位</span><b>左胸队徽 · 右胸 SAGI</b></div>
+  </div>
+  <div class="dialogBtns"><button id="closeModal">继续看款</button><a id="modalGo" class="go" href="./index.html">选这款去定制</a></div>
+</div></div>
+
+<script src="./sprite.js"></script>
+<script src="./catalog-data.js"></script>
+<script>
+const META=window.SAGI_KIT_CATALOG_META||{products:[]},PRODUCTS=META.products||[];
+const qs=s=>document.querySelector(s),qsa=s=>[...document.querySelectorAll(s)];
+let filter='全部',onlyFav=false;
+let favs=[];try{favs=JSON.parse(localStorage.getItem('sagi-kit-catalog-favs')||'[]');if(!Array.isArray(favs))favs=[]}catch(e){favs=[]}
+function saveFavs(){localStorage.setItem('sagi-kit-catalog-favs',JSON.stringify(favs))}
+function spritePos(id){const m=(window.SAGI_KIT_SPRITE_MAP||{})[id];return m?{x:m[0]*33.333333,y:m[1]*20}:null}
+function initSprite(){if(window.SAGI_KIT_SPRITE)document.documentElement.style.setProperty('--kit-sprite','url("'+window.SAGI_KIT_SPRITE+'")')}
+function renderChips(){const styles=['全部',...new Set(PRODUCTS.map(p=>p.style))];qs('#chips').innerHTML=styles.map(x=>'<button class="chip '+(filter===x?'on':'')+'" data-style="'+x+'">'+x+'</button>').join('');qsa('[data-style]').forEach(b=>b.onclick=()=>{filter=b.dataset.style;renderChips();render()})}
+function match(p,q){q=q.trim().toLowerCase();if(!q)return true;return [p.id,p.name,p.style,...p.colors,...p.tags].join(' ').toLowerCase().includes(q)}
+function visualStyle(id){const sp=spritePos(id);return sp?'background-position:'+sp.x+'% '+sp.y+'%':'background-image:none'}
+function render(){const q=qs('#q').value||'';const list=PRODUCTS.filter(p=>(filter==='全部'||p.style===filter)&&(!onlyFav||favs.includes(p.id))&&match(p,q));qs('#grid').innerHTML=list.length?list.map(p=>{
+ const sp=spritePos(p.id),tags=p.tags||[],gold=tags.some(x=>x==='SAGI推荐');
+ return '<article class="product"><div class="visual '+(sp?'':'empty')+'" data-open="'+p.id+'" style="'+visualStyle(p.id)+'"><span class="mask a"></span><span class="mask b"></span><img class="mark" src="./brand-mark.svg" alt="SAGI"><span class="ref">原款参考</span><b class="code">'+p.id+'</b></div><h3>'+p.name+'</h3><div class="style">'+p.style+' · 成人/青训通用</div><div class="tags">'+tags.slice(0,3).map(t=>'<span class="tag '+(t==='SAGI推荐'?'gold':'')+'">'+t+'</span>').join('')+'</div><div class="colors">'+p.colors.join(' · ')+'</div><div class="actions"><button class="fav '+(favs.includes(p.id)?'on':'')+'" data-fav="'+p.id+'">'+(favs.includes(p.id)?'已加入候选':'加入候选')+'</button><a class="custom" href="./index.html?product='+encodeURIComponent(p.id)+'">选这款</a></div></article>'
+ }).join(''):'<div class="emptyState">没有符合条件的款式。换个关键词或取消筛选试试。</div>';
+ qsa('[data-open]').forEach(x=>x.onclick=()=>openProduct(x.dataset.open));qsa('[data-fav]').forEach(b=>b.onclick=()=>toggleFav(b.dataset.fav));
+}
+function toggleFav(id){favs=favs.includes(id)?favs.filter(x=>x!==id):[...favs,id].slice(-3);saveFavs();render()}
+function openProduct(id){const p=PRODUCTS.find(x=>x.id===id);if(!p)return;const sp=spritePos(id);qs('#bigVisual').style.backgroundImage=sp&&window.SAGI_KIT_SPRITE?'var(--kit-sprite)':'none';qs('#bigVisual').style.backgroundPosition=sp?sp.x+'% '+sp.y+'%':'center';qs('#modalName').textContent=p.id+' · '+p.name;qs('#modalDesc').textContent=p.style+'｜'+p.colors.join(' · ')+'｜'+(p.tags||[]).join(' · ');qs('#modalGo').href='./index.html?product='+encodeURIComponent(p.id);qs('#modal').classList.add('show')}
+qs('#closeModal').onclick=()=>qs('#modal').classList.remove('show');qs('#modal').onclick=e=>{if(e.target===qs('#modal'))qs('#modal').classList.remove('show')};
+qs('#q').oninput=render;qs('#favToggle').onclick=()=>{onlyFav=!onlyFav;qs('#favToggle').classList.toggle('on',onlyFav);render()};
+qs('#styleCount').textContent=PRODUCTS.length;qs('#colorCount').textContent=PRODUCTS.reduce((n,p)=>n+p.colors.length,0);
+initSprite();renderChips();render();
+</script>
+</body></html>
