@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#080a0d">
+<title>SAGI KIT · 生产中心</title>
+<style>
+:root{--bg:#080a0d;--panel:#10151b;--line:#2d3841;--text:#f4f1ea;--muted:#84919a;--gold:#d6b85f;--green:#78bd8c;--red:#df8585;--blue:#8cc3dc}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 20% -8%,#292319 0,#0d1014 28%,#07090c 70%);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",Arial,sans-serif}button,input,select,textarea{font:inherit}.app{max-width:900px;margin:auto;padding:17px 13px 85px}.top{display:flex;justify-content:space-between;align-items:center;gap:10px}.brand{display:flex;gap:9px;align-items:center}.brand img{width:42px;height:42px}.brand b{display:block;font-size:19px}.brand small{display:block;font-size:8px;color:#84909a;margin-top:2px}.back{color:#dec475;text-decoration:none;border:1px solid #594b2e;border-radius:999px;padding:8px 10px;font-size:9px}
+.hero{padding:20px 2px 9px}.hero h1{font-size:28px;line-height:1.08;margin:0}.hero p{font-size:9px;line-height:1.7;color:#89949d;margin:8px 0 0}
+.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:11px}.sum{border:1px solid #2e3942;border-radius:13px;background:#0d1217;padding:11px}.sum span{display:block;font-size:8px;color:#7e8a93}.sum strong{display:block;font-size:22px;margin-top:5px}.sum.hot{border-color:#6d5830;background:#1b160c}.sum.hot strong{color:#e6c86f}.sum.alert{border-color:#653f3f;background:#1a1111}.sum.alert strong{color:#e49a9a}
+.lanes{display:flex;gap:7px;overflow:auto;margin-top:12px;padding-bottom:2px}.lane{min-width:112px;border:1px solid #34404a;background:#10161b;color:#96a2aa;border-radius:12px;padding:9px;text-align:left}.lane.on{border-color:#9b813e;background:#241e0f;color:#ead07c}.lane b{display:block;font-size:18px}.lane span{display:block;font-size:8px;margin-top:3px}
+.toolbar{margin-top:11px;border:1px solid #2d3841;border-radius:14px;background:#10151b;padding:10px}.search{width:100%;border:1px solid #394650;border-radius:10px;padding:11px;background:#080d11;color:#fff}.chips{display:flex;gap:6px;overflow:auto;margin-top:8px}.chip{white-space:nowrap;border:1px solid #38444e;background:#151b21;color:#9da7ae;border-radius:999px;padding:7px 9px;font-size:8px}.chip.on{border-color:#8b7437;color:#e9ce7b;background:#241d0d}
+.list{display:grid;gap:10px;margin-top:11px}.job{border:1px solid #303b44;border-radius:15px;background:linear-gradient(145deg,#11171d,#0b1014);padding:13px}.job.alert{border-color:#654141}.jobHead{display:flex;justify-content:space-between;gap:9px}.code{font-size:9px;color:#d9c17a;font-weight:1000}.age{font-size:8px;color:#77838b}.team{font-size:16px;font-weight:1000;margin-top:6px}.meta{font-size:9px;color:#8b97a0;line-height:1.65;margin-top:5px}.badges{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}.badge{border:1px solid #3b4750;border-radius:999px;padding:4px 7px;font-size:7px;color:#9da8af}.badge.stage{border-color:#4d6373;color:#a9d2e4;background:#0c1720}.badge.warn{border-color:#6c542d;color:#e0c070;background:#1c170d}.badge.alert{border-color:#6b3f3f;color:#e8a1a1;background:#1b1010}.badge.good{border-color:#3d6849;color:#a8d5b2;background:#0d1811}.missing{margin-top:8px;border-left:3px solid #6b3f3f;background:#171011;border-radius:0 9px 9px 0;padding:7px 9px;font-size:8px;color:#d59b9b;line-height:1.55}.actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.btn{border:1px solid #45515b;border-radius:9px;background:#172027;color:#e5e9eb;padding:8px 9px;font-size:8px;font-weight:1000}.btn.primary{border-color:#9a813c;background:linear-gradient(135deg,#8f722b,#d4b45a);color:#111}.btn.good{border-color:#407050;background:#183722;color:#a9d8b5}
+.empty{padding:28px;text-align:center;border:1px dashed #34404a;border-radius:13px;color:#75818a;font-size:9px}
+.modal{position:fixed;inset:0;background:#000d;z-index:50;display:none;align-items:flex-end;justify-content:center}.modal.show{display:flex}.sheet{width:min(100%,760px);max-height:92vh;overflow:auto;border:1px solid #3a4650;border-radius:18px 18px 0 0;background:#0c1116;padding:14px}.sheetHead{display:flex;justify-content:space-between;align-items:center}.sheetHead b{font-size:15px}.close{border:1px solid #45515b;border-radius:9px;background:#171e24;color:#fff;padding:8px 10px}.detail{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:11px}.ibox{border:1px solid #2d3841;border-radius:10px;padding:9px}.ibox span{display:block;font-size:7px;color:#7e8a93}.ibox b{display:block;font-size:10px;margin-top:4px;line-height:1.45}.form{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.form label{display:block;font-size:8px;color:#8b969f;margin-bottom:4px}.form input,.form select,.form textarea{width:100%;border:1px solid #35414a;border-radius:9px;background:#080d11;color:#fff;padding:9px}.form textarea{min-height:70px;resize:vertical}.form .wide{grid-column:1/-1}.timeline{margin-top:12px;border-top:1px solid #273139;padding-top:9px}.timeline h3{font-size:10px;margin:0 0 6px}.tl{display:flex;justify-content:space-between;gap:8px;border-bottom:1px dashed #273139;padding:6px 0;font-size:8px}.tl span{color:#7b8790}.foot{margin-top:15px;font-size:7px;color:#66727a;line-height:1.7}
+@media(max-width:600px){.summary{grid-template-columns:1fr 1fr}.summary .sum:last-child{grid-column:1/-1}.detail,.form{grid-template-columns:1fr}.form .wide{grid-column:auto}}
+</style>
+</head>
+<body><main class="app">
+<div class="top"><div class="brand"><img src="./brand-mark.svg" alt="SAGI KIT"><div><b>SAGI KIT</b><small>生产中心 V1.3</small></div></div><a class="back" href="./start.html">返回工作台</a></div>
+<section class="hero"><h1>成交以后，每一单都有人盯。</h1><p>生产中心只管理已经进入履约阶段的订单。它不保存厂家身份和采购成本，只记录生产阶段、目标交付日期与内部进度备注。</p></section>
+<section class="summary">
+ <div class="sum"><span>生产池</span><strong id="sTotal">0</strong></div>
+ <div class="sum hot"><span>今天需要推进</span><strong id="sTodo">0</strong></div>
+ <div class="sum alert"><span>超期 / 信息缺失</span><strong id="sAlert">0</strong></div>
+</section>
+<div id="lanes" class="lanes"></div>
+<div class="toolbar"><input id="search" class="search" placeholder="搜索球队 / 订单号 / SAGI款号"><div class="chips"><button class="chip on" data-view="active">进行中</button><button class="chip" data-view="alert">只看问题</button><button class="chip" data-view="all">全部</button></div></div>
+<div id="list" class="list"></div>
+<div class="foot">SAGI KIT PRODUCTION CENTER · 生产轨道保存在订单对象的 production 字段中，可随订单一起进入现有云端订单备份；不包含老板私有成本表。</div>
+</main>
+
+<div id="modal" class="modal"><div class="sheet">
+ <div class="sheetHead"><b>生产单</b><button id="close" class="close">关闭</button></div>
+ <div id="detail" class="detail"></div>
+ <div class="form">
+  <div><label>生产阶段</label><select id="stage"></select></div>
+  <div><label>目标交付日期</label><input id="due" type="date"></div>
+  <div class="wide"><label>内部生产备注</label><textarea id="note" placeholder="例如：11月20日已确认印号；等待成衣到货。不要填写厂家联系方式或成本。"></textarea></div>
+ </div>
+ <div class="actions"><button id="save" class="btn primary">保存生产进度</button><button id="next" class="btn good">推进下一阶段</button><button id="openOrder" class="btn">打开订单中心</button></div>
+ <div class="timeline"><h3>生产进度记录</h3><div id="timeline"></div></div>
+</div></div>
+
+<script src="./cloud-sync.js"></script>
+<script>
+const KEY='sagi-kit-orders',STAGES=['待下单','已下单工厂','生产中','已到货','待交付','已完成'];
+const q=s=>document.querySelector(s),qa=s=>[...document.querySelectorAll(s)];
+let stageFilter='全部',view='active',selected=null;
+function orders(){try{const a=JSON.parse(localStorage.getItem(KEY)||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}}
+function status(o){return o.status||'待确认'}
+function eligible(o){return ['已付款','生产中','已发货','已完成'].includes(status(o))||!!o.production}
+function inferStage(o){if(o.production&&STAGES.includes(o.production.stage))return o.production.stage;if(status(o)==='已完成')return'已完成';if(status(o)==='已发货')return'待交付';if(status(o)==='生产中')return'生产中';return'待下单'}
+function prod(o){const p=o.production&&typeof o.production==='object'?o.production:{};return {...p,stage:inferStage(o),history:Array.isArray(p.history)?p.history:[]}}
+function stageAt(o){const p=prod(o),h=p.history,hit=[...h].reverse().find(x=>x.stage===p.stage);return new Date((hit&&hit.at)||p.updatedAt||o.statusUpdatedAt||o.createdAt||0).getTime()}
+function overdueDays(stage){return ({'待下单':1,'已下单工厂':2,'生产中':7,'已到货':2,'待交付':3})[stage]||9999}
+function isOverdue(o){const s=inferStage(o);return s!=='已完成'&&Date.now()-stageAt(o)>=overdueDays(s)*86400000}
+function missing(o){const c=o.customer||{},p=o.product||{},r=Array.isArray(o.roster)?o.roster:[],m=[];if(!c.team)m.push('球队');if(!c.contact)m.push('联系人');if(!p.sagiCode)m.push('SAGI款号');if(!p.color)m.push('配色');if(!r.length)m.push('名单');else{if(r.some(x=>!x.name))m.push('姓名');if(r.some(x=>!x.number))m.push('号码');if(r.some(x=>!x.size))m.push('尺码')}return [...new Set(m)]}
+function dueLate(o){const d=prod(o).dueDate;if(!d||inferStage(o)==='已完成')return false;const end=new Date(d+'T23:59:59').getTime();return Date.now()>end}
+function hasProblem(o){return isOverdue(o)||dueLate(o)||missing(o).length>0}
+function daysInStage(o){return Math.max(0,Math.floor((Date.now()-stageAt(o))/86400000))}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function laneCounts(){const a=orders().filter(eligible),map=Object.fromEntries(STAGES.map(x=>[x,0]));a.forEach(o=>map[inferStage(o)]++);return map}
+function renderLanes(){const m=laneCounts();q('#lanes').innerHTML=['全部',...STAGES].map(s=>'<button class="lane '+(stageFilter===s?'on':'')+'" data-stage="'+s+'"><b>'+(s==='全部'?Object.values(m).reduce((a,b)=>a+b,0):m[s])+'</b><span>'+s+'</span></button>').join('');qa('[data-stage]').forEach(b=>b.onclick=()=>{stageFilter=b.dataset.stage;renderLanes();render()})}
+function renderSummary(){const a=orders().filter(eligible),active=a.filter(o=>inferStage(o)!=='已完成'),alerts=a.filter(hasProblem);q('#sTotal').textContent=active.length;q('#sTodo').textContent=active.filter(o=>daysInStage(o)>=Math.max(1,overdueDays(inferStage(o))-1)).length;q('#sAlert').textContent=alerts.length}
+function render(){renderSummary();renderLanes();const term=q('#search').value.trim().toLowerCase();let a=orders().filter(eligible).filter(o=>stageFilter==='全部'||inferStage(o)===stageFilter).filter(o=>view==='all'||view==='alert'?true:inferStage(o)!=='已完成');if(view==='alert')a=a.filter(hasProblem);a=a.filter(o=>{if(!term)return true;const c=o.customer||{},p=o.product||{};return[o.orderCode,c.team,c.contact,p.sagiCode,p.sagiName].join(' ').toLowerCase().includes(term)}).sort((x,y)=>{const ax=hasProblem(x)?1:0,ay=hasProblem(y)?1:0;if(ax!==ay)return ay-ax;return stageAt(x)-stageAt(y)});q('#list').innerHTML=a.length?a.map(o=>{const c=o.customer||{},p=o.product||{},s=inferStage(o),m=missing(o),prob=hasProblem(o),due=prod(o).dueDate;return '<article class="job '+(prob?'alert':'')+'"><div class="jobHead"><b class="code">'+esc(o.orderCode||'--')+'</b><span class="age">'+daysInStage(o)+'天在当前阶段</span></div><div class="team">'+esc(c.team||'未命名球队')+'</div><div class="meta">'+esc((p.sagiCode||'')+' · '+(p.sagiName||''))+' · '+(o.roster||[]).length+'套<br>'+(due?'目标交付 '+due:'未设置目标交付日期')+'</div><div class="badges"><span class="badge stage">'+s+'</span>'+(isOverdue(o)?'<span class="badge alert">阶段超期</span>':'')+(dueLate(o)?'<span class="badge alert">交付逾期</span>':'')+(!prob?'<span class="badge good">信息完整</span>':'')+'</div>'+(m.length?'<div class="missing">缺少：'+m.join(' / ')+'</div>':'')+'<div class="actions"><button class="btn primary" data-open="'+esc(o.orderCode)+'">管理生产</button>'+(s!=='已完成'?'<button class="btn good" data-next="'+esc(o.orderCode)+'">→ '+STAGES[Math.min(STAGES.length-1,STAGES.indexOf(s)+1)]+'</button>':'')+'</div></article>'}).join(''):'<div class="empty">当前没有符合条件的生产订单。</div>';qa('[data-open]').forEach(b=>b.onclick=()=>openJob(b.dataset.open));qa('[data-next]').forEach(b=>b.onclick=()=>advance(b.dataset.next))}
+function find(code){return orders().find(o=>o.orderCode===code)}
+function saveProduction(o,nextStage,due,note){const a=orders(),i=a.findIndex(x=>x.orderCode===o.orderCode);if(i<0)return;const old=prod(a[i]),stage=STAGES.includes(nextStage)?nextStage:old.stage,now=new Date().toISOString(),history=old.history.length?old.history:[{stage:old.stage,at:old.updatedAt||a[i].statusUpdatedAt||a[i].createdAt||now}];let p={...old,stage,dueDate:due||'',note:note||'',updatedAt:now,history};if(old.stage!==stage)p.history=[...history,{stage,at:now}];let updated={...a[i],production:p};if(stage==='生产中'&&status(updated)==='已付款'){updated.status='生产中';updated.statusUpdatedAt=now;updated.statusHistory=[...(Array.isArray(updated.statusHistory)?updated.statusHistory:[]),{status:'生产中',at:now}]}if(stage==='已完成'&&status(updated)!=='已完成'){updated.status='已完成';updated.statusUpdatedAt=now;updated.statusHistory=[...(Array.isArray(updated.statusHistory)?updated.statusHistory:[]),{status:'已完成',at:now}]}a[i]=updated;localStorage.setItem(KEY,JSON.stringify(a));if(window.SAGICloud){SAGICloud.enqueue(updated);SAGICloud.flush()}selected=updated;render();return updated}
+function advance(code){const o=find(code);if(!o)return;const s=inferStage(o),i=STAGES.indexOf(s);if(i<0||i>=STAGES.length-1)return;saveProduction(o,STAGES[i+1],prod(o).dueDate,prod(o).note)}
+function openJob(code){const o=find(code);if(!o)return;selected=o;const c=o.customer||{},p=o.product||{},pr=prod(o),m=missing(o);q('#detail').innerHTML=[['订单',o.orderCode||''],['球队',c.team||''],['款式',(p.sagiCode||'')+' · '+(p.sagiName||'')],['配色',p.color||''],['数量',(o.roster||[]).length+'套'],['信息检查',m.length?'缺：'+m.join(' / '):'完整']].map(x=>'<div class="ibox"><span>'+esc(x[0])+'</span><b>'+esc(x[1])+'</b></div>').join('');q('#stage').innerHTML=STAGES.map(s=>'<option '+(s===pr.stage?'selected':'')+'>'+s+'</option>').join('');q('#due').value=pr.dueDate||'';q('#note').value=pr.note||'';renderTimeline(pr);q('#modal').classList.add('show')}
+function renderTimeline(p){const h=(p.history||[]).slice().reverse();q('#timeline').innerHTML=h.length?h.map(x=>'<div class="tl"><b>'+esc(x.stage||'')+'</b><span>'+new Date(x.at||Date.now()).toLocaleString('zh-CN',{hour12:false})+'</span></div>').join(''):'<div class="empty">暂无生产阶段记录。</div>'}
+q('#save').onclick=()=>{if(!selected)return;const u=saveProduction(selected,q('#stage').value,q('#due').value,q('#note').value.trim());if(u)openJob(u.orderCode)};
+q('#next').onclick=()=>{if(!selected)return;const i=STAGES.indexOf(q('#stage').value);if(i<0||i>=STAGES.length-1)return alert('已经是最后阶段');q('#stage').value=STAGES[i+1];q('#save').click()};
+q('#openOrder').onclick=()=>{location.href='./order-history.html?order='+encodeURIComponent(selected&&selected.orderCode||'')};
+q('#close').onclick=()=>q('#modal').classList.remove('show');q('#modal').onclick=e=>{if(e.target.id==='modal')q('#modal').classList.remove('show')};
+q('#search').oninput=render;qa('[data-view]').forEach(b=>b.onclick=()=>{view=b.dataset.view;qa('[data-view]').forEach(x=>x.classList.toggle('on',x===b));render()});window.addEventListener('storage',render);window.addEventListener('sagi-cloud-status',render);render();
+</script></body></html>
