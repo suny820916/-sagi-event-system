@@ -52,6 +52,21 @@ for(const [name,html] of [['control',control],['output',output],['packaged contr
   const remoteImports=[...html.matchAll(/\bimport\s*\(\s*['"]https?:\/\/[^'"]+/gi)];
   const remoteWorkers=[...html.matchAll(/\bworkerSrc\s*=\s*['"]https?:\/\/[^'"]+/gi)];
   console.log('OPTIONAL_DYNAMIC_REMOTE_REFERENCES '+name+' '+JSON.stringify([...remoteImports,...remoteWorkers].map(x=>x[0]).slice(0,12)));
+  // The live vMix overlay must remain fully local even if optional roster imports use CDNs.
+  if(name==='output'||name==='packaged output'){
+    check(name+' no remote dynamic modules or workers',remoteImports.length===0&&remoteWorkers.length===0);
+  }
+  // Any optional PDF CDN fallback must remain confined to the explicit import action.
+  // If a future refactor moves it into startup or match control, fail certification.
+  if(name==='control'||name==='packaged control'){
+    const pdfStart=html.indexOf('async function riReadPdf(file){');
+    const pdfEnd=html.indexOf('async function riImageCanvas(file){',pdfStart);
+    const pdfBody=pdfStart>=0&&pdfEnd>pdfStart?html.slice(pdfStart,pdfEnd):'';
+    const allDynamic=[...remoteImports,...remoteWorkers];
+    check(name+' remote PDF module remains isolated to optional import',
+      allDynamic.length===0||(pdfBody.length>0&&allDynamic.every(m=>pdfBody.includes(m[0]))));
+  }
+
 }
 const externalUrls=[...new Set((control.match(/https?:\/\/[^\s'"<>]+/g)||[]).filter(x=>!/(127\.0\.0\.1|localhost)/.test(x)))];
 console.log('OPTIONAL_EXTERNAL_REFERENCES '+JSON.stringify(externalUrls.slice(0,30)));
