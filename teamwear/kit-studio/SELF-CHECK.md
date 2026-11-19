@@ -173,3 +173,49 @@ This validates the web integration and brand references at source level. The sup
 - WeChat built-in browser manual tap-through: NOT YET VERIFIED
 - Long-session / low-storage physical-device stress test: NOT YET VERIFIED
 - Real cloud server multi-device conflict test: NOT APPLICABLE until private server is enabled
+
+
+## SAGI KIT V1.6 RC1 Release Gate
+- release.json version = 1.6.0-rc1: PASS
+- release channel = release-candidate, stable=false: PASS
+- 工作台注册 Service Worker: PASS
+- 工作台主动触发 Service Worker update check: PASS
+- controllerchange 自动重载工作台: PASS
+- RC1 更新完成提示: PASS
+- iPhone Safari / 非 Safari 环境识别: PASS
+- 微信内置浏览器识别与 Safari 使用提示: PASS
+- manifest id / scope / start_url 固定: PASS
+- 商用自检升级 V1.6 RC1: PASS
+- 业务备份恢复按钮: PASS
+- 恢复 schema 检查: PASS
+- 恢复 localStorage 白名单: PASS
+- 恢复前逐值 JSON 校验: PASS
+- 恢复采用内存快照: PASS
+- 恢复写入失败自动回滚: PASS
+- 私有成本键不在业务恢复白名单: PASS
+- RC1 自检报告版本字段: PASS
+- RC1 自检报告文件名: PASS
+- Service Worker 缓存 release.json: PASS
+- Service Worker 缓存清单所有目标文件真实存在: PASS
+- 手机工作台所有 kit-studio 本地入口真实存在: PASS
+- start.html script syntax: PASS
+- commercial-check.html script syntax: PASS
+- sw.js script syntax: PASS
+- cloud-sync.js 未引用私有成本键: PASS
+- cloud-sync.js 仍只 POST 显式订单对象: PASS
+- PR #24 state: OPEN / DRAFT / MERGEABLE
+- GitHub status checks on RC1 head: NONE CONFIGURED / NONE REPORTED
+- GitHub workflow runs on RC1 head: NONE
+- Source release gate date: 2026-11-19
+
+## V1.6 RC1 final acceptance boundary
+- Real iPhone Safari end-to-end manual QA: NOT YET VERIFIED
+- WeChat built-in browser manual QA: NOT YET VERIFIED
+- Real-device PWA upgrade from previous cache: NOT YET VERIFIED
+- Low-storage / long-session stress QA: NOT YET VERIFIED
+- Backup export → restore → compare drill on real device: NOT YET VERIFIED
+- Private cloud multi-device conflict/security QA: NOT APPLICABLE until server enabled
+
+## RC1 Decision
+SOURCE-LEVEL RELEASE CANDIDATE: PASS
+STABLE RELEASE: NOT YET APPROVED
