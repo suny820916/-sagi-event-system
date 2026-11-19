@@ -20,7 +20,7 @@ button,input,select,textarea{font:inherit}.app{max-width:980px;margin:auto;paddi
 .rows{display:grid;gap:6px;margin-top:10px}.row{display:grid;grid-template-columns:32px 1fr .65fr .8fr 36px;gap:6px;align-items:center;border:1px solid #27313a;border-radius:10px;padding:6px;background:#090d11}.row input,.row select{padding:7px;font-size:10px}.idx{text-align:center;color:#76818a;font-size:9px}.rm{padding:7px 0;border:1px solid #573737;background:#281313;color:#eaa0a0;border-radius:8px}.issue{margin-top:8px;padding:9px 10px;border-radius:10px;border:1px solid #5d3c3c;background:#1d1111;color:#dfa0a0;font-size:9px;display:none}.issue.show{display:block}
 .summary{display:grid;gap:8px}.sum{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid #252e36;font-size:11px}.sum span{color:#87939d}.sum b{text-align:right}.okbox{margin-top:10px;padding:10px;border:1px solid #355742;border-radius:10px;background:#0d1b13;color:#a6d7b7;font-size:9px;line-height:1.6}
 .actions{display:flex;gap:8px;margin-top:12px}.actions button{flex:1;border:1px solid #36414a;background:#151b21;color:#e9ecee;border-radius:11px;padding:11px;font-weight:1000}.actions .primary{background:linear-gradient(135deg,#94772f,#d8b85e);border-color:#c7a74e;color:#111}.actions .good{background:linear-gradient(135deg,#285f41,#63a979);border-color:#4b8f65;color:#fff}
-.step{display:none}.step.on{display:block}.orderCode{font-size:20px;font-weight:1000;letter-spacing:1px;color:#efd27e}.sharebox{padding:12px;border:1px solid #34414b;border-radius:12px;background:#090e12;margin-top:10px}.sharebox textarea{min-height:150px;font-size:10px}
+.step{display:none}.step.on{display:block}.orderCode{font-size:20px;font-weight:1000;letter-spacing:1px;color:#efd27e}.sharebox{padding:12px;border:1px solid #34414b;border-radius:12px;background:#090e12;margin-top:10px}.sharebox textarea{min-height:150px;font-size:10px}.confirmSheet{margin-top:12px;background:#f6f4ee;color:#111;border-radius:14px;padding:16px}.confirmHead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;border-bottom:2px solid #111;padding-bottom:10px}.confirmBrand{font-weight:1000;font-size:22px;letter-spacing:.5px}.confirmBrand i{font-style:normal;color:#d93636}.confirmNo{font-size:10px;text-align:right}.confirmMain{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.confirmBox{border:1px solid #c9c5bb;border-radius:10px;padding:9px}.confirmBox span{display:block;color:#6c675f;font-size:8px}.confirmBox b{display:block;margin-top:4px;font-size:11px}.confirmRoster{width:100%;border-collapse:collapse;margin-top:12px}.confirmRoster th,.confirmRoster td{border-bottom:1px solid #d7d2c8;padding:7px 4px;font-size:9px;text-align:left}.confirmRoster th{color:#6c675f}.confirmFooter{margin-top:12px;padding-top:10px;border-top:1px solid #bbb5aa;font-size:8px;line-height:1.6;color:#5e5a53}.confirmSign{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}.signBox{height:52px;border:1px dashed #aaa398;border-radius:9px;padding:7px;font-size:8px;color:#777166}@media print{body{background:#fff}.app>*:not(.step.on){display:none!important}.top,.progress,.step.on>.card>h2,.step.on>.card>.hint,.sharebox,.step.on>.card>.actions,.badge,.orderCode{display:none!important}.step.on>.card{border:0;box-shadow:none;background:#fff;padding:0}.confirmSheet{display:block!important;margin:0;border-radius:0;padding:0}}
 .small{font-size:8px;color:#6f7a84;line-height:1.55}.badge{display:inline-flex;padding:5px 8px;border:1px solid #3a4650;border-radius:999px;font-size:8px;color:#a3adb5}.badge.good{border-color:#376047;color:#a3d8b5}
 @media(max-width:640px){.app{padding:12px 10px 88px}.grid{grid-template-columns:1fr 1fr}.form2{grid-template-columns:1fr}.wide{grid-column:auto}.row{grid-template-columns:28px 1fr .7fr}.row select{grid-column:2/3}.row .rm{grid-column:3/4}.progress{gap:4px}.prog{padding:7px 2px;font-size:8px}.product{padding:7px}.brand{font-size:18px}}
 </style>
@@ -93,7 +93,20 @@ button,input,select,textarea{font:inherit}.app{max-width:980px;margin:auto;paddi
       <div class="orderCode" id="orderCode"></div>
       <div class="hint" style="margin-top:6px">当前为 V1.0 安全原型：不会把客户数据偷偷发到境外服务。正式服务器接入后，再启用真正的在线提交。</div>
       <div class="sharebox"><textarea id="orderText" readonly></textarea></div>
-      <div class="actions"><button id="copyOrder">复制订单</button><button id="shareOrder">手机分享</button><button class="primary" id="downloadOrder">导出订单文件</button></div>
+      <div id="confirmSheet" class="confirmSheet">
+        <div class="confirmHead">
+          <div><div class="confirmBrand">SAGI<i>●</i> KIT</div><div style="font-size:8px;color:#6c675f;margin-top:3px">球队定制服装确认单</div></div>
+          <div class="confirmNo"><b id="sheetOrderNo">--</b><br><span id="sheetDate">--</span></div>
+        </div>
+        <div class="confirmMain" id="sheetInfo"></div>
+        <table class="confirmRoster"><thead><tr><th>#</th><th>姓名</th><th>号码</th><th>尺码</th></tr></thead><tbody id="sheetRoster"></tbody></table>
+        <div class="confirmSign">
+          <div class="signBox">客户确认：<br><br>________________</div>
+          <div class="signBox">SAGI确认：<br><br>________________</div>
+        </div>
+        <div class="confirmFooter">请客户重点核对：款式、配色、姓名、号码、尺码。确认后进入生产流程，个性化印制内容原则上不再修改。</div>
+      </div>
+      <div class="actions"><button id="copyOrder">复制订单</button><button id="shareOrder">手机分享</button><button class="primary" id="printConfirm">保存/打印确认单</button></div><div class="actions"><button id="downloadOrder">导出订单文件</button></div>
       <div class="actions"><button id="newOrder">再下一单</button></div>
     </div>
   </section>
@@ -146,8 +159,16 @@ function checkRoster(){const nums=state.roster.map(r=>String(r.number).trim()).f
 function parseRoster(){const t=qs('#pasteRoster').value.trim();if(!t)return;const lines=t.split(/\n+/);lines.forEach(line=>{let a=line.trim().split(/[，,\t\s]+/).filter(Boolean);if(a.length>=2)addRow({name:a[0],number:a[1],size:a[2]||((state.custom.ageGroup||'adult')==='child'?'140':'L')})});qs('#pasteRoster').value=''}
 function renderSummary(){const p=PRODUCTS.find(x=>x.id===state.product);const c=state.custom;const rows=[['款式',p?p.id+' · '+p.name:'未选择'],['主配色',c.color||'未选择'],['球队',c.teamName||'未填写'],['适用人群',(c.ageGroup||'adult')==='child'?'儿童 / 青少年':'成人'],['领型',c.collar||'常规V圆领'],['面料',({standard:'标准版',comfort:'舒适版',pro:'专业版',elite:'高性能版'})[c.fabric||'standard']],['队员数量',state.roster.length+' 人'],['联系人',(c.contact||'')+' '+(c.phone||'')]];qs('#summary').innerHTML=rows.map(r=>'<div class="sum"><span>'+r[0]+'</span><b>'+r[1]+'</b></div>').join('')+'<div class="okbox">客户订单只保存 SAGI 款号；厂家映射不会进入客户页面、订单文本或导出文件。提交前请重点检查号码和尺码。</div>';qs('#confirmCheck').checked=false}
 function orderPayload(){const p=PRODUCTS.find(x=>x.id===state.product);return {schema:'SAGI-KIT-ORDER-1',version:'SAGI KIT STUDIO V1.0 CHINA READY',createdAt:new Date().toISOString(),orderCode:'SK'+Date.now().toString().slice(-10),customer:{team:state.custom.teamName||'',contact:state.custom.contact||'',phone:state.custom.phone||''},product:{sagiCode:p.id,sagiName:p.name,ageGroup:state.custom.ageGroup||'adult',privateLabel:true,color:state.custom.color||p.colors[0],collar:state.custom.collar||'常规V圆领',fabric:state.custom.fabric||'standard',sponsor:state.custom.sponsor||''},roster:state.roster}}
+function renderConfirmSheet(o){
+ const p=o.product||{},cus=o.customer||{},fabricName=({standard:'标准版',comfort:'舒适版',pro:'专业版',elite:'高性能版'})[p.fabric]||p.fabric||'';
+ qs('#sheetOrderNo').textContent=o.orderCode||'';
+ qs('#sheetDate').textContent=new Date(o.createdAt||Date.now()).toLocaleString('zh-CN',{hour12:false});
+ const items=[['球队',cus.team||''],['联系人',(cus.contact||'')+' '+(cus.phone||'')],['SAGI款号',(p.sagiCode||'')+' · '+(p.sagiName||'')],['配色',p.color||''],['适用人群',p.ageGroup==='child'?'儿童 / 青少年':'成人'],['领型',p.collar||''],['面料',fabricName],['赞助/队名',p.sponsor||'无']];
+ qs('#sheetInfo').innerHTML=items.map(x=>'<div class="confirmBox"><span>'+esc(x[0])+'</span><b>'+esc(x[1])+'</b></div>').join('');
+ qs('#sheetRoster').innerHTML=(o.roster||[]).map((r,i)=>'<tr><td>'+(i+1)+'</td><td>'+esc(r.name)+'</td><td>'+esc(r.number)+'</td><td>'+esc(r.size)+'</td></tr>').join('');
+}
 function textOrder(o){return 'SAGI KIT 订单 '+o.orderCode+'\n球队：'+o.customer.team+'\n款式：'+o.product.sagiCode+' '+o.product.sagiName+'\n配色：'+o.product.color+'\n领型：'+o.product.collar+'\n面料：'+o.product.fabric+'\n人数：'+o.roster.length+'\n\n名单：\n'+o.roster.map((r,i)=>(i+1)+'. '+r.name+' / '+r.number+' / '+r.size).join('\n')+'\n\n联系人：'+o.customer.contact+' '+o.customer.phone}
-function submit(){if(!state.product)return alert('请先选择款式');if(!state.custom.teamName)return alert('请填写球队名称');if(!checkRoster())return alert('请先修正名单信息');if(!qs('#confirmCheck').checked)return alert('请勾选“我已核对”');const o=orderPayload();localStorage.setItem('sagi-kit-last-order',JSON.stringify(o));let history=JSON.parse(localStorage.getItem('sagi-kit-orders')||'[]');history.unshift(o);localStorage.setItem('sagi-kit-orders',JSON.stringify(history.slice(0,100)));qs('#orderCode').textContent=o.orderCode;qs('#orderText').value=textOrder(o);goto(5)}
+function submit(){if(!state.product)return alert('请先选择款式');if(!state.custom.teamName)return alert('请填写球队名称');if(!checkRoster())return alert('请先修正名单信息');if(!qs('#confirmCheck').checked)return alert('请勾选“我已核对”');const o=orderPayload();localStorage.setItem('sagi-kit-last-order',JSON.stringify(o));let history=JSON.parse(localStorage.getItem('sagi-kit-orders')||'[]');history.unshift(o);localStorage.setItem('sagi-kit-orders',JSON.stringify(history.slice(0,100)));qs('#orderCode').textContent=o.orderCode;qs('#orderText').value=textOrder(o);renderConfirmSheet(o);goto(5)}
 function download(){const o=JSON.parse(localStorage.getItem('sagi-kit-last-order'));const blob=new Blob([JSON.stringify(o,null,2)],{type:'application/json;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=o.orderCode+'.json';a.click();URL.revokeObjectURL(a.href)}
 function updateNet(){qs('#net').textContent=navigator.onLine?'在线 · 已自动保存':'离线 · 可继续填写';qs('#net').classList.toggle('off',!navigator.onLine)}
 
@@ -173,13 +194,13 @@ function recommendProducts(){
 qs('#recommendBtn').onclick=()=>qs('#recommendPanel').classList.toggle('show');
 qs('#runRecommend').onclick=recommendProducts;
 qsa('[data-next]').forEach(b=>b.onclick=()=>{if(state.step===1&&!state.product)return alert('请先选一款球衣');if(state.step===2){state.custom.ageGroup=qs('#ageGroup').value;save();renderRows()}goto(state.step+1)});qsa('[data-prev]').forEach(b=>b.onclick=()=>goto(state.step-1));
-qs('#addRow').onclick=()=>addRow();qs('#parseRoster').onclick=parseRoster;qs('#submitOrder').onclick=submit;qs('#downloadOrder').onclick=download;
+qs('#addRow').onclick=()=>addRow();qs('#parseRoster').onclick=parseRoster;qs('#submitOrder').onclick=submit;qs('#downloadOrder').onclick=download;qs('#printConfirm').onclick=()=>window.print();
 qs('#copyOrder').onclick=async()=>{await navigator.clipboard.writeText(qs('#orderText').value);alert('订单已复制')};
 qs('#shareOrder').onclick=async()=>{if(navigator.share)await navigator.share({title:'SAGI KIT 订单',text:qs('#orderText').value});else alert('当前浏览器不支持系统分享，请使用“复制订单”')};
 qs('#newOrder').onclick=()=>{localStorage.removeItem('sagi-kit-draft');location.reload()};
 qs('#logoFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{qs('#logoPreview').innerHTML='<img alt="队徽" src="'+r.result+'">';state.custom.logoPreview=r.result;save()};r.readAsDataURL(f)};
 window.addEventListener('online',updateNet);window.addEventListener('offline',updateNet);
-renderProgress();renderFilters();renderProducts();fillColor();bindFields();renderRows();updateNet();if(state.custom.logoPreview)qs('#logoPreview').innerHTML='<img alt="队徽" src="'+state.custom.logoPreview+'">';goto(state.step);
+renderProgress();renderFilters();renderProducts();fillColor();bindFields();renderRows();updateNet();if(state.step===5){try{const o=JSON.parse(localStorage.getItem('sagi-kit-last-order')||'null');if(o){qs('#orderCode').textContent=o.orderCode;qs('#orderText').value=textOrder(o);renderConfirmSheet(o)}}catch(e){}}if(state.custom.logoPreview)qs('#logoPreview').innerHTML='<img alt="队徽" src="'+state.custom.logoPreview+'">';goto(state.step);
 if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
 </script>
 </body></html>
