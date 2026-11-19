@@ -114,3 +114,10 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Added tests for session exhaustion, revocation, expiry reclamation and invalid configuration.
 - **Verification status:** GitHub commits created; automated CI and real Windows/LAN validation not confirmed in this run. Container clone failed because github.com DNS resolution was unavailable; do not report test PASS.
 - **Open security work:** rate limit by source address, operator-initiated approval boundary, LAN HTTP integration, origin/host protections, and pairing token scope. No production security certification.
+
+## 2026-11-20 — Experimental LAN HTTP gateway
+- Added `commercial/lan/lan-gateway.mjs` and self-test for health, one-time code redemption, session-authorized state reads, revocation, browser Origin rejection and source-IP rate limits.
+- LAN binding requires an explicit IP interface; wildcard listeners are rejected. Default is loopback.
+- Deliberately **disabled** HTTP pairing-code issuance: local loopback access alone is not proof of physical operator approval. Codes may only be issued by a trusted desktop integration.
+- Added gateway checks to LAN pairing CI. Local isolated HTTP prototype test passed on Node 22; CI result remains unverified.
+- **Not production-ready:** gateway is not wired to the canonical Local Engine; no LAN TLS or authenticated operator UI, no device permission scopes, no persistent rate limiting, no real Windows/vMix testing. Treat source IP throttling as defense-in-depth, not an authentication boundary.
