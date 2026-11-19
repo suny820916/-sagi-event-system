@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#080a0d">
+<title>SAGI KIT · 交付与售后中心</title>
+<style>
+:root{--bg:#080a0d;--panel:#10151b;--line:#2d3841;--text:#f4f1ea;--muted:#84919a;--gold:#d6b85f;--green:#78bd8c;--red:#df8585;--blue:#8dc2dc}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 18% -10%,#292319 0,#0d1014 28%,#07090c 70%);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",Arial,sans-serif}button,input,select,textarea{font:inherit}.app{max-width:900px;margin:auto;padding:17px 13px 85px}.top{display:flex;justify-content:space-between;align-items:center;gap:10px}.brand{display:flex;gap:9px;align-items:center}.brand img{width:42px;height:42px}.brand b{display:block;font-size:19px}.brand small{display:block;font-size:8px;color:#84909a;margin-top:2px}.back{color:#dec475;text-decoration:none;border:1px solid #594b2e;border-radius:999px;padding:8px 10px;font-size:9px}
+.hero{padding:20px 2px 9px}.hero h1{font-size:28px;line-height:1.08;margin:0}.hero p{font-size:9px;line-height:1.7;color:#89949d;margin:8px 0 0}.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:11px}.sum{border:1px solid #2e3942;border-radius:13px;background:#0d1217;padding:11px}.sum span{display:block;font-size:8px;color:#7e8a93}.sum strong{display:block;font-size:22px;margin-top:5px}.sum.hot{border-color:#6d5830;background:#1b160c}.sum.hot strong{color:#e6c86f}.sum.alert{border-color:#653f3f;background:#1a1111}.sum.alert strong{color:#e49a9a}.sum.good strong{color:#95d0a5}
+.lanes{display:flex;gap:7px;overflow:auto;margin-top:12px}.lane{min-width:110px;border:1px solid #34404a;background:#10161b;color:#96a2aa;border-radius:12px;padding:9px;text-align:left}.lane.on{border-color:#9b813e;background:#241e0f;color:#ead07c}.lane b{display:block;font-size:18px}.lane span{display:block;font-size:8px;margin-top:3px}
+.toolbar{margin-top:11px;border:1px solid #2d3841;border-radius:14px;background:#10151b;padding:10px}.search{width:100%;border:1px solid #394650;border-radius:10px;padding:11px;background:#080d11;color:#fff}.chips{display:flex;gap:6px;overflow:auto;margin-top:8px}.chip{white-space:nowrap;border:1px solid #38444e;background:#151b21;color:#9da7ae;border-radius:999px;padding:7px 9px;font-size:8px}.chip.on{border-color:#8b7437;color:#e9ce7b;background:#241d0d}
+.list{display:grid;gap:10px;margin-top:11px}.job{border:1px solid #303b44;border-radius:15px;background:linear-gradient(145deg,#11171d,#0b1014);padding:13px}.job.alert{border-color:#654141}.head{display:flex;justify-content:space-between;gap:9px}.code{font-size:9px;color:#d9c17a;font-weight:1000}.date{font-size:8px;color:#77838b}.team{font-size:16px;font-weight:1000;margin-top:6px}.meta{font-size:9px;color:#8b97a0;line-height:1.65;margin-top:5px}.badges{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}.badge{border:1px solid #3b4750;border-radius:999px;padding:4px 7px;font-size:7px;color:#9da8af}.badge.stage{border-color:#4d6373;color:#a9d2e4;background:#0c1720}.badge.alert{border-color:#6b3f3f;color:#e8a1a1;background:#1b1010}.badge.good{border-color:#3d6849;color:#a8d5b2;background:#0d1811}.badge.warn{border-color:#6c542d;color:#e0c070;background:#1c170d}.actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.btn{border:1px solid #45515b;border-radius:9px;background:#172027;color:#e5e9eb;padding:8px 9px;font-size:8px;font-weight:1000}.btn.primary{border-color:#9a813c;background:linear-gradient(135deg,#8f722b,#d4b45a);color:#111}.btn.good{border-color:#407050;background:#183722;color:#a9d8b5}.empty{padding:28px;text-align:center;border:1px dashed #34404a;border-radius:13px;color:#75818a;font-size:9px}
+.modal{position:fixed;inset:0;background:#000d;z-index:50;display:none;align-items:flex-end;justify-content:center}.modal.show{display:flex}.sheet{width:min(100%,780px);max-height:93vh;overflow:auto;border:1px solid #3a4650;border-radius:18px 18px 0 0;background:#0c1116;padding:14px}.sheetHead{display:flex;justify-content:space-between;align-items:center}.sheetHead b{font-size:15px}.close{border:1px solid #45515b;border-radius:9px;background:#171e24;color:#fff;padding:8px 10px}.detail{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:11px}.ibox{border:1px solid #2d3841;border-radius:10px;padding:9px}.ibox span{display:block;font-size:7px;color:#7e8a93}.ibox b{display:block;font-size:10px;margin-top:4px;line-height:1.45}.section{margin-top:12px;border-top:1px solid #273139;padding-top:10px}.section h3{font-size:11px;margin:0 0 8px}.form{display:grid;grid-template-columns:1fr 1fr;gap:8px}.form label{display:block;font-size:8px;color:#8b969f;margin-bottom:4px}.form input,.form select,.form textarea{width:100%;border:1px solid #35414a;border-radius:9px;background:#080d11;color:#fff;padding:9px}.form textarea{min-height:68px;resize:vertical}.wide{grid-column:1/-1}
+.checks{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}.check{border:1px solid #34404a;border-radius:10px;padding:9px;background:#10161b}.check label{display:flex;align-items:center;gap:6px;font-size:8px;color:#a5afb5}.check input{accent-color:#b59643}.issueForm{display:grid;grid-template-columns:1fr 80px 1.4fr auto;gap:7px}.issueForm input,.issueForm select{width:100%;border:1px solid #35414a;border-radius:9px;background:#080d11;color:#fff;padding:9px}.issues{display:grid;gap:7px;margin-top:8px}.issue{border:1px solid #3a444d;border-radius:10px;padding:9px;background:#10161b}.issue.resolved{opacity:.65}.issueTop{display:flex;justify-content:space-between;gap:8px}.issue b{font-size:9px}.issue span{font-size:7px;color:#7e8991}.issue p{font-size:8px;color:#a1abb2;line-height:1.55;margin:6px 0 0}.timeline{display:grid;gap:5px}.tl{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px dashed #263139;font-size:8px}.tl span{color:#7c8790}.foot{margin-top:15px;font-size:7px;color:#66727a;line-height:1.7}
+@media(max-width:650px){.summary{grid-template-columns:1fr 1fr}.detail,.form{grid-template-columns:1fr}.wide{grid-column:auto}.checks{grid-template-columns:1fr 1fr}.issueForm{grid-template-columns:1fr 72px}.issueForm .desc{grid-column:1/-1}.issueForm button{grid-column:1/-1}}
+</style>
+</head>
+<body><main class="app">
+<div class="top"><div class="brand"><img src="./brand-mark.svg" alt="SAGI KIT"><div><b>SAGI KIT</b><small>交付与售后中心 V1.4</small></div></div><a class="back" href="./start.html">返回工作台</a></div>
+<section class="hero"><h1>货到了，不代表订单结束。</h1><p>先验货，再交付，再签收。缺件、错码、质量问题和补单都留记录；交付完成后再进入复购提醒。</p></section>
+<section class="summary">
+ <div class="sum"><span>待处理交付</span><strong id="sActive">0</strong></div>
+ <div class="sum alert"><span>异常未解决</span><strong id="sIssue">0</strong></div>
+ <div class="sum hot"><span>待客户签收</span><strong id="sSign">0</strong></div>
+ <div class="sum good"><span>本月已签收</span><strong id="sDone">0</strong></div>
+</section>
+<div id="lanes" class="lanes"></div>
+<div class="toolbar"><input id="search" class="search" placeholder="搜索球队 / 订单号 / SAGI款号"><div class="chips"><button class="chip on" data-view="active">待处理</button><button class="chip" data-view="issue">只看异常</button><button class="chip" data-view="reorder">复购提醒</button><button class="chip" data-view="all">全部</button></div></div>
+<div id="list" class="list"></div>
+<div class="foot">SAGI KIT DELIVERY & AFTER-SALES CENTER · 售后记录保存在订单 delivery 字段，可随订单进入现有云端订单备份；不读取私有成本表，也不保存供应商身份。</div>
+</main>
+
+<div id="modal" class="modal"><div class="sheet">
+ <div class="sheetHead"><b>交付 / 售后单</b><button id="close" class="close">关闭</button></div>
+ <div id="detail" class="detail"></div>
+
+ <div class="section"><h3>验货清单</h3><div class="checks">
+  <div class="check"><label><input id="ckQty" type="checkbox"> 数量正确</label></div>
+  <div class="check"><label><input id="ckName" type="checkbox"> 姓名/号码正确</label></div>
+  <div class="check"><label><input id="ckSize" type="checkbox"> 尺码正确</label></div>
+  <div class="check"><label><input id="ckQuality" type="checkbox"> 外观质量合格</label></div>
+ </div></div>
+
+ <div class="section"><h3>异常 / 补单记录</h3>
+  <div class="issueForm"><select id="issueType"><option>缺件</option><option>错码</option><option>错名/错号</option><option>质量问题</option><option>补单</option><option>其他</option></select><input id="issueQty" type="number" min="1" value="1" inputmode="numeric"><input id="issueDesc" class="desc" placeholder="例如：8号球员 L 码收到 M 码"><button id="addIssue" class="btn">添加异常</button></div>
+  <div id="issues" class="issues"></div>
+ </div>
+
+ <div class="section"><h3>交付与签收</h3>
+  <div class="form">
+   <div><label>交付阶段</label><select id="stage"></select></div>
+   <div><label>交付日期</label><input id="deliveredAt" type="date"></div>
+   <div><label>签收人</label><input id="signedBy" placeholder="客户/领队姓名"></div>
+   <div><label>签收日期</label><input id="signedAt" type="date"></div>
+   <div><label>复购提醒日期</label><input id="reorderAt" type="date"></div>
+   <div class="wide"><label>售后备注</label><textarea id="note" placeholder="例如：已补发 1 件；客户确认其余成衣无误。"></textarea></div>
+  </div>
+  <div class="actions"><button id="save" class="btn primary">保存交付记录</button><button id="sign" class="btn good">客户已签收</button><button id="openOrder" class="btn">打开订单</button></div>
+ </div>
+
+ <div class="section"><h3>记录时间线</h3><div id="timeline" class="timeline"></div></div>
+</div></div>
+
+<script src="./cloud-sync.js"></script>
+<script>
+const KEY='sagi-kit-orders',STAGES=['待验货','验货异常','待交付','已签收','售后处理中','已关闭'];
+const q=s=>document.querySelector(s),qa=s=>[...document.querySelectorAll(s)];let stageFilter='全部',view='active',selected=null;
+function orders(){try{const a=JSON.parse(localStorage.getItem(KEY)||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}}
+function prodStage(o){return o.production&&o.production.stage||''}
+function eligible(o){return ['已到货','待交付','已完成'].includes(prodStage(o))||['已发货','已完成'].includes(o.status)||!!o.delivery}
+function delivery(o){const d=o.delivery&&typeof o.delivery==='object'?o.delivery:{};const issues=Array.isArray(d.issues)?d.issues:[],checks=d.checks&&typeof d.checks==='object'?d.checks:{};return {...d,stage:inferStage(o,d,issues),issues,checks,history:Array.isArray(d.history)?d.history:[]}}
+function inferStage(o,d,issues){if(d&&STAGES.includes(d.stage))return d.stage;if(issues.some(x=>!x.resolved))return'验货异常';if(prodStage(o)==='已到货')return'待验货';if(prodStage(o)==='待交付'||o.status==='已发货')return'待交付';if(o.status==='已完成'||prodStage(o)==='已完成')return'已签收';return'待验货'}
+function unresolved(o){return delivery(o).issues.filter(x=>!x.resolved)}
+function todayISO(){const d=new Date();return d.toISOString().slice(0,10)}
+function thisMonthDate(s){if(!s)return false;const d=new Date(s+'T12:00:00'),n=new Date();return d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth()}
+function reorderDue(o){const d=delivery(o).reorderAt;if(!d)return false;return new Date(d+'T23:59:59').getTime()<=Date.now()}
+function stageOf(o){return delivery(o).stage}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function laneCounts(){const a=orders().filter(eligible),m=Object.fromEntries(STAGES.map(x=>[x,0]));a.forEach(o=>m[stageOf(o)]++);return m}
+function renderLanes(){const m=laneCounts();q('#lanes').innerHTML=['全部',...STAGES].map(s=>'<button class="lane '+(stageFilter===s?'on':'')+'" data-stage="'+s+'"><b>'+(s==='全部'?Object.values(m).reduce((a,b)=>a+b,0):m[s])+'</b><span>'+s+'</span></button>').join('');qa('[data-stage]').forEach(b=>b.onclick=()=>{stageFilter=b.dataset.stage;renderLanes();render()})}
+function renderSummary(){const a=orders().filter(eligible),active=a.filter(o=>!['已签收','已关闭'].includes(stageOf(o))),issues=a.filter(o=>unresolved(o).length),sign=a.filter(o=>stageOf(o)==='待交付'),done=a.filter(o=>thisMonthDate(delivery(o).signedAt));q('#sActive').textContent=active.length;q('#sIssue').textContent=issues.length;q('#sSign').textContent=sign.length;q('#sDone').textContent=done.length}
+function render(){renderSummary();renderLanes();const term=q('#search').value.trim().toLowerCase();let a=orders().filter(eligible).filter(o=>stageFilter==='全部'||stageOf(o)===stageFilter);if(view==='active')a=a.filter(o=>!['已签收','已关闭'].includes(stageOf(o)));if(view==='issue')a=a.filter(o=>unresolved(o).length);if(view==='reorder')a=a.filter(reorderDue);a=a.filter(o=>{if(!term)return true;const c=o.customer||{},p=o.product||{};return[o.orderCode,c.team,c.contact,p.sagiCode,p.sagiName].join(' ').toLowerCase().includes(term)}).sort((x,y)=>unresolved(y).length-unresolved(x).length);q('#list').innerHTML=a.length?a.map(o=>{const c=o.customer||{},p=o.product||{},d=delivery(o),u=unresolved(o),signed=d.signedAt&&d.signedBy;return '<article class="job '+(u.length?'alert':'')+'"><div class="head"><b class="code">'+esc(o.orderCode||'--')+'</b><span class="date">'+esc(d.deliveredAt||d.signedAt||'')+'</span></div><div class="team">'+esc(c.team||'未命名球队')+'</div><div class="meta">'+esc((p.sagiCode||'')+' · '+(p.sagiName||''))+' · '+(o.roster||[]).length+'套<br>'+(d.reorderAt?'复购提醒 '+d.reorderAt:'未设置复购提醒')+'</div><div class="badges"><span class="badge stage">'+d.stage+'</span>'+(u.length?'<span class="badge alert">'+u.length+'项异常未解决</span>':'')+(signed?'<span class="badge good">已签收</span>':'')+(reorderDue(o)?'<span class="badge warn">该联系复购</span>':'')+'</div><div class="actions"><button class="btn primary" data-open="'+esc(o.orderCode)+'">管理交付</button>'+(d.stage==='待交付'?'<button class="btn good" data-sign="'+esc(o.orderCode)+'">快速签收</button>':'')+'</div></article>'}).join(''):'<div class="empty">当前没有符合条件的交付/售后订单。</div>';qa('[data-open]').forEach(b=>b.onclick=()=>openJob(b.dataset.open));qa('[data-sign]').forEach(b=>b.onclick=()=>quickSign(b.dataset.sign))}
+function find(code){return orders().find(o=>o.orderCode===code)}
+function saveDelivery(o,patch,eventLabel){const a=orders(),i=a.findIndex(x=>x.orderCode===o.orderCode);if(i<0)return;const old=delivery(a[i]),now=new Date().toISOString(),next={...old,...patch,updatedAt:now};next.history=[...(old.history||[]),{event:eventLabel||'更新交付记录',at:now}];let updated={...a[i],delivery:next};if(next.stage==='已签收'&&updated.status!=='已完成'){updated.status='已完成';updated.statusUpdatedAt=now;updated.statusHistory=[...(Array.isArray(updated.statusHistory)?updated.statusHistory:[]),{status:'已完成',at:now}]}a[i]=updated;localStorage.setItem(KEY,JSON.stringify(a));if(window.SAGICloud){SAGICloud.enqueue(updated);SAGICloud.flush()}selected=updated;render();return updated}
+function openJob(code){const o=find(code);if(!o)return;selected=o;const c=o.customer||{},p=o.product||{},d=delivery(o);q('#detail').innerHTML=[['订单',o.orderCode||''],['球队',c.team||''],['款式',(p.sagiCode||'')+' · '+(p.sagiName||'')],['配色',p.color||''],['数量',(o.roster||[]).length+'套'],['未解决异常',unresolved(o).length+'项']].map(x=>'<div class="ibox"><span>'+esc(x[0])+'</span><b>'+esc(x[1])+'</b></div>').join('');q('#ckQty').checked=!!d.checks.qty;q('#ckName').checked=!!d.checks.nameNumber;q('#ckSize').checked=!!d.checks.size;q('#ckQuality').checked=!!d.checks.quality;q('#stage').innerHTML=STAGES.map(s=>'<option '+(s===d.stage?'selected':'')+'>'+s+'</option>').join('');q('#deliveredAt').value=d.deliveredAt||'';q('#signedBy').value=d.signedBy||'';q('#signedAt').value=d.signedAt||'';q('#reorderAt').value=d.reorderAt||'';q('#note').value=d.note||'';renderIssues(d);renderTimeline(d);q('#modal').classList.add('show')}
+function renderIssues(d){q('#issues').innerHTML=d.issues.length?d.issues.map(x=>'<div class="issue '+(x.resolved?'resolved':'')+'"><div class="issueTop"><b>'+esc(x.type)+' × '+Number(x.qty||1)+'</b><span>'+new Date(x.createdAt||Date.now()).toLocaleString('zh-CN',{hour12:false})+'</span></div><p>'+esc(x.desc||'无描述')+'</p><div class="actions"><button class="btn '+(x.resolved?'':'good')+'" data-resolve="'+esc(x.id)+'">'+(x.resolved?'重新打开':'标记已解决')+'</button></div></div>').join(''):'<div class="empty">没有异常记录。</div>';qa('[data-resolve]').forEach(b=>b.onclick=()=>toggleIssue(b.dataset.resolve))}
+function renderTimeline(d){q('#timeline').innerHTML=d.history.length?d.history.slice().reverse().map(x=>'<div class="tl"><b>'+esc(x.event||'更新')+'</b><span>'+new Date(x.at||Date.now()).toLocaleString('zh-CN',{hour12:false})+'</span></div>').join(''):'<div class="empty">暂无交付记录。</div>'}
+function currentPatch(){const old=delivery(selected),issues=old.issues;let stage=q('#stage').value;if(issues.some(x=>!x.resolved)&&stage==='待验货')stage='验货异常';return {stage,checks:{qty:q('#ckQty').checked,nameNumber:q('#ckName').checked,size:q('#ckSize').checked,quality:q('#ckQuality').checked},issues,deliveredAt:q('#deliveredAt').value,signedBy:q('#signedBy').value.trim(),signedAt:q('#signedAt').value,reorderAt:q('#reorderAt').value,note:q('#note').value.trim()}}
+function addIssue(){if(!selected)return;const desc=q('#issueDesc').value.trim();if(!desc)return alert('请填写异常说明');const old=delivery(selected),issue={id:'I-'+Date.now().toString(36),type:q('#issueType').value,qty:Math.max(1,Number(q('#issueQty').value)||1),desc,createdAt:new Date().toISOString(),resolved:false};const u=saveDelivery(selected,{...currentPatch(),stage:'验货异常',issues:[...old.issues,issue]},'新增异常：'+issue.type);q('#issueDesc').value='';if(u)openJob(u.orderCode)}
+function toggleIssue(id){if(!selected)return;const old=delivery(selected),issues=old.issues.map(x=>x.id===id?{...x,resolved:!x.resolved,resolvedAt:!x.resolved?new Date().toISOString():''}:x),has=issues.some(x=>!x.resolved),stage=has?'验货异常':(old.stage==='验货异常'?'待交付':old.stage);const u=saveDelivery(selected,{...currentPatch(),issues,stage},has?'重新打开售后异常':'异常已解决');if(u)openJob(u.orderCode)}
+function quickSign(code){const o=find(code);if(!o)return;const d=delivery(o);if(unresolved(o).length)return alert('还有未解决异常，不能直接签收');const who=(o.customer&&o.customer.contact)||'客户';const u=saveDelivery(o,{...d,stage:'已签收',signedBy:who,signedAt:todayISO()},'客户签收');if(u)render()}
+q('#addIssue').onclick=addIssue;q('#save').onclick=()=>{if(!selected)return;let patch=currentPatch();if(patch.stage==='已签收'&&unresolved(selected).length)return alert('还有未解决异常，先处理后再签收');if(patch.stage==='已签收'&&!patch.signedAt)patch.signedAt=todayISO();const u=saveDelivery(selected,patch,'保存交付记录');if(u)openJob(u.orderCode)};
+q('#sign').onclick=()=>{if(!selected)return;if(unresolved(selected).length)return alert('还有未解决异常，不能签收');q('#stage').value='已签收';if(!q('#signedBy').value)q('#signedBy').value=(selected.customer&&selected.customer.contact)||'客户';if(!q('#signedAt').value)q('#signedAt').value=todayISO();q('#save').click()};
+q('#openOrder').onclick=()=>location.href='./order-history.html?order='+encodeURIComponent(selected&&selected.orderCode||'');q('#close').onclick=()=>q('#modal').classList.remove('show');q('#modal').onclick=e=>{if(e.target.id==='modal')q('#modal').classList.remove('show')};q('#search').oninput=render;qa('[data-view]').forEach(b=>b.onclick=()=>{view=b.dataset.view;qa('[data-view]').forEach(x=>x.classList.toggle('on',x===b));render()});window.addEventListener('storage',render);window.addEventListener('sagi-cloud-status',render);render();
+</script></body></html>
