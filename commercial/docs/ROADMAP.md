@@ -128,3 +128,11 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Added self-test for unauthorized access, invalid envelopes, duplicate IDs, stale revision conflict, state read-back and revoked session.
 - Added command self-test to the existing LAN CI workflow.
 - **Not yet integrated:** canonical Local Engine callback wiring, per-device scopes, encrypted LAN transport, mobile UI, Windows/vMix hardware validation. HTTP status 200 only confirms the injected callback response, not broadcast/on-air confirmation. CI result not verified in this run.
+
+## 2026-11-20 — LAN command boundary hardening
+- LAN POST requests now require an explicit application/json content type.
+- Paired mobile sessions cannot forward arbitrary administrative or vMix operations: the gateway applies a narrow football-command allowlist before invoking the injected callback.
+- Extended LAN command self-test with denied privileged commands and missing content type.
+- **Verification:** GitHub commits recorded; no CI workflow run was returned for the latest commit at time of inspection. No claim of test PASS or live integration.
+- **Compatibility caution:** this provisional allowlist must be reconciled with canonical Local Engine command names before integration. It intentionally fails closed for unknown types.
+- **Still open:** true Local Engine wiring, per-device permissions, encrypted transport, end-to-end idempotency and state recovery, Windows and actual vMix validation.
