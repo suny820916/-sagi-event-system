@@ -41,6 +41,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
@@ -48,18 +50,23 @@ jobs:
         run: |
           npm install --no-save playwright@latest
           npx playwright install --with-deps chromium
-      - name: Diagnose main integration merge without modifying branch
+      - name: Verify main integration merge without modifying branch
         shell: bash
+        env:
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           git fetch --no-tags origin main
-          echo "Current PR HEAD: $(git rev-parse HEAD)"
+          candidate="${PR_HEAD_SHA:-$(git rev-parse HEAD)}"
+          echo "Candidate head: $candidate"
           echo "Current main: $(git rev-parse FETCH_HEAD)"
-          echo "Merge base: $(git merge-base HEAD FETCH_HEAD)"
-          if git merge-tree --write-tree HEAD FETCH_HEAD > /tmp/sagi-v432-merge-tree.txt 2>&1; then
+          base="$(git merge-base "$candidate" FETCH_HEAD)"
+          echo "Merge base: $base"
+          if git merge-tree --write-tree "$candidate" FETCH_HEAD > /tmp/sagi-v432-merge-tree.txt 2>&1; then
             echo "V4.32 main integration rehearsal: CLEAN"
           else
-            echo "::warning::V4.32 main integration rehearsal reports conflicts. Inspect merge-tree diagnostic."
+            echo "::error::V4.32 main integration rehearsal failed"
             sed -n '1,120p' /tmp/sagi-v432-merge-tree.txt
+            exit 1
           fi
       - name: Validate V4.31.0 BAT launcher structure
         run: |
