@@ -192,3 +192,46 @@ The bridge merges the customer submission into `sagi_teamwear_sales_v122` withou
 每天第一次接单前打开 `commercial-check.html`。如果显示 PASS，可开始当天接单；如果出现 FAIL，应先处理失败项。WARN 通常代表非阻断能力，例如当前离线、系统分享不可用或 Service Worker 尚未接管当前页面。
 
 V1.5 的 PASS 仍属于浏览器和源码级验收，不等同于真实 iPhone 机型上的完整人工点击验收，也不替代服务器端安全测试。
+
+
+## V1.6 RC1 发布候选版
+
+版本：`1.6.0-rc1`
+发布元数据：`release.json`
+状态：Release Candidate，尚未标记 Stable。
+
+### RC1 发布加固
+- 手机工作台负责注册 Service Worker，不再依赖先打开定制页
+- 工作台每次联网打开会检查 PWA 更新
+- 新 Service Worker 接管后自动重载工作台，并显示更新完成提示
+- PWA manifest 固定 `id=./`、`scope=./`、`start_url=./start.html`
+- iPhone 非 Safari / 非 PWA 环境显示接单建议
+- 微信内置浏览器显示明确提示：正式接单、备份恢复、打印和 PWA 更新优先使用 Safari
+- 商用自检升级到 V1.6 RC1
+- 业务备份支持安全恢复
+- 恢复仅允许业务白名单键，不允许导入额外 localStorage 键
+- 恢复前先完整验证 JSON 和每个白名单值
+- 恢复过程采用内存快照 + 写入失败自动回滚
+- 老板私有成本 `sagi-kit-private-cost-v1` 不参与业务备份恢复
+- 离线缓存加入 `release.json`
+- Service Worker 离线导航继续回退到工作台
+- RC1 自检报告文件名：`SAGI-KIT-V1.6-RC1-CHECK.json`
+
+### Release Gate
+- 当前 Service Worker 缓存清单中的文件：全部存在
+- 手机工作台本地入口：全部有目标文件，无已知死链
+- start.html / commercial-check.html / sw.js：脚本语法检查 PASS
+- RC1 manifest / release metadata：PASS
+- 云同步仍只同步显式订单对象：PASS
+- GitHub PR #24 当前可合并，但仍为 Draft
+- 当前 PR 头提交没有 GitHub status checks / workflow runs；仓库未提供自动 CI 证据，因此不能把“无 CI”表述为 CI PASS
+
+### 仍未通过的最终发布边界
+- 真实 iPhone Safari 全流程人工点击：NOT YET VERIFIED
+- 微信内置浏览器人工点击：NOT YET VERIFIED
+- PWA 从旧缓存升级到 RC1 的真实设备验证：NOT YET VERIFIED
+- 低存储 / 长时间连续使用压力测试：NOT YET VERIFIED
+- 业务备份导出 → 清空测试环境 → 恢复 → 数据逐项比对的真实设备演练：NOT YET VERIFIED
+- 私有云服务器未启用，因此多设备冲突与服务器安全测试：NOT APPLICABLE
+
+因此 V1.6 当前应称为 **RC1 源码发布候选通过**，不应称为最终 Stable。
