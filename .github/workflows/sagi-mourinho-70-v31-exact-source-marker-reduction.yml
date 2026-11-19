@@ -4,8 +4,8 @@ on:
   push:
     branches: [main]
     paths:
-      - ".github/workflows/sagi-mourinho-70-v31-teactics-exact-source-marker-reduction.yml"
-      - "cloud-blender-worker/presets/mourinho_real_madrid_4231_70s_v31_teactics_exact_source_marker_reduction.json"
+      - ".github/workflows/sagi-mourinho-70-v31-exact-source-marker-reduction.yml"
+      - "cloud-blender-worker/presets/mourinho_real_madrid_4231_70s_v31_exact_source_marker_reduction.json"
       - "cloud-blender-worker/overlay/mourinho_70s_v27_cn_title_lock.ass"
 concurrency:
   group: sagi-mourinho-v31-teactics-figure-marker-${{ github.ref }}
@@ -24,7 +24,7 @@ jobs:
           mkdir -p mourinho_v31_out/critical_frames
           docker run --rm -v "$PWD/mourinho_v31_out:/out" sagi-mourinho-v31 bash -lc '
             set -euo pipefail
-            blender --background --python /app/engine/sagi_tactical_mourinho_70_v13.py -- /app/presets/mourinho_real_madrid_4231_70s_v31_teactics_exact_source_marker_reduction.json /out
+            blender --background --python /app/engine/sagi_tactical_mourinho_70_v13.py -- /app/presets/mourinho_real_madrid_4231_70s_v31_exact_source_marker_reduction.json /out
             ffmpeg -y -loglevel error -framerate 30 -i /out/frames/frame_%04d.png -f lavfi -i anullsrc=channel_layout=stereo:sample_rate=44100 -map 0:v:0 -map 1:a:0 -c:v libx264 -profile:v baseline -level 3.1 -pix_fmt yuv420p -preset veryfast -crf 20 -c:a aac -b:a 64k -shortest -movflags +faststart /out/V31_BASE_NO_TITLES.mp4
           '
           sudo chown -R "$USER":"$USER" mourinho_v31_out
@@ -41,7 +41,7 @@ jobs:
           import json,subprocess
           p='mourinho_v31_out/'
           r=json.load(open(p+'execution_report.json'))
-          preset=json.load(open('cloud-blender-worker/presets/mourinho_real_madrid_4231_70s_v31_teactics_exact_source_marker_reduction.json'))
+          preset=json.load(open('cloud-blender-worker/presets/mourinho_real_madrid_4231_70s_v31_exact_source_marker_reduction.json'))
           assert r['valid'] and r['duration_sec']==70 and not r['errors'],r
           d=float(subprocess.check_output(['ffprobe','-v','error','-show_entries','format=duration','-of','default=noprint_wrappers=1:nokey=1',p+'SAGI_MOURINHO_70S_V31_EXACT_SOURCE_MARKER_REDUCTION.mp4']).decode())
           assert abs(d-70)<0.05,d
@@ -64,6 +64,6 @@ jobs:
             mourinho_v31_out/critical_frames/*.jpg
             mourinho_v31_out/execution_report_v31.json
             mourinho_v31_out/scene.blend
-            cloud-blender-worker/presets/mourinho_real_madrid_4231_70s_v31_teactics_exact_source_marker_reduction.json
+            cloud-blender-worker/presets/mourinho_real_madrid_4231_70s_v31_exact_source_marker_reduction.json
             cloud-blender-worker/overlay/mourinho_70s_v27_cn_title_lock.ass
           retention-days: 7
