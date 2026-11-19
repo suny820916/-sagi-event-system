@@ -27,7 +27,7 @@
 - [ ] disconnected safe mode
 
 ## Phase 3 — Mobile Control
-- [ ] LAN discovery / QR entry
+- [ ] LAN discovery / QR entry (isolated pairing primitive implemented; HTTP/UI integration pending)
 - [ ] score
 - [ ] clock
 - [ ] goal
@@ -100,3 +100,10 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Added test for unauthorized status access, Chinese camera names, active/preview discovery, disconnected vMix and match state availability.
 - Wired new test into commercial CI. CI result and real Windows/vMix validation pending.
 - **Next:** durable cue outbox, explicit input allowlist, read-back verification, LAN pairing and state synchronization. Do not treat vMix HTTP acknowledgement as confirmed on-air transition.
+
+
+## 2026-11-20 — Isolated LAN pairing prototype
+- Added dependency-free `commercial/lan/lan-pairing.mjs` with locally approved one-time codes, attempt limits, expiring sessions and revocation.
+- Added deterministic Node self-test and separate CI workflow.
+- Locally verified: `node commercial/lan/lan-pairing-selftest.mjs` PASS.
+- **Not integrated:** trusted desktop approval, HTTP endpoint, client-IP rate limiting, LAN firewall/origin/host controls, mobile UI, and Windows security review. The module must not be advertised as secure production pairing until those are implemented and tested.
