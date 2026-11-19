@@ -25,7 +25,17 @@ check('Packaged output includes V4.32 Signature Core',embeddedOutput.includes('S
 check('Embedded control includes local match operation',embeddedControl.includes('mdMacroEvent')&&embeddedControl.includes('mdRecordEvent'));
 check('Embedded output includes local scoreboard',embeddedOutput.includes('scoreBug')&&embeddedOutput.includes('simplePenaltyBoard'));
 check('Bridge uses loopback vMix API',bat.includes('http://127.0.0.1:8088/api/'));
-check('Bridge provides LAN phone URL',bat.includes('PHONE CONTROL')&&bat.includes(':8099'));
+// Verify the advertised LAN URL matches the port actually bound by the Bridge.
+// A stale 8099 example must not silently pass while the listener binds 8100.
+const bridgePortMatch=bat.match(/\$PreferredPort\s*=\s*(\d+)/);
+const bridgePort=bridgePortMatch?Number(bridgePortMatch[1]):null;
+check('Bridge has a valid explicit listening port',Number.isInteger(bridgePort)&&bridgePort>0&&bridgePort<=65535);
+check('Bridge provides LAN phone URL on its actual listening port',
+  !!bridgePort&&bat.includes('PHONE CONTROL')&&
+  bat.includes('":" + $Port + "/"')&&bat.includes('$listener = $tryListener'));
+check('Bridge binds its advertised port',!!bridgePort&&
+  bat.includes('for ($candidate = $PreferredPort;')&&
+  bat.includes(',$candidate)')&&bat.includes('$Port = $candidate'));
 for(const [name,html] of [['control',control],['output',output],['packaged control',embeddedControl],['packaged output',embeddedOutput]]){
   // The core entrypoints must never load a remote executable or stylesheet as a hard prerequisite.
   const remoteScripts=[...html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["'](https?:)?\/\/[^"']+/gi)];
