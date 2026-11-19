@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#080a0d">
+<title>SAGI KIT · 成交与利润中心</title>
+<style>
+:root{--bg:#080a0d;--panel:#10151b;--line:#2d3740;--text:#f4f1e9;--muted:#85919a;--gold:#d5b65b;--green:#78c18e;--red:#e78686}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 20% -8%,#292319 0,#0d1014 28%,#07090c 70%);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",Arial,sans-serif}button,input,select{font:inherit}.app{max-width:860px;margin:auto;padding:17px 13px 80px}.top{display:flex;justify-content:space-between;align-items:center;gap:10px}.brand{display:flex;align-items:center;gap:9px}.brand img{width:42px;height:42px}.brand b{display:block;font-size:19px}.brand small{display:block;font-size:8px;color:#84909a;margin-top:2px}.back{color:#dec474;text-decoration:none;border:1px solid #594b2e;border-radius:999px;padding:8px 10px;font-size:9px}
+.lock{min-height:78vh;display:flex;align-items:center;justify-content:center}.lockBox{width:min(92vw,420px);border:1px solid #343e47;border-radius:18px;padding:18px;background:linear-gradient(180deg,#11171d,#0a0e12);text-align:center}.lockBox img{width:54px;height:54px}.lockBox h1{font-size:23px;margin:12px 0 5px}.lockBox p{font-size:9px;line-height:1.7;color:#8c97a0}.lockBox input{width:100%;margin-top:12px;padding:12px;text-align:center;letter-spacing:5px;border:1px solid #39454f;border-radius:11px;background:#070b0e;color:#fff}.lockBox button{width:100%;margin-top:9px;border:1px solid #9b813d;background:linear-gradient(135deg,#94752d,#d5b65b);color:#111;border-radius:11px;padding:11px;font-weight:1000}.mini{font-size:8px!important;color:#6f7a83!important}
+.main{display:none}.hero{padding:20px 2px 10px}.hero h1{font-size:28px;line-height:1.08;margin:0}.hero p{font-size:9px;line-height:1.7;color:#89949d;margin:8px 0 0}.private{display:inline-flex;margin-top:9px;border:1px solid #5e433e;color:#e7a59c;background:#1a1110;border-radius:999px;padding:5px 8px;font-size:7px;font-weight:1000}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}.stat{border:1px solid #2d3740;border-radius:13px;background:#0c1116;padding:11px}.stat span{display:block;font-size:8px;color:#7e8992}.stat strong{display:block;font-size:20px;margin-top:5px}.stat.good strong{color:#9ad5a9}.stat.gold strong{color:#ebcd72}
+.card{margin-top:11px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,#11171d,#0b0f13);padding:13px}.card h2{font-size:14px;margin:0}.hint{font-size:8px;color:#849099;line-height:1.6;margin-top:5px}.controls{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:8px;margin-top:10px}.controls input,.controls select{width:100%;border:1px solid #34404a;background:#080d11;color:#fff;border-radius:10px;padding:10px}.btn{border:1px solid #46515a;background:#151c22;color:#e6ebed;border-radius:9px;padding:9px;font-size:8px;font-weight:1000}.btn.primary{border-color:#91793a;background:#2a220f;color:#ebcf78}.btn.danger{border-color:#623f3f;color:#e8a1a1;background:#1b1111}
+.coverage{margin-top:9px;padding:9px;border-left:3px solid #b4903d;background:#17140d;border-radius:0 9px 9px 0;font-size:8px;color:#b7a46e;line-height:1.6}.coverage.good{border-color:#4e8a62;background:#0e1712;color:#9fceb0}
+.table{width:100%;border-collapse:collapse;margin-top:9px}.table th,.table td{border-bottom:1px solid #252e36;padding:8px 5px;text-align:left;font-size:8px;vertical-align:middle}.table th{color:#78838c}.table td b{font-size:9px}.costInput{width:82px;border:1px solid #35414a;background:#080d11;color:#fff;border-radius:7px;padding:7px}.deal{display:grid;grid-template-columns:1.2fr .7fr .7fr .7fr .7fr;gap:7px;align-items:center;padding:10px 0;border-bottom:1px solid #252e36}.deal:last-child{border-bottom:0}.deal b{font-size:10px}.deal small{font-size:7px;color:#7e8992;display:block;margin-top:3px}.deal span{font-size:8px}.profit.good{color:#8fd1a1}.profit.bad{color:#e38a8a}.empty{padding:22px;text-align:center;border:1px dashed #34404a;border-radius:12px;color:#75818a;font-size:9px;margin-top:10px}.actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}.actions .btn{flex:1;min-width:120px}.rank{display:grid;grid-template-columns:1fr auto;gap:8px;padding:9px 0;border-bottom:1px solid #252e36}.rank b{font-size:10px}.rank span{font-size:9px;color:#d9bd6b}.foot{margin-top:15px;color:#66727a;font-size:7px;line-height:1.7}
+@media(max-width:650px){.stats{grid-template-columns:1fr 1fr}.controls{grid-template-columns:1fr 1fr}.controls .wide{grid-column:1/-1}.deal{grid-template-columns:1fr 1fr}.deal .name{grid-column:1/-1}.table{display:block;overflow:auto;white-space:nowrap}}
+</style>
+</head>
+<body>
+<div id="lock" class="lock"><div class="lockBox">
+<img src="./brand-mark.svg" alt="SAGI KIT"><h1 id="lockTitle">老板私有数据</h1>
+<p id="lockText">第一次进入请设置 4–6 位本机 PIN。之后打开利润中心需要输入 PIN。</p>
+<input id="pin" type="password" inputmode="numeric" maxlength="6" placeholder="••••">
+<button id="unlock">设置并进入</button>
+<p class="mini">此 PIN 只用于防止客户随手看到经营数据，不等同于服务器级安全。成本数据只保存在当前设备。</p>
+</div></div>
+
+<main id="main" class="app main">
+<div class="top"><div class="brand"><img src="./brand-mark.svg" alt="SAGI KIT"><div><b>SAGI KIT</b><small>成交与利润中心 V1.2</small></div></div><a class="back" href="./start.html">返回工作台</a></div>
+<section class="hero"><h1>只看真正赚到的钱。</h1><p>成交额来自“已成交”报价；成本来自本机私有成本表。客户报价、商品库和公开代码都不会带出你的成本。</p><span class="private">老板私有 · 当前设备</span></section>
+<section class="stats">
+<div class="stat gold"><span>本月成交额</span><strong id="revenue">¥0</strong></div>
+<div class="stat good"><span>本月毛利润</span><strong id="profit">--</strong></div>
+<div class="stat"><span>毛利率</span><strong id="margin">--</strong></div>
+<div class="stat"><span>本月成交</span><strong id="dealCount">0单</strong></div>
+</section>
+<div id="coverage" class="coverage">正在计算成本覆盖率…</div>
+
+<section class="card"><h2>成本设置（本机私有）</h2><div class="hint">先填一个默认单套成本，22 款都可立即计算；有特殊款再单独覆盖。不要在客户面前打开此页面。</div>
+<div class="controls"><input id="defaultCost" type="number" min="0" step="0.01" inputmode="decimal" placeholder="默认成本 / 套"><button id="applyDefault" class="btn primary">保存默认成本</button><button id="clearOverrides" class="btn">清除单款覆盖</button></div>
+<table class="table"><thead><tr><th>款号</th><th>商品</th><th>单款成本覆盖</th><th>当前计算成本</th></tr></thead><tbody id="costRows"></tbody></table>
+</section>
+
+<section class="card"><h2>本月成交明细</h2><div class="hint">毛利润 = 成交额 − 数量 × 本机成本。未配置成本的订单不会被伪造利润，会明确显示“待补成本”。</div><div id="deals"></div></section>
+
+<section class="card"><h2>最畅销款式</h2><div class="hint">按已成交报价的套数排名。</div><div id="ranking"></div></section>
+
+<section class="card"><h2>私有数据备份</h2><div class="hint">只备份成本设置，不导出客户名单。文件本身包含商业敏感数据，请自己保管。</div><div class="actions"><button id="exportCosts" class="btn">导出成本备份</button><button id="importCosts" class="btn">导入成本备份</button><input id="costFile" type="file" accept="application/json,.json" hidden><button id="lockNow" class="btn danger">立即锁定</button><button id="changePin" class="btn">修改 PIN</button></div></section>
+<div class="foot">SAGI KIT PRIVATE BUSINESS CENTER · 本页面不参与客户报价导出，也不进入云端同步队列。未来接私有服务器后，再升级为账号权限、加密存储与多设备同步。</div>
+</main>
+
+<script src="./catalog-data.js"></script>
+<script>
+const PRODUCTS=(window.SAGI_KIT_CATALOG_META&&window.SAGI_KIT_CATALOG_META.products)||[];
+const COST_KEY='sagi-kit-private-cost-v1',PIN_KEY='sagi-kit-private-pin-v1',QUOTE_KEY='sagi-kit-quotes';
+const q=s=>document.querySelector(s),qa=s=>[...document.querySelectorAll(s)];
+let unlocked=false;
+function hash(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return (h>>>0).toString(36)}
+function pinSaved(){return !!localStorage.getItem(PIN_KEY)}
+function updateLockMode(){q('#lockTitle').textContent=pinSaved()?'输入老板 PIN':'设置老板 PIN';q('#lockText').textContent=pinSaved()?'请输入本机 PIN 后进入成交与利润中心。':'第一次进入请设置 4–6 位本机 PIN。之后打开利润中心需要输入 PIN。';q('#unlock').textContent=pinSaved()?'进入利润中心':'设置并进入'}
+function openMain(){unlocked=true;q('#lock').style.display='none';q('#main').style.display='block';renderAll()}
+function lockNow(){unlocked=false;q('#main').style.display='none';q('#lock').style.display='flex';q('#pin').value='';updateLockMode()}
+q('#unlock').onclick=()=>{const p=q('#pin').value.trim();if(!/^\d{4,6}$/.test(p))return alert('请输入 4–6 位数字 PIN');if(!pinSaved()){localStorage.setItem(PIN_KEY,hash(p));openMain()}else if(localStorage.getItem(PIN_KEY)===hash(p))openMain();else alert('PIN 不正确')};
+q('#pin').onkeydown=e=>{if(e.key==='Enter')q('#unlock').click()};
+function costData(){try{const x=JSON.parse(localStorage.getItem(COST_KEY)||'{}');return x&&typeof x==='object'?x:{}}catch(e){return{}}}
+function saveCostData(x){localStorage.setItem(COST_KEY,JSON.stringify({...x,updatedAt:new Date().toISOString()}))}
+function quotes(){try{const a=JSON.parse(localStorage.getItem(QUOTE_KEY)||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}}
+function dealAt(o){const h=Array.isArray(o.statusHistory)?o.statusHistory:[];const hit=[...h].reverse().find(x=>x.status==='已成交');return new Date((hit&&hit.at)||o.updatedAt||o.createdAt||0)}
+function thisMonth(o){const d=dealAt(o),n=new Date();return o.status==='已成交'&&d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth()}
+function money(n){return Number(n||0).toLocaleString('zh-CN',{minimumFractionDigits:0,maximumFractionDigits:2})}
+function unitCost(code){const d=costData(),v=d.overrides&&Number(d.overrides[code]);if(Number.isFinite(v)&&v>=0)return v;const def=Number(d.defaultCost);return Number.isFinite(def)&&def>=0?def:null}
+function renderCosts(){const d=costData();q('#defaultCost').value=d.defaultCost??'';q('#costRows').innerHTML=PRODUCTS.map(p=>{const ov=d.overrides&&d.overrides[p.id]!=null?d.overrides[p.id]:'';const cur=unitCost(p.id);return '<tr><td><b>'+p.id+'</b></td><td>'+p.name+'</td><td><input class="costInput" data-cost="'+p.id+'" type="number" min="0" step="0.01" inputmode="decimal" value="'+ov+'" placeholder="使用默认"></td><td>'+(cur==null?'待设置':'¥'+money(cur))+'</td></tr>'}).join('');qa('[data-cost]').forEach(i=>i.onchange=()=>{const x=costData();x.overrides=x.overrides||{};if(i.value==='')delete x.overrides[i.dataset.cost];else x.overrides[i.dataset.cost]=Math.max(0,Number(i.value)||0);saveCostData(x);renderAll()})}
+function monthDeals(){return quotes().filter(thisMonth)}
+function renderStats(){const a=monthDeals(),revenue=a.reduce((s,o)=>s+Number(o.total||0),0);let covered=0,knownRevenue=0,totalCost=0;for(const o of a){const c=unitCost(o.product&&o.product.sagiCode);if(c!=null){covered++;knownRevenue+=Number(o.total||0);totalCost+=c*Number(o.quantity||0)}}const profit=knownRevenue-totalCost,margin=knownRevenue>0?profit/knownRevenue*100:null;q('#revenue').textContent='¥'+money(revenue);q('#dealCount').textContent=a.length+'单';q('#profit').textContent=covered?('¥'+money(profit)):'--';q('#margin').textContent=margin==null?'--':margin.toFixed(1)+'%';const box=q('#coverage');box.classList.toggle('good',a.length>0&&covered===a.length);box.textContent=!a.length?'本月还没有“已成交”报价。':covered===a.length?'成本覆盖 '+covered+'/'+a.length+' 单 · 本月利润数据完整。':'成本覆盖 '+covered+'/'+a.length+' 单 · 还有 '+(a.length-covered)+' 单待补成本；毛利润仅统计已配置成本的成交。'}
+function renderDeals(){const a=monthDeals().sort((x,y)=>dealAt(y)-dealAt(x));q('#deals').innerHTML=a.length?a.map(o=>{const code=o.product&&o.product.sagiCode||'',c=unitCost(code),cost=c==null?null:c*Number(o.quantity||0),profit=cost==null?null:Number(o.total||0)-cost,margin=profit!=null&&Number(o.total)>0?profit/Number(o.total)*100:null;return '<div class="deal"><div class="name"><b>'+(o.customer&&o.customer.team||'未命名球队')+'</b><small>'+code+' · '+(o.product&&o.product.sagiName||'')+' · '+Number(o.quantity||0)+'套</small></div><span>成交 ¥'+money(o.total)+'</span><span>'+(cost==null?'成本 待补':'成本 ¥'+money(cost))+'</span><span class="profit '+(profit!=null&&profit>=0?'good':'bad')+'">'+(profit==null?'利润 --':'利润 ¥'+money(profit))+'</span><span>'+(margin==null?'毛利 --':margin.toFixed(1)+'%')+'</span></div>'}).join(''):'<div class="empty">本月还没有成交报价。</div>'}
+function renderRanking(){const map={};monthDeals().forEach(o=>{const p=o.product||{},k=p.sagiCode||'--';map[k]=map[k]||{name:p.sagiName||'',qty:0,revenue:0};map[k].qty+=Number(o.quantity||0);map[k].revenue+=Number(o.total||0)});const a=Object.entries(map).sort((a,b)=>b[1].qty-a[1].qty).slice(0,5);q('#ranking').innerHTML=a.length?a.map(([k,v],i)=>'<div class="rank"><div><b>'+(i+1)+'. '+k+' · '+v.name+'</b><div class="hint">'+v.qty+'套 · 成交额 ¥'+money(v.revenue)+'</div></div><span>'+v.qty+'套</span></div>').join(''):'<div class="empty">暂无排行数据。</div>'}
+function renderAll(){if(!unlocked)return;renderCosts();renderStats();renderDeals();renderRanking()}
+q('#applyDefault').onclick=()=>{const v=q('#defaultCost').value;if(v==='')return alert('请输入默认单套成本');const x=costData();x.defaultCost=Math.max(0,Number(v)||0);saveCostData(x);renderAll()};
+q('#clearOverrides').onclick=()=>{if(!confirm('清除 22 款的单独成本覆盖？默认成本会保留。'))return;const x=costData();x.overrides={};saveCostData(x);renderAll()};
+q('#exportCosts').onclick=()=>{const data={schema:'SAGI-KIT-PRIVATE-COST-1',exportedAt:new Date().toISOString(),costs:costData()};const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='SAGI-KIT-PRIVATE-COST-BACKUP.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500)};
+q('#importCosts').onclick=()=>q('#costFile').click();q('#costFile').onchange=async()=>{const f=q('#costFile').files&&q('#costFile').files[0];if(!f)return;try{const x=JSON.parse(await f.text());if(x.schema!=='SAGI-KIT-PRIVATE-COST-1'||!x.costs)throw 0;saveCostData(x.costs);renderAll();alert('私有成本已导入')}catch(e){alert('不是有效的 SAGI 私有成本备份')}q('#costFile').value=''};
+q('#lockNow').onclick=lockNow;q('#changePin').onclick=()=>{const old=prompt('输入当前 PIN');if(old==null)return;if(localStorage.getItem(PIN_KEY)!==hash(old.trim()))return alert('当前 PIN 不正确');const n=prompt('设置新的 4–6 位数字 PIN');if(n==null)return;if(!/^\d{4,6}$/.test(n.trim()))return alert('PIN 格式不正确');localStorage.setItem(PIN_KEY,hash(n.trim()));alert('PIN 已修改')};
+window.addEventListener('storage',()=>{if(unlocked)renderAll()});updateLockMode();
+</script>
+</body></html>
