@@ -107,3 +107,10 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Added deterministic Node self-test and separate CI workflow.
 - Locally verified: `node commercial/lan/lan-pairing-selftest.mjs` PASS.
 - **Not integrated:** trusted desktop approval, HTTP endpoint, client-IP rate limiting, LAN firewall/origin/host controls, mobile UI, and Windows security review. The module must not be advertised as secure production pairing until those are implemented and tested.
+
+## 2026-11-20 — LAN pairing resource hardening
+- Replaced modulo-based six-digit pairing code generation with cryptographic `randomInt` to avoid modulo bias.
+- Added bounded active sessions (`maxSessions`, default 16) and expiry pruning before new session admission.
+- Added tests for session exhaustion, revocation, expiry reclamation and invalid configuration.
+- **Verification status:** GitHub commits created; automated CI and real Windows/LAN validation not confirmed in this run. Container clone failed because github.com DNS resolution was unavailable; do not report test PASS.
+- **Open security work:** rate limit by source address, operator-initiated approval boundary, LAN HTTP integration, origin/host protections, and pairing token scope. No production security certification.
