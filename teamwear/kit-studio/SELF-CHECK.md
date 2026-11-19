@@ -6,16 +6,17 @@ Branch: kit-studio-v1-china
 ## Result
 PASS
 
-## Checks
-- 22 products loaded: PASS (22)
-- No supplier identity/mapping in customer bundle: PASS
+## Order History Center
+- Today / yesterday / month / all filters: PASS
+- Search team / contact / order / SAGI code: PASS
+- Full confirmation detail + roster: PASS
+- Copy / share / JSON export / print: PASS
+- Local/cloud sync status display: PASS
+- Mobile launcher entry: PASS
+- Offline cache includes order history: PASS
+- Readable collision-resistant order code: PASS
+- No supplier mapping in customer history page: PASS
 - No external runtime CDN/script dependency: PASS
-- Service worker/offline support: PASS
-- Local draft autosave: PASS
-- 3-question recommendation engine: PASS
-- Adult/child size-aware roster: PASS
-- Duplicate/missing roster validation: PASS
-- Customer order schema marker: PASS
 
 ## Note
-This is a static source-level check. Browser/device QA and China-network deployment QA are still required before production release.
+This is a static source-level check. iPhone Safari interaction and print/share behavior still need device QA before production release.
