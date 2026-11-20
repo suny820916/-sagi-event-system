@@ -84,6 +84,7 @@ check('No external scripts in live output',!/<script\b[^>]*\bsrc\s*=\s*["']https
 check('Bridge rejects stale same-fixture revisions',bat.includes('STALE_MATCHDAY_REVISION')&&bat.includes('$staleRevision')&&bat.includes('Write-HttpResponse $stream 409'));
 check('Bridge rejects same-revision conflicting commands',bat.includes('$revisionConflict')&&bat.includes('$incomingCommand')&&bat.includes('$currentCommand'));
 check('Bridge rejects unapproved cross-fixture takeover',bat.includes('FIXTURE_TAKEOVER_REQUIRED')&&bat.includes('$fixtureConflict')&&bat.includes('$allowFixtureTakeover'));
+check('Bridge durable state scrubs transient event replay',bat.includes('$durableProbe.event = $null')&&bat.includes("$durableProbe.lastEvent = $null")&&bat.includes('$durableJson = $durableProbe | ConvertTo-Json'));
 check('Controller has one-shot fixture takeover authorization',control.includes('mdFixtureTakeoverOnce=false')&&control.includes('function mdAuthorizeFixtureTakeover()')&&control.includes('allowFixtureTakeover:!!mdFixtureTakeoverOnce'));
 const readyBlock=control.slice(control.indexOf('function setMatchReady(on){'),control.indexOf('function requireMatchReady(){'));
 const projectLoadBlock=control.slice(control.indexOf('async function loadMatchProject(){'),control.indexOf('async function createMatchProject(){'));
