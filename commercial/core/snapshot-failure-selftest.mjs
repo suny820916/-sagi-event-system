@@ -49,6 +49,19 @@ assert.equal(exportMatch.replayMarkers.length,1002);
 assert.equal(exportMatch.eventLog[0].sequence,1);
 assert.equal(exportMatch.eventLog.at(-1).sequence,1002);
 
+// Score corrections must be auditable and must not generate replay cues.
+const correction = {commandId:'correction',type:'SCORE_ADJUST',side:'AWAY',delta:-2};
+const corrected = applyCommand(exportMatch,correction);
+assert.equal(corrected.event.type,'SCORE_ADJUST');
+assert.equal(corrected.event.before,0);
+assert.equal(corrected.event.after,0);
+assert.equal(corrected.event.appliedDelta,0);
+assert.equal(corrected.state.replayMarkers.length,1002);
+assert.equal(applyCommand(corrected.state,correction).duplicate,true);
+for(const delta of [Infinity,NaN,1.5,101]) {
+  assert.throws(()=>applyCommand(corrected.state,{...correction,commandId:'invalid',delta}),/INVALID_SCORE_DELTA/);
+}
+
 const dir = await mkdtemp(path.join(os.tmpdir(), 'sagi-snapshot-failure-'));
 let engine;
 const meta = { fixtureId: 'snapshot-failure', home: '主队', away: '客队' };
