@@ -224,3 +224,7 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Removed the 2048-command eviction from reducer and hydration so delayed retries of early goals remain duplicates throughout a fixture, including serialization/reload. Commits: 239c4d2, fb8db0c.
 - Added reducer regression after 2050 subsequent operations; runtime execution pending. Previously evicted IDs in existing data are not reconstructed by this change.
 - Tradeoff: full-state journal and retained IDs grow with fixture size; benchmark storage/latency and migrate to a durable indexed command ledger before commercial endurance certification. Existing event/history retention limits remain separate export blockers.
+
+## 2026-11-20 — Complete fixture history retention
+- Removed reducer/hydration caps on event log, replay markers and penalty history to preserve complete new-fixture records. Commits: ca09091, 2a84211.
+- Added regression assertions for 1002 events/markers after serialization and 205 penalty attempts. Runtime/CI not yet verified. Previously truncated histories are not reconstructed; full-state journal size and serialization costs remain endurance risks. Export UI and durable indexed ledger remain open.
