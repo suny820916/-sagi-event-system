@@ -24,6 +24,18 @@ apply({commandId:'clock-again',type:'SET_CLOCK',running:true,elapsedSeconds:600}
 apply({commandId:'finish',type:'FINISH_PENALTIES'});
 assert.equal(fixture.clock.running,false);
 
+// A delayed retry must remain idempotent after the old 2048-ID window.
+let longMatch = createInitialMatchState({fixtureId:'long-match',home:'主队',away:'客队'});
+const oldGoal = {commandId:'first-goal',type:'GOAL',side:'HOME'};
+longMatch = applyCommand(longMatch,oldGoal).state;
+for(let i=0;i<2050;i++){
+  longMatch = applyCommand(longMatch,{commandId:'toggle-'+i,type:'SET_SCOREBOARD',visible:i%2===0}).state;
+}
+const delayed = applyCommand(JSON.parse(JSON.stringify(longMatch)),oldGoal);
+assert.equal(delayed.duplicate,true);
+assert.equal(delayed.state.homeScore,1);
+assert.equal(delayed.state.revision,longMatch.revision);
+
 const dir = await mkdtemp(path.join(os.tmpdir(), 'sagi-snapshot-failure-'));
 let engine;
 const meta = { fixtureId: 'snapshot-failure', home: '主队', away: '客队' };
