@@ -28,4 +28,10 @@ for(const token of [
 
 assert(!output.includes("const raw=g&&g.simplePenalty||{},ps=g&&g.penaltyShootout||{}"),'output still mixes two live penalty sources');
 assert(!output.includes("const p=raw.visible?raw:(ps.started?"),'legacy simplePenalty can still override canonical output');
+assert(control.includes("const eventGateMs=type==='GOAL'?2500:1400"),
+  'V4.33 must inherit V4.32 GOAL accidental double-tap protection');
+assert(control.includes("recoverMatchdayFromBridge(false,{preferNewest:false,allowIdentityTakeover:true})"),
+  'V4.33 must inherit Bridge-authoritative recovery after rejected stale/conflicting state');
+assert(control.includes('mdFixtureTakeoverOnce=false')&&control.includes('allowFixtureTakeover:!!mdFixtureTakeoverOnce'),
+  'V4.33 must inherit explicit fixture takeover protection');
 console.log('SAGI V4.33 PENALTY SINGLE SOURCE GATE PASS');
