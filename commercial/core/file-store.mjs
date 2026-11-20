@@ -96,19 +96,22 @@ export class FileMatchStore {
       await handle.close();
     }
 
+    // The journal is already durable. Snapshot failure must not turn a
+    // committed command into an apparent failure or leave live state stale.
     const tempPath = this.snapshotPath + ".tmp";
+    this.snapshotError = null;
     try {
-      await copyFile(this.snapshotPath, this.backupPath);
-    } catch (error) {
-      if (error.code !== "ENOENT") throw error;
-    }
-    await writeFile(tempPath, JSON.stringify(state, null, 2), "utf8");
-    try {
+      try {
+        await copyFile(this.snapshotPath, this.backupPath);
+      } catch (error) {
+        if (error.code !== "ENOENT") throw error;
+      }
+      await writeFile(tempPath, JSON.stringify(state, null, 2), "utf8");
       await rename(tempPath, this.snapshotPath);
     } catch (error) {
-      // Windows may not allow overwrite rename. Journal remains authoritative.
-      await rm(this.snapshotPath, { force: true });
-      await rename(tempPath, this.snapshotPath);
+      this.snapshotError = error.code || "SNAPSHOT_FAILED";
+      // Never delete the previous snapshot as a fallback.
+      await rm(tempPath, { force: true }).catch(() => {});
     }
     return state;
   }
