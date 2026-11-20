@@ -116,14 +116,15 @@ export function createLanGateway({
           return reply(res, 400, { error: 'INVALID_COMMAND' });
         // Only football state commands may cross this mobile gateway. Never forward
         // arbitrary vMix or administrative operations from a paired phone.
-        const allowed = new Set(['GOAL', 'SCORE_CORRECTION', 'YELLOW_CARD', 'RED_CARD', 'SUBSTITUTION', 'PENALTY', 'START_CLOCK', 'PAUSE_CLOCK', 'RESUME_CLOCK', 'END_MATCH']);
+        const allowed = new Set(['GOAL', 'SCORE_ADJUST', 'YELLOW', 'RED', 'SUB', 'SET_CLOCK', 'HALF_TIME', 'FULL_TIME', 'START_PENALTIES', 'PENALTY_ATTEMPT', 'FINISH_PENALTIES', 'SET_PERIOD']);
         if (!allowed.has(body.type)) return reply(res, 403, { error: 'COMMAND_NOT_ALLOWED' });
         const result = await submitCommand(body);
         return reply(res, 200, { result });
       } catch (err) {
         if (err.message === 'BODY_TOO_LARGE') return reply(res, 413, { error: 'BODY_TOO_LARGE' });
         if (err.message === 'INVALID_JSON') return reply(res, 400, { error: 'INVALID_JSON' });
-        if (err.code === 'REVISION_CONFLICT') return reply(res, 409, { error: 'REVISION_CONFLICT' });
+        if (err.code === 'REVISION_CONFLICT') return reply(res, 409, { error: 'REVISION_CONFLICT', revision: err.revision });
+        if (err.code === 'INVALID_COMMAND') return reply(res, 400, { error: 'INVALID_COMMAND' });
         return reply(res, 503, { error: 'COMMAND_FAILED' });
       }
     }
