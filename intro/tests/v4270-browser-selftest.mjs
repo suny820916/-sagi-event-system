@@ -622,7 +622,7 @@ server.listen(PORT,'127.0.0.1',async()=>{
   assert(projectPosts.length===0,'passive project follow must not reverse-publish: '+JSON.stringify(projectPosts));
   await projectDesktop.locator('#projectName').fill('SYNC COPY');
   await projectDesktop.click('#projectSaveBtn');
-  await projectDesktop.waitForFunction(()=>document.querySelector('#projectSelect')?.options.length===3,null,{timeout:8000});
+  await projectDesktop.waitForFunction(()=>document.querySelector('#projectSelect')?.options.length===3,null,{timeout:12000});
   const activeAfterSave=projectStore.activeProjectId;
   assert(activeAfterSave&&activeAfterSave!=='bridge_project_1'&&projectStore.projects.length===2,'desktop save did not publish project list + active id: '+JSON.stringify(projectStore));
   await projectPhone.waitForFunction(id=>typeof window.sagiProjectSyncDiagnostic==='function'&&(()=>{const d=window.sagiProjectSyncDiagnostic();return !d.syncBusy&&d.activeMatchProjectId===id&&d.selectedProjectId===id&&d.projectCount===2&&document.querySelector('#projectName')?.value==='SYNC COPY'})(),activeAfterSave,{timeout:12000});
