@@ -16,14 +16,13 @@ table{width:100%;border-collapse:separate;border-spacing:0 7px}th{font-size:10px
 <body><div class="app">
 <div class="top"><div><div class="brand">SAGI KIT · 图册生产线</div><div class="sub">内部流程页 · 未通过验收的款式禁止进入正式画册</div></div><a class="back" href="./catalog.html">返回产品画册</a></div>
 <div class="rule"><b>Production Master：</b>原图册对应页 → 精确还原版型 / 纹路 / 拼接位置 → 只换 SAGI A+红点标识和固定六配色 → 对照源页自检 → 通过后发布 → 再继续下一款。任何“重新设计纹路”都判定为失败。</div>
-<div class="pipeline"><div class="step">01<b>锁定原图</b></div><div class="step on">02<b>结构还原</b></div><div class="step">03<b>六配色</b></div><div class="step">04<b>对照验收</b></div><div class="step">05<b>发布 KIT</b></div></div><div style="margin:12px 0;background:#101010;border:1px solid #2a2a2a;border-radius:14px;padding:12px"><div style="font-size:12px;font-weight:900;color:#f1dda2">权威 PDF 已恢复并完成源页校验</div><div style="font-size:10px;color:#777;margin-top:5px">01B 第8页已完成生产与发布；当前按顺序进入 03 交错系列（PDF第9页）结构还原。</div></div>
-<table><thead><tr><th>款式</th><th>源页</th><th>当前状态</th><th class="hide">下一动作</th></tr></thead><tbody id="rows"></tbody></table>
+<div class="pipeline"><div class="step">01<b>锁定原图</b></div><div class="step on">02<b>结构还原</b></div><div class="step">03<b>六配色</b></div><div class="step">04<b>对照验收</b></div><div class="step">05<b>发布 KIT</b></div></div><div style="margin:12px 0;background:#101010;border:1px solid #2a2a2a;border-radius:14px;padding:12px"><div style="font-size:12px;font-weight:900;color:#f1dda2">加速生产模式已启用</div><div style="font-size:10px;color:#777;margin-top:5px">正式发布仍严格按顺序；但后续全部款式的 PDF 页码映射与生产清单可提前批量准备。当前款若 QA 失败，不再结束本轮，必须连续执行修复 → 六配色重渲染 → 复检，至少完成 3 个自动修复闭环后才允许汇报。</div></div><table><thead><tr><th>款式</th><th>源页</th><th>当前状态</th><th class="hide">下一动作</th></tr></thead><tbody id="rows"></tbody></table>
 </div>
 <script>
 const data=[
 ["01A","狮头系列一",7,"pub","已发布","标准母版，保持不动"],
 ["01B","狮头系列二",8,"pub","已发布","第8页已验收；六配色、产品页、设计器入口已建立"],
-["03","交错系列",9,"lock","结构提取中","第9页已目视核对前后片、圆领、灰色肩腰拼接及旧标识；已按源图修正肩领、腰部及短裤侧条遮罩坐标与边缘混合；待渲染核验边界、清标、品牌替换及六配色验收"],
+["03","交错系列",9,"lock","V4 多通道修复","已升级为多边形分区、旧标识纹理重建、短裤底色联动、SAGI A+红点矢量标；继续执行同轮修复→重渲染→QA，未通过不得发布"],
 ["04","斑马纹系列",10,"wait","待处理","03验收通过后开始"],
 ["05","折线系列",11,"wait","待处理","04验收通过后开始"],
 ["06","结构系列",12,"wait","待处理","05验收通过后开始"],
