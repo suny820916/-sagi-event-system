@@ -2446,15 +2446,17 @@ async function recoverMatchdayFromBridge(showNote=false,opts={}){
    if(x&&x.commandId){
      const remoteRevision=Math.max(0,Number(x.revision)||0);
      if(remoteRevision){mdPublishRevision=Math.max(mdPublishRevision,remoteRevision);mdLastAckRevision=Math.max(mdLastAckRevision,remoteRevision)}
-     const remoteStamp=mdRecoveryTimestamp(x),localStamp=Math.max(Number(opts.localStamp)||0,mdLocalRecoveryStamp||0);
-     if(opts.preferNewest&&localStamp&&(!remoteStamp||localStamp>remoteStamp+250)){
-       mdRecoveryMetrics.localWins++;mdRecoveryMetrics.lastReason='LOCAL_NEWER';mdRecoveryMetrics.lastRecoveryAt=Date.now();
+     const remoteStamp=mdRecoveryTimestamp(x),localRevision=Math.max(0,Number(matchdayState.revision)||0,Number(mdLastAckRevision)||0);
+     if(opts.preferNewest&&localRevision>remoteRevision){
+       mdPublishRevision=Math.max(mdPublishRevision,localRevision);
+       mdRecoveryMetrics.localWins++;mdRecoveryMetrics.lastReason='LOCAL_REVISION_AHEAD';mdRecoveryMetrics.lastRecoveryAt=Date.now();
        await publishMatchday(matchdayState.lastEvent||null);
-       if(showNote)note('本机比赛状态更新 · 已阻止旧 Bridge 回退');
+       if(showNote)note('本机 revision 更新 · 已阻止旧 Bridge 回退');
        return true
      }
      if(mdApplyRecovered(x,!!opts.allowIdentityTakeover)){
        if(opts.preferNewest)mdRecoveryMetrics.bridgeWins++;
+       mdPublishRevision=Math.max(mdPublishRevision,remoteRevision);mdLastAckRevision=Math.max(mdLastAckRevision,remoteRevision);
        mdLocalRecoveryStamp=Math.max(mdLocalRecoveryStamp||0,remoteStamp);
        refreshMatchdayUI();mdRenderLog();mdPersist();
        if(showNote){vdSave();if(matchdayState.overlayVisible)publishVmixDirector('OverlayInput'+vmixDirectorSettings.overlay+'In',vmixDirectorSettings.graphics,0,'RESTORE 图形开启');else publishVmixDirector('OverlayInput'+vmixDirectorSettings.overlay+'Out','',0,'RESTORE 图形关闭');note('已从 Bridge 恢复比赛状态与 Overlay')}
@@ -2493,7 +2495,7 @@ function mdNextEventIdentity(type='EVENT'){
  matchdayState.eventSequence=sequence;
  return{eventId:'evt_'+Date.now().toString(36)+'_'+sequence.toString(36),sequence}
 }
-let mdRecoveryMetrics={resumeChecks:0,networkRestores:0,forcedRepairs:0,localWins:0,bridgeWins:0,lastRecoveryAt:0,lastReason:'INIT'},mdRecoveryTimer=null;
+let mdRecoveryMetrics={resumeChecks:0,networkRestores:0,forcedRepairs:0,localWins:0,bridgeWins:0,passivePolls:0,bridgeFollows:0,staleRemoteIgnored:0,lastRecoveryAt:0,lastReason:'INIT'},mdRecoveryTimer=null;
 function mdDelay(ms){return new Promise(r=>setTimeout(r,Math.max(0,Number(ms)||0)))}
 function mdSaveLastGood(){
  try{
@@ -2529,8 +2531,11 @@ async function mdPostMatchdayWithRetry(state){
  mdPublishMetrics.failed++;mdPublishMetrics.lastAttempts=waits.length;throw lastError||new Error('MATCHDAY_SYNC_FAILED')
 }
 window.sagiMatchdayReliabilityDiagnostic=()=>({metrics:{...mdPublishMetrics},recovery:{...mdRecoveryMetrics},localRecoveryStamp:mdLocalRecoveryStamp,lastAckRevision:mdLastAckRevision,lastConsistencyState:mdLastConsistencyState,lastConsistencyAt:mdLastConsistencyAt,lastGood:!!mdLoadLastGood(),fixtureKey:mdFixtureKey()});
-function mdCloudSnapshot(event=null){
- const now=mdNowSeconds(),canonical=mdEnforceCanonicalTeams(),homeName=canonical.home||'HOME',awayName=canonical.away||'AWAY',revision=++mdPublishRevision;
+function mdCloudSnapshot(event=null,opts={}){
+ const now=mdNowSeconds(),canonical=mdEnforceCanonicalTeams(),homeName=canonical.home||'HOME',awayName=canonical.away||'AWAY';
+ const baseRevision=Math.max(0,Number(mdPublishRevision)||0,Number(matchdayState.revision)||0,Number(mdLastAckRevision)||0);
+ const revision=opts.peek?baseRevision:(baseRevision+1);
+ if(!opts.peek)mdPublishRevision=revision;
  const normalizedEvent=window.SAGISignatureCore?SAGISignatureCore.normalizeEvent(event,{home:homeName,away:awayName,fixtureKey:mdFixtureKey()}):event;
  return{
   commandId:Date.now()+'_'+Math.random().toString(36).slice(2,7),
@@ -2548,7 +2553,7 @@ function mdCloudSnapshot(event=null){
  };
 }
 async function publishMatchday(event=null){
- const state=mdCloudSnapshot(event),revision=state.revision;if(state.allowFixtureTakeover)mdFixtureTakeoverOnce=false;matchdayState.lastEvent=event;mdPersist();refreshMatchdayUI();
+ const state=mdCloudSnapshot(event),revision=state.revision;if(state.allowFixtureTakeover)mdFixtureTakeoverOnce=false;matchdayState.lastEvent=event;matchdayState.revision=revision;mdPersist();refreshMatchdayUI();
  const send=async()=>{
   try{
    const r=await mdPostMatchdayWithRetry(state);mdLastAckRevision=Math.max(mdLastAckRevision,revision);
@@ -2583,12 +2588,36 @@ async function mdConsistencyCheck(force=false){
  if(mdConsistencyBusy||(!force&&(document.hidden||!matchReady||!(matchModeActive||matchdayState.scoreboardVisible||matchdayState.clockRunning))))return false;
  mdConsistencyBusy=true;
  try{
-  const local=mdCloudSnapshot(null),remote=await lanJson('/api/matchday?consistency='+Date.now()),sameFixture=remote&&mdBridgeMatchesCurrent(remote);
-  if(!remote||!remote.commandId||!sameFixture||mdConsistencyComparable(remote)!==mdConsistencyComparable(local)){
-   mdLastConsistencyState=sameFixture?'REPAIR':'FIXTURE_REPAIR';await publishMatchday(matchdayState.lastEvent||null);mdLastConsistencyAt=Date.now();
-   if(q('mdSync'))q('mdSync').innerHTML='<span class="mdLiveDot on"></span>状态已自动校正';return true
+  mdRecoveryMetrics.passivePolls++;
+  const remote=await lanJson('/api/matchday?consistency='+Date.now()),sameFixture=remote&&mdBridgeMatchesCurrent(remote);
+  if(!remote||!remote.commandId){mdLastConsistencyState='BRIDGE_EMPTY';mdLastConsistencyAt=Date.now();return false}
+  if(!sameFixture){mdLastConsistencyState='FIXTURE_MISMATCH';mdLastConsistencyAt=Date.now();return false}
+  const remoteRevision=Math.max(0,Number(remote.revision)||0);
+  const localRevision=Math.max(0,Number(matchdayState.revision)||0,Number(mdLastAckRevision)||0);
+  if(remoteRevision<localRevision){
+   mdRecoveryMetrics.staleRemoteIgnored++;mdLastConsistencyState='LOCAL_REVISION_AHEAD';mdLastConsistencyAt=Date.now();
+   mdPublishRevision=Math.max(mdPublishRevision,localRevision);
+   await publishMatchday(matchdayState.lastEvent||null);
+   if(q('mdSync'))q('mdSync').innerHTML='<span class="mdLiveDot on"></span>Bridge revision 落后 · 已安全恢复 R'+Math.max(mdLastAckRevision,localRevision);
+   return true
   }
-  mdLastConsistencyState='OK';mdLastConsistencyAt=Date.now();if(q('mdSync'))q('mdSync').innerHTML='<span class="mdLiveDot on"></span>导播台 / 比分牌一致';return true
+  const local=mdCloudSnapshot(null,{peek:true});
+  const differs=mdConsistencyComparable(remote)!==mdConsistencyComparable(local);
+  if(remoteRevision>localRevision||differs){
+   if(mdApplyRecovered(remote,false)){
+    mdPublishRevision=Math.max(mdPublishRevision,remoteRevision);mdLastAckRevision=Math.max(mdLastAckRevision,remoteRevision);
+    mdLocalRecoveryStamp=Math.max(mdLocalRecoveryStamp||0,mdRecoveryTimestamp(remote));
+    mdRecoveryMetrics.bridgeFollows++;mdRecoveryMetrics.lastReason='BRIDGE_FOLLOW';mdRecoveryMetrics.lastRecoveryAt=Date.now();
+    refreshMatchdayUI();refreshMatchdayPlayers();mdRenderLog();mdPersist();
+    mdLastConsistencyState='BRIDGE_FOLLOW';mdLastConsistencyAt=Date.now();
+    if(q('mdSync'))q('mdSync').innerHTML='<span class="mdLiveDot on"></span>手机 / 电脑已跟随 Bridge · R'+remoteRevision;
+    return true
+   }
+  }
+  mdPublishRevision=Math.max(mdPublishRevision,remoteRevision);mdLastAckRevision=Math.max(mdLastAckRevision,remoteRevision);
+  mdLastConsistencyState='OK';mdLastConsistencyAt=Date.now();
+  if(q('mdSync'))q('mdSync').innerHTML='<span class="mdLiveDot on"></span>手机 / 电脑 / 比分牌一致 · R'+remoteRevision;
+  return true
  }catch(e){mdLastConsistencyState='OFFLINE';return false}finally{mdConsistencyBusy=false}
 }
 
@@ -3169,7 +3198,7 @@ function initMatchdayGraphics(){
  ['addBtn','updateBtn','removeBtn','demoBtn','loadBtn','homeSideBtn','awaySideBtn'].forEach(id=>q(id)&&q(id).addEventListener('click',()=>setTimeout(refreshMatchdayPlayers,60)));
  ['matchHome','matchAway'].forEach(id=>q(id)&&q(id).addEventListener('input',()=>{mdEnforceCanonicalTeams();refreshMatchdayUI()}));
  ['matchHome','matchAway','matchCompetition'].forEach(id=>q(id)&&q(id).addEventListener('change',()=>{mdEnforceCanonicalTeams();refreshMatchdayUI();if(matchReady||matchdayState.scoreboardVisible)publishMatchday(null)}));
- setInterval(()=>{if(matchdayState.clockRunning&&!document.hidden)refreshMatchdayClockUI()},500);setInterval(()=>{if(!document.hidden&&!matchdayState.lastEvent&&!gdAutoCameraActive)sdRecommend(null)},5000);setInterval(()=>{mdConsistencyCheck(false).catch(()=>{})},12000);
+ setInterval(()=>{if(matchdayState.clockRunning&&!document.hidden)refreshMatchdayClockUI()},500);setInterval(()=>{if(!document.hidden&&!matchdayState.lastEvent&&!gdAutoCameraActive)sdRecommend(null)},5000);setInterval(()=>{mdConsistencyCheck(false).catch(()=>{})},900);
  window.addEventListener('online',()=>mdScheduleRecovery('ONLINE',80));
  window.addEventListener('pageshow',()=>mdScheduleRecovery('PAGESHOW',120));
  window.addEventListener('pagehide',()=>{mdPersist();mdSaveLastGood()});
