@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>SAGI EVENT · 赛事工作台 V2</title>
-<meta name="description" content="SAGI EVENT 手机赛事工作台：赛事创建、赛制、球队、抽签、赛程、比分、积分、双败晋级与赛事备份。">
+<title>SAGI EVENT · 免费赛事工作台</title>
+<meta name="description" content="SAGI EVENT 免费赛事工作台：无需注册即可创建8队赛事，管理球队、抽签、赛程、比分、积分、双败晋级与赛事备份。">
 <style>
 :root{--bg:#080808;--p:#121212;--p2:#171717;--l:#292929;--t:#f5f5f2;--m:#929292;--g:#dec47e;--g2:#b99548;--ok:#21533d;--bad:#5a2828}
 *{box-sizing:border-box}html{background:var(--bg)}body{margin:0;background:var(--bg);color:var(--t);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;-webkit-tap-highlight-color:transparent}
@@ -33,13 +33,13 @@ button,input{font:inherit}button{touch-action:manipulation}.w{max-width:920px;ma
 <div class="w">
   <header class="head">
     <a class="brand" href="/"><img src="/assets/brand/sagi-official-logo.webp?v=20261121b" alt="SAGI FOOTBALL"></a>
-    <div class="headright"><a class="ghostlink" href="./showcase.html">赛事介绍</a><span class="chip">EVENT V2</span></div>
+    <div class="headright"><a class="ghostlink" href="./showcase.html">赛事介绍</a><span class="chip">基础版免费</span></div>
   </header>
 
   <section id="s0" class="sec on">
     <div class="card hero">
-      <div class="heroTop"><div><div class="eyebrow">SAGI EVENT · MATCH OPERATIONS</div><h1 id="hero">新建赛事</h1><div id="heroMeta" class="muted">先完成赛事设置，再生成比赛。</div></div></div>
-      <div class="kpis"><div class="k"><span>球队</span><b id="kt">8</b></div><div class="k"><span>比赛</span><b id="km">0</b></div><div class="k"><span>已完成</span><b id="kd">0</b></div></div>
+      <div class="heroTop"><div><div class="eyebrow">SAGI EVENT · FREE MATCH OPERATIONS</div><h1 id="hero">新建赛事</h1><div id="heroMeta" class="muted">基础赛事管理永久免费 · 无需注册 · 数据保存在当前设备。</div></div></div>
+      <div class="kpis"><div class="k"><span>球队</span><b id="kt">8</b></div><div class="k"><span>比赛</span><b id="km">0</b></div><div class="k"><span>已完成</span><b id="kd">0</b></div></div><div class="muted" style="margin-top:10px">适用于校园赛、青训赛、社区联赛、杯赛与业余联赛。当前公开版为 8 队赛事模板。</div>
     </div>
 
     <div class="card">
@@ -114,6 +114,7 @@ button,input{font:inherit}button{touch-action:manipulation}.w{max-width:920px;ma
   <button data-tab="3" onclick="tab(3,this)">操作</button>
   <button data-tab="4" onclick="tab(4,this)">工具</button>
 </nav>
+<div style="text-align:center;color:#5f5f5f;font-size:9px;padding:4px 12px 88px">Powered by SAGI SPORTS · 基础赛事管理永久免费</div>
 
 <script>
 var KEY='sagi_event_v11';
@@ -177,7 +178,7 @@ function addEvent(id,text){if(!by(id))return;S.events[id]=S.events[id]||[];S.eve
 function goal(id,side){var m=by(id);if(!m)return;if(side==='h'){m.hs=(m.hs||0)+1;addEvent(id,teamName(m.home)+' 进球')}else{m.as=(m.as||0)+1;addEvent(id,teamName(m.away)+' 进球')}}
 function finish(id){var m=by(id);if(!m||m.hs==null||m.as==null){msg('请先录入比分');return}if(isElim(m)&&m.hs===m.as){msg('淘汰赛必须决出胜负');return}m.status='done';if(S.fmt==='double')advanceDouble();if(S.fmt==='groups')advanceGroups();persist();renderAll();renderLive();msg('比赛已结束并自动推进')}
 function renderLive(){renderLiveSel();var sel=q('liveSel'),id=sel?sel.value:'',m=by(id),box=q('liveBox'),logs=q('logs');if(!box||!logs)return;if(!m){box.innerHTML='<div class="empty" style="margin-top:10px">暂无可操作比赛</div>';logs.textContent='暂无事件';return}box.innerHTML='<div class="match" style="margin-top:10px"><div class="liveTeams"><div>'+esc(teamName(m.home))+'</div><div>'+esc(teamName(m.away))+'</div></div><div class="liveScore">'+(m.hs||0)+' : '+(m.as||0)+'</div><div class="liveActions"><button class="btn" onclick="goal(\''+m.id+'\',\'h\')">主队 +1</button><button class="btn" onclick="goal(\''+m.id+'\',\'a\')">客队 +1</button><button class="btn" onclick="addEvent(\''+m.id+'\',\'黄牌\')">黄牌</button><button class="btn bad" onclick="addEvent(\''+m.id+'\',\'红牌\')">红牌</button><button class="btn" onclick="addEvent(\''+m.id+'\',\'点球 / 单刀决胜\')">决胜事件</button><button class="btn pri" onclick="finish(\''+m.id+'\')">结束比赛</button></div></div>';var es=S.events[m.id]||[];logs.innerHTML=es.length?es.slice().reverse().map(function(e){return '<div>'+esc(e.time)+'　'+esc(e.text)+'</div>'}).join('<hr style="border-color:#222">'):'暂无事件'}
-function renderHomeMeta(){var h=q('hero'),meta=q('heroMeta');if(h)h.textContent=S.name||'新建赛事';if(meta)meta.textContent=S.matches.length?[(FORMATS[S.fmt]||FORMATS.groups).label,S.date,S.loc].filter(Boolean).join(' · '):'先完成赛事设置，再生成比赛。';if(q('kt'))q('kt').textContent=S.teams.length;if(q('km'))q('km').textContent=visible().length;if(q('kd'))q('kd').textContent=visible().filter(function(m){return m.status==='done'}).length;if(q('matchHint'))q('matchHint').textContent=S.matches.length?((FORMATS[S.fmt]||FORMATS.groups).label+' · '+visible().length+'场'):'生成赛事后显示赛程'}
+function renderHomeMeta(){var h=q('hero'),meta=q('heroMeta');if(h)h.textContent=S.name||'新建赛事';if(meta)meta.textContent=S.matches.length?[(FORMATS[S.fmt]||FORMATS.groups).label,S.date,S.loc].filter(Boolean).join(' · '):'基础赛事管理永久免费 · 无需注册 · 数据保存在当前设备。';if(q('kt'))q('kt').textContent=S.teams.length;if(q('km'))q('km').textContent=visible().length;if(q('kd'))q('kd').textContent=visible().filter(function(m){return m.status==='done'}).length;if(q('matchHint'))q('matchHint').textContent=S.matches.length?((FORMATS[S.fmt]||FORMATS.groups).label+' · '+visible().length+'场'):'生成赛事后显示赛程'}
 function renderHome(){if(q('ename'))q('ename').value=S.name||'';if(q('loc'))q('loc').value=S.loc||'';if(q('date'))q('date').value=S.date||'';renderTeams();renderFormatChoice();renderPlan();renderHomeMeta()}
 function renderAll(){if(typeof document==='undefined')return;renderHome();renderMatches();renderTables();renderLiveSel()}
 function exportJSON(){var b=new Blob([JSON.stringify(S,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=(S.name||'sagi-event')+'.json';a.click();setTimeout(function(){URL.revokeObjectURL(a.href)},1000)}
