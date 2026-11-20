@@ -199,3 +199,8 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Latch uncertain journal write/sync/close failures; refuse further mutations until restart and recovery. Health reports HTTP 503 while latched; authenticated diagnostics exposes sanitized journal and snapshot warnings without local paths or tokens.
 - Extended snapshot failure self-test with diagnostics auth and injected recovery latch checks. This does not simulate an actual disk write/sync failure.
 - Commits: 616c695, fff543b, 55cad51. Runtime tests remain pending. A complete but unsynced record, torn tail, writer locking, actual Windows disk-full/power loss and operator recovery UI remain release blockers. Reads may represent the last confirmed in-memory state while recovery is required; do not treat them as current on-air confirmation.
+
+## 2026-11-20 — Torn journal startup recovery gate
+- Detect incomplete JSONL tail during recovery, retain last complete state but latch recovery-required immediately; new commands are blocked and health returns 503. Append-open errors also latch the store.
+- Extended snapshot failure integration self-test with actual incomplete tail bytes, restart, state readback and refusal of new goal. Commits: c51fa28, 992dcdb.
+- Runtime verification pending. No automatic truncation or repair is attempted; preserve evidence and require exclusive writer coordination before implementing repair. Windows disk failure and power-loss tests still required.
