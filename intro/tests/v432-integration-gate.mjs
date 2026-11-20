@@ -14,7 +14,10 @@ for(const token of [
  "programGate:'SAGI4311_PROGRAM'",
  '完整出场结束自动清屏',
  "function mdNextEventIdentity(type='EVENT')",
- "normalizeEvent(event,{home:homeName,away:awayName,fixtureKey:mdFixtureKey()})"
+ "normalizeEvent(event,{home:homeName,away:awayName,fixtureKey:mdFixtureKey()})",
+ "SAGI_MATCH_PROJECTS_V2",
+ "window.sagiProjectSyncDiagnostic",
+ "loadMatchProjectById(remoteActive,{publishSelection:false,remoteSync:true})"
 ]) assert(control.includes(token),'control regression: '+token);
 
 for(const token of [
@@ -47,5 +50,7 @@ assert(embeddedOutput===output.trim().replace(/\r/g,''),'BAT output payload drif
 assert(bat.includes(build),'BAT build fingerprint missing');
 assert(bat.includes('"BrowserReload"'),'BAT BrowserReload allowlist missing');
 assert(bat.includes('"ReplayPlayLastEventToOutput"'),'BAT replay latest-only allowlist missing');
+assert(bat.includes('SAGI_MATCH_PROJECTS_V2'),'BAT project SSOT schema missing');
+assert(bat.includes('activeProjectId'),'BAT active project authority missing');
 assert(bat.includes('$candidate -le $PreferredPort'),'BAT must lock preferred port / prevent silent 8101 fallback');
 console.log('SAGI V4.32 CLEAN INTEGRATION GATE PASS');

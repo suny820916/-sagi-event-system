@@ -1851,7 +1851,7 @@ async function cacheMatchProjectsFull(list=[]){
  const full=(list||[]).filter(p=>p&&p.id&&!p.__compact);if(!full.length)return;
  await dbPutMany(full.map(p=>['matchProject:'+p.id,p]))
 }
-let matchProjectsCache=null;
+let matchProjectsCache=null,matchProjectsBridgeStamp=0,activeMatchProjectId='',activeMatchProjectSavedAt=0,matchProjectSyncBusy=false,matchProjectSyncTimer=null;
 function localMatchProjects(){try{const x=JSON.parse(localStorage.getItem(MATCH_PROJECTS_KEY)||'[]');return Array.isArray(x)?x:[]}catch(e){return[]}}
 function getMatchProjects(){return Array.isArray(matchProjectsCache)?matchProjectsCache.slice():localMatchProjects()}
 async function resolveMatchProject(id){
@@ -1870,26 +1870,46 @@ function mergeMatchProjects(a=[],b=[]){
  const byName=new Map();[...map.values()].sort((x,y)=>(Number(y.savedAt)||0)-(Number(x.savedAt)||0)).forEach(p=>{const k=String(p.name||p.id);if(!byName.has(k))byName.set(k,p)});
  return [...byName.values()].slice(0,20)
 }
-async function persistMatchProjectsBridge(list){
- const projects=(list||[]).slice(0,20);
- try{await lanPost('/api/projects',{projects,savedAt:Date.now(),schema:'SAGI_MATCH_PROJECTS_V1'});return true}catch(e){}
+function currentProjectSelection(){return String((q('projectSelect')&&q('projectSelect').value)||activeMatchProjectId||'').trim()}
+async function persistMatchProjectsBridge(list,activeProjectId=currentProjectSelection()){
+ const projects=(list||[]).slice(0,20),active=String(activeProjectId||'').trim(),stamp=Date.now();
+ try{
+  await lanPost('/api/projects',{projects,activeProjectId:active,savedAt:stamp,schema:'SAGI_MATCH_PROJECTS_V2'});
+  activeMatchProjectId=active;matchProjectsBridgeStamp=Math.max(matchProjectsBridgeStamp,stamp);return true
+ }catch(e){}
  try{
   let state=await lanJson('/api/matchday?projectSave='+Date.now());if(!state||typeof state!=='object'||Array.isArray(state))state={};
-  state.__sagiProjects=projects;await lanPost('/api/matchday',state);return true
+  state.__sagiProjects=projects;state.__sagiActiveProjectId=active;await lanPost('/api/matchday',state);activeMatchProjectId=active;return true
  }catch(e){return false}
 }
-async function syncMatchProjectsFromBridge(){
- const localIndex=localMatchProjects();matchProjectsCache=localIndex.slice();
- const local=await Promise.all(localIndex.map(async p=>(await resolveMatchProject(p.id))||p));let remoteList=[];
+async function syncMatchProjectsFromBridge(opts={}){
+ if(matchProjectSyncBusy||projectSaveBusy||projectLoadBusy)return false;matchProjectSyncBusy=true;
  try{
-  const remote=await lanJson('/api/projects?ts='+Date.now());remoteList=Array.isArray(remote&&remote.projects)?remote.projects:[]
- }catch(e){
-  try{const state=await lanJson('/api/matchday?projectLoad='+Date.now());remoteList=Array.isArray(state&&state.__sagiProjects)?state.__sagiProjects:[]}catch(_){}
- }
- const merged=mergeMatchProjects(remoteList,local);putMatchProjects(merged);refreshProjectList();
- if(merged.length&&(JSON.stringify(merged)!==JSON.stringify(remoteList)))await persistMatchProjectsBridge(merged);
- return merged.length>0||remoteList.length===0
+  const localIndex=localMatchProjects();if(!Array.isArray(matchProjectsCache))matchProjectsCache=localIndex.slice();
+  const local=await Promise.all(localIndex.map(async p=>(await resolveMatchProject(p.id))||p));let remoteList=[],remoteActive='',remoteStamp=0,remoteSchema='',remoteRead=false;
+  try{
+   const remote=await lanJson('/api/projects?ts='+Date.now());remoteRead=true;remoteList=Array.isArray(remote&&remote.projects)?remote.projects:[];remoteActive=String(remote&&remote.activeProjectId||'').trim();remoteStamp=Number(remote&&remote.savedAt)||0;remoteSchema=String(remote&&remote.schema||'')
+  }catch(e){
+   try{const state=await lanJson('/api/matchday?projectLoad='+Date.now());remoteRead=true;remoteList=Array.isArray(state&&state.__sagiProjects)?state.__sagiProjects:[];remoteActive=String(state&&state.__sagiActiveProjectId||'').trim()}catch(_){}
+  }
+  const remoteAuthoritative=remoteRead&&(remoteSchema==='SAGI_MATCH_PROJECTS_V2'||remoteStamp>0||remoteList.length>0||!!remoteActive);
+  const merged=remoteAuthoritative?remoteList.slice(0,20):mergeMatchProjects(remoteList,local);
+  putMatchProjects(merged);matchProjectsBridgeStamp=Math.max(matchProjectsBridgeStamp,remoteStamp);
+  if(activeMatchProjectId&&!merged.some(p=>String(p.id)===String(activeMatchProjectId))){activeMatchProjectId='';activeMatchProjectSavedAt=0}
+  const remoteProject=remoteActive?merged.find(p=>String(p.id)===remoteActive):null;
+  refreshProjectList(remoteActive||activeMatchProjectId);
+  if(remoteRead&&remoteSchema!=='SAGI_MATCH_PROJECTS_V2'&&remoteAuthoritative)await persistMatchProjectsBridge(merged,'');
+  else if(!remoteAuthoritative&&merged.length)await persistMatchProjectsBridge(merged,'');
+  const needsActiveReload=!!(remoteProject&&(remoteActive!==activeMatchProjectId||Number(remoteProject.savedAt||0)>Number(activeMatchProjectSavedAt||0)));
+  if(opts.applyActive!==false&&needsActiveReload){
+   await loadMatchProjectById(remoteActive,{publishSelection:false,remoteSync:true})
+  }else if(remoteProject){
+   activeMatchProjectId=remoteActive;activeMatchProjectSavedAt=Math.max(activeMatchProjectSavedAt,Number(remoteProject.savedAt)||0);if(q('projectSelect'))q('projectSelect').value=remoteActive
+  }
+  return merged.length>0||remoteRead
+ }finally{matchProjectSyncBusy=false}
 }
+window.sagiProjectSyncDiagnostic=()=>({activeMatchProjectId,activeMatchProjectSavedAt,selectedProjectId:currentProjectSelection(),bridgeStamp:matchProjectsBridgeStamp,projectCount:getMatchProjects().length,syncBusy:matchProjectSyncBusy});
 function projectAssetsSnapshot(){
  const photos={HOME:{},AWAY:{}};for(const side of ['HOME','AWAY'])for(const p of (teamStore[side]&&teamStore[side].roster||[]))if(p&&p.id&&p.photo)photos[side][p.id]=p.photo;
  return{homeCrest:(teamStore.HOME&&teamStore.HOME.crest)||'',awayCrest:(teamStore.AWAY&&teamStore.AWAY.crest)||'',stadium:assets.bg||'',eventLogo:assets.eventLogo||'data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20256%20239%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2348cf35%22%2F%3E%3Cstop%20offset%3D%22.45%22%20stop-color%3D%22%230a8b4a%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23005432%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Cpath%20d%3D%22M%20133%20184%20L%20133%20213%20L%20134%20214%20L%20134%20222%20L%20135%20223%20L%20136%20231%20L%20137%20232%20L%20144%20232%20L%20164%20226%20L%20165%20224%20L%20162%20219%20L%20142%20199%20Z%20M%20129%20184%20L%20120%20199%20L%20113%20207%20L%20101%20218%20L%2097%20225%20L%20103%20228%20L%20109%20229%20L%20113%20231%20L%20126%20232%20L%20126%20228%20L%20128%20222%20L%20128%20216%20L%20129%20215%20Z%20M%2028%2083%20L%2029%2096%20L%2034%20108%20L%2041%20118%20L%2050%20126%20L%2061%20132%20L%2070%20133%20L%2071%20134%20L%20102%20134%20L%20103%20133%20L%20101%20127%20L%2092%20119%20L%2083%20116%20L%2071%20115%20L%2063%20111%20L%2052%2099%20L%2052%2097%20L%2049%2091%20L%2048%2083%20Z%20M%20234%2082%20L%20214%2082%20L%20214%2087%20L%20211%2097%20L%20203%20108%20L%20196%20113%20L%20194%20113%20L%20191%20115%20L%20178%20116%20L%20168%20120%20L%20161%20127%20L%20159%20133%20L%20196%20133%20L%20203%20131%20L%20212%20126%20L%20222%20117%20L%20227%20110%20L%20233%2096%20L%20233%2093%20L%20234%2092%20Z%20M%20227%2053%20L%20200%2053%20L%20198%2054%20L%20139%20112%20L%20134%20121%20L%20134%20173%20L%20137%20182%20L%20147%20195%20L%20153%20200%20L%20169%20210%20L%20175%20216%20L%20177%20220%20L%20181%20219%20L%20194%20209%20L%20194%20207%20L%20191%20203%20L%20184%20197%20L%20176%20193%20L%20173%20193%20L%20164%20190%20L%20157%20186%20L%20158%20185%20L%20161%20186%20L%20175%20186%20L%20185%20189%20L%20193%20194%20L%20201%20201%20L%20205%20199%20L%20215%20189%20L%20214%20187%20L%20203%20179%20L%20191%20174%20L%20179%20173%20L%20178%20172%20L%20159%20172%20L%20157%20171%20L%20153%20166%20L%20153%20161%20L%20154%20159%20L%20158%20156%20L%20206%20156%20L%20207%20155%20L%20212%20155%20L%20219%20153%20L%20228%20148%20L%20233%20144%20L%20239%20137%20L%20246%20124%20L%20248%20118%20L%20248%20114%20L%20239%20116%20L%20226%20121%20L%20223%20126%20L%20217%20132%20L%20208%20137%20L%20201%20138%20L%20200%20139%20L%20159%20139%20L%20153%20142%20L%20152%20141%20L%20153%20131%20L%20155%20127%20L%20211%2072%20Z%20M%20156%20185%20L%20157%20184%20L%20158%20185%20L%20157%20186%20Z%20M%2035%2053%20L%2038%2058%20L%2048%2069%20L%20107%20127%20L%20109%20131%20L%20109%20134%20L%20110%20135%20L%20110%20140%20L%20109%20141%20L%20104%20139%20L%2062%20139%20L%2061%20138%20L%2054%20137%20L%2045%20132%20L%2039%20126%20L%2036%20121%20L%2014%20114%20L%2014%20117%20L%2017%20126%20L%2023%20137%20L%2032%20147%20L%2042%20153%20L%2048%20155%20L%2053%20155%20L%2054%20156%20L%20104%20156%20L%20109%20160%20L%20110%20163%20L%20109%20167%20L%20103%20172%20L%2087%20172%20L%2086%20173%20L%2076%20173%20L%2075%20174%20L%2072%20174%20L%2056%20181%20L%2048%20188%20L%2048%20189%20L%2061%20201%20L%2068%20195%20L%2080%20188%20L%2087%20187%20L%2088%20186%20L%20102%20186%20L%20103%20187%20L%2098%20190%20L%2080%20196%20L%2068%20207%20L%2069%20210%20L%2085%20221%20L%2086%20218%20L%2091%20212%20L%20113%20197%20L%20120%20190%20L%20126%20180%20L%20128%20174%20L%20128%20167%20L%20129%20166%20L%20129%20125%20L%20128%20124%20L%20128%20121%20L%20126%20116%20L%2064%2054%20L%2061%2053%20Z%20M%20102%20186%20L%20103%20185%20L%20105%20186%20L%20104%20187%20Z%20M%2093%2024%20L%2075%2035%20L%2075%2045%20L%2076%2046%20L%2076%2050%20L%2078%2056%20L%2084%2066%20L%20129%20110%20L%20129%2093%20L%20128%2092%20L%20127%2084%20L%20124%2079%20L%2098%2052%20L%2095%2046%20L%2095%2042%20L%2094%2041%20L%2094%2024%20Z%20M%20169%2023%20L%20168%2023%20L%20168%2043%20L%20165%2051%20L%20159%2059%20L%20138%2079%20L%20135%2084%20L%20134%2092%20L%20133%2093%20L%20133%20110%20L%20178%2066%20L%20185%2054%20L%20186%2047%20L%20187%2046%20L%20187%2034%20Z%20M%20134%205%20L%20133%206%20L%20133%2074%20L%20142%2067%20L%20150%2059%20L%20150%2016%20L%20147%2013%20Z%20M%20128%205%20L%20118%2012%20L%20115%2013%20L%20112%2017%20L%20112%2059%20L%20129%2074%20L%20129%205%20Z%22%20fill%3D%22url(%23g)%22%20fill-rule%3D%22evenodd%22%2F%3E%3C%2Fsvg%3E',photos}
@@ -1900,7 +1920,9 @@ async function restoreProjectAssets(a){
  const ph=a.photos||{};for(const side of ['HOME','AWAY'])for(const [id,data] of Object.entries(ph[side]||{}))if(id&&data)await dbPut('photo:'+id,data)
 }
 function refreshProjectList(selected=''){
- const list=getMatchProjects().sort((a,b)=>(b.savedAt||0)-(a.savedAt||0)),el=q('projectSelect');el.innerHTML='<option value="">选择比赛项目</option>'+list.map(p=>'<option value="'+escAttr(p.id)+'">'+esc(p.name)+' · '+new Date(p.savedAt).toLocaleString()+'</option>').join('');if(selected)el.value=selected
+ const list=getMatchProjects().sort((a,b)=>(b.savedAt||0)-(a.savedAt||0)),el=q('projectSelect'),keep=String(selected||activeMatchProjectId||(el&&el.value)||'');
+ el.innerHTML='<option value="">选择比赛项目</option>'+list.map(p=>'<option value="'+escAttr(p.id)+'">'+esc(p.name)+' · '+new Date(p.savedAt).toLocaleString()+'</option>').join('');
+ if(keep&&list.some(p=>String(p.id)===keep))el.value=keep;else el.value=''
 }
 let projectSaveBusy=false,projectLoadBusy=false;
 async function saveMatchProject(){
@@ -1909,9 +1931,9 @@ async function saveMatchProject(){
   const name=q('projectName').value.trim()||setupProjectDefaultName();q('projectName').value=name;await save();mdPersist();vdSave();
   const id='match_'+Date.now().toString(36),project={id,name,savedAt:Date.now(),meta:currentMatchMeta(),core:localStorage.getItem('sagi_player_intro_v40')||'',show:localStorage.getItem('sagi_show_director_v40')||'',matchday:localStorage.getItem('sagi_matchday_graphics_v47')||localStorage.getItem('sagi_matchday_graphics_v42')||'',vmix:localStorage.getItem('sagi_vmix_director_v42')||'',assets:projectAssetsSnapshot()};
   let list=getMatchProjects();const same=list.findIndex(p=>p.name===name);if(same>=0){project.id=list[same].id;list.splice(same,1)}
-  await dbPut('matchProject:'+project.id,project);list.unshift(project);putMatchProjects(list);refreshProjectList(project.id);
+  await dbPut('matchProject:'+project.id,project);list.unshift(project);putMatchProjects(list);activeMatchProjectId=project.id;activeMatchProjectSavedAt=project.savedAt;refreshProjectList(project.id);
   note('比赛项目已保存 · '+name+' · 本机已安全落盘');
-  persistMatchProjectsBridge(list).then(safe=>{if(!safe)note('Bridge 同步失败 · 本机项目不受影响')}).catch(()=>note('Bridge 同步失败 · 本机项目不受影响'))
+  persistMatchProjectsBridge(list,project.id).then(safe=>{if(!safe)note('Bridge 同步失败 · 本机项目不受影响')}).catch(()=>note('Bridge 同步失败 · 本机项目不受影响'))
  }finally{projectSaveBusy=false;if(btn){btn.disabled=false;btn.textContent='保存比赛项目'}}
 }
 function portablePlayer(p={},photo=''){
@@ -1960,8 +1982,8 @@ async function applyPortableMatchProject(p){
  await save();
  return{home:home.length,away:away.length,homeStarters:home.filter(z=>z.squadType==='STARTER').length,awayStarters:away.filter(z=>z.squadType==='STARTER').length}
 }
-async function loadMatchProject(){
- if(projectLoadBusy)return;const id=q('projectSelect').value;if(!id){note('请选择比赛项目');return}
+async function loadMatchProjectById(id,opts={}){
+ if(projectLoadBusy)return false;id=String(id||'').trim();if(!id){if(!opts.remoteSync)note('请选择比赛项目');return false}
  projectLoadBusy=true;const btn=q('projectLoadBtn');if(btn){btn.disabled=true;btn.textContent='读取中…'}
  try{
   const p=await resolveMatchProject(id);if(!p)throw new Error('比赛项目不存在或已删除');
@@ -1973,10 +1995,16 @@ async function loadMatchProject(){
   else mdResetForProject();
   applyMatchMeta(projectMatchMeta(p),true);
   if(p.vmix){localStorage.setItem('sagi_vmix_director_v42',p.vmix);vdLoad()}
-  q('projectName').value=p.name;matchReady=false;setupReadySignature='';const check=validateMatchSetup(true);refreshSetupReadyUI();refreshUXDashboard();syncMatchStage();refreshMatchdayUI();
-  note('比赛项目已读取 · '+p.name+(stats?' · HOME '+stats.home+'人/'+stats.homeStarters+'首发 · AWAY '+stats.away+'人/'+stats.awayStarters+'首发':'')+(check.ok?' · 可进行赛前确认':' · 请检查阵容'))
- }catch(e){recoveryStatus('比赛项目读取失败 · '+(e&&e.message||'未知错误'),true);note('比赛项目读取失败 · '+(e&&e.message||'未知错误'))}
+  q('projectName').value=p.name;activeMatchProjectId=id;activeMatchProjectSavedAt=Number(p.savedAt)||Date.now();if(q('projectSelect'))q('projectSelect').value=id;matchReady=false;setupReadySignature='';const check=validateMatchSetup(true);refreshSetupReadyUI();refreshUXDashboard();syncMatchStage();refreshMatchdayUI();
+  if(opts.publishSelection!==false){const safe=await persistMatchProjectsBridge(getMatchProjects(),id).catch(()=>false);if(!safe)note('当前比赛项目 Bridge 同步失败 · 本机仍可继续')}
+  note((opts.remoteSync?'已跟随另一控制端 · ':'比赛项目已读取 · ')+p.name+(stats?' · HOME '+stats.home+'人/'+stats.homeStarters+'首发 · AWAY '+stats.away+'人/'+stats.awayStarters+'首发':'')+(check.ok?' · 可进行赛前确认':' · 请检查阵容'));
+  return true
+ }catch(e){recoveryStatus('比赛项目读取失败 · '+(e&&e.message||'未知错误'),true);if(!opts.remoteSync)note('比赛项目读取失败 · '+(e&&e.message||'未知错误'));return false}
  finally{projectLoadBusy=false;if(btn){btn.disabled=false;btn.textContent='读取项目'}}
+}
+async function loadMatchProject(){
+ const id=q('projectSelect').value;if(!id){note('请选择比赛项目');return false}
+ return loadMatchProjectById(id,{publishSelection:true})
 }
 function phonePrematchDbOpen(){
  return new Promise((resolve,reject)=>{const r=indexedDB.open('sagi_prematch_phone_v1',1);r.onupgradeneeded=()=>{const db=r.result;if(!db.objectStoreNames.contains('packages'))db.createObjectStore('packages')};r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error||new Error('本机赛前数据库打开失败'))})
@@ -2049,7 +2077,9 @@ async function importPhonePrematchPackage(file){
  }catch(e){recoveryStatus('赛前包读取失败 · '+(e&&e.message||'文件错误'),true);note('赛前包读取失败')}
 }
 async function deleteMatchProject(){
- const id=q('projectSelect').value;if(!id){note('请选择比赛项目');return}let list=getMatchProjects(),p=list.find(x=>x.id===id);list=list.filter(x=>x.id!==id);putMatchProjects(list);refreshProjectList();await dbDel('matchProject:'+id);await persistMatchProjectsBridge(list);note('已删除比赛项目'+(p?' · '+p.name:''))
+ const id=q('projectSelect').value;if(!id){note('请选择比赛项目');return}let list=getMatchProjects(),p=list.find(x=>x.id===id);list=list.filter(x=>x.id!==id);
+ if(activeMatchProjectId===id){activeMatchProjectId='';activeMatchProjectSavedAt=0}
+ putMatchProjects(list);refreshProjectList();await dbDel('matchProject:'+id);await persistMatchProjectsBridge(list,activeMatchProjectId);note('已删除比赛项目'+(p?' · '+p.name:''))
 }
 function recoveryStatus(t,on=true){const el=q('projectRecoveryStatus');if(!el)return;el.textContent=t;el.classList.toggle('on',!!on)}
 function storageVersionValue(prefix){
@@ -2125,7 +2155,9 @@ async function recoverHistoryProjects(){
 function initMatchSetup(){
  q('projectName').value=setupProjectDefaultName();refreshProjectList();q('projectSaveBtn').onclick=saveMatchProject;q('projectLoadBtn').onclick=loadMatchProject;q('projectDeleteBtn').onclick=deleteMatchProject;q('projectRecoverBtn').onclick=recoverHistoryProjects;q('projectCloudSyncBtn').onclick=()=>syncPrematchCloud(false);q('projectPhoneImportFile').onchange=async e=>{const f=e.target.files&&e.target.files[0];if(f)await importPhonePrematchPackage(f);e.target.value=''};
  q('setupValidateBtn').onclick=()=>validateMatchSetup(true);q('setupReadyBtn').onclick=()=>setMatchReady(true);q('setupUnlockBtn').onclick=()=>setMatchReady(false);
- validateMatchSetup(true);refreshSetupReadyUI();syncMatchProjectsFromBridge().catch(()=>{});
+ validateMatchSetup(true);refreshSetupReadyUI();syncMatchProjectsFromBridge({applyActive:true}).catch(()=>{});
+ if(matchProjectSyncTimer)clearInterval(matchProjectSyncTimer);matchProjectSyncTimer=setInterval(()=>{if(!document.hidden)syncMatchProjectsFromBridge({applyActive:true}).catch(()=>{})},1200);
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden)syncMatchProjectsFromBridge({applyActive:true}).catch(()=>{})});
  const startCloud=()=>syncPrematchCloud(true).catch(()=>{});if('requestIdleCallback' in window)requestIdleCallback(startCloud,{timeout:6000});else setTimeout(startCloud,4500)
 }
 

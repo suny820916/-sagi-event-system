@@ -11,7 +11,7 @@ const AWAY='ALTAI YOUTH FOOTBALL CLUB';
 const crest=(fill,label)=>'data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><path d="M60 4 108 22v38c0 31-20 48-48 56C32 108 12 91 12 60V22Z" fill="'+fill+'"/><text x="60" y="70" text-anchor="middle" font-size="30" font-family="Arial" font-weight="900" fill="white">'+label+'</text></svg>');
 const HOME_CREST=crest('#0c8b55','H');
 const AWAY_CREST=crest('#3157b7','A');
-let seq=1,vmixCommands=[],matchdayPosts=[],matchdayAttempts=[],graphics=makeGraphics(),reorderMatchdayWrites=false,failNextMatchdayPosts=0,failNextMatchdayGets=0,failNextOutputMatchdayGets=0;
+let seq=1,vmixCommands=[],matchdayPosts=[],matchdayAttempts=[],graphics=makeGraphics(),reorderMatchdayWrites=false,failNextMatchdayPosts=0,failNextMatchdayGets=0,failNextOutputMatchdayGets=0,projectStore={projects:[],activeProjectId:'',savedAt:0,schema:'SAGI_MATCH_PROJECTS_V2'},projectPosts=[];
 
 function makeGraphics(overrides={}){
  return {
@@ -50,7 +50,8 @@ const server=http.createServer(async(req,res)=>{
   if(u.pathname==='/api/matchday'&&req.method==='POST'){const b=await readBody(req);let next=null;try{next=JSON.parse(b)||graphics;matchdayAttempts.push(next)}catch{}if(failNextMatchdayPosts>0){failNextMatchdayPosts--;return json(res,{ok:false,error:'SIMULATED_TRANSIENT_FAILURE'},503)}try{if(next){if(reorderMatchdayWrites&&Number(next.homeScore)===5)await new Promise(r=>setTimeout(r,450));graphics=next;matchdayPosts.push(graphics)}}catch{}return json(res,{ok:true})}
   if(u.pathname==='/api/vmix/status')return json(res,{ok:true,active:'1',preview:'2',inputs:[{number:'1',key:'cam1',type:'Camera',title:'CAM 1',state:'Running'},{number:'2',key:'cam2',type:'Camera',title:'CAM 2',state:'Running'},{number:'4',key:'replay',type:'Video',title:'REPLAY',state:'Running'},{number:'5',key:'gfx',type:'Browser',title:'SAGI Browser',state:'Running'}],overlays:[]});
   if(u.pathname==='/api/vmix'&&req.method==='POST'){const b=await readBody(req);let cmd={};try{cmd=JSON.parse(b)}catch{}vmixCommands.push(cmd);return json(res,{ok:true,command:cmd})}
-  if(u.pathname==='/api/projects')return json(res,{projects:[]});
+  if(u.pathname==='/api/projects'&&req.method==='GET')return json(res,projectStore);
+  if(u.pathname==='/api/projects'&&req.method==='POST'){const b=await readBody(req);let next={};try{next=JSON.parse(b)||{}}catch{};projectStore={projects:Array.isArray(next.projects)?next.projects.slice(0,20):[],activeProjectId:String(next.activeProjectId||''),savedAt:Date.now(),schema:'SAGI_MATCH_PROJECTS_V2'};projectPosts.push(JSON.parse(JSON.stringify(projectStore)));return json(res,{ok:true})}
   if(u.pathname==='/health')return json(res,{ok:true,port:PORT});
   if(u.pathname==='/')return text(res,'SAGI V4.31.0 SELFTEST');
   const rel=decodeURIComponent(u.pathname).replace(/^\/+/,'');const file=path.resolve(ROOT,rel);
@@ -565,13 +566,48 @@ server.listen(PORT,'127.0.0.1',async()=>{
   graphics={...graphics,commandId:'multi_controller_restore',revision:(Number(graphics.revision)||0)+1,homeScore:6,awayScore:1,updatedAt:new Date().toISOString(),event:{type:'CLEAR_EVENT'}};
   await page.evaluate(()=>window.sagiMatchdayConsistencyCheck(true));await wait(700);
 
+  console.log('TEST 11E: desktop + phone share one Bridge project list and active project');
+  projectStore={projects:[makeStoredProject('bridge_project_1')],activeProjectId:'bridge_project_1',savedAt:Date.now(),schema:'SAGI_MATCH_PROJECTS_V2'};projectPosts=[];
+  const projectDesktopContext=await browser.newContext({viewport:{width:1440,height:1100}});
+  const projectPhoneContext=await browser.newContext({viewport:{width:390,height:844},isMobile:true});
+  const projectDesktop=await projectDesktopContext.newPage();
+  const projectPhone=await projectPhoneContext.newPage();
+  await Promise.all([
+    projectDesktop.goto('http://127.0.0.1:'+PORT+'/intro/v45-lan.html',{waitUntil:'domcontentloaded'}),
+    projectPhone.goto('http://127.0.0.1:'+PORT+'/intro/v45-lan.html',{waitUntil:'domcontentloaded'})
+  ]);
+  await projectDesktop.waitForFunction(()=>document.querySelector('#projectSelect')?.value==='bridge_project_1'&&document.querySelector('#matchHome')?.value==='乌苏叶克备',null,{timeout:8000});
+  await projectPhone.waitForFunction(()=>document.querySelector('#projectSelect')?.value==='bridge_project_1'&&document.querySelector('#matchHome')?.value==='乌苏叶克备',null,{timeout:8000});
+  const initialProjectSync=await Promise.all([
+    projectDesktop.evaluate(()=>window.sagiProjectSyncDiagnostic()),
+    projectPhone.evaluate(()=>window.sagiProjectSyncDiagnostic())
+  ]);
+  assert(initialProjectSync.every(x=>x.activeMatchProjectId==='bridge_project_1'&&x.projectCount===1),'initial project SSOT failed: '+JSON.stringify(initialProjectSync));
+  assert(projectPosts.length===0,'passive project follow must not reverse-publish: '+JSON.stringify(projectPosts));
+  await projectDesktop.locator('#projectName').fill('SYNC COPY');
+  await projectDesktop.click('#projectSaveBtn');
+  await projectDesktop.waitForFunction(()=>document.querySelector('#projectSelect')?.options.length===3,null,{timeout:8000});
+  const activeAfterSave=projectStore.activeProjectId;
+  assert(activeAfterSave&&activeAfterSave!=='bridge_project_1'&&projectStore.projects.length===2,'desktop save did not publish project list + active id: '+JSON.stringify(projectStore));
+  await projectPhone.waitForFunction(id=>document.querySelector('#projectSelect')?.value===id&&document.querySelector('#projectName')?.value==='SYNC COPY',activeAfterSave,{timeout:8000});
+  const phoneFollow=await projectPhone.evaluate(()=>window.sagiProjectSyncDiagnostic());
+  assert(phoneFollow.activeMatchProjectId===activeAfterSave&&phoneFollow.projectCount===2,'phone did not follow desktop active project: '+JSON.stringify(phoneFollow));
+  assert(projectPosts.length===1,'passive phone project follow caused a reverse write: '+JSON.stringify(projectPosts));
+  await projectPhone.click('#projectDeleteBtn');
+  await projectDesktop.waitForFunction(()=>document.querySelector('#projectSelect')?.options.length===2,null,{timeout:8000});
+  const afterDelete=await projectDesktop.evaluate(()=>window.sagiProjectSyncDiagnostic());
+  assert(projectStore.projects.length===1&&projectStore.activeProjectId===''&&afterDelete.projectCount===1,'project deletion did not converge across controllers: '+JSON.stringify({projectStore,afterDelete}));
+  assert(projectPosts.length===2,'project sync wrote more than the two explicit operator mutations: '+JSON.stringify(projectPosts));
+  await Promise.all([projectDesktopContext.close(),projectPhoneContext.close()]);
+  graphics={...authoritative,commandId:'project_sync_restore',revision:(Number(authoritative.revision)||0)+80,updatedAt:new Date().toISOString(),event:{type:'CLEAR_EVENT'}};
+
   console.log('TEST 12: accelerated long-session identity soak keeps names/scores stable');
   const soak=await page.evaluate(()=>window.sagiMatchdaySoakDiagnostic(5000));
   assert(soak.home==='乌苏叶克备'&&soak.away==='IPF'&&soak.mirrorHome==='乌苏叶克备'&&soak.mirrorAway==='IPF'&&soak.score==='6','accelerated long-session soak drifted state: '+JSON.stringify(soak));
   await page.screenshot({path:'selftest-artifacts/13-long-session-soak.png'});
 
   assert(pageErrors.length===0,'browser page errors: '+pageErrors.join(' | '));
-  const report={ok:true,build:'V4.31.0',testedAt:new Date().toISOString(),tests:['compact one-row full-name scorebug + SAGI signature palette/tag + unified score pair + restrained score roll + clock-only regular halves + conditional states','HOME goal enlarged HOME crest + complete GOAL + lower player card + collapse','AWAY goal enlarged AWAY crest','yellow/red referee-card shape + event colors + control icons','penalty >5 rounds/sudden death/miss/scores','two-camera Input 1 -> Input 2','event-logo replay stinger visual','manual replay stinger IN -> Input 4 -> OUT -> Input 1','stored project load wins over stale Bridge + optional time/venue do not block READY','compact project index rehydrates full photos from IndexedDB with empty Bridge list','clock-only refresh avoids repeated heavy match-control repaints','regular scorebug always uses canonical full team names even when backup aliases exist','mobile match control mirrors current fixture identity and legacy fields are read-only','transient LAN failure retries automatically and records last-good state','rapid score writes are serialized under deliberate network reordering','duplicate operator events are gated before double-counting','reopen recovery keeps newer local same-fixture state over stale Bridge','in-match health check is read-only and cannot mutate on-air state','vMix output ignores stale lower revisions within the same fixture','online/resume recovery repairs score/name/color/exceptional-state drift','Browser Input watchdog holds last good frame during longer outage and self-heals','fresh startup can atomically recover Bridge fixture identity when no local snapshot exists','isolated desktop and phone controllers follow one Bridge revision with zero passive ping-pong writes','accelerated 5000-cycle long-session identity soak'],vmixCommands:cuts};
+  const report={ok:true,build:'V4.31.0',testedAt:new Date().toISOString(),tests:['compact one-row full-name scorebug + SAGI signature palette/tag + unified score pair + restrained score roll + clock-only regular halves + conditional states','HOME goal enlarged HOME crest + complete GOAL + lower player card + collapse','AWAY goal enlarged AWAY crest','yellow/red referee-card shape + event colors + control icons','penalty >5 rounds/sudden death/miss/scores','two-camera Input 1 -> Input 2','event-logo replay stinger visual','manual replay stinger IN -> Input 4 -> OUT -> Input 1','stored project load wins over stale Bridge + optional time/venue do not block READY','compact project index rehydrates full photos from IndexedDB with empty Bridge list','clock-only refresh avoids repeated heavy match-control repaints','regular scorebug always uses canonical full team names even when backup aliases exist','mobile match control mirrors current fixture identity and legacy fields are read-only','transient LAN failure retries automatically and records last-good state','rapid score writes are serialized under deliberate network reordering','duplicate operator events are gated before double-counting','reopen recovery keeps newer local same-fixture state over stale Bridge','in-match health check is read-only and cannot mutate on-air state','vMix output ignores stale lower revisions within the same fixture','online/resume recovery repairs score/name/color/exceptional-state drift','Browser Input watchdog holds last good frame during longer outage and self-heals','fresh startup can atomically recover Bridge fixture identity when no local snapshot exists','isolated desktop and phone controllers follow one Bridge revision with zero passive ping-pong writes','desktop and phone share one Bridge-authoritative project list and active project','accelerated 5000-cycle long-session identity soak'],vmixCommands:cuts};
   fs.writeFileSync('selftest-artifacts/report.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
  }catch(e){
   fs.mkdirSync('selftest-artifacts',{recursive:true});try{await page.screenshot({path:'selftest-artifacts/FAIL.png',fullPage:true})}catch{}
