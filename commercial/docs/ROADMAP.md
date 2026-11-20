@@ -228,3 +228,7 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 ## 2026-11-20 — Complete fixture history retention
 - Removed reducer/hydration caps on event log, replay markers and penalty history to preserve complete new-fixture records. Commits: ca09091, 2a84211.
 - Added regression assertions for 1002 events/markers after serialization and 205 penalty attempts. Runtime/CI not yet verified. Previously truncated histories are not reconstructed; full-state journal size and serialization costs remain endurance risks. Export UI and durable indexed ledger remain open.
+
+## 2026-11-20 — Auditable score corrections
+- SCORE_ADJUST now records before/after and requested/applied delta in the canonical event history without creating a replay marker. Reject non-safe-integer or out-of-range deltas (absolute maximum 100 per command). Commits: 8686bf5, bf668e9.
+- Added reducer assertions for clamped correction, duplicate retries, invalid deltas and unchanged replay markers. Runtime/CI not verified; historical unlogged corrections cannot be reconstructed from event history alone. Consumers must recognize the new event type before live deployment. No new dependencies.
