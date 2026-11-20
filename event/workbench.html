@@ -69,7 +69,7 @@ button,input{font:inherit}button{touch-action:manipulation}.w{max-width:920px;ma
     <div class="card">
       <div class="stepTitle"><div class="stepNo">4</div><div><h2>生成赛事</h2><small>生成后自动进入比赛中心</small></div></div>
       <div id="planSummary" class="plan"></div>
-      <button id="createBtn" class="btn pri wide" onclick="createEvent()">生成赛事</button>
+      <button id="createBtn" class="btn pri wide" type="button" onclick="createEventTap(this)">生成赛事</button>
       <div class="muted" style="margin-top:8px">已有赛果时重新生成会先要求确认，避免误删比赛数据。</div>
     </div>
   </section>
@@ -117,6 +117,13 @@ button,input{font:inherit}button{touch-action:manipulation}.w{max-width:920px;ma
 <div style="text-align:center;color:#5f5f5f;font-size:9px;padding:4px 12px 88px">Powered by SAGI SPORTS · 基础赛事管理永久免费</div>
 
 <script>
+/* Mobile compatibility: support older Android/embedded browser engines */
+if(!Number.isInteger){Number.isInteger=function(n){return typeof n==='number'&&isFinite(n)&&Math.floor(n)===n}}
+if(!Array.prototype.find){Array.prototype.find=function(fn,ctx){for(var i=0;i<this.length;i++){if(fn.call(ctx,this[i],i,this))return this[i]}}}
+if(!Array.from){Array.from=function(x){return Array.prototype.slice.call(x)}}
+if(!Object.values){Object.values=function(o){var a=[];for(var k in o){if(Object.prototype.hasOwnProperty.call(o,k))a.push(o[k])}return a}}
+if(!String.prototype.padStart){String.prototype.padStart=function(len,pad){var s=String(this),p=pad===undefined?' ':String(pad);while(s.length<len)s=p+s;return s.slice(-len)}}
+if(typeof NodeList!=='undefined'&&!NodeList.prototype.forEach){NodeList.prototype.forEach=Array.prototype.forEach}
 var KEY='sagi_event_v11';
 var DEFAULT_TEAMS=['球队1','球队2','球队3','球队4','球队5','球队6','球队7','球队8'];
 var FORMATS={
@@ -134,7 +141,7 @@ function msg(t){var e=q('toast');if(!e)return;e.textContent=t;e.style.display='b
 function persist(){try{if(typeof localStorage!=='undefined')localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 function normalizeState(x){var n=freshState();if(!x||typeof x!=='object')return n;n.name=String(x.name||'');n.loc=String(x.loc||'');n.date=String(x.date||'');n.fmt=FORMATS[x.fmt]?x.fmt:'groups';n.teams=Array.isArray(x.teams)?x.teams.slice(0,8).map(function(v,i){return String(v||('球队'+(i+1)))}):DEFAULT_TEAMS.slice();while(n.teams.length<8)n.teams.push('球队'+(n.teams.length+1));n.matches=Array.isArray(x.matches)?x.matches:[];n.events=x.events&&typeof x.events==='object'?x.events:{};n.champ=Number.isInteger(x.champ)?x.champ:null;return n}
 function load(){try{var raw=typeof localStorage!=='undefined'?localStorage.getItem(KEY):null;if(raw)S=normalizeState(JSON.parse(raw))}catch(e){S=freshState()}selectedFmt=FORMATS[S.fmt]?S.fmt:'groups';renderAll()}
-function tab(n,b){if(typeof document==='undefined')return;document.querySelectorAll('.sec').forEach(function(x){x.classList.remove('on')});var sec=q('s'+n);if(sec)sec.classList.add('on');document.querySelectorAll('.tabs button').forEach(function(x){x.classList.remove('on')});var btn=b||document.querySelector('.tabs button[data-tab="'+n+'"]');if(btn)btn.classList.add('on');if(n===3)renderLive();window.scrollTo({top:0,behavior:'smooth'})}
+function tab(n,b){if(typeof document==='undefined')return;document.querySelectorAll('.sec').forEach(function(x){x.classList.remove('on')});var sec=q('s'+n);if(sec)sec.classList.add('on');document.querySelectorAll('.tabs button').forEach(function(x){x.classList.remove('on')});var btn=b||document.querySelector('.tabs button[data-tab="'+n+'"]');if(btn)btn.classList.add('on');if(n===3)renderLive();try{window.scrollTo(0,0)}catch(e){}}
 function selectFormat(fmt){if(!FORMATS[fmt])return;selectedFmt=fmt;renderFormatChoice();renderPlan()}
 function renderFormatChoice(){if(typeof document==='undefined')return;document.querySelectorAll('.formatCard').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-fmt')===selectedFmt)})}
 function renderPlan(){var f=FORMATS[selectedFmt]||FORMATS.groups;var box=q('planSummary'),btn=q('createBtn');if(box)box.innerHTML='<div class="planline"><span>当前赛制</span><b>'+esc(f.label)+'</b></div><div class="planline"><span>预计比赛</span><b>'+esc(f.count)+'</b></div><div class="planline"><span>流程</span><b>'+esc(f.desc)+'</b></div>';if(btn)btn.textContent='生成赛事 · '+f.count}
@@ -168,7 +175,44 @@ function setScore(id,k,v){var m=by(id);if(!m)return;m[k]=v===''?null:Math.max(0,
 function clearScore(id){var m=by(id);if(!m)return;m.hs=null;m.as=null;m.status='pending';if(S.fmt==='double')advanceDouble();if(S.fmt==='groups')advanceGroups();persist();renderAll();msg('比分已清除')}
 function visible(){return Array.isArray(S.matches)?S.matches.filter(function(m){return m.active!==false}):[]}
 function hasResults(){return visible().some(function(m){return m.hs!=null||m.as!=null||m.status==='done'})||Object.keys(S.events||{}).length>0}
-function createEvent(){try{var a=readTeams(),err=validateTeams(a);if(err){msg(err);return}if(hasResults()&&typeof confirm!=='undefined'&&!confirm('当前赛事已有比分或事件。重新生成会清空这些比赛数据，确定继续？'))return;S.name=q('ename').value.trim()||'未命名赛事';S.loc=q('loc').value.trim();S.date=q('date').value;S.fmt=selectedFmt;S.teams=a;S.events={};S.champ=null;if(S.fmt==='groups')makeGroups();else if(S.fmt==='round')makeRound();else if(S.fmt==='double')makeDouble();else throw new Error('赛制无效');persist();renderAll();tab(1);msg('赛事已生成 · '+visible().length+'场')}catch(e){msg('生成失败：'+(e&&e.message?e.message:e))}}
+var createArmed=false,createArmTimer=null;
+function createEventTap(btn){
+  try{if(btn){btn.disabled=true;btn.textContent='正在生成…'}}catch(e){}
+  setTimeout(function(){
+    var ok=false;
+    try{ok=createEventCore()}catch(e){msg('生成失败：'+(e&&e.message?e.message:e))}
+    var b=q('createBtn');
+    if(b){b.disabled=false;if(ok)b.textContent='已生成 · 查看比赛';else if(!createArmed)renderPlan()}
+  },20)
+}
+function createEventCore(){
+  var a=readTeams(),err=validateTeams(a);
+  if(err){msg(err);return false}
+  if(hasResults()&&!createArmed){
+    createArmed=true;
+    var b=q('createBtn');if(b)b.textContent='再次点击 · 确认重新生成';
+    msg('已有比赛数据，再点一次确认重新生成');
+    clearTimeout(createArmTimer);
+    createArmTimer=setTimeout(function(){createArmed=false;renderPlan()},5000);
+    return false
+  }
+  createArmed=false;clearTimeout(createArmTimer);
+  S.name=q('ename').value.trim()||'未命名赛事';
+  S.loc=q('loc').value.trim();
+  S.date=q('date').value;
+  S.fmt=selectedFmt;
+  S.teams=a;S.events={};S.champ=null;
+  if(S.fmt==='groups')makeGroups();
+  else if(S.fmt==='round')makeRound();
+  else if(S.fmt==='double')makeDouble();
+  else throw new Error('赛制无效');
+  persist();
+  renderAll();
+  tab(1);
+  msg('赛事已生成 · '+visible().length+'场');
+  return true
+}
+function createEvent(){return createEventCore()}
 function statusText(m){if(!Number.isInteger(m.home)||!Number.isInteger(m.away))return ['等待晋级','wait'];if(isElim(m)&&m.hs!=null&&m.as!=null&&m.hs===m.as)return ['需要决胜','tie'];if(m.status==='done')return ['已结束','done'];return ['待开赛','']}
 function renderMatches(){var box=q('matches');if(!box)return;var a=visible();if(!a.length){box.innerHTML='<div class="empty">还没有比赛。<br>返回“赛事”选择赛制并生成赛事。</div>';return}var groups={};a.forEach(function(m){(groups[m.stage]||(groups[m.stage]=[])).push(m)});var out='';Object.keys(groups).forEach(function(stage){out+='<div class="stageTitle">'+esc(stage)+'</div>';groups[stage].forEach(function(m){var dis=!(Number.isInteger(m.home)&&Number.isInteger(m.away)),st=statusText(m);out+='<div class="match"><div class="mh"><span>'+esc(m.source||m.id)+'</span><span class="status '+st[1]+'">'+st[0]+'</span></div><div class="sc"><div class="home">'+esc(teamName(m.home))+'</div><input inputmode="numeric" '+(dis?'disabled':'')+' value="'+(m.hs==null?'':m.hs)+'" onchange="setScore(\''+m.id+'\',\'hs\',this.value)"><span>:</span><input inputmode="numeric" '+(dis?'disabled':'')+' value="'+(m.as==null?'':m.as)+'" onchange="setScore(\''+m.id+'\',\'as\',this.value)"><div class="away">'+esc(teamName(m.away))+'</div></div><div class="matchFoot"><span class="muted">'+(dis?'等待前序比赛结果':'录入比分后自动保存')+'</span><button class="mini" onclick="clearScore(\''+m.id+'\')">清比分</button></div></div>'})});box.innerHTML=out}
 function tableHtml(title,rows){return '<div class="card"><h2 style="font-size:15px;margin:0 0 9px">'+esc(title)+'</h2><div class="tblwrap"><table class="tbl"><tr><th>#</th><th>球队</th><th>赛</th><th>胜</th><th>平</th><th>负</th><th>净</th><th>分</th></tr>'+rows.map(function(x,i){return '<tr><td>'+(i+1)+'</td><td>'+esc(teamName(x.i))+'</td><td>'+x.p+'</td><td>'+x.w+'</td><td>'+x.d+'</td><td>'+x.l+'</td><td>'+x.gd+'</td><td><b>'+x.pts+'</b></td></tr>'}).join('')+'</table></div></div>'}
