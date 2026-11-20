@@ -2487,7 +2487,7 @@ async function recoverMatchdayFromBridge(showNote=false,opts={}){
      }
      if(mdApplyRecovered(x,!!opts.allowIdentityTakeover)){
        if(opts.preferNewest)mdRecoveryMetrics.bridgeWins++;
-       mdPublishRevision=Math.max(mdPublishRevision,remoteRevision);mdLastAckRevision=Math.max(mdLastAckRevision,remoteRevision);
+       mdPublishRevision=remoteRevision;mdLastAckRevision=remoteRevision;matchdayState.revision=remoteRevision;
        mdLocalRecoveryStamp=Math.max(mdLocalRecoveryStamp||0,remoteStamp);
        refreshMatchdayUI();mdRenderLog();mdPersist();
        if(showNote){vdSave();if(matchdayState.overlayVisible)publishVmixDirector('OverlayInput'+vmixDirectorSettings.overlay+'In',vmixDirectorSettings.graphics,0,'RESTORE 图形开启');else publishVmixDirector('OverlayInput'+vmixDirectorSettings.overlay+'Out','',0,'RESTORE 图形关闭');note('已从 Bridge 恢复比赛状态与 Overlay')}
@@ -2634,7 +2634,7 @@ async function mdConsistencyCheck(force=false){
   const differs=mdConsistencyComparable(remote)!==mdConsistencyComparable(local);
   if(remoteRevision!==localRevision||differs){
    if(mdApplyRecovered(remote,false)){
-    mdPublishRevision=Math.max(mdPublishRevision,remoteRevision);mdLastAckRevision=Math.max(mdLastAckRevision,remoteRevision);
+    mdPublishRevision=remoteRevision;mdLastAckRevision=remoteRevision;matchdayState.revision=remoteRevision;
     mdLocalRecoveryStamp=Math.max(mdLocalRecoveryStamp||0,mdRecoveryTimestamp(remote));
     mdRecoveryMetrics.bridgeFollows++;mdRecoveryMetrics.lastReason='BRIDGE_FOLLOW';mdRecoveryMetrics.lastRecoveryAt=Date.now();
     refreshMatchdayUI();refreshMatchdayPlayers();mdRenderLog();mdPersist();

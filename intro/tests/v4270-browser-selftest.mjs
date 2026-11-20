@@ -486,6 +486,18 @@ server.listen(PORT,'127.0.0.1',async()=>{
   assert(matchdayPosts.length===postsBeforeBridgeAuthority,'reopen Bridge follow produced forbidden reverse POST: '+JSON.stringify({before:postsBeforeBridgeAuthority,after:matchdayPosts.length}));
   assert(reopenAfter.diag.liveAuthority==='BRIDGE'&&Number(reopenAfter.diag.lastAckRevision)===5,'Bridge authority diagnostics missing: '+JSON.stringify(reopenAfter.diag));
 
+  console.log('TEST 10D2: an already-open controller with a higher ack converges its revision down to Bridge without reverse write');
+  await page.click('#mdHomePlus');await wait(900);
+  const highAck=await page.evaluate(()=>window.sagiMatchdayReliabilityDiagnostic().lastAckRevision);
+  assert(Number(highAck)>5,'failed to create a higher local acknowledged revision: '+highAck);
+  const postsBeforeDownConverge=matchdayPosts.length;
+  graphics={...graphics,commandId:'bridge_lower_revision_authority',revision:3,homeScore:1,awayScore:1,updatedAt:new Date().toISOString(),event:{type:'CLEAR_EVENT'}};
+  await page.evaluate(()=>window.sagiMatchdayConsistencyCheck(true));
+  await page.waitForFunction(()=>window.sagiMatchdayReliabilityDiagnostic?.().lastAckRevision===3&&document.querySelector('#mdHomeScore')?.textContent==='1'&&document.querySelector('#mdAwayScore')?.textContent==='1',null,{timeout:6000});
+  const downConverged=await page.evaluate(()=>({diag:window.sagiMatchdayReliabilityDiagnostic(),home:document.querySelector('#mdHomeScore')?.textContent,away:document.querySelector('#mdAwayScore')?.textContent}));
+  assert(downConverged.diag.lastAckRevision===3&&downConverged.diag.liveAuthority==='BRIDGE','controller revision did not converge to Bridge: '+JSON.stringify(downConverged));
+  assert(matchdayPosts.length===postsBeforeDownConverge,'revision convergence produced forbidden reverse POST: '+JSON.stringify({before:postsBeforeDownConverge,after:matchdayPosts.length}));
+
   console.log('TEST 10E: in-match health check is read-only and cannot alter on-air state');
   const healthBefore={commandId:graphics.commandId,homeScore:graphics.homeScore,awayScore:graphics.awayScore,posts:matchdayPosts.length,cuts:vmixCommands.length};
   const liveHealth=await page.evaluate(()=>window.sagiLiveHealthCheck());
