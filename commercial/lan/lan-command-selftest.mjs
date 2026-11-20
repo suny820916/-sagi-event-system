@@ -20,6 +20,11 @@ const g = createLanGateway({
     return result;
   },
 });
+assert.equal(g.server.requestTimeout, 15_000);
+assert.equal(g.server.headersTimeout, 10_000);
+assert.equal(g.server.timeout, 20_000);
+assert.equal(g.server.keepAliveTimeout, 5_000);
+assert.equal(g.server.maxRequestsPerSocket, 100);
 const { port } = await g.listen();
 const base = `http://127.0.0.1:${port}`;
 const post = (body, token) => fetch(base + '/api/v1/lan/command', {
