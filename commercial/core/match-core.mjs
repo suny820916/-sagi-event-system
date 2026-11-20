@@ -96,7 +96,7 @@ export function hydrateMatchState(raw) {
     eventLog: Array.isArray(raw.eventLog) ? clone(raw.eventLog).slice(-1000) : [],
     replayMarkers: Array.isArray(raw.replayMarkers) ? clone(raw.replayMarkers).slice(-1000) : [],
     processedCommandIds: Array.isArray(raw.processedCommandIds)
-      ? raw.processedCommandIds.map(String).filter(Boolean).slice(-2048)
+      ? raw.processedCommandIds.map(String).filter(Boolean)
       : [],
   };
 
@@ -275,9 +275,6 @@ export function applyCommand(currentState, command) {
 
   state.revision += 1;
   state.processedCommandIds.push(commandId);
-  if (state.processedCommandIds.length > 2048) {
-    state.processedCommandIds = state.processedCommandIds.slice(-2048);
-  }
   state.updatedAt = String(command.createdAt ?? new Date().toISOString());
 
   return { state: hydrateMatchState(state), event, duplicate: false };
