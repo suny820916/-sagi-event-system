@@ -9,7 +9,11 @@ try {
   let r = await fetch(base + '/api/v1/lan/health');
   assert.equal(r.status, 200);
   r = await fetch(base + '/api/v1/lan/issue', { method: 'POST' });
+  assert.equal(r.status, 415);
+  assert.equal((await r.json()).error, 'JSON_REQUIRED');
+  r = await fetch(base + '/api/v1/lan/issue', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' });
   assert.equal(r.status, 403);
+  assert.equal((await r.json()).error, 'DESKTOP_APPROVAL_INTEGRATION_REQUIRED');
   r = await fetch(base + '/api/v1/lan/state');
   assert.equal(r.status, 401);
   const code = g.pairing.issue({ localOperatorApproved: true }).code;
