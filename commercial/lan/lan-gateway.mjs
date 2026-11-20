@@ -56,9 +56,11 @@ export function createLanGateway({
     try {
       // Host is an authority, not a URL: reject credentials, paths and whitespace.
       if (!hostHeader || /[@\/\\?#\s]/.test(hostHeader)) throw new Error('BAD_HOST');
+      const authority = /^(?:\[[0-9a-f:.]+\]|[a-z0-9.-]+):([0-9]{1,5})$/i.exec(hostHeader);
+      if (!authority) throw new Error('PORT_REQUIRED');
+      if (Number(authority[1]) !== server.address()?.port) throw new Error('WRONG_PORT');
       const parsed = new URL('http://' + hostHeader);
-      if (!parsed.port || !/^\d+$/.test(parsed.port)) throw new Error('PORT_REQUIRED');
-      if (Number(parsed.port) !== server.address()?.port) throw new Error('WRONG_PORT');
+      if (parsed.hostname + ':' + authority[1] !== hostHeader.toLowerCase()) throw new Error('NON_CANONICAL_HOST');
       requestHost = parsed.hostname.replace(/^\[/, '').replace(/\]$/, '');
     }
     catch { return reply(res, 400, { error: 'INVALID_HOST' }); }
@@ -74,7 +76,8 @@ export function createLanGateway({
       try {
         const parsedOrigin = new URL(origin);
         valid = parsedOrigin.protocol === 'http:' &&
-          parsedOrigin.origin === 'http://' + hostHeader &&
+          origin === parsedOrigin.origin &&
+          parsedOrigin.origin === new URL('http://' + hostHeader).origin &&
           parsedOrigin.pathname === '/' && !parsedOrigin.search && !parsedOrigin.hash &&
           !parsedOrigin.username && !parsedOrigin.password;
       } catch { /* reject */ }
