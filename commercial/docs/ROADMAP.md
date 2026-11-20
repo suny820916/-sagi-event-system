@@ -214,3 +214,8 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Local Engine reserves an atomic directory lock before loading state; a competing engine for the same data directory fails closed. Graceful shutdown drains server and command queue before removing ownership. Failed startup releases ownership.
 - Extended recovery self-test with competing engine and listener startup failure cases. Commits: 0f2b3af, b1744e7.
 - Crash residue intentionally blocks restart; safe offline operator recovery, direct store writer coordination, multiprocess tests and Windows verification remain required. Runtime tests not confirmed. No new dependencies.
+
+## 2026-11-20 — Match clock and shootout identity corrections
+- Stop clock on HALF_TIME and FINISH_PENALTIES, preserving elapsed seconds. Continuous authoritative clock progression remains unimplemented.
+- Derive penalty attempt IDs from monotonic event sequence, not capped history length, preventing new collisions after 200 attempts. Existing historical IDs are not migrated.
+- Added reducer regression assertions for 205 attempts and clock stopping to snapshot-failure self-test. Commits: 473f0c5, 323816f. Runtime/CI and Windows validation pending; no new dependencies. Engine crash-lock recovery remains open.
