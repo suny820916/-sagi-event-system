@@ -3092,7 +3092,7 @@ async function mdPostMatchdayWithRetry(state){
    lastError=e;mdPublishMetrics.lastErrorAt=Date.now();
    if(String(e&&e.message||e).includes('LAN 409')){
     try{
-     const recovered=await recoverMatchdayFromBridge(false,{preferNewest:false,allowIdentityTakeover:false});
+     const recovered=await recoverMatchdayFromBridge(false,{preferNewest:false,allowIdentityTakeover:true});
      if(recovered){mdPublishMetrics.recovered++;mdPublishMetrics.lastAttempts=i+1;return{ok:true,attempts:i+1,recovered:true}}
     }catch(_){}
     break
