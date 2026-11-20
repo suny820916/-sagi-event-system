@@ -18,7 +18,7 @@ button,input{font:inherit}button{touch-action:manipulation}.w{max-width:920px;ma
 .btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.btn{border:1px solid #333;border-radius:12px;padding:11px 12px;background:#242424;color:#fff;font-weight:750}.btn.ok{background:#19382d;border-color:#285542}.btn.bad{background:#3d2020;border-color:#5e3030}.btn.pri{background:linear-gradient(135deg,#b99548,#e3c66e);border:0;color:#111}.btn.wide{width:100%;padding:14px;font-size:15px}.btn:active{transform:scale(.985)}
 .plan{background:#0b0b0b;border:1px solid #2d2d2d;border-radius:14px;padding:11px;margin-bottom:10px}.plan b{color:#f0d98f}.planline{display:flex;justify-content:space-between;gap:10px;font-size:11px;margin:4px 0}.planline span:first-child{color:#777}
 .sec{display:none}.sec.on{display:block}.sectionHead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:3px 1px 10px}.sectionHead h2{font-size:18px;margin:0}.sectionHead small{color:#777}
-.stageTitle{font-size:11px;color:var(--g);margin:15px 2px 7px;font-weight:850}.match{background:#0c0c0c;border:1px solid #292929;border-radius:14px;padding:11px;margin:7px 0}.mh{display:flex;justify-content:space-between;align-items:center;color:#888;font-size:10px;margin-bottom:9px}.status{border:1px solid #333;border-radius:999px;padding:4px 7px}.status.done{color:#8bd8b4;border-color:#285542}.status.wait{color:#777}.status.tie{color:#f1c77b;border-color:#674c25}.sc{display:grid;grid-template-columns:minmax(0,1fr) 48px 15px 48px minmax(0,1fr);gap:5px;align-items:center}.sc input{width:100%;text-align:center;background:#111;color:#fff;border:1px solid #333;border-radius:10px;padding:8px 3px;font-size:16px}.sc input:disabled{opacity:.35}.home{text-align:right;font-weight:700;overflow:hidden;text-overflow:ellipsis}.away{text-align:left;font-weight:700;overflow:hidden;text-overflow:ellipsis}.matchFoot{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px}.mini{border:1px solid #303030;background:#171717;color:#aaa;border-radius:9px;padding:6px 8px;font-size:9px}
+.stageTitle{font-size:11px;color:var(--g);margin:15px 2px 7px;font-weight:850}.scheduleMeta{display:flex;justify-content:space-between;gap:8px;align-items:center;margin:4px 1px 10px}.scheduleMeta b{font-size:11px;color:#d9c88f}.scheduleMeta span{font-size:10px;color:#777}.gapGood{color:#72c89f!important}.gapWarn{color:#e4ad67!important}.restBreak{margin:9px 0;padding:9px 10px;border:1px dashed #66542b;border-radius:12px;background:#17140d;color:#d9c88f;font-size:10px;text-align:center}.match{background:#0c0c0c;border:1px solid #292929;border-radius:14px;padding:11px;margin:7px 0}.mh{display:flex;justify-content:space-between;align-items:center;color:#888;font-size:10px;margin-bottom:9px}.status{border:1px solid #333;border-radius:999px;padding:4px 7px}.status.done{color:#8bd8b4;border-color:#285542}.status.wait{color:#777}.status.tie{color:#f1c77b;border-color:#674c25}.sc{display:grid;grid-template-columns:minmax(0,1fr) 48px 15px 48px minmax(0,1fr);gap:5px;align-items:center}.sc input{width:100%;text-align:center;background:#111;color:#fff;border:1px solid #333;border-radius:10px;padding:8px 3px;font-size:16px}.sc input:disabled{opacity:.35}.home{text-align:right;font-weight:700;overflow:hidden;text-overflow:ellipsis}.away{text-align:left;font-weight:700;overflow:hidden;text-overflow:ellipsis}.matchFoot{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px}.mini{border:1px solid #303030;background:#171717;color:#aaa;border-radius:9px;padding:6px 8px;font-size:9px}
 .tblwrap{overflow-x:auto}.tbl{width:100%;border-collapse:collapse;font-size:11px;min-width:470px}.tbl th,.tbl td{border-bottom:1px solid #282828;padding:8px 5px;text-align:center}.tbl th:nth-child(2),.tbl td:nth-child(2){text-align:left}.champ{border:1px solid #68572c;background:#211b10;border-radius:14px;padding:12px;color:#efd990;margin-bottom:10px}.champ b{display:block;font-size:21px;margin-top:3px}.round{border-left:2px solid #493b23;padding-left:8px;margin:11px 0}.round h3{font-size:11px;color:var(--g);margin:4px 0}
 .liveScore{text-align:center;font-size:44px;color:var(--g);font-weight:850;margin:8px 0}.liveTeams{display:grid;grid-template-columns:1fr 1fr;gap:12px;text-align:center;font-weight:800}.liveActions{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin-top:12px}.liveActions .btn{padding:11px 6px}
 .diag{display:flex;align-items:flex-start;gap:10px}.diagDot{width:12px;height:12px;border-radius:50%;margin-top:3px;background:#6d6d6d}.diag.pass .diagDot{background:#37b477;box-shadow:0 0 0 5px #37b47716}.diag.fail .diagDot{background:#d45b5b}.diag b{display:block}.diag pre{white-space:pre-wrap;font:10px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;color:#8d8d8d;margin:6px 0 0}
@@ -150,17 +150,83 @@ function readTeams(){return S.teams.map(function(_,i){var el=q('t'+i),v=el?el.va
 function validateTeams(a){if(!Array.isArray(a)||a.length!==8)return '当前版本需要8支球队';var seen={};for(var i=0;i<a.length;i++){var k=a[i].trim().toLowerCase();if(!k)return '球队名称不能为空';if(seen[k])return '球队名称不能重复：'+a[i];seen[k]=1}return ''}
 function saveTeams(){try{var a=readTeams(),err=validateTeams(a);if(err){msg(err);return false}S.teams=a;persist();renderHomeMeta();msg('球队已保存');return true}catch(e){msg('保存失败：'+(e&&e.message?e.message:e));return false}}
 function shuffleTeams(){var a=readTeams(),err=validateTeams(a);if(err){msg(err);return}for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),z=a[i];a[i]=a[j];a[j]=z}S.teams=a;persist();renderTeams();msg('抽签完成，顺序已更新')}
-function M(id,stage,h,a,group,source){return {id:id,stage:stage,home:h,away:a,group:group||'',source:source||'',hs:null,as:null,status:'pending',active:true}}
-function makeGroups(){S.matches=[];var gp=[[[0,3],[1,2]],[[0,2],[3,1]],[[0,1],[2,3]]];[['A',[0,1,2,3]],['B',[4,5,6,7]]].forEach(function(g){gp.forEach(function(round,ri){round.forEach(function(p,pi){S.matches.push(M(g[0]+'R'+(ri+1)+'M'+(pi+1),g[0]+'组 · 第'+(ri+1)+'轮',g[1][p[0]],g[1][p[1]],g[0]))})})});S.matches.push(M('SF1','半决赛',null,null,'','A1 vs B2'));S.matches.push(M('SF2','半决赛',null,null,'','B1 vs A2'));S.matches.push(M('F','决赛',null,null,'','半决赛胜者'))}
-function makeRound(){S.matches=[];var a=[0,1,2,3,4,5,6,7],n=0;for(var r=0;r<7;r++){for(var i=0;i<4;i++){S.matches.push(M('R'+(++n),'第'+(r+1)+'轮',a[i],a[7-i],'LEAGUE'))}a=[a[0],a[7]].concat(a.slice(1,7))}}
+function M(id,stage,h,a,group,source){return {id:id,stage:stage,home:h,away:a,group:group||'',source:source||'',hs:null,as:null,status:'pending',active:true,restBefore:false}}
+function sharesTeam(a,b){
+  if(!a||!b)return false;
+  if(!Number.isInteger(a.home)||!Number.isInteger(a.away)||!Number.isInteger(b.home)||!Number.isInteger(b.away))return false;
+  return a.home===b.home||a.home===b.away||a.away===b.home||a.away===b.away
+}
+function orderRoundAgainstPrevious(round,prev){
+  if(!round||round.length<2||!prev)return round||[];
+  for(var i=0;i<round.length;i++){
+    if(!sharesTeam(prev,round[i])){
+      if(i!==0){var x=round.splice(i,1)[0];round.unshift(x)}
+      break
+    }
+  }
+  return round
+}
+function scheduleConflicts(){
+  var a=visible(),bad=[];
+  for(var i=1;i<a.length;i++){
+    if(a[i].restBefore)continue;
+    if(sharesTeam(a[i-1],a[i]))bad.push({index:i,prev:a[i-1],next:a[i]})
+  }
+  return bad
+}
+function scheduleHealth(){
+  var bad=scheduleConflicts();
+  return {ok:bad.length===0,count:bad.length,bad:bad}
+}
+function makeGroups(){
+  S.matches=[];
+  var gp=[[[0,3],[1,2]],[[0,2],[3,1]],[[0,1],[2,3]]];
+  var A=[0,1,2,3],B=[4,5,6,7];
+  for(var r=0;r<3;r++){
+    for(var slot=0;slot<2;slot++){
+      var pa=gp[r][slot],pb=gp[r][slot];
+      S.matches.push(M('AR'+(r+1)+'M'+(slot+1),'A组 · 第'+(r+1)+'轮',A[pa[0]],A[pa[1]],'A'));
+      S.matches.push(M('BR'+(r+1)+'M'+(slot+1),'B组 · 第'+(r+1)+'轮',B[pb[0]],B[pb[1]],'B'));
+    }
+  }
+  S.matches.push(M('SF1','半决赛',null,null,'','A1 vs B2'));
+  S.matches.push(M('SF2','半决赛',null,null,'','B1 vs A2'));
+  S.matches.push(M('F','决赛',null,null,'','半决赛胜者'));
+  by('SF1').restBefore=true;
+  by('F').restBefore=true
+}
+function makeRound(){
+  S.matches=[];
+  var a=[0,1,2,3,4,5,6,7],n=0,prev=null;
+  for(var r=0;r<7;r++){
+    var round=[];
+    for(var i=0;i<4;i++)round.push(M('R'+(++n),'第'+(r+1)+'轮',a[i],a[7-i],'LEAGUE'));
+    round=orderRoundAgainstPrevious(round,prev);
+    for(var j=0;j<round.length;j++)S.matches.push(round[j]);
+    prev=round[round.length-1];
+    a=[a[0],a[7]].concat(a.slice(1,7))
+  }
+}
 function makeDouble(){S.matches=[
- M('W1','胜者组 R1',0,7,'','1号位 vs 8号位'),M('W2','胜者组 R1',3,4,'','4号位 vs 5号位'),M('W3','胜者组 R1',1,6,'','2号位 vs 7号位'),M('W4','胜者组 R1',2,5,'','3号位 vs 6号位'),
- M('W5','胜者组半决赛',null,null,'','W1胜者 vs W2胜者'),M('W6','胜者组半决赛',null,null,'','W3胜者 vs W4胜者'),
- M('L1','败者组 R1',null,null,'','W1负者 vs W2负者'),M('L2','败者组 R1',null,null,'','W3负者 vs W4负者'),
- M('L3','败者组 R2',null,null,'','L1胜者 vs W5负者'),M('L4','败者组 R2',null,null,'','L2胜者 vs W6负者'),
- M('W7','胜者组决赛',null,null,'','W5胜者 vs W6胜者'),M('L5','败者组 R3',null,null,'','L3胜者 vs L4胜者'),M('L6','败者组决赛',null,null,'','L5胜者 vs W7负者'),
- M('GF1','总决赛',null,null,'','胜者组冠军 vs 败者组冠军'),M('GF2','重置决赛',null,null,'','必要时开启')
-];var x=by('GF2');if(x)x.active=false}
+ M('W1','胜者组 R1',0,7,'','1号位 vs 8号位'),
+ M('W2','胜者组 R1',3,4,'','4号位 vs 5号位'),
+ M('W3','胜者组 R1',1,6,'','2号位 vs 7号位'),
+ M('W4','胜者组 R1',2,5,'','3号位 vs 6号位'),
+ M('L1','败者组 R1',null,null,'','W1负者 vs W2负者'),
+ M('L2','败者组 R1',null,null,'','W3负者 vs W4负者'),
+ M('W5','胜者组半决赛',null,null,'','W1胜者 vs W2胜者'),
+ M('W6','胜者组半决赛',null,null,'','W3胜者 vs W4胜者'),
+ M('L3','败者组 R2',null,null,'','L1胜者 vs W5负者'),
+ M('L4','败者组 R2',null,null,'','L2胜者 vs W6负者'),
+ M('W7','胜者组决赛',null,null,'','W5胜者 vs W6胜者'),
+ M('L5','败者组 R3',null,null,'','L3胜者 vs L4胜者'),
+ M('L6','败者组决赛',null,null,'','L5胜者 vs W7负者'),
+ M('GF1','总决赛',null,null,'','胜者组冠军 vs 败者组冠军'),
+ M('GF2','重置决赛',null,null,'','必要时开启')
+];
+by('L6').restBefore=true;
+by('GF1').restBefore=true;
+var x=by('GF2');if(x){x.active=false;x.restBefore=true}}
 function by(id){return S.matches.find(function(m){return m.id===id})}
 function done(m){return !!(m&&m.status==='done'&&m.hs!=null&&m.as!=null&&m.hs!==m.as)}
 function win(id){var m=by(id);return done(m)?(m.hs>m.as?m.home:m.away):null}
@@ -214,7 +280,19 @@ function createEventCore(){
 }
 function createEvent(){return createEventCore()}
 function statusText(m){if(!Number.isInteger(m.home)||!Number.isInteger(m.away))return ['等待晋级','wait'];if(isElim(m)&&m.hs!=null&&m.as!=null&&m.hs===m.as)return ['需要决胜','tie'];if(m.status==='done')return ['已结束','done'];return ['待开赛','']}
-function renderMatches(){var box=q('matches');if(!box)return;var a=visible();if(!a.length){box.innerHTML='<div class="empty">还没有比赛。<br>返回“赛事”选择赛制并生成赛事。</div>';return}var groups={};a.forEach(function(m){(groups[m.stage]||(groups[m.stage]=[])).push(m)});var out='';Object.keys(groups).forEach(function(stage){out+='<div class="stageTitle">'+esc(stage)+'</div>';groups[stage].forEach(function(m){var dis=!(Number.isInteger(m.home)&&Number.isInteger(m.away)),st=statusText(m);out+='<div class="match"><div class="mh"><span>'+esc(m.source||m.id)+'</span><span class="status '+st[1]+'">'+st[0]+'</span></div><div class="sc"><div class="home">'+esc(teamName(m.home))+'</div><input inputmode="numeric" '+(dis?'disabled':'')+' value="'+(m.hs==null?'':m.hs)+'" onchange="setScore(\''+m.id+'\',\'hs\',this.value)"><span>:</span><input inputmode="numeric" '+(dis?'disabled':'')+' value="'+(m.as==null?'':m.as)+'" onchange="setScore(\''+m.id+'\',\'as\',this.value)"><div class="away">'+esc(teamName(m.away))+'</div></div><div class="matchFoot"><span class="muted">'+(dis?'等待前序比赛结果':'录入比分后自动保存')+'</span><button class="mini" onclick="clearScore(\''+m.id+'\')">清比分</button></div></div>'})});box.innerHTML=out}
+function renderMatches(){
+  var box=q('matches');if(!box)return;
+  var a=visible();
+  if(!a.length){box.innerHTML='<div class="empty">还没有比赛。<br>返回“赛事”选择赛制并生成赛事。</div>';return}
+  var health=scheduleHealth();
+  var out='<div class="scheduleMeta"><b>比赛按实际执行顺序排列</b><span class="'+(health.ok?'gapGood':'gapWarn')+'">'+(health.ok?'✓ 已避开背靠背':'⚠ '+health.count+'处连续出场风险')+'</span></div>';
+  for(var i=0;i<a.length;i++){
+    var m=a[i],dis=!(Number.isInteger(m.home)&&Number.isInteger(m.away)),st=statusText(m);
+    if(m.restBefore)out+='<div class="restBreak">强制休息间隔 · 再进行下一场</div>';
+    out+='<div class="match"><div class="mh"><span>赛程 #'+(i+1)+' · '+esc(m.stage)+'</span><span class="status '+st[1]+'">'+st[0]+'</span></div><div class="sc"><div class="home">'+esc(teamName(m.home))+'</div><input inputmode="numeric" '+(dis?'disabled':'')+' value="'+(m.hs==null?'':m.hs)+'" onchange="setScore(\''+m.id+'\',\'hs\',this.value)"><span>:</span><input inputmode="numeric" '+(dis?'disabled':'')+' value="'+(m.as==null?'':m.as)+'" onchange="setScore(\''+m.id+'\',\'as\',this.value)"><div class="away">'+esc(teamName(m.away))+'</div></div><div class="matchFoot"><span class="muted">'+(m.source?esc(m.source)+' · ':'')+(dis?'等待前序比赛结果':'录入比分后自动保存')+'</span><button class="mini" onclick="clearScore(\''+m.id+'\')">清比分</button></div></div>'
+  }
+  box.innerHTML=out
+}
 function tableHtml(title,rows){return '<div class="card"><h2 style="font-size:15px;margin:0 0 9px">'+esc(title)+'</h2><div class="tblwrap"><table class="tbl"><tr><th>#</th><th>球队</th><th>赛</th><th>胜</th><th>平</th><th>负</th><th>净</th><th>分</th></tr>'+rows.map(function(x,i){return '<tr><td>'+(i+1)+'</td><td>'+esc(teamName(x.i))+'</td><td>'+x.p+'</td><td>'+x.w+'</td><td>'+x.d+'</td><td>'+x.l+'</td><td>'+x.gd+'</td><td><b>'+x.pts+'</b></td></tr>'}).join('')+'</table></div></div>'}
 function renderTables(){var box=q('tables');if(!box)return;if(!S.matches.length){box.innerHTML='<div class="empty">生成赛事后，这里会自动出现积分榜或晋级对阵。</div>';return}if(S.fmt==='groups'){box.innerHTML=(S.champ!=null?'<div class="champ">赛事冠军<b>'+esc(teamName(S.champ))+'</b></div>':'')+tableHtml('A组积分',table('A'))+tableHtml('B组积分',table('B'));return}if(S.fmt==='round'){box.innerHTML=tableHtml('单循环积分榜',table('ALL'));return}var groups={};visible().forEach(function(m){(groups[m.stage]||(groups[m.stage]=[])).push(m)});var h=(S.champ!=null?'<div class="champ">赛事冠军<b>'+esc(teamName(S.champ))+'</b></div>':'')+'<div class="card"><h2 style="font-size:15px;margin:0 0 8px">双败晋级</h2>';Object.keys(groups).forEach(function(stage){h+='<div class="round"><h3>'+esc(stage)+'</h3>'+groups[stage].map(function(m){return '<div class="match">'+esc(teamName(m.home))+'　'+(m.hs==null?'-':m.hs)+' : '+(m.as==null?'-':m.as)+'　'+esc(teamName(m.away))+'</div>'}).join('')+'</div>'});box.innerHTML=h+'<p class="muted">败者组冠军若在第一场总决赛击败未尝败绩的胜者组冠军，将自动开启重置决赛。</p></div>'}
 function renderLiveSel(){var el=q('liveSel');if(!el)return;var old=el.value,ready=visible().filter(function(m){return Number.isInteger(m.home)&&Number.isInteger(m.away)});el.innerHTML=ready.map(function(m){return '<option value="'+m.id+'">'+esc(m.stage)+' · '+esc(teamName(m.home))+' vs '+esc(teamName(m.away))+'</option>'}).join('');if(Array.from(el.options).some(function(o){return o.value===old}))el.value=old}
@@ -231,9 +309,9 @@ function copySummary(){var arr=[S.name,S.date,S.loc].filter(Boolean);visible().f
 function clearAll(){if(typeof confirm!=='undefined'&&!confirm('确定清空全部赛事数据？此操作不可撤销。'))return;try{if(typeof localStorage!=='undefined')localStorage.removeItem(KEY)}catch(e){}S=freshState();selectedFmt='groups';renderAll();msg('赛事已清空')}
 function assertTest(cond,name,arr){if(!cond)throw new Error(name);arr.push('PASS · '+name)}
 function runSelfTest(){var backup=JSON.stringify(S),fmt=selectedFmt,res=[];try{
- S=freshState();S.fmt='groups';makeGroups();assertTest(S.matches.length===15,'分组赛生成15场',res);assertTest(S.matches.filter(function(m){return m.group==='A'||m.group==='B'}).length===12,'小组赛12场',res);S.matches.filter(function(m){return m.group==='A'||m.group==='B'}).forEach(function(m){m.hs=1;m.as=0;m.status='done'});advanceGroups();assertTest(Number.isInteger(by('SF1').home)&&Number.isInteger(by('SF2').home),'小组结束自动生成半决赛',res);by('SF1').hs=1;by('SF1').as=0;by('SF1').status='done';by('SF2').hs=1;by('SF2').as=0;by('SF2').status='done';advanceGroups();assertTest(Number.isInteger(by('F').home)&&Number.isInteger(by('F').away),'半决赛后自动生成决赛',res);
- S=freshState();S.fmt='round';makeRound();assertTest(S.matches.length===28,'单循环生成28场',res);var rounds={};S.matches.forEach(function(m){rounds[m.stage]=(rounds[m.stage]||0)+1});assertTest(Object.keys(rounds).length===7&&Object.keys(rounds).every(function(k){return rounds[k]===4}),'单循环7轮×4场',res);
- S=freshState();S.fmt='double';makeDouble();assertTest(visible().length===14&&!by('GF2').active,'双败初始14场',res);var guard=0;while(S.champ==null&&guard++<40){var m=visible().find(function(x){return x.status!=='done'&&Number.isInteger(x.home)&&Number.isInteger(x.away)});if(!m)break;m.hs=1;m.as=0;m.status='done';advanceDouble()}assertTest(S.champ!=null,'双败可自动推进至冠军',res);
+ S=freshState();S.fmt='groups';makeGroups();assertTest(S.matches.length===15,'分组赛生成15场',res);assertTest(scheduleConflicts().length===0,'分组赛赛程避免背靠背',res);assertTest(S.matches.filter(function(m){return m.group==='A'||m.group==='B'}).length===12,'小组赛12场',res);S.matches.filter(function(m){return m.group==='A'||m.group==='B'}).forEach(function(m){m.hs=1;m.as=0;m.status='done'});advanceGroups();assertTest(Number.isInteger(by('SF1').home)&&Number.isInteger(by('SF2').home),'小组结束自动生成半决赛',res);by('SF1').hs=1;by('SF1').as=0;by('SF1').status='done';by('SF2').hs=1;by('SF2').as=0;by('SF2').status='done';advanceGroups();assertTest(Number.isInteger(by('F').home)&&Number.isInteger(by('F').away),'半决赛后自动生成决赛',res);
+ S=freshState();S.fmt='round';makeRound();assertTest(S.matches.length===28,'单循环生成28场',res);assertTest(scheduleConflicts().length===0,'单循环赛程避免背靠背',res);var rounds={};S.matches.forEach(function(m){rounds[m.stage]=(rounds[m.stage]||0)+1});assertTest(Object.keys(rounds).length===7&&Object.keys(rounds).every(function(k){return rounds[k]===4}),'单循环7轮×4场',res);
+ S=freshState();S.fmt='double';makeDouble();assertTest(visible().length===14&&!by('GF2').active,'双败初始14场',res);assertTest(scheduleConflicts().length===0,'双败初始赛程避免背靠背',res);var guard=0;while(S.champ==null&&guard++<40){var m=visible().find(function(x){return x.status!=='done'&&Number.isInteger(x.home)&&Number.isInteger(x.away)});if(!m)break;m.hs=1;m.as=0;m.status='done';advanceDouble()}assertTest(S.champ!=null,'双败可自动推进至冠军',res);
  return {ok:true,tests:res}
  }catch(e){return {ok:false,tests:res,error:e&&e.message?e.message:String(e)}}finally{S=JSON.parse(backup);selectedFmt=fmt}}
 function renderDiagnostics(showToast){var r=runSelfTest();if(typeof window!=='undefined')window.__SAGI_EVENT_SELFTEST__=r;var box=q('selfCheck');if(box)box.innerHTML='<div class="diag '+(r.ok?'pass':'fail')+'"><div class="diagDot"></div><div><b>'+(r.ok?'全部核心逻辑通过':'自检未通过')+'</b><pre>'+esc((r.tests||[]).join('\n')+(r.error?'\nFAIL · '+r.error:''))+'</pre></div></div>';if(showToast)msg(r.ok?'自检通过':'自检失败：'+r.error);return r}
