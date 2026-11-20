@@ -14,7 +14,7 @@ html,body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-sys
 body{min-height:100vh;background:radial-gradient(circle at 75% 0%,#261f12 0,transparent 30%),#080808}
 .wrap{max-width:1060px;margin:auto;padding:26px 16px 54px}
 .top{display:flex;justify-content:space-between;align-items:center;gap:16px}
-.brandmark{display:flex;align-items:center;text-decoration:none}.brandmark img{display:block;width:178px;height:auto}.dot{color:var(--red)}
+.brandmark{display:flex;align-items:center;text-decoration:none;min-width:178px}.brandmark img{display:block;width:178px;height:auto}.brand-fallback{display:none;color:#fff;font-size:24px;font-weight:950;letter-spacing:-1px}.brandmark.broken .brand-fallback{display:block}.brandmark.broken img{display:none}.dot{color:var(--red)}
 .tag{font-size:10px;color:#c9b77d;border:1px solid #564a29;padding:6px 9px;border-radius:999px}
 .hero{padding:72px 0 54px}
 .kicker{font-size:11px;color:var(--gold);font-weight:900;letter-spacing:2px}
@@ -33,7 +33,7 @@ h1{font-size:clamp(42px,9vw,84px);line-height:.95;letter-spacing:-4px;margin:12p
 <body>
 <div class="wrap">
   <header class="top">
-    <a class="brandmark" href="/" aria-label="SAGI FOOTBALL"><img src="/assets/brand/sagi-football-logo.webp" alt="SAGI FOOTBALL"></a>
+    <a class="brandmark" href="/" aria-label="SAGI FOOTBALL"><img src="/assets/brand/sagi-football-logo.webp?v=20261121a" alt="SAGI FOOTBALL" onerror="this.parentNode.classList.add('broken')"><span class="brand-fallback">SAGI<span style="color:#e52231">.</span> FOOTBALL</span></a>
     <div class="tag">FOOTBALL · XINJIANG</div>
   </header>
 
