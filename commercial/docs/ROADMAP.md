@@ -263,3 +263,8 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - SET_CLOCK rejects non-boolean running and non-safe-integer or negative elapsed seconds. SET_PERIOD stops the clock when selecting PRE, HT, ET_BREAK, PEN or FT, retaining elapsed seconds. Commits: e6ce7dd, b26fc5c.
 - Added reducer regression cases to the existing core CI suite. Execution not verified in this run. Clients must send both clock fields with canonical JSON types. Explicit SET_CLOCK remains an operator override; continuous authoritative progression and restart policy are not implemented by this patch.
 - No new runtime dependency or main change. Next: verify CI, reconcile client payloads, establish monotonic clock anchor and restart policy, complete LAN/vMix integration and endurance acceptance.
+
+## 2026-11-21 — Monotonic clock foundation
+- Added dependency-free runtime clock using Node performance.now(), whole-second projection and explicit operator override. A persisted running checkpoint is held paused on startup with recoveryPending; downtime is not silently counted.
+- Added deterministic fake-time self-test for progression, pause, restart hold and invalid input. Commits: 271fe7c, aa43bd4.
+- Verification: source and tests committed; Node/CI execution not confirmed. Not wired into Local Engine or LAN UI. Next: materialize clock checkpoints at durable command boundaries, preserve fractional progression across unrelated commands, expose authoritative clock and recovery status consistently, and implement periodic durable checkpoints plus operator recovery. Do not treat this as live-certified timing.
