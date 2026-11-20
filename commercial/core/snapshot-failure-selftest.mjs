@@ -19,6 +19,7 @@ for(let i=0;i<205;i++){
   ids.add(fixture.penalties.history.at(-1).attemptId);
 }
 assert.equal(ids.size,205);
+assert.equal(fixture.penalties.history.length,205);
 assert.equal(fixture.penalties.home+fixture.penalties.away,205);
 apply({commandId:'clock-again',type:'SET_CLOCK',running:true,elapsedSeconds:600});
 apply({commandId:'finish',type:'FINISH_PENALTIES'});
@@ -35,6 +36,18 @@ const delayed = applyCommand(JSON.parse(JSON.stringify(longMatch)),oldGoal);
 assert.equal(delayed.duplicate,true);
 assert.equal(delayed.state.homeScore,1);
 assert.equal(delayed.state.revision,longMatch.revision);
+
+// Full fixture export must retain events and replay markers across hydration.
+let exportMatch = createInitialMatchState({fixtureId:'export-test',home:'主队',away:'客队'});
+for(let i=0;i<1002;i++){
+  exportMatch = applyCommand(exportMatch,{commandId:'event-'+i,type:'GOAL',side:'HOME'}).state;
+}
+const {hydrateMatchState} = await import('./match-core.mjs');
+exportMatch = hydrateMatchState(JSON.parse(JSON.stringify(exportMatch)));
+assert.equal(exportMatch.eventLog.length,1002);
+assert.equal(exportMatch.replayMarkers.length,1002);
+assert.equal(exportMatch.eventLog[0].sequence,1);
+assert.equal(exportMatch.eventLog.at(-1).sequence,1002);
 
 const dir = await mkdtemp(path.join(os.tmpdir(), 'sagi-snapshot-failure-'));
 let engine;
