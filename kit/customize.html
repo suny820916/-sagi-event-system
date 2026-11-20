@@ -11,7 +11,7 @@
 :root{--bg:#080808;--panel:#131313;--line:#2d2d2d;--text:#f5f2e9;--muted:#909090;--gold:#d7b75f;--red:#e52231}
 *{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
 body{min-height:100vh;background:radial-gradient(circle at 78% 0,#211a10 0,transparent 28%),#080808}
-.wrap{max-width:980px;margin:auto;padding:22px 14px 50px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px}.brand img{display:block;width:170px}.tag{border:1px solid #5d512f;color:#d6c17f;border-radius:999px;padding:7px 10px;font-size:10px;font-weight:900}
+.wrap{max-width:980px;margin:auto;padding:22px 14px 50px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px}.brand img{display:block;width:170px}.topnav{display:flex;gap:5px;align-items:center;flex-wrap:wrap;justify-content:flex-end}.topnav a{color:#aaa;text-decoration:none;font-size:10px;font-weight:850;padding:7px 9px;border-radius:999px}.topnav a:hover,.topnav a.on{background:#171717;color:#f2dda1}
 .hero{padding:46px 0 24px}.hero h1{font-size:clamp(36px,7vw,68px);line-height:.98;letter-spacing:-3px;margin:10px 0}.hero p{color:#9b9b9b;line-height:1.8;font-size:13px;max-width:700px}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.card{border:1px solid var(--line);background:linear-gradient(180deg,#151515,#0d0d0d);border-radius:20px;padding:16px}.card.full{grid-column:1/-1}.card h2{font-size:15px;margin:0 0 12px}
 label{display:block;font-size:10px;color:#8d8d8d;margin:10px 0 5px}input,select,textarea{width:100%;background:#090909;color:#fff;border:1px solid #363636;border-radius:11px;padding:11px;font:inherit;font-size:13px}textarea{min-height:145px;resize:vertical}
@@ -19,12 +19,12 @@ label{display:block;font-size:10px;color:#8d8d8d;margin:10px 0 5px}input,select,
 .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.btn{border:1px solid #363636;background:#222;color:#fff;border-radius:12px;padding:11px 14px;font-weight:900;font-size:12px;text-decoration:none}.btn.primary{background:linear-gradient(135deg,#b89449,#e0c36d);color:#111;border:0}
 .out{white-space:pre-wrap;background:#090909;border:1px solid #313131;border-radius:14px;padding:14px;min-height:180px;color:#d8d8d8;font-size:12px;line-height:1.75}
 .note{font-size:10px;color:#747474;line-height:1.6;margin-top:10px}.footer{display:flex;justify-content:space-between;gap:12px;margin-top:24px;padding-top:17px;border-top:1px solid #202020;color:#666;font-size:10px}
-@media(max-width:700px){.grid{grid-template-columns:1fr}.card.full{grid-column:auto}.row{grid-template-columns:1fr}.colors{grid-template-columns:1fr 1fr}.hero h1{letter-spacing:-2px}.brand img{width:150px}}
+@media(max-width:700px){.top{align-items:flex-start}.brand img{width:150px}.topnav{max-width:55%}.grid{grid-template-columns:1fr}.card.full{grid-column:auto}.row{grid-template-columns:1fr}.colors{grid-template-columns:1fr 1fr}.hero h1{letter-spacing:-2px}}
 </style>
 </head>
 <body>
 <div class="wrap">
-<header class="top"><a class="brand" href="/"><img src="/assets/brand/sagi-football-logo.webp?v=20261121a" alt="SAGI FOOTBALL"></a><div class="tag">KIT CUSTOM</div></header>
+<header class="top"><a class="brand" href="/"><img src="/assets/brand/sagi-football-logo.webp?v=20261121a" alt="SAGI FOOTBALL"></a><nav class="topnav"><a class="on" href="/kit/catalog.html">KIT</a><a href="/event/">EVENT</a><a href="/broadcast/">BROADCAST</a><a href="/about.html">ABOUT</a></nav></header>
 
 <section class="hero">
   <div style="font-size:11px;color:var(--gold);font-weight:900;letter-spacing:2px">SAGI KIT · TEAMWEAR</div>
