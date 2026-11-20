@@ -1,0 +1,29 @@
+name: SAGI VOICE Relay Health
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/sagi-voice-relay-health.yml"
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe workers.dev relay
+        run: |
+          set -euo pipefail
+          URL="https://sagi-voice-edge-relay.sg3544225.workers.dev/health"
+          echo "URL=$URL"
+          BODY="$(curl --fail-with-body --show-error --silent --retry 2 --connect-timeout 10 --max-time 30 "$URL")"
+          echo "$BODY"
+          python - "$BODY" <<'PY'
+          import json,sys
+          d=json.loads(sys.argv[1])
+          print("version",d.get("version"))
+          print("aiVoice",d.get("aiVoice"))
+          print("voicePro",d.get("voicePro"))
+          assert d.get("version") == "3.9.8", d
+          assert d.get("aiVoice") is True, d
+          assert d.get("voicePro") is True, d
+          PY
