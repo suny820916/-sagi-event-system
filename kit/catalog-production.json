@@ -1,5 +1,5 @@
 {
-  "version": "2.1",
+  "version": "2.2",
   "production_master": "原图册对应页 → 精确还原版型/纹路/拼接位置 → 只换 SAGI A+红点标识和标准六配色 → 对照验收 → 通过后发布 → 下一款",
   "standard_colorways": [
     "藏蓝红金",
@@ -21,7 +21,7 @@
       "01B",
       "狮头系列二",
       8,
-      "source_assets_extracted"
+      "source_integrity_failed"
     ],
     [
       "03",
@@ -157,8 +157,15 @@
     "01B": {
       "source_reference": "source/01B/source-reference.webp",
       "source_page": 8,
-      "status": "source_assets_extracted",
-      "next": "structure_reconstruction"
+      "status": "source_integrity_failed",
+      "next": "recover original PDF bytes and re-extract",
+      "qa": {
+        "source_page_visual": "confirmed",
+        "binary_integrity": "failed: stored base64 contains literal ELLIPSIZATION marker",
+        "raw_pdf_materialization": "denied for both matching library copies",
+        "release": "blocked"
+      }
     }
-  }
+  },
+  "source_atlas_status": "integrity_failed"
 }
