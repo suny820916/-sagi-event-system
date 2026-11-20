@@ -493,8 +493,13 @@ while ($true) {
             Write-Host ("[FIXTURE TAKEOVER] Authorized switch: " + $currentFixture + " -> " + $incomingFixture) -ForegroundColor Cyan
           }
           # Commit durable state before publishing it in memory or acknowledging HTTP success.
+          # Transient event payloads drive live animation only; never persist them across Bridge restart.
+          $durableProbe = $req.body | ConvertFrom-Json
+          try { $durableProbe.event = $null } catch {}
+          try { if ($durableProbe.PSObject.Properties.Name -contains 'lastEvent') { $durableProbe.lastEvent = $null } } catch {}
+          $durableJson = $durableProbe | ConvertTo-Json -Depth 40 -Compress
           $tmpState = $MatchdayStateFile + ".new"
-          $bytes = (New-Object Text.UTF8Encoding($false)).GetBytes([string]$req.body)
+          $bytes = (New-Object Text.UTF8Encoding($false)).GetBytes([string]$durableJson)
           $file = [IO.File]::Open($tmpState,[IO.FileMode]::Create,[IO.FileAccess]::Write,[IO.FileShare]::None)
           try { $file.Write($bytes,0,$bytes.Length); $file.Flush($true) } finally { $file.Dispose() }
           if ([IO.File]::Exists($MatchdayStateFile)) {
