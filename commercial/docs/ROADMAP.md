@@ -148,3 +148,10 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Added a negative Host-header test to the existing LAN command self-test.
 - Commits: `c9cb8ad` (gateway), `fcaa6d3` (test).
 - **Verification:** source changes committed through GitHub API; Node syntax, test execution and CI status are not yet confirmed. Do not treat this as a complete LAN security solution: plaintext bearer tokens, phone browser Origin handling, physical operator approval and actual Windows LAN testing remain open.
+
+## 2026-11-20 — LAN Host authority validation follow-up
+- Hardened Host parsing to reject userinfo, path/query fragments, whitespace and missing explicit port, instead of trusting URL hostname alone. Corrected IPv6 bracket removal (prior expression had incorrect escaping).
+- Added malformed-Host negative tests in `lan-command-selftest.mjs`.
+- Commits: `3092c66`, `a6d1570`, `e15772e`.
+- **Verification pending:** GitHub API accepted changes, but no Node execution or actual Windows/mobile LAN test was performed in this run. A passing CI result is required before treating this fix as validated.
+- **Important compatibility limitation:** browser Origin requests are still unconditionally rejected, so the current HTTP gateway cannot be considered a working phone-browser control UI. TLS, operator approval, canonical Local Engine integration, and end-to-end state synchronization remain outstanding.
