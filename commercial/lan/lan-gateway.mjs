@@ -43,10 +43,10 @@ export function createLanGateway({
     let requestHost;
     try {
       // Host is an authority, not a URL: reject credentials, paths and whitespace.
-      if (!hostHeader || /[@/\\\\?#\\s]/.test(hostHeader)) throw new Error('BAD_HOST');
+      if (!hostHeader || /[@\/\\?#\s]/.test(hostHeader)) throw new Error('BAD_HOST');
       const parsed = new URL('http://' + hostHeader);
-      if (!parsed.port || !/^\\d+$/.test(parsed.port)) throw new Error('PORT_REQUIRED');
-      requestHost = parsed.hostname.replace(/^\\[/, '').replace(/\\]$/, '');
+      if (!parsed.port || !/^\d+$/.test(parsed.port)) throw new Error('PORT_REQUIRED');
+      requestHost = parsed.hostname.replace(/^\[/, '').replace(/\]$/, '');
     }
     catch { return reply(res, 400, { error: 'INVALID_HOST' }); }
     const allowedHosts = new Set([host]);
