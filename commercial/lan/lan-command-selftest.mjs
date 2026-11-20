@@ -54,7 +54,7 @@ try {
   const rebinding = await hostProbe('attacker.example:' + port);
   assert.equal(rebinding.status, 403);
   assert.equal((await rebinding.json()).error, 'HOST_FORBIDDEN');
-  for (const malformedHost of ['user@127.0.0.1:' + port, '127.0.0.1', '127.0.0.1:' + port + '/bad']) {
+  for (const malformedHost of ['user@127.0.0.1:' + port, '127.0.0.1', '127.0.0.1:' + port + '/bad', '127.1:' + port, '2130706433:' + port, '127.0.0.1:0' + port]) {
     const response = await hostProbe(malformedHost);
     assert.equal(response.status, 400, 'malformed Host must be rejected: ' + malformedHost);
   }
@@ -69,7 +69,7 @@ try {
   }
   const sameOrigin = await fetch(base + '/api/v1/lan/health', { headers: { origin: base } });
   assert.equal(sameOrigin.status, 200, 'same-origin browser request must work');
-  for (const origin of ['http://evil.example', base + '.evil.example', 'null', base + '/other', 'https://127.0.0.1:' + port]) {
+  for (const origin of ['http://evil.example', base + '.evil.example', 'null', base + '/other', base + '/', base + '/a/..', 'https://127.0.0.1:' + port]) {
     const response = await fetch(base + '/api/v1/lan/health', { headers: { origin } });
     assert.equal(response.status, 403, 'foreign/malformed Origin must be rejected: ' + origin);
   }
