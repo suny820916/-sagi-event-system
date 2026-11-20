@@ -185,7 +185,10 @@ function applyEventCommand(state, command, type) {
     else state.awayRedCards += 1;
   }
 
-  if (type === "HALF_TIME") state.period = "HT";
+  if (type === "HALF_TIME") {
+    state.period = "HT";
+    state.clock.running = false;
+  }
   if (type === "FULL_TIME") {
     state.period = "FT";
     state.clock.running = false;
@@ -244,7 +247,7 @@ export function applyCommand(currentState, command) {
       else state.penalties.away += 1;
     }
     const attempt = {
-      attemptId: `${state.fixtureId}:pen:${state.penalties.history.length + 1}`,
+      attemptId: `${state.fixtureId}:pen:${state.sequence + 1}`,
       commandId,
       side,
       outcome,
@@ -263,6 +266,7 @@ export function applyCommand(currentState, command) {
     state.penalties.started = true;
     state.penalties.finished = true;
     state.period = "FT";
+    state.clock.running = false;
   } else if (type === "CLEAR_EVENT") {
     state.lastEvent = null;
   } else {
