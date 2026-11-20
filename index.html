@@ -6,14 +6,17 @@
 <meta name="theme-color" content="#080808">
 <title>SAGI SPORTS</title>
 <meta name="description" content="SAGI SPORTS · 记录平凡人的足球梦。SAGI KIT、赛事系统与赛事导播。">
-<link rel="icon" href="/icon.svg" type="image/svg+xml">\n<link rel="manifest" href="/sagi.webmanifest">\n<meta name="apple-mobile-web-app-capable" content="yes">\n<meta name="apple-mobile-web-app-title" content="SAGI SPORTS">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="manifest" href="/sagi.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="SAGI SPORTS">
 <style>
 :root{--bg:#080808;--panel:#111;--line:#292929;--text:#f6f3ea;--muted:#969696;--gold:#d6b55f;--red:#e52231}
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
 body{min-height:100vh;background:radial-gradient(circle at 75% 0%,#261f12 0,transparent 30%),#080808}
 .wrap{max-width:1060px;margin:auto;padding:26px 16px 54px}
-.top{display:flex;justify-content:space-between;align-items:center;gap:16px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:16px}.nav{display:flex;gap:5px;align-items:center;flex-wrap:wrap;justify-content:flex-end}.nav a{color:#aaa;text-decoration:none;font-size:10px;font-weight:850;padding:7px 9px;border-radius:999px}.nav a:hover{background:#171717;color:#f2dda1}
 .brandmark{display:flex;align-items:center;text-decoration:none;min-width:178px}.brandmark img{display:block;width:178px;height:auto}.brand-fallback{display:none;color:#fff;font-size:24px;font-weight:950;letter-spacing:-1px}.brandmark.broken .brand-fallback{display:block}.brandmark.broken img{display:none}.dot{color:var(--red)}
 .tag{font-size:10px;color:#c9b77d;border:1px solid #564a29;padding:6px 9px;border-radius:999px}
 .hero{padding:72px 0 54px}
@@ -26,15 +29,15 @@ h1{font-size:clamp(42px,9vw,84px);line-height:.95;letter-spacing:-4px;margin:12p
 .card:hover{transform:translateY(-3px);border-color:#5d5130}.card.primary{border-color:#65552d;background:linear-gradient(180deg,#1c180f,#10100d)}
 .code{font-size:11px;color:var(--gold);font-weight:900;letter-spacing:1px}.name{font-size:30px;font-weight:950;margin-top:8px;letter-spacing:-1px}
 .desc{font-size:12px;color:#929292;line-height:1.75;margin-top:10px}.go{font-size:13px;font-weight:900;color:#eee}.primary .go{color:#f0d98f}
-.foot{display:flex;justify-content:space-between;gap:14px;margin-top:26px;padding-top:18px;border-top:1px solid #202020;color:#666;font-size:10px}
-@media(max-width:760px){.wrap{padding:20px 13px 40px}.brandmark img{width:154px}.hero{padding:54px 0 34px}h1{letter-spacing:-2px}.grid{grid-template-columns:1fr}.card{min-height:205px}.foot{flex-direction:column}}
+.about-strip{display:grid;grid-template-columns:1.15fr .85fr;gap:12px;margin-top:14px}.about-box{border:1px solid #292929;border-radius:22px;background:#101010;padding:20px}.about-box h2{font-size:24px;margin:0 0 8px}.about-box p{font-size:11px;color:#888;line-height:1.8;margin:0}.about-link{display:flex;align-items:flex-end;justify-content:space-between;text-decoration:none;color:#f3dda0;background:linear-gradient(135deg,#1a160d,#101010);border-color:#5b4e2e}.about-link b{font-size:18px}.about-link span{font-size:22px}.foot{display:flex;justify-content:space-between;gap:14px;margin-top:26px;padding-top:18px;border-top:1px solid #202020;color:#666;font-size:10px}
+@media(max-width:760px){.wrap{padding:20px 13px 40px}.top{align-items:flex-start}.brandmark img{width:154px}.nav{max-width:55%}.hero{padding:54px 0 34px}h1{letter-spacing:-2px}.grid,.about-strip{grid-template-columns:1fr}.card{min-height:205px}.foot{flex-direction:column}}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header class="top">
     <a class="brandmark" href="/" aria-label="SAGI FOOTBALL"><img src="/assets/brand/sagi-football-logo.webp?v=20261121a" alt="SAGI FOOTBALL" onerror="this.parentNode.classList.add('broken')"><span class="brand-fallback">SAGI<span style="color:#e52231">.</span> FOOTBALL</span></a>
-    <div class="tag">FOOTBALL · XINJIANG</div>
+    <nav class="nav"><a href="/kit/catalog.html">KIT</a><a href="/event/">EVENT</a><a href="/broadcast/">BROADCAST</a><a href="/about.html">ABOUT</a></nav>
   </header>
 
   <main>
@@ -72,6 +75,11 @@ h1{font-size:clamp(42px,9vw,84px);line-height:.95;letter-spacing:-4px;margin:12p
         </div>
         <div class="go">查看导播演示 →</div>
       </a>
+    </section>
+
+    <section class="about-strip">
+      <div class="about-box"><h2>从身边的足球出发。</h2><p>SAGI 不只做一个工具或一个产品。我们希望让球队更容易拥有自己的装备，让赛事更容易被组织，让普通人的比赛也拥有值得留下来的画面和故事。</p></div>
+      <a class="about-box about-link" href="/about.html"><b>了解 SAGI</b><span>→</span></a>
     </section>
   </main>
 
