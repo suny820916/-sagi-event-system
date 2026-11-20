@@ -26,6 +26,8 @@ export class FileMatchStore {
     this.backupPath = path.join(rootDir, "match-state.bak.json");
     this.journalPath = path.join(rootDir, "match-events.jsonl");
     this.pending = Promise.resolve();
+    this.journalError = null;
+    this.snapshotError = null;
   }
 
   async init() {
@@ -66,6 +68,7 @@ export class FileMatchStore {
   }
 
   async _commit(stateLike, event) {
+    if (this.journalError) throw new Error("JOURNAL_RESTART_REQUIRED");
     await this.init();
     const state = hydrateMatchState(stateLike);
     // Never append behind a torn JSONL tail; that would create an invalid
@@ -90,10 +93,17 @@ export class FileMatchStore {
     const entry = { kind: "STATE_COMMIT", revision: state.revision, event, state };
     const handle = await open(this.journalPath, "a");
     try {
-      await handle.writeFile(JSON.stringify(entry) + "\n", "utf8");
-      await handle.sync();
-    } finally {
-      await handle.close();
+      try {
+        await handle.writeFile(JSON.stringify(entry) + "\n", "utf8");
+        await handle.sync();
+      } finally {
+        await handle.close();
+      }
+    } catch (error) {
+      // A failed write/sync/close may still have left a complete record.
+      // Refuse subsequent mutations until restart and journal recovery.
+      this.journalError = error.code || "JOURNAL_WRITE_UNCERTAIN";
+      throw error;
     }
 
     // The journal is already durable. Snapshot failure must not turn a
