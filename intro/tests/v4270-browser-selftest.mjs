@@ -288,6 +288,31 @@ server.listen(PORT,'127.0.0.1',async()=>{
   assert(cuts.length===2&&String(cuts[0].input)==='1'&&String(cuts[1].input)==='2','camera switching wrong: '+JSON.stringify(cuts));
   await page.screenshot({path:'selftest-artifacts/06-two-camera-control.png'});
 
+  console.log('TEST 5A: humanized camera controls keep desktop direct-cut and mobile preview-first safety');
+  await page.click('#enterMatchModeBtn');await wait(250);
+  vmixCommands=[];
+  await page.setViewportSize({width:1440,height:900});
+  await page.click('#mmCam1');await wait(350);
+  const desktopCamera=vmixCommands.slice();
+  assert(desktopCamera.some(x=>['Cut','Fade','Stinger1'].includes(x.functionName)&&String(x.input)==='1'),'desktop match-mode camera did not direct-take PROGRAM: '+JSON.stringify(desktopCamera));
+  assert(!desktopCamera.some(x=>x.functionName==='PreviewInput'),'desktop camera unexpectedly forced PREVIEW: '+JSON.stringify(desktopCamera));
+
+  vmixCommands=[];
+  await page.setViewportSize({width:390,height:844});await wait(120);
+  await page.click('#mmCam2');await wait(350);
+  const mobilePreview=vmixCommands.slice();
+  const mobileBeforeTake=await page.evaluate(()=>window.sagiHumanizedCameraDiagnostic());
+  assert(mobileBeforeTake.previewFirst&&mobileBeforeTake.pending==='cam2','mobile camera did not stage cam2 in PREVIEW: '+JSON.stringify(mobileBeforeTake));
+  assert(mobilePreview.some(x=>x.functionName==='PreviewInput'&&String(x.input)==='2'),'mobile camera did not send PreviewInput 2: '+JSON.stringify(mobilePreview));
+  assert(!mobilePreview.some(x=>['Cut','Fade','Stinger1'].includes(x.functionName)),'mobile camera tap leaked into PROGRAM before GO LIVE: '+JSON.stringify(mobilePreview));
+  assert(!(await page.locator('#mmTakePreview').isDisabled()),'GO LIVE remained disabled after mobile preview selection');
+  await page.click('#mmTakePreview');await wait(420);
+  const mobileAfterTake=await page.evaluate(()=>window.sagiHumanizedCameraDiagnostic());
+  const mobileTakeCommands=vmixCommands.slice();
+  assert(mobileTakeCommands.some(x=>['Cut','Fade','Stinger1'].includes(x.functionName)&&String(x.input)==='2'),'mobile GO LIVE did not take staged cam2: '+JSON.stringify(mobileTakeCommands));
+  assert(mobileAfterTake.pending===''&&mobileAfterTake.program==='cam2','mobile camera state did not settle after GO LIVE: '+JSON.stringify(mobileAfterTake));
+  await page.setViewportSize({width:1440,height:1100});await page.click('#mmExit');await wait(150);
+
   console.log('TEST 6: event-logo replay stinger visual');
   const replayPage=await browser.newPage({viewport:{width:1920,height:1080}});
   const EVENT_LOGO='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><circle cx="150" cy="150" r="130" fill="#067347"/><path d="M80 170 150 55l70 115-70 75Z" fill="#6cff3f"/></svg>');

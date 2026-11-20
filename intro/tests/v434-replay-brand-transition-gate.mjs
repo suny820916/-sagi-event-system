@@ -29,7 +29,12 @@ const lines=pkg.split(/\r?\n/),c=lines.indexOf('###SAGI_CONTROL###'),o=lines.ind
 assert(c>0&&o>c,'V4.34 package markers invalid');
 const pkgControl=lines.slice(c+1,o).join('\n').trim().replace(/\r/g,'');
 const pkgOutput=lines.slice(o+1).join('\n').trim().replace(/\r/g,'');
-assert(pkgControl===control.trim().replace(/\r/g,''),'V4.34 packaged control drift');
-assert(pkgOutput===output.trim().replace(/\r/g,''),'V4.34 packaged output drift');
-for(const token of ['SAGI434_REPLAY_BRAND_RC1','SAGI_MATCH_PROJECTS_V2','activeProjectId','mdLocalMutationDepth']) assert(pkg.includes(token),'V4.34 package lost inherited SSOT/race protection: '+token);
-console.log('SAGI V4.34 REPLAY BRAND + PACKAGE PARITY GATE PASS');
+const currentBuild=Number((control.match(/SAGI4(\d{2})_[A-Z0-9_]+/)||[])[1]||0);
+assert(currentBuild>=34,'current source regressed below V4.34');
+if(currentBuild===34){
+ assert(pkgControl===control.trim().replace(/\r/g,''),'V4.34 packaged control drift');
+ assert(pkgOutput===output.trim().replace(/\r/g,''),'V4.34 packaged output drift');
+}
+for(const token of ['SAGI434_REPLAY_BRAND_RC1','SAGI_MATCH_PROJECTS_V2','activeProjectId','mdLocalMutationDepth']) assert(pkg.includes(token),'historical V4.34 package lost inherited SSOT/race protection: '+token);
+for(const token of ['V4.34 SAGI SIGNATURE · REPLAY BRAND TRANSITION','data-brand-source="sagi-safe"','function setReplayBrandSource(st,logo,fallback,source)','id="rsCompetition"']) assert(pkgOutput.includes(token),'historical V4.34 replay output lost certified brand transition: '+token);
+console.log('SAGI V4.34 FORWARD-COMPAT + HISTORICAL REPLAY PACKAGE GATE PASS');
