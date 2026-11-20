@@ -347,7 +347,8 @@ q('saveBtn').onclick=saveDesign;q('loadBtn').onclick=loadDesign;q('resetBtn').on
 q('copySpecBtn').onclick=async()=>{try{await navigator.clipboard.writeText(q('spec').textContent);note('厂家参数已复制')}catch(e){note('复制失败')}};
 function applyProductPreset(){
  const p=new URLSearchParams(location.search);
- if(p.get('kit')!=='01A')return;
+ const kit=p.get('kit');
+ if(!['01A','01B'].includes(kit))return;
  const demo=Math.max(0,Math.min(5,parseInt(p.get('demo')||'0',10)||0));
  const palettes=[
   ['#0e234e','#e21b2d'],
@@ -362,7 +363,8 @@ function applyProductPreset(){
  ['front','back','sleeve'].forEach(k=>S.pieces[k].color=primary);
  ['cuff','collarWide','collarNarrow'].forEach(k=>S.pieces[k].color=accent);
  S.view='preview';
- const bar=q('presetBar'); if(bar){bar.style.display='flex';q('presetText').textContent=' · 01 狮头系列一 / '+names[demo]+'。已自动带入主色与辅色，可继续修改。'}
+ const seriesName=kit==='01B'?'01B 狮头系列二':'01A 狮头系列一';
+ const bar=q('presetBar'); if(bar){bar.style.display='flex';q('presetText').textContent=' · '+seriesName+' / '+names[demo]+'。已自动带入主色与辅色，可继续修改。'}
 }
 applyProductPreset();syncAll();apply();hydrateAssets();
 })();
