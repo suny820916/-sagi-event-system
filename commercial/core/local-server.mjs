@@ -19,8 +19,9 @@ export async function createLocalServer({dataDir,meta,host="127.0.0.1",port=0,to
   let queue=Promise.resolve();
   const server=http.createServer(async(req,res)=>{
     const pathname=new URL(req.url??"/","http://localhost").pathname;
-    if(pathname==="/health"&&req.method==="GET")return send(res,200,{ok:true,service:"sagi-local-engine",revision:state.revision});
+    if(pathname==="/health"&&req.method==="GET")return send(res,store.journalError?503:200,{ok:!store.journalError,service:"sagi-local-engine",revision:state.revision,recoveryRequired:!!store.journalError});
     if(!safeEqual(req.headers.authorization,`Bearer ${token}`))return send(res,401,{error:"UNAUTHORIZED"});
+    if(pathname==="/api/v1/diagnostics"&&req.method==="GET")return send(res,200,{revision:state.revision,recoveryRequired:!!store.journalError,journalWarning:store.journalError?"JOURNAL_RESTART_REQUIRED":null,snapshotWarning:store.snapshotError?"SNAPSHOT_FAILED":null});
     if(pathname==="/api/v1/state"&&req.method==="GET")return send(res,200,{state});
     if(pathname==="/api/v1/vmix/status"&&req.method==="GET"){
       if(!vmixAdapter)return send(res,503,{ok:false,code:"VMIX_NOT_CONFIGURED"});
@@ -33,6 +34,7 @@ export async function createLocalServer({dataDir,meta,host="127.0.0.1",port=0,to
       let command;
       try{command=await readJson(req)}catch(error){return send(res,400,{error:error.message})}
       const work=queue.then(async()=>{
+        if(store.journalError)return{status:503,body:{error:"JOURNAL_RESTART_REQUIRED"}};
         if(command.expectedRevision!==undefined&&command.expectedRevision!==state.revision&&!state.processedCommandIds.includes(String(command.commandId)))return{status:409,body:{error:"REVISION_CONFLICT",revision:state.revision}};
         const result=applyCommand(state,command);
         if(!result.duplicate){await store.commit(result.state,result.event);state=result.state}
