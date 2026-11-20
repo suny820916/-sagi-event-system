@@ -4,89 +4,70 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#080808">
-<title>SAGI KIT 产品画册</title>
+<title>SAGI KIT 产品画册 V2</title>
 <style>
-:root{--bg:#080808;--panel:#141414;--line:#2b2b2b;--text:#f4f0e7;--muted:#8f8f8f;--gold:#d8b55b}
+:root{--bg:#080808;--panel:#141414;--line:#2c2c2c;--text:#f5f1e8;--muted:#8e8e8e;--gold:#d8b55b;--red:#e11d2e;--green:#72c79a}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
-.app{max-width:1180px;margin:auto;padding:16px 12px 60px}.top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.brand{font-size:24px;font-weight:900}.sub{font-size:12px;color:var(--muted);margin-top:4px}.badge{border:1px solid #65552b;color:var(--gold);border-radius:999px;padding:7px 10px;font-size:12px}
-.toolbar{position:sticky;top:0;z-index:5;background:#080808e8;backdrop-filter:blur(12px);padding:10px 0}.search{display:grid;grid-template-columns:1fr auto;gap:8px}input{width:100%;background:#111;color:#fff;border:1px solid #333;border-radius:12px;padding:12px;font-size:15px}.btn{border:0;border-radius:12px;background:#292929;color:#fff;font-weight:800;padding:10px 13px;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}.primary{background:linear-gradient(135deg,#bc9948,#e3c66e);color:#111}
-.notice{background:#15120b;border:1px solid #5d4c28;border-radius:16px;padding:12px 14px;color:#d9c995;font-size:12px;line-height:1.65;margin:12px 0}
-.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;overflow:hidden}.visual{background:linear-gradient(180deg,#111,#090909);padding:14px;min-height:240px;display:flex;align-items:center;justify-content:center}.visual svg{width:100%;max-width:280px;height:auto;filter:drop-shadow(0 12px 20px #0008)}
-.body{padding:13px}.row{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.name{font-size:17px;font-weight:900}.code{font-size:11px;color:var(--gold);margin-top:3px}.page{font-size:11px;color:#777}.colorLabel{font-size:10px;color:#777;margin-top:10px;font-weight:800}.colors{display:flex;gap:8px;overflow-x:auto;padding:10px 0 4px;scrollbar-width:none}.colors::-webkit-scrollbar{display:none}.sw{flex:0 0 auto;width:52px}.dot{width:44px;height:44px;border-radius:12px;border:2px solid #393939;box-shadow:inset 0 0 0 1px #0006}.sw.on .dot{border-color:var(--gold);box-shadow:0 0 0 2px #5c4a22}.sw label{display:block;font-size:9px;color:#888;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.meta{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px}.pill{background:#0b0b0b;border:1px solid #292929;border-radius:10px;padding:8px;font-size:10px;color:#aaa}.pill b{display:block;color:#eee;font-size:12px;margin-top:2px}.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:11px}.demo{margin-top:12px;border:1px solid #5d4c28;background:#0d0b07;border-radius:14px;padding:10px}.demoHead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:9px}.demoTitle{font-size:13px;font-weight:900;color:#f0d88e}.demoTag{font-size:10px;color:#111;background:linear-gradient(135deg,#bc9948,#e3c66e);padding:5px 8px;border-radius:999px;font-weight:900}.demoPreview{width:min(100%,330px);aspect-ratio:210/262;margin:auto;border-radius:12px;background-image:url("./assets/01-lion/sagi-demo-sprite.webp");background-size:300% 200%;background-repeat:no-repeat;background-position:0 0;box-shadow:0 14px 28px #0008}.demoThumbs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin-top:9px}.demoThumb{border:1px solid #333;border-radius:9px;padding:3px;background:#111;cursor:pointer}.demoThumb.on{border-color:var(--gold);box-shadow:0 0 0 1px #6c592c}.demoCrop{width:100%;aspect-ratio:210/262;border-radius:6px;background-image:url("./assets/01-lion/sagi-demo-sprite.webp");background-size:300% 200%;background-repeat:no-repeat}.demoThumb span{display:block;text-align:center;font-size:8px;color:#999;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-@media(max-width:900px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:620px){.grid{grid-template-columns:1fr}.visual{min-height:280px}.app{padding-bottom:28px}}
+.app{max-width:1180px;margin:auto;padding:16px 12px 70px}.top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.brand{font-size:25px;font-weight:950}.sub{font-size:12px;color:var(--muted);margin-top:5px}.badge{border:1px solid #65552b;color:var(--gold);border-radius:999px;padding:7px 10px;font-size:11px;font-weight:900}
+.nav{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}.btn{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:9px 13px;border-radius:12px;background:#292929;color:#fff;text-decoration:none;font-weight:850;border:0}.primary{background:linear-gradient(135deg,#bc9948,#e3c66e);color:#111}
+.rule{background:#15120b;border:1px solid #65552b;border-radius:16px;padding:14px;line-height:1.7;font-size:12px;color:#d8cfb4}.rule b{color:#f2dda1}
+.progress{margin:14px 0;background:#101010;border:1px solid var(--line);border-radius:16px;padding:12px}.bar{height:8px;background:#252525;border-radius:999px;overflow:hidden}.fill{height:100%;width:4.55%;background:linear-gradient(90deg,#bc9948,#e3c66e)}.ptext{display:flex;justify-content:space-between;gap:10px;font-size:11px;color:#999;margin-top:8px}
+.toolbar{position:sticky;top:0;z-index:5;background:#080808e8;backdrop-filter:blur(12px);padding:8px 0}.search{width:100%;background:#111;color:#fff;border:1px solid #333;border-radius:12px;padding:12px;font-size:15px}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:12px}.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;overflow:hidden}.preview{aspect-ratio:4/5;background:#0b0b0b;display:flex;align-items:center;justify-content:center;position:relative}.preview.demo{background-image:url("./assets/01-lion/sagi-demo-sprite.webp");background-size:300% 200%;background-position:0 0;background-repeat:no-repeat}.placeholder{padding:22px;text-align:center}.source{font-size:42px;font-weight:950;color:#333}.source small{display:block;font-size:11px;color:#656565;margin-top:6px}.body{padding:13px}.row{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.name{font-size:16px;font-weight:950}.code{font-size:11px;color:var(--gold);margin-top:3px}.status{font-size:10px;border-radius:999px;padding:5px 8px;font-weight:850;white-space:nowrap}.published{background:#143322;color:#91e9b7}.locked{background:#332d17;color:#e7ce79}.queued{background:#232323;color:#929292}.meta{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}.pill{background:#0b0b0b;border:1px solid #292929;border-radius:10px;padding:8px;font-size:10px;color:#777}.pill b{display:block;color:#eee;font-size:12px;margin-top:2px}.colors{display:flex;gap:5px;margin-top:10px}.c{height:8px;flex:1;border-radius:99px}.actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:11px}.disabled{opacity:.38;pointer-events:none}
+.note{font-size:10px;color:#777;line-height:1.6;margin-top:9px}
+@media(max-width:900px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:620px){.grid{grid-template-columns:1fr}.app{padding-bottom:30px}}
 </style>
 </head>
 <body>
 <div class="app">
-  <div class="top"><div><div class="brand">SAGI KIT · 产品画册</div><div class="sub">选款 → 选配色 → 进入设计器</div></div><div class="badge">CATALOG V1.2</div></div>
-  <div class="toolbar"><div class="search"><input id="q" placeholder="搜索：狮头 / 城邦 / 红色 / 黑金…"><a class="btn" href="./index.html">返回设计器</a></div></div>
-  <div class="notice">已按原厂家画册重建 22 个款式并补齐配色。01 狮头系列已加入 SAGI 官方样板效果图，可直接查看 6 种实装配色；其他系列将按同一标准继续补充样板。</div>
-  <div id="grid" class="grid"></div>
+ <div class="top"><div><div class="brand">SAGI KIT · 新产品画册</div><div class="sub">严格按原图册逐款还原 · 通过验收后才发布</div></div><div class="badge">CATALOG V2.0</div></div>
+ <div class="nav"><a class="btn" href="./index.html">队服设计器</a><a class="btn" href="./production.html">生产进度</a></div>
+ <div class="rule"><b>唯一生产标准：</b> 原图册对应页 → 精确还原版型 / 纹路 / 拼接位置 → 只换 SAGI A+红点标识和标准六配色 → 内部对照验收 → 通过后发布 → 再继续下一款。</div>
+ <div class="progress"><div class="bar"><div class="fill"></div></div><div class="ptext"><span>正式发布 1 / 22 款</span><span>01 狮头系列一 = 标准母版</span></div></div>
+ <div class="toolbar"><input id="q" class="search" placeholder="搜索款式：狮头 / 斑马纹 / 城邦…"></div>
+ <div id="grid" class="grid"></div>
 </div>
 <script>
+const six=["藏蓝红金","红白金","蓝白金","紫白金","白黑金","黄绿"];
+const sw=["linear-gradient(90deg,#0d214d,#e11d2e,#d8b55b)","linear-gradient(90deg,#c81929,#f2f2ee,#d8b55b)","linear-gradient(90deg,#1649c8,#f2f2ee,#d8b55b)","linear-gradient(90deg,#572080,#f2f2ee,#d8b55b)","linear-gradient(90deg,#f2f2ee,#171717,#d8b55b)","linear-gradient(90deg,#f0d10b,#0a663c)"];
 const products=[
-["01A","狮头系列一",7,["蓝红","红白","蓝白","紫白","白黑","黄绿"]],
-["01B","狮头系列二",8,["白红黑","浅绿","粉黑","蓝红复古","绿黑经典","紫黑沉稳"]],
-["03","交错系列",9,["粉色","紫色","灰粉","绿色","红黄","蓝粉"]],
-["04","斑马纹系列",10,["蓝黑经典","浅蛋黄","水蓝","柔粉","黑金","激情红","粉黑"]],
-["05","折线系列",11,["红色","荧光绿","浅蛋黄","紫色","黑色","蓝色","绿色"]],
-["06","结构系列",12,["蓝白经典","黑粉","紫白","黑金","活力绿","淡黄","激情红"]],
-["07","星耀系列",13,["经典红白","粉黑","粉黄","蓝黄","紫白","绿白","蓝白"]],
-["08","城邦系列",14,["蓝白经典","红色","黑金","亮粉","紫色","绿色","黄色"]],
-["09","双色线条",15,["红蓝双线","活力橘","蓝色","白灰","紫色","绿色","黑色"]],
-["10","雄狮系列",16,["红白","绿白","紫白","黑白","蓝白"]],
-["11","假日风情",17,["经典红白","绿白","蓝白","紫白","蒂芙尼蓝","黄黑","粉白"]],
-["12","碎线系列",18,["蓝红经典","蒂芙尼蓝","黄绿","红白","黑粉","绿黄","紫白"]],
-["13","块面暗纹",19,["经典红","紫色","绿色","蓝色","黄色","白紫","白绿","白蓝","白红"]],
-["14","交错系列",20,["蓝白经典","粉白","紫白","绿白","红白","黄绿","白红","蓝白"]],
-["15","动势系列",21,["蓝色","水蓝","蛋黄","赤红","白黑","紫色","绿色"]],
-["16","线条渐变",22,["白紫","橙色","深蓝","绿色","蓝黄","红黄"]],
-["17","脉络竖纹",23,["蓝黑","奇幻紫","葱郁绿","热力红","淡粉","大黄蜂","灰白"]],
-["18","经典系列",24,["天蓝","深邃紫","焕新绿","活力红","温柔粉","白蓝","白红","白绿"]],
-["19","菱形暗花",25,["活力红黄","沉稳墨黑","奇幻紫","魅力蓝","清透蒂芙尼","柔和肉桂粉","青翠黄绿"]],
-["20","塔系列",26,["象牙蓝","红白","柔黄","复古红蓝","深紫","绿黄","粉白","浅蓝","深蓝亮粉"]],
-["21","水龙吟系列",27,["水蓝","荧黄绿黄","黑金","赤龙","白粉","清爽芭乐"]],
-["22","围龙系列",28,["蓝白经典","莹绿","淡粉","水蓝","红色","黑金","紫色"]]
+{code:"01A",name:"狮头系列一",page:7,state:"published",label:"已发布",url:"./product-01.html"},
+{code:"01B",name:"狮头系列二",page:8,state:"locked",label:"源页锁定"},
+{code:"03",name:"交错系列",page:9,state:"queued",label:"待还原"},
+{code:"04",name:"斑马纹系列",page:10,state:"queued",label:"待还原"},
+{code:"05",name:"折线系列",page:11,state:"queued",label:"待还原"},
+{code:"06",name:"结构系列",page:12,state:"queued",label:"待还原"},
+{code:"07",name:"星耀系列",page:13,state:"queued",label:"待还原"},
+{code:"08",name:"城邦系列",page:14,state:"queued",label:"待还原"},
+{code:"09",name:"双色线条",page:15,state:"queued",label:"待还原"},
+{code:"10",name:"雄狮系列",page:16,state:"queued",label:"待还原"},
+{code:"11",name:"假日风情",page:17,state:"queued",label:"待还原"},
+{code:"12",name:"碎线系列",page:18,state:"queued",label:"待还原"},
+{code:"13",name:"块面暗纹",page:19,state:"queued",label:"待还原"},
+{code:"14",name:"交错系列",page:20,state:"queued",label:"待还原"},
+{code:"15",name:"动势系列",page:21,state:"queued",label:"待还原"},
+{code:"16",name:"线条渐变",page:22,state:"queued",label:"待还原"},
+{code:"17",name:"脉络竖纹",page:23,state:"queued",label:"待还原"},
+{code:"18",name:"经典系列",page:24,state:"queued",label:"待还原"},
+{code:"19",name:"菱形暗花",page:25,state:"queued",label:"待还原"},
+{code:"20",name:"塔系列",page:26,state:"queued",label:"待还原"},
+{code:"21",name:"水龙吟系列",page:27,state:"queued",label:"待还原"},
+{code:"22",name:"围龙系列",page:28,state:"queued",label:"待还原"}
 ];
-const colorMap={
-"蓝":"#1769aa","深蓝":"#0f2f5f","水蓝":"#52c7e8","天蓝":"#38a9e0","红":"#c9303e","赤红":"#bc2830","激情红":"#d62634","热力红":"#d93539","粉":"#e68aa6","柔粉":"#e8a6b7","亮粉":"#e14a91","紫":"#6948a5","深紫":"#50318b","奇幻紫":"#6a45b7","绿":"#198a52","葱郁绿":"#16804a","活力绿":"#72c746","莹绿":"#88d84d","黄":"#f0c12f","蛋黄":"#e8c44e","浅蛋黄":"#eadc7f","柔黄":"#e6d38d","橙":"#e4772e","活力橘":"#eb6b34","黑":"#161616","墨黑":"#111","灰":"#a9adb4","白":"#efefec","象牙":"#eee7d5","蒂芙尼":"#4cc7c8","芭乐":"#e7b9ae"};
-function pair(name){
- const keys=Object.keys(colorMap).sort((a,b)=>b.length-a.length), found=[];
- for(const k of keys) if(name.includes(k)&&!found.includes(colorMap[k])) found.push(colorMap[k]);
- if(!found.length) found.push("#275a8d");
- return [found[0],found[1]||"#f4f4f1"];
+function card(p){
+ const live=p.state==="published";
+ return `<div class="card" data-key="${p.code} ${p.name}">
+   <div class="preview ${live?"demo":""}">${live?"":`<div class="placeholder"><div class="source">PDF ${p.page}<small>原图册对应页已登记</small></div></div>`}</div>
+   <div class="body">
+    <div class="row"><div><div class="name">${p.code} · ${p.name}</div><div class="code">原图册第 ${p.page} 页</div></div><span class="status ${p.state}">${p.label}</span></div>
+    <div class="meta"><div class="pill">固定输出<b>6套标准配色</b></div><div class="pill">品牌标识<b>A + 红点</b></div></div>
+    <div class="colors">${sw.map(x=>`<span class="c" style="background:${x}"></span>`).join("")}</div>
+    <div class="actions">${live?`<a class="btn" href="${p.url}">查看产品页</a><a class="btn primary" href="${p.url}">用样板设计</a>`:`<span class="btn disabled">未通过不发布</span><a class="btn" href="./production.html">查看进度</a>`}</div>
+    <div class="note">${live?"已完成六配色样板并作为 SAGI KIT 标准母版。":"必须先完成原图对照还原与六配色验收，才会进入正式画册。"}</div>
+   </div>
+ </div>`;
 }
-function pattern(code){
- if(code==="04") return '<path d="M70 62l145 80M52 95l160 88M94 48l126 70" stroke="#fff" stroke-width="8" opacity=".55"/>';
- if(code==="05"||code==="09"||code==="16") return '<path d="M50 80l170 65M45 110l170 65M60 145l145 55" stroke="#fff" stroke-width="4" opacity=".35"/>';
- if(code==="17") return '<path d="M90 50v165M120 50v165M150 50v165M180 50v165" stroke="#fff" stroke-width="8" opacity=".25"/>';
- if(code==="19") return '<path d="M100 75l35 35-35 35-35-35zM165 90l30 30-30 30-30-30z" fill="none" stroke="#fff" stroke-width="4" opacity=".25"/>';
- return '<path d="M65 80l150 100M80 60l135 90" stroke="#fff" stroke-width="3" opacity=".22"/>';
-}
-function shirt(code,c1,c2){
- return `<svg viewBox="0 0 280 250" aria-hidden="true"><defs><linearGradient id="g${code}" x1="0" x2="1"><stop stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient></defs><path d="M90 35l24-14h52l24 14 47 30-21 42-26-13v127H90V94l-26 13-21-42z" fill="url(#g${code})" stroke="#ffffff33" stroke-width="3"/><path d="M114 21c6 15 46 15 52 0" fill="none" stroke="#f5f5f0" stroke-width="8"/>${pattern(code)}<text x="140" y="120" fill="#fff" font-size="22" font-weight="900" text-anchor="middle" opacity=".95">SAGI KIT</text><text x="140" y="153" fill="#fff" font-size="34" font-weight="900" text-anchor="middle" opacity=".95">10</text></svg>`;
-}
-function demoGallery(code,id){
- if(code!=="01A") return "";
- const names=["藏蓝红金","红白金","蓝白金","紫白金","白黑金","黄绿"];
- const pos=[["0%","0%"],["50%","0%"],["100%","0%"],["0%","100%"],["50%","100%"],["100%","100%"]];
- return `<div class="demo"><div class="demoHead"><div class="demoTitle">SAGI 样板效果图</div><div class="demoTag">SAGI DEMO</div></div><div class="demoPreview" id="${id}demo" style="background-position:${pos[0][0]} ${pos[0][1]}"></div><div class="demoThumbs">${names.map((n,i)=>`<div class="demoThumb ${i===0?"on":""}" data-demo="${i}"><div class="demoCrop" style="background-position:${pos[i][0]} ${pos[i][1]}"></div><span>${n}</span></div>`).join("")}</div></div>`;
-}
-function render(filter=""){
- const box=document.getElementById("grid"); box.innerHTML="";
- products.filter(p=>(p.join(" ")+p[3].join(" ")).toLowerCase().includes(filter.toLowerCase())).forEach((p,idx)=>{
-   const [code,name,page,colors]=p, id="p"+idx, first=pair(colors[0]);
-   const el=document.createElement("div"); el.className="card";
-   el.innerHTML=`<div class="visual" id="${id}visual">${shirt(code,first[0],first[1])}</div><div class="body"><div class="row"><div><div class="name">${code} · ${name}</div><div class="code">厂家画册款式</div></div><div class="page">PDF 第${page}页</div></div><div class="colorLabel">原厂可选配色</div><div class="colors">${colors.map((c,i)=>{const a=pair(c);return `<div class="sw ${i===0?"on":""}" data-c1="${a[0]}" data-c2="${a[1]}" data-name="${c}"><div class="dot" style="background:linear-gradient(135deg,${a[0]} 0 50%,${a[1]} 50% 100%)"></div><label>${c}</label></div>`}).join("")}</div><div class="meta"><div class="pill">儿童尺码<b>110–160</b></div><div class="pill">成人尺码<b>XS–5XL</b></div><div class="pill">基础版<b>138元/套</b></div><div class="pill">最高面料版<b>208元/套</b></div></div>${demoGallery(code,id)}<div class="actions">${code==="01A"?`<a class="btn" href="./product-01.html">查看完整样板</a><a class="btn primary" href="./product-01.html">进入01产品页</a>`:`<button class="btn choose">选此配色</button><a class="btn primary" href="./index.html">用此款设计</a>`}</div></div>`;
-   el.querySelectorAll(".sw").forEach(sw=>sw.onclick=()=>{el.querySelectorAll(".sw").forEach(x=>x.classList.remove("on"));sw.classList.add("on");document.getElementById(id+"visual").innerHTML=shirt(code,sw.dataset.c1,sw.dataset.c2)});
-   if(code==="01A"){
-     const pos=[["0%","0%"],["50%","0%"],["100%","0%"],["0%","100%"],["50%","100%"],["100%","100%"]];
-     el.querySelectorAll(".demoThumb").forEach((th,i)=>th.onclick=()=>{el.querySelectorAll(".demoThumb").forEach(x=>x.classList.remove("on"));th.classList.add("on");document.getElementById(id+"demo").style.backgroundPosition=pos[i][0]+" "+pos[i][1]});
-   }
-   box.appendChild(el);
- });
-}
-document.getElementById("q").addEventListener("input",e=>render(e.target.value)); render();
+function render(){const q=document.getElementById("q").value.trim().toLowerCase();document.getElementById("grid").innerHTML=products.filter(p=>(p.code+" "+p.name).toLowerCase().includes(q)).map(card).join("")}
+document.getElementById("q").addEventListener("input",render);render();
 </script>
 </body></html>
