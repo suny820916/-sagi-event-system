@@ -268,3 +268,11 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Added dependency-free runtime clock using Node performance.now(), whole-second projection and explicit operator override. A persisted running checkpoint is held paused on startup with recoveryPending; downtime is not silently counted.
 - Added deterministic fake-time self-test for progression, pause, restart hold and invalid input. Commits: 271fe7c, aa43bd4.
 - Verification: source and tests committed; Node/CI execution not confirmed. Not wired into Local Engine or LAN UI. Next: materialize clock checkpoints at durable command boundaries, preserve fractional progression across unrelated commands, expose authoritative clock and recovery status consistently, and implement periodic durable checkpoints plus operator recovery. Do not treat this as live-certified timing.
+
+
+## 2026-11-21 — Authoritative HTTP match clock integration
+- Local Engine now projects a single monotonic runtime clock on state reads and command replies; ticking does not advance command revision. Non-clock commands checkpoint elapsed seconds without resetting the runtime anchor.
+- Clock updates occur only after durable command commit; a running checkpoint recovered after restart is exposed as paused with clockRecoveryPending until explicit clock/phase action. No internet time service required.
+- Extended HTTP regression for ticking, revision stability, yellow-card checkpoint and restart without counting downtime. Standalone clock test added to Windows/Linux CI.
+- Commits: 841ed59, ad7946c, ec79b3d. Prior core CI run 44826325683 succeeded, but did not include the standalone clock test. New CI pending at time of writing.
+- Open: periodic durable checkpoint and graceful-close checkpoint (idle running clock can lose time since last command), LAN gateway wiring, vMix display sync, real machine endurance and power loss tests. Not release certified.
