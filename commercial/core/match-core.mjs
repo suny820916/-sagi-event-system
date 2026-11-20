@@ -93,8 +93,8 @@ export function hydrateMatchState(raw) {
     awayScore: asNonNegativeInt(raw.awayScore),
     homeRedCards: asNonNegativeInt(raw.homeRedCards),
     awayRedCards: asNonNegativeInt(raw.awayRedCards),
-    eventLog: Array.isArray(raw.eventLog) ? clone(raw.eventLog).slice(-1000) : [],
-    replayMarkers: Array.isArray(raw.replayMarkers) ? clone(raw.replayMarkers).slice(-1000) : [],
+    eventLog: Array.isArray(raw.eventLog) ? clone(raw.eventLog) : [],
+    replayMarkers: Array.isArray(raw.replayMarkers) ? clone(raw.replayMarkers) : [],
     processedCommandIds: Array.isArray(raw.processedCommandIds)
       ? raw.processedCommandIds.map(String).filter(Boolean)
       : [],
@@ -110,7 +110,7 @@ export function hydrateMatchState(raw) {
     finished: !!raw.penalties?.finished,
     home: asNonNegativeInt(raw.penalties?.home),
     away: asNonNegativeInt(raw.penalties?.away),
-    history: Array.isArray(raw.penalties?.history) ? clone(raw.penalties.history).slice(-200) : [],
+    history: Array.isArray(raw.penalties?.history) ? clone(raw.penalties.history) : [],
   };
   next.scoreboardVisible = !!raw.scoreboardVisible;
   next.scoreboardFrozen = !!raw.scoreboardFrozen;
@@ -146,7 +146,6 @@ function makeEvent(state, command, type, extra = {}) {
 function recordEvent(state, event) {
   state.sequence = event.sequence;
   state.eventLog.push(event);
-  if (state.eventLog.length > 1000) state.eventLog = state.eventLog.slice(-1000);
   state.lastEvent = event;
 
   if (event.type === "GOAL" || event.type === "RED") {
@@ -157,7 +156,6 @@ function recordEvent(state, event) {
       at: event.at,
       createdAt: event.createdAt,
     });
-    if (state.replayMarkers.length > 1000) state.replayMarkers = state.replayMarkers.slice(-1000);
   }
 }
 
