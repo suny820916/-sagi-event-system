@@ -465,15 +465,34 @@ while ($true) {
     elseif ($method -eq "POST" -and $path -eq "/api/matchday") {
       try {
         $probe = $req.body | ConvertFrom-Json
-        $MatchdayJson = $req.body
-        $tmpState = $MatchdayStateFile + ".new"
-        [IO.File]::WriteAllText($tmpState,$MatchdayJson,(New-Object Text.UTF8Encoding($false)))
-        Move-Item $tmpState $MatchdayStateFile -Force
-        $hs = [string]$probe.homeScore
-        $as = [string]$probe.awayScore
-        $vis = [string]$probe.scoreboardVisible
-        Write-Host ("[SCORE] " + $hs + ":" + $as + " visible=" + $vis) -ForegroundColor Cyan
-        Write-HttpResponse $stream 200 "application/json" '{"ok":true}'
+        $currentProbe = $null
+        if (-not [string]::IsNullOrWhiteSpace($MatchdayJson) -and $MatchdayJson -ne "null") {
+          try { $currentProbe = $MatchdayJson | ConvertFrom-Json } catch { $currentProbe = $null }
+        }
+        $incomingRevision = 0L; $currentRevision = 0L
+        try { $incomingRevision = [int64]$probe.revision } catch {}
+        try { if ($currentProbe) { $currentRevision = [int64]$currentProbe.revision } } catch {}
+        $incomingFixture = [string]$probe.fixtureKey
+        $currentFixture = if ($currentProbe) { [string]$currentProbe.fixtureKey } else { "" }
+        $incomingCommand = [string]$probe.commandId
+        $currentCommand = if ($currentProbe) { [string]$currentProbe.commandId } else { "" }
+        $sameFixture = (-not [string]::IsNullOrWhiteSpace($incomingFixture)) -and ($incomingFixture -eq $currentFixture)
+        $staleRevision = $sameFixture -and $incomingRevision -gt 0 -and $currentRevision -gt 0 -and $incomingRevision -lt $currentRevision
+        $revisionConflict = $sameFixture -and $incomingRevision -gt 0 -and $incomingRevision -eq $currentRevision -and -not [string]::IsNullOrWhiteSpace($incomingCommand) -and -not [string]::IsNullOrWhiteSpace($currentCommand) -and $incomingCommand -ne $currentCommand
+        if ($staleRevision -or $revisionConflict) {
+          Write-Host ("[STATE GUARD] Rejected stale/conflicting matchday write R" + $incomingRevision + " while current is R" + $currentRevision) -ForegroundColor Yellow
+          Write-HttpResponse $stream 409 "application/json" '{"ok":false,"error":"STALE_MATCHDAY_REVISION"}'
+        } else {
+          $MatchdayJson = $req.body
+          $tmpState = $MatchdayStateFile + ".new"
+          [IO.File]::WriteAllText($tmpState,$MatchdayJson,(New-Object Text.UTF8Encoding($false)))
+          Move-Item $tmpState $MatchdayStateFile -Force
+          $hs = [string]$probe.homeScore
+          $as = [string]$probe.awayScore
+          $vis = [string]$probe.scoreboardVisible
+          Write-Host ("[SCORE] " + $hs + ":" + $as + " visible=" + $vis) -ForegroundColor Cyan
+          Write-HttpResponse $stream 200 "application/json" '{"ok":true}'
+        }
       } catch {
         $err = $_.Exception.Message | ConvertTo-Json -Compress
         Write-HttpResponse $stream 400 "application/json" ('{"ok":false,"error":' + $err + '}')
