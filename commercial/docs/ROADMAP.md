@@ -209,3 +209,8 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Added atomic directory lock around FileMatchStore commit, including revision checks and journal/snapshot writes. Existing locks are never automatically stolen. Release failure latches the store without negating a durable commit.
 - Extended recovery self-test to exercise lock contention, stale revision and lock cleanup. Commits: 01a332a, b1f8cb4.
 - Limits: commit lock is not a lifetime engine ownership lock; multiple engines can still serve stale reads. Crash residue requires safe operator recovery; do not remove lock while a writer may be alive. Node/Windows execution pending. Next: exclusive engine ownership, recovery UI and actual concurrent process tests.
+
+## 2026-11-20 — Engine lifetime ownership
+- Local Engine reserves an atomic directory lock before loading state; a competing engine for the same data directory fails closed. Graceful shutdown drains server and command queue before removing ownership. Failed startup releases ownership.
+- Extended recovery self-test with competing engine and listener startup failure cases. Commits: 0f2b3af, b1744e7.
+- Crash residue intentionally blocks restart; safe offline operator recovery, direct store writer coordination, multiprocess tests and Windows verification remain required. Runtime tests not confirmed. No new dependencies.
