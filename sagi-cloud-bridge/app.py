@@ -30,11 +30,23 @@ import imageio_ffmpeg
 
 app = Flask(__name__)
 
-ALLOWED_ORIGIN = (os.getenv("SAGI_ALLOWED_ORIGIN") or "https://suny820916.github.io").rstrip("/")
+_BUILTIN_ALLOWED_ORIGINS = (
+    "https://suny820916.github.io",
+    "https://sagisports.cn",
+    "https://www.sagisports.cn",
+)
+_ENV_ALLOWED_ORIGINS = tuple(
+    x.strip().rstrip("/")
+    for x in (os.getenv("SAGI_ALLOWED_ORIGIN") or "").split(",")
+    if x.strip()
+)
+ALLOWED_ORIGINS = tuple(dict.fromkeys(_BUILTIN_ALLOWED_ORIGINS + _ENV_ALLOWED_ORIGINS))
+# Legacy single-origin consumers keep the first GitHub Pages origin.
+ALLOWED_ORIGIN = ALLOWED_ORIGINS[0]
 SERVER_SECRET = (os.getenv("SAGI_SERVER_SECRET") or os.getenv("SAGI_BRIDGE_TOKEN") or "").strip()
 PORT = int(os.getenv("PORT") or "10000")
-DEPLOY_REVISION = "2026-11-17-smart-cut-large-media-lowmem-v2"
-APP_VERSION = "3.9.7"
+DEPLOY_REVISION = "2026-11-21-voice-pro-origin-wake-hotfix-v1"
+APP_VERSION = "3.9.8"
 MAX_FILE_MB = int(os.getenv("SAGI_MAX_FILE_MB") or "300")
 JOB_TTL_MIN = int(os.getenv("SAGI_JOB_TTL_MIN") or "30")
 RATE_LIMIT_PER_HOUR = int(os.getenv("SAGI_RATE_LIMIT_PER_HOUR") or "20")
@@ -101,7 +113,7 @@ FOOTBALL_COMPETITIONS = {
 football_cache = {}
 football_cache_lock = Lock()
 
-CORS(app, resources={r"/api/*": {"origins": [ALLOWED_ORIGIN]}, r"/health": {"origins": [ALLOWED_ORIGIN]}, r"/": {"origins": [ALLOWED_ORIGIN]}})
+CORS(app, resources={r"/api/*": {"origins": list(ALLOWED_ORIGINS)}, r"/health": {"origins": list(ALLOWED_ORIGINS)}, r"/": {"origins": list(ALLOWED_ORIGINS)}})
 
 jobs = {}
 jobs_lock = Lock()
@@ -247,7 +259,7 @@ def worker_online():
 def origin_allowed():
     origin = (request.headers.get("Origin") or "").rstrip("/")
     same_origin = request.host_url.rstrip("/")
-    return origin in (ALLOWED_ORIGIN, same_origin)
+    return origin == same_origin or origin in ALLOWED_ORIGINS
 
 def authorized():
     token = client_token()
