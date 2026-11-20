@@ -170,3 +170,10 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Commits: `c093ef5`, `a692dfc`, `bfd12cc`.
 - **Verification:** GitHub accepted source/test updates; Node syntax checks and LAN tests have not yet run in this execution. No claim of CI PASS or Windows/mobile validation.
 - **Next:** verify LAN CI and connect canonical Local Engine with durable idempotency. Do not expose this experimental HTTP gateway to untrusted networks; plaintext paired-device bearer tokens and missing end-to-end device controls remain release blockers.
+
+## 2026-11-20 — LAN socket lifetime bounds
+- Set explicit HTTP request/header/idle/keep-alive timeouts and a maximum of 100 requests per socket in the experimental LAN gateway, preventing abandoned connections from remaining open indefinitely.
+- Added assertions for these settings to the existing LAN command self-test.
+- Commits: `2b8f786` (gateway), `f69e1ce` (test).
+- **Verification:** source and test committed through GitHub API. Local clone failed due to GitHub DNS resolution; Node execution and GitHub Actions CI are not confirmed. The configuration assertions do not substitute for a real slow-client/endurance test.
+- **Release blockers remain:** connect LAN Gateway to canonical Local Engine, persist idempotent commands, validate phone/vMix on Windows, protect bearer tokens on LAN, and test recovery under power loss. Prioritize those integration milestones over further isolated gateway hardening.
