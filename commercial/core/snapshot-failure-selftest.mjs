@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, rm, appendFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { FileMatchStore } from './file-store.mjs';
@@ -45,6 +45,19 @@ try {
   const retry = await send();
   assert.equal(retry.duplicate, true);
   assert.equal(retry.state.homeScore, 1);
+  await engine.close(); engine = null;
+  // Real torn journal tail: startup retains the last complete state but
+  // must immediately advertise recovery required and refuse new commands.
+  await appendFile(store.journalPath, '{"kind":"STATE_COMMIT"');
+  engine = await createLocalServer({ dataDir: dir, meta });
+  const recoveredBase = 'http://127.0.0.1:' + engine.address.port;
+  const recoveredHeaders = { authorization: 'Bearer ' + engine.token };
+  assert.equal((await fetch(recoveredBase + '/health')).status, 503);
+  const recovered = await (await fetch(recoveredBase + '/api/v1/state', { headers: recoveredHeaders })).json();
+  assert.equal(recovered.state.homeScore, 1);
+  const refused = await fetch(recoveredBase + '/api/v1/commands', { method: 'POST', headers: { ...recoveredHeaders, 'content-type': 'application/json' }, body: JSON.stringify({...command, commandId: 'after_torn_tail', expectedRevision: 1}) });
+  assert.equal(refused.status, 503);
+  assert.equal((await refused.json()).error, 'JOURNAL_RESTART_REQUIRED');
   console.log('SNAPSHOT FAILURE RECOVERY PASS');
 } finally {
   if (engine) await engine.close();
