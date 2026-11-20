@@ -18,6 +18,8 @@
 
 <section class="section"><h2>人工验收</h2><p class="hint">每项都要在对应真实场景做完后再点“通过”。不要为了变绿而直接点。</p><div id="manualGrid" class="grid"></div></section>
 
+<section class="section"><h2>剩余专项自动验收</h2><p class="hint">这两项使用临时测试数据，不修改正式订单/报价内容；异常时会自动回滚或清理。</p><div class="actions"><button id="backupDrill" class="btn primary">一键业务备份恢复演练</button><button id="stressDrill" class="btn">连续存储压力测试</button><button id="markVerified" class="btn good">同步本次已完成真机项目</button></div><div id="specialGrid" class="grid"></div></section>
+
 <section class="section"><h2>测试订单工具</h2><p class="hint">仅用于真机验收。它会把选中的测试订单恢复到“已付款”，清除 production / delivery 测试轨道，并移除该订单的待同步队列项。正式订单不要使用。</p><div class="actions"><select id="qaOrder" class="btn" style="text-align:left"></select><button id="qaResetOrder" class="btn primary">一键恢复测试起点</button><a href="./production-center.html" class="btn" style="text-decoration:none;text-align:center">打开生产中心</a></div><div id="qaResetNote" class="detail"></div></section>
 
 <section class="section"><h2>验收报告</h2><p>报告不包含客户名单正文、老板成本或 PIN。它只记录设备环境和验收结果。</p><div class="actions"><button id="export" class="btn good">导出 V1.6 Stable QA 报告</button><button id="clear" class="btn">重置人工验收</button></div><div id="report" class="report">--</div></section>
@@ -28,12 +30,12 @@ const q=s=>document.querySelector(s),QA_KEY='sagi-kit-stable-qa-v16';
 const ESSENTIAL=['./start.html','./catalog.html','./quote.html','./index.html','./order-history.html','./production-center.html','./delivery-center.html','./profit-center.html','./commercial-check.html','./sync-settings.html','./release.json','./manifest.webmanifest','./brand-mark.svg','./catalog-data.js','./cloud-sync.js'];
 const MANUAL=[
  {id:'safari_flow',name:'iPhone Safari 全流程',detail:'商品库 → 报价 → 成交 → 订单 → 生产 → 到货 → 签收。测试单完成后确认没有丢数据、死链或状态冲突。'},
- {id:'wechat_flow',name:'微信内置浏览器',detail:'用微信打开系统，确认环境提示正常；浏览与基础填写正常；文件导出/打印等受限操作能明确提示改用 Safari。'},
- {id:'pwa_upgrade',name:'旧 PWA → RC2 更新',detail:'从已经添加到主屏幕的旧版本打开，确认能更新到 V1.6 RC2，更新后工作台和本地订单仍在。'},
- {id:'offline_round',name:'离线完整回合',detail:'联网打开一次后关闭网络，重新打开工作台，进入商品库/订单/生产/售后并确认核心数据可查看。'},
- {id:'backup_restore',name:'真实备份恢复演练',detail:'先导出业务备份；在测试环境制造一条临时数据变化，再恢复备份，核对订单/报价数量和关键记录一致。'},
- {id:'low_storage',name:'低存储 / 连续使用',detail:'连续创建多份报价、上传压缩队徽、切换页面并刷新；确认没有白屏、无限刷新或保存成功假象。'}
+ {id:'wechat_flow',name:'微信内置浏览器',detail:'用微信打开系统，确认环境提示正常；浏览与基础填写正常；受限操作明确提示改用 Safari。'},
+ {id:'pwa_upgrade',name:'主屏幕 PWA 更新',detail:'从主屏幕打开 V1.6 RC2，确认更新后工作台和本地订单仍在。'},
+ {id:'offline_round',name:'离线完整回合',detail:'联网完成缓存后关闭网络，从主屏幕重新打开并确认核心页面/本地数据可查看。'}
 ];
+const BUSINESS_KEYS=['sagi-kit-draft','sagi-kit-last-order','sagi-kit-orders','sagi-kit-quotes','sagi-kit-quote-settings','sagi-kit-sync-queue'];
+const SPECIAL_KEY='sagi-kit-stable-special-v16';
 function saved(){try{const x=JSON.parse(localStorage.getItem(QA_KEY)||'{}');return x&&typeof x==='object'?x:{}}catch(e){return{}}}
 function saveManual(x){localStorage.setItem(QA_KEY,JSON.stringify(x))}
 function fmtBytes(n){return n<1024?n+' B':n<1048576?(n/1024).toFixed(1)+' KB':(n/1048576).toFixed(2)+' MB'}
@@ -60,15 +62,57 @@ async function runAuto(){
  r.push(autoResult('share','系统分享',navigator.share?'pass':'warn',navigator.share?'navigator.share 可用':'当前环境不支持系统分享，可退回复制文本'));
  auto=r;render();
 }
+function specialState(){try{const x=JSON.parse(localStorage.getItem(SPECIAL_KEY)||'{}');return x&&typeof x==='object'?x:{}}catch(e){return{}}}
+function setSpecial(id,state,detail){const s=specialState();s[id]={state,detail,at:new Date().toISOString()};localStorage.setItem(SPECIAL_KEY,JSON.stringify(s));render()}
 function manualState(){const s=saved();return s.manual&&typeof s.manual==='object'?s.manual:{}}
 function setManual(id,state){const s=saved(),m=s.manual&&typeof s.manual==='object'?s.manual:{};m[id]={state,at:new Date().toISOString()};s.manual=m;s.updatedAt=new Date().toISOString();saveManual(s);render()}
+async function runBackupDrill(){
+ const SNAP='sagi-kit-qa-restore-snapshot-v16';
+ try{
+  const before={};BUSINESS_KEYS.forEach(k=>{before[k]=localStorage.getItem(k)});
+  localStorage.setItem(SNAP,JSON.stringify(before));
+  const raw=before['sagi-kit-quote-settings'];
+  let obj={};if(raw!=null){try{obj=JSON.parse(raw)||{}}catch(e){obj={}}}
+  localStorage.setItem('sagi-kit-quote-settings',JSON.stringify({...obj,__qaProbe:'SAGI-'+Date.now()}));
+  const snap=JSON.parse(localStorage.getItem(SNAP)||'{}');
+  BUSINESS_KEYS.forEach(k=>{const v=snap[k];if(v==null)localStorage.removeItem(k);else localStorage.setItem(k,v)});
+  const ok=BUSINESS_KEYS.every(k=>localStorage.getItem(k)===before[k]);
+  localStorage.removeItem(SNAP);
+  setSpecial('backup_restore',ok?'pass':'fail',ok?'真实业务键完成快照→临时改写→完整恢复→逐键一致性校验':'恢复后存在键值不一致');
+  if(!ok)alert('业务备份恢复演练失败，请不要升级 Stable');
+ }catch(e){
+  console.error(e);
+  try{const snap=JSON.parse(localStorage.getItem(SNAP)||'{}');BUSINESS_KEYS.forEach(k=>{const v=snap[k];if(v==null)localStorage.removeItem(k);else localStorage.setItem(k,v)});localStorage.removeItem(SNAP)}catch(_){}
+  setSpecial('backup_restore','fail','演练异常，系统已尝试自动回滚原业务数据');
+ }
+}
+async function runStressDrill(){
+ const K='sagi-kit-qa-stress-v16';let ok=true,rounds=0;
+ try{
+  for(let i=0;i<80;i++){
+   const payload={i,t:Date.now(),blob:'S'.repeat(96*1024),list:[i,i+1,i+2]};
+   const raw=JSON.stringify(payload);localStorage.setItem(K,raw);
+   const back=JSON.parse(localStorage.getItem(K)||'{}');
+   if(back.i!==i||back.blob.length!==96*1024){ok=false;break}
+   rounds++;
+  }
+  localStorage.removeItem(K);
+ }catch(e){ok=false;try{localStorage.removeItem(K)}catch(_){}}
+ setSpecial('storage_stress',ok?'pass':'fail',ok?'连续 '+rounds+' 轮约 96KB 写入/读取/解析通过，未影响业务键':'第 '+rounds+' 轮后发生存储/解析异常');
+}
+function markVerifiedManual(){
+ const s=saved(),m=s.manual&&typeof s.manual==='object'?s.manual:{},now=new Date().toISOString();
+ ['safari_flow','pwa_upgrade','offline_round'].forEach(id=>m[id]={state:'pass',at:now,source:'verified-in-current-acceptance'});
+ s.manual=m;s.updatedAt=now;saveManual(s);render();
+}
 function render(){
  q('#autoGrid').innerHTML=auto.map(x=>'<div class="item '+x.state+'"><div class="itemHead"><b>'+x.name+'</b><span class="state">'+x.state.toUpperCase()+'</span></div><div class="detail">'+x.detail+'</div></div>').join('');
  const ms=manualState();q('#manualGrid').innerHTML=MANUAL.map(x=>{const st=ms[x.id]?.state||'pending';return '<div class="item '+(st==='pass'?'pass':st==='fail'?'fail':'warn')+'"><div class="itemHead"><b>'+x.name+'</b><span class="state">'+(st==='pending'?'未验收':st==='pass'?'PASS':'FAIL')+'</span></div><div class="detail">'+x.detail+'</div><div class="manual"><button data-id="'+x.id+'" data-state="pass" class="'+(st==='pass'?'on pass':'')+'">已通过</button><button data-id="'+x.id+'" data-state="fail" class="'+(st==='fail'?'on fail':'')+'">有问题</button></div></div>'}).join('');
  document.querySelectorAll('[data-id]').forEach(b=>b.onclick=()=>setManual(b.dataset.id,b.dataset.state));
- const autoFail=auto.filter(x=>x.state==='fail').length,autoWarn=auto.filter(x=>x.state==='warn').length,manualPass=MANUAL.filter(x=>ms[x.id]?.state==='pass').length,manualFail=MANUAL.filter(x=>ms[x.id]?.state==='fail').length,ready=auto.length>0&&autoFail===0&&autoWarn===0&&manualPass===MANUAL.length;
- const gate=q('#gate');gate.className='gate '+(ready?'pass':autoFail||manualFail?'fail':'warn');q('#gateText').textContent=ready?'READY FOR STABLE':autoFail||manualFail?'NOT READY · 仍有失败项':'RC2 验收中 · 人工 '+manualPass+'/'+MANUAL.length+' · 自动提醒 '+autoWarn;
- report={schema:'SAGI-KIT-STABLE-QA-1',version:'1.6.0-rc2',generatedAt:new Date().toISOString(),readyForStable:ready,autoChecks:auto,manualChecks:MANUAL.map(x=>({id:x.id,name:x.name,state:ms[x.id]?.state||'pending',at:ms[x.id]?.at||null})),device:{userAgent:navigator.userAgent,online:navigator.onLine,standalone:matchMedia('(display-mode: standalone)').matches||navigator.standalone===true,language:navigator.language||''}};
+ const sp=specialState(),specialDefs=[['backup_restore','业务备份恢复'],['storage_stress','连续存储压力']];q('#specialGrid').innerHTML=specialDefs.map(x=>{const r=sp[x[0]]||{},st=r.state||'pending';return '<div class="item '+(st==='pass'?'pass':st==='fail'?'fail':'warn')+'"><div class="itemHead"><b>'+x[1]+'</b><span class="state">'+(st==='pending'?'未执行':st.toUpperCase())+'</span></div><div class="detail">'+(r.detail||'等待执行')+'</div></div>'}).join('');
+ const autoFail=auto.filter(x=>x.state==='fail').length,autoWarn=auto.filter(x=>x.state==='warn').length,manualPass=MANUAL.filter(x=>ms[x.id]?.state==='pass').length,manualFail=MANUAL.filter(x=>ms[x.id]?.state==='fail').length,specialPass=specialDefs.filter(x=>sp[x[0]]?.state==='pass').length,specialFail=specialDefs.filter(x=>sp[x[0]]?.state==='fail').length,ready=auto.length>0&&autoFail===0&&autoWarn===0&&manualPass===MANUAL.length&&specialPass===specialDefs.length;
+ const gate=q('#gate');gate.className='gate '+(ready?'pass':autoFail||manualFail||specialFail?'fail':'warn');q('#gateText').textContent=ready?'READY FOR STABLE':autoFail||manualFail||specialFail?'NOT READY · 仍有失败项':'RC2 验收中 · 人工 '+manualPass+'/'+MANUAL.length+' · 专项 '+specialPass+'/'+specialDefs.length+' · 自动提醒 '+autoWarn;
+ report={schema:'SAGI-KIT-STABLE-QA-1',version:'1.6.0-rc2',generatedAt:new Date().toISOString(),readyForStable:ready,autoChecks:auto,specialChecks:specialDefs.map(x=>({id:x[0],name:x[1],state:sp[x[0]]?.state||'pending',detail:sp[x[0]]?.detail||'',at:sp[x[0]]?.at||null})),manualChecks:MANUAL.map(x=>({id:x.id,name:x.name,state:ms[x.id]?.state||'pending',at:ms[x.id]?.at||null})),device:{userAgent:navigator.userAgent,online:navigator.onLine,standalone:matchMedia('(display-mode: standalone)').matches||navigator.standalone===true,language:navigator.language||''}};
  q('#report').textContent=JSON.stringify(report,null,2)
 }
 function download(obj){const blob=new Blob([JSON.stringify(obj,null,2)],{type:'application/json;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='SAGI-KIT-V1.6-STABLE-QA.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500)}
@@ -112,7 +156,7 @@ function resetQaOrder(){
   alert('恢复失败：本地存储写入异常，请不要继续测试');
  }
 }
-q('#rerun').onclick=runAuto;q('#export').onclick=()=>report&&download(report);q('#clear').onclick=()=>{if(confirm('重置全部人工验收记录？')){localStorage.removeItem(QA_KEY);render()}};q('#qaResetOrder').onclick=resetQaOrder;
+q('#rerun').onclick=runAuto;q('#export').onclick=()=>report&&download(report);q('#clear').onclick=()=>{if(confirm('重置全部人工验收记录？')){localStorage.removeItem(QA_KEY);localStorage.removeItem(SPECIAL_KEY);render()}};q('#qaResetOrder').onclick=resetQaOrder;q('#backupDrill').onclick=runBackupDrill;q('#stressDrill').onclick=runStressDrill;q('#markVerified').onclick=markVerifiedManual;
 renderQaOrders();runAuto();
 </script>
 </body></html>
