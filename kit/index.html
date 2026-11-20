@@ -15,7 +15,7 @@
 button,.fileBtn{border:0;border-radius:12px;background:#292929;color:#fff;font-weight:800;min-height:42px;padding:9px 12px}.primary{background:linear-gradient(135deg,#bc9948,#e3c66e);color:#111}.ok{background:#1e4a36}.danger{background:#582727}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.tabs,.pieceTabs{display:grid;gap:7px}.tabs{grid-template-columns:1fr 1fr}.pieceTabs{grid-template-columns:repeat(3,1fr)}.tabs button.on,.pieceTabs button.on{background:#493b20;color:#f0d88e;border:1px solid #6c592c}
 .stageCard{position:sticky;top:8px}.stage{background:#0b0d10;border:1px solid #2e3136;border-radius:20px;min-height:790px;padding:12px;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}.stage:before{content:"SAGI FACTORY PATTERN";position:absolute;left:18px;top:16px;color:#ffffff10;letter-spacing:3px;font-weight:900;font-size:21px}.stage:after{content:"FACTORY IMAGE TRACE";position:absolute;right:18px;bottom:14px;color:#ffffff18;font-size:10px;letter-spacing:2px}
 #paperSvg{width:min(100%,800px);height:auto;filter:drop-shadow(0 18px 24px #0008)}.status{font-size:12px;color:var(--green);margin-top:8px}.spec{white-space:pre-wrap;background:#090909;border:1px solid #2d2d2d;border-radius:12px;padding:11px;min-height:220px;font-size:12px;line-height:1.65;color:#d8d8d8}.notice{display:none;position:fixed;left:50%;bottom:70px;transform:translateX(-50%);background:#1d1d1d;border:1px solid #4f4327;color:#f0d58d;border-radius:999px;padding:10px 14px;font-size:12px;z-index:20}
-.asset{display:grid;grid-template-columns:64px 1fr;gap:9px;align-items:center}.assetPreview{width:64px;height:64px;background:#090909;border:1px solid #393939;border-radius:12px;display:flex;align-items:center;justify-content:center;overflow:hidden;color:#666;font-size:10px}.assetPreview img{width:100%;height:100%;object-fit:contain}.fileBtn{display:flex;align-items:center;justify-content:center;cursor:pointer}.fileBtn input{display:none}.pieceInfo{background:#0a0a0a;border:1px solid #2d2d2d;border-radius:12px;padding:10px;margin-top:9px}.pieceInfo b{color:#e9d08a}.lockRow{display:flex;align-items:center;gap:9px;background:#0a0a0a;border:1px solid #2d2d2d;border-radius:12px;padding:10px}.lockRow input{width:auto}.refBox{border:1px dashed #454545;border-radius:12px;padding:10px;background:#0b0b0b}.warn{color:#e5c36e;font-size:11px;line-height:1.55;margin-top:8px}
+.asset{display:grid;grid-template-columns:64px 1fr;gap:9px;align-items:center}.assetPreview{width:64px;height:64px;background:#090909;border:1px solid #393939;border-radius:12px;display:flex;align-items:center;justify-content:center;overflow:hidden;color:#666;font-size:10px}.assetPreview img{width:100%;height:100%;object-fit:contain}.fileBtn{display:flex;align-items:center;justify-content:center;cursor:pointer}.fileBtn input{display:none}.pieceInfo{background:#0a0a0a;border:1px solid #2d2d2d;border-radius:12px;padding:10px;margin-top:9px}.pieceInfo b{color:#e9d08a}.lockRow{display:flex;align-items:center;gap:9px;background:#0a0a0a;border:1px solid #2d2d2d;border-radius:12px;padding:10px}.lockRow input{width:auto}.refBox{border:1px dashed #454545;border-radius:12px;padding:10px;background:#0b0b0b}.warn{color:#e5c36e;font-size:11px;line-height:1.55;margin-top:8px}.presetBar{display:none;align-items:center;justify-content:space-between;gap:10px;margin:12px 0;padding:12px 14px;border:1px solid #65552b;border-radius:14px;background:#15120b}.presetBar b{color:#f0d88e}.presetBar span{font-size:12px;color:#aaa}.presetBar a{color:#111;background:linear-gradient(135deg,#bc9948,#e3c66e);text-decoration:none;border-radius:10px;padding:8px 10px;font-size:11px;font-weight:900;white-space:nowrap}
 @media(max-width:940px){.layout{grid-template-columns:1fr}.stageCard{position:static;order:-1}.stage{min-height:590px}.app{padding-bottom:35px}}
 </style>
 </head>
@@ -345,7 +345,26 @@ q('crestFile').onchange=e=>loadAsset('crest',e.target.files[0]);q('brandFile').o
 q('refFile').onchange=async e=>{const file=e.target.files[0];if(!file)return;S.ref.url=await fileData(file);renderReference();note('厂家参考层已载入')};q('clearRefBtn').onclick=()=>{S.ref.url='';renderReference();note('参考层已移除')};
 q('saveBtn').onclick=saveDesign;q('loadBtn').onclick=loadDesign;q('resetBtn').onclick=reset;q('svgBtn').onclick=exportSvg;q('pngBtn').onclick=exportPng;q('jsonBtn').onclick=exportJson;
 q('copySpecBtn').onclick=async()=>{try{await navigator.clipboard.writeText(q('spec').textContent);note('厂家参数已复制')}catch(e){note('复制失败')}};
-syncAll();apply();hydrateAssets();
+function applyProductPreset(){
+ const p=new URLSearchParams(location.search);
+ if(p.get('kit')!=='01A')return;
+ const demo=Math.max(0,Math.min(5,parseInt(p.get('demo')||'0',10)||0));
+ const palettes=[
+  ['#0e234e','#e21b2d'],
+  ['#c90f22','#f4f4f1'],
+  ['#123fb5','#f4f4f1'],
+  ['#511278','#f4f4f1'],
+  ['#f2f2f0','#151515'],
+  ['#f1cf08','#0b673c']
+ ];
+ const names=['藏蓝红金','红白金','蓝白金','紫白金','白黑金','黄绿'];
+ const primary=palettes[demo][0], accent=palettes[demo][1];
+ ['front','back','sleeve'].forEach(k=>S.pieces[k].color=primary);
+ ['cuff','collarWide','collarNarrow'].forEach(k=>S.pieces[k].color=accent);
+ S.view='preview';
+ const bar=q('presetBar'); if(bar){bar.style.display='flex';q('presetText').textContent=' · 01 狮头系列一 / '+names[demo]+'。已自动带入主色与辅色，可继续修改。'}
+}
+applyProductPreset();syncAll();apply();hydrateAssets();
 })();
 </script>
 </body></html>
