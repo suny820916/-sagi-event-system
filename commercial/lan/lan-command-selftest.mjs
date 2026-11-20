@@ -41,6 +41,15 @@ try {
     const response = await fetch(base + '/api/v1/lan/health', { headers: { host: malformedHost } });
     assert.equal(response.status, 400, 'malformed Host must be rejected: ' + malformedHost);
   }
+  for (const target of [
+    '/api/v1/lan/health?debug=1',
+    '/api/v1/lan/%68ealth',
+    '/api/v1/lan%2fhealth',
+    '//attacker.example/api/v1/lan/health',
+  ]) {
+    const response = await fetch(base + target);
+    assert.equal(response.status, 400, 'non-canonical target rejected: ' + target);
+  }
   const sameOrigin = await fetch(base + '/api/v1/lan/health', { headers: { origin: base } });
   assert.equal(sameOrigin.status, 200, 'same-origin browser request must work');
   for (const origin of ['http://evil.example', base + '.evil.example', 'null', base + '/other', 'https://127.0.0.1:' + port]) {
