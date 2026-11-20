@@ -189,3 +189,8 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Reconciled mobile allowlist with canonical command types and propagated invalid-command and revision-conflict responses.
 - Added real engine/store integration self-test covering concurrent goals, restart/re-pair, durable duplicate detection, red card and offline engine response.
 - Commits: 89b41c1, d3680fc, 7252f5d. Runtime verification pending; no live certification. Clock progression, long-window idempotency (2048 ID cap), store writer locking, transport security, vMix cues and Windows/mobile tests remain open.
+
+## 2026-11-20 — Durable commit / snapshot failure boundary
+- Fixed a source-observed consistency defect: after a journal record was fsynced, a snapshot failure previously caused the Local Engine to return failure and retain stale in-memory state. Snapshot replacement is now best-effort after the durable commit; the old snapshot is never deleted as a fallback. Snapshot error is retained in the store instance for future diagnostics.
+- Added `commercial/core/snapshot-failure-selftest.mjs` covering actual HTTP goal submission, duplicate retry and restart with a deliberately obstructed snapshot path.
+- Commits: e5a375b, d37fab92. Test execution and CI pending; uncertain journal writes, disk-full, writer locking and torn-tail repair remain release blockers. The snapshot warning still needs a diagnostics endpoint.
