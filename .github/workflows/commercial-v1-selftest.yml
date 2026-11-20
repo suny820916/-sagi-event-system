@@ -15,8 +15,12 @@ on:
 
 jobs:
   core-selftest:
-    runs-on: ubuntu-latest
-    timeout-minutes: 8
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -36,3 +40,6 @@ jobs:
         run: node commercial/tests/vmix-status-selftest.mjs
       - name: Run authenticated vMix Local API self-test
         run: node commercial/tests/vmix-local-api-selftest.mjs
+
+      - name: Run storage failure and retained history regression
+        run: node commercial/core/snapshot-failure-selftest.mjs
