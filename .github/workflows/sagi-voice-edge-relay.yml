@@ -1,0 +1,51 @@
+name: Deploy SAGI VOICE Edge Relay
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "sagi-voice-edge-relay/**"
+      - ".github/workflows/sagi-voice-edge-relay.yml"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Validate worker syntax
+        run: node --check sagi-voice-edge-relay/worker.js
+
+  deploy:
+    needs: validate
+    runs-on: ubuntu-latest
+    env:
+      CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CF_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Cloudflare credentials
+        id: cf
+        run: |
+          if [ -n "$CF_API_TOKEN" ] && [ -n "$CF_ACCOUNT_ID" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "Cloudflare credentials are not configured; relay source is ready but deployment is skipped."
+          fi
+      - name: Deploy workers.dev relay
+        if: steps.cf.outputs.ready == 'true'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: sagi-voice-edge-relay
+          command: deploy
+      - name: Deployment not configured yet
+        if: steps.cf.outputs.ready != 'true'
+        run: |
+          echo "No domestic server/domain is used."
+          echo "To activate the overseas relay, connect a Cloudflare account once and add CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID."
