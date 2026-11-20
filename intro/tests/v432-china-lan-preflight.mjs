@@ -83,6 +83,10 @@ check('External dependency audit produces a deterministic list',Array.isArray(ex
 check('No external scripts in live output',!/<script\b[^>]*\bsrc\s*=\s*["']https?:/i.test(output));
 check('Bridge rejects stale same-fixture revisions',bat.includes('STALE_MATCHDAY_REVISION')&&bat.includes('$staleRevision')&&bat.includes('Write-HttpResponse $stream 409'));
 check('Bridge rejects same-revision conflicting commands',bat.includes('$revisionConflict')&&bat.includes('$incomingCommand')&&bat.includes('$currentCommand'));
+check('Bridge rejects unapproved cross-fixture takeover',bat.includes('FIXTURE_TAKEOVER_REQUIRED')&&bat.includes('$fixtureConflict')&&bat.includes('$allowFixtureTakeover'));
+check('Controller has one-shot fixture takeover authorization',control.includes('mdFixtureTakeoverOnce=false')&&control.includes('function mdAuthorizeFixtureTakeover()')&&control.includes('allowFixtureTakeover:!!mdFixtureTakeoverOnce'));
+check('Fixture takeover is tied to explicit operator actions',control.includes("mdAuthorizeFixtureTakeover();matchReady=true")&&control.includes("mdAuthorizeFixtureTakeover();\n  let stats=null;"));
+check('Fixture takeover authorization is consumed and restored only on publish failure',control.includes('if(state.allowFixtureTakeover)mdFixtureTakeoverOnce=false')&&control.includes('if(state.allowFixtureTakeover)mdFixtureTakeoverOnce=true'));
 check('Controller recovers immediately after stale revision rejection',control.includes("includes('LAN 409')")&&control.includes("recoverMatchdayFromBridge(false,{preferNewest:false,allowIdentityTakeover:false})"));
 check('Local event persistence exists',control.includes('mdPersist()')&&control.includes('mdRecordEvent('));
 if(failures.length){console.error('CHINA_LAN_PREFLIGHT_FAILED '+failures.join('; '));process.exit(1)}
