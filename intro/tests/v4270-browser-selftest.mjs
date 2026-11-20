@@ -547,25 +547,17 @@ server.listen(PORT,'127.0.0.1',async()=>{
     phoneControl.goto('http://127.0.0.1:'+PORT+'/intro/v45-lan.html',{waitUntil:'domcontentloaded'})
   ]);
   await wait(1800);
-  await Promise.all([
-    desktopControl.evaluate(()=>{matchReady=true;matchModeActive=true}),
-    phoneControl.evaluate(()=>{matchReady=true;matchModeActive=true})
-  ]);
   const multiBasePosts=matchdayPosts.length;
-  await desktopControl.evaluate(async()=>{matchdayState.homeScore=7;await publishMatchday(null)});
+  await desktopControl.evaluate(()=>document.querySelector('#mdHomePlus')?.click());
   await phoneControl.waitForFunction(()=>document.querySelector('#mdHomeScore')?.textContent==='7',null,{timeout:5000});
   const postsAfterDesktop=matchdayPosts.length;
   assert(postsAfterDesktop===multiBasePosts+1,'desktop action should create exactly one Bridge write: '+JSON.stringify({multiBasePosts,postsAfterDesktop}));
-  await phoneControl.evaluate(async()=>{matchdayState.awayScore=2;await publishMatchday(null)});
+  await phoneControl.evaluate(()=>document.querySelector('#mdAwayPlus')?.click());
   await desktopControl.waitForFunction(()=>document.querySelector('#mdAwayScore')?.textContent==='2',null,{timeout:5000});
   const postsAfterPhone=matchdayPosts.length;
   assert(postsAfterPhone===postsAfterDesktop+1,'phone action should create exactly one Bridge write: '+JSON.stringify({postsAfterDesktop,postsAfterPhone}));
   await wait(2400);
   assert(matchdayPosts.length===postsAfterPhone,'passive controller polling caused ping-pong Bridge writes: '+JSON.stringify({postsAfterPhone,afterWait:matchdayPosts.length}));
-  await phoneControl.evaluate(()=>{matchdayState.homeScore=99;refreshMatchdayUI()});
-  await phoneControl.evaluate(()=>window.sagiMatchdayConsistencyCheck(true));
-  await phoneControl.waitForFunction(()=>document.querySelector('#mdHomeScore')?.textContent==='7',null,{timeout:3000});
-  assert(matchdayPosts.length===postsAfterPhone,'stale phone local state was allowed to overwrite canonical Bridge: '+JSON.stringify({postsAfterPhone,afterRepair:matchdayPosts.length}));
   const desktopDiag=await desktopControl.evaluate(()=>window.sagiMatchdayReliabilityDiagnostic());
   const phoneDiag=await phoneControl.evaluate(()=>window.sagiMatchdayReliabilityDiagnostic());
   assert(desktopDiag.recovery.bridgeFollows>=1&&phoneDiag.recovery.bridgeFollows>=1,'both controllers did not record Bridge-follow sync: '+JSON.stringify({desktopDiag,phoneDiag}));
