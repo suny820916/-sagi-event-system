@@ -1,5 +1,5 @@
 {
-  "version": "2.3",
+  "version": "2.4",
   "production_master": "原图册对应页 → 精确还原版型/纹路/拼接位置 → 只换 SAGI A+红点标识和标准六配色 → 对照验收 → 通过后发布 → 下一款",
   "standard_colorways": [
     "藏蓝红金",
@@ -21,13 +21,13 @@
       "01B",
       "狮头系列二",
       8,
-      "source_pdf_verified_repository_asset_pending"
+      "published"
     ],
     [
       "03",
       "交错系列",
       9,
-      "queued"
+      "source_locked"
     ],
     [
       "04",
@@ -155,25 +155,42 @@
   ],
   "product_assets": {
     "01B": {
-      "source_reference": "source/01B/source-reference.webp",
       "source_page": 8,
-      "status": "source_pdf_verified_repository_asset_pending",
-      "next": "transfer validated page-8 source asset to repository; perform exact garment reconstruction and six-color visual QA",
+      "source_variant": "蓝红复古",
+      "asset": "assets/01b-lion-ii/sagi-01b-sprite.webp",
+      "qa_record": "assets/01b-lion-ii/qa.json",
+      "product_page": "product-01b.html",
+      "status": "published",
       "qa": {
-        "source_page_visual": "confirmed from newly uploaded original PDF",
-        "binary_integrity": "repository asset still unverified; do not release",
-        "raw_pdf_materialization": "available locally in current conversation",
-        "release": "blocked"
+        "source_page_visual": "passed",
+        "cut": "passed",
+        "collar": "passed",
+        "panel_positions": "passed",
+        "lion_pattern": "passed",
+        "brand_replacement": "passed",
+        "six_colorways": "passed",
+        "designer_entry": "passed",
+        "release": "published"
       }
+    },
+    "03": {
+      "source_page": 9,
+      "status": "source_locked",
+      "next": "structure_restore"
     }
   },
-  "source_atlas_status": "repository_integrity_pending",
+  "source_atlas_status": "authoritative_uploaded_pdf_verified",
   "source_local_validation": {
     "pages": 30,
     "product_pages": "7-28",
-    "verified_page": 8,
+    "verified_pages": [
+      7,
+      8,
+      9
+    ],
     "source_pdf": "user-uploaded original PDF",
     "local_pdf_readable": true,
-    "repository_binary_restored": false
-  }
+    "repository_01b_asset_restored": true
+  },
+  "current_product": "03"
 }
