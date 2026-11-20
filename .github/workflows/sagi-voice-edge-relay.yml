@@ -47,5 +47,5 @@ jobs:
       - name: Deployment not configured yet
         if: steps.cf.outputs.ready != 'true'
         run: |
-          echo "No domestic server/domain is used."
-          echo "To activate the overseas relay, connect a Cloudflare account once and add CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID."
+          echo "::warning::Cloudflare API credentials are not configured; source validation passed but workers.dev was NOT deployed."
+          echo "Use the one-click Deploy to Cloudflare button in sagi-voice-edge-relay/README.md, or configure CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID."
