@@ -2336,9 +2336,12 @@ function mdRenderPenaltyDirector(){
  const hint=q('mdPenHint');if(hint){hint.textContent=p.finished?status.next+' · 常规比分 '+matchdayState.homeScore+'-'+matchdayState.awayScore+' · 点球 '+st.homeGoals+'-'+st.awayGoals:(p.started?(mdPenaltySuddenDeath()?'已进入突然死亡 · 双方必须完成同轮后才能判胜':'系统自动轮换主罚方并判断是否提前结束'):'进入后常规比分不会被点球比分覆盖。');hint.classList.toggle('finished',p.finished)}
 }
 async function mdPenaltyStart(){
- const p=mdPenaltyState();if(p.finished&&p.history.length){note('点球大战已经结束 · 如需重来请先重置');return}if(p.started&&!p.finished){mdSyncDirectorPenaltyToSimple();await publishMatchday(null);note('点球大战正在进行 · 已重新同步直播点球牌');return}if(!p.history.length){p.rounds=Number(q('mdPenRounds')&&q('mdPenRounds').value)||p.rounds;p.firstSide=(q('mdPenFirst')&&q('mdPenFirst').value)==='AWAY'?'AWAY':'HOME'}
- p.started=true;p.visible=true;p.finished=false;p.winner='';matchdayState.period='PEN';matchdayState.clockBase=mdNowSeconds();matchdayState.clockRunning=false;matchdayState.clockStartedAt=0;matchdayState.scoreboardVisible=true;mdPenaltyEvaluateWinner();mdSyncDirectorPenaltyToSimple();mdRenderPenaltyDirector();
- await refreshGraphicsBrowser(false);await sagiDelay(500);await publishMatchday(null);note('点球大战已开始 · 世界杯级点球牌已同步')
+ mdLocalMutationDepth++;
+ try{
+  const p=mdPenaltyState();if(p.finished&&p.history.length){note('点球大战已经结束 · 如需重来请先重置');return}if(p.started&&!p.finished){mdSyncDirectorPenaltyToSimple();await publishMatchday(null);note('点球大战正在进行 · 已重新同步直播点球牌');return}if(!p.history.length){p.rounds=Number(q('mdPenRounds')&&q('mdPenRounds').value)||p.rounds;p.firstSide=(q('mdPenFirst')&&q('mdPenFirst').value)==='AWAY'?'AWAY':'HOME'}
+  p.started=true;p.visible=true;p.finished=false;p.winner='';matchdayState.period='PEN';matchdayState.clockBase=mdNowSeconds();matchdayState.clockRunning=false;matchdayState.clockStartedAt=0;matchdayState.scoreboardVisible=true;mdPenaltyEvaluateWinner();mdSyncDirectorPenaltyToSimple();mdRenderPenaltyDirector();
+  await refreshGraphicsBrowser(false);await sagiDelay(500);await publishMatchday(null);note('点球大战已开始 · 世界杯级点球牌已同步')
+ }finally{mdLocalMutationDepth=Math.max(0,mdLocalMutationDepth-1)}
 }
 async function mdPenaltyKick(side,result){
  const p=mdPenaltyState();if(!p.started)await mdPenaltyStart();p.visible=true;if(p.finished){note('点球大战已经结束');return}
@@ -2504,7 +2507,7 @@ async function mdLoad(opts={}){
  if(matchdayState.period==='PEN'&&mdPenaltyState().started)mdSyncDirectorPenaltyToSimple()
 }
 const MD_LAST_GOOD_KEY='sagi_matchday_last_good_v429';
-let mdPublishRevision=0,mdLastAckRevision=0,mdPublishChain=Promise.resolve(),mdPendingPublishes=0,mdConsistencyBusy=false,mdLastConsistencyAt=0,mdLastConsistencyState='INIT',mdLocalRecoveryStamp=0,mdFixtureTakeoverOnce=false;
+let mdPublishRevision=0,mdLastAckRevision=0,mdPublishChain=Promise.resolve(),mdPendingPublishes=0,mdLocalMutationDepth=0,mdConsistencyBusy=false,mdLastConsistencyAt=0,mdLastConsistencyState='INIT',mdLocalRecoveryStamp=0,mdFixtureTakeoverOnce=false;
 function mdAuthorizeFixtureTakeover(){mdFixtureTakeoverOnce=true;return true}
 let mdPublishMetrics={ok:0,failed:0,retried:0,recovered:0,lastOkAt:0,lastErrorAt:0,lastAttempts:0},mdEventGateSig='',mdEventGateAt=0;
 function mdNextEventIdentity(type='EVENT'){
@@ -2605,7 +2608,7 @@ function mdPassiveSyncActive(){
  return !!(matchReady||matchModeActive||matchdayState.scoreboardVisible||matchdayState.clockRunning||Number(matchdayState.revision)>0)
 }
 async function mdConsistencyCheck(force=false){
- if(mdConsistencyBusy||mdPendingPublishes>0||(!force&&!mdPassiveSyncActive()))return false;
+ if(mdConsistencyBusy||mdPendingPublishes>0||mdLocalMutationDepth>0||(!force&&!mdPassiveSyncActive()))return false;
  mdConsistencyBusy=true;
  try{
   mdRecoveryMetrics.passivePolls++;

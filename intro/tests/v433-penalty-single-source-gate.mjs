@@ -11,7 +11,9 @@ for(const token of [
  "async function mdSimplePenaltyAdd(side){return mdPenaltyKick(side,'GOAL')}",
  "async function mdSimplePenaltyMiss(side){return mdPenaltyKick(side,'MISS')}",
  "window.sagiPenaltySingleSourceDiagnostic",
- "p.visible=true"
+ "p.visible=true",
+ "mdLocalMutationDepth",
+ "mdPendingPublishes>0||mdLocalMutationDepth>0"
 ]) assert(control.includes(token),'control single-source gate missing: '+token);
 
 assert(control.includes("matchdayState.simplePenalty=mdPenaltyCompatView()"),'compatibility mirror must be derived from canonical state');
