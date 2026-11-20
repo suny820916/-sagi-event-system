@@ -22,7 +22,7 @@
 </head>
 <body>
 <div class="app">
- <div class="top"><a class="back" href="./catalog.html">← 产品画册</a><div class="tag">SAGI DEMO · 标准样板</div></div>
+ <div class="top"><a class="back" href="./catalog.html">← 产品画册</a><div class="tag">SAGI KIT · TEAMWEAR</div></div>
  <div class="hero">
   <div class="gallery">
    <div class="preview" id="preview"></div>
@@ -31,7 +31,7 @@
   <div class="info">
    <div class="eyebrow">01 · LION SERIES</div>
    <div class="title">狮头系列一</div>
-   <div class="sub">SAGI KIT 首个标准样板产品页。保留原款式结构，以 SAGI 品牌、号码和球队视觉完成效果展示。</div>
+   <div class="sub">狮头暗纹与比赛服结构结合，提供六套标准配色，并支持球队标识、姓名、号码与尺码定制。</div>
    <div class="selected"><small>当前样板配色</small><b id="selectedName">藏蓝红金</b></div>
    <div class="grid">
     <div class="cell">儿童尺码<b>110 — 160</b></div>
@@ -39,8 +39,8 @@
    </div>
    <div class="section"><h3>可选领型</h3><div class="chips"><span class="chip">常规V圆领</span><span class="chip">交叉V圆领</span><span class="chip">缺口V圆领</span><span class="chip">平口V领</span><span class="chip">翻领</span><span class="chip">Polo领</span></div></div>
    <div class="section"><h3>面料 / 标准版零售价</h3><div class="prices"><div class="price">针眼<b>¥138</b></div><div class="price">菱形提花<b>¥158</b></div><div class="price">针眼提花<b>¥158</b></div><div class="price">阿迪<b>¥178</b></div><div class="price">ADV<b>¥208</b></div></div></div>
-   <div class="actions"><a class="btn" href="./catalog.html">继续选款</a><a class="btn primary" id="designBtn" href="./index.html?kit=01A&demo=0&color=%230e234e">用这个样板设计</a></div>
-   <div class="note">样板图用于展示设计效果；正式生产仍以厂家纸样、面料与最终确认稿为准。</div>
+   <div class="actions"><a class="btn" href="./catalog.html">继续选款</a><a class="btn primary" id="designBtn" href="./customize.html?kit=01A">开始定制</a></div>
+   <div class="note">页面展示为标准配色效果；正式生产以最终确认的尺码、印字、球队标识和订单信息为准。</div>
   </div>
  </div>
 </div>
@@ -53,11 +53,10 @@ const items=[
  {name:"白黑金",pos:["50%","100%"],hex:"#f2f2f0"},
  {name:"黄绿",pos:["100%","100%"],hex:"#f1cf08"}
 ];
-const preview=document.getElementById("preview"), thumbs=document.getElementById("thumbs"), selected=document.getElementById("selectedName"), btn=document.getElementById("designBtn");
+const preview=document.getElementById("preview"), thumbs=document.getElementById("thumbs"), selected=document.getElementById("selectedName");
 function choose(i){
  const it=items[i]; preview.style.backgroundPosition=it.pos[0]+" "+it.pos[1]; selected.textContent=it.name;
  [...thumbs.children].forEach((x,n)=>x.classList.toggle("on",n===i));
- btn.href="./index.html?kit=01A&demo="+i+"&color="+encodeURIComponent(it.hex)+"&colorName="+encodeURIComponent(it.name);
 }
 items.forEach((it,i)=>{const d=document.createElement("div");d.className="thumb"+(i===0?" on":"");d.innerHTML='<div class="crop" style="background-position:'+it.pos[0]+' '+it.pos[1]+'"></div><span>'+it.name+'</span>';d.onclick=()=>choose(i);thumbs.appendChild(d)});choose(0);
 </script>
