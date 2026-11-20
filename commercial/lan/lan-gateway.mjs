@@ -46,6 +46,7 @@ export function createLanGateway({
       if (!hostHeader || /[@\/\\?#\s]/.test(hostHeader)) throw new Error('BAD_HOST');
       const parsed = new URL('http://' + hostHeader);
       if (!parsed.port || !/^\d+$/.test(parsed.port)) throw new Error('PORT_REQUIRED');
+      if (Number(parsed.port) !== server.address()?.port) throw new Error('WRONG_PORT');
       requestHost = parsed.hostname.replace(/^\[/, '').replace(/\]$/, '');
     }
     catch { return reply(res, 400, { error: 'INVALID_HOST' }); }
@@ -53,7 +54,20 @@ export function createLanGateway({
     if (host === '127.0.0.1') allowedHosts.add('localhost');
     if (host === '::1') allowedHosts.add('localhost');
     if (!allowedHosts.has(requestHost)) return reply(res, 403, { error: 'HOST_FORBIDDEN' });
-    if (req.headers.origin) return reply(res, 403, { error: 'ORIGIN_FORBIDDEN' });
+    // Browsers sending a same-origin Origin are legitimate. Reject foreign origins
+    // and malformed/multiple Origin values; never reflect arbitrary CORS origins.
+    if (req.headers.origin) {
+      const origin = String(req.headers.origin);
+      let valid = false;
+      try {
+        const parsedOrigin = new URL(origin);
+        valid = parsedOrigin.protocol === 'http:' &&
+          parsedOrigin.origin === 'http://' + hostHeader &&
+          parsedOrigin.pathname === '/' && !parsedOrigin.search && !parsedOrigin.hash &&
+          !parsedOrigin.username && !parsedOrigin.password;
+      } catch { /* reject */ }
+      if (!valid) return reply(res, 403, { error: 'ORIGIN_FORBIDDEN' });
+    }
     if (req.method === 'POST' && !/^application\/json(?:\s*;|\s*$)/i.test(String(req.headers['content-type'] || '')))
       return reply(res, 415, { error: 'JSON_REQUIRED' });
     if (path === '/api/v1/lan/health' && req.method === 'GET')
