@@ -12,7 +12,7 @@ on:
       - "intro/tests/v432-event-identity-gate.mjs"
       - "intro/tests/v432-brand-gate.mjs"
       - "intro/tests/v432-integration-gate.mjs"
-      - "intro/tests/v432-china-lan-preflight.mjs"
+      - "intro/tests/v432-china-lan-preflight.mjs"\n      - "intro/tests/v432-bridge-ssot-runtime.ps1"
       - "intro/tests/v432-field-preflight.ps1"
       - "intro/SAGI_VMIX_LAN_V432_SIGNATURE_RC.bat"
       - "intro/tests/v4311-replay-hotfix-selftest.mjs"
@@ -30,7 +30,7 @@ on:
       - "intro/tests/v432-event-identity-gate.mjs"
       - "intro/tests/v432-brand-gate.mjs"
       - "intro/tests/v432-integration-gate.mjs"
-      - "intro/tests/v432-china-lan-preflight.mjs"
+      - "intro/tests/v432-china-lan-preflight.mjs"\n      - "intro/tests/v432-bridge-ssot-runtime.ps1"
       - "intro/tests/v432-field-preflight.ps1"
       - "intro/SAGI_VMIX_LAN_V432_SIGNATURE_RC.bat"
       - "intro/tests/v4311-replay-hotfix-selftest.mjs"
@@ -228,6 +228,10 @@ jobs:
           if ($code -notin @(0,1)) { throw "Unexpected preflight exit: $code" }
           Write-Host 'Field preflight package checks and JSON evidence PASS'
           exit 0
+      - name: Run V4.32 Bridge restart / SSoT runtime gate on Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          & .\\intro\\tests\\v432-bridge-ssot-runtime.ps1
       - name: Install Playwright Chromium for Windows browser compatibility
         shell: pwsh
         run: |
