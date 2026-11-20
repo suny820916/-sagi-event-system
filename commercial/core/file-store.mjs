@@ -1,4 +1,4 @@
-import { copyFile, mkdir, open, readFile, rename, rm, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, open, readFile, rename, rm, rmdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { hydrateMatchState } from "./match-core.mjs";
 
@@ -25,6 +25,7 @@ export class FileMatchStore {
     this.snapshotPath = path.join(rootDir, "match-state.json");
     this.backupPath = path.join(rootDir, "match-state.bak.json");
     this.journalPath = path.join(rootDir, "match-events.jsonl");
+    this.lockPath = path.join(rootDir, "match-writer.lock");
     this.pending = Promise.resolve();
     this.journalError = null;
     this.snapshotError = null;
@@ -70,6 +71,25 @@ export class FileMatchStore {
   }
 
   async _commit(stateLike, event) {
+    await this.init();
+    // Atomic directory creation coordinates independent store instances.
+    // Never steal an existing lock: crash residue requires operator recovery.
+    try {
+      await mkdir(this.lockPath);
+    } catch (error) {
+      if (error.code === "EEXIST") throw new Error("WRITER_LOCK_BUSY");
+      throw error;
+    }
+    try {
+      return await this._commitLocked(stateLike, event);
+    } finally {
+      // A release failure must not negate a durable commit.
+      try { await rmdir(this.lockPath); }
+      catch { this.journalError = "WRITER_LOCK_RELEASE_FAILED"; }
+    }
+  }
+
+  async _commitLocked(stateLike, event) {
     if (this.journalError) throw new Error("JOURNAL_RESTART_REQUIRED");
     await this.init();
     const state = hydrateMatchState(stateLike);
