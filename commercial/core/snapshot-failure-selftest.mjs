@@ -20,6 +20,7 @@ async function send() {
 try {
   const store = new FileMatchStore(dir);
   engine = await createLocalServer({ store, meta });
+  await assert.rejects(createLocalServer({dataDir: dir, meta}), /ENGINE_ALREADY_RUNNING_OR_RECOVERY_REQUIRED/);
   await mkdir(store.backupPath);
   // A directory at the temporary snapshot path makes snapshot writes fail.
   await mkdir(store.snapshotPath + '.tmp');
@@ -57,6 +58,15 @@ try {
   // A failed commit must release its own lock.
   await mkdir(independent.lockPath);
   await rm(independent.lockPath, { recursive: true });
+  // Listener startup failure must release engine ownership.
+  const otherDir = await mkdtemp(path.join(os.tmpdir(), 'sagi-owner-'));
+  const other = await createLocalServer({dataDir: otherDir, meta});
+  try {
+    await assert.rejects(createLocalServer({dataDir: dir, meta, port: other.address.port}), /EADDRINUSE/);
+  } finally {
+    await other.close();
+    await rm(otherDir, {recursive:true, force:true});
+  }
   await appendFile(store.journalPath, '{"kind":"STATE_COMMIT"');
   engine = await createLocalServer({ dataDir: dir, meta });
   const recoveredBase = 'http://127.0.0.1:' + engine.address.port;
