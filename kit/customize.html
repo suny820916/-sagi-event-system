@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#080808">
+<title>SAGI KIT · 定制需求</title>
+<meta name="description" content="SAGI KIT 足球队服定制需求：款式、配色、球队、姓名、号码、尺码与数量。">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<style>
+:root{--bg:#080808;--panel:#131313;--line:#2d2d2d;--text:#f5f2e9;--muted:#909090;--gold:#d7b75f;--red:#e52231}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+body{min-height:100vh;background:radial-gradient(circle at 78% 0,#211a10 0,transparent 28%),#080808}
+.wrap{max-width:980px;margin:auto;padding:22px 14px 50px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px}.brand img{display:block;width:170px}.tag{border:1px solid #5d512f;color:#d6c17f;border-radius:999px;padding:7px 10px;font-size:10px;font-weight:900}
+.hero{padding:46px 0 24px}.hero h1{font-size:clamp(36px,7vw,68px);line-height:.98;letter-spacing:-3px;margin:10px 0}.hero p{color:#9b9b9b;line-height:1.8;font-size:13px;max-width:700px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.card{border:1px solid var(--line);background:linear-gradient(180deg,#151515,#0d0d0d);border-radius:20px;padding:16px}.card.full{grid-column:1/-1}.card h2{font-size:15px;margin:0 0 12px}
+label{display:block;font-size:10px;color:#8d8d8d;margin:10px 0 5px}input,select,textarea{width:100%;background:#090909;color:#fff;border:1px solid #363636;border-radius:11px;padding:11px;font:inherit;font-size:13px}textarea{min-height:145px;resize:vertical}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.colors{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.color{border:1px solid #333;background:#111;border-radius:12px;padding:9px;color:#ddd;font-size:11px;text-align:left}.color.on{border-color:#bfa45c;box-shadow:0 0 0 1px #bfa45c inset}.sw{height:22px;border-radius:7px;margin-bottom:6px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.btn{border:1px solid #363636;background:#222;color:#fff;border-radius:12px;padding:11px 14px;font-weight:900;font-size:12px;text-decoration:none}.btn.primary{background:linear-gradient(135deg,#b89449,#e0c36d);color:#111;border:0}
+.out{white-space:pre-wrap;background:#090909;border:1px solid #313131;border-radius:14px;padding:14px;min-height:180px;color:#d8d8d8;font-size:12px;line-height:1.75}
+.note{font-size:10px;color:#747474;line-height:1.6;margin-top:10px}.footer{display:flex;justify-content:space-between;gap:12px;margin-top:24px;padding-top:17px;border-top:1px solid #202020;color:#666;font-size:10px}
+@media(max-width:700px){.grid{grid-template-columns:1fr}.card.full{grid-column:auto}.row{grid-template-columns:1fr}.colors{grid-template-columns:1fr 1fr}.hero h1{letter-spacing:-2px}.brand img{width:150px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top"><a class="brand" href="/"><img src="/assets/brand/sagi-football-logo.webp?v=20261121a" alt="SAGI FOOTBALL"></a><div class="tag">KIT CUSTOM</div></header>
+
+<section class="hero">
+  <div style="font-size:11px;color:var(--gold);font-weight:900;letter-spacing:2px">SAGI KIT · TEAMWEAR</div>
+  <h1>把球队信息，<br>变成一张清楚的定制单。</h1>
+  <p>选择款式与配色，填写球队、数量、姓名号码和尺码。当前版本先生成可复制的定制需求；以后可以直接接 SAGI 订单中心和抖店成交。</p>
+</section>
+
+<div class="grid">
+  <section class="card">
+    <h2>01 · 款式与配色</h2>
+    <label>选择款式</label>
+    <select id="kit"><option value="01A">01A · 狮头系列一</option><option value="01B">01B · 狮头系列二</option></select>
+    <label>标准配色</label>
+    <div class="colors" id="colors"></div>
+  </section>
+
+  <section class="card">
+    <h2>02 · 球队信息</h2>
+    <label>球队名称</label><input id="team" placeholder="例如：塔城青年">
+    <div class="row"><div><label>联系人</label><input id="contact" placeholder="姓名"></div><div><label>联系电话</label><input id="phone" inputmode="tel" placeholder="手机号码"></div></div>
+    <div class="row"><div><label>预计数量</label><input id="qty" type="number" min="1" value="15"></div><div><label>是否需要袜子/袜套</label><select id="socks"><option>暂不确定</option><option>需要袜子</option><option>需要袜套</option><option>不需要</option></select></div></div>
+  </section>
+
+  <section class="card full">
+    <h2>03 · 球员名单</h2>
+    <label>姓名 / 号码 / 尺码</label>
+    <textarea id="players" placeholder="每人一行，例如：&#10;阿力木 / 10 / L&#10;艾克拜尔 / 7 / XL&#10;王强 / 23 / M"></textarea>
+    <div class="note">也可以先只填数量，详细名单后续再补。正式下单前仍需确认最终尺码、印字和球队标识。</div>
+  </section>
+
+  <section class="card full">
+    <h2>04 · 生成定制需求</h2>
+    <div class="out" id="out">填写上面的信息后，点击“生成定制单”。</div>
+    <div class="actions"><button class="btn primary" onclick="build()">生成定制单</button><button class="btn" onclick="copyOut()">复制内容</button><a class="btn" href="./catalog.html">继续选款</a></div>
+  </section>
+</div>
+
+<footer class="footer"><span>SAGI SPORTS · 为身边的足球加油</span><span>SAGI KIT</span></footer>
+</div>
+<script>
+const palette=[
+  ["藏蓝红金","linear-gradient(90deg,#0d214d,#e11d2e,#d8b55b)"],
+  ["红白金","linear-gradient(90deg,#c81929,#f2f2ee,#d8b55b)"],
+  ["蓝白金","linear-gradient(90deg,#1649c8,#f2f2ee,#d8b55b)"],
+  ["紫白金","linear-gradient(90deg,#572080,#f2f2ee,#d8b55b)"],
+  ["白黑金","linear-gradient(90deg,#f2f2ee,#171717,#d8b55b)"],
+  ["黄绿","linear-gradient(90deg,#f0d10b,#0a663c)"]
+];
+let chosen=0;
+const colors=document.getElementById("colors");
+palette.forEach((p,i)=>{const b=document.createElement("button");b.className="color"+(i===0?" on":"");b.innerHTML='<div class="sw" style="background:'+p[1]+'"></div>'+p[0];b.onclick=()=>{chosen=i;[...colors.children].forEach((x,n)=>x.classList.toggle("on",n===i))};colors.appendChild(b)});
+const qs=new URLSearchParams(location.search);if(qs.get("kit")&&["01A","01B"].includes(qs.get("kit")))document.getElementById("kit").value=qs.get("kit");
+function val(id){return document.getElementById(id).value.trim()}
+function build(){
+ const now=new Date(), code="SG-"+now.getFullYear()+String(now.getMonth()+1).padStart(2,"0")+String(now.getDate()).padStart(2,"0")+"-"+String(Math.floor(Math.random()*9000)+1000);
+ const lines=[
+  "SAGI KIT 定制需求单",
+  "定制码："+code,
+  "款式："+val("kit"),
+  "配色："+palette[chosen][0],
+  "球队："+(val("team")||"待填写"),
+  "数量："+(val("qty")||"待确认")+" 套",
+  "袜子/袜套："+val("socks"),
+  "联系人："+(val("contact")||"待填写"),
+  "联系电话："+(val("phone")||"待填写"),
+  "",
+  "球员名单：",
+  val("players")||"待补充",
+  "",
+  "备注：最终生产以确认后的尺码、印字、球队标识和订单信息为准。"
+ ];
+ document.getElementById("out").textContent=lines.join("\n");
+}
+async function copyOut(){const t=document.getElementById("out").textContent;try{await navigator.clipboard.writeText(t);alert("已复制定制需求");}catch(e){alert("请长按选择并复制内容")}}
+</script>
+</body>
+</html>
