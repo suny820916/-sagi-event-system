@@ -8,7 +8,7 @@
 <style>
 :root{--bg:#080808;--panel:#141414;--line:#2c2c2c;--text:#f5f1e8;--muted:#929292;--gold:#d8b55b}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
-.app{max-width:1080px;margin:auto;padding:14px 12px 70px}.brandlogo{display:inline-flex;align-items:center;text-decoration:none}.brandlogo img{display:block;width:150px;height:auto}.top{display:flex;align-items:center;justify-content:space-between;gap:10px}.back{color:#fff;text-decoration:none;background:#222;border:1px solid #333;border-radius:12px;padding:10px 12px;font-weight:800}.tag{font-size:11px;color:#111;background:linear-gradient(135deg,#bc9948,#e3c66e);border-radius:999px;padding:7px 10px;font-weight:900}
+.app{max-width:1080px;margin:auto;padding:14px 12px 70px}.brandlogo{display:inline-flex;align-items:center;text-decoration:none}.brandlogo img{display:block;width:150px;height:auto}.topnav{display:flex;gap:5px;align-items:center;flex-wrap:wrap;justify-content:flex-end}.topnav a{color:#aaa;text-decoration:none;font-size:10px;font-weight:850;padding:7px 9px;border-radius:999px}.topnav a:hover,.topnav a.on{background:#171717;color:#f2dda1}.top{display:flex;align-items:center;justify-content:space-between;gap:10px}.back{color:#fff;text-decoration:none;background:#222;border:1px solid #333;border-radius:12px;padding:10px 12px;font-weight:800}.tag{font-size:11px;color:#111;background:linear-gradient(135deg,#bc9948,#e3c66e);border-radius:999px;padding:7px 10px;font-weight:900}
 .hero{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(320px,.85fr);gap:16px;margin-top:14px}.gallery,.info{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:14px}
 .preview{width:100%;aspect-ratio:4/5;border-radius:16px;background-image:url("./assets/01b-lion-ii/sagi-01b-sprite.webp");background-size:300% 200%;background-repeat:no-repeat;background-position:0 0;background-color:#eee}
 .thumbs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px;margin-top:9px}.thumb{border:1px solid #333;border-radius:10px;padding:3px;background:#0b0b0b;cursor:pointer}.thumb.on{border-color:var(--gold);box-shadow:0 0 0 1px #6c592c}.crop{width:100%;aspect-ratio:4/5;border-radius:7px;background-image:url("./assets/01b-lion-ii/sagi-01b-sprite.webp");background-size:300% 200%;background-repeat:no-repeat}.thumb span{display:block;text-align:center;color:#8d8d8d;font-size:9px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -22,7 +22,7 @@
 </head>
 <body>
 <div class="app">
- <div class="top"><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><a class="brandlogo" href="/"><img src="/assets/brand/sagi-football-logo.webp?v=20261121a" alt="SAGI FOOTBALL"></a><a class="back" href="./catalog.html">← 产品画册</a></div><div class="tag">SAGI KIT · TEAMWEAR</div></div>
+ <div class="top"><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><a class="brandlogo" href="/"><img src="/assets/brand/sagi-football-logo.webp?v=20261121a" alt="SAGI FOOTBALL"></a><a class="back" href="./catalog.html">← 产品画册</a></div><nav class="topnav"><a class="on" href="/kit/catalog.html">KIT</a><a href="/event/">EVENT</a><a href="/broadcast/">BROADCAST</a><a href="/about.html">ABOUT</a></nav></div>
  <div class="hero">
   <div class="gallery">
    <div class="preview" id="preview"></div>
