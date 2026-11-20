@@ -204,3 +204,8 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Detect incomplete JSONL tail during recovery, retain last complete state but latch recovery-required immediately; new commands are blocked and health returns 503. Append-open errors also latch the store.
 - Extended snapshot failure integration self-test with actual incomplete tail bytes, restart, state readback and refusal of new goal. Commits: c51fa28, 992dcdb.
 - Runtime verification pending. No automatic truncation or repair is attempted; preserve evidence and require exclusive writer coordination before implementing repair. Windows disk failure and power-loss tests still required.
+
+## 2026-11-20 — Independent writer exclusion
+- Added atomic directory lock around FileMatchStore commit, including revision checks and journal/snapshot writes. Existing locks are never automatically stolen. Release failure latches the store without negating a durable commit.
+- Extended recovery self-test to exercise lock contention, stale revision and lock cleanup. Commits: 01a332a, b1f8cb4.
+- Limits: commit lock is not a lifetime engine ownership lock; multiple engines can still serve stale reads. Crash residue requires safe operator recovery; do not remove lock while a writer may be alive. Node/Windows execution pending. Next: exclusive engine ownership, recovery UI and actual concurrent process tests.
