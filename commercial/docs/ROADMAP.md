@@ -163,3 +163,10 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Commits: `f01f6dbc` (gateway), `09888b1` (tests).
 - **Verification pending:** GitHub API accepted source and test commits; neither Node execution nor Windows/mobile hardware testing has been confirmed. Treat this as code review progress, not a certified browser connection.
 - **Still open:** local desktop approval UI, actual LAN TLS or equivalent protected pairing-token transport, canonical engine integration, replay/vMix end-to-end tests, security review and commercial packaging. The browser must load from the gateway's exact origin; a separately hosted UI is intentionally blocked.
+
+## 2026-11-20 — LAN request-target canonicalization
+- Reject non-origin-form, query-bearing, percent-encoded and malformed LAN API request targets before routing; do not silently normalize alternate spellings of privileged endpoints.
+- Added negative HTTP tests for query, encoded route aliases and double-slash targets.
+- Commits: `c093ef5`, `a692dfc`, `bfd12cc`.
+- **Verification:** GitHub accepted source/test updates; Node syntax checks and LAN tests have not yet run in this execution. No claim of CI PASS or Windows/mobile validation.
+- **Next:** verify LAN CI and connect canonical Local Engine with durable idempotency. Do not expose this experimental HTTP gateway to untrusted networks; plaintext paired-device bearer tokens and missing end-to-end device controls remain release blockers.
