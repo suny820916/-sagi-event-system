@@ -58,7 +58,7 @@ assert.equal(corrected.event.after,0);
 assert.equal(corrected.event.appliedDelta,0);
 assert.equal(corrected.state.replayMarkers.length,1002);
 assert.equal(applyCommand(corrected.state,correction).duplicate,true);
-for(const delta of [Infinity,NaN,1.5,101]) {
+for(const delta of [Infinity,NaN,1.5,101,null,true,false,"","1",[],{},undefined]) {
   assert.throws(()=>applyCommand(corrected.state,{...correction,commandId:'invalid',delta}),/INVALID_SCORE_DELTA/);
 }
 
