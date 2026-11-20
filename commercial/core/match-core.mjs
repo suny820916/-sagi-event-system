@@ -212,7 +212,7 @@ export function applyCommand(currentState, command) {
     event = applyEventCommand(state, command, type);
   } else if (type === "SCORE_ADJUST") {
     const side = assertSide(command.side);
-    const delta = Number(command.delta);
+    const delta = command.delta;
     if (!Number.isSafeInteger(delta) || Math.abs(delta) > 100) throw new Error("INVALID_SCORE_DELTA");
     const key = side === "HOME" ? "homeScore" : "awayScore";
     const before = state[key];
