@@ -519,8 +519,12 @@ server.listen(PORT,'127.0.0.1',async()=>{
   assert(outputRecovery.health.pollFail>=10&&outputRecovery.health.recoveries>=1&&outputRecovery.health.watchdogTrips>=1&&outputRecovery.health.softRepolls>=1&&outputRecovery.health.consecutiveFailures===0,'output watchdog health metrics wrong: '+JSON.stringify(outputRecovery.health));
   await diagPage.screenshot({path:'selftest-artifacts/12b-output-watchdog-recovery.png'});
   await diagPage.close();
+  const postsBeforeControlCatchup=matchdayPosts.length;
   await page.evaluate(()=>window.sagiMatchdayConsistencyCheck(true));await wait(800);
-  assert(Number(graphics.homeScore)===Number(authoritative.homeScore),'control did not restore authoritative state after output recovery test');
+  const controlCatchup=await page.evaluate(()=>({home:document.querySelector('#mdHomeScore')?.textContent,diag:window.sagiMatchdayReliabilityDiagnostic()}));
+  assert(Number(graphics.homeScore)===recoveryScore&&controlCatchup.home===String(recoveryScore),'control did not follow newer Bridge revision after output recovery test: '+JSON.stringify({graphics,controlCatchup}));
+  assert(matchdayPosts.length===postsBeforeControlCatchup,'control catch-up produced a reverse POST after output recovery: '+JSON.stringify({before:postsBeforeControlCatchup,after:matchdayPosts.length}));
+  authoritative=JSON.parse(JSON.stringify(graphics));
   await page.screenshot({path:'selftest-artifacts/12-watchdog-repair.png'});
 
   console.log('TEST 11C: fresh director with no local matchday snapshot can atomically recover Bridge fixture identity');
