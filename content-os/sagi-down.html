@@ -1086,7 +1086,7 @@ Unbelievable finish."></textarea>
 
 <script>
 (()=>{'use strict';
-const SAGI_DOWN_BUILD='V4.3.2';
+const SAGI_DOWN_BUILD='V4.3.2.1';
 document.documentElement.dataset.sagiDownBuild=SAGI_DOWN_BUILD;
 const BTCH_PUBLIC='https://btch-downloader-api-green.vercel.app';
 const DOWNLOAD_ROUTER_VERSION='3.0';
@@ -1731,8 +1731,9 @@ function voiceTimingHint(){
  if(clipLocked){renderVoiceTimeline()}else if(actual)rebuildVoiceTimelineToDuration(actual,'actual');else buildVoiceTimeline(true)
 }
 async function voiceApiReady(){
- const ready=await wakeCaptionCloud();
- if(!ready||!STUDIO.cloudCaptionToken)throw new Error('SAGI Cloud 未连接');
+ let ready=await wakeCaptionCloud();
+ if(!ready||!STUDIO.cloudCaptionToken)ready=await wakeCaptionCloud(true);
+ if(!ready||!STUDIO.cloudCaptionToken)throw new Error(STUDIO.cloudLastError||'SAGI Cloud 未连接');
  return true
 }
 async function refreshAIVoiceStatus(showToast=false){
@@ -3167,11 +3168,16 @@ const CAPTION_CLOUD='https://sagi-cloud-bridge-suny820916.onrender.com';
 
 function setCloudCaptionStatus(t){const e=q('captionCloudStatus');if(e)e.textContent='云端：'+t}
 
+let cloudWakePromise=null;
 async function wakeCaptionCloud(force=false){
  if(STUDIO.cloudCaptionReady&&!force)return true;
- if(STUDIO.cloudCaptionWaking)return false;
+ if(cloudWakePromise){
+   const current=await cloudWakePromise;
+   if(!force||current)return current
+ }
  STUDIO.cloudCaptionWaking=true;STUDIO.cloudLastError='';setCloudCaptionStatus('唤醒中');
- try{
+ const task=(async()=>{
+  try{
    const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),90000);
    let healthResp;
    try{
@@ -3193,8 +3199,6 @@ async function wakeCaptionCloud(force=false){
      STUDIO.cloudCaptionReady=false;
      throw new Error('字幕云端不可用：缺少 '+missing.join(', '))
    }
-   // 字幕、翻译、AI Voice、Cloud Render 分开做能力判断。
-   // 老云端只要 captionMedia/captionFast 正常，就绝不能阻断字幕。
    const optional=[];
    if(!health.contextTranslate)optional.push('contextTranslate');
    if(!health.smartTranslate)optional.push('smartTranslate');
@@ -3206,7 +3210,7 @@ async function wakeCaptionCloud(force=false){
      method:'POST',headers:{'Content-Type':'application/json'},body:'{}'
    });
    const data=await a.json().catch(()=>({}));
-   if(a.status===403)throw new Error('鉴权失败：Origin 未允许');
+   if(a.status===403)throw new Error('当前访问域名未获 SAGI Cloud 授权');
    if(a.status===503)throw new Error('鉴权失败：SERVER_SECRET 未配置');
    if(!a.ok)throw new Error('激活失败 HTTP '+a.status);
    if(!data?.token)throw new Error('激活成功但未返回 Token');
@@ -3217,12 +3221,19 @@ async function wakeCaptionCloud(force=false){
    setCloudCaptionStatus('已连接 · '+ready);
    STUDIO.cloudLastError='';
    return true
- }catch(e){
+  }catch(e){
    STUDIO.cloudCaptionReady=false;
    STUDIO.cloudLastError=String(e?.message||e);
    setCloudCaptionStatus('失败 · '+STUDIO.cloudLastError);
    return false
- }finally{STUDIO.cloudCaptionWaking=false}
+  }
+ })();
+ cloudWakePromise=task;
+ try{return await task}
+ finally{
+   STUDIO.cloudCaptionWaking=false;
+   if(cloudWakePromise===task)cloudWakePromise=null
+ }
 }
 
 async function runCloudSelfTest(){
@@ -4198,7 +4209,7 @@ async function ensureFFmpeg(){
  // iPhone/Safari: class worker must be same-origin. The stock bundled worker can
  // resolve blob: core URLs as webpack module ids and throw "Cannot find module blob:...".
  // SAGI's raw module worker uses the browser's native dynamic import instead.
- const classWorkerURL=new URL('./sagi-ffmpeg-worker.js?v=4320',window.location.href).href;
+ const classWorkerURL=new URL('./sagi-ffmpeg-worker.js?v=4321',window.location.href).href;
  const core='https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd';
  const coreURL=await toBlobURLRemote([core+'/ffmpeg-core.js','https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd/ffmpeg-core.js'],'text/javascript');
  const wasmURL=await toBlobURLRemote([core+'/ffmpeg-core.wasm','https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd/ffmpeg-core.wasm'],'application/wasm');
@@ -6411,11 +6422,11 @@ if('serviceWorker' in navigator){
  navigator.serviceWorker.addEventListener('controllerchange',()=>{
   if(swReloaded)return;swReloaded=true;
   try{
-   const key='sagi_sw_reload_v4320';
+   const key='sagi_sw_reload_v4321';
    if(sessionStorage.getItem(key)!=='1'){sessionStorage.setItem(key,'1');location.reload()}
   }catch(e){location.reload()}
  });
- navigator.serviceWorker.register('./sagi-down-sw.js?v=4320',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})
+ navigator.serviceWorker.register('./sagi-down-sw.js?v=4321',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})
 }
 window.addEventListener('DOMContentLoaded',()=>setTimeout(applySagiModuleMode,0));
 })();
