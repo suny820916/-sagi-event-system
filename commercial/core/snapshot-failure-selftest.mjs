@@ -48,6 +48,15 @@ try {
   await engine.close(); engine = null;
   // Real torn journal tail: startup retains the last complete state but
   // must immediately advertise recovery required and refuse new commands.
+  const independent = new FileMatchStore(dir);
+  const saved = await independent.load();
+  await mkdir(independent.lockPath);
+  await assert.rejects(independent.commit(saved), /WRITER_LOCK_BUSY/);
+  await rm(independent.lockPath, { recursive: true });
+  await assert.rejects(independent.commit(saved), /STALE_REVISION/);
+  // A failed commit must release its own lock.
+  await mkdir(independent.lockPath);
+  await rm(independent.lockPath, { recursive: true });
   await appendFile(store.journalPath, '{"kind":"STATE_COMMIT"');
   engine = await createLocalServer({ dataDir: dir, meta });
   const recoveredBase = 'http://127.0.0.1:' + engine.address.port;
