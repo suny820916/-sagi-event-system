@@ -219,3 +219,8 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Stop clock on HALF_TIME and FINISH_PENALTIES, preserving elapsed seconds. Continuous authoritative clock progression remains unimplemented.
 - Derive penalty attempt IDs from monotonic event sequence, not capped history length, preventing new collisions after 200 attempts. Existing historical IDs are not migrated.
 - Added reducer regression assertions for 205 attempts and clock stopping to snapshot-failure self-test. Commits: 473f0c5, 323816f. Runtime/CI and Windows validation pending; no new dependencies. Engine crash-lock recovery remains open.
+
+## 2026-11-20 — Match-wide idempotency retention
+- Removed the 2048-command eviction from reducer and hydration so delayed retries of early goals remain duplicates throughout a fixture, including serialization/reload. Commits: 239c4d2, fb8db0c.
+- Added reducer regression after 2050 subsequent operations; runtime execution pending. Previously evicted IDs in existing data are not reconstructed by this change.
+- Tradeoff: full-state journal and retained IDs grow with fixture size; benchmark storage/latency and migrate to a durable indexed command ledger before commercial endurance certification. Existing event/history retention limits remain separate export blockers.
