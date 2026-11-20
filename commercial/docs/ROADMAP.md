@@ -236,3 +236,8 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 ## 2026-11-21 — Strict score correction payloads
 - Reject non-number deltas instead of coercing null, booleans, strings and arrays into score corrections. Added regression cases. Commits: ba8a5a2, 65f6290.
 - Runtime and CI verification pending; clients must send numeric JSON deltas. No new dependencies.
+
+## 2026-11-21 — CI coverage closure
+- Verified baseline commit `85e8350`: GitHub Actions run 44769721281 passed all six existing Linux core/API/vMix simulated tests. The accumulated snapshot-failure self-test was absent from that workflow, so baseline green does not verify those regressions.
+- Added `commercial/core/snapshot-failure-selftest.mjs` to core CI and expanded matrix to Ubuntu and Windows, with independent failure reporting (commit b9024e6). New matrix results pending; simulated Windows runner does not certify real vMix, power loss or endurance.
+- Next gate: inspect both matrix jobs and fix any failures before feature expansion.
