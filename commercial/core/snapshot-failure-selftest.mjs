@@ -25,6 +25,20 @@ apply({commandId:'clock-again',type:'SET_CLOCK',running:true,elapsedSeconds:600}
 apply({commandId:'finish',type:'FINISH_PENALTIES'});
 assert.equal(fixture.clock.running,false);
 
+// Clock inputs are explicit JSON values, never coerced browser strings.
+let clockState = createInitialMatchState({fixtureId:'clock-validation',home:'主队',away:'客队'});
+for (const period of ['PRE','HT','ET_BREAK','PEN','FT']) {
+  clockState = applyCommand(clockState,{commandId:'run-'+period,type:'SET_CLOCK',running:true,elapsedSeconds:123}).state;
+  clockState = applyCommand(clockState,{commandId:'period-'+period,type:'SET_PERIOD',period}).state;
+  assert.deepEqual(clockState.clock,{running:false,elapsedSeconds:123});
+}
+for (const elapsedSeconds of [-1,1.5,null,'123',true,undefined,Infinity,Number.MAX_SAFE_INTEGER+1]) {
+  assert.throws(()=>applyCommand(clockState,{commandId:'invalid-clock',type:'SET_CLOCK',running:true,elapsedSeconds}),/INVALID_CLOCK/);
+}
+for (const running of ['false',0,null,undefined]) {
+  assert.throws(()=>applyCommand(clockState,{commandId:'invalid-running',type:'SET_CLOCK',running,elapsedSeconds:123}),/INVALID_CLOCK/);
+}
+
 // A delayed retry must remain idempotent after the old 2048-ID window.
 let longMatch = createInitialMatchState({fixtureId:'long-match',home:'主队',away:'客队'});
 const oldGoal = {commandId:'first-goal',type:'GOAL',side:'HOME'};
