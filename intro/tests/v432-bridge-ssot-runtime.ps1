@@ -21,15 +21,30 @@ $bridgePath = Join-Path $root 'bridge-stable.ps1'
 $ps51 = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
 $base = 'http://127.0.0.1:8100'
 $proc = $null
+$startCount = 0
+$bridgeOut = $null
+$bridgeErr = $null
 
 function Start-Bridge {
-  $script:proc = Start-Process -FilePath $ps51 -ArgumentList @('-NoLogo','-NoProfile','-ExecutionPolicy','Bypass','-File',$bridgePath) -PassThru -WindowStyle Hidden
+  $script:startCount++
+  $script:bridgeOut = Join-Path $sandbox ('bridge-'+$script:startCount+'.stdout.log')
+  $script:bridgeErr = Join-Path $sandbox ('bridge-'+$script:startCount+'.stderr.log')
+  $script:proc = Start-Process -FilePath $ps51 -ArgumentList @('-NoLogo','-NoProfile','-ExecutionPolicy','Bypass','-File',$bridgePath) -PassThru -WindowStyle Hidden -RedirectStandardOutput $script:bridgeOut -RedirectStandardError $script:bridgeErr
   $end=(Get-Date).AddSeconds(25)
   while((Get-Date) -lt $end){
     try { $r=Invoke-WebRequest -UseBasicParsing -Uri ($base+'/health?t='+[DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()) -TimeoutSec 2; if($r.StatusCode -eq 200){ return } } catch {}
+    if($script:proc.HasExited){
+      $out=''; $err=''
+      try { if(Test-Path $script:bridgeOut){ $out=Get-Content -LiteralPath $script:bridgeOut -Raw -ErrorAction SilentlyContinue } } catch {}
+      try { if(Test-Path $script:bridgeErr){ $err=Get-Content -LiteralPath $script:bridgeErr -Raw -ErrorAction SilentlyContinue } } catch {}
+      throw ('Bridge exited early code='+$script:proc.ExitCode+' stdout='+$out+' stderr='+$err)
+    }
     Start-Sleep -Milliseconds 500
   }
-  throw 'Bridge did not start on 8100'
+  $out=''; $err=''
+  try { if(Test-Path $script:bridgeOut){ $out=Get-Content -LiteralPath $script:bridgeOut -Raw -ErrorAction SilentlyContinue } } catch {}
+  try { if(Test-Path $script:bridgeErr){ $err=Get-Content -LiteralPath $script:bridgeErr -Raw -ErrorAction SilentlyContinue } } catch {}
+  throw ('Bridge did not start on 8100 stdout='+$out+' stderr='+$err)
 }
 function Stop-Bridge {
   if($script:proc -and -not $script:proc.HasExited){ try { Stop-Process -Id $script:proc.Id -Force -ErrorAction Stop } catch {} }
