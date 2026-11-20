@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#080a0d">
+<title>SAGI KIT · Stable Promotion Gate</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 18% -8%,#292319 0,#0d1014 28%,#07090c 72%);color:#f4f1ea;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",Arial,sans-serif}button,input{font:inherit}.app{max-width:760px;margin:auto;padding:17px 13px 90px}.top{display:flex;justify-content:space-between;align-items:center;gap:10px}.brand{display:flex;gap:9px;align-items:center}.brand img{width:42px;height:42px}.brand b{display:block;font-size:18px}.brand small{display:block;font-size:8px;color:#84909a;margin-top:2px}.back{color:#dec475;text-decoration:none;border:1px solid #594b2e;border-radius:999px;padding:8px 10px;font-size:9px}.hero{padding:20px 2px 9px}.hero h1{font-size:28px;line-height:1.08;margin:0}.hero p{font-size:9px;color:#89949d;line-height:1.7;margin:8px 0 0}.gate{margin-top:10px;border:1px solid #3a4650;border-radius:16px;background:#10151b;padding:14px}.gate.pass{border-color:#3f704d;background:#0d1811}.gate.warn{border-color:#6b5930;background:#19150c}.gate.fail{border-color:#6b4141;background:#1a1111}.gate span{font-size:8px;color:#83909a}.gate strong{display:block;font-size:23px;margin-top:4px}.card{margin-top:12px;border:1px solid #2e3942;border-radius:15px;background:#10151b;padding:13px}.card h2{font-size:13px;margin:0}.card p{font-size:8px;color:#84909a;line-height:1.65}.drop{margin-top:10px;border:1px dashed #50606c;border-radius:12px;padding:18px;text-align:center;background:#0b1014}.drop input{width:100%;color:#aab4ba;font-size:9px}.grid{display:grid;gap:8px;margin-top:10px}.item{border:1px solid #2e3942;border-radius:12px;padding:10px;background:#0c1116;display:grid;grid-template-columns:1fr auto;gap:8px}.item b{font-size:10px}.item small{display:block;font-size:8px;color:#808c95;margin-top:4px;line-height:1.5}.state{font-size:8px;font-weight:1000}.pass .state{color:#95d0a5}.warn .state{color:#e6c66e}.fail .state{color:#e49a9a}.actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}.btn{flex:1;min-width:130px;border:1px solid #46515b;border-radius:9px;background:#172027;color:#e7ecee;padding:10px;font-size:8px;font-weight:1000}.btn.good{border-color:#407050;background:#183722;color:#a9d8b5}.btn[disabled]{opacity:.35}.report{white-space:pre-wrap;font:8px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;color:#aeb7bc;background:#080d11;border:1px solid #28323a;border-radius:10px;padding:10px;max-height:280px;overflow:auto}.foot{margin-top:15px;font-size:7px;color:#66727a;line-height:1.7}.warning{border-left:3px solid #9a7e3a;background:#18140d;border-radius:0 10px 10px 0;padding:9px 10px!important;color:#c4ad73!important}
+</style>
+</head>
+<body><main class="app">
+<div class="top"><div class="brand"><img src="./brand-mark.svg" alt="SAGI KIT"><div><b>SAGI KIT</b><small>Stable Promotion Gate</small></div></div><a class="back" href="./start.html">返回工作台</a></div>
+<section class="hero"><h1>真机通过之后，才进入发布。</h1><p>上传 iPhone 导出的 Stable QA 报告。本页只验证并生成发布申请包，不会修改 release.json、不会合并 PR、不会把 RC2 自动变成 Stable。</p></section>
+<div id="gate" class="gate warn"><span>Promotion Gate</span><strong id="gateText">等待 Stable QA 报告</strong></div>
+
+<section class="card"><h2>导入真机验收报告</h2><p class="warning">只接受 <b>SAGI-KIT-STABLE-QA-1</b>、版本 <b>1.6.0-rc2</b>、readyForStable=true 的报告。报告里的人工验收属于真实操作者确认，本页不会伪造或代替真机测试。</p><div class="drop"><input id="file" type="file" accept="application/json,.json"></div></section>
+
+<section class="card"><h2>发布条件</h2><div id="checks" class="grid"></div></section>
+
+<section class="card"><h2>Stable 发布申请包</h2><p>全部条件通过后生成。申请包只包含验收摘要、设备信息和 QA 文件 SHA‑256，不包含客户订单、名单、老板成本或 PIN。</p><div class="actions"><button id="export" class="btn good" disabled>生成 Stable 发布申请包</button></div><div id="report" class="report">尚未生成</div></section>
+<div class="foot">最终 Stable 发布必须由仓库侧单独执行：更新 release.json → 切换 stable=true → 更新缓存版本 → 完成最终源码 Gate → 再决定是否将 PR 从 Draft 转为可合并/合入稳定分支。本页没有任何 GitHub 写入能力。</div>
+</main>
+<script>
+const q=s=>document.querySelector(s);let parsed=null,raw='',hash='',promotion=null;
+const REQUIRED_MANUAL=['safari_flow','wechat_flow','pwa_upgrade','offline_round','backup_restore','low_storage'];
+function row(name,state,detail){return{name,state,detail}}
+function hex(buf){return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('')}
+async function sha256(text){if(!crypto?.subtle)return'';return hex(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text)))}
+function validate(x){
+ const rows=[];
+ rows.push(row('报告 schema',x?.schema==='SAGI-KIT-STABLE-QA-1'?'pass':'fail',String(x?.schema||'缺失')));
+ rows.push(row('RC2 版本',x?.version==='1.6.0-rc2'?'pass':'fail',String(x?.version||'缺失')));
+ rows.push(row('Stable Gate',x?.readyForStable===true?'pass':'fail','readyForStable='+String(x?.readyForStable)));
+ const autos=Array.isArray(x?.autoChecks)?x.autoChecks:[];
+ const autoBad=autos.filter(a=>a?.state!=='pass');
+ rows.push(row('自动检查',autos.length>0&&autoBad.length===0?'pass':'fail',autos.length?('共 '+autos.length+' 项，非PASS '+autoBad.length+' 项'):'缺少自动检查'));
+ const manual=Array.isArray(x?.manualChecks)?x.manualChecks:[];
+ const map=Object.fromEntries(manual.map(m=>[m?.id,m]));
+ const missing=REQUIRED_MANUAL.filter(id=>!map[id]),bad=REQUIRED_MANUAL.filter(id=>map[id]&&map[id].state!=='pass');
+ rows.push(row('6项人工真机验收',missing.length===0&&bad.length===0?'pass':'fail',missing.length?('缺少 '+missing.join(', ')):bad.length?('未通过 '+bad.join(', ')):'6/6 PASS'));
+ const generated=Date.parse(x?.generatedAt||'');
+ rows.push(row('报告时间',Number.isFinite(generated)?'pass':'fail',Number.isFinite(generated)?new Date(generated).toLocaleString('zh-CN',{hour12:false}):'无效时间'));
+ const device=x?.device&&typeof x.device==='object';
+ rows.push(row('设备信息',device?'pass':'fail',device?(x.device.userAgent||'已记录设备信息'):'缺少 device'));
+ return rows;
+}
+function render(rows){
+ q('#checks').innerHTML=rows.map(x=>'<div class="item '+x.state+'"><div><b>'+x.name+'</b><small>'+x.detail+'</small></div><div class="state">'+x.state.toUpperCase()+'</div></div>').join('');
+ const ok=rows.length>0&&rows.every(x=>x.state==='pass');q('#gate').className='gate '+(ok?'pass':'fail');q('#gateText').textContent=ok?'QA VERIFIED · READY TO REQUEST STABLE':'NOT READY FOR STABLE';q('#export').disabled=!ok;return ok
+}
+q('#file').onchange=async()=>{promotion=null;q('#report').textContent='正在验证…';const f=q('#file').files&&q('#file').files[0];if(!f)return;try{raw=await f.text();parsed=JSON.parse(raw);hash=await sha256(raw);const rows=validate(parsed),ok=render(rows);q('#report').textContent=ok?('QA文件 SHA-256\n'+(hash||'当前浏览器不支持 WebCrypto SHA-256')):'报告未通过 Stable Promotion Gate'}catch(e){console.error(e);parsed=null;hash='';render([row('QA 文件','fail','文件不是有效 JSON 或无法读取')]);q('#report').textContent='报告读取失败'}};
+q('#export').onclick=()=>{if(!parsed)return;const rows=validate(parsed);if(!rows.every(x=>x.state==='pass'))return;promotion={schema:'SAGI-KIT-STABLE-PROMOTION-REQUEST-1',product:'SAGI KIT',fromVersion:'1.6.0-rc2',requestedVersion:'1.6.0',requestedChannel:'stable',requestedAt:new Date().toISOString(),qa:{schema:parsed.schema,generatedAt:parsed.generatedAt,readyForStable:parsed.readyForStable,sha256:hash||null,autoPass:parsed.autoChecks.length,manualPass:parsed.manualChecks.filter(x=>x.state==='pass').length},device:{userAgent:parsed.device?.userAgent||'',standalone:!!parsed.device?.standalone,language:parsed.device?.language||''},constraints:{requiresRepositoryRelease:true,doesNotAutoMerge:true,doesNotAutoModifyReleaseJson:true}};q('#report').textContent=JSON.stringify(promotion,null,2);const blob=new Blob([JSON.stringify(promotion,null,2)],{type:'application/json;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='SAGI-KIT-V1.6-STABLE-PROMOTION.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500)};
+render([row('Stable QA 报告','warn','等待上传')]);
+</script>
+</body></html>
