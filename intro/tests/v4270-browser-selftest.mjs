@@ -473,7 +473,7 @@ server.listen(PORT,'127.0.0.1',async()=>{
   assert(reopenAfter.home==='6'&&reopenAfter.away==='1','older same-fixture Bridge snapshot rolled director backward after reopen: '+JSON.stringify(reopenAfter));
   assert(reopenAfter.homeName==='乌苏叶克备'&&reopenAfter.awayName==='IPF'&&reopenAfter.competition==='TORANHE PROJECT CUP','reopen recovery did not restore fixture identity atomically: '+JSON.stringify(reopenAfter));
   assert(Number(graphics.homeScore)===6&&Number(graphics.awayScore)===1&&graphics.home==='乌苏叶克备'&&graphics.away==='IPF','local-newer recovery was not republished to Bridge with fixture identity: '+JSON.stringify(graphics));
-  assert(reopenAfter.diag.recovery.localWins>=1&&reopenAfter.diag.fixtureKey==='toranhe project cup|乌苏叶克备|ipf','local-newer arbitration diagnostics missing: '+JSON.stringify(reopenAfter.diag));
+  assert(reopenAfter.diag.recovery.localWins>=1&&reopenAfter.diag.recovery.lastReason==='LOCAL_REVISION_AHEAD'&&reopenAfter.diag.fixtureKey==='toranhe project cup|乌苏叶克备|ipf','revision-based local-ahead arbitration diagnostics missing: '+JSON.stringify(reopenAfter.diag));
 
   console.log('TEST 10E: in-match health check is read-only and cannot alter on-air state');
   const healthBefore={commandId:graphics.commandId,homeScore:graphics.homeScore,awayScore:graphics.awayScore,posts:matchdayPosts.length,cuts:vmixCommands.length};
@@ -483,19 +483,20 @@ server.listen(PORT,'127.0.0.1',async()=>{
   assert(healthAfter.commandId===healthBefore.commandId&&healthAfter.homeScore===healthBefore.homeScore&&healthAfter.awayScore===healthBefore.awayScore&&healthAfter.posts===healthBefore.posts&&healthAfter.cuts===healthBefore.cuts,'live health check mutated broadcast state: '+JSON.stringify({before:healthBefore,after:healthAfter}));
   await page.screenshot({path:'selftest-artifacts/11e-live-health-readonly.png'});
 
-  console.log('TEST 11: consistency watchdog repairs score, identity, colors and exceptional-state drift');
-  const authoritative=JSON.parse(JSON.stringify(graphics));
-  graphics={...graphics,commandId:'corrupt_same_fixture',home:'乌苏叶克备',away:'IPF',homeShort:'少林足球',awayShort:'旧客队',
-    scoreHomeName:'错误主队',scoreAwayName:'错误客队',homeScore:99,awayScore:88,homeColor:'#ff0000',awayColor:'#00ff00',accentColor:'#0000ff',
-    stoppageTime:'99',scoreboardFrozen:!authoritative.scoreboardFrozen,homePen:7,awayPen:8,scoreTheme:'uefa'};
-  await page.evaluate(()=>window.dispatchEvent(new Event('online')));await wait(1000);
-  const repairUI=await page.evaluate(()=>({sync:document.querySelector('#mdSync').textContent,home:document.querySelector('#mmHomeName').textContent,away:document.querySelector('#mmAwayName').textContent,score:document.querySelector('#mdHomeScore').textContent,reliability:window.sagiMatchdayReliabilityDiagnostic()}));
-  assert(Number(graphics.homeScore)===Number(authoritative.homeScore)&&Number(graphics.awayScore)===Number(authoritative.awayScore),'online recovery failed to restore authoritative score state: '+JSON.stringify(graphics));
-  assert(repairUI.reliability.recovery.networkRestores>=1&&repairUI.reliability.recovery.lastReason==='ONLINE','online recovery metrics missing: '+JSON.stringify(repairUI.reliability));
-  assert(graphics.scoreHomeName===authoritative.scoreHomeName&&graphics.scoreAwayName===authoritative.scoreAwayName,'watchdog failed to restore broadcast team names: '+JSON.stringify({expected:[authoritative.scoreHomeName,authoritative.scoreAwayName],actual:[graphics.scoreHomeName,graphics.scoreAwayName]}));
-  assert(graphics.homeColor===authoritative.homeColor&&graphics.awayColor===authoritative.awayColor&&graphics.accentColor===authoritative.accentColor,'watchdog failed to restore broadcast colors');
-  assert(String(graphics.stoppageTime||'')===String(authoritative.stoppageTime||'')&&!!graphics.scoreboardFrozen===!!authoritative.scoreboardFrozen&&Number(graphics.homePen||0)===Number(authoritative.homePen||0)&&Number(graphics.awayPen||0)===Number(authoritative.awayPen||0),'watchdog failed to restore exceptional score-center state');
-  assert(repairUI.home==='乌苏叶克备'&&repairUI.away==='IPF'&&repairUI.score===String(authoritative.homeScore),'watchdog repair changed local control identity/state: '+JSON.stringify(repairUI));
+  console.log('TEST 11: control follows newer Bridge revision and never overwrites it from stale local state');
+  let authoritative=JSON.parse(JSON.stringify(graphics));
+  const postsBeforeRemoteFollow=matchdayPosts.length;
+  const remoteScore=Number(authoritative.homeScore)+1;
+  graphics={...authoritative,commandId:'remote_controller_update',revision:(Number(authoritative.revision)||0)+1,
+    homeScore:remoteScore,awayScore:Number(authoritative.awayScore),homeColor:'#335577',awayColor:'#775533',accentColor:'#f4f0e8',
+    stoppageTime:'4',scoreboardFrozen:false,homePen:0,awayPen:0,updatedAt:new Date().toISOString(),event:{type:'CLEAR_EVENT'}};
+  await page.evaluate(()=>window.dispatchEvent(new Event('online')));await wait(1400);
+  const followUI=await page.evaluate(()=>({sync:document.querySelector('#mdSync').textContent,home:document.querySelector('#mmHomeName').textContent,away:document.querySelector('#mmAwayName').textContent,score:document.querySelector('#mdHomeScore').textContent,reliability:window.sagiMatchdayReliabilityDiagnostic()}));
+  assert(Number(graphics.homeScore)===remoteScore&&followUI.score===String(remoteScore),'control did not follow newer Bridge score: '+JSON.stringify({graphics,followUI}));
+  assert(followUI.reliability.recovery.networkRestores>=1&&followUI.reliability.recovery.bridgeFollows>=1,'Bridge-follow recovery metrics missing: '+JSON.stringify(followUI.reliability));
+  assert(matchdayPosts.length===postsBeforeRemoteFollow,'passive Bridge follow produced a reverse POST overwrite: '+JSON.stringify({before:postsBeforeRemoteFollow,after:matchdayPosts.length}));
+  assert(graphics.homeColor==='#335577'&&graphics.awayColor==='#775533'&&String(graphics.stoppageTime)==='4','Bridge-follow lost exceptional score-center state');
+  authoritative=JSON.parse(JSON.stringify(graphics));
   const diagPage=await browser.newPage({viewport:{width:1920,height:1080}});
   await diagPage.goto('http://127.0.0.1:'+PORT+'/intro/vmix-v45-lan.html',{waitUntil:'domcontentloaded'});
   await diagPage.waitForFunction(()=>window.sagiScoreCenterDiagnostic&&window.sagiScoreCenterDiagnostic().build==='V4.31.0',null,{timeout:5000});
@@ -532,13 +533,49 @@ server.listen(PORT,'127.0.0.1',async()=>{
   await freshContext.close();
   await page.evaluate(()=>window.sagiMatchdayConsistencyCheck(true));await wait(600);
 
+  console.log('TEST 11D: isolated desktop + phone controllers follow one Bridge revision with no ping-pong writes');
+  const desktopContext=await browser.newContext({viewport:{width:1440,height:1100}});
+  const phoneContext=await browser.newContext({viewport:{width:390,height:844},isMobile:true});
+  const desktopControl=await desktopContext.newPage();
+  const phoneControl=await phoneContext.newPage();
+  await Promise.all([
+    desktopControl.goto('http://127.0.0.1:'+PORT+'/intro/v45-lan.html',{waitUntil:'domcontentloaded'}),
+    phoneControl.goto('http://127.0.0.1:'+PORT+'/intro/v45-lan.html',{waitUntil:'domcontentloaded'})
+  ]);
+  await wait(1800);
+  await Promise.all([
+    desktopControl.evaluate(()=>{matchReady=true;matchModeActive=true}),
+    phoneControl.evaluate(()=>{matchReady=true;matchModeActive=true})
+  ]);
+  const multiBasePosts=matchdayPosts.length;
+  await desktopControl.evaluate(async()=>{matchdayState.homeScore=7;await publishMatchday(null)});
+  await phoneControl.waitForFunction(()=>document.querySelector('#mdHomeScore')?.textContent==='7',null,{timeout:5000});
+  const postsAfterDesktop=matchdayPosts.length;
+  assert(postsAfterDesktop===multiBasePosts+1,'desktop action should create exactly one Bridge write: '+JSON.stringify({multiBasePosts,postsAfterDesktop}));
+  await phoneControl.evaluate(async()=>{matchdayState.awayScore=2;await publishMatchday(null)});
+  await desktopControl.waitForFunction(()=>document.querySelector('#mdAwayScore')?.textContent==='2',null,{timeout:5000});
+  const postsAfterPhone=matchdayPosts.length;
+  assert(postsAfterPhone===postsAfterDesktop+1,'phone action should create exactly one Bridge write: '+JSON.stringify({postsAfterDesktop,postsAfterPhone}));
+  await wait(2400);
+  assert(matchdayPosts.length===postsAfterPhone,'passive controller polling caused ping-pong Bridge writes: '+JSON.stringify({postsAfterPhone,afterWait:matchdayPosts.length}));
+  await phoneControl.evaluate(()=>{matchdayState.homeScore=99;refreshMatchdayUI()});
+  await phoneControl.evaluate(()=>window.sagiMatchdayConsistencyCheck(true));
+  await phoneControl.waitForFunction(()=>document.querySelector('#mdHomeScore')?.textContent==='7',null,{timeout:3000});
+  assert(matchdayPosts.length===postsAfterPhone,'stale phone local state was allowed to overwrite canonical Bridge: '+JSON.stringify({postsAfterPhone,afterRepair:matchdayPosts.length}));
+  const desktopDiag=await desktopControl.evaluate(()=>window.sagiMatchdayReliabilityDiagnostic());
+  const phoneDiag=await phoneControl.evaluate(()=>window.sagiMatchdayReliabilityDiagnostic());
+  assert(desktopDiag.recovery.bridgeFollows>=1&&phoneDiag.recovery.bridgeFollows>=1,'both controllers did not record Bridge-follow sync: '+JSON.stringify({desktopDiag,phoneDiag}));
+  await Promise.all([desktopContext.close(),phoneContext.close()]);
+  graphics={...graphics,commandId:'multi_controller_restore',revision:(Number(graphics.revision)||0)+1,homeScore:6,awayScore:1,updatedAt:new Date().toISOString(),event:{type:'CLEAR_EVENT'}};
+  await page.evaluate(()=>window.sagiMatchdayConsistencyCheck(true));await wait(700);
+
   console.log('TEST 12: accelerated long-session identity soak keeps names/scores stable');
   const soak=await page.evaluate(()=>window.sagiMatchdaySoakDiagnostic(5000));
   assert(soak.home==='乌苏叶克备'&&soak.away==='IPF'&&soak.mirrorHome==='乌苏叶克备'&&soak.mirrorAway==='IPF'&&soak.score==='6','accelerated long-session soak drifted state: '+JSON.stringify(soak));
   await page.screenshot({path:'selftest-artifacts/13-long-session-soak.png'});
 
   assert(pageErrors.length===0,'browser page errors: '+pageErrors.join(' | '));
-  const report={ok:true,build:'V4.31.0',testedAt:new Date().toISOString(),tests:['compact one-row full-name scorebug + SAGI signature palette/tag + unified score pair + restrained score roll + clock-only regular halves + conditional states','HOME goal enlarged HOME crest + complete GOAL + lower player card + collapse','AWAY goal enlarged AWAY crest','yellow/red referee-card shape + event colors + control icons','penalty >5 rounds/sudden death/miss/scores','two-camera Input 1 -> Input 2','event-logo replay stinger visual','manual replay stinger IN -> Input 4 -> OUT -> Input 1','stored project load wins over stale Bridge + optional time/venue do not block READY','compact project index rehydrates full photos from IndexedDB with empty Bridge list','clock-only refresh avoids repeated heavy match-control repaints','regular scorebug always uses canonical full team names even when backup aliases exist','mobile match control mirrors current fixture identity and legacy fields are read-only','transient LAN failure retries automatically and records last-good state','rapid score writes are serialized under deliberate network reordering','duplicate operator events are gated before double-counting','reopen recovery keeps newer local same-fixture state over stale Bridge','in-match health check is read-only and cannot mutate on-air state','vMix output ignores stale lower revisions within the same fixture','online/resume recovery repairs score/name/color/exceptional-state drift','Browser Input watchdog holds last good frame during longer outage and self-heals','fresh startup can atomically recover Bridge fixture identity when no local snapshot exists','accelerated 5000-cycle long-session identity soak'],vmixCommands:cuts};
+  const report={ok:true,build:'V4.31.0',testedAt:new Date().toISOString(),tests:['compact one-row full-name scorebug + SAGI signature palette/tag + unified score pair + restrained score roll + clock-only regular halves + conditional states','HOME goal enlarged HOME crest + complete GOAL + lower player card + collapse','AWAY goal enlarged AWAY crest','yellow/red referee-card shape + event colors + control icons','penalty >5 rounds/sudden death/miss/scores','two-camera Input 1 -> Input 2','event-logo replay stinger visual','manual replay stinger IN -> Input 4 -> OUT -> Input 1','stored project load wins over stale Bridge + optional time/venue do not block READY','compact project index rehydrates full photos from IndexedDB with empty Bridge list','clock-only refresh avoids repeated heavy match-control repaints','regular scorebug always uses canonical full team names even when backup aliases exist','mobile match control mirrors current fixture identity and legacy fields are read-only','transient LAN failure retries automatically and records last-good state','rapid score writes are serialized under deliberate network reordering','duplicate operator events are gated before double-counting','reopen recovery keeps newer local same-fixture state over stale Bridge','in-match health check is read-only and cannot mutate on-air state','vMix output ignores stale lower revisions within the same fixture','online/resume recovery repairs score/name/color/exceptional-state drift','Browser Input watchdog holds last good frame during longer outage and self-heals','fresh startup can atomically recover Bridge fixture identity when no local snapshot exists','isolated desktop and phone controllers follow one Bridge revision with zero passive ping-pong writes','accelerated 5000-cycle long-session identity soak'],vmixCommands:cuts};
   fs.writeFileSync('selftest-artifacts/report.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
  }catch(e){
   fs.mkdirSync('selftest-artifacts',{recursive:true});try{await page.screenshot({path:'selftest-artifacts/FAIL.png',fullPage:true})}catch{}
