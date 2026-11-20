@@ -212,9 +212,15 @@ export function applyCommand(currentState, command) {
     event = applyEventCommand(state, command, type);
   } else if (type === "SCORE_ADJUST") {
     const side = assertSide(command.side);
-    const delta = Math.trunc(Number(command.delta) || 0);
-    if (side === "HOME") state.homeScore = Math.max(0, state.homeScore + delta);
-    else state.awayScore = Math.max(0, state.awayScore + delta);
+    const delta = Number(command.delta);
+    if (!Number.isSafeInteger(delta) || Math.abs(delta) > 100) throw new Error("INVALID_SCORE_DELTA");
+    const key = side === "HOME" ? "homeScore" : "awayScore";
+    const before = state[key];
+    const after = Math.max(0, before + delta);
+    if (!Number.isSafeInteger(after)) throw new Error("INVALID_SCORE_DELTA");
+    state[key] = after;
+    event = makeEvent(state, command, "SCORE_ADJUST", { side, requestedDelta: delta, appliedDelta: after - before, before, after });
+    recordEvent(state, event);
   } else if (type === "SET_PERIOD") {
     const period = String(command.period ?? "").toUpperCase();
     if (!PERIODS.has(period)) throw new Error("INVALID_PERIOD");
