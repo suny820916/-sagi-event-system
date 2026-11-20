@@ -41,6 +41,14 @@ try {
     const response = await fetch(base + '/api/v1/lan/health', { headers: { host: malformedHost } });
     assert.equal(response.status, 400, 'malformed Host must be rejected: ' + malformedHost);
   }
+  const sameOrigin = await fetch(base + '/api/v1/lan/health', { headers: { origin: base } });
+  assert.equal(sameOrigin.status, 200, 'same-origin browser request must work');
+  for (const origin of ['http://evil.example', base + '.evil.example', 'null', base + '/other', 'https://127.0.0.1:' + port]) {
+    const response = await fetch(base + '/api/v1/lan/health', { headers: { origin } });
+    assert.equal(response.status, 403, 'foreign/malformed Origin must be rejected: ' + origin);
+  }
+  const wrongPort = await fetch(base + '/api/v1/lan/health', { headers: { host: '127.0.0.1:' + (port + 1) } });
+  assert.equal(wrongPort.status, 400, 'wrong Host port must be rejected');
   const goal = { commandId: 'goal_00000001', expectedRevision: 0, type: 'GOAL', team: 'home' };
   assert.equal((await post(goal)).status, 401);
   assert.equal((await post({ type: 'GOAL' }, token)).status, 400);
