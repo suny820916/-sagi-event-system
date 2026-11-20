@@ -258,3 +258,8 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Validate explicit Host port from raw authority before URL parsing, reject alternate IPv4 spellings and padded ports, and require exact serialized browser Origin. This also avoids relying on URL.port for explicit default ports.
 - Added regression probes for alternate IPv4 authorities, padded ports and noncanonical Origin paths. Commits: 088868a, c16c3d6.
 - No workflow runs were returned by the PR-filtered lookup for b1e25b9; latest LAN verification remains unknown. New tests not executed in this run. Canonical IPv6 spelling and default-port browser behavior still need dedicated tests. No new dependencies or main changes.
+
+## 2026-11-21 — Clock command validation
+- SET_CLOCK rejects non-boolean running and non-safe-integer or negative elapsed seconds. SET_PERIOD stops the clock when selecting PRE, HT, ET_BREAK, PEN or FT, retaining elapsed seconds. Commits: e6ce7dd, b26fc5c.
+- Added reducer regression cases to the existing core CI suite. Execution not verified in this run. Clients must send both clock fields with canonical JSON types. Explicit SET_CLOCK remains an operator override; continuous authoritative progression and restart policy are not implemented by this patch.
+- No new runtime dependency or main change. Next: verify CI, reconcile client payloads, establish monotonic clock anchor and restart policy, complete LAN/vMix integration and endurance acceptance.
