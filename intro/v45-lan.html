@@ -4203,19 +4203,36 @@ function demo(){
 function bcCueFor(group){return({STING:'STING',MATCH:'RISER',COUNTDOWN:'HIT',TEAM:'RISER',GK:'HIT',DF:'WHOOSH',MF:'WHOOSH',FW:'HIT',FULL:'CROWD',SUB:'WHOOSH'})[group]||'NONE'}
 function bcDuration(group){return({STING:2000,MATCH:3000,COUNTDOWN:5000,TEAM:2500,GK:3000,DF:4000,MF:4000,FW:4000,FULL:6000,SUB:5000})[group]||3500}
 function bcLabel(group,side){const p=side==='AWAY'?'AWAY':'HOME';return({STING:'赛事Logo',MATCH:'比赛信息',COUNTDOWN:'开场倒计时',TEAM:p+' TEAM',GK:p+' GK',DF:p+' DF',MF:p+' MF',FW:p+' FW',FULL:p+' '+starterCode(),SUB:p+' SUBS'})[group]||group}
+let bcVmixLink={bridge:false,vmix:false,active:'',preview:'',inputs:[],lastAt:0,lastError:''},bcVmixPollBusy=false,bcVmixPollTimer=null;
+function bcVmixInputLabel(number){
+ const n=String(number||'').trim(),hit=(bcVmixLink.inputs||[]).find(x=>String(x.number)===n),title=hit&&String(hit.title||hit.type||'').trim();
+ return n?('Input '+n+(title?' · '+title:'')):'未检测'
+}
 function refreshBroadcastStatus(){
- const cfg=cloudAdmin(),ready=!!(cfg.url&&cfg.key&&cfg.eventSlug&&cfg.token);
- q('bcVmixStatus').textContent=ready?'已连接':'仅本机';
+ const ready=!!bcVmixLink.vmix,programInput=bcVmixInputLabel(bcVmixLink.active),previewInput=bcVmixInputLabel(bcVmixLink.preview);
+ q('bcVmixStatus').textContent=ready?('CONNECTED · P'+(bcVmixLink.active||'—')+' / V'+(bcVmixLink.preview||'—')):(bcVmixLink.bridge?'vMix OFFLINE · 8088':'Bridge OFFLINE');
  q('bcVmixLamp').classList.toggle('ready',ready);
  q('bcOnAirLamp').classList.toggle('live',!!broadcastProgram);
  q('bcOnAirStatus').textContent=broadcastProgram?'正在播出':'SAFE';
- q('bcProgramLabel').textContent=broadcastProgram?broadcastProgram.label:'安全画面 / 未播出';
- q('bcProgramMeta').textContent=broadcastProgram?(broadcastProgram.side+' · '+broadcastProgram.group+' · '+(broadcastProgram.duration/1000).toFixed(1)+'s'):'等待切入播出';
+ q('bcProgramLabel').textContent=broadcastProgram?broadcastProgram.label:(ready?'vMix PROGRAM':'安全画面 / 未播出');
+ q('bcProgramMeta').textContent=ready?('vMix PROGRAM · '+programInput+(broadcastProgram?' · SAGI '+broadcastProgram.side+' '+broadcastProgram.group:'')):'vMix 未连接 · 当前仅本机预监';
  q('bcPreviewLabel').textContent=broadcastPreview.label;
- q('bcPreviewMeta').textContent=broadcastPreview.side+' · '+broadcastPreview.group+' · READY';
+ q('bcPreviewMeta').textContent=ready?('SAGI 本机预监 · '+broadcastPreview.side+' '+broadcastPreview.group+' · vMix PREVIEW '+previewInput):(broadcastPreview.side+' · '+broadcastPreview.group+' · 本机 READY');
+ if(q('mmVmixStatus')){q('mmVmixStatus').textContent=ready?('CONNECTED · P'+(bcVmixLink.active||'—')):'OFFLINE';q('mmVmixStatus').className=ready?'mmGood':'mmBad'}
  const nxt=BROADCAST_MANUAL[(broadcastManualIndex+1+BROADCAST_MANUAL.length)%BROADCAST_MANUAL.length];q('bcNextLabel').textContent=nxt.label;
  document.querySelectorAll('[data-bc-group]').forEach(b=>b.classList.toggle('on',b.dataset.bcGroup===broadcastPreview.group&&(!b.dataset.bcSide||b.dataset.bcSide===broadcastPreview.side)));
 }
+async function pollBroadcastVmixLink(){
+ if(bcVmixPollBusy)return false;bcVmixPollBusy=true;
+ try{
+  const h=await lanJson('/health?broadcastLink='+Date.now()),info=h&&h.vmixInfo||{};
+  bcVmixLink={bridge:!!(h&&h.ok),vmix:!!(h&&h.vmix),active:String(info.active||''),preview:String(info.preview||''),inputs:Array.isArray(info.inputs)?info.inputs:[],lastAt:Date.now(),lastError:''};
+  refreshBroadcastStatus();return bcVmixLink.vmix
+ }catch(e){
+  bcVmixLink={...bcVmixLink,bridge:false,vmix:false,lastAt:Date.now(),lastError:String(e&&e.message||e)};refreshBroadcastStatus();return false
+ }finally{bcVmixPollBusy=false}
+}
+window.sagiVmixLinkDiagnostic=()=>({...bcVmixLink,programLabel:bcVmixInputLabel(bcVmixLink.active),previewLabel:bcVmixInputLabel(bcVmixLink.preview)});
 function setBroadcastPreview(group,side=activeSide,label='',duration=0){
  const targetSide=(side==='AWAY'?'AWAY':'HOME');if(targetSide!==activeSide)switchTeam(targetSide,{silent:true,noRender:true});
  broadcastPreview={group,side:targetSide,label:label||bcLabel(group,targetSide),duration:duration||bcDuration(group)};
@@ -4250,6 +4267,8 @@ function broadcastProgramFromShow(s,d){
  broadcastProgram={group:s.group,side:s.side||activeSide,label:'自动 · '+s.label,duration:d,startedAt:Date.now()};refreshBroadcastStatus();
 }
 function initBroadcastControl(){
+ pollBroadcastVmixLink().catch(()=>{});if(bcVmixPollTimer)clearInterval(bcVmixPollTimer);bcVmixPollTimer=setInterval(()=>{if(!document.hidden)pollBroadcastVmixLink().catch(()=>{})},1000);
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden)pollBroadcastVmixLink().catch(()=>{})});
  document.querySelectorAll('[data-bc-group]').forEach(b=>b.onclick=()=>setBroadcastPreview(b.dataset.bcGroup,b.dataset.bcSide||activeSide,b.dataset.bcLabel||'',bcDuration(b.dataset.bcGroup)));
  q('fullIntroBtn').onclick=startFullIntro;q('goLiveBtn').onclick=takeBroadcastLive;q('holdBtn').onclick=toggleBroadcastHold;q('prevLiveBtn').onclick=()=>stepBroadcastPreview(-1);q('nextLiveBtn').onclick=()=>stepBroadcastPreview(1);q('clearAllBtn').onclick=clearBroadcastAll;
  document.addEventListener('keydown',e=>{const tag=(document.activeElement&&document.activeElement.tagName)||'';if(['INPUT','SELECT','TEXTAREA'].includes(tag))return;

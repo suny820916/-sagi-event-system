@@ -52,7 +52,7 @@ const server=http.createServer(async(req,res)=>{
   if(u.pathname==='/api/vmix'&&req.method==='POST'){const b=await readBody(req);let cmd={};try{cmd=JSON.parse(b)}catch{}vmixCommands.push(cmd);return json(res,{ok:true,command:cmd})}
   if(u.pathname==='/api/projects'&&req.method==='GET')return json(res,projectStore);
   if(u.pathname==='/api/projects'&&req.method==='POST'){const b=await readBody(req);let next={};try{next=JSON.parse(b)||{}}catch{};projectStore={projects:Array.isArray(next.projects)?next.projects.slice(0,20):[],activeProjectId:String(next.activeProjectId||''),savedAt:Date.now(),schema:'SAGI_MATCH_PROJECTS_V2'};projectPosts.push(JSON.parse(JSON.stringify(projectStore)));return json(res,{ok:true})}
-  if(u.pathname==='/health')return json(res,{ok:true,port:PORT});
+  if(u.pathname==='/health')return json(res,{ok:true,port:PORT,vmix:true,vmixInfo:{ok:true,active:'2',preview:'1',inputs:[{number:'1',key:'cam1',type:'Camera',title:'CAM 1',state:'Running'},{number:'2',key:'cam2',type:'Camera',title:'Integrated Webcam',state:'Running'},{number:'4',key:'replay',type:'Video',title:'REPLAY',state:'Running'},{number:'5',key:'gfx',type:'Browser',title:'SAGI Browser',state:'Running'}],overlays:[]}});
   if(u.pathname==='/')return text(res,'SAGI V4.31.0 SELFTEST');
   const rel=decodeURIComponent(u.pathname).replace(/^\/+/,'');const file=path.resolve(ROOT,rel);
   if(!file.startsWith(ROOT)||!fs.existsSync(file)||fs.statSync(file).isDirectory())return text(res,'Not found','text/plain',404);
@@ -398,6 +398,12 @@ server.listen(PORT,'127.0.0.1',async()=>{
   const reliability=await page.evaluate(()=>window.sagiMatchdayReliabilityDiagnostic());
   assert(Number(graphics.homeScore)===4,'retry did not deliver score state after transient failure: '+JSON.stringify(graphics));
   assert(reliability.metrics.retried>=1&&reliability.lastGood,'reliability retry/LKG diagnostics missing: '+JSON.stringify(reliability));
+
+  console.log('TEST 10A2: broadcast desk connection is driven by real vMix health, not cloud configuration');
+  await page.waitForFunction(()=>window.sagiVmixLinkDiagnostic?.().vmix===true&&document.querySelector('#bcVmixStatus')?.textContent.includes('CONNECTED'),null,{timeout:6000});
+  const vmixLink=await page.evaluate(()=>({diag:window.sagiVmixLinkDiagnostic(),status:document.querySelector('#bcVmixStatus')?.textContent,program:document.querySelector('#bcProgramMeta')?.textContent,preview:document.querySelector('#bcPreviewMeta')?.textContent,mm:document.querySelector('#mmVmixStatus')?.textContent}));
+  assert(vmixLink.diag.vmix&&vmixLink.diag.active==='2'&&vmixLink.diag.preview==='1','real vMix link diagnostic missing: '+JSON.stringify(vmixLink));
+  assert(vmixLink.status.includes('P2 / V1')&&vmixLink.program.includes('Integrated Webcam')&&vmixLink.preview.includes('Input 1')&&vmixLink.mm.includes('CONNECTED'),'broadcast desk does not expose actual vMix Program/Preview link: '+JSON.stringify(vmixLink));
 
   console.log('TEST 10B: rapid score writes remain ordered even when the first network write is deliberately delayed');
   reorderMatchdayWrites=true;matchdayPosts=[];
