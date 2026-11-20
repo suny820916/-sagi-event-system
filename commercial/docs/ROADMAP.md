@@ -177,3 +177,9 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Commits: `2b8f786` (gateway), `f69e1ce` (test).
 - **Verification:** source and test committed through GitHub API. Local clone failed due to GitHub DNS resolution; Node execution and GitHub Actions CI are not confirmed. The configuration assertions do not substitute for a real slow-client/endurance test.
 - **Release blockers remain:** connect LAN Gateway to canonical Local Engine, persist idempotent commands, validate phone/vMix on Windows, protect bearer tokens on LAN, and test recovery under power loss. Prioritize those integration milestones over further isolated gateway hardening.
+
+## 2026-11-20 — LAN → Local Engine integration acceptance gate
+- Added `commercial/docs/LAN_ENGINE_INTEGRATION_GATE.md` documenting source-observed integration gaps and ten concrete acceptance tests.
+- Confirmed the current LAN command self-test uses an in-memory fake callback; it does not validate canonical engine persistence, restart idempotency, WAN outage or vMix readback.
+- **Verification:** documentation committed; no Node/CI/Windows/vMix test was executed in this run. All ten integration checks remain pending. No production readiness claim.
+- **Priority:** connect gateway to canonical durable engine with an explicit adapter and implement real restart/reconnect tests before further LAN gateway micro-hardening.
