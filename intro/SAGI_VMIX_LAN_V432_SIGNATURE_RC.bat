@@ -3070,12 +3070,11 @@ async function recoverMatchdayFromBridge(showNote=false,opts={}){
      const remoteRevision=Math.max(0,Number(x.revision)||0);
      if(remoteRevision){mdPublishRevision=Math.max(mdPublishRevision,remoteRevision);mdLastAckRevision=Math.max(mdLastAckRevision,remoteRevision)}
      const remoteStamp=mdRecoveryTimestamp(x),localRevision=Math.max(0,Number(matchdayState.revision)||0,Number(mdLastAckRevision)||0);
-     if(opts.preferNewest&&localRevision>remoteRevision){
-       mdPublishRevision=Math.max(mdPublishRevision,localRevision);
-       mdRecoveryMetrics.localWins++;mdRecoveryMetrics.lastReason='LOCAL_REVISION_AHEAD';mdRecoveryMetrics.lastRecoveryAt=Date.now();
-       await publishMatchday(matchdayState.lastEvent||null);
-       if(showNote)note('本机 revision 更新 · 已阻止旧 Bridge 回退');
-       return true
+     // LIVE SSOT: once Bridge has a valid same-fixture state, every controller follows Bridge.
+     // A per-device local revision is recovery metadata only; it must never overrule the shared live state.
+     if(localRevision>remoteRevision){
+       mdRecoveryMetrics.localWins+=0;mdRecoveryMetrics.staleRemoteIgnored+=0;
+       mdRecoveryMetrics.lastReason='BRIDGE_AUTHORITY_OVER_LOCAL_REVISION';mdRecoveryMetrics.lastRecoveryAt=Date.now()
      }
      if(mdApplyRecovered(x,!!opts.allowIdentityTakeover)){
        if(opts.preferNewest)mdRecoveryMetrics.bridgeWins++;
@@ -3153,7 +3152,7 @@ async function mdPostMatchdayWithRetry(state){
  }
  mdPublishMetrics.failed++;mdPublishMetrics.lastAttempts=waits.length;throw lastError||new Error('MATCHDAY_SYNC_FAILED')
 }
-window.sagiMatchdayReliabilityDiagnostic=()=>({metrics:{...mdPublishMetrics},recovery:{...mdRecoveryMetrics},pendingPublishes:mdPendingPublishes,localRecoveryStamp:mdLocalRecoveryStamp,lastAckRevision:mdLastAckRevision,lastConsistencyState:mdLastConsistencyState,lastConsistencyAt:mdLastConsistencyAt,lastGood:!!mdLoadLastGood(),fixtureKey:mdFixtureKey()});
+window.sagiMatchdayReliabilityDiagnostic=()=>({metrics:{...mdPublishMetrics},recovery:{...mdRecoveryMetrics},pendingPublishes:mdPendingPublishes,localRecoveryStamp:mdLocalRecoveryStamp,lastAckRevision:mdLastAckRevision,lastConsistencyState:mdLastConsistencyState,lastConsistencyAt:mdLastConsistencyAt,lastGood:!!mdLoadLastGood(),fixtureKey:mdFixtureKey(),liveAuthority:'BRIDGE'});
 function mdCloudSnapshot(event=null,opts={}){
  const now=mdNowSeconds(),canonical=mdEnforceCanonicalTeams(),homeName=canonical.home||'HOME',awayName=canonical.away||'AWAY';
  const baseRevision=Math.max(0,Number(mdPublishRevision)||0,Number(matchdayState.revision)||0,Number(mdLastAckRevision)||0);
@@ -3220,16 +3219,11 @@ async function mdConsistencyCheck(force=false){
   if(!sameFixture){mdLastConsistencyState='FIXTURE_MISMATCH';mdLastConsistencyAt=Date.now();return false}
   const remoteRevision=Math.max(0,Number(remote.revision)||0);
   const localRevision=Math.max(0,Number(matchdayState.revision)||0,Number(mdLastAckRevision)||0);
-  if(remoteRevision<localRevision){
-   mdRecoveryMetrics.staleRemoteIgnored++;mdLastConsistencyState='LOCAL_REVISION_AHEAD';mdLastConsistencyAt=Date.now();
-   mdPublishRevision=Math.max(mdPublishRevision,localRevision);
-   await publishMatchday(matchdayState.lastEvent||null);
-   if(q('mdSync'))q('mdSync').innerHTML='<span class="mdLiveDot on"></span>Bridge revision 落后 · 已安全恢复 R'+Math.max(mdLastAckRevision,localRevision);
-   return true
-  }
+  // Revisions are not comparable across independent browser controllers. Bridge is the live authority.
+  // mdPendingPublishes already protects the short interval while THIS controller is committing an operator action.
   const local=mdCloudSnapshot(null,{peek:true});
   const differs=mdConsistencyComparable(remote)!==mdConsistencyComparable(local);
-  if(remoteRevision>localRevision||differs){
+  if(remoteRevision!==localRevision||differs){
    if(mdApplyRecovered(remote,false)){
     mdPublishRevision=Math.max(mdPublishRevision,remoteRevision);mdLastAckRevision=Math.max(mdLastAckRevision,remoteRevision);
     mdLocalRecoveryStamp=Math.max(mdLocalRecoveryStamp||0,mdRecoveryTimestamp(remote));

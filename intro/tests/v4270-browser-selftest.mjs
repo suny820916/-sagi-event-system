@@ -465,16 +465,26 @@ server.listen(PORT,'127.0.0.1',async()=>{
   await idemPage.close();
   graphics={...graphics,commandId:'idem_clear',revision:baseRevision+3,event:{type:'CLEAR_EVENT'},updatedAt:new Date().toISOString()};
 
-  console.log('TEST 10D: reopening director refuses an older same-fixture Bridge snapshot');
-  const reopenBefore=await page.evaluate(()=>{window.dispatchEvent(new Event('pagehide'));const x=JSON.parse(localStorage.getItem('sagi_matchday_graphics_v47')||'null');return{x,diag:window.sagiMatchdayReliabilityDiagnostic()}});
-  assert(reopenBefore.x&&Number(reopenBefore.x.homeScore)===6,'pagehide checkpoint did not preserve current local score: '+JSON.stringify(reopenBefore));
-  graphics={...graphics,commandId:'stale_same_fixture_reopen',home:'乌苏叶克备',away:'IPF',competition:'TORANHE PROJECT CUP',fixtureKey:'toranhe project cup|乌苏叶克备|ipf',homeScore:2,awayScore:2,revision:1,updatedAt:new Date(Date.now()-60000).toISOString(),event:{type:'CLEAR_EVENT'}};
-  await page.reload({waitUntil:'domcontentloaded'});await wait(2200);
-  const reopenAfter=await page.evaluate(()=>({home:document.querySelector('#mdHomeScore')?.textContent,away:document.querySelector('#mdAwayScore')?.textContent,homeName:document.querySelector('#matchHome')?.value,awayName:document.querySelector('#matchAway')?.value,competition:document.querySelector('#matchCompetition')?.value,diag:window.sagiMatchdayReliabilityDiagnostic()}));
-  assert(reopenAfter.home==='6'&&reopenAfter.away==='1','older same-fixture Bridge snapshot rolled director backward after reopen: '+JSON.stringify(reopenAfter));
-  assert(reopenAfter.homeName==='乌苏叶克备'&&reopenAfter.awayName==='IPF'&&reopenAfter.competition==='TORANHE PROJECT CUP','reopen recovery did not restore fixture identity atomically: '+JSON.stringify(reopenAfter));
-  assert(Number(graphics.homeScore)===6&&Number(graphics.awayScore)===1&&graphics.home==='乌苏叶克备'&&graphics.away==='IPF','local-newer recovery was not republished to Bridge with fixture identity: '+JSON.stringify(graphics));
-  assert(reopenAfter.diag.recovery.localWins>=1&&Number(reopenAfter.diag.lastAckRevision)>=2&&reopenAfter.diag.fixtureKey==='toranhe project cup|乌苏叶克备|ipf','revision-based local-ahead arbitration diagnostics missing: '+JSON.stringify(reopenAfter.diag));
+  console.log('TEST 10D: stale phone-local revision can never overrule Bridge live score');
+  const reopenBefore=await page.evaluate(()=>{
+    window.dispatchEvent(new Event('pagehide'));
+    const x=JSON.parse(localStorage.getItem('sagi_matchday_graphics_v47')||'null');
+    // Simulate the photographed field failure: this controller has a numerically larger stale local revision / score.
+    x.homeScore=0;x.awayScore=1;x.revision=999;x.savedAt=Date.now()+60000;
+    localStorage.setItem('sagi_matchday_graphics_v47',JSON.stringify(x));
+    return{x,diag:window.sagiMatchdayReliabilityDiagnostic()}
+  });
+  assert(reopenBefore.x&&Number(reopenBefore.x.revision)===999&&Number(reopenBefore.x.homeScore)===0&&Number(reopenBefore.x.awayScore)===1,'failed to seed stale high-revision phone snapshot: '+JSON.stringify(reopenBefore));
+  const postsBeforeBridgeAuthority=matchdayPosts.length;
+  graphics={...graphics,commandId:'bridge_authoritative_reopen',home:'乌苏叶克备',away:'IPF',competition:'TORANHE PROJECT CUP',fixtureKey:'toranhe project cup|乌苏叶克备|ipf',homeScore:1,awayScore:1,revision:5,updatedAt:new Date().toISOString(),event:{type:'CLEAR_EVENT'}};
+  await page.reload({waitUntil:'domcontentloaded'});
+  await page.waitForFunction(()=>document.querySelector('#mdHomeScore')?.textContent==='1'&&document.querySelector('#mdAwayScore')?.textContent==='1'&&window.sagiMatchdayReliabilityDiagnostic?.().liveAuthority==='BRIDGE',null,{timeout:8000});
+  const reopenAfter=await page.evaluate(()=>({home:document.querySelector('#mdHomeScore')?.textContent,away:document.querySelector('#mdAwayScore')?.textContent,mmHome:document.querySelector('#mmHomeScore')?.textContent,mmAway:document.querySelector('#mmAwayScore')?.textContent,homeName:document.querySelector('#matchHome')?.value,awayName:document.querySelector('#matchAway')?.value,competition:document.querySelector('#matchCompetition')?.value,diag:window.sagiMatchdayReliabilityDiagnostic()}));
+  assert(reopenAfter.home==='1'&&reopenAfter.away==='1'&&reopenAfter.mmHome==='1'&&reopenAfter.mmAway==='1','phone/desktop control UI did not converge to Bridge 1:1: '+JSON.stringify(reopenAfter));
+  assert(reopenAfter.homeName==='乌苏叶克备'&&reopenAfter.awayName==='IPF'&&reopenAfter.competition==='TORANHE PROJECT CUP','Bridge authority did not preserve fixture identity atomically: '+JSON.stringify(reopenAfter));
+  assert(Number(graphics.homeScore)===1&&Number(graphics.awayScore)===1,'stale local state overwrote Bridge live score: '+JSON.stringify(graphics));
+  assert(matchdayPosts.length===postsBeforeBridgeAuthority,'reopen Bridge follow produced forbidden reverse POST: '+JSON.stringify({before:postsBeforeBridgeAuthority,after:matchdayPosts.length}));
+  assert(reopenAfter.diag.liveAuthority==='BRIDGE'&&Number(reopenAfter.diag.lastAckRevision)===5,'Bridge authority diagnostics missing: '+JSON.stringify(reopenAfter.diag));
 
   console.log('TEST 10E: in-match health check is read-only and cannot alter on-air state');
   const healthBefore={commandId:graphics.commandId,homeScore:graphics.homeScore,awayScore:graphics.awayScore,posts:matchdayPosts.length,cuts:vmixCommands.length};

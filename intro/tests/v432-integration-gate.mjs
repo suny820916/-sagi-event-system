@@ -17,7 +17,9 @@ for(const token of [
  "normalizeEvent(event,{home:homeName,away:awayName,fixtureKey:mdFixtureKey()})",
  "SAGI_MATCH_PROJECTS_V2",
  "window.sagiProjectSyncDiagnostic",
- "loadMatchProjectById(remoteActive,{publishSelection:false,remoteSync:true})"
+ "loadMatchProjectById(remoteActive,{publishSelection:false,remoteSync:true})",
+ "liveAuthority:'BRIDGE'",
+ "Revisions are not comparable across independent browser controllers. Bridge is the live authority."
 ]) assert(control.includes(token),'control regression: '+token);
 
 for(const token of [
@@ -52,5 +54,6 @@ assert(bat.includes('"BrowserReload"'),'BAT BrowserReload allowlist missing');
 assert(bat.includes('"ReplayPlayLastEventToOutput"'),'BAT replay latest-only allowlist missing');
 assert(bat.includes('SAGI_MATCH_PROJECTS_V2'),'BAT project SSOT schema missing');
 assert(bat.includes('activeProjectId'),'BAT active project authority missing');
+assert(!control.includes("mdLastConsistencyState='LOCAL_REVISION_AHEAD'"),'stale per-device local revision can still overrule Bridge');
 assert(bat.includes('$candidate -le $PreferredPort'),'BAT must lock preferred port / prevent silent 8101 fallback');
 console.log('SAGI V4.32 CLEAN INTEGRATION GATE PASS');
