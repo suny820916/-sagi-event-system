@@ -5,6 +5,25 @@ import path from 'node:path';
 import { FileMatchStore } from './file-store.mjs';
 import { createLocalServer } from './local-server.mjs';
 
+// Pure reducer regression: stopping periods and long shootout IDs.
+const {createInitialMatchState, applyCommand} = await import('./match-core.mjs');
+let fixture = createInitialMatchState({fixtureId:'period-test',home:'主队',away:'客队'});
+const apply = (command) => { fixture = applyCommand(fixture, command).state; };
+apply({commandId:'clock',type:'SET_CLOCK',running:true,elapsedSeconds:600});
+apply({commandId:'half',type:'HALF_TIME'});
+assert.equal(fixture.clock.running,false);
+assert.equal(fixture.clock.elapsedSeconds,600);
+const ids = new Set();
+for(let i=0;i<205;i++){
+  apply({commandId:'pen-'+i,type:'PENALTY_ATTEMPT',side:i%2?'HOME':'AWAY',outcome:'SCORED'});
+  ids.add(fixture.penalties.history.at(-1).attemptId);
+}
+assert.equal(ids.size,205);
+assert.equal(fixture.penalties.home+fixture.penalties.away,205);
+apply({commandId:'clock-again',type:'SET_CLOCK',running:true,elapsedSeconds:600});
+apply({commandId:'finish',type:'FINISH_PENALTIES'});
+assert.equal(fixture.clock.running,false);
+
 const dir = await mkdtemp(path.join(os.tmpdir(), 'sagi-snapshot-failure-'));
 let engine;
 const meta = { fixtureId: 'snapshot-failure', home: '主队', away: '客队' };
