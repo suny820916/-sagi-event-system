@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import { createMatchClock } from './match-clock.mjs';
+let t = 1000;
+const clock = createMatchClock({elapsedSeconds: 120, running: true}, {now: () => t});
+t += 3600000;
+assert.deepEqual(clock.read(), {elapsedSeconds:120,running:false,recoveryPending:true});
+clock.set({elapsedSeconds:125,running:true});
+t += 1999;
+assert.equal(clock.read().elapsedSeconds,126);
+t += 1;
+assert.equal(clock.read().elapsedSeconds,127);
+clock.set({elapsedSeconds:127,running:false});
+t += 900000;
+assert.equal(clock.read().elapsedSeconds,127);
+assert.equal(clock.read().recoveryPending,false);
+assert.throws(()=>clock.set({elapsedSeconds:-1,running:true}),/INVALID_CLOCK/);
+console.log('MATCH CLOCK PASS');
