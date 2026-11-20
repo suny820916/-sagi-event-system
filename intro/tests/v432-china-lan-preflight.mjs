@@ -20,11 +20,21 @@ const embeddedControl=bat.slice(positions[1]+markers[1].length,positions[2]);
 const embeddedOutput=bat.slice(positions[2]+markers[2].length);
 check('Packaged control is not truncated',embeddedControl.length>100000);
 check('Packaged output is not truncated',embeddedOutput.length>50000);
-// Catch accidentally shipping stale standalone HTML while the BAT embeds a different UI.
-// Compare the actual embedded payload after removing only BAT delimiter boundary newlines.
+// V4.32 package is historical/immutable once later source versions advance.
+// While current source is still V4.32, require byte-equivalent embedded HTML.
+// Once current source is V4.33+, validate the frozen V4.32 payload by its certified build/capability markers;
+// current V4.33+ source is audited independently below, and its own BAT has a dedicated package gate.
 const normalizePayload=s=>s.replace(/^\r?\n/,'').replace(/\r?\n$/,'').replace(/\r\n/g,'\n');
-check('BAT packaged control matches standalone source',normalizePayload(embeddedControl)===normalizePayload(control));
-check('BAT packaged output matches standalone source',normalizePayload(embeddedOutput)===normalizePayload(output));
+const currentBuildMatch=control.match(/SAGI4(\d{2})_[A-Z0-9_]+/);
+const currentBuild=currentBuildMatch?Number(currentBuildMatch[1]):0;
+if(currentBuild===32){
+  check('BAT packaged control matches standalone source',normalizePayload(embeddedControl)===normalizePayload(control));
+  check('BAT packaged output matches standalone source',normalizePayload(embeddedOutput)===normalizePayload(output));
+}else{
+  check('Historical V4.32 BAT control remains frozen/certified',embeddedControl.includes('SAGI432_SIGNATURE_RC3')&&embeddedControl.includes("function mdNextEventIdentity(type='EVENT')")&&embeddedControl.includes('SAGISignatureCore'));
+  check('Historical V4.32 BAT output remains frozen/certified',embeddedOutput.includes('SAGI432_SIGNATURE_RC3')&&embeddedOutput.includes('lastRenderedSignatureEventKey')&&embeddedOutput.includes('SAGISignatureCore'));
+  check('Current source has advanced beyond V4.32 intentionally',currentBuild>32,'currentBuild='+currentBuild);
+}
 check('Packaged control includes V4.32 Signature Core',embeddedControl.includes('SAGISignatureCore'));
 check('Packaged output includes V4.32 Signature Core',embeddedOutput.includes('SAGISignatureCore'));
 check('Embedded control includes local match operation',embeddedControl.includes('mdMacroEvent')&&embeddedControl.includes('mdRecordEvent'));
