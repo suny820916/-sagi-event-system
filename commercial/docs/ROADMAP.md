@@ -247,3 +247,9 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - LAN run 44779949409 failed on Ubuntu: legacy issue-endpoint test expected 403 but omitted required JSON content type, correctly receiving 415. Windows was cancelled by matrix fail-fast.
 - Updated tests to assert both JSON rejection and desktop approval denial, and use the actual port for the forbidden-host test; disabled LAN matrix fail-fast. Commits 72d0c0d, 779829a, e14100c. Security checks were not weakened.
 - Repaired LAN suite execution pending. Real phone/Windows/vMix operation, encrypted transport, production startup and endurance remain unverified. No new runtime dependencies.
+
+## 2026-11-21 — LAN Host regression harness repair
+- Core run 44792966144 passed seven runtime test steps on each of Windows and Ubuntu (14/14).
+- LAN run 44792966009 failed on both platforms at the command self-test; Ubuntu log reports line 43 actual 200 versus expected 403 for the forged Host probe. Both pairing and gateway suites passed; canonical bridge tests were skipped.
+- Replaced fetch-based Host overrides with explicit node:http requests (commit 594cc57) so the test sends the intended authority. Added probe timeout; production gateway and security policy unchanged. Repaired test execution remains pending; do not claim that the Host defense or bridge passed.
+- Full Preflight run 44792966073 failed at Flask API smoke test, outside the commercial core suite; no changes made to inherited application or main. Release remains blocked pending LAN CI and actual Windows/vMix/endurance validation.
