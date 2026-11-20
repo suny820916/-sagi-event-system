@@ -596,8 +596,11 @@ server.listen(PORT,'127.0.0.1',async()=>{
 
   console.log('TEST 11E: desktop + phone share one Bridge project list and active project');
   projectStore={projects:[makeStoredProject('bridge_project_1')],activeProjectId:'bridge_project_1',savedAt:Date.now(),schema:'SAGI_MATCH_PROJECTS_V2'};projectPosts=[];
-  const projectDesktopContext=await browser.newContext({viewport:{width:1440,height:1100}});
-  const projectPhoneContext=await browser.newContext({viewport:{width:390,height:844},isMobile:true});
+  // This mock serves plain text at /, unlike the production Bridge. Isolate
+  // project SSoT from first-install service-worker controllerchange reloads.
+  // PWA lifecycle/reload needs its own real-shell regression.
+  const projectDesktopContext=await browser.newContext({serviceWorkers:'block',viewport:{width:1440,height:1100}});
+  const projectPhoneContext=await browser.newContext({serviceWorkers:'block',viewport:{width:390,height:844},isMobile:true});
   const projectDesktop=await projectDesktopContext.newPage();
   const projectPhone=await projectPhoneContext.newPage();
   await Promise.all([
@@ -617,7 +620,9 @@ server.listen(PORT,'127.0.0.1',async()=>{
   assert(projectPosts.length===0,'passive project follow must not reverse-publish: '+JSON.stringify(projectPosts));
   await projectDesktop.locator('#projectName').fill('SYNC COPY');
   await projectDesktop.click('#projectSaveBtn');
-  await projectDesktop.waitForFunction(()=>document.querySelector('#projectSelect')?.options.length===3,null,{timeout:8000});
+  await projectDesktop.waitForFunction(()=>{const d=window.sagiProjectSyncDiagnostic?.();return d&&!d.syncBusy&&d.projectCount===2&&document.querySelector('#projectSelect')?.options.length===3},null,{timeout:8000});
+  // DOM can update before the POST completes; require the authoritative mock ACK.
+  for(let i=0;i<80&&!(projectStore.projects.length===2&&projectStore.activeProjectId!=='bridge_project_1'&&projectPosts.length===1);i++)await wait(100);
   const activeAfterSave=projectStore.activeProjectId;
   assert(activeAfterSave&&activeAfterSave!=='bridge_project_1'&&projectStore.projects.length===2,'desktop save did not publish project list + active id: '+JSON.stringify(projectStore));
   await projectPhone.waitForFunction(id=>typeof window.sagiProjectSyncDiagnostic==='function'&&(()=>{const d=window.sagiProjectSyncDiagnostic();return !d.syncBusy&&d.activeMatchProjectId===id&&d.selectedProjectId===id&&d.projectCount===2&&document.querySelector('#projectName')?.value==='SYNC COPY'})(),activeAfterSave,{timeout:12000});
