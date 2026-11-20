@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#080808"><title>SAGI KIT 图册生产进度</title>
+<style>
+:root{--bg:#080808;--panel:#141414;--line:#2c2c2c;--text:#f5f1e8;--muted:#8e8e8e;--gold:#d8b55b;--green:#72c79a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}.app{max-width:1120px;margin:auto;padding:16px 12px 60px}
+.top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.brand{font-size:24px;font-weight:950}.sub{font-size:12px;color:var(--muted);margin-top:5px}.back{color:#fff;text-decoration:none;background:#292929;border-radius:12px;padding:10px 12px;font-weight:850}
+.rule{margin:14px 0;background:#15120b;border:1px solid #65552b;border-radius:16px;padding:14px;color:#d8cfb4;font-size:12px;line-height:1.7}.rule b{color:#f1dda2}
+.pipeline{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin:12px 0}.step{background:#101010;border:1px solid #2a2a2a;border-radius:12px;padding:10px;text-align:center;font-size:10px;color:#777}.step b{display:block;color:#eee;font-size:12px;margin-top:3px}.step.on{border-color:#65552b;background:#15120b}
+table{width:100%;border-collapse:separate;border-spacing:0 7px}th{font-size:10px;color:#777;text-align:left;padding:0 10px}td{background:#121212;border-top:1px solid #262626;border-bottom:1px solid #262626;padding:10px;font-size:12px}td:first-child{border-left:1px solid #262626;border-radius:12px 0 0 12px}td:last-child{border-right:1px solid #262626;border-radius:0 12px 12px 0}
+.status{display:inline-block;border-radius:999px;padding:5px 8px;font-size:10px;font-weight:850}.pub{background:#143322;color:#91e9b7}.lock{background:#332d17;color:#e7ce79}.wait{background:#242424;color:#8b8b8b}.src{color:var(--gold);font-weight:850}.small{color:#777;font-size:10px}
+@media(max-width:720px){.pipeline{grid-template-columns:1fr}.hide{display:none}table{font-size:11px}}
+</style></head>
+<body><div class="app">
+<div class="top"><div><div class="brand">SAGI KIT · 图册生产线</div><div class="sub">内部流程页 · 未通过验收的款式禁止进入正式画册</div></div><a class="back" href="./catalog.html">返回产品画册</a></div>
+<div class="rule"><b>Production Master：</b>原图册对应页 → 精确还原版型 / 纹路 / 拼接位置 → 只换 SAGI A+红点标识和固定六配色 → 对照源页自检 → 通过后发布 → 再继续下一款。任何“重新设计纹路”都判定为失败。</div>
+<div class="pipeline"><div class="step on">01<b>锁定原图</b></div><div class="step">02<b>结构还原</b></div><div class="step">03<b>六配色</b></div><div class="step">04<b>对照验收</b></div><div class="step">05<b>发布 KIT</b></div></div>
+<table><thead><tr><th>款式</th><th>源页</th><th>当前状态</th><th class="hide">下一动作</th></tr></thead><tbody id="rows"></tbody></table>
+</div>
+<script>
+const data=[
+["01A","狮头系列一",7,"pub","已发布","标准母版，保持不动"],
+["01B","狮头系列二",8,"lock","原图锁定","按源页结构还原，不沿用错误新设计"],
+["03","交错系列",9,"wait","待处理","01B验收通过后开始"],
+["04","斑马纹系列",10,"wait","待处理","03验收通过后开始"],
+["05","折线系列",11,"wait","待处理","04验收通过后开始"],
+["06","结构系列",12,"wait","待处理","05验收通过后开始"],
+["07","星耀系列",13,"wait","待处理","06验收通过后开始"],
+["08","城邦系列",14,"wait","待处理","07验收通过后开始"],
+["09","双色线条",15,"wait","待处理","08验收通过后开始"],
+["10","雄狮系列",16,"wait","待处理","09验收通过后开始"],
+["11","假日风情",17,"wait","待处理","10验收通过后开始"],
+["12","碎线系列",18,"wait","待处理","11验收通过后开始"],
+["13","块面暗纹",19,"wait","待处理","12验收通过后开始"],
+["14","交错系列",20,"wait","待处理","13验收通过后开始"],
+["15","动势系列",21,"wait","待处理","14验收通过后开始"],
+["16","线条渐变",22,"wait","待处理","15验收通过后开始"],
+["17","脉络竖纹",23,"wait","待处理","16验收通过后开始"],
+["18","经典系列",24,"wait","待处理","17验收通过后开始"],
+["19","菱形暗花",25,"wait","待处理","18验收通过后开始"],
+["20","塔系列",26,"wait","待处理","19验收通过后开始"],
+["21","水龙吟系列",27,"wait","待处理","20验收通过后开始"],
+["22","围龙系列",28,"wait","待处理","21验收通过后开始"]
+];
+document.getElementById("rows").innerHTML=data.map(x=>'<tr><td><b>'+x[0]+' · '+x[1]+'</b></td><td class="src">PDF '+x[2]+'</td><td><span class="status '+x[3]+'">'+x[4]+'</span></td><td class="hide small">'+x[5]+'</td></tr>').join("");
+</script></body></html>
