@@ -40,6 +40,12 @@ assert(control.includes("normalizeEvent(event,{home:homeName,away:awayName,fixtu
   'BLOCK RELEASE: published snapshots must carry fixture identity into normalization');
 assert(control.includes("function mdNextEventIdentity(type='EVENT')"),
   'BLOCK RELEASE: control source must generate persistent in-match event identity');
+assert(control.includes("const eventGateMs=type==='GOAL'?2500:1400"),
+  'BLOCK RELEASE: GOAL must use strengthened accidental double-tap guard');
+assert(control.includes("mdPublishRevision=Math.max(mdPublishRevision,remoteRevision)"),
+  'BLOCK RELEASE: Bridge recovery must preserve publish revision continuity');
+assert(control.includes("mdLastAckRevision=Math.max(mdLastAckRevision,remoteRevision)"),
+  'BLOCK RELEASE: Bridge recovery must preserve ack revision continuity');
 assert(control.includes("...mdNextEventIdentity(type)")&&control.includes("...mdNextEventIdentity('SUB')")&&control.includes("...mdNextEventIdentity('MVP')"),
   'BLOCK RELEASE: live event creators must attach explicit identity');
 assert(/eventSequence\)\|\|0\)\+1/.test(control),
