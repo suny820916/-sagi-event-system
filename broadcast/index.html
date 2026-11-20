@@ -12,7 +12,7 @@
 *{box-sizing:border-box}html,body{margin:0;background:#080808;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
 body{min-height:100vh;background:radial-gradient(circle at 78% 0%,#211b10 0,transparent 28%),#080808}
 .wrap{max-width:1180px;margin:auto;padding:22px 14px 48px}
-.top{display:flex;align-items:center;justify-content:space-between;gap:14px}.brand img{width:172px;height:auto;display:block}.tag{border:1px solid #5f522f;color:#d5be7a;border-radius:999px;padding:7px 10px;font-size:10px;font-weight:900;letter-spacing:1px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:14px}.nav{display:flex;gap:5px;align-items:center;flex-wrap:wrap;justify-content:flex-end}.nav a{color:#aaa;text-decoration:none;font-size:10px;font-weight:850;padding:7px 9px;border-radius:999px}.nav a:hover,.nav a.on{background:#171717;color:#f2dda1}.brand img{width:172px;height:auto;display:block}.tag{border:1px solid #5f522f;color:#d5be7a;border-radius:999px;padding:7px 10px;font-size:10px;font-weight:900;letter-spacing:1px}
 .hero{padding:52px 0 30px}.eyebrow{font-size:11px;color:var(--gold);font-weight:900;letter-spacing:2px}.hero h1{font-size:clamp(38px,7vw,72px);line-height:.96;letter-spacing:-3px;margin:12px 0 15px}.hero p{max-width:760px;color:#a5a5a5;line-height:1.8;font-size:14px}
 .hero .note{margin-top:16px;font-size:12px;color:#d6c797}
 .layout{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(300px,.75fr);gap:14px;align-items:start}
@@ -35,14 +35,14 @@ linear-gradient(#ffffff33,#ffffff33) 94% 50%/10% 45% no-repeat}
 .features{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}.feature{padding:18px;min-height:150px}.num{font-size:10px;color:var(--gold);font-weight:900}.feature h3{font-size:17px;margin:8px 0}.feature p{font-size:11px;color:#8f8f8f;line-height:1.7;margin:0}
 .footer{display:flex;justify-content:space-between;gap:12px;margin-top:24px;padding-top:17px;border-top:1px solid #202020;color:#666;font-size:10px}
 @media(max-width:860px){.layout{grid-template-columns:1fr}.controlCard{position:static}.features{grid-template-columns:1fr 1fr}.hero{padding-top:42px}.stage{aspect-ratio:16/10}}
-@media(max-width:560px){.brand img{width:150px}.tag{font-size:9px}.hero h1{letter-spacing:-2px}.features{grid-template-columns:1fr}.team{min-width:auto;padding:0 9px}.tn{font-size:10px}.scorebug{left:4%}.goal{left:4%;min-width:220px}.stage{aspect-ratio:4/3}}
+@media(max-width:560px){.top{align-items:flex-start}.brand img{width:150px}.nav{max-width:55%}.hero h1{letter-spacing:-2px}.features{grid-template-columns:1fr}.team{min-width:auto;padding:0 9px}.tn{font-size:10px}.scorebug{left:4%}.goal{left:4%;min-width:220px}.stage{aspect-ratio:4/3}}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header class="top">
     <a class="brand" href="/"><img src="/assets/brand/sagi-football-logo.webp?v=20261121a" alt="SAGI FOOTBALL"></a>
-    <div class="tag">BROADCAST DEMO</div>
+    <nav class="nav"><a href="/kit/catalog.html">KIT</a><a href="/event/">EVENT</a><a class="on" href="/broadcast/">BROADCAST</a><a href="/about.html">ABOUT</a></nav>
   </header>
 
   <section class="hero">
