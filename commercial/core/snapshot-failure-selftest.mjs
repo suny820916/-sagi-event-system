@@ -27,7 +27,19 @@ try {
   assert.equal(first.state.homeScore, 1);
   assert.equal(first.duplicate, false);
   assert.ok(store.snapshotError);
+  const base = 'http://127.0.0.1:' + engine.address.port;
+  const headers = { authorization: 'Bearer ' + engine.token };
+  assert.equal((await fetch(base + '/api/v1/diagnostics')).status, 401);
+  const diag = await (await fetch(base + '/api/v1/diagnostics', { headers })).json();
+  assert.equal(diag.snapshotWarning, 'SNAPSHOT_FAILED');
+  assert.equal(diag.recoveryRequired, false);
   assert.equal((await send()).duplicate, true);
+  // Inject the recovery latch to verify API behavior (not a real disk fault).
+  store.journalError = 'INJECTED';
+  assert.equal((await fetch(base + '/health')).status, 503);
+  const blocked = await fetch(base + '/api/v1/commands', { method: 'POST', headers: { ...headers, 'content-type': 'application/json' }, body: JSON.stringify({...command, commandId: 'blocked', expectedRevision: 1}) });
+  assert.equal(blocked.status, 503);
+  assert.equal((await blocked.json()).error, 'JOURNAL_RESTART_REQUIRED');
   await engine.close(); engine = null;
   engine = await createLocalServer({ dataDir: dir, meta });
   const retry = await send();
