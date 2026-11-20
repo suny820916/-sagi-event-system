@@ -13,15 +13,15 @@
 .notice{background:#15120b;border:1px solid #5d4c28;border-radius:16px;padding:12px 14px;color:#d9c995;font-size:12px;line-height:1.65;margin:12px 0}
 .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;overflow:hidden}.visual{background:linear-gradient(180deg,#111,#090909);padding:14px;min-height:240px;display:flex;align-items:center;justify-content:center}.visual svg{width:100%;max-width:280px;height:auto;filter:drop-shadow(0 12px 20px #0008)}
 .body{padding:13px}.row{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.name{font-size:17px;font-weight:900}.code{font-size:11px;color:var(--gold);margin-top:3px}.page{font-size:11px;color:#777}.colors{display:flex;gap:8px;overflow-x:auto;padding:10px 0 4px;scrollbar-width:none}.colors::-webkit-scrollbar{display:none}.sw{flex:0 0 auto;width:52px}.dot{width:44px;height:44px;border-radius:12px;border:2px solid #393939;box-shadow:inset 0 0 0 1px #0006}.sw.on .dot{border-color:var(--gold);box-shadow:0 0 0 2px #5c4a22}.sw label{display:block;font-size:9px;color:#888;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.meta{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px}.pill{background:#0b0b0b;border:1px solid #292929;border-radius:10px;padding:8px;font-size:10px;color:#aaa}.pill b{display:block;color:#eee;font-size:12px;margin-top:2px}.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:11px}
+.meta{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px}.pill{background:#0b0b0b;border:1px solid #292929;border-radius:10px;padding:8px;font-size:10px;color:#aaa}.pill b{display:block;color:#eee;font-size:12px;margin-top:2px}.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:11px}.demo{margin-top:12px;border:1px solid #5d4c28;background:#0d0b07;border-radius:14px;padding:10px}.demoHead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:9px}.demoTitle{font-size:13px;font-weight:900;color:#f0d88e}.demoTag{font-size:10px;color:#111;background:linear-gradient(135deg,#bc9948,#e3c66e);padding:5px 8px;border-radius:999px;font-weight:900}.demoPreview{width:min(100%,330px);aspect-ratio:210/262;margin:auto;border-radius:12px;background-image:url("./assets/01-lion/sagi-demo-sprite.webp");background-size:300% 200%;background-repeat:no-repeat;background-position:0 0;box-shadow:0 14px 28px #0008}.demoThumbs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin-top:9px}.demoThumb{border:1px solid #333;border-radius:9px;padding:3px;background:#111;cursor:pointer}.demoThumb.on{border-color:var(--gold);box-shadow:0 0 0 1px #6c592c}.demoCrop{width:100%;aspect-ratio:210/262;border-radius:6px;background-image:url("./assets/01-lion/sagi-demo-sprite.webp");background-size:300% 200%;background-repeat:no-repeat}.demoThumb span{display:block;text-align:center;font-size:8px;color:#999;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media(max-width:900px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:620px){.grid{grid-template-columns:1fr}.visual{min-height:280px}.app{padding-bottom:28px}}
 </style>
 </head>
 <body>
 <div class="app">
-  <div class="top"><div><div class="brand">SAGI KIT · 产品画册</div><div class="sub">选款 → 选配色 → 进入设计器</div></div><div class="badge">CATALOG V1.1</div></div>
+  <div class="top"><div><div class="brand">SAGI KIT · 产品画册</div><div class="sub">选款 → 选配色 → 进入设计器</div></div><div class="badge">CATALOG V1.2</div></div>
   <div class="toolbar"><div class="search"><input id="q" placeholder="搜索：狮头 / 城邦 / 红色 / 黑金…"><a class="btn" href="./index.html">返回设计器</a></div></div>
-  <div class="notice">已按原厂家画册重建 22 个款式，并把各款配色补齐。当前卡片中的球衣图是“清晰配色预览”，用于快速选款；厂家原始高清成衣图会在原 PDF 文件重新接入后替换，不会用 AI 改动版型。</div>
+  <div class="notice">已按原厂家画册重建 22 个款式并补齐配色。01 狮头系列已加入 SAGI 官方样板效果图，可直接查看 6 种实装配色；其他系列将按同一标准继续补充样板。</div>
   <div id="grid" class="grid"></div>
 </div>
 <script>
@@ -67,13 +67,23 @@ function pattern(code){
 function shirt(code,c1,c2){
  return `<svg viewBox="0 0 280 250" aria-hidden="true"><defs><linearGradient id="g${code}" x1="0" x2="1"><stop stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient></defs><path d="M90 35l24-14h52l24 14 47 30-21 42-26-13v127H90V94l-26 13-21-42z" fill="url(#g${code})" stroke="#ffffff33" stroke-width="3"/><path d="M114 21c6 15 46 15 52 0" fill="none" stroke="#f5f5f0" stroke-width="8"/>${pattern(code)}<text x="140" y="120" fill="#fff" font-size="22" font-weight="900" text-anchor="middle" opacity=".95">SAGI KIT</text><text x="140" y="153" fill="#fff" font-size="34" font-weight="900" text-anchor="middle" opacity=".95">10</text></svg>`;
 }
+function demoGallery(code,id){
+ if(code!=="01A") return "";
+ const names=["藏蓝红金","红白金","蓝白金","紫白金","白黑金","黄绿"];
+ const pos=[["0%","0%"],["50%","0%"],["100%","0%"],["0%","100%"],["50%","100%"],["100%","100%"]];
+ return `<div class="demo"><div class="demoHead"><div class="demoTitle">SAGI 样板效果图</div><div class="demoTag">SAGI DEMO</div></div><div class="demoPreview" id="${id}demo" style="background-position:${pos[0][0]} ${pos[0][1]}"></div><div class="demoThumbs">${names.map((n,i)=>`<div class="demoThumb ${i===0?"on":""}" data-demo="${i}"><div class="demoCrop" style="background-position:${pos[i][0]} ${pos[i][1]}"></div><span>${n}</span></div>`).join("")}</div></div>`;
+}
 function render(filter=""){
  const box=document.getElementById("grid"); box.innerHTML="";
  products.filter(p=>(p.join(" ")+p[3].join(" ")).toLowerCase().includes(filter.toLowerCase())).forEach((p,idx)=>{
    const [code,name,page,colors]=p, id="p"+idx, first=pair(colors[0]);
    const el=document.createElement("div"); el.className="card";
-   el.innerHTML=`<div class="visual" id="${id}visual">${shirt(code,first[0],first[1])}</div><div class="body"><div class="row"><div><div class="name">${code} · ${name}</div><div class="code">厂家画册款式</div></div><div class="page">PDF 第${page}页</div></div><div class="colors">${colors.map((c,i)=>{const a=pair(c);return `<div class="sw ${i===0?"on":""}" data-c1="${a[0]}" data-c2="${a[1]}" data-name="${c}"><div class="dot" style="background:linear-gradient(135deg,${a[0]} 0 50%,${a[1]} 50% 100%)"></div><label>${c}</label></div>`}).join("")}</div><div class="meta"><div class="pill">儿童尺码<b>110–160</b></div><div class="pill">成人尺码<b>XS–5XL</b></div><div class="pill">基础版<b>138元/套</b></div><div class="pill">最高面料版<b>208元/套</b></div></div><div class="actions"><button class="btn choose">选此配色</button><a class="btn primary" href="./index.html">用此款设计</a></div></div>`;
+   el.innerHTML=`<div class="visual" id="${id}visual">${shirt(code,first[0],first[1])}</div><div class="body"><div class="row"><div><div class="name">${code} · ${name}</div><div class="code">厂家画册款式</div></div><div class="page">PDF 第${page}页</div></div><div class="colors">${colors.map((c,i)=>{const a=pair(c);return `<div class="sw ${i===0?"on":""}" data-c1="${a[0]}" data-c2="${a[1]}" data-name="${c}"><div class="dot" style="background:linear-gradient(135deg,${a[0]} 0 50%,${a[1]} 50% 100%)"></div><label>${c}</label></div>`}).join("")}</div><div class="meta"><div class="pill">儿童尺码<b>110–160</b></div><div class="pill">成人尺码<b>XS–5XL</b></div><div class="pill">基础版<b>138元/套</b></div><div class="pill">最高面料版<b>208元/套</b></div></div>${demoGallery(code,id)}<div class="actions"><button class="btn choose">选此配色</button><a class="btn primary" href="./index.html">用此款设计</a></div></div>`;
    el.querySelectorAll(".sw").forEach(sw=>sw.onclick=()=>{el.querySelectorAll(".sw").forEach(x=>x.classList.remove("on"));sw.classList.add("on");document.getElementById(id+"visual").innerHTML=shirt(code,sw.dataset.c1,sw.dataset.c2)});
+   if(code==="01A"){
+     const pos=[["0%","0%"],["50%","0%"],["100%","0%"],["0%","100%"],["50%","100%"],["100%","100%"]];
+     el.querySelectorAll(".demoThumb").forEach((th,i)=>th.onclick=()=>{el.querySelectorAll(".demoThumb").forEach(x=>x.classList.remove("on"));th.classList.add("on");document.getElementById(id+"demo").style.backgroundPosition=pos[i][0]+" "+pos[i][1]});
+   }
    box.appendChild(el);
  });
 }
