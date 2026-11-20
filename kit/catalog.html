@@ -68,7 +68,7 @@ function card(p){
    </div>
  </div>`;
 }
-function render(){const q=document.getElementById("q").value.trim().toLowerCase();document.getElementById("grid").innerHTML=products.filter(p=>(p.code+" "+p.name).toLowerCase().includes(q)).map(card).join("")}
+function render(){const q=document.getElementById("q").value.trim().toLowerCase();document.getElementById("grid").innerHTML=products.filter(p=>p.state==="published").filter(p=>(p.code+" "+p.name).toLowerCase().includes(q)).map(card).join("")}
 document.getElementById("q").addEventListener("input",render);render();
 </script>
 </body></html>
