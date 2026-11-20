@@ -35,7 +35,19 @@ export function createLanGateway({
   if (!isIP(host) || ['0.0.0.0', '::'].includes(host)) throw new Error('EXPLICIT_INTERFACE_REQUIRED');
   const attempts = new Map();
   const server = http.createServer(async (req, res) => {
-    const path = new URL(req.url || '/', 'http://localhost').pathname;
+    // Accept only origin-form request targets. Absolute-form URLs, query strings
+    // and malformed encodings are not valid command routes on this LAN API.
+    const target = req.url || '';
+    if (!target.startsWith('/') || target.startsWith('//') ||
+        /[?#\\]/.test(target) || /%(?:2f|5c|00)/i.test(target))
+      return reply(res, 400, { error: 'INVALID_REQUEST_TARGET' });
+    let path;
+    try {
+      path = new URL(target, 'http://localhost').pathname;
+      if (path !== target) throw new Error('NON_CANONICAL_PATH');
+    } catch {
+      return reply(res, 400, { error: 'INVALID_REQUEST_TARGET' });
+    }
     const ip = keyOf(req.socket.remoteAddress);
     // Reject DNS rebinding and forged Host headers. Only the explicitly bound
     // interface (or loopback aliases for a loopback listener) is acceptable.
