@@ -214,7 +214,8 @@ jobs:
         run: |
           $ErrorActionPreference = 'Continue'
           $dir = Join-Path $env:RUNNER_TEMP 'sagi-field-preflight'
-          & .\\intro\\tests\\v432-field-preflight.ps1 -ReportDir $dir
+          $ps51 = Join-Path $env:SystemRoot 'System32\\WindowsPowerShell\\v1.0\\powershell.exe'
+          & $ps51 -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\\intro\\tests\\v432-field-preflight.ps1 -ReportDir $dir
           $code = $LASTEXITCODE
           $reports = @(Get-ChildItem -LiteralPath $dir -Filter '*.json' -ErrorAction SilentlyContinue)
           if ($reports.Count -ne 1) { throw 'Expected one preflight JSON evidence file' }
