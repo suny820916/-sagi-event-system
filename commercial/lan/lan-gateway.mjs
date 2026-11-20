@@ -37,6 +37,16 @@ export function createLanGateway({
   const server = http.createServer(async (req, res) => {
     const path = new URL(req.url || '/', 'http://localhost').pathname;
     const ip = keyOf(req.socket.remoteAddress);
+    // Reject DNS rebinding and forged Host headers. Only the explicitly bound
+    // interface (or loopback aliases for a loopback listener) is acceptable.
+    const hostHeader = String(req.headers.host || '');
+    let requestHost;
+    try { requestHost = new URL('http://' + hostHeader).hostname.replace(/^\\[|\\]$/g, ''); }
+    catch { return reply(res, 400, { error: 'INVALID_HOST' }); }
+    const allowedHosts = new Set([host]);
+    if (host === '127.0.0.1') allowedHosts.add('localhost');
+    if (host === '::1') allowedHosts.add('localhost');
+    if (!allowedHosts.has(requestHost)) return reply(res, 403, { error: 'HOST_FORBIDDEN' });
     if (req.headers.origin) return reply(res, 403, { error: 'ORIGIN_FORBIDDEN' });
     if (req.method === 'POST' && !/^application\/json(?:\s*;|\s*$)/i.test(String(req.headers['content-type'] || '')))
       return reply(res, 415, { error: 'JSON_REQUIRED' });
