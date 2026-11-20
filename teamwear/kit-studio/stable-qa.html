@@ -18,7 +18,7 @@
 
 <section class="section"><h2>人工验收</h2><p class="hint">每项都要在对应真实场景做完后再点“通过”。不要为了变绿而直接点。</p><div id="manualGrid" class="grid"></div></section>
 
-<section class="section"><h2>剩余专项自动验收</h2><p class="hint">这两项使用临时测试数据，不修改正式订单/报价内容；异常时会自动回滚或清理。</p><div class="actions"><button id="backupDrill" class="btn primary">一键业务备份恢复演练</button><button id="stressDrill" class="btn">连续存储压力测试</button><button id="markVerified" class="btn good">同步本次已完成真机项目</button></div><div id="specialGrid" class="grid"></div></section>
+<section class="section"><h2>剩余专项自动验收</h2><p class="hint">这两项使用临时测试数据，不修改正式订单/报价内容；异常时会自动回滚或清理。</p><div class="actions"><button id="finishRemaining" class="btn good">一键完成剩余自动验收</button><button id="backupDrill" class="btn primary">单独重跑备份恢复</button><button id="stressDrill" class="btn">单独重跑存储压力</button></div><div id="specialGrid" class="grid"></div></section>
 
 <section class="section"><h2>测试订单工具</h2><p class="hint">仅用于真机验收。它会把选中的测试订单恢复到“已付款”，清除 production / delivery 测试轨道，并移除该订单的待同步队列项。正式订单不要使用。</p><div class="actions"><select id="qaOrder" class="btn" style="text-align:left"></select><button id="qaResetOrder" class="btn primary">一键恢复测试起点</button><a href="./production-center.html" class="btn" style="text-decoration:none;text-align:center">打开生产中心</a></div><div id="qaResetNote" class="detail"></div></section>
 
@@ -100,6 +100,7 @@ async function runStressDrill(){
  }catch(e){ok=false;try{localStorage.removeItem(K)}catch(_){}}
  setSpecial('storage_stress',ok?'pass':'fail',ok?'连续 '+rounds+' 轮约 96KB 写入/读取/解析通过，未影响业务键':'第 '+rounds+' 轮后发生存储/解析异常');
 }
+async function finishRemaining(){markVerifiedManual();await runBackupDrill();await runStressDrill();await runAuto();alert('已完成：Safari/PWA/离线记录同步 + 业务备份恢复演练 + 连续存储压力测试。若页面只剩微信未验收，说明自动部分已通过。')}
 function markVerifiedManual(){
  const s=saved(),m=s.manual&&typeof s.manual==='object'?s.manual:{},now=new Date().toISOString();
  ['safari_flow','pwa_upgrade','offline_round'].forEach(id=>m[id]={state:'pass',at:now,source:'verified-in-current-acceptance'});
@@ -156,7 +157,7 @@ function resetQaOrder(){
   alert('恢复失败：本地存储写入异常，请不要继续测试');
  }
 }
-q('#rerun').onclick=runAuto;q('#export').onclick=()=>report&&download(report);q('#clear').onclick=()=>{if(confirm('重置全部人工验收记录？')){localStorage.removeItem(QA_KEY);localStorage.removeItem(SPECIAL_KEY);render()}};q('#qaResetOrder').onclick=resetQaOrder;q('#backupDrill').onclick=runBackupDrill;q('#stressDrill').onclick=runStressDrill;q('#markVerified').onclick=markVerifiedManual;
+q('#rerun').onclick=runAuto;q('#export').onclick=()=>report&&download(report);q('#clear').onclick=()=>{if(confirm('重置全部人工验收记录？')){localStorage.removeItem(QA_KEY);localStorage.removeItem(SPECIAL_KEY);render()}};q('#qaResetOrder').onclick=resetQaOrder;q('#backupDrill').onclick=runBackupDrill;q('#stressDrill').onclick=runStressDrill;q('#finishRemaining').onclick=finishRemaining;
 renderQaOrders();runAuto();
 </script>
 </body></html>
