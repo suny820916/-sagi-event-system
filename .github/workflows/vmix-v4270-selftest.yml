@@ -368,11 +368,16 @@ jobs:
       - name: Run V4.32 portable regression gates on Windows
         shell: pwsh
         run: |
-          node intro/tests/v432-signature-core-selftest.mjs
-          node intro/tests/v432-event-identity-gate.mjs
-          node intro/tests/v432-brand-gate.mjs
-          node intro/tests/v432-integration-gate.mjs
-          node intro/tests/v433-penalty-single-source-gate.mjs
-          node intro/tests/v434-replay-brand-transition-gate.mjs
-          node intro/tests/v435-humanized-controls-gate.mjs
-          node intro/tests/v432-china-lan-preflight.mjs
+          $ErrorActionPreference = 'Stop'
+          function Invoke-SagiGate([string]$Path) {
+            & node $Path
+            if ($LASTEXITCODE -ne 0) { throw "SAGI gate failed: $Path (exit $LASTEXITCODE)" }
+          }
+          Invoke-SagiGate 'intro/tests/v432-signature-core-selftest.mjs'
+          Invoke-SagiGate 'intro/tests/v432-event-identity-gate.mjs'
+          Invoke-SagiGate 'intro/tests/v432-brand-gate.mjs'
+          Invoke-SagiGate 'intro/tests/v432-integration-gate.mjs'
+          Invoke-SagiGate 'intro/tests/v433-penalty-single-source-gate.mjs'
+          Invoke-SagiGate 'intro/tests/v434-replay-brand-transition-gate.mjs'
+          Invoke-SagiGate 'intro/tests/v435-humanized-controls-gate.mjs'
+          Invoke-SagiGate 'intro/tests/v432-china-lan-preflight.mjs'
