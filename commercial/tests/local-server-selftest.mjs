@@ -1,0 +1,31 @@
+import assert from "node:assert/strict";
+import {mkdtemp,rm} from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
+import {createLocalServer} from "../core/local-server.mjs";
+const dir=await mkdtemp(path.join(os.tmpdir(),"sagi-api-"));
+const meta={fixtureId:"api-test",home:"主队",away:"客队"},token="a".repeat(64);
+let app;
+try{
+  app=await createLocalServer({dataDir:dir,meta,token});
+  const base=`http://127.0.0.1:${app.address.port}`;
+  const get=(p,auth=token)=>fetch(base+p,{headers:auth?{authorization:`Bearer ${auth}`}:{}});
+  const cmd=(body,auth=token)=>fetch(base+"/api/v1/commands",{method:"POST",headers:{authorization:`Bearer ${auth}`,"content-type":"application/json"},body:JSON.stringify(body)});
+  assert.equal((await get("/health","")).status,200);
+  assert.equal((await get("/api/v1/state","")).status,401);
+  assert.equal((await cmd({commandId:"bad",type:"GOAL",side:"HOME"},"wrong")).status,401);
+  const goal={commandId:"goal-1",type:"GOAL",side:"HOME",expectedRevision:0};
+  const [a,b]=await Promise.all([cmd(goal),cmd(goal)]);
+  assert.equal(a.status,200);assert.equal(b.status,200);
+  assert.deepEqual([(await a.json()).duplicate,(await b.json()).duplicate].sort(),[false,true]);
+  let state=(await(await get("/api/v1/state")).json()).state;
+  assert.equal(state.homeScore,1);assert.equal(state.revision,1);
+  assert.equal((await cmd({commandId:"goal-2",type:"GOAL",side:"AWAY",expectedRevision:0})).status,409);
+  assert.equal((await cmd({commandId:"invalid",type:"GOAL",side:"LEFT"})).status,400);
+  await app.close();app=null;
+  app=await createLocalServer({dataDir:dir,meta,token});
+  const url=`http://127.0.0.1:${app.address.port}/api/v1/state`;
+  state=(await(await fetch(url,{headers:{authorization:`Bearer ${token}`}})).json()).state;
+  assert.equal(state.homeScore,1);assert.equal(state.revision,1);
+  console.log("SAGI LOCAL SERVER SELFTEST PASS");
+}finally{if(app)await app.close();await rm(dir,{recursive:true,force:true})}

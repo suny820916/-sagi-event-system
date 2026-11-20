@@ -1,0 +1,45 @@
+name: SAGI Commercial V1 Core Self Test
+
+on:
+  push:
+    branches:
+      - commercial-v1.0
+    paths:
+      - "commercial/**"
+      - ".github/workflows/commercial-v1-selftest.yml"
+  pull_request:
+    paths:
+      - "commercial/**"
+      - ".github/workflows/commercial-v1-selftest.yml"
+  workflow_dispatch:
+
+jobs:
+  core-selftest:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Run deterministic match core self-test
+        run: node commercial/tests/match-core-selftest.mjs
+      - name: Run journal crash recovery self-test
+        run: node commercial/tests/journal-recovery-selftest.mjs
+      - name: Run offline local API self-test
+        run: node commercial/tests/local-server-selftest.mjs
+      - name: Run isolated vMix adapter self-test
+        run: node commercial/tests/vmix-adapter-selftest.mjs
+      - name: Run vMix input discovery self-test
+        run: node commercial/tests/vmix-status-selftest.mjs
+      - name: Run authenticated vMix Local API self-test
+        run: node commercial/tests/vmix-local-api-selftest.mjs
+
+      - name: Run storage failure and retained history regression
+        run: node commercial/core/snapshot-failure-selftest.mjs
