@@ -37,6 +37,10 @@ try {
   const rebinding = await fetch(base + '/api/v1/lan/health', { headers: { host: 'attacker.example' } });
   assert.equal(rebinding.status, 403);
   assert.equal((await rebinding.json()).error, 'HOST_FORBIDDEN');
+  for (const malformedHost of ['user@127.0.0.1:' + port, '127.0.0.1', '127.0.0.1:' + port + '/bad']) {
+    const response = await fetch(base + '/api/v1/lan/health', { headers: { host: malformedHost } });
+    assert.equal(response.status, 400, 'malformed Host must be rejected: ' + malformedHost);
+  }
   const goal = { commandId: 'goal_00000001', expectedRevision: 0, type: 'GOAL', team: 'home' };
   assert.equal((await post(goal)).status, 401);
   assert.equal((await post({ type: 'GOAL' }, token)).status, 400);
