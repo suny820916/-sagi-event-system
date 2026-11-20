@@ -227,6 +227,7 @@ jobs:
           }
           if ($code -notin @(0,1)) { throw "Unexpected preflight exit: $code" }
           Write-Host 'Field preflight package checks and JSON evidence PASS'
+          exit 0
       - name: Install Playwright Chromium for Windows browser compatibility
         shell: pwsh
         run: |
