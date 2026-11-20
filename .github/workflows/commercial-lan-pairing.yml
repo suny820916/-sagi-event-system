@@ -5,10 +5,12 @@ on:
     branches: [commercial-v1.0]
     paths:
       - 'commercial/lan/**'
+      - 'commercial/core/**'
       - '.github/workflows/commercial-lan-pairing.yml'
   pull_request:
     paths:
       - 'commercial/lan/**'
+      - 'commercial/core/**'
       - '.github/workflows/commercial-lan-pairing.yml'
   workflow_dispatch:
 
@@ -17,7 +19,10 @@ permissions:
 
 jobs:
   lan-pairing:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
@@ -32,3 +37,6 @@ jobs:
       - run: node commercial/lan/lan-gateway-selftest.mjs
       - run: node --check commercial/lan/lan-command-selftest.mjs
       - run: node commercial/lan/lan-command-selftest.mjs
+
+      - run: node --check commercial/lan/engine-lan-bridge.mjs
+      - run: node commercial/lan/engine-lan-selftest.mjs
