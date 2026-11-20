@@ -3068,7 +3068,7 @@ async function mdLoad(opts={}){
  if(matchdayState.period==='PEN'&&mdPenaltyState().started)mdSyncDirectorPenaltyToSimple()
 }
 const MD_LAST_GOOD_KEY='sagi_matchday_last_good_v429';
-let mdPublishRevision=0,mdLastAckRevision=0,mdPublishChain=Promise.resolve(),mdConsistencyBusy=false,mdLastConsistencyAt=0,mdLastConsistencyState='INIT',mdLocalRecoveryStamp=0,mdFixtureTakeoverOnce=false;
+let mdPublishRevision=0,mdLastAckRevision=0,mdPublishChain=Promise.resolve(),mdPendingPublishes=0,mdConsistencyBusy=false,mdLastConsistencyAt=0,mdLastConsistencyState='INIT',mdLocalRecoveryStamp=0,mdFixtureTakeoverOnce=false;
 function mdAuthorizeFixtureTakeover(){mdFixtureTakeoverOnce=true;return true}
 let mdPublishMetrics={ok:0,failed:0,retried:0,recovered:0,lastOkAt:0,lastErrorAt:0,lastAttempts:0},mdEventGateSig='',mdEventGateAt=0;
 function mdNextEventIdentity(type='EVENT'){
@@ -3111,7 +3111,7 @@ async function mdPostMatchdayWithRetry(state){
  }
  mdPublishMetrics.failed++;mdPublishMetrics.lastAttempts=waits.length;throw lastError||new Error('MATCHDAY_SYNC_FAILED')
 }
-window.sagiMatchdayReliabilityDiagnostic=()=>({metrics:{...mdPublishMetrics},recovery:{...mdRecoveryMetrics},localRecoveryStamp:mdLocalRecoveryStamp,lastAckRevision:mdLastAckRevision,lastConsistencyState:mdLastConsistencyState,lastConsistencyAt:mdLastConsistencyAt,lastGood:!!mdLoadLastGood(),fixtureKey:mdFixtureKey()});
+window.sagiMatchdayReliabilityDiagnostic=()=>({metrics:{...mdPublishMetrics},recovery:{...mdRecoveryMetrics},pendingPublishes:mdPendingPublishes,localRecoveryStamp:mdLocalRecoveryStamp,lastAckRevision:mdLastAckRevision,lastConsistencyState:mdLastConsistencyState,lastConsistencyAt:mdLastConsistencyAt,lastGood:!!mdLoadLastGood(),fixtureKey:mdFixtureKey()});
 function mdCloudSnapshot(event=null,opts={}){
  const now=mdNowSeconds(),canonical=mdEnforceCanonicalTeams(),homeName=canonical.home||'HOME',awayName=canonical.away||'AWAY';
  const baseRevision=Math.max(0,Number(mdPublishRevision)||0,Number(matchdayState.revision)||0,Number(mdLastAckRevision)||0);
@@ -3134,7 +3134,7 @@ function mdCloudSnapshot(event=null,opts={}){
  };
 }
 async function publishMatchday(event=null){
- const state=mdCloudSnapshot(event),revision=state.revision;if(state.allowFixtureTakeover)mdFixtureTakeoverOnce=false;matchdayState.lastEvent=event;matchdayState.revision=revision;mdPersist();refreshMatchdayUI();
+ const state=mdCloudSnapshot(event),revision=state.revision;if(state.allowFixtureTakeover)mdFixtureTakeoverOnce=false;matchdayState.lastEvent=event;matchdayState.revision=revision;mdPersist();refreshMatchdayUI();mdPendingPublishes++;
  const send=async()=>{
   try{
    const r=await mdPostMatchdayWithRetry(state);mdLastAckRevision=Math.max(mdLastAckRevision,revision);
@@ -3144,7 +3144,7 @@ async function publishMatchday(event=null){
    if(state.allowFixtureTakeover)mdFixtureTakeoverOnce=true;
    if(q('mdSync'))q('mdSync').innerHTML='<span class="mdLiveDot"></span>LAN 同步失败 · 已保留本机状态 / 最近正确状态';
    return{ok:false,revision,attempts:mdPublishMetrics.lastAttempts}
-  }
+  }finally{mdPendingPublishes=Math.max(0,mdPendingPublishes-1)}
  };
  mdPublishChain=mdPublishChain.then(send,send);return mdPublishChain
 }
@@ -3166,7 +3166,7 @@ function mdConsistencyComparable(x){
  })
 }
 async function mdConsistencyCheck(force=false){
- if(mdConsistencyBusy||(!force&&(document.hidden||!matchReady||!(matchModeActive||matchdayState.scoreboardVisible||matchdayState.clockRunning))))return false;
+ if(mdConsistencyBusy||mdPendingPublishes>0||(!force&&(document.hidden||!matchReady||!(matchModeActive||matchdayState.scoreboardVisible||matchdayState.clockRunning))))return false;
  mdConsistencyBusy=true;
  try{
   mdRecoveryMetrics.passivePolls++;
