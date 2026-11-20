@@ -232,3 +232,7 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 ## 2026-11-20 — Auditable score corrections
 - SCORE_ADJUST now records before/after and requested/applied delta in the canonical event history without creating a replay marker. Reject non-safe-integer or out-of-range deltas (absolute maximum 100 per command). Commits: 8686bf5, bf668e9.
 - Added reducer assertions for clamped correction, duplicate retries, invalid deltas and unchanged replay markers. Runtime/CI not verified; historical unlogged corrections cannot be reconstructed from event history alone. Consumers must recognize the new event type before live deployment. No new dependencies.
+
+## 2026-11-21 — Strict score correction payloads
+- Reject non-number deltas instead of coercing null, booleans, strings and arrays into score corrections. Added regression cases. Commits: ba8a5a2, 65f6290.
+- Runtime and CI verification pending; clients must send numeric JSON deltas. No new dependencies.
