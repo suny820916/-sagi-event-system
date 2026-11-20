@@ -155,3 +155,11 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Commits: `3092c66`, `a6d1570`, `e15772e`.
 - **Verification pending:** GitHub API accepted changes, but no Node execution or actual Windows/mobile LAN test was performed in this run. A passing CI result is required before treating this fix as validated.
 - **Important compatibility limitation:** browser Origin requests are still unconditionally rejected, so the current HTTP gateway cannot be considered a working phone-browser control UI. TLS, operator approval, canonical Local Engine integration, and end-to-end state synchronization remain outstanding.
+
+## 2026-11-20 — Same-origin browser compatibility and Host-port validation
+- Updated experimental LAN gateway to accept browser requests only when the Origin exactly matches the HTTP Host authority (same scheme, host, port); foreign and malformed origins remain forbidden. No wildcard CORS is enabled.
+- Host validation now also checks the actual listening TCP port, preventing Host authorities pointing at another port from being accepted.
+- Added negative and positive HTTP regression cases to `commercial/lan/lan-command-selftest.mjs`.
+- Commits: `f01f6dbc` (gateway), `09888b1` (tests).
+- **Verification pending:** GitHub API accepted source and test commits; neither Node execution nor Windows/mobile hardware testing has been confirmed. Treat this as code review progress, not a certified browser connection.
+- **Still open:** local desktop approval UI, actual LAN TLS or equivalent protected pairing-token transport, canonical engine integration, replay/vMix end-to-end tests, security review and commercial packaging. The browser must load from the gateway's exact origin; a separately hosted UI is intentionally blocked.
