@@ -20,10 +20,9 @@
 </head>
 <body>
 <div class="app">
- <div class="top"><div><a class="brandlink" href="/"><img src="/assets/brand/sagi-football-logo.webp?v=20261121a" alt="SAGI FOOTBALL"></a><div class="brand-title">SAGI KIT · 新产品画册</div><div class="sub">严格按原图册逐款还原 · 通过验收后才发布</div></div><div class="badge">CATALOG V2.0</div></div>
- <div class="nav"><a class="btn" href="./index.html">队服设计器</a><a class="btn" href="./production.html">生产进度</a></div>
- <div class="rule"><b>唯一生产标准：</b> 原图册对应页 → 精确还原版型 / 纹路 / 拼接位置 → 只换 SAGI A+红点标识和标准六配色 → 内部对照验收 → 通过后发布 → 再继续下一款。</div>
- <div class="progress"><div class="bar"><div class="fill"></div></div><div class="ptext"><span>正式发布 2 / 22 款</span><span>01 狮头系列一 = 标准母版</span></div></div>
+ <div class="top"><div><a class="brandlink" href="/"><img src="/assets/brand/sagi-football-logo.webp?v=20261121a" alt="SAGI FOOTBALL"></a><div class="brand-title">SAGI KIT · 足球队服定制</div><div class="sub">选款 · 配色 · 姓名号码 · 球队标识 · 定制需求</div></div><div class="badge">CATALOG V2.0</div></div>
+ <div class="nav"><a class="btn primary" href="./customize.html">开始定制</a><a class="btn" href="/">返回 SAGI SPORTS</a></div>
+ <div class="rule"><b>为球队做一套真正属于自己的比赛服。</b> 先选择喜欢的款式与标准配色，再填写球队、姓名、号码与尺码需求；后续可继续接入 SAGI 订单系统与抖店成交。</div>
  <div class="toolbar"><input id="q" class="search" placeholder="搜索款式：狮头 / 斑马纹 / 城邦…"></div>
  <div id="grid" class="grid"></div>
 </div>
@@ -60,11 +59,11 @@ function card(p){
  return `<div class="card" data-key="${p.code} ${p.name}">
    <div class="preview ${demoClass}">${live?"":`<div class="placeholder"><div class="source">PDF ${p.page}<small>原图册对应页已登记</small></div></div>`}</div>
    <div class="body">
-    <div class="row"><div><div class="name">${p.code} · ${p.name}</div><div class="code">原图册第 ${p.page} 页</div></div><span class="status ${p.state}">${p.label}</span></div>
-    <div class="meta"><div class="pill">固定输出<b>6套标准配色</b></div><div class="pill">品牌标识<b>A + 红点</b></div></div>
+    <div class="row"><div><div class="name">${p.code} · ${p.name}</div><div class="code">SAGI KIT · TEAMWEAR</div></div><span class="status published">可定制</span></div>
+    <div class="meta"><div class="pill">标准配色<b>6 套</b></div><div class="pill">支持定制<b>队徽 / 姓名 / 号码</b></div></div>
     <div class="colors">${sw.map(x=>`<span class="c" style="background:${x}"></span>`).join("")}</div>
-    <div class="actions">${live?`<a class="btn" href="${p.url}">查看产品页</a><a class="btn primary" href="${p.url}">用样板设计</a>`:`<span class="btn disabled">未通过不发布</span><a class="btn" href="./production.html">查看进度</a>`}</div>
-    <div class="note">${live?(p.code==="01A"?"已完成六配色样板并作为 SAGI KIT 标准母版。":"已完成源页对照、六配色与设计器入口验收。"):"必须先完成原图对照还原与六配色验收，才会进入正式画册。"}</div>
+    <div class="actions">${live?`<a class="btn" href="${p.url}">查看款式</a><a class="btn primary" href="./customize.html?kit=${encodeURIComponent(p.code)}">开始定制</a>`:""}</div>
+    <div class="note">${live?"选择款式后可继续填写球队名称、配色、姓名号码、尺码与数量。":""}</div>
    </div>
  </div>`;
 }
