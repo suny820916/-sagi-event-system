@@ -39,7 +39,7 @@ try {
   });
   assert.equal(redeem.status, 200);
   const { token } = await redeem.json();
-  const rebinding = await fetch(base + '/api/v1/lan/health', { headers: { host: 'attacker.example' } });
+  const rebinding = await fetch(base + '/api/v1/lan/health', { headers: { host: 'attacker.example:' + port } });
   assert.equal(rebinding.status, 403);
   assert.equal((await rebinding.json()).error, 'HOST_FORBIDDEN');
   for (const malformedHost of ['user@127.0.0.1:' + port, '127.0.0.1', '127.0.0.1:' + port + '/bad']) {
