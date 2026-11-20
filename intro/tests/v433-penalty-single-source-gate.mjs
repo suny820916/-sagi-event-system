@@ -43,7 +43,13 @@ const pkgLines=pkg.split(/\r?\n/),pc=pkgLines.indexOf('###SAGI_CONTROL###'),po=p
 assert(pc>0&&po>pc,'V4.33 package payload markers invalid');
 const pkgControl=pkgLines.slice(pc+1,po).join('\n').trim().replace(/\r/g,'');
 const pkgOutput=pkgLines.slice(po+1).join('\n').trim().replace(/\r/g,'');
-assert(pkgControl===control.trim().replace(/\r/g,''),'V4.33 packaged control drift');
-assert(pkgOutput===output.trim().replace(/\r/g,''),'V4.33 packaged output drift');
-for(const token of ['SAGI433_PENALTY_SSOT_RC1','SAGI_MATCH_PROJECTS_V2','activeProjectId','window.sagiProjectSyncDiagnostic']) assert(pkg.includes(token),'V4.33 package lost unified-project foundation: '+token);
-console.log('SAGI V4.33 PACKAGE PARITY + PROJECT SSOT GATE PASS');
+const currentBuild=Number((control.match(/SAGI4(\d{2})_[A-Z0-9_]+/)||[])[1]||0);
+assert(currentBuild>=33,'current source regressed below V4.33');
+if(currentBuild===33){
+ assert(pkgControl===control.trim().replace(/\r/g,''),'V4.33 packaged control drift');
+ assert(pkgOutput===output.trim().replace(/\r/g,''),'V4.33 packaged output drift');
+}
+for(const token of ['SAGI433_PENALTY_SSOT_RC1','SAGI_MATCH_PROJECTS_V2','activeProjectId','window.sagiProjectSyncDiagnostic','mdLocalMutationDepth']) assert(pkg.includes(token),'historical V4.33 package lost certified foundation: '+token);
+for(const token of ["function mdPenaltyCompatView()","sourceVersion='V4.33'","window.sagiPenaltySingleSourceDiagnostic"]) assert(pkgControl.includes(token),'historical V4.33 control lost penalty SSOT: '+token);
+for(const token of ["function gfxPenaltyView(g)","source:'penaltyShootout'"]) assert(pkgOutput.includes(token),'historical V4.33 output lost canonical penalty source: '+token);
+console.log('SAGI V4.33 FORWARD-COMPAT + HISTORICAL PACKAGE GATE PASS');

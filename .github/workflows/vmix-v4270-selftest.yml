@@ -1,4 +1,4 @@
-name: SAGI vMix V4.33 PENALTY SSOT R2 Certification
+name: SAGI vMix V4.34 REPLAY BRAND R2 Certification
 
 on:
   push:
@@ -14,6 +14,8 @@ on:
       - "intro/tests/v432-integration-gate.mjs"
       - "intro/tests/v433-penalty-single-source-gate.mjs"
       - "intro/SAGI_VMIX_LAN_V433_PENALTY_RC.bat"
+      - "intro/tests/v434-replay-brand-transition-gate.mjs"
+      - "intro/SAGI_VMIX_LAN_V434_REPLAY_BRAND_RC.bat"
       - "intro/tests/v432-china-lan-preflight.mjs"
       - "intro/tests/v432-bridge-ssot-runtime.ps1"
       - "intro/tests/v432-field-preflight.ps1"
@@ -35,6 +37,8 @@ on:
       - "intro/tests/v432-integration-gate.mjs"
       - "intro/tests/v433-penalty-single-source-gate.mjs"
       - "intro/SAGI_VMIX_LAN_V433_PENALTY_RC.bat"
+      - "intro/tests/v434-replay-brand-transition-gate.mjs"
+      - "intro/SAGI_VMIX_LAN_V434_REPLAY_BRAND_RC.bat"
       - "intro/tests/v432-china-lan-preflight.mjs"
       - "intro/tests/v432-bridge-ssot-runtime.ps1"
       - "intro/tests/v432-field-preflight.ps1"
@@ -123,8 +127,10 @@ jobs:
         run: node intro/tests/v432-brand-gate.mjs
       - name: Validate V4.32 clean integration and package
         run: node intro/tests/v432-integration-gate.mjs
-      - name: Validate V4.33 penalty SSOT and exact package parity
+      - name: Validate inherited V4.33 penalty SSOT and historical package
         run: node intro/tests/v433-penalty-single-source-gate.mjs
+      - name: Validate V4.34 replay brand transition and exact package parity
+        run: node intro/tests/v434-replay-brand-transition-gate.mjs
       - name: Validate China LAN-first packaged core dependency gate
         run: node intro/tests/v432-china-lan-preflight.mjs
       - name: Run V4.31.0 broadcast compatibility self-test
@@ -170,6 +176,15 @@ jobs:
         with:
           name: SAGI_VMIX_V433_PENALTY_SSOT_RC_CI_PASSED_NOT_PRODUCTION_CERTIFIED
           path: intro/SAGI_VMIX_LAN_V433_PENALTY_RC.bat
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Export V4.34 REPLAY BRAND RC after automated gates
+        if: success() && hashFiles('intro/SAGI_VMIX_LAN_V434_REPLAY_BRAND_RC.bat') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: SAGI_VMIX_V434_REPLAY_BRAND_RC_CI_PASSED_NOT_PRODUCTION_CERTIFIED
+          path: intro/SAGI_VMIX_LAN_V434_REPLAY_BRAND_RC.bat
           if-no-files-found: error
           retention-days: 7
 
@@ -240,6 +255,29 @@ jobs:
             if (-not $output.Contains($marker)) { throw "V4.33 output missing: $marker" }
           }
           Write-Host 'Windows V4.33 package extraction / recovery / project SSOT inheritance PASS'
+      - name: Validate V4.34 replay-brand package on Windows
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $path = 'intro/SAGI_VMIX_LAN_V434_REPLAY_BRAND_RC.bat'
+          $source = [IO.File]::ReadAllText((Resolve-Path $path), [Text.Encoding]::UTF8)
+          $pattern = '(?s)###SAGI_PS###\r?\n(.*?)\r?\n###SAGI_CONTROL###\r?\n(.*?)\r?\n###SAGI_OUTPUT###\r?\n(.*)$'
+          $match = [regex]::Match($source, $pattern)
+          if (-not $match.Success) { throw 'V4.34 embedded BAT payload extraction failed' }
+          $bridge = $match.Groups[1].Value
+          $control = $match.Groups[2].Value
+          $output = $match.Groups[3].Value
+          $tokens = $null
+          $parseErrors = $null
+          [void][System.Management.Automation.Language.Parser]::ParseInput($bridge, [ref]$tokens, [ref]$parseErrors)
+          if ($parseErrors.Count -gt 0) { throw ('V4.34 embedded bridge syntax errors: ' + ($parseErrors | Out-String)) }
+          foreach ($marker in @('SAGI434_REPLAY_BRAND_RC1','SAGI_MATCH_PROJECTS_V2','activeProjectId','mdLocalMutationDepth','FIXTURE_TAKEOVER_REQUIRED')) {
+            if (-not $source.Contains($marker)) { throw "V4.34 package missing: $marker" }
+          }
+          foreach ($marker in @('data-brand-source="sagi-safe"','setReplayBrandSource','rsCompetition','LIVE PRODUCTION')) {
+            if (-not $output.Contains($marker)) { throw "V4.34 replay output missing: $marker" }
+          }
+          Write-Host 'Windows V4.34 replay-brand package PASS'
       - name: Parse field/runtime scripts with Windows PowerShell 5.1
         shell: powershell
         run: |
@@ -300,4 +338,5 @@ jobs:
           node intro/tests/v432-brand-gate.mjs
           node intro/tests/v432-integration-gate.mjs
           node intro/tests/v433-penalty-single-source-gate.mjs
+          node intro/tests/v434-replay-brand-transition-gate.mjs
           node intro/tests/v432-china-lan-preflight.mjs

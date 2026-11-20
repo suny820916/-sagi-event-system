@@ -295,14 +295,29 @@ server.listen(PORT,'127.0.0.1',async()=>{
   await replayPage.goto('http://127.0.0.1:'+PORT+'/intro/vmix-v45-lan.html',{waitUntil:'domcontentloaded'});
   await replayPage.waitForFunction(()=>document.querySelector('#replayStinger')?.classList.contains('on'),null,{timeout:5000});
   await wait(520);
-  const replayVisual=await replayPage.evaluate(()=>{const s=document.querySelector('#replayStinger'),logo=document.querySelector('#rsLogo');return{on:s.classList.contains('on'),src:logo.getAttribute('src')||'',title:document.querySelector('#rsTitle').textContent,kicker:document.querySelector('#rsKicker').textContent,left:document.querySelector('.rsLeft').getBoundingClientRect().width,right:document.querySelector('.rsRight').getBoundingClientRect().width,opacity:parseFloat(getComputedStyle(document.querySelector('.rsCenter')).opacity)}});
+  const replayVisual=await replayPage.evaluate(()=>{const s=document.querySelector('#replayStinger'),logo=document.querySelector('#rsLogo'),fallback=document.querySelector('#rsLogoFallback');return{on:s.classList.contains('on'),brandSource:s.dataset.brandSource||'',src:logo.getAttribute('src')||'',logoDisplay:getComputedStyle(logo).display,fallbackDisplay:getComputedStyle(fallback).display,competition:document.querySelector('#rsCompetition')?.textContent||'',title:document.querySelector('#rsTitle').textContent,kicker:document.querySelector('#rsKicker').textContent,left:document.querySelector('.rsLeft').getBoundingClientRect().width,right:document.querySelector('.rsRight').getBoundingClientRect().width,opacity:parseFloat(getComputedStyle(document.querySelector('.rsCenter')).opacity)}});
   assert(replayVisual.on&&replayVisual.src.startsWith('data:image/svg+xml'),'replay stinger event logo missing');
+  assert(replayVisual.brandSource==='event'&&replayVisual.logoDisplay!=='none'&&replayVisual.fallbackDisplay==='none','decoded event logo did not promote replay brand source: '+JSON.stringify(replayVisual));
   assert(replayVisual.title==='INSTANT REPLAY'&&replayVisual.kicker==='精彩回放','replay labels wrong');
   assert(replayVisual.left>1000&&replayVisual.right>1000&&replayVisual.opacity>.8,'replay stinger did not fully cover/display');
   await replayPage.screenshot({path:'selftest-artifacts/07-replay-stinger-visual.png'});
   await wait(1100);
   assert(!(await replayPage.locator('#replayStinger').evaluate(el=>el.classList.contains('on'))),'replay stinger did not auto clear');
   await replayPage.close();
+
+  console.log('TEST 6A: replay transition is immediately safe-branded when event logo is absent');
+  const replaySafePage=await browser.newPage({viewport:{width:1920,height:1080}});
+  graphics=makeGraphics({eventLogo:'',competition:'SAGI SELF TEST CUP',event:{type:'REPLAY_STINGER',phase:'IN',title:'INSTANT REPLAY'}});
+  await replaySafePage.goto('http://127.0.0.1:'+PORT+'/intro/vmix-v45-lan.html',{waitUntil:'domcontentloaded'});
+  await replaySafePage.waitForFunction(()=>document.querySelector('#replayStinger')?.classList.contains('on'),null,{timeout:5000});
+  await wait(260);
+  const replaySafe=await replaySafePage.evaluate(()=>{const s=document.querySelector('#replayStinger'),logo=document.querySelector('#rsLogo'),fallback=document.querySelector('#rsLogoFallback');return{brandSource:s.dataset.brandSource||'',aria:s.getAttribute('aria-hidden'),logoDisplay:getComputedStyle(logo).display,logoSrc:logo.getAttribute('src')||'',fallbackDisplay:getComputedStyle(fallback).display,fallbackOn:fallback.classList.contains('on'),competition:document.querySelector('#rsCompetition')?.textContent||'',producer:document.querySelector('.rsProducerRole')?.textContent||''}});
+  assert(replaySafe.brandSource==='sagi-safe'&&replaySafe.aria==='false','safe replay brand was not immediate: '+JSON.stringify(replaySafe));
+  assert(replaySafe.logoDisplay==='none'&&!replaySafe.logoSrc&&replaySafe.fallbackOn&&replaySafe.fallbackDisplay!=='none','SAGI safe fallback was not visible: '+JSON.stringify(replaySafe));
+  assert(replaySafe.competition==='SAGI SELF TEST CUP'&&replaySafe.producer==='LIVE PRODUCTION','replay competition/producer identity missing: '+JSON.stringify(replaySafe));
+  await wait(1350);
+  assert(!(await replaySafePage.locator('#replayStinger').evaluate(el=>el.classList.contains('on'))),'safe replay stinger did not auto clear');
+  await replaySafePage.close();
 
   console.log('TEST 7: replay key plays only latest Replay Event with SAGI IN/OUT transitions, then returns live');
   vmixCommands=[];matchdayPosts=[];
