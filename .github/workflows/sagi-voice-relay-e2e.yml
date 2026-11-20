@@ -1,0 +1,70 @@
+name: SAGI VOICE Relay E2E
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/sagi-voice-relay-e2e.yml"
+  workflow_dispatch:
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Activate through workers.dev
+        id: activate
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="https://sagi-voice-edge-relay.sg3544225.workers.dev"
+          ORIGIN="https://sagisports.cn"
+          ACT="$(curl --fail-with-body --show-error --silent --retry 2 \
+            -H "Origin: $ORIGIN" \
+            -H "Content-Type: application/json" \
+            --data '{}' \
+            "$BASE/api/activate")"
+          echo "$ACT"
+          TOKEN="$(python -c 'import json,sys; d=json.loads(sys.argv[1]); assert d.get("ok") is True; print(d["token"])' "$ACT")"
+          test -n "$TOKEN"
+          echo "::add-mask::$TOKEN"
+          echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
+
+      - name: Voice status through workers.dev
+        shell: bash
+        env:
+          TOKEN: ${{ steps.activate.outputs.token }}
+        run: |
+          set -euo pipefail
+          BASE="https://sagi-voice-edge-relay.sg3544225.workers.dev"
+          ORIGIN="https://sagisports.cn"
+          STATUS="$(curl --fail-with-body --show-error --silent --retry 2 \
+            -H "Origin: $ORIGIN" \
+            -H "Authorization: Bearer $TOKEN" \
+            "$BASE/api/voice/status")"
+          echo "$STATUS"
+          python -c 'import json,sys; d=json.loads(sys.argv[1]); assert d.get("ok") is True; assert d.get("configured") is True; assert int(d.get("voiceCount") or 0) >= 1; print("voice provider=",d.get("provider"),"voices=",d.get("voiceCount"))' "$STATUS"
+
+      - name: Generate real short voice through workers.dev
+        shell: bash
+        env:
+          TOKEN: ${{ steps.activate.outputs.token }}
+        run: |
+          set -euo pipefail
+          BASE="https://sagi-voice-edge-relay.sg3544225.workers.dev"
+          ORIGIN="https://sagisports.cn"
+          BODY='{"text":"塔城加油，这一场我们全力以赴。","mode":"ai_male","voice_id":"","speed":1.08,"style":"football_passion","quality":"fast"}'
+          curl --fail-with-body --show-error --silent --retry 1 \
+            --connect-timeout 15 --max-time 120 \
+            -D /tmp/voice.headers \
+            -o /tmp/voice.bin \
+            -H "Origin: $ORIGIN" \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Content-Type: application/json" \
+            --data "$BODY" \
+            "$BASE/api/voice/preview"
+          cat /tmp/voice.headers
+          SIZE="$(wc -c < /tmp/voice.bin)"
+          echo "voice_bytes=$SIZE"
+          test "$SIZE" -gt 1000
+          grep -qi '^X-SAGI-Voice-Complete: 1' /tmp/voice.headers
+          echo "SAGI VOICE workers.dev E2E verified."
