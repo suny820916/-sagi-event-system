@@ -36,8 +36,10 @@ function Invoke-RawBridgeHttp {
   $stream = $null
   $ms = $null
   try {
-    $client.ReceiveTimeout = 5000
-    $client.SendTimeout = 5000
+    # GitHub Windows runners can briefly stall local PowerShell/TCP scheduling under parallel browser setup.
+    # Keep the gate strict, but allow a longer first-byte window so runner jitter is not misclassified as Bridge failure.
+    $client.ReceiveTimeout = 10000
+    $client.SendTimeout = 10000
     $client.Connect('127.0.0.1',8100)
     $stream = $client.GetStream()
 
