@@ -48,7 +48,9 @@ assert(control.includes("mdLastAckRevision=Math.max(mdLastAckRevision,remoteRevi
   'BLOCK RELEASE: Bridge recovery must preserve ack revision continuity');
 assert(control.includes('mdFixtureTakeoverOnce=false')&&control.includes('allowFixtureTakeover:!!mdFixtureTakeoverOnce'),
   'BLOCK RELEASE: controller must use one-shot explicit fixture takeover authorization');
-assert(control.includes("mdAuthorizeFixtureTakeover();matchReady=true")&&control.includes("mdAuthorizeFixtureTakeover();\n  let stats=null;"),
+const readyTakeoverBlock=control.slice(control.indexOf('function setMatchReady(on){'),control.indexOf('function requireMatchReady(){'));
+const projectTakeoverBlock=control.slice(control.indexOf('async function loadMatchProject(){'),control.indexOf('async function createMatchProject(){'));
+assert(readyTakeoverBlock.includes('mdAuthorizeFixtureTakeover()')&&projectTakeoverBlock.includes('mdAuthorizeFixtureTakeover()'),
   'BLOCK RELEASE: only explicit READY/project-load actions may authorize fixture takeover');
 assert(control.includes("...mdNextEventIdentity(type)")&&control.includes("...mdNextEventIdentity('SUB')")&&control.includes("...mdNextEventIdentity('MVP')"),
   'BLOCK RELEASE: live event creators must attach explicit identity');
