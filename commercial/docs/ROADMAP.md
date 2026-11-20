@@ -142,3 +142,9 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Replaced the embedded escaped-newline sequences with actual newlines in `commercial/lan/lan-gateway.mjs` and `commercial/lan/lan-command-selftest.mjs` (commits `501eefb`, `79970f1`).
 - **Verification:** fetched source inspection confirmed the defect before patch; GitHub contents API accepted both file updates. Local `node --check` and self-tests could not be executed because the runner could not resolve github.com for clone. CI remains unverified. Do not mark the LAN command bridge as tested or production ready.
 - **Next:** run Node syntax checks and all LAN tests in CI; reconcile mobile command types with canonical engine and wire the gateway only after verified tests.
+
+## 2026-11-20 — LAN Host-header boundary
+- Reject HTTP requests with a Host header not matching the explicitly bound interface; permit localhost alias only for loopback binding. This limits DNS-rebinding / forged-host exposure of the experimental gateway.
+- Added a negative Host-header test to the existing LAN command self-test.
+- Commits: `c9cb8ad` (gateway), `fcaa6d3` (test).
+- **Verification:** source changes committed through GitHub API; Node syntax, test execution and CI status are not yet confirmed. Do not treat this as a complete LAN security solution: plaintext bearer tokens, phone browser Origin handling, physical operator approval and actual Windows LAN testing remain open.
