@@ -576,8 +576,11 @@ server.listen(PORT,'127.0.0.1',async()=>{
     projectDesktop.goto('http://127.0.0.1:'+PORT+'/intro/v45-lan.html',{waitUntil:'domcontentloaded'}),
     projectPhone.goto('http://127.0.0.1:'+PORT+'/intro/v45-lan.html',{waitUntil:'domcontentloaded'})
   ]);
-  await projectDesktop.waitForFunction(()=>document.querySelector('#projectSelect')?.value==='bridge_project_1'&&document.querySelector('#matchHome')?.value==='乌苏叶克备',null,{timeout:8000});
-  await projectPhone.waitForFunction(()=>document.querySelector('#projectSelect')?.value==='bridge_project_1'&&document.querySelector('#matchHome')?.value==='乌苏叶克备',null,{timeout:8000});
+  const projectReady=()=>typeof window.sagiProjectSyncDiagnostic==='function'&&(()=>{const d=window.sagiProjectSyncDiagnostic();return !d.syncBusy&&d.activeMatchProjectId==='bridge_project_1'&&d.selectedProjectId==='bridge_project_1'&&d.projectCount===1&&document.querySelector('#matchHome')?.value==='乌苏叶克备'})();
+  await Promise.all([
+    projectDesktop.waitForFunction(projectReady,null,{timeout:12000}),
+    projectPhone.waitForFunction(projectReady,null,{timeout:12000})
+  ]);
   const initialProjectSync=await Promise.all([
     projectDesktop.evaluate(()=>window.sagiProjectSyncDiagnostic()),
     projectPhone.evaluate(()=>window.sagiProjectSyncDiagnostic())
@@ -589,12 +592,12 @@ server.listen(PORT,'127.0.0.1',async()=>{
   await projectDesktop.waitForFunction(()=>document.querySelector('#projectSelect')?.options.length===3,null,{timeout:8000});
   const activeAfterSave=projectStore.activeProjectId;
   assert(activeAfterSave&&activeAfterSave!=='bridge_project_1'&&projectStore.projects.length===2,'desktop save did not publish project list + active id: '+JSON.stringify(projectStore));
-  await projectPhone.waitForFunction(id=>document.querySelector('#projectSelect')?.value===id&&document.querySelector('#projectName')?.value==='SYNC COPY',activeAfterSave,{timeout:8000});
+  await projectPhone.waitForFunction(id=>typeof window.sagiProjectSyncDiagnostic==='function'&&(()=>{const d=window.sagiProjectSyncDiagnostic();return !d.syncBusy&&d.activeMatchProjectId===id&&d.selectedProjectId===id&&d.projectCount===2&&document.querySelector('#projectName')?.value==='SYNC COPY'})(),activeAfterSave,{timeout:12000});
   const phoneFollow=await projectPhone.evaluate(()=>window.sagiProjectSyncDiagnostic());
   assert(phoneFollow.activeMatchProjectId===activeAfterSave&&phoneFollow.projectCount===2,'phone did not follow desktop active project: '+JSON.stringify(phoneFollow));
   assert(projectPosts.length===1,'passive phone project follow caused a reverse write: '+JSON.stringify(projectPosts));
   await projectPhone.click('#projectDeleteBtn');
-  await projectDesktop.waitForFunction(()=>document.querySelector('#projectSelect')?.options.length===2,null,{timeout:8000});
+  await projectDesktop.waitForFunction(()=>typeof window.sagiProjectSyncDiagnostic==='function'&&(()=>{const d=window.sagiProjectSyncDiagnostic();return !d.syncBusy&&d.projectCount===1&&document.querySelector('#projectSelect')?.options.length===2})(),null,{timeout:12000});
   const afterDelete=await projectDesktop.evaluate(()=>window.sagiProjectSyncDiagnostic());
   assert(projectStore.projects.length===1&&projectStore.activeProjectId===''&&afterDelete.projectCount===1,'project deletion did not converge across controllers: '+JSON.stringify({projectStore,afterDelete}));
   assert(projectPosts.length===2,'project sync wrote more than the two explicit operator mutations: '+JSON.stringify(projectPosts));
