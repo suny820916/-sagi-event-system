@@ -136,6 +136,13 @@ export function createLanGateway({
     }
     return reply(res, 404, { error: 'NOT_FOUND' });
   });
+  // Bound idle and incomplete HTTP connections so an abandoned phone or
+  // malicious LAN peer cannot occupy sockets indefinitely during a match.
+  server.requestTimeout = 15_000;
+  server.headersTimeout = 10_000;
+  server.timeout = 20_000;
+  server.keepAliveTimeout = 5_000;
+  server.maxRequestsPerSocket = 100;
   return {
     server, pairing, host,
     listen: (port = 0) => new Promise((resolve, reject) => {
