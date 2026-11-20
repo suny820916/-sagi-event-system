@@ -674,7 +674,7 @@ jobs:
           for module in ("down","voice","cut","subtitle","image","studio"):
               assert f"module={module}" in hub, module
           manifest = __import__("json").loads(pathlib.Path("content-os/sagi-down-manifest.webmanifest").read_text(encoding="utf-8"))
-          assert manifest["start_url"] == "./sagi-hub.html?v=4320", manifest["start_url"]
+          assert manifest["start_url"] == "./sagi-hub.html?v=4321", manifest["start_url"]
           m = re.search(r"<script>([\s\S]*?)</script>", s)
           assert m, "inline script missing"
           pathlib.Path("/tmp/sagi-down.js").write_text(m.group(1), encoding="utf-8")
@@ -740,7 +740,7 @@ jobs:
               "SAGI SUBTITLE",
               "SAGI IMAGE",
               "SAGI STUDIO",
-              "sagi-ffmpeg-worker.js?v=4320",
+              "sagi-ffmpeg-worker.js?v=4321",
               "const classWorkerURL=new URL",
               "/api/smart-render",
           ]
@@ -777,7 +777,7 @@ jobs:
           SERVER_PID=$!
           trap 'kill $SERVER_PID || true' EXIT
           sleep 1
-          "$CHROME" --headless=new --no-sandbox --disable-gpu --virtual-time-budget=2500             --dump-dom "http://127.0.0.1:8765/sagi-down.html?module=voice&v=4320" > /tmp/voice-module-dom.html
+          "$CHROME" --headless=new --no-sandbox --disable-gpu --virtual-time-budget=2500             --dump-dom "http://127.0.0.1:8765/sagi-down.html?module=voice&v=4321" > /tmp/voice-module-dom.html
           grep -q 'id="sagiVoiceExport"' /tmp/voice-module-dom.html
           ! grep -q 'id="mobileStudio"' /tmp/voice-module-dom.html
           ! grep -q '06 · 解说' /tmp/voice-module-dom.html
