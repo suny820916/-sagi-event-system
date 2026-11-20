@@ -228,7 +228,24 @@ jobs:
           c = mod.app.test_client()
           health = c.get("/health").get_json()
           print("health", health)
-          assert health["version"] == "3.9.7"
+          assert health["version"] == "3.9.8"
+
+          # VOICE PRO regression: both the GitHub Pages host and SAGI custom
+          # domains must be able to activate the cloud bridge.
+          for allowed_origin in (
+              "https://suny820916.github.io",
+              "https://sagisports.cn",
+              "https://www.sagisports.cn",
+          ):
+              activation = c.post("/api/activate", headers={"Origin": allowed_origin})
+              assert activation.status_code == 200, (allowed_origin, activation.status_code, activation.get_data(as_text=True))
+              payload = activation.get_json()
+              assert payload["ok"] is True and payload.get("token"), payload
+          blocked = c.post("/api/activate", headers={"Origin": "https://example.invalid"})
+          assert blocked.status_code == 403, (blocked.status_code, blocked.get_data(as_text=True))
+          print("VOICE PRO origin activation regression OK")
+
+          assert health["version"] == "3.9.8"
           assert health["captionMedia"] is True
           assert health["contextTranslate"] is True
           assert health["smartTranslate"] is True
