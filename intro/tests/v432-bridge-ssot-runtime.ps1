@@ -171,9 +171,12 @@ try {
   $a='CI-FIXTURE-A|HOME|AWAY'
   $b='CI-FIXTURE-B|HOME|AWAY'
 
-  Post-State -State (New-State -Fixture $a -Revision 4 -Command 'a-r4' -Score 4 -Takeover $true) -Expected 200
+  $initial=New-State -Fixture $a -Revision 4 -Command 'a-r4' -Score 4 -Takeover $true
+  $initial.event=[ordered]@{type='GOAL';eventId='ci-goal-r4';sequence=4}
+  Post-State -State $initial -Expected 200
   $s=Get-State
   if([string]$s.fixtureKey -ne $a -or [int]$s.revision -ne 4 -or [int]$s.homeScore -ne 4){ throw 'Initial authoritative state mismatch' }
+  if($null -eq $s.event -or [string]$s.event.type -ne 'GOAL'){ throw 'Live event payload not visible before restart' }
 
   Post-State -State (New-State -Fixture $a -Revision 2 -Command 'a-r2-stale' -Score 99 -Takeover $false) -Expected 409
   $s=Get-State
@@ -189,6 +192,7 @@ try {
   if([string]$s.fixtureKey -ne $a -or [int]$s.revision -ne 4 -or [int]$s.homeScore -ne 4){
     throw ('Restart persistence failed: fixture=' + $s.fixtureKey + ' revision=' + $s.revision + ' score=' + $s.homeScore)
   }
+  if($null -ne $s.event){ throw ('Stale transient event survived Bridge restart: ' + ($s.event | ConvertTo-Json -Compress)) }
 
   Post-State -State (New-State -Fixture $b -Revision 100 -Command 'b-after-restart' -Score 77 -Takeover $false) -Expected 409
   $s=Get-State
