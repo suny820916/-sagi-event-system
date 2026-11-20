@@ -46,6 +46,10 @@ assert(control.includes("mdPublishRevision=Math.max(mdPublishRevision,remoteRevi
   'BLOCK RELEASE: Bridge recovery must preserve publish revision continuity');
 assert(control.includes("mdLastAckRevision=Math.max(mdLastAckRevision,remoteRevision)"),
   'BLOCK RELEASE: Bridge recovery must preserve ack revision continuity');
+assert(control.includes('mdFixtureTakeoverOnce=false')&&control.includes('allowFixtureTakeover:!!mdFixtureTakeoverOnce'),
+  'BLOCK RELEASE: controller must use one-shot explicit fixture takeover authorization');
+assert(control.includes("mdAuthorizeFixtureTakeover();matchReady=true")&&control.includes("mdAuthorizeFixtureTakeover();\n  let stats=null;"),
+  'BLOCK RELEASE: only explicit READY/project-load actions may authorize fixture takeover');
 assert(control.includes("...mdNextEventIdentity(type)")&&control.includes("...mdNextEventIdentity('SUB')")&&control.includes("...mdNextEventIdentity('MVP')"),
   'BLOCK RELEASE: live event creators must attach explicit identity');
 assert(/eventSequence\)\|\|0\)\+1/.test(control),
