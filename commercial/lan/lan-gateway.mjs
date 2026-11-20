@@ -41,7 +41,13 @@ export function createLanGateway({
     // interface (or loopback aliases for a loopback listener) is acceptable.
     const hostHeader = String(req.headers.host || '');
     let requestHost;
-    try { requestHost = new URL('http://' + hostHeader).hostname.replace(/^\\[|\\]$/g, ''); }
+    try {
+      // Host is an authority, not a URL: reject credentials, paths and whitespace.
+      if (!hostHeader || /[@/\\\\?#\\s]/.test(hostHeader)) throw new Error('BAD_HOST');
+      const parsed = new URL('http://' + hostHeader);
+      if (!parsed.port || !/^\\d+$/.test(parsed.port)) throw new Error('PORT_REQUIRED');
+      requestHost = parsed.hostname.replace(/^\\[/, '').replace(/\\]$/, '');
+    }
     catch { return reply(res, 400, { error: 'INVALID_HOST' }); }
     const allowedHosts = new Set([host]);
     if (host === '127.0.0.1') allowedHosts.add('localhost');
