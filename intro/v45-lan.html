@@ -2584,8 +2584,11 @@ function mdConsistencyComparable(x){
   simplePenaltyHistory:Array.isArray(simple.history)?simple.history.length:0
  })
 }
+function mdPassiveSyncActive(){
+ return !!(matchReady||matchModeActive||matchdayState.scoreboardVisible||matchdayState.clockRunning||Number(matchdayState.revision)>0)
+}
 async function mdConsistencyCheck(force=false){
- if(mdConsistencyBusy||mdPendingPublishes>0||(!force&&(document.hidden||!matchReady||!(matchModeActive||matchdayState.scoreboardVisible||matchdayState.clockRunning))))return false;
+ if(mdConsistencyBusy||mdPendingPublishes>0||(!force&&!mdPassiveSyncActive()))return false;
  mdConsistencyBusy=true;
  try{
   mdRecoveryMetrics.passivePolls++;
