@@ -183,3 +183,9 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Confirmed the current LAN command self-test uses an in-memory fake callback; it does not validate canonical engine persistence, restart idempotency, WAN outage or vMix readback.
 - **Verification:** documentation committed; no Node/CI/Windows/vMix test was executed in this run. All ten integration checks remain pending. No production readiness claim.
 - **Priority:** connect gateway to canonical durable engine with an explicit adapter and implement real restart/reconnect tests before further LAN gateway micro-hardening.
+
+## 2026-11-20 — Canonical LAN engine bridge
+- Added loopback-only HTTP adapter using the existing authoritative engine, with bounded timeout and no automatic retries. Engine token stays server-side.
+- Reconciled mobile allowlist with canonical command types and propagated invalid-command and revision-conflict responses.
+- Added real engine/store integration self-test covering concurrent goals, restart/re-pair, durable duplicate detection, red card and offline engine response.
+- Commits: 89b41c1, d3680fc, 7252f5d. Runtime verification pending; no live certification. Clock progression, long-window idempotency (2048 ID cap), store writer locking, transport security, vMix cues and Windows/mobile tests remain open.
