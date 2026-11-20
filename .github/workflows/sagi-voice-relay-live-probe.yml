@@ -1,0 +1,30 @@
+name: SAGI VOICE workers.dev live probe
+
+on:
+  push:
+    branches:
+      - relay-live-probe-20261121
+    paths:
+      - ".github/workflows/sagi-voice-relay-live-probe.yml"
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe Cloudflare Worker health
+        run: |
+          set -euo pipefail
+          URL="https://sagi-voice-edge-relay.sg3544225.workers.dev/health"
+          echo "Probing $URL"
+          BODY="$(curl --fail --show-error --silent --retry 3 --connect-timeout 15 --max-time 45 "$URL")"
+          echo "$BODY"
+          python - "$BODY" <<'PY'
+          import json,sys
+          d=json.loads(sys.argv[1])
+          print("version=", d.get("version"))
+          print("aiVoice=", d.get("aiVoice"))
+          print("voicePro=", d.get("voicePro"))
+          assert d.get("version") == "3.9.8", d
+          assert d.get("aiVoice") is True, d
+          assert d.get("voicePro") is True, d
+          PY
