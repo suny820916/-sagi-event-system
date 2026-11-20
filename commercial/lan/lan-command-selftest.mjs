@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import http from 'node:http';
 import { createLanGateway } from './lan-gateway.mjs';
 
 const accepted = [];
@@ -27,6 +28,17 @@ assert.equal(g.server.keepAliveTimeout, 5_000);
 assert.equal(g.server.maxRequestsPerSocket, 100);
 const { port } = await g.listen();
 const base = `http://127.0.0.1:${port}`;
+// Use raw HTTP for Host overrides: fetch may silently replace the header.
+const hostProbe = host => new Promise((resolve, reject) => {
+  const req = http.get({ hostname: '127.0.0.1', port, path: '/api/v1/lan/health', headers: { Host: host } }, res => {
+    const chunks = [];
+    res.on('data', chunk => chunks.push(chunk));
+    res.on('error', reject);
+    res.on('end', () => resolve({ status: res.statusCode, json: async () => JSON.parse(Buffer.concat(chunks).toString('utf8')) }));
+  });
+  req.on('error', reject);
+  req.setTimeout(5000, () => req.destroy(new Error('HOST_PROBE_TIMEOUT')));
+});
 const post = (body, token) => fetch(base + '/api/v1/lan/command', {
   method: 'POST',
   headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}) },
@@ -39,11 +51,11 @@ try {
   });
   assert.equal(redeem.status, 200);
   const { token } = await redeem.json();
-  const rebinding = await fetch(base + '/api/v1/lan/health', { headers: { host: 'attacker.example:' + port } });
+  const rebinding = await hostProbe('attacker.example:' + port);
   assert.equal(rebinding.status, 403);
   assert.equal((await rebinding.json()).error, 'HOST_FORBIDDEN');
   for (const malformedHost of ['user@127.0.0.1:' + port, '127.0.0.1', '127.0.0.1:' + port + '/bad']) {
-    const response = await fetch(base + '/api/v1/lan/health', { headers: { host: malformedHost } });
+    const response = await hostProbe(malformedHost);
     assert.equal(response.status, 400, 'malformed Host must be rejected: ' + malformedHost);
   }
   for (const target of [
@@ -61,7 +73,7 @@ try {
     const response = await fetch(base + '/api/v1/lan/health', { headers: { origin } });
     assert.equal(response.status, 403, 'foreign/malformed Origin must be rejected: ' + origin);
   }
-  const wrongPort = await fetch(base + '/api/v1/lan/health', { headers: { host: '127.0.0.1:' + (port + 1) } });
+  const wrongPort = await hostProbe('127.0.0.1:' + (port === 65535 ? port - 1 : port + 1));
   assert.equal(wrongPort.status, 400, 'wrong Host port must be rejected');
   const goal = { commandId: 'goal_00000001', expectedRevision: 0, type: 'GOAL', team: 'home' };
   assert.equal((await post(goal)).status, 401);
