@@ -225,10 +225,12 @@ export function applyCommand(currentState, command) {
     const period = String(command.period ?? "").toUpperCase();
     if (!PERIODS.has(period)) throw new Error("INVALID_PERIOD");
     state.period = period;
+    if (["PRE", "HT", "ET_BREAK", "PEN", "FT"].includes(period)) state.clock.running = false;
   } else if (type === "SET_CLOCK") {
+    if (typeof command.running !== "boolean" || !Number.isSafeInteger(command.elapsedSeconds) || command.elapsedSeconds < 0) throw new Error("INVALID_CLOCK");
     state.clock = {
-      running: !!command.running,
-      elapsedSeconds: asNonNegativeInt(command.elapsedSeconds),
+      running: command.running,
+      elapsedSeconds: command.elapsedSeconds,
     };
   } else if (type === "SET_SCOREBOARD") {
     if ("visible" in command) state.scoreboardVisible = !!command.visible;
