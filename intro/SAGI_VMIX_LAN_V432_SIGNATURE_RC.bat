@@ -313,7 +313,7 @@ function Read-HttpRequest($stream) {
 
 function Write-HttpResponse($stream,[int]$Status,[string]$ContentType,[string]$Body) {
   $statusText = switch ($Status) {
-    200 {"OK"} 204 {"No Content"} 400 {"Bad Request"} 404 {"Not Found"} 500 {"Internal Server Error"} default {"OK"}
+    200 {"OK"} 204 {"No Content"} 400 {"Bad Request"} 404 {"Not Found"} 409 {"Conflict"} 500 {"Internal Server Error"} default {"OK"}
   }
   if ($null -eq $Body) { $Body = "" }
   $bytes = [Text.Encoding]::UTF8.GetBytes($Body)
@@ -476,13 +476,22 @@ while ($true) {
         $currentFixture = if ($currentProbe) { [string]$currentProbe.fixtureKey } else { "" }
         $incomingCommand = [string]$probe.commandId
         $currentCommand = if ($currentProbe) { [string]$currentProbe.commandId } else { "" }
+        $allowFixtureTakeover = $false
+        try { $allowFixtureTakeover = [bool]$probe.allowFixtureTakeover } catch {}
         $sameFixture = (-not [string]::IsNullOrWhiteSpace($incomingFixture)) -and ($incomingFixture -eq $currentFixture)
+        $fixtureConflict = (-not [string]::IsNullOrWhiteSpace($currentFixture)) -and ($incomingFixture -ne $currentFixture) -and (-not $allowFixtureTakeover)
         $staleRevision = $sameFixture -and $incomingRevision -gt 0 -and $currentRevision -gt 0 -and $incomingRevision -lt $currentRevision
         $revisionConflict = $sameFixture -and $incomingRevision -gt 0 -and $incomingRevision -eq $currentRevision -and -not [string]::IsNullOrWhiteSpace($incomingCommand) -and -not [string]::IsNullOrWhiteSpace($currentCommand) -and $incomingCommand -ne $currentCommand
-        if ($staleRevision -or $revisionConflict) {
+        if ($fixtureConflict) {
+          Write-Host ("[FIXTURE GUARD] Rejected unapproved fixture takeover: " + $incomingFixture + " while active is " + $currentFixture) -ForegroundColor Yellow
+          Write-HttpResponse $stream 409 "application/json" '{"ok":false,"error":"FIXTURE_TAKEOVER_REQUIRED"}'
+        } elseif ($staleRevision -or $revisionConflict) {
           Write-Host ("[STATE GUARD] Rejected stale/conflicting matchday write R" + $incomingRevision + " while current is R" + $currentRevision) -ForegroundColor Yellow
           Write-HttpResponse $stream 409 "application/json" '{"ok":false,"error":"STALE_MATCHDAY_REVISION"}'
         } else {
+          if ($allowFixtureTakeover -and -not $sameFixture -and -not [string]::IsNullOrWhiteSpace($currentFixture)) {
+            Write-Host ("[FIXTURE TAKEOVER] Authorized switch: " + $currentFixture + " -> " + $incomingFixture) -ForegroundColor Cyan
+          }
           # Commit durable state before publishing it in memory or acknowledging HTTP success.
           $tmpState = $MatchdayStateFile + ".new"
           $bytes = (New-Object Text.UTF8Encoding($false)).GetBytes([string]$req.body)
@@ -2370,7 +2379,7 @@ function renderSetupValidation(result){
 function setMatchReady(on){
  if(on){
    const r=validateMatchSetup(true);if(!r.ok){matchReady=false;refreshSetupReadyUI();note('赛前检查未通过');return false}
-   matchReady=true;setupReadySignature=r.signature;note('可以播出 · 已解锁正式播出')
+   mdAuthorizeFixtureTakeover();matchReady=true;setupReadySignature=r.signature;note('可以播出 · 已解锁正式播出')
  }else{matchReady=false;setupReadySignature='';note('已解除就绪 · 播出已锁定')}
  refreshSetupReadyUI();return matchReady
 }
@@ -2529,6 +2538,7 @@ async function loadMatchProject(){
  projectLoadBusy=true;const btn=q('projectLoadBtn');if(btn){btn.disabled=true;btn.textContent='读取中…'}
  try{
   const p=await resolveMatchProject(id);if(!p)throw new Error('比赛项目不存在或已删除');
+  mdAuthorizeFixtureTakeover();
   let stats=null;
   if(p.core)stats=await applyPortableMatchProject(p);
   else{if(p.show)localStorage.setItem('sagi_show_director_v40',p.show);await restoreProjectAssets(p.assets);await load()}
@@ -3048,7 +3058,8 @@ async function mdLoad(opts={}){
  if(matchdayState.period==='PEN'&&mdPenaltyState().started)mdSyncDirectorPenaltyToSimple()
 }
 const MD_LAST_GOOD_KEY='sagi_matchday_last_good_v429';
-let mdPublishRevision=0,mdLastAckRevision=0,mdPublishChain=Promise.resolve(),mdConsistencyBusy=false,mdLastConsistencyAt=0,mdLastConsistencyState='INIT',mdLocalRecoveryStamp=0;
+let mdPublishRevision=0,mdLastAckRevision=0,mdPublishChain=Promise.resolve(),mdConsistencyBusy=false,mdLastConsistencyAt=0,mdLastConsistencyState='INIT',mdLocalRecoveryStamp=0,mdFixtureTakeoverOnce=false;
+function mdAuthorizeFixtureTakeover(){mdFixtureTakeoverOnce=true;return true}
 let mdPublishMetrics={ok:0,failed:0,retried:0,recovered:0,lastOkAt:0,lastErrorAt:0,lastAttempts:0},mdEventGateSig='',mdEventGateAt=0;
 function mdNextEventIdentity(type='EVENT'){
  const sequence=Math.max(0,Number(matchdayState.eventSequence)||0)+1;
@@ -3096,7 +3107,7 @@ function mdCloudSnapshot(event=null){
  const normalizedEvent=window.SAGISignatureCore?SAGISignatureCore.normalizeEvent(event,{home:homeName,away:awayName,fixtureKey:mdFixtureKey()}):event;
  return{
   commandId:Date.now()+'_'+Math.random().toString(36).slice(2,7),
-  revision,fixtureKey:mdFixtureKey(),
+  revision,fixtureKey:mdFixtureKey(),allowFixtureTakeover:!!mdFixtureTakeoverOnce,
   visualVersion:'V4.31.0-LIVE-SCORE-GOAL-DIRECTOR',
   home:homeName,away:awayName,homeShort:homeName,awayShort:awayName,scoreHomeName:matchdayState.scoreHomeName||mdShortAuto(homeName,'主队'),scoreAwayName:matchdayState.scoreAwayName||mdShortAuto(awayName,'客队'),
   homeCrest:(teamStore.HOME&&teamStore.HOME.crest)||'',awayCrest:(teamStore.AWAY&&teamStore.AWAY.crest)||'',eventLogo:assets.eventLogo||'data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20256%20239%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2348cf35%22%2F%3E%3Cstop%20offset%3D%22.45%22%20stop-color%3D%22%230a8b4a%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23005432%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Cpath%20d%3D%22M%20133%20184%20L%20133%20213%20L%20134%20214%20L%20134%20222%20L%20135%20223%20L%20136%20231%20L%20137%20232%20L%20144%20232%20L%20164%20226%20L%20165%20224%20L%20162%20219%20L%20142%20199%20Z%20M%20129%20184%20L%20120%20199%20L%20113%20207%20L%20101%20218%20L%2097%20225%20L%20103%20228%20L%20109%20229%20L%20113%20231%20L%20126%20232%20L%20126%20228%20L%20128%20222%20L%20128%20216%20L%20129%20215%20Z%20M%2028%2083%20L%2029%2096%20L%2034%20108%20L%2041%20118%20L%2050%20126%20L%2061%20132%20L%2070%20133%20L%2071%20134%20L%20102%20134%20L%20103%20133%20L%20101%20127%20L%2092%20119%20L%2083%20116%20L%2071%20115%20L%2063%20111%20L%2052%2099%20L%2052%2097%20L%2049%2091%20L%2048%2083%20Z%20M%20234%2082%20L%20214%2082%20L%20214%2087%20L%20211%2097%20L%20203%20108%20L%20196%20113%20L%20194%20113%20L%20191%20115%20L%20178%20116%20L%20168%20120%20L%20161%20127%20L%20159%20133%20L%20196%20133%20L%20203%20131%20L%20212%20126%20L%20222%20117%20L%20227%20110%20L%20233%2096%20L%20233%2093%20L%20234%2092%20Z%20M%20227%2053%20L%20200%2053%20L%20198%2054%20L%20139%20112%20L%20134%20121%20L%20134%20173%20L%20137%20182%20L%20147%20195%20L%20153%20200%20L%20169%20210%20L%20175%20216%20L%20177%20220%20L%20181%20219%20L%20194%20209%20L%20194%20207%20L%20191%20203%20L%20184%20197%20L%20176%20193%20L%20173%20193%20L%20164%20190%20L%20157%20186%20L%20158%20185%20L%20161%20186%20L%20175%20186%20L%20185%20189%20L%20193%20194%20L%20201%20201%20L%20205%20199%20L%20215%20189%20L%20214%20187%20L%20203%20179%20L%20191%20174%20L%20179%20173%20L%20178%20172%20L%20159%20172%20L%20157%20171%20L%20153%20166%20L%20153%20161%20L%20154%20159%20L%20158%20156%20L%20206%20156%20L%20207%20155%20L%20212%20155%20L%20219%20153%20L%20228%20148%20L%20233%20144%20L%20239%20137%20L%20246%20124%20L%20248%20118%20L%20248%20114%20L%20239%20116%20L%20226%20121%20L%20223%20126%20L%20217%20132%20L%20208%20137%20L%20201%20138%20L%20200%20139%20L%20159%20139%20L%20153%20142%20L%20152%20141%20L%20153%20131%20L%20155%20127%20L%20211%2072%20Z%20M%20156%20185%20L%20157%20184%20L%20158%20185%20L%20157%20186%20Z%20M%2035%2053%20L%2038%2058%20L%2048%2069%20L%20107%20127%20L%20109%20131%20L%20109%20134%20L%20110%20135%20L%20110%20140%20L%20109%20141%20L%20104%20139%20L%2062%20139%20L%2061%20138%20L%2054%20137%20L%2045%20132%20L%2039%20126%20L%2036%20121%20L%2014%20114%20L%2014%20117%20L%2017%20126%20L%2023%20137%20L%2032%20147%20L%2042%20153%20L%2048%20155%20L%2053%20155%20L%2054%20156%20L%20104%20156%20L%20109%20160%20L%20110%20163%20L%20109%20167%20L%20103%20172%20L%2087%20172%20L%2086%20173%20L%2076%20173%20L%2075%20174%20L%2072%20174%20L%2056%20181%20L%2048%20188%20L%2048%20189%20L%2061%20201%20L%2068%20195%20L%2080%20188%20L%2087%20187%20L%2088%20186%20L%20102%20186%20L%20103%20187%20L%2098%20190%20L%2080%20196%20L%2068%20207%20L%2069%20210%20L%2085%20221%20L%2086%20218%20L%2091%20212%20L%20113%20197%20L%20120%20190%20L%20126%20180%20L%20128%20174%20L%20128%20167%20L%20129%20166%20L%20129%20125%20L%20128%20124%20L%20128%20121%20L%20126%20116%20L%2064%2054%20L%2061%2053%20Z%20M%20102%20186%20L%20103%20185%20L%20105%20186%20L%20104%20187%20Z%20M%2093%2024%20L%2075%2035%20L%2075%2045%20L%2076%2046%20L%2076%2050%20L%2078%2056%20L%2084%2066%20L%20129%20110%20L%20129%2093%20L%20128%2092%20L%20127%2084%20L%20124%2079%20L%2098%2052%20L%2095%2046%20L%2095%2042%20L%2094%2041%20L%2094%2024%20Z%20M%20169%2023%20L%20168%2023%20L%20168%2043%20L%20165%2051%20L%20159%2059%20L%20138%2079%20L%20135%2084%20L%20134%2092%20L%20133%2093%20L%20133%20110%20L%20178%2066%20L%20185%2054%20L%20186%2047%20L%20187%2046%20L%20187%2034%20Z%20M%20134%205%20L%20133%206%20L%20133%2074%20L%20142%2067%20L%20150%2059%20L%20150%2016%20L%20147%2013%20Z%20M%20128%205%20L%20118%2012%20L%20115%2013%20L%20112%2017%20L%20112%2059%20L%20129%2074%20L%20129%205%20Z%22%20fill%3D%22url(%23g)%22%20fill-rule%3D%22evenodd%22%2F%3E%3C%2Fsvg%3E',competition:q('matchCompetition').value.trim()||'SAGI FOOTBALL',
@@ -3110,13 +3121,14 @@ function mdCloudSnapshot(event=null){
  };
 }
 async function publishMatchday(event=null){
- const state=mdCloudSnapshot(event),revision=state.revision;matchdayState.lastEvent=event;mdPersist();refreshMatchdayUI();
+ const state=mdCloudSnapshot(event),revision=state.revision;if(state.allowFixtureTakeover)mdFixtureTakeoverOnce=false;matchdayState.lastEvent=event;mdPersist();refreshMatchdayUI();
  const send=async()=>{
   try{
    const r=await mdPostMatchdayWithRetry(state);mdLastAckRevision=Math.max(mdLastAckRevision,revision);
    if(q('mdSync'))q('mdSync').innerHTML='<span class="mdLiveDot on"></span>LAN 状态一致 · R'+mdLastAckRevision+(r.attempts>1?' · 自动重试 '+(r.attempts-1)+' 次':'');
    return{ok:true,revision,attempts:r.attempts}
   }catch(e){
+   if(state.allowFixtureTakeover)mdFixtureTakeoverOnce=true;
    if(q('mdSync'))q('mdSync').innerHTML='<span class="mdLiveDot"></span>LAN 同步失败 · 已保留本机状态 / 最近正确状态';
    return{ok:false,revision,attempts:mdPublishMetrics.lastAttempts}
   }
