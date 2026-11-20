@@ -194,3 +194,8 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Fixed a source-observed consistency defect: after a journal record was fsynced, a snapshot failure previously caused the Local Engine to return failure and retain stale in-memory state. Snapshot replacement is now best-effort after the durable commit; the old snapshot is never deleted as a fallback. Snapshot error is retained in the store instance for future diagnostics.
 - Added `commercial/core/snapshot-failure-selftest.mjs` covering actual HTTP goal submission, duplicate retry and restart with a deliberately obstructed snapshot path.
 - Commits: e5a375b, d37fab92. Test execution and CI pending; uncertain journal writes, disk-full, writer locking and torn-tail repair remain release blockers. The snapshot warning still needs a diagnostics endpoint.
+
+## 2026-11-20 — Storage recovery gate and diagnostics
+- Latch uncertain journal write/sync/close failures; refuse further mutations until restart and recovery. Health reports HTTP 503 while latched; authenticated diagnostics exposes sanitized journal and snapshot warnings without local paths or tokens.
+- Extended snapshot failure self-test with diagnostics auth and injected recovery latch checks. This does not simulate an actual disk write/sync failure.
+- Commits: 616c695, fff543b, 55cad51. Runtime tests remain pending. A complete but unsynced record, torn tail, writer locking, actual Windows disk-full/power loss and operator recovery UI remain release blockers. Reads may represent the last confirmed in-memory state while recovery is required; do not treat them as current on-air confirmation.
