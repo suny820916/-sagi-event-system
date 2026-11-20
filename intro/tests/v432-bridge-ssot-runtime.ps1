@@ -25,6 +25,151 @@ $startCount = 0
 $bridgeOut = $null
 $bridgeErr = $null
 
+function Invoke-RawBridgeHttp([string]$Method,[string]$Path,[string]$Body='') {
+  $client = New-Object System.Net.Sockets.TcpClient
+  $stream = $null
+  $reader = $null
+  try {
+    $client.ReceiveTimeout = 5000
+    $client.SendTimeout = 5000
+    $client.Connect('127.0.0.1',8100)
+    $stream = $client.GetStream()
+    $bodyBytes = [Text.Encoding]::UTF8.GetBytes([string]$Body)
+    $head = $Method.ToUpperInvariant() + ' ' + $Path + " HTTP/1.1`r`nHost: 127.0.0.1`r`nConnection: close`r`n"
+    if ($bodyBytes.Length -gt 0) {
+      $head += "Content-Type: application/json; charset=utf-8`r`nContent-Length: " + $bodyBytes.Length + "`r`n"
+    }
+    $head += "`r`n"
+    $headBytes = [Text.Encoding]::ASCII.GetBytes($head)
+    $stream.Write($headBytes,0,$headBytes.Length)
+    if ($bodyBytes.Length -gt 0) { $stream.Write($bodyBytes,0,$bodyBytes.Length) }
+    $stream.Flush()
+
+    $reader = New-Object IO.StreamReader($stream,[Text.Encoding]::UTF8,$false,4096,$true)
+    $statusLine = $reader.ReadLine()
+    if ([string]::IsNullOrWhiteSpace($statusLine)) { throw 'Empty HTTP status line' }
+    $parts = $statusLine -split ' '
+    if ($parts.Count -lt 2) { throw ('Malformed HTTP status: ' + $statusLine) }
+    $status = 0
+    if (-not [int]::TryParse($parts[1],[ref]$status)) { throw ('Invalid HTTP status: ' + $statusLine) }
+    $contentLength = 0
+    while ($true) {
+      $line = $reader.ReadLine()
+      if ($null -eq $line -or $line -eq '') { break }
+      if ($line -match '^(?i)Content-Length:\s*(\d+)\s*
+  $script:startCount++
+  $script:bridgeOut = Join-Path $sandbox ('bridge-'+$script:startCount+'.stdout.log')
+  $script:bridgeErr = Join-Path $sandbox ('bridge-'+$script:startCount+'.stderr.log')
+  $script:proc = Start-Process -FilePath $ps51 -ArgumentList @('-NoLogo','-NoProfile','-ExecutionPolicy','Bypass','-File',$bridgePath) -PassThru -WindowStyle Hidden -RedirectStandardOutput $script:bridgeOut -RedirectStandardError $script:bridgeErr
+  $end=(Get-Date).AddSeconds(25)
+  while((Get-Date) -lt $end){
+    try { $r=Invoke-RawBridgeHttp 'GET' ('/health?t='+[DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()); if($r.Status -eq 200){ return } } catch {}
+    if($script:proc.HasExited){
+      $out=''; $err=''
+      try { if(Test-Path $script:bridgeOut){ $out=Get-Content -LiteralPath $script:bridgeOut -Raw -ErrorAction SilentlyContinue } } catch {}
+      try { if(Test-Path $script:bridgeErr){ $err=Get-Content -LiteralPath $script:bridgeErr -Raw -ErrorAction SilentlyContinue } } catch {}
+      throw ('Bridge exited early code='+$script:proc.ExitCode+' stdout='+$out+' stderr='+$err)
+    }
+    Start-Sleep -Milliseconds 500
+  }
+  $out=''; $err=''
+  try { if(Test-Path $script:bridgeOut){ $out=Get-Content -LiteralPath $script:bridgeOut -Raw -ErrorAction SilentlyContinue } } catch {}
+  try { if(Test-Path $script:bridgeErr){ $err=Get-Content -LiteralPath $script:bridgeErr -Raw -ErrorAction SilentlyContinue } } catch {}
+  throw ('Bridge did not start on 8100 stdout='+$out+' stderr='+$err)
+}
+function Stop-Bridge {
+  if($script:proc -and -not $script:proc.HasExited){ try { Stop-Process -Id $script:proc.Id -Force -ErrorAction Stop } catch {} }
+  Start-Sleep -Milliseconds 700
+}
+function Get-State {
+  $r=Invoke-RawBridgeHttp 'GET' ('/api/matchday?t='+[DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds())
+  if($r.Status -ne 200){ throw ('GET /api/matchday expected 200 got '+$r.Status+' body='+$r.Body) }
+  return ($r.Body | ConvertFrom-Json)
+}
+function New-State([string]$fixture,[int]$revision,[string]$command,[int]$score,[bool]$takeover){
+  return [ordered]@{
+    commandId=$command; revision=$revision; fixtureKey=$fixture; allowFixtureTakeover=$takeover;
+    home='HOME'; away='AWAY'; competition='CI'; homeScore=$score; awayScore=0;
+    scoreboardVisible=$true; scoreboardFrozen=$false; homeRedCards=0; awayRedCards=0;
+    homePen=0; awayPen=0; penaltyShootout=[ordered]@{started=$false;history=@();finished=$false};
+    simplePenalty=[ordered]@{visible=$false;home=0;away=0;history=@()};
+    clock=[ordered]@{baseSeconds=0;running=$false;startedAt=$null;period='1H'};
+    event=$null; eventLog=@(); replayMarkers=@(); updatedAt=(Get-Date).ToUniversalTime().ToString('o')
+  }
+}
+function Post-State($state,[int]$expected){
+  $body=$state | ConvertTo-Json -Depth 30 -Compress
+  $r=Invoke-RawBridgeHttp 'POST' '/api/matchday' $body
+  if([int]$r.Status -ne $expected){ throw ('Expected HTTP '+$expected+' got '+$r.Status+' body='+$r.Body) }
+}
+
+try {
+  Start-Bridge
+  $a='CI-FIXTURE-A|HOME|AWAY'
+  $b='CI-FIXTURE-B|HOME|AWAY'
+
+  Post-State (New-State $a 4 'a-r4' 4 $true) 200
+  $s=Get-State
+  if([string]$s.fixtureKey -ne $a -or [int]$s.revision -ne 4 -or [int]$s.homeScore -ne 4){ throw 'Initial authoritative state mismatch' }
+
+  Post-State (New-State $a 2 'a-r2-stale' 99 $false) 409
+  $s=Get-State
+  if([int]$s.revision -ne 4 -or [int]$s.homeScore -ne 4){ throw 'Stale same-fixture write changed state' }
+
+  Post-State (New-State $b 99 'b-foreign' 88 $false) 409
+  $s=Get-State
+  if([string]$s.fixtureKey -ne $a -or [int]$s.revision -ne 4){ throw 'Unapproved cross-fixture write changed state' }
+
+  Stop-Bridge
+  Start-Bridge
+  $s=Get-State
+  if([string]$s.fixtureKey -ne $a -or [int]$s.revision -ne 4 -or [int]$s.homeScore -ne 4){ throw ('Restart persistence failed: fixture='+$s.fixtureKey+' revision='+$s.revision+' score='+$s.homeScore) }
+
+  Post-State (New-State $b 100 'b-after-restart' 77 $false) 409
+  $s=Get-State
+  if([string]$s.fixtureKey -ne $a -or [int]$s.revision -ne 4){ throw 'Foreign stale controller took over after restart' }
+
+  Post-State (New-State $a 4 'a-conflict' 66 $false) 409
+  $s=Get-State
+  if([int]$s.revision -ne 4 -or [int]$s.homeScore -ne 4){ throw 'Equal-revision conflict changed state' }
+
+  Post-State (New-State $b 1 'b-authorized' 1 $true) 200
+  $s=Get-State
+  if([string]$s.fixtureKey -ne $b -or [int]$s.revision -ne 1 -or [int]$s.homeScore -ne 1){ throw 'Authorized fixture takeover failed' }
+
+  Stop-Bridge
+  Start-Bridge
+  $s=Get-State
+  if([string]$s.fixtureKey -ne $b -or [int]$s.revision -ne 1){ throw 'Authorized fixture did not persist across restart' }
+
+  Write-Host 'V4.32 BRIDGE SSOT RUNTIME PASS'
+}
+finally {
+  Stop-Bridge
+  $env:LOCALAPPDATA=$oldLocal
+  Remove-Item -LiteralPath $sandbox -Recurse -Force -ErrorAction SilentlyContinue
+}
+) { $contentLength = [int]$Matches[1] }
+    }
+    $bodyText = ''
+    if ($contentLength -gt 0) {
+      $buf = New-Object char[] $contentLength
+      $offset = 0
+      while ($offset -lt $contentLength) {
+        $n = $reader.Read($buf,$offset,$contentLength-$offset)
+        if ($n -le 0) { break }
+        $offset += $n
+      }
+      if ($offset -gt 0) { $bodyText = -join $buf[0..($offset-1)] }
+    }
+    return [pscustomobject]@{Status=$status;Body=$bodyText;StatusLine=$statusLine}
+  } finally {
+    try { if ($reader) { $reader.Dispose() } } catch {}
+    try { if ($stream) { $stream.Dispose() } } catch {}
+    try { $client.Close() } catch {}
+  }
+}
+
 function Start-Bridge {
   $script:startCount++
   $script:bridgeOut = Join-Path $sandbox ('bridge-'+$script:startCount+'.stdout.log')
