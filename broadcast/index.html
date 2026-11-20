@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#080808">
+<title>SAGI BROADCAST · 导播演示</title>
+<meta name="description" content="SAGI BROADCAST 足球赛事导播系统演示：比分牌、进球动画、红黄牌、换人、点球大战、战术板与直播导演工作流。">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<style>
+:root{--bg:#080808;--panel:#121212;--panel2:#0c0c0c;--line:#2b2b2b;--text:#f7f3e9;--muted:#929292;--gold:#d7b85f;--red:#e52231;--yellow:#ffd43b;--green:#50c878}
+*{box-sizing:border-box}html,body{margin:0;background:#080808;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+body{min-height:100vh;background:radial-gradient(circle at 78% 0%,#211b10 0,transparent 28%),#080808}
+.wrap{max-width:1180px;margin:auto;padding:22px 14px 48px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:14px}.brand img{width:172px;height:auto;display:block}.tag{border:1px solid #5f522f;color:#d5be7a;border-radius:999px;padding:7px 10px;font-size:10px;font-weight:900;letter-spacing:1px}
+.hero{padding:52px 0 30px}.eyebrow{font-size:11px;color:var(--gold);font-weight:900;letter-spacing:2px}.hero h1{font-size:clamp(38px,7vw,72px);line-height:.96;letter-spacing:-3px;margin:12px 0 15px}.hero p{max-width:760px;color:#a5a5a5;line-height:1.8;font-size:14px}
+.hero .note{margin-top:16px;font-size:12px;color:#d6c797}
+.layout{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(300px,.75fr);gap:14px;align-items:start}
+.stageCard,.controlCard,.feature{background:linear-gradient(180deg,#151515,#0d0d0d);border:1px solid var(--line);border-radius:22px}
+.stageCard{padding:14px}.stageTop{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.stageTop b{font-size:13px}.stageTop span{font-size:10px;color:#777}
+.stage{position:relative;aspect-ratio:16/9;border-radius:16px;overflow:hidden;background:linear-gradient(180deg,#263826 0 60%,#182619 60%);box-shadow:inset 0 0 0 1px #ffffff0d}
+.pitch{position:absolute;inset:0;opacity:.34;background:
+linear-gradient(90deg,transparent 49.7%,#fff 49.8% 50.2%,transparent 50.3%),
+radial-gradient(circle at 50% 50%,transparent 0 12%,#fff 12.2% 12.6%,transparent 12.8%),
+linear-gradient(#ffffff33,#ffffff33) 6% 50%/10% 45% no-repeat,
+linear-gradient(#ffffff33,#ffffff33) 94% 50%/10% 45% no-repeat}
+.cam{position:absolute;inset:0;background:linear-gradient(180deg,transparent 65%,#0009 100%)}
+.scorebug{position:absolute;top:6%;left:5%;display:flex;align-items:stretch;filter:drop-shadow(0 10px 18px #0008);transition:.25s transform}
+.team{height:42px;display:flex;align-items:center;gap:9px;background:#0b0b0bf2;padding:0 12px;min-width:122px}.team.home{border-radius:10px 0 0 10px}.team.away{border-radius:0 10px 10px 0}.crest{width:25px;height:25px;border-radius:50%;background:linear-gradient(135deg,#c21b2c,#5c0f17);border:1px solid #ffffff3a}.away .crest{background:linear-gradient(135deg,#2366d1,#102b5d)}.tn{font-size:12px;font-weight:900;white-space:nowrap}.score{height:42px;min-width:58px;background:var(--gold);color:#0a0a0a;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:950}
+.goal{position:absolute;top:calc(6% + 48px);left:5%;display:none;align-items:center;gap:10px;background:#f5f1e9;color:#0b0b0b;border-radius:9px;padding:11px 14px;box-shadow:0 14px 30px #0007;min-width:255px;animation:pop .28s ease}.goal.on{display:flex}.goal b{font-size:17px}.goal small{display:block;color:#555;margin-top:2px}.goal .bigcrest{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#c21b2c,#5c0f17)}@keyframes pop{from{opacity:0;transform:translateY(-10px) scale(.96)}to{opacity:1;transform:none}}
+.eventStrip{position:absolute;left:50%;bottom:7%;transform:translateX(-50%);display:none;align-items:center;gap:10px;background:#101010ec;border:1px solid #393939;border-radius:11px;padding:10px 14px;min-width:240px;justify-content:center}.eventStrip.on{display:flex}.cardIcon{width:18px;height:26px;border-radius:2px;background:var(--yellow)}.cardIcon.red{background:var(--red)}.eventStrip b{font-size:13px}
+.pk{position:absolute;left:50%;bottom:7%;transform:translateX(-50%);display:none;gap:8px;align-items:center;background:#0a0a0aec;border:1px solid #444;border-radius:14px;padding:12px 16px}.pk.on{display:flex}.pk b{font-size:16px;margin-right:5px}.dot{width:14px;height:14px;border-radius:50%;background:#252525;border:1px solid #555}.dot.hit{background:#eaf3ea;border-color:#eaf3ea}.dot.miss{background:#c8202e;border-color:#c8202e}
+.tactics{position:absolute;right:4%;top:18%;width:31%;aspect-ratio:.72;border:1px solid #ffffff2b;border-radius:12px;background:#0d2615cc;display:none}.tactics.on{display:block}.tactics:before{content:"";position:absolute;left:50%;top:0;bottom:0;width:1px;background:#ffffff33}.p{position:absolute;width:13px;height:13px;border-radius:50%;background:#e4c66c;border:2px solid #171717}.p.a{left:46%;top:78%}.p.b{left:25%;top:55%}.p.c{left:67%;top:55%}.p.d{left:45%;top:38%}.p.e{left:25%;top:20%}.p.f{left:67%;top:20%}
+.controlCard{padding:14px;position:sticky;top:12px}.controlCard h2{font-size:15px;margin:2px 0 12px}.hint{font-size:11px;color:#808080;line-height:1.6;margin-bottom:12px}.controls{display:grid;grid-template-columns:1fr 1fr;gap:8px}.btn{border:1px solid #333;background:#1a1a1a;color:#fff;border-radius:12px;padding:11px 9px;font-weight:850;font-size:12px;min-height:46px}.btn.primary{background:linear-gradient(135deg,#b79549,#e0c675);color:#111;border:0}.btn.red{background:#4a1c20;border-color:#6d2a30}.btn.yellow{background:#4c4119;border-color:#756528}.btn.full{grid-column:1/-1}.status{margin-top:12px;padding:10px 11px;border:1px solid #2d2d2d;border-radius:12px;background:#0a0a0a;font-size:11px;color:#9a9a9a}
+.features{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}.feature{padding:18px;min-height:150px}.num{font-size:10px;color:var(--gold);font-weight:900}.feature h3{font-size:17px;margin:8px 0}.feature p{font-size:11px;color:#8f8f8f;line-height:1.7;margin:0}
+.footer{display:flex;justify-content:space-between;gap:12px;margin-top:24px;padding-top:17px;border-top:1px solid #202020;color:#666;font-size:10px}
+@media(max-width:860px){.layout{grid-template-columns:1fr}.controlCard{position:static}.features{grid-template-columns:1fr 1fr}.hero{padding-top:42px}.stage{aspect-ratio:16/10}}
+@media(max-width:560px){.brand img{width:150px}.tag{font-size:9px}.hero h1{letter-spacing:-2px}.features{grid-template-columns:1fr}.team{min-width:auto;padding:0 9px}.tn{font-size:10px}.scorebug{left:4%}.goal{left:4%;min-width:220px}.stage{aspect-ratio:4/3}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="/"><img src="/assets/brand/sagi-football-logo.webp?v=20261121a" alt="SAGI FOOTBALL"></a>
+    <div class="tag">BROADCAST DEMO</div>
+  </header>
+
+  <section class="hero">
+    <div class="eyebrow">SAGI BROADCAST · LIVE PRODUCTION</div>
+    <h1>把一场普通比赛，<br>做得像真正的赛事转播。</h1>
+    <p>这是 SAGI 导播系统的公开演示页。重点展示比赛信息表达、进球动画、红黄牌、换人、点球大战、战术板与导演控制逻辑；真实直播控制台和内部比赛数据不在公开页面暴露。</p>
+    <div class="note">点击右侧/下方演示按钮，可以直接体验几种核心转播状态。</div>
+  </section>
+
+  <section class="layout">
+    <div class="stageCard">
+      <div class="stageTop"><b>直播画面模拟</b><span>16:9 · PROGRAM PREVIEW</span></div>
+      <div class="stage">
+        <div class="pitch"></div><div class="cam"></div>
+        <div class="scorebug" id="scorebug">
+          <div class="team home"><div class="crest"></div><div class="tn">TORANHE</div></div>
+          <div class="score"><span id="hs">0</span>&nbsp;:&nbsp;<span id="as">0</span></div>
+          <div class="team away"><div class="tn">TFC</div><div class="crest"></div></div>
+        </div>
+        <div class="goal" id="goal"><div class="bigcrest"></div><div><b>GOAL</b><small id="goalText">17 · SAGI PLAYER</small></div></div>
+        <div class="eventStrip" id="event"><div class="cardIcon" id="cardIcon"></div><b id="eventText">黄牌 · 8号球员</b></div>
+        <div class="pk" id="pk"><b>点球大战</b><span class="dot hit"></span><span class="dot hit"></span><span class="dot miss"></span><span class="dot hit"></span><span class="dot"></span></div>
+        <div class="tactics" id="tactics"><i class="p a"></i><i class="p b"></i><i class="p c"></i><i class="p d"></i><i class="p e"></i><i class="p f"></i></div>
+      </div>
+    </div>
+
+    <aside class="controlCard">
+      <h2>演示控制</h2>
+      <div class="hint">这是展示版控制，不连接真实 vMix。用于给球队、赛事方和合作伙伴快速理解 SAGI BROADCAST 能做什么。</div>
+      <div class="controls">
+        <button class="btn primary" onclick="goal('home')">主队进球 +1</button>
+        <button class="btn primary" onclick="goal('away')">客队进球 +1</button>
+        <button class="btn yellow" onclick="showCard(false)">黄牌</button>
+        <button class="btn red" onclick="showCard(true)">红牌</button>
+        <button class="btn" onclick="showSub()">换人</button>
+        <button class="btn" onclick="togglePK()">点球大战</button>
+        <button class="btn full" onclick="toggleTactics()">战术板演示</button>
+        <button class="btn full" onclick="resetDemo()">恢复比赛画面</button>
+      </div>
+      <div class="status" id="status">状态：常规比赛画面 · 0:0</div>
+    </aside>
+  </section>
+
+  <section class="features">
+    <div class="feature"><div class="num">01 · SCOREBUG</div><h3>常规比分牌</h3><p>小尺寸长期驻留；进球时展开，队徽、比分和 GOAL 信息形成清晰的赛事语言。</p></div>
+    <div class="feature"><div class="num">02 · MATCH EVENTS</div><h3>进球 / 红黄牌 / 换人</h3><p>所有关键事件使用统一的 SAGI SIGNATURE 视觉体系，不让不同包装像来自不同软件。</p></div>
+    <div class="feature"><div class="num">03 · PENALTIES</div><h3>点球大战</h3><p>独立点球记分逻辑，支持超过五轮继续记录，强调成功/罚失状态并保持直播可读性。</p></div>
+    <div class="feature"><div class="num">04 · TACTICAL BOARD</div><h3>阵容与战术板</h3><p>赛前阵容、比赛中战术关系和球员信息可以进入同一套直播包装体系。</p></div>
+    <div class="feature"><div class="num">05 · DIRECTOR</div><h3>比赛导演</h3><p>把机位切换、精彩回放、比赛事件和屏幕包装放到更适合实际比赛操作的控制流程里。</p></div>
+    <div class="feature"><div class="num">06 · RELIABILITY</div><h3>稳定优先</h3><p>真实比赛最重要的是不中断：状态一致、断线恢复、长时间运行和手机/电脑同步优先于炫技。</p></div>
+  </section>
+
+  <footer class="footer"><span>SAGI SPORTS · 为身边的足球加油</span><span>SAGI BROADCAST · DEMO</span></footer>
+</div>
+<script>
+let home=0,away=0,timer=null;
+const $=id=>document.getElementById(id);
+function hideAll(){ $('goal').classList.remove('on');$('event').classList.remove('on');$('pk').classList.remove('on');$('tactics').classList.remove('on'); }
+function updateStatus(t){$('status').textContent='状态：'+t}
+function goal(side){
+  hideAll(); if(side==='home') home++; else away++; $('hs').textContent=home;$('as').textContent=away;
+  $('goalText').textContent=(side==='home'?'17 · TORANHE PLAYER':'9 · TFC PLAYER');$('goal').classList.add('on');
+  updateStatus('进球动画 · '+home+':'+away); clearTimeout(timer);timer=setTimeout(()=>{$('goal').classList.remove('on');updateStatus('常规比赛画面 · '+home+':'+away)},2600)
+}
+function showCard(red){hideAll();$('cardIcon').className='cardIcon'+(red?' red':'');$('eventText').textContent=(red?'红牌':'黄牌')+' · 8号球员';$('event').classList.add('on');updateStatus((red?'红牌':'黄牌')+'事件');clearTimeout(timer);timer=setTimeout(()=>{$('event').classList.remove('on');updateStatus('常规比赛画面 · '+home+':'+away)},2400)}
+function showSub(){hideAll();$('cardIcon').className='cardIcon';$('cardIcon').style.background='linear-gradient(90deg,#e52231 0 50%,#50c878 50%)';$('eventText').textContent='换人 · 11号 ↓ / 19号 ↑';$('event').classList.add('on');updateStatus('换人事件');clearTimeout(timer);timer=setTimeout(()=>{$('event').classList.remove('on');$('cardIcon').style.background='';updateStatus('常规比赛画面 · '+home+':'+away)},2500)}
+function togglePK(){const on=!$('pk').classList.contains('on');hideAll();if(on){$('pk').classList.add('on');updateStatus('点球大战模式')}else updateStatus('常规比赛画面 · '+home+':'+away)}
+function toggleTactics(){const on=!$('tactics').classList.contains('on');hideAll();if(on){$('tactics').classList.add('on');updateStatus('战术板演示')}else updateStatus('常规比赛画面 · '+home+':'+away)}
+function resetDemo(){home=0;away=0;$('hs').textContent=0;$('as').textContent=0;hideAll();updateStatus('常规比赛画面 · 0:0')}
+</script>
+</body>
+</html>
