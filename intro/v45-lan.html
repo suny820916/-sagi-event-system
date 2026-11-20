@@ -2443,6 +2443,8 @@ async function recoverMatchdayFromBridge(showNote=false,opts={}){
    const bridgeMatches=!!(x&&x.commandId&&mdBridgeMatchesCurrent(x));
    if(x&&x.commandId&&!bridgeMatches&&!opts.allowIdentityTakeover){if(showNote)note('Bridge 是另一场比赛 · 已忽略旧比分状态');return false}
    if(x&&x.commandId){
+     const remoteRevision=Math.max(0,Number(x.revision)||0);
+     if(remoteRevision){mdPublishRevision=Math.max(mdPublishRevision,remoteRevision);mdLastAckRevision=Math.max(mdLastAckRevision,remoteRevision)}
      const remoteStamp=mdRecoveryTimestamp(x),localStamp=Math.max(Number(opts.localStamp)||0,mdLocalRecoveryStamp||0);
      if(opts.preferNewest&&localStamp&&(!remoteStamp||localStamp>remoteStamp+250)){
        mdRecoveryMetrics.localWins++;mdRecoveryMetrics.lastReason='LOCAL_NEWER';mdRecoveryMetrics.lastRecoveryAt=Date.now();
@@ -2976,7 +2978,7 @@ async function mdCopyMarkers(){
 }
 function mdMacroEvent(type,side,playerId=''){
  if(type==='GOAL'&&matchdayState.period==='PEN'){note('点球大战中 · 请使用点球罚进/罚失按钮');return false}
- if(!mdAcceptOperatorEvent(['EVENT',type,side,playerId].join('|'),1400))return false;
+ const eventGateMs=type==='GOAL'?2500:1400;if(!mdAcceptOperatorEvent(['EVENT',type,side,playerId].join('|'),eventGateMs))return false;
  const p=playerId?mdPlayer(side,playerId):null,before={homeScore:matchdayState.homeScore,awayScore:matchdayState.awayScore,homeRedCards:matchdayState.homeRedCards,awayRedCards:matchdayState.awayRedCards};
  if(type==='GOAL'){if(side==='HOME')matchdayState.homeScore++;else matchdayState.awayScore++;matchdayState.scoreboardVisible=true}
  if(type==='RED'){if(side==='HOME')matchdayState.homeRedCards=Math.min(5,(Number(matchdayState.homeRedCards)||0)+1);else matchdayState.awayRedCards=Math.min(5,(Number(matchdayState.awayRedCards)||0)+1)}
