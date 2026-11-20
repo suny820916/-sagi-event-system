@@ -1,4 +1,6 @@
 import http from "node:http";
+import { mkdir, rmdir } from "node:fs/promises";
+import path from "node:path";
 import { randomBytes, timingSafeEqual } from "node:crypto";
 import { applyCommand, createInitialMatchState, hydrateMatchState } from "./match-core.mjs";
 import { FileMatchStore } from "./file-store.mjs";
@@ -13,6 +15,12 @@ export async function createLocalServer({dataDir,meta,host="127.0.0.1",port=0,to
   if(!store)throw new Error("STORE_REQUIRED");
   if(typeof token!=="string"||token.length<32)throw new Error("WEAK_TOKEN");
   await store.init();
+  const ownership = path.join(store.rootDir, "match-engine.lock");
+  try { await mkdir(ownership); } catch (error) {
+    if (error.code === "EEXIST") throw new Error("ENGINE_ALREADY_RUNNING_OR_RECOVERY_REQUIRED");
+    throw error;
+  }
+  try {
   let state;
   try{state=await store.load()}catch(error){if(error.code!=="ENOENT")throw error;state=createInitialMatchState(meta)}
   state=hydrateMatchState(state);
@@ -46,5 +54,14 @@ export async function createLocalServer({dataDir,meta,host="127.0.0.1",port=0,to
     return send(res,404,{error:"NOT_FOUND"})
   });
   await new Promise((resolve,reject)=>{server.once("error",reject);server.listen(port,host,resolve)});
-  return{server,token,address:server.address(),close:()=>new Promise((resolve,reject)=>server.close(err=>err?reject(err):resolve()))}
+  let closing;
+  return {server,token,address:server.address(),close:()=>closing ??= (async()=>{
+    await new Promise((resolve,reject)=>server.close(err=>err?reject(err):resolve()));
+    await queue;
+    await rmdir(ownership);
+  })()};
+  } catch (error) {
+    await rmdir(ownership).catch(()=>{});
+    throw error;
+  }
 }
