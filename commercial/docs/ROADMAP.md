@@ -253,3 +253,8 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - LAN run 44792966009 failed on both platforms at the command self-test; Ubuntu log reports line 43 actual 200 versus expected 403 for the forged Host probe. Both pairing and gateway suites passed; canonical bridge tests were skipped.
 - Replaced fetch-based Host overrides with explicit node:http requests (commit 594cc57) so the test sends the intended authority. Added probe timeout; production gateway and security policy unchanged. Repaired test execution remains pending; do not claim that the Host defense or bridge passed.
 - Full Preflight run 44792966073 failed at Flask API smoke test, outside the commercial core suite; no changes made to inherited application or main. Release remains blocked pending LAN CI and actual Windows/vMix/endurance validation.
+
+## 2026-11-21 — LAN authority normalization review
+- Validate explicit Host port from raw authority before URL parsing, reject alternate IPv4 spellings and padded ports, and require exact serialized browser Origin. This also avoids relying on URL.port for explicit default ports.
+- Added regression probes for alternate IPv4 authorities, padded ports and noncanonical Origin paths. Commits: 088868a, c16c3d6.
+- No workflow runs were returned by the PR-filtered lookup for b1e25b9; latest LAN verification remains unknown. New tests not executed in this run. Canonical IPv6 spelling and default-port browser behavior still need dedicated tests. No new dependencies or main changes.
