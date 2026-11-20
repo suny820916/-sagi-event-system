@@ -241,6 +241,17 @@ server.listen(PORT,'127.0.0.1',async()=>{
   assert(pk.homeScore==='4'&&pk.awayScore==='5','PK scores unsynchronized');
   await page.screenshot({path:'selftest-artifacts/05-penalty-round6.png'});
 
+  console.log('TEST 4D: V4.33 canonical penaltyShootout overrides a corrupted legacy simplePenalty mirror');
+  const canonicalHist=[{side:'HOME',result:'GOAL',at:'1'},{side:'AWAY',result:'MISS',at:'2'}];
+  graphics=makeGraphics({homeScore:1,awayScore:1,clock:{period:'PEN',baseSeconds:0,running:false,startedAt:null},
+    penaltyShootout:{sourceVersion:'V4.33',started:true,visible:true,finished:false,history:canonicalHist,rounds:5,currentRound:2,nextSide:'HOME',homeGoals:1,awayGoals:0},
+    simplePenalty:{visible:true,home:99,away:88,history:Array.from({length:12},(_,i)=>({side:i%2?'AWAY':'HOME',result:'GOAL'})),round:6},
+    event:{type:'CLEAR_EVENT'}});
+  await page.waitForFunction(()=>document.querySelector('#spbHomeScore')?.textContent==='1'&&document.querySelector('#spbAwayScore')?.textContent==='0',null,{timeout:5000});await wait(300);
+  const canonicalPk=await page.evaluate(()=>({home:document.querySelector('#spbHomeScore').textContent,away:document.querySelector('#spbAwayScore').textContent,phase:document.querySelector('#spbPhase').textContent,homeDots:document.querySelectorAll('#spbHomeDots .spbDot').length,awayDots:document.querySelectorAll('#spbAwayDots .spbDot').length}));
+  assert(canonicalPk.home==='1'&&canonicalPk.away==='0','legacy simplePenalty overrode canonical penalty score: '+JSON.stringify(canonicalPk));
+  assert(!canonicalPk.phase.includes('突然死亡'),'legacy simplePenalty round leaked into canonical penalty phase: '+JSON.stringify(canonicalPk));
+
   console.log('TEST 5: two-camera manual switching still sends Input 1 -> Input 2');
   vmixCommands=[];
   await page.evaluate(()=>localStorage.setItem('sagi_vmix_director_v42',JSON.stringify({cam1:'1',cam2:'2',drone:'',replay:'',graphics:'5',transition:'Cut',duration:0,overlay:'1',cam1Role:'MAIN_WIDE',cam2Role:'SIDELINE_CLOSE',droneRole:'DRONE',replayRole:'REPLAY'})));
@@ -250,6 +261,28 @@ server.listen(PORT,'127.0.0.1',async()=>{
   await page.locator('#matchCompetition').fill('SAGI SELF TEST CUP');await page.locator('#matchHome').fill('SELF TEST HOME');await page.locator('#matchAway').fill('SELF TEST AWAY');await page.locator('#matchKickoff').fill('2026-11-17T20:00');await page.locator('#matchVenue').fill('SELF TEST STADIUM');
   assert(await page.locator('#vdCam1').inputValue()==='1'&&await page.locator('#vdCam2').inputValue()==='2','saved camera mapping not restored');
   await page.click('#setupValidateBtn');await page.waitForFunction(()=>!document.querySelector('#setupReadyBtn')?.disabled,null,{timeout:5000});await page.click('#setupReadyBtn');await page.waitForFunction(()=>document.querySelector('#setupReadyBadge')?.textContent.includes('可以播出'),null,{timeout:5000});
+
+  console.log('TEST 4E: V4.33 real penalty buttons share one canonical history for kick, mirror, and undo');
+  // TEST 4D intentionally left an active penalty state in the Bridge. A fresh operator must reset it
+  // before changing rounds/first kicker; the disabled selectors are a safety feature, not a failure.
+  await page.click('#mdPenReset');await wait(600);
+  await page.selectOption('#mdPenRounds','5');await page.selectOption('#mdPenFirst','HOME');
+  await page.click('#mdPenStart');await wait(800);
+  const penaltyBefore=await page.evaluate(()=>window.sagiPenaltySingleSourceDiagnostic());
+  await page.click('#mdPenHomeGoal');await wait(500);
+  const penaltyAfterHome=await page.evaluate(()=>window.sagiPenaltySingleSourceDiagnostic());
+  await page.click('#mdPenAwayMiss');await wait(500);
+  const penaltyAfterAway=await page.evaluate(()=>window.sagiPenaltySingleSourceDiagnostic());
+  await page.click('#mdPenUndo');await wait(500);
+  const penaltyAfterUndo=await page.evaluate(()=>window.sagiPenaltySingleSourceDiagnostic());
+  await page.click('#mdPenReset');await wait(500);
+  const penaltyAfterReset=await page.evaluate(()=>window.sagiPenaltySingleSourceDiagnostic());
+  const penaltyPeriod=await page.locator('#mdPeriod').inputValue();
+  assert(penaltyBefore.source==='penaltyShootout'&&penaltyBefore.consistent&&penaltyBefore.history.length===0,'penalty start did not establish canonical source: '+JSON.stringify(penaltyBefore));
+  assert(penaltyAfterHome.history.length===1&&penaltyAfterHome.homeGoals===1&&penaltyAfterHome.compat.home===1&&penaltyAfterHome.consistent,'HOME penalty did not update one source: '+JSON.stringify(penaltyAfterHome));
+  assert(penaltyAfterAway.history.length===2&&penaltyAfterAway.awayGoals===0&&penaltyAfterAway.compat.history.length===2&&penaltyAfterAway.consistent,'AWAY miss drifted compatibility view: '+JSON.stringify(penaltyAfterAway));
+  assert(penaltyAfterUndo.history.length===1&&penaltyAfterUndo.homeGoals===1&&penaltyAfterUndo.consistent,'penalty undo did not roll back one source atomically: '+JSON.stringify(penaltyAfterUndo));
+  assert(penaltyAfterReset.history.length===0&&penaltyAfterReset.homeGoals===0&&penaltyAfterReset.awayGoals===0&&penaltyAfterReset.consistent&&penaltyPeriod==='2H','penalty reset did not clear one source / return to regular phase: '+JSON.stringify({penaltyAfterReset,penaltyPeriod}));
   await page.click('#vdTakeCam1');await page.waitForFunction(()=>document.querySelector('#vdStatus')?.textContent.includes('已执行'),null,{timeout:4000});await page.click('#vdTakeCam2');await wait(800);
   const cuts=vmixCommands.filter(x=>['Cut','Fade','Stinger1'].includes(x.functionName));
   assert(cuts.length===2&&String(cuts[0].input)==='1'&&String(cuts[1].input)==='2','camera switching wrong: '+JSON.stringify(cuts));
