@@ -241,3 +241,9 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Verified baseline commit `85e8350`: GitHub Actions run 44769721281 passed all six existing Linux core/API/vMix simulated tests. The accumulated snapshot-failure self-test was absent from that workflow, so baseline green does not verify those regressions.
 - Added `commercial/core/snapshot-failure-selftest.mjs` to core CI and expanded matrix to Ubuntu and Windows, with independent failure reporting (commit b9024e6). New matrix results pending; simulated Windows runner does not certify real vMix, power loss or endurance.
 - Next gate: inspect both matrix jobs and fix any failures before feature expansion.
+
+## 2026-11-21 — Dual-platform core verification and LAN CI repair
+- PR merge CI run 44779949465 for c97e3b8 passed all seven core/API/vMix simulated test steps on both Windows and Ubuntu (14/14), including accumulated storage and retained-history regressions.
+- LAN run 44779949409 failed on Ubuntu: legacy issue-endpoint test expected 403 but omitted required JSON content type, correctly receiving 415. Windows was cancelled by matrix fail-fast.
+- Updated tests to assert both JSON rejection and desktop approval denial, and use the actual port for the forbidden-host test; disabled LAN matrix fail-fast. Commits 72d0c0d, 779829a, e14100c. Security checks were not weakened.
+- Repaired LAN suite execution pending. Real phone/Windows/vMix operation, encrypted transport, production startup and endurance remain unverified. No new runtime dependencies.
