@@ -43,8 +43,15 @@ check('Bridge binds its advertised port',!!bridgePort&&
   bat.includes(',$candidate)')&&bat.includes('$Port = $candidate'));
 for(const [name,html] of [['control',control],['output',output],['packaged control',embeddedControl],['packaged output',embeddedOutput]]){
   // The core entrypoints must never load a remote executable or stylesheet as a hard prerequisite.
-  const remoteScripts=[...html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["'](https?:)?\/\/[^"']+/gi)];
-  const remoteCss=[...html.matchAll(/<link\b[^>]*\brel\s*=\s*["']stylesheet["'][^>]*\bhref\s*=\s*["'](https?:)?\/\/[^"']+/gi)];
+  // Audit whole tags: attribute order and quote style must not bypass LAN-FIRST.
+  const attribute=(tag,key)=>{
+    const re=new RegExp('\\b'+key+'\\s*=\\s*(?:"([^"]*)"|\\x27([^\\x27]*)\\x27|([^\\s>]+))','i');
+    const m=tag.match(re);
+    return m?(m[1]??m[2]??m[3]):'';
+  };
+  const remote=url=>/^(?:https?:)?\/\//i.test(url.trim());
+  const remoteScripts=[...html.matchAll(/<script\b[^>]*>/gi)].map(x=>x[0]).filter(tag=>remote(attribute(tag,'src')));
+  const remoteCss=[...html.matchAll(/<link\b[^>]*>/gi)].map(x=>x[0]).filter(tag=>/\bstylesheet\b/i.test(attribute(tag,'rel'))&&remote(attribute(tag,'href')));
   check(name+' no mandatory remote script tags',remoteScripts.length===0,remoteScripts.map(x=>x[0]).join(', '));
   check(name+' no mandatory remote CSS tags',remoteCss.length===0,remoteCss.map(x=>x[0]).join(', '));
   // Dynamic imports and workers are reported as audit findings, not assumed to be core dependencies:
