@@ -3072,7 +3072,16 @@ async function mdPostMatchdayWithRetry(state){
    await lanPost('/api/matchday',state);
    mdPublishMetrics.ok++;mdPublishMetrics.lastOkAt=Date.now();mdPublishMetrics.lastAttempts=i+1;if(i){mdPublishMetrics.retried+=i;mdPublishMetrics.recovered++}
    mdSaveLastGood();return{ok:true,attempts:i+1}
-  }catch(e){lastError=e;mdPublishMetrics.lastErrorAt=Date.now()}
+  }catch(e){
+   lastError=e;mdPublishMetrics.lastErrorAt=Date.now();
+   if(String(e&&e.message||e).includes('LAN 409')){
+    try{
+     const recovered=await recoverMatchdayFromBridge(false,{preferNewest:false,allowIdentityTakeover:false});
+     if(recovered){mdPublishMetrics.recovered++;mdPublishMetrics.lastAttempts=i+1;return{ok:true,attempts:i+1,recovered:true}}
+    }catch(_){}
+    break
+   }
+  }
  }
  mdPublishMetrics.failed++;mdPublishMetrics.lastAttempts=waits.length;throw lastError||new Error('MATCHDAY_SYNC_FAILED')
 }
