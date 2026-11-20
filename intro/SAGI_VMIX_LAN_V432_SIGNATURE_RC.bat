@@ -498,7 +498,10 @@ while ($true) {
           $file = [IO.File]::Open($tmpState,[IO.FileMode]::Create,[IO.FileAccess]::Write,[IO.FileShare]::None)
           try { $file.Write($bytes,0,$bytes.Length); $file.Flush($true) } finally { $file.Dispose() }
           if ([IO.File]::Exists($MatchdayStateFile)) {
-            [IO.File]::Replace($tmpState,$MatchdayStateFile,$null)
+            $backupState = $MatchdayStateFile + ".bak"
+            Remove-Item $backupState -Force -ErrorAction SilentlyContinue
+            [IO.File]::Replace($tmpState,$MatchdayStateFile,$backupState,$true)
+            Remove-Item $backupState -Force -ErrorAction SilentlyContinue
           } else { [IO.File]::Move($tmpState,$MatchdayStateFile) }
           $MatchdayJson = $req.body
           $hs = [string]$probe.homeScore
