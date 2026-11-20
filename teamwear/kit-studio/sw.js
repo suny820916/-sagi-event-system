@@ -1,4 +1,4 @@
-const CACHE='sagi-kit-v1-china-20261120-rc2-hotfix7';
+const CACHE='sagi-kit-v1-china-20261120-rc2-hotfix8';
 const CORE=['./start.html','./index.html','./catalog.html','./quote.html','./order-history.html','./production-center.html','./delivery-center.html','./brand-mark.svg','./catalog-data.js','./cloud-sync.js'];
 const OPTIONAL=['./','./admin-import.html','./sync-settings.html','./assets.js','./sprite.js','./manifest.webmanifest','./brand-standard.html','./profit-center.html','./commercial-check.html','./release.json','./stable-qa.html','./stable-promotion.html'];
 async function cacheOne(cache,url){
