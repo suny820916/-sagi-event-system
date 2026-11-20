@@ -37,7 +37,9 @@ export class FileMatchStore {
 
   async _entries() {
     try {
-      return parseJournal(await readFile(this.journalPath, "utf8"));
+      const text = await readFile(this.journalPath, "utf8");
+      if (text.length && !text.endsWith("\n")) this.journalError = "TORN_JOURNAL_REQUIRES_REPAIR";
+      return parseJournal(text);
     } catch (error) {
       if (error.code === "ENOENT") return [];
       throw error;
@@ -76,6 +78,7 @@ export class FileMatchStore {
     try {
       const existing = await readFile(this.journalPath, "utf8");
       if (existing.length && !existing.endsWith("\n")) {
+        this.journalError = "TORN_JOURNAL_REQUIRES_REPAIR";
         throw new Error("TORN_JOURNAL_REQUIRES_REPAIR");
       }
     } catch (error) {
@@ -91,8 +94,8 @@ export class FileMatchStore {
     // A single fsynced record holds the complete state, including commands
     // which do not create match events (clock, score correction, etc).
     const entry = { kind: "STATE_COMMIT", revision: state.revision, event, state };
-    const handle = await open(this.journalPath, "a");
     try {
+      const handle = await open(this.journalPath, "a");
       try {
         await handle.writeFile(JSON.stringify(entry) + "\n", "utf8");
         await handle.sync();
