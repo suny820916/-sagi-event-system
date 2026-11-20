@@ -9,8 +9,6 @@ services:
     startCommand: gunicorn -w 1 -k gthread --threads 2 -b 0.0.0.0:$PORT --timeout 900 app:app
     healthCheckPath: /health
     autoDeployTrigger: commit
-    domains:
-      - api.sagisports.cn
     envVars:
       - key: PYTHON_VERSION
         value: "3.12.8"

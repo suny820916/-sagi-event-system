@@ -1086,7 +1086,7 @@ Unbelievable finish."></textarea>
 
 <script>
 (()=>{'use strict';
-const SAGI_DOWN_BUILD='V4.3.2.2';
+const SAGI_DOWN_BUILD='V4.3.2.3';
 document.documentElement.dataset.sagiDownBuild=SAGI_DOWN_BUILD;
 const BTCH_PUBLIC='https://btch-downloader-api-green.vercel.app';
 const DOWNLOAD_ROUTER_VERSION='3.0';
@@ -1298,8 +1298,7 @@ async function tryBtchBrowser(sourceUrl,handoff,timeoutMs=7000){
 async function probeDownloadCloud(timeoutMs=4500){
   const healthCtl=new AbortController(),healthTimer=setTimeout(()=>healthCtl.abort(),timeoutMs);
   try{
-    clearTimeout(healthTimer);
-    const r=await resolveCaptionCloud(timeoutMs);
+    const r=await fetch(CAPTION_CLOUD+'/health',{cache:'no-store',signal:healthCtl.signal});
     if(!r.ok)return{ready:false,reason:'health_'+r.status};
     const health=await r.json();
     STUDIO.cloudHealth=health;
@@ -1529,7 +1528,7 @@ const SCENE_SEMANTIC_TERMS={
  defense:['防守','回防','落位','保护','封堵','压迫','外压','逼抢','低位','defend','defense','press'],
  attack:['进攻','推进','前插','套边','控球','组织','attack','build up','build-up'],
  transition:['转换','反击','丢球','抢断','由攻转守','由守转攻','transition','counter'],
- formation:['阵型','站位','结构','四后卫','三后卫','圣诞树','433','4322','formation','shape'],
+ formation:['阵型','站位','结构','四后卫','三后卫','圣诞树','433','4323','formation','shape'],
  movement:['移动','横移','跑动','轮转','拉扯','回撤','前压','外压','movement','shift','move'],
  pass:['传球','短传','出球','转移','直塞','回传','倒脚','pass','passing'],
  shot:['射门','打门','远射','禁区','shot','finish','finishing'],
@@ -1817,7 +1816,7 @@ function meaningIntegrity(source,out){
  return required?Math.round(kept/required*100):100
 }
 const MEANING_CRITICAL_GROUPS={
- formation:['4322','4-3-2-1','433','圣诞树','阵型','站位','结构'],
+ formation:['4323','4-3-2-1','433','圣诞树','阵型','站位','结构'],
  attack:['进攻','推进','前插','套边','控球','组织'],
  defense:['防守','回防','落位','保护','封堵','压迫','逼抢','低位'],
  midfield:['中场','三中场','后腰','前腰','双前腰','中路'],
@@ -1919,7 +1918,7 @@ function compressLogicUnit(text,budget){
  let s=preserveRelationSkeleton(text);if(narrationCharCount(s)<=budget)return s;
  const clauses=s.split(/(?<=[，；：])/).map(x=>x.trim()).filter(Boolean);
  if(clauses.length<=1)return s; // Never hard-cut a single proposition.
- const relational=/因为|所以|因此|但是|但|而|如果|当|只有|同时|意味着|一旦|进攻|防守|优点|缺点|问题|结果|目的|核心|关键|中场|边路|边后卫|后腰|前腰|横移|前压|回撤|压迫|逼抢|推进|转换|反击|传球|站位|空间|4322|433|圣诞树/;
+ const relational=/因为|所以|因此|但是|但|而|如果|当|只有|同时|意味着|一旦|进攻|防守|优点|缺点|问题|结果|目的|核心|关键|中场|边路|边后卫|后腰|前腰|横移|前压|回撤|压迫|逼抢|推进|转换|反击|传球|站位|空间|4323|433|圣诞树/;
  const must=clauses.map((x,i)=>({x,i,must:relational.test(x)||i===0||i===clauses.length-1,chars:narrationCharCount(x)}));
  let keep=must.filter(x=>x.must);
  let total=keep.reduce((n,x)=>n+x.chars,0);
@@ -2144,7 +2143,7 @@ function semanticTightenPhrase(text){
   [/但它最大的风险同样来自边路[，,]?如果近侧中场横移慢了一步[，,]?边后卫可能面对对方边锋的一打一/g,'但风险在边路；如果中场横移慢，边后卫就可能陷入一对一'],
   [/圣诞树的优势是中路控制力强、球员之间距离短[，,]?而且前腰可更自由地发挥创造力/g,'圣诞树优势是中路控制强、距离短、前腰更自由'],
   [/它的缺点是边路覆盖压力大[，,]?对中场的比赛阅读能力和体能要求都高/g,'缺点是边路覆盖压力大，对中场阅读和体能要求高'],
-  [/所以同样摆出?一个4322[，,]?不同的球员会踢出完全不同的效果/g,'所以同样4322会因球员不同产生不同效果'],
+  [/所以同样摆出?一个4323[，,]?不同的球员会踢出完全不同的效果/g,'所以同样4323会因球员不同产生不同效果'],
   [/圣诞树成为经典靠的是球员之间的理解、移动和执行/g,'圣诞树成为经典靠理解、移动和执行'],
   [/近侧边后卫/g,'边后卫'],[/近侧中场/g,'中场'],
   [/迅速向外侧移动压迫/g,'迅速外压'],[/向外侧移动压迫/g,'外压'],
@@ -3165,33 +3164,7 @@ async function ensureCaptionModule(){
  STUDIO.captionModule=mod;
  return STUDIO.captionModule
 }
-const CAPTION_CLOUD_PRIMARY='https://api.sagisports.cn';
-const CAPTION_CLOUD_FALLBACK='https://sagi-cloud-bridge-suny820916.onrender.com';
-const CAPTION_CLOUD_CANDIDATES=[CAPTION_CLOUD_PRIMARY,CAPTION_CLOUD_FALLBACK];
-let CAPTION_CLOUD=(()=>{try{const s=localStorage.getItem('sagi_cloud_base_v2');return CAPTION_CLOUD_CANDIDATES.includes(s)?s:CAPTION_CLOUD_PRIMARY}catch(e){return CAPTION_CLOUD_PRIMARY}})();
-
-function captionCloudName(base){
-  return base===CAPTION_CLOUD_PRIMARY?'SAGI API':'Render 备用线'
-}
-async function resolveCaptionCloud(timeoutMs=5500){
-  const ordered=[CAPTION_CLOUD,...CAPTION_CLOUD_CANDIDATES].filter((x,i,a)=>x&&a.indexOf(x)===i);
-  let lastError='';
-  for(const base of ordered){
-    const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),timeoutMs);
-    try{
-      const r=await fetch(base+'/health',{cache:'no-store',signal:ctl.signal});
-      clearTimeout(timer);
-      if(!r.ok){lastError=captionCloudName(base)+' HTTP '+r.status;continue}
-      CAPTION_CLOUD=base;
-      try{localStorage.setItem('sagi_cloud_base_v2',base)}catch(e){}
-      return r
-    }catch(e){
-      clearTimeout(timer);
-      lastError=e?.name==='AbortError'?(captionCloudName(base)+' 超时'):(captionCloudName(base)+' 不可达')
-    }
-  }
-  throw new Error(lastError||'SAGI 云端不可达')
-}
+const CAPTION_CLOUD='https://sagi-cloud-bridge-suny820916.onrender.com';
 
 function setCloudCaptionStatus(t){const e=q('captionCloudStatus');if(e)e.textContent='云端：'+t}
 
@@ -3208,8 +3181,7 @@ async function wakeCaptionCloud(force=false){
    const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),90000);
    let healthResp;
    try{
-     clearTimeout(timer);
-     healthResp=await resolveCaptionCloud(5500);
+     healthResp=await fetch(CAPTION_CLOUD+'/health',{cache:'no-store',signal:ctl.signal});
    }catch(e){
      clearTimeout(timer);
      throw new Error(e?.message||'SAGI API 无法连接')
@@ -4237,7 +4209,7 @@ async function ensureFFmpeg(){
  // iPhone/Safari: class worker must be same-origin. The stock bundled worker can
  // resolve blob: core URLs as webpack module ids and throw "Cannot find module blob:...".
  // SAGI's raw module worker uses the browser's native dynamic import instead.
- const classWorkerURL=new URL('./sagi-ffmpeg-worker.js?v=4322',window.location.href).href;
+ const classWorkerURL=new URL('./sagi-ffmpeg-worker.js?v=4323',window.location.href).href;
  const core='https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd';
  const coreURL=await toBlobURLRemote([core+'/ffmpeg-core.js','https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd/ffmpeg-core.js'],'text/javascript');
  const wasmURL=await toBlobURLRemote([core+'/ffmpeg-core.wasm','https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd/ffmpeg-core.wasm'],'application/wasm');
@@ -6450,11 +6422,11 @@ if('serviceWorker' in navigator){
  navigator.serviceWorker.addEventListener('controllerchange',()=>{
   if(swReloaded)return;swReloaded=true;
   try{
-   const key='sagi_sw_reload_v4322';
+   const key='sagi_sw_reload_v4323';
    if(sessionStorage.getItem(key)!=='1'){sessionStorage.setItem(key,'1');location.reload()}
   }catch(e){location.reload()}
  });
- navigator.serviceWorker.register('./sagi-down-sw.js?v=4322',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})
+ navigator.serviceWorker.register('./sagi-down-sw.js?v=4323',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})
 }
 window.addEventListener('DOMContentLoaded',()=>setTimeout(applySagiModuleMode,0));
 })();
