@@ -2483,7 +2483,7 @@ async function syncMatchProjectsFromBridge(opts={}){
   }catch(e){
    try{const state=await lanJson('/api/matchday?projectLoad='+Date.now());remoteRead=true;remoteList=Array.isArray(state&&state.__sagiProjects)?state.__sagiProjects:[];remoteActive=String(state&&state.__sagiActiveProjectId||'').trim()}catch(_){}
   }
-  const remoteAuthoritative=remoteRead&&(remoteSchema==='SAGI_MATCH_PROJECTS_V2'||remoteStamp>0||remoteList.length>0||!!remoteActive);
+  const remoteAuthoritative=remoteRead&&(remoteStamp>0||remoteList.length>0||!!remoteActive);
   const merged=remoteAuthoritative?remoteList.slice(0,20):mergeMatchProjects(remoteList,local);
   putMatchProjects(merged);matchProjectsBridgeStamp=Math.max(matchProjectsBridgeStamp,remoteStamp);
   if(activeMatchProjectId&&!merged.some(p=>String(p.id)===String(activeMatchProjectId))){activeMatchProjectId='';activeMatchProjectSavedAt=0}
@@ -2524,7 +2524,7 @@ async function saveMatchProject(){
   let list=getMatchProjects();const same=list.findIndex(p=>p.name===name);if(same>=0){project.id=list[same].id;list.splice(same,1)}
   await dbPut('matchProject:'+project.id,project);list.unshift(project);putMatchProjects(list);activeMatchProjectId=project.id;activeMatchProjectSavedAt=project.savedAt;refreshProjectList(project.id);
   note('比赛项目已保存 · '+name+' · 本机已安全落盘');
-  persistMatchProjectsBridge(list,project.id).then(safe=>{if(!safe)note('Bridge 同步失败 · 本机项目不受影响')}).catch(()=>note('Bridge 同步失败 · 本机项目不受影响'))
+  const projectSafe=await persistMatchProjectsBridge(list,project.id).catch(()=>false);if(!projectSafe)note('Bridge 同步失败 · 本机项目不受影响')
  }finally{projectSaveBusy=false;if(btn){btn.disabled=false;btn.textContent='保存比赛项目'}}
 }
 function portablePlayer(p={},photo=''){
