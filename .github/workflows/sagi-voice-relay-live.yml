@@ -1,0 +1,31 @@
+name: SAGI VOICE Relay Live Probe
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/sagi-voice-relay-live.yml"
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe workers.dev health
+        run: |
+          set -euo pipefail
+          URL="https://sagi-voice-edge-relay.sg3544225.workers.dev/health"
+          echo "Probing $URL"
+          curl -i --fail --show-error --silent --retry 2 --connect-timeout 15 --max-time 45 "$URL" | tee /tmp/relay.txt
+          python - <<'PY'
+          import json
+          raw=open("/tmp/relay.txt","r",encoding="utf-8",errors="replace").read()
+          body=raw.split("\r\n\r\n")[-1].strip()
+          if not body.startswith("{"):
+              body=raw.split("\n\n")[-1].strip()
+          print("BODY:", body[:1000])
+          d=json.loads(body)
+          assert d.get("version")=="3.9.8", d
+          assert d.get("aiVoice") is True, d
+          assert d.get("voicePro") is True, d
+          print("SAGI VOICE RELAY LIVE: OK")
+          PY
