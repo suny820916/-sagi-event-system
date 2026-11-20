@@ -6,8 +6,10 @@ import {createLocalServer} from "../core/local-server.mjs";
 const dir=await mkdtemp(path.join(os.tmpdir(),"sagi-api-"));
 const meta={fixtureId:"api-test",home:"主队",away:"客队"},token="a".repeat(64);
 let app;
+let tick=1000;
+const clockNow=()=>tick;
 try{
-  app=await createLocalServer({dataDir:dir,meta,token});
+  app=await createLocalServer({dataDir:dir,meta,token,clockNow});
   const base=`http://127.0.0.1:${app.address.port}`;
   const get=(p,auth=token)=>fetch(base+p,{headers:auth?{authorization:`Bearer ${auth}`}:{}});
   const cmd=(body,auth=token)=>fetch(base+"/api/v1/commands",{method:"POST",headers:{authorization:`Bearer ${auth}`,"content-type":"application/json"},body:JSON.stringify(body)});
@@ -22,10 +24,24 @@ try{
   assert.equal(state.homeScore,1);assert.equal(state.revision,1);
   assert.equal((await cmd({commandId:"goal-2",type:"GOAL",side:"AWAY",expectedRevision:0})).status,409);
   assert.equal((await cmd({commandId:"invalid",type:"GOAL",side:"LEFT"})).status,400);
+  assert.equal((await cmd({commandId:"period",type:"SET_PERIOD",period:"1H"})).status,200);
+  assert.equal((await cmd({commandId:"clock",type:"SET_CLOCK",elapsedSeconds:120,running:true})).status,200);
+  tick+=2500;
+  state=(await(await get("/api/v1/state")).json()).state;
+  assert.equal(state.clock.elapsedSeconds,122);
+  assert.equal(state.revision,3);
+  assert.equal((await cmd({commandId:"yellow",type:"YELLOW",side:"HOME"})).status,200);
+  tick+=600;
+  state=(await(await get("/api/v1/state")).json()).state;
+  assert.equal(state.clock.elapsedSeconds,123);
   await app.close();app=null;
-  app=await createLocalServer({dataDir:dir,meta,token});
+  tick+=3600000;
+  app=await createLocalServer({dataDir:dir,meta,token,clockNow});
   const url=`http://127.0.0.1:${app.address.port}/api/v1/state`;
   state=(await(await fetch(url,{headers:{authorization:`Bearer ${token}`}})).json()).state;
-  assert.equal(state.homeScore,1);assert.equal(state.revision,1);
+  assert.equal(state.homeScore,1);assert.equal(state.revision,4);
+  assert.equal(state.clock.elapsedSeconds,122);
+  assert.equal(state.clock.running,false);
+  assert.equal(state.clockRecoveryPending,true);
   console.log("SAGI LOCAL SERVER SELFTEST PASS");
 }finally{if(app)await app.close();await rm(dir,{recursive:true,force:true})}
