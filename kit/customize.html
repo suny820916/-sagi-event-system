@@ -52,13 +52,13 @@ label{display:block;font-size:10px;color:#8d8d8d;margin:10px 0 5px}input,select,
     <h2>03 · 球员名单</h2>
     <label>姓名 / 号码 / 尺码</label>
     <textarea id="players" placeholder="每人一行，例如：&#10;阿力木 / 10 / L&#10;艾克拜尔 / 7 / XL&#10;王强 / 23 / M"></textarea>
-    <div class="note">也可以先只填数量，详细名单后续再补。正式下单前仍需确认最终尺码、印字和球队标识。</div>
+    <div class="note">也可以先只填数量，详细名单后续再补。当前页面不会把姓名、电话或名单上传到服务器；内容只保存在这台设备的浏览器草稿中。正式下单前仍需确认最终尺码、印字和球队标识。</div>
   </section>
 
   <section class="card full">
     <h2>04 · 生成定制需求</h2>
     <div class="out" id="out">填写上面的信息后，点击“生成定制单”。</div>
-    <div class="actions"><button class="btn primary" onclick="build()">生成定制单</button><button class="btn" onclick="copyOut()">复制内容</button><a class="btn" href="./catalog.html">继续选款</a></div>
+    <div class="actions"><button class="btn primary" onclick="build()">生成定制单</button><button class="btn" onclick="copyOut()">复制内容</button><button class="btn" onclick="clearDraft()">清空草稿</button><a class="btn" href="./catalog.html">继续选款</a></div>
   </section>
 </div>
 
@@ -76,7 +76,25 @@ const palette=[
 let chosen=0;
 const colors=document.getElementById("colors");
 palette.forEach((p,i)=>{const b=document.createElement("button");b.className="color"+(i===0?" on":"");b.innerHTML='<div class="sw" style="background:'+p[1]+'"></div>'+p[0];b.onclick=()=>{chosen=i;[...colors.children].forEach((x,n)=>x.classList.toggle("on",n===i))};colors.appendChild(b)});
-const qs=new URLSearchParams(location.search);if(qs.get("kit")&&["01A","01B"].includes(qs.get("kit")))document.getElementById("kit").value=qs.get("kit");
+const qs=new URLSearchParams(location.search);
+const fields=["kit","team","contact","phone","qty","socks","players"];
+function saveDraft(){
+ const data={chosen};
+ fields.forEach(id=>data[id]=document.getElementById(id).value);
+ localStorage.setItem("sagi-kit-custom-draft-v1",JSON.stringify(data));
+}
+function loadDraft(){
+ try{
+  const data=JSON.parse(localStorage.getItem("sagi-kit-custom-draft-v1")||"null");
+  if(!data)return;
+  fields.forEach(id=>{if(data[id]!=null)document.getElementById(id).value=data[id]});
+  if(Number.isInteger(data.chosen)&&palette[data.chosen]){chosen=data.chosen;[...colors.children].forEach((x,n)=>x.classList.toggle("on",n===chosen))}
+ }catch(e){}
+}
+loadDraft();
+if(qs.get("kit")&&["01A","01B"].includes(qs.get("kit")))document.getElementById("kit").value=qs.get("kit");
+fields.forEach(id=>document.getElementById(id).addEventListener("input",saveDraft));
+colors.addEventListener("click",saveDraft);
 function val(id){return document.getElementById(id).value.trim()}
 function build(){
  const now=new Date(), code="SG-"+now.getFullYear()+String(now.getMonth()+1).padStart(2,"0")+String(now.getDate()).padStart(2,"0")+"-"+String(Math.floor(Math.random()*9000)+1000);
@@ -99,6 +117,13 @@ function build(){
  document.getElementById("out").textContent=lines.join("\n");
 }
 async function copyOut(){const t=document.getElementById("out").textContent;try{await navigator.clipboard.writeText(t);alert("已复制定制需求");}catch(e){alert("请长按选择并复制内容")}}
+function clearDraft(){
+ if(!confirm("确定清空这台设备上的 SAGI KIT 定制草稿吗？"))return;
+ localStorage.removeItem("sagi-kit-custom-draft-v1");
+ ["team","contact","phone","players"].forEach(id=>document.getElementById(id).value="");
+ document.getElementById("qty").value="15";document.getElementById("socks").selectedIndex=0;chosen=0;
+ [...colors.children].forEach((x,n)=>x.classList.toggle("on",n===0));document.getElementById("out").textContent="填写上面的信息后，点击“生成定制单”。";
+}
 </script>
 </body>
 </html>
