@@ -1987,13 +1987,18 @@ async function loadMatchProjectById(id,opts={}){
  projectLoadBusy=true;const btn=q('projectLoadBtn');if(btn){btn.disabled=true;btn.textContent='读取中…'}
  try{
   const p=await resolveMatchProject(id);if(!p)throw new Error('比赛项目不存在或已删除');
-  mdAuthorizeFixtureTakeover();
-  let stats=null;
+  if(!opts.remoteSync)mdAuthorizeFixtureTakeover();
+   let stats=null;
   if(p.core)stats=await applyPortableMatchProject(p);
   else{if(p.show)localStorage.setItem('sagi_show_director_v40',p.show);await restoreProjectAssets(p.assets);await load()}
-  if(p.matchday){localStorage.setItem('sagi_matchday_graphics_v47',p.matchday);localStorage.setItem('sagi_matchday_graphics_v42',p.matchday);await mdLoad({recoverBridge:false})}
-  else mdResetForProject();
   applyMatchMeta(projectMatchMeta(p),true);
+   // Passive selection first consults live authority rather than archived score.
+   const followedLive=opts.remoteSync&&await recoverMatchdayFromBridge(false,{preferNewest:true});
+   if(!followedLive){
+    if(p.matchday){localStorage.setItem('sagi_matchday_graphics_v47',p.matchday);localStorage.setItem('sagi_matchday_graphics_v42',p.matchday);await mdLoad({recoverBridge:false})}
+    else mdResetForProject();
+    applyMatchMeta(projectMatchMeta(p),true);
+   }
   if(p.vmix){localStorage.setItem('sagi_vmix_director_v42',p.vmix);vdLoad()}
   q('projectName').value=p.name;activeMatchProjectId=id;activeMatchProjectSavedAt=Number(p.savedAt)||Date.now();if(q('projectSelect'))q('projectSelect').value=id;matchReady=false;setupReadySignature='';const check=validateMatchSetup(true);refreshSetupReadyUI();refreshUXDashboard();syncMatchStage();refreshMatchdayUI();
   if(opts.publishSelection!==false){const safe=await persistMatchProjectsBridge(getMatchProjects(),id).catch(()=>false);if(!safe)note('当前比赛项目 Bridge 同步失败 · 本机仍可继续')}
@@ -2619,12 +2624,13 @@ function mdPassiveSyncActive(){
  return !!(matchReady||matchModeActive||matchdayState.scoreboardVisible||matchdayState.clockRunning||Number(matchdayState.revision)>0)
 }
 async function mdConsistencyCheck(force=false){
- if(mdConsistencyBusy||mdPendingPublishes>0||(!force&&!mdPassiveSyncActive()))return false;
+ if(mdConsistencyBusy||projectLoadBusy||mdPendingPublishes>0||(!force&&!mdPassiveSyncActive()))return false;
  mdConsistencyBusy=true;
  try{
   mdRecoveryMetrics.passivePolls++;
   const remote=await lanJson('/api/matchday?consistency='+Date.now()),sameFixture=remote&&mdBridgeMatchesCurrent(remote);
-  if(!remote||!remote.commandId){mdLastConsistencyState='BRIDGE_EMPTY';mdLastConsistencyAt=Date.now();return false}
+  if(projectLoadBusy||mdPendingPublishes>0)return false;
+   if(!remote||!remote.commandId){mdLastConsistencyState='BRIDGE_EMPTY';mdLastConsistencyAt=Date.now();return false}
   if(!sameFixture){mdLastConsistencyState='FIXTURE_MISMATCH';mdLastConsistencyAt=Date.now();return false}
   const remoteRevision=Math.max(0,Number(remote.revision)||0);
   const localRevision=Math.max(0,Number(matchdayState.revision)||0,Number(mdLastAckRevision)||0);
