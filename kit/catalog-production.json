@@ -1,5 +1,5 @@
 {
-  "version": "2.7",
+  "version": "2.8",
   "production_master": "原图册对应页 → 精确还原版型/纹路/拼接位置 → 只换 SAGI A+红点标识和标准六配色 → 对照验收 → 通过后发布 → 下一款",
   "standard_colorways": [
     "藏蓝红金",
@@ -188,7 +188,7 @@
         "sleeve": "短袖，主样粉色袖口，无独立粗对比袖口带",
         "legacy_marks": "前胸左侧小字、右侧徽章、中胸 LANTU 字样；后背 LANTU 字样与号码分离处理；短裤旧品牌标记"
       },
-      "next": "Use polygon masks constrained to actual garment panels and mark pixels; reconstruct diagonal texture under front chest print; use approved A+red dot master; render all six and visually inspect before release.",
+      "next": "Execute V4 visual QA immediately; if any collar/texture/brand/shorts/colorway defect remains, continue repair→rerender→QA loops in the same run. Publish only after every QA field passes.",
       "qa": {
         "source_page_visual": "passed",
         "cut": "pending",
@@ -202,14 +202,14 @@
         "designer_entry": "pending"
       },
       "draft": "source/03/recolor-draft.html",
-      "draft_status": "unapproved_corrected_mask_prototype",
+      "draft_status": "v4_multi_channel_cleanup_unapproved",
       "source_page_recheck": {
         "pages": 30,
         "page": 9,
         "source": "latest uploaded PDF",
         "result": "matches repository source crop"
       },
-      "draft_revision": "8196253",
+      "draft_revision": "3fe87ef",
       "native_source": {
         "page": 9,
         "images": [
@@ -259,7 +259,15 @@
           "shorts base remains white in dark colorway"
         ],
         "release": false
-      }
+      },
+      "repair_pipeline_v4": [
+        "polygon-constrained shirt/front/back/shorts recolor",
+        "legacy-mark local texture reconstruction before recolor",
+        "shorts base follows primary colorway instead of remaining white",
+        "accent panels recolored independently",
+        "SAGI A+red-dot vector mark over cleaned brand positions",
+        "1160x680 six-colorway render target retained"
+      ]
     }
   },
   "source_atlas_status": "authoritative_uploaded_pdf_verified",
@@ -275,5 +283,13 @@
     "local_pdf_readable": true,
     "repository_01b_asset_restored": true
   },
-  "current_product": "03"
+  "current_product": "03",
+  "batch_acceleration": {
+    "mode": "multi_repair_loop_v4",
+    "source_manifest": "source/source-manifest.json",
+    "publication_order": "strict_sequential",
+    "ahead_of_time_preprocessing": "page mapping / manifests / QA scaffolds may be prepared for all remaining products",
+    "minimum_same_run_repair_cycles_before_reporting": 3,
+    "rule": "QA failure is not a hard blocker; auto-fix and rerender in the same run whenever tools allow"
+  }
 }
