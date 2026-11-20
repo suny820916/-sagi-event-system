@@ -483,10 +483,15 @@ while ($true) {
           Write-Host ("[STATE GUARD] Rejected stale/conflicting matchday write R" + $incomingRevision + " while current is R" + $currentRevision) -ForegroundColor Yellow
           Write-HttpResponse $stream 409 "application/json" '{"ok":false,"error":"STALE_MATCHDAY_REVISION"}'
         } else {
-          $MatchdayJson = $req.body
+          # Commit durable state before publishing it in memory or acknowledging HTTP success.
           $tmpState = $MatchdayStateFile + ".new"
-          [IO.File]::WriteAllText($tmpState,$MatchdayJson,(New-Object Text.UTF8Encoding($false)))
-          Move-Item $tmpState $MatchdayStateFile -Force
+          $bytes = (New-Object Text.UTF8Encoding($false)).GetBytes([string]$req.body)
+          $file = [IO.File]::Open($tmpState,[IO.FileMode]::Create,[IO.FileAccess]::Write,[IO.FileShare]::None)
+          try { $file.Write($bytes,0,$bytes.Length); $file.Flush($true) } finally { $file.Dispose() }
+          if ([IO.File]::Exists($MatchdayStateFile)) {
+            [IO.File]::Replace($tmpState,$MatchdayStateFile,$null)
+          } else { [IO.File]::Move($tmpState,$MatchdayStateFile) }
+          $MatchdayJson = $req.body
           $hs = [string]$probe.homeScore
           $as = [string]$probe.awayScore
           $vis = [string]$probe.scoreboardVisible
