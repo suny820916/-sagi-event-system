@@ -81,6 +81,9 @@ console.log('OPTIONAL_EXTERNAL_REFERENCES '+JSON.stringify(externalUrls.slice(0,
 // Audit visibility is informational; do not require remote dependencies to exist.
 check('External dependency audit produces a deterministic list',Array.isArray(externalUrls));
 check('No external scripts in live output',!/<script\b[^>]*\bsrc\s*=\s*["']https?:/i.test(output));
+check('Bridge rejects stale same-fixture revisions',bat.includes('STALE_MATCHDAY_REVISION')&&bat.includes('$staleRevision')&&bat.includes('Write-HttpResponse $stream 409'));
+check('Bridge rejects same-revision conflicting commands',bat.includes('$revisionConflict')&&bat.includes('$incomingCommand')&&bat.includes('$currentCommand'));
+check('Controller recovers immediately after stale revision rejection',control.includes("includes('LAN 409')")&&control.includes("recoverMatchdayFromBridge(false,{preferNewest:false,allowIdentityTakeover:false})"));
 check('Local event persistence exists',control.includes('mdPersist()')&&control.includes('mdRecordEvent('));
 if(failures.length){console.error('CHINA_LAN_PREFLIGHT_FAILED '+failures.join('; '));process.exit(1)}
 console.log('CHINA_LAN_PREFLIGHT_STATIC_PASS — physical offline soak still required');
