@@ -1,0 +1,66 @@
+name: SAGI VOICE Fallback Health
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "41 */12 * * *"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/sagi-voice-fallback-health.yml"
+
+concurrency:
+  group: sagi-voice-fallback-health
+  cancel-in-progress: false
+
+jobs:
+  render-fallback:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Test Render fallback with real audio
+        run: |
+          set -euo pipefail
+          BASE="https://sagi-cloud-bridge-suny820916.onrender.com"
+          ORIGIN="https://suny820916.github.io"
+
+          ACT=""
+          for i in 1 2 3 4 5; do
+            CODE="$(curl --silent --show-error               -H "Origin: $ORIGIN"               -H "Content-Type: application/json"               -d '{}'               -o /tmp/activate.json               -w '%{http_code}'               "$BASE/api/activate" || true)"
+            echo "activate_attempt=$i http=$CODE"
+            if [ "$CODE" = "200" ]; then
+              ACT="$(cat /tmp/activate.json)"
+              break
+            fi
+            sleep $((i*3))
+          done
+
+          test -n "$ACT"
+          TOKEN="$(python -c 'import json,sys; d=json.loads(sys.argv[1]); print(d.get("token",""))' "$ACT")"
+          test -n "$TOKEN"
+
+          BODY='{"text":"备用线路自检。比赛进入最后阶段，塔城队继续向前。","mode":"ai_male","voice_id":"","speed":1.0,"style":"football_pro","quality":"cinema"}'
+          STATUS="$(curl --silent --show-error             -H "Origin: $ORIGIN"             -H "Authorization: Bearer $TOKEN"             -H "Content-Type: application/json"             -d "$BODY"             -D /tmp/fallback.headers             -o /tmp/fallback.audio             -w '%{http_code}'             "$BASE/api/voice/preview")"
+
+          cat /tmp/fallback.headers
+          echo "http_status=$STATUS"
+          test "$STATUS" = "200"
+          SIZE="$(wc -c < /tmp/fallback.audio)"
+          echo "audio_bytes=$SIZE"
+          test "$SIZE" -gt 5000
+          grep -qi '^X-SAGI-Voice-Complete: 1' /tmp/fallback.headers
+          PROVIDER="$(awk -F': ' 'tolower($1)=="x-sagi-voice-provider"{gsub("\r","",$2);print $2}' /tmp/fallback.headers | tail -1)"
+          MODEL="$(awk -F': ' 'tolower($1)=="x-sagi-voice-model"{gsub("\r","",$2);print $2}' /tmp/fallback.headers | tail -1)"
+          test -n "$PROVIDER"
+          echo "fallback_provider=$PROVIDER"
+          echo "fallback_model=$MODEL"
+
+          {
+            echo "# SAGI VOICE Fallback Health"
+            echo ""
+            echo "- HTTP: $STATUS"
+            echo "- Bytes: $SIZE"
+            echo "- Provider: $PROVIDER"
+            echo "- Model: $MODEL"
+            echo "- Result: ✅ Render fallback generated real audio"
+          } >> "$GITHUB_STEP_SUMMARY"
