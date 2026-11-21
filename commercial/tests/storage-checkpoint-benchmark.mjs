@@ -95,6 +95,14 @@ try {
     assert.equal(await readFile(reopened.journalPath, 'utf8'), invalidJournal);
   }
   await writeFile(reopened.journalPath, validJournal);
+  // A cleanly truncated journal may still parse, but a newer surviving
+  // snapshot proves the journal has lost at least one committed revision.
+  const firstRecord = validJournal.slice(0, validJournal.indexOf('\n')+1);
+  await writeFile(reopened.journalPath, firstRecord);
+  await assert.rejects(new FileMatchStore(root).load(), /JOURNAL_BEHIND_SNAPSHOT/);
+  await assert.rejects(new FileMatchStore(root).commit(state), /JOURNAL_BEHIND_SNAPSHOT/);
+  assert.equal(await readFile(reopened.journalPath, 'utf8'), firstRecord);
+  await writeFile(reopened.journalPath, validJournal);
   // A torn compact record is ignored on recovery but blocks mutation.
   await appendFile(store.journalPath, '{"kind":"CLOCK_CHECKPOINT"');
   const torn = new FileMatchStore(root);
