@@ -335,3 +335,8 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Fresh stores now reject missing authoritative journals when either primary or backup snapshot exists; both load and mutation paths fail closed. Commits 10cf800, b52715a (regression).
 - Compatibility: snapshot-only imports/restores are no longer accepted implicitly. Restore a verified journal-inclusive backup or provide an explicit migration procedure. Empty/replaced journals and loss of all artifacts remain separate risks.
 - Verification: GitHub source writes succeeded; Node 22 is available but direct git access failed DNS resolution. Runtime and Windows CI results remain unverified. No new dependencies or on-disk format change. Prioritize executable test retrieval and LAN/vMix integration before more storage micro-optimizations.
+
+## 2026-11-21 — Recovery regression CI triage
+- Core run 44906947049 failed on both Windows and Ubuntu at snapshot-failure-selftest (HTTP 503 versus 200); six preceding runtime steps passed on each platform. Clock and storage benchmark were skipped. LAN run 44906926002 passed for 10cf800.
+- The test created a backup-path directory before the first journal commit, correctly triggering the new missing-journal guard. Removed that artificial backup while retaining the temporary snapshot directory fault injection (3f1e252). Production recovery guard unchanged.
+- Re-run core matrix and inspect benchmark before further persistence changes. Actual Windows/vMix and endurance certification remain open. No new runtime dependencies.
