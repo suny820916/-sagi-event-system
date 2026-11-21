@@ -1,0 +1,42 @@
+name: SAGI VOICE Safari Origin E2E
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/sagi-voice-safari-origin-e2e.yml"
+
+jobs:
+  safari:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Safari-like CORS + voice preview probe
+        run: |
+          set -euo pipefail
+          BASE="https://sagi-voice-edge-relay.sg3544225.workers.dev"
+          ORIGIN="https://suny820916.github.io"
+
+          echo "=== preflight ==="
+          curl -i --fail --show-error --silent -X OPTIONS             -H "Origin: $ORIGIN"             -H "Access-Control-Request-Method: POST"             -H "Access-Control-Request-Headers: authorization,content-type"             "$BASE/api/voice/preview" | tee /tmp/preflight.txt
+          grep -qi "access-control-allow-origin: $ORIGIN" /tmp/preflight.txt
+          grep -qi "access-control-allow-methods: GET, POST, OPTIONS" /tmp/preflight.txt
+
+          echo "=== activate ==="
+          ACT="$(curl --fail-with-body --show-error --silent             -H "Origin: $ORIGIN"             -H "Content-Type: application/json"             -d '{}'             "$BASE/api/activate")"
+          echo "$ACT"
+          TOKEN="$(python -c 'import json,sys; print(json.loads(sys.argv[1])["token"])' "$ACT")"
+
+          echo "=== status ==="
+          curl -i --fail-with-body --show-error --silent             -H "Origin: $ORIGIN"             -H "Authorization: Bearer $TOKEN"             "$BASE/api/voice/status" | tee /tmp/status.txt
+          grep -qi "access-control-allow-origin: $ORIGIN" /tmp/status.txt
+
+          echo "=== preview ==="
+          BODY='{"text":"塔城加油，这一场我们全力以赴。","mode":"ai_male","voice_id":"","speed":1.08,"style":"football_passion","quality":"cinema"}'
+          curl -i --fail-with-body --show-error --silent             -H "Origin: $ORIGIN"             -H "Authorization: Bearer $TOKEN"             -H "Content-Type: application/json"             -d "$BODY"             "$BASE/api/voice/preview"             -D /tmp/voice.headers -o /tmp/voice.bin
+          cat /tmp/voice.headers
+          grep -qi "access-control-allow-origin: $ORIGIN" /tmp/voice.headers
+          grep -qi "^content-type: audio/" /tmp/voice.headers
+          SIZE="$(wc -c < /tmp/voice.bin)"
+          echo "voice_bytes=$SIZE"
+          test "$SIZE" -gt 1000
+          echo "SAFARI ORIGIN E2E OK"
