@@ -63,8 +63,17 @@ export class FileMatchStore {
 
   async _lastCommit({ useCache = false } = {}) {
     const before = await this._journalFingerprint();
-    if (before === null && this.journalCache !== null)
-      throw new Error('JOURNAL_DISAPPEARED');
+    if (before === null) {
+      if (this.journalCache !== null) throw new Error('JOURNAL_DISAPPEARED');
+      // Snapshots are only produced after a journal commit. They cannot
+      // establish the latest clock or command history without that journal.
+      for (const file of [this.snapshotPath, this.backupPath]) {
+        let exists = false;
+        try { await stat(file); exists = true; }
+        catch (error) { if (error.code !== 'ENOENT') throw error; }
+        if (exists) throw new Error('JOURNAL_DISAPPEARED');
+      }
+    }
     if (useCache && before !== null && this.journalCache?.fingerprint === before)
       return structuredClone(this.journalCache.last);
     this.journalCache = null;
