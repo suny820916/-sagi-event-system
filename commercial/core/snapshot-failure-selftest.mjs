@@ -92,7 +92,8 @@ try {
   const store = new FileMatchStore(dir);
   engine = await createLocalServer({ store, meta });
   await assert.rejects(createLocalServer({dataDir: dir, meta}), /ENGINE_ALREADY_RUNNING_OR_RECOVERY_REQUIRED/);
-  await mkdir(store.backupPath);
+  // Do not create a backup before the first journal commit: that correctly
+  // triggers the missing-authoritative-journal recovery guard.
   // A directory at the temporary snapshot path makes snapshot writes fail.
   await mkdir(store.snapshotPath + '.tmp');
   const first = await send();
