@@ -273,7 +273,7 @@ function Read-HttpRequest($stream) {
     }
   }
 
-  if ($headerBytes.Count -eq 0) { return $null }
+  if ($headerBytes.Count -eq 0 -or $match -ne 4) { return $null }
 
   $headerText = [Text.Encoding]::ASCII.GetString($headerBytes.ToArray())
   $lines = $headerText -split "\r\n"
@@ -297,7 +297,7 @@ function Read-HttpRequest($stream) {
 
   $len = 0
   if ($headers.ContainsKey("content-length")) { [void][int]::TryParse($headers["content-length"],[ref]$len) }
-  if ($len -gt 20971520) { throw "Request body too large" }
+  if ($len -lt 0 -or $len -gt 20971520) { throw "Invalid request body length" }
 
   $body = ""
   if ($len -gt 0) {
@@ -308,6 +308,7 @@ function Read-HttpRequest($stream) {
       if ($n -le 0) { break }
       $offset += $n
     }
+    if ($offset -ne $len) { throw "Incomplete request body" }
     $body = [Text.Encoding]::UTF8.GetString($bodyBytes,0,$offset)
   }
 
@@ -388,8 +389,10 @@ Write-Host "If Windows Firewall asks, allow PowerShell on Private networks." -Fo
 Write-Host "Keep this window open during the match." -ForegroundColor White
 Write-Host ""
 try {
+  if ($env:SAGI_BRIDGE_NO_AUTO_OPEN -ne "1") {
   Start-Process ("http://127.0.0.1:" + $Port + "/")
   Write-Host "[READY] PC Control Room opened automatically." -ForegroundColor Green
+  }
 } catch {
   Write-Host "[INFO] Open the PC CONTROL address manually." -ForegroundColor Yellow
 }
