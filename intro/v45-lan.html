@@ -1455,7 +1455,7 @@ function normalizeSide(value){
 function safePhoto(value,max=2097152){
   const s=String(value==null?'':value).trim();
   if(!s||s.length>Math.max(2048,Number(max)||2097152)) return '';
-  if(/^data:image\/(?:png|jpe?g|webp|gif);base64,/i.test(s)){
+  if(/^data:image\/(?:png|jpe?g|webp|gif);base64,/i.test(s)||/^data:image\/svg\+xml(?:;charset=utf-8)?,/i.test(s)){
     return /[\u0000-\u001f\u007f]/.test(s)?'':s;
   }
   if(/^https?:\/\/[^\s<>"']+$/i.test(s)) return s.slice(0,2048);
