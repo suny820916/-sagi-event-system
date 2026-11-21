@@ -42,6 +42,7 @@ try {
       assert.equal(applyCommand(recovered,goal).duplicate,true);
     }
   }
+  assert.ok((await stat(store.journalPath)).size - baselineBytes < 240 * 256, "compact checkpoint growth budget");
   const sorted = [...timings].sort((a,b)=>a-b);
   const percentile = p => sorted[Math.ceil(sorted.length*p)-1];
   console.log(JSON.stringify({checkpoints:timings.length,simulatedSeconds:3600,
@@ -49,6 +50,13 @@ try {
     p95Ms:percentile(.95),maxMs:sorted.at(-1)},null,2));
   assert.equal((await store.readJournal()).length,121);
   assert.ok((await stat(store.journalPath)).size > 65536, 'exercise multiple stream chunks');
+  // Reject a syntactically valid checkpoint for the wrong fixture.
+  const { readFile, writeFile } = await import('node:fs/promises');
+  const validJournal = await readFile(store.journalPath, 'utf8');
+  await appendFile(store.journalPath, JSON.stringify({kind:'CLOCK_CHECKPOINT',
+    fixtureId:'wrong', revision:state.revision, elapsedSeconds:3615})+'\n');
+  await assert.rejects(new FileMatchStore(root).load(), /INVALID_JOURNAL_CLOCK_CHECKPOINT/);
+  await writeFile(store.journalPath, validJournal);
   // A malformed complete record must not be hidden by later valid commits.
   await appendFile(store.journalPath, '{invalid json}\n', 'utf8');
   await assert.rejects(new FileMatchStore(root).load(), SyntaxError);
