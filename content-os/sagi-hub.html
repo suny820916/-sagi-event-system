@@ -15,7 +15,7 @@ body{min-height:100vh;padding:calc(18px + env(safe-area-inset-top)) 14px calc(28
 .hero{margin-top:16px;border:1px solid #31454d;border-radius:18px;padding:18px;background:linear-gradient(145deg,#152229,#0c1114)}.hero small{font-size:8px;color:#9aabaf;letter-spacing:1.4px}.hero h1{font-size:23px;line-height:1.18;margin:8px 0}.hero p{margin:0;color:#81949b;font-size:10px;line-height:1.55}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:11px}.tool{display:block;text-decoration:none;color:inherit;border:1px solid var(--line);border-radius:16px;padding:14px;background:linear-gradient(180deg,var(--card),#0b1012);min-height:150px;position:relative;overflow:hidden}.tool:active{transform:scale(.985)}.tool:before{content:"";position:absolute;width:90px;height:90px;border-radius:50%;right:-38px;top:-38px;background:radial-gradient(circle,rgba(215,181,104,.14),transparent 70%)}.tool .tag{font-size:7px;letter-spacing:1.1px;color:#82765a}.tool h2{font-size:15px;margin:8px 0 5px}.tool p{font-size:9px;line-height:1.5;color:#768a91;margin:0}.tool ul{padding:0;margin:10px 0 0;list-style:none;display:grid;gap:4px}.tool li{font-size:8px;color:#a1afb3}.tool li:before{content:"·";color:var(--gold);margin-right:5px}.tool strong{position:absolute;right:11px;bottom:11px;color:#c6ad6b;font-size:9px}
 .tool.voice{border-color:#584a2e}.tool.cut{border-color:#4a4430}.tool.subtitle{border-color:#394a65}.tool.image{border-color:#3d4c55}.tool.studio{border-color:#4a5766}
-.foot{margin-top:14px;text-align:center;color:#63767c;font-size:8px;line-height:1.5}
+.voiceStandalone{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:11px;border:1px solid #665630;border-radius:16px;padding:14px;background:linear-gradient(135deg,#1b170e,#0d1112);text-decoration:none;color:inherit}.voiceStandalone b{font-size:14px}.voiceStandalone span{display:block;color:#917d4d;font-size:8px;margin-top:4px}.voiceStandalone strong{color:#d8bd76;font-size:10px;white-space:nowrap}.foot{margin-top:14px;text-align:center;color:#63767c;font-size:8px;line-height:1.5}
 @media(max-width:430px){.grid{grid-template-columns:1fr}.tool{min-height:132px}}
 </style>
 </head>
@@ -24,20 +24,17 @@ body{min-height:100vh;padding:calc(18px + env(safe-area-inset-top)) 14px calc(28
   <div class="top"><div class="brand"><b>SAGI TOOLS</b><span>萨吉体育 · 手机内容生产工作台</span></div><span class="ver">V1.0</span></div>
   <section class="hero">
     <small>CHINA FIRST · MOBILE FIRST</small>
-    <h1>一个主屏，进入六个独立工具。</h1>
-    <p>每个模块单独升级、单独扩展、单独自检；底层文件、云端、AI、任务状态继续共用，避免功能互相影响。</p>
+    <h1>五个工具，一个独立配音应用。</h1>
+    <p>SAGI VOICE 已从 TOOLS 中独立，拥有固定网址和主屏幕入口；其余工具继续共用底层文件、云端与任务状态。</p>
   </section>
+
+  <a class="voiceStandalone" href="/voice/"><div><b>SAGI VOICE 已独立</b><span>固定网址 · 主屏幕安装 · 独立升级</span></div><strong>打开 VOICE →</strong></a>
 
   <div class="grid">
     <a class="tool down" href="./sagi-down.html?module=down&v=4326">
       <span class="tag">DOWNLOAD</span><h2>SAGI DOWN</h2>
       <p>社交平台素材下载与任务管理。</p>
       <ul><li>链接识别与下载</li><li>下载历史</li><li>文件整理 / 重命名</li></ul><strong>进入 →</strong>
-    </a>
-    <a class="tool voice" href="./sagi-down.html?module=voice&v=4326">
-      <span class="tag">VOICE PRO</span><h2>SAGI VOICE</h2>
-      <p>足球内容专用 AI 配音工作台。</p>
-      <ul><li>专业 / 电影级人声</li><li>激情 / 温情 / 感人</li><li>独立 WAV 导出 / 克隆声音</li></ul><strong>进入 →</strong>
     </a>
     <a class="tool cut" href="./sagi-down.html?module=cut&v=4326">
       <span class="tag">AI EDITOR</span><h2>SAGI SMART CUT</h2>

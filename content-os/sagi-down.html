@@ -699,7 +699,7 @@ AEK 2-3 皇马
     <div id="recreateStatus" class="status">可以先下载，再回来选择视频；也可以只用当前链接创建任务。</div>
   </section>
 
-  <section class="card voiceExportCard" id="sagiVoiceExport">
+  <section class="card voiceExportCard" id="sagiVoiceExport" style="display:none!important">
     <div class="voiceExportHead">
       <div><b>SAGI VOICE · 独立配音下载</b><span>不需要视频 · 粘贴文案 → AI配音 → 试听 → 单独保存 WAV</span></div>
       <span class="badge">VOICE</span>
@@ -1086,7 +1086,7 @@ Unbelievable finish."></textarea>
 
 <script>
 (()=>{'use strict';
-const SAGI_DOWN_BUILD='V4.3.2.6';
+const SAGI_DOWN_BUILD='V4.3.2.7';
 document.documentElement.dataset.sagiDownBuild=SAGI_DOWN_BUILD;
 const BTCH_PUBLIC='https://btch-downloader-api-green.vercel.app';
 const DOWNLOAD_ROUTER_VERSION='3.0';
@@ -1108,6 +1108,7 @@ function sagiModuleMode(){
 function sagiShow(el,yes){if(el)el.classList.toggle('moduleHidden',!yes)}
 function applySagiModuleMode(){
  const mode=sagiModuleMode();if(!mode)return;
+ if(mode==='voice'){location.replace('/voice/');return;}
  const meta=SAGI_MODULES[mode];
  q('moduleModeBar')?.classList.add('show');
  if(q('moduleModeTitle'))q('moduleModeTitle').textContent=meta.title;
