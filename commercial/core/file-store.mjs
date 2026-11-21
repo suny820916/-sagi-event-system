@@ -61,6 +61,15 @@ export class FileMatchStore {
           if (!line.trim()) continue;
           const entry = JSON.parse(line);
           if (entry.kind === "STATE_COMMIT") last = entry;
+          else if (entry.kind === "CLOCK_CHECKPOINT") {
+            if (!last || entry.fixtureId !== last.state.fixtureId ||
+                entry.revision !== last.revision || last.state.clock.running !== true ||
+                !Number.isSafeInteger(entry.elapsedSeconds) ||
+                entry.elapsedSeconds < last.state.clock.elapsedSeconds)
+              throw new Error("INVALID_JOURNAL_CLOCK_CHECKPOINT");
+            last = { ...last, state: { ...last.state,
+              clock: { ...last.state.clock, elapsedSeconds: entry.elapsedSeconds } } };
+          }
         }
       }
     } catch (error) {
@@ -125,6 +134,7 @@ export class FileMatchStore {
         const prior = hydrateMatchState(lastCommit.state);
         if (state.revision !== prior.revision || !prior.clock.running || !state.clock.running ||
             state.clock.elapsedSeconds < prior.clock.elapsedSeconds ||
+            JSON.stringify({...prior.clock, elapsedSeconds: 0}) !== JSON.stringify({...state.clock, elapsedSeconds: 0}) ||
             JSON.stringify({...prior, clock: null}) !== JSON.stringify({...state, clock: null}))
           throw new Error("INVALID_CLOCK_CHECKPOINT");
       } else {
@@ -135,7 +145,10 @@ export class FileMatchStore {
     if (checkpoint && !lastCommit) throw new Error("CHECKPOINT_REQUIRES_COMMIT");
     // A single fsynced record holds the complete state, including commands
     // which do not create match events (clock, score correction, etc).
-    const entry = { kind: "STATE_COMMIT", revision: state.revision, event, state };
+    const entry = checkpoint
+      ? { kind: "CLOCK_CHECKPOINT", fixtureId: state.fixtureId,
+          revision: state.revision, elapsedSeconds: state.clock.elapsedSeconds }
+      : { kind: "STATE_COMMIT", revision: state.revision, event, state };
     try {
       const handle = await open(this.journalPath, "a");
       try {
@@ -186,7 +199,7 @@ export class FileMatchStore {
   async readJournal() {
     await this.init();
     return (await this._entries()).map((entry) =>
-      entry.kind === "STATE_COMMIT" ? entry.event : entry
+      entry.kind === "CLOCK_CHECKPOINT" ? null : entry.kind === "STATE_COMMIT" ? entry.event : entry
     ).filter(Boolean);
   }
 }
