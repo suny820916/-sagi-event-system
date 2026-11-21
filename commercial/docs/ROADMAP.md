@@ -374,3 +374,8 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Added exclusive local file cue claims using hashed validated IDs and fsync before output (9c5bf7a). Executor optionally reserves a cue before any output (9872e15); duplicate claims suppress replay across instances; storage errors block output.
 - Extended matrix-covered executor self-test with concurrent duplicate claims, fresh instance duplicate and storage failure (9c3510f). Runtime results not yet verified.
 - This is at-most-once claim admission, not confirmed delivery. Claims remain after failed or cancelled output; never automatically delete or replay them. Directory metadata durability under sudden power loss, storage loss, bounded retention, fixture-namespaced IDs, unresolved-cue operator reconciliation and global single-director ownership still require validation. Optional claim injection is not yet wired into the production shell. No new dependencies; main unchanged.
+
+## 2026-11-22 — Confirmed presentation output boundary
+- Added full-screen input switching adapter prototype with explicit graphic/program key allowlists, single Cut attempt and active-input readback deadline (829cf98). HTTP success alone cannot confirm output.
+- Added executor integration regression for complete intro, wrong input, timeout, cancellation and no blind retry (ba52fd1); wired to Windows/Linux director CI (ee30751).
+- Runtime and CI results not observed. Existing vMix transport binding, discovery-backed key mapping, bounded abort-aware transport, manual takeover detection, actual graphics and hardware verification remain pending. Readback confirms active input only, not rendered pixels or audio. This is not overlay support. No new dependencies; main untouched.
