@@ -9,6 +9,15 @@ jobs:
   probe:
     runs-on: ubuntu-latest
     steps:
+      - name: Probe GitHub Pages canonical behavior
+        run: |
+          set -euo pipefail
+          URL='https://suny820916.github.io/-sagi-event-system/voice/'
+          curl -L --silent --show-error --max-time 30 -o /tmp/page.html -D /tmp/page.headers -w 'effective_url=%{url_effective}\nhttp_code=%{http_code}\n' "$URL"
+          grep -Ei '^(location|content-type):' /tmp/page.headers || true
+          head -c 120 /tmp/page.html || true
+          echo
+
       - name: Check Render credential presence only
         env:
           RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
