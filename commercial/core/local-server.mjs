@@ -12,9 +12,10 @@ function send(res,status,data){const body=JSON.stringify(data);res.writeHead(sta
 async function readJson(req){let size=0;const chunks=[];for await(const chunk of req){size+=chunk.length;if(size>65536)throw new Error("PAYLOAD_TOO_LARGE");chunks.push(chunk)}const data=JSON.parse(Buffer.concat(chunks).toString("utf8"));if(!data||typeof data!=="object"||Array.isArray(data))throw new Error("INVALID_BODY");return data}
 
 /** Local-first authoritative match API. Bind loopback unless LAN is explicitly configured. */
-export async function createLocalServer({dataDir,meta,host="127.0.0.1",port=0,token=randomBytes(32).toString("hex"),vmixAdapter=null,clockNow,store=dataDir?new FileMatchStore(dataDir):null}={}){
+export async function createLocalServer({dataDir,meta,host="127.0.0.1",port=0,token=randomBytes(32).toString("hex"),vmixAdapter=null,clockNow,checkpointIntervalMs=15000,store=dataDir?new FileMatchStore(dataDir):null}={}){
   if(!store)throw new Error("STORE_REQUIRED");
   if(typeof token!=="string"||token.length<32)throw new Error("WEAK_TOKEN");
+  if(!Number.isSafeInteger(checkpointIntervalMs)||checkpointIntervalMs<0)throw new Error("INVALID_CHECKPOINT_INTERVAL");
   await store.init();
   const ownership = path.join(store.rootDir, "match-engine.lock");
   try { await mkdir(ownership); } catch (error) {
@@ -28,11 +29,27 @@ export async function createLocalServer({dataDir,meta,host="127.0.0.1",port=0,to
   const clock=createMatchClock(state.clock, clockNow ? {now:clockNow} : {});
   const liveState=()=>{const {recoveryPending,...currentClock}=clock.read();return {...state,clock:currentClock,clockRecoveryPending:recoveryPending}};
   let queue=Promise.resolve();
+  let checkpointWarning=null;
+  let checkpointPending=false;
+  const checkpoint=()=>{
+    if(checkpointPending)return queue;
+    checkpointPending=true;
+    const work=queue.then(async()=>{
+      const current=liveState();
+      if(store.journalError || !current.clock.running || current.clock.elapsedSeconds<=state.clock.elapsedSeconds)return;
+      delete current.clockRecoveryPending;
+      await store.checkpointClock(current);
+      state=current;
+      checkpointWarning=null;
+    });
+    queue=work.catch(()=>{checkpointWarning="CLOCK_CHECKPOINT_FAILED"}).finally(()=>{checkpointPending=false});
+    return queue;
+  };
   const server=http.createServer(async(req,res)=>{
     const pathname=new URL(req.url??"/","http://localhost").pathname;
     if(pathname==="/health"&&req.method==="GET")return send(res,store.journalError?503:200,{ok:!store.journalError,service:"sagi-local-engine",revision:state.revision,recoveryRequired:!!store.journalError});
     if(!safeEqual(req.headers.authorization,`Bearer ${token}`))return send(res,401,{error:"UNAUTHORIZED"});
-    if(pathname==="/api/v1/diagnostics"&&req.method==="GET")return send(res,200,{revision:state.revision,recoveryRequired:!!store.journalError,journalWarning:store.journalError?"JOURNAL_RESTART_REQUIRED":null,snapshotWarning:store.snapshotError?"SNAPSHOT_FAILED":null});
+    if(pathname==="/api/v1/diagnostics"&&req.method==="GET")return send(res,200,{revision:state.revision,recoveryRequired:!!store.journalError,journalWarning:store.journalError?"JOURNAL_RESTART_REQUIRED":null,clockCheckpointWarning:checkpointWarning,snapshotWarning:store.snapshotError?"SNAPSHOT_FAILED":null});
     if(pathname==="/api/v1/state"&&req.method==="GET")return send(res,200,{state:liveState()});
     if(pathname==="/api/v1/vmix/status"&&req.method==="GET"){
       if(!vmixAdapter)return send(res,503,{ok:false,code:"VMIX_NOT_CONFIGURED"});
@@ -66,10 +83,14 @@ export async function createLocalServer({dataDir,meta,host="127.0.0.1",port=0,to
     return send(res,404,{error:"NOT_FOUND"})
   });
   await new Promise((resolve,reject)=>{server.once("error",reject);server.listen(port,host,resolve)});
+  const timer=checkpointIntervalMs ? setInterval(checkpoint,checkpointIntervalMs) : null;
+  timer?.unref();
   let closing;
   return {server,token,address:server.address(),close:()=>closing ??= (async()=>{
+    if(timer)clearInterval(timer);
     await new Promise((resolve,reject)=>server.close(err=>err?reject(err):resolve()));
     await queue;
+    await checkpoint();
     await rmdir(ownership);
   })()};
   } catch (error) {
