@@ -29,3 +29,28 @@ assert(long.history.length===28&&!long.finished&&p.snapshot(long).currentRound==
 const restored=p.normalizeState(JSON.parse(JSON.stringify(long)));assert(restored.history.length===28&&p.nextSide(restored)==='HOME','history restore changed state');
 const dirty=p.normalizeState({history:[{kickId:'dup',side:'HOME',result:'GOAL'},{kickId:'dup',side:'HOME',result:'GOAL'}]});assert(dirty.history.length===1,'duplicate persisted history not normalized');
 console.log('SAGI V4.33 PENALTY CORE PASS',{history:long.history.length,round:p.snapshot(long).currentRound});
+
+ // Exhaustively verify all reachable regulation outcomes for both starting sides.
+ for(const rounds of [3,5])for(const firstSide of ['HOME','AWAY']){
+  let visited=0;
+  function walk(state){
+   visited++;
+   const q=p.snapshot(state),h=q.homeAttempts,a=q.awayAttempts,H=q.homeGoals,A=q.awayGoals;
+   const expected=H>A+Math.max(0,rounds-a)?'HOME':A>H+Math.max(0,rounds-h)?'AWAY':'';
+   assert(q.winner===expected,'regulation winner mismatch '+JSON.stringify(q));
+   if(q.finished){const z=p.applyKick(state,{kickId:'after-finish',side:firstSide,result:'GOAL'});assert(!z.accepted&&z.state.history.length===state.history.length,'finished shootout mutated');return;}
+   if(h===rounds&&a===rounds)return;
+   const side=state.history.length%2===0?firstSide:firstSide==='HOME'?'AWAY':'HOME';
+   assert(q.nextSide===side,'alternation mismatch');
+   for(const result of ['GOAL','MISS']){
+    const cmd={kickId:'ex-'+state.history.length,side,result};
+    const x=p.applyKick(state,cmd);assert(x.accepted&&!x.deduped,'legal kick refused');
+    const retry=p.applyKick(x.state,cmd);assert(retry.deduped&&retry.state.history.length===x.state.history.length,'retry duplicated kick');
+    const restore=p.normalizeState(JSON.parse(JSON.stringify(x.state)));assert(JSON.stringify(restore)===JSON.stringify(x.state),'restore drift');
+    const undo=p.undo(x.state);assert(JSON.stringify(undo.state.history)===JSON.stringify(state.history),'undo history drift');
+    walk(x.state);
+   }
+  }
+  walk(p.normalizeState({rounds,firstSide,started:true}));
+  console.log('regulation exhaustive PASS',{rounds,firstSide,visited});
+ }
