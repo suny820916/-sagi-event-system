@@ -2401,6 +2401,36 @@ function mdFormat(sec){sec=Math.max(0,Math.floor(Number(sec)||0));return String(
 function mdParse(s){const m=String(s||'').trim().match(/^(\d{1,3})(?::(\d{1,2}))?$/);if(!m)return null;return Math.max(0,(+m[1])*60+(+(m[2]||0)))}
 function mdRoster(side){stashActiveTeam();return (teamStore[side]&&teamStore[side].roster||[]).slice()}
 function mdPlayer(side,id){return mdRoster(side).find(p=>p.id===id)||null}
+function mdSafeEventPhoto(src){
+ const raw=String(src||'').trim();if(!raw)return'';
+ return window.SAGISignatureCore&&SAGISignatureCore.safePhoto?SAGISignatureCore.safePhoto(raw):raw
+}
+function mdCompressEventPhoto(src,max=900,quality=.8){
+ return new Promise(resolve=>{
+  const raw=String(src||'');if(!/^data:image\//i.test(raw)){resolve('');return}
+  const im=new Image(),done=v=>resolve(mdSafeEventPhoto(v)||'');
+  im.onerror=()=>resolve('');
+  im.onload=()=>{
+   try{
+    const ratio=Math.min(1,max/Math.max(1,im.width),max/Math.max(1,im.height)),w=Math.max(1,Math.round(im.width*ratio)),h=Math.max(1,Math.round(im.height*ratio)),cv=document.createElement('canvas');
+    cv.width=w;cv.height=h;const cx=cv.getContext('2d');cx.clearRect(0,0,w,h);cx.drawImage(im,0,0,w,h);done(cv.toDataURL('image/webp',quality))
+   }catch(e){resolve('')}
+  };
+  im.src=raw
+ })
+}
+async function mdResolvePlayerForEvent(side,id){
+ const p=id?mdPlayer(side,id):null;if(!p)return null;
+ let raw=String(p.photo||'');
+ if(!raw&&p.id){try{raw=String(await dbGet('photo:'+p.id)||'')}catch(e){}}
+ let photo=mdSafeEventPhoto(raw);
+ if(!photo&&raw&&/^data:image\//i.test(raw))photo=await mdCompressEventPhoto(raw);
+ if(photo){
+  p.photo=photo;
+  if(p.id)dbPut('photo:'+p.id,photo).catch(()=>{})
+ }
+ return p
+}
 function mdFillSelect(id,side,placeholder){
  const el=q(id);if(!el)return;const old=el.value,arr=mdRoster(side);el.innerHTML='<option value="">'+placeholder+'</option>'+arr.map(p=>'<option value="'+esc(p.id)+'">#'+esc(p.number)+' · '+esc(p.name)+' · '+esc(p.squadType==='SUB'?'替补':p.position||p.role)+'</option>').join('');if(arr.some(p=>p.id===old))el.value=old;
 }
@@ -3102,30 +3132,30 @@ async function mdCopyMarkers(){
  const list=(matchdayState.replayMarkers||[]).slice().reverse(),txt=list.map(x=>(x.at||'--:--')+' · '+(x.type||'KEY')+' · '+(x.label||'')+' · '+(x.score||'')).join('\n');
  try{await navigator.clipboard.writeText(txt);note('回放标记已复制')}catch(e){prompt('复制回放标记：',txt)}
 }
-function mdMacroEvent(type,side,playerId=''){
+async function mdMacroEvent(type,side,playerId=''){
  if(type==='GOAL'&&matchdayState.period==='PEN'){note('点球大战中 · 请使用点球罚进/罚失按钮');return false}
  const eventGateMs=type==='GOAL'?2500:1400;if(!mdAcceptOperatorEvent(['EVENT',type,side,playerId].join('|'),eventGateMs))return false;
- const p=playerId?mdPlayer(side,playerId):null,before={homeScore:matchdayState.homeScore,awayScore:matchdayState.awayScore,homeRedCards:matchdayState.homeRedCards,awayRedCards:matchdayState.awayRedCards};
- if(type==='GOAL'){if(side==='HOME')matchdayState.homeScore++;else matchdayState.awayScore++;matchdayState.scoreboardVisible=true}
+ const before={homeScore:matchdayState.homeScore,awayScore:matchdayState.awayScore,homeRedCards:matchdayState.homeRedCards,awayRedCards:matchdayState.awayRedCards};
+ if(type==='GOAL'){if(side==='HOME')matchdayState.homeScore++;else matchdayState.awayScore++;matchdayState.scoreboardVisible=true;refreshMatchdayUI()}
  if(type==='RED'){if(side==='HOME')matchdayState.homeRedCards=Math.min(5,(Number(matchdayState.homeRedCards)||0)+1);else matchdayState.awayRedCards=Math.min(5,(Number(matchdayState.awayRedCards)||0)+1)}
- const team=side==='HOME'?(q('matchHome').value||'HOME'):(q('matchAway').value||'AWAY');
+ const p=playerId?await mdResolvePlayerForEvent(side,playerId):null,team=side==='HOME'?(q('matchHome').value||'HOME'):(q('matchAway').value||'AWAY');
  const ev={type,side,team,player:p?{id:p.id,name:p.name,number:p.number,position:p.position||p.role,photo:p.photo||''}:{id:'',name:team,number:'',position:'',photo:''},at:mdFormat(mdNowSeconds()),...mdNextEventIdentity(type)};
  mdRecordEvent(ev,before);
  if(type==='GOAL'||type==='RED')mdAddReplayMarker(type,type==='GOAL'?'进球 · '+team:'红牌 · '+team);
- q('mdEventStatus').textContent=(type==='GOAL'?'进球':type==='YELLOW'?'黄牌':'红牌')+(p?' · #'+p.number+' '+p.name:' · '+team);
- gdRunEvent(ev,type==='GOAL'?5800:5000);refreshMatchdayUI();
+ q('mdEventStatus').textContent=(type==='GOAL'?'进球':type==='YELLOW'?'黄牌':'红牌')+(p?' · #'+p.number+' '+p.name:' · '+team)+(p&&p.photo?' · 📷':' · 无照片');
+ gdRunEvent(ev,type==='GOAL'?5800:5000);refreshMatchdayUI();return true
 }
-function mdEvent(type){
- const side=q('mdEventSide').value,pid=q('mdEventPlayer').value;if(!pid){note('请先选择球员');return}mdMacroEvent(type,side,pid)
+async function mdEvent(type){
+ const side=q('mdEventSide').value,pid=q('mdEventPlayer').value;if(!pid){note('请先选择球员');return false}return await mdMacroEvent(type,side,pid)
 }
 
-function mdShowGoalPlayer(){
- const side=q('mmEventSide').value,pid=q('mmEventPlayer').value,p=pid?mdPlayer(side,pid):null;
+async function mdShowGoalPlayer(){
+ const side=q('mmEventSide').value,pid=q('mmEventPlayer').value,p=pid?await mdResolvePlayerForEvent(side,pid):null;
  if(!p){note('请选择进球队员');return false}
  const team=side==='HOME'?(q('matchHome').value||'HOME'):(q('matchAway').value||'AWAY');
  const ev={type:'GOAL',displayOnly:true,side,team,player:{id:p.id,name:p.name,number:p.number,position:p.position||p.role,photo:p.photo||''},at:mdFormat(mdNowSeconds()),...mdNextEventIdentity('GOAL')};
- q('mdEventStatus').textContent='进球队员 · #'+p.number+' '+p.name;
- publishMatchday(ev);mdEventAutoClear(4600);return true
+ q('mdEventStatus').textContent='进球队员 · #'+p.number+' '+p.name+(p.photo?' · 📷':' · 无照片');
+ await publishMatchday(ev);mdEventAutoClear(4600);return true
 }
 async function instantReplayReturnLiveNow(){
  clearTimeout(instantReplayTimer);instantReplayTimer=null;
@@ -3136,14 +3166,14 @@ async function instantReplayReturnLiveNow(){
  irFinishBusy(ok?'已回到主画面':'无法回主画面 · 检查主机位',ok?'ok':'error');return !!ok
 }
 
-function mdSubstitutionByIds(side,offId,onId){
+async function mdSubstitutionByIds(side,offId,onId){
  if(!mdAcceptOperatorEvent(['SUB',side,offId,onId].join('|'),1000))return false;
- const off=mdPlayer(side,offId),on=mdPlayer(side,onId);if(!off||!on){note('请选择换下和换上球员');return}
+ const [off,on]=await Promise.all([mdResolvePlayerForEvent(side,offId),mdResolvePlayerForEvent(side,onId)]);if(!off||!on){note('请选择换下和换上球员');return false}
  const before={homeScore:matchdayState.homeScore,awayScore:matchdayState.awayScore,homeRedCards:matchdayState.homeRedCards,awayRedCards:matchdayState.awayRedCards};
  const ev={type:'SUB',side,team:side==='HOME'?(q('matchHome').value||'HOME'):(q('matchAway').value||'AWAY'),off:{id:off.id,name:off.name,number:off.number,position:off.position||off.role,photo:off.photo||''},on:{id:on.id,name:on.name,number:on.number,position:on.position||on.role,photo:on.photo||''},at:mdFormat(mdNowSeconds()),...mdNextEventIdentity('SUB')};
- mdRecordEvent(ev,before);q('mdEventStatus').textContent='换人 · #'+off.number+' '+off.name+' → #'+on.number+' '+on.name;gdRunEvent(ev,6200)
+ mdRecordEvent(ev,before);q('mdEventStatus').textContent='换人 · #'+off.number+' '+off.name+' → #'+on.number+' '+on.name;gdRunEvent(ev,6200);return true
 }
-function mdSubstitution(){mdSubstitutionByIds(q('mdSubSide').value,q('mdSubOff').value,q('mdSubOn').value)}
+async function mdSubstitution(){return await mdSubstitutionByIds(q('mdSubSide').value,q('mdSubOff').value,q('mdSubOn').value)}
 
 function mdMatchState(type){
  if(!mdAcceptOperatorEvent('MATCH_STATE|'+type,1200))return false;
@@ -3151,12 +3181,12 @@ function mdMatchState(type){
  const ev={type,home:q('matchHome').value||'HOME',away:q('matchAway').value||'AWAY',homeScore:matchdayState.homeScore,awayScore:matchdayState.awayScore,at:mdFormat(sec),...mdNextEventIdentity(type)};
  mdRecordEvent(ev,before);q('mdEventStatus').textContent=type==='HALF_TIME'?'半场图形已触发':'全场图形已触发';gdRunEvent(ev,type==='FULL_TIME'?9000:6500)
 }
-function mdMvp(){
+async function mdMvp(){
  const side=q('mdMvpSide').value,pid=q('mdMvpPlayer').value;
  if(!mdAcceptOperatorEvent(['MVP',side,pid].join('|'),1200))return false;
- const p=mdPlayer(side,pid);if(!p){note('请选择本场最佳球员');return}
+ const p=await mdResolvePlayerForEvent(side,pid);if(!p){note('请选择本场最佳球员');return false}
  const before={homeScore:matchdayState.homeScore,awayScore:matchdayState.awayScore},ev={type:'MVP',side,team:side==='HOME'?(q('matchHome').value||'HOME'):(q('matchAway').value||'AWAY'),player:{id:p.id,name:p.name,number:p.number,position:p.position||p.role,photo:p.photo||''},score:matchdayState.homeScore+'-'+matchdayState.awayScore,at:mdFormat(mdNowSeconds()),...mdNextEventIdentity('MVP')};
- mdRecordEvent(ev,before);q('mdEventStatus').textContent='MVP · #'+p.number+' '+p.name;gdRunEvent(ev,9000)
+ mdRecordEvent(ev,before);q('mdEventStatus').textContent='MVP · #'+p.number+' '+p.name+(p.photo?' · 📷':' · 无照片');gdRunEvent(ev,9000);return true
 }
 function applyOperatorRole(role,persist=true){
  matchOperatorRole=['FULL','DIRECTOR','SCOREKEEPER'].includes(role)?role:'FULL';document.body.dataset.operatorRole=matchOperatorRole;
