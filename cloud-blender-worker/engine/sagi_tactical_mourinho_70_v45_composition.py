@@ -2672,7 +2672,24 @@ def fit_screen_space_v42():
         cam.data.shift_y=scale*cy+(.5-center)/aspect
         bpy.context.view_layer.update()
         projected=[world_to_camera_view(scene,cam,p) for p in pts]
-        if any(not (.045<=p.x<=.955 and floor-.005<=p.y<=ceiling+.005) for p in projected):
+        def outside(points):
+            return any(not (.045<=p.x<=.955 and floor-.005<=p.y<=ceiling+.005) for p in points)
+        # Preserve the gate; on failure fall back to a conservative centered fit.
+        # Reproject after each adjustment rather than assuming the analytic fit.
+        if outside(projected):
+            center=(floor+ceiling)/2
+            scale=min(scale,.89/max(hi-lo,.001),125/cam.data.sensor_width)
+            for attempt in range(12):
+                lens=scale*cam.data.sensor_width
+                cam.data.lens=lens
+                cam.data.shift_x=scale*cx
+                cam.data.shift_y=scale*cy+(.5-center)/aspect
+                bpy.context.view_layer.update()
+                projected=[world_to_camera_view(scene,cam,p) for p in pts]
+                if not outside(projected):
+                    break
+                scale*=.88
+        if outside(projected):
             failures.append(f)
         min_lens=min(min_lens,lens); max_lens=max(max_lens,lens)
         for prop in ("lens","shift_x","shift_y"):
