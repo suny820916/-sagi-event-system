@@ -28,3 +28,26 @@ const u = new PresentationExecutor({showGraphic:async()=>false,returnProgram:asy
 assert.equal((await u.play(req('card-0001','RED'))).status,'uncertain');
 assert.equal(u.status.blocked,true);
 console.log('presentation executor self-test PASS');
+
+import { FileCueClaims } from './file-cue-claims.mjs';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+const dir = await mkdtemp(join(tmpdir(),'sagi-cues-'));
+try {
+  let outputs=0;
+  const make=()=>new PresentationExecutor({
+    cueClaims:new FileCueClaims(dir),
+    showGraphic:async()=>{outputs++;return true;},
+    returnProgram:async()=>true,wait:async()=>{}
+  });
+  const results=await Promise.all([make().play(req('durable-001','GOAL')),make().play(req('durable-001','GOAL'))]);
+  assert.deepEqual(results.map(r=>r.status).sort(),['completed','duplicate']);
+  assert.equal((await make().play(req('durable-001','GOAL'))).status,'duplicate');
+  assert.equal(outputs,1);
+  const bad=new PresentationExecutor({cueClaims:{claim:async()=>{throw Error('disk');}},showGraphic:async()=>{outputs++;return true;},returnProgram:async()=>true});
+  assert.equal((await bad.play(req('durable-002','GOAL'))).status,'uncertain');
+  assert.equal(bad.status.blocked,true);
+  assert.equal(outputs,1);
+} finally { await rm(dir,{recursive:true,force:true}); }
+console.log('persistent cue claim self-test PASS');
