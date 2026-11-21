@@ -1,0 +1,28 @@
+import assert from 'node:assert/strict';
+import {VMixAdapter} from '../core/vmix-adapter.mjs';
+import {bindVMixPresentation} from './vmix-presentation-binding.mjs';
+import {PresentationExecutor} from './presentation-executor.mjs';
+const graphics=Object.fromEntries(['competition','matchup','home-lineup','away-lineup','goal-player','yellow-card','red-card','substitution'].map((n,i)=>[n,'G'+i]));
+const keys=['CAM1',...Object.values(graphics)];
+let active=1, missing=false, calls=[];
+const adapter=new VMixAdapter({fetchImpl:async(url,options)=>{
+  assert.equal(options.redirect,'error');
+  options.signal.throwIfAborted();
+  if(url.searchParams.has('Function')){
+    assert.equal(url.searchParams.get('Function'),'Cut');
+    const key=url.searchParams.get('Input');calls.push(key);active=keys.indexOf(key)+1;
+    return new Response('OK');
+  }
+  return new Response('<vmix><inputs>'+keys.filter(k=>!missing||k!=='G7').map(k=>'<input key="'+k+'" number="'+(keys.indexOf(k)+1)+'">'+k+'</input>').join('')+'</inputs><active>'+active+'</active></vmix>');
+}});
+const output=bindVMixPresentation({adapter,graphics,programKeys:['CAM1']});
+const executor=new PresentationExecutor({...output,wait:async()=>{}});
+assert.equal((await executor.play({type:'INTRO',cueId:'intro-0001',programInput:'CAM1'})).status,'completed');
+assert.deepEqual(calls,['G0','G1','G2','G3','CAM1']);
+missing=true;
+await assert.rejects(output.showGraphic('competition'),/VMIX_MAPPING_MISSING/);
+assert.equal(calls.length,5);
+const cancelled=new AbortController();cancelled.abort();
+await assert.rejects(output.showGraphic('competition',{signal:cancelled.signal}));
+assert.equal(calls.length,5);
+console.log('vMix presentation binding self-test PASS');
