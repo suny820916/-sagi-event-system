@@ -145,7 +145,16 @@ export class FileMatchStore {
     const state = hydrateMatchState(stateLike);
     // Never append behind a torn JSONL tail; that would create an invalid
     // complete line and make subsequent recovery fail closed.
-    const lastCommit = await this._lastCommit({ useCache: true });
+    let lastCommit;
+    try {
+      lastCommit = await this._lastCommit({ useCache: true });
+    } catch (error) {
+      // A corrupt or concurrently changed journal cannot be trusted. Keep
+      // serving only the last confirmed state and require restart/recovery.
+      this.journalCache = null;
+      this.journalError = "JOURNAL_SCAN_REQUIRES_RECOVERY";
+      throw error;
+    }
     if (this.journalError) throw new Error(this.journalError);
     if (lastCommit) {
       if (state.fixtureId !== lastCommit.state.fixtureId) throw new Error("FIXTURE_MISMATCH");
