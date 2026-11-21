@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
-<meta name="sagi-build" content="SAGI432_SIGNATURE_RC3">
+<meta name="sagi-build" content="SAGI432_SIGNATURE_RC4">
 <!-- SAGI LIVE MATCH DIRECTOR · SAFE UPDATE COMPATIBILITY MARKER -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -1548,9 +1548,15 @@ root.SAGISignatureCore=api;
 const LAN_DIRECT=true;
 async function lanJson(url,options={}){
   const r=await fetch(url,Object.assign({cache:'no-store'},options));
-  if(!r.ok)throw new Error('LAN '+r.status);
   const t=await r.text();
-  return t?JSON.parse(t):{};
+  let body={};
+  if(t){try{body=JSON.parse(t)}catch(e){body={raw:t}}}
+  if(!r.ok){
+    const err=new Error('LAN '+r.status+(body&&body.error?' '+body.error:''));
+    err.status=r.status;err.code=body&&body.error||'';err.payload=body;
+    throw err
+  }
+  return body;
 }
 async function lanPost(url,data){
   let payload=data||{};
@@ -2546,6 +2552,12 @@ function mdAcceptOperatorEvent(signature,windowMs=850){
  mdEventGateSig=sig;mdEventGateAt=now;return true
 }
 async function mdPostMatchdayWithRetry(state){
+ const liveFixture=mdFixtureKey();
+ if(state&&state.fixtureKey&&state.fixtureKey!==liveFixture&&!state.allowFixtureTakeover){
+  mdPublishMetrics.recovered++;mdPublishMetrics.lastAttempts=0;
+  mdRecoveryMetrics.staleRemoteIgnored++;mdRecoveryMetrics.lastReason='STALE_QUEUED_FIXTURE_DROPPED';mdRecoveryMetrics.lastRecoveryAt=Date.now();
+  return{ok:true,attempts:0,skipped:true,reason:'STALE_QUEUED_FIXTURE_DROPPED'}
+ }
  const waits=[0,180,520,1200];let lastError=null;
  for(let i=0;i<waits.length;i++){
   if(waits[i])await mdDelay(waits[i]);
@@ -3431,7 +3443,7 @@ function initVmixDirector(){
  vdReadVmixInputs(false);
  setTimeout(async()=>{
   try{
-   vdLoad();const input=String(vmixDirectorSettings.graphics||'').trim(),key='sagi_graphics_loaded_SAGI432_SIGNATURE_RC3';
+   vdLoad();const input=String(vmixDirectorSettings.graphics||'').trim(),key='sagi_graphics_loaded_SAGI432_SIGNATURE_RC4';
    if(input&&localStorage.getItem(key)!==input){
     const ok=await refreshGraphicsBrowser(false);
     if(ok){localStorage.setItem(key,input);q('vdStatus').textContent='LIVEFLOW 07 已强制刷新 vMix 图形 · Input '+input}
