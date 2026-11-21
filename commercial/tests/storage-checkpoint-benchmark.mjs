@@ -70,7 +70,12 @@ try {
     fixtureId:'wrong', revision:state.revision, elapsedSeconds:3615})+'\n');
   await assert.rejects(new FileMatchStore(root).load(), /INVALID_JOURNAL_CLOCK_CHECKPOINT/);
   await assert.rejects(store.checkpointClock(state), /INVALID_JOURNAL_CLOCK_CHECKPOINT/);
+  assert.equal(store.journalError, 'JOURNAL_SCAN_REQUIRES_RECOVERY');
   await writeFile(store.journalPath, validJournal);
+  await assert.rejects(store.checkpointClock(state), /JOURNAL_RESTART_REQUIRED/);
+  const reopened = new FileMatchStore(root);
+  assert.deepEqual((await reopened.load()).clock, state.clock);
+  assert.equal(reopened.journalError, null);
   // A torn compact record is ignored on recovery but blocks mutation.
   await appendFile(store.journalPath, '{"kind":"CLOCK_CHECKPOINT"');
   const torn = new FileMatchStore(root);
