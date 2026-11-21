@@ -1,4 +1,4 @@
-import { copyFile, mkdir, open, readFile, rename, rm, rmdir, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, open, readFile, rename, rm, rmdir, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { createReadStream } from "node:fs";
 import { hydrateMatchState } from "./match-core.mjs";
@@ -30,6 +30,7 @@ export class FileMatchStore {
     this.pending = Promise.resolve();
     this.journalError = null;
     this.snapshotError = null;
+    this.journalCache = null;
   }
 
   async init() {
@@ -50,7 +51,21 @@ export class FileMatchStore {
 
   // Retain only the latest commit while validating every complete record.
   // UTF-8 stream decoding preserves multibyte player names across chunks.
-  async _lastCommit() {
+  async _journalFingerprint() {
+    try {
+      const s = await stat(this.journalPath, { bigint: true });
+      return [s.dev, s.ino, s.size, s.mtimeNs, s.ctimeNs].join(':');
+    } catch (error) {
+      if (error.code === 'ENOENT') return null;
+      throw error;
+    }
+  }
+
+  async _lastCommit({ useCache = false } = {}) {
+    const before = await this._journalFingerprint();
+    if (useCache && before !== null && this.journalCache?.fingerprint === before)
+      return structuredClone(this.journalCache.last);
+    this.journalCache = null;
     let tail = "";
     let last = null;
     try {
@@ -77,6 +92,10 @@ export class FileMatchStore {
       throw error;
     }
     if (tail.length) this.journalError = "TORN_JOURNAL_REQUIRES_REPAIR";
+    const after = await this._journalFingerprint();
+    if (before !== after) throw new Error('JOURNAL_CHANGED_DURING_SCAN');
+    if (!tail.length && after !== null && last)
+      this.journalCache = { fingerprint: after, last: structuredClone(last) };
     return last;
   }
 
@@ -126,7 +145,7 @@ export class FileMatchStore {
     const state = hydrateMatchState(stateLike);
     // Never append behind a torn JSONL tail; that would create an invalid
     // complete line and make subsequent recovery fail closed.
-    const lastCommit = await this._lastCommit();
+    const lastCommit = await this._lastCommit({ useCache: true });
     if (this.journalError) throw new Error(this.journalError);
     if (lastCommit) {
       if (state.fixtureId !== lastCommit.state.fixtureId) throw new Error("FIXTURE_MISMATCH");
@@ -149,11 +168,16 @@ export class FileMatchStore {
       ? { kind: "CLOCK_CHECKPOINT", fixtureId: state.fixtureId,
           revision: state.revision, elapsedSeconds: state.clock.elapsedSeconds }
       : { kind: "STATE_COMMIT", revision: state.revision, event, state };
+    this.journalCache = null;
+    let writtenFingerprint;
     try {
       const handle = await open(this.journalPath, "a");
       try {
         await handle.writeFile(JSON.stringify(entry) + "\n", "utf8");
         await handle.sync();
+        // Capture the identity of the actual opened file, not a replacement path.
+        const info = await handle.stat({ bigint: true });
+        writtenFingerprint = [info.dev, info.ino, info.size, info.mtimeNs, info.ctimeNs].join(':');
       } finally {
         await handle.close();
       }
@@ -163,6 +187,12 @@ export class FileMatchStore {
       this.journalError = error.code || "JOURNAL_WRITE_UNCERTAIN";
       throw error;
     }
+
+    // Only reuse an immutable copy after our own durable append. Other
+    // cooperative writers change the fingerprint and force a complete scan.
+    // Recovery always scans; this is not a tamper-proof integrity mechanism.
+    this.journalCache = { fingerprint: writtenFingerprint, last: structuredClone(
+      checkpoint ? { ...lastCommit, state } : entry) };
 
     // Clock checkpoints are authoritative in the fsynced journal. Avoid
     // copying and serializing the entire retained match history every 15s.
