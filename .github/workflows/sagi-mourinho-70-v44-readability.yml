@@ -63,6 +63,23 @@ jobs:
           r['teactics_exact_source_visual_acceptance']='PENDING_RENDERED_FRAME_COMPARISON'
           json.dump(r,open(p+'execution_report_v44.json','w'),ensure_ascii=False,indent=2)
           PY
+      - name: Verify final video decodes completely
+        run: |
+          set -euo pipefail
+          ffmpeg -v error -xerror -i mourinho_v44_out/SAGI_MOURINHO_70S_V44_READABILITY.mp4 -map 0:v:0 -f null -
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('mourinho_v44_out')
+          frames=list((p/'critical_frames').glob('*.jpg'))
+          assert len(frames)==9 and all(f.stat().st_size>0 for f in frames)
+          report=p/'execution_report_v44.json'
+          r=json.loads(report.read_text())
+          r['full_video_decode']='PASS'
+          r['critical_frame_count']=len(frames)
+          r['visual_acceptance']='PENDING_MANUAL_REVIEW'
+          report.write_text(json.dumps(r,ensure_ascii=False,indent=2))
+          PY
       - uses: actions/upload-artifact@v4
         with:
           name: SAGI-MOURINHO-70S-V4.4-READABILITY
