@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import {mkdtemp,rm} from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import {FileMatchStore} from "../core/file-store.mjs";
 import {createLocalServer} from "../core/local-server.mjs";
 const dir=await mkdtemp(path.join(os.tmpdir(),"sagi-api-"));
 const meta={fixtureId:"api-test",home:"主队",away:"客队"},token="a".repeat(64);
@@ -9,7 +10,7 @@ let app;
 let tick=1000;
 const clockNow=()=>tick;
 try{
-  app=await createLocalServer({dataDir:dir,meta,token,clockNow});
+  app=await createLocalServer({dataDir:dir,meta,token,clockNow,checkpointIntervalMs:10});
   const base=`http://127.0.0.1:${app.address.port}`;
   const get=(p,auth=token)=>fetch(base+p,{headers:auth?{authorization:`Bearer ${auth}`}:{}});
   const cmd=(body,auth=token)=>fetch(base+"/api/v1/commands",{method:"POST",headers:{authorization:`Bearer ${auth}`,"content-type":"application/json"},body:JSON.stringify(body)});
@@ -34,13 +35,25 @@ try{
   tick+=600;
   state=(await(await get("/api/v1/state")).json()).state;
   assert.equal(state.clock.elapsedSeconds,123);
+  const store=new FileMatchStore(dir);
+  const deadline=Date.now()+3000;
+  while((await store.load()).clock.elapsedSeconds!==123){
+    assert.ok(Date.now()<deadline,"periodic checkpoint missing");
+    await new Promise(resolve=>setTimeout(resolve,20));
+  }
+  assert.equal((await store.load()).revision,4);
+  assert.equal((await store.load()).homeScore,1);
+  const saved=await store.load();
+  await assert.rejects(store.checkpointClock({...saved,homeScore:2}),/INVALID_CLOCK_CHECKPOINT/);
+  tick+=2000;
   await app.close();app=null;
+  assert.equal((await store.load()).clock.elapsedSeconds,125);
   tick+=3600000;
   app=await createLocalServer({dataDir:dir,meta,token,clockNow});
   const url=`http://127.0.0.1:${app.address.port}/api/v1/state`;
   state=(await(await fetch(url,{headers:{authorization:`Bearer ${token}`}})).json()).state;
   assert.equal(state.homeScore,1);assert.equal(state.revision,4);
-  assert.equal(state.clock.elapsedSeconds,122);
+  assert.equal(state.clock.elapsedSeconds,125);
   assert.equal(state.clock.running,false);
   assert.equal(state.clockRecoveryPending,true);
   console.log("SAGI LOCAL SERVER SELFTEST PASS");
