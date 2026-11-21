@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, rm, stat, appendFile } from 'node:fs/promises';
+import { mkdtemp, rm, stat, appendFile, readFile, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { performance } from 'node:perf_hooks';
@@ -26,6 +26,7 @@ try {
   state = applyCommand(state,{commandId:'start-clock',type:'SET_CLOCK',running:true,elapsedSeconds:0}).state;
   await store.commit(state);
   const baselineBytes = (await stat(store.journalPath)).size;
+  const originalSnapshot = await readFile(store.snapshotPath, 'utf8');
   const timings = [];
   for(let i=1;i<=240;i++){
     state = {...state,clock:{...state.clock,elapsedSeconds:i*15}};
@@ -51,11 +52,19 @@ try {
   assert.equal((await store.readJournal()).length,121);
   assert.ok((await stat(store.journalPath)).size > 65536, 'exercise multiple stream chunks');
   // Reject a syntactically valid checkpoint for the wrong fixture.
-  const { readFile, writeFile } = await import('node:fs/promises');
+  assert.equal(await readFile(store.snapshotPath, 'utf8'), originalSnapshot,
+    'clock checkpoints must not rewrite full snapshot');
   const validJournal = await readFile(store.journalPath, 'utf8');
   await appendFile(store.journalPath, JSON.stringify({kind:'CLOCK_CHECKPOINT',
     fixtureId:'wrong', revision:state.revision, elapsedSeconds:3615})+'\n');
   await assert.rejects(new FileMatchStore(root).load(), /INVALID_JOURNAL_CLOCK_CHECKPOINT/);
+  await writeFile(store.journalPath, validJournal);
+  // A torn compact record is ignored on recovery but blocks mutation.
+  await appendFile(store.journalPath, '{"kind":"CLOCK_CHECKPOINT"');
+  const torn = new FileMatchStore(root);
+  assert.deepEqual((await torn.load()).clock, state.clock);
+  assert.equal(torn.journalError, 'TORN_JOURNAL_REQUIRES_REPAIR');
+  await assert.rejects(torn.checkpointClock(state), /JOURNAL_RESTART_REQUIRED/);
   await writeFile(store.journalPath, validJournal);
   // A malformed complete record must not be hidden by later valid commits.
   await appendFile(store.journalPath, '{invalid json}\n', 'utf8');
