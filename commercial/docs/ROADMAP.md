@@ -282,3 +282,7 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Local Engine schedules checkpoints every 15 seconds by default, coalesces pending work through its command queue, saves again on graceful close and exposes a sanitized checkpoint warning in diagnostics.
 - Extended HTTP self-test for periodic persistence, unchanged revision, rejection of score mutations through checkpoint path and graceful restart recovery. Commits: ffcc8ef, afd5ab9, a48c62d.
 - Runtime/CI verification pending. Full-state checkpoint records increase journal growth; benchmark long fixtures and disk latency. 15 seconds is a target interval, not a guaranteed loss bound under stalled I/O or shutdown failure. Crash-lock operator recovery and real Windows/vMix acceptance remain release blockers.
+
+## 2026-11-21 — Journal read amplification reduction
+- Removed redundant full journal read from locked commit path; `_entries()` now provides both parsed entries and torn-tail latch. Reject latched tail before appending. Commit 7653db4.
+- No format, retention, revision or dependency changes. Existing recovery tests must be rerun; no runtime/CI result verified for this change. Full journal parsing and full-state checkpoint growth remain endurance blockers; benchmark before introducing a bounded durable index.
