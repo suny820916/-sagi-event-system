@@ -1,0 +1,33 @@
+name: SAGI vMix V4.33 Penalty Core
+
+on:
+  push:
+    paths:
+      - "intro/sagi-penalty-core-v433.js"
+      - "intro/v45-lan.html"
+      - "intro/vmix-v45-lan.html"
+      - "intro/SAGI_VMIX_LAN_V433_PENALTY_RC.bat"
+      - "intro/SAGI_VMIX_LAN_V432_SIGNATURE_RC.bat"
+      - "intro/tests/v433-penalty-core-selftest.mjs"
+      - "intro/tests/v433-penalty-integration-selftest.mjs"
+      - ".github/workflows/vmix-v433-penalty-selftest.yml"
+  pull_request:
+    paths:
+      - "intro/sagi-penalty-core-v433.js"
+      - "intro/tests/v433-penalty-core-selftest.mjs"
+      - ".github/workflows/vmix-v433-penalty-selftest.yml"
+  workflow_dispatch:
+
+jobs:
+  penalty-core:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Run V4.33 penalty core self-test
+        run: node intro/tests/v433-penalty-core-selftest.mjs
+      - name: Run V4.33 live/package integration gate
+        run: node intro/tests/v433-penalty-integration-selftest.mjs
