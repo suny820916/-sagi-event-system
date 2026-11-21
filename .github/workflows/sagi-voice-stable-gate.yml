@@ -80,6 +80,12 @@ jobs:
 
           base=os.environ["BASE_URL"].rstrip("/")
           suite=json.load(open("voice/stability/golden-cases.json","r",encoding="utf-8"))
+          baseline=json.load(open("voice/stability/stable-baseline.json","r",encoding="utf-8"))
+          metrics=baseline.get("metrics",{})
+          duration_drift=float(metrics.get("allowed_duration_drift_pct",30))/100.0
+          bytes_drift=float(metrics.get("allowed_bytes_drift_pct",40))/100.0
+          latency_limit=float(metrics.get("max_latency_seconds",4.5))
+          baseline_cases=metrics.get("cases",{})
           out=pathlib.Path("golden-output"); out.mkdir()
           report=[]
           failures=[]
@@ -127,6 +133,11 @@ jobs:
                   except Exception as e:
                       failures.append(f"{case['id']}: ffprobe failed: {e}")
 
+              base_case=baseline_cases.get(case["id"],{})
+              base_duration=float(base_case.get("duration_seconds") or 0)
+              base_bytes=float(base_case.get("bytes") or 0)
+              duration_ok=True if not base_duration else abs(duration-base_duration)/base_duration<=duration_drift
+              bytes_ok=True if not base_bytes else abs(len(body)-base_bytes)/base_bytes<=bytes_drift
               checks={
                   "http_200":status==200,
                   "provider":provider==suite["provider_required"],
@@ -134,7 +145,10 @@ jobs:
                   "audio_type":ctype.startswith("audio/"),
                   "min_bytes":len(body)>=case["min_bytes"],
                   "duration_min":duration>=case["min_seconds"],
-                  "duration_max":duration<=case["max_seconds"]
+                  "duration_max":duration<=case["max_seconds"],
+                  "baseline_duration_drift":duration_ok,
+                  "baseline_bytes_drift":bytes_ok,
+                  "latency_limit":latency<=latency_limit
               }
               failed=[k for k,v in checks.items() if not v]
               if failed:
@@ -143,7 +157,10 @@ jobs:
               report.append({
                   "id":case["id"],"label":case["label"],"status":status,
                   "bytes":len(body),"duration":round(duration,2),"latency":latency,
-                  "provider":provider,"checks":checks
+                  "provider":provider,
+                  "baseline_duration":base_duration or None,
+                  "baseline_bytes":int(base_bytes) if base_bytes else None,
+                  "checks":checks
               })
               print(f"[{idx}/{len(suite['cases'])}] {case['id']} status={status} bytes={len(body)} duration={duration:.2f}s latency={latency}s provider={provider}")
               time.sleep(1.0)
@@ -154,7 +171,8 @@ jobs:
               "# SAGI VOICE Golden Regression",
               "",
               "| Case | HTTP | Bytes | Duration | Latency | Provider | Result |",
-              "|---|---:|---:|---:|---:|---|---|"
+              "|---|---:|---:|---:|---:|---|---|",
+              f"| Baseline policy |  | bytes ±{int(bytes_drift*100)}% | duration ±{int(duration_drift*100)}% | ≤{latency_limit}s | {suite['provider_required']} | |"
           ]
           for r in report:
               ok=all(r["checks"].values())
