@@ -72,7 +72,7 @@ function Invoke-RawBridgeHttp {
     if ($split -lt 0) { throw ('Malformed HTTP response: ' + $raw) }
     $header = $raw.Substring(0,$split)
     $bodyText = $raw.Substring($split+4)
-    if ($header -notmatch '(?im)^Content-Length:[ \t]*(\d+)[ \t]*\r?) { throw 'Missing HTTP Content-Length' }
+    if ($header -notmatch '(?im)^Content-Length:[ \t]*(\d+)[ \t]*\r?$') { throw 'Missing HTTP Content-Length' }
     $expectedLength = [int]$Matches[1]
     if ([Text.Encoding]::UTF8.GetByteCount($bodyText) -ne $expectedLength) { throw 'Incomplete HTTP response body' }
     $statusLine = ($header -split "`r`n")[0]
