@@ -16,25 +16,26 @@ jobs:
           set -euo pipefail
           BASE="https://sagi-voice-edge-relay.sg3544225.workers.dev"
 
-          echo "=== wait for R3 ==="
-          READY=0
-          for i in $(seq 1 36); do
-            PAGE="$(curl --fail --show-error --silent --connect-timeout 10 --max-time 20 "$BASE/voice" || true)"
-            if echo "$PAGE" | grep -q "OVERSEAS DIRECT · EDGE DIRECT · R3"; then
-              READY=1
-              echo "R3 page live on attempt $i"
-              break
-            fi
-            echo "R3 not live yet: $i/36"
-            sleep 5
-          done
-          test "$READY" = "1"
+          PAGE="$(curl --fail --show-error --silent "$BASE/voice")"
+          echo "$PAGE" | grep -q "OVERSEAS DIRECT · EDGE DIRECT · R3"
 
-          echo "=== direct Edge TTS ==="
           BODY='{"text":"两次遗憾已经够了。第三次——塔城能不能杀进淘汰赛？就看这一场！","mode":"ai_male","speed":1.16,"style":"football_passion","quality":"cinema"}'
-          curl --fail-with-body --show-error --silent --retry 1             -H "Content-Type: application/json"             -d "$BODY"             -D /tmp/headers             -o /tmp/audio             "$BASE/api/direct-tts"
+          STATUS="$(curl --show-error --silent \
+            -H "Content-Type: application/json" \
+            -d "$BODY" \
+            -D /tmp/headers \
+            -o /tmp/audio \
+            -w '%{http_code}' \
+            "$BASE/api/direct-tts")"
 
           cat /tmp/headers
+          echo "http_status=$STATUS"
+          if [ "$STATUS" != "200" ]; then
+            echo "direct_tts_error_body:"
+            cat /tmp/audio
+            exit 1
+          fi
+
           SIZE="$(wc -c < /tmp/audio)"
           echo "audio_bytes=$SIZE"
           test "$SIZE" -gt 5000
