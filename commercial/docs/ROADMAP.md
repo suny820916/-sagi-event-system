@@ -351,3 +351,7 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Full journal scans now reject an otherwise valid earlier journal head when a readable snapshot for the same fixture has a greater revision (9cc9d8a). Added regression for clean truncation, mutation refusal and evidence preservation (c2a2c5d).
 - This is a conservative recovery gate, not a cryptographic integrity check. Loss of compact clock-only records, loss of all newer artifacts, or malicious snapshot modification are not covered. No format or runtime dependency changes; main untouched.
 - Runtime and Windows/Linux CI verification pending. Prioritize executable matrix results, real LAN/vMix integration and endurance rather than further storage changes until tests are green.
+
+## 2026-11-22 — LAN Host regression repair
+- Source review found padded decimal Host ports could pass numeric comparison despite the existing negative regression. Compare the raw port string with the actual listening port's canonical decimal spelling (412c0fb).
+- Existing lan-command-selftest already covers this case; no test weakening or dependency changes. Runtime/CI verification pending. This does not certify phone integration, TLS, or live vMix operation.
