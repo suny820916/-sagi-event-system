@@ -39,9 +39,9 @@ powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -Command ^
  "[IO.File]::WriteAllText($env:SAGI_FB_CONTROL,$m.Groups[2].Value,$utf);" ^
  "[IO.File]::WriteAllText($env:SAGI_FB_OUTPUT,$m.Groups[3].Value,$utf);" ^
  "Copy-Item $env:SAGI_FB_BRIDGE $env:SAGI_BRIDGE -Force;" ^
- "$controlOk=$false;if(Test-Path $env:SAGI_CONTROL){try{$t=[IO.File]::ReadAllText($env:SAGI_CONTROL,[Text.Encoding]::UTF8);$controlOk=($t.Length -gt 100000 -and $t -match '<!doctype html>' -and $t -match 'SAGI432_SIGNATURE_RC5' -and $t -match 'SAGISignatureCore' -and $t -match 'mdNextEventIdentity' -and $t -match 'LIVE FLOW' -and $t -match 'instantReplayGenerate')}catch{}};" ^
+ "$controlOk=$false;if(Test-Path $env:SAGI_CONTROL){try{$t=[IO.File]::ReadAllText($env:SAGI_CONTROL,[Text.Encoding]::UTF8);$controlOk=($t.Length -gt 100000 -and $t -match '<!doctype html>' -and $t -match 'SAGI432_SIGNATURE_RC6' -and $t -match 'SAGISignatureCore' -and $t -match 'mdNextEventIdentity' -and $t -match 'LIVE FLOW' -and $t -match 'instantReplayGenerate')}catch{}};" ^
  "if(-not $controlOk){Copy-Item $env:SAGI_FB_CONTROL $env:SAGI_CONTROL -Force;Write-Host '[REPAIR] V4.32 SIGNATURE RC Control installed over stale cache.' -ForegroundColor Yellow}else{Write-Host '[SAFE] V4.32 SIGNATURE RC Control cache verified.' -ForegroundColor Green};" ^
- "$outputOk=$false;if(Test-Path $env:SAGI_OUTPUT){try{$t=[IO.File]::ReadAllText($env:SAGI_OUTPUT,[Text.Encoding]::UTF8);$outputOk=($t.Length -gt 50000 -and $t -match '<!doctype html>' -and $t -match 'SAGI432_SIGNATURE_RC5' -and $t -match 'SAGISignatureCore' -and $t -match 'introStateAllowed' -and $t -match 'sagiBrandA' -and $t -match 'lastRenderedSignatureEventKey')}catch{}};" ^
+ "$outputOk=$false;if(Test-Path $env:SAGI_OUTPUT){try{$t=[IO.File]::ReadAllText($env:SAGI_OUTPUT,[Text.Encoding]::UTF8);$outputOk=($t.Length -gt 50000 -and $t -match '<!doctype html>' -and $t -match 'SAGI432_SIGNATURE_RC6' -and $t -match 'SAGISignatureCore' -and $t -match 'introStateAllowed' -and $t -match 'sagiBrandA' -and $t -match 'lastRenderedSignatureEventKey')}catch{}};" ^
  "if(-not $outputOk){Copy-Item $env:SAGI_FB_OUTPUT $env:SAGI_OUTPUT -Force;Write-Host '[REPAIR] V4.32 SIGNATURE RC vMix output installed over stale cache.' -ForegroundColor Yellow}else{Write-Host '[SAFE] V4.32 SIGNATURE RC vMix output cache verified.' -ForegroundColor Green};"
 
 if errorlevel 1 (
@@ -596,7 +596,7 @@ while ($true) {
 <!doctype html>
 <html lang="zh-CN">
 <head>
-<meta name="sagi-build" content="SAGI432_SIGNATURE_RC5">
+<meta name="sagi-build" content="SAGI432_SIGNATURE_RC6">
 <!-- SAGI LIVE MATCH DIRECTOR · SAFE UPDATE COMPATIBILITY MARKER -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -2142,16 +2142,24 @@ root.SAGISignatureCore=api;
 'use strict';
 const LAN_DIRECT=true;
 async function lanJson(url,options={}){
-  const r=await fetch(url,Object.assign({cache:'no-store'},options));
-  const t=await r.text();
-  let body={};
-  if(t){try{body=JSON.parse(t)}catch(e){body={raw:t}}}
-  if(!r.ok){
-    const err=new Error('LAN '+r.status+(body&&body.error?' '+body.error:''));
-    err.status=r.status;err.code=body&&body.error||'';err.payload=body;
-    throw err
-  }
-  return body;
+  const opts=Object.assign({cache:'no-store'},options),timeoutMs=Math.max(500,Number(opts.timeoutMs)||2500);delete opts.timeoutMs;
+  let timer=null,controller=null;
+  if(!opts.signal&&typeof AbortController!=='undefined'){controller=new AbortController();opts.signal=controller.signal;timer=setTimeout(()=>controller.abort(),timeoutMs)}
+  try{
+    const r=await fetch(url,opts);
+    const t=await r.text();
+    let body={};
+    if(t){try{body=JSON.parse(t)}catch(e){body={raw:t}}}
+    if(!r.ok){
+      const err=new Error('LAN '+r.status+(body&&body.error?' '+body.error:''));
+      err.status=r.status;err.code=body&&body.error||'';err.payload=body;
+      throw err
+    }
+    return body;
+  }catch(e){
+    if(controller&&controller.signal.aborted){const err=new Error('LAN_TIMEOUT');err.code='LAN_TIMEOUT';throw err}
+    throw e
+  }finally{if(timer)clearTimeout(timer)}
 }
 async function lanPost(url,data){
   let payload=data||{};
@@ -3124,7 +3132,7 @@ async function mdLoad(opts={}){
  if(matchdayState.period==='PEN'&&mdPenaltyState().started)mdSyncDirectorPenaltyToSimple()
 }
 const MD_LAST_GOOD_KEY='sagi_matchday_last_good_v429';
-let mdPublishRevision=0,mdLastAckRevision=0,mdPublishChain=Promise.resolve(),mdPendingPublishes=0,mdConsistencyBusy=false,mdLastConsistencyAt=0,mdLastConsistencyState='INIT',mdLocalRecoveryStamp=0,mdFixtureTakeoverOnce=false;
+let mdPublishRevision=0,mdLastAckRevision=0,mdPublishChain=Promise.resolve(),mdPendingPublishes=0,mdConsistencyBusy=false,mdConsistencyBusySince=0,mdLastConsistencyAt=0,mdLastConsistencyState='INIT',mdLocalRecoveryStamp=0,mdFixtureTakeoverOnce=false;
 function mdAuthorizeFixtureTakeover(){mdFixtureTakeoverOnce=true;return true}
 let mdPublishMetrics={ok:0,failed:0,retried:0,recovered:0,lastOkAt:0,lastErrorAt:0,lastAttempts:0},mdEventGateSig='',mdEventGateAt=0;
 function mdNextEventIdentity(type='EVENT'){
@@ -3132,7 +3140,7 @@ function mdNextEventIdentity(type='EVENT'){
  matchdayState.eventSequence=sequence;
  return{eventId:'evt_'+Date.now().toString(36)+'_'+sequence.toString(36),sequence}
 }
-let mdRecoveryMetrics={resumeChecks:0,networkRestores:0,forcedRepairs:0,localWins:0,bridgeWins:0,passivePolls:0,bridgeFollows:0,staleRemoteIgnored:0,lastRecoveryAt:0,lastReason:'INIT'},mdRecoveryTimer=null;
+let mdRecoveryMetrics={resumeChecks:0,networkRestores:0,forcedRepairs:0,localWins:0,bridgeWins:0,passivePolls:0,bridgeFollows:0,staleRemoteIgnored:0,lanTimeouts:0,busyResets:0,lastRecoveryAt:0,lastReason:'INIT'},mdRecoveryTimer=null;
 function mdDelay(ms){return new Promise(r=>setTimeout(r,Math.max(0,Number(ms)||0)))}
 function mdSaveLastGood(){
  try{
@@ -3173,7 +3181,7 @@ async function mdPostMatchdayWithRetry(state){
  }
  mdPublishMetrics.failed++;mdPublishMetrics.lastAttempts=waits.length;throw lastError||new Error('MATCHDAY_SYNC_FAILED')
 }
-window.sagiMatchdayReliabilityDiagnostic=()=>({metrics:{...mdPublishMetrics},recovery:{...mdRecoveryMetrics},pendingPublishes:mdPendingPublishes,localRecoveryStamp:mdLocalRecoveryStamp,lastAckRevision:mdLastAckRevision,lastConsistencyState:mdLastConsistencyState,lastConsistencyAt:mdLastConsistencyAt,lastGood:!!mdLoadLastGood(),fixtureKey:mdFixtureKey(),liveAuthority:'BRIDGE'});
+window.sagiMatchdayReliabilityDiagnostic=()=>({metrics:{...mdPublishMetrics},recovery:{...mdRecoveryMetrics},pendingPublishes:mdPendingPublishes,localRecoveryStamp:mdLocalRecoveryStamp,lastAckRevision:mdLastAckRevision,lastConsistencyState:mdLastConsistencyState,lastConsistencyAt:mdLastConsistencyAt,consistencyBusy:mdConsistencyBusy,consistencyBusySince:mdConsistencyBusySince,lastGood:!!mdLoadLastGood(),fixtureKey:mdFixtureKey(),liveAuthority:'BRIDGE'});
 function mdCloudSnapshot(event=null,opts={}){
  const now=mdNowSeconds(),canonical=mdEnforceCanonicalTeams(),homeName=canonical.home||'HOME',awayName=canonical.away||'AWAY';
  const baseRevision=Math.max(0,Number(mdPublishRevision)||0,Number(matchdayState.revision)||0,Number(mdLastAckRevision)||0);
@@ -3237,8 +3245,12 @@ function mdPassiveSyncActive(){
  return !!(matchReady||matchModeActive||matchdayState.scoreboardVisible||matchdayState.clockRunning||Number(matchdayState.revision)>0)
 }
 async function mdConsistencyCheck(force=false){
+ const now=Date.now();
+ if(mdConsistencyBusy&&mdConsistencyBusySince&&now-mdConsistencyBusySince>4000){
+  mdConsistencyBusy=false;mdConsistencyBusySince=0;mdRecoveryMetrics.busyResets++;mdRecoveryMetrics.lastReason='CONSISTENCY_BUSY_RESET';mdRecoveryMetrics.lastRecoveryAt=now
+ }
  if(mdConsistencyBusy||projectLoadBusy||mdPendingPublishes>0||(!force&&!mdPassiveSyncActive()))return false;
- mdConsistencyBusy=true;
+ mdConsistencyBusy=true;mdConsistencyBusySince=Date.now();
  try{
   mdRecoveryMetrics.passivePolls++;
   const remote=await lanJson('/api/matchday?consistency='+Date.now()),sameFixture=remote&&mdBridgeMatchesCurrent(remote);
@@ -3266,7 +3278,10 @@ async function mdConsistencyCheck(force=false){
   mdLastConsistencyState='OK';mdLastConsistencyAt=Date.now();
   if(q('mdSync'))q('mdSync').innerHTML='<span class="mdLiveDot on"></span>手机 / 电脑 / 比分牌一致 · R'+remoteRevision;
   return true
- }catch(e){mdLastConsistencyState='OFFLINE';return false}finally{mdConsistencyBusy=false}
+ }catch(e){
+  if(String(e&&e.code||e&&e.message||e).includes('LAN_TIMEOUT')){mdRecoveryMetrics.lanTimeouts++;mdRecoveryMetrics.lastReason='LAN_TIMEOUT_RECOVERY';mdRecoveryMetrics.lastRecoveryAt=Date.now()}
+  mdLastConsistencyState='OFFLINE';return false
+ }finally{mdConsistencyBusy=false;mdConsistencyBusySince=0}
 }
 
 async function mdRecoverySync(reason='MANUAL'){
@@ -4051,7 +4066,7 @@ function initVmixDirector(){
  vdReadVmixInputs(false);
  setTimeout(async()=>{
   try{
-   vdLoad();const input=String(vmixDirectorSettings.graphics||'').trim(),key='sagi_graphics_loaded_SAGI432_SIGNATURE_RC5';
+   vdLoad();const input=String(vmixDirectorSettings.graphics||'').trim(),key='sagi_graphics_loaded_SAGI432_SIGNATURE_RC6';
    if(input&&localStorage.getItem(key)!==input){
     const ok=await refreshGraphicsBrowser(false);
     if(ok){localStorage.setItem(key,input);q('vdStatus').textContent='LIVEFLOW 07 已强制刷新 vMix 图形 · Input '+input}
@@ -5109,7 +5124,7 @@ if(standalone){
 ###SAGI_OUTPUT###
 <!doctype html>
 <html lang="zh-CN"><head>
-<meta name="sagi-build" content="SAGI432_SIGNATURE_RC5">
+<meta name="sagi-build" content="SAGI432_SIGNATURE_RC6">
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SAGI V4.31.0 · STAGE 广播系统 · vMix</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%2307090d%22/%3E%3Ctext x=%2232%22 y=%2243%22 text-anchor=%22middle%22 font-size=%2234%22 fill=%22%23d8b55b%22%3ES%3C/text%3E%3C/svg%3E">

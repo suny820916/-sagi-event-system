@@ -11,7 +11,7 @@ const AWAY='ALTAI YOUTH FOOTBALL CLUB';
 const crest=(fill,label)=>'data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><path d="M60 4 108 22v38c0 31-20 48-48 56C32 108 12 91 12 60V22Z" fill="'+fill+'"/><text x="60" y="70" text-anchor="middle" font-size="30" font-family="Arial" font-weight="900" fill="white">'+label+'</text></svg>');
 const HOME_CREST=crest('#0c8b55','H');
 const AWAY_CREST=crest('#3157b7','A');
-let seq=1,vmixCommands=[],matchdayPosts=[],matchdayAttempts=[],graphics=makeGraphics(),reorderMatchdayWrites=false,failNextMatchdayPosts=0,failNextMatchdayGets=0,failNextOutputMatchdayGets=0,projectStore={projects:[],activeProjectId:'',savedAt:0,schema:'SAGI_MATCH_PROJECTS_V2'},projectPosts=[];
+let seq=1,vmixCommands=[],matchdayPosts=[],matchdayAttempts=[],graphics=makeGraphics(),reorderMatchdayWrites=false,failNextMatchdayPosts=0,failNextMatchdayGets=0,hangNextMatchdayGets=0,failNextOutputMatchdayGets=0,projectStore={projects:[],activeProjectId:'',savedAt:0,schema:'SAGI_MATCH_PROJECTS_V2'},projectPosts=[];
 
 function makeGraphics(overrides={}){
  return {
@@ -46,7 +46,7 @@ const server=http.createServer(async(req,res)=>{
  const u=new URL(req.url,'http://127.0.0.1:'+PORT);
  try{
   if(u.pathname==='/api/state')return json(res,{lineupIntro:null});
-  if(u.pathname==='/api/matchday'&&req.method==='GET'){const isOutputPoll=u.searchParams.has('ts');if(isOutputPoll&&failNextOutputMatchdayGets>0){failNextOutputMatchdayGets--;return json(res,{ok:false,error:'SIMULATED_OUTPUT_GET_FAILURE'},503)}if(failNextMatchdayGets>0){failNextMatchdayGets--;return json(res,{ok:false,error:'SIMULATED_TRANSIENT_GET_FAILURE'},503)}return json(res,graphics)}
+  if(u.pathname==='/api/matchday'&&req.method==='GET'){const isOutputPoll=u.searchParams.has('ts');if(isOutputPoll&&failNextOutputMatchdayGets>0){failNextOutputMatchdayGets--;return json(res,{ok:false,error:'SIMULATED_OUTPUT_GET_FAILURE'},503)}if(!isOutputPoll&&hangNextMatchdayGets>0){hangNextMatchdayGets--;setTimeout(()=>{try{if(!res.writableEnded)json(res,graphics)}catch{}},5000);return}if(failNextMatchdayGets>0){failNextMatchdayGets--;return json(res,{ok:false,error:'SIMULATED_TRANSIENT_GET_FAILURE'},503)}return json(res,graphics)}
   if(u.pathname==='/api/matchday'&&req.method==='POST'){const b=await readBody(req);let next=null;try{next=JSON.parse(b)||graphics;matchdayAttempts.push(next)}catch{}if(failNextMatchdayPosts>0){failNextMatchdayPosts--;return json(res,{ok:false,error:'SIMULATED_TRANSIENT_FAILURE'},503)}try{if(next){if(reorderMatchdayWrites&&Number(next.homeScore)===5)await new Promise(r=>setTimeout(r,450));graphics=next;matchdayPosts.push(graphics)}}catch{}return json(res,{ok:true})}
   if(u.pathname==='/api/vmix/status')return json(res,{ok:true,active:'1',preview:'2',inputs:[{number:'1',key:'cam1',type:'Camera',title:'CAM 1',state:'Running'},{number:'2',key:'cam2',type:'Camera',title:'CAM 2',state:'Running'},{number:'4',key:'replay',type:'Video',title:'REPLAY',state:'Running'},{number:'5',key:'gfx',type:'Browser',title:'SAGI Browser',state:'Running'}],overlays:[]});
   if(u.pathname==='/api/vmix'&&req.method==='POST'){const b=await readBody(req);let cmd={};try{cmd=JSON.parse(b)}catch{}vmixCommands.push(cmd);return json(res,{ok:true,command:cmd})}
@@ -591,6 +591,27 @@ server.listen(PORT,'127.0.0.1',async()=>{
   const phoneDiag=await phoneControl.evaluate(()=>window.sagiMatchdayReliabilityDiagnostic());
   assert(desktopDiag.recovery.bridgeFollows>=1&&phoneDiag.recovery.bridgeFollows>=1,'both controllers did not record Bridge-follow sync: '+JSON.stringify({desktopDiag,phoneDiag}));
   await Promise.all([desktopContext.close(),phoneContext.close()]);
+
+  console.log('TEST 11D2: phone passive Bridge-follow self-recovers after one hung LAN GET');
+  const desktopHangContext=await browser.newContext({viewport:{width:1440,height:1100}});
+  const phoneHangContext=await browser.newContext({viewport:{width:390,height:844},isMobile:true});
+  const desktopHang=await desktopHangContext.newPage();
+  const phoneHang=await phoneHangContext.newPage();
+  await Promise.all([
+    desktopHang.goto('http://127.0.0.1:'+PORT+'/intro/v45-lan.html',{waitUntil:'domcontentloaded'}),
+    phoneHang.goto('http://127.0.0.1:'+PORT+'/intro/v45-lan.html',{waitUntil:'domcontentloaded'})
+  ]);
+  await wait(1600);
+  hangNextMatchdayGets=1;
+  await phoneHang.evaluate(()=>window.sagiMatchdayConsistencyCheck(true));
+  const timeoutDiag=await phoneHang.evaluate(()=>window.sagiMatchdayReliabilityDiagnostic());
+  assert(timeoutDiag.recovery.lanTimeouts>=1&&!timeoutDiag.consistencyBusy,'phone consistency poll did not release after hung LAN read: '+JSON.stringify(timeoutDiag));
+  await desktopHang.evaluate(()=>document.querySelector('#mdHomePlus')?.click());
+  await phoneHang.waitForFunction(()=>document.querySelector('#mdHomeScore')?.textContent==='8',null,{timeout:7000});
+  const recoveredPhone=await phoneHang.evaluate(()=>({score:document.querySelector('#mdHomeScore')?.textContent+'-'+document.querySelector('#mdAwayScore')?.textContent,diag:window.sagiMatchdayReliabilityDiagnostic()}));
+  assert(recoveredPhone.score==='8-2'&&recoveredPhone.diag.recovery.bridgeFollows>=1,'phone did not resume passive Bridge-follow after LAN timeout: '+JSON.stringify(recoveredPhone));
+  await Promise.all([desktopHangContext.close(),phoneHangContext.close()]);
+
   graphics={...graphics,commandId:'multi_controller_restore',revision:(Number(graphics.revision)||0)+1,homeScore:6,awayScore:1,updatedAt:new Date().toISOString(),event:{type:'CLEAR_EVENT'}};
   await page.evaluate(()=>window.sagiMatchdayConsistencyCheck(true));await wait(700);
 
