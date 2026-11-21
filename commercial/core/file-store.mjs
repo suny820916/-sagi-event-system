@@ -164,6 +164,11 @@ export class FileMatchStore {
       throw error;
     }
 
+    // Clock checkpoints are authoritative in the fsynced journal. Avoid
+    // copying and serializing the entire retained match history every 15s.
+    // Full command commits still refresh the compatibility snapshot.
+    if (checkpoint) return state;
+
     // The journal is already durable. Snapshot failure must not turn a
     // committed command into an apparent failure or leave live state stale.
     const tempPath = this.snapshotPath + ".tmp";
