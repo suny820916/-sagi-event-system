@@ -340,3 +340,9 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Core run 44906947049 failed on both Windows and Ubuntu at snapshot-failure-selftest (HTTP 503 versus 200); six preceding runtime steps passed on each platform. Clock and storage benchmark were skipped. LAN run 44906926002 passed for 10cf800.
 - The test created a backup-path directory before the first journal commit, correctly triggering the new missing-journal guard. Removed that artificial backup while retaining the temporary snapshot directory fault injection (3f1e252). Production recovery guard unchanged.
 - Re-run core matrix and inspect benchmark before further persistence changes. Actual Windows/vMix and endurance certification remain open. No new runtime dependencies.
+
+## 2026-11-21 — Empty journal recovery gate
+- Existing but empty or state-less journals now fail closed instead of falling back to potentially stale snapshots. Commit 9b26445.
+- Added regression cases for zero-byte, whitespace-only and unknown-record-only journals, including refusal to append and preservation of evidence (916a8f1).
+- No format or dependency change. Existing empty journal files require explicit recovery, never automatic reset. A valid but truncated history ending on an earlier complete commit remains an open integrity risk.
+- Verification: GitHub writes succeeded. Commit workflow lookup returned no runs (connector filters to PR-triggered runs); no new runtime PASS asserted. Core matrix re-verification remains pending.
