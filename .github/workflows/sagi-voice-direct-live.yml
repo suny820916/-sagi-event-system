@@ -17,16 +17,20 @@ jobs:
           BASE="https://sagi-voice-edge-relay.sg3544225.workers.dev"
           API="$BASE/api/direct-tts"
 
-          echo "=== wait for permanent standalone root ==="
+          echo "=== wait for permanent standalone PWA v2 ==="
           READY=0
-          for i in $(seq 1 36); do
+          for i in $(seq 1 48); do
             HTML="$(curl --fail --show-error --silent --connect-timeout 10 --max-time 20 "$BASE/" || true)"
-            if echo "$HTML" | grep -q "独立长期入口 · 不属于 SAGI TOOLS · R3.2"; then
+            MANIFEST="$(curl --fail --show-error --silent --connect-timeout 10 --max-time 20 "$BASE/manifest.webmanifest" || true)"
+            SW="$(curl --fail --show-error --silent --connect-timeout 10 --max-time 20 "$BASE/voice-sw.js" || true)"
+            if echo "$HTML" | grep -q "独立长期入口 · 不属于 SAGI TOOLS · R3.2" \
+              && echo "$MANIFEST" | grep -q '"start_url":"/"' \
+              && echo "$SW" | grep -q 'sagi-voice-standalone-v2'; then
               READY=1
-              echo "standalone root live on attempt $i"
+              echo "standalone PWA v2 live on attempt $i"
               break
             fi
-            echo "standalone root not live yet: $i/36"
+            echo "standalone PWA v2 not fully live yet: $i/48"
             sleep 5
           done
           test "$READY" = "1"
