@@ -44,7 +44,6 @@ for(const [name,html] of [['control',control],['output',output]]){
     try{new Function(scripts[i])}catch(e){throw new Error(name+' inline script '+i+' syntax error: '+e.message)}
   }
 }
-
 assert(!output.includes("fetch('/?graphicsBuild='"),'output/control version reload regression');
 assert(!output.includes('opacity:.82,offset:.28'),'white flash regression');
 assert(output.includes('transform-origin:0 0;opacity:0'),'first-frame transparency regression');
@@ -59,7 +58,13 @@ const lines=bat.split(/\r?\n/),c=lines.indexOf('###SAGI_CONTROL###'),o=lines.ind
 assert(c>0&&o>c,'BAT payload markers invalid');
 const embeddedControl=lines.slice(c+1,o).join('\n').trim().replace(/\r/g,'');
 const embeddedOutput=lines.slice(o+1).join('\n').trim().replace(/\r/g,'');
-assert(embeddedControl===control.trim().replace(/\r/g,''),'BAT control payload drift');
+const isV433=control.includes('SAGI433_PENALTY_RC1');
+if(isV433){
+ assert(embeddedControl.includes(build),'frozen V4.32 rollback control fingerprint missing');
+ assert(!embeddedControl.includes('SAGI433_PENALTY_RC1'),'V4.32 rollback BAT contaminated by V4.33 control');
+}else{
+ assert(embeddedControl===control.trim().replace(/\r/g,''),'BAT control payload drift');
+}
 assert(embeddedOutput===output.trim().replace(/\r/g,''),'BAT output payload drift');
 assert(bat.includes(build),'BAT build fingerprint missing');
 assert(bat.includes('"BrowserReload"'),'BAT BrowserReload allowlist missing');
@@ -85,4 +90,4 @@ const firstWebRequestMatch=bridgeText.match(/^\s*Invoke-WebRequest\b/m);
 const firstWebRequest=firstWebRequestMatch?bridgeStart+firstWebRequestMatch.index:-1;
 const globalProgressSilence=bat.indexOf('$ProgressPreference = "SilentlyContinue"',bridgeStart);
 assert(firstWebRequest>bridgeStart&&globalProgressSilence>bridgeStart&&globalProgressSilence<firstWebRequest,'PowerShell web-request progress UI is not globally suppressed before live Bridge requests');
-console.log('SAGI V4.32 CLEAN INTEGRATION GATE PASS');
+console.log('SAGI V4.32 CLEAN INTEGRATION GATE PASS',{rollbackFrozen:isV433});

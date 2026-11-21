@@ -472,6 +472,75 @@ server.listen(PORT,'127.0.0.1',async()=>{
   await idemPage.close();
   graphics={...graphics,commandId:'idem_clear',revision:baseRevision+3,event:{type:'CLEAR_EVENT'},updatedAt:new Date().toISOString()};
 
+  console.log('TEST 10C4: V4.33 penalty controls are idempotent, recoverable, and enter sudden death safely');
+  graphics={...graphics,commandId:'penalty_v433_base',revision:(Number(graphics.revision)||0)+5,homeScore:1,awayScore:1,homePen:0,awayPen:0,
+    clock:{period:'2H',baseSeconds:5400,running:false,startedAt:null},
+    penaltyShootout:{started:false,rounds:5,firstSide:'HOME',history:[],winner:'',finished:false},
+    simplePenalty:{visible:false,home:0,away:0,history:[],slots:5},event:{type:'CLEAR_EVENT'},updatedAt:new Date().toISOString()};
+  await page.evaluate(()=>window.sagiMatchdayConsistencyCheck(true));await wait(700);
+  await page.selectOption('#mdPenRounds','5');await page.selectOption('#mdPenFirst','HOME');
+  matchdayPosts=[];matchdayAttempts=[];
+  await page.click('#mdPenStart');await wait(1000);
+  assert(graphics.penaltyShootout?.started===true&&graphics.clock?.period==='PEN','V4.33 penalty start did not reach Bridge: '+JSON.stringify(graphics.penaltyShootout));
+  const startWrites=matchdayPosts.length;
+
+  await page.evaluate(()=>{const b=document.querySelector('#spHomePlus');b.click();b.click()});await wait(900);
+  assert(graphics.penaltyShootout.history.length===1,'rapid double HOME kick created duplicate attempts: '+JSON.stringify(graphics.penaltyShootout.history));
+  assert(graphics.penaltyShootout.history[0].kickId&&graphics.penaltyShootout.history[0].side==='HOME'&&graphics.penaltyShootout.history[0].result==='GOAL','HOME kick identity/result missing: '+JSON.stringify(graphics.penaltyShootout.history[0]));
+  assert(Number(graphics.homePen)===1&&Number(graphics.awayPen)===0,'HOME penalty score drift: '+JSON.stringify({homePen:graphics.homePen,awayPen:graphics.awayPen}));
+  assert(matchdayPosts.length===startWrites+1,'rapid double HOME kick produced more than one Bridge write: '+JSON.stringify({startWrites,after:matchdayPosts.length}));
+
+  const afterHomeWrites=matchdayPosts.length;
+  await page.evaluate(()=>document.querySelector('#spHomePlus').click());await wait(350);
+  assert(graphics.penaltyShootout.history.length===1&&matchdayPosts.length===afterHomeWrites,'wrong-side HOME kick was not blocked');
+
+  await page.evaluate(()=>{const b=document.querySelector('#spAwayMiss');b.click();b.click()});await wait(900);
+  assert(graphics.penaltyShootout.history.length===2,'rapid double AWAY miss created duplicate attempts: '+JSON.stringify(graphics.penaltyShootout.history));
+  assert(graphics.penaltyShootout.history[1].kickId&&graphics.penaltyShootout.history[1].side==='AWAY'&&graphics.penaltyShootout.history[1].result==='MISS','AWAY miss identity/result missing: '+JSON.stringify(graphics.penaltyShootout.history[1]));
+  assert(graphics.penaltyShootout.history[0].kickId!==graphics.penaltyShootout.history[1].kickId,'two real penalty kicks reused one kickId');
+  assert(Number(graphics.homePen)===1&&Number(graphics.awayPen)===0,'penalty miss incorrectly changed score');
+
+  await page.reload({waitUntil:'domcontentloaded'});await wait(1500);
+  const recoveredPenalty=await page.evaluate(()=>({
+    home:document.querySelector('#spHomeScore')?.textContent,
+    away:document.querySelector('#spAwayScore')?.textContent,
+    phase:document.querySelector('#spVisibleState')?.textContent,
+    quickUndoDisabled:document.querySelector('#spUndo')?.disabled,
+    directorUndoDisabled:document.querySelector('#mdPenUndo')?.disabled,
+    directorUndoVisible:!!document.querySelector('#mdPenUndo')&&getComputedStyle(document.querySelector('#mdPenUndo')).display!=='none'&&document.querySelector('#mdPenUndo').getBoundingClientRect().height>0,
+    build:typeof SAGIPenaltyCore!=='undefined'?SAGIPenaltyCore.VERSION:''
+  }));
+  assert(recoveredPenalty.home==='1'&&recoveredPenalty.away==='0'&&recoveredPenalty.phase.includes('第2轮')&&recoveredPenalty.build==='4.33.0-rc.1','penalty reload recovery/current round failed: '+JSON.stringify(recoveredPenalty));
+  assert(!recoveredPenalty.directorUndoDisabled&&recoveredPenalty.directorUndoVisible,'desktop penalty undo unavailable after reload recovery: '+JSON.stringify(recoveredPenalty));
+
+  await page.click('#mdPenUndo');await wait(850);
+  assert(graphics.penaltyShootout.history.length===1&&graphics.penaltyShootout.finished===false&&graphics.penaltyShootout.winner==='','penalty undo did not restore previous shootout state: '+JSON.stringify(graphics.penaltyShootout));
+  assert(graphics.penaltyShootout.nextSide==='AWAY'||graphics.penaltyShootout.history.length===1,'penalty undo next-side state invalid: '+JSON.stringify(graphics.penaltyShootout));
+
+  await page.click('#mdPenReset');await wait(850);
+  assert(graphics.penaltyShootout.history.length===0&&Number(graphics.homePen)===0&&Number(graphics.awayPen)===0&&graphics.clock?.period==='2H','penalty reset changed regular score or failed to leave PEN mode: '+JSON.stringify(graphics));
+
+  await page.selectOption('#mdPenRounds','5');await page.selectOption('#mdPenFirst','HOME');await page.click('#mdPenStart');await wait(900);
+  for(let round=1;round<=5;round++){
+    await page.click('#mdPenHomeGoal');await wait(450);
+    await page.click('#mdPenAwayGoal');await wait(450);
+  }
+  assert(graphics.penaltyShootout.history.length===10&&!graphics.penaltyShootout.finished&&graphics.penaltyShootout.suddenDeath===true&&graphics.penaltyShootout.currentRound===6,
+    'tied five-round shootout did not enter round-6 sudden death: '+JSON.stringify(graphics.penaltyShootout));
+  const round6=await page.evaluate(()=>document.querySelector('#spVisibleState')?.textContent||'');
+  assert(round6.includes('突然死亡')&&round6.includes('第6轮'),'round-6 sudden-death label missing: '+round6);
+
+  await page.click('#mdPenHomeGoal');await wait(500);
+  assert(!graphics.penaltyShootout.finished,'shootout ended before AWAY completed sudden-death round');
+  await page.click('#mdPenAwayMiss');await wait(700);
+  assert(graphics.penaltyShootout.finished===true&&graphics.penaltyShootout.winner==='HOME'&&graphics.penaltyShootout.history.length===12,
+    'sudden-death winner/attempt count incorrect: '+JSON.stringify(graphics.penaltyShootout));
+  assert(Number(graphics.homePen)===6&&Number(graphics.awayPen)===5,'sudden-death penalty score incorrect: '+JSON.stringify({homePen:graphics.homePen,awayPen:graphics.awayPen}));
+  await page.screenshot({path:'selftest-artifacts/11d-v433-penalty-sudden-death.png'});
+
+  await page.click('#mdPenReset');await wait(800);
+  graphics={...graphics,commandId:'penalty_v433_clear',revision:(Number(graphics.revision)||0)+1,clock:{period:'2H',baseSeconds:5400,running:false,startedAt:null},event:{type:'CLEAR_EVENT'},updatedAt:new Date().toISOString()};
+
   console.log('TEST 10D: stale phone-local revision can never overrule Bridge live score');
   const reopenBefore=await page.evaluate(()=>{
     window.dispatchEvent(new Event('pagehide'));

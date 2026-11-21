@@ -3,9 +3,12 @@
 import fs from 'node:fs';
 
 const read=p=>fs.readFileSync(p,'utf8');
-const bat=read('intro/SAGI_VMIX_LAN_V432_SIGNATURE_RC.bat');
 const control=read('intro/v45-lan.html');
 const output=read('intro/vmix-v45-lan.html');
+const rollbackBat=read('intro/SAGI_VMIX_LAN_V432_SIGNATURE_RC.bat');
+const isV433=control.includes('SAGI433_PENALTY_RC1');
+const activeBatPath=isV433?'intro/SAGI_VMIX_LAN_V433_PENALTY_RC.bat':'intro/SAGI_VMIX_LAN_V432_SIGNATURE_RC.bat';
+const bat=read(activeBatPath);
 const failures=[];
 function check(name,ok,detail=''){
   console.log((ok?'PASS':'FAIL')+' '+name+(detail?' — '+detail:''));
@@ -25,6 +28,10 @@ check('Packaged output is not truncated',embeddedOutput.length>50000);
 const normalizePayload=s=>s.replace(/^\r?\n/,'').replace(/\r?\n$/,'').replace(/\r\n/g,'\n');
 check('BAT packaged control matches standalone source',normalizePayload(embeddedControl)===normalizePayload(control));
 check('BAT packaged output matches standalone source',normalizePayload(embeddedOutput)===normalizePayload(output));
+if(isV433){
+  check('V4.32 rollback package remains frozen',rollbackBat.includes('SAGI432_SIGNATURE_RC7')&&!rollbackBat.includes('SAGI433_PENALTY_RC1'));
+  check('Active package is V4.33 penalty RC',bat.includes('SAGI433_PENALTY_RC1')&&embeddedControl.includes('SAGIPenaltyCore'));
+}
 check('Packaged control includes V4.32 Signature Core',embeddedControl.includes('SAGISignatureCore'));
 check('Packaged output includes V4.32 Signature Core',embeddedOutput.includes('SAGISignatureCore'));
 check('Embedded control includes local match operation',embeddedControl.includes('mdMacroEvent')&&embeddedControl.includes('mdRecordEvent'));
@@ -93,4 +100,4 @@ check('Fixture takeover authorization is consumed and restored only on publish f
 check('Controller recovers immediately after stale/conflicting state rejection',control.includes("includes('LAN 409')")&&control.includes("recoverMatchdayFromBridge(false,{preferNewest:false,allowIdentityTakeover:true})"));
 check('Local event persistence exists',control.includes('mdPersist()')&&control.includes('mdRecordEvent('));
 if(failures.length){console.error('CHINA_LAN_PREFLIGHT_FAILED '+failures.join('; '));process.exit(1)}
-console.log('CHINA_LAN_PREFLIGHT_STATIC_PASS — physical offline soak still required');
+console.log('CHINA_LAN_PREFLIGHT_STATIC_PASS — physical offline soak still required',{activeBatPath,rollbackFrozen:isV433});
