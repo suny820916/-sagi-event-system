@@ -19,19 +19,20 @@ export class VMixAdapter {
     this.fetchImpl=fetchImpl;
     this.timeoutMs=timeoutMs;
   }
-  async request(params) {
+  async request(params, {signal} = {}) {
     const url=new URL(this.base);
     for(const [k,v] of Object.entries(params)) url.searchParams.set(k,String(v));
     try {
-      const response=await this.fetchImpl(url,{signal:AbortSignal.timeout(this.timeoutMs),cache:"no-store"});
+      signal?.throwIfAborted();
+      const response=await this.fetchImpl(url,{signal:signal ? AbortSignal.any([signal, AbortSignal.timeout(this.timeoutMs)]) : AbortSignal.timeout(this.timeoutMs),cache:"no-store",redirect:"error"});
       if(!response.ok) return {ok:false,code:"VMIX_HTTP_ERROR",status:response.status};
       return {ok:true,code:"VMIX_ACCEPTED",body:await response.text()};
     } catch(error) {
       return {ok:false,code:error?.name==="TimeoutError"?"VMIX_TIMEOUT":"VMIX_DISCONNECTED"};
     }
   }
-  async health() {return this.request({});}
-  async cue({functionName,input,duration}={}) {
+  async health(options) {return this.request({}, options);}
+  async cue({functionName,input,duration}={}, options) {
     if(!ALLOWED.has(functionName)) throw new Error("INVALID_VMIX_FUNCTION");
     const params={Function:functionName};
     if(INPUT_REQUIRED.has(functionName)) params.Input=assertInput(input);
@@ -39,7 +40,7 @@ export class VMixAdapter {
       if(!Number.isInteger(duration)||duration<0||duration>10000) throw new Error("INVALID_FADE_DURATION");
       params.Duration=duration;
     }
-    const result=await this.request(params);
+    const result=await this.request(params, options);
     return {...result,functionName};
   }
 }
