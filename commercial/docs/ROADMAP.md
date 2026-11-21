@@ -299,3 +299,8 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 ## 2026-11-21 — Journal lookup allocation reduction
 - Use reverse search without copying the entire parsed journal array on commit or filtering it on recovery (4d638100). Complete-line parsing and torn-tail detection are unchanged; Node 22 supports findLast.
 - No on-disk format change or new dependency. Runtime verification pending; full journal parsing and full-state checkpoint growth remain unresolved. Do not infer a measured performance improvement from this change.
+
+## 2026-11-21 — Streaming journal validation
+- Recovery and locked commits now stream UTF-8 journal records and retain only the latest state commit, rather than retaining every historical full-state object. Complete-line JSON validation and torn-tail latch remain; export still uses the existing full-history reader. Commit c0ba5a9.
+- Extended benchmark with multi-chunk size assertion and malformed complete record rejection (96a2ada). Existing recovery assertions cover retained Chinese names indirectly via state hydration; dedicated UTF-8 boundary test remains open.
+- No format or dependency change. Runtime/CI not yet verified. This reduces retained scan memory, not disk growth or total scan work; largest individual record still determines memory requirements. Measure latency and memory before release.
