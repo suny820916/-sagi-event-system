@@ -105,6 +105,7 @@ export class FileMatchStore {
     if (tail.length) this.journalError = "TORN_JOURNAL_REQUIRES_REPAIR";
     const after = await this._journalFingerprint();
     if (before !== after) throw new Error('JOURNAL_CHANGED_DURING_SCAN');
+    if (after !== null && !last) throw new Error('JOURNAL_NO_STATE_COMMIT');
     if (!tail.length && after !== null && last)
       this.journalCache = { fingerprint: after, last: structuredClone(last) };
     return last;
