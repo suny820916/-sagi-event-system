@@ -63,6 +63,8 @@ export class FileMatchStore {
 
   async _lastCommit({ useCache = false } = {}) {
     const before = await this._journalFingerprint();
+    if (before === null && this.journalCache !== null)
+      throw new Error('JOURNAL_DISAPPEARED');
     if (useCache && before !== null && this.journalCache?.fingerprint === before)
       return structuredClone(this.journalCache.last);
     this.journalCache = null;
@@ -88,7 +90,7 @@ export class FileMatchStore {
         }
       }
     } catch (error) {
-      if (error.code === "ENOENT") return null;
+      if (error.code === "ENOENT" && before === null && await this._journalFingerprint() === null) return null;
       throw error;
     }
     if (tail.length) this.journalError = "TORN_JOURNAL_REQUIRES_REPAIR";
