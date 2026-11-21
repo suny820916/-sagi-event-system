@@ -67,6 +67,10 @@ exit /b
 # Phone Control: http://<PC-LAN-IP>:8099/
 # vMix Browser:  http://127.0.0.1:8099/vmix
 
+# Suppress PowerShell Invoke-WebRequest progress UI globally.
+# This prevents the blue "bytes read" progress bar from flashing in the Bridge console during live operation.
+$ProgressPreference = "SilentlyContinue"
+
 $PreferredPort = 8100
 $Port = $PreferredPort
 $VmixApi = "http://127.0.0.1:8088/api/"
