@@ -9,30 +9,36 @@ on:
 jobs:
   direct:
     runs-on: ubuntu-latest
+    timeout-minutes: 8
     steps:
-      - name: Verify same-origin VOICE DIRECT
+      - name: Verify Worker-native Edge TTS R3
         run: |
           set -euo pipefail
           BASE="https://sagi-voice-edge-relay.sg3544225.workers.dev"
 
-          echo "=== page ==="
-          PAGE="$(curl --fail --show-error --silent --retry 3 --connect-timeout 10 --max-time 30 "$BASE/voice")"
-          echo "$PAGE" | grep -q "SAGI VOICE DIRECT"
-          echo "$PAGE" | grep -q "OVERSEAS DIRECT · iPHONE SAFE · R2"
-          if echo "$PAGE" | grep -q "云端健康检查 HTTP"; then echo "stale health gate still present"; exit 1; fi
-          echo "VOICE DIRECT page live."
+          echo "=== wait for R3 ==="
+          READY=0
+          for i in $(seq 1 36); do
+            PAGE="$(curl --fail --show-error --silent --connect-timeout 10 --max-time 20 "$BASE/voice" || true)"
+            if echo "$PAGE" | grep -q "OVERSEAS DIRECT · EDGE DIRECT · R3"; then
+              READY=1
+              echo "R3 page live on attempt $i"
+              break
+            fi
+            echo "R3 not live yet: $i/36"
+            sleep 5
+          done
+          test "$READY" = "1"
 
-          echo "=== activate ==="
-          ACT="$(curl --fail-with-body --show-error --silent --retry 2             -H "Origin: $BASE"             -H "Content-Type: application/json"             -d '{}'             "$BASE/api/activate")"
-          echo "$ACT"
-          TOKEN="$(python -c 'import json,sys; print(json.loads(sys.argv[1])["token"])' "$ACT")"
+          echo "=== direct Edge TTS ==="
+          BODY='{"text":"两次遗憾已经够了。第三次——塔城能不能杀进淘汰赛？就看这一场！","mode":"ai_male","speed":1.16,"style":"football_passion","quality":"cinema"}'
+          curl --fail-with-body --show-error --silent --retry 1             -H "Content-Type: application/json"             -d "$BODY"             -D /tmp/headers             -o /tmp/audio             "$BASE/api/direct-tts"
 
-          echo "=== voice ==="
-          BODY='{"text":"两次遗憾已经够了。第三次——塔城能不能杀进淘汰赛？就看这一场！","mode":"ai_male","voice_id":"","speed":1.08,"style":"football_passion","quality":"cinema"}'
-          curl --fail-with-body --show-error --silent --retry 1             -H "Origin: $BASE"             -H "Authorization: Bearer $TOKEN"             -H "Content-Type: application/json"             -d "$BODY"             -D /tmp/headers             -o /tmp/audio             "$BASE/api/voice/preview"
           cat /tmp/headers
           SIZE="$(wc -c < /tmp/audio)"
           echo "audio_bytes=$SIZE"
-          test "$SIZE" -gt 1000
+          test "$SIZE" -gt 5000
           grep -qi '^X-SAGI-Voice-Complete: 1' /tmp/headers
-          echo "SAGI VOICE DIRECT LIVE E2E OK"
+          grep -qi '^X-SAGI-Direct-TTS: 1' /tmp/headers
+          grep -qi '^X-SAGI-Voice-Provider: Microsoft Edge Neural Direct' /tmp/headers
+          echo "SAGI VOICE EDGE DIRECT R3 LIVE E2E OK"
