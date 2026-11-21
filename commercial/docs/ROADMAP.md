@@ -286,3 +286,8 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 ## 2026-11-21 — Journal read amplification reduction
 - Removed redundant full journal read from locked commit path; `_entries()` now provides both parsed entries and torn-tail latch. Reject latched tail before appending. Commit 7653db4.
 - No format, retention, revision or dependency changes. Existing recovery tests must be rerun; no runtime/CI result verified for this change. Full journal parsing and full-state checkpoint growth remain endurance blockers; benchmark before introducing a bounded durable index.
+
+## 2026-11-21 — Checkpoint performance baseline harness
+- Added real FileMatchStore benchmark executing 240 durable checkpoints (one simulated match hour) and checking recovery, stable revision, original goal idempotency, and preserved journal event count. Reports journal bytes and p50/p95/max latency.
+- Wired benchmark into Windows/Linux core CI. Commits: 15fc9ae, b45d8f6. Execution not yet verified; this is accelerated correctness coverage, not a real one-hour or 24-hour soak, and metrics have no performance pass threshold yet.
+- Next: inspect measured baseline, extend under realistic retained command/event history, set hardware-specific latency budgets, then optimize storage without weakening corruption detection or writer exclusion. No new runtime dependencies.
