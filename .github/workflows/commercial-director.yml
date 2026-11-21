@@ -1,0 +1,22 @@
+name: Commercial director
+on:
+  push:
+    branches: [commercial-v1.0]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  director:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node commercial/director/presentation-plan-selftest.mjs
+      - run: node commercial/director/presentation-executor-selftest.mjs
