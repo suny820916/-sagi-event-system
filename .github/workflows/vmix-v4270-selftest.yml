@@ -1,4 +1,4 @@
-name: SAGI vMix V4.31.0 TORANHE Scorebug Self Test
+name: SAGI vMix V4.32 SIGNATURE RC Certification
 
 on:
   push:
@@ -7,6 +7,15 @@ on:
       - "intro/v45-lan.html"
       - "intro/assets/toranhe-event-logo.png"
       - "intro/tests/v4270-browser-selftest.mjs"
+      - "intro/sagi-signature-core-v432.js"
+      - "intro/tests/v432-signature-core-selftest.mjs"
+      - "intro/tests/v432-event-identity-gate.mjs"
+      - "intro/tests/v432-brand-gate.mjs"
+      - "intro/tests/v432-integration-gate.mjs"
+      - "intro/tests/v432-china-lan-preflight.mjs"
+      - "intro/tests/v432-bridge-ssot-runtime.ps1"
+      - "intro/tests/v432-field-preflight.ps1"
+      - "intro/SAGI_VMIX_LAN_V432_SIGNATURE_RC.bat"
       - "intro/tests/v4311-replay-hotfix-selftest.mjs"
       - "intro/SAGI_VMIX_LAN_V4311_REPLAY_HOTFIX.bat"
       - ".github/workflows/vmix-v4270-selftest.yml"
@@ -17,6 +26,15 @@ on:
       - "intro/v45-lan.html"
       - "intro/assets/toranhe-event-logo.png"
       - "intro/tests/v4270-browser-selftest.mjs"
+      - "intro/sagi-signature-core-v432.js"
+      - "intro/tests/v432-signature-core-selftest.mjs"
+      - "intro/tests/v432-event-identity-gate.mjs"
+      - "intro/tests/v432-brand-gate.mjs"
+      - "intro/tests/v432-integration-gate.mjs"
+      - "intro/tests/v432-china-lan-preflight.mjs"
+      - "intro/tests/v432-bridge-ssot-runtime.ps1"
+      - "intro/tests/v432-field-preflight.ps1"
+      - "intro/SAGI_VMIX_LAN_V432_SIGNATURE_RC.bat"
       - "intro/tests/v4311-replay-hotfix-selftest.mjs"
       - "intro/SAGI_VMIX_LAN_V4311_REPLAY_HOTFIX.bat"
       - ".github/workflows/vmix-v4270-selftest.yml"
@@ -29,6 +47,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
@@ -36,6 +56,24 @@ jobs:
         run: |
           npm install --no-save playwright@latest
           npx playwright install --with-deps chromium
+      - name: Verify main integration merge without modifying branch
+        shell: bash
+        env:
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          git fetch --no-tags origin main
+          candidate="${PR_HEAD_SHA:-$(git rev-parse HEAD)}"
+          echo "Candidate head: $candidate"
+          echo "Current main: $(git rev-parse FETCH_HEAD)"
+          base="$(git merge-base "$candidate" FETCH_HEAD)"
+          echo "Merge base: $base"
+          if git merge-tree --write-tree "$candidate" FETCH_HEAD > /tmp/sagi-v432-merge-tree.txt 2>&1; then
+            echo "V4.32 main integration rehearsal: CLEAN"
+          else
+            echo "::error::V4.32 main integration rehearsal failed"
+            sed -n '1,120p' /tmp/sagi-v432-merge-tree.txt
+            exit 1
+          fi
       - name: Validate V4.31.0 BAT launcher structure
         run: |
           node - <<'NODE'
@@ -59,11 +97,31 @@ jobs:
           if(!lines.some(x=>x.includes('powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -Command ^'))) throw new Error('BAT PowerShell bootstrap missing');
           console.log('BAT STRUCTURE PASS', {bytes:Buffer.byteLength(s),idx});
           NODE
-      - name: Validate V4.31.1 replay hotfix when present
-        if: hashFiles('intro/tests/v4311-replay-hotfix-selftest.mjs') != ''
+      - name: Require replay compatibility coverage in broadcast browser self-test
         run: |
-          node intro/tests/v4311-replay-hotfix-selftest.mjs
-      - name: Run V4.31.0 broadcast self-test
+          node - <<'NODE'
+          const fs=require('fs');
+          const s=fs.readFileSync('intro/tests/v4270-browser-selftest.mjs','utf8');
+          const required=[
+            'TEST 6: event-logo replay stinger visual',
+            'TEST 7: replay key plays only latest Replay Event',
+            'replay stinger did not auto clear',
+            'replay stinger'
+          ];
+          for(const marker of required) if(!s.includes(marker)) throw new Error('Replay regression coverage missing: '+marker);
+          console.log('Replay browser regression coverage present; full browser test must pass below');
+          NODE
+      - name: Validate V4.32 Signature Core
+        run: node intro/tests/v432-signature-core-selftest.mjs
+      - name: Validate V4.32 event identity
+        run: node intro/tests/v432-event-identity-gate.mjs
+      - name: Validate V4.32 SAGI brand integration
+        run: node intro/tests/v432-brand-gate.mjs
+      - name: Validate V4.32 clean integration and package
+        run: node intro/tests/v432-integration-gate.mjs
+      - name: Validate China LAN-first packaged core dependency gate
+        run: node intro/tests/v432-china-lan-preflight.mjs
+      - name: Run V4.31.0 broadcast compatibility self-test
         run: |
           mkdir -p selftest-artifacts
           node intro/tests/v4270-browser-selftest.mjs
@@ -90,16 +148,116 @@ jobs:
           path: intro/SAGI_VMIX_LAN_V4311_REPLAY_HOTFIX.bat
           if-no-files-found: error
           retention-days: 7
+      - name: Export V4.32 SIGNATURE RC after automated gates (not production certified)
+        if: success() && hashFiles('intro/SAGI_VMIX_LAN_V432_SIGNATURE_RC.bat') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: SAGI_VMIX_V432_SIGNATURE_RC_CI_PASSED_NOT_PRODUCTION_CERTIFIED
+          path: intro/SAGI_VMIX_LAN_V432_SIGNATURE_RC.bat
+          if-no-files-found: error
+          retention-days: 7
 
 
-
-
-
-
-
-
-
-
-
-
-
+  windows-package-validation:
+    runs-on: windows-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Validate V4.32 package extraction and PowerShell syntax on Windows
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $path = 'intro/SAGI_VMIX_LAN_V432_SIGNATURE_RC.bat'
+          $source = [IO.File]::ReadAllText((Resolve-Path $path), [Text.Encoding]::UTF8)
+          $pattern = '(?s)###SAGI_PS###\r?\n(.*?)\r?\n###SAGI_CONTROL###\r?\n(.*?)\r?\n###SAGI_OUTPUT###\r?\n(.*)$'
+          $match = [regex]::Match($source, $pattern)
+          if (-not $match.Success) { throw 'Embedded BAT payload extraction failed' }
+          $bridge = $match.Groups[1].Value
+          $control = $match.Groups[2].Value
+          $output = $match.Groups[3].Value
+          if ($bridge.Length -lt 1000 -or $control.Length -lt 100000 -or $output.Length -lt 50000) { throw 'Extracted payload is truncated' }
+          $tokens = $null
+          $parseErrors = $null
+          [void][System.Management.Automation.Language.Parser]::ParseInput($bridge, [ref]$tokens, [ref]$parseErrors)
+          if ($parseErrors.Count -gt 0) { throw ('Embedded bridge PowerShell syntax errors: ' + ($parseErrors | Out-String)) }
+          foreach ($marker in @('SAGI432_SIGNATURE_RC7','SAGISignatureCore')) {
+            if (-not $control.Contains($marker) -or -not $output.Contains($marker)) { throw "Missing shared package marker: $marker" }
+          }
+          foreach ($marker in @('mdNextEventIdentity','instantReplayGenerate')) {
+            if (-not $control.Contains($marker)) { throw "Control payload missing: $marker" }
+          }
+          foreach ($marker in @('introStateAllowed','lastRenderedSignatureEventKey')) {
+            if (-not $output.Contains($marker)) { throw "Output payload missing: $marker" }
+          }
+          # Validate that the packaged HTML actually contains the expected live-control and output roots.
+          # This is a package integrity gate, not a real vMix hardware certification.
+          foreach ($marker in @('id="mdGoalBtn"','id="mdRedBtn"','id="mdYellowBtn"','id="mdSubBtn"')) {
+            if (-not $control.Contains($marker)) { throw "Packaged operator control missing: $marker" }
+          }
+          foreach ($marker in @('id="scoreBug"','id="simplePenaltyBoard"')) {
+            if (-not $output.Contains($marker)) { throw "Packaged live output missing: $marker" }
+          }
+          Write-Host "Windows BAT extraction and embedded PowerShell parser PASS"
+      - name: Parse field/runtime scripts with Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          foreach ($path in @('intro/tests/v432-field-preflight.ps1','intro/tests/v432-bridge-ssot-runtime.ps1')) {
+            $tokens = $null
+            $errors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path $path), [ref]$tokens, [ref]$errors)
+            if ($errors.Count -gt 0) { throw ($path + ' parser errors: ' + (($errors | ForEach-Object { $_.Message + ' at line ' + $_.Extent.StartLineNumber + ': ' + $_.Extent.Text }) -join "`n")) }
+          }
+          Write-Host 'Windows PowerShell 5.1 field/runtime script syntax PASS'
+      - name: Execute field preflight against packaged BAT (offline and no live ports)
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Continue'
+          $dir = Join-Path $env:RUNNER_TEMP 'sagi-field-preflight'
+          $ps51 = Join-Path $env:SystemRoot 'System32\\WindowsPowerShell\\v1.0\\powershell.exe'
+          & $ps51 -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\\intro\\tests\\v432-field-preflight.ps1 -ReportDir $dir
+          $code = $LASTEXITCODE
+          $reports = @(Get-ChildItem -LiteralPath $dir -Filter '*.json' -ErrorAction SilentlyContinue)
+          if ($reports.Count -ne 1) { throw 'Expected one preflight JSON evidence file' }
+          $report = Get-Content -LiteralPath $reports[0].FullName -Raw | ConvertFrom-Json
+          if ($report.schema -ne 'SAGI_FIELD_PREFLIGHT_V1') { throw 'Unexpected evidence schema' }
+          foreach ($required in @('package-extraction','bridge-powershell-parser','control-payload','output-payload')) {
+            $check = @($report.checks | Where-Object { $_.name -eq $required })
+            if ($check.Count -ne 1 -or -not $check[0].pass) { throw "Package gate failed: $required" }
+          }
+          if ($code -notin @(0,1)) { throw "Unexpected preflight exit: $code" }
+          Write-Host 'Field preflight package checks and JSON evidence PASS'
+          exit 0
+      - name: Run V4.32 Bridge restart / SSoT runtime gate on Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          & .\\intro\\tests\\v432-bridge-ssot-runtime.ps1
+      - name: Install Playwright Chromium for Windows browser compatibility
+        shell: pwsh
+        run: |
+          npm install --no-save playwright@latest
+          npx playwright install chromium
+      - name: Run full V4.31 broadcast browser regression on Windows
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path selftest-artifacts | Out-Null
+          node intro/tests/v4270-browser-selftest.mjs
+      - name: Upload Windows browser regression evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: SAGI_V432_WINDOWS_BROWSER_REGRESSION_EVIDENCE
+          path: selftest-artifacts
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Run V4.32 portable regression gates on Windows
+        shell: pwsh
+        run: |
+          node intro/tests/v432-signature-core-selftest.mjs
+          node intro/tests/v432-event-identity-gate.mjs
+          node intro/tests/v432-brand-gate.mjs
+          node intro/tests/v432-integration-gate.mjs
+          node intro/tests/v432-china-lan-preflight.mjs

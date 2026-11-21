@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
+<meta name="sagi-build" content="SAGI432_SIGNATURE_RC7">
 <!-- SAGI LIVE MATCH DIRECTOR · SAFE UPDATE COMPATIBILITY MARKER -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -17,7 +18,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="format-detection" content="telephone=no">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%2307090d%22/%3E%3Ctext x=%2232%22 y=%2243%22 text-anchor=%22middle%22 font-size=%2234%22 fill=%22%23d8b55b%22%3ES%3C/text%3E%3C/svg%3E">
-<title>SAGI V4.31.0 · STAGE 广播系统</title>
+<title>SAGI V4.32 RC · SAGI SIGNATURE</title>
 <style>
 :root{--bg:#07090d;--panel:#11151c;--line:#2b3340;--text:#f4f0e8;--muted:#8f97a5;--gold:#d8b55b;--green:#72c79a}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
@@ -403,6 +404,11 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 .gdSwitch{margin:0;display:flex;align-items:center;gap:7px;height:38px;padding:0 10px;border:1px solid #303b48;border-radius:9px;background:#0a0f15;color:#cbd3dc;font-size:10px;font-weight:900;white-space:nowrap}.gdSwitch input{width:16px;height:16px;margin:0;accent-color:#d8b55b}
 .gdField{margin:0}.gdField span{display:block;margin:0 0 3px;font-size:8px;color:#7f8996;letter-spacing:1px}.gdField select{height:30px;padding:4px 7px;border-radius:8px;font-size:10px}
 .gdAbort{min-height:38px!important;padding:6px 10px!important;background:#3a2024!important;color:#ff9a9f!important;border:1px solid #6a3038!important;font-size:10px!important}
+.irQuick{grid-column:1/-1;display:grid;grid-template-columns:auto 100px minmax(140px,190px) minmax(150px,1fr);gap:8px;align-items:center;padding-top:8px;border-top:1px solid #25303b}
+.irRecord,.irGenerate{min-height:38px!important;font-size:10px!important}.irRecord{background:#183a2a!important;color:#86e0aa!important;border:1px solid #2f6549!important}.irGenerate{background:linear-gradient(135deg,#155f8c,#238fbd)!important;color:#fff!important;border:1px solid #329bc6!important}
+.irGenerate.busy{opacity:.65;pointer-events:none}.irStatus{font-size:9px;color:#8f9aa7;line-height:1.35}.irStatus.ok{color:#78dda4}.irStatus.busy{color:#f0c96b}.irStatus.error{color:#ff858a}
+.irSeconds{height:38px!important;padding:6px 8px!important;font-size:11px!important}
+@media(max-width:650px){.irQuick{grid-template-columns:1fr 88px}.irStatus{grid-column:1/3}.irRecord,.irGenerate{min-height:44px!important}}
 @media(max-width:1050px){.gdBar{grid-template-columns:1fr 1fr 1fr}.gdIdentity{grid-column:1/4}.gdAbort{grid-column:3/4}}
 @media(max-width:650px){.gdBar{grid-template-columns:1fr 1fr}.gdIdentity{grid-column:1/3}.gdAbort{grid-column:1/3}.gdField select{height:36px}}
 
@@ -646,10 +652,26 @@ body{background:radial-gradient(circle at 78% -10%,#0a43c933,transparent 28%),li
 .mdProEditor:before{content:"SAGI SIGNATURE · 黑金 / 天山白 / 帕米尔蓝";display:block;margin:-1px 0 9px;padding:7px 9px;border-left:3px solid #d3ae5b;background:#080a0f;color:#d3ae5b;font-size:9px;font-weight:1000;letter-spacing:1.1px}
 
 </style>
+<style>
+/* ===== SAGI LIVE FLOW 07 · HUMANIZED FOOTBALL EVENT ORDER ===== */
+.mmLiveFlow{margin:10px 0 12px;padding:12px;border:1px solid #35506a;border-radius:18px;background:linear-gradient(180deg,#0d1620,#080d13);box-shadow:0 18px 42px #0007;position:relative}
+.mmFlowHead{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-bottom:9px}.mmFlowHead b{font-size:15px;letter-spacing:2px;color:#fff}.mmFlowHead span{font-size:9px;color:#8292a2;letter-spacing:.5px}
+.mmFlowSelectors{display:grid;grid-template-columns:140px minmax(180px,1fr);gap:7px;margin-bottom:8px}.mmFlowSelectors select{min-height:42px;font-size:12px}
+.mmFlowPrimary{display:grid;grid-template-columns:1.15fr 1.15fr 1fr 1fr 1fr;gap:7px}.mmFlowPrimary button{min-height:58px!important;font-size:12px!important;font-weight:1000!important;letter-spacing:.3px}.mmFlowPrimary .goal{background:linear-gradient(135deg,#17603b,#258e59)!important;color:#fff}.mmFlowPrimary .replay{background:linear-gradient(135deg,#164b76,#237eb4)!important;color:#fff}.mmFlowPrimary .player{background:linear-gradient(135deg,#4a3b19,#8c6b22)!important;color:#ffe6a3}.mmFlowPrimary .live{background:linear-gradient(135deg,#52222a,#8a303b)!important;color:#fff}
+.mmFlowReplaySetup{display:grid;grid-template-columns:150px 105px 1fr;gap:7px;align-items:center;margin-top:7px}.mmFlowReplaySetup button,.mmFlowReplaySetup select{min-height:40px!important}.mmFlowHint{font-size:9px;color:#778695;line-height:1.35}
+.mmFlowSecondary{display:grid;grid-template-columns:1fr 1fr 1.25fr 1fr 1fr;gap:7px;margin-top:9px;padding-top:9px;border-top:1px solid #273645}.mmFlowSecondary button{min-height:46px!important;font-size:10px!important}.mmFlowSecondary .undo{border-color:#a47b34!important;color:#ffd98a!important}.mmFlowSecondary .clear{border-color:#6f3d46!important;color:#ff9da6!important}
+.mmFlowSub{display:grid;grid-template-columns:120px 1fr 1fr 1.15fr;gap:7px;margin-top:7px}.mmFlowSub select,.mmFlowSub button{min-height:42px!important}
+.mmDirectorOnly .mmPanelTitle:first-child{margin-bottom:8px}
+#matchCockpit:not(.penaltyActive) .simplePenaltyControl,#matchCockpit:not(.penaltyActive) .mmPenaltyDirector{display:none!important}
+@media(max-width:850px){.mmFlowHead{align-items:flex-start;flex-direction:column}.mmFlowPrimary{grid-template-columns:1fr 1fr}.mmFlowPrimary .goal{grid-column:1/2}.mmFlowPrimary .live{grid-column:1/3}.mmFlowSelectors{grid-template-columns:1fr 1fr}.mmFlowSecondary{grid-template-columns:1fr 1fr}.mmFlowSub{grid-template-columns:1fr 1fr}.mmFlowReplaySetup{grid-template-columns:1fr 90px}.mmFlowHint{grid-column:1/3}.mmFlowPrimary button{min-height:56px!important}}
+@media(max-width:520px){.mmLiveFlow{padding:9px}.mmFlowPrimary button{font-size:11px!important}.mmFlowSecondary button,.mmFlowSub button{min-height:48px!important}}
+
+.sagiControlLogo{display:inline-flex;align-items:center;gap:8px;vertical-align:middle}.sagiControlWord{display:inline-flex;align-items:baseline;font-weight:1000;letter-spacing:.3px}.sagiControlA{position:relative;display:inline-block}.sagiControlA i{position:absolute;width:6px;height:6px;border-radius:50%;background:#ff1a1a;left:50%;bottom:-4px;transform:translateX(-50%);box-shadow:0 0 9px #ff1a1a66}.sagiControlSub{font-size:9px;letter-spacing:2px;color:#9ca7b4;font-weight:900}
+</style>
 </head>
 <body>
 <div class="app">
-  <div class="top"><div><div class="brand">SAGI 赛事直播导播</div><div class="sub">V4.31.0 · STAGE 广播系统 · 比赛设置</div></div><div class="topRight"><div class="ver">V4.31.0</div><button id="mobileUpdateBtn" class="mobileUpdateBtn" type="button">↻ 安全更新</button><button id="mobileRollbackBtn" class="mobileRollbackBtn" type="button">↶ 回退上一版</button><div id="mobileUpdateStatus" class="mobileUpdateStatus">V4.31.0 · STAGE 广播系统 · 桥接服务已锁定</div></div></div>
+  <div class="top"><div><div class="brand"><span class="sagiControlLogo"><span class="sagiControlWord"><span>S</span><span class="sagiControlA">A<i></i></span><span>GI</span></span><span class="sagiControlSub">FOOTBALL</span></span> 赛事直播导播</div><div class="sub">V4.32 RC · SAGI SIGNATURE · 比赛设置</div></div><div class="topRight"><div class="ver">V4.32 RC</div><button id="mobileUpdateBtn" class="mobileUpdateBtn" type="button">↻ 安全更新</button><button id="mobileRollbackBtn" class="mobileRollbackBtn" type="button">↶ 回退上一版</button><div id="mobileUpdateStatus" class="mobileUpdateStatus">V4.31.0 · STAGE 广播系统 · 桥接服务已锁定</div></div></div>
 
   <div id="pwaBar" class="pwaBar" style="display:none">
     <div class="pwaInfo">
@@ -761,12 +783,34 @@ body{background:radial-gradient(circle at 78% -10%,#0a43c933,transparent 28%),li
       <div class="mmStatusCard"><span>状态恢复</span><b id="mmRecoveryStatus">本机 + 桥接服务</b></div>
     </div>
 
+    <div class="mmLiveFlow mmScoreOnly">
+      <div class="mmFlowHead"><b>LIVE FLOW · 比赛事件主链</b><span>按比赛发生顺序操作，不再跨区域找按钮</span></div>
+      <div class="mmFlowSelectors"><select id="mmEventSide"><option value="HOME">主队</option><option value="AWAY">客队</option></select><select id="mmEventPlayer"><option value="">选择球员 / 进球后可补选进球队员</option></select></div>
+      <div class="mmFlowPrimary">
+        <button id="mmGoalMacro" class="goal" type="button">⚽ 1 · 进球</button>
+        <button id="mmGenerateReplay" class="replay" type="button">⏪ 2 · 生成回放</button>
+        <button id="mmReplay" class="replay" type="button" data-camera-slot="replay">▶ 3 · 最近回放</button>
+        <button id="mmGoalPlayer" class="player" type="button">👤 4 · 进球队员</button>
+        <button id="mmReturnLive" class="live" type="button">↩ 5 · 回主画面</button>
+      </div>
+      <div class="mmFlowReplaySetup"><button id="mmReplayRecord" class="ok" type="button">● 启动回放录制</button><select id="mmReplaySeconds"><option value="5">前 5 秒</option><option value="8" selected>前 8 秒</option><option value="12">前 12 秒</option></select><span class="mmFlowHint">进球后可先按「进球」立即更新比分，再生成回放；回放期间选择球员，回来后按「进球队员」。</span></div>
+      <div class="mmFlowSecondary">
+        <button id="mmYellowMacro" class="mmMacroYellow" type="button"><span class="refCardIcon yellow" aria-hidden="true"></span><span>黄牌</span></button>
+        <button id="mmRedMacro" class="mmMacroRed" type="button"><span class="refCardIcon red" aria-hidden="true"></span><span>红牌</span></button>
+        <button id="mmUndoEvent" class="undo" type="button">↶ 撤销上一事件</button>
+        <button id="mmClearEvent" class="clear" type="button">清当前图形</button>
+        <button id="mmGraphicsToggleQuick" type="button">比分牌 开/关</button>
+      </div>
+      <div class="mmFlowSub"><select id="mmSubSide"><option value="HOME">主队换人</option><option value="AWAY">客队换人</option></select><select id="mmSubOff"><option value="">换下球员</option></select><select id="mmSubOn"><option value="">换上球员</option></select><button id="mmSubMacro" type="button">↕ 换人</button></div>
+    </div>
+
     <div class="mmGrid">
       <div class="mmPanel mmScoreOnly">
         <div class="mmPanelTitle">比分与计时</div>
         <div class="mmScoreTeams"><div><div id="mmHomeName" class="mmTeam">HOME</div><div id="mmHomeScore" class="mmScore">0</div></div><div><div id="mmClock" class="mmClock" style="font-size:25px">00:00</div><div id="mmPeriod" class="mmPeriod">1H</div></div><div><div id="mmAwayName" class="mmTeam">AWAY</div><div id="mmAwayScore" class="mmScore">0</div></div></div>
         <div class="mmScoreBtns"><button id="mmHomeMinus" type="button">主队 −</button><button id="mmHomePlus" class="ok" type="button">主队 ＋</button><button id="mmAwayMinus" type="button">客队 −</button><button id="mmAwayPlus" class="ok" type="button">客队 ＋</button></div>
         <div class="mmRow3" style="margin-top:6px"><button id="mmClockStart" class="ok" type="button">▶ 开始</button><button id="mmClockPause" type="button">Ⅱ 暂停</button><button id="mmScoreboardToggle" type="button">比分牌 开/关</button></div>
+        <div class="mmRow" style="margin-top:6px"><button id="mmHalf" type="button">半场结束</button><button id="mmFull" type="button">全场结束</button></div>
       </div>
       <div class="mmPanel mmScoreOnly simplePenaltyControl">
         <div class="mmPanelTitle">世界杯级点球记分牌</div>
@@ -797,20 +841,10 @@ body{background:radial-gradient(circle at 78% -10%,#0a43c933,transparent 28%),li
         <div class="mmRow" style="margin-top:6px"><button id="mmPenStart" type="button">开始点球大战</button><button id="mmPenUndo" type="button">↶ 撤销上一罚</button></div>
       </div>
 
-      <div class="mmPanel mmScoreOnly">
-        <div class="mmPanelTitle">一键事件</div>
-        <div class="mmRow"><select id="mmEventSide"><option value="HOME">主队</option><option value="AWAY">客队</option></select><select id="mmEventPlayer"><option value="">球员可选</option></select></div>
-        <div class="mmRow3" style="margin-top:6px"><button id="mmGoalMacro" class="mmMacroGoal" type="button">⚽ 进球宏</button><button id="mmYellowMacro" class="mmMacroYellow" type="button"><span class="refCardIcon yellow" aria-hidden="true"></span><span>黄牌宏</span></button><button id="mmRedMacro" class="mmMacroRed" type="button"><span class="refCardIcon red" aria-hidden="true"></span><span>红牌宏</span></button></div>
-        <div class="mmRow" style="margin-top:6px"><button id="mmHalf" type="button">半场结束</button><button id="mmFull" type="button">全场结束</button></div>
-        <div class="mmPanelTitle" style="margin-top:9px">换人快捷操作</div>
-        <div class="mmRow3"><select id="mmSubSide"><option value="HOME">主队</option><option value="AWAY">客队</option></select><select id="mmSubOff"><option value="">换下</option></select><select id="mmSubOn"><option value="">换上</option></select></div>
-        <button id="mmSubMacro" style="width:100%;margin-top:6px" type="button">↕ 一键播放换人</button>
-        <div class="mmRoleHint">进球宏：自动加分 → 记录回放点 → 播放事件 → 自动回到比分牌。换人同样自动收起。</div>
-      </div>
 
       <div class="mmPanel mmDirectorOnly">
         <div class="mmPanelTitle">机位导播</div>
-        <div class="mmRow"><button id="mmCam1" class="ok" type="button" data-camera-slot="cam1">1 主机位</button><button id="mmCam2" type="button" data-camera-slot="cam2">2 机位2</button><button id="mmDrone" type="button" data-camera-slot="drone">3 无人机</button><button id="mmReplay" class="mmMarker" type="button" data-camera-slot="replay">4 回放</button></div>
+        <div class="mmRow3"><button id="mmCam1" class="ok" type="button" data-camera-slot="cam1">1 主机位</button><button id="mmCam2" type="button" data-camera-slot="cam2">2 机位2</button><button id="mmDrone" type="button" data-camera-slot="drone">3 无人机</button></div>
         <div class="mmRow" style="margin-top:6px"><button id="mmGraphicsOn" type="button">图形开启</button><button id="mmGraphicsOff" type="button">图形关闭</button></div>
         <div class="mmFilter"><div class="mmPanelTitle" style="margin-top:10px">画面滤镜 · 电影感</div><div class="filterPresets"><button class="filterOriginal" type="button" data-mm-filter="ORIGINAL">原片</button><button class="filterClean" type="button" data-mm-filter="CLEAN">清晰</button><button class="filterWarm" type="button" data-mm-filter="WARM">暖色</button><button class="filterNight" type="button" data-mm-filter="NIGHT">夜场</button></div></div>
         <div class="mmPanelTitle" style="margin-top:10px">回放标记</div>
@@ -900,7 +934,7 @@ body{background:radial-gradient(circle at 78% -10%,#0a43c933,transparent 28%),li
           <button class="vdSource" id="vdTakeCam1" type="button" data-vd-take="cam1"><b>1</b><span>主全景</span></button>
           <button class="vdSource" id="vdTakeCam2" type="button" data-vd-take="cam2"><b>2</b><span>边线近景</span></button>
           <button class="vdSource" id="vdTakeDrone" type="button" data-vd-take="drone"><b>3</b><span>无人机</span></button>
-          <button class="vdSource" id="vdTakeReplay" type="button" data-vd-take="replay"><b>4</b><span>回放</span></button>
+          <button class="vdSource" id="vdTakeReplay" type="button" data-vd-take="replay"><b>4</b><span>最近回放</span></button>
         </div>
         <div class="vdPreview">
           <button id="vdPreviewCam1" type="button" data-vd-preview="cam1">预监 · 主全景</button>
@@ -921,7 +955,7 @@ body{background:radial-gradient(circle at 78% -10%,#0a43c933,transparent 28%),li
         </div>
         <div class="vdBridgeHelp">局域网直连：手机与 vMix 电脑连接同一 Wi‑Fi。此页面由桥接服务在本机提供，所有导播指令与比赛图形直接走局域网，不依赖 Supabase。</div>
         <a class="vdDownload" href="/health" target="_blank">检查局域网桥接</a>
-        <div class="vdKeys">快捷键：1/2/3/4 手动切机位 · G 图形开启 · X 图形关闭 · A 关键进攻保护。输入框正在编辑时快捷键自动停用。</div>
+        <div class="vdKeys">快捷键：1/2/3 切机位 · 4 播放最近回放 · G 图形开启 · X 图形关闭 · A 关键进攻保护。输入框正在编辑时快捷键自动停用。</div>
       </div>
       <div class="vdPanel">
         <div class="vdPanelTitle">画面滤镜 · 电影感</div>
@@ -941,7 +975,7 @@ body{background:radial-gradient(circle at 78% -10%,#0a43c933,transparent 28%),li
 
   <div class="matchdayDesk">
     <div class="mdHead">
-      <div class="mdTitle">V4.31.0 · 比赛模式 <small>STAGE 广播系统 · 安全自动</small></div>
+      <div class="mdTitle">V4.32 RC · 比赛模式 <small>REPLAY HOTFIX · 安全自动</small></div>
       <div id="mdSync" class="mdSync"><span id="mdSyncDot" class="mdLiveDot"></span>比赛图形待命</div>
     </div>
     <div class="gdBar">
@@ -951,6 +985,12 @@ body{background:radial-gradient(circle at 78% -10%,#0a43c933,transparent 28%),li
       <label class="gdField"><span>回放停留</span><select id="gdReplayHold"><option value="2500">2.5s</option><option value="3500" selected>3.5s</option><option value="5000">5s</option></select></label>
       <label class="gdField"><span>返回机位</span><select id="gdReturnSlot"><option value="cam1" selected>主机位</option><option value="cam2">机位 2</option></select></label>
       <button id="gdAbort" class="gdAbort" type="button">■ 终止自动流程</button>
+      <div class="irQuick">
+        <button id="irStartRecording" class="irRecord" type="button">● 启动回放录制</button>
+        <select id="irSeconds" class="irSeconds" aria-label="生成回放长度"><option value="5">前 5 秒</option><option value="8" selected>前 8 秒</option><option value="12">前 12 秒</option></select>
+        <button id="irGenerate" class="irGenerate" type="button">⏪ 生成回放</button>
+        <span id="irStatus" class="irStatus">赛前先启动 vMix Instant Replay 录制</span>
+      </div>
     </div>
     <div id="smartDirector" class="smartDirector">
       <div class="sdHead">
@@ -1361,15 +1401,170 @@ body{background:radial-gradient(circle at 78% -10%,#0a43c933,transparent 28%),li
 </div>
 <div id="notice" class="notice"></div>
 
+<script data-sagi-signature-core="v432">
+(function(root){
+'use strict';
+const VERSION='4.32.0-rc.2';
+const EVENT_TYPES=Object.freeze(['CLEAR_EVENT','GOAL','YELLOW','RED','SUB','HALF_TIME','FULL_TIME','MVP','REPLAY_STINGER']);
+const TOKENS=Object.freeze({
+  bg:'#07090d',
+  panel:'#11151c',
+  line:'#2b3340',
+  text:'#f4f0e8',
+  muted:'#8f97a5',
+  gold:'#d8b55b',
+  green:'#72c79a',
+  blue:'#39a7db',
+  yellow:'#f2d536',
+  red:'#e33440',
+  homeFallback:'#d8b55b',
+  awayFallback:'#4c7dff',
+  motionEnterMs:460,
+  motionExitMs:300
+});
+const HOLD_MS=Object.freeze({
+  GOAL:5600,
+  YELLOW:5200,
+  RED:5200,
+  SUB:6500,
+  HALF_TIME:6500,
+  FULL_TIME:9000,
+  MVP:9000,
+  REPLAY_STINGER:1520,
+  CLEAR_EVENT:0
+});
+const ALIAS=Object.freeze({
+  SUBSTITUTION:'SUB',
+  SUBSTITUTE:'SUB',
+  YELLOW_CARD:'YELLOW',
+  RED_CARD:'RED',
+  HT:'HALF_TIME',
+  FT:'FULL_TIME'
+});
+function safeText(value,max=120){
+  const s=String(value==null?'':value).replace(/[\u0000-\u001f\u007f]/g,' ').replace(/\s+/g,' ').trim();
+  return s.slice(0,Math.max(0,Number(max)||0));
+}
+function validHex(value,fallback=''){
+  const s=safeText(value,16);
+  return /^#[0-9a-fA-F]{6}$/.test(s)?s:fallback;
+}
+function normalizeSide(value){
+  return String(value||'').toUpperCase()==='AWAY'?'AWAY':'HOME';
+}
+function normalizePlayer(p){
+  if(!p||typeof p!=='object') return null;
+  return {
+    id:safeText(p.id,80),
+    name:safeText(p.name,80),
+    number:safeText(p.number,12),
+    position:safeText(p.position||p.role,24),
+    photo:safeText(p.photo,2048)
+  };
+}
+function normalizeType(value){
+  let t=safeText(value,40).toUpperCase();
+  if(ALIAS[t]) t=ALIAS[t];
+  return EVENT_TYPES.includes(t)?t:'CLEAR_EVENT';
+}
+function safeScore(value){
+  const n=Number(value);
+  return Number.isFinite(n)?Math.min(9999,Math.max(0,Math.floor(n))):0;
+}
+function normalizeEvent(raw,context={}){
+  if(raw==null) return null;
+  if(typeof raw!=='object') return {type:'CLEAR_EVENT',__signatureVersion:VERSION,__rejectedType:safeText(raw,40)};
+  const originalType=safeText(raw.type,40).toUpperCase();
+  const type=normalizeType(originalType);
+  const side=normalizeSide(raw.side);
+  const teamFallback=side==='AWAY'?safeText(context.away,80):safeText(context.home,80);
+  const e={
+    type,
+    side,
+    team:safeText(raw.team||teamFallback,80),
+    at:safeText(raw.at,24),
+    eventId:safeText(raw.eventId,128),
+    fixtureKey:safeText(raw.fixtureKey||context.fixtureKey,128),
+    sequence:(Number.isSafeInteger(raw.sequence)&&raw.sequence>=0)?raw.sequence:null,
+    __signatureVersion:VERSION
+  };
+  if(type==='CLEAR_EVENT'){
+    if(originalType && originalType!=='CLEAR_EVENT') e.__rejectedType=originalType;
+    return e;
+  }
+  if(type==='GOAL'||type==='YELLOW'||type==='RED'){
+    e.player=normalizePlayer(raw.player);
+  }
+  if(type==='SUB'){
+    e.on=normalizePlayer(raw.on);
+    e.off=normalizePlayer(raw.off);
+  }
+  if(type==='HALF_TIME'||type==='FULL_TIME'){
+    e.home=safeText(raw.home||context.home,80);
+    e.away=safeText(raw.away||context.away,80);
+    e.homeScore=safeScore(raw.homeScore);
+    e.awayScore=safeScore(raw.awayScore);
+  }
+  if(type==='MVP'){
+    e.player=normalizePlayer(raw.player);
+    e.score=safeText(raw.score,40);
+  }
+  if(type==='REPLAY_STINGER'){
+    e.phase=String(raw.phase||'IN').toUpperCase()==='OUT'?'OUT':'IN';
+    e.title=safeText(raw.title||(e.phase==='OUT'?'BACK TO LIVE':'INSTANT REPLAY'),80);
+    e.label=safeText(raw.label||(e.phase==='OUT'?'回到比赛':'精彩回放'),40);
+  }
+  return e;
+}
+function eventAccent(event,graphics={}){
+  const type=normalizeType(event&&event.type);
+  if(type==='YELLOW') return TOKENS.yellow;
+  if(type==='RED') return TOKENS.red;
+  if(type==='SUB') return TOKENS.blue;
+  const side=normalizeSide(event&&event.side);
+  return side==='AWAY'?validHex(graphics.awayColor,TOKENS.awayFallback):validHex(graphics.homeColor,TOKENS.homeFallback);
+}
+function holdMs(type,fallback=5200){
+  const t=normalizeType(type);
+  return Object.prototype.hasOwnProperty.call(HOLD_MS,t)?HOLD_MS[t]:Math.max(0,Number(fallback)||0);
+}
+function eventKey(event){
+  const e=normalizeEvent(event)||{type:'CLEAR_EVENT'};
+  if(e.eventId) return 'id|'+e.eventId;
+  // Sequence numbers restart for each fixture: never dedupe across fixtures.
+  const fixtureKey=safeText(event&&event.fixtureKey,128);
+  if(fixtureKey&&e.sequence!==null&&e.sequence!==undefined) return 'seq|'+fixtureKey+'|'+String(e.sequence);
+  // Fail open for legacy events without a reliable identity.
+  // Revision/command guards still prevent stale rollback; never collapse two real events by metadata guesswork.
+  return '';
+}
+const api=Object.freeze({VERSION,TOKENS,EVENT_TYPES,HOLD_MS,safeText,validHex,normalizeSide,normalizeType,normalizeEvent,eventAccent,holdMs,eventKey});
+root.SAGISignatureCore=api;
+})(typeof window!=='undefined'?window:globalThis);
+</script>
 <script>
 (function(){
 'use strict';
 const LAN_DIRECT=true;
 async function lanJson(url,options={}){
-  const r=await fetch(url,Object.assign({cache:'no-store'},options));
-  if(!r.ok)throw new Error('LAN '+r.status);
-  const t=await r.text();
-  return t?JSON.parse(t):{};
+  const opts=Object.assign({cache:'no-store'},options),timeoutMs=Math.max(500,Number(opts.timeoutMs)||2500);delete opts.timeoutMs;
+  let timer=null,controller=null;
+  if(!opts.signal&&typeof AbortController!=='undefined'){controller=new AbortController();opts.signal=controller.signal;timer=setTimeout(()=>controller.abort(),timeoutMs)}
+  try{
+    const r=await fetch(url,opts);
+    const t=await r.text();
+    let body={};
+    if(t){try{body=JSON.parse(t)}catch(e){body={raw:t}}}
+    if(!r.ok){
+      const err=new Error('LAN '+r.status+(body&&body.error?' '+body.error:''));
+      err.status=r.status;err.code=body&&body.error||'';err.payload=body;
+      throw err
+    }
+    return body;
+  }catch(e){
+    if(controller&&controller.signal.aborted){const err=new Error('LAN_TIMEOUT');err.code='LAN_TIMEOUT';throw err}
+    throw e
+  }finally{if(timer)clearTimeout(timer)}
 }
 async function lanPost(url,data){
   let payload=data||{};
@@ -1625,7 +1820,7 @@ function renderSetupValidation(result){
 function setMatchReady(on){
  if(on){
    const r=validateMatchSetup(true);if(!r.ok){matchReady=false;refreshSetupReadyUI();note('赛前检查未通过');return false}
-   matchReady=true;setupReadySignature=r.signature;note('可以播出 · 已解锁正式播出')
+   mdAuthorizeFixtureTakeover();matchReady=true;setupReadySignature=r.signature;note('可以播出 · 已解锁正式播出')
  }else{matchReady=false;setupReadySignature='';note('已解除就绪 · 播出已锁定')}
  refreshSetupReadyUI();return matchReady
 }
@@ -1670,7 +1865,7 @@ async function cacheMatchProjectsFull(list=[]){
  const full=(list||[]).filter(p=>p&&p.id&&!p.__compact);if(!full.length)return;
  await dbPutMany(full.map(p=>['matchProject:'+p.id,p]))
 }
-let matchProjectsCache=null;
+let matchProjectsCache=null,matchProjectsBridgeStamp=0,activeMatchProjectId='',activeMatchProjectSavedAt=0,matchProjectSyncBusy=false,matchProjectSyncTimer=null;
 function localMatchProjects(){try{const x=JSON.parse(localStorage.getItem(MATCH_PROJECTS_KEY)||'[]');return Array.isArray(x)?x:[]}catch(e){return[]}}
 function getMatchProjects(){return Array.isArray(matchProjectsCache)?matchProjectsCache.slice():localMatchProjects()}
 async function resolveMatchProject(id){
@@ -1689,26 +1884,46 @@ function mergeMatchProjects(a=[],b=[]){
  const byName=new Map();[...map.values()].sort((x,y)=>(Number(y.savedAt)||0)-(Number(x.savedAt)||0)).forEach(p=>{const k=String(p.name||p.id);if(!byName.has(k))byName.set(k,p)});
  return [...byName.values()].slice(0,20)
 }
-async function persistMatchProjectsBridge(list){
- const projects=(list||[]).slice(0,20);
- try{await lanPost('/api/projects',{projects,savedAt:Date.now(),schema:'SAGI_MATCH_PROJECTS_V1'});return true}catch(e){}
+function currentProjectSelection(){return String((q('projectSelect')&&q('projectSelect').value)||activeMatchProjectId||'').trim()}
+async function persistMatchProjectsBridge(list,activeProjectId=currentProjectSelection()){
+ const projects=(list||[]).slice(0,20),active=String(activeProjectId||'').trim(),stamp=Date.now();
+ try{
+  await lanPost('/api/projects',{projects,activeProjectId:active,savedAt:stamp,schema:'SAGI_MATCH_PROJECTS_V2'});
+  activeMatchProjectId=active;matchProjectsBridgeStamp=Math.max(matchProjectsBridgeStamp,stamp);return true
+ }catch(e){}
  try{
   let state=await lanJson('/api/matchday?projectSave='+Date.now());if(!state||typeof state!=='object'||Array.isArray(state))state={};
-  state.__sagiProjects=projects;await lanPost('/api/matchday',state);return true
+  state.__sagiProjects=projects;state.__sagiActiveProjectId=active;await lanPost('/api/matchday',state);activeMatchProjectId=active;return true
  }catch(e){return false}
 }
-async function syncMatchProjectsFromBridge(){
- const localIndex=localMatchProjects();matchProjectsCache=localIndex.slice();
- const local=await Promise.all(localIndex.map(async p=>(await resolveMatchProject(p.id))||p));let remoteList=[];
+async function syncMatchProjectsFromBridge(opts={}){
+ if(matchProjectSyncBusy||projectSaveBusy||projectLoadBusy)return false;matchProjectSyncBusy=true;
  try{
-  const remote=await lanJson('/api/projects?ts='+Date.now());remoteList=Array.isArray(remote&&remote.projects)?remote.projects:[]
- }catch(e){
-  try{const state=await lanJson('/api/matchday?projectLoad='+Date.now());remoteList=Array.isArray(state&&state.__sagiProjects)?state.__sagiProjects:[]}catch(_){}
- }
- const merged=mergeMatchProjects(remoteList,local);putMatchProjects(merged);refreshProjectList();
- if(merged.length&&(JSON.stringify(merged)!==JSON.stringify(remoteList)))await persistMatchProjectsBridge(merged);
- return merged.length>0||remoteList.length===0
+  const localIndex=localMatchProjects();if(!Array.isArray(matchProjectsCache))matchProjectsCache=localIndex.slice();
+  const local=await Promise.all(localIndex.map(async p=>(await resolveMatchProject(p.id))||p));let remoteList=[],remoteActive='',remoteStamp=0,remoteSchema='',remoteRead=false;
+  try{
+   const remote=await lanJson('/api/projects?ts='+Date.now());remoteRead=true;remoteList=Array.isArray(remote&&remote.projects)?remote.projects:[];remoteActive=String(remote&&remote.activeProjectId||'').trim();remoteStamp=Number(remote&&remote.savedAt)||0;remoteSchema=String(remote&&remote.schema||'')
+  }catch(e){
+   try{const state=await lanJson('/api/matchday?projectLoad='+Date.now());remoteRead=true;remoteList=Array.isArray(state&&state.__sagiProjects)?state.__sagiProjects:[];remoteActive=String(state&&state.__sagiActiveProjectId||'').trim()}catch(_){}
+  }
+  const remoteAuthoritative=remoteRead&&(remoteStamp>0||remoteList.length>0||!!remoteActive);
+  const merged=remoteAuthoritative?remoteList.slice(0,20):mergeMatchProjects(remoteList,local);
+  putMatchProjects(merged);matchProjectsBridgeStamp=Math.max(matchProjectsBridgeStamp,remoteStamp);
+  if(activeMatchProjectId&&!merged.some(p=>String(p.id)===String(activeMatchProjectId))){activeMatchProjectId='';activeMatchProjectSavedAt=0}
+  const remoteProject=remoteActive?merged.find(p=>String(p.id)===remoteActive):null;
+  refreshProjectList(remoteActive||activeMatchProjectId);
+  if(remoteRead&&remoteSchema!=='SAGI_MATCH_PROJECTS_V2'&&remoteAuthoritative)await persistMatchProjectsBridge(merged,'');
+  else if(!remoteAuthoritative&&merged.length)await persistMatchProjectsBridge(merged,'');
+  const needsActiveReload=!!(remoteProject&&(remoteActive!==activeMatchProjectId||Number(remoteProject.savedAt||0)>Number(activeMatchProjectSavedAt||0)));
+  if(opts.applyActive!==false&&needsActiveReload){
+   await loadMatchProjectById(remoteActive,{publishSelection:false,remoteSync:true})
+  }else if(remoteProject){
+   activeMatchProjectId=remoteActive;activeMatchProjectSavedAt=Math.max(activeMatchProjectSavedAt,Number(remoteProject.savedAt)||0);if(q('projectSelect'))q('projectSelect').value=remoteActive
+  }
+  return merged.length>0||remoteRead
+ }finally{matchProjectSyncBusy=false}
 }
+window.sagiProjectSyncDiagnostic=()=>({activeMatchProjectId,activeMatchProjectSavedAt,selectedProjectId:currentProjectSelection(),bridgeStamp:matchProjectsBridgeStamp,projectCount:getMatchProjects().length,syncBusy:matchProjectSyncBusy});
 function projectAssetsSnapshot(){
  const photos={HOME:{},AWAY:{}};for(const side of ['HOME','AWAY'])for(const p of (teamStore[side]&&teamStore[side].roster||[]))if(p&&p.id&&p.photo)photos[side][p.id]=p.photo;
  return{homeCrest:(teamStore.HOME&&teamStore.HOME.crest)||'',awayCrest:(teamStore.AWAY&&teamStore.AWAY.crest)||'',stadium:assets.bg||'',eventLogo:assets.eventLogo||'data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20256%20239%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2348cf35%22%2F%3E%3Cstop%20offset%3D%22.45%22%20stop-color%3D%22%230a8b4a%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23005432%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Cpath%20d%3D%22M%20133%20184%20L%20133%20213%20L%20134%20214%20L%20134%20222%20L%20135%20223%20L%20136%20231%20L%20137%20232%20L%20144%20232%20L%20164%20226%20L%20165%20224%20L%20162%20219%20L%20142%20199%20Z%20M%20129%20184%20L%20120%20199%20L%20113%20207%20L%20101%20218%20L%2097%20225%20L%20103%20228%20L%20109%20229%20L%20113%20231%20L%20126%20232%20L%20126%20228%20L%20128%20222%20L%20128%20216%20L%20129%20215%20Z%20M%2028%2083%20L%2029%2096%20L%2034%20108%20L%2041%20118%20L%2050%20126%20L%2061%20132%20L%2070%20133%20L%2071%20134%20L%20102%20134%20L%20103%20133%20L%20101%20127%20L%2092%20119%20L%2083%20116%20L%2071%20115%20L%2063%20111%20L%2052%2099%20L%2052%2097%20L%2049%2091%20L%2048%2083%20Z%20M%20234%2082%20L%20214%2082%20L%20214%2087%20L%20211%2097%20L%20203%20108%20L%20196%20113%20L%20194%20113%20L%20191%20115%20L%20178%20116%20L%20168%20120%20L%20161%20127%20L%20159%20133%20L%20196%20133%20L%20203%20131%20L%20212%20126%20L%20222%20117%20L%20227%20110%20L%20233%2096%20L%20233%2093%20L%20234%2092%20Z%20M%20227%2053%20L%20200%2053%20L%20198%2054%20L%20139%20112%20L%20134%20121%20L%20134%20173%20L%20137%20182%20L%20147%20195%20L%20153%20200%20L%20169%20210%20L%20175%20216%20L%20177%20220%20L%20181%20219%20L%20194%20209%20L%20194%20207%20L%20191%20203%20L%20184%20197%20L%20176%20193%20L%20173%20193%20L%20164%20190%20L%20157%20186%20L%20158%20185%20L%20161%20186%20L%20175%20186%20L%20185%20189%20L%20193%20194%20L%20201%20201%20L%20205%20199%20L%20215%20189%20L%20214%20187%20L%20203%20179%20L%20191%20174%20L%20179%20173%20L%20178%20172%20L%20159%20172%20L%20157%20171%20L%20153%20166%20L%20153%20161%20L%20154%20159%20L%20158%20156%20L%20206%20156%20L%20207%20155%20L%20212%20155%20L%20219%20153%20L%20228%20148%20L%20233%20144%20L%20239%20137%20L%20246%20124%20L%20248%20118%20L%20248%20114%20L%20239%20116%20L%20226%20121%20L%20223%20126%20L%20217%20132%20L%20208%20137%20L%20201%20138%20L%20200%20139%20L%20159%20139%20L%20153%20142%20L%20152%20141%20L%20153%20131%20L%20155%20127%20L%20211%2072%20Z%20M%20156%20185%20L%20157%20184%20L%20158%20185%20L%20157%20186%20Z%20M%2035%2053%20L%2038%2058%20L%2048%2069%20L%20107%20127%20L%20109%20131%20L%20109%20134%20L%20110%20135%20L%20110%20140%20L%20109%20141%20L%20104%20139%20L%2062%20139%20L%2061%20138%20L%2054%20137%20L%2045%20132%20L%2039%20126%20L%2036%20121%20L%2014%20114%20L%2014%20117%20L%2017%20126%20L%2023%20137%20L%2032%20147%20L%2042%20153%20L%2048%20155%20L%2053%20155%20L%2054%20156%20L%20104%20156%20L%20109%20160%20L%20110%20163%20L%20109%20167%20L%20103%20172%20L%2087%20172%20L%2086%20173%20L%2076%20173%20L%2075%20174%20L%2072%20174%20L%2056%20181%20L%2048%20188%20L%2048%20189%20L%2061%20201%20L%2068%20195%20L%2080%20188%20L%2087%20187%20L%2088%20186%20L%20102%20186%20L%20103%20187%20L%2098%20190%20L%2080%20196%20L%2068%20207%20L%2069%20210%20L%2085%20221%20L%2086%20218%20L%2091%20212%20L%20113%20197%20L%20120%20190%20L%20126%20180%20L%20128%20174%20L%20128%20167%20L%20129%20166%20L%20129%20125%20L%20128%20124%20L%20128%20121%20L%20126%20116%20L%2064%2054%20L%2061%2053%20Z%20M%20102%20186%20L%20103%20185%20L%20105%20186%20L%20104%20187%20Z%20M%2093%2024%20L%2075%2035%20L%2075%2045%20L%2076%2046%20L%2076%2050%20L%2078%2056%20L%2084%2066%20L%20129%20110%20L%20129%2093%20L%20128%2092%20L%20127%2084%20L%20124%2079%20L%2098%2052%20L%2095%2046%20L%2095%2042%20L%2094%2041%20L%2094%2024%20Z%20M%20169%2023%20L%20168%2023%20L%20168%2043%20L%20165%2051%20L%20159%2059%20L%20138%2079%20L%20135%2084%20L%20134%2092%20L%20133%2093%20L%20133%20110%20L%20178%2066%20L%20185%2054%20L%20186%2047%20L%20187%2046%20L%20187%2034%20Z%20M%20134%205%20L%20133%206%20L%20133%2074%20L%20142%2067%20L%20150%2059%20L%20150%2016%20L%20147%2013%20Z%20M%20128%205%20L%20118%2012%20L%20115%2013%20L%20112%2017%20L%20112%2059%20L%20129%2074%20L%20129%205%20Z%22%20fill%3D%22url(%23g)%22%20fill-rule%3D%22evenodd%22%2F%3E%3C%2Fsvg%3E',photos}
@@ -1719,7 +1934,9 @@ async function restoreProjectAssets(a){
  const ph=a.photos||{};for(const side of ['HOME','AWAY'])for(const [id,data] of Object.entries(ph[side]||{}))if(id&&data)await dbPut('photo:'+id,data)
 }
 function refreshProjectList(selected=''){
- const list=getMatchProjects().sort((a,b)=>(b.savedAt||0)-(a.savedAt||0)),el=q('projectSelect');el.innerHTML='<option value="">选择比赛项目</option>'+list.map(p=>'<option value="'+escAttr(p.id)+'">'+esc(p.name)+' · '+new Date(p.savedAt).toLocaleString()+'</option>').join('');if(selected)el.value=selected
+ const list=getMatchProjects().sort((a,b)=>(b.savedAt||0)-(a.savedAt||0)),el=q('projectSelect'),keep=String(selected||activeMatchProjectId||(el&&el.value)||'');
+ el.innerHTML='<option value="">选择比赛项目</option>'+list.map(p=>'<option value="'+escAttr(p.id)+'">'+esc(p.name)+' · '+new Date(p.savedAt).toLocaleString()+'</option>').join('');
+ if(keep&&list.some(p=>String(p.id)===keep))el.value=keep;else el.value=''
 }
 let projectSaveBusy=false,projectLoadBusy=false;
 async function saveMatchProject(){
@@ -1728,9 +1945,9 @@ async function saveMatchProject(){
   const name=q('projectName').value.trim()||setupProjectDefaultName();q('projectName').value=name;await save();mdPersist();vdSave();
   const id='match_'+Date.now().toString(36),project={id,name,savedAt:Date.now(),meta:currentMatchMeta(),core:localStorage.getItem('sagi_player_intro_v40')||'',show:localStorage.getItem('sagi_show_director_v40')||'',matchday:localStorage.getItem('sagi_matchday_graphics_v47')||localStorage.getItem('sagi_matchday_graphics_v42')||'',vmix:localStorage.getItem('sagi_vmix_director_v42')||'',assets:projectAssetsSnapshot()};
   let list=getMatchProjects();const same=list.findIndex(p=>p.name===name);if(same>=0){project.id=list[same].id;list.splice(same,1)}
-  await dbPut('matchProject:'+project.id,project);list.unshift(project);putMatchProjects(list);refreshProjectList(project.id);
+  await dbPut('matchProject:'+project.id,project);list.unshift(project);putMatchProjects(list);activeMatchProjectId=project.id;activeMatchProjectSavedAt=project.savedAt;refreshProjectList(project.id);
   note('比赛项目已保存 · '+name+' · 本机已安全落盘');
-  persistMatchProjectsBridge(list).then(safe=>{if(!safe)note('Bridge 同步失败 · 本机项目不受影响')}).catch(()=>note('Bridge 同步失败 · 本机项目不受影响'))
+  const projectSafe=await persistMatchProjectsBridge(list,project.id).catch(()=>false);if(!projectSafe)note('Bridge 同步失败 · 本机项目不受影响')
  }finally{projectSaveBusy=false;if(btn){btn.disabled=false;btn.textContent='保存比赛项目'}}
 }
 function portablePlayer(p={},photo=''){
@@ -1779,22 +1996,34 @@ async function applyPortableMatchProject(p){
  await save();
  return{home:home.length,away:away.length,homeStarters:home.filter(z=>z.squadType==='STARTER').length,awayStarters:away.filter(z=>z.squadType==='STARTER').length}
 }
-async function loadMatchProject(){
- if(projectLoadBusy)return;const id=q('projectSelect').value;if(!id){note('请选择比赛项目');return}
+async function loadMatchProjectById(id,opts={}){
+ if(projectLoadBusy)return false;id=String(id||'').trim();if(!id){if(!opts.remoteSync)note('请选择比赛项目');return false}
  projectLoadBusy=true;const btn=q('projectLoadBtn');if(btn){btn.disabled=true;btn.textContent='读取中…'}
  try{
   const p=await resolveMatchProject(id);if(!p)throw new Error('比赛项目不存在或已删除');
-  let stats=null;
+  if(!opts.remoteSync)mdAuthorizeFixtureTakeover();
+   let stats=null;
   if(p.core)stats=await applyPortableMatchProject(p);
   else{if(p.show)localStorage.setItem('sagi_show_director_v40',p.show);await restoreProjectAssets(p.assets);await load()}
-  if(p.matchday){localStorage.setItem('sagi_matchday_graphics_v47',p.matchday);localStorage.setItem('sagi_matchday_graphics_v42',p.matchday);await mdLoad({recoverBridge:false})}
-  else mdResetForProject();
   applyMatchMeta(projectMatchMeta(p),true);
+   // Passive selection first consults live authority rather than archived score.
+   const followedLive=opts.remoteSync&&await recoverMatchdayFromBridge(false,{preferNewest:true});
+   if(!followedLive){
+    if(p.matchday){localStorage.setItem('sagi_matchday_graphics_v47',p.matchday);localStorage.setItem('sagi_matchday_graphics_v42',p.matchday);await mdLoad({recoverBridge:false})}
+    else mdResetForProject();
+    applyMatchMeta(projectMatchMeta(p),true);
+   }
   if(p.vmix){localStorage.setItem('sagi_vmix_director_v42',p.vmix);vdLoad()}
-  q('projectName').value=p.name;matchReady=false;setupReadySignature='';const check=validateMatchSetup(true);refreshSetupReadyUI();refreshUXDashboard();syncMatchStage();refreshMatchdayUI();
-  note('比赛项目已读取 · '+p.name+(stats?' · HOME '+stats.home+'人/'+stats.homeStarters+'首发 · AWAY '+stats.away+'人/'+stats.awayStarters+'首发':'')+(check.ok?' · 可进行赛前确认':' · 请检查阵容'))
- }catch(e){recoveryStatus('比赛项目读取失败 · '+(e&&e.message||'未知错误'),true);note('比赛项目读取失败 · '+(e&&e.message||'未知错误'))}
+  q('projectName').value=p.name;activeMatchProjectId=id;activeMatchProjectSavedAt=Number(p.savedAt)||Date.now();if(q('projectSelect'))q('projectSelect').value=id;matchReady=false;setupReadySignature='';const check=validateMatchSetup(true);refreshSetupReadyUI();refreshUXDashboard();syncMatchStage();refreshMatchdayUI();
+  if(opts.publishSelection!==false){const safe=await persistMatchProjectsBridge(getMatchProjects(),id).catch(()=>false);if(!safe)note('当前比赛项目 Bridge 同步失败 · 本机仍可继续')}
+  note((opts.remoteSync?'已跟随另一控制端 · ':'比赛项目已读取 · ')+p.name+(stats?' · HOME '+stats.home+'人/'+stats.homeStarters+'首发 · AWAY '+stats.away+'人/'+stats.awayStarters+'首发':'')+(check.ok?' · 可进行赛前确认':' · 请检查阵容'));
+  return true
+ }catch(e){recoveryStatus('比赛项目读取失败 · '+(e&&e.message||'未知错误'),true);if(!opts.remoteSync)note('比赛项目读取失败 · '+(e&&e.message||'未知错误'));return false}
  finally{projectLoadBusy=false;if(btn){btn.disabled=false;btn.textContent='读取项目'}}
+}
+async function loadMatchProject(){
+ const id=q('projectSelect').value;if(!id){note('请选择比赛项目');return false}
+ return loadMatchProjectById(id,{publishSelection:true})
 }
 function phonePrematchDbOpen(){
  return new Promise((resolve,reject)=>{const r=indexedDB.open('sagi_prematch_phone_v1',1);r.onupgradeneeded=()=>{const db=r.result;if(!db.objectStoreNames.contains('packages'))db.createObjectStore('packages')};r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error||new Error('本机赛前数据库打开失败'))})
@@ -1867,7 +2096,9 @@ async function importPhonePrematchPackage(file){
  }catch(e){recoveryStatus('赛前包读取失败 · '+(e&&e.message||'文件错误'),true);note('赛前包读取失败')}
 }
 async function deleteMatchProject(){
- const id=q('projectSelect').value;if(!id){note('请选择比赛项目');return}let list=getMatchProjects(),p=list.find(x=>x.id===id);list=list.filter(x=>x.id!==id);putMatchProjects(list);refreshProjectList();await dbDel('matchProject:'+id);await persistMatchProjectsBridge(list);note('已删除比赛项目'+(p?' · '+p.name:''))
+ const id=q('projectSelect').value;if(!id){note('请选择比赛项目');return}let list=getMatchProjects(),p=list.find(x=>x.id===id);list=list.filter(x=>x.id!==id);
+ if(activeMatchProjectId===id){activeMatchProjectId='';activeMatchProjectSavedAt=0}
+ putMatchProjects(list);refreshProjectList();await dbDel('matchProject:'+id);await persistMatchProjectsBridge(list,activeMatchProjectId);note('已删除比赛项目'+(p?' · '+p.name:''))
 }
 function recoveryStatus(t,on=true){const el=q('projectRecoveryStatus');if(!el)return;el.textContent=t;el.classList.toggle('on',!!on)}
 function storageVersionValue(prefix){
@@ -1943,26 +2174,28 @@ async function recoverHistoryProjects(){
 function initMatchSetup(){
  q('projectName').value=setupProjectDefaultName();refreshProjectList();q('projectSaveBtn').onclick=saveMatchProject;q('projectLoadBtn').onclick=loadMatchProject;q('projectDeleteBtn').onclick=deleteMatchProject;q('projectRecoverBtn').onclick=recoverHistoryProjects;q('projectCloudSyncBtn').onclick=()=>syncPrematchCloud(false);q('projectPhoneImportFile').onchange=async e=>{const f=e.target.files&&e.target.files[0];if(f)await importPhonePrematchPackage(f);e.target.value=''};
  q('setupValidateBtn').onclick=()=>validateMatchSetup(true);q('setupReadyBtn').onclick=()=>setMatchReady(true);q('setupUnlockBtn').onclick=()=>setMatchReady(false);
- validateMatchSetup(true);refreshSetupReadyUI();syncMatchProjectsFromBridge().catch(()=>{});
+ validateMatchSetup(true);refreshSetupReadyUI();syncMatchProjectsFromBridge({applyActive:true}).catch(()=>{});
+ if(matchProjectSyncTimer)clearInterval(matchProjectSyncTimer);matchProjectSyncTimer=setInterval(()=>{if(!document.hidden)syncMatchProjectsFromBridge({applyActive:true}).catch(()=>{})},1200);
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden)syncMatchProjectsFromBridge({applyActive:true}).catch(()=>{})});
  const startCloud=()=>syncPrematchCloud(true).catch(()=>{});if('requestIdleCallback' in window)requestIdleCallback(startCloud,{timeout:6000});else setTimeout(startCloud,4500)
 }
 
 const DEFAULT_SHOW=[
- {id:'sting',group:'STING',label:'赛事标识',duration:2000,transition:'FLASH',cue:'STING',enabled:true},
+ {id:'sting',group:'STING',label:'赛事标识',duration:2000,transition:'FADE',cue:'STING',enabled:true},
  {id:'match',group:'MATCH',label:'比赛信息',duration:3000,transition:'FADE',cue:'RISER',enabled:true},
  {id:'countdown',group:'COUNTDOWN',label:'开场倒计时',duration:5000,transition:'ZOOM',cue:'HIT',enabled:true},
  {id:'home_team',side:'HOME',group:'TEAM',label:'主队开场',duration:2500,transition:'FADE',cue:'RISER',enabled:true},
  {id:'home_gk',side:'HOME',group:'GK',label:'主队门将',duration:3000,transition:'ZOOM',cue:'HIT',enabled:true},
  {id:'home_df',side:'HOME',group:'DF',label:'主队后卫',duration:4000,transition:'SLIDE',cue:'WHOOSH',enabled:true},
  {id:'home_mf',side:'HOME',group:'MF',label:'主队中场',duration:4000,transition:'SLIDE',cue:'WHOOSH',enabled:true},
- {id:'home_fw',side:'HOME',group:'FW',label:'主队前锋',duration:4000,transition:'FLASH',cue:'HIT',enabled:true},
+ {id:'home_fw',side:'HOME',group:'FW',label:'主队前锋',duration:4000,transition:'FADE',cue:'HIT',enabled:true},
  {id:'home_full',side:'HOME',group:'FULL',label:'主队完整首发',duration:6000,transition:'ZOOM',cue:'CROWD',enabled:true},
  {id:'home_sub',side:'HOME',group:'SUB',label:'主队替补名单',duration:5000,transition:'SLIDE',cue:'WHOOSH',enabled:true},
  {id:'away_team',side:'AWAY',group:'TEAM',label:'客队开场',duration:2500,transition:'FADE',cue:'RISER',enabled:true},
  {id:'away_gk',side:'AWAY',group:'GK',label:'客队门将',duration:3000,transition:'ZOOM',cue:'HIT',enabled:true},
  {id:'away_df',side:'AWAY',group:'DF',label:'客队后卫',duration:4000,transition:'SLIDE',cue:'WHOOSH',enabled:true},
  {id:'away_mf',side:'AWAY',group:'MF',label:'客队中场',duration:4000,transition:'SLIDE',cue:'WHOOSH',enabled:true},
- {id:'away_fw',side:'AWAY',group:'FW',label:'客队前锋',duration:4000,transition:'FLASH',cue:'HIT',enabled:true},
+ {id:'away_fw',side:'AWAY',group:'FW',label:'客队前锋',duration:4000,transition:'FADE',cue:'HIT',enabled:true},
  {id:'away_full',side:'AWAY',group:'FULL',label:'客队完整首发',duration:6000,transition:'ZOOM',cue:'CROWD',enabled:true},
  {id:'away_sub',side:'AWAY',group:'SUB',label:'客队替补名单',duration:5000,transition:'SLIDE',cue:'WHOOSH',enabled:true}
 ];
@@ -1989,7 +2222,7 @@ const BROADCAST_MANUAL=[
 ];
 
 
-let matchdayState={homeScore:0,awayScore:0,scoreboardVisible:false,scoreboardFrozen:false,period:'1H',clockBase:0,clockRunning:false,clockStartedAt:0,lastEvent:null,eventLog:[],replayMarkers:[],homeColor:'#d8b55b',awayColor:'#4c7dff',accentColor:'#f4f0e8',homeShort:'',awayShort:'',scoreHomeName:'',scoreAwayName:'',scoreNameFixture:'',homeRedCards:0,awayRedCards:0,homePen:0,awayPen:0,penaltyShootout:{started:false,rounds:5,firstSide:'HOME',history:[],winner:'',finished:false},simplePenalty:{visible:false,home:0,away:0,history:[],slots:5},stoppageTime:'',scoreTheme:'sagi-pro',overlayVisible:false};
+let matchdayState={homeScore:0,awayScore:0,scoreboardVisible:false,scoreboardFrozen:false,period:'1H',clockBase:0,clockRunning:false,clockStartedAt:0,lastEvent:null,eventLog:[],replayMarkers:[],eventSequence:0,homeColor:'#d8b55b',awayColor:'#4c7dff',accentColor:'#f4f0e8',homeShort:'',awayShort:'',scoreHomeName:'',scoreAwayName:'',scoreNameFixture:'',homeRedCards:0,awayRedCards:0,homePen:0,awayPen:0,penaltyShootout:{started:false,rounds:5,firstSide:'HOME',history:[],winner:'',finished:false},simplePenalty:{visible:false,home:0,away:0,history:[],slots:5},stoppageTime:'',scoreTheme:'sagi-pro',overlayVisible:false};
 let technicalReady=false,matchModeActive=false,matchOperatorRole='FULL',mdMacroTimer=null,mdMacroSeq=0;
 let graphicsDirectorSettings={enabled:true,autoReplay:false,replayHold:3500,returnSlot:'cam1'},gdTimers=[],gdCameraTimers=[],gdSequence=0,gdAutoCameraActive=false;
 let smartDirectorSettings={enabled:true,autoTake:false},smartCue={slot:'cam1',title:'保持主机位',reason:'等待比赛事件',confidence:70,eventType:'IDLE'};
@@ -2221,6 +2454,7 @@ function refreshMatchdayUI(){
  if(q('mmHomeScore'))q('mmHomeScore').textContent=matchdayState.homeScore;
  if(q('mmAwayScore'))q('mmAwayScore').textContent=matchdayState.awayScore;
  if(q('mmPeriod'))q('mmPeriod').textContent=mdPeriodName(matchdayState.period)+(matchdayState.stoppageTime?' · '+matchdayState.stoppageTime:'');
+ const cockpit=q('matchCockpit');if(cockpit)cockpit.classList.toggle('penaltyActive',matchdayState.period==='PEN'||!!(matchdayState.penaltyShootout&&matchdayState.penaltyShootout.started)||!!(matchdayState.simplePenalty&&matchdayState.simplePenalty.visible));
  if(q('mmScoreboardToggle'))q('mmScoreboardToggle').textContent=matchdayState.scoreboardVisible?'隐藏比分牌':'显示比分牌';
  if(q('mmFreeze'))q('mmFreeze').textContent=matchdayState.scoreboardFrozen?'解除比分冻结':'冻结比分牌';
  mdRenderMarkers();mdRenderSimplePenalty();mdRenderPenaltyDirector();applyOperatorRole(matchOperatorRole,false);
@@ -2261,15 +2495,18 @@ async function recoverMatchdayFromBridge(showNote=false,opts={}){
    const bridgeMatches=!!(x&&x.commandId&&mdBridgeMatchesCurrent(x));
    if(x&&x.commandId&&!bridgeMatches&&!opts.allowIdentityTakeover){if(showNote)note('Bridge 是另一场比赛 · 已忽略旧比分状态');return false}
    if(x&&x.commandId){
-     const remoteStamp=mdRecoveryTimestamp(x),localStamp=Math.max(Number(opts.localStamp)||0,mdLocalRecoveryStamp||0);
-     if(opts.preferNewest&&localStamp&&(!remoteStamp||localStamp>remoteStamp+250)){
-       mdRecoveryMetrics.localWins++;mdRecoveryMetrics.lastReason='LOCAL_NEWER';mdRecoveryMetrics.lastRecoveryAt=Date.now();
-       await publishMatchday(matchdayState.lastEvent||null);
-       if(showNote)note('本机比赛状态更新 · 已阻止旧 Bridge 回退');
-       return true
+     const remoteRevision=Math.max(0,Number(x.revision)||0);
+     if(remoteRevision){mdPublishRevision=Math.max(mdPublishRevision,remoteRevision);mdLastAckRevision=Math.max(mdLastAckRevision,remoteRevision)}
+     const remoteStamp=mdRecoveryTimestamp(x),localRevision=Math.max(0,Number(matchdayState.revision)||0,Number(mdLastAckRevision)||0);
+     // LIVE SSOT: once Bridge has a valid same-fixture state, every controller follows Bridge.
+     // A per-device local revision is recovery metadata only; it must never overrule the shared live state.
+     if(localRevision>remoteRevision){
+       mdRecoveryMetrics.localWins+=0;mdRecoveryMetrics.staleRemoteIgnored+=0;
+       mdRecoveryMetrics.lastReason='BRIDGE_AUTHORITY_OVER_LOCAL_REVISION';mdRecoveryMetrics.lastRecoveryAt=Date.now()
      }
      if(mdApplyRecovered(x,!!opts.allowIdentityTakeover)){
        if(opts.preferNewest)mdRecoveryMetrics.bridgeWins++;
+       mdPublishRevision=remoteRevision;mdLastAckRevision=remoteRevision;matchdayState.revision=remoteRevision;
        mdLocalRecoveryStamp=Math.max(mdLocalRecoveryStamp||0,remoteStamp);
        refreshMatchdayUI();mdRenderLog();mdPersist();
        if(showNote){vdSave();if(matchdayState.overlayVisible)publishVmixDirector('OverlayInput'+vmixDirectorSettings.overlay+'In',vmixDirectorSettings.graphics,0,'RESTORE 图形开启');else publishVmixDirector('OverlayInput'+vmixDirectorSettings.overlay+'Out','',0,'RESTORE 图形关闭');note('已从 Bridge 恢复比赛状态与 Overlay')}
@@ -2300,9 +2537,15 @@ async function mdLoad(opts={}){
  if(matchdayState.period==='PEN'&&mdPenaltyState().started)mdSyncDirectorPenaltyToSimple()
 }
 const MD_LAST_GOOD_KEY='sagi_matchday_last_good_v429';
-let mdPublishRevision=0,mdLastAckRevision=0,mdPublishChain=Promise.resolve(),mdConsistencyBusy=false,mdLastConsistencyAt=0,mdLastConsistencyState='INIT',mdLocalRecoveryStamp=0;
+let mdPublishRevision=0,mdLastAckRevision=0,mdPublishChain=Promise.resolve(),mdPendingPublishes=0,mdConsistencyBusy=false,mdConsistencyBusySince=0,mdLastConsistencyAt=0,mdLastConsistencyState='INIT',mdLocalRecoveryStamp=0,mdFixtureTakeoverOnce=false;
+function mdAuthorizeFixtureTakeover(){mdFixtureTakeoverOnce=true;return true}
 let mdPublishMetrics={ok:0,failed:0,retried:0,recovered:0,lastOkAt:0,lastErrorAt:0,lastAttempts:0},mdEventGateSig='',mdEventGateAt=0;
-let mdRecoveryMetrics={resumeChecks:0,networkRestores:0,forcedRepairs:0,localWins:0,bridgeWins:0,lastRecoveryAt:0,lastReason:'INIT'},mdRecoveryTimer=null;
+function mdNextEventIdentity(type='EVENT'){
+ const sequence=Math.max(0,Number(matchdayState.eventSequence)||0)+1;
+ matchdayState.eventSequence=sequence;
+ return{eventId:'evt_'+Date.now().toString(36)+'_'+sequence.toString(36),sequence}
+}
+let mdRecoveryMetrics={resumeChecks:0,networkRestores:0,forcedRepairs:0,localWins:0,bridgeWins:0,passivePolls:0,bridgeFollows:0,staleRemoteIgnored:0,lanTimeouts:0,busyResets:0,lastRecoveryAt:0,lastReason:'INIT'},mdRecoveryTimer=null;
 function mdDelay(ms){return new Promise(r=>setTimeout(r,Math.max(0,Number(ms)||0)))}
 function mdSaveLastGood(){
  try{
@@ -2317,6 +2560,12 @@ function mdAcceptOperatorEvent(signature,windowMs=850){
  mdEventGateSig=sig;mdEventGateAt=now;return true
 }
 async function mdPostMatchdayWithRetry(state){
+ const liveFixture=mdFixtureKey();
+ if(state&&state.fixtureKey&&state.fixtureKey!==liveFixture&&!state.allowFixtureTakeover){
+  mdPublishMetrics.recovered++;mdPublishMetrics.lastAttempts=0;
+  mdRecoveryMetrics.staleRemoteIgnored++;mdRecoveryMetrics.lastReason='STALE_QUEUED_FIXTURE_DROPPED';mdRecoveryMetrics.lastRecoveryAt=Date.now();
+  return{ok:true,attempts:0,skipped:true,reason:'STALE_QUEUED_FIXTURE_DROPPED'}
+ }
  const waits=[0,180,520,1200];let lastError=null;
  for(let i=0;i<waits.length;i++){
   if(waits[i])await mdDelay(waits[i]);
@@ -2324,16 +2573,29 @@ async function mdPostMatchdayWithRetry(state){
    await lanPost('/api/matchday',state);
    mdPublishMetrics.ok++;mdPublishMetrics.lastOkAt=Date.now();mdPublishMetrics.lastAttempts=i+1;if(i){mdPublishMetrics.retried+=i;mdPublishMetrics.recovered++}
    mdSaveLastGood();return{ok:true,attempts:i+1}
-  }catch(e){lastError=e;mdPublishMetrics.lastErrorAt=Date.now()}
+  }catch(e){
+   lastError=e;mdPublishMetrics.lastErrorAt=Date.now();
+   if(String(e&&e.message||e).includes('LAN 409')){
+    try{
+     const recovered=await recoverMatchdayFromBridge(false,{preferNewest:false,allowIdentityTakeover:true});
+     if(recovered){mdPublishMetrics.recovered++;mdPublishMetrics.lastAttempts=i+1;return{ok:false,attempts:i+1,recovered:true,conflict:true}}
+    }catch(_){}
+    break
+   }
+  }
  }
  mdPublishMetrics.failed++;mdPublishMetrics.lastAttempts=waits.length;throw lastError||new Error('MATCHDAY_SYNC_FAILED')
 }
-window.sagiMatchdayReliabilityDiagnostic=()=>({metrics:{...mdPublishMetrics},recovery:{...mdRecoveryMetrics},localRecoveryStamp:mdLocalRecoveryStamp,lastAckRevision:mdLastAckRevision,lastConsistencyState:mdLastConsistencyState,lastConsistencyAt:mdLastConsistencyAt,lastGood:!!mdLoadLastGood(),fixtureKey:mdFixtureKey()});
-function mdCloudSnapshot(event=null){
- const now=mdNowSeconds(),canonical=mdEnforceCanonicalTeams(),homeName=canonical.home||'HOME',awayName=canonical.away||'AWAY',revision=++mdPublishRevision;
+window.sagiMatchdayReliabilityDiagnostic=()=>({metrics:{...mdPublishMetrics},recovery:{...mdRecoveryMetrics},pendingPublishes:mdPendingPublishes,localRecoveryStamp:mdLocalRecoveryStamp,lastAckRevision:mdLastAckRevision,lastConsistencyState:mdLastConsistencyState,lastConsistencyAt:mdLastConsistencyAt,consistencyBusy:mdConsistencyBusy,consistencyBusySince:mdConsistencyBusySince,lastGood:!!mdLoadLastGood(),fixtureKey:mdFixtureKey(),liveAuthority:'BRIDGE'});
+function mdCloudSnapshot(event=null,opts={}){
+ const now=mdNowSeconds(),canonical=mdEnforceCanonicalTeams(),homeName=canonical.home||'HOME',awayName=canonical.away||'AWAY';
+ const baseRevision=Math.max(0,Number(mdPublishRevision)||0,Number(matchdayState.revision)||0,Number(mdLastAckRevision)||0);
+ const revision=opts.peek?baseRevision:(baseRevision+1);
+ if(!opts.peek)mdPublishRevision=revision;
+ const normalizedEvent=window.SAGISignatureCore?SAGISignatureCore.normalizeEvent(event,{home:homeName,away:awayName,fixtureKey:mdFixtureKey()}):event;
  return{
   commandId:Date.now()+'_'+Math.random().toString(36).slice(2,7),
-  revision,fixtureKey:mdFixtureKey(),
+  revision,fixtureKey:mdFixtureKey(),allowFixtureTakeover:!!mdFixtureTakeoverOnce,
   visualVersion:'V4.31.0-LIVE-SCORE-GOAL-DIRECTOR',
   home:homeName,away:awayName,homeShort:homeName,awayShort:awayName,scoreHomeName:matchdayState.scoreHomeName||mdShortAuto(homeName,'主队'),scoreAwayName:matchdayState.scoreAwayName||mdShortAuto(awayName,'客队'),
   homeCrest:(teamStore.HOME&&teamStore.HOME.crest)||'',awayCrest:(teamStore.AWAY&&teamStore.AWAY.crest)||'',eventLogo:assets.eventLogo||'data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20256%20239%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2348cf35%22%2F%3E%3Cstop%20offset%3D%22.45%22%20stop-color%3D%22%230a8b4a%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23005432%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Cpath%20d%3D%22M%20133%20184%20L%20133%20213%20L%20134%20214%20L%20134%20222%20L%20135%20223%20L%20136%20231%20L%20137%20232%20L%20144%20232%20L%20164%20226%20L%20165%20224%20L%20162%20219%20L%20142%20199%20Z%20M%20129%20184%20L%20120%20199%20L%20113%20207%20L%20101%20218%20L%2097%20225%20L%20103%20228%20L%20109%20229%20L%20113%20231%20L%20126%20232%20L%20126%20228%20L%20128%20222%20L%20128%20216%20L%20129%20215%20Z%20M%2028%2083%20L%2029%2096%20L%2034%20108%20L%2041%20118%20L%2050%20126%20L%2061%20132%20L%2070%20133%20L%2071%20134%20L%20102%20134%20L%20103%20133%20L%20101%20127%20L%2092%20119%20L%2083%20116%20L%2071%20115%20L%2063%20111%20L%2052%2099%20L%2052%2097%20L%2049%2091%20L%2048%2083%20Z%20M%20234%2082%20L%20214%2082%20L%20214%2087%20L%20211%2097%20L%20203%20108%20L%20196%20113%20L%20194%20113%20L%20191%20115%20L%20178%20116%20L%20168%20120%20L%20161%20127%20L%20159%20133%20L%20196%20133%20L%20203%20131%20L%20212%20126%20L%20222%20117%20L%20227%20110%20L%20233%2096%20L%20233%2093%20L%20234%2092%20Z%20M%20227%2053%20L%20200%2053%20L%20198%2054%20L%20139%20112%20L%20134%20121%20L%20134%20173%20L%20137%20182%20L%20147%20195%20L%20153%20200%20L%20169%20210%20L%20175%20216%20L%20177%20220%20L%20181%20219%20L%20194%20209%20L%20194%20207%20L%20191%20203%20L%20184%20197%20L%20176%20193%20L%20173%20193%20L%20164%20190%20L%20157%20186%20L%20158%20185%20L%20161%20186%20L%20175%20186%20L%20185%20189%20L%20193%20194%20L%20201%20201%20L%20205%20199%20L%20215%20189%20L%20214%20187%20L%20203%20179%20L%20191%20174%20L%20179%20173%20L%20178%20172%20L%20159%20172%20L%20157%20171%20L%20153%20166%20L%20153%20161%20L%20154%20159%20L%20158%20156%20L%20206%20156%20L%20207%20155%20L%20212%20155%20L%20219%20153%20L%20228%20148%20L%20233%20144%20L%20239%20137%20L%20246%20124%20L%20248%20118%20L%20248%20114%20L%20239%20116%20L%20226%20121%20L%20223%20126%20L%20217%20132%20L%20208%20137%20L%20201%20138%20L%20200%20139%20L%20159%20139%20L%20153%20142%20L%20152%20141%20L%20153%20131%20L%20155%20127%20L%20211%2072%20Z%20M%20156%20185%20L%20157%20184%20L%20158%20185%20L%20157%20186%20Z%20M%2035%2053%20L%2038%2058%20L%2048%2069%20L%20107%20127%20L%20109%20131%20L%20109%20134%20L%20110%20135%20L%20110%20140%20L%20109%20141%20L%20104%20139%20L%2062%20139%20L%2061%20138%20L%2054%20137%20L%2045%20132%20L%2039%20126%20L%2036%20121%20L%2014%20114%20L%2014%20117%20L%2017%20126%20L%2023%20137%20L%2032%20147%20L%2042%20153%20L%2048%20155%20L%2053%20155%20L%2054%20156%20L%20104%20156%20L%20109%20160%20L%20110%20163%20L%20109%20167%20L%20103%20172%20L%2087%20172%20L%2086%20173%20L%2076%20173%20L%2075%20174%20L%2072%20174%20L%2056%20181%20L%2048%20188%20L%2048%20189%20L%2061%20201%20L%2068%20195%20L%2080%20188%20L%2087%20187%20L%2088%20186%20L%20102%20186%20L%20103%20187%20L%2098%20190%20L%2080%20196%20L%2068%20207%20L%2069%20210%20L%2085%20221%20L%2086%20218%20L%2091%20212%20L%20113%20197%20L%20120%20190%20L%20126%20180%20L%20128%20174%20L%20128%20167%20L%20129%20166%20L%20129%20125%20L%20128%20124%20L%20128%20121%20L%20126%20116%20L%2064%2054%20L%2061%2053%20Z%20M%20102%20186%20L%20103%20185%20L%20105%20186%20L%20104%20187%20Z%20M%2093%2024%20L%2075%2035%20L%2075%2045%20L%2076%2046%20L%2076%2050%20L%2078%2056%20L%2084%2066%20L%20129%20110%20L%20129%2093%20L%20128%2092%20L%20127%2084%20L%20124%2079%20L%2098%2052%20L%2095%2046%20L%2095%2042%20L%2094%2041%20L%2094%2024%20Z%20M%20169%2023%20L%20168%2023%20L%20168%2043%20L%20165%2051%20L%20159%2059%20L%20138%2079%20L%20135%2084%20L%20134%2092%20L%20133%2093%20L%20133%20110%20L%20178%2066%20L%20185%2054%20L%20186%2047%20L%20187%2046%20L%20187%2034%20Z%20M%20134%205%20L%20133%206%20L%20133%2074%20L%20142%2067%20L%20150%2059%20L%20150%2016%20L%20147%2013%20Z%20M%20128%205%20L%20118%2012%20L%20115%2013%20L%20112%2017%20L%20112%2059%20L%20129%2074%20L%20129%205%20Z%22%20fill%3D%22url(%23g)%22%20fill-rule%3D%22evenodd%22%2F%3E%3C%2Fsvg%3E',competition:q('matchCompetition').value.trim()||'SAGI FOOTBALL',
@@ -2343,20 +2605,27 @@ function mdCloudSnapshot(event=null){
   stoppageTime:matchdayState.stoppageTime||'',scoreTheme:matchdayState.scoreTheme||'sagi-pro',overlayVisible:!!matchdayState.overlayVisible,
   replayMarkers:(matchdayState.replayMarkers||[]).slice(0,80),eventLog:(matchdayState.eventLog||[]).slice(0,40),
   clock:{baseSeconds:now,running:!!matchdayState.clockRunning,startedAt:matchdayState.clockRunning?new Date().toISOString():null,period:matchdayState.period},
-  controller:{operatorRole:matchOperatorRole,matchMode:matchModeActive,autoGraphics:!!graphicsDirectorSettings.enabled,autoReplay:!!graphicsDirectorSettings.autoReplay,smartDirector:!!smartDirectorSettings.enabled,autoTake:!!smartDirectorSettings.autoTake,smartCue:{slot:smartCue.slot,role:cameraRoleOf(smartCue.slot),title:smartCue.title,confidence:smartCue.confidence},cameraRoles:{cam1:cameraRoleOf('cam1'),cam2:cameraRoleOf('cam2'),drone:cameraRoleOf('drone'),replay:cameraRoleOf('replay')},shotSafety:{enabled:!!shotSafetySettings.enabled,currentSlot:shotSafetyState.currentSlot,minShotMs:shotSafetySettings.minShotMs,cooldownMs:shotSafetySettings.cooldownMs,bounceMs:shotSafetySettings.bounceMs,attackLockUntil:shotSafetyState.attackLockUntil}},event:event||null,updatedAt:new Date().toISOString()
+  controller:{operatorRole:matchOperatorRole,matchMode:matchModeActive,autoGraphics:!!graphicsDirectorSettings.enabled,autoReplay:!!graphicsDirectorSettings.autoReplay,smartDirector:!!smartDirectorSettings.enabled,autoTake:!!smartDirectorSettings.autoTake,smartCue:{slot:smartCue.slot,role:cameraRoleOf(smartCue.slot),title:smartCue.title,confidence:smartCue.confidence},cameraRoles:{cam1:cameraRoleOf('cam1'),cam2:cameraRoleOf('cam2'),drone:cameraRoleOf('drone'),replay:cameraRoleOf('replay')},shotSafety:{enabled:!!shotSafetySettings.enabled,currentSlot:shotSafetyState.currentSlot,minShotMs:shotSafetySettings.minShotMs,cooldownMs:shotSafetySettings.cooldownMs,bounceMs:shotSafetySettings.bounceMs,attackLockUntil:shotSafetyState.attackLockUntil}},event:normalizedEvent||null,updatedAt:new Date().toISOString()
  };
 }
 async function publishMatchday(event=null){
- const state=mdCloudSnapshot(event),revision=state.revision;matchdayState.lastEvent=event;mdPersist();refreshMatchdayUI();
+ const state=mdCloudSnapshot(event),revision=state.revision;if(state.allowFixtureTakeover)mdFixtureTakeoverOnce=false;matchdayState.lastEvent=event;matchdayState.revision=revision;mdPersist();refreshMatchdayUI();mdPendingPublishes++;
  const send=async()=>{
   try{
-   const r=await mdPostMatchdayWithRetry(state);mdLastAckRevision=Math.max(mdLastAckRevision,revision);
+   const r=await mdPostMatchdayWithRetry(state);
+   if(r&&r.skipped)return{ok:false,revision,attempts:0,skipped:true};
+   if(r&&r.ok===false){
+    if(q('mdSync'))q('mdSync').innerHTML='<span class="mdLiveDot"></span>本次操作未提交 · 已恢复 Bridge 直播真源';
+    return{ok:false,revision,attempts:r.attempts||0,recovered:!!r.recovered,conflict:!!r.conflict}
+   }
+   mdLastAckRevision=Math.max(mdLastAckRevision,revision);
    if(q('mdSync'))q('mdSync').innerHTML='<span class="mdLiveDot on"></span>LAN 状态一致 · R'+mdLastAckRevision+(r.attempts>1?' · 自动重试 '+(r.attempts-1)+' 次':'');
    return{ok:true,revision,attempts:r.attempts}
   }catch(e){
+   if(state.allowFixtureTakeover)mdFixtureTakeoverOnce=true;
    if(q('mdSync'))q('mdSync').innerHTML='<span class="mdLiveDot"></span>LAN 同步失败 · 已保留本机状态 / 最近正确状态';
    return{ok:false,revision,attempts:mdPublishMetrics.lastAttempts}
-  }
+  }finally{mdPendingPublishes=Math.max(0,mdPendingPublishes-1)}
  };
  mdPublishChain=mdPublishChain.then(send,send);return mdPublishChain
 }
@@ -2377,17 +2646,47 @@ function mdConsistencyComparable(x){
   simplePenaltyHistory:Array.isArray(simple.history)?simple.history.length:0
  })
 }
+function mdPassiveSyncActive(){
+ return !!(matchReady||matchModeActive||matchdayState.scoreboardVisible||matchdayState.clockRunning||Number(matchdayState.revision)>0)
+}
 async function mdConsistencyCheck(force=false){
- if(mdConsistencyBusy||(!force&&(document.hidden||!matchReady||!(matchModeActive||matchdayState.scoreboardVisible||matchdayState.clockRunning))))return false;
- mdConsistencyBusy=true;
+ const now=Date.now();
+ if(mdConsistencyBusy&&mdConsistencyBusySince&&now-mdConsistencyBusySince>4000){
+  mdConsistencyBusy=false;mdConsistencyBusySince=0;mdRecoveryMetrics.busyResets++;mdRecoveryMetrics.lastReason='CONSISTENCY_BUSY_RESET';mdRecoveryMetrics.lastRecoveryAt=now
+ }
+ if(mdConsistencyBusy||projectLoadBusy||mdPendingPublishes>0||(!force&&!mdPassiveSyncActive()))return false;
+ mdConsistencyBusy=true;mdConsistencyBusySince=Date.now();
  try{
-  const local=mdCloudSnapshot(null),remote=await lanJson('/api/matchday?consistency='+Date.now()),sameFixture=remote&&mdBridgeMatchesCurrent(remote);
-  if(!remote||!remote.commandId||!sameFixture||mdConsistencyComparable(remote)!==mdConsistencyComparable(local)){
-   mdLastConsistencyState=sameFixture?'REPAIR':'FIXTURE_REPAIR';await publishMatchday(matchdayState.lastEvent||null);mdLastConsistencyAt=Date.now();
-   if(q('mdSync'))q('mdSync').innerHTML='<span class="mdLiveDot on"></span>状态已自动校正';return true
+  mdRecoveryMetrics.passivePolls++;
+  const remote=await lanJson('/api/matchday?consistency='+Date.now()),sameFixture=remote&&mdBridgeMatchesCurrent(remote);
+  if(projectLoadBusy||mdPendingPublishes>0)return false;
+   if(!remote||!remote.commandId){mdLastConsistencyState='BRIDGE_EMPTY';mdLastConsistencyAt=Date.now();return false}
+  if(!sameFixture){mdLastConsistencyState='FIXTURE_MISMATCH';mdLastConsistencyAt=Date.now();return false}
+  const remoteRevision=Math.max(0,Number(remote.revision)||0);
+  const localRevision=Math.max(0,Number(matchdayState.revision)||0,Number(mdLastAckRevision)||0);
+  // Revisions are not comparable across independent browser controllers. Bridge is the live authority.
+  // mdPendingPublishes already protects the short interval while THIS controller is committing an operator action.
+  const local=mdCloudSnapshot(null,{peek:true});
+  const differs=mdConsistencyComparable(remote)!==mdConsistencyComparable(local);
+  if(remoteRevision!==localRevision||differs){
+   if(mdApplyRecovered(remote,false)){
+    mdPublishRevision=remoteRevision;mdLastAckRevision=remoteRevision;matchdayState.revision=remoteRevision;
+    mdLocalRecoveryStamp=Math.max(mdLocalRecoveryStamp||0,mdRecoveryTimestamp(remote));
+    mdRecoveryMetrics.bridgeFollows++;mdRecoveryMetrics.lastReason='BRIDGE_FOLLOW';mdRecoveryMetrics.lastRecoveryAt=Date.now();
+    refreshMatchdayUI();refreshMatchdayPlayers();mdRenderLog();mdPersist();
+    mdLastConsistencyState='BRIDGE_FOLLOW';mdLastConsistencyAt=Date.now();
+    if(q('mdSync'))q('mdSync').innerHTML='<span class="mdLiveDot on"></span>手机 / 电脑已跟随 Bridge · R'+remoteRevision;
+    return true
+   }
   }
-  mdLastConsistencyState='OK';mdLastConsistencyAt=Date.now();if(q('mdSync'))q('mdSync').innerHTML='<span class="mdLiveDot on"></span>导播台 / 比分牌一致';return true
- }catch(e){mdLastConsistencyState='OFFLINE';return false}finally{mdConsistencyBusy=false}
+  mdPublishRevision=Math.max(mdPublishRevision,remoteRevision);mdLastAckRevision=Math.max(mdLastAckRevision,remoteRevision);
+  mdLastConsistencyState='OK';mdLastConsistencyAt=Date.now();
+  if(q('mdSync'))q('mdSync').innerHTML='<span class="mdLiveDot on"></span>手机 / 电脑 / 比分牌一致 · R'+remoteRevision;
+  return true
+ }catch(e){
+  if(String(e&&e.code||e&&e.message||e).includes('LAN_TIMEOUT')){mdRecoveryMetrics.lanTimeouts++;mdRecoveryMetrics.lastReason='LAN_TIMEOUT_RECOVERY';mdRecoveryMetrics.lastRecoveryAt=Date.now()}
+  mdLastConsistencyState='OFFLINE';return false
+ }finally{mdConsistencyBusy=false;mdConsistencyBusySince=0}
 }
 
 async function mdRecoverySync(reason='MANUAL'){
@@ -2437,9 +2736,16 @@ function mdUndoLast(){
  if(e.type==='GOAL'||e.type==='RED'){const idx=(matchdayState.replayMarkers||[]).findIndex(m=>m.type===e.type);if(idx>=0)matchdayState.replayMarkers.splice(idx,1)}
  mdRenderLog();mdRenderMarkers();q('mdEventStatus').textContent='已撤销 · '+mdEventLabel(e);publishMatchday({type:'CLEAR_EVENT'});note('已撤销 '+mdEventLabel(e));
 }
-function mdScore(side,delta){
+async function mdScore(side,delta){
  if(matchdayState.period==='PEN'){note('点球大战中 · 常规比分已锁定，请使用点球按钮');return false}
- if(side==='HOME')matchdayState.homeScore=Math.max(0,matchdayState.homeScore+delta);else matchdayState.awayScore=Math.max(0,matchdayState.awayScore+delta);publishMatchday(null);return true
+ if(side==='HOME')matchdayState.homeScore=Math.max(0,matchdayState.homeScore+delta);else matchdayState.awayScore=Math.max(0,matchdayState.awayScore+delta);
+ const result=await publishMatchday(null);
+ if(!result||!result.ok){
+  if(result&&result.conflict)note('比分未提交 · Bridge 正在使用另一场比赛，已恢复直播真实比分；确认“可以播出”后再操作');
+  else if(!result||!result.skipped)note('比分未确认同步 · 请检查 Bridge / vMix 连接');
+  return false
+ }
+ return true
 }
 function mdEventAutoClear(ms=5400){
  const seq=++mdMacroSeq;clearTimeout(mdMacroTimer);mdMacroTimer=setTimeout(()=>{if(seq!==mdMacroSeq)return;matchdayState.lastEvent=null;publishMatchday({type:'CLEAR_EVENT'})},ms)
@@ -2466,6 +2772,107 @@ function gdSaveFromUI(){
  graphicsDirectorSettings.returnSlot=q('gdReturnSlot').value==='cam2'?'cam2':'cam1';
  gdPersist();gdRefreshUI()
 }
+let instantReplayBusy=false,instantReplayTimer=null,instantReplayRecordingRequested=false,replayStingerCleanupTimer=null,replayStingerSeq=0;
+const IR_LAST_DURATION_KEY='sagi_instant_replay_last_duration_v4311';
+function irSaveLastDuration(seconds){const n=[5,8,12].includes(Number(seconds))?Number(seconds):8;try{localStorage.setItem(IR_LAST_DURATION_KEY,String(n))}catch(e){}return n}
+function irLastDuration(){let n=8;try{n=Number(localStorage.getItem(IR_LAST_DURATION_KEY)||0)||Number(q('irSeconds')&&q('irSeconds').value)||Number(q('mmReplaySeconds')&&q('mmReplaySeconds').value)||8}catch(e){}return[5,8,12].includes(n)?n:8}
+function irFinishBusy(text,state=''){instantReplayBusy=false;clearTimeout(instantReplayTimer);instantReplayTimer=null;irSyncButtons();if(text)irSetStatus(text,state)}
+function irSyncButtons(){
+ const busy=!!instantReplayBusy;
+ for(const id of ['irGenerate','mmGenerateReplay','mmReplay','vdTakeReplay']){const b=q(id);if(b){b.disabled=busy;b.classList.toggle('busy',busy)}}
+}
+function irSetStatus(text,state=''){
+ const el=q('irStatus');if(el){el.textContent=text;el.className='irStatus'+(state?' '+state:'')}
+}
+async function instantReplayStartRecording(){
+ if(!requireMatchReady())return false;
+ irSetStatus('正在启动 Instant Replay 录制…','busy');
+ const ok=await publishVmixDirector('ReplayStartRecording','','','启动 Instant Replay 录制');
+ instantReplayRecordingRequested=!!ok;
+ irSetStatus(ok?'Instant Replay 已发送录制启动命令':'启动失败 · 检查 vMix Replay 输入',''+(ok?'ok':'error'));
+ if(ok)note('Instant Replay 录制启动命令已发送');
+ return !!ok
+}
+async function replayStingerAction(phase='IN',switchAction=null,label=''){
+ if(!matchReady)return false;vdSave();
+ const seq=++replayStingerSeq;clearTimeout(replayStingerCleanupTimer);replayStingerCleanupTimer=null;
+ const overlayWasVisible=!!matchdayState.overlayVisible;
+ if(!overlayWasVisible){
+   matchdayState.overlayVisible=true;mdPersist();
+   await publishVmixDirector('OverlayInput'+vmixDirectorSettings.overlay+'In',vmixDirectorSettings.graphics,0,'REPLAY TRANSITION ON')
+ }
+ gdSetStatus((phase==='OUT'?'BACK TO LIVE':'INSTANT REPLAY')+' · SAGI TRANSITION','busy');
+ await publishMatchday(replayStingerPayload(phase));
+ // 1.45s stinger panels fully cover 18%-72% (261-1044ms).
+ // 920ms keeps the actual switch inside that cover window even with up to ~650ms output poll latency.
+ await new Promise(r=>setTimeout(r,REPLAY_STINGER_SWITCH_MS));
+ if(seq!==replayStingerSeq)return false;
+ let ok=false;try{ok=switchAction?!!(await switchAction()):true}catch(e){ok=false}
+ // Cleanup is deliberately asynchronous. The caller can start replay timing from the real switch point.
+ replayStingerCleanupTimer=setTimeout(async()=>{
+   if(seq!==replayStingerSeq)return;
+   try{await publishMatchday({type:'CLEAR_EVENT'})}catch(e){}
+   if(!overlayWasVisible){
+     try{matchdayState.overlayVisible=false;mdPersist();await publishVmixDirector('OverlayInput'+vmixDirectorSettings.overlay+'Out','',0,'REPLAY TRANSITION RESTORE')}catch(e){}
+   }
+   replayStingerCleanupTimer=null
+ },REPLAY_STINGER_POST_SWITCH_CLEAN_MS);
+ return !!ok
+}
+async function instantReplayBeginLatest(seconds=8,label='最近回放'){
+ seconds=irSaveLastDuration(seconds);
+ const played=await replayStingerAction('IN',()=>publishVmixDirector('ReplayPlayLastEventToOutput','',0,label+' · 只播放最近一条'),'PLAY LATEST');
+ if(!played)throw new Error('PLAY_FAILED');
+ irSetStatus(label+'播放中 · '+seconds+' 秒 · 自动返回比赛','busy');
+ clearTimeout(instantReplayTimer);
+ // Start BACK TO LIVE slightly before the replay endpoint so the cut is hidden by the transition.
+ const delay=Math.max(0,seconds*1000-REPLAY_STINGER_SWITCH_MS);
+ instantReplayTimer=setTimeout(async()=>{
+   const preferred=graphicsDirectorSettings.returnSlot||'cam1';
+   const returnSlot=vdSlotAvailable(preferred)?preferred:ssMainSlot();
+   let returned=false;
+   if(returnSlot&&vdSlotAvailable(returnSlot)){
+     returned=await replayStingerAction('OUT',async()=>{await publishVmixDirector('ReplayStopEvents','','','结束最近回放');return ssTake(returnSlot,'INSTANT REPLAY RETURN','OPERATOR',true,'RETURN')},'BACK TO LIVE');
+   }
+   irFinishBusy(returned?'回放完成 · SAGI 转场已返回比赛':'回放结束 · 请手动切回主机位',returned?'ok':'error');
+ },delay);
+ return true
+}
+async function instantReplayGenerate(seconds=8){
+ if(instantReplayBusy){note('回放流程正在执行');return false}
+ if(!requireMatchReady())return false;
+ seconds=[5,8,12].includes(Number(seconds))?Number(seconds):8;
+ instantReplayBusy=true;irSyncButtons();gdClearCameraTimers();gdAutoCameraActive=false;
+ irSetStatus('正在生成前 '+seconds+' 秒回放…','busy');
+ try{
+  // Stop any prior replay playback first; this never deletes recorded events.
+  await publishVmixDirector('ReplayStopEvents','','','停止旧回放播放');
+  const marked=await publishVmixDirector('ReplayMarkInOutLive','',0,'生成回放 · 前 '+seconds+' 秒',String(seconds));
+  if(!marked)throw new Error('MARK_FAILED');
+  mdAddReplayMarker('REPLAY','生成回放 · '+seconds+'秒');
+  await new Promise(r=>setTimeout(r,180));
+  return await instantReplayBeginLatest(seconds,'刚生成的回放')
+ }catch(e){
+  irFinishBusy('生成失败 · 确认 vMix Instant Replay 已在录制','error');
+  note('回放生成失败 · 请确认 vMix Instant Replay 已开始录制');
+  return false
+ }
+}
+async function instantReplayPlayLatest(){
+ if(instantReplayBusy){note('回放流程正在执行');return false}
+ if(!requireMatchReady())return false;
+ const seconds=irLastDuration();
+ instantReplayBusy=true;irSyncButtons();gdClearCameraTimers();gdAutoCameraActive=false;
+ irSetStatus('准备播放最近一条回放…','busy');
+ try{
+  await publishVmixDirector('ReplayStopEvents','','','停止旧回放播放');
+  return await instantReplayBeginLatest(seconds,'最近一条回放')
+ }catch(e){
+  irFinishBusy('最近回放播放失败 · 请先生成一条回放','error');
+  note('最近回放播放失败 · 请先生成一条回放');
+  return false
+ }
+}
 function gdClearTimers(){for(const t of gdTimers)clearTimeout(t);gdTimers=[]}
 function gdClearCameraTimers(){for(const t of gdCameraTimers)clearTimeout(t);gdCameraTimers=[]}
 function gdSchedule(fn,ms,seq=gdSequence){
@@ -2476,6 +2883,8 @@ function gdScheduleCamera(fn,ms,seq=gdSequence){
 }
 function gdAbort(showNote=true){
  gdSequence++;gdClearTimers();gdClearCameraTimers();gdAutoCameraActive=false;clearTimeout(mdMacroTimer);mdMacroSeq++;
+ clearTimeout(instantReplayTimer);instantReplayTimer=null;clearTimeout(replayStingerCleanupTimer);replayStingerCleanupTimer=null;replayStingerSeq++;instantReplayBusy=false;irSyncButtons();
+ if(showNote)publishVmixDirector('ReplayStopEvents','','','停止正在播放的回放').catch(()=>{});
  gdSetStatus('AUTO FLOW ABORTED','manual');if(showNote)note('自动导播流程已终止')
 }
 async function gdEnsureOverlay(){
@@ -2491,30 +2900,18 @@ async function gdTakeCamera(slot,label,opts={}){
  return ssTake(slot,label,source,force,eventType)
 }
 
-const REPLAY_STINGER_SWITCH_MS=950,REPLAY_STINGER_CLEAR_MS=420;
+const REPLAY_STINGER_SWITCH_MS=920,REPLAY_STINGER_POST_SWITCH_CLEAN_MS=1380,REPLAY_STINGER_TOTAL_MS=1450;
 function replayStingerPayload(phase='IN'){
- return{type:'REPLAY_STINGER',phase:phase==='OUT'?'OUT':'IN',title:phase==='OUT'?'BACK TO LIVE':'INSTANT REPLAY',label:phase==='OUT'?'回到比赛':'精彩回放',at:mdFormat(mdNowSeconds())}
+ return{type:'REPLAY_STINGER',phase:phase==='OUT'?'OUT':'IN',title:phase==='OUT'?'BACK TO LIVE':'INSTANT REPLAY',label:phase==='OUT'?'回到比赛':'精彩回放',at:mdFormat(mdNowSeconds()),...mdNextEventIdentity('REPLAY_STINGER')}
 }
 async function replayStingerTake(slot,phase='IN',source='MANUAL',label=''){
  if(!matchReady)return false;vdSave();
  if(!vdSlotAvailable(slot)){note('回放/返回机位未分配，无法执行转场');return false}
- const overlayWasVisible=!!matchdayState.overlayVisible;
- if(!overlayWasVisible){
-   matchdayState.overlayVisible=true;mdPersist();
-   await publishVmixDirector('OverlayInput'+vmixDirectorSettings.overlay+'In',vmixDirectorSettings.graphics,0,'REPLAY LOGO STINGER ON')
- }
- gdSetStatus((phase==='OUT'?'RETURN':'REPLAY')+' · LOGO STINGER','busy');
- await publishMatchday(replayStingerPayload(phase));
- await new Promise(r=>setTimeout(r,REPLAY_STINGER_SWITCH_MS));
- const ok=await ssTake(slot,label||(phase==='OUT'?'REPLAY RETURN':'INSTANT REPLAY'),source,true,phase==='OUT'?'RETURN':'REPLAY');
- await new Promise(r=>setTimeout(r,REPLAY_STINGER_CLEAR_MS));
- await publishMatchday({type:'CLEAR_EVENT'});
- if(!overlayWasVisible){
-   await new Promise(r=>setTimeout(r,120));
-   matchdayState.overlayVisible=false;mdPersist();
-   await publishVmixDirector('OverlayInput'+vmixDirectorSettings.overlay+'Out','',0,'REPLAY LOGO STINGER RESTORE')
- }
- return !!ok
+ return replayStingerAction(
+   phase,
+   ()=>ssTake(slot,label||(phase==='OUT'?'REPLAY RETURN':'INSTANT REPLAY'),source,true,phase==='OUT'?'RETURN':'REPLAY'),
+   label
+ )
 }
 async function gdRunEvent(ev,holdMs=5200){
  sdRecommend(ev);const seq=++gdSequence;gdClearTimers();clearTimeout(mdMacroTimer);mdMacroSeq++;
@@ -2677,7 +3074,11 @@ function sdInit(){
 function gdInit(){
  gdLoad();
  q('gdEnabled').onchange=gdSaveFromUI;q('gdAutoReplay').onchange=gdSaveFromUI;q('gdReplayHold').onchange=gdSaveFromUI;q('gdReturnSlot').onchange=gdSaveFromUI;
- q('gdAbort').onclick=()=>gdAbort(true)
+ q('gdAbort').onclick=()=>gdAbort(true);
+ if(q('irStartRecording'))q('irStartRecording').onclick=instantReplayStartRecording;
+ if(q('irGenerate'))q('irGenerate').onclick=()=>instantReplayGenerate(Number(q('irSeconds').value)||8);
+ if(q('irSeconds'))q('irSeconds').onchange=()=>{if(q('mmReplaySeconds'))q('mmReplaySeconds').value=q('irSeconds').value};
+ irSyncButtons()
 }
 function mdAddReplayMarker(type,label=''){
  const sec=mdNowSeconds(),m={id:'mk_'+Date.now().toString(36),type:String(type||'KEY'),label:String(label||type||'KEY'),at:mdFormat(sec),seconds:Math.floor(sec),score:matchdayState.homeScore+'-'+matchdayState.awayScore,createdAt:new Date().toISOString()};
@@ -2693,12 +3094,12 @@ async function mdCopyMarkers(){
 }
 function mdMacroEvent(type,side,playerId=''){
  if(type==='GOAL'&&matchdayState.period==='PEN'){note('点球大战中 · 请使用点球罚进/罚失按钮');return false}
- if(!mdAcceptOperatorEvent(['EVENT',type,side,playerId].join('|'),1400))return false;
+ const eventGateMs=type==='GOAL'?2500:1400;if(!mdAcceptOperatorEvent(['EVENT',type,side,playerId].join('|'),eventGateMs))return false;
  const p=playerId?mdPlayer(side,playerId):null,before={homeScore:matchdayState.homeScore,awayScore:matchdayState.awayScore,homeRedCards:matchdayState.homeRedCards,awayRedCards:matchdayState.awayRedCards};
  if(type==='GOAL'){if(side==='HOME')matchdayState.homeScore++;else matchdayState.awayScore++;matchdayState.scoreboardVisible=true}
  if(type==='RED'){if(side==='HOME')matchdayState.homeRedCards=Math.min(5,(Number(matchdayState.homeRedCards)||0)+1);else matchdayState.awayRedCards=Math.min(5,(Number(matchdayState.awayRedCards)||0)+1)}
  const team=side==='HOME'?(q('matchHome').value||'HOME'):(q('matchAway').value||'AWAY');
- const ev={type,side,team,player:p?{id:p.id,name:p.name,number:p.number,position:p.position||p.role,photo:p.photo||''}:{id:'',name:team,number:'',position:'',photo:''},at:mdFormat(mdNowSeconds())};
+ const ev={type,side,team,player:p?{id:p.id,name:p.name,number:p.number,position:p.position||p.role,photo:p.photo||''}:{id:'',name:team,number:'',position:'',photo:''},at:mdFormat(mdNowSeconds()),...mdNextEventIdentity(type)};
  mdRecordEvent(ev,before);
  if(type==='GOAL'||type==='RED')mdAddReplayMarker(type,type==='GOAL'?'进球 · '+team:'红牌 · '+team);
  q('mdEventStatus').textContent=(type==='GOAL'?'进球':type==='YELLOW'?'黄牌':'红牌')+(p?' · #'+p.number+' '+p.name:' · '+team);
@@ -2708,11 +3109,28 @@ function mdEvent(type){
  const side=q('mdEventSide').value,pid=q('mdEventPlayer').value;if(!pid){note('请先选择球员');return}mdMacroEvent(type,side,pid)
 }
 
+function mdShowGoalPlayer(){
+ const side=q('mmEventSide').value,pid=q('mmEventPlayer').value,p=pid?mdPlayer(side,pid):null;
+ if(!p){note('请选择进球队员');return false}
+ const team=side==='HOME'?(q('matchHome').value||'HOME'):(q('matchAway').value||'AWAY');
+ const ev={type:'GOAL',displayOnly:true,side,team,player:{id:p.id,name:p.name,number:p.number,position:p.position||p.role,photo:p.photo||''},at:mdFormat(mdNowSeconds()),...mdNextEventIdentity('GOAL')};
+ q('mdEventStatus').textContent='进球队员 · #'+p.number+' '+p.name;
+ publishMatchday(ev);mdEventAutoClear(4600);return true
+}
+async function instantReplayReturnLiveNow(){
+ clearTimeout(instantReplayTimer);instantReplayTimer=null;
+ await publishVmixDirector('ReplayStopEvents','','','手动结束回放');
+ const preferred=graphicsDirectorSettings.returnSlot||'cam1',returnSlot=vdSlotAvailable(preferred)?preferred:ssMainSlot();
+ let ok=false;
+ if(returnSlot&&vdSlotAvailable(returnSlot))ok=await replayStingerAction('OUT',()=>ssTake(returnSlot,'MANUAL RETURN LIVE','OPERATOR',true,'RETURN'),'MANUAL BACK TO LIVE');
+ irFinishBusy(ok?'已回到主画面':'无法回主画面 · 检查主机位',ok?'ok':'error');return !!ok
+}
+
 function mdSubstitutionByIds(side,offId,onId){
  if(!mdAcceptOperatorEvent(['SUB',side,offId,onId].join('|'),1000))return false;
  const off=mdPlayer(side,offId),on=mdPlayer(side,onId);if(!off||!on){note('请选择换下和换上球员');return}
  const before={homeScore:matchdayState.homeScore,awayScore:matchdayState.awayScore,homeRedCards:matchdayState.homeRedCards,awayRedCards:matchdayState.awayRedCards};
- const ev={type:'SUB',side,team:side==='HOME'?(q('matchHome').value||'HOME'):(q('matchAway').value||'AWAY'),off:{id:off.id,name:off.name,number:off.number,position:off.position||off.role,photo:off.photo||''},on:{id:on.id,name:on.name,number:on.number,position:on.position||on.role,photo:on.photo||''},at:mdFormat(mdNowSeconds())};
+ const ev={type:'SUB',side,team:side==='HOME'?(q('matchHome').value||'HOME'):(q('matchAway').value||'AWAY'),off:{id:off.id,name:off.name,number:off.number,position:off.position||off.role,photo:off.photo||''},on:{id:on.id,name:on.name,number:on.number,position:on.position||on.role,photo:on.photo||''},at:mdFormat(mdNowSeconds()),...mdNextEventIdentity('SUB')};
  mdRecordEvent(ev,before);q('mdEventStatus').textContent='换人 · #'+off.number+' '+off.name+' → #'+on.number+' '+on.name;gdRunEvent(ev,6200)
 }
 function mdSubstitution(){mdSubstitutionByIds(q('mdSubSide').value,q('mdSubOff').value,q('mdSubOn').value)}
@@ -2720,14 +3138,14 @@ function mdSubstitution(){mdSubstitutionByIds(q('mdSubSide').value,q('mdSubOff')
 function mdMatchState(type){
  if(!mdAcceptOperatorEvent('MATCH_STATE|'+type,1200))return false;
  const before={homeScore:matchdayState.homeScore,awayScore:matchdayState.awayScore},sec=mdNowSeconds();matchdayState.clockBase=sec;matchdayState.clockRunning=false;matchdayState.clockStartedAt=0;
- const ev={type,home:q('matchHome').value||'HOME',away:q('matchAway').value||'AWAY',homeScore:matchdayState.homeScore,awayScore:matchdayState.awayScore,at:mdFormat(sec)};
+ const ev={type,home:q('matchHome').value||'HOME',away:q('matchAway').value||'AWAY',homeScore:matchdayState.homeScore,awayScore:matchdayState.awayScore,at:mdFormat(sec),...mdNextEventIdentity(type)};
  mdRecordEvent(ev,before);q('mdEventStatus').textContent=type==='HALF_TIME'?'半场图形已触发':'全场图形已触发';gdRunEvent(ev,type==='FULL_TIME'?9000:6500)
 }
 function mdMvp(){
  const side=q('mdMvpSide').value,pid=q('mdMvpPlayer').value;
  if(!mdAcceptOperatorEvent(['MVP',side,pid].join('|'),1200))return false;
  const p=mdPlayer(side,pid);if(!p){note('请选择本场最佳球员');return}
- const before={homeScore:matchdayState.homeScore,awayScore:matchdayState.awayScore},ev={type:'MVP',side,team:side==='HOME'?(q('matchHome').value||'HOME'):(q('matchAway').value||'AWAY'),player:{id:p.id,name:p.name,number:p.number,position:p.position||p.role,photo:p.photo||''},score:matchdayState.homeScore+'-'+matchdayState.awayScore,at:mdFormat(mdNowSeconds())};
+ const before={homeScore:matchdayState.homeScore,awayScore:matchdayState.awayScore},ev={type:'MVP',side,team:side==='HOME'?(q('matchHome').value||'HOME'):(q('matchAway').value||'AWAY'),player:{id:p.id,name:p.name,number:p.number,position:p.position||p.role,photo:p.photo||''},score:matchdayState.homeScore+'-'+matchdayState.awayScore,at:mdFormat(mdNowSeconds()),...mdNextEventIdentity('MVP')};
  mdRecordEvent(ev,before);q('mdEventStatus').textContent='MVP · #'+p.number+' '+p.name;gdRunEvent(ev,9000)
 }
 function applyOperatorRole(role,persist=true){
@@ -2813,9 +3231,12 @@ function initMatchMode(){
  q('mmHomeMinus').onclick=()=>mdScore('HOME',-1);q('mmHomePlus').onclick=()=>mdScore('HOME',1);q('mmAwayMinus').onclick=()=>mdScore('AWAY',-1);q('mmAwayPlus').onclick=()=>mdScore('AWAY',1);
  q('mmClockStart').onclick=()=>q('mdClockStart').click();q('mmClockPause').onclick=()=>q('mdClockPause').click();q('mmScoreboardToggle').onclick=()=>{matchdayState.scoreboardVisible=!matchdayState.scoreboardVisible;publishMatchday(null)};
  q('mmEventSide').onchange=refreshMatchdayPlayers;q('mmGoalMacro').onclick=()=>mdMacroEvent('GOAL',q('mmEventSide').value,q('mmEventPlayer').value);q('mmYellowMacro').onclick=()=>mdMacroEvent('YELLOW',q('mmEventSide').value,q('mmEventPlayer').value);q('mmRedMacro').onclick=()=>mdMacroEvent('RED',q('mmEventSide').value,q('mmEventPlayer').value);
+ q('mmGoalPlayer').onclick=mdShowGoalPlayer;q('mmReturnLive').onclick=instantReplayReturnLiveNow;q('mmUndoEvent').onclick=mdUndoLast;q('mmClearEvent').onclick=()=>{gdAbort(false);matchdayState.lastEvent=null;publishMatchday({type:'CLEAR_EVENT'});note('当前事件图形已清除')};q('mmGraphicsToggleQuick').onclick=()=>q('mmScoreboardToggle').click();
  q('mmHalf').onclick=()=>mdMatchState('HALF_TIME');q('mmFull').onclick=()=>mdMatchState('FULL_TIME');
  q('mmSubSide').onchange=refreshMatchdayPlayers;q('mmSubMacro').onclick=()=>mdSubstitutionByIds(q('mmSubSide').value,q('mmSubOff').value,q('mmSubOn').value);
- q('mmCam1').onclick=()=>vdTake('cam1');q('mmCam2').onclick=()=>vdTake('cam2');q('mmDrone').onclick=()=>vdTake('drone');q('mmReplay').onclick=()=>vdTake('replay');q('mmGraphicsOn').onclick=vdOverlayIn;q('mmGraphicsOff').onclick=vdOverlayOut;
+ q('mmCam1').onclick=()=>vdTake('cam1');q('mmCam2').onclick=()=>vdTake('cam2');q('mmDrone').onclick=()=>vdTake('drone');q('mmReplay').onclick=instantReplayPlayLatest;q('mmGraphicsOn').onclick=vdOverlayIn;q('mmGraphicsOff').onclick=vdOverlayOut;
+ q('mmReplayRecord').onclick=instantReplayStartRecording;q('mmGenerateReplay').onclick=()=>instantReplayGenerate(Number(q('mmReplaySeconds').value)||8);
+ q('mmReplaySeconds').onchange=()=>{if(q('irSeconds'))q('irSeconds').value=q('mmReplaySeconds').value};
  q('mmMarkSave').onclick=()=>{mdAddReplayMarker('SAVE','精彩扑救');note('已标记扑救')};q('mmMarkIncident').onclick=()=>{mdAddReplayMarker('INCIDENT','对抗/冲突');note('已标记事件')};q('mmMarkKey').onclick=()=>{mdAddReplayMarker('KEY','精彩时刻');note('已标记精彩时刻')};
  q('mmCopyMarkers').onclick=mdCopyMarkers;q('mmClearMarkers').onclick=()=>{matchdayState.replayMarkers=[];mdPersist();mdRenderMarkers();note('回放标记已清空')};
  q('mmFreeze').onclick=emergencyFreeze;q('mmHideAll').onclick=emergencyHideAll;q('mmSafeCam').onclick=emergencySafeCamera;
@@ -2852,7 +3273,7 @@ function initMatchdayGraphics(){
  ['addBtn','updateBtn','removeBtn','demoBtn','loadBtn','homeSideBtn','awaySideBtn'].forEach(id=>q(id)&&q(id).addEventListener('click',()=>setTimeout(refreshMatchdayPlayers,60)));
  ['matchHome','matchAway'].forEach(id=>q(id)&&q(id).addEventListener('input',()=>{mdEnforceCanonicalTeams();refreshMatchdayUI()}));
  ['matchHome','matchAway','matchCompetition'].forEach(id=>q(id)&&q(id).addEventListener('change',()=>{mdEnforceCanonicalTeams();refreshMatchdayUI();if(matchReady||matchdayState.scoreboardVisible)publishMatchday(null)}));
- setInterval(()=>{if(matchdayState.clockRunning&&!document.hidden)refreshMatchdayClockUI()},500);setInterval(()=>{if(!document.hidden&&!matchdayState.lastEvent&&!gdAutoCameraActive)sdRecommend(null)},5000);setInterval(()=>{mdConsistencyCheck(false).catch(()=>{})},12000);
+ setInterval(()=>{if(matchdayState.clockRunning&&!document.hidden)refreshMatchdayClockUI()},500);setInterval(()=>{if(!document.hidden&&!matchdayState.lastEvent&&!gdAutoCameraActive)sdRecommend(null)},5000);setInterval(()=>{mdConsistencyCheck(false).catch(()=>{})},900);
  window.addEventListener('online',()=>mdScheduleRecovery('ONLINE',80));
  window.addEventListener('pageshow',()=>mdScheduleRecovery('PAGESHOW',120));
  window.addEventListener('pagehide',()=>{mdPersist();mdSaveLastGood()});
@@ -3001,6 +3422,7 @@ async function publishVmixDirector(functionName,input='',duration=0,label='',val
 }
 
 async function vdTake(slot){
+ if(slot==='replay')return instantReplayPlayLatest();
  if(gdAutoCameraActive){gdClearCameraTimers();gdAutoCameraActive=false;gdSetStatus('MANUAL CAMERA OVERRIDE','manual')}
  if(!requireMatchReady())return false;vdSave();
  if(!vdSlotAvailable(slot)){note('该机位未分配，不能切换');refreshCameraRoleUI();return false}
@@ -3047,11 +3469,20 @@ function initVmixDirector(){
  vdLoad();
  if(q('vdAutoReadInputs'))q('vdAutoReadInputs').onclick=()=>vdReadVmixInputs(true);
  vdReadVmixInputs(false);
- document.querySelectorAll('[data-vd-take]').forEach(b=>b.onclick=()=>vdTake(b.dataset.vdTake));
+ setTimeout(async()=>{
+  try{
+   vdLoad();const input=String(vmixDirectorSettings.graphics||'').trim(),key='sagi_graphics_loaded_SAGI432_SIGNATURE_RC7';
+   if(input&&localStorage.getItem(key)!==input){
+    const ok=await refreshGraphicsBrowser(false);
+    if(ok){localStorage.setItem(key,input);q('vdStatus').textContent='LIVEFLOW 07 已强制刷新 vMix 图形 · Input '+input}
+   }
+  }catch(e){}
+ },1800);
+ document.querySelectorAll('[data-vd-take]').forEach(b=>b.onclick=()=>b.dataset.vdTake==='replay'?instantReplayPlayLatest():vdTake(b.dataset.vdTake));
  document.querySelectorAll('[data-vd-preview]').forEach(b=>b.onclick=()=>vdPreview(b.dataset.vdPreview));
  q('vdGraphicsIn').onclick=vdOverlayIn;q('vdGraphicsOut').onclick=vdOverlayOut;q('vdReloadGraphics').onclick=()=>refreshGraphicsBrowser(true);q('vdAllOverlaysOff').onclick=()=>publishVmixDirector('OverlayInputAllOff','','0','ALL OVERLAYS OFF');q('vdTest').onclick=()=>vdPreview('cam1');
  ['vdCam1','vdCam2','vdDrone','vdReplay','vdGraphics','vdTransition','vdDuration','vdOverlay','vdCam1Role','vdCam2Role','vdDroneRole','vdReplayRole'].forEach(id=>q(id).addEventListener('change',()=>{vdSave();refreshCameraRoleUI();sdRecommend(null)}));
- addEventListener('keydown',e=>{const tag=(e.target&&e.target.tagName)||'';if(tag==='INPUT'||tag==='SELECT'||tag==='TEXTAREA')return;if(e.key==='1')vdTake('cam1');else if(e.key==='2')vdTake('cam2');else if(e.key==='3')vdTake('drone');else if(e.key==='4')vdTake('replay');else if(e.key.toLowerCase()==='g')vdOverlayIn();else if(e.key.toLowerCase()==='x')vdOverlayOut();else if(e.key.toLowerCase()==='a')ssAttackLock()});
+ addEventListener('keydown',e=>{const tag=(e.target&&e.target.tagName)||'';if(tag==='INPUT'||tag==='SELECT'||tag==='TEXTAREA')return;if(e.key==='1')vdTake('cam1');else if(e.key==='2')vdTake('cam2');else if(e.key==='3')vdTake('drone');else if(e.key==='4')instantReplayPlayLatest();else if(e.key.toLowerCase()==='g')vdOverlayIn();else if(e.key.toLowerCase()==='x')vdOverlayOut();else if(e.key.toLowerCase()==='a')ssAttackLock()});
  const params=new URLSearchParams(location.search);if(params.has('safe')||params.has('homescreen'))setTimeout(()=>refreshGraphicsBrowser(false),900);
 }
 
@@ -3578,7 +4009,8 @@ function stopCountdown(){clearInterval(startCountdown.t)}
 function cloudAdmin(){try{const x=JSON.parse(localStorage.getItem('sagi_cloud_admin_v20')||'null')||{},b=window.SAGI_CLOUD||{};return{url:x.url||b.url||'',key:x.key||b.key||'',eventSlug:x.eventSlug||b.eventSlug||'',token:x.token||''}}catch(e){const b=window.SAGI_CLOUD||{};return{url:b.url||'',key:b.key||'',eventSlug:b.eventSlug||'',token:''}}}
 function compactPlayersForGroup(group){const src=group==='FULL'?validStarters():group==='SUB'?substitutes():(['GK','DF','MF','FW'].includes(group)?grouped(group):[]);return src.map(p=>({id:p.id,layoutKey:formationPlayerKey(p),name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',squadType:p.squadType||'STARTER',photo:(group==='FULL'||group==='SUB')?'':p.photo||'',mediaUrl:(group==='FULL'||group==='SUB')?'':p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'}))}
 async function publishGroup(group,duration,show=null){
- const state={commandId:Date.now()+'_'+Math.random().toString(36).slice(2,6),group,side:activeSide,team:currentTeamName(),formation:q('formation').value,matchFormat:{mode:matchConfig.mode,playerCount:starterLimit()},playerCount:starterLimit(),startingLabel:startingLabel(),players:compactPlayersForGroup(group),formationLayout:currentFormationLayoutPayload(),allPlayers:validStarters().map(p=>({id:p.id,layoutKey:formationPlayerKey(p),name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',photo:p.photo||'',mediaUrl:p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'})),substitutes:substitutes().map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,statLabel:p.statLabel||'',statValue:p.statValue||''})),crest:assets.crest||'',stadium:assets.bg||'',background:q('outputBg').value,teamColor:(activeSide==='HOME'?(matchdayState.homeColor||'#d8b55b'):(matchdayState.awayColor||'#4c7dff')),visualVersion:'V4.31.0-PREMIER-BROADCAST',duration,show:show||null,package:packageData(),startedAt:new Date().toISOString()};
+ const issuedAtMs=Date.now(),safeDuration=Math.max(200,Number(duration)||1000),autoNext=!!(show&&show.autoNext),expiresAtMs=group==='CLEAR'?issuedAtMs+500:(issuedAtMs+safeDuration+(autoNext?1800:60000));
+ const state={commandId:issuedAtMs+'_'+Math.random().toString(36).slice(2,6),programGate:'SAGI4311_PROGRAM',onAir:true,issuedAtMs,expiresAtMs,group,side:activeSide,team:currentTeamName(),formation:q('formation').value,matchFormat:{mode:matchConfig.mode,playerCount:starterLimit()},playerCount:starterLimit(),startingLabel:startingLabel(),players:compactPlayersForGroup(group),formationLayout:currentFormationLayoutPayload(),allPlayers:validStarters().map(p=>({id:p.id,layoutKey:formationPlayerKey(p),name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',photo:p.photo||'',mediaUrl:p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'})),substitutes:substitutes().map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,statLabel:p.statLabel||'',statValue:p.statValue||''})),crest:assets.crest||'',stadium:assets.bg||'',background:q('outputBg').value,teamColor:(activeSide==='HOME'?(matchdayState.homeColor||'#d8b55b'):(matchdayState.awayColor||'#4c7dff')),visualVersion:'V4.32 RC-PROGRAM-GATE',duration:safeDuration,show:show||null,package:packageData(),startedAt:new Date(issuedAtMs).toISOString()};
  try{
    await lanPost('/api/state',{lineupIntro:state});
    return{ok:true}
@@ -3595,13 +4027,13 @@ function normalizeShowSteps(list){
    if(i>=0)src.splice(i,0,{...homeSub});else src.push({...homeSub});
  }
  if(!src.some(s=>s.id==='away_sub'))src.push({...awaySub});
- return src.map(s=>({...s,duration:Math.max(500,Number(s.duration)||1000),enabled:s.enabled!==false}));
+ return src.map(s=>({...s,transition:s.transition==='FLASH'?'FADE':(s.transition||'FADE'),duration:Math.max(500,Number(s.duration)||1000),enabled:s.enabled!==false}));
 }
 function showEnabled(){return showSteps.filter(s=>s.enabled)}
 function showTotalMs(){return showEnabled().reduce((a,s)=>a+(Number(s.duration)||0),0)}
-function showTransitionLabel(v){return({CUT:'硬切',FADE:'淡变',SLIDE:'滑动',ZOOM:'推进',FLASH:'闪白'})[v]||v}
+function showTransitionLabel(v){return({CUT:'硬切',FADE:'淡变',SLIDE:'滑动',ZOOM:'推进',FLASH:'淡变（兼容）'})[v]||v}
 function showCueLabel(v){return({NONE:'无',WHOOSH:'呼啸',HIT:'冲击',RISER:'渐强',CROWD:'观众',STING:'转场'})[v]||v}
-function showTransitionOptions(v){return ['CUT','FADE','SLIDE','ZOOM','FLASH'].map(x=>'<option value="'+x+'"'+(x===v?' selected':'')+'>'+showTransitionLabel(x)+'</option>').join('')}
+function showTransitionOptions(v){v=v==='FLASH'?'FADE':v;return ['CUT','FADE','SLIDE','ZOOM'].map(x=>'<option value="'+x+'"'+(x===v?' selected':'')+'>'+showTransitionLabel(x)+'</option>').join('')}
 function showCueOptions(v){return ['NONE','WHOOSH','HIT','RISER','CROWD','STING'].map(x=>'<option value="'+x+'"'+(x===v?' selected':'')+'>'+showCueLabel(x)+'</option>').join('')}
 function showNextEnabledIndex(from){let i=Math.max(0,Number(from)||0);while(i<showSteps.length&&!showSteps[i].enabled)i++;return i<showSteps.length?i:-1}
 function showRemainingMs(){
@@ -3725,7 +4157,7 @@ function showMeta(step){const en=showEnabled(),pos=en.indexOf(step);return{sessi
 function runShowStep(i){
  if(!playing)return;
  while(i<showSteps.length&&!showSteps[i].enabled)i++;
- if(i>=showSteps.length){playing=false;showIndex=showSteps.length-1;stopCountdown();stopShowMusic();q('status').textContent='节目播放结束';q('showNow').textContent='节目完成 · 已播出全部启用段落';q('showProgressBar').style.width='100%';renderShowTimeline();renderShowDirectorMonitor();return}
+ if(i>=showSteps.length){playing=false;showIndex=showSteps.length-1;stopCountdown();stopShowMusic();q('status').textContent='节目播放结束';q('showNow').textContent='节目完成 · 已播出全部启用段落';q('showProgressBar').style.width='100%';renderShowTimeline();renderShowDirectorMonitor();broadcastProgram=null;const clearMeta={sessionId:showSession||('auto-clear-'+Date.now().toString(36)),stepIndex:-1,sequenceIndex:-1,stepTotal:1,label:'完整出场结束自动清屏',side:activeSide,transition:'CUT',cue:'NONE',autoNext:false,isFirst:false,isLast:true,controlRoom:true};publishGroup('CLEAR',200,clearMeta).then(()=>refreshBroadcastStatus()).catch(()=>{});return}
  showIndex=i;showHoldElapsed=0;const s=showSteps[i],d=Math.max(500,Number(s.duration)||1000);if(s.side&&s.side!==activeSide)switchTeam(s.side,{silent:true,noRender:true});renderShowTimeline();broadcastProgramFromShow(s,d);applyShowTransition(s.transition);triggerCue(s.cue);renderStage(s.group);animateStage();animatePackageGroup(s.group,d);showProgressTick(s,d);q('status').textContent='节目 '+(i+1)+' / '+showSteps.length+' · '+s.label;publishGroup(s.group,d,showMeta(s));clearTimeout(showTimer);if(!broadcastHold)showTimer=setTimeout(()=>runShowStep(i+1),d)
 }
 function startFullIntro(){
@@ -3817,19 +4249,36 @@ function demo(){
 function bcCueFor(group){return({STING:'STING',MATCH:'RISER',COUNTDOWN:'HIT',TEAM:'RISER',GK:'HIT',DF:'WHOOSH',MF:'WHOOSH',FW:'HIT',FULL:'CROWD',SUB:'WHOOSH'})[group]||'NONE'}
 function bcDuration(group){return({STING:2000,MATCH:3000,COUNTDOWN:5000,TEAM:2500,GK:3000,DF:4000,MF:4000,FW:4000,FULL:6000,SUB:5000})[group]||3500}
 function bcLabel(group,side){const p=side==='AWAY'?'AWAY':'HOME';return({STING:'赛事Logo',MATCH:'比赛信息',COUNTDOWN:'开场倒计时',TEAM:p+' TEAM',GK:p+' GK',DF:p+' DF',MF:p+' MF',FW:p+' FW',FULL:p+' '+starterCode(),SUB:p+' SUBS'})[group]||group}
+let bcVmixLink={bridge:false,vmix:false,active:'',preview:'',inputs:[],lastAt:0,lastError:''},bcVmixPollBusy=false,bcVmixPollTimer=null;
+function bcVmixInputLabel(number){
+ const n=String(number||'').trim(),hit=(bcVmixLink.inputs||[]).find(x=>String(x.number)===n),title=hit&&String(hit.title||hit.type||'').trim();
+ return n?('Input '+n+(title?' · '+title:'')):'未检测'
+}
 function refreshBroadcastStatus(){
- const cfg=cloudAdmin(),ready=!!(cfg.url&&cfg.key&&cfg.eventSlug&&cfg.token);
- q('bcVmixStatus').textContent=ready?'已连接':'仅本机';
+ const ready=!!bcVmixLink.vmix,programInput=bcVmixInputLabel(bcVmixLink.active),previewInput=bcVmixInputLabel(bcVmixLink.preview);
+ q('bcVmixStatus').textContent=ready?('CONNECTED · P'+(bcVmixLink.active||'—')+' / V'+(bcVmixLink.preview||'—')):(bcVmixLink.bridge?'vMix OFFLINE · 8088':'Bridge OFFLINE');
  q('bcVmixLamp').classList.toggle('ready',ready);
  q('bcOnAirLamp').classList.toggle('live',!!broadcastProgram);
  q('bcOnAirStatus').textContent=broadcastProgram?'正在播出':'SAFE';
- q('bcProgramLabel').textContent=broadcastProgram?broadcastProgram.label:'安全画面 / 未播出';
- q('bcProgramMeta').textContent=broadcastProgram?(broadcastProgram.side+' · '+broadcastProgram.group+' · '+(broadcastProgram.duration/1000).toFixed(1)+'s'):'等待切入播出';
+ q('bcProgramLabel').textContent=broadcastProgram?broadcastProgram.label:(ready?'vMix PROGRAM':'安全画面 / 未播出');
+ q('bcProgramMeta').textContent=ready?('vMix PROGRAM · '+programInput+(broadcastProgram?' · SAGI '+broadcastProgram.side+' '+broadcastProgram.group:'')):'vMix 未连接 · 当前仅本机预监';
  q('bcPreviewLabel').textContent=broadcastPreview.label;
- q('bcPreviewMeta').textContent=broadcastPreview.side+' · '+broadcastPreview.group+' · READY';
+ q('bcPreviewMeta').textContent=ready?('SAGI 本机预监 · '+broadcastPreview.side+' '+broadcastPreview.group+' · vMix PREVIEW '+previewInput):(broadcastPreview.side+' · '+broadcastPreview.group+' · 本机 READY');
+ if(q('mmVmixStatus')){q('mmVmixStatus').textContent=ready?('CONNECTED · P'+(bcVmixLink.active||'—')):'OFFLINE';q('mmVmixStatus').className=ready?'mmGood':'mmBad'}
  const nxt=BROADCAST_MANUAL[(broadcastManualIndex+1+BROADCAST_MANUAL.length)%BROADCAST_MANUAL.length];q('bcNextLabel').textContent=nxt.label;
  document.querySelectorAll('[data-bc-group]').forEach(b=>b.classList.toggle('on',b.dataset.bcGroup===broadcastPreview.group&&(!b.dataset.bcSide||b.dataset.bcSide===broadcastPreview.side)));
 }
+async function pollBroadcastVmixLink(){
+ if(bcVmixPollBusy)return false;bcVmixPollBusy=true;
+ try{
+  const h=await lanJson('/health?broadcastLink='+Date.now()),info=h&&h.vmixInfo||{};
+  bcVmixLink={bridge:!!(h&&h.ok),vmix:!!(h&&h.vmix),active:String(info.active||''),preview:String(info.preview||''),inputs:Array.isArray(info.inputs)?info.inputs:[],lastAt:Date.now(),lastError:''};
+  refreshBroadcastStatus();return bcVmixLink.vmix
+ }catch(e){
+  bcVmixLink={...bcVmixLink,bridge:false,vmix:false,lastAt:Date.now(),lastError:String(e&&e.message||e)};refreshBroadcastStatus();return false
+ }finally{bcVmixPollBusy=false}
+}
+window.sagiVmixLinkDiagnostic=()=>({...bcVmixLink,programLabel:bcVmixInputLabel(bcVmixLink.active),previewLabel:bcVmixInputLabel(bcVmixLink.preview)});
 function setBroadcastPreview(group,side=activeSide,label='',duration=0){
  const targetSide=(side==='AWAY'?'AWAY':'HOME');if(targetSide!==activeSide)switchTeam(targetSide,{silent:true,noRender:true});
  broadcastPreview={group,side:targetSide,label:label||bcLabel(group,targetSide),duration:duration||bcDuration(group)};
@@ -3864,6 +4313,8 @@ function broadcastProgramFromShow(s,d){
  broadcastProgram={group:s.group,side:s.side||activeSide,label:'自动 · '+s.label,duration:d,startedAt:Date.now()};refreshBroadcastStatus();
 }
 function initBroadcastControl(){
+ pollBroadcastVmixLink().catch(()=>{});if(bcVmixPollTimer)clearInterval(bcVmixPollTimer);bcVmixPollTimer=setInterval(()=>{if(!document.hidden)pollBroadcastVmixLink().catch(()=>{})},1000);
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden)pollBroadcastVmixLink().catch(()=>{})});
  document.querySelectorAll('[data-bc-group]').forEach(b=>b.onclick=()=>setBroadcastPreview(b.dataset.bcGroup,b.dataset.bcSide||activeSide,b.dataset.bcLabel||'',bcDuration(b.dataset.bcGroup)));
  q('fullIntroBtn').onclick=startFullIntro;q('goLiveBtn').onclick=takeBroadcastLive;q('holdBtn').onclick=toggleBroadcastHold;q('prevLiveBtn').onclick=()=>stepBroadcastPreview(-1);q('nextLiveBtn').onclick=()=>stepBroadcastPreview(1);q('clearAllBtn').onclick=clearBroadcastAll;
  document.addEventListener('keydown',e=>{const tag=(document.activeElement&&document.activeElement.tagName)||'';if(['INPUT','SELECT','TEXTAREA'].includes(tag))return;

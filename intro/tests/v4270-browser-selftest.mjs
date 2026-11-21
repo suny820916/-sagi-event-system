@@ -11,7 +11,7 @@ const AWAY='ALTAI YOUTH FOOTBALL CLUB';
 const crest=(fill,label)=>'data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><path d="M60 4 108 22v38c0 31-20 48-48 56C32 108 12 91 12 60V22Z" fill="'+fill+'"/><text x="60" y="70" text-anchor="middle" font-size="30" font-family="Arial" font-weight="900" fill="white">'+label+'</text></svg>');
 const HOME_CREST=crest('#0c8b55','H');
 const AWAY_CREST=crest('#3157b7','A');
-let seq=1,vmixCommands=[],matchdayPosts=[],graphics=makeGraphics(),reorderMatchdayWrites=false,failNextMatchdayPosts=0,failNextMatchdayGets=0;
+let seq=1,vmixCommands=[],matchdayPosts=[],matchdayAttempts=[],graphics=makeGraphics(),reorderMatchdayWrites=false,failNextMatchdayPosts=0,failNextMatchdayGets=0,hangNextMatchdayGets=0,failNextOutputMatchdayGets=0,projectStore={projects:[],activeProjectId:'',savedAt:0,schema:'SAGI_MATCH_PROJECTS_V2'},projectPosts=[];
 
 function makeGraphics(overrides={}){
  return {
@@ -46,12 +46,13 @@ const server=http.createServer(async(req,res)=>{
  const u=new URL(req.url,'http://127.0.0.1:'+PORT);
  try{
   if(u.pathname==='/api/state')return json(res,{lineupIntro:null});
-  if(u.pathname==='/api/matchday'&&req.method==='GET'){if(failNextMatchdayGets>0){failNextMatchdayGets--;return json(res,{ok:false,error:'SIMULATED_TRANSIENT_GET_FAILURE'},503)}return json(res,graphics)}
-  if(u.pathname==='/api/matchday'&&req.method==='POST'){const b=await readBody(req);if(failNextMatchdayPosts>0){failNextMatchdayPosts--;return json(res,{ok:false,error:'SIMULATED_TRANSIENT_FAILURE'},503)}try{const next=JSON.parse(b)||graphics;if(reorderMatchdayWrites&&Number(next.homeScore)===5)await new Promise(r=>setTimeout(r,450));graphics=next;matchdayPosts.push(graphics)}catch{}return json(res,{ok:true})}
+  if(u.pathname==='/api/matchday'&&req.method==='GET'){const isOutputPoll=u.searchParams.has('ts');if(isOutputPoll&&failNextOutputMatchdayGets>0){failNextOutputMatchdayGets--;return json(res,{ok:false,error:'SIMULATED_OUTPUT_GET_FAILURE'},503)}if(!isOutputPoll&&hangNextMatchdayGets>0){hangNextMatchdayGets--;setTimeout(()=>{try{if(!res.writableEnded)json(res,graphics)}catch{}},5000);return}if(failNextMatchdayGets>0){failNextMatchdayGets--;return json(res,{ok:false,error:'SIMULATED_TRANSIENT_GET_FAILURE'},503)}return json(res,graphics)}
+  if(u.pathname==='/api/matchday'&&req.method==='POST'){const b=await readBody(req);let next=null;try{next=JSON.parse(b)||graphics;matchdayAttempts.push(next)}catch{}if(failNextMatchdayPosts>0){failNextMatchdayPosts--;return json(res,{ok:false,error:'SIMULATED_TRANSIENT_FAILURE'},503)}try{if(next){if(reorderMatchdayWrites&&Number(next.homeScore)===5)await new Promise(r=>setTimeout(r,450));graphics=next;matchdayPosts.push(graphics)}}catch{}return json(res,{ok:true})}
   if(u.pathname==='/api/vmix/status')return json(res,{ok:true,active:'1',preview:'2',inputs:[{number:'1',key:'cam1',type:'Camera',title:'CAM 1',state:'Running'},{number:'2',key:'cam2',type:'Camera',title:'CAM 2',state:'Running'},{number:'4',key:'replay',type:'Video',title:'REPLAY',state:'Running'},{number:'5',key:'gfx',type:'Browser',title:'SAGI Browser',state:'Running'}],overlays:[]});
   if(u.pathname==='/api/vmix'&&req.method==='POST'){const b=await readBody(req);let cmd={};try{cmd=JSON.parse(b)}catch{}vmixCommands.push(cmd);return json(res,{ok:true,command:cmd})}
-  if(u.pathname==='/api/projects')return json(res,{projects:[]});
-  if(u.pathname==='/health')return json(res,{ok:true,port:PORT});
+  if(u.pathname==='/api/projects'&&req.method==='GET')return json(res,projectStore);
+  if(u.pathname==='/api/projects'&&req.method==='POST'){const b=await readBody(req);let next={};try{next=JSON.parse(b)||{}}catch{};projectStore={projects:Array.isArray(next.projects)?next.projects.slice(0,20):[],activeProjectId:String(next.activeProjectId||''),savedAt:Date.now(),schema:'SAGI_MATCH_PROJECTS_V2'};projectPosts.push(JSON.parse(JSON.stringify(projectStore)));return json(res,{ok:true})}
+  if(u.pathname==='/health')return json(res,{ok:true,port:PORT,vmix:true,vmixInfo:{ok:true,active:'2',preview:'1',inputs:[{number:'1',key:'cam1',type:'Camera',title:'CAM 1',state:'Running'},{number:'2',key:'cam2',type:'Camera',title:'Integrated Webcam',state:'Running'},{number:'4',key:'replay',type:'Video',title:'REPLAY',state:'Running'},{number:'5',key:'gfx',type:'Browser',title:'SAGI Browser',state:'Running'}],overlays:[]}});
   if(u.pathname==='/')return text(res,'SAGI V4.31.0 SELFTEST');
   const rel=decodeURIComponent(u.pathname).replace(/^\/+/,'');const file=path.resolve(ROOT,rel);
   if(!file.startsWith(ROOT)||!fs.existsSync(file)||fs.statSync(file).isDirectory())return text(res,'Not found','text/plain',404);
@@ -270,20 +271,31 @@ server.listen(PORT,'127.0.0.1',async()=>{
   assert(!(await replayPage.locator('#replayStinger').evaluate(el=>el.classList.contains('on'))),'replay stinger did not auto clear');
   await replayPage.close();
 
-  console.log('TEST 7: manual replay uses logo stinger IN, then OUT back to live');
+  console.log('TEST 7: replay key plays only latest Replay Event with SAGI IN/OUT transitions, then returns live');
   vmixCommands=[];matchdayPosts=[];
-  await page.evaluate(()=>localStorage.setItem('sagi_vmix_director_v42',JSON.stringify({cam1:'1',cam2:'2',drone:'',replay:'4',graphics:'5',transition:'Cut',duration:0,overlay:'1',cam1Role:'MAIN_WIDE',cam2Role:'SIDELINE_CLOSE',droneRole:'DRONE',replayRole:'REPLAY'})));
+  await page.evaluate(()=>{
+    localStorage.setItem('sagi_vmix_director_v42',JSON.stringify({cam1:'1',cam2:'2',drone:'',replay:'4',graphics:'5',transition:'Cut',duration:0,overlay:'1',cam1Role:'MAIN_WIDE',cam2Role:'SIDELINE_CLOSE',droneRole:'DRONE',replayRole:'REPLAY'}));
+    localStorage.setItem('sagi_instant_replay_last_duration_v4311','5');
+  });
   await page.reload({waitUntil:'domcontentloaded'});await wait(1800);
   await page.locator('#matchCompetition').fill('SAGI SELF TEST CUP');await page.locator('#matchHome').fill('SELF TEST HOME');await page.locator('#matchAway').fill('SELF TEST AWAY');await page.locator('#matchKickoff').fill('2026-11-17T20:00');await page.locator('#matchVenue').fill('SELF TEST STADIUM');
   await page.click('#setupValidateBtn');await page.waitForFunction(()=>!document.querySelector('#setupReadyBtn')?.disabled,null,{timeout:5000});await page.click('#setupReadyBtn');
-  await page.click('#vdTakeReplay');await wait(1900);
-  await page.click('#vdTakeCam1');await wait(1900);
+  await page.click('#vdTakeReplay');await wait(6500);
   const replayCuts=vmixCommands.filter(x=>['Cut','Fade','Stinger1'].includes(x.functionName));
+  const replayFns=vmixCommands.filter(x=>['ReplayStopEvents','ReplayPlayLastEventToOutput'].includes(x.functionName));
   const replayEvents=matchdayPosts.map(x=>x&&x.event).filter(Boolean);
-  assert(replayCuts.length>=2&&String(replayCuts[0].input)==='4'&&String(replayCuts[1].input)==='1','replay camera sequence wrong: '+JSON.stringify(replayCuts));
+  assert(replayFns.some(x=>x.functionName==='ReplayPlayLastEventToOutput'),'latest Replay Event command missing: '+JSON.stringify(replayFns));
+  assert(!replayCuts.some(x=>String(x.input)==='4'),'replay key must not cut to whole Replay input: '+JSON.stringify(replayCuts));
+  assert(replayCuts.some(x=>String(x.input)==='1'),'automatic return to main camera missing: '+JSON.stringify(replayCuts));
+  assert(replayFns.filter(x=>x.functionName==='ReplayStopEvents').length>=2,'replay stop guards missing before play/return: '+JSON.stringify(replayFns));
   assert(replayEvents.some(e=>e.type==='REPLAY_STINGER'&&e.phase==='IN'),'missing replay IN stinger event');
   assert(replayEvents.some(e=>e.type==='REPLAY_STINGER'&&e.phase==='OUT'),'missing replay OUT stinger event');
-  assert(replayEvents.filter(e=>e.type==='CLEAR_EVENT').length>=2,'replay stinger clear events missing');
+  const midClears=replayEvents.filter(e=>e.type==='CLEAR_EVENT').length;
+  assert(midClears>=1,'replay IN stinger cleanup missing before live return: '+JSON.stringify(replayEvents.map(e=>({type:e.type,phase:e.phase,eventId:e.eventId}))));
+  await wait(1900);
+  const finalReplayEvents=matchdayPosts.map(x=>x&&x.event).filter(Boolean);
+  const finalClears=finalReplayEvents.filter(e=>e.type==='CLEAR_EVENT').length;
+  assert(finalClears>=2,'replay OUT stinger final cleanup missing after transition tail: '+JSON.stringify(finalReplayEvents.map(e=>({type:e.type,phase:e.phase,eventId:e.eventId}))));
   await page.screenshot({path:'selftest-artifacts/08-replay-control.png'});
 
   console.log('TEST 8: stored project load is deterministic and optional match metadata does not block READY');
@@ -387,6 +399,12 @@ server.listen(PORT,'127.0.0.1',async()=>{
   assert(Number(graphics.homeScore)===4,'retry did not deliver score state after transient failure: '+JSON.stringify(graphics));
   assert(reliability.metrics.retried>=1&&reliability.lastGood,'reliability retry/LKG diagnostics missing: '+JSON.stringify(reliability));
 
+  console.log('TEST 10A2: broadcast desk connection is driven by real vMix health, not cloud configuration');
+  await page.waitForFunction(()=>window.sagiVmixLinkDiagnostic?.().vmix===true&&document.querySelector('#bcVmixStatus')?.textContent.includes('CONNECTED'),null,{timeout:6000});
+  const vmixLink=await page.evaluate(()=>({diag:window.sagiVmixLinkDiagnostic(),status:document.querySelector('#bcVmixStatus')?.textContent,program:document.querySelector('#bcProgramMeta')?.textContent,preview:document.querySelector('#bcPreviewMeta')?.textContent,mm:document.querySelector('#mmVmixStatus')?.textContent}));
+  assert(vmixLink.diag.vmix&&vmixLink.diag.active==='2'&&vmixLink.diag.preview==='1','real vMix link diagnostic missing: '+JSON.stringify(vmixLink));
+  assert(vmixLink.status.includes('P2 / V1')&&vmixLink.program.includes('Integrated Webcam')&&vmixLink.preview.includes('Input 1')&&vmixLink.mm.includes('CONNECTED'),'broadcast desk does not expose actual vMix Program/Preview link: '+JSON.stringify(vmixLink));
+
   console.log('TEST 10B: rapid score writes remain ordered even when the first network write is deliberately delayed');
   reorderMatchdayWrites=true;matchdayPosts=[];
   await page.evaluate(()=>{document.querySelector('#mdHomePlus').click();document.querySelector('#mdHomePlus').click()});
@@ -406,16 +424,85 @@ server.listen(PORT,'127.0.0.1',async()=>{
   assert(dupe.yellow==='1','duplicate yellow-card click created two events: '+JSON.stringify(dupe));
   await page.click('#mdClearEventBtn');await wait(400);
 
-  console.log('TEST 10D: reopening director refuses an older same-fixture Bridge snapshot');
-  const reopenBefore=await page.evaluate(()=>{window.dispatchEvent(new Event('pagehide'));const x=JSON.parse(localStorage.getItem('sagi_matchday_graphics_v47')||'null');return{x,diag:window.sagiMatchdayReliabilityDiagnostic()}});
-  assert(reopenBefore.x&&Number(reopenBefore.x.homeScore)===6,'pagehide checkpoint did not preserve current local score: '+JSON.stringify(reopenBefore));
-  graphics={...graphics,commandId:'stale_same_fixture_reopen',home:'乌苏叶克备',away:'IPF',competition:'TORANHE PROJECT CUP',fixtureKey:'toranhe project cup|乌苏叶克备|ipf',homeScore:2,awayScore:2,revision:1,updatedAt:new Date(Date.now()-60000).toISOString(),event:{type:'CLEAR_EVENT'}};
-  await page.reload({waitUntil:'domcontentloaded'});await wait(2200);
-  const reopenAfter=await page.evaluate(()=>({home:document.querySelector('#mdHomeScore')?.textContent,away:document.querySelector('#mdAwayScore')?.textContent,homeName:document.querySelector('#matchHome')?.value,awayName:document.querySelector('#matchAway')?.value,competition:document.querySelector('#matchCompetition')?.value,diag:window.sagiMatchdayReliabilityDiagnostic()}));
-  assert(reopenAfter.home==='6'&&reopenAfter.away==='1','older same-fixture Bridge snapshot rolled director backward after reopen: '+JSON.stringify(reopenAfter));
-  assert(reopenAfter.homeName==='乌苏叶克备'&&reopenAfter.awayName==='IPF'&&reopenAfter.competition==='TORANHE PROJECT CUP','reopen recovery did not restore fixture identity atomically: '+JSON.stringify(reopenAfter));
-  assert(Number(graphics.homeScore)===6&&Number(graphics.awayScore)===1&&graphics.home==='乌苏叶克备'&&graphics.away==='IPF','local-newer recovery was not republished to Bridge with fixture identity: '+JSON.stringify(graphics));
-  assert(reopenAfter.diag.recovery.localWins>=1&&reopenAfter.diag.fixtureKey==='toranhe project cup|乌苏叶克备|ipf','local-newer arbitration diagnostics missing: '+JSON.stringify(reopenAfter.diag));
+  console.log('TEST 10C2: network retry preserves one event identity, while two real identical events get distinct identities');
+  // TEST 10C deliberately exercised the 1400ms operator debounce using the same YELLOW signature.
+  // Cross that safety window before starting the transport-retry identity test.
+  await wait(1100);
+  matchdayAttempts=[];failNextMatchdayPosts=1;
+  await page.selectOption('#mdEventSide','HOME');await page.selectOption('#mdEventPlayer',{index:1});
+  await page.click('#mdYellowBtn');await wait(1600);
+  const retryAttempts=matchdayAttempts.filter(x=>x&&x.event&&x.event.type==='YELLOW');
+  assert(retryAttempts.length>=2,'retry did not attempt the same event twice: '+JSON.stringify(retryAttempts));
+  const retryIds=retryAttempts.slice(0,2).map(x=>x.event&&x.event.eventId);
+  const retrySeq=retryAttempts.slice(0,2).map(x=>x.event&&x.event.sequence);
+  assert(retryIds[0]&&retryIds[0]===retryIds[1]&&retrySeq[0]===retrySeq[1],'network retry changed event identity: '+JSON.stringify({ids:retryIds,seq:retrySeq}));
+  assert(retryAttempts[0].event.fixtureKey===retryAttempts[1].event.fixtureKey,'retry changed fixture-scoped identity');
+
+  matchdayAttempts=[];
+  await page.click('#mdYellowBtn');await wait(1600);await page.click('#mdYellowBtn');await wait(700);
+  const realEvents=matchdayAttempts.filter(x=>x&&x.event&&x.event.type==='YELLOW');
+  const distinctIds=[...new Set(realEvents.map(x=>x.event.eventId).filter(Boolean))];
+  assert(distinctIds.length>=2,'two real identical-looking events collapsed to one identity: '+JSON.stringify(realEvents.map(x=>x.event)));
+  await page.click('#mdClearEventBtn');await wait(400);
+
+  console.log('TEST 10C3: vMix output does not replay the same eventId after retry/state refresh, but accepts a new eventId');
+  const idemPage=await browser.newPage({viewport:{width:1920,height:1080}});
+  const fixture=graphics.fixtureKey||'toranhe project cup|乌苏叶克备|ipf';
+  const baseRevision=(Number(graphics.revision)||0)+30;
+  const idemEvent={type:'YELLOW',side:'HOME',team:'乌苏叶克备',at:'55:00',eventId:'browser-idem-1',fixtureKey:fixture,sequence:900,player:{id:'h1',name:'H PLAYER 1',number:'1',position:'GK',photo:''}};
+  graphics={...graphics,commandId:'idem_first',revision:baseRevision,fixtureKey:fixture,event:idemEvent,updatedAt:new Date().toISOString()};
+  await idemPage.goto('http://127.0.0.1:'+PORT+'/intro/vmix-v45-lan.html',{waitUntil:'domcontentloaded'});
+  await idemPage.waitForFunction(()=>document.querySelector('#eventCard')?.classList.contains('on'),null,{timeout:5000});
+  await idemPage.evaluate(()=>{
+    window.__idemMutations=0;
+    const el=document.querySelector('#eventCard');
+    window.__idemObserver=new MutationObserver(ms=>window.__idemMutations+=ms.length);
+    window.__idemObserver.observe(el,{attributes:true,childList:true,subtree:true,characterData:true});
+  });
+  graphics={...graphics,commandId:'idem_retry',revision:baseRevision+1,event:{...idemEvent},updatedAt:new Date().toISOString()};
+  await wait(1400);
+  const retryMutations=await idemPage.evaluate(()=>window.__idemMutations);
+  assert(retryMutations===0,'same eventId replayed event animation after state refresh: '+retryMutations);
+  graphics={...graphics,commandId:'idem_second',revision:baseRevision+2,event:{...idemEvent,eventId:'browser-idem-2',sequence:901},updatedAt:new Date().toISOString()};
+  await wait(1400);
+  const secondMutations=await idemPage.evaluate(()=>window.__idemMutations);
+  assert(secondMutations>retryMutations,'new eventId did not trigger a new event render: '+JSON.stringify({retryMutations,secondMutations}));
+  await idemPage.evaluate(()=>window.__idemObserver&&window.__idemObserver.disconnect());
+  await idemPage.close();
+  graphics={...graphics,commandId:'idem_clear',revision:baseRevision+3,event:{type:'CLEAR_EVENT'},updatedAt:new Date().toISOString()};
+
+  console.log('TEST 10D: stale phone-local revision can never overrule Bridge live score');
+  const reopenBefore=await page.evaluate(()=>{
+    window.dispatchEvent(new Event('pagehide'));
+    const x=JSON.parse(localStorage.getItem('sagi_matchday_graphics_v47')||'null');
+    // Simulate the photographed field failure: this controller has a numerically larger stale local revision / score.
+    x.homeScore=0;x.awayScore=1;x.revision=999;x.savedAt=Date.now()+60000;
+    localStorage.setItem('sagi_matchday_graphics_v47',JSON.stringify(x));
+    return{x,diag:window.sagiMatchdayReliabilityDiagnostic()}
+  });
+  assert(reopenBefore.x&&Number(reopenBefore.x.revision)===999&&Number(reopenBefore.x.homeScore)===0&&Number(reopenBefore.x.awayScore)===1,'failed to seed stale high-revision phone snapshot: '+JSON.stringify(reopenBefore));
+  const postsBeforeBridgeAuthority=matchdayPosts.length;
+  graphics={...graphics,commandId:'bridge_authoritative_reopen',home:'乌苏叶克备',away:'IPF',competition:'TORANHE PROJECT CUP',fixtureKey:'toranhe project cup|乌苏叶克备|ipf',homeScore:1,awayScore:1,revision:5,updatedAt:new Date().toISOString(),event:{type:'CLEAR_EVENT'}};
+  await page.reload({waitUntil:'domcontentloaded'});
+  await page.waitForFunction(()=>document.querySelector('#mdHomeScore')?.textContent==='1'&&document.querySelector('#mdAwayScore')?.textContent==='1'&&window.sagiMatchdayReliabilityDiagnostic?.().liveAuthority==='BRIDGE',null,{timeout:8000});
+  const reopenAfter=await page.evaluate(()=>({home:document.querySelector('#mdHomeScore')?.textContent,away:document.querySelector('#mdAwayScore')?.textContent,mmHome:document.querySelector('#mmHomeScore')?.textContent,mmAway:document.querySelector('#mmAwayScore')?.textContent,homeName:document.querySelector('#matchHome')?.value,awayName:document.querySelector('#matchAway')?.value,competition:document.querySelector('#matchCompetition')?.value,diag:window.sagiMatchdayReliabilityDiagnostic()}));
+  assert(reopenAfter.home==='1'&&reopenAfter.away==='1'&&reopenAfter.mmHome==='1'&&reopenAfter.mmAway==='1','phone/desktop control UI did not converge to Bridge 1:1: '+JSON.stringify(reopenAfter));
+  assert(reopenAfter.homeName==='乌苏叶克备'&&reopenAfter.awayName==='IPF'&&reopenAfter.competition==='TORANHE PROJECT CUP','Bridge authority did not preserve fixture identity atomically: '+JSON.stringify(reopenAfter));
+  assert(Number(graphics.homeScore)===1&&Number(graphics.awayScore)===1,'stale local state overwrote Bridge live score: '+JSON.stringify(graphics));
+  assert(matchdayPosts.length===postsBeforeBridgeAuthority,'reopen Bridge follow produced forbidden reverse POST: '+JSON.stringify({before:postsBeforeBridgeAuthority,after:matchdayPosts.length}));
+  assert(reopenAfter.diag.liveAuthority==='BRIDGE'&&Number(reopenAfter.diag.lastAckRevision)===5,'Bridge authority diagnostics missing: '+JSON.stringify(reopenAfter.diag));
+
+  console.log('TEST 10D2: an already-open controller with a higher ack converges its revision down to Bridge without reverse write');
+  await page.click('#mdHomePlus');await wait(900);
+  const highAck=await page.evaluate(()=>window.sagiMatchdayReliabilityDiagnostic().lastAckRevision);
+  assert(Number(highAck)>5,'failed to create a higher local acknowledged revision: '+highAck);
+  const postsBeforeDownConverge=matchdayPosts.length;
+  graphics={...graphics,commandId:'bridge_lower_revision_authority',revision:3,homeScore:1,awayScore:1,updatedAt:new Date().toISOString(),event:{type:'CLEAR_EVENT'}};
+  await page.evaluate(()=>window.sagiMatchdayConsistencyCheck(true));
+  await page.waitForFunction(()=>window.sagiMatchdayReliabilityDiagnostic?.().lastAckRevision===3&&document.querySelector('#mdHomeScore')?.textContent==='1'&&document.querySelector('#mdAwayScore')?.textContent==='1',null,{timeout:6000});
+  const downConverged=await page.evaluate(()=>({diag:window.sagiMatchdayReliabilityDiagnostic(),home:document.querySelector('#mdHomeScore')?.textContent,away:document.querySelector('#mdAwayScore')?.textContent}));
+  assert(downConverged.diag.lastAckRevision===3&&downConverged.diag.liveAuthority==='BRIDGE','controller revision did not converge to Bridge: '+JSON.stringify(downConverged));
+  assert(matchdayPosts.length===postsBeforeDownConverge,'revision convergence produced forbidden reverse POST: '+JSON.stringify({before:postsBeforeDownConverge,after:matchdayPosts.length}));
 
   console.log('TEST 10E: in-match health check is read-only and cannot alter on-air state');
   const healthBefore={commandId:graphics.commandId,homeScore:graphics.homeScore,awayScore:graphics.awayScore,posts:matchdayPosts.length,cuts:vmixCommands.length};
@@ -425,22 +512,23 @@ server.listen(PORT,'127.0.0.1',async()=>{
   assert(healthAfter.commandId===healthBefore.commandId&&healthAfter.homeScore===healthBefore.homeScore&&healthAfter.awayScore===healthBefore.awayScore&&healthAfter.posts===healthBefore.posts&&healthAfter.cuts===healthBefore.cuts,'live health check mutated broadcast state: '+JSON.stringify({before:healthBefore,after:healthAfter}));
   await page.screenshot({path:'selftest-artifacts/11e-live-health-readonly.png'});
 
-  console.log('TEST 11: consistency watchdog repairs score, identity, colors and exceptional-state drift');
-  const authoritative=JSON.parse(JSON.stringify(graphics));
-  graphics={...graphics,commandId:'corrupt_same_fixture',home:'乌苏叶克备',away:'IPF',homeShort:'少林足球',awayShort:'旧客队',
-    scoreHomeName:'错误主队',scoreAwayName:'错误客队',homeScore:99,awayScore:88,homeColor:'#ff0000',awayColor:'#00ff00',accentColor:'#0000ff',
-    stoppageTime:'99',scoreboardFrozen:!authoritative.scoreboardFrozen,homePen:7,awayPen:8,scoreTheme:'uefa'};
-  await page.evaluate(()=>window.dispatchEvent(new Event('online')));await wait(1000);
-  const repairUI=await page.evaluate(()=>({sync:document.querySelector('#mdSync').textContent,home:document.querySelector('#mmHomeName').textContent,away:document.querySelector('#mmAwayName').textContent,score:document.querySelector('#mdHomeScore').textContent,reliability:window.sagiMatchdayReliabilityDiagnostic()}));
-  assert(Number(graphics.homeScore)===Number(authoritative.homeScore)&&Number(graphics.awayScore)===Number(authoritative.awayScore),'online recovery failed to restore authoritative score state: '+JSON.stringify(graphics));
-  assert(repairUI.reliability.recovery.networkRestores>=1&&repairUI.reliability.recovery.lastReason==='ONLINE','online recovery metrics missing: '+JSON.stringify(repairUI.reliability));
-  assert(graphics.scoreHomeName===authoritative.scoreHomeName&&graphics.scoreAwayName===authoritative.scoreAwayName,'watchdog failed to restore broadcast team names: '+JSON.stringify({expected:[authoritative.scoreHomeName,authoritative.scoreAwayName],actual:[graphics.scoreHomeName,graphics.scoreAwayName]}));
-  assert(graphics.homeColor===authoritative.homeColor&&graphics.awayColor===authoritative.awayColor&&graphics.accentColor===authoritative.accentColor,'watchdog failed to restore broadcast colors');
-  assert(String(graphics.stoppageTime||'')===String(authoritative.stoppageTime||'')&&!!graphics.scoreboardFrozen===!!authoritative.scoreboardFrozen&&Number(graphics.homePen||0)===Number(authoritative.homePen||0)&&Number(graphics.awayPen||0)===Number(authoritative.awayPen||0),'watchdog failed to restore exceptional score-center state');
-  assert(repairUI.home==='乌苏叶克备'&&repairUI.away==='IPF'&&repairUI.score===String(authoritative.homeScore),'watchdog repair changed local control identity/state: '+JSON.stringify(repairUI));
+  console.log('TEST 11: control follows newer Bridge revision and never overwrites it from stale local state');
+  let authoritative=JSON.parse(JSON.stringify(graphics));
+  const postsBeforeRemoteFollow=matchdayPosts.length;
+  const remoteScore=Number(authoritative.homeScore)+1;
+  graphics={...authoritative,commandId:'remote_controller_update',revision:(Number(authoritative.revision)||0)+1,
+    homeScore:remoteScore,awayScore:Number(authoritative.awayScore),homeColor:'#335577',awayColor:'#775533',accentColor:'#f4f0e8',
+    stoppageTime:'4',scoreboardFrozen:false,homePen:0,awayPen:0,updatedAt:new Date().toISOString(),event:{type:'CLEAR_EVENT'}};
+  await page.evaluate(()=>window.dispatchEvent(new Event('online')));await wait(1400);
+  const followUI=await page.evaluate(()=>({sync:document.querySelector('#mdSync').textContent,home:document.querySelector('#mmHomeName').textContent,away:document.querySelector('#mmAwayName').textContent,score:document.querySelector('#mdHomeScore').textContent,reliability:window.sagiMatchdayReliabilityDiagnostic()}));
+  assert(Number(graphics.homeScore)===remoteScore&&followUI.score===String(remoteScore),'control did not follow newer Bridge score: '+JSON.stringify({graphics,followUI}));
+  assert(followUI.reliability.recovery.networkRestores>=1&&followUI.reliability.recovery.bridgeFollows>=1,'Bridge-follow recovery metrics missing: '+JSON.stringify(followUI.reliability));
+  assert(matchdayPosts.length===postsBeforeRemoteFollow,'passive Bridge follow produced a reverse POST overwrite: '+JSON.stringify({before:postsBeforeRemoteFollow,after:matchdayPosts.length}));
+  assert(graphics.homeColor==='#335577'&&graphics.awayColor==='#775533'&&String(graphics.stoppageTime)==='4','Bridge-follow lost exceptional score-center state');
+  authoritative=JSON.parse(JSON.stringify(graphics));
   const diagPage=await browser.newPage({viewport:{width:1920,height:1080}});
   await diagPage.goto('http://127.0.0.1:'+PORT+'/intro/vmix-v45-lan.html',{waitUntil:'domcontentloaded'});
-  await diagPage.waitForFunction(()=>window.sagiScoreCenterDiagnostic&&window.sagiScoreCenterDiagnostic().build==='V4.31.0',null,{timeout:5000});
+  await diagPage.waitForFunction(expected=>{const d=window.sagiScoreCenterDiagnostic?.();return d?.build==='V4.31.0'&&d.commandId===expected.commandId&&d.revision===Number(expected.revision)&&d.home===expected.scoreHomeName&&Number(d.score[0])===Number(expected.homeScore)&&Number(d.score[1])===Number(expected.awayScore)},authoritative,{timeout:10000});
   const outputDiag=await diagPage.evaluate(()=>window.sagiScoreCenterDiagnostic());
   assert(outputDiag&&outputDiag.build==='V4.31.0'&&outputDiag.home===authoritative.scoreHomeName,'vMix score-center diagnostic is not tracking authoritative state: '+JSON.stringify(outputDiag));
   await diagPage.screenshot({path:'selftest-artifacts/12-output-diagnostic.png'});
@@ -448,7 +536,7 @@ server.listen(PORT,'127.0.0.1',async()=>{
   console.log('TEST 11B: Browser Input watchdog holds last good frame through a longer state-channel outage, then self-heals');
   const heldBefore=await diagPage.evaluate(()=>window.sagiScoreCenterDiagnostic());
   const recoveryScore=Number(authoritative.homeScore)+1;
-  failNextMatchdayGets=12;
+  failNextOutputMatchdayGets=12;
   graphics={...graphics,commandId:'output_watchdog_recovery',revision:(Number(graphics.revision)||0)+20,homeScore:recoveryScore,updatedAt:new Date().toISOString(),event:{type:'CLEAR_EVENT'}};
   await wait(2600);
   const heldDuring=await diagPage.evaluate(()=>window.sagiScoreCenterDiagnostic());
@@ -460,8 +548,12 @@ server.listen(PORT,'127.0.0.1',async()=>{
   assert(outputRecovery.health.pollFail>=10&&outputRecovery.health.recoveries>=1&&outputRecovery.health.watchdogTrips>=1&&outputRecovery.health.softRepolls>=1&&outputRecovery.health.consecutiveFailures===0,'output watchdog health metrics wrong: '+JSON.stringify(outputRecovery.health));
   await diagPage.screenshot({path:'selftest-artifacts/12b-output-watchdog-recovery.png'});
   await diagPage.close();
+  const postsBeforeControlCatchup=matchdayPosts.length;
   await page.evaluate(()=>window.sagiMatchdayConsistencyCheck(true));await wait(800);
-  assert(Number(graphics.homeScore)===Number(authoritative.homeScore),'control did not restore authoritative state after output recovery test');
+  const controlCatchup=await page.evaluate(()=>({home:document.querySelector('#mdHomeScore')?.textContent,diag:window.sagiMatchdayReliabilityDiagnostic()}));
+  assert(Number(graphics.homeScore)===recoveryScore&&controlCatchup.home===String(recoveryScore),'control did not follow newer Bridge revision after output recovery test: '+JSON.stringify({graphics,controlCatchup}));
+  assert(matchdayPosts.length===postsBeforeControlCatchup,'control catch-up produced a reverse POST after output recovery: '+JSON.stringify({before:postsBeforeControlCatchup,after:matchdayPosts.length}));
+  authoritative=JSON.parse(JSON.stringify(graphics));
   await page.screenshot({path:'selftest-artifacts/12-watchdog-repair.png'});
 
   console.log('TEST 11C: fresh director with no local matchday snapshot can atomically recover Bridge fixture identity');
@@ -474,13 +566,105 @@ server.listen(PORT,'127.0.0.1',async()=>{
   await freshContext.close();
   await page.evaluate(()=>window.sagiMatchdayConsistencyCheck(true));await wait(600);
 
+  console.log('TEST 11D: isolated desktop + phone controllers follow one Bridge revision with no ping-pong writes');
+  const desktopContext=await browser.newContext({viewport:{width:1440,height:1100}});
+  const phoneContext=await browser.newContext({viewport:{width:390,height:844},isMobile:true});
+  const desktopControl=await desktopContext.newPage();
+  const phoneControl=await phoneContext.newPage();
+  await Promise.all([
+    desktopControl.goto('http://127.0.0.1:'+PORT+'/intro/v45-lan.html',{waitUntil:'domcontentloaded'}),
+    phoneControl.goto('http://127.0.0.1:'+PORT+'/intro/v45-lan.html',{waitUntil:'domcontentloaded'})
+  ]);
+  await wait(1800);
+  const multiBasePosts=matchdayPosts.length;
+  await desktopControl.evaluate(()=>document.querySelector('#mdHomePlus')?.click());
+  await phoneControl.waitForFunction(()=>document.querySelector('#mdHomeScore')?.textContent==='7',null,{timeout:5000});
+  const postsAfterDesktop=matchdayPosts.length;
+  assert(postsAfterDesktop===multiBasePosts+1,'desktop action should create exactly one Bridge write: '+JSON.stringify({multiBasePosts,postsAfterDesktop}));
+  await phoneControl.evaluate(()=>document.querySelector('#mdAwayPlus')?.click());
+  await desktopControl.waitForFunction(()=>document.querySelector('#mdAwayScore')?.textContent==='2',null,{timeout:5000});
+  const postsAfterPhone=matchdayPosts.length;
+  assert(postsAfterPhone===postsAfterDesktop+1,'phone action should create exactly one Bridge write: '+JSON.stringify({postsAfterDesktop,postsAfterPhone}));
+  await wait(2400);
+  assert(matchdayPosts.length===postsAfterPhone,'passive controller polling caused ping-pong Bridge writes: '+JSON.stringify({postsAfterPhone,afterWait:matchdayPosts.length}));
+  const desktopDiag=await desktopControl.evaluate(()=>window.sagiMatchdayReliabilityDiagnostic());
+  const phoneDiag=await phoneControl.evaluate(()=>window.sagiMatchdayReliabilityDiagnostic());
+  assert(desktopDiag.recovery.bridgeFollows>=1&&phoneDiag.recovery.bridgeFollows>=1,'both controllers did not record Bridge-follow sync: '+JSON.stringify({desktopDiag,phoneDiag}));
+  await Promise.all([desktopContext.close(),phoneContext.close()]);
+
+  console.log('TEST 11D2: phone passive Bridge-follow self-recovers after one hung LAN GET');
+  const desktopHangContext=await browser.newContext({viewport:{width:1440,height:1100}});
+  const phoneHangContext=await browser.newContext({viewport:{width:390,height:844},isMobile:true});
+  const desktopHang=await desktopHangContext.newPage();
+  const phoneHang=await phoneHangContext.newPage();
+  await Promise.all([
+    desktopHang.goto('http://127.0.0.1:'+PORT+'/intro/v45-lan.html',{waitUntil:'domcontentloaded'}),
+    phoneHang.goto('http://127.0.0.1:'+PORT+'/intro/v45-lan.html',{waitUntil:'domcontentloaded'})
+  ]);
+  await wait(1600);
+  hangNextMatchdayGets=1;
+  await phoneHang.evaluate(()=>window.sagiMatchdayConsistencyCheck(true));
+  const timeoutDiag=await phoneHang.evaluate(()=>window.sagiMatchdayReliabilityDiagnostic());
+  assert(timeoutDiag.recovery.lanTimeouts>=1&&!timeoutDiag.consistencyBusy,'phone consistency poll did not release after hung LAN read: '+JSON.stringify(timeoutDiag));
+  await desktopHang.evaluate(()=>document.querySelector('#mdHomePlus')?.click());
+  await phoneHang.waitForFunction(()=>document.querySelector('#mdHomeScore')?.textContent==='8',null,{timeout:7000});
+  const recoveredPhone=await phoneHang.evaluate(()=>({score:document.querySelector('#mdHomeScore')?.textContent+'-'+document.querySelector('#mdAwayScore')?.textContent,diag:window.sagiMatchdayReliabilityDiagnostic()}));
+  assert(recoveredPhone.score==='8-2'&&recoveredPhone.diag.recovery.bridgeFollows>=1,'phone did not resume passive Bridge-follow after LAN timeout: '+JSON.stringify(recoveredPhone));
+  await Promise.all([desktopHangContext.close(),phoneHangContext.close()]);
+
+  graphics={...graphics,commandId:'multi_controller_restore',revision:(Number(graphics.revision)||0)+1,homeScore:6,awayScore:1,updatedAt:new Date().toISOString(),event:{type:'CLEAR_EVENT'}};
+  await page.evaluate(()=>window.sagiMatchdayConsistencyCheck(true));await wait(700);
+
+  console.log('TEST 11E: desktop + phone share one Bridge project list and active project');
+  projectStore={projects:[makeStoredProject('bridge_project_1')],activeProjectId:'bridge_project_1',savedAt:Date.now(),schema:'SAGI_MATCH_PROJECTS_V2'};projectPosts=[];
+  // This mock serves plain text at /, unlike the production Bridge. Isolate
+  // project SSoT from first-install service-worker controllerchange reloads.
+  // PWA lifecycle/reload needs its own real-shell regression.
+  const projectDesktopContext=await browser.newContext({serviceWorkers:'block',viewport:{width:1440,height:1100}});
+  const projectPhoneContext=await browser.newContext({serviceWorkers:'block',viewport:{width:390,height:844},isMobile:true});
+  const projectDesktop=await projectDesktopContext.newPage();
+  const projectPhone=await projectPhoneContext.newPage();
+  await Promise.all([
+    projectDesktop.goto('http://127.0.0.1:'+PORT+'/intro/v45-lan.html',{waitUntil:'domcontentloaded'}),
+    projectPhone.goto('http://127.0.0.1:'+PORT+'/intro/v45-lan.html',{waitUntil:'domcontentloaded'})
+  ]);
+  const projectReady=()=>typeof window.sagiProjectSyncDiagnostic==='function'&&(()=>{const d=window.sagiProjectSyncDiagnostic();return !d.syncBusy&&d.activeMatchProjectId==='bridge_project_1'&&d.selectedProjectId==='bridge_project_1'&&d.projectCount===1&&document.querySelector('#matchHome')?.value==='乌苏叶克备'})();
+  await Promise.all([
+    projectDesktop.waitForFunction(projectReady,null,{timeout:12000}),
+    projectPhone.waitForFunction(projectReady,null,{timeout:12000})
+  ]);
+  const initialProjectSync=await Promise.all([
+    projectDesktop.evaluate(()=>window.sagiProjectSyncDiagnostic()),
+    projectPhone.evaluate(()=>window.sagiProjectSyncDiagnostic())
+  ]);
+  assert(initialProjectSync.every(x=>x.activeMatchProjectId==='bridge_project_1'&&x.projectCount===1),'initial project SSOT failed: '+JSON.stringify(initialProjectSync));
+  assert(projectPosts.length===0,'passive project follow must not reverse-publish: '+JSON.stringify(projectPosts));
+  await projectDesktop.locator('#projectName').fill('SYNC COPY');
+  await projectDesktop.click('#projectSaveBtn');
+  await projectDesktop.waitForFunction(()=>{const d=window.sagiProjectSyncDiagnostic?.();return d&&!d.syncBusy&&d.projectCount===2&&document.querySelector('#projectSelect')?.options.length===3},null,{timeout:8000});
+  // DOM can update before the POST completes; require the authoritative mock ACK.
+  for(let i=0;i<80&&!(projectStore.projects.length===2&&projectStore.activeProjectId!=='bridge_project_1'&&projectPosts.length===1);i++)await wait(100);
+  const activeAfterSave=projectStore.activeProjectId;
+  assert(activeAfterSave&&activeAfterSave!=='bridge_project_1'&&projectStore.projects.length===2,'desktop save did not publish project list + active id: '+JSON.stringify(projectStore));
+  await projectPhone.waitForFunction(id=>typeof window.sagiProjectSyncDiagnostic==='function'&&(()=>{const d=window.sagiProjectSyncDiagnostic();return !d.syncBusy&&d.activeMatchProjectId===id&&d.selectedProjectId===id&&d.projectCount===2&&document.querySelector('#projectName')?.value==='SYNC COPY'})(),activeAfterSave,{timeout:12000});
+  const phoneFollow=await projectPhone.evaluate(()=>window.sagiProjectSyncDiagnostic());
+  assert(phoneFollow.activeMatchProjectId===activeAfterSave&&phoneFollow.projectCount===2,'phone did not follow desktop active project: '+JSON.stringify(phoneFollow));
+  assert(projectPosts.length===1,'passive phone project follow caused a reverse write: '+JSON.stringify(projectPosts));
+  await projectPhone.click('#projectDeleteBtn');
+  await projectDesktop.waitForFunction(()=>typeof window.sagiProjectSyncDiagnostic==='function'&&(()=>{const d=window.sagiProjectSyncDiagnostic();return !d.syncBusy&&d.projectCount===1&&document.querySelector('#projectSelect')?.options.length===2})(),null,{timeout:12000});
+  const afterDelete=await projectDesktop.evaluate(()=>window.sagiProjectSyncDiagnostic());
+  assert(projectStore.projects.length===1&&projectStore.activeProjectId===''&&afterDelete.projectCount===1,'project deletion did not converge across controllers: '+JSON.stringify({projectStore,afterDelete}));
+  assert(projectPosts.length===2,'project sync wrote more than the two explicit operator mutations: '+JSON.stringify(projectPosts));
+  await Promise.all([projectDesktopContext.close(),projectPhoneContext.close()]);
+  graphics={...authoritative,commandId:'project_sync_restore',revision:(Number(authoritative.revision)||0)+80,updatedAt:new Date().toISOString(),event:{type:'CLEAR_EVENT'}};
+
   console.log('TEST 12: accelerated long-session identity soak keeps names/scores stable');
   const soak=await page.evaluate(()=>window.sagiMatchdaySoakDiagnostic(5000));
   assert(soak.home==='乌苏叶克备'&&soak.away==='IPF'&&soak.mirrorHome==='乌苏叶克备'&&soak.mirrorAway==='IPF'&&soak.score==='6','accelerated long-session soak drifted state: '+JSON.stringify(soak));
   await page.screenshot({path:'selftest-artifacts/13-long-session-soak.png'});
 
   assert(pageErrors.length===0,'browser page errors: '+pageErrors.join(' | '));
-  const report={ok:true,build:'V4.31.0',testedAt:new Date().toISOString(),tests:['compact one-row full-name scorebug + SAGI signature palette/tag + unified score pair + restrained score roll + clock-only regular halves + conditional states','HOME goal enlarged HOME crest + complete GOAL + lower player card + collapse','AWAY goal enlarged AWAY crest','yellow/red referee-card shape + event colors + control icons','penalty >5 rounds/sudden death/miss/scores','two-camera Input 1 -> Input 2','event-logo replay stinger visual','manual replay stinger IN -> Input 4 -> OUT -> Input 1','stored project load wins over stale Bridge + optional time/venue do not block READY','compact project index rehydrates full photos from IndexedDB with empty Bridge list','clock-only refresh avoids repeated heavy match-control repaints','regular scorebug always uses canonical full team names even when backup aliases exist','mobile match control mirrors current fixture identity and legacy fields are read-only','transient LAN failure retries automatically and records last-good state','rapid score writes are serialized under deliberate network reordering','duplicate operator events are gated before double-counting','reopen recovery keeps newer local same-fixture state over stale Bridge','in-match health check is read-only and cannot mutate on-air state','vMix output ignores stale lower revisions within the same fixture','online/resume recovery repairs score/name/color/exceptional-state drift','Browser Input watchdog holds last good frame during longer outage and self-heals','fresh startup can atomically recover Bridge fixture identity when no local snapshot exists','accelerated 5000-cycle long-session identity soak'],vmixCommands:cuts};
+  const report={ok:true,build:'V4.31.0',testedAt:new Date().toISOString(),tests:['compact one-row full-name scorebug + SAGI signature palette/tag + unified score pair + restrained score roll + clock-only regular halves + conditional states','HOME goal enlarged HOME crest + complete GOAL + lower player card + collapse','AWAY goal enlarged AWAY crest','yellow/red referee-card shape + event colors + control icons','penalty >5 rounds/sudden death/miss/scores','two-camera Input 1 -> Input 2','event-logo replay stinger visual','manual replay stinger IN -> Input 4 -> OUT -> Input 1','stored project load wins over stale Bridge + optional time/venue do not block READY','compact project index rehydrates full photos from IndexedDB with empty Bridge list','clock-only refresh avoids repeated heavy match-control repaints','regular scorebug always uses canonical full team names even when backup aliases exist','mobile match control mirrors current fixture identity and legacy fields are read-only','transient LAN failure retries automatically and records last-good state','rapid score writes are serialized under deliberate network reordering','duplicate operator events are gated before double-counting','reopen recovery keeps newer local same-fixture state over stale Bridge','in-match health check is read-only and cannot mutate on-air state','vMix output ignores stale lower revisions within the same fixture','online/resume recovery repairs score/name/color/exceptional-state drift','Browser Input watchdog holds last good frame during longer outage and self-heals','fresh startup can atomically recover Bridge fixture identity when no local snapshot exists','isolated desktop and phone controllers follow one Bridge revision with zero passive ping-pong writes','desktop and phone share one Bridge-authoritative project list and active project','accelerated 5000-cycle long-session identity soak'],vmixCommands:cuts};
   fs.writeFileSync('selftest-artifacts/report.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
  }catch(e){
   fs.mkdirSync('selftest-artifacts',{recursive:true});try{await page.screenshot({path:'selftest-artifacts/FAIL.png',fullPage:true})}catch{}
