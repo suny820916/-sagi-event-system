@@ -1108,7 +1108,7 @@ function sagiModuleMode(){
 function sagiShow(el,yes){if(el)el.classList.toggle('moduleHidden',!yes)}
 function applySagiModuleMode(){
  const mode=sagiModuleMode();if(!mode)return;
- if(mode==='voice'){location.replace('https://sagi-voice-edge-relay.sg3544225.workers.dev/voice');return;}
+ if(mode==='voice'){location.replace('https://sagi-voice-edge-relay.sg3544225.workers.dev/');return;}
  const meta=SAGI_MODULES[mode];
  q('moduleModeBar')?.classList.add('show');
  if(q('moduleModeTitle'))q('moduleModeTitle').textContent=meta.title;
