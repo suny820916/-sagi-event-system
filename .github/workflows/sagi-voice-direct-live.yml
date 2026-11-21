@@ -1,0 +1,41 @@
+name: SAGI VOICE DIRECT Live E2E
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/sagi-voice-direct-live.yml"
+
+jobs:
+  direct:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify same-origin VOICE DIRECT
+        run: |
+          set -euo pipefail
+          BASE="https://sagi-voice-edge-relay.sg3544225.workers.dev"
+
+          echo "=== page ==="
+          PAGE="$(curl --fail --show-error --silent --retry 3 --connect-timeout 10 --max-time 30 "$BASE/voice")"
+          echo "$PAGE" | grep -q "SAGI VOICE DIRECT"
+          echo "$PAGE" | grep -q "OVERSEAS DIRECT"
+          echo "VOICE DIRECT page live."
+
+          echo "=== health ==="
+          HEALTH="$(curl --fail --show-error --silent --retry 3 "$BASE/health")"
+          python -c 'import json,sys; d=json.loads(sys.argv[1]); assert d.get("version")=="3.9.8"; assert d.get("aiVoice") is True; print("health ok")' "$HEALTH"
+
+          echo "=== activate ==="
+          ACT="$(curl --fail-with-body --show-error --silent --retry 2             -H "Origin: $BASE"             -H "Content-Type: application/json"             -d '{}'             "$BASE/api/activate")"
+          echo "$ACT"
+          TOKEN="$(python -c 'import json,sys; print(json.loads(sys.argv[1])["token"])' "$ACT")"
+
+          echo "=== voice ==="
+          BODY='{"text":"两次遗憾已经够了。第三次——塔城能不能杀进淘汰赛？就看这一场！","mode":"ai_male","voice_id":"","speed":1.08,"style":"football_passion","quality":"cinema"}'
+          curl --fail-with-body --show-error --silent --retry 1             -H "Origin: $BASE"             -H "Authorization: Bearer $TOKEN"             -H "Content-Type: application/json"             -d "$BODY"             -D /tmp/headers             -o /tmp/audio             "$BASE/api/voice/preview"
+          cat /tmp/headers
+          SIZE="$(wc -c < /tmp/audio)"
+          echo "audio_bytes=$SIZE"
+          test "$SIZE" -gt 1000
+          grep -qi '^X-SAGI-Voice-Complete: 1' /tmp/headers
+          echo "SAGI VOICE DIRECT LIVE E2E OK"
