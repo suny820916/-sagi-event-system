@@ -365,3 +365,7 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Added cancellable single-active-cue executor with bounded in-memory duplicate suppression, explicit confirmed-output adapter contract and manual recovery gate after cancellation or ambiguous output (ede5192a). Cancellation deliberately does not issue an automatic return that could overwrite manual takeover.
 - Added deterministic adapter self-test for sequence, duplicates, busy rejection, cancellation and uncertain output (b626cb35). Runtime and CI not verified in this run. No new dependencies; main untouched.
 - Open: durable cue claims across restarts, trusted manual recovery UI, adapter timeout and readback, validated input mapping, actual graphics/vMix integration and CI wiring. In-flight adapters must honor abort; this prototype does not certify physical cancellation or on-air state.
+
+## 2026-11-22 — Director automated verification gate
+- Added `.github/workflows/commercial-director.yml` (2e4f24b) to execute the planner and executor self-tests on Windows and Ubuntu with Node 22 on commercial branch pushes. No runtime dependency or main change.
+- CI execution results not yet observed; this is a test execution gate, not evidence of passing tests or actual graphics/vMix output. Next: inspect matrix results and wire a readback-confirmed vMix output adapter plus durable cue claims.
