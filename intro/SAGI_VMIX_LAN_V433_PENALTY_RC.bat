@@ -2242,9 +2242,11 @@ function applyKick(state,command={}){
  if(!kickId)return{state:s,accepted:false,deduped:false,reason:'MISSING_KICK_ID'};
  if(s.history.some(x=>x.kickId===kickId))return{state:s,accepted:true,deduped:true,reason:'DUPLICATE_KICK_ID'};
  if(s.finished)return{state:s,accepted:false,deduped:false,reason:'FINISHED'};
- const side=safeSide(command.side),expected=nextSide(s);
+ const side=String(command.side||'').toUpperCase(),result=String(command.result||'').toUpperCase(),expected=nextSide(s);
+ if(!['HOME','AWAY'].includes(side))return{state:s,accepted:false,deduped:false,reason:'INVALID_SIDE'};
+ if(!RESULTS.includes(result))return{state:s,accepted:false,deduped:false,reason:'INVALID_RESULT'};
  if(side!==expected)return{state:s,accepted:false,deduped:false,reason:'WRONG_SIDE',expectedSide:expected};
- const history=s.history.concat({kickId,side,result:safeResult(command.result),at:safeId(command.at,32)});
+ const history=s.history.concat({kickId,side,result,at:safeId(command.at,32)});
  s=normalizeState({...s,started:true,history});
  return{state:s,accepted:true,deduped:false,reason:'OK'};
 }
@@ -3039,7 +3041,8 @@ function mdPenaltyKickId(side,result){
 }
 async function mdPenaltyCommitKick(side,result='GOAL',source='DIRECTOR'){
  if(mdPenaltySubmitBusy){note('上一罚正在同步 · 请勿重复点击');return false}
- const cleanSide=side==='AWAY'?'AWAY':'HOME',cleanResult=result==='MISS'?'MISS':'GOAL';
+ if(!['HOME','AWAY'].includes(side)||!['GOAL','MISS'].includes(result)){note('点球输入无效 · 未修改比分');return false}
+ const cleanSide=side,cleanResult=result;
  mdSimplePenaltyEnsureOverlay();let p=mdPenaltyState();
  if(!p.started){p=mdPenaltyNormalize({...p,started:true,finished:false,winner:'',firstSide:p.history.length?p.firstSide:cleanSide});matchdayState.penaltyShootout=p}
  if(p.finished){note('点球大战已经结束');return false}

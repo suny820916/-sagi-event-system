@@ -54,3 +54,11 @@ console.log('SAGI V4.33 PENALTY CORE PASS',{history:long.history.length,round:p.
   walk(p.normalizeState({rounds,firstSide,started:true}));
   console.log('regulation exhaustive PASS',{rounds,firstSide,visited});
  }
+
+// Invalid live commands must not create a phantom kick.
+for(const [side,result,reason] of [['INVALID','GOAL','INVALID_SIDE'],['HOME','INVALID','INVALID_RESULT'],['HOME',null,'INVALID_RESULT'],[null,'GOAL','INVALID_SIDE']]){
+ const before=p.normalizeState({rounds:5,firstSide:'HOME'});
+ const rejected=p.applyKick(before,{kickId:'invalid',side,result});
+ assert(!rejected.accepted&&rejected.reason===reason&&JSON.stringify(rejected.state)===JSON.stringify(before),'invalid command mutated state: '+reason);
+}
+console.log('invalid command rejection PASS');
