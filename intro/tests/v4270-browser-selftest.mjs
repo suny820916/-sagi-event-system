@@ -528,7 +528,7 @@ server.listen(PORT,'127.0.0.1',async()=>{
   authoritative=JSON.parse(JSON.stringify(graphics));
   const diagPage=await browser.newPage({viewport:{width:1920,height:1080}});
   await diagPage.goto('http://127.0.0.1:'+PORT+'/intro/vmix-v45-lan.html',{waitUntil:'domcontentloaded'});
-  await diagPage.waitForFunction(()=>window.sagiScoreCenterDiagnostic&&window.sagiScoreCenterDiagnostic().build==='V4.31.0',null,{timeout:5000});
+  await diagPage.waitForFunction(expected=>{const d=window.sagiScoreCenterDiagnostic?.();return d?.build==='V4.31.0'&&d.commandId===expected.commandId&&d.revision===Number(expected.revision)&&d.home===expected.scoreHomeName&&Number(d.score[0])===Number(expected.homeScore)&&Number(d.score[1])===Number(expected.awayScore)},authoritative,{timeout:10000});
   const outputDiag=await diagPage.evaluate(()=>window.sagiScoreCenterDiagnostic());
   assert(outputDiag&&outputDiag.build==='V4.31.0'&&outputDiag.home===authoritative.scoreHomeName,'vMix score-center diagnostic is not tracking authoritative state: '+JSON.stringify(outputDiag));
   await diagPage.screenshot({path:'selftest-artifacts/12-output-diagnostic.png'});
