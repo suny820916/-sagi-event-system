@@ -235,6 +235,17 @@ function scheduleHealth(){
   var bad=scheduleConflicts();
   return {ok:bad.length===0,count:bad.length,bad:bad}
 }
+function orderMatchesAvoidBackToBack(list){
+  var pending=list.slice(),out=[];
+  while(pending.length){
+    if(!out.length){out.push(pending.shift());continue}
+    var last=out[out.length-1],pick=-1;
+    for(var i=0;i<pending.length;i++){if(!sharesTeam(last,pending[i])){pick=i;break}}
+    if(pick<0){pick=0;pending[pick].restBefore=true}
+    out.push(pending.splice(pick,1)[0])
+  }
+  return out
+}
 function roundRobinRounds(ids,group,prefix){
   var a=ids.slice(),rounds=[],seq=0;
   if(a.length%2===1)a.push(null);
@@ -254,11 +265,10 @@ function makeGroups(){
   S.matches=[];
   var n=S.teams.length,cut=Math.ceil(n/2),A=[],B=[];
   for(var i=0;i<n;i++){if(i<cut)A.push(i);else B.push(i)}
-  var ar=roundRobinRounds(A,'A','A'),br=roundRobinRounds(B,'B','B'),max=Math.max(ar.length,br.length);
-  for(var r=0;r<max;r++){
-    var aa=ar[r]||[],bb=br[r]||[],slots=Math.max(aa.length,bb.length);
-    for(var j=0;j<slots;j++){if(aa[j])S.matches.push(aa[j]);if(bb[j])S.matches.push(bb[j])}
-  }
+  var ar=roundRobinRounds(A,'A','A'),br=roundRobinRounds(B,'B','B'),groupMatches=[];
+  for(var ra=0;ra<ar.length;ra++)for(var ai=0;ai<ar[ra].length;ai++)groupMatches.push(ar[ra][ai]);
+  for(var rb=0;rb<br.length;rb++)for(var bi=0;bi<br[rb].length;bi++)groupMatches.push(br[rb][bi]);
+  S.matches=orderMatchesAvoidBackToBack(groupMatches);
   S.matches.push(M('SF1','半决赛',null,null,'','A1 vs B2'));
   S.matches.push(M('SF2','半决赛',null,null,'','B1 vs A2'));
   S.matches.push(M('F','决赛',null,null,'','半决赛胜者'));
