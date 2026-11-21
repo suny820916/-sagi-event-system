@@ -48,6 +48,16 @@ function validHex(value,fallback=''){
 function normalizeSide(value){
   return String(value||'').toUpperCase()==='AWAY'?'AWAY':'HOME';
 }
+function safePhoto(value,max=2097152){
+  const s=String(value==null?'':value).trim();
+  if(!s||s.length>Math.max(2048,Number(max)||2097152)) return '';
+  if(/^data:image\/(?:png|jpe?g|webp|gif);base64,/i.test(s)||/^data:image\/svg\+xml(?:;charset=utf-8)?,/i.test(s)){
+    return /[\u0000-\u001f\u007f]/.test(s)?'':s;
+  }
+  if(/^https?:\/\/[^\s<>"']+$/i.test(s)) return s.slice(0,2048);
+  if(/^\/(?!\/)[^\s<>"']+$/i.test(s)) return s.slice(0,2048);
+  return '';
+}
 function normalizePlayer(p){
   if(!p||typeof p!=='object') return null;
   return {
@@ -55,7 +65,7 @@ function normalizePlayer(p){
     name:safeText(p.name,80),
     number:safeText(p.number,12),
     position:safeText(p.position||p.role,24),
-    photo:safeText(p.photo,2048)
+    photo:safePhoto(p.photo)
   };
 }
 function normalizeType(value){
@@ -134,6 +144,6 @@ function eventKey(event){
   // Revision/command guards still prevent stale rollback; never collapse two real events by metadata guesswork.
   return '';
 }
-const api=Object.freeze({VERSION,TOKENS,EVENT_TYPES,HOLD_MS,safeText,validHex,normalizeSide,normalizeType,normalizeEvent,eventAccent,holdMs,eventKey});
+const api=Object.freeze({VERSION,TOKENS,EVENT_TYPES,HOLD_MS,safeText,safePhoto,validHex,normalizeSide,normalizeType,normalizeEvent,eventAccent,holdMs,eventKey});
 root.SAGISignatureCore=api;
 })(typeof window!=='undefined'?window:globalThis);

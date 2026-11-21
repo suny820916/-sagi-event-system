@@ -39,7 +39,13 @@ assert(boundedScore.homeScore===9999&&boundedScore.awayScore===0,'score clamping
 const replay=c.normalizeEvent({type:'REPLAY_STINGER',phase:'weird'});
 assert(replay.phase==='IN'&&replay.title==='INSTANT REPLAY','replay phase fail-safe failed');
 const long=c.normalizeEvent({type:'GOAL',team:'X'.repeat(500),player:{name:'Y'.repeat(500),photo:'z'.repeat(5000)}});
-assert(long.team.length<=80&&long.player.name.length<=80&&long.player.photo.length<=2048,'payload bounds failed');
+assert(long.team.length<=80&&long.player.name.length<=80&&long.player.photo==='','unsafe non-image photo payload was accepted');
+const fullPhoto='data:image/jpeg;base64,'+'A'.repeat(12000);
+const photoEvent=c.normalizeEvent({type:'GOAL',player:{name:'PHOTO TEST',photo:fullPhoto}});
+assert(photoEvent.player.photo===fullPhoto&&photoEvent.player.photo.length>2048,'local base64 player photo was truncated');
+const svgPhoto='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect width="10" height="10"/></svg>');
+assert(c.normalizeEvent({type:'GOAL',player:{photo:svgPhoto}}).player.photo===svgPhoto,'safe SVG photo data URL regressed');
+assert(c.safePhoto('javascript:alert(1)')==='','unsafe photo scheme accepted');
 assert(c.eventKey({type:'GOAL',side:'HOME',team:'HOME',at:'',player:null})==='','legacy metadata must not be treated as reliable event identity');
 const control=fs.readFileSync(new URL('../v45-lan.html',import.meta.url),'utf8');
 const output=fs.readFileSync(new URL('../vmix-v45-lan.html',import.meta.url),'utf8');
