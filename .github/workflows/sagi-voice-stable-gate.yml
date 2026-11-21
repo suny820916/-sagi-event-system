@@ -99,7 +99,7 @@ jobs:
                   "quality":case["quality"]
               }, ensure_ascii=False).encode("utf-8")
               req=urllib.request.Request(
-                  base+suite["endpoint"],
+                  base+"/api/voice-router",
                   data=payload,
                   headers={"Content-Type":"application/json","User-Agent":"SAGI-VOICE-Golden/1.0"},
                   method="POST"
@@ -120,6 +120,9 @@ jobs:
               audio_path.write_bytes(body)
 
               provider=headers.get("x-sagi-voice-provider","")
+              route=headers.get("x-sagi-voice-route","")
+              router=headers.get("x-sagi-voice-router","")
+              fallback=headers.get("x-sagi-voice-fallback","")
               complete=headers.get("x-sagi-voice-complete","")
               ctype=headers.get("content-type","")
               duration=0.0
@@ -140,7 +143,9 @@ jobs:
               bytes_ok=True if not base_bytes else abs(len(body)-base_bytes)/base_bytes<=bytes_drift
               checks={
                   "http_200":status==200,
-                  "provider":provider==suite["provider_required"],
+                  "router":router=="1",
+                  "route":route in ("edge-direct","render-fallback"),
+                  "provider":bool(provider),
                   "complete":complete=="1",
                   "audio_type":ctype.startswith("audio/"),
                   "min_bytes":len(body)>=case["min_bytes"],
@@ -157,12 +162,12 @@ jobs:
               report.append({
                   "id":case["id"],"label":case["label"],"status":status,
                   "bytes":len(body),"duration":round(duration,2),"latency":latency,
-                  "provider":provider,
+                  "provider":provider,"route":route,"fallback":fallback,
                   "baseline_duration":base_duration or None,
                   "baseline_bytes":int(base_bytes) if base_bytes else None,
                   "checks":checks
               })
-              print(f"[{idx}/{len(suite['cases'])}] {case['id']} status={status} bytes={len(body)} duration={duration:.2f}s latency={latency}s provider={provider}")
+              print(f"[{idx}/{len(suite['cases'])}] {case['id']} status={status} bytes={len(body)} duration={duration:.2f}s latency={latency}s provider={provider} route={route} fallback={fallback}")
               time.sleep(1.0)
 
           pathlib.Path("golden-report.json").write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding="utf-8")
@@ -170,13 +175,13 @@ jobs:
           lines=[
               "# SAGI VOICE Golden Regression",
               "",
-              "| Case | HTTP | Bytes | Duration | Latency | Provider | Result |",
-              "|---|---:|---:|---:|---:|---|---|",
-              f"| Baseline policy |  | bytes ±{int(bytes_drift*100)}% | duration ±{int(duration_drift*100)}% | ≤{latency_limit}s | {suite['provider_required']} | |"
+              "| Case | HTTP | Bytes | Duration | Latency | Provider | Route | Result |",
+              "|---|---:|---:|---:|---:|---|---|---|",
+              f"| Baseline policy |  | bytes ±{int(bytes_drift*100)}% | duration ±{int(duration_drift*100)}% | ≤{latency_limit}s | any valid provider | router required | |"
           ]
           for r in report:
               ok=all(r["checks"].values())
-              lines.append(f"| {r['label']} | {r['status']} | {r['bytes']} | {r['duration']}s | {r['latency']}s | {r['provider'] or '-'} | {'✅' if ok else '❌'} |")
+              lines.append(f"| {r['label']} | {r['status']} | {r['bytes']} | {r['duration']}s | {r['latency']}s | {r['provider'] or '-'} | {r['route'] or '-'} | {'✅' if ok else '❌'} |")
           lines += ["", f"**Failures: {len(failures)}**"]
           if failures:
               lines += [""] + [f"- {x}" for x in failures]
