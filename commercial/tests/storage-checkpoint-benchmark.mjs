@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, rm, stat } from 'node:fs/promises';
+import { mkdtemp, rm, stat, appendFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { performance } from 'node:perf_hooks';
@@ -48,6 +48,10 @@ try {
     baselineBytes,journalBytes:(await stat(store.journalPath)).size,p50Ms:percentile(.5),
     p95Ms:percentile(.95),maxMs:sorted.at(-1)},null,2));
   assert.equal((await store.readJournal()).length,121);
+  assert.ok((await stat(store.journalPath)).size > 65536, 'exercise multiple stream chunks');
+  // A malformed complete record must not be hidden by later valid commits.
+  await appendFile(store.journalPath, '{invalid json}\n', 'utf8');
+  await assert.rejects(new FileMatchStore(root).load(), SyntaxError);
   console.log('Storage checkpoint benchmark PASS (correctness only)');
 } finally {
   await rm(root,{recursive:true,force:true});
