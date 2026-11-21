@@ -1,0 +1,87 @@
+name: SAGI VOICE iPhone WebKit E2E
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/sagi-voice-ios-webkit-e2e.yml"
+
+jobs:
+  iphone-webkit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Wait for V4.3.2.6 Pages
+        run: |
+          set -euo pipefail
+          URL="https://suny820916.github.io/-sagi-event-system/content-os/sagi-down.html?module=voice&v=4326&fresh=ios-e2e"
+          for i in $(seq 1 30); do
+            BODY="$(curl --silent --show-error --fail "$URL" || true)"
+            if echo "$BODY" | grep -q "V4.3.2.6"; then
+              echo "V4.3.2.6 live."
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "V4.3.2.6 not live"
+          exit 1
+
+      - name: Install Playwright WebKit
+        run: |
+          mkdir -p /tmp/sagi-webkit && cd /tmp/sagi-webkit
+          npm init -y >/dev/null 2>&1
+          npm install playwright@latest
+          npx playwright install --with-deps webkit
+
+      - name: Run iPhone Safari-style VOICE generation
+        working-directory: /tmp/sagi-webkit
+        run: |
+          cat > test.mjs <<'JS'
+          import { webkit } from 'playwright';
+
+          const browser = await webkit.launch({headless:true});
+          const context = await browser.newContext({
+            userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 26_6_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Mobile/15E148 Safari/604.1',
+            viewport: { width: 430, height: 932 },
+            locale: 'zh-CN'
+          });
+          const page = await context.newPage();
+          const logs = [];
+          page.on('console', m => logs.push('console:'+m.type()+':'+m.text()));
+          page.on('pageerror', e => logs.push('pageerror:'+e.message));
+          page.on('requestfailed', r => logs.push('requestfailed:'+r.url()+':'+(r.failure()?.errorText||'')));
+
+          const relay = encodeURIComponent('https://sagi-voice-edge-relay.sg3544225.workers.dev');
+          const url = 'https://suny820916.github.io/-sagi-event-system/content-os/sagi-down.html?module=voice&v=4326&relay='+relay+'&fresh=ios-webkit-e2e';
+          await page.goto(url,{waitUntil:'networkidle',timeout:90000});
+          await page.locator('#voiceExportText').fill('两次遗憾已经够了。第三次——塔城能不能杀进淘汰赛？就看这一场！');
+          await page.locator('#voiceExportMode').selectOption('ai_male');
+          await page.locator('#voiceExportStyle').selectOption('football_passion');
+          await page.locator('#voiceExportQuality').selectOption('cinema');
+          await page.locator('#voiceExportSpeed').selectOption('1.08');
+          await page.locator('#voiceExportGenerateBtn').click();
+
+          await page.waitForFunction(() => {
+            const t=document.querySelector('#voiceExportStatus')?.textContent||'';
+            return t.includes('完成 ·') || t.includes('配音生成失败');
+          }, null, {timeout:120000});
+
+          const status = await page.locator('#voiceExportStatus').innerText();
+          const previewSrc = await page.locator('#voiceExportPreview').getAttribute('src');
+          const downloadHref = await page.locator('#voiceExportDownloadBtn').getAttribute('href');
+          console.log('VOICE_STATUS='+status);
+          console.log('PREVIEW_SRC='+previewSrc);
+          console.log('DOWNLOAD_HREF='+downloadHref);
+          console.log(logs.join('\n'));
+
+          if(!status.includes('完成 ·')) throw new Error('VOICE did not complete: '+status);
+          if(!previewSrc?.startsWith('blob:')) throw new Error('No preview blob URL');
+          if(!downloadHref?.startsWith('blob:')) throw new Error('No download blob URL');
+
+          await browser.close();
+          JS
+          node test.mjs
