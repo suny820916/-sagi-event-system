@@ -106,6 +106,21 @@ export class FileMatchStore {
     const after = await this._journalFingerprint();
     if (before !== after) throw new Error('JOURNAL_CHANGED_DURING_SCAN');
     if (after !== null && !last) throw new Error('JOURNAL_NO_STATE_COMMIT');
+    // A surviving newer snapshot is evidence of a lost complete journal tail.
+    // Snapshot corruption alone must not prevent recovery from a valid journal.
+    if (last) {
+      for (const file of [this.snapshotPath, this.backupPath]) {
+        let snapshot;
+        try { snapshot = await readJson(file); }
+        catch (error) {
+          if (error instanceof SyntaxError || ['ENOENT', 'EISDIR'].includes(error.code)) continue;
+          throw error;
+        }
+        if (snapshot?.fixtureId === last.state.fixtureId &&
+            Number.isSafeInteger(snapshot.revision) && snapshot.revision > last.revision)
+          throw new Error('JOURNAL_BEHIND_SNAPSHOT');
+      }
+    }
     if (!tail.length && after !== null && last)
       this.journalCache = { fingerprint: after, last: structuredClone(last) };
     return last;
