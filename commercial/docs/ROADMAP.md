@@ -355,3 +355,8 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 ## 2026-11-22 — LAN Host regression repair
 - Source review found padded decimal Host ports could pass numeric comparison despite the existing negative regression. Compare the raw port string with the actual listening port's canonical decimal spelling (412c0fb).
 - Existing lan-command-selftest already covers this case; no test weakening or dependency changes. Runtime/CI verification pending. This does not certify phone integration, TLS, or live vMix operation.
+
+## 2026-11-22 — Offline presentation plan prototype
+- Added pure, dependency-free Phase 4 planner for V4.32 one-click introduction (competition, matchup, home and away lineup, explicit return to program), plus independent goal/player, yellow/red card and substitution plans. Default introduction duration 24 seconds. Commits dec81f1, d36ab9f (self-test).
+- Plans are immutable, require a cue ID and explicit return input; they do not execute vMix commands, render graphics, persist cue state or guarantee idempotent delivery. Duration and graphics are provisional until V4.32 visual parity is verified.
+- Self-test source covers order, duration, return target, unsupported types and immutability; execution/CI pending. Next: connect to a serialized cancellable cue executor, validated input discovery and durable event IDs; reconcile uncertain vMix effects without blind retry. Keep manual program override authoritative. Main unchanged; no new dependencies.
