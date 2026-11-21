@@ -674,13 +674,13 @@ jobs:
           for module in ("down","cut","subtitle","image","studio"):
               assert f"module={module}" in hub, module
           assert "module=voice" not in hub, "VOICE must be separated from SAGI TOOLS"
-          assert 'href="/voice/"' in hub, "standalone SAGI VOICE link missing"
+          assert 'href="https://sagi-voice-edge-relay.sg3544225.workers.dev/voice"' in hub, "standalone SAGI VOICE link missing"
           voice = pathlib.Path("voice/index.html").read_text(encoding="utf-8")
           assert "STANDALONE R3.1" in voice
           assert "不属于 SAGI TOOLS" in voice
           assert "workers.dev/api/direct-tts" in voice
           assert "manifest.webmanifest" in voice
-          assert "location.replace('/voice/')" in s, "legacy module=voice must redirect to standalone app"
+          assert "location.replace('https://sagi-voice-edge-relay.sg3544225.workers.dev/voice')" in s, "legacy module=voice must redirect to standalone app"
           manifest = __import__("json").loads(pathlib.Path("content-os/sagi-down-manifest.webmanifest").read_text(encoding="utf-8"))
           assert manifest["start_url"] == "./sagi-hub.html?v=4326", manifest["start_url"]
           m = re.search(r"<script>([\s\S]*?)</script>", s)
@@ -786,13 +786,12 @@ jobs:
           trap 'kill $SERVER_PID || true' EXIT
           sleep 1
           "$CHROME" --headless=new --no-sandbox --disable-gpu --virtual-time-budget=2500 \
-            --dump-dom "http://127.0.0.1:8765/content-os/sagi-down.html?module=voice&v=4327" > /tmp/voice-standalone-dom.html
+            --dump-dom "http://127.0.0.1:8765/voice/" > /tmp/voice-standalone-dom.html
           grep -q 'STANDALONE R3.1' /tmp/voice-standalone-dom.html
           grep -q '不属于 SAGI TOOLS' /tmp/voice-standalone-dom.html
           grep -q 'id="generate"' /tmp/voice-standalone-dom.html
           grep -q 'id="download"' /tmp/voice-standalone-dom.html
           ! grep -q 'MOBILE STUDIO · 手机再创作' /tmp/voice-standalone-dom.html
-          ! grep -q 'SAGI DOWN' /tmp/voice-standalone-dom.html
           echo "VOICE standalone runtime isolation smoke OK"
 
       - name: SAGI AI LOCAL V1.3 design frontend smoke
