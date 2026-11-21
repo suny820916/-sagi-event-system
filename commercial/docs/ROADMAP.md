@@ -324,3 +324,9 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Locked writes now invalidate the journal cache and latch JOURNAL_SCAN_REQUIRES_RECOVERY when the authoritative scan throws (33391c7). This prevents automatic resumption of mutations after a transient or corrupt journal read; restart and validated recovery are required.
 - Extended storage benchmark to assert the latch, refusal after external restoration of valid bytes, and successful readback on a fresh store (c307c5b). Production operators must not overwrite live journals; restoration in this test is a controlled fixture only.
 - Verification: source updates accepted by GitHub. Direct clone still fails DNS; combined status for prior head returned no statuses. Runtime/CI not verified. No new dependency or format changes. Next: verify the accumulated suite and actual Windows recovery before further persistence changes; continue LAN/vMix integration independently.
+
+## 2026-11-21 — Established journal disappearance protection
+- Refuse mutation when a previously cached authoritative journal disappears, or when an observed journal vanishes before stream open. Do not silently recreate history. Commit c9d569f.
+- Added regression for deletion after recovery, no recreation, and restart-required latch even after fixture restoration (4ae7bad).
+- Runtime/CI verification pending. This guard is not a persistent missing-journal sentinel across process restarts; snapshot-only fallback on a fresh instance remains a release risk. No format or dependency changes.
+- Phase 4 acceptance addition: retain V4.32 one-click full introduction (competition, matchup, both lineups/formations, return to program), plus individually triggered goal/player photo, yellow/red card and substitution sequences. Require cancellation and return-to-program validation; these are requirements, not implemented features.
