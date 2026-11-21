@@ -7,11 +7,12 @@ export class PresentationExecutor {
   #active = null;
   #seen = new Set();
   #blocked = false;
-  constructor({ showGraphic, returnProgram, wait = delay, maxCues = 4096 } = {}) {
+  constructor({ showGraphic, returnProgram, wait = delay, maxCues = 4096, cueClaims = null } = {}) {
     if (![showGraphic, returnProgram, wait].every(fn => typeof fn === 'function')) throw new Error('ADAPTER_REQUIRED');
     if (!Number.isSafeInteger(maxCues) || maxCues < 1) throw new Error('INVALID_CAPACITY');
     this.showGraphic = showGraphic; this.returnProgram = returnProgram;
-    this.wait = wait; this.maxCues = maxCues;
+    if (cueClaims !== null && typeof cueClaims.claim !== 'function') throw Error('INVALID_CUE_CLAIMS');
+    this.wait = wait; this.maxCues = maxCues; this.cueClaims = cueClaims;
   }
   get status() { return { active: this.#active?.id ?? null, blocked: this.#blocked }; }
   cancel() { if (!this.#active) return false; this.#active.controller.abort(); return true; }
@@ -28,9 +29,10 @@ export class PresentationExecutor {
     if (this.#seen.size >= this.maxCues) throw new Error('CUE_HISTORY_FULL');
     const controller = new AbortController();
     const signal = controller.signal;
-    this.#seen.add(plan.cueId);
     this.#active = { id:plan.cueId, controller };
     try {
+      if (this.cueClaims && !(await this.cueClaims.claim(plan.cueId))) return { status:'duplicate' };
+      this.#seen.add(plan.cueId);
       for (const step of plan.steps) {
         signal.throwIfAborted();
         const confirmed = step.action === 'SHOW_GRAPHIC'
