@@ -27,6 +27,8 @@ assert(!control.includes("history:(p.history||[]).slice(0,24)"),'penalty history
 assert(control.includes("simple.history=(p.history||[]).map(x=>({kickId:x.kickId||''"),'simple penalty mirror lost kickId linkage');
 assert(control.includes("if(mdPenaltySubmitBusy){note('上一罚正在同步 · 请勿重复点击');return false}"),'rapid repeat guard missing');
 assert(control.includes("if(published&&published.recovered)"),'Bridge conflict recovery not wired into penalty commit');
+const startFn=control.slice(control.indexOf('async function mdPenaltyStart(){'),control.indexOf('async function mdPenaltyKick(',control.indexOf('async function mdPenaltyStart(){')));
+assert(startFn.indexOf('await publishMatchday(null)')>=0&&startFn.indexOf('await refreshGraphicsBrowser(false)')>startFn.indexOf('await publishMatchday(null)'),'penalty start can still be overwritten by passive Bridge sync before first commit');
 
 const cMarker='###SAGI_CONTROL###',oMarker='###SAGI_OUTPUT###';
 const lines=bat.split(/\r?\n/),ci=lines.lastIndexOf(cMarker),oi=lines.lastIndexOf(oMarker);
