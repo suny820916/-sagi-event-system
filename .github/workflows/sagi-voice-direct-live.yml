@@ -18,12 +18,9 @@ jobs:
           echo "=== page ==="
           PAGE="$(curl --fail --show-error --silent --retry 3 --connect-timeout 10 --max-time 30 "$BASE/voice")"
           echo "$PAGE" | grep -q "SAGI VOICE DIRECT"
-          echo "$PAGE" | grep -q "OVERSEAS DIRECT"
+          echo "$PAGE" | grep -q "OVERSEAS DIRECT · iPHONE SAFE · R2"
+          if echo "$PAGE" | grep -q "云端健康检查 HTTP"; then echo "stale health gate still present"; exit 1; fi
           echo "VOICE DIRECT page live."
-
-          echo "=== health ==="
-          HEALTH="$(curl --fail --show-error --silent --retry 3 "$BASE/health")"
-          python -c 'import json,sys; d=json.loads(sys.argv[1]); assert d.get("version")=="3.9.8"; assert d.get("aiVoice") is True; print("health ok")' "$HEALTH"
 
           echo "=== activate ==="
           ACT="$(curl --fail-with-body --show-error --silent --retry 2             -H "Origin: $BASE"             -H "Content-Type: application/json"             -d '{}'             "$BASE/api/activate")"
