@@ -291,3 +291,7 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Added real FileMatchStore benchmark executing 240 durable checkpoints (one simulated match hour) and checking recovery, stable revision, original goal idempotency, and preserved journal event count. Reports journal bytes and p50/p95/max latency.
 - Wired benchmark into Windows/Linux core CI. Commits: 15fc9ae, b45d8f6. Execution not yet verified; this is accelerated correctness coverage, not a real one-hour or 24-hour soak, and metrics have no performance pass threshold yet.
 - Next: inspect measured baseline, extend under realistic retained command/event history, set hardware-specific latency budgets, then optimize storage without weakening corruption detection or writer exclusion. No new runtime dependencies.
+
+## 2026-11-21 — Retained-history checkpoint benchmark
+- Expanded the existing 240-checkpoint benchmark with 120 durable card/substitution events, explicit first-half transition, and recovery assertions for all 121 events and 123 command IDs. Reports pre-checkpoint journal bytes separately from total bytes. Commit d134601.
+- This is accelerated synthetic load, not a real-time endurance or hardware certification. The GitHub file update succeeded; runtime results remain unverified. Next: measure growth and latency before changing journal format. No new dependencies.
