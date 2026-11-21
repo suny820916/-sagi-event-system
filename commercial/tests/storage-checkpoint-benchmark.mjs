@@ -81,6 +81,10 @@ try {
   await assert.rejects(reopened.checkpointClock(state), /JOURNAL_DISAPPEARED/);
   assert.equal(reopened.journalError, 'JOURNAL_SCAN_REQUIRES_RECOVERY');
   await assert.rejects(stat(reopened.journalPath), {code:'ENOENT'});
+  // Restart must not silently recover stale snapshot-only history.
+  await assert.rejects(new FileMatchStore(root).load(), /JOURNAL_DISAPPEARED/);
+  await assert.rejects(new FileMatchStore(root).commit(state), /JOURNAL_DISAPPEARED/);
+  await assert.rejects(stat(reopened.journalPath), {code:'ENOENT'});
   await writeFile(reopened.journalPath, validJournal);
   await assert.rejects(reopened.checkpointClock(state), /JOURNAL_RESTART_REQUIRED/);
   // A torn compact record is ignored on recovery but blocks mutation.
