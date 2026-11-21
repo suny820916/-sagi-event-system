@@ -67,4 +67,8 @@ assert(bat.includes("aborted by the software in your host machine"),'normal host
 assert(!bat.includes("SAGI432_SIGNATURE_RC3"),'embedded updater still accepts obsolete RC3 fingerprint');
 assert(control.includes("err.status=r.status")&&control.includes("err.code=body&&body.error||''"),'LAN HTTP errors do not expose structured 409 reason');
 assert(bat.includes("$benignDisconnect")&&bat.includes("Unable to read data from the transport connection"),'expected browser/socket disconnect noise is not filtered');
+const bridgeStart=bat.indexOf('###SAGI_PS###');
+const firstWebRequest=bat.indexOf('Invoke-WebRequest',bridgeStart);
+const globalProgressSilence=bat.indexOf('$ProgressPreference = "SilentlyContinue"',bridgeStart);
+assert(globalProgressSilence>bridgeStart&&globalProgressSilence<firstWebRequest,'PowerShell web-request progress UI is not globally suppressed before live Bridge requests');
 console.log('SAGI V4.32 CLEAN INTEGRATION GATE PASS');
