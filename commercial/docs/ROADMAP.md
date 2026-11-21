@@ -276,3 +276,9 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Extended HTTP regression for ticking, revision stability, yellow-card checkpoint and restart without counting downtime. Standalone clock test added to Windows/Linux CI.
 - Commits: 841ed59, ad7946c, ec79b3d. Prior core CI run 44826325683 succeeded, but did not include the standalone clock test. New CI pending at time of writing.
 - Open: periodic durable checkpoint and graceful-close checkpoint (idle running clock can lose time since last command), LAN gateway wiring, vMix display sync, real machine endurance and power loss tests. Not release certified.
+
+## 2026-11-21 — Durable clock checkpoints
+- Added clock-only same-revision journal commits under the existing writer lock; reject changes to non-clock state, backward elapsed time and non-running checkpoints. No match event or command ID is generated.
+- Local Engine schedules checkpoints every 15 seconds by default, coalesces pending work through its command queue, saves again on graceful close and exposes a sanitized checkpoint warning in diagnostics.
+- Extended HTTP self-test for periodic persistence, unchanged revision, rejection of score mutations through checkpoint path and graceful restart recovery. Commits: ffcc8ef, afd5ab9, a48c62d.
+- Runtime/CI verification pending. Full-state checkpoint records increase journal growth; benchmark long fixtures and disk latency. 15 seconds is a target interval, not a guaranteed loss bound under stalled I/O or shutdown failure. Crash-lock operator recovery and real Windows/vMix acceptance remain release blockers.
