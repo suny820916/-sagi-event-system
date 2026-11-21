@@ -1,5 +1,6 @@
 import { copyFile, mkdir, open, readFile, rename, rm, rmdir, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { createReadStream } from "node:fs";
 import { hydrateMatchState } from "./match-core.mjs";
 
 async function readJson(file) {
@@ -47,12 +48,34 @@ export class FileMatchStore {
     }
   }
 
+  // Retain only the latest commit while validating every complete record.
+  // UTF-8 stream decoding preserves multibyte player names across chunks.
+  async _lastCommit() {
+    let tail = "";
+    let last = null;
+    try {
+      for await (const chunk of createReadStream(this.journalPath, { encoding: "utf8" })) {
+        const lines = (tail + chunk).split("\n");
+        tail = lines.pop();
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          const entry = JSON.parse(line);
+          if (entry.kind === "STATE_COMMIT") last = entry;
+        }
+      }
+    } catch (error) {
+      if (error.code === "ENOENT") return null;
+      throw error;
+    }
+    if (tail.length) this.journalError = "TORN_JOURNAL_REQUIRES_REPAIR";
+    return last;
+  }
+
   async load() {
     await this.init();
     // A committed journal entry is authoritative. This covers a crash between
     // durable journal append and snapshot replacement.
-    const entries = await this._entries();
-    const last = entries.findLast((entry) => entry.kind === "STATE_COMMIT");
+    const last = await this._lastCommit();
     if (last) {
       const state = hydrateMatchState(last.state);
       if (state.revision !== last.revision) throw new Error("JOURNAL_REVISION_MISMATCH");
@@ -94,9 +117,8 @@ export class FileMatchStore {
     const state = hydrateMatchState(stateLike);
     // Never append behind a torn JSONL tail; that would create an invalid
     // complete line and make subsequent recovery fail closed.
-    const entries = await this._entries();
+    const lastCommit = await this._lastCommit();
     if (this.journalError) throw new Error(this.journalError);
-    const lastCommit = entries.findLast((entry) => entry.kind === "STATE_COMMIT");
     if (lastCommit) {
       if (state.fixtureId !== lastCommit.state.fixtureId) throw new Error("FIXTURE_MISMATCH");
       if (checkpoint) {
