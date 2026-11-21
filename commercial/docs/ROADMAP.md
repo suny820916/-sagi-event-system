@@ -313,3 +313,9 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 ## 2026-11-21 — Journal-only clock checkpoint writes
 - After fsynced compact checkpoints, skip full snapshot backup and replacement (a2a7710). Full command commits continue to refresh snapshots. Recovery must use the journal; snapshot-only export or downgrade may omit recent elapsed time.
 - Benchmark now asserts unchanged snapshot bytes and tests torn compact tail recovery plus mutation refusal (abda263). Runtime/CI not yet verified. No new dependencies. Full scans remain a latency risk; verify snapshot-only consumers and require journal-inclusive backups before release.
+
+## 2026-11-21 — Validated journal head cache
+- Under the existing writer lock, reuse a private cloned journal head when file identity, size and modification/change timestamps match the last full scan or durable append. Startup recovery still scans all records. Other cooperating writers invalidate the cache. No on-disk format or dependency change. Commit 714582a.
+- Added regression cases for independent writers, stale checkpoints, caller mutation of returned state and externally appended invalid checkpoints (5008d47). Existing 240-checkpoint benchmark remains the measurement gate.
+- Verification: source commits succeeded; direct clone failed DNS resolution and combined status / PR-filtered workflow lookup returned no results. Runtime and CI are unverified, not failed or passed. No measured latency improvement claimed.
+- Cache assumes exclusive cooperating writers and ordinary local filesystem metadata semantics; it is not a cryptographic integrity check or defense against arbitrary concurrent external file edits. Validate metadata behavior on actual Windows NTFS, cross-process recovery, scan fallback and endurance before release. Do not use network/shared data directories without separate support and testing.
