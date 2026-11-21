@@ -51,6 +51,17 @@ try {
     p95Ms:percentile(.95),maxMs:sorted.at(-1)},null,2));
   assert.equal((await store.readJournal()).length,121);
   assert.ok((await stat(store.journalPath)).size > 65536, 'exercise multiple stream chunks');
+  // Independent cooperative writers must invalidate another store's cached head.
+  const peer = new FileMatchStore(root);
+  const next = {...state, clock:{...state.clock, elapsedSeconds:3615}};
+  await peer.checkpointClock(next);
+  await assert.rejects(store.checkpointClock(state), /INVALID_CLOCK_CHECKPOINT/);
+  state = {...next, clock:{...next.clock, elapsedSeconds:3630}};
+  const returned = await store.checkpointClock(state);
+  returned.clock.elapsedSeconds = 999999;
+  state = {...state, clock:{running:true, elapsedSeconds:3645}};
+  await store.checkpointClock(state);
+  assert.deepEqual((await new FileMatchStore(root).load()).clock, state.clock);
   // Reject a syntactically valid checkpoint for the wrong fixture.
   assert.equal(await readFile(store.snapshotPath, 'utf8'), originalSnapshot,
     'clock checkpoints must not rewrite full snapshot');
@@ -58,6 +69,7 @@ try {
   await appendFile(store.journalPath, JSON.stringify({kind:'CLOCK_CHECKPOINT',
     fixtureId:'wrong', revision:state.revision, elapsedSeconds:3615})+'\n');
   await assert.rejects(new FileMatchStore(root).load(), /INVALID_JOURNAL_CLOCK_CHECKPOINT/);
+  await assert.rejects(store.checkpointClock(state), /INVALID_JOURNAL_CLOCK_CHECKPOINT/);
   await writeFile(store.journalPath, validJournal);
   // A torn compact record is ignored on recovery but blocks mutation.
   await appendFile(store.journalPath, '{"kind":"CLOCK_CHECKPOINT"');
