@@ -1,0 +1,180 @@
+name: SAGI VOICE Stable Gate
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 */6 * * *"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/sagi-voice-stable-gate.yml"
+
+concurrency:
+  group: sagi-voice-stable-gate
+  cancel-in-progress: false
+
+jobs:
+  source-gate:
+    name: Source gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout SAGI VOICE source
+        uses: actions/checkout@v4
+        with:
+          repository: suny820916/sagi-voice-edge-relay
+          ref: main
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.12.0"
+
+      - name: Install dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund
+
+      - name: Verify Sec-MS-GEC v2 reference vectors
+        run: |
+          node --input-type=module <<'JS'
+          import { generateSecMsGec } from './edge-tts-direct.js';
+          const vectors = [
+            [0,'52BC7A17B50DFEC9-28C4394775C8751CD2F6859C030C06DB1489ACAB3B3A7651831FC26895177ED6'],
+            [1760000000,'6D50DDDB91812C33-DD68EFB01898B0750C9797D51A5FF93471DFDAE6888A1039D532CBDCCE54545D'],
+            [1760000300,'BAF4076F572BFE4E-2D6FBE5C0E24F56622EB94F37395F2D153C6C0C451DAAE2249A459BB3AFAD62C']
+          ];
+          for (const [t, expected] of vectors) {
+            const got = generateSecMsGec(t);
+            if (got !== expected) throw new Error('GEC mismatch '+t+' '+got);
+            console.log('GEC OK', t);
+          }
+          JS
+
+      - name: Wrangler production dry-run
+        run: npx wrangler deploy --dry-run --outdir .wrangler-dry-run
+
+  golden-live:
+    name: Golden live regression
+    needs: source-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout golden corpus
+        uses: actions/checkout@v4
+        with:
+          repository: suny820916/sagi-voice-edge-relay
+          ref: main
+          path: voice
+
+      - name: Ensure ffprobe
+        run: |
+          if ! command -v ffprobe >/dev/null 2>&1; then
+            sudo apt-get update -y
+            sudo apt-get install -y ffmpeg
+          fi
+
+      - name: Run seven golden voices
+        env:
+          BASE_URL: https://sagi-voice-edge-relay.sg3544225.workers.dev
+        run: |
+          python - <<'PY'
+          import json, os, pathlib, subprocess, time, urllib.request, urllib.error
+
+          base=os.environ["BASE_URL"].rstrip("/")
+          suite=json.load(open("voice/stability/golden-cases.json","r",encoding="utf-8"))
+          out=pathlib.Path("golden-output"); out.mkdir()
+          report=[]
+          failures=[]
+
+          for idx, case in enumerate(suite["cases"],1):
+              payload=json.dumps({
+                  "text":case["text"],
+                  "mode":case["mode"],
+                  "style":case["style"],
+                  "speed":case["speed"],
+                  "quality":case["quality"]
+              }, ensure_ascii=False).encode("utf-8")
+              req=urllib.request.Request(
+                  base+suite["endpoint"],
+                  data=payload,
+                  headers={"Content-Type":"application/json","User-Agent":"SAGI-VOICE-Golden/1.0"},
+                  method="POST"
+              )
+              started=time.time()
+              try:
+                  with urllib.request.urlopen(req, timeout=45) as resp:
+                      body=resp.read()
+                      headers={k.lower():v for k,v in resp.headers.items()}
+                      status=resp.status
+              except urllib.error.HTTPError as e:
+                  body=e.read()
+                  headers={k.lower():v for k,v in e.headers.items()}
+                  status=e.code
+              latency=round(time.time()-started,3)
+
+              audio_path=out/(case["id"]+".mp3")
+              audio_path.write_bytes(body)
+
+              provider=headers.get("x-sagi-voice-provider","")
+              complete=headers.get("x-sagi-voice-complete","")
+              ctype=headers.get("content-type","")
+              duration=0.0
+              if status==200 and len(body)>1000:
+                  try:
+                      p=subprocess.run(
+                          ["ffprobe","-v","error","-show_entries","format=duration","-of","default=noprint_wrappers=1:nokey=1",str(audio_path)],
+                          capture_output=True,text=True,check=True,timeout=20
+                      )
+                      duration=float(p.stdout.strip() or 0)
+                  except Exception as e:
+                      failures.append(f"{case['id']}: ffprobe failed: {e}")
+
+              checks={
+                  "http_200":status==200,
+                  "provider":provider==suite["provider_required"],
+                  "complete":complete=="1",
+                  "audio_type":ctype.startswith("audio/"),
+                  "min_bytes":len(body)>=case["min_bytes"],
+                  "duration_min":duration>=case["min_seconds"],
+                  "duration_max":duration<=case["max_seconds"]
+              }
+              failed=[k for k,v in checks.items() if not v]
+              if failed:
+                  failures.append(f"{case['id']}: {', '.join(failed)}")
+
+              report.append({
+                  "id":case["id"],"label":case["label"],"status":status,
+                  "bytes":len(body),"duration":round(duration,2),"latency":latency,
+                  "provider":provider,"checks":checks
+              })
+              print(f"[{idx}/{len(suite['cases'])}] {case['id']} status={status} bytes={len(body)} duration={duration:.2f}s latency={latency}s provider={provider}")
+              time.sleep(1.0)
+
+          pathlib.Path("golden-report.json").write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding="utf-8")
+
+          lines=[
+              "# SAGI VOICE Golden Regression",
+              "",
+              "| Case | HTTP | Bytes | Duration | Latency | Provider | Result |",
+              "|---|---:|---:|---:|---:|---|---|"
+          ]
+          for r in report:
+              ok=all(r["checks"].values())
+              lines.append(f"| {r['label']} | {r['status']} | {r['bytes']} | {r['duration']}s | {r['latency']}s | {r['provider'] or '-'} | {'✅' if ok else '❌'} |")
+          lines += ["", f"**Failures: {len(failures)}**"]
+          if failures:
+              lines += [""] + [f"- {x}" for x in failures]
+          pathlib.Path("golden-report.md").write_text("\n".join(lines)+"\n",encoding="utf-8")
+          with open(os.environ["GITHUB_STEP_SUMMARY"],"a",encoding="utf-8") as f:
+              f.write("\n".join(lines)+"\n")
+          if failures:
+              raise SystemExit("\n".join(failures))
+          PY
+
+      - name: Upload golden report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sagi-voice-golden-report
+          path: |
+            golden-report.json
+            golden-report.md
+          retention-days: 14
