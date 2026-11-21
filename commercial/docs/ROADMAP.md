@@ -379,3 +379,10 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Added full-screen input switching adapter prototype with explicit graphic/program key allowlists, single Cut attempt and active-input readback deadline (829cf98). HTTP success alone cannot confirm output.
 - Added executor integration regression for complete intro, wrong input, timeout, cancellation and no blind retry (ba52fd1); wired to Windows/Linux director CI (ee30751).
 - Runtime and CI results not observed. Existing vMix transport binding, discovery-backed key mapping, bounded abort-aware transport, manual takeover detection, actual graphics and hardware verification remain pending. Readback confirms active input only, not rendered pixels or audio. This is not overlay support. No new dependencies; main untouched.
+
+## 2026-11-22 — vMix presentation transport binding
+- Propagated caller cancellation into bounded vMix fetch and disabled HTTP redirects (a7495b9).
+- Added explicit graphic/program key binding to VMixAdapter, preflight discovery before each Cut, unique input-number validation and active-number-to-key readback (0d5a345).
+- Added simulated HTTP end-to-end intro test, missing mapping and cancellation cases (791ae9f), wired into director matrix (3cd4ab7).
+- Source commits accepted; runtime and CI results not verified. No new runtime dependencies; main untouched.
+- Binding is not installed into a production shell. Manual takeover detection between steps, in-flight ambiguous effects, overall deadline including transport latency, actual vMix GUID compatibility and graphic assets remain release blockers. Full-screen cuts are not overlays. Next: verify matrix, add manual takeover safety and real Windows vMix acceptance.
