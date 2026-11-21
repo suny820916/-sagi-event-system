@@ -87,6 +87,14 @@ try {
   await assert.rejects(stat(reopened.journalPath), {code:'ENOENT'});
   await writeFile(reopened.journalPath, validJournal);
   await assert.rejects(reopened.checkpointClock(state), /JOURNAL_RESTART_REQUIRED/);
+  // An existing but truncated or state-less journal must not fall back to snapshots.
+  for (const invalidJournal of ['', '\n', JSON.stringify({kind:'UNKNOWN'})+'\n']) {
+    await writeFile(reopened.journalPath, invalidJournal);
+    await assert.rejects(new FileMatchStore(root).load(), /JOURNAL_NO_STATE_COMMIT/);
+    await assert.rejects(new FileMatchStore(root).commit(state), /JOURNAL_NO_STATE_COMMIT/);
+    assert.equal(await readFile(reopened.journalPath, 'utf8'), invalidJournal);
+  }
+  await writeFile(reopened.journalPath, validJournal);
   // A torn compact record is ignored on recovery but blocks mutation.
   await appendFile(store.journalPath, '{"kind":"CLOCK_CHECKPOINT"');
   const torn = new FileMatchStore(root);
