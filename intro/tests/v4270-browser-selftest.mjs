@@ -165,18 +165,19 @@ server.listen(PORT,'127.0.0.1',async()=>{
   await page.screenshot({path:'selftest-artifacts/01d-sagi-signature.png'});
 
   console.log('TEST 2: HOME goal = enlarged HOME crest + complete GOAL + lower player card');
-  const photo='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="180" height="220"><rect width="100%" height="100%" fill="#17202a"/><circle cx="90" cy="70" r="35" fill="#d5a97a"/><rect x="45" y="110" width="90" height="105" rx="18" fill="#0c8b55"/></svg>');
+  const photo='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="180" height="220"><desc>'+('SAGI_GOAL_PHOTO_'.repeat(400))+'</desc><rect width="100%" height="100%" fill="#17202a"/><circle cx="90" cy="70" r="35" fill="#d5a97a"/><rect x="45" y="110" width="90" height="105" rx="18" fill="#0c8b55"/></svg>');
+  assert(photo.length>2048,'GOAL photo regression fixture must exceed the old 2048-char truncation limit');
   graphics=makeGraphics({homeScore:1,event:{type:'GOAL',side:'HOME',team:HOME,at:"91'",player:{number:'9',name:'TEST STRIKER',photo}}});
   await page.waitForFunction(()=>document.querySelector('#scoreBug')?.classList.contains('goalExpand'),null,{timeout:5000});await wait(1100);
   const homeGoal=await page.evaluate(({HOME_CREST})=>{
    const burst=document.querySelector('#sbGoalBurst'),word=document.querySelector('.sbGoalWord'),gc=document.querySelector('#sbGoalCrest'),rc=document.querySelector('#sbHomeCrest'),card=document.querySelector('#eventCard'),photo=document.querySelector('#eventPhoto'),rr=burst.getBoundingClientRect();
-   return {letters:word.textContent.replace(/\s/g,''),ops:[...word.querySelectorAll('span')].map(x=>parseFloat(getComputedStyle(x).opacity)),burstWidth:rr.width,burstRight:rr.right,goalCrestSrc:gc.getAttribute('src')||'',goalCrestWidth:gc.getBoundingClientRect().width,regularCrestWidth:rc.getBoundingClientRect().width,eventGoal:card.classList.contains('on')&&card.classList.contains('goal'),photo:photo.getAttribute('src')||''};
+   return {letters:word.textContent.replace(/\s/g,''),ops:[...word.querySelectorAll('span')].map(x=>parseFloat(getComputedStyle(x).opacity)),burstWidth:rr.width,burstRight:rr.right,goalCrestSrc:gc.getAttribute('src')||'',goalCrestWidth:gc.getBoundingClientRect().width,regularCrestWidth:rc.getBoundingClientRect().width,eventGoal:card.classList.contains('on')&&card.classList.contains('goal'),photo:photo.getAttribute('src')||'',photoComplete:photo.complete,photoNaturalWidth:photo.naturalWidth};
   },{HOME_CREST});
   assert(homeGoal.letters==='GOAL'&&homeGoal.ops.every(x=>x>.9),'GOAL letters incomplete');
   assert(homeGoal.burstWidth>=250&&homeGoal.burstRight<=1918,'HOME goal panel size/frame failure');
   assert(homeGoal.goalCrestSrc===HOME_CREST,'HOME goal did not use HOME crest');
   assert(homeGoal.regularCrestWidth===0&&homeGoal.goalCrestWidth>=70,'normal crest was not hidden or scoring crest did not enlarge: '+JSON.stringify(homeGoal));
-  assert(homeGoal.eventGoal&&homeGoal.photo.startsWith('data:image/svg+xml'),'lower goal-player card/photo missing');
+  assert(homeGoal.eventGoal&&homeGoal.photo.startsWith('data:image/svg+xml')&&homeGoal.photo.length>2048&&homeGoal.photoComplete&&homeGoal.photoNaturalWidth>0,'lower goal-player card/photo missing or truncated: '+JSON.stringify(homeGoal));
   await page.screenshot({path:'selftest-artifacts/02-home-goal-expanded.png'});
 
   await wait(3500);
