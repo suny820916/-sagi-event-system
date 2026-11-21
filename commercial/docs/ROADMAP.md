@@ -295,3 +295,7 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 ## 2026-11-21 — Retained-history checkpoint benchmark
 - Expanded the existing 240-checkpoint benchmark with 120 durable card/substitution events, explicit first-half transition, and recovery assertions for all 121 events and 123 command IDs. Reports pre-checkpoint journal bytes separately from total bytes. Commit d134601.
 - This is accelerated synthetic load, not a real-time endurance or hardware certification. The GitHub file update succeeded; runtime results remain unverified. Next: measure growth and latency before changing journal format. No new dependencies.
+
+## 2026-11-21 — Journal lookup allocation reduction
+- Use reverse search without copying the entire parsed journal array on commit or filtering it on recovery (4d638100). Complete-line parsing and torn-tail detection are unchanged; Node 22 supports findLast.
+- No on-disk format change or new dependency. Runtime verification pending; full journal parsing and full-state checkpoint growth remain unresolved. Do not infer a measured performance improvement from this change.
