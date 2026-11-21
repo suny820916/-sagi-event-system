@@ -1,0 +1,93 @@
+name: SAGI MOURINHO 70S V4.9 CONTEXT
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/sagi-mourinho-70-v49-context.yml"
+      - "cloud-blender-worker/engine/sagi_tactical_mourinho_70_v49_context.py"
+      - "cloud-blender-worker/overlay/mourinho_70s_v45_cn_title.ass"
+concurrency:
+  group: sagi-mourinho-v49-teactics-figure-marker-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  render-and-package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Blender image
+        run: docker build -t sagi-mourinho-v49 ./cloud-blender-worker
+      - name: Render V4.9 context and framing
+        run: |
+          set -euo pipefail
+          mkdir -p mourinho_v49_out/critical_frames
+          docker run --rm -v "$PWD/mourinho_v49_out:/out" sagi-mourinho-v49 bash -lc '
+            set -euo pipefail
+            blender --background --python /app/engine/sagi_tactical_mourinho_70_v49_context.py -- /app/presets/mourinho_real_madrid_4231_70s_v39_subject_bound.json /out
+            ffmpeg -y -loglevel error -framerate 30 -i /out/frames/frame_%04d.png -f lavfi -i anullsrc=channel_layout=stereo:sample_rate=44100 -map 0:v:0 -map 1:a:0 -c:v libx264 -profile:v baseline -level 3.1 -pix_fmt yuv420p -preset veryfast -crf 20 -c:a aac -b:a 64k -shortest -movflags +faststart /out/V49_BASE_NO_TITLES.mp4
+          '
+          sudo chown -R "$USER":"$USER" mourinho_v49_out
+      - name: Add locked Chinese title/subtitle
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq fonts-noto-cjk ffmpeg
+          ffmpeg -y -loglevel error -i mourinho_v49_out/V49_BASE_NO_TITLES.mp4 -vf "ass=cloud-blender-worker/overlay/mourinho_70s_v45_cn_title.ass" -c:v libx264 -profile:v baseline -level 3.1 -pix_fmt yuv420p -preset veryfast -crf 20 -c:a copy -movflags +faststart mourinho_v49_out/SAGI_MOURINHO_70S_V49_CONTEXT.mp4
+          for t in 4 12 20 28 36 44 52 60 68; do
+            ffmpeg -y -loglevel error -ss "$t" -i mourinho_v49_out/SAGI_MOURINHO_70S_V49_CONTEXT.mp4 -frames:v 1 "mourinho_v49_out/critical_frames/${t}.jpg"
+          done
+          python3 - <<'PY'
+          import json,subprocess
+          p='mourinho_v49_out/'
+          r=json.load(open(p+'execution_report.json'))
+          preset=json.load(open('cloud-blender-worker/presets/mourinho_real_madrid_4231_70s_v39_subject_bound.json'))
+          assert r['valid'] and r['duration_sec']==70 and not r['errors'],r
+          d=float(subprocess.check_output(['ffprobe','-v','error','-show_entries','format=duration','-of','default=noprint_wrappers=1:nokey=1',p+'SAGI_MOURINHO_70S_V49_CONTEXT.mp4']).decode())
+          assert abs(d-70)<0.05,d
+          assert preset['player_visual']['scale_base']==4.05
+          assert preset['ball_visual']['radius']==0.36
+          assert preset['emphasis_visual']['focal_ring_radius']==0.34
+          assert preset['emphasis_visual']['support_ring_radius']==0.43
+          assert preset['player_visual']['silhouette']['torso_radius_top']==0.18
+          assert preset['player_visual']['silhouette']['head_radius']==0.14
+          assert len([e for e in preset['events'] if e['type']=='relation_camera'])==9
+          cams={e['t']:e for e in preset['events'] if e['type']=='relation_camera'}
+          assert [cams[t]['min_z'] for t in (0,7,20,36,45,50,53,58,64)] == [106,72,66,65,63,62,58,54,70]
+          assert r['v42_projection_gate']['sampled_frames']==2100
+          assert not r['v42_projection_gate']['outside_safe_frames']
+          r['packaging_version']='V4.9 CONTEXT'
+          r['preset_version']=preset['version']
+          r['director_mode']=preset['director_mode']
+          r['final_mp4_duration_sec']=d
+          r['teactics_exact_source_visual_acceptance']='PENDING_RENDERED_FRAME_COMPARISON'
+          json.dump(r,open(p+'execution_report_v49.json','w'),ensure_ascii=False,indent=2)
+          PY
+      - name: Verify final video decodes completely
+        run: |
+          set -euo pipefail
+          ffmpeg -v error -xerror -i mourinho_v49_out/SAGI_MOURINHO_70S_V49_CONTEXT.mp4 -map 0:v:0 -f null -
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('mourinho_v49_out')
+          frames=list((p/'critical_frames').glob('*.jpg'))
+          assert len(frames)==9 and all(f.stat().st_size>0 for f in frames)
+          report=p/'execution_report_v49.json'
+          r=json.loads(report.read_text())
+          r['full_video_decode']='PASS'
+          r['critical_frame_count']=len(frames)
+          r['visual_acceptance']='PENDING_MANUAL_REVIEW'
+          report.write_text(json.dumps(r,ensure_ascii=False,indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SAGI-MOURINHO-70S-V4.9-CONTEXT
+          path: |
+            mourinho_v49_out/SAGI_MOURINHO_70S_V49_CONTEXT.mp4
+            mourinho_v49_out/critical_frames/*.jpg
+            mourinho_v49_out/execution_report_v49.json
+            mourinho_v49_out/scene.blend
+            cloud-blender-worker/presets/mourinho_real_madrid_4231_70s_v39_subject_bound.json
+            cloud-blender-worker/overlay/mourinho_70s_v45_cn_title.ass
+          retention-days: 30
