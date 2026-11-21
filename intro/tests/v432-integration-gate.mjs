@@ -15,6 +15,7 @@ for(const token of [
  '完整出场结束自动清屏',
  "function mdNextEventIdentity(type='EVENT')",
  "normalizeEvent(event,{home:homeName,away:awayName,fixtureKey:mdFixtureKey()})",
+ "safePhoto",
  "SAGI_MATCH_PROJECTS_V2",
  "window.sagiProjectSyncDiagnostic",
  "loadMatchProjectById(remoteActive,{publishSelection:false,remoteSync:true})",
@@ -26,6 +27,7 @@ for(const token of [
  'SAGISignatureCore',
  'function introStateAllowed',
  'lastRenderedSignatureEventKey',
+ 'function setEventPhoto',
  "fetch('/vmix?graphicsBuild='",
  'sagiBrandA',
  '#ff1a1a',
@@ -33,6 +35,9 @@ for(const token of [
 ]) assert(output.includes(token),'output regression: '+token);
 
 assert(output.includes('SAGISignatureCore.eventKey(e)'),'output event idempotency guard missing');
+assert(control.includes("photo:p.photo||''"),'GOAL/control event no longer carries the selected player photo');
+assert(output.includes("if(e.player&&e.player.photo)setEventPhoto(e.player.photo)"),'GOAL output is not using SAFE MODE player-photo rendering');
+assert(output.includes("photo.onerror=()=>{wrap.classList.remove('on');photo.removeAttribute('src')}"),'broken player photo can leave an empty event-photo panel on air');
 assert(!output.includes("fetch('/?graphicsBuild='"),'output/control version reload regression');
 assert(!output.includes('opacity:.82,offset:.28'),'white flash regression');
 assert(output.includes('transform-origin:0 0;opacity:0'),'first-frame transparency regression');
