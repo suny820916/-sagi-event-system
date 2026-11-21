@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>SAGI EVENT · 免费赛事工作台</title>
-<meta name="description" content="SAGI EVENT 免费赛事工作台：无需注册即可创建8队赛事，管理球队、抽签、赛程、比分、积分、双败晋级与赛事备份。">
+<meta name="description" content="SAGI EVENT 免费赛事工作台：支持动态球队数量，管理球队、随机抽签、赛程、比分、积分、晋级与赛事备份。">
 <style>
 :root{--bg:#080808;--p:#121212;--p2:#171717;--l:#292929;--t:#f5f5f2;--m:#929292;--g:#dec47e;--g2:#b99548;--ok:#21533d;--bad:#5a2828}
 *{box-sizing:border-box}html{background:var(--bg)}body{margin:0;background:var(--bg);color:var(--t);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;-webkit-tap-highlight-color:transparent}
@@ -39,7 +39,7 @@ button,input{font:inherit}button{touch-action:manipulation}.w{max-width:920px;ma
   <section id="s0" class="sec on">
     <div class="card hero">
       <div class="heroTop"><div><div class="eyebrow">SAGI EVENT · FREE MATCH OPERATIONS</div><h1 id="hero">新建赛事</h1><div id="heroMeta" class="muted">基础赛事管理永久免费 · 无需注册 · 数据保存在当前设备。</div></div></div>
-      <div class="kpis"><div class="k"><span>球队</span><b id="kt">8</b></div><div class="k"><span>比赛</span><b id="km">0</b></div><div class="k"><span>已完成</span><b id="kd">0</b></div></div><div class="muted" style="margin-top:10px">适用于校园赛、青训赛、社区联赛、杯赛与业余联赛。当前公开版为 8 队赛事模板。</div>
+      <div class="kpis"><div class="k"><span>球队</span><b id="kt">0</b></div><div class="k"><span>比赛</span><b id="km">0</b></div><div class="k"><span>已完成</span><b id="kd">0</b></div></div><div class="muted" style="margin-top:10px">适用于校园赛、青训赛、社区联赛、杯赛与业余联赛。当前公开版为 8 队赛事模板。</div>
     </div>
 
     <div class="card">
@@ -54,16 +54,21 @@ button,input{font:inherit}button{touch-action:manipulation}.w{max-width:920px;ma
     <div class="card">
       <div class="stepTitle"><div class="stepNo">2</div><div><h2>选择赛制</h2><small>点击卡片即可选择，不再使用下拉框</small></div></div>
       <div class="formatGrid">
-        <button type="button" class="formatCard" data-fmt="groups" onclick="selectFormat('groups')"><div><b>A/B 分组 + 淘汰赛</b><span>8队 · 两组单循环 · 前2晋级半决赛</span></div><em>15场</em></button>
-        <button type="button" class="formatCard" data-fmt="double" onclick="selectFormat('double')"><div><b>8队双败制</b><span>输两场淘汰 · 自动晋级 · 支持重置决赛</span></div><em>14–15场</em></button>
-        <button type="button" class="formatCard" data-fmt="round" onclick="selectFormat('round')"><div><b>8队单循环</b><span>7轮 · 每轮4场 · 每队7场</span></div><em>28场</em></button>
+        <button type="button" class="formatCard" data-fmt="groups" onclick="selectFormat('groups')"><div><b>A/B 分组 + 淘汰赛</b><span>4–16队 · 自动均分两组 · 前2晋级</span></div><em>动态</em></button>
+        <button type="button" class="formatCard" data-fmt="double" onclick="selectFormat('double')"><div><b>双败制</b><span>当前支持4队 / 8队 · 输两场淘汰</span></div><em>6–15场</em></button>
+        <button type="button" class="formatCard" data-fmt="round" onclick="selectFormat('round')"><div><b>单循环</b><span>2–16队 · 奇数队自动轮空 · 每队互赛一次</span></div><em>动态</em></button>
       </div>
     </div>
 
     <div class="card">
-      <div class="stepTitle"><div class="stepNo">3</div><div><h2>录入球队</h2><small>固定8队版本 · 后续可继续扩展队数</small></div></div>
+      <div class="stepTitle"><div class="stepNo">3</div><div><h2>录入球队</h2><small>球队数量不固定 · 2–16队</small></div></div>
       <div id="teamInputs" class="teams"></div>
-      <div class="btnrow"><button class="btn ok" onclick="saveTeams()">保存球队</button><button class="btn" onclick="shuffleTeams()">随机抽签</button></div>
+      <div class="btnrow">
+        <button class="btn" type="button" onclick="addTeam()">+ 添加球队</button>
+        <button class="btn" type="button" onclick="removeTeam()">− 减少球队</button>
+        <button class="btn ok" type="button" onclick="saveTeams()">保存球队</button>
+        <button class="btn" type="button" onclick="shuffleTeams()">随机抽签</button>
+      </div>
     </div>
 
     <div class="card">
@@ -127,9 +132,9 @@ if(typeof NodeList!=='undefined'&&!NodeList.prototype.forEach){NodeList.prototyp
 var KEY='sagi_event_v11';
 var DEFAULT_TEAMS=['球队1','球队2','球队3','球队4','球队5','球队6','球队7','球队8'];
 var FORMATS={
-  groups:{label:'A/B 分组 + 淘汰赛',count:'15场',desc:'两组单循环，前2晋级半决赛'},
-  double:{label:'8队双败制',count:'14–15场',desc:'输两场淘汰，支持重置决赛'},
-  round:{label:'8队单循环',count:'28场',desc:'7轮，每轮4场，每队7场'}
+  groups:{label:'A/B 分组 + 淘汰赛',desc:'自动均分两组，小组单循环，前2晋级半决赛'},
+  double:{label:'双败制',desc:'当前支持4队或8队，输两场淘汰，支持重置决赛'},
+  round:{label:'单循环',desc:'所有球队互赛一次，奇数队自动轮空'}
 };
 function freshState(){return {name:'',loc:'',date:'',fmt:'groups',teams:DEFAULT_TEAMS.slice(),matches:[],events:{},champ:null}}
 var S=freshState();
@@ -139,17 +144,69 @@ function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return
 function teamName(i){return Number.isInteger(i)&&S.teams[i]!=null?S.teams[i]:'待定'}
 function msg(t){var e=q('toast');if(!e)return;e.textContent=t;e.style.display='block';clearTimeout(msg._t);msg._t=setTimeout(function(){e.style.display='none'},1800)}
 function persist(){try{if(typeof localStorage!=='undefined')localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
-function normalizeState(x){var n=freshState();if(!x||typeof x!=='object')return n;n.name=String(x.name||'');n.loc=String(x.loc||'');n.date=String(x.date||'');n.fmt=FORMATS[x.fmt]?x.fmt:'groups';n.teams=Array.isArray(x.teams)?x.teams.slice(0,8).map(function(v,i){return String(v||('球队'+(i+1)))}):DEFAULT_TEAMS.slice();while(n.teams.length<8)n.teams.push('球队'+(n.teams.length+1));n.matches=Array.isArray(x.matches)?x.matches:[];n.events=x.events&&typeof x.events==='object'?x.events:{};n.champ=Number.isInteger(x.champ)?x.champ:null;return n}
+function normalizeState(x){
+  var n=freshState();
+  if(!x||typeof x!=='object')return n;
+  n.name=String(x.name||'');n.loc=String(x.loc||'');n.date=String(x.date||'');
+  n.fmt=FORMATS[x.fmt]?x.fmt:'groups';
+  if(Array.isArray(x.teams)){
+    n.teams=x.teams.slice(0,16).map(function(v,i){return String(v||('球队'+(i+1)))});
+    if(n.teams.length<2)n.teams=DEFAULT_TEAMS.slice()
+  }
+  n.matches=Array.isArray(x.matches)?x.matches:[];
+  n.events=x.events&&typeof x.events==='object'?x.events:{};
+  n.champ=Number.isInteger(x.champ)?x.champ:null;
+  return n
+}
 function load(){try{var raw=typeof localStorage!=='undefined'?localStorage.getItem(KEY):null;if(raw)S=normalizeState(JSON.parse(raw))}catch(e){S=freshState()}selectedFmt=FORMATS[S.fmt]?S.fmt:'groups';renderAll()}
 function tab(n,b){if(typeof document==='undefined')return;document.querySelectorAll('.sec').forEach(function(x){x.classList.remove('on')});var sec=q('s'+n);if(sec)sec.classList.add('on');document.querySelectorAll('.tabs button').forEach(function(x){x.classList.remove('on')});var btn=b||document.querySelector('.tabs button[data-tab="'+n+'"]');if(btn)btn.classList.add('on');if(n===3)renderLive();try{window.scrollTo(0,0)}catch(e){}}
 function selectFormat(fmt){if(!FORMATS[fmt])return;selectedFmt=fmt;renderFormatChoice();renderPlan()}
 function renderFormatChoice(){if(typeof document==='undefined')return;document.querySelectorAll('.formatCard').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-fmt')===selectedFmt)})}
-function renderPlan(){var f=FORMATS[selectedFmt]||FORMATS.groups;var box=q('planSummary'),btn=q('createBtn');if(box)box.innerHTML='<div class="planline"><span>当前赛制</span><b>'+esc(f.label)+'</b></div><div class="planline"><span>预计比赛</span><b>'+esc(f.count)+'</b></div><div class="planline"><span>流程</span><b>'+esc(f.desc)+'</b></div>';if(btn)btn.textContent='生成赛事 · '+f.count}
-function renderTeams(){var box=q('teamInputs');if(!box)return;box.innerHTML=S.teams.map(function(t,i){return '<label class="teamField"><span>'+String(i+1).padStart(2,'0')+'</span><input id="t'+i+'" value="'+esc(t)+'" autocomplete="off" aria-label="球队'+(i+1)+'"></label>'}).join('')}
-function readTeams(){return S.teams.map(function(_,i){var el=q('t'+i),v=el?el.value.trim():'';return v||('球队'+(i+1))})}
-function validateTeams(a){if(!Array.isArray(a)||a.length!==8)return '当前版本需要8支球队';var seen={};for(var i=0;i<a.length;i++){var k=a[i].trim().toLowerCase();if(!k)return '球队名称不能为空';if(seen[k])return '球队名称不能重复：'+a[i];seen[k]=1}return ''}
-function saveTeams(){try{var a=readTeams(),err=validateTeams(a);if(err){msg(err);return false}S.teams=a;persist();renderHomeMeta();msg('球队已保存');return true}catch(e){msg('保存失败：'+(e&&e.message?e.message:e));return false}}
-function shuffleTeams(){var a=readTeams(),err=validateTeams(a);if(err){msg(err);return}for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),z=a[i];a[i]=a[j];a[j]=z}S.teams=a;persist();renderTeams();msg('抽签完成，顺序已更新')}
+function expectedMatches(fmt,n){
+  if(fmt==='round')return n*(n-1)/2;
+  if(fmt==='groups'){var a=Math.ceil(n/2),b=Math.floor(n/2);return a*(a-1)/2+b*(b-1)/2+3}
+  if(fmt==='double'){if(n===4)return '6–7';if(n===8)return '14–15';return '仅4/8队'}
+  return 0
+}
+function renderPlan(){
+  var f=FORMATS[selectedFmt]||FORMATS.groups,n=S.teams.length,c=expectedMatches(selectedFmt,n),box=q('planSummary'),btn=q('createBtn');
+  if(box)box.innerHTML='<div class="planline"><span>球队数量</span><b>'+n+'队</b></div><div class="planline"><span>当前赛制</span><b>'+esc(f.label)+'</b></div><div class="planline"><span>预计比赛</span><b>'+esc(c)+'场</b></div><div class="planline"><span>流程</span><b>'+esc(f.desc)+'</b></div>';
+  if(btn)btn.textContent='生成赛事 · '+esc(c)+'场'
+}
+function renderTeams(){
+  var box=q('teamInputs');if(!box)return;
+  box.innerHTML=S.teams.map(function(t,i){return '<label class="teamField"><span>'+String(i+1).padStart(2,'0')+'</span><input id="t'+i+'" value="'+esc(t)+'" autocomplete="off" aria-label="球队'+(i+1)+'"></label>'}).join('')
+}
+function readTeams(){
+  var a=[];
+  for(var i=0;i<S.teams.length;i++){var el=q('t'+i),v=el?el.value.trim():'';a.push(v||('球队'+(i+1)))}
+  return a
+}
+function validateTeams(a,fmt){
+  if(!Array.isArray(a)||a.length<2)return '至少需要2支球队';
+  if(a.length>16)return '当前版本最多支持16支球队';
+  var seen={};
+  for(var i=0;i<a.length;i++){var k=a[i].trim().toLowerCase();if(!k)return '球队名称不能为空';if(seen[k])return '球队名称不能重复：'+a[i];seen[k]=1}
+  if(fmt==='groups'&&a.length<4)return 'A/B分组至少需要4支球队';
+  if(fmt==='double'&&a.length!==4&&a.length!==8)return '双败制当前支持4队或8队';
+  return ''
+}
+function addTeam(){
+  var a=readTeams();
+  if(a.length>=16){msg('最多支持16支球队');return}
+  a.push('球队'+(a.length+1));S.teams=a;persist();renderTeams();renderPlan();renderHomeMeta();msg('已增加到 '+a.length+' 队')
+}
+function removeTeam(){
+  var a=readTeams();
+  if(a.length<=2){msg('至少保留2支球队');return}
+  a.pop();S.teams=a;persist();renderTeams();renderPlan();renderHomeMeta();msg('已调整为 '+a.length+' 队')
+}
+function saveTeams(){try{var a=readTeams(),err=validateTeams(a,null);if(err){msg(err);return false}S.teams=a;persist();renderPlan();renderHomeMeta();msg('球队已保存');return true}catch(e){msg('保存失败：'+(e&&e.message?e.message:e));return false}}
+function shuffleTeams(){
+  var a=readTeams(),err=validateTeams(a,null);if(err){msg(err);return}
+  for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),z=a[i];a[i]=a[j];a[j]=z}
+  S.teams=a;persist();renderTeams();renderPlan();msg('随机抽签完成 · '+a.length+'队')
+}
 function M(id,stage,h,a,group,source){return {id:id,stage:stage,home:h,away:a,group:group||'',source:source||'',hs:null,as:null,status:'pending',active:true,restBefore:false}}
 function sharesTeam(a,b){
   if(!a||!b)return false;
@@ -178,62 +235,104 @@ function scheduleHealth(){
   var bad=scheduleConflicts();
   return {ok:bad.length===0,count:bad.length,bad:bad}
 }
+function roundRobinRounds(ids,group,prefix){
+  var a=ids.slice(),rounds=[],seq=0;
+  if(a.length%2===1)a.push(null);
+  var total=a.length;
+  for(var r=0;r<total-1;r++){
+    var games=[];
+    for(var i=0;i<total/2;i++){
+      var h=a[i],aw=a[total-1-i];
+      if(h!==null&&aw!==null)games.push(M(prefix+(++seq),group+'组 · 第'+(r+1)+'轮',h,aw,group))
+    }
+    rounds.push(games);
+    a=[a[0],a[total-1]].concat(a.slice(1,total-1))
+  }
+  return rounds
+}
 function makeGroups(){
   S.matches=[];
-  var gp=[[[0,3],[1,2]],[[0,2],[3,1]],[[0,1],[2,3]]];
-  var A=[0,1,2,3],B=[4,5,6,7];
-  for(var r=0;r<3;r++){
-    for(var slot=0;slot<2;slot++){
-      var pa=gp[r][slot],pb=gp[r][slot];
-      S.matches.push(M('AR'+(r+1)+'M'+(slot+1),'A组 · 第'+(r+1)+'轮',A[pa[0]],A[pa[1]],'A'));
-      S.matches.push(M('BR'+(r+1)+'M'+(slot+1),'B组 · 第'+(r+1)+'轮',B[pb[0]],B[pb[1]],'B'));
-    }
+  var n=S.teams.length,cut=Math.ceil(n/2),A=[],B=[];
+  for(var i=0;i<n;i++){if(i<cut)A.push(i);else B.push(i)}
+  var ar=roundRobinRounds(A,'A','A'),br=roundRobinRounds(B,'B','B'),max=Math.max(ar.length,br.length);
+  for(var r=0;r<max;r++){
+    var aa=ar[r]||[],bb=br[r]||[],slots=Math.max(aa.length,bb.length);
+    for(var j=0;j<slots;j++){if(aa[j])S.matches.push(aa[j]);if(bb[j])S.matches.push(bb[j])}
   }
   S.matches.push(M('SF1','半决赛',null,null,'','A1 vs B2'));
   S.matches.push(M('SF2','半决赛',null,null,'','B1 vs A2'));
   S.matches.push(M('F','决赛',null,null,'','半决赛胜者'));
-  by('SF1').restBefore=true;
-  by('F').restBefore=true
+  by('SF1').restBefore=true;by('F').restBefore=true
 }
 function makeRound(){
   S.matches=[];
-  var a=[0,1,2,3,4,5,6,7],n=0,prev=null;
-  for(var r=0;r<7;r++){
+  var ids=[],n=S.teams.length;for(var z=0;z<n;z++)ids.push(z);
+  var a=ids.slice();if(a.length%2===1)a.push(null);
+  var total=a.length,seq=0,prev=null;
+  for(var r=0;r<total-1;r++){
     var round=[];
-    for(var i=0;i<4;i++)round.push(M('R'+(++n),'第'+(r+1)+'轮',a[i],a[7-i],'LEAGUE'));
+    for(var i=0;i<total/2;i++){
+      var h=a[i],aw=a[total-1-i];
+      if(h!==null&&aw!==null)round.push(M('R'+(++seq),'第'+(r+1)+'轮',h,aw,'LEAGUE'))
+    }
     round=orderRoundAgainstPrevious(round,prev);
+    if(prev&&round.length&&sharesTeam(prev,round[0]))round[0].restBefore=true;
     for(var j=0;j<round.length;j++)S.matches.push(round[j]);
-    prev=round[round.length-1];
-    a=[a[0],a[7]].concat(a.slice(1,7))
+    if(round.length)prev=round[round.length-1];
+    a=[a[0],a[total-1]].concat(a.slice(1,total-1))
   }
 }
-function makeDouble(){S.matches=[
- M('W1','胜者组 R1',0,7,'','1号位 vs 8号位'),
- M('W2','胜者组 R1',3,4,'','4号位 vs 5号位'),
- M('W3','胜者组 R1',1,6,'','2号位 vs 7号位'),
- M('W4','胜者组 R1',2,5,'','3号位 vs 6号位'),
+function makeDouble4(){S.matches=[
+ M('W1','胜者组 R1',0,3,'','1号位 vs 4号位'),
+ M('W2','胜者组 R1',1,2,'','2号位 vs 3号位'),
  M('L1','败者组 R1',null,null,'','W1负者 vs W2负者'),
- M('L2','败者组 R1',null,null,'','W3负者 vs W4负者'),
- M('W5','胜者组半决赛',null,null,'','W1胜者 vs W2胜者'),
- M('W6','胜者组半决赛',null,null,'','W3胜者 vs W4胜者'),
- M('L3','败者组 R2',null,null,'','L1胜者 vs W5负者'),
- M('L4','败者组 R2',null,null,'','L2胜者 vs W6负者'),
- M('W7','胜者组决赛',null,null,'','W5胜者 vs W6胜者'),
- M('L5','败者组 R3',null,null,'','L3胜者 vs L4胜者'),
- M('L6','败者组决赛',null,null,'','L5胜者 vs W7负者'),
+ M('W3','胜者组决赛',null,null,'','W1胜者 vs W2胜者'),
+ M('L2','败者组决赛',null,null,'','L1胜者 vs W3负者'),
  M('GF1','总决赛',null,null,'','胜者组冠军 vs 败者组冠军'),
  M('GF2','重置决赛',null,null,'','必要时开启')
-];
-by('L6').restBefore=true;
-by('GF1').restBefore=true;
-var x=by('GF2');if(x){x.active=false;x.restBefore=true}}
+];by('L1').restBefore=true;by('L2').restBefore=true;by('GF1').restBefore=true;var x=by('GF2');if(x){x.active=false;x.restBefore=true}}
+function makeDouble8(){S.matches=[
+ M('W1','胜者组 R1',0,7,'','1号位 vs 8号位'),M('W2','胜者组 R1',3,4,'','4号位 vs 5号位'),M('W3','胜者组 R1',1,6,'','2号位 vs 7号位'),M('W4','胜者组 R1',2,5,'','3号位 vs 6号位'),
+ M('L1','败者组 R1',null,null,'','W1负者 vs W2负者'),M('L2','败者组 R1',null,null,'','W3负者 vs W4负者'),
+ M('W5','胜者组半决赛',null,null,'','W1胜者 vs W2胜者'),M('W6','胜者组半决赛',null,null,'','W3胜者 vs W4胜者'),
+ M('L3','败者组 R2',null,null,'','L1胜者 vs W5负者'),M('L4','败者组 R2',null,null,'','L2胜者 vs W6负者'),
+ M('W7','胜者组决赛',null,null,'','W5胜者 vs W6胜者'),M('L5','败者组 R3',null,null,'','L3胜者 vs L4胜者'),M('L6','败者组决赛',null,null,'','L5胜者 vs W7负者'),
+ M('GF1','总决赛',null,null,'','胜者组冠军 vs 败者组冠军'),M('GF2','重置决赛',null,null,'','必要时开启')
+];by('L6').restBefore=true;by('GF1').restBefore=true;var x=by('GF2');if(x){x.active=false;x.restBefore=true}}
+function makeDouble(){if(S.teams.length===4)makeDouble4();else if(S.teams.length===8)makeDouble8();else throw new Error('双败制当前支持4队或8队')}
 function by(id){return S.matches.find(function(m){return m.id===id})}
 function done(m){return !!(m&&m.status==='done'&&m.hs!=null&&m.as!=null&&m.hs!==m.as)}
 function win(id){var m=by(id);return done(m)?(m.hs>m.as?m.home:m.away):null}
 function lose(id){var m=by(id);return done(m)?(m.hs>m.as?m.away:m.home):null}
 function pair(id,a,b){var m=by(id);if(!m)return;if(m.home!==a||m.away!==b){m.home=a;m.away=b;m.hs=null;m.as=null;m.status='pending'}}
-function advanceDouble(){pair('W5',win('W1'),win('W2'));pair('W6',win('W3'),win('W4'));pair('L1',lose('W1'),lose('W2'));pair('L2',lose('W3'),lose('W4'));pair('L3',win('L1'),lose('W5'));pair('L4',win('L2'),lose('W6'));pair('W7',win('W5'),win('W6'));pair('L5',win('L3'),win('L4'));pair('L6',win('L5'),lose('W7'));pair('GF1',win('W7'),win('L6'));var gf=by('GF1'),gf2=by('GF2');if(!gf2)return;gf2.active=false;S.champ=null;if(done(gf)){var wc=win('W7');if(win('GF1')===wc){S.champ=wc}else{gf2.active=true;pair('GF2',gf.home,gf.away);if(done(gf2))S.champ=win('GF2')}}}
-function table(group){var ids=group==='A'?[0,1,2,3]:group==='B'?[4,5,6,7]:[0,1,2,3,4,5,6,7],t={};ids.forEach(function(i){t[i]={i:i,p:0,w:0,d:0,l:0,gf:0,ga:0,pts:0}});S.matches.filter(function(m){return group==='A'||group==='B'?m.group===group:m.group==='LEAGUE'}).forEach(function(m){if(m.hs==null||m.as==null||!Number.isInteger(m.home)||!Number.isInteger(m.away))return;var h=t[m.home],a=t[m.away];if(!h||!a)return;h.p++;a.p++;h.gf+=m.hs;h.ga+=m.as;a.gf+=m.as;a.ga+=m.hs;if(m.hs>m.as){h.w++;a.l++;h.pts+=3}else if(m.hs<m.as){a.w++;h.l++;a.pts+=3}else{h.d++;a.d++;h.pts++;a.pts++}});return Object.values(t).map(function(x){x.gd=x.gf-x.ga;return x}).sort(function(a,b){return b.pts-a.pts||b.gd-a.gd||b.gf-a.gf||a.i-b.i})}
+function advanceDouble4(){
+  pair('L1',lose('W1'),lose('W2'));pair('W3',win('W1'),win('W2'));pair('L2',win('L1'),lose('W3'));pair('GF1',win('W3'),win('L2'));
+  var gf=by('GF1'),gf2=by('GF2');if(!gf2)return;gf2.active=false;S.champ=null;
+  if(done(gf)){var wc=win('W3');if(win('GF1')===wc){S.champ=wc}else{gf2.active=true;pair('GF2',gf.home,gf.away);if(done(gf2))S.champ=win('GF2')}}
+}
+function advanceDouble8(){
+  pair('W5',win('W1'),win('W2'));pair('W6',win('W3'),win('W4'));pair('L1',lose('W1'),lose('W2'));pair('L2',lose('W3'),lose('W4'));pair('L3',win('L1'),lose('W5'));pair('L4',win('L2'),lose('W6'));pair('W7',win('W5'),win('W6'));pair('L5',win('L3'),win('L4'));pair('L6',win('L5'),lose('W7'));pair('GF1',win('W7'),win('L6'));
+  var gf=by('GF1'),gf2=by('GF2');if(!gf2)return;gf2.active=false;S.champ=null;
+  if(done(gf)){var wc=win('W7');if(win('GF1')===wc){S.champ=wc}else{gf2.active=true;pair('GF2',gf.home,gf.away);if(done(gf2))S.champ=win('GF2')}}
+}
+function advanceDouble(){if(S.teams.length===4)advanceDouble4();else advanceDouble8()}
+function groupTeamIds(group){
+  var seen={},ids=[];
+  S.matches.filter(function(m){return m.group===group}).forEach(function(m){if(Number.isInteger(m.home))seen[m.home]=1;if(Number.isInteger(m.away))seen[m.away]=1});
+  for(var k in seen){if(Object.prototype.hasOwnProperty.call(seen,k))ids.push(parseInt(k,10))}
+  ids.sort(function(a,b){return a-b});return ids
+}
+function table(group){
+  var ids=group==='A'||group==='B'?groupTeamIds(group):S.teams.map(function(_,i){return i}),t={};
+  ids.forEach(function(i){t[i]={i:i,p:0,w:0,d:0,l:0,gf:0,ga:0,pts:0}});
+  S.matches.filter(function(m){return group==='A'||group==='B'?m.group===group:m.group==='LEAGUE'}).forEach(function(m){
+    if(m.hs==null||m.as==null||!Number.isInteger(m.home)||!Number.isInteger(m.away))return;
+    var h=t[m.home],a=t[m.away];if(!h||!a)return;
+    h.p++;a.p++;h.gf+=m.hs;h.ga+=m.as;a.gf+=m.as;a.ga+=m.hs;
+    if(m.hs>m.as){h.w++;a.l++;h.pts+=3}else if(m.hs<m.as){a.w++;h.l++;a.pts+=3}else{h.d++;a.d++;h.pts++;a.pts++}
+  });
+  return Object.values(t).map(function(x){x.gd=x.gf-x.ga;return x}).sort(function(a,b){return b.pts-a.pts||b.gd-a.gd||b.gf-a.gf||a.i-b.i})
+}
 function groupComplete(g){return S.matches.filter(function(m){return m.group===g}).every(function(m){return m.status==='done'})}
 function advanceGroups(){if(groupComplete('A')&&groupComplete('B')){var A=table('A'),B=table('B');pair('SF1',A[0].i,B[1].i);pair('SF2',B[0].i,A[1].i)}else{pair('SF1',null,null);pair('SF2',null,null)}if(done(by('SF1'))&&done(by('SF2')))pair('F',win('SF1'),win('SF2'));else pair('F',null,null);S.champ=done(by('F'))?win('F'):null}
 function isElim(m){return S.fmt==='double'||m.id==='SF1'||m.id==='SF2'||m.id==='F'}
@@ -252,7 +351,7 @@ function createEventTap(btn){
   },20)
 }
 function createEventCore(){
-  var a=readTeams(),err=validateTeams(a);
+  var a=readTeams(),err=validateTeams(a,selectedFmt);
   if(err){msg(err);return false}
   if(hasResults()&&!createArmed){
     createArmed=true;
@@ -309,11 +408,30 @@ function copySummary(){var arr=[S.name,S.date,S.loc].filter(Boolean);visible().f
 function clearAll(){if(typeof confirm!=='undefined'&&!confirm('确定清空全部赛事数据？此操作不可撤销。'))return;try{if(typeof localStorage!=='undefined')localStorage.removeItem(KEY)}catch(e){}S=freshState();selectedFmt='groups';renderAll();msg('赛事已清空')}
 function assertTest(cond,name,arr){if(!cond)throw new Error(name);arr.push('PASS · '+name)}
 function runSelfTest(){var backup=JSON.stringify(S),fmt=selectedFmt,res=[];try{
- S=freshState();S.fmt='groups';makeGroups();assertTest(S.matches.length===15,'分组赛生成15场',res);assertTest(scheduleConflicts().length===0,'分组赛赛程避免背靠背',res);assertTest(S.matches.filter(function(m){return m.group==='A'||m.group==='B'}).length===12,'小组赛12场',res);S.matches.filter(function(m){return m.group==='A'||m.group==='B'}).forEach(function(m){m.hs=1;m.as=0;m.status='done'});advanceGroups();assertTest(Number.isInteger(by('SF1').home)&&Number.isInteger(by('SF2').home),'小组结束自动生成半决赛',res);by('SF1').hs=1;by('SF1').as=0;by('SF1').status='done';by('SF2').hs=1;by('SF2').as=0;by('SF2').status='done';advanceGroups();assertTest(Number.isInteger(by('F').home)&&Number.isInteger(by('F').away),'半决赛后自动生成决赛',res);
- S=freshState();S.fmt='round';makeRound();assertTest(S.matches.length===28,'单循环生成28场',res);assertTest(scheduleConflicts().length===0,'单循环赛程避免背靠背',res);var rounds={};S.matches.forEach(function(m){rounds[m.stage]=(rounds[m.stage]||0)+1});assertTest(Object.keys(rounds).length===7&&Object.keys(rounds).every(function(k){return rounds[k]===4}),'单循环7轮×4场',res);
- S=freshState();S.fmt='double';makeDouble();assertTest(visible().length===14&&!by('GF2').active,'双败初始14场',res);assertTest(scheduleConflicts().length===0,'双败初始赛程避免背靠背',res);var guard=0;while(S.champ==null&&guard++<40){var m=visible().find(function(x){return x.status!=='done'&&Number.isInteger(x.home)&&Number.isInteger(x.away)});if(!m)break;m.hs=1;m.as=0;m.status='done';advanceDouble()}assertTest(S.champ!=null,'双败可自动推进至冠军',res);
- return {ok:true,tests:res}
+  var counts=[3,5,7,9,10,12];
+  for(var ci=0;ci<counts.length;ci++){
+    var n=counts[ci];S=freshState();S.teams=[];for(var t=0;t<n;t++)S.teams.push('T'+(t+1));S.fmt='round';makeRound();
+    assertTest(S.matches.length===n*(n-1)/2,'单循环 '+n+'队 场次正确',res);
+    assertTest(scheduleConflicts().length===0,'单循环 '+n+'队 无背靠背',res);
+    var pairs={};S.matches.forEach(function(m){var k=Math.min(m.home,m.away)+'-'+Math.max(m.home,m.away);if(pairs[k])throw new Error('单循环重复对阵 '+n+'队 '+k);pairs[k]=1})
+  }
+  var gc=[4,5,6,7,8,9,10,12];
+  for(var gi=0;gi<gc.length;gi++){
+    var gn=gc[gi];S=freshState();S.teams=[];for(var g=0;g<gn;g++)S.teams.push('G'+(g+1));S.fmt='groups';makeGroups();
+    var a=Math.ceil(gn/2),b=Math.floor(gn/2),expected=a*(a-1)/2+b*(b-1)/2+3;
+    assertTest(S.matches.length===expected,'分组 '+gn+'队 场次正确',res);
+    assertTest(scheduleConflicts().length===0,'分组 '+gn+'队 无背靠背',res)
+  }
+  [4,8].forEach(function(dn){
+    S=freshState();S.teams=[];for(var d=0;d<dn;d++)S.teams.push('D'+(d+1));S.fmt='double';makeDouble();
+    assertTest(visible().length===(dn===4?6:14),'双败 '+dn+'队 初始场次正确',res);
+    var guard=0;while(S.champ==null&&guard++<60){var m=visible().find(function(x){return x.status!=='done'&&Number.isInteger(x.home)&&Number.isInteger(x.away)});if(!m)break;m.hs=1;m.as=0;m.status='done';advanceDouble()}
+    assertTest(S.champ!=null,'双败 '+dn+'队 可推进至冠军',res);
+    assertTest(scheduleConflicts().length===0,'双败 '+dn+'队 无背靠背',res)
+  });
+  return {ok:true,tests:res}
  }catch(e){return {ok:false,tests:res,error:e&&e.message?e.message:String(e)}}finally{S=JSON.parse(backup);selectedFmt=fmt}}
+
 function renderDiagnostics(showToast){var r=runSelfTest();if(typeof window!=='undefined')window.__SAGI_EVENT_SELFTEST__=r;var box=q('selfCheck');if(box)box.innerHTML='<div class="diag '+(r.ok?'pass':'fail')+'"><div class="diagDot"></div><div><b>'+(r.ok?'全部核心逻辑通过':'自检未通过')+'</b><pre>'+esc((r.tests||[]).join('\n')+(r.error?'\nFAIL · '+r.error:''))+'</pre></div></div>';if(showToast)msg(r.ok?'自检通过':'自检失败：'+r.error);return r}
 function boot(){load();renderDiagnostics(false)}
 if(typeof document!=='undefined')boot();
