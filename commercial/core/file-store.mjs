@@ -70,7 +70,7 @@ export class FileMatchStore {
     }
   }
 
-  async _commit(stateLike, event) {
+  async _commit(stateLike, event, checkpoint = false) {
     await this.init();
     // Atomic directory creation coordinates independent store instances.
     // Never steal an existing lock: crash residue requires operator recovery.
@@ -81,7 +81,7 @@ export class FileMatchStore {
       throw error;
     }
     try {
-      return await this._commitLocked(stateLike, event);
+      return await this._commitLocked(stateLike, event, checkpoint);
     } finally {
       // A release failure must not negate a durable commit.
       try { await rmdir(this.lockPath); }
@@ -89,7 +89,7 @@ export class FileMatchStore {
     }
   }
 
-  async _commitLocked(stateLike, event) {
+  async _commitLocked(stateLike, event, checkpoint) {
     if (this.journalError) throw new Error("JOURNAL_RESTART_REQUIRED");
     await this.init();
     const state = hydrateMatchState(stateLike);
@@ -108,9 +108,18 @@ export class FileMatchStore {
     const lastCommit = [...entries].reverse().find((entry) => entry.kind === "STATE_COMMIT");
     if (lastCommit) {
       if (state.fixtureId !== lastCommit.state.fixtureId) throw new Error("FIXTURE_MISMATCH");
-      if (state.revision <= lastCommit.revision) throw new Error("STALE_REVISION");
-      if (state.revision !== lastCommit.revision + 1) throw new Error("REVISION_GAP");
+      if (checkpoint) {
+        const prior = hydrateMatchState(lastCommit.state);
+        if (state.revision !== prior.revision || !prior.clock.running || !state.clock.running ||
+            state.clock.elapsedSeconds < prior.clock.elapsedSeconds ||
+            JSON.stringify({...prior, clock: null}) !== JSON.stringify({...state, clock: null}))
+          throw new Error("INVALID_CLOCK_CHECKPOINT");
+      } else {
+        if (state.revision <= lastCommit.revision) throw new Error("STALE_REVISION");
+        if (state.revision !== lastCommit.revision + 1) throw new Error("REVISION_GAP");
+      }
     }
+    if (checkpoint && !lastCommit) throw new Error("CHECKPOINT_REQUIRES_COMMIT");
     // A single fsynced record holds the complete state, including commands
     // which do not create match events (clock, score correction, etc).
     const entry = { kind: "STATE_COMMIT", revision: state.revision, event, state };
@@ -151,6 +160,12 @@ export class FileMatchStore {
 
   commit(stateLike, event = null) {
     const work = this.pending.then(() => this._commit(stateLike, event));
+    this.pending = work.catch(() => {});
+    return work;
+  }
+
+  checkpointClock(stateLike) {
+    const work = this.pending.then(() => this._commit(stateLike, null, true));
     this.pending = work.catch(() => {});
     return work;
   }
