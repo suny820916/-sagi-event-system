@@ -39,9 +39,9 @@ powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -Command ^
  "[IO.File]::WriteAllText($env:SAGI_FB_CONTROL,$m.Groups[2].Value,$utf);" ^
  "[IO.File]::WriteAllText($env:SAGI_FB_OUTPUT,$m.Groups[3].Value,$utf);" ^
  "Copy-Item $env:SAGI_FB_BRIDGE $env:SAGI_BRIDGE -Force;" ^
- "$controlOk=$false;if(Test-Path $env:SAGI_CONTROL){try{$t=[IO.File]::ReadAllText($env:SAGI_CONTROL,[Text.Encoding]::UTF8);$controlOk=($t.Length -gt 100000 -and $t -match '<!doctype html>' -and $t -match 'SAGI432_SIGNATURE_RC6' -and $t -match 'SAGISignatureCore' -and $t -match 'mdNextEventIdentity' -and $t -match 'LIVE FLOW' -and $t -match 'instantReplayGenerate')}catch{}};" ^
+ "$controlOk=$false;if(Test-Path $env:SAGI_CONTROL){try{$t=[IO.File]::ReadAllText($env:SAGI_CONTROL,[Text.Encoding]::UTF8);$controlOk=($t.Length -gt 100000 -and $t -match '<!doctype html>' -and $t -match 'SAGI432_SIGNATURE_RC7' -and $t -match 'SAGISignatureCore' -and $t -match 'mdNextEventIdentity' -and $t -match 'LIVE FLOW' -and $t -match 'instantReplayGenerate')}catch{}};" ^
  "if(-not $controlOk){Copy-Item $env:SAGI_FB_CONTROL $env:SAGI_CONTROL -Force;Write-Host '[REPAIR] V4.32 SIGNATURE RC Control installed over stale cache.' -ForegroundColor Yellow}else{Write-Host '[SAFE] V4.32 SIGNATURE RC Control cache verified.' -ForegroundColor Green};" ^
- "$outputOk=$false;if(Test-Path $env:SAGI_OUTPUT){try{$t=[IO.File]::ReadAllText($env:SAGI_OUTPUT,[Text.Encoding]::UTF8);$outputOk=($t.Length -gt 50000 -and $t -match '<!doctype html>' -and $t -match 'SAGI432_SIGNATURE_RC6' -and $t -match 'SAGISignatureCore' -and $t -match 'introStateAllowed' -and $t -match 'sagiBrandA' -and $t -match 'lastRenderedSignatureEventKey')}catch{}};" ^
+ "$outputOk=$false;if(Test-Path $env:SAGI_OUTPUT){try{$t=[IO.File]::ReadAllText($env:SAGI_OUTPUT,[Text.Encoding]::UTF8);$outputOk=($t.Length -gt 50000 -and $t -match '<!doctype html>' -and $t -match 'SAGI432_SIGNATURE_RC7' -and $t -match 'SAGISignatureCore' -and $t -match 'introStateAllowed' -and $t -match 'sagiBrandA' -and $t -match 'lastRenderedSignatureEventKey')}catch{}};" ^
  "if(-not $outputOk){Copy-Item $env:SAGI_FB_OUTPUT $env:SAGI_OUTPUT -Force;Write-Host '[REPAIR] V4.32 SIGNATURE RC vMix output installed over stale cache.' -ForegroundColor Yellow}else{Write-Host '[SAFE] V4.32 SIGNATURE RC vMix output cache verified.' -ForegroundColor Green};"
 
 if errorlevel 1 (
@@ -99,6 +99,9 @@ $State = @{
   matchdayGraphics = $null
 }
 $MatchdayJson = "null"
+$LastScoreLogSignature = ""
+$LastStateGuardLogKey = ""
+$LastStateGuardLogAt = [DateTime]::MinValue
 if (Test-Path $MatchdayStateFile) {
   try {
     $savedMatchday = [IO.File]::ReadAllText($MatchdayStateFile,[Text.Encoding]::UTF8)
@@ -144,8 +147,8 @@ function Update-SagiLan {
     $outputText = [Text.Encoding]::UTF8.GetString([IO.File]::ReadAllBytes($outputDownload))
     if ($controlText -notmatch "<!doctype html>") { throw "Control validation failed" }
     if ($outputText -notmatch "<!doctype html>") { throw "Graphics validation failed" }
-    if ($controlText -notmatch "SAGI LIVE MATCH DIRECTOR" -or $controlText -notmatch "SAGI432_SIGNATURE_RC3" -or $controlText -notmatch "mdNextEventIdentity") { throw "Remote control is older than V4.32 SIGNATURE RC; local RC kept" }
-    if ($outputText -notmatch "SAGI432_SIGNATURE_RC3" -or $outputText -notmatch "SAGISignatureCore" -or $outputText -notmatch "lastRenderedSignatureEventKey") { throw "Remote vMix output is older than V4.32 SIGNATURE RC; local RC kept" }
+    if ($controlText -notmatch "SAGI LIVE MATCH DIRECTOR" -or $controlText -notmatch "SAGI432_SIGNATURE_RC7" -or $controlText -notmatch "mdNextEventIdentity") { throw "Remote control is older than V4.32 SIGNATURE RC; local RC kept" }
+    if ($outputText -notmatch "SAGI432_SIGNATURE_RC7" -or $outputText -notmatch "SAGISignatureCore" -or $outputText -notmatch "lastRenderedSignatureEventKey") { throw "Remote vMix output is older than V4.32 SIGNATURE RC; local RC kept" }
 
     Copy-Item $ControlCache $ControlBackup -Force
     Copy-Item $OutputCache $OutputBackup -Force
@@ -496,7 +499,13 @@ while ($true) {
           Write-Host ("[FIXTURE GUARD] Rejected unapproved fixture takeover: " + $incomingFixture + " while active is " + $currentFixture) -ForegroundColor Yellow
           Write-HttpResponse $stream 409 "application/json" '{"ok":false,"error":"FIXTURE_TAKEOVER_REQUIRED"}'
         } elseif ($staleRevision -or $revisionConflict) {
-          Write-Host ("[STATE GUARD] Rejected stale/conflicting matchday write R" + $incomingRevision + " while current is R" + $currentRevision) -ForegroundColor Yellow
+          $guardKey = [string]$incomingRevision + "|" + [string]$currentRevision + "|" + [string]$incomingCommand + "|" + [string]$currentCommand
+          $guardNow = [DateTime]::UtcNow
+          if (($guardKey -ne $LastStateGuardLogKey) -or (($guardNow - $LastStateGuardLogAt).TotalSeconds -ge 2)) {
+            Write-Host ("[STATE GUARD] Rejected stale/conflicting matchday write R" + $incomingRevision + " while current is R" + $currentRevision) -ForegroundColor Yellow
+            $LastStateGuardLogKey = $guardKey
+            $LastStateGuardLogAt = $guardNow
+          }
           Write-HttpResponse $stream 409 "application/json" '{"ok":false,"error":"STALE_MATCHDAY_REVISION"}'
         } else {
           if ($allowFixtureTakeover -and -not $sameFixture -and -not [string]::IsNullOrWhiteSpace($currentFixture)) {
@@ -522,7 +531,11 @@ while ($true) {
           $hs = [string]$probe.homeScore
           $as = [string]$probe.awayScore
           $vis = [string]$probe.scoreboardVisible
-          Write-Host ("[SCORE] " + $hs + ":" + $as + " visible=" + $vis) -ForegroundColor Cyan
+          $scoreLogSignature = $hs + "|" + $as + "|" + $vis
+          if ($scoreLogSignature -ne $LastScoreLogSignature) {
+            Write-Host ("[SCORE] " + $hs + ":" + $as + " visible=" + $vis) -ForegroundColor Cyan
+            $LastScoreLogSignature = $scoreLogSignature
+          }
           Write-HttpResponse $stream 200 "application/json" '{"ok":true}'
         }
       } catch {
@@ -582,7 +595,7 @@ while ($true) {
   }
   catch {
     $lanMessage = [string]$_.Exception.Message
-    $benignDisconnect = $lanMessage -match 'forcibly closed by the remote host|Unable to read data from the transport connection|The I/O operation has been aborted|远程主机强迫关闭|传输连接'
+    $benignDisconnect = $lanMessage -match 'forcibly closed by the remote host|Unable to read data from the transport connection|The I/O operation has been aborted|aborted by the software in your host machine|established connection was aborted|connection was aborted|远程主机强迫关闭|传输连接'
     if (-not $benignDisconnect) {
       Write-Host ("[LAN WARN] " + $lanMessage) -ForegroundColor DarkYellow
     }
@@ -596,7 +609,7 @@ while ($true) {
 <!doctype html>
 <html lang="zh-CN">
 <head>
-<meta name="sagi-build" content="SAGI432_SIGNATURE_RC6">
+<meta name="sagi-build" content="SAGI432_SIGNATURE_RC7">
 <!-- SAGI LIVE MATCH DIRECTOR · SAFE UPDATE COMPATIBILITY MARKER -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -4066,7 +4079,7 @@ function initVmixDirector(){
  vdReadVmixInputs(false);
  setTimeout(async()=>{
   try{
-   vdLoad();const input=String(vmixDirectorSettings.graphics||'').trim(),key='sagi_graphics_loaded_SAGI432_SIGNATURE_RC6';
+   vdLoad();const input=String(vmixDirectorSettings.graphics||'').trim(),key='sagi_graphics_loaded_SAGI432_SIGNATURE_RC7';
    if(input&&localStorage.getItem(key)!==input){
     const ok=await refreshGraphicsBrowser(false);
     if(ok){localStorage.setItem(key,input);q('vdStatus').textContent='LIVEFLOW 07 已强制刷新 vMix 图形 · Input '+input}
@@ -5124,7 +5137,7 @@ if(standalone){
 ###SAGI_OUTPUT###
 <!doctype html>
 <html lang="zh-CN"><head>
-<meta name="sagi-build" content="SAGI432_SIGNATURE_RC6">
+<meta name="sagi-build" content="SAGI432_SIGNATURE_RC7">
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SAGI V4.31.0 · STAGE 广播系统 · vMix</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%2307090d%22/%3E%3Ctext x=%2232%22 y=%2243%22 text-anchor=%22middle%22 font-size=%2234%22 fill=%22%23d8b55b%22%3ES%3C/text%3E%3C/svg%3E">

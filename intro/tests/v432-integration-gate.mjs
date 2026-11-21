@@ -3,7 +3,7 @@ function assert(ok,msg){if(!ok)throw new Error(msg)}
 const control=fs.readFileSync(new URL('../v45-lan.html',import.meta.url),'utf8');
 const output=fs.readFileSync(new URL('../vmix-v45-lan.html',import.meta.url),'utf8');
 const bat=fs.readFileSync(new URL('../SAGI_VMIX_LAN_V432_SIGNATURE_RC.bat',import.meta.url),'utf8');
-const build='SAGI432_SIGNATURE_RC6';
+const build='SAGI432_SIGNATURE_RC7';
 
 for(const [name,html] of [['control',control],['output',output]])assert(html.includes(build),name+' build fingerprint missing');
 
@@ -61,6 +61,10 @@ assert(control.includes("return{ok:false,attempts:i+1,recovered:true,conflict:tr
 assert(control.includes("本次操作未提交 · 已恢复 Bridge 直播真源"),'operator UI does not expose Bridge conflict recovery');
 assert(control.includes("async function mdScore(side,delta)")&&control.includes("const result=await publishMatchday(null);"),'score control can still report optimistic local success before Bridge acknowledgement');
 assert(control.includes("LAN_TIMEOUT")&&control.includes("mdConsistencyBusySince")&&control.includes("busyResets"),'mobile passive Bridge-follow can still hang forever on a stuck LAN request');
+assert(bat.includes("$LastScoreLogSignature")&&bat.includes("$scoreLogSignature -ne $LastScoreLogSignature"),'Bridge still logs every duplicate score POST and can flash the console');
+assert(bat.includes("$LastStateGuardLogKey")&&bat.includes("TotalSeconds -ge 2"),'Bridge state-guard log spam is not rate-limited');
+assert(bat.includes("aborted by the software in your host machine"),'normal host-side socket abort still surfaces as LAN WARN');
+assert(!bat.includes("SAGI432_SIGNATURE_RC3"),'embedded updater still accepts obsolete RC3 fingerprint');
 assert(control.includes("err.status=r.status")&&control.includes("err.code=body&&body.error||''"),'LAN HTTP errors do not expose structured 409 reason');
 assert(bat.includes("$benignDisconnect")&&bat.includes("Unable to read data from the transport connection"),'expected browser/socket disconnect noise is not filtered');
 console.log('SAGI V4.32 CLEAN INTEGRATION GATE PASS');

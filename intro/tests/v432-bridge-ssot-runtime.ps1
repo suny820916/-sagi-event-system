@@ -84,6 +84,23 @@ function Invoke-RawBridgeHttp {
   }
 }
 
+function Invoke-RawBridgeHttpReliable {
+  param(
+    [string]$Method,
+    [string]$Path,
+    [string]$Body = ''
+  )
+  $last = $null
+  for($attempt=1;$attempt -le 3;$attempt++){
+    try { return Invoke-RawBridgeHttp -Method $Method -Path $Path -Body $Body }
+    catch {
+      $last = $_
+      if($attempt -lt 3){ Start-Sleep -Milliseconds (150 * $attempt) }
+    }
+  }
+  throw $last
+}
+
 function Read-BridgeLogs {
   $out=''; $err=''
   try { if($script:bridgeOut -and (Test-Path $script:bridgeOut)){ $out=Get-Content -LiteralPath $script:bridgeOut -Raw -ErrorAction SilentlyContinue } } catch {}
@@ -120,7 +137,7 @@ function Stop-Bridge {
 }
 
 function Get-State {
-  $r=Invoke-RawBridgeHttp -Method 'GET' -Path ('/api/matchday?t=' + [DateTime]::UtcNow.Ticks)
+  $r=Invoke-RawBridgeHttpReliable -Method 'GET' -Path ('/api/matchday?t=' + [DateTime]::UtcNow.Ticks)
   if($r.Status -ne 200){ throw ('GET /api/matchday expected 200 got ' + $r.Status + ' body=' + $r.Body) }
   return ($r.Body | ConvertFrom-Json)
 }
@@ -162,7 +179,7 @@ function New-State {
 function Post-State {
   param($State,[int]$Expected)
   $body=$State | ConvertTo-Json -Depth 30 -Compress
-  $r=Invoke-RawBridgeHttp -Method 'POST' -Path '/api/matchday' -Body $body
+  $r=Invoke-RawBridgeHttpReliable -Method 'POST' -Path '/api/matchday' -Body $body
   if([int]$r.Status -ne $Expected){
     throw ('Expected HTTP ' + $Expected + ' got ' + $r.Status + ' body=' + $r.Body)
   }
