@@ -76,6 +76,13 @@ try {
   const reopened = new FileMatchStore(root);
   assert.deepEqual((await reopened.load()).clock, state.clock);
   assert.equal(reopened.journalError, null);
+  // Losing an established journal must not silently start a new history.
+  await rm(reopened.journalPath);
+  await assert.rejects(reopened.checkpointClock(state), /JOURNAL_DISAPPEARED/);
+  assert.equal(reopened.journalError, 'JOURNAL_SCAN_REQUIRES_RECOVERY');
+  await assert.rejects(stat(reopened.journalPath), {code:'ENOENT'});
+  await writeFile(reopened.journalPath, validJournal);
+  await assert.rejects(reopened.checkpointClock(state), /JOURNAL_RESTART_REQUIRED/);
   // A torn compact record is ignored on recovery but blocks mutation.
   await appendFile(store.journalPath, '{"kind":"CLOCK_CHECKPOINT"');
   const torn = new FileMatchStore(root);
