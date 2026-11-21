@@ -8,7 +8,7 @@ async function readJson(file) {
 
 function parseJournal(text) {
   const lines = text.split("\n");
-  const complete = text.endsWith("\n") ? lines.slice(0, -1) : lines.slice(0, -1);
+  const complete = lines.slice(0, -1);
   const entries = [];
   for (const line of complete) {
     if (!line.trim()) continue;
@@ -52,9 +52,8 @@ export class FileMatchStore {
     // A committed journal entry is authoritative. This covers a crash between
     // durable journal append and snapshot replacement.
     const entries = await this._entries();
-    const committed = entries.filter((entry) => entry.kind === "STATE_COMMIT");
-    if (committed.length) {
-      const last = committed.at(-1);
+    const last = entries.findLast((entry) => entry.kind === "STATE_COMMIT");
+    if (last) {
       const state = hydrateMatchState(last.state);
       if (state.revision !== last.revision) throw new Error("JOURNAL_REVISION_MISMATCH");
       return state;
@@ -97,7 +96,7 @@ export class FileMatchStore {
     // complete line and make subsequent recovery fail closed.
     const entries = await this._entries();
     if (this.journalError) throw new Error(this.journalError);
-    const lastCommit = [...entries].reverse().find((entry) => entry.kind === "STATE_COMMIT");
+    const lastCommit = entries.findLast((entry) => entry.kind === "STATE_COMMIT");
     if (lastCommit) {
       if (state.fixtureId !== lastCommit.state.fixtureId) throw new Error("FIXTURE_MISMATCH");
       if (checkpoint) {
