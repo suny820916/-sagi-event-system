@@ -330,3 +330,8 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Added regression for deletion after recovery, no recreation, and restart-required latch even after fixture restoration (4ae7bad).
 - Runtime/CI verification pending. This guard is not a persistent missing-journal sentinel across process restarts; snapshot-only fallback on a fresh instance remains a release risk. No format or dependency changes.
 - Phase 4 acceptance addition: retain V4.32 one-click full introduction (competition, matchup, both lineups/formations, return to program), plus individually triggered goal/player photo, yellow/red card and substitution sequences. Require cancellation and return-to-program validation; these are requirements, not implemented features.
+
+## 2026-11-21 — Restart missing-journal gate
+- Fresh stores now reject missing authoritative journals when either primary or backup snapshot exists; both load and mutation paths fail closed. Commits 10cf800, b52715a (regression).
+- Compatibility: snapshot-only imports/restores are no longer accepted implicitly. Restore a verified journal-inclusive backup or provide an explicit migration procedure. Empty/replaced journals and loss of all artifacts remain separate risks.
+- Verification: GitHub source writes succeeded; Node 22 is available but direct git access failed DNS resolution. Runtime and Windows CI results remain unverified. No new dependencies or on-disk format change. Prioritize executable test retrieval and LAN/vMix integration before more storage micro-optimizations.
