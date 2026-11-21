@@ -1,5 +1,4 @@
 name: SAGI VOICE Standalone Live E2E
-# permanent-worker-pwa-r3.2
 
 on:
   push:
@@ -12,51 +11,43 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
-      - name: Verify permanent Worker PWA + real audio
+      - name: Verify permanent workers.dev PWA + real audio
         run: |
           set -euo pipefail
           BASE="https://sagi-voice-edge-relay.sg3544225.workers.dev"
-          PAGE="$BASE/voice"
           API="$BASE/api/direct-tts"
 
-          echo "=== wait for standalone Worker PWA ==="
+          echo "=== wait for permanent standalone root ==="
           READY=0
           for i in $(seq 1 36); do
-            HTML="$(curl --fail --show-error --silent --connect-timeout 10 --max-time 20 "$PAGE" || true)"
+            HTML="$(curl --fail --show-error --silent --connect-timeout 10 --max-time 20 "$BASE/" || true)"
             if echo "$HTML" | grep -q "独立长期入口 · 不属于 SAGI TOOLS · R3.2"; then
               READY=1
-              echo "standalone Worker PWA live on attempt $i"
+              echo "standalone root live on attempt $i"
               break
             fi
-            echo "Worker PWA not live yet: $i/36"
+            echo "standalone root not live yet: $i/36"
             sleep 5
           done
           test "$READY" = "1"
 
+          echo "=== root and legacy alias ==="
+          curl --fail --show-error --silent "$BASE/" | grep -q "SAGI VOICE"
+          curl --fail --show-error --silent "$BASE/voice" | grep -q "SAGI VOICE"
+
           echo "=== PWA assets ==="
-          curl --fail --show-error --silent "$BASE/manifest.webmanifest" | grep -q '"name":"SAGI VOICE"'
-          curl --fail --show-error --silent "$BASE/voice-sw.js" | grep -q 'sagi-voice-worker-pwa-v1'
+          MANIFEST="$(curl --fail --show-error --silent "$BASE/manifest.webmanifest")"
+          echo "$MANIFEST" | grep -q '"name":"SAGI VOICE"'
+          echo "$MANIFEST" | grep -q '"start_url":"/"'
+          echo "$MANIFEST" | grep -q '"display":"standalone"'
+          curl --fail --show-error --silent "$BASE/voice-manifest.json" | grep -q '"name":"SAGI VOICE"'
+          curl --fail --show-error --silent "$BASE/voice-sw.js" | grep -q 'sagi-voice-standalone-v2'
+          curl --fail --show-error --silent "$BASE/icon.svg" | grep -q '<svg'
           curl --fail --show-error --silent "$BASE/voice-icon.svg" | grep -q '<svg'
 
-          echo "=== future custom-domain CORS ==="
-          curl --fail --show-error --silent -X OPTIONS \
-            -H "Origin: https://sagisports.cn" \
-            -H "Access-Control-Request-Method: POST" \
-            -H "Access-Control-Request-Headers: content-type" \
-            -D /tmp/preflight \
-            -o /dev/null \
-            "$API"
-          grep -qi '^access-control-allow-origin: https://sagisports.cn' /tmp/preflight
-
-          echo "=== real Edge Neural audio ==="
+          echo "=== real Microsoft Edge Neural audio ==="
           BODY='{"text":"第三次参加阿图什杯，这一次，塔城要冲出小组，创造历史！","mode":"ai_male","speed":1.16,"style":"football_passion","quality":"cinema"}'
-          STATUS="$(curl --show-error --silent \
-            -H "Content-Type: application/json" \
-            -d "$BODY" \
-            -D /tmp/headers \
-            -o /tmp/audio \
-            -w '%{http_code}' \
-            "$API")"
+          STATUS="$(curl --show-error --silent             -H "Content-Type: application/json"             -d "$BODY"             -D /tmp/headers             -o /tmp/audio             -w '%{http_code}'             "$API")"
           cat /tmp/headers
           echo "http_status=$STATUS"
           if [ "$STATUS" != "200" ]; then cat /tmp/audio; exit 1; fi
@@ -66,4 +57,4 @@ jobs:
           grep -qi '^x-sagi-direct-tts: 1' /tmp/headers
           grep -qi '^x-sagi-voice-complete: 1' /tmp/headers
           grep -qi '^x-sagi-voice-provider: Microsoft Edge Neural Direct' /tmp/headers
-          echo "SAGI VOICE PERMANENT STANDALONE PWA LIVE E2E OK"
+          echo "SAGI VOICE PERMANENT WORKERS.DEV PWA LIVE E2E OK"
