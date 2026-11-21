@@ -95,16 +95,8 @@ export class FileMatchStore {
     const state = hydrateMatchState(stateLike);
     // Never append behind a torn JSONL tail; that would create an invalid
     // complete line and make subsequent recovery fail closed.
-    try {
-      const existing = await readFile(this.journalPath, "utf8");
-      if (existing.length && !existing.endsWith("\n")) {
-        this.journalError = "TORN_JOURNAL_REQUIRES_REPAIR";
-        throw new Error("TORN_JOURNAL_REQUIRES_REPAIR");
-      }
-    } catch (error) {
-      if (error.code !== "ENOENT") throw error;
-    }
     const entries = await this._entries();
+    if (this.journalError) throw new Error(this.journalError);
     const lastCommit = [...entries].reverse().find((entry) => entry.kind === "STATE_COMMIT");
     if (lastCommit) {
       if (state.fixtureId !== lastCommit.state.fixtureId) throw new Error("FIXTURE_MISMATCH");
