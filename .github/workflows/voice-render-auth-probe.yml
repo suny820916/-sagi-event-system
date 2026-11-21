@@ -1,0 +1,28 @@
+name: SAGI VOICE Render Credential Probe
+
+on:
+  push:
+    branches: [feature/voice-render-auth-probe]
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Render credential presence only
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+        run: |
+          set -euo pipefail
+          HOOK=0
+          API=0
+          [ -n "${RENDER_DEPLOY_HOOK_URL:-}" ] && HOOK=1
+          [ -n "${RENDER_API_KEY:-}" ] && API=1
+          echo "render_hook_configured=$HOOK"
+          echo "render_api_configured=$API"
+          if [ "$HOOK" = "0" ] && [ "$API" = "0" ]; then
+            echo "render_auth_ready=0"
+          else
+            echo "render_auth_ready=1"
+          fi
