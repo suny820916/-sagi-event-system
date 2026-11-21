@@ -369,3 +369,8 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 ## 2026-11-22 — Director automated verification gate
 - Added `.github/workflows/commercial-director.yml` (2e4f24b) to execute the planner and executor self-tests on Windows and Ubuntu with Node 22 on commercial branch pushes. No runtime dependency or main change.
 - CI execution results not yet observed; this is a test execution gate, not evidence of passing tests or actual graphics/vMix output. Next: inspect matrix results and wire a readback-confirmed vMix output adapter plus durable cue claims.
+
+## 2026-11-22 — Persistent cue claim prototype
+- Added exclusive local file cue claims using hashed validated IDs and fsync before output (9c5bf7a). Executor optionally reserves a cue before any output (9872e15); duplicate claims suppress replay across instances; storage errors block output.
+- Extended matrix-covered executor self-test with concurrent duplicate claims, fresh instance duplicate and storage failure (9c3510f). Runtime results not yet verified.
+- This is at-most-once claim admission, not confirmed delivery. Claims remain after failed or cancelled output; never automatically delete or replay them. Directory metadata durability under sudden power loss, storage loss, bounded retention, fixture-namespaced IDs, unresolved-cue operator reconciliation and global single-director ownership still require validation. Optional claim injection is not yet wired into the production shell. No new dependencies; main unchanged.
