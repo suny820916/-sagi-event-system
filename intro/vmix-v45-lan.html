@@ -1969,17 +1969,17 @@ function showEvent(g){
    scorebugGoalExpand(e,g);
    card.style.borderLeftColor=teamColor;icon.style.background=teamColor;
    card.className='eventCard on goal';icon.textContent='⚽';k.textContent='进球';
-   if(e.player&&e.player.photo)setEventPhoto(e.player.photo)
+   if(e.player&&e.player.photo){setEventPhoto(e.player.photo)}
    {const no=e.player&&e.player.number?('#'+e.player.number+'  '):'';name.textContent=no+(e.player&&e.player.name||e.team||'球员')}
    meta.textContent=(e.team||'')+'  ·  '+(e.at||'')+'  ·  '+(Number(g.homeScore)||0)+' - '+(Number(g.awayScore)||0);
    motionInEvent('GOAL');scheduleEventHide(window.SAGISignatureCore?SAGISignatureCore.holdMs('GOAL',5600):5600);
  } else if(e.type==='YELLOW'||e.type==='RED'){
    const cardColor=e.type==='YELLOW'?'#f2d536':'#e33440';
    card.style.borderLeftColor='';card.style.setProperty('--eventAccent',cardColor);icon.style.background='';icon.style.color='';
-   card.className='eventCard on '+(e.type==='YELLOW'?'yellow':'red');icon.textContent='';icon.dataset.cardType=e.type;icon.setAttribute('aria-label',e.type==='YELLOW'?'黄牌':'红牌');k.textContent=e.type==='YELLOW'?'黄牌 · YELLOW CARD':'红牌 · RED CARD';if(e.player&&e.player.photo)setEventPhoto(e.player.photo){const no=e.player&&e.player.number?('#'+e.player.number+'  '):'';name.textContent=no+(e.player&&e.player.name||e.team||'球员')}meta.textContent=(e.team||'')+'  ·  '+(e.at||'')+'  ·  '+(Number(g.homeScore)||0)+' - '+(Number(g.awayScore)||0);
+   card.className='eventCard on '+(e.type==='YELLOW'?'yellow':'red');icon.textContent='';icon.dataset.cardType=e.type;icon.setAttribute('aria-label',e.type==='YELLOW'?'黄牌':'红牌');k.textContent=e.type==='YELLOW'?'黄牌 · YELLOW CARD':'红牌 · RED CARD';if(e.player&&e.player.photo){setEventPhoto(e.player.photo)}{const no=e.player&&e.player.number?('#'+e.player.number+'  '):'';name.textContent=no+(e.player&&e.player.name||e.team||'球员')}meta.textContent=(e.team||'')+'  ·  '+(e.at||'')+'  ·  '+(Number(g.homeScore)||0)+' - '+(Number(g.awayScore)||0);
    motionInEvent(e.type);scheduleEventHide(window.SAGISignatureCore?SAGISignatureCore.holdMs(e.type,5200):5200);
  } else if(e.type==='SUB'){
-   card.className='eventCard on sub';icon.textContent='↕';k.textContent='换人';name.textContent=e.team||'';meta.textContent=e.at||'';if(e.on&&e.on.photo)setEventPhoto(e.on.photo)rows.innerHTML='<div class="subRowG in"><span class="subArrow">▲</span>#'+esc(e.on&&e.on.number)+' '+esc(e.on&&e.on.name)+'</div><div class="subRowG out"><span class="subArrow">▼</span>#'+esc(e.off&&e.off.number)+' '+esc(e.off&&e.off.name)+'</div>';motionInEvent('SUB');scheduleEventHide(window.SAGISignatureCore?SAGISignatureCore.holdMs('SUB',6500):6500);
+   card.className='eventCard on sub';icon.textContent='↕';k.textContent='换人';name.textContent=e.team||'';meta.textContent=e.at||'';if(e.on&&e.on.photo){setEventPhoto(e.on.photo)}rows.innerHTML='<div class="subRowG in"><span class="subArrow">▲</span>#'+esc(e.on&&e.on.number)+' '+esc(e.on&&e.on.name)+'</div><div class="subRowG out"><span class="subArrow">▼</span>#'+esc(e.off&&e.off.number)+' '+esc(e.off&&e.off.name)+'</div>';motionInEvent('SUB');scheduleEventHide(window.SAGISignatureCore?SAGISignatureCore.holdMs('SUB',6500):6500);
  } else if(e.type==='HALF_TIME'||e.type==='FULL_TIME'){
    splash.classList.add('on');splash.style.setProperty('--stateAccent',validHex(g.accentColor,'#f4f0e8'));q('stateKicker').textContent=e.type==='HALF_TIME'?'半场结束':'全场结束';q('stateTitle').textContent=e.type==='HALF_TIME'?'半场结束':'全场结束';q('stateScore').textContent=(Number(e.homeScore)||0)+'  :  '+(Number(e.awayScore)||0);q('stateTeams').textContent=(e.home||g.home||'主队')+'    ·    '+(e.away||g.away||'客队');motionInSplash(e.type);scheduleEventHide(window.SAGISignatureCore?SAGISignatureCore.holdMs(e.type,e.type==='FULL_TIME'?9000:6500):(e.type==='FULL_TIME'?9000:6500));
  } else if(e.type==='MVP'){
