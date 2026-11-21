@@ -3102,7 +3102,9 @@ async function mdPenaltyStart(){
  if(p.started&&!p.finished){mdSyncDirectorPenaltyToSimple();await publishMatchday(null);note('点球大战正在进行 · 已重新同步直播点球牌');return true}
  if(!p.history.length)p=mdPenaltyNormalize({...p,rounds:Number(q('mdPenRounds')&&q('mdPenRounds').value)||p.rounds,firstSide:(q('mdPenFirst')&&q('mdPenFirst').value)==='AWAY'?'AWAY':'HOME'});
  matchdayState.penaltyShootout=mdPenaltyNormalize({...p,started:true,finished:false,winner:''});matchdayState.period='PEN';matchdayState.clockBase=mdNowSeconds();matchdayState.clockRunning=false;matchdayState.clockStartedAt=0;matchdayState.scoreboardVisible=true;mdPenaltyEvaluateWinner();mdSyncDirectorPenaltyToSimple();mdRenderPenaltyDirector();
- await refreshGraphicsBrowser(false);await sagiDelay(500);const published=await publishMatchday(null);if(published&&published.ok){note('点球大战已开始 · SAGI 点球牌已同步');return true}return false
+ const published=await publishMatchday(null);
+ if(published&&published.ok){await refreshGraphicsBrowser(false);note('点球大战已开始 · SAGI 点球牌已同步');return true}
+ return false
 }
 async function mdPenaltyKick(side,result){return mdPenaltyCommitKick(side,result,'DIRECTOR')}
 async function mdPenaltyUndo(){
