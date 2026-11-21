@@ -1,4 +1,4 @@
-name: SAGI VOICE DIRECT Live E2E
+name: SAGI VOICE Standalone Live E2E
 
 on:
   push:
@@ -7,39 +7,48 @@ on:
       - ".github/workflows/sagi-voice-direct-live.yml"
 
 jobs:
-  direct:
+  standalone:
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
-      - name: Verify Worker-native Edge TTS R3
+      - name: Verify sagisports.cn standalone voice
         run: |
           set -euo pipefail
-          BASE="https://sagi-voice-edge-relay.sg3544225.workers.dev"
+          PAGE="https://sagisports.cn/voice/"
+          API="https://sagi-voice-edge-relay.sg3544225.workers.dev/api/direct-tts"
 
-          PAGE="$(curl --fail --show-error --silent "$BASE/voice")"
-          echo "$PAGE" | grep -q "OVERSEAS DIRECT · EDGE DIRECT · R3"
+          echo "=== wait for standalone page ==="
+          READY=0
+          for i in $(seq 1 36); do
+            HTML="$(curl --fail --show-error --silent --connect-timeout 10 --max-time 20 "$PAGE" || true)"
+            if echo "$HTML" | grep -q "STANDALONE R3.1" && echo "$HTML" | grep -q "不属于 SAGI TOOLS"; then
+              READY=1
+              echo "standalone page live on attempt $i"
+              break
+            fi
+            echo "standalone page not live yet: $i/36"
+            sleep 5
+          done
+          test "$READY" = "1"
 
-          BODY='{"text":"两次遗憾已经够了。第三次——塔城能不能杀进淘汰赛？就看这一场！","mode":"ai_male","speed":1.16,"style":"football_passion","quality":"cinema"}'
-          STATUS="$(curl --show-error --silent \
-            -H "Content-Type: application/json" \
-            -d "$BODY" \
-            -D /tmp/headers \
-            -o /tmp/audio \
-            -w '%{http_code}' \
-            "$BASE/api/direct-tts")"
+          echo "=== CORS preflight ==="
+          curl --fail --show-error --silent -X OPTIONS             -H "Origin: https://sagisports.cn"             -H "Access-Control-Request-Method: POST"             -H "Access-Control-Request-Headers: content-type"             -D /tmp/preflight             -o /dev/null             "$API"
+          cat /tmp/preflight
+          grep -qi '^access-control-allow-origin: https://sagisports.cn' /tmp/preflight
+          grep -qi '^access-control-allow-methods: .*POST' /tmp/preflight
 
+          echo "=== real standalone audio ==="
+          BODY='{"text":"第三次参加阿图什杯，这一次，塔城要冲出小组，创造历史！","mode":"ai_male","speed":1.16,"style":"football_passion","quality":"cinema"}'
+          STATUS="$(curl --show-error --silent             -H "Origin: https://sagisports.cn"             -H "Content-Type: application/json"             -d "$BODY"             -D /tmp/headers             -o /tmp/audio             -w '%{http_code}'             "$API")"
           cat /tmp/headers
           echo "http_status=$STATUS"
-          if [ "$STATUS" != "200" ]; then
-            echo "direct_tts_error_body:"
-            cat /tmp/audio
-            exit 1
-          fi
+          if [ "$STATUS" != "200" ]; then cat /tmp/audio; exit 1; fi
 
           SIZE="$(wc -c < /tmp/audio)"
           echo "audio_bytes=$SIZE"
           test "$SIZE" -gt 5000
-          grep -qi '^X-SAGI-Voice-Complete: 1' /tmp/headers
-          grep -qi '^X-SAGI-Direct-TTS: 1' /tmp/headers
-          grep -qi '^X-SAGI-Voice-Provider: Microsoft Edge Neural Direct' /tmp/headers
-          echo "SAGI VOICE EDGE DIRECT R3 LIVE E2E OK"
+          grep -qi '^access-control-allow-origin: https://sagisports.cn' /tmp/headers
+          grep -qi '^x-sagi-direct-tts: 1' /tmp/headers
+          grep -qi '^x-sagi-voice-complete: 1' /tmp/headers
+          grep -qi '^x-sagi-voice-provider: Microsoft Edge Neural Direct' /tmp/headers
+          echo "SAGI VOICE STANDALONE LIVE E2E OK"
