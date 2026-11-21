@@ -46,3 +46,6 @@ jobs:
 
       - name: Run monotonic match clock self-test
         run: node commercial/core/match-clock-selftest.mjs
+
+      - name: Measure durable checkpoint storage and recovery
+        run: node commercial/tests/storage-checkpoint-benchmark.mjs
