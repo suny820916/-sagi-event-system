@@ -671,8 +671,16 @@ jobs:
           p = pathlib.Path("content-os/sagi-down.html")
           s = p.read_text(encoding="utf-8")
           hub = pathlib.Path("content-os/sagi-hub.html").read_text(encoding="utf-8")
-          for module in ("down","voice","cut","subtitle","image","studio"):
+          for module in ("down","cut","subtitle","image","studio"):
               assert f"module={module}" in hub, module
+          assert "module=voice" not in hub, "VOICE must be separated from SAGI TOOLS"
+          assert 'href="/voice/"' in hub, "standalone SAGI VOICE link missing"
+          voice = pathlib.Path("voice/index.html").read_text(encoding="utf-8")
+          assert "STANDALONE R3.1" in voice
+          assert "不属于 SAGI TOOLS" in voice
+          assert "workers.dev/api/direct-tts" in voice
+          assert "manifest.webmanifest" in voice
+          assert "location.replace('/voice/')" in s, "legacy module=voice must redirect to standalone app"
           manifest = __import__("json").loads(pathlib.Path("content-os/sagi-down-manifest.webmanifest").read_text(encoding="utf-8"))
           assert manifest["start_url"] == "./sagi-hub.html?v=4326", manifest["start_url"]
           m = re.search(r"<script>([\s\S]*?)</script>", s)
@@ -768,22 +776,24 @@ jobs:
           node --check /tmp/sagi-down.js
           node --check content-os/sagi-ffmpeg-worker.js
 
-      - name: VOICE module runtime isolation smoke
+      - name: VOICE standalone runtime isolation smoke
         run: |
           set -e
           CHROME="$(command -v google-chrome || command -v chromium-browser || command -v chromium || true)"
           test -n "$CHROME"
-          python -m http.server 8765 --directory content-os >/tmp/sagi-content-http.log 2>&1 &
+          python -m http.server 8765 --directory . >/tmp/sagi-root-http.log 2>&1 &
           SERVER_PID=$!
           trap 'kill $SERVER_PID || true' EXIT
           sleep 1
-          "$CHROME" --headless=new --no-sandbox --disable-gpu --virtual-time-budget=2500             --dump-dom "http://127.0.0.1:8765/sagi-down.html?module=voice&v=4326" > /tmp/voice-module-dom.html
-          grep -q 'id="sagiVoiceExport"' /tmp/voice-module-dom.html
-          ! grep -q 'id="mobileStudio"' /tmp/voice-module-dom.html
-          ! grep -q '06 · 解说' /tmp/voice-module-dom.html
-          grep -q 'SAGI VOICE PRO' /tmp/voice-module-dom.html
-          grep -q '独立配音工作台 · 不包含视频解说流程' /tmp/voice-module-dom.html
-          echo "VOICE module runtime isolation smoke OK"
+          "$CHROME" --headless=new --no-sandbox --disable-gpu --virtual-time-budget=2500 \
+            --dump-dom "http://127.0.0.1:8765/content-os/sagi-down.html?module=voice&v=4327" > /tmp/voice-standalone-dom.html
+          grep -q 'STANDALONE R3.1' /tmp/voice-standalone-dom.html
+          grep -q '不属于 SAGI TOOLS' /tmp/voice-standalone-dom.html
+          grep -q 'id="generate"' /tmp/voice-standalone-dom.html
+          grep -q 'id="download"' /tmp/voice-standalone-dom.html
+          ! grep -q 'MOBILE STUDIO · 手机再创作' /tmp/voice-standalone-dom.html
+          ! grep -q 'SAGI DOWN' /tmp/voice-standalone-dom.html
+          echo "VOICE standalone runtime isolation smoke OK"
 
       - name: SAGI AI LOCAL V1.3 design frontend smoke
         run: |
