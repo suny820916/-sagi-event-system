@@ -2067,6 +2067,16 @@ function validHex(value,fallback=''){
 function normalizeSide(value){
   return String(value||'').toUpperCase()==='AWAY'?'AWAY':'HOME';
 }
+function safePhoto(value,max=2097152){
+  const s=String(value==null?'':value).trim();
+  if(!s||s.length>Math.max(2048,Number(max)||2097152)) return '';
+  if(/^data:image\/(?:png|jpe?g|webp|gif);base64,/i.test(s)||/^data:image\/svg\+xml(?:;charset=utf-8)?,/i.test(s)){
+    return /[\u0000-\u001f\u007f]/.test(s)?'':s;
+  }
+  if(/^https?:\/\/[^\s<>"']+$/i.test(s)) return s.slice(0,2048);
+  if(/^\/(?!\/)[^\s<>"']+$/i.test(s)) return s.slice(0,2048);
+  return '';
+}
 function normalizePlayer(p){
   if(!p||typeof p!=='object') return null;
   return {
@@ -2074,7 +2084,7 @@ function normalizePlayer(p){
     name:safeText(p.name,80),
     number:safeText(p.number,12),
     position:safeText(p.position||p.role,24),
-    photo:safeText(p.photo,2048)
+    photo:safePhoto(p.photo)
   };
 }
 function normalizeType(value){
@@ -2153,7 +2163,7 @@ function eventKey(event){
   // Revision/command guards still prevent stale rollback; never collapse two real events by metadata guesswork.
   return '';
 }
-const api=Object.freeze({VERSION,TOKENS,EVENT_TYPES,HOLD_MS,safeText,validHex,normalizeSide,normalizeType,normalizeEvent,eventAccent,holdMs,eventKey});
+const api=Object.freeze({VERSION,TOKENS,EVENT_TYPES,HOLD_MS,safeText,safePhoto,validHex,normalizeSide,normalizeType,normalizeEvent,eventAccent,holdMs,eventKey});
 root.SAGISignatureCore=api;
 })(typeof window!=='undefined'?window:globalThis);
 </script>
@@ -6591,6 +6601,16 @@ function validHex(value,fallback=''){
 function normalizeSide(value){
   return String(value||'').toUpperCase()==='AWAY'?'AWAY':'HOME';
 }
+function safePhoto(value,max=2097152){
+  const s=String(value==null?'':value).trim();
+  if(!s||s.length>Math.max(2048,Number(max)||2097152)) return '';
+  if(/^data:image\/(?:png|jpe?g|webp|gif);base64,/i.test(s)||/^data:image\/svg\+xml(?:;charset=utf-8)?,/i.test(s)){
+    return /[\u0000-\u001f\u007f]/.test(s)?'':s;
+  }
+  if(/^https?:\/\/[^\s<>"']+$/i.test(s)) return s.slice(0,2048);
+  if(/^\/(?!\/)[^\s<>"']+$/i.test(s)) return s.slice(0,2048);
+  return '';
+}
 function normalizePlayer(p){
   if(!p||typeof p!=='object') return null;
   return {
@@ -6598,7 +6618,7 @@ function normalizePlayer(p){
     name:safeText(p.name,80),
     number:safeText(p.number,12),
     position:safeText(p.position||p.role,24),
-    photo:safeText(p.photo,2048)
+    photo:safePhoto(p.photo)
   };
 }
 function normalizeType(value){
@@ -6677,7 +6697,7 @@ function eventKey(event){
   // Revision/command guards still prevent stale rollback; never collapse two real events by metadata guesswork.
   return '';
 }
-const api=Object.freeze({VERSION,TOKENS,EVENT_TYPES,HOLD_MS,safeText,validHex,normalizeSide,normalizeType,normalizeEvent,eventAccent,holdMs,eventKey});
+const api=Object.freeze({VERSION,TOKENS,EVENT_TYPES,HOLD_MS,safeText,safePhoto,validHex,normalizeSide,normalizeType,normalizeEvent,eventAccent,holdMs,eventKey});
 root.SAGISignatureCore=api;
 })(typeof window!=='undefined'?window:globalThis);
 </script>
@@ -6942,9 +6962,9 @@ function cleanupEventVisuals(){
  clearTimeout(eventCleanupTimer);eventCleanupTimer=null;
  clearTimeout(replayStingerTimer);const rs=q('replayStinger');if(rs)rs.className='replayStinger';
  clearTimeout(scorebugGoalTimer);scorebugGoalActive=false;const scorebug=q('scoreBug');if(scorebug)scorebug.classList.remove('goalExpand');
- q('graphicsStage').classList.remove('eventActive');const card=q('eventCard'),splash=q('stateSplash');
+ q('graphicsStage').classList.remove('eventActive');const card=q('eventCard'),splash=q('stateSplash'),eventPhoto=q('eventPhoto');
  card.className='eventCard';card.style.borderLeftColor='';q('eventIcon').style.background='';q('eventIcon').removeAttribute('data-card-type');q('eventIcon').removeAttribute('aria-label');
- q('eventPhotoWrap').className='eventPhotoWrap';q('eventPhoto').removeAttribute('src');q('eventIcon').className='eventIcon';q('eventCopy').className='eventCopy';q('subRows').className='subRows';
+ q('eventPhotoWrap').className='eventPhotoWrap';eventPhoto.onload=null;eventPhoto.onerror=null;eventPhoto.removeAttribute('src');q('eventIcon').className='eventIcon';q('eventCopy').className='eventCopy';q('subRows').className='subRows';
  splash.className='stateSplash';q('stateBox').className='stateBox';q('mvpPhoto').className='mvpPhoto';q('stateCopy').className='stateCopy';q('mvpPhoto').removeAttribute('src')
 }
 function hideEvent(animated=false){
@@ -6957,6 +6977,14 @@ function hideEvent(animated=false){
   eventCleanupTimer=setTimeout(()=>{eventCleanupTimer=null;cleanupEventVisuals()},340);return
  }
  cleanupEventVisuals()
+}
+function setEventPhoto(src){
+ const photo=q('eventPhoto'),wrap=q('eventPhotoWrap'),safe=String(src||'');
+ photo.onload=null;photo.onerror=null;
+ if(!safe){wrap.classList.remove('on');photo.removeAttribute('src');return false}
+ photo.onerror=()=>{wrap.classList.remove('on');photo.removeAttribute('src')};
+ photo.onload=()=>{if(photo.getAttribute('src'))wrap.classList.add('on')};
+ photo.src=safe;wrap.classList.add('on');return true
 }
 function scheduleEventHide(ms){clearTimeout(eventTimer);eventTimer=setTimeout(()=>hideEvent(true),Math.max(800,Number(ms)||5000))}
 function motionInEvent(type){
@@ -7095,17 +7123,17 @@ function showEvent(g){
    scorebugGoalExpand(e,g);
    card.style.borderLeftColor=teamColor;icon.style.background=teamColor;
    card.className='eventCard on goal';icon.textContent='⚽';k.textContent='进球';
-   if(e.player&&e.player.photo){photo.src=e.player.photo;photoWrap.classList.add('on')}
+   if(e.player&&e.player.photo){setEventPhoto(e.player.photo)}
    {const no=e.player&&e.player.number?('#'+e.player.number+'  '):'';name.textContent=no+(e.player&&e.player.name||e.team||'球员')}
    meta.textContent=(e.team||'')+'  ·  '+(e.at||'')+'  ·  '+(Number(g.homeScore)||0)+' - '+(Number(g.awayScore)||0);
    motionInEvent('GOAL');scheduleEventHide(window.SAGISignatureCore?SAGISignatureCore.holdMs('GOAL',5600):5600);
  } else if(e.type==='YELLOW'||e.type==='RED'){
    const cardColor=e.type==='YELLOW'?'#f2d536':'#e33440';
    card.style.borderLeftColor='';card.style.setProperty('--eventAccent',cardColor);icon.style.background='';icon.style.color='';
-   card.className='eventCard on '+(e.type==='YELLOW'?'yellow':'red');icon.textContent='';icon.dataset.cardType=e.type;icon.setAttribute('aria-label',e.type==='YELLOW'?'黄牌':'红牌');k.textContent=e.type==='YELLOW'?'黄牌 · YELLOW CARD':'红牌 · RED CARD';if(e.player&&e.player.photo){photo.src=e.player.photo;photoWrap.classList.add('on')}{const no=e.player&&e.player.number?('#'+e.player.number+'  '):'';name.textContent=no+(e.player&&e.player.name||e.team||'球员')}meta.textContent=(e.team||'')+'  ·  '+(e.at||'')+'  ·  '+(Number(g.homeScore)||0)+' - '+(Number(g.awayScore)||0);
+   card.className='eventCard on '+(e.type==='YELLOW'?'yellow':'red');icon.textContent='';icon.dataset.cardType=e.type;icon.setAttribute('aria-label',e.type==='YELLOW'?'黄牌':'红牌');k.textContent=e.type==='YELLOW'?'黄牌 · YELLOW CARD':'红牌 · RED CARD';if(e.player&&e.player.photo){setEventPhoto(e.player.photo)}{const no=e.player&&e.player.number?('#'+e.player.number+'  '):'';name.textContent=no+(e.player&&e.player.name||e.team||'球员')}meta.textContent=(e.team||'')+'  ·  '+(e.at||'')+'  ·  '+(Number(g.homeScore)||0)+' - '+(Number(g.awayScore)||0);
    motionInEvent(e.type);scheduleEventHide(window.SAGISignatureCore?SAGISignatureCore.holdMs(e.type,5200):5200);
  } else if(e.type==='SUB'){
-   card.className='eventCard on sub';icon.textContent='↕';k.textContent='换人';name.textContent=e.team||'';meta.textContent=e.at||'';if(e.on&&e.on.photo){photo.src=e.on.photo;photoWrap.classList.add('on')}rows.innerHTML='<div class="subRowG in"><span class="subArrow">▲</span>#'+esc(e.on&&e.on.number)+' '+esc(e.on&&e.on.name)+'</div><div class="subRowG out"><span class="subArrow">▼</span>#'+esc(e.off&&e.off.number)+' '+esc(e.off&&e.off.name)+'</div>';motionInEvent('SUB');scheduleEventHide(window.SAGISignatureCore?SAGISignatureCore.holdMs('SUB',6500):6500);
+   card.className='eventCard on sub';icon.textContent='↕';k.textContent='换人';name.textContent=e.team||'';meta.textContent=e.at||'';if(e.on&&e.on.photo){setEventPhoto(e.on.photo)}rows.innerHTML='<div class="subRowG in"><span class="subArrow">▲</span>#'+esc(e.on&&e.on.number)+' '+esc(e.on&&e.on.name)+'</div><div class="subRowG out"><span class="subArrow">▼</span>#'+esc(e.off&&e.off.number)+' '+esc(e.off&&e.off.name)+'</div>';motionInEvent('SUB');scheduleEventHide(window.SAGISignatureCore?SAGISignatureCore.holdMs('SUB',6500):6500);
  } else if(e.type==='HALF_TIME'||e.type==='FULL_TIME'){
    splash.classList.add('on');splash.style.setProperty('--stateAccent',validHex(g.accentColor,'#f4f0e8'));q('stateKicker').textContent=e.type==='HALF_TIME'?'半场结束':'全场结束';q('stateTitle').textContent=e.type==='HALF_TIME'?'半场结束':'全场结束';q('stateScore').textContent=(Number(e.homeScore)||0)+'  :  '+(Number(e.awayScore)||0);q('stateTeams').textContent=(e.home||g.home||'主队')+'    ·    '+(e.away||g.away||'客队');motionInSplash(e.type);scheduleEventHide(window.SAGISignatureCore?SAGISignatureCore.holdMs(e.type,e.type==='FULL_TIME'?9000:6500):(e.type==='FULL_TIME'?9000:6500));
  } else if(e.type==='MVP'){
