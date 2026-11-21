@@ -183,7 +183,7 @@ jobs:
           $parseErrors = $null
           [void][System.Management.Automation.Language.Parser]::ParseInput($bridge, [ref]$tokens, [ref]$parseErrors)
           if ($parseErrors.Count -gt 0) { throw ('Embedded bridge PowerShell syntax errors: ' + ($parseErrors | Out-String)) }
-          foreach ($marker in @('SAGI432_SIGNATURE_RC4','SAGISignatureCore')) {
+          foreach ($marker in @('SAGI432_SIGNATURE_RC5','SAGISignatureCore')) {
             if (-not $control.Contains($marker) -or -not $output.Contains($marker)) { throw "Missing shared package marker: $marker" }
           }
           foreach ($marker in @('mdNextEventIdentity','instantReplayGenerate')) {

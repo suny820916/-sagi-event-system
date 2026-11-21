@@ -39,9 +39,9 @@ powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -Command ^
  "[IO.File]::WriteAllText($env:SAGI_FB_CONTROL,$m.Groups[2].Value,$utf);" ^
  "[IO.File]::WriteAllText($env:SAGI_FB_OUTPUT,$m.Groups[3].Value,$utf);" ^
  "Copy-Item $env:SAGI_FB_BRIDGE $env:SAGI_BRIDGE -Force;" ^
- "$controlOk=$false;if(Test-Path $env:SAGI_CONTROL){try{$t=[IO.File]::ReadAllText($env:SAGI_CONTROL,[Text.Encoding]::UTF8);$controlOk=($t.Length -gt 100000 -and $t -match '<!doctype html>' -and $t -match 'SAGI432_SIGNATURE_RC4' -and $t -match 'SAGISignatureCore' -and $t -match 'mdNextEventIdentity' -and $t -match 'LIVE FLOW' -and $t -match 'instantReplayGenerate')}catch{}};" ^
+ "$controlOk=$false;if(Test-Path $env:SAGI_CONTROL){try{$t=[IO.File]::ReadAllText($env:SAGI_CONTROL,[Text.Encoding]::UTF8);$controlOk=($t.Length -gt 100000 -and $t -match '<!doctype html>' -and $t -match 'SAGI432_SIGNATURE_RC5' -and $t -match 'SAGISignatureCore' -and $t -match 'mdNextEventIdentity' -and $t -match 'LIVE FLOW' -and $t -match 'instantReplayGenerate')}catch{}};" ^
  "if(-not $controlOk){Copy-Item $env:SAGI_FB_CONTROL $env:SAGI_CONTROL -Force;Write-Host '[REPAIR] V4.32 SIGNATURE RC Control installed over stale cache.' -ForegroundColor Yellow}else{Write-Host '[SAFE] V4.32 SIGNATURE RC Control cache verified.' -ForegroundColor Green};" ^
- "$outputOk=$false;if(Test-Path $env:SAGI_OUTPUT){try{$t=[IO.File]::ReadAllText($env:SAGI_OUTPUT,[Text.Encoding]::UTF8);$outputOk=($t.Length -gt 50000 -and $t -match '<!doctype html>' -and $t -match 'SAGI432_SIGNATURE_RC4' -and $t -match 'SAGISignatureCore' -and $t -match 'introStateAllowed' -and $t -match 'sagiBrandA' -and $t -match 'lastRenderedSignatureEventKey')}catch{}};" ^
+ "$outputOk=$false;if(Test-Path $env:SAGI_OUTPUT){try{$t=[IO.File]::ReadAllText($env:SAGI_OUTPUT,[Text.Encoding]::UTF8);$outputOk=($t.Length -gt 50000 -and $t -match '<!doctype html>' -and $t -match 'SAGI432_SIGNATURE_RC5' -and $t -match 'SAGISignatureCore' -and $t -match 'introStateAllowed' -and $t -match 'sagiBrandA' -and $t -match 'lastRenderedSignatureEventKey')}catch{}};" ^
  "if(-not $outputOk){Copy-Item $env:SAGI_FB_OUTPUT $env:SAGI_OUTPUT -Force;Write-Host '[REPAIR] V4.32 SIGNATURE RC vMix output installed over stale cache.' -ForegroundColor Yellow}else{Write-Host '[SAFE] V4.32 SIGNATURE RC vMix output cache verified.' -ForegroundColor Green};"
 
 if errorlevel 1 (
@@ -596,7 +596,7 @@ while ($true) {
 <!doctype html>
 <html lang="zh-CN">
 <head>
-<meta name="sagi-build" content="SAGI432_SIGNATURE_RC4">
+<meta name="sagi-build" content="SAGI432_SIGNATURE_RC5">
 <!-- SAGI LIVE MATCH DIRECTOR · SAFE UPDATE COMPATIBILITY MARKER -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -3165,7 +3165,7 @@ async function mdPostMatchdayWithRetry(state){
    if(String(e&&e.message||e).includes('LAN 409')){
     try{
      const recovered=await recoverMatchdayFromBridge(false,{preferNewest:false,allowIdentityTakeover:true});
-     if(recovered){mdPublishMetrics.recovered++;mdPublishMetrics.lastAttempts=i+1;return{ok:true,attempts:i+1,recovered:true}}
+     if(recovered){mdPublishMetrics.recovered++;mdPublishMetrics.lastAttempts=i+1;return{ok:false,attempts:i+1,recovered:true,conflict:true}}
     }catch(_){}
     break
    }
@@ -3199,7 +3199,13 @@ async function publishMatchday(event=null){
  const state=mdCloudSnapshot(event),revision=state.revision;if(state.allowFixtureTakeover)mdFixtureTakeoverOnce=false;matchdayState.lastEvent=event;matchdayState.revision=revision;mdPersist();refreshMatchdayUI();mdPendingPublishes++;
  const send=async()=>{
   try{
-   const r=await mdPostMatchdayWithRetry(state);mdLastAckRevision=Math.max(mdLastAckRevision,revision);
+   const r=await mdPostMatchdayWithRetry(state);
+   if(r&&r.skipped)return{ok:false,revision,attempts:0,skipped:true};
+   if(r&&r.ok===false){
+    if(q('mdSync'))q('mdSync').innerHTML='<span class="mdLiveDot"></span>本次操作未提交 · 已恢复 Bridge 直播真源';
+    return{ok:false,revision,attempts:r.attempts||0,recovered:!!r.recovered,conflict:!!r.conflict}
+   }
+   mdLastAckRevision=Math.max(mdLastAckRevision,revision);
    if(q('mdSync'))q('mdSync').innerHTML='<span class="mdLiveDot on"></span>LAN 状态一致 · R'+mdLastAckRevision+(r.attempts>1?' · 自动重试 '+(r.attempts-1)+' 次':'');
    return{ok:true,revision,attempts:r.attempts}
   }catch(e){
@@ -3310,9 +3316,16 @@ function mdUndoLast(){
  if(e.type==='GOAL'||e.type==='RED'){const idx=(matchdayState.replayMarkers||[]).findIndex(m=>m.type===e.type);if(idx>=0)matchdayState.replayMarkers.splice(idx,1)}
  mdRenderLog();mdRenderMarkers();q('mdEventStatus').textContent='已撤销 · '+mdEventLabel(e);publishMatchday({type:'CLEAR_EVENT'});note('已撤销 '+mdEventLabel(e));
 }
-function mdScore(side,delta){
+async function mdScore(side,delta){
  if(matchdayState.period==='PEN'){note('点球大战中 · 常规比分已锁定，请使用点球按钮');return false}
- if(side==='HOME')matchdayState.homeScore=Math.max(0,matchdayState.homeScore+delta);else matchdayState.awayScore=Math.max(0,matchdayState.awayScore+delta);publishMatchday(null);return true
+ if(side==='HOME')matchdayState.homeScore=Math.max(0,matchdayState.homeScore+delta);else matchdayState.awayScore=Math.max(0,matchdayState.awayScore+delta);
+ const result=await publishMatchday(null);
+ if(!result||!result.ok){
+  if(result&&result.conflict)note('比分未提交 · Bridge 正在使用另一场比赛，已恢复直播真实比分；确认“可以播出”后再操作');
+  else if(!result||!result.skipped)note('比分未确认同步 · 请检查 Bridge / vMix 连接');
+  return false
+ }
+ return true
 }
 function mdEventAutoClear(ms=5400){
  const seq=++mdMacroSeq;clearTimeout(mdMacroTimer);mdMacroTimer=setTimeout(()=>{if(seq!==mdMacroSeq)return;matchdayState.lastEvent=null;publishMatchday({type:'CLEAR_EVENT'})},ms)
@@ -4038,7 +4051,7 @@ function initVmixDirector(){
  vdReadVmixInputs(false);
  setTimeout(async()=>{
   try{
-   vdLoad();const input=String(vmixDirectorSettings.graphics||'').trim(),key='sagi_graphics_loaded_SAGI432_SIGNATURE_RC4';
+   vdLoad();const input=String(vmixDirectorSettings.graphics||'').trim(),key='sagi_graphics_loaded_SAGI432_SIGNATURE_RC5';
    if(input&&localStorage.getItem(key)!==input){
     const ok=await refreshGraphicsBrowser(false);
     if(ok){localStorage.setItem(key,input);q('vdStatus').textContent='LIVEFLOW 07 已强制刷新 vMix 图形 · Input '+input}
@@ -5096,7 +5109,7 @@ if(standalone){
 ###SAGI_OUTPUT###
 <!doctype html>
 <html lang="zh-CN"><head>
-<meta name="sagi-build" content="SAGI432_SIGNATURE_RC4">
+<meta name="sagi-build" content="SAGI432_SIGNATURE_RC5">
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SAGI V4.31.0 · STAGE 广播系统 · vMix</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%2307090d%22/%3E%3Ctext x=%2232%22 y=%2243%22 text-anchor=%22middle%22 font-size=%2234%22 fill=%22%23d8b55b%22%3ES%3C/text%3E%3C/svg%3E">
