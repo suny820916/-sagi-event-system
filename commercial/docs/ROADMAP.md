@@ -432,3 +432,9 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Revalidate the paired token after asynchronous request body parsing and before dispatching a command (f885e619). A revoked or expired session cannot submit a command through a slow outstanding upload.
 - Added deterministic revocation regression (e3bbb873), asserting HTTP 401 and unchanged accepted-command count. Runtime/CI not verified for this revision. No runtime dependencies; commercial branch only.
 - Admission does not cancel a command already handed to the canonical engine. TLS, device scopes, real engine integration, mobile UI and physical LAN acceptance remain open.
+
+## 2026-11-22 — Chinese local mobile score console prototype
+- Added same-origin /mobile and /mobile.js assets with pairing, authoritative score readback, HOME/AWAY goal commands, revision checking and same-ID manual retry (44962f7, c330852).
+- Added HTTP asset/CSP/origin and script syntax assertions to LAN command CI (ca19416).
+- No external assets or runtime dependencies. Tokens and pending commands are memory-only; browser reload can lose an unresolved command ID, session expiry during ambiguity requires operator intervention, and no automatic polling or full event UI exists yet. Do not expose plaintext pairing on untrusted networks. Not a production phone console.
+- CI execution and physical phone acceptance unverified for this revision. Next: durable client intent reconciliation, session re-pair flow, browser interaction tests, clock/cards/substitution/penalties and protected transport.
