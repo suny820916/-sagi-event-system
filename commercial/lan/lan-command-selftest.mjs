@@ -57,7 +57,7 @@ try {
   // Execute the served browser script with simulated DOM/storage and transport.
   const saved = new Map();
   let sent = [], fail = true, score = 0, offline = false, expired = false, reads = 0;
-  let poll;
+  let poll, pageShow;
   function boot() {
     const elements = new Map();
     const document = { getElementById(id) {
@@ -83,7 +83,7 @@ try {
       }
       return { ok: true, json: async () => data };
     };
-    new Function('document','sessionStorage','fetch','window','crypto', source)(document,storage,transport,{addEventListener(){},setInterval(fn){poll=fn;}},globalThis.crypto);
+    new Function('document','sessionStorage','fetch','window','crypto', source)(document,storage,transport,{addEventListener(name,fn){if(name === 'pageshow') pageShow=fn;},setInterval(fn){poll=fn;}},globalThis.crypto);
     return id => document.getElementById(id);
   }
   let phone = boot();
@@ -97,6 +97,12 @@ try {
   await phone('pair').onclick();
   assert.equal(phone('retry').disabled, false);
   fail = false;
+  pageShow();
+  assert.equal(phone('retry').disabled, true);
+  await phone('retry').onclick();
+  assert.equal(sent.length, 1, 'stale retry must not dispatch');
+  await phone('refresh').onclick();
+  assert.equal(phone('retry').disabled, false);
   await phone('retry').onclick();
   assert.equal(sent.length, 2);
   assert.deepEqual(sent[0], sent[1]);
@@ -110,6 +116,11 @@ try {
   assert.equal(phone('home').disabled, true);
   assert.equal(phone('score').textContent, '— : —');
   offline = false; await tick();
+  assert.equal(phone('home').disabled, false);
+  score = -1; await tick();
+  assert.equal(phone('home').disabled, true);
+  assert.equal(phone('score').textContent, '— : —');
+  score = 2; await tick();
   assert.equal(phone('home').disabled, false);
   expired = true; await tick();
   assert.equal(phone('home').disabled, true);
