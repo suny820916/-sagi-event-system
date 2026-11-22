@@ -51,3 +51,26 @@ try {
   assert.equal(outputs,1);
 } finally { await rm(dir,{recursive:true,force:true}); }
 console.log('persistent cue claim self-test PASS');
+
+import { DirectorOwnership } from './director-ownership.mjs';
+const lockDir = await mkdtemp(join(tmpdir(),'sagi-owner-'));
+try {
+  const path = join(lockDir,'output.lock');
+  let entered, resume;
+  const started = new Promise(r=>{entered=r;});
+  const hold = new Promise(r=>{resume=r;});
+  const make = (wait=async()=>{}, showGraphic=async()=>true) => new PresentationExecutor({
+    ownership:new DirectorOwnership(path), showGraphic, returnProgram:async()=>true, wait
+  });
+  const first = make(async()=>{entered();await hold;});
+  const running = first.play(req('owner-001','GOAL'));
+  await started;
+  const second = make();
+  assert.equal((await second.play(req('owner-002','GOAL'))).status,'busy');
+  resume();
+  assert.equal((await running).status,'completed');
+  assert.equal((await second.play(req('owner-002','GOAL'))).status,'completed');
+  assert.equal((await make(undefined,async()=>false).play(req('owner-003','GOAL'))).status,'uncertain');
+  assert.equal((await make().play(req('owner-004','GOAL'))).status,'busy');
+} finally { await rm(lockDir,{recursive:true,force:true}); }
+console.log('director ownership self-test PASS');
