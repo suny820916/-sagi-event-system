@@ -18,15 +18,22 @@ try {
  const req=cueId=>({cueId,type:'GOAL',programInput:'CAM1'});
  await assert.rejects(createLocalDirector({dataRoot:'relative'}),/ABSOLUTE_DATA_ROOT_REQUIRED/);
  const a=await make(),b=await make();
+ assert.deepEqual(await a.diagnostics(),{active:null,blocked:false,ownership:'absent',manualReviewRequired:false});
  const running=a.play(req('local-001'));
  await started;
+ assert.equal((await a.diagnostics()).ownership,'present');
+ assert.equal((await b.diagnostics()).manualReviewRequired,true);
  try {assert.equal((await b.play(req('local-002'))).status,'busy');} finally {resume();}
  assert.equal((await running).status,'completed');
  assert.equal((await (await make()).play(req('local-001'))).status,'duplicate');
  assert.equal(cuts,2);
+ assert.equal((await a.diagnostics()).ownership,'absent');
  fail=true;
  assert.equal((await b.play(req('local-002'))).status,'uncertain');
  assert.equal((await (await make()).play(req('local-003'))).status,'busy');
  assert.equal(cuts,3);
+ const fresh=await make();
+ assert.deepEqual(await fresh.diagnostics(),{active:null,blocked:false,ownership:'present',manualReviewRequired:true});
+ assert.equal((await b.diagnostics()).blocked,true);
 } finally {await rm(root,{recursive:true,force:true});}
 console.log('Local director durable composition PASS');
