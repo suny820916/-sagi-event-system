@@ -51,8 +51,8 @@ for(const token of [
  "$t -match 'mdPenaltyCompatView'",
  "$t -match 'mdSimplePenaltyKick'",
  "$t -match 'gfxPenaltyView'",
- "$controlText -notmatch \\"SAGI433_PENALTY_SSOT_RC1\\"",
- "$outputText -notmatch \\"SAGI433_PENALTY_SSOT_RC1\\""
+ '$controlText -notmatch "SAGI433_PENALTY_SSOT_RC1"',
+ '$outputText -notmatch "SAGI433_PENALTY_SSOT_RC1"'
 ]) assert(pkg.includes(token),'V4.33 installer does not enforce current-version cache/remote fingerprint: '+token);
 assert(!pkg.includes("$t -match 'SAGI432_SIGNATURE_RC3'"),'V4.33 installer still accepts V4.32 control/output cache as current');
 
