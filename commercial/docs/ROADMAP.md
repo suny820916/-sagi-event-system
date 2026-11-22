@@ -412,3 +412,8 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Successful completion releases ownership; cancellation or ambiguous output retains the latch across restart. No automatic age/PID reclamation. Busy admission does not consume the event ID.
 - Recovery is currently manual: stop all director processes, reconcile actual vMix output and outstanding effects, then remove the latch before restarting. Never remove a live owner's latch. Existing in-memory recovery acknowledgement does not remove the file.
 - Not production enforced: all cooperating instances must use the same protected local path per vMix endpoint; no production shell wiring, directory fsync/power-loss certification, cross-host exclusion or trusted operator recovery UI. Tests added to existing matrix-covered self-test, execution not yet verified. No new runtime dependencies; commercial branch only.
+
+## 2026-11-22 — Guarded local director composition
+- Added createLocalDirector factory combining vMix readback binding, local ownership latch and durable cue claims without optional bypass in the factory (2c8f157).
+- Added simulated adapter integration regression for two instances, duplicate after re-creation and uncertain-output latch (5b5c1e2); wired to Windows/Linux matrix (6968672).
+- Runtime/CI results not yet verified. This is a composition entry point, not a deployed desktop shell. Trusted shell must select one protected local data root per endpoint; no cross-host exclusion or automatic recovery. Actual graphics and hardware acceptance remain open. No new runtime dependencies; commercial branch only.
