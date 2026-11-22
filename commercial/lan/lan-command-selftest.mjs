@@ -89,6 +89,23 @@ try {
   assert.equal((await state.json()).state.revision, 1);
   g.pairing.revoke(token);
   assert.equal((await post({ ...goal, commandId: 'goal_00000003', expectedRevision: 1 }, token)).status, 401);
+  // Deterministically simulate revocation between initial authentication and
+  // command admission without relying on socket timing.
+  const nextCode = g.pairing.issue({ localOperatorApproved: true }).code;
+  const nextToken = g.pairing.redeem(nextCode).token;
+  const originalVerify = g.pairing.verify.bind(g.pairing);
+  let checks = 0;
+  g.pairing.verify = candidate => {
+    const valid = originalVerify(candidate);
+    if (++checks === 1) g.pairing.revoke(candidate);
+    return valid;
+  };
+  try {
+    assert.equal((await post({ ...goal, commandId: 'goal_00000004', expectedRevision: 1 }, nextToken)).status, 401);
+    assert.equal(accepted.length, 1, 'revoked session must not dispatch a command');
+  } finally {
+    g.pairing.verify = originalVerify;
+  }
   console.log('lan-command-selftest PASS');
 } finally {
   await new Promise(resolve => g.server.close(resolve));
