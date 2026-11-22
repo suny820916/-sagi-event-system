@@ -1,4 +1,5 @@
 import http from 'node:http';
+import { mobileHtml, mobileJs } from './mobile-console.mjs';
 import { isIP } from 'node:net';
 import { LanPairing } from './lan-pairing.mjs';
 
@@ -85,6 +86,15 @@ export function createLanGateway({
     }
     if (req.method === 'POST' && !/^application\/json(?:\s*;|\s*$)/i.test(String(req.headers['content-type'] || '')))
       return reply(res, 415, { error: 'JSON_REQUIRED' });
+    if (req.method === 'GET' && (path === '/mobile' || path === '/mobile.js')) {
+      res.writeHead(200, {
+        'content-type': path === '/mobile' ? 'text/html; charset=utf-8' : 'text/javascript; charset=utf-8',
+        'cache-control': 'no-store',
+        'x-content-type-options': 'nosniff',
+        'content-security-policy': "default-src 'none'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
+      });
+      return res.end(path === '/mobile' ? mobileHtml : mobileJs);
+    }
     if (path === '/api/v1/lan/health' && req.method === 'GET')
       return reply(res, 200, { ok: true });
     if (path === '/api/v1/lan/issue' && req.method === 'POST') {
