@@ -7,11 +7,13 @@ export class PresentationExecutor {
   #active = null;
   #seen = new Set();
   #blocked = false;
-  constructor({ showGraphic, returnProgram, wait = delay, maxCues = 4096, cueClaims = null } = {}) {
+  constructor({ showGraphic, returnProgram, wait = delay, maxCues = 4096, cueClaims = null, ownership = null } = {}) {
     if (![showGraphic, returnProgram, wait].every(fn => typeof fn === 'function')) throw new Error('ADAPTER_REQUIRED');
     if (!Number.isSafeInteger(maxCues) || maxCues < 1) throw new Error('INVALID_CAPACITY');
     this.showGraphic = showGraphic; this.returnProgram = returnProgram;
     if (cueClaims !== null && typeof cueClaims.claim !== 'function') throw Error('INVALID_CUE_CLAIMS');
+    if (ownership !== null && typeof ownership.acquire !== 'function') throw Error('INVALID_OWNERSHIP');
+    this.ownership = ownership;
     this.wait = wait; this.maxCues = maxCues; this.cueClaims = cueClaims;
   }
   get status() { return { active: this.#active?.id ?? null, blocked: this.#blocked }; }
@@ -30,7 +32,13 @@ export class PresentationExecutor {
     const controller = new AbortController();
     const signal = controller.signal;
     this.#active = { id:plan.cueId, controller };
+    let release = null;
     try {
+      if (this.ownership) {
+        release = await this.ownership.acquire();
+        if (!release) return { status:'busy' };
+      }
+      signal.throwIfAborted();
       if (this.cueClaims && !(await this.cueClaims.claim(plan.cueId))) return { status:'duplicate' };
       this.#seen.add(plan.cueId);
       let expectedActive = plan.steps.at(-1).input;
@@ -51,6 +59,10 @@ export class PresentationExecutor {
       // Manual takeover must never be overwritten by an automatic return.
       this.#blocked = true;
       return { status:signal.aborted ? 'cancelled' : 'uncertain', manualRecoveryRequired:true };
-    } finally { this.#active = null; }
+    } finally {
+      try { if (release && !this.#blocked) await release(); }
+      catch (error) { this.#blocked = true; throw error; }
+      finally { this.#active = null; }
+    }
   }
 }
