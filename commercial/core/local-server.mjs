@@ -69,7 +69,7 @@ export async function createLocalServer({dataDir,meta,host="127.0.0.1",port=0,to
         const result=applyCommand(before,command);
         if(!result.duplicate){
           const type=String(command.type).trim().toUpperCase();
-          const explicitClock=type==="SET_CLOCK" || result.state.clock.running!==before.clock.running || ["SET_PERIOD","HALF_TIME","FULL_TIME","START_PENALTIES","PENALTY_ATTEMPT","FINISH_PENALTIES"].includes(type);
+          const explicitClock=type==="SET_CLOCK" || type==="SET_CLOCK_RUNNING" || result.state.clock.running!==before.clock.running || ["SET_PERIOD","HALF_TIME","FULL_TIME","START_PENALTIES","PENALTY_ATTEMPT","FINISH_PENALTIES"].includes(type);
           delete result.state.clockRecoveryPending;
           if(before.clockRecoveryPending && !explicitClock)result.state.clock.running=true;
           await store.commit(result.state,result.event);
