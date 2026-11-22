@@ -8,11 +8,18 @@ export function createPresentationOutput({ cut, readActiveKey, graphics, program
   const map=new Map(names.map(name=>[name,graphics?.[name]]));
   const programs=new Set(programKeys);
   if (![...map.values(),...programs].every(valid) || !programs.size || [...map.values()].some(k=>programs.has(k)) || new Set(map.values()).size!==map.size) throw Error('INVALID_INPUT_MAPPING');
-  async function switchTo(key,{signal}={}) {
+  async function switchTo(key,{signal,expectedActive}={}) {
     signal?.throwIfAborted();
     const deadline=now()+timeoutMs;
     // Transport must honor the signal and its own bounded request timeout.
-    if (await cut(key,{signal})!==true) return false;
+    const previous = map.get(expectedActive) ?? expectedActive;
+    if (previous !== undefined) {
+      if (!programs.has(previous) && ![...map.values()].includes(previous)) throw Error('PREVIOUS_INPUT_NOT_ALLOWED');
+      if (await readActiveKey({signal}) !== previous) return false;
+    }
+    signal?.throwIfAborted();
+    if(now()>=deadline) return false;
+    if (await cut(key,{signal,expectedActive:previous})!==true) return false;
     for(let i=0;i<=Math.ceil(timeoutMs/pollMs);i++) {
       signal?.throwIfAborted();
       if(now()>=deadline) return false;
