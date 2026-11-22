@@ -54,6 +54,49 @@ try {
   const source = await script.text();
   assert.doesNotThrow(() => new Function(source));
   assert.match(source, /expectedRevision:state.revision/);
+  // Execute the served browser script with simulated DOM/storage and transport.
+  const saved = new Map();
+  let sent = [], fail = true, score = 0;
+  function boot() {
+    const elements = new Map();
+    const document = { getElementById(id) {
+      if (!elements.has(id)) elements.set(id, { value: '', disabled: false });
+      return elements.get(id);
+    }};
+    const storage = { getItem: k => saved.get(k) ?? null, setItem: (k,v) => saved.set(k,v), removeItem: k => saved.delete(k) };
+    const transport = async (url, opts) => {
+      let data;
+      if (url.endsWith('/redeem')) data = { token: 'test-token' };
+      else if (url.endsWith('/state')) data = { state: { fixtureId: 'test-match', revision: score, homeScore: score, awayScore: 0 } };
+      else {
+        const command = JSON.parse(opts.body);
+        if (!sent.some(c => c.commandId === command.commandId)) score++;
+        sent.push(command);
+        if (fail) throw new Error('lost response');
+        data = { result: {} };
+      }
+      return { ok: true, json: async () => data };
+    };
+    new Function('document','sessionStorage','fetch','window','crypto', source)(document,storage,transport,{addEventListener(){}},globalThis.crypto);
+    return id => document.getElementById(id);
+  }
+  let phone = boot();
+  await phone('pair').onclick();
+  phone('home').onclick();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(score, 1);
+  assert.equal(saved.size, 1);
+  phone = boot();
+  assert.equal(phone('home').disabled, true);
+  await phone('pair').onclick();
+  assert.equal(phone('retry').disabled, false);
+  fail = false;
+  await phone('retry').onclick();
+  assert.equal(sent.length, 2);
+  assert.deepEqual(sent[0], sent[1]);
+  assert.equal(score, 1);
+  assert.equal(saved.size, 0);
+  assert.equal(phone('score').textContent, '1 : 0');
   assert.equal((await fetch(base + '/mobile', { headers: { origin: 'http://evil.example' } })).status, 403);
   const code = g.pairing.issue({ localOperatorApproved: true }).code;
   const redeem = await fetch(base + '/api/v1/lan/redeem', {
