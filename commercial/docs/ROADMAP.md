@@ -391,3 +391,9 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Executor carries the expected previous program/graphic to each transition (628417d); output checks readback before switching (aac7871); vMix binding checks again immediately before Cut (0f0d7f2).
 - Added simulated manual camera takeover during intro and goal holds; subsequent automatic cuts must stop and require manual recovery. Runtime/CI not verified in this run.
 - This is observed-state protection, not atomic ownership: a manual cut between final read and command, or away-and-back during a hold, can evade detection. Actual vMix testing, operator cancellation and production shell integration remain required. No new dependencies; main untouched.
+
+## 2026-11-22 — Director mapping identity guard
+- Capture immutable graphic/program mapping at binding time and reject non-array program keys and duplicate input identities (b3a81ff).
+- Add regression for caller configuration mutation and invalid program key type (8f9c858).
+- Previous head c85d937 returned no PR-triggered workflow runs; this does not establish push CI status. New tests not executed in this run. No new dependencies; only commercial branch written.
+- Remaining gates: actual resource migration, Windows/vMix acceptance, continuous manual ownership and production shell. Prioritize executable integration and CI evidence.
