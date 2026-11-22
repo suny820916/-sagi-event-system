@@ -62,3 +62,17 @@ for(const [side,result,reason] of [['INVALID','GOAL','INVALID_SIDE'],['HOME','IN
  assert(!rejected.accepted&&rejected.reason===reason&&JSON.stringify(rejected.state)===JSON.stringify(before),'invalid command mutated state: '+reason);
 }
 console.log('invalid command rejection PASS');
+
+ // Restore only the last valid chronological prefix; never fabricate a goal.
+ const good={kickId:'h',side:'HOME',result:'MISS'};
+ const away={kickId:'a',side:'AWAY',result:'GOAL'};
+ for(const bad of [{kickId:'bad',side:'INVALID',result:'GOAL'},{kickId:'bad',side:'AWAY',result:'INVALID'},{kickId:'bad',side:'HOME',result:'GOAL'},null,{...good,result:'GOAL'}]){
+  const q=p.snapshot({firstSide:'HOME',history:[good,bad,away]});
+  assert(q.history.length===1&&q.homeGoals===0&&q.awayGoals===0,'corrupt restore fabricated or reordered a kick');
+ }
+ const legacy=p.snapshot({firstSide:'AWAY',history:[{side:'AWAY',result:'MISS'},{side:'HOME',result:'GOAL'}]});
+ assert(legacy.history.length===2&&legacy.homeGoals===1,'legacy away-first restore failed');
+ const postWin=p.snapshot({rounds:3,history:[{side:'HOME',result:'GOAL'},{side:'AWAY',result:'MISS'},{side:'HOME',result:'GOAL'},{side:'AWAY',result:'MISS'},{side:'HOME',result:'GOAL'},{side:'AWAY',result:'GOAL'}]});
+ assert(postWin.finished&&postWin.history.length===4,'post-win history accepted');
+ assert(p.snapshot(null).history.length===0,'null restore failed');
+ console.log('corrupt history restore PASS');

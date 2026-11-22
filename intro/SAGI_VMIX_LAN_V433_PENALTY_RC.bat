@@ -2175,19 +2175,28 @@ const RESULTS=Object.freeze(['GOAL','MISS']);
 function safeSide(v){return String(v||'').toUpperCase()==='AWAY'?'AWAY':'HOME'}
 function safeResult(v){return String(v||'').toUpperCase()==='MISS'?'MISS':'GOAL'}
 function safeId(v,max=128){return String(v==null?'':v).replace(/[\u0000-\u001f\u007f]/g,' ').trim().slice(0,max)}
-function normalizeHistory(raw){
- const seen=new Set(),out=[];
+function normalizeHistory(raw,firstSide='HOME',rounds=5){
+ const seen=new Map(),out=[];
+ firstSide=safeSide(firstSide);
  for(const x of Array.isArray(raw)?raw:[]){
-  if(!x||typeof x!=='object')continue;
-  const kickId=safeId(x.kickId);
-  if(kickId&&seen.has(kickId))continue;
-  if(kickId)seen.add(kickId);
-  out.push({kickId,side:safeSide(x.side),result:safeResult(x.result),at:safeId(x.at,32)});
+  if(!x||typeof x!=='object')break;
+  const kickId=safeId(x.kickId),side=String(x.side||'').toUpperCase(),result=String(x.result||'').toUpperCase();
+  if(!['HOME','AWAY'].includes(side)||!RESULTS.includes(result))break;
+  if(kickId&&seen.has(kickId)){
+   const prior=seen.get(kickId);
+   if(prior.side!==side||prior.result!==result)break;
+   continue;
+  }
+  const expected=out.length%2===0?firstSide:firstSide==='HOME'?'AWAY':'HOME';
+  if(side!==expected||evaluateBase({history:out,rounds}).finished)break;
+  const entry={kickId,side,result,at:safeId(x.at,32)};
+  if(kickId)seen.set(kickId,entry);
+  out.push(entry);
  }
  return out;
 }
 function stats(state){
- const h=normalizeHistory(state&&state.history);
+ const h=normalizeState(state||{}).history;
  const home=h.filter(x=>x.side==='HOME'),away=h.filter(x=>x.side==='AWAY');
  return {homeAttempts:home.length,awayAttempts:away.length,homeGoals:home.filter(x=>x.result==='GOAL').length,awayGoals:away.filter(x=>x.result==='GOAL').length};
 }
@@ -2204,7 +2213,7 @@ function suddenDeath(state){
  return Math.min(st.homeAttempts,st.awayAttempts)>=s.rounds||Math.max(st.homeAttempts,st.awayAttempts)>s.rounds;
 }
 function evaluate(state){
- const s={...normalizeState(state),history:normalizeHistory(state&&state.history)};
+ const s=normalizeState(state||{});
  const st=stats(s),r=s.rounds;let winner='';
  if(st.homeAttempts<=r&&st.awayAttempts<=r){
   const remH=Math.max(0,r-st.homeAttempts),remA=Math.max(0,r-st.awayAttempts);
@@ -2217,8 +2226,9 @@ function evaluate(state){
  return {...s,winner,finished:!!winner};
 }
 function normalizeState(raw={}){
+ raw=raw&&typeof raw==='object'?raw:{};
  const rounds=[3,5].includes(Number(raw.rounds))?Number(raw.rounds):5;
- const base={started:!!raw.started,rounds,firstSide:safeSide(raw.firstSide),history:normalizeHistory(raw.history),winner:'',finished:false};
+ const base={started:!!raw.started,rounds,firstSide:safeSide(raw.firstSide),history:normalizeHistory(raw.history,raw.firstSide,rounds),winner:'',finished:false};
  const ev=evaluateBase(base);
  return {...base,winner:ev.winner,finished:ev.finished};
 }
