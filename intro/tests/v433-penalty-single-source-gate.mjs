@@ -46,4 +46,14 @@ const pkgOutput=pkgLines.slice(po+1).join('\n').trim().replace(/\r/g,'');
 assert(pkgControl===control.trim().replace(/\r/g,''),'V4.33 packaged control drift');
 assert(pkgOutput===output.trim().replace(/\r/g,''),'V4.33 packaged output drift');
 for(const token of ['SAGI433_PENALTY_SSOT_RC1','SAGI_MATCH_PROJECTS_V2','activeProjectId','window.sagiProjectSyncDiagnostic']) assert(pkg.includes(token),'V4.33 package lost unified-project foundation: '+token);
+for(const token of [
+ "$t -match 'SAGI433_PENALTY_SSOT_RC1'",
+ "$t -match 'mdPenaltyCompatView'",
+ "$t -match 'mdSimplePenaltyKick'",
+ "$t -match 'gfxPenaltyView'",
+ "$controlText -notmatch \\"SAGI433_PENALTY_SSOT_RC1\\"",
+ "$outputText -notmatch \\"SAGI433_PENALTY_SSOT_RC1\\""
+]) assert(pkg.includes(token),'V4.33 installer does not enforce current-version cache/remote fingerprint: '+token);
+assert(!pkg.includes("$t -match 'SAGI432_SIGNATURE_RC3'"),'V4.33 installer still accepts V4.32 control/output cache as current');
+
 console.log('SAGI V4.33 PACKAGE PARITY + PROJECT SSOT GATE PASS');
