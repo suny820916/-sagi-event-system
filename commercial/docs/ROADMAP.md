@@ -449,3 +449,8 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Poll authoritative match state every two seconds while paired and idle; never automatically replay mutations. Hide stale score and disable goals on read failure; resume reads after reconnect, require re-pair after HTTP 401. Guard goals against snapshots older than five seconds (d2224d5).
 - Extend mocked browser regression to cover external score changes, offline/reconnect, expired session and no mutation replay (fb81caa).
 - Runtime and CI execution not verified in this run. Background browser timer throttling, physical Safari, encrypted transport, clock/cards/substitution/penalty UI and production Windows integration remain release gates. No new runtime dependencies; commercial branch only.
+
+## 2026-11-23 — Mobile stale retry and score validation
+- Require fresh authoritative state for manual retries as well as new goals; invalidate freshness on pageshow and reject negative/noninteger scores or revisions (6975498). Extend served-script regression (5a59268).
+- Executed fetched committed browser script with mocked DOM, storage, transport and timeout signal: PASS for lost response, pageshow stale retry refusal, same-ID retry deduplication and negative score rejection. Full Node LAN suite and Windows/Linux CI not verified this run; actual Safari lifecycle and timeout behavior not certified.
+- No runtime dependencies; commercial branch only. Next: locate canonical clock/event schema and add typed mobile controls without weakening fixture/revision/intent checks. Physical LAN, protected transport and cross-tab coordination remain open.
