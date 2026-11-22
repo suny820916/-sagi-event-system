@@ -58,6 +58,7 @@ try {
   const saved = new Map();
   let sent = [], fail = true, score = 0, offline = false, expired = false, reads = 0;
   let poll, pageShow, running = false, period = 'PRE';
+  const penalties = {started:false,finished:false,home:0,away:0};
   function boot() {
     const elements = new Map();
     const document = { getElementById(id) {
@@ -72,11 +73,11 @@ try {
         reads++;
         if (offline) throw new Error('offline');
         if (expired) return {ok:false,status:401,json:async()=>({error:'expired'})};
-        data = { state: { fixtureId: 'test-match', revision: score, homeScore: score, awayScore: 0, period, clock: { running, elapsedSeconds: 17 } } };
+        data = { state: { fixtureId: 'test-match', revision: score, homeScore: score, awayScore: 0, period, penalties, clock: { running, elapsedSeconds: 17 } } };
       }
       else {
         const command = JSON.parse(opts.body);
-        if (!sent.some(c => c.commandId === command.commandId)) { if (command.type === 'SET_CLOCK_RUNNING') running = command.running; else score++; }
+        if (!sent.some(c => c.commandId === command.commandId)) { if (command.type === 'SET_CLOCK_RUNNING') running = command.running; else if (command.type === 'PENALTY_ATTEMPT') { if (command.outcome === 'SCORED') penalties[command.side === 'HOME' ? 'home' : 'away']++; } else score++; }
         sent.push(command);
         if (fail) throw new Error('lost response');
         data = { result: {} };
@@ -177,6 +178,19 @@ try {
   await new Promise(resolve => setImmediate(resolve));
   assert.equal(running,false);
   assert.equal(sent[7].running,false);
+  assert.equal(phone('homePenScore').disabled,true);
+  const regularScore = score;
+  period = 'PEN'; penalties.started = true; await tick();
+  assert.equal(phone('homePenScore').disabled,false);
+  fail = true; phone('homePenScore').onclick(); await new Promise(resolve => setImmediate(resolve));
+  assert.equal(penalties.home,1); assert.equal(saved.size,1);
+  phone = boot(); await phone('pair').onclick(); fail = false; await phone('retry').onclick();
+  assert.deepEqual(sent[8],sent[9]); assert.equal(penalties.home,1);
+  phone('awayPenMiss').onclick(); await new Promise(resolve => setImmediate(resolve));
+  assert.equal(sent[10].outcome,'MISSED'); assert.equal(penalties.away,0);
+  assert.equal(score,regularScore); assert.equal(phone('penScore').textContent,'点球 1 : 0');
+  penalties.finished = true; period = 'FT'; await tick();
+  assert.equal(phone('homePenScore').disabled,true);
   assert.equal((await fetch(base + '/mobile', { headers: { origin: 'http://evil.example' } })).status, 403);
   const code = g.pairing.issue({ localOperatorApproved: true }).code;
   const redeem = await fetch(base + '/api/v1/lan/redeem', {
