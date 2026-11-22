@@ -278,7 +278,7 @@ export function applyCommand(currentState, command) {
     if (state.period !== "PEN" || !state.penalties.started || state.penalties.finished) throw new Error("INVALID_PENALTY_LIFECYCLE");
     const attemptId = requiredString(command.attemptId, "attemptId");
     const attempt = state.penalties.history.at(-1);
-    if (!attempt || attempt.attemptId !== attemptId) throw new Error("PENALTY_ATTEMPT_CONFLICT");
+    if (!attempt || attempt.attemptId !== attemptId) throw new Error("INVALID_PENALTY_ATTEMPT_TARGET");
     if (!SIDES.has(attempt.side) || !["SCORED", "MISSED"].includes(attempt.outcome)) throw new Error("INVALID_PENALTY_HISTORY");
     const key = attempt.side === "HOME" ? "home" : "away";
     if (attempt.outcome === "SCORED") {
