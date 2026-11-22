@@ -63,6 +63,7 @@ export async function createLocalServer({dataDir,meta,host="127.0.0.1",port=0,to
       try{command=await readJson(req)}catch(error){return send(res,400,{error:error.message})}
       const work=queue.then(async()=>{
         if(store.journalError)return{status:503,body:{error:"JOURNAL_RESTART_REQUIRED"}};
+        if(command.fixtureId!==undefined&&command.fixtureId!==state.fixtureId)return{status:409,body:{error:"FIXTURE_MISMATCH",revision:state.revision}};
         if(command.expectedRevision!==undefined&&command.expectedRevision!==state.revision&&!state.processedCommandIds.includes(String(command.commandId)))return{status:409,body:{error:"REVISION_CONFLICT",revision:state.revision}};
         const before=liveState();
         const result=applyCommand(before,command);
