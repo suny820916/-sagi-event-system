@@ -6,7 +6,6 @@ const xml=`<?xml version="1.0" encoding="utf-8"?>
 <inputs>
 <input key="cam-1" number="1" type="Capture" state="Running">主机位 &amp; 全景</input>
 <input key="cam-2" number="2" type="Capture" state="Running">客机位</input>
-<input key="cam-2" number="3" type="Capture">重复</input>
 <input key="invalid" number="oops">坏输入</input>
 </inputs></vmix>`;
 const parsed=parseVMixStatus(xml);
@@ -25,3 +24,9 @@ assert.equal(disconnected.code,"VMIX_DISCONNECTED");
 const malformed=await readVMixStatus({health:async()=>({ok:true,body:"bad"})});
 assert.equal(malformed.code,"VMIX_INVALID_XML");
 console.log("SAGI VMIX STATUS SELFTEST PASS");
+
+const duplicate=xml.replace('</inputs>','<input key="cam-2" number="3">重复</input></inputs>');
+assert.throws(()=>parseVMixStatus(duplicate),/AMBIGUOUS_INPUT_KEYS/);
+assert.equal((await readVMixStatus({health:async()=>({ok:true,body:duplicate})})).code,"VMIX_INVALID_XML");
+const many='<vmix><inputs>'+Array.from({length:501},(_,i)=>'<input key="k'+i+'" number="'+(i+1)+'"/>').join('')+'</inputs></vmix>';
+assert.throws(()=>parseVMixStatus(many),/VMIX_INPUT_LIMIT/);
