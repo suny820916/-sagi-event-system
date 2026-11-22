@@ -29,10 +29,11 @@ export function parseVMixStatus(xml) {
   for(const m of block.matchAll(/<input\b([^>]*?)(?:\/>|>([\s\S]*?)<\/input>)/gi)){
     const attrs=attributes(m[1]);
     const key=String(attrs.key??"").trim(),number=Number(attrs.number);
-    if(!key||!Number.isInteger(number)||number<1||seen.has(key)) continue;
+    if(!key||!Number.isSafeInteger(number)||number<1) continue;
+    if(seen.has(key)) throw new Error("AMBIGUOUS_INPUT_KEYS");
     seen.add(key);
     inputs.push({key,number,title:decodeXml((m[2]??"").replace(/<[^>]*>/g,"").trim()).slice(0,256),type:String(attrs.type??""),state:String(attrs.state??"")});
-    if(inputs.length>=500) break;
+    if(inputs.length>500) throw new Error("VMIX_INPUT_LIMIT");
   }
   const active=Number(textOf(xml,"active"));
   const preview=Number(textOf(xml,"preview"));
