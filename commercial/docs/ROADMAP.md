@@ -401,3 +401,8 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 ## 2026-11-22 — Shared director transition deadline
 - Bound preflight, Cut transport and readback to a shared abort deadline (55705e3), with a maximum configured transition timeout of 30 seconds. Added stalled preflight regression requiring zero Cut calls (5c60908).
 - This depends on the transport honoring AbortSignal; an already transmitted Cut may still take effect. Do not automatically retry ambiguous output. Runtime/CI verification pending; actual vMix and asset migration remain open. No new runtime dependencies; commercial branch only.
+
+## 2026-11-22 — Reject ambiguous vMix discovery
+- Reject duplicate valid input keys rather than silently deduplicating; reject inventories above 500 valid inputs rather than truncating. Commit 2668c5e.
+- Director regression requires refusal before Cut (1cbc704); core status fixture now expects refusal and tests oversized inventories (c00e5ea).
+- Runtime/CI verification pending. Invalid entries are still filtered, and global cross-instance director ownership is unresolved. No new dependencies; commercial branch only. Actual Windows/vMix and graphics integration remain release gates.
