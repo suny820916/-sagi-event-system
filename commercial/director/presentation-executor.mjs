@@ -33,14 +33,18 @@ export class PresentationExecutor {
     try {
       if (this.cueClaims && !(await this.cueClaims.claim(plan.cueId))) return { status:'duplicate' };
       this.#seen.add(plan.cueId);
+      let expectedActive = plan.steps.at(-1).input;
       for (const step of plan.steps) {
         signal.throwIfAborted();
         const confirmed = step.action === 'SHOW_GRAPHIC'
-          ? await this.showGraphic(step.graphic, { cueId:plan.cueId, signal })
-          : await this.returnProgram(step.input, { cueId:plan.cueId, signal });
+          ? await this.showGraphic(step.graphic, { cueId:plan.cueId, signal, expectedActive })
+          : await this.returnProgram(step.input, { cueId:plan.cueId, signal, expectedActive });
         signal.throwIfAborted();
         if (confirmed !== true) throw new Error('OUTPUT_NOT_CONFIRMED');
-        if (step.action === 'SHOW_GRAPHIC') await this.wait(step.durationMs, undefined, { signal });
+        if (step.action === 'SHOW_GRAPHIC') {
+          expectedActive = step.graphic;
+          await this.wait(step.durationMs, undefined, { signal });
+        }
       }
       return { status:'completed' };
     } catch (error) {
