@@ -19,8 +19,9 @@ function clearPending() {
   pending = null;
 }
 function matchesFixture() { return !!state && !!pending && state.fixtureId === pending.fixtureId; }
+let lastSync = 0;
 function controls() {
-  el('home').disabled = el('away').disabled = !storageReady || !token || !state || busy || !!pending;
+  el('home').disabled = el('away').disabled = !storageReady || !token || !state || Date.now() - lastSync > 5000 || busy || !!pending;
   el('retry').disabled = !storageReady || !token || !matchesFixture() || busy;
   el('pair').disabled = busy;
   el('refresh').disabled = busy;
@@ -40,13 +41,14 @@ async function sync() {
   const data = await api('state');
   state = data.state;
   if (!Number.isSafeInteger(state?.revision) || typeof state.fixtureId !== 'string' || !state.fixtureId) { state = null; throw new Error('INVALID_STATE'); }
+  lastSync = Date.now();
   el('score').textContent = state.homeScore + ' : ' + state.awayScore;
 }
 async function run(action) {
   if (busy) return;
   busy = true; controls();
   try { await action(); }
-  catch (e) { state = null; el('status').textContent = pending ? '结果待确认：请重试原指令，不要重复加分' : '连接或授权失败，请同步或重新配对'; }
+  catch (e) { state = null; if (e.status === 401) token = ''; el('score').textContent = '— : —'; el('status').textContent = pending ? '结果待确认：请重试原指令，不要重复加分' : '连接或授权失败，请同步或重新配对'; }
   finally { busy = false; controls(); }
 }
 el('pair').onclick = () => run(async () => {
@@ -69,7 +71,7 @@ async function send() {
   clearPending(); await sync(); el('status').textContent = '已确认';
 }
 function goal(side) {
-  if (!storageReady || !state || pending || busy) return;
+  if (!storageReady || !token || !state || Date.now() - lastSync > 5000 || pending || busy) return;
   const bytes = new Uint8Array(16); crypto.getRandomValues(bytes);
   pending = {commandId:Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join(''), expectedRevision:state.revision,fixtureId:state.fixtureId,type:'GOAL',side};
   try { sessionStorage.setItem(pendingKey, JSON.stringify(pending)); }
@@ -82,4 +84,12 @@ el('retry').onclick = () => run(send);
 window.addEventListener('beforeunload', e => { if(pending){e.preventDefault();e.returnValue='';} });
 if (!storageReady) el('status').textContent = '无法恢复本地指令，已禁止加分';
 else if (pending) el('status').textContent = '存在待确认指令，请重新配对';
-controls();`;
+controls();
+// Poll only when idle; never replay a mutation automatically.
+window.setInterval(() => {
+  if (!token || busy) return;
+  run(async () => {
+    await sync();
+    el('status').textContent = pending ? (matchesFixture() ? '结果待确认，请重试原指令' : '比赛不一致，请联系导播核对') : '已连接 · 自动同步';
+  });
+}, 2000);`;
