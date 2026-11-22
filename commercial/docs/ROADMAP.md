@@ -485,3 +485,8 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Render authoritative HOME/AWAY attempt history as numbered scored/missed circles with no five-round truncation (f538b36). Hide inconsistent history rather than inventing dots; clear history on failed reads.
 - Extend served-script regression for deduplicated attempts, seventh round, inconsistent history and reconnect (34746fc). Execution and CI not verified this run. No new dependencies; commercial branch only.
 - Undo, explicit start/finish operator UI, desktop/vMix graphics, real Safari and end-to-end verification remain open. The display alone does not enforce turn order or certify shootout rules.
+
+## 2026-11-23 — Targeted penalty undo core
+- Add UNDO_PENALTY_ATTEMPT for an explicitly identified latest active shootout attempt only; append compensating event without deleting audit history, adjust only shootout score, reject stale target and finished shootout. Same command ID remains deduplicated after hydration (bcd37c9, 43bc815).
+- Add isolated regression (f6c0010) and Windows/Linux CI workflow (a01eb1d). Executed isolated fetched core with JavaScript evaluator: PASS for missed/scored undo, wrong target, serialized hydration duplicate, unchanged regular score, audit history and finished guard. Final error-code rename is source-only verified. Node workflow execution and actual durable restart/HTTP integration not yet verified.
+- Undo is not exposed through LAN allowlist or operator UI yet. Next: integrate target-aware UI, HTTP restart regression and vMix state readback; ensure downstream consumers handle compensating events rather than replaying prior attempts. No new runtime dependencies; commercial branch only.
