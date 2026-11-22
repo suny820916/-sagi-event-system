@@ -311,6 +311,8 @@ server.listen(PORT,'127.0.0.1',async()=>{
   await page.selectOption('#projectSelect',storedProject.id);
   await page.click('#projectLoadBtn');
   await page.waitForFunction(()=>document.querySelector('#projectLoadBtn')?.textContent==='读取项目'&&document.querySelector('#projectName')?.value==='SELFTEST STORED MATCH',null,{timeout:8000});
+  assert(graphics.home==='乌苏叶克备'&&graphics.away==='IPF'&&Number(graphics.homeScore)===3&&Number(graphics.awayScore)===1,'loaded fixture was not committed to Bridge before project selection');
+  assert(projectStore.activeProjectId===storedProject.id,'loaded project selection not persisted to Bridge');
   await page.click('#setupValidateBtn');await wait(350);
   const loadedProject=await page.evaluate(()=>({
     competition:document.querySelector('#matchCompetition').value,

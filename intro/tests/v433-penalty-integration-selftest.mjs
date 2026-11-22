@@ -62,3 +62,8 @@ assert(!control.includes('length:Math.min(5,slots)'),'director dots capped');
 assert(!output.includes('attempts.slice(-5)'),'output dots truncated');
 assert(!output.includes('length:Math.min(12,total)'),'output dots capped');
 assert(control.includes('<title>SAGI V4.33 RC'),'wrong RC title');
+
+const loadProjectFn=control.slice(control.indexOf('async function loadMatchProjectById('),control.indexOf('async function loadMatchProject(){'));
+assert(loadProjectFn.includes('await mdPublishChain'),'project switch does not drain previous fixture writes');
+assert(loadProjectFn.indexOf('await publishMatchday(null)')>0&&loadProjectFn.indexOf('await publishMatchday(null)')<loadProjectFn.indexOf('await persistMatchProjectsBridge(getMatchProjects(),id)'),'project selection advertised before live fixture commit');
+assert(control.includes('persistMatchProjectsBridge(merged,remoteActive)'),'legacy project migration drops active selection');

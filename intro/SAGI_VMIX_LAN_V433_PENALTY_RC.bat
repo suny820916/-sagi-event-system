@@ -2645,7 +2645,7 @@ async function syncMatchProjectsFromBridge(opts={}){
   if(activeMatchProjectId&&!merged.some(p=>String(p.id)===String(activeMatchProjectId))){activeMatchProjectId='';activeMatchProjectSavedAt=0}
   const remoteProject=remoteActive?merged.find(p=>String(p.id)===remoteActive):null;
   refreshProjectList(remoteActive||activeMatchProjectId);
-  if(remoteRead&&remoteSchema!=='SAGI_MATCH_PROJECTS_V2'&&remoteAuthoritative)await persistMatchProjectsBridge(merged,'');
+  if(remoteRead&&remoteSchema!=='SAGI_MATCH_PROJECTS_V2'&&remoteAuthoritative)await persistMatchProjectsBridge(merged,remoteActive);
   else if(!remoteAuthoritative&&merged.length)await persistMatchProjectsBridge(merged,'');
   const needsActiveReload=!!(remoteProject&&(remoteActive!==activeMatchProjectId||Number(remoteProject.savedAt||0)>Number(activeMatchProjectSavedAt||0)));
   if(opts.applyActive!==false&&needsActiveReload){
@@ -2734,7 +2734,7 @@ async function loadMatchProjectById(id,opts={}){
  projectLoadBusy=true;const btn=q('projectLoadBtn');if(btn){btn.disabled=true;btn.textContent='读取中…'}
  try{
   const p=await resolveMatchProject(id);if(!p)throw new Error('比赛项目不存在或已删除');
-  if(!opts.remoteSync)mdAuthorizeFixtureTakeover();
+  if(!opts.remoteSync){await mdPublishChain;mdAuthorizeFixtureTakeover();}
    let stats=null;
   if(p.core)stats=await applyPortableMatchProject(p);
   else{if(p.show)localStorage.setItem('sagi_show_director_v40',p.show);await restoreProjectAssets(p.assets);await load()}
@@ -2748,7 +2748,13 @@ async function loadMatchProjectById(id,opts={}){
    }
   if(p.vmix){localStorage.setItem('sagi_vmix_director_v42',p.vmix);vdLoad()}
   q('projectName').value=p.name;activeMatchProjectId=id;activeMatchProjectSavedAt=Number(p.savedAt)||Date.now();if(q('projectSelect'))q('projectSelect').value=id;matchReady=false;setupReadySignature='';const check=validateMatchSetup(true);refreshSetupReadyUI();refreshUXDashboard();syncMatchStage();refreshMatchdayUI();
-  if(opts.publishSelection!==false){const safe=await persistMatchProjectsBridge(getMatchProjects(),id).catch(()=>false);if(!safe)note('当前比赛项目 Bridge 同步失败 · 本机仍可继续')}
+  if(opts.publishSelection!==false){
+    // Commit the selected fixture before advertising it to other controllers.
+    const committed=await publishMatchday(null);
+    if(!committed||!committed.ok)throw new Error('当前比赛状态未提交 Bridge，请重新读取项目');
+    const safe=await persistMatchProjectsBridge(getMatchProjects(),id).catch(()=>false);
+    if(!safe)throw new Error('当前比赛项目 Bridge 保存失败，请重新读取项目');
+   }
   note((opts.remoteSync?'已跟随另一控制端 · ':'比赛项目已读取 · ')+p.name+(stats?' · HOME '+stats.home+'人/'+stats.homeStarters+'首发 · AWAY '+stats.away+'人/'+stats.awayStarters+'首发':'')+(check.ok?' · 可进行赛前确认':' · 请检查阵容'));
   return true
  }catch(e){recoveryStatus('比赛项目读取失败 · '+(e&&e.message||'未知错误'),true);if(!opts.remoteSync)note('比赛项目读取失败 · '+(e&&e.message||'未知错误'));return false}
