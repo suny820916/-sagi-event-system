@@ -34,3 +34,13 @@ const recovery=new PresentationExecutor({...output,wait:async()=>{active=1;}});
 assert.equal((await recovery.play({type:'GOAL',cueId:'goal-00002',programInput:'CAM1'})).status,'uncertain');
 assert.deepEqual(calls,['G0','G1','G2','G3','CAM1','G0','G4']);
 console.log('vMix presentation binding self-test PASS');
+
+// Configuration is captured at binding time, not read from mutable caller arrays.
+active=1;
+const mutableGraphics={...graphics}, mutablePrograms=['CAM1'];
+const frozen=bindVMixPresentation({adapter,graphics:mutableGraphics,programKeys:mutablePrograms});
+mutableGraphics.competition='MISSING'; mutablePrograms[0]='MISSING';
+assert.equal(await frozen.showGraphic('competition',{expectedActive:'CAM1'}),true);
+assert.equal(await frozen.returnProgram('CAM1',{expectedActive:'competition'}),true);
+assert.throws(()=>bindVMixPresentation({adapter,graphics,programKeys:'CAM1'}),/INVALID_PROGRAM_KEYS/);
+console.log('vMix mapping snapshot regression PASS');
