@@ -238,7 +238,7 @@ server.listen(PORT,'127.0.0.1',async()=>{
   const pk=await page.evaluate(({HOME,AWAY})=>{const board=document.querySelector('#simplePenaltyBoard'),bug=document.querySelector('#scoreBug'),hn=document.querySelector('#spbHomeName'),an=document.querySelector('#spbAwayName');return{home:hn.textContent,away:an.textContent,phase:document.querySelector('#spbPhase').textContent,homeDots:document.querySelectorAll('#spbHomeDots .spbDot').length,awayDots:document.querySelectorAll('#spbAwayDots .spbDot').length,misses:document.querySelectorAll('.spbDot.miss').length,boardOn:board.classList.contains('on'),scorebugOn:bug.classList.contains('on'),homeScore:document.querySelector('#spbHomeScore').textContent,awayScore:document.querySelector('#spbAwayScore').textContent}}, {HOME,AWAY});
   assert(pk.boardOn&&!pk.scorebugOn,'PK board not isolated');
   assert(pk.home===HOME&&pk.away===AWAY,'PK names changed');
-  assert(pk.phase.includes('突然死亡')&&pk.homeDots===5&&pk.awayDots===5&&pk.misses>=1,'PK >5 round/miss display failed');
+  assert(pk.phase.includes('突然死亡')&&pk.homeDots===6&&pk.awayDots===6&&pk.misses===3,'PK >5 round/miss display failed');
   assert(pk.homeScore==='4'&&pk.awayScore==='5','PK scores unsynchronized');
   await page.screenshot({path:'selftest-artifacts/05-penalty-round6.png'});
 
