@@ -480,3 +480,8 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Core now refuses attempts and finish outside an explicitly started, unfinished PEN period; repeated start under a new ID and reopening after FT are refused. Existing duplicate IDs are resolved before lifecycle validation (796ef3a).
 - Added LAN/engine restart regression for invalid attempts, explicit start, scored/missed attempts, finish, post-restart duplicate and unchanged regular score (b9a3ce6).
 - Executed isolated proposed core code with JavaScript evaluator: PASS for lifecycle negatives, scored/missed, duplicate after finish and independent scores. Full HTTP integration and CI not executed this run. Check compatibility with existing core test fixtures and operator workflows that previously started penalties after FT; explicit start must precede final FT. General SET_PERIOD/FULL_TIME transitions, turn rules, undo, penalty dots and actual vMix graphics remain open. No new dependencies; commercial branch only.
+
+## 2026-11-23 — Mobile penalty history display
+- Render authoritative HOME/AWAY attempt history as numbered scored/missed circles with no five-round truncation (f538b36). Hide inconsistent history rather than inventing dots; clear history on failed reads.
+- Extend served-script regression for deduplicated attempts, seventh round, inconsistent history and reconnect (34746fc). Execution and CI not verified this run. No new dependencies; commercial branch only.
+- Undo, explicit start/finish operator UI, desktop/vMix graphics, real Safari and end-to-end verification remain open. The display alone does not enforce turn order or certify shootout rules.
