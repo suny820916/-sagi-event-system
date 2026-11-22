@@ -65,7 +65,15 @@ if(isV433){
 }else{
  assert(embeddedControl===control.trim().replace(/\r/g,''),'BAT control payload drift');
 }
-assert(embeddedOutput===output.trim().replace(/\r/g,''),'BAT output payload drift');
+if(isV433){
+ assert(embeddedOutput.includes(build),'frozen V4.32 rollback output fingerprint missing');
+ assert(!embeddedOutput.includes('SAGI433_PENALTY_RC1'),'V4.32 rollback output contaminated by V4.33');
+ const candidate=fs.readFileSync(new URL('../SAGI_VMIX_LAN_V433_PENALTY_RC.bat',import.meta.url),'utf8');
+ const candidateOutput=candidate.split(/\r?\n###SAGI_OUTPUT###\r?\n/)[1];
+ assert(candidateOutput&&candidateOutput.trim().replace(/\r/g,'')===output.trim().replace(/\r/g,''),'V4.33 BAT output payload drift');
+}else{
+ assert(embeddedOutput===output.trim().replace(/\r/g,''),'BAT output payload drift');
+}
 assert(bat.includes(build),'BAT build fingerprint missing');
 assert(bat.includes('"BrowserReload"'),'BAT BrowserReload allowlist missing');
 assert(bat.includes('"ReplayPlayLastEventToOutput"'),'BAT replay latest-only allowlist missing');
