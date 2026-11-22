@@ -226,6 +226,10 @@ export function applyCommand(currentState, command) {
     if (!PERIODS.has(period)) throw new Error("INVALID_PERIOD");
     state.period = period;
     if (["PRE", "HT", "ET_BREAK", "PEN", "FT"].includes(period)) state.clock.running = false;
+  } else if (type === "SET_CLOCK_RUNNING") {
+    if (typeof command.running !== "boolean" || "elapsedSeconds" in command) throw new Error("INVALID_CLOCK");
+    if (command.running && !["1H", "2H", "ET1", "ET2"].includes(state.period)) throw new Error("INVALID_CLOCK_PERIOD");
+    state.clock.running = command.running;
   } else if (type === "SET_CLOCK") {
     if (typeof command.running !== "boolean" || !Number.isSafeInteger(command.elapsedSeconds) || command.elapsedSeconds < 0) throw new Error("INVALID_CLOCK");
     state.clock = {
