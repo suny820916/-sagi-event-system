@@ -444,3 +444,8 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Authoritative engine checks optional fixtureId inside serialized command queue before duplicate/revision processing (f544d86); backward compatibility retained for older clients. Require unique fixture IDs in production. Added wrong-fixture/restart integration regression (a1729d8), and served-script simulated lost-response/reload/retry regression (5d65e57).
 - Executed a separate mocked DOM/storage/transport evaluation of the fetched committed browser script: PASS, one goal despite two identical requests across reload. Full Node LAN/core matrix and real Safari/Windows not verified this run.
 - Limits: sessionStorage covers same-tab reload, not tab closure/storage clearing/origin changes. No trusted manual reconciliation UI for mismatched fixtures, no cross-tab intent coordination, no automatic polling. Plain HTTP remains experimental. No new runtime dependencies; commercial branch only.
+
+## 2026-11-22 — Mobile automatic read-only resync
+- Poll authoritative match state every two seconds while paired and idle; never automatically replay mutations. Hide stale score and disable goals on read failure; resume reads after reconnect, require re-pair after HTTP 401. Guard goals against snapshots older than five seconds (d2224d5).
+- Extend mocked browser regression to cover external score changes, offline/reconnect, expired session and no mutation replay (fb81caa).
+- Runtime and CI execution not verified in this run. Background browser timer throttling, physical Safari, encrypted transport, clock/cards/substitution/penalty UI and production Windows integration remain release gates. No new runtime dependencies; commercial branch only.
