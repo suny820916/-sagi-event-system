@@ -7,8 +7,9 @@ import { createEngineLanGateway } from './engine-lan-bridge.mjs';
 
 const dir = await mkdtemp(path.join(os.tmpdir(), 'sagi-lan-engine-'));
 let engine, gateway, base, token;
+let now = 0;
 async function start() {
-  engine = await createLocalServer({ dataDir: dir, meta: { fixtureId: 'lan-test', home: '主队', away: '客队' } });
+  engine = await createLocalServer({ dataDir: dir, clockNow: () => now, checkpointIntervalMs: 0, meta: { fixtureId: 'lan-test', home: '主队', away: '客队' } });
   gateway = createEngineLanGateway(engine);
   const { port } = await gateway.listen();
   base = 'http://127.0.0.1:' + port;
@@ -51,6 +52,18 @@ try {
   assert.equal(state.revision, 1);
   assert.equal((await request('command', { commandId: 'card_00000001', expectedRevision: 1, type: 'RED', side: 'AWAY' })).status, 200);
   assert.equal((await (await request('state')).json()).state.awayRedCards, 1);
+  const clockCommand = (commandId, expectedRevision, running) => request('command', { commandId, expectedRevision, fixtureId: 'lan-test', type: 'SET_CLOCK_RUNNING', running });
+  assert.equal((await clockCommand('clock_invalid01', 2, true)).status, 400);
+  assert.equal((await request('command', { commandId: 'period_0000001', expectedRevision: 2, type: 'SET_PERIOD', period: '1H' })).status, 200);
+  assert.equal((await clockCommand('clock_start001', 3, true)).status, 200);
+  now += 17000;
+  assert.equal((await clockCommand('clock_pause001', 4, false)).status, 200);
+  now += 9000;
+  assert.equal((await clockCommand('clock_pause001', 4, false)).status, 200);
+  assert.deepEqual((await (await request('state')).json()).state.clock, { running: false, elapsedSeconds: 17 });
+  await stop();
+  await start();
+  assert.deepEqual((await (await request('state')).json()).state.clock, { running: false, elapsedSeconds: 17 });
   await engine.close(); engine = null;
   assert.equal((await request('state')).status, 503);
   console.log('LAN ENGINE INTEGRATION PASS');
