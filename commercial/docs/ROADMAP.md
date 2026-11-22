@@ -454,3 +454,9 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Require fresh authoritative state for manual retries as well as new goals; invalidate freshness on pageshow and reject negative/noninteger scores or revisions (6975498). Extend served-script regression (5a59268).
 - Executed fetched committed browser script with mocked DOM, storage, transport and timeout signal: PASS for lost response, pageshow stale retry refusal, same-ID retry deduplication and negative score rejection. Full Node LAN suite and Windows/Linux CI not verified this run; actual Safari lifecycle and timeout behavior not certified.
 - No runtime dependencies; commercial branch only. Next: locate canonical clock/event schema and add typed mobile controls without weakening fixture/revision/intent checks. Physical LAN, protected transport and cross-tab coordination remain open.
+
+## 2026-11-23 — Typed mobile cards and substitution
+- Located canonical command definitions in commercial/core/match-core.mjs; mobile UI now submits YELLOW, RED and SUB using canonical side and player/off/on number fields (259faae). Existing GOAL intent compatibility preserved.
+- Require numeric player numbers and distinct substitution numbers; keep fixture, revision, same-ID retry and sessionStorage protection for these actions. Added served-script regression (95f9f5c).
+- Executed isolated proposed browser script with mocked DOM/storage/transport: PASS for missing number refusal, lost red-card response, reload/same-ID deduplication and substitution payload. Full Node CI and physical Safari/Windows/vMix not executed this run.
+- Limits: numbers only, not roster-backed player identity; no actual graphic confirmation. Clock SET_CLOCK uses absolute elapsedSeconds and needs a separate atomic current-clock control to avoid rewinding during network delay. Penalty lifecycle, desktop integration and secure LAN remain open. No new runtime dependencies; commercial branch only.
