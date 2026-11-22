@@ -56,7 +56,8 @@ try {
   assert.match(source, /expectedRevision:state.revision/);
   // Execute the served browser script with simulated DOM/storage and transport.
   const saved = new Map();
-  let sent = [], fail = true, score = 0;
+  let sent = [], fail = true, score = 0, offline = false, expired = false, reads = 0;
+  let poll;
   function boot() {
     const elements = new Map();
     const document = { getElementById(id) {
@@ -67,7 +68,12 @@ try {
     const transport = async (url, opts) => {
       let data;
       if (url.endsWith('/redeem')) data = { token: 'test-token' };
-      else if (url.endsWith('/state')) data = { state: { fixtureId: 'test-match', revision: score, homeScore: score, awayScore: 0 } };
+      else if (url.endsWith('/state')) {
+        reads++;
+        if (offline) throw new Error('offline');
+        if (expired) return {ok:false,status:401,json:async()=>({error:'expired'})};
+        data = { state: { fixtureId: 'test-match', revision: score, homeScore: score, awayScore: 0 } };
+      }
       else {
         const command = JSON.parse(opts.body);
         if (!sent.some(c => c.commandId === command.commandId)) score++;
@@ -77,7 +83,7 @@ try {
       }
       return { ok: true, json: async () => data };
     };
-    new Function('document','sessionStorage','fetch','window','crypto', source)(document,storage,transport,{addEventListener(){}},globalThis.crypto);
+    new Function('document','sessionStorage','fetch','window','crypto', source)(document,storage,transport,{addEventListener(){},setInterval(fn){poll=fn;}},globalThis.crypto);
     return id => document.getElementById(id);
   }
   let phone = boot();
@@ -97,6 +103,18 @@ try {
   assert.equal(score, 1);
   assert.equal(saved.size, 0);
   assert.equal(phone('score').textContent, '1 : 0');
+  const tick = async () => { poll(); await new Promise(resolve => setImmediate(resolve)); };
+  score = 2; await tick();
+  assert.equal(phone('score').textContent, '2 : 0');
+  offline = true; await tick();
+  assert.equal(phone('home').disabled, true);
+  assert.equal(phone('score').textContent, '— : —');
+  offline = false; await tick();
+  assert.equal(phone('home').disabled, false);
+  expired = true; await tick();
+  assert.equal(phone('home').disabled, true);
+  const before = reads; await tick(); assert.equal(reads,before);
+  assert.equal(sent.length,2, 'polling must not replay mutations');
   assert.equal((await fetch(base + '/mobile', { headers: { origin: 'http://evil.example' } })).status, 403);
   const code = g.pairing.issue({ localOperatorApproved: true }).code;
   const redeem = await fetch(base + '/api/v1/lan/redeem', {
