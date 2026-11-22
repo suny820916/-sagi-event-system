@@ -45,6 +45,16 @@ const post = (body, token) => fetch(base + '/api/v1/lan/command', {
   body: JSON.stringify(body),
 });
 try {
+  const page = await fetch(base + '/mobile');
+  assert.equal(page.status, 200);
+  assert.match(page.headers.get('content-security-policy'), /script-src 'self'/);
+  assert.match(await page.text(), /主队进球/);
+  const script = await fetch(base + '/mobile.js');
+  assert.equal(script.status, 200);
+  const source = await script.text();
+  assert.doesNotThrow(() => new Function(source));
+  assert.match(source, /expectedRevision:state.revision/);
+  assert.equal((await fetch(base + '/mobile', { headers: { origin: 'http://evil.example' } })).status, 403);
   const code = g.pairing.issue({ localOperatorApproved: true }).code;
   const redeem = await fetch(base + '/api/v1/lan/redeem', {
     method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code }),
