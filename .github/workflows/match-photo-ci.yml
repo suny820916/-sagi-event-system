@@ -16,7 +16,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
-          cache-dependency-path: match-photo/package-lock.json
       - run: npm install
       - run: npm test
+      - run: node --check server.js
+      - run: node --check public/app.js
