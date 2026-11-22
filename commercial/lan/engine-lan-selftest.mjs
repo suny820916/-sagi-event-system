@@ -29,6 +29,10 @@ const request = (route, command) => fetch(base + '/api/v1/lan/' + route, {
 try {
   await start();
   const goal = { commandId: 'goal_00000001', expectedRevision: 0, type: 'GOAL', side: 'HOME' };
+  const wrongFixture = await request('command', { ...goal, fixtureId: 'another-match' });
+  assert.equal(wrongFixture.status, 409);
+  assert.equal((await (await request('state')).json()).state.homeScore, 0);
+  goal.fixtureId = 'lan-test';
   const results = await Promise.all([request('command', goal), request('command', goal)]);
   assert.deepEqual(results.map(r => r.status), [200, 200]);
   assert.deepEqual((await Promise.all(results.map(r => r.json()))).map(r => r.result.duplicate).sort(), [false, true]);
@@ -38,6 +42,7 @@ try {
   assert.equal((await request('command', { ...goal, commandId: 'goal_00000003', expectedRevision: 1, side: 'LEFT' })).status, 400);
   await stop();
   await start();
+  assert.equal((await request('command', { ...goal, fixtureId: 'another-match' })).status, 409);
   const duplicate = await request('command', goal);
   assert.equal(duplicate.status, 200);
   assert.equal((await duplicate.json()).result.duplicate, true);
