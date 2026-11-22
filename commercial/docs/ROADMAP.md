@@ -406,3 +406,9 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Reject duplicate valid input keys rather than silently deduplicating; reject inventories above 500 valid inputs rather than truncating. Commit 2668c5e.
 - Director regression requires refusal before Cut (1cbc704); core status fixture now expects refusal and tests oversized inventories (c00e5ea).
 - Runtime/CI verification pending. Invalid entries are still filtered, and global cross-instance director ownership is unresolved. No new dependencies; commercial branch only. Actual Windows/vMix and graphics integration remain release gates.
+
+## 2026-11-22 — Shared director ownership prototype
+- Added exclusive local filesystem ownership latch (42f01e8), optional executor admission guard (b58ecf4), and competing-instance/uncertain-output regression (c9b9a99).
+- Successful completion releases ownership; cancellation or ambiguous output retains the latch across restart. No automatic age/PID reclamation. Busy admission does not consume the event ID.
+- Recovery is currently manual: stop all director processes, reconcile actual vMix output and outstanding effects, then remove the latch before restarting. Never remove a live owner's latch. Existing in-memory recovery acknowledgement does not remove the file.
+- Not production enforced: all cooperating instances must use the same protected local path per vMix endpoint; no production shell wiring, directory fsync/power-loss certification, cross-host exclusion or trusted operator recovery UI. Tests added to existing matrix-covered self-test, execution not yet verified. No new runtime dependencies; commercial branch only.
