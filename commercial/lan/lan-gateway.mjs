@@ -117,6 +117,8 @@ export function createLanGateway({
             !Number.isSafeInteger(body.expectedRevision) || body.expectedRevision < 0 ||
             typeof body.type !== 'string' || !/^[A-Z_]{2,48}$/.test(body.type))
           return reply(res, 400, { error: 'INVALID_COMMAND' });
+        // A session may expire or be revoked while a slow body is arriving.
+        if (!pairing.verify(token)) return reply(res, 401, { error: 'UNAUTHORIZED' });
         // Only football state commands may cross this mobile gateway. Never forward
         // arbitrary vMix or administrative operations from a paired phone.
         const allowed = new Set(['GOAL', 'SCORE_ADJUST', 'YELLOW', 'RED', 'SUB', 'SET_CLOCK', 'HALF_TIME', 'FULL_TIME', 'START_PENALTIES', 'PENALTY_ATTEMPT', 'FINISH_PENALTIES', 'SET_PERIOD']);
