@@ -57,3 +57,6 @@ for(const token of [
 assert(!pkg.includes("$t -match 'SAGI432_SIGNATURE_RC3'"),'V4.33 installer still accepts V4.32 control/output cache as current');
 
 console.log('SAGI V4.33 PACKAGE PARITY + PROJECT SSOT GATE PASS');
+
+for(const token of ['Get-FileHash -LiteralPath $env:SAGI_FB_CONTROL','Get-FileHash -LiteralPath $env:SAGI_FB_OUTPUT','$LastScoreLogSignature','$LastStateGuardLogKey','durableProbe.event = $null','FIXTURE_TAKEOVER_REQUIRED','STALE_MATCHDAY_REVISION']) assert(pkg.includes(token),'V4.33 cache integrity or inherited Bridge guard missing: '+token);
+console.log('V4.33 exact cache integrity and Bridge inheritance gate PASS');
