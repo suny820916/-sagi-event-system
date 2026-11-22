@@ -44,3 +44,12 @@ assert.equal(await frozen.showGraphic('competition',{expectedActive:'CAM1'}),tru
 assert.equal(await frozen.returnProgram('CAM1',{expectedActive:'competition'}),true);
 assert.throws(()=>bindVMixPresentation({adapter,graphics,programKeys:'CAM1'}),/INVALID_PROGRAM_KEYS/);
 console.log('vMix mapping snapshot regression PASS');
+
+ // Duplicate identity must fail before any output, not be silently deduplicated.
+const ambiguousAdapter={
+ health:async()=>({ok:true,body:'<vmix><inputs><input key="CAM1" number="1">A</input><input key="CAM1" number="2">B</input></inputs><active>1</active></vmix>'}),
+ cue:async()=>{throw Error('UNEXPECTED_CUT');}
+};
+const ambiguous=bindVMixPresentation({adapter:ambiguousAdapter,graphics,programKeys:['CAM1']});
+await assert.rejects(ambiguous.showGraphic('competition'),/AMBIGUOUS_INPUT_KEYS/);
+console.log('Duplicate input identity regression PASS');
