@@ -1,5 +1,5 @@
 // Experimental same-origin mobile console; no external assets or persistent tokens.
-export const mobileHtml = `<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SAGI 手机控制</title><h1>SAGI 手机控制</h1><p>实验版 · 仅限受信任局域网</p><label>配对码 <input id="code" inputmode="numeric" maxlength="6" autocomplete="off"></label><button id="pair">配对</button><p id="status" role="status">未配对</p><h2 id="score">— : —</h2><p id="clock">计时未同步</p><button id="clockStart" disabled>开始计时</button> <button id="clockPause" disabled>暂停计时</button><button id="home" disabled>主队进球</button> <button id="away" disabled>客队进球</button><p><label>球员号码 <input id="number" inputmode="numeric" maxlength="3"></label> <label>换上号码 <input id="onNumber" inputmode="numeric" maxlength="3"></label></p><button id="homeYellow" disabled>主队黄牌</button> <button id="awayYellow" disabled>客队黄牌</button> <button id="homeRed" disabled>主队红牌</button> <button id="awayRed" disabled>客队红牌</button> <button id="homeSub" disabled>主队换人</button> <button id="awaySub" disabled>客队换人</button><h2 id="penScore">点球未同步</h2><button id="homePenScore" disabled>主队罚进</button> <button id="homePenMiss" disabled>主队罚失</button> <button id="awayPenScore" disabled>客队罚进</button> <button id="awayPenMiss" disabled>客队罚失</button><p><button id="refresh">同步比分</button><button id="retry" disabled>重试原指令</button></p><script src="/mobile.js" defer></script></html>`;
+export const mobileHtml = `<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SAGI 手机控制</title><h1>SAGI 手机控制</h1><p>实验版 · 仅限受信任局域网</p><label>配对码 <input id="code" inputmode="numeric" maxlength="6" autocomplete="off"></label><button id="pair">配对</button><p id="status" role="status">未配对</p><h2 id="score">— : —</h2><p id="clock">计时未同步</p><button id="clockStart" disabled>开始计时</button> <button id="clockPause" disabled>暂停计时</button><button id="home" disabled>主队进球</button> <button id="away" disabled>客队进球</button><p><label>球员号码 <input id="number" inputmode="numeric" maxlength="3"></label> <label>换上号码 <input id="onNumber" inputmode="numeric" maxlength="3"></label></p><button id="homeYellow" disabled>主队黄牌</button> <button id="awayYellow" disabled>客队黄牌</button> <button id="homeRed" disabled>主队红牌</button> <button id="awayRed" disabled>客队红牌</button> <button id="homeSub" disabled>主队换人</button> <button id="awaySub" disabled>客队换人</button><h2 id="penScore">点球未同步</h2><p id="penHome">主队：—</p><p id="penAway">客队：—</p><button id="homePenScore" disabled>主队罚进</button> <button id="homePenMiss" disabled>主队罚失</button> <button id="awayPenScore" disabled>客队罚进</button> <button id="awayPenMiss" disabled>客队罚失</button><p><button id="refresh">同步比分</button><button id="retry" disabled>重试原指令</button></p><script src="/mobile.js" defer></script></html>`;
 export const mobileJs = `'use strict';
 const el = id => document.getElementById(id);
 let token = '', state = null, pending = null, busy = false, storageReady = true;
@@ -8,6 +8,15 @@ function validNumber(value) { return typeof value === 'string' && /^[0-9]{1,3}$/
 const playing = ['1H','2H','ET1','ET2'];
 const penButtons = ['homePenScore','homePenMiss','awayPenScore','awayPenMiss'];
 function validPen(p) { return p && typeof p.started === 'boolean' && typeof p.finished === 'boolean' && Number.isSafeInteger(p.home) && p.home >= 0 && Number.isSafeInteger(p.away) && p.away >= 0; }
+function renderPenaltyHistory(p) {
+  const valid = validPen(p) && p.started && Array.isArray(p.history) &&
+    p.history.every(a => a && ['HOME','AWAY'].includes(a.side) && ['SCORED','MISSED'].includes(a.outcome)) &&
+    ['HOME','AWAY'].every(side => p.history.filter(a => a.side === side && a.outcome === 'SCORED').length === p[side === 'HOME' ? 'home' : 'away']);
+  for (const [id,side,label] of [['penHome','HOME','主队'],['penAway','AWAY','客队']]) {
+    const marks = valid ? p.history.filter(a => a.side === side).map((a,i) => (i+1)+':'+(a.outcome === 'SCORED' ? '●' : '○')).join(' ') : '';
+    el(id).textContent = label+'：'+(marks || (valid ? '尚未罚球' : '—'));
+  }
+}
 function validIntent(c) {
   if (c.type === 'PENALTY_ATTEMPT') return ['SCORED','MISSED'].includes(c.outcome);
   if (c.type === 'SET_CLOCK_RUNNING') return typeof c.running === 'boolean' && !('elapsedSeconds' in c) && !('side' in c);
@@ -62,6 +71,7 @@ async function sync() {
   lastSync = Date.now();
   const p = state.penalties;
   el('penScore').textContent = validPen(p) && p.started ? '点球 '+p.home+' : '+p.away+(p.finished?' · 已结束':'') : '点球未开始或未同步';
+  renderPenaltyHistory(p);
   el('score').textContent = state.homeScore + ' : ' + state.awayScore;
   const periods = {PRE:'赛前','1H':'上半场',HT:'中场','2H':'下半场',ET1:'加时上半场',ET_BREAK:'加时中场',ET2:'加时下半场',PEN:'点球大战',FT:'全场结束'};
   const c = state.clock;
@@ -71,7 +81,7 @@ async function run(action) {
   if (busy) return;
   busy = true; controls();
   try { await action(); }
-  catch (e) { state = null; if (e.status === 401) token = ''; el('score').textContent = '— : —'; el('clock').textContent = '计时未同步'; el('penScore').textContent = '点球未同步'; el('status').textContent = pending ? '结果待确认：请重试原指令，不要重复操作' : '连接或授权失败，请同步或重新配对'; }
+  catch (e) { state = null; if (e.status === 401) token = ''; el('score').textContent = '— : —'; el('clock').textContent = '计时未同步'; el('penScore').textContent = '点球未同步'; renderPenaltyHistory(null); el('status').textContent = pending ? '结果待确认：请重试原指令，不要重复操作' : '连接或授权失败，请同步或重新配对'; }
   finally { busy = false; controls(); }
 }
 el('pair').onclick = () => run(async () => {
