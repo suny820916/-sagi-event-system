@@ -2926,7 +2926,7 @@ function mdPenaltyStatus(){
 }
 function mdPenaltySnapshot(){
  const p=mdPenaltyState(),st=mdPenaltyStats(),status=mdPenaltyStatus();
- return{started:p.started,visible:!!p.visible,rounds:p.rounds,firstSide:p.firstSide,history:(p.history||[]).slice(0,24),winner:p.winner||'',finished:!!p.finished,nextSide:mdPenaltyNextSide(),currentRound:mdPenaltyCurrentRound(),suddenDeath:mdPenaltySuddenDeath(),homeAttempts:st.homeAttempts,awayAttempts:st.awayAttempts,homeGoals:st.homeGoals,awayGoals:st.awayGoals,status:status.stage,sourceVersion:'V4.33'}
+ return{started:p.started,visible:!!p.visible,rounds:p.rounds,firstSide:p.firstSide,history:(p.history||[]).map(x=>({...x})),winner:p.winner||'',finished:!!p.finished,nextSide:mdPenaltyNextSide(),currentRound:mdPenaltyCurrentRound(),suddenDeath:mdPenaltySuddenDeath(),homeAttempts:st.homeAttempts,awayAttempts:st.awayAttempts,homeGoals:st.homeGoals,awayGoals:st.awayGoals,status:status.stage,sourceVersion:'V4.33'}
 }
 window.sagiPenaltySingleSourceDiagnostic=()=>{
  const p=mdPenaltyState(),view=mdPenaltyCompatView(),st=mdPenaltyStats();
