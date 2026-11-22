@@ -1844,7 +1844,7 @@ function motionInSplash(type){
 }
 function gfxPenaltyDots(ps,side){
  const h=Array.isArray(ps&&ps.history)?ps.history.filter(x=>x.side===side):[],rounds=[3,5].includes(Number(ps&&ps.rounds))?Number(ps.rounds):5,attempts=side==='HOME'?Number(ps&&ps.homeAttempts)||h.length:Number(ps&&ps.awayAttempts)||h.length,next=ps&&ps.nextSide,total=Math.max(rounds,h.length+(ps&&ps.finished?0:1));
- return Array.from({length:Math.min(12,total)},(_,i)=>{const x=h[i],cls=x?(x.result==='GOAL'?'goal':'miss'):'pending'+((next===side&&i===attempts)?' current':'');return'<i class="sbPenDot '+cls+'"></i>'}).join('')
+ return Array.from({length:total},(_,i)=>{const x=h[i],cls=x?(x.result==='GOAL'?'goal':'miss'):'pending'+((next===side&&i===attempts)?' current':'');return'<i class="sbPenDot '+cls+'"></i>'}).join('')
 }
 function gfxPenaltyStatus(ps,g){
  if(!ps||!ps.started)return{stage:'点球大战',next:'等待主罚'};
@@ -1853,9 +1853,9 @@ function gfxPenaltyStatus(ps,g){
 }
 let lastSimplePenaltyHome=0,lastSimplePenaltyAway=0,lastSimplePenaltyHomeAttempts=0,lastSimplePenaltyAwayAttempts=0;
 function gfxSimplePenaltyDots(ps,side,previousAttempts){
- const history=Array.isArray(ps&&ps.history)?ps.history.map(x=>typeof x==='string'?{side:x,result:'GOAL'}:x).filter(Boolean):[],attempts=history.filter(x=>x.side===side),round=Number(ps&&ps.round)||Math.max(history.filter(x=>x.side==='HOME').length,history.filter(x=>x.side==='AWAY').length),visible=round<=5?attempts.slice(0,5):attempts.slice(-5),startIndex=Math.max(0,attempts.length-visible.length),items=[];
+ const history=Array.isArray(ps&&ps.history)?ps.history.map(x=>typeof x==='string'?{side:x,result:'GOAL'}:x).filter(Boolean):[],attempts=history.filter(x=>x.side===side),round=Number(ps&&ps.round)||Math.max(history.filter(x=>x.side==='HOME').length,history.filter(x=>x.side==='AWAY').length),visible=attempts,startIndex=Math.max(0,attempts.length-visible.length),items=[];
  visible.forEach((x,i)=>{const absoluteIndex=startIndex+i,isNew=absoluteIndex===attempts.length-1&&attempts.length>Number(previousAttempts||0),cls=x.result==='MISS'?' miss':' on';items.push('<i class="spbDot'+cls+(isNew?' new':'')+'"></i>')});
- while(items.length<5)items.push('<i class="spbDot"></i>');return items.join('')
+ while(items.length<Math.max(5,Number(ps&&ps.slots)||0,round))items.push('<i class="spbDot"></i>');return items.join('')
 }
 function simplePenaltyScorePulse(el,previous,current){
  if(!el||Number(current)===Number(previous))return;el.classList.remove('pulse');void el.offsetWidth;el.classList.add('pulse')

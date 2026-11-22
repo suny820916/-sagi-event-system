@@ -18,7 +18,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="format-detection" content="telephone=no">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%2307090d%22/%3E%3Ctext x=%2232%22 y=%2243%22 text-anchor=%22middle%22 font-size=%2234%22 fill=%22%23d8b55b%22%3ES%3C/text%3E%3C/svg%3E">
-<title>SAGI V4.32 RC · SAGI SIGNATURE</title>
+<title>SAGI V4.33 RC · SAGI SIGNATURE</title>
 <style>
 :root{--bg:#07090d;--panel:#11151c;--line:#2b3340;--text:#f4f0e8;--muted:#8f97a5;--gold:#d8b55b;--green:#72c79a}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
@@ -535,7 +535,7 @@ body[data-operator-role="DIRECTOR"] .mmScoreOnly{display:none!important}
 .spControlScore{display:grid;grid-template-columns:1fr 120px 1fr;gap:8px;align-items:center;padding:10px;border:1px solid #2f3c49;border-radius:12px;background:#060b10;text-align:center}
 .spControlTeam span{display:block;font-size:10px;color:#97a4b0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.spControlTeam b{display:block;margin-top:4px;font-size:38px;line-height:1;color:#fff}.spControlTeam.home b{color:#e3c66b}.spControlTeam.away b{color:#70b5ff}
 .spControlCenter strong{display:block;font-size:11px;color:#fff;letter-spacing:1.5px}.spControlCenter span{display:block;margin-top:5px;font-size:8px;color:#7e8b98}
-.spControlDots{display:flex;justify-content:center;gap:4px;margin-top:7px;min-height:11px}.spControlDot{width:11px;height:11px;border-radius:50%;border:1px solid #596673;background:#151d24}.spControlDot.on{background:#64da91;border-color:#64da91;box-shadow:0 0 8px #64da9155}
+.spControlDots{display:flex;justify-content:center;flex-wrap:wrap;gap:4px;margin-top:7px;min-height:11px}.spControlDot{width:11px;height:11px;border-radius:50%;border:1px solid #596673;background:#151d24}.spControlDot.on{background:#64da91;border-color:#64da91;box-shadow:0 0 8px #64da9155}
 .spBigButtons{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}.spBigButtons button{min-height:72px!important;font-size:21px!important;font-weight:1000!important;letter-spacing:1px}.spPlus.home{background:linear-gradient(135deg,#6d5818,#c19c31)!important;color:#fff6cf!important;border-color:#d6b548!important}.spPlus.away{background:linear-gradient(135deg,#164a70,#267fc0)!important;color:#e6f4ff!important;border-color:#3b92cd!important}
 .spSmallButtons{display:grid;grid-template-columns:1.2fr 1fr .8fr;gap:6px;margin-top:7px}.spSmallButtons button{min-height:38px}.spHint{margin-top:7px;color:#7f8c98;font-size:9px;line-height:1.45}
 @media(max-width:760px){.spControlScore{grid-template-columns:1fr 92px 1fr}.spBigButtons button{min-height:78px!important;font-size:22px!important}.spSmallButtons{grid-template-columns:1fr 1fr}.spSmallButtons .danger{grid-column:1/3}}
@@ -671,7 +671,7 @@ body{background:radial-gradient(circle at 78% -10%,#0a43c933,transparent 28%),li
 </head>
 <body>
 <div class="app">
-  <div class="top"><div><div class="brand"><span class="sagiControlLogo"><span class="sagiControlWord"><span>S</span><span class="sagiControlA">A<i></i></span><span>GI</span></span><span class="sagiControlSub">FOOTBALL</span></span> 赛事直播导播</div><div class="sub">V4.32 RC · SAGI SIGNATURE · 比赛设置</div></div><div class="topRight"><div class="ver">V4.32 RC</div><button id="mobileUpdateBtn" class="mobileUpdateBtn" type="button">↻ 安全更新</button><button id="mobileRollbackBtn" class="mobileRollbackBtn" type="button">↶ 回退上一版</button><div id="mobileUpdateStatus" class="mobileUpdateStatus">V4.31.0 · STAGE 广播系统 · 桥接服务已锁定</div></div></div>
+  <div class="top"><div><div class="brand"><span class="sagiControlLogo"><span class="sagiControlWord"><span>S</span><span class="sagiControlA">A<i></i></span><span>GI</span></span><span class="sagiControlSub">FOOTBALL</span></span> 赛事直播导播</div><div class="sub">V4.33 RC · SAGI SIGNATURE · 比赛设置</div></div><div class="topRight"><div class="ver">V4.33 RC</div><button id="mobileUpdateBtn" class="mobileUpdateBtn" type="button">↻ 安全更新</button><button id="mobileRollbackBtn" class="mobileRollbackBtn" type="button">↶ 回退上一版</button><div id="mobileUpdateStatus" class="mobileUpdateStatus">V4.31.0 · STAGE 广播系统 · 桥接服务已锁定</div></div></div>
 
   <div id="pwaBar" class="pwaBar" style="display:none">
     <div class="pwaInfo">
@@ -975,7 +975,7 @@ body{background:radial-gradient(circle at 78% -10%,#0a43c933,transparent 28%),li
 
   <div class="matchdayDesk">
     <div class="mdHead">
-      <div class="mdTitle">V4.32 RC · 比赛模式 <small>REPLAY HOTFIX · 安全自动</small></div>
+      <div class="mdTitle">V4.33 RC · 比赛模式 <small>REPLAY HOTFIX · 安全自动</small></div>
       <div id="mdSync" class="mdSync"><span id="mdSyncDot" class="mdLiveDot"></span>比赛图形待命</div>
     </div>
     <div class="gdBar">
@@ -2397,11 +2397,10 @@ function mdPenaltyEvaluateWinner(){
 function mdSimplePenaltyTeamAttempts(side){return (mdPenaltyState().history||[]).filter(x=>x&&x.side===side)}
 function mdSimplePenaltyRound(){const st=mdPenaltyStats();return Math.max(st.homeAttempts,st.awayAttempts)}
 function mdPenaltyVisibleAttempts(side){
- const attempts=mdSimplePenaltyTeamAttempts(side),keep=5;
- return attempts.length<=keep?attempts:attempts.slice(-keep)
+ return mdSimplePenaltyTeamAttempts(side)
 }
 function mdSimplePenaltyDots(side){
- const attempts=mdPenaltyVisibleAttempts(side),pad=Math.max(0,5-attempts.length);
+ const attempts=mdPenaltyVisibleAttempts(side),pad=Math.max(0,Number(mdSimplePenaltySnapshot().slots||5)-attempts.length);
  const items=attempts.map(x=>'<i class="spControlDot'+(x.result==='MISS'?' miss':' on')+'"></i>');
  for(let i=0;i<pad;i++)items.push('<i class="spControlDot"></i>');return items.join('')
 }
@@ -2475,9 +2474,9 @@ async function mdSimplePenaltyToggle(){
 async function mdSimplePenaltyUndo(){return mdPenaltyUndo()}
 async function mdSimplePenaltyReset(){return mdPenaltyReset()}
 function mdPenaltyDots(side,compact=false){
- const p=mdPenaltyState(),all=(p.history||[]).filter(x=>x.side===side),visible=all.length<=5?all:all.slice(-5),next=mdPenaltyNextSide(),st=mdPenaltyStats(),attempts=side==='HOME'?st.homeAttempts:st.awayAttempts;
- const slots=Math.max(5,visible.length+(p.finished?0:(side===next?1:0)));
- return Array.from({length:Math.min(5,slots)},(_,i)=>{const x=visible[i],absoluteIndex=Math.max(0,all.length-visible.length)+i,cls=x?(x.result==='GOAL'?'goal':'miss'):'pending'+((side===next&&absoluteIndex===attempts)?' current':'');return'<i class="penDot '+cls+'"></i>'}).join('')
+ const p=mdPenaltyState(),all=(p.history||[]).filter(x=>x.side===side),visible=all,next=mdPenaltyNextSide(),st=mdPenaltyStats(),attempts=side==='HOME'?st.homeAttempts:st.awayAttempts;
+ const slots=Math.max(Number(p.rounds)||5,st.homeAttempts,st.awayAttempts,p.finished?0:mdPenaltyCurrentRound());
+ return Array.from({length:slots},(_,i)=>{const x=visible[i],absoluteIndex=Math.max(0,all.length-visible.length)+i,cls=x?(x.result==='GOAL'?'goal':'miss'):'pending'+((side===next&&absoluteIndex===attempts)?' current':'');return'<i class="penDot '+cls+'"></i>'}).join('')
 }
 function mdPenaltyStatus(){
  const p=mdPenaltyState(),home=q('matchHome').value.trim()||'主队',away=q('matchAway').value.trim()||'客队';
@@ -4157,7 +4156,7 @@ function cloudAdmin(){try{const x=JSON.parse(localStorage.getItem('sagi_cloud_ad
 function compactPlayersForGroup(group){const src=group==='FULL'?validStarters():group==='SUB'?substitutes():(['GK','DF','MF','FW'].includes(group)?grouped(group):[]);return src.map(p=>({id:p.id,layoutKey:formationPlayerKey(p),name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',squadType:p.squadType||'STARTER',photo:(group==='FULL'||group==='SUB')?'':p.photo||'',mediaUrl:(group==='FULL'||group==='SUB')?'':p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'}))}
 async function publishGroup(group,duration,show=null){
  const issuedAtMs=Date.now(),safeDuration=Math.max(200,Number(duration)||1000),autoNext=!!(show&&show.autoNext),expiresAtMs=group==='CLEAR'?issuedAtMs+500:(issuedAtMs+safeDuration+(autoNext?1800:60000));
- const state={commandId:issuedAtMs+'_'+Math.random().toString(36).slice(2,6),programGate:'SAGI4311_PROGRAM',onAir:true,issuedAtMs,expiresAtMs,group,side:activeSide,team:currentTeamName(),formation:q('formation').value,matchFormat:{mode:matchConfig.mode,playerCount:starterLimit()},playerCount:starterLimit(),startingLabel:startingLabel(),players:compactPlayersForGroup(group),formationLayout:currentFormationLayoutPayload(),allPlayers:validStarters().map(p=>({id:p.id,layoutKey:formationPlayerKey(p),name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',photo:p.photo||'',mediaUrl:p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'})),substitutes:substitutes().map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,statLabel:p.statLabel||'',statValue:p.statValue||''})),crest:assets.crest||'',stadium:assets.bg||'',background:q('outputBg').value,teamColor:(activeSide==='HOME'?(matchdayState.homeColor||'#d8b55b'):(matchdayState.awayColor||'#4c7dff')),visualVersion:'V4.32 RC-PROGRAM-GATE',duration:safeDuration,show:show||null,package:packageData(),startedAt:new Date(issuedAtMs).toISOString()};
+ const state={commandId:issuedAtMs+'_'+Math.random().toString(36).slice(2,6),programGate:'SAGI4311_PROGRAM',onAir:true,issuedAtMs,expiresAtMs,group,side:activeSide,team:currentTeamName(),formation:q('formation').value,matchFormat:{mode:matchConfig.mode,playerCount:starterLimit()},playerCount:starterLimit(),startingLabel:startingLabel(),players:compactPlayersForGroup(group),formationLayout:currentFormationLayoutPayload(),allPlayers:validStarters().map(p=>({id:p.id,layoutKey:formationPlayerKey(p),name:p.name,number:p.number,role:p.role,position:p.position,captain:!!p.captain,statLabel:p.statLabel||'',statValue:p.statValue||'',photo:p.photo||'',mediaUrl:p.mediaUrl||'',mediaAction:p.mediaAction||'STANDARD',directorIn:Number(p.directorIn)||0,directorOut:Number(p.directorOut)||0,directorSpeed:Number(p.directorSpeed)||1,directorFreeze:!!p.directorFreeze,directorFreezeMs:Number(p.directorFreezeMs)||1000,directorCamera:p.directorCamera||'MEDIUM'})),substitutes:substitutes().map(p=>({name:p.name,number:p.number,role:p.role,position:p.position,statLabel:p.statLabel||'',statValue:p.statValue||''})),crest:assets.crest||'',stadium:assets.bg||'',background:q('outputBg').value,teamColor:(activeSide==='HOME'?(matchdayState.homeColor||'#d8b55b'):(matchdayState.awayColor||'#4c7dff')),visualVersion:'V4.33 RC-PROGRAM-GATE',duration:safeDuration,show:show||null,package:packageData(),startedAt:new Date(issuedAtMs).toISOString()};
  try{
    await lanPost('/api/state',{lineupIntro:state});
    return{ok:true}

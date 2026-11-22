@@ -56,3 +56,9 @@ console.log('SAGI V4.33 PENALTY INTEGRATION PASS',{
   controlBytes:Buffer.byteLength(control),
   outputBytes:Buffer.byteLength(output)
 });
+
+assert(!control.includes('all.slice(-5)'),'director dots truncated');
+assert(!control.includes('length:Math.min(5,slots)'),'director dots capped');
+assert(!output.includes('attempts.slice(-5)'),'output dots truncated');
+assert(!output.includes('length:Math.min(12,total)'),'output dots capped');
+assert(control.includes('<title>SAGI V4.33 RC'),'wrong RC title');
