@@ -397,3 +397,7 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Add regression for caller configuration mutation and invalid program key type (8f9c858).
 - Previous head c85d937 returned no PR-triggered workflow runs; this does not establish push CI status. New tests not executed in this run. No new dependencies; only commercial branch written.
 - Remaining gates: actual resource migration, Windows/vMix acceptance, continuous manual ownership and production shell. Prioritize executable integration and CI evidence.
+
+## 2026-11-22 — Shared director transition deadline
+- Bound preflight, Cut transport and readback to a shared abort deadline (55705e3), with a maximum configured transition timeout of 30 seconds. Added stalled preflight regression requiring zero Cut calls (5c60908).
+- This depends on the transport honoring AbortSignal; an already transmitted Cut may still take effect. Do not automatically retry ambiguous output. Runtime/CI verification pending; actual vMix and asset migration remain open. No new runtime dependencies; commercial branch only.
