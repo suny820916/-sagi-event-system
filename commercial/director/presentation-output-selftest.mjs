@@ -19,3 +19,16 @@ const controller=new AbortController();controller.abort();
 await assert.rejects(output.showGraphic('competition',{signal:controller.signal}));
 assert.equal(calls.length,6);
 console.log('presentation output self-test PASS');
+
+// The deadline also covers a slow preflight, not just the confirmation poll.
+const keepAlive=setInterval(()=>{},100);
+try {
+  let cuts=0;
+  const slow=createPresentationOutput({...options,now:()=>performance.now(),readActiveKey:({signal})=>new Promise((resolve,reject)=>{
+    signal.addEventListener('abort',()=>reject(signal.reason),{once:true});
+  }),cut:async()=>{cuts++;return true;}});
+  await assert.rejects(slow.showGraphic('competition',{expectedActive:'CAM1'}),{name:'TimeoutError'});
+  assert.equal(cuts,0);
+  assert.throws(()=>createPresentationOutput({...options,timeoutMs:30001}),/INVALID_TIMEOUT/);
+} finally {clearInterval(keepAlive);}
+console.log('presentation shared deadline regression PASS');
