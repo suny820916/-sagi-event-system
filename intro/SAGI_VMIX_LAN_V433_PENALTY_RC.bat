@@ -39,9 +39,9 @@ powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -Command ^
  "[IO.File]::WriteAllText($env:SAGI_FB_CONTROL,$m.Groups[2].Value,$utf);" ^
  "[IO.File]::WriteAllText($env:SAGI_FB_OUTPUT,$m.Groups[3].Value,$utf);" ^
  "Copy-Item $env:SAGI_FB_BRIDGE $env:SAGI_BRIDGE -Force;" ^
- "$controlOk=$false;if(Test-Path $env:SAGI_CONTROL){try{$t=[IO.File]::ReadAllText($env:SAGI_CONTROL,[Text.Encoding]::UTF8);$controlOk=($t.Length -gt 100000 -and $t -match '<!doctype html>' -and $t -match 'SAGI433_PENALTY_SSOT_RC1' -and $t -match 'SAGISignatureCore' -and $t -match 'mdNextEventIdentity' -and $t -match 'mdPenaltyCompatView' -and $t -match 'mdSimplePenaltyKick' -and $t -match 'LIVE FLOW' -and $t -match 'instantReplayGenerate')}catch{}};" ^
+ "$controlOk=$false;if(Test-Path $env:SAGI_CONTROL){try{$t=[IO.File]::ReadAllText($env:SAGI_CONTROL,[Text.Encoding]::UTF8);$controlOk=($t.Length -gt 100000 -and $t -match '<!doctype html>' -and $t -match 'SAGI433_PENALTY_SSOT_RC1' -and $t -match 'SAGISignatureCore' -and $t -match 'mdNextEventIdentity' -and $t -match 'mdPenaltyCompatView' -and $t -match 'mdSimplePenaltyKick' -and $t -match 'LIVE FLOW' -and $t -match 'instantReplayGenerate' -and (Get-FileHash -LiteralPath $env:SAGI_CONTROL).Hash -eq (Get-FileHash -LiteralPath $env:SAGI_FB_CONTROL).Hash)}catch{}};" ^
  "if(-not $controlOk){Copy-Item $env:SAGI_FB_CONTROL $env:SAGI_CONTROL -Force;Write-Host '[REPAIR] V4.33 PENALTY SSOT RC Control installed over stale cache.' -ForegroundColor Yellow}else{Write-Host '[SAFE] V4.33 PENALTY SSOT RC Control cache verified.' -ForegroundColor Green};" ^
- "$outputOk=$false;if(Test-Path $env:SAGI_OUTPUT){try{$t=[IO.File]::ReadAllText($env:SAGI_OUTPUT,[Text.Encoding]::UTF8);$outputOk=($t.Length -gt 50000 -and $t -match '<!doctype html>' -and $t -match 'SAGI433_PENALTY_SSOT_RC1' -and $t -match 'SAGISignatureCore' -and $t -match 'introStateAllowed' -and $t -match 'sagiBrandA' -and $t -match 'lastRenderedSignatureEventKey' -and $t -match 'gfxPenaltyView')}catch{}};" ^
+ "$outputOk=$false;if(Test-Path $env:SAGI_OUTPUT){try{$t=[IO.File]::ReadAllText($env:SAGI_OUTPUT,[Text.Encoding]::UTF8);$outputOk=($t.Length -gt 50000 -and $t -match '<!doctype html>' -and $t -match 'SAGI433_PENALTY_SSOT_RC1' -and $t -match 'SAGISignatureCore' -and $t -match 'introStateAllowed' -and $t -match 'sagiBrandA' -and $t -match 'lastRenderedSignatureEventKey' -and $t -match 'gfxPenaltyView' -and (Get-FileHash -LiteralPath $env:SAGI_OUTPUT).Hash -eq (Get-FileHash -LiteralPath $env:SAGI_FB_OUTPUT).Hash)}catch{}};" ^
  "if(-not $outputOk){Copy-Item $env:SAGI_FB_OUTPUT $env:SAGI_OUTPUT -Force;Write-Host '[REPAIR] V4.33 PENALTY SSOT RC vMix output installed over stale cache.' -ForegroundColor Yellow}else{Write-Host '[SAFE] V4.33 PENALTY SSOT RC vMix output cache verified.' -ForegroundColor Green};"
 
 if errorlevel 1 (
@@ -99,6 +99,9 @@ $State = @{
   matchdayGraphics = $null
 }
 $MatchdayJson = "null"
+$LastScoreLogSignature = ""
+$LastStateGuardLogKey = ""
+$LastStateGuardLogAt = [DateTime]::MinValue
 if (Test-Path $MatchdayStateFile) {
   try {
     $savedMatchday = [IO.File]::ReadAllText($MatchdayStateFile,[Text.Encoding]::UTF8)
@@ -144,8 +147,8 @@ function Update-SagiLan {
     $outputText = [Text.Encoding]::UTF8.GetString([IO.File]::ReadAllBytes($outputDownload))
     if ($controlText -notmatch "<!doctype html>") { throw "Control validation failed" }
     if ($outputText -notmatch "<!doctype html>") { throw "Graphics validation failed" }
-    if ($controlText -notmatch "SAGI LIVE MATCH DIRECTOR" -or $controlText -notmatch "SAGI433_PENALTY_SSOT_RC1" -or $controlText -notmatch "mdNextEventIdentity" -or $controlText -notmatch "mdPenaltyCompatView") { throw "Remote control is older than V4.32 SIGNATURE RC; local RC kept" }
-    if ($outputText -notmatch "SAGI433_PENALTY_SSOT_RC1" -or $outputText -notmatch "SAGISignatureCore" -or $outputText -notmatch "lastRenderedSignatureEventKey" -or $outputText -notmatch "gfxPenaltyView") { throw "Remote vMix output is older than V4.32 SIGNATURE RC; local RC kept" }
+    if ($controlText -notmatch "SAGI LIVE MATCH DIRECTOR" -or $controlText -notmatch "SAGI433_PENALTY_SSOT_RC1" -or $controlText -notmatch "mdNextEventIdentity" -or $controlText -notmatch "mdPenaltyCompatView") { throw "Remote control is older than V4.33 PENALTY SSOT RC; local RC kept" }
+    if ($outputText -notmatch "SAGI433_PENALTY_SSOT_RC1" -or $outputText -notmatch "SAGISignatureCore" -or $outputText -notmatch "lastRenderedSignatureEventKey" -or $outputText -notmatch "gfxPenaltyView") { throw "Remote vMix output is older than V4.33 PENALTY SSOT RC; local RC kept" }
 
     Copy-Item $ControlCache $ControlBackup -Force
     Copy-Item $OutputCache $OutputBackup -Force
@@ -270,7 +273,7 @@ function Read-HttpRequest($stream) {
     }
   }
 
-  if ($headerBytes.Count -eq 0) { return $null }
+  if ($headerBytes.Count -eq 0 -or $match -ne 4) { return $null }
 
   $headerText = [Text.Encoding]::ASCII.GetString($headerBytes.ToArray())
   $lines = $headerText -split "\r\n"
@@ -294,7 +297,7 @@ function Read-HttpRequest($stream) {
 
   $len = 0
   if ($headers.ContainsKey("content-length")) { [void][int]::TryParse($headers["content-length"],[ref]$len) }
-  if ($len -gt 20971520) { throw "Request body too large" }
+  if ($len -lt 0 -or $len -gt 20971520) { throw "Invalid request body length" }
 
   $body = ""
   if ($len -gt 0) {
@@ -305,6 +308,7 @@ function Read-HttpRequest($stream) {
       if ($n -le 0) { break }
       $offset += $n
     }
+    if ($offset -ne $len) { throw "Incomplete request body" }
     $body = [Text.Encoding]::UTF8.GetString($bodyBytes,0,$offset)
   }
 
@@ -385,8 +389,10 @@ Write-Host "If Windows Firewall asks, allow PowerShell on Private networks." -Fo
 Write-Host "Keep this window open during the match." -ForegroundColor White
 Write-Host ""
 try {
+  if ($env:SAGI_BRIDGE_NO_AUTO_OPEN -ne "1") {
   Start-Process ("http://127.0.0.1:" + $Port + "/")
   Write-Host "[READY] PC Control Room opened automatically." -ForegroundColor Green
+  }
 } catch {
   Write-Host "[INFO] Open the PC CONTROL address manually." -ForegroundColor Yellow
 }
@@ -496,7 +502,13 @@ while ($true) {
           Write-Host ("[FIXTURE GUARD] Rejected unapproved fixture takeover: " + $incomingFixture + " while active is " + $currentFixture) -ForegroundColor Yellow
           Write-HttpResponse $stream 409 "application/json" '{"ok":false,"error":"FIXTURE_TAKEOVER_REQUIRED"}'
         } elseif ($staleRevision -or $revisionConflict) {
-          Write-Host ("[STATE GUARD] Rejected stale/conflicting matchday write R" + $incomingRevision + " while current is R" + $currentRevision) -ForegroundColor Yellow
+          $guardKey = [string]$incomingRevision + "|" + [string]$currentRevision + "|" + [string]$incomingCommand + "|" + [string]$currentCommand
+          $guardNow = [DateTime]::UtcNow
+          if (($guardKey -ne $LastStateGuardLogKey) -or (($guardNow - $LastStateGuardLogAt).TotalSeconds -ge 2)) {
+            Write-Host ("[STATE GUARD] Rejected stale/conflicting matchday write R" + $incomingRevision + " while current is R" + $currentRevision) -ForegroundColor Yellow
+            $LastStateGuardLogKey = $guardKey
+            $LastStateGuardLogAt = $guardNow
+          }
           Write-HttpResponse $stream 409 "application/json" '{"ok":false,"error":"STALE_MATCHDAY_REVISION"}'
         } else {
           if ($allowFixtureTakeover -and -not $sameFixture -and -not [string]::IsNullOrWhiteSpace($currentFixture)) {
@@ -522,7 +534,11 @@ while ($true) {
           $hs = [string]$probe.homeScore
           $as = [string]$probe.awayScore
           $vis = [string]$probe.scoreboardVisible
-          Write-Host ("[SCORE] " + $hs + ":" + $as + " visible=" + $vis) -ForegroundColor Cyan
+          $scoreLogSignature = $hs + "|" + $as + "|" + $vis
+          if ($scoreLogSignature -ne $LastScoreLogSignature) {
+            Write-Host ("[SCORE] " + $hs + ":" + $as + " visible=" + $vis) -ForegroundColor Cyan
+            $LastScoreLogSignature = $scoreLogSignature
+          }
           Write-HttpResponse $stream 200 "application/json" '{"ok":true}'
         }
       } catch {
@@ -581,7 +597,11 @@ while ($true) {
     }
   }
   catch {
-    Write-Host ("[LAN WARN] " + $_.Exception.Message) -ForegroundColor DarkYellow
+    $lanMessage = [string]$_.Exception.Message
+    $benignDisconnect = $lanMessage -match 'forcibly closed by the remote host|Unable to read data from the transport connection|The I/O operation has been aborted|aborted by the software in your host machine|established connection was aborted|connection was aborted|远程主机强迫关闭|传输连接'
+    if (-not $benignDisconnect) {
+      Write-Host ("[LAN WARN] " + $lanMessage) -ForegroundColor DarkYellow
+    }
   }
   finally {
     if ($null -ne $client) { try { $client.Close() } catch {} }
