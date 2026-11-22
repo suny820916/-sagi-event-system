@@ -58,7 +58,7 @@ try {
   const saved = new Map();
   let sent = [], fail = true, score = 0, offline = false, expired = false, reads = 0;
   let poll, pageShow, running = false, period = 'PRE';
-  const penalties = {started:false,finished:false,home:0,away:0};
+  const penalties = {started:false,finished:false,home:0,away:0,history:[]};
   function boot() {
     const elements = new Map();
     const document = { getElementById(id) {
@@ -77,7 +77,7 @@ try {
       }
       else {
         const command = JSON.parse(opts.body);
-        if (!sent.some(c => c.commandId === command.commandId)) { if (command.type === 'SET_CLOCK_RUNNING') running = command.running; else if (command.type === 'PENALTY_ATTEMPT') { if (command.outcome === 'SCORED') penalties[command.side === 'HOME' ? 'home' : 'away']++; } else score++; }
+        if (!sent.some(c => c.commandId === command.commandId)) { if (command.type === 'SET_CLOCK_RUNNING') running = command.running; else if (command.type === 'PENALTY_ATTEMPT') { penalties.history.push({side:command.side,outcome:command.outcome}); if (command.outcome === 'SCORED') penalties[command.side === 'HOME' ? 'home' : 'away']++; } else score++; }
         sent.push(command);
         if (fail) throw new Error('lost response');
         data = { result: {} };
@@ -189,6 +189,19 @@ try {
   phone('awayPenMiss').onclick(); await new Promise(resolve => setImmediate(resolve));
   assert.equal(sent[10].outcome,'MISSED'); assert.equal(penalties.away,0);
   assert.equal(score,regularScore); assert.equal(phone('penScore').textContent,'点球 1 : 0');
+  assert.equal(phone('penHome').textContent,'主队：1:●');
+  assert.equal(phone('penAway').textContent,'客队：1:○');
+  for (let i=0;i<6;i++) penalties.history.push({side:'HOME',outcome:'MISSED'});
+  await tick();
+  assert.match(phone('penHome').textContent,/7:○$/);
+  penalties.history.push({side:'AWAY',outcome:'SCORED'});
+  await tick();
+  assert.equal(phone('penAway').textContent,'客队：—','inconsistent history must not render');
+  penalties.history.pop();
+  offline = true; await tick();
+  assert.equal(phone('penHome').textContent,'主队：—');
+  offline = false; await tick();
+  assert.match(phone('penHome').textContent,/7:○$/);
   penalties.finished = true; period = 'FT'; await tick();
   assert.equal(phone('homePenScore').disabled,true);
   assert.equal((await fetch(base + '/mobile', { headers: { origin: 'http://evil.example' } })).status, 403);
