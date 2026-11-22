@@ -22,8 +22,9 @@ export function bindVMixPresentation({adapter,graphics,programKeys,...timing}={}
   return createPresentationOutput({...timing,graphics,programKeys,
     sleep:timing.sleep??((ms,{signal}={})=>delay(ms,undefined,{signal})),
     readActiveKey:({signal}={})=>snapshot(signal),
-    cut:async(key,{signal}={})=>{
-      await snapshot(signal);
+    cut:async(key,{signal,expectedActive}={})=>{
+      const active = await snapshot(signal);
+      if(expectedActive !== undefined && active !== expectedActive) return false;
       signal?.throwIfAborted();
       const result=await adapter.cue({functionName:'Cut',input:key},{signal});
       signal?.throwIfAborted();
