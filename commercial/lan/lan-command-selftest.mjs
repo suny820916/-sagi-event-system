@@ -57,7 +57,7 @@ try {
   // Execute the served browser script with simulated DOM/storage and transport.
   const saved = new Map();
   let sent = [], fail = true, score = 0, offline = false, expired = false, reads = 0;
-  let poll, pageShow;
+  let poll, pageShow, running = false, period = 'PRE';
   function boot() {
     const elements = new Map();
     const document = { getElementById(id) {
@@ -72,11 +72,11 @@ try {
         reads++;
         if (offline) throw new Error('offline');
         if (expired) return {ok:false,status:401,json:async()=>({error:'expired'})};
-        data = { state: { fixtureId: 'test-match', revision: score, homeScore: score, awayScore: 0 } };
+        data = { state: { fixtureId: 'test-match', revision: score, homeScore: score, awayScore: 0, period, clock: { running, elapsedSeconds: 17 } } };
       }
       else {
         const command = JSON.parse(opts.body);
-        if (!sent.some(c => c.commandId === command.commandId)) score++;
+        if (!sent.some(c => c.commandId === command.commandId)) { if (command.type === 'SET_CLOCK_RUNNING') running = command.running; else score++; }
         sent.push(command);
         if (fail) throw new Error('lost response');
         data = { result: {} };
@@ -154,6 +154,29 @@ try {
   assert.equal(sent[4].type,'SUB');
   assert.deepEqual(sent[4].off,{number:'12'});
   assert.deepEqual(sent[4].on,{number:'8'});
+  assert.equal(phone('clockStart').disabled,true);
+  period = '1H'; await tick();
+  assert.equal(phone('clockStart').disabled,false);
+  assert.match(phone('clock').textContent,/上半场 · 0:17/);
+  fail = true;
+  phone('clockStart').onclick();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(running,true);
+  assert.equal(saved.size,1);
+  assert.equal(sent[5].type,'SET_CLOCK_RUNNING');
+  assert.equal(sent[5].running,true);
+  assert.equal('elapsedSeconds' in sent[5],false);
+  assert.equal('side' in sent[5],false);
+  phone = boot(); await phone('pair').onclick();
+  fail = false; await phone('retry').onclick();
+  assert.deepEqual(sent[5],sent[6]);
+  assert.equal(saved.size,0);
+  assert.equal(phone('clockStart').disabled,true);
+  assert.equal(phone('clockPause').disabled,false);
+  phone('clockPause').onclick();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(running,false);
+  assert.equal(sent[7].running,false);
   assert.equal((await fetch(base + '/mobile', { headers: { origin: 'http://evil.example' } })).status, 403);
   const code = g.pairing.issue({ localOperatorApproved: true }).code;
   const redeem = await fetch(base + '/api/v1/lan/redeem', {
