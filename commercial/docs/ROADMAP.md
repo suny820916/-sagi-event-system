@@ -422,3 +422,8 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Expose sanitized ownership presence (present/absent/unknown), active cue and blocked state in the guarded factory (4fd5d2d); add regression for live competing owner and restart after uncertain output (2f4417f).
 - Diagnostics are advisory, not permission to delete a lock. A present latch may belong to a live instance. 中文现场处置：停止自动导演，人工确认 vMix 当前播出画面，排除未完成指令，停止所有相关进程，再由受信任维护人员按恢复规程处理锁；不得仅凭诊断结果解锁。比赛比分与计时应独立继续运行。
 - Previous head ff919c8 returned no PR-filtered workflow runs; current tests not executed in this run. No new dependencies; commercial branch only. Desktop UI wiring and actual Windows/vMix acceptance remain pending.
+
+## 2026-11-22 — Verified cross-platform CI baseline
+- Verified push CI at b225188ded5df7f69b0dabaa760cb745ae220d87: director run 45006103383 and core run 45006103430 completed successfully. Both Windows and Ubuntu jobs passed, with all 5 director and 9 core runtime steps per platform successful (28 runtime step executions total).
+- Evidence: https://github.com/suny820916/-sagi-event-system/actions/runs/45006103383 and https://github.com/suny820916/-sagi-event-system/actions/runs/45006103430 . This supersedes earlier pending core/director CI notes for the tested revision only.
+- LAN-specific matrix not established by these runs. Real vMix, physical phone LAN, WAN disconnection, production assets, long-duration Windows operation and installer/rollback remain separate release gates. No commercial release authorization or runtime dependency changes.
