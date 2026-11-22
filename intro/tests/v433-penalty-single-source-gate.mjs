@@ -60,3 +60,18 @@ console.log('SAGI V4.33 PACKAGE PARITY + PROJECT SSOT GATE PASS');
 
 for(const token of ['Get-FileHash -LiteralPath $env:SAGI_FB_CONTROL','Get-FileHash -LiteralPath $env:SAGI_FB_OUTPUT','$LastScoreLogSignature','$LastStateGuardLogKey','durableProbe.event = $null','FIXTURE_TAKEOVER_REQUIRED','STALE_MATCHDAY_REVISION']) assert(pkg.includes(token),'V4.33 cache integrity or inherited Bridge guard missing: '+token);
 console.log('V4.33 exact cache integrity and Bridge inheritance gate PASS');
+
+// Canonical history must survive beyond 12 rounds; the five-dot UI alone may window it.
+assert(control.includes('history:(p.history||[]).map(x=>({...x}))'),'snapshot must preserve all kick history');
+assert(!control.includes('history:(p.history||[]).slice(0,24)'),'snapshot truncates sudden-death history');
+const {runInNewContext}=await import('node:vm');
+const start=control.indexOf('function mdPenaltyState(){');
+const end=control.indexOf('window.sagiPenaltySingleSourceDiagnostic',start);
+assert(start>=0&&end>start,'cannot extract actual penalty functions');
+const history=Array.from({length:30},(_,i)=>({side:i%2?'AWAY':'HOME',result:'GOAL',at:String(i)}));
+const ctx={matchdayState:{penaltyShootout:{sourceVersion:'V4.33',started:true,visible:true,rounds:5,history},homeScore:2,awayScore:2},q:()=>({value:''})};
+const snap=runInNewContext(control.slice(start,end)+'\nmdPenaltySnapshot()',ctx);
+assert(snap.history.length===30&&snap.homeGoals===15&&snap.awayGoals===15,'long shootout snapshot truncated');
+assert(snap.history[29].at==='29'&&snap.nextSide==='HOME','last kick or next side lost');
+assert(snap.history!==history&&snap.history[0]!==history[0],'snapshot must not alias mutable history');
+console.log('V4.33 15-round canonical snapshot retention PASS');
