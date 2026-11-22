@@ -386,3 +386,8 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Added simulated HTTP end-to-end intro test, missing mapping and cancellation cases (791ae9f), wired into director matrix (3cd4ab7).
 - Source commits accepted; runtime and CI results not verified. No new runtime dependencies; main untouched.
 - Binding is not installed into a production shell. Manual takeover detection between steps, in-flight ambiguous effects, overall deadline including transport latency, actual vMix GUID compatibility and graphic assets remain release blockers. Full-screen cuts are not overlays. Next: verify matrix, add manual takeover safety and real Windows vMix acceptance.
+
+## 2026-11-22 — Manual takeover guard
+- Executor carries the expected previous program/graphic to each transition (628417d); output checks readback before switching (aac7871); vMix binding checks again immediately before Cut (0f0d7f2).
+- Added simulated manual camera takeover during intro and goal holds; subsequent automatic cuts must stop and require manual recovery. Runtime/CI not verified in this run.
+- This is observed-state protection, not atomic ownership: a manual cut between final read and command, or away-and-back during a hold, can evade detection. Actual vMix testing, operator cancellation and production shell integration remain required. No new dependencies; main untouched.
