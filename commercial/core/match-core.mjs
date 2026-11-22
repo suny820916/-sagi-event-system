@@ -240,11 +240,13 @@ export function applyCommand(currentState, command) {
     if ("visible" in command) state.scoreboardVisible = !!command.visible;
     if ("frozen" in command) state.scoreboardFrozen = !!command.frozen;
   } else if (type === "START_PENALTIES") {
+    if (state.penalties.started || state.penalties.finished || state.period === "FT") throw new Error("INVALID_PENALTY_LIFECYCLE");
     state.period = "PEN";
     state.clock.running = false;
     state.penalties.started = true;
     state.penalties.finished = false;
   } else if (type === "PENALTY_ATTEMPT") {
+    if (state.period !== "PEN" || !state.penalties.started || state.penalties.finished) throw new Error("INVALID_PENALTY_LIFECYCLE");
     const side = assertSide(command.side);
     const outcome = String(command.outcome ?? "").toUpperCase();
     if (!["SCORED", "MISSED"].includes(outcome)) throw new Error("INVALID_PENALTY_OUTCOME");
@@ -273,6 +275,7 @@ export function applyCommand(currentState, command) {
     });
     recordEvent(state, event);
   } else if (type === "FINISH_PENALTIES") {
+    if (state.period !== "PEN" || !state.penalties.started || state.penalties.finished) throw new Error("INVALID_PENALTY_LIFECYCLE");
     state.penalties.started = true;
     state.penalties.finished = true;
     state.period = "FT";
