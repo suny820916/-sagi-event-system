@@ -427,3 +427,8 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Verified push CI at b225188ded5df7f69b0dabaa760cb745ae220d87: director run 45006103383 and core run 45006103430 completed successfully. Both Windows and Ubuntu jobs passed, with all 5 director and 9 core runtime steps per platform successful (28 runtime step executions total).
 - Evidence: https://github.com/suny820916/-sagi-event-system/actions/runs/45006103383 and https://github.com/suny820916/-sagi-event-system/actions/runs/45006103430 . This supersedes earlier pending core/director CI notes for the tested revision only.
 - LAN-specific matrix not established by these runs. Real vMix, physical phone LAN, WAN disconnection, production assets, long-duration Windows operation and installer/rollback remain separate release gates. No commercial release authorization or runtime dependency changes.
+
+## 2026-11-22 — LAN session admission recheck
+- Revalidate the paired token after asynchronous request body parsing and before dispatching a command (f885e619). A revoked or expired session cannot submit a command through a slow outstanding upload.
+- Added deterministic revocation regression (e3bbb873), asserting HTTP 401 and unchanged accepted-command count. Runtime/CI not verified for this revision. No runtime dependencies; commercial branch only.
+- Admission does not cancel a command already handed to the canonical engine. TLS, device scopes, real engine integration, mobile UI and physical LAN acceptance remain open.
