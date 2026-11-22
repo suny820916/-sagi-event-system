@@ -39,9 +39,9 @@ powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -Command ^
  "[IO.File]::WriteAllText($env:SAGI_FB_CONTROL,$m.Groups[2].Value,$utf);" ^
  "[IO.File]::WriteAllText($env:SAGI_FB_OUTPUT,$m.Groups[3].Value,$utf);" ^
  "Copy-Item $env:SAGI_FB_BRIDGE $env:SAGI_BRIDGE -Force;" ^
- "$controlOk=$false;if(Test-Path $env:SAGI_CONTROL){try{$t=[IO.File]::ReadAllText($env:SAGI_CONTROL,[Text.Encoding]::UTF8);$controlOk=($t.Length -gt 100000 -and $t -match '<!doctype html>' -and $t -match 'SAGI432_SIGNATURE_RC3' -and $t -match 'SAGISignatureCore' -and $t -match 'mdNextEventIdentity' -and $t -match 'LIVE FLOW' -and $t -match 'instantReplayGenerate')}catch{}};" ^
+ "$controlOk=$false;if(Test-Path $env:SAGI_CONTROL){try{$t=[IO.File]::ReadAllText($env:SAGI_CONTROL,[Text.Encoding]::UTF8);$controlOk=($t.Length -gt 100000 -and $t -match '<!doctype html>' -and $t -match 'SAGI433_PENALTY_SSOT_RC1' -and $t -match 'SAGISignatureCore' -and $t -match 'mdNextEventIdentity' -and $t -match 'mdPenaltyCompatView' -and $t -match 'mdSimplePenaltyKick' -and $t -match 'LIVE FLOW' -and $t -match 'instantReplayGenerate')}catch{}};" ^
  "if(-not $controlOk){Copy-Item $env:SAGI_FB_CONTROL $env:SAGI_CONTROL -Force;Write-Host '[REPAIR] V4.33 PENALTY SSOT RC Control installed over stale cache.' -ForegroundColor Yellow}else{Write-Host '[SAFE] V4.33 PENALTY SSOT RC Control cache verified.' -ForegroundColor Green};" ^
- "$outputOk=$false;if(Test-Path $env:SAGI_OUTPUT){try{$t=[IO.File]::ReadAllText($env:SAGI_OUTPUT,[Text.Encoding]::UTF8);$outputOk=($t.Length -gt 50000 -and $t -match '<!doctype html>' -and $t -match 'SAGI432_SIGNATURE_RC3' -and $t -match 'SAGISignatureCore' -and $t -match 'introStateAllowed' -and $t -match 'sagiBrandA' -and $t -match 'lastRenderedSignatureEventKey')}catch{}};" ^
+ "$outputOk=$false;if(Test-Path $env:SAGI_OUTPUT){try{$t=[IO.File]::ReadAllText($env:SAGI_OUTPUT,[Text.Encoding]::UTF8);$outputOk=($t.Length -gt 50000 -and $t -match '<!doctype html>' -and $t -match 'SAGI433_PENALTY_SSOT_RC1' -and $t -match 'SAGISignatureCore' -and $t -match 'introStateAllowed' -and $t -match 'sagiBrandA' -and $t -match 'lastRenderedSignatureEventKey' -and $t -match 'gfxPenaltyView')}catch{}};" ^
  "if(-not $outputOk){Copy-Item $env:SAGI_FB_OUTPUT $env:SAGI_OUTPUT -Force;Write-Host '[REPAIR] V4.33 PENALTY SSOT RC vMix output installed over stale cache.' -ForegroundColor Yellow}else{Write-Host '[SAFE] V4.33 PENALTY SSOT RC vMix output cache verified.' -ForegroundColor Green};"
 
 if errorlevel 1 (
@@ -144,8 +144,8 @@ function Update-SagiLan {
     $outputText = [Text.Encoding]::UTF8.GetString([IO.File]::ReadAllBytes($outputDownload))
     if ($controlText -notmatch "<!doctype html>") { throw "Control validation failed" }
     if ($outputText -notmatch "<!doctype html>") { throw "Graphics validation failed" }
-    if ($controlText -notmatch "SAGI LIVE MATCH DIRECTOR" -or $controlText -notmatch "SAGI432_SIGNATURE_RC3" -or $controlText -notmatch "mdNextEventIdentity") { throw "Remote control is older than V4.32 SIGNATURE RC; local RC kept" }
-    if ($outputText -notmatch "SAGI432_SIGNATURE_RC3" -or $outputText -notmatch "SAGISignatureCore" -or $outputText -notmatch "lastRenderedSignatureEventKey") { throw "Remote vMix output is older than V4.32 SIGNATURE RC; local RC kept" }
+    if ($controlText -notmatch "SAGI LIVE MATCH DIRECTOR" -or $controlText -notmatch "SAGI433_PENALTY_SSOT_RC1" -or $controlText -notmatch "mdNextEventIdentity" -or $controlText -notmatch "mdPenaltyCompatView") { throw "Remote control is older than V4.32 SIGNATURE RC; local RC kept" }
+    if ($outputText -notmatch "SAGI433_PENALTY_SSOT_RC1" -or $outputText -notmatch "SAGISignatureCore" -or $outputText -notmatch "lastRenderedSignatureEventKey" -or $outputText -notmatch "gfxPenaltyView") { throw "Remote vMix output is older than V4.32 SIGNATURE RC; local RC kept" }
 
     Copy-Item $ControlCache $ControlBackup -Force
     Copy-Item $OutputCache $OutputBackup -Force
