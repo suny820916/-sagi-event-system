@@ -20,9 +20,10 @@ function clearPending() {
 }
 function matchesFixture() { return !!state && !!pending && state.fixtureId === pending.fixtureId; }
 let lastSync = 0;
+function fresh() { const age = Date.now() - lastSync; return !!state && age >= 0 && age <= 5000; }
 function controls() {
-  el('home').disabled = el('away').disabled = !storageReady || !token || !state || Date.now() - lastSync > 5000 || busy || !!pending;
-  el('retry').disabled = !storageReady || !token || !matchesFixture() || busy;
+  el('home').disabled = el('away').disabled = !storageReady || !token || !fresh() || busy || !!pending;
+  el('retry').disabled = !storageReady || !token || !matchesFixture() || !fresh() || busy;
   el('pair').disabled = busy;
   el('refresh').disabled = busy;
 }
@@ -40,7 +41,7 @@ async function sync() {
   state = null;
   const data = await api('state');
   state = data.state;
-  if (!Number.isSafeInteger(state?.revision) || typeof state.fixtureId !== 'string' || !state.fixtureId) { state = null; throw new Error('INVALID_STATE'); }
+  if (!Number.isSafeInteger(state?.revision) || state.revision < 0 || !Number.isSafeInteger(state.homeScore) || state.homeScore < 0 || !Number.isSafeInteger(state.awayScore) || state.awayScore < 0 || typeof state.fixtureId !== 'string' || !state.fixtureId) { state = null; throw new Error('INVALID_STATE'); }
   lastSync = Date.now();
   el('score').textContent = state.homeScore + ' : ' + state.awayScore;
 }
@@ -58,7 +59,7 @@ el('pair').onclick = () => run(async () => {
 });
 el('refresh').onclick = () => run(async () => { await sync(); el('status').textContent = pending ? '仍有待确认指令' : '已同步'; });
 async function send() {
-  if (!storageReady || !matchesFixture()) throw new Error('FIXTURE_MISMATCH');
+  if (!storageReady || !matchesFixture() || !fresh()) throw new Error('FIXTURE_MISMATCH');
   try { await api('command', pending); }
   catch(e) {
     if (e.status === 409 || e.status === 400 || e.status === 403) {
@@ -71,7 +72,7 @@ async function send() {
   clearPending(); await sync(); el('status').textContent = '已确认';
 }
 function goal(side) {
-  if (!storageReady || !token || !state || Date.now() - lastSync > 5000 || pending || busy) return;
+  if (!storageReady || !token || !fresh() || pending || busy) return;
   const bytes = new Uint8Array(16); crypto.getRandomValues(bytes);
   pending = {commandId:Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join(''), expectedRevision:state.revision,fixtureId:state.fixtureId,type:'GOAL',side};
   try { sessionStorage.setItem(pendingKey, JSON.stringify(pending)); }
@@ -81,6 +82,7 @@ function goal(side) {
 el('home').onclick = () => goal('HOME');
 el('away').onclick = () => goal('AWAY');
 el('retry').onclick = () => run(send);
+window.addEventListener('pageshow', () => { lastSync = 0; controls(); });
 window.addEventListener('beforeunload', e => { if(pending){e.preventDefault();e.returnValue='';} });
 if (!storageReady) el('status').textContent = '无法恢复本地指令，已禁止加分';
 else if (pending) el('status').textContent = '存在待确认指令，请重新配对';
