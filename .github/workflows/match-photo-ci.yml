@@ -2,9 +2,13 @@ name: SAGI MATCH PHOTO CI
 on:
   push:
     branches: [match-photo-v1]
-    paths: ['match-photo/**', '.github/workflows/match-photo-ci.yml']
+    paths:
+      - 'match-photo/**'
+      - '.github/workflows/match-photo-ci.yml'
+      - '.github/workflows/match-photo-preview-deploy.yml'
   pull_request:
     paths: ['match-photo/**']
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -20,3 +24,127 @@ jobs:
       - run: npm test
       - run: node --check server.js
       - run: node --check public/app.js
+
+  deploy-preview:
+    if: github.event_name == 'push'
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require Render API key
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+        run: |
+          if [ -z "$RENDER_API_KEY" ]; then
+            echo "::error::RENDER_API_KEY is not configured."
+            exit 1
+          fi
+
+      - name: Create or redeploy free Render preview
+        id: render
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          python - <<'PY'
+          import json, os, urllib.request, urllib.parse, urllib.error
+
+          api="https://api.render.com/v1"
+          headers={
+            "Authorization":"Bearer "+os.environ["RENDER_API_KEY"],
+            "Accept":"application/json",
+            "Content-Type":"application/json",
+          }
+          def call(method,path,body=None):
+            req=urllib.request.Request(api+path,method=method,headers=headers)
+            if body is not None:
+              req.data=json.dumps(body).encode()
+            try:
+              with urllib.request.urlopen(req,timeout=30) as r:
+                raw=r.read().decode()
+                return r.status,(json.loads(raw) if raw else None)
+            except urllib.error.HTTPError as e:
+              raw=e.read().decode()
+              print(f"Render error {e.code} on {method} {path}: {raw}")
+              raise
+
+          name="sagi-match-photo-preview"
+          _, rows=call("GET","/services?name="+urllib.parse.quote(name)+"&limit=20")
+          service=None
+          for row in rows or []:
+            s=row.get("service",row)
+            if s.get("name")==name:
+              service=s
+              break
+
+          if service is None:
+            _, owners=call("GET","/owners?limit=20")
+            if not owners:
+              raise RuntimeError("Render API key has no workspace")
+            owner=(owners[0].get("owner") or owners[0])
+            payload={
+              "type":"web_service",
+              "name":name,
+              "ownerId":owner["id"],
+              "repo":"https://github.com/suny820916/-sagi-event-system",
+              "branch":"match-photo-v1",
+              "rootDir":"match-photo",
+              "autoDeployTrigger":"checksPass",
+              "envVars":[
+                {"key":"NODE_VERSION","value":"20.18.0"},
+                {"key":"DATA_DIR","value":"/tmp/sagi-match-photo"},
+                {"key":"PAYMENT_MODE","value":"mock"},
+                {"key":"PUBLIC_TITLE","value":"SAGI MATCH PHOTO · 总决赛预览"},
+                {"key":"ADMIN_KEY","value":"SAGI-PHOTO-PREVIEW-2026"}
+              ],
+              "serviceDetails":{
+                "runtime":"node",
+                "region":"singapore",
+                "plan":"free",
+                "buildCommand":"npm install",
+                "startCommand":"npm start",
+                "healthCheckPath":"/api/health"
+              }
+            }
+            _, created=call("POST","/services",payload)
+            service=created.get("service",created)
+            print("Created Render preview service",service.get("id"))
+          else:
+            sid=service["id"]
+            print("Redeploying existing Render preview service",sid)
+            call("POST",f"/services/{sid}/deploys",{
+              "commitId":os.environ["COMMIT_SHA"],
+              "clearCache":"do_not_clear"
+            })
+
+          url=((service.get("serviceDetails") or {}).get("url")
+              or ("https://"+service.get("slug","")+".onrender.com" if service.get("slug") else ""))
+          print("PREVIEW_URL",url)
+          with open(os.environ["GITHUB_OUTPUT"],"a") as f:
+            f.write("url="+url+"\n")
+          PY
+
+      - name: Verify preview health
+        env:
+          URL: ${{ steps.render.outputs.url }}
+        run: |
+          python - <<'PY'
+          import json,os,time,urllib.request
+          base=os.environ["URL"].rstrip("/")
+          if not base:
+            raise SystemExit("Missing Render preview URL")
+          url=base+"/api/health"
+          last=""
+          for i in range(45):
+            try:
+              with urllib.request.urlopen(url,timeout=20) as r:
+                data=json.loads(r.read().decode())
+              print("health",data)
+              if data.get("ok") and data.get("service")=="SAGI MATCH PHOTO":
+                print("PREVIEW_READY",base)
+                raise SystemExit(0)
+            except Exception as e:
+              last=str(e)
+              print(f"check {i+1}/45 {e}")
+            time.sleep(10)
+          raise SystemExit("Preview health check failed: "+last)
+          PY
