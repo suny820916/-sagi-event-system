@@ -327,6 +327,7 @@ export function consistencyView(stateLike) {
       home: s.penalties.home,
       away: s.penalties.away,
       historyCount: s.penalties.history.length,
+      history: s.penalties.history.map(({attemptId, side, outcome}) => ({attemptId, side, outcome})),
     },
   });
 }
