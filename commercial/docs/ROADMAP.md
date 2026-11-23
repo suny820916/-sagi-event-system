@@ -501,3 +501,8 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Extended actual HTTP gateway/engine integration test with stale attempt rejection, missed-attempt undo, full engine/gateway shutdown and re-pair, same-ID deduplication, scored-attempt undo and second restart. Assert authoritative penalty history and regular score separately (2a04666).
 - Reviewed gateway allowlist, bridge error mapping and engine invalid-command mapping against the test. Runtime execution and push CI remain unverified in this run; no claim of restart certification. No dependencies or stable branch changes.
 - Next: execute integration matrix; verify desktop/vMix consumers use authoritative history after compensating events, not incremental score replay.
+
+## 2026-11-23 — Penalty state consistency and integration CI
+- Include ordered attempt identity, side and outcome in consistencyView, rather than only history count (d3358be). Equal totals/counts no longer mask divergent dots. Added regression (e0ac499); executed fetched core and regression in isolated JavaScript evaluator: PASS, including undo cases. This is not Node HTTP or physical three-device evidence.
+- Added actual engine/LAN restart regression invocation to Windows/Linux penalty CI (07cfe44). Push CI result remains unverified. No new dependencies; commercial branch only.
+- Next: verify CI, locate desktop/vMix state consumers and connect authoritative history rendering; fingerprint is not a deployed sync mechanism. Physical LAN and vMix acceptance remain open.
