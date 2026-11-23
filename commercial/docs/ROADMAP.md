@@ -558,3 +558,9 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Added real HTTP gateway → canonical Local Engine → durable store assertion for a reused penalty command ID with changed outcome after restart (`commercial/lan/engine-lan-selftest.mjs`, commit `68e506f`). Expected response: HTTP 409 `COMMAND_ID_CONFLICT`; state revision and penalty history must remain unchanged.
 - This specifically closes a *test coverage gap*: earlier gateway conflict tests used a fake callback, and existing real-engine tests only checked identical retries. It is not evidence of a passing runtime test.
 - **Verification pending:** execute Node integration test and Windows/Linux CI; check historical journal migration without fingerprints, vMix readback, Safari LAN pairing, power-loss recovery, and transport security before commercial release.
+
+## 2026-11-23 — LAN state-read revocation boundary
+- Rechecked paired-session authorization after asynchronous `/api/v1/lan/state` retrieval; a token revoked while the backend is waiting must receive HTTP 401 instead of the private match state.
+- Added deterministic deferred-read regression test `commercial/lan/lan-state-revocation-selftest.mjs` and wired it into Windows/Linux LAN CI.
+- Commits: `5efdaa7`, `2957983`, `a391103` (source, regression, CI).
+- **Verification:** GitHub writes confirmed; Node execution and Actions PASS are not confirmed. This closes only one revocation race. Plaintext LAN bearer transport, real Safari/vMix integration, operator approval UI, Windows endurance, crash recovery and full dependency-license review remain release blockers.
