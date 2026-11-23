@@ -1,10 +1,12 @@
-import { createInitialMatchState, applyCommand, hydrateMatchState } from "./match-core.mjs";
+import { createInitialMatchState, applyCommand, hydrateMatchState, consistencyView } from "./match-core.mjs";
 
 let state=createInitialMatchState({fixtureId:"T",home:"H",away:"A"});
 const run=(type,commandId,extra={})=>{let r=applyCommand(state,{type,commandId,...extra});state=r.state;return r};
 const ok=(x)=>{if(!x)throw Error("assertion")};
 const reject=(f)=>{let failed=false;try{f()}catch{failed=true}ok(failed)};
 run("START_PENALTIES","start");run("PENALTY_ATTEMPT","a",{side:"HOME",outcome:"SCORED"});run("PENALTY_ATTEMPT","b",{side:"AWAY",outcome:"MISSED"});
+const divergent=hydrateMatchState(state); divergent.penalties.history.reverse(); ok(consistencyView(divergent)!==consistencyView(state));
+const wrongOutcome=hydrateMatchState(state); wrongOutcome.penalties.history[0].outcome="MISSED"; ok(consistencyView(wrongOutcome)!==consistencyView(state));
 let [first,last]=state.penalties.history;reject(()=>run("UNDO_PENALTY_ATTEMPT","wrong",{attemptId:first.attemptId}));
 run("UNDO_PENALTY_ATTEMPT","u1",{attemptId:last.attemptId});ok(state.penalties.away===0&&state.penalties.history.length===1);
 state=hydrateMatchState(JSON.parse(JSON.stringify(state)));ok(run("UNDO_PENALTY_ATTEMPT","u1",{attemptId:last.attemptId}).duplicate);
