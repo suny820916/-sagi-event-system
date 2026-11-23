@@ -119,6 +119,16 @@ try {
   assert.equal(retryExtra.status, 200);
   assert.equal((await retryExtra.json()).result.duplicate, true);
   assert.equal((await (await request('state')).json()).state.revision, 24);
+  // A reused command ID with a changed payload must be rejected by the REAL
+  // persisted engine after restart, not only by the gateway's fake callback.
+  const conflictingRetry = await penalty('extra_pen_0000', 10, 'PENALTY_ATTEMPT', {
+    side: extra[0].side, outcome: extra[0].outcome === 'SCORED' ? 'MISSED' : 'SCORED',
+  });
+  assert.equal(conflictingRetry.status, 409, 'changed payload with same command ID');
+  assert.equal((await conflictingRetry.json()).error, 'COMMAND_ID_CONFLICT');
+  const afterConflict = (await (await request('state')).json()).state;
+  assert.equal(afterConflict.revision, 24);
+  assert.deepEqual(afterConflict.penalties.history.map(({ side, outcome }) => ({ side, outcome })), extra);
   assert.equal((await penalty('pen_finish001', 24, 'FINISH_PENALTIES')).status, 200);
   await stop();
   await start();
