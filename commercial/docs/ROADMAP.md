@@ -547,3 +547,9 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Added reducer regression covering hydration/restart-like serialization, legitimate retry, conflicting HOME/AWAY goal, and unchanged score.
 - Commits: `166a697`, `7954cd3`. GitHub accepted the source/test changes; Node execution, CI and Windows hardware validation have **not** been confirmed in this run.
 - **Migration caveat:** older persisted processed IDs lack fingerprints and retain legacy duplicate handling; do not claim retrospective conflict detection. Fingerprint storage grows with command count, and client error-code mapping plus durability/endurance tests are still required. No new third-party dependencies.
+
+## 2026-11-23 — LAN duplicate-command conflict HTTP mapping
+- Map reducer `COMMAND_ID_CONFLICT` to HTTP 409 with a stable error code, instead of generic 503. This distinguishes a reused command ID with changed payload from a transient gateway outage and prevents clients from blindly retrying a semantically conflicting command.
+- Extended LAN command regression to verify 409 and no second command dispatch; this uses a simulated command handler, not the production Local Engine end-to-end.
+- Commits: 1cb48b8, bc0270e. Node tests and GitHub CI not confirmed in this run: container DNS cannot resolve github.com. No main/V4.40 modifications or new dependencies.
+- Open: verify CI and real engine HTTP conflict behavior; normalize error propagation from Local Engine; real iPhone Safari/vMix LAN tests, TLS/credential exposure, crash recovery, and commercial license audit remain release blockers.
