@@ -209,6 +209,9 @@ export function applyCommand(currentState, command) {
   let event = null;
 
   if (EVENT_COMMANDS.has(type)) {
+    // A delayed mobile command must never alter match results after finalization.
+    // MVP remains available for post-match selection; other match events fail closed.
+    if (state.period === "FT" && type !== "MVP") throw new Error("MATCH_ALREADY_FINISHED");
     event = applyEventCommand(state, command, type);
   } else if (type === "SCORE_ADJUST") {
     const side = assertSide(command.side);
