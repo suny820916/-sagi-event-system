@@ -541,3 +541,9 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Added regression assertions for rejected mutations, unchanged consistency view, delayed FINISH_PENALTIES retry, and permitted scoreboard presentation.
 - Commits: 23443bf, bbcb796. **Verification:** GitHub accepted source and test updates; Node/CI and real Windows/vMix tests have not been confirmed in this run. This is not a production-certified result lock.
 - **Remaining risks:** command-ID reuse with different payloads, administrator-authorized post-match corrections with audit trail, durable restart/physical power loss, full LAN/vMix state reconciliation, and license/installer validation.
+
+## 2026-11-23 — Conflicting command-ID replay guard
+- Added a persisted semantic fingerprint for newly accepted commands. A retry with the same ID and equivalent payload remains idempotent even if `createdAt` or `expectedRevision` changes; reusing that ID with a different payload now throws `COMMAND_ID_CONFLICT` rather than silently acknowledging the wrong operation.
+- Added reducer regression covering hydration/restart-like serialization, legitimate retry, conflicting HOME/AWAY goal, and unchanged score.
+- Commits: `166a697`, `7954cd3`. GitHub accepted the source/test changes; Node execution, CI and Windows hardware validation have **not** been confirmed in this run.
+- **Migration caveat:** older persisted processed IDs lack fingerprints and retain legacy duplicate handling; do not claim retrospective conflict detection. Fingerprint storage grows with command count, and client error-code mapping plus durability/endurance tests are still required. No new third-party dependencies.
