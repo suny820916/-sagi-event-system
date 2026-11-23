@@ -553,3 +553,8 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Extended LAN command regression to verify 409 and no second command dispatch; this uses a simulated command handler, not the production Local Engine end-to-end.
 - Commits: 1cb48b8, bc0270e. Node tests and GitHub CI not confirmed in this run: container DNS cannot resolve github.com. No main/V4.40 modifications or new dependencies.
 - Open: verify CI and real engine HTTP conflict behavior; normalize error propagation from Local Engine; real iPhone Safari/vMix LAN tests, TLS/credential exposure, crash recovery, and commercial license audit remain release blockers.
+
+## 2026-11-23 — Real LAN engine command-ID payload conflict regression
+- Added real HTTP gateway → canonical Local Engine → durable store assertion for a reused penalty command ID with changed outcome after restart (`commercial/lan/engine-lan-selftest.mjs`, commit `68e506f`). Expected response: HTTP 409 `COMMAND_ID_CONFLICT`; state revision and penalty history must remain unchanged.
+- This specifically closes a *test coverage gap*: earlier gateway conflict tests used a fake callback, and existing real-engine tests only checked identical retries. It is not evidence of a passing runtime test.
+- **Verification pending:** execute Node integration test and Windows/Linux CI; check historical journal migration without fingerprints, vMix readback, Safari LAN pairing, power-loss recovery, and transport security before commercial release.
