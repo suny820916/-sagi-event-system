@@ -95,3 +95,37 @@ SAGI KIT 新增 `kit/photo-upload.html`，摄影师与管理员彻底分权。
 3. 摄影师打开 SAGI KIT → MATCH PHOTO → 摄影师上传。
 4. 每场结束按“场次 + 球队”上传一批。
 5. 上传完成后，买图页自动出现水印预览。
+
+
+## 正式服务器存储版
+生产服务器建议设置：
+
+```
+STORAGE_ROOT=/srv/sagi-photo
+MIN_FREE_GB=20
+```
+
+目录结构自动生成：
+
+```
+/srv/sagi-photo/
+  system/
+    db.json
+  tmp/
+  events/
+    <event-id>/
+      originals/
+      previews/
+```
+
+规则：
+- 高清原图只保存在 `originals`，没有公开静态地址。
+- 水印预览存放在 `previews`。
+- 每个赛事独立目录，方便迁移、归档和备份。
+- 摄影师上传先进入临时目录，处理完成后临时文件自动删除，避免大量照片常驻 Node 内存。
+- 上传前检查服务器磁盘空间；默认要求至少保留 20GB。
+- 空间低于安全线时返回 507 并停止写入，不会继续把服务器硬盘写满。
+- 管理端可调用 `/api/admin/storage` 查看服务器存储路径、总空间和剩余空间。
+- `DATA_DIR` 仍兼容旧部署，但新部署统一使用 `STORAGE_ROOT`。
+
+正式使用仍建议将整个 `STORAGE_ROOT` 做异盘或异地备份；同一块硬盘上的第二份副本不能替代真正备份。
