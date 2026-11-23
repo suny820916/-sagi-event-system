@@ -1,5 +1,5 @@
 // Experimental same-origin mobile console; no external assets or persistent tokens.
-export const mobileHtml = `<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SAGI 手机控制</title><h1>SAGI 手机控制</h1><p>实验版 · 仅限受信任局域网</p><label>配对码 <input id="code" inputmode="numeric" maxlength="6" autocomplete="off"></label><button id="pair">配对</button><p id="status" role="status">未配对</p><h2 id="score">— : —</h2><p id="clock">计时未同步</p><button id="clockStart" disabled>开始计时</button> <button id="clockPause" disabled>暂停计时</button><button id="home" disabled>主队进球</button> <button id="away" disabled>客队进球</button><p><label>球员号码 <input id="number" inputmode="numeric" maxlength="3"></label> <label>换上号码 <input id="onNumber" inputmode="numeric" maxlength="3"></label></p><button id="homeYellow" disabled>主队黄牌</button> <button id="awayYellow" disabled>客队黄牌</button> <button id="homeRed" disabled>主队红牌</button> <button id="awayRed" disabled>客队红牌</button> <button id="homeSub" disabled>主队换人</button> <button id="awaySub" disabled>客队换人</button><h2 id="penScore">点球未同步</h2><p id="penHome">主队：—</p><p id="penAway">客队：—</p><button id="homePenScore" disabled>主队罚进</button> <button id="homePenMiss" disabled>主队罚失</button> <button id="awayPenScore" disabled>客队罚进</button> <button id="awayPenMiss" disabled>客队罚失</button><p><button id="refresh">同步比分</button><button id="retry" disabled>重试原指令</button></p><script src="/mobile.js" defer></script></html>`;
+export const mobileHtml = `<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SAGI 手机控制</title><h1>SAGI 手机控制</h1><p>实验版 · 仅限受信任局域网</p><label>配对码 <input id="code" inputmode="numeric" maxlength="6" autocomplete="off"></label><button id="pair">配对</button><p id="status" role="status">未配对</p><h2 id="score">— : —</h2><p id="clock">计时未同步</p><button id="clockStart" disabled>开始计时</button> <button id="clockPause" disabled>暂停计时</button><button id="home" disabled>主队进球</button> <button id="away" disabled>客队进球</button><p><label>球员号码 <input id="number" inputmode="numeric" maxlength="3"></label> <label>换上号码 <input id="onNumber" inputmode="numeric" maxlength="3"></label></p><button id="homeYellow" disabled>主队黄牌</button> <button id="awayYellow" disabled>客队黄牌</button> <button id="homeRed" disabled>主队红牌</button> <button id="awayRed" disabled>客队红牌</button> <button id="homeSub" disabled>主队换人</button> <button id="awaySub" disabled>客队换人</button><h2 id="penScore">点球未同步</h2><p id="penHome">主队：—</p><p id="penAway">客队：—</p><button id="homePenScore" disabled>主队罚进</button> <button id="homePenMiss" disabled>主队罚失</button> <button id="awayPenScore" disabled>客队罚进</button> <button id="awayPenMiss" disabled>客队罚失</button><button id="penUndo" disabled>撤销最后一次罚球</button><p id="penUndoTarget"></p><p><button id="refresh">同步比分</button><button id="retry" disabled>重试原指令</button></p><script src="/mobile.js" defer></script></html>`;
 export const mobileJs = `'use strict';
 const el = id => document.getElementById(id);
 let token = '', state = null, pending = null, busy = false, storageReady = true;
@@ -8,6 +8,13 @@ function validNumber(value) { return typeof value === 'string' && /^[0-9]{1,3}$/
 const playing = ['1H','2H','ET1','ET2'];
 const penButtons = ['homePenScore','homePenMiss','awayPenScore','awayPenMiss'];
 function validPen(p) { return p && typeof p.started === 'boolean' && typeof p.finished === 'boolean' && Number.isSafeInteger(p.home) && p.home >= 0 && Number.isSafeInteger(p.away) && p.away >= 0; }
+function validAttemptId(id) { return typeof id === 'string' && id.length > 0 && id.length <= 512; }
+function undoTarget(p) {
+  if (!validPen(p) || !p.started || p.finished || !Array.isArray(p.history) || !p.history.length) return null;
+  if (!p.history.every(a => a && validAttemptId(a.attemptId) && ['HOME','AWAY'].includes(a.side) && ['SCORED','MISSED'].includes(a.outcome)) || new Set(p.history.map(a=>a.attemptId)).size !== p.history.length) return null;
+  if (!['HOME','AWAY'].every(side => p.history.filter(a=>a.side===side && a.outcome==='SCORED').length===p[side==='HOME'?'home':'away'])) return null;
+  return p.history[p.history.length-1];
+}
 function renderPenaltyHistory(p) {
   const valid = validPen(p) && p.started && Array.isArray(p.history) &&
     p.history.every(a => a && ['HOME','AWAY'].includes(a.side) && ['SCORED','MISSED'].includes(a.outcome)) &&
@@ -18,6 +25,7 @@ function renderPenaltyHistory(p) {
   }
 }
 function validIntent(c) {
+  if (c.type === 'UNDO_PENALTY_ATTEMPT') return validAttemptId(c.attemptId) && !('side' in c);
   if (c.type === 'PENALTY_ATTEMPT') return ['SCORED','MISSED'].includes(c.outcome);
   if (c.type === 'SET_CLOCK_RUNNING') return typeof c.running === 'boolean' && !('elapsedSeconds' in c) && !('side' in c);
   if (c.type === 'GOAL') return true;
@@ -32,7 +40,7 @@ try {
     pending = JSON.parse(raw);
     if (!pending || typeof pending.fixtureId !== 'string' || !pending.fixtureId ||
         !/^[a-f0-9]{32}$/.test(pending.commandId) || !validIntent(pending) ||
-        (pending.type !== 'SET_CLOCK_RUNNING' && !['HOME','AWAY'].includes(pending.side)) || !Number.isSafeInteger(pending.expectedRevision) || pending.expectedRevision < 0)
+        (!['SET_CLOCK_RUNNING','UNDO_PENALTY_ATTEMPT'].includes(pending.type) && !['HOME','AWAY'].includes(pending.side)) || !Number.isSafeInteger(pending.expectedRevision) || pending.expectedRevision < 0)
       throw new Error('INVALID_PENDING');
   }
 } catch { storageReady = false; }
@@ -46,6 +54,9 @@ function fresh() { const age = Date.now() - lastSync; return !!state && age >= 0
 function controls() {
   for (const id of eventButtons) el(id).disabled = !storageReady || !token || !fresh() || busy || !!pending;
   for (const id of penButtons) el(id).disabled = !storageReady || !token || !fresh() || busy || !!pending || state?.period !== 'PEN' || !validPen(state?.penalties) || !state.penalties.started || state.penalties.finished;
+  const target = undoTarget(state?.penalties);
+  el('penUndo').disabled = !storageReady || !token || !fresh() || busy || !!pending || state?.period !== 'PEN' || !target;
+  el('penUndoTarget').textContent = fresh() && state?.period === 'PEN' && target ? '最后一次：'+(target.side==='HOME'?'主队':'客队')+' '+(target.outcome==='SCORED'?'罚进':'罚失') : '';
   const clockReady = storageReady && token && fresh() && !busy && !pending && !!state.clock && typeof state.clock.running === 'boolean' && Number.isSafeInteger(state.clock.elapsedSeconds) && state.clock.elapsedSeconds >= 0;
   el('clockStart').disabled = !clockReady || !playing.includes(state?.period) || state?.clock?.running;
   el('clockPause').disabled = !clockReady || !state?.clock?.running;
@@ -129,6 +140,11 @@ el('clockPause').onclick = () => { if (!el('clockPause').disabled) queueIntent({
 for (const [id,side,outcome] of [['homePenScore','HOME','SCORED'],['homePenMiss','HOME','MISSED'],['awayPenScore','AWAY','SCORED'],['awayPenMiss','AWAY','MISSED']]) {
   el(id).onclick = () => { if (!el(id).disabled) queueIntent({type:'PENALTY_ATTEMPT',side,outcome}); };
 }
+el('penUndo').onclick = () => {
+  if (el('penUndo').disabled || !fresh()) return;
+  const target = undoTarget(state?.penalties);
+  if (target && state.period === 'PEN') queueIntent({type:'UNDO_PENALTY_ATTEMPT',attemptId:target.attemptId});
+};
 el('retry').onclick = () => run(send);
 window.addEventListener('pageshow', () => { lastSync = 0; controls(); });
 window.addEventListener('beforeunload', e => { if(pending){e.preventDefault();e.returnValue='';} });
