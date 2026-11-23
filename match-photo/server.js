@@ -16,9 +16,9 @@ const ORIGINAL_DIR = path.join(DATA_DIR, 'originals');
 const PREVIEW_DIR = path.join(DATA_DIR, 'previews');
 const DB_FILE = path.join(DATA_DIR, 'db.json');
 const ADMIN_KEY = process.env.ADMIN_KEY || 'change-this-before-event';
-const PAYMENT_MODE = process.env.PAYMENT_MODE || 'manual';
-const PAYMENT_QR_URL = process.env.PAYMENT_QR_URL || '';
 const PUBLIC_TITLE = process.env.PUBLIC_TITLE || 'SAGI MATCH PHOTO';
+const ALLOWED_ORIGINS = String(process.env.ALLOWED_ORIGINS || 'https://sagisports.cn,https://www.sagisports.cn,https://suny820916.github.io')
+  .split(',').map(x => x.trim()).filter(Boolean);
 
 for (const dir of [DATA_DIR, ORIGINAL_DIR, PREVIEW_DIR]) fs.mkdirSync(dir, { recursive: true });
 const store = new JsonStore(DB_FILE);
@@ -26,6 +26,17 @@ const store = new JsonStore(DB_FILE);
 app.disable('x-powered-by');
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
+app.use((req,res,next)=>{
+  const origin=req.get('origin');
+  if(origin && ALLOWED_ORIGINS.includes(origin)){
+    res.set('Access-Control-Allow-Origin',origin);
+    res.set('Vary','Origin');
+    res.set('Access-Control-Allow-Headers','Content-Type, X-SAGI-ADMIN-KEY');
+    res.set('Access-Control-Allow-Methods','GET,POST,OPTIONS');
+  }
+  if(req.method==='OPTIONS') return res.sendStatus(204);
+  next();
+});
 app.use(express.static(path.join(__dirname, 'public'), { maxAge: '5m' }));
 
 function id(prefix='id') {
@@ -39,6 +50,19 @@ function admin(req, res, next) {
 function safe(v, max=80) {
   return String(v || '').trim().slice(0, max);
 }
+function normalizeCode(v){
+  return String(v||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+}
+function makeDownloadCode(data){
+  const alphabet='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  for(let attempt=0;attempt<50;attempt++){
+    let raw='';
+    for(let i=0;i<10;i++) raw+=alphabet[crypto.randomInt(0,alphabet.length)];
+    const code=raw.slice(0,5)+'-'+raw.slice(5);
+    if(!data.orders.some(o=>normalizeCode(o.downloadCode)===normalizeCode(code))) return code;
+  }
+  throw new Error('无法生成唯一下载码');
+}
 function photoById(data, photoId) {
   return data.photos.find(p => p.id === photoId);
 }
@@ -47,6 +71,20 @@ function publicPhoto(p) {
     id: p.id, eventId: p.eventId, team: p.team, match: p.match,
     jersey: p.jersey, player: p.player, createdAt: p.createdAt,
     previewUrl: '/media/preview/' + p.id
+  };
+}
+function publicOrder(o){
+  return {
+    id:o.id,
+    photoIds:o.photoIds,
+    status:o.status,
+    product:o.product,
+    productName:o.productName,
+    amountFen:o.amountFen,
+    nickname:o.nickname,
+    contact:o.contact,
+    createdAt:o.createdAt,
+    codeIssuedAt:o.codeIssuedAt || null
   };
 }
 
@@ -75,11 +113,10 @@ async function makePreview(buffer, target, label) {
     .toFile(target);
 }
 
-app.get('/api/health', (req,res) => res.json({ ok:true, service:'SAGI MATCH PHOTO', version:'1.0.0' }));
+app.get('/api/health', (req,res) => res.json({ ok:true, service:'SAGI MATCH PHOTO', version:'1.1.0-code' }));
 app.get('/api/config', (req,res) => res.json({
   title: PUBLIC_TITLE,
-  paymentMode: PAYMENT_MODE,
-  paymentQrUrl: PAYMENT_QR_URL,
+  checkoutMode: 'wechat-offline-download-code',
   prices: { single:5, five:15, personal:29, team:99 }
 }));
 
@@ -157,24 +194,20 @@ app.post('/api/orders', (req,res) => {
   if (valid.length !== photoIds.length) return res.status(400).json({ error:'部分照片不存在，请刷新重选' });
   const pricing = quote(valid.length);
   const order = {
-    id:id('ord'), photoIds:valid, status: PAYMENT_MODE === 'mock' ? 'paid' : 'pending',
+    id:id('ord'), photoIds:valid, status:'awaiting_wechat',
     product:pricing.code, productName:pricing.name, amountFen:pricing.priceFen,
     nickname:safe(req.body.nickname,40), contact:safe(req.body.contact,80),
-    createdAt:new Date().toISOString(), paidAt:null, downloadToken:null
+    createdAt:new Date().toISOString(), codeIssuedAt:null, downloadCode:null
   };
-  if (order.status === 'paid') {
-    order.paidAt = new Date().toISOString();
-    order.downloadToken = crypto.randomBytes(18).toString('hex');
-  }
   store.update(d => { d.orders.push(order); return d; });
-  res.status(201).json(order);
+  res.status(201).json(publicOrder(order));
 });
 
 app.get('/api/orders/:id', (req,res) => {
   const data = store.read();
   const o = data.orders.find(x => x.id === req.params.id);
   if (!o) return res.sendStatus(404);
-  res.json(o);
+  res.json(publicOrder(o));
 });
 
 app.get('/api/admin/orders', admin, (req,res) => {
@@ -182,34 +215,61 @@ app.get('/api/admin/orders', admin, (req,res) => {
   res.json(data.orders.slice().reverse());
 });
 
-app.post('/api/admin/orders/:id/paid', admin, (req,res) => {
+app.post('/api/admin/orders/:id/code', admin, (req,res) => {
   let found;
   store.update(d => {
     const o = d.orders.find(x => x.id === req.params.id);
     if (!o) return d;
-    o.status='paid';
-    o.paidAt=new Date().toISOString();
-    o.downloadToken=o.downloadToken || crypto.randomBytes(18).toString('hex');
+    if(!o.downloadCode) o.downloadCode=makeDownloadCode(d);
+    o.status='code_issued';
+    o.codeIssuedAt=o.codeIssuedAt || new Date().toISOString();
     found={...o};
     return d;
   });
   if (!found) return res.sendStatus(404);
-  res.json(found);
+  res.json({
+    id:found.id,
+    status:found.status,
+    amountFen:found.amountFen,
+    productName:found.productName,
+    downloadCode:found.downloadCode,
+    codeIssuedAt:found.codeIssuedAt
+  });
 });
 
-app.get('/api/download/:orderId/:token/:photoId', (req,res) => {
-  const data = store.read();
-  const o = data.orders.find(x => x.id === req.params.orderId);
-  if (!o || o.status !== 'paid' || o.downloadToken !== req.params.token || !o.photoIds.includes(req.params.photoId)) {
-    return res.status(403).json({ error:'下载权限无效' });
+app.post('/api/redeem', (req,res) => {
+  const code=normalizeCode(req.body.code);
+  if(code.length<8) return res.status(400).json({ error:'请输入正确的下载码' });
+  const data=store.read();
+  const o=data.orders.find(x => x.status==='code_issued' && normalizeCode(x.downloadCode)===code);
+  if(!o) return res.status(404).json({ error:'下载码无效，请核对后重试' });
+  res.json({
+    orderId:o.id,
+    productName:o.productName,
+    count:o.photoIds.length,
+    photos:o.photoIds.map((pid,i)=>({
+      id:pid,
+      name:'高清原图 '+(i+1),
+      downloadUrl:'/api/download/'+encodeURIComponent(o.downloadCode)+'/'+pid
+    }))
+  });
+});
+
+app.get('/api/download/:code/:photoId', (req,res) => {
+  const code=normalizeCode(req.params.code);
+  const data=store.read();
+  const o=data.orders.find(x => x.status==='code_issued' && normalizeCode(x.downloadCode)===code);
+  if(!o || !o.photoIds.includes(req.params.photoId)) {
+    return res.status(403).json({ error:'下载码无效或无权下载这张照片' });
   }
-  const p = photoById(data, req.params.photoId);
-  if (!p || !fs.existsSync(p.originalPath)) return res.sendStatus(404);
-  res.download(p.originalPath, 'SAGI_' + p.id + '.jpg');
+  const p=photoById(data,req.params.photoId);
+  if(!p || !fs.existsSync(p.originalPath)) return res.sendStatus(404);
+  res.set('Cache-Control','private, no-store');
+  res.download(p.originalPath,'SAGI_'+p.id+'.jpg');
 });
 
 app.post('/api/find-me', upload.single('selfie'), (req,res) => {
-  res.status(501).json({ error:'AI找我将在 V1.1 接入 Face Worker；本次总决赛先使用球队/号码检索。' });
+  res.status(501).json({ error:'AI找我将在 V1.1 后续版本接入；本次总决赛先使用球队/号码检索。' });
 });
 
 app.get('*', (req,res) => res.sendFile(path.join(__dirname,'public','index.html')));
