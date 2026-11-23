@@ -11,4 +11,10 @@ let [first,last]=state.penalties.history;reject(()=>run("UNDO_PENALTY_ATTEMPT","
 run("UNDO_PENALTY_ATTEMPT","u1",{attemptId:last.attemptId});ok(state.penalties.away===0&&state.penalties.history.length===1);
 state=hydrateMatchState(JSON.parse(JSON.stringify(state)));ok(run("UNDO_PENALTY_ATTEMPT","u1",{attemptId:last.attemptId}).duplicate);
 run("UNDO_PENALTY_ATTEMPT","u2",{attemptId:first.attemptId});ok(state.penalties.home===0&&state.homeScore===0&&state.eventLog.length===4&&state.penalties.history.length===0);
-reject(()=>run("UNDO_PENALTY_ATTEMPT","again",{attemptId:first.attemptId}));run("FINISH_PENALTIES","finish");reject(()=>run("UNDO_PENALTY_ATTEMPT","late",{attemptId:first.attemptId}));console.log("penalty undo PASS");
+reject(()=>run("UNDO_PENALTY_ATTEMPT","again",{attemptId:first.attemptId}));run("FINISH_PENALTIES","finish");reject(()=>run("UNDO_PENALTY_ATTEMPT","late",{attemptId:first.attemptId}));const finishedRevision=state.revision;
+for(const type of ["GOAL","YELLOW","RED","SUB","HALF_TIME","FULL_TIME"]){
+  reject(()=>run(type,"late_"+type,{side:"HOME"}));
+  ok(state.revision===finishedRevision);
+}
+ok(run("MVP","post_match_mvp",{player:{id:"7",name:"球员",number:"7"}}).state.period==="FT");
+console.log("penalty undo PASS");
