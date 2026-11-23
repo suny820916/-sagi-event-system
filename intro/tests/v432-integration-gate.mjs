@@ -60,4 +60,16 @@ assert(bat.includes('"BrowserReload"'),'V4.32 BAT BrowserReload allowlist missin
 assert(bat.includes('"ReplayPlayLastEventToOutput"'),'V4.32 BAT replay latest-only allowlist missing');
 assert(bat.includes('activeProjectId'),'V4.32 BAT active project SSOT missing');
 assert(bat.includes('$candidate -le $PreferredPort'),'V4.32 BAT must lock preferred port / prevent silent 8101 fallback');
+
+// Preserve V4.32 RC7 Bridge-authoritative recovery in every later candidate.
+for(const token of [
+ "liveAuthority:'BRIDGE'",
+ 'STALE_QUEUED_FIXTURE_DROPPED',
+ '本次操作未提交 · 已恢复 Bridge 直播真源',
+ 'LAN_TIMEOUT', 'mdConsistencyBusySince', 'busyResets'
+]) assert(control.includes(token),'V4.32 RC7 Bridge recovery regression: '+token);
+assert(control.includes("return{ok:false,attempts:i+1,recovered:true,conflict:true}"),'Bridge 409 conflict must not be acknowledged as committed');
+assert(control.includes("async function mdScore(side,delta)")&&control.includes("const result=await publishMatchday(null);"),'score must await Bridge acknowledgement');
+assert(!control.includes("mdLastConsistencyState='LOCAL_REVISION_AHEAD'"),'per-device revision must not override Bridge');
+
 console.log('SAGI V4.32 FORWARD-COMPAT CERTIFICATION GATE PASS');
