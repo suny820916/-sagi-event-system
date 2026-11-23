@@ -318,6 +318,39 @@ try {
     releaseCommand();
     await new Promise(resolve => slow.server.close(resolve));
   }
+  // A rejected in-flight command must not reveal its revision after revocation.
+  let releaseFailure, failureStarted;
+  const failureGate = new Promise(resolve => { releaseFailure = resolve; });
+  const failureEntered = new Promise(resolve => { failureStarted = resolve; });
+  const rejecting = createLanGateway({
+    submitCommand: async () => {
+      failureStarted();
+      await failureGate;
+      const error = new Error('stale revision');
+      error.code = 'REVISION_CONFLICT';
+      error.revision = 12345;
+      throw error;
+    },
+  });
+  const rejectingAddress = await rejecting.listen();
+  try {
+    const code = rejecting.pairing.issue({ localOperatorApproved: true }).code;
+    const token = rejecting.pairing.redeem(code).token;
+    const pending = fetch(`http://127.0.0.1:${rejectingAddress.port}/api/v1/lan/command`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+      body: JSON.stringify({ commandId: 'pending_error_0001', expectedRevision: 0, type: 'GOAL', side: 'HOME' }),
+    });
+    await failureEntered;
+    rejecting.pairing.revoke(token);
+    releaseFailure();
+    const response = await pending;
+    assert.equal(response.status, 401);
+    assert.deepEqual(await response.json(), { error: 'UNAUTHORIZED' });
+  } finally {
+    releaseFailure();
+    await new Promise(resolve => rejecting.server.close(resolve));
+  }
   console.log('lan-command-selftest PASS');
 } finally {
   await new Promise(resolve => g.server.close(resolve));
