@@ -134,6 +134,10 @@ export function createLanGateway({
         const allowed = new Set(['GOAL', 'SCORE_ADJUST', 'YELLOW', 'RED', 'SUB', 'SET_CLOCK_RUNNING', 'SET_CLOCK', 'HALF_TIME', 'FULL_TIME', 'START_PENALTIES', 'PENALTY_ATTEMPT', 'UNDO_PENALTY_ATTEMPT', 'FINISH_PENALTIES', 'SET_PERIOD']);
         if (!allowed.has(body.type)) return reply(res, 403, { error: 'COMMAND_NOT_ALLOWED' });
         const result = await submitCommand(body);
+        // Revocation during an asynchronous command must not disclose the result.
+        // The command may already have committed: the client must resync after re-pairing,
+        // never issue a new command ID to guess whether it succeeded.
+        if (!pairing.verify(token)) return reply(res, 401, { error: 'UNAUTHORIZED' });
         return reply(res, 200, { result });
       } catch (err) {
         if (err.message === 'BODY_TOO_LARGE') return reply(res, 413, { error: 'BODY_TOO_LARGE' });
