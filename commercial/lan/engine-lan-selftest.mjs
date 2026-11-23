@@ -144,6 +144,14 @@ try {
     assert.equal(retry.status, 200, 'finalized retry ' + i);
     assert.equal((await retry.json()).result.duplicate, true, 'finalized duplicate ' + i);
   }
+  // Concurrent retries can arrive together after a mobile reconnect or gateway replay.
+  // They must all resolve to the original durable command without new events.
+  const concurrentRetries = await Promise.all(extra.map((attempt, i) =>
+    penalty('extra_pen_' + String(i).padStart(4, '0'), 10 + i, 'PENALTY_ATTEMPT', attempt)
+  ));
+  assert.ok(concurrentRetries.every(response => response.status === 200), 'concurrent finalized retry HTTP status');
+  const concurrentBodies = await Promise.all(concurrentRetries.map(response => response.json()));
+  assert.ok(concurrentBodies.every(body => body.result?.duplicate === true), 'concurrent finalized retry deduplication');
   const afterLateRetries = (await (await request('state')).json()).state;
   assert.equal(afterLateRetries.revision, finalRevision);
   assert.deepEqual(afterLateRetries.penalties.history.map(({ attemptId, side, outcome }) => ({ attemptId, side, outcome })), finalHistory);
