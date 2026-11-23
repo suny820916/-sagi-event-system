@@ -625,3 +625,8 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Opened issue #35 (`https://github.com/suny820916/-sagi-event-system/issues/35`) as the single release-blocking checklist for Windows + iPhone Safari + real vMix WAN-disconnected acceptance, including lost-response idempotency, restart, penalty shootout, actual on-air readback, soak and installer/rollback evidence.
 - Checked prior Actions runs `45255010106` and `45255010178`: both had failed Linux and Windows jobs; these are historical failures and do not establish current HEAD status. The commit-associated workflow query for `c26e02c` returned no PR-triggered runs, which is not evidence of a passing or absent push-triggered CI run.
 - No Node or hardware test was executed in this update. No release gate has been cleared. Commercial release remains **NO-GO** and main/V4.40 Stable must remain untouched.
+
+## 2026-11-24 — Release evidence syntax coverage expansion
+- Expanded `commercial/tools/collect-release-evidence.mjs` from 8 to 12 checks, adding `node --check` for the canonical LAN bridge, LAN pairing implementation, engine/LAN integration test and penalty-undo regression test.
+- Verified all four referenced files exist on `commercial-v1.0` via GitHub contents API. Commit: `2e2569b`.
+- **Verification boundary:** GitHub accepted the source commit; these 12 checks have **not** been executed in this run. A passing syntax check is not a passing integration or Windows/vMix test. Keep commercial release **NO-GO** until CI evidence and real offline hardware acceptance are available.
