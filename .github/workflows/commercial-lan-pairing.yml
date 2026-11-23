@@ -38,6 +38,8 @@ jobs:
       - run: node commercial/lan/lan-gateway-selftest.mjs
       - run: node --check commercial/lan/lan-command-selftest.mjs
       - run: node commercial/lan/lan-command-selftest.mjs
+      - run: node --check commercial/lan/lan-state-revocation-selftest.mjs
+      - run: node commercial/lan/lan-state-revocation-selftest.mjs
 
       - run: node --check commercial/lan/engine-lan-bridge.mjs
       - run: node commercial/lan/engine-lan-selftest.mjs
