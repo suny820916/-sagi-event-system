@@ -1517,6 +1517,14 @@ def relation_camera_pose(
 
         max_x = max(1.0, float(guard_eff.get("max_target_x", 12.0)))
         max_y = max(1.0, float(guard_eff.get("max_target_y", 18.0)))
+        # V5.2 camera composition repair: the former absolute Y clamp (13m
+        # for local shots) pulled the camera toward midfield even when the
+        # action/goal was at Y=35..52. This placed the tactical relationship
+        # at the bottom of the portrait frame and left a large empty top.
+        # Keep the authored framing centre for local relation/finish shots.
+        # Do not loosen structural/master views or the X safety clamp.
+        if scale_name in ("RELATION", "RESULT_RELATION", "FOCUS_RELATION", "FINISH_FOCUS"):
+            max_y = max(max_y, abs(cy) + 6.0)
         overshoot = max(0.0, abs(target_x) - max_x) + max(0.0, abs(target_y) - max_y)
         target_x = max(-max_x, min(max_x, target_x))
         target_y = max(-max_y, min(max_y, target_y))
