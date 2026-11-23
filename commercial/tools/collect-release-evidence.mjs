@@ -12,6 +12,9 @@ const checks = [
   ['test:lan-command', 'commercial/lan/lan-command-selftest.mjs', false],
   ['test:engine-lan', 'commercial/lan/engine-lan-selftest.mjs', false],
   ['test:lan-state-revocation', 'commercial/lan/lan-state-revocation-selftest.mjs', false],
+  ['test:lan-pairing', 'commercial/lan/lan-pairing-selftest.mjs', false],
+  ['test:core-snapshot-failure', 'commercial/core/snapshot-failure-selftest.mjs', false],
+  ['test:core-penalty-undo', 'commercial/core/penalty-undo-selftest.mjs', false],
 ];
 const run = (bin, args, timeout = 120000) => spawnSync(bin, args, {
   cwd: process.cwd(), encoding: 'utf8', timeout, maxBuffer: 1024 * 1024,
@@ -21,6 +24,8 @@ const sha256 = value => createHash('sha256').update(value).digest('hex');
 const git = run('git', ['rev-parse', 'HEAD'], 10000);
 const branch = run('git', ['branch', '--show-current'], 10000);
 const revision = git.status === 0 ? git.stdout.trim() : null;
+const dirty = run('git', ['diff', '--quiet', 'HEAD', '--'], 10000);
+const cleanTrackedTree = dirty.status === 0 && !dirty.error;
 const branchName = branch.status === 0 ? branch.stdout.trim() : null;
 const report = {
   schemaVersion: 1,
@@ -31,6 +36,9 @@ const report = {
   platform: process.platform,
   arch: process.arch,
   status: 'FAIL',
+  releaseDecision: 'NO-GO',
+  scope: 'PARTIAL_AUTOMATED_CHECKS_ONLY',
+  cleanTrackedTree,
   checks: [],
 };
 if (!revision || branchName !== 'commercial-v1.0') {
@@ -57,7 +65,8 @@ if (!revision || branchName !== 'commercial-v1.0') {
     });
     console.log(name + ': ' + (passed ? 'PASS' : 'FAIL'));
   }
-  report.status = report.checks.every(c => c.result === 'PASS') ? 'PASS' : 'FAIL';
+  report.status = cleanTrackedTree && report.checks.every(c => c.result === 'PASS') ? 'PASS' : 'FAIL';
+  if (!cleanTrackedTree) console.error('Tracked worktree differs from recorded HEAD; evidence cannot pass.');
 }
 mkdirSync('commercial/evidence', { recursive: true });
 const outputPath = 'commercial/evidence/release-evidence-local.json';
