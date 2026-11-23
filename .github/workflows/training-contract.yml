@@ -1,0 +1,38 @@
+name: SAGI TRAINING contracts
+on:
+  push:
+    branches: [training-v1]
+    paths:
+      - 'training/**'
+      - '.github/workflows/training-contract.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check JavaScript syntax
+        run: |
+          node --check training/sw.js
+          node --check training/tests/static-contract.test.cjs
+          node --check training/tests/data-contract.test.cjs
+          node - <<'NODE'
+          const fs=require('node:fs');
+          const vm=require('node:vm');
+          for(const file of ['training/index.html','training/iq.html']){
+            const html=fs.readFileSync(file,'utf8');
+            const scripts=[...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)];
+            if(!scripts.length)throw Error('No inline script: '+file);
+            scripts.forEach((s,i)=>new vm.Script(s[1],{filename:file+':inline-'+i}));
+          }
+          NODE
+      - name: Run isolated source contract checks
+        run: |
+          node training/tests/static-contract.test.cjs
+          node training/tests/data-contract.test.cjs
