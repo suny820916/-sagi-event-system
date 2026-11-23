@@ -496,3 +496,8 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Extend served-script regression for lost undo response, reload/retry, unchanged regular score, shortened history and finished-state guard (9777481).
 - Executed fetched committed browser script with mocked DOM/storage/transport and deterministic crypto/timeout stubs: PASS including previous regression cases. Actual HTTP gateway/engine durable restart, CI, physical Safari and vMix graphics remain unverified. No new runtime dependencies; commercial branch only.
 - Next: real LAN-to-engine undo integration including stale target and durable restart; vMix consumers must handle compensating events and render authoritative history. No production certification.
+
+## 2026-11-23 — Durable LAN penalty undo regression
+- Extended actual HTTP gateway/engine integration test with stale attempt rejection, missed-attempt undo, full engine/gateway shutdown and re-pair, same-ID deduplication, scored-attempt undo and second restart. Assert authoritative penalty history and regular score separately (2a04666).
+- Reviewed gateway allowlist, bridge error mapping and engine invalid-command mapping against the test. Runtime execution and push CI remain unverified in this run; no claim of restart certification. No dependencies or stable branch changes.
+- Next: execute integration matrix; verify desktop/vMix consumers use authoritative history after compensating events, not incremental score replay.
