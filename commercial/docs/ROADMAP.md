@@ -596,3 +596,9 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Added `commercial/docs/RELEASE_EVIDENCE_GATE.md` (commit `4060b443`) with exact local Node commands, required Windows/iPhone/vMix offline and restart scenarios, no-duplicate-command criteria, vMix failure handling, license/SBOM review, and a dated evidence ledger template.
 - This is an **acceptance specification**, not a production fix or a passing test. No CI, Node, Windows, iPhone Safari, physical power-loss or real vMix execution was performed as part of this documentation change.
 - Release decision remains **NO-GO**. Prioritize running existing tests and recording reproducible evidence before further declaring feature completion. `main` and V4.40 Stable remain outside this work.
+
+## 2026-11-24 — Local release evidence collection
+- Added `commercial/tools/collect-release-evidence.mjs` (`bb5708b`) to run five documented LAN syntax/integration checks against the checked-out commercial branch, recording exact revision, platform, exit codes and SHA-256 hashes of command output without storing potentially sensitive raw logs.
+- The script fails closed when Git metadata or the expected branch is absent and marks missing test files UNKNOWN. Evidence is written to `commercial/evidence/release-evidence-local.json` and is **not** a certification.
+- **Verification:** GitHub accepted the new script; this run did not execute Node or Windows/vMix hardware tests. Validate the script on a real checkout and confirm its output before relying on the report. CI status remains unverified.
+- **Next:** expand the runner to the complete CI test matrix, capture independently verified Windows/iPhone/vMix offline evidence, and ensure generated evidence is excluded from distributable bundles.
