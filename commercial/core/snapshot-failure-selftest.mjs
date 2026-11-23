@@ -13,6 +13,8 @@ apply({commandId:'clock',type:'SET_CLOCK',running:true,elapsedSeconds:600});
 apply({commandId:'half',type:'HALF_TIME'});
 assert.equal(fixture.clock.running,false);
 assert.equal(fixture.clock.elapsedSeconds,600);
+// Shootout attempts require an explicit start; do not bypass the reducer lifecycle.
+apply({commandId:'start-shootout',type:'START_PENALTIES'});
 const ids = new Set();
 for(let i=0;i<205;i++){
   apply({commandId:'pen-'+i,type:'PENALTY_ATTEMPT',side:i%2?'HOME':'AWAY',outcome:'SCORED'});
