@@ -2521,7 +2521,7 @@ async function mdLoad(opts={}){
  if(matchdayState.period==='PEN'&&mdPenaltyState().started)mdSyncDirectorPenaltyToSimple()
 }
 const MD_LAST_GOOD_KEY='sagi_matchday_last_good_v429';
-let mdPublishRevision=0,mdLastAckRevision=0,mdPublishChain=Promise.resolve(),mdPendingPublishes=0,mdLocalMutationDepth=0,mdConsistencyBusy=false,mdLastConsistencyAt=0,mdLastConsistencyState='INIT',mdLocalRecoveryStamp=0,mdFixtureTakeoverOnce=false;
+let mdPublishRevision=0,mdLastAckRevision=0,mdPublishChain=Promise.resolve(),mdPendingPublishes=0,mdLocalMutationDepth=0,mdConsistencyBusy=false,mdConsistencyBusySince=0,mdLastConsistencyAt=0,mdLastConsistencyState='INIT',mdLocalRecoveryStamp=0,mdFixtureTakeoverOnce=false;
 function mdAuthorizeFixtureTakeover(){mdFixtureTakeoverOnce=true;return true}
 let mdPublishMetrics={ok:0,failed:0,retried:0,recovered:0,lastOkAt:0,lastErrorAt:0,lastAttempts:0},mdEventGateSig='',mdEventGateAt=0;
 function mdNextEventIdentity(type='EVENT'){
@@ -2628,8 +2628,10 @@ function mdPassiveSyncActive(){
  return !!(matchReady||matchModeActive||matchdayState.scoreboardVisible||matchdayState.clockRunning||Number(matchdayState.revision)>0)
 }
 async function mdConsistencyCheck(force=false){
+ const now=Date.now();
+ if(mdConsistencyBusy&&mdConsistencyBusySince&&now-mdConsistencyBusySince>4000){mdConsistencyBusy=false;mdConsistencyBusySince=0;mdRecoveryMetrics.busyResets=(mdRecoveryMetrics.busyResets||0)+1}
  if(mdConsistencyBusy||mdPendingPublishes>0||mdLocalMutationDepth>0||(!force&&!mdPassiveSyncActive()))return false;
- mdConsistencyBusy=true;
+ mdConsistencyBusy=true;mdConsistencyBusySince=Date.now();
  try{
   mdRecoveryMetrics.passivePolls++;
   const remote=await lanJson('/api/matchday?consistency='+Date.now()),sameFixture=remote&&mdBridgeMatchesCurrent(remote);
@@ -2661,7 +2663,7 @@ async function mdConsistencyCheck(force=false){
   mdLastConsistencyState='OK';mdLastConsistencyAt=Date.now();
   if(q('mdSync'))q('mdSync').innerHTML='<span class="mdLiveDot on"></span>手机 / 电脑 / 比分牌一致 · R'+remoteRevision;
   return true
- }catch(e){mdLastConsistencyState='OFFLINE';return false}finally{mdConsistencyBusy=false}
+ }catch(e){mdLastConsistencyState='OFFLINE';return false}finally{mdConsistencyBusy=false;mdConsistencyBusySince=0}
 }
 
 async function mdRecoverySync(reason='MANUAL'){
