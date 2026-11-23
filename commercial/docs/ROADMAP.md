@@ -506,3 +506,8 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Include ordered attempt identity, side and outcome in consistencyView, rather than only history count (d3358be). Equal totals/counts no longer mask divergent dots. Added regression (e0ac499); executed fetched core and regression in isolated JavaScript evaluator: PASS, including undo cases. This is not Node HTTP or physical three-device evidence.
 - Added actual engine/LAN restart regression invocation to Windows/Linux penalty CI (07cfe44). Push CI result remains unverified. No new dependencies; commercial branch only.
 - Next: verify CI, locate desktop/vMix state consumers and connect authoritative history rendering; fingerprint is not a deployed sync mechanism. Physical LAN and vMix acceptance remain open.
+
+## 2026-11-23 — Cross-platform penalty regression CI hardening
+- Commit `9707df5` updates `.github/workflows/commercial-penalty-undo.yml`: explicit read-only workflow permission, 12-minute per-job timeout, independent Windows/Linux matrix failures, Node syntax gates for core/LAN/mobile sources, reducer undo regression and durable HTTP restart regression.
+- **Verification:** GitHub accepted the workflow update; this is not evidence that either OS job passed. Inspect Actions job conclusions and logs before closing the CI acceptance gate.
+- **Release blockers:** Windows/vMix/Safari real hardware tests, authoritative vMix overlay readback, LAN bearer-token transport protection, and crash/power-loss endurance remain pending. No changes to main/V4.40 Stable.
