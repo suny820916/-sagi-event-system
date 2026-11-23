@@ -120,3 +120,17 @@ const awaySudden=runInNewContext(winnerCode+'\nmdPenaltyEvaluateWinner()',winner
 assert(awaySudden==='AWAY'&&winnerCtx.matchdayState.homePen===3&&winnerCtx.matchdayState.awayPen===4,
  'away sudden-death winner or canonical totals incorrect');
 console.log('V4.33 away sudden-death winner PASS');
+
+// V4.32 Bridge safety inheritance: never certify a penalty-only change that
+// silently drops LAN timeout, stale-fixture rejection or conflict recovery.
+for (const token of [
+  'LAN_TIMEOUT',
+  'STALE_QUEUED_FIXTURE_DROPPED',
+  'mdConsistencyBusySince',
+  'mdFixtureTakeoverOnce=false',
+  'allowFixtureTakeover:!!mdFixtureTakeoverOnce',
+  'recoverMatchdayFromBridge(false,{preferNewest:false,allowIdentityTakeover:true})'
+]) assert(control.includes(token),'V4.33 lost inherited Bridge safety: '+token);
+assert(pkgControl.includes('LAN_TIMEOUT')&&pkgControl.includes('STALE_QUEUED_FIXTURE_DROPPED'),
+  'packaged V4.33 control lost inherited LAN recovery safety');
+console.log('V4.33 inherited LAN/Bridge safety guard PASS');
