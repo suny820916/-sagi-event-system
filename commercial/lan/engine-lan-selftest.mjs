@@ -135,6 +135,19 @@ try {
   assert.equal(finalState.penalties.away, extra.filter(a => a.side === 'AWAY' && a.outcome === 'SCORED').length);
   assert.equal(finalState.penalties.history.length, 14);
   assert.equal(finalState.penalties.finished, true);
+  // A late mobile retry after the final whistle must not resurrect a penalty,
+  // change its original outcome, or append an event. Exercise all 14 IDs.
+  const finalRevision = finalState.revision;
+  const finalHistory = finalState.penalties.history.map(({ attemptId, side, outcome }) => ({ attemptId, side, outcome }));
+  for (let i = 0; i < extra.length; i++) {
+    const retry = await penalty('extra_pen_' + String(i).padStart(4, '0'), 10 + i, 'PENALTY_ATTEMPT', extra[i]);
+    assert.equal(retry.status, 200, 'finalized retry ' + i);
+    assert.equal((await retry.json()).result.duplicate, true, 'finalized duplicate ' + i);
+  }
+  const afterLateRetries = (await (await request('state')).json()).state;
+  assert.equal(afterLateRetries.revision, finalRevision);
+  assert.deepEqual(afterLateRetries.penalties.history.map(({ attemptId, side, outcome }) => ({ attemptId, side, outcome })), finalHistory);
+  assert.equal(afterLateRetries.penalties.finished, true);
   await engine.close(); engine = null;
   assert.equal((await request('state')).status, 503);
   console.log('LAN ENGINE INTEGRATION PASS');
