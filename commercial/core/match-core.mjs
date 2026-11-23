@@ -205,6 +205,13 @@ export function applyCommand(currentState, command) {
     return { state: current, event: null, duplicate: true };
   }
 
+  // Final results are immutable through ordinary controls. Historical IDs are
+  // checked above so delayed mobile retries remain idempotent after full time.
+  // Post-match MVP and presentation-only overlays remain available.
+  if (current.period === "FT" && !["MVP", "SET_SCOREBOARD", "CLEAR_EVENT"].includes(type)) {
+    throw new Error("MATCH_ALREADY_FINISHED");
+  }
+
   const state = clone(current);
   let event = null;
 
