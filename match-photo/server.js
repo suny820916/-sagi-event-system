@@ -18,6 +18,8 @@ const PREVIEW_DIR = path.join(DATA_DIR, 'previews');
 const DB_FILE = path.join(DATA_DIR, 'db.json');
 const ADMIN_KEY = process.env.ADMIN_KEY || 'change-this-before-event';
 const PUBLIC_TITLE = process.env.PUBLIC_TITLE || 'SAGI MATCH PHOTO';
+const PHOTOGRAPHER_CODES = String(process.env.PHOTOGRAPHER_CODES || 'PHOTO-1123')
+  .split(',').map(x => x.trim()).filter(Boolean);
 const ALLOWED_ORIGINS = String(process.env.ALLOWED_ORIGINS || 'https://sagisports.cn,https://www.sagisports.cn,https://suny820916.github.io')
   .split(',').map(x => x.trim()).filter(Boolean);
 
@@ -32,7 +34,7 @@ app.use((req,res,next)=>{
   if(origin && ALLOWED_ORIGINS.includes(origin)){
     res.set('Access-Control-Allow-Origin',origin);
     res.set('Vary','Origin');
-    res.set('Access-Control-Allow-Headers','Content-Type, X-SAGI-ADMIN-KEY');
+    res.set('Access-Control-Allow-Headers','Content-Type, X-SAGI-ADMIN-KEY, X-SAGI-PHOTOGRAPHER-CODE');
     res.set('Access-Control-Allow-Methods','GET,POST,OPTIONS');
   }
   if(req.method==='OPTIONS') return res.sendStatus(204);
@@ -50,6 +52,12 @@ function admin(req, res, next) {
 }
 function safe(v, max=80) {
   return String(v || '').trim().slice(0, max);
+}
+function photographer(req, res, next) {
+  const code = safe(req.get('x-sagi-photographer-code'), 80);
+  if (!code || !PHOTOGRAPHER_CODES.includes(code)) return res.status(401).json({ error:'摄影师上传码无效' });
+  req.photographerCode = code;
+  next();
 }
 
 function photoById(data, photoId) {
@@ -136,7 +144,7 @@ app.get('/api/photos', (req,res) => {
   res.json(list.slice().reverse().map(publicPhoto));
 });
 
-app.post('/api/admin/photos', admin, upload.array('photos', 40), async (req,res) => {
+async function handlePhotoUpload(req,res){
   try {
     const eventId = safe(req.body.eventId,100);
     if (!eventId) return res.status(400).json({ error:'请选择赛事' });
@@ -156,6 +164,7 @@ app.post('/api/admin/photos', admin, upload.array('photos', 40), async (req,res)
       created.push({
         id:pid, eventId, team:safe(req.body.team), match:safe(req.body.match,120),
         jersey:safe(req.body.jersey,20), player:safe(req.body.player,80),
+        uploadedBy:req.photographerCode ? 'photographer' : 'admin',
         originalPath, previewPath, createdAt:new Date().toISOString()
       });
     }
@@ -165,6 +174,13 @@ app.post('/api/admin/photos', admin, upload.array('photos', 40), async (req,res)
     console.error(e);
     res.status(500).json({ error:'照片处理失败，请重试' });
   }
+}
+
+app.post('/api/admin/photos', admin, upload.array('photos', 40), handlePhotoUpload);
+app.post('/api/photographer/photos', photographer, upload.array('photos', 40), handlePhotoUpload);
+
+app.get('/api/photographer/check', photographer, (req,res)=>{
+  res.json({ ok:true, role:'photographer' });
 });
 
 app.get('/media/preview/:id', (req,res) => {
