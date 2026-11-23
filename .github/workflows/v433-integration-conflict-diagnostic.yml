@@ -7,6 +7,15 @@ on:
       - '.github/workflows/v433-integration-conflict-diagnostic.yml'
       - 'intro/tests/v433-penalty-single-source-gate.mjs'
       - 'intro/SAGI_VMIX_LAN_V433_PENALTY_RC.bat'
+  pull_request:
+    branches:
+      - sagi-vmix-v432-clean-integration
+    paths:
+      - '.github/workflows/v433-integration-conflict-diagnostic.yml'
+      - 'intro/tests/v433-penalty-single-source-gate.mjs'
+      - 'intro/SAGI_VMIX_LAN_V433_PENALTY_RC.bat'
+      - 'intro/v45-lan.html'
+      - 'intro/vmix-v45-lan.html'
   workflow_dispatch:
 permissions:
   contents: read
