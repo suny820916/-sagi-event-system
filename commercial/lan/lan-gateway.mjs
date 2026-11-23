@@ -140,6 +140,9 @@ export function createLanGateway({
         if (!pairing.verify(token)) return reply(res, 401, { error: 'UNAUTHORIZED' });
         return reply(res, 200, { result });
       } catch (err) {
+        // Do not disclose command outcome or current revision to a revoked device.
+        // The command might already be committed; client must resync after pairing.
+        if (!pairing.verify(token)) return reply(res, 401, { error: 'UNAUTHORIZED' });
         if (err.message === 'BODY_TOO_LARGE') return reply(res, 413, { error: 'BODY_TOO_LARGE' });
         if (err.message === 'INVALID_JSON') return reply(res, 400, { error: 'INVALID_JSON' });
         if (err.code === 'REVISION_CONFLICT') return reply(res, 409, { error: 'REVISION_CONFLICT', revision: err.revision });
@@ -158,7 +161,10 @@ export function createLanGateway({
         // Never release match data after the authorization has expired.
         if (!pairing.verify(token)) return reply(res, 401, { error: 'UNAUTHORIZED' });
         return reply(res, 200, { state });
-      } catch { return reply(res, 503, { error: 'STATE_UNAVAILABLE' }); }
+      } catch {
+        if (!pairing.verify(token)) return reply(res, 401, { error: 'UNAUTHORIZED' });
+        return reply(res, 503, { error: 'STATE_UNAVAILABLE' });
+      }
     }
     return reply(res, 404, { error: 'NOT_FOUND' });
   });
