@@ -148,8 +148,13 @@ export function createLanGateway({
       const auth = req.headers.authorization || '';
       const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
       if (!pairing.verify(token)) return reply(res, 401, { error: 'UNAUTHORIZED' });
-      try { return reply(res, 200, { state: await getState() }); }
-      catch { return reply(res, 503, { error: 'STATE_UNAVAILABLE' }); }
+      try {
+        const state = await getState();
+        // A session may be revoked while an asynchronous state read is pending.
+        // Never release match data after the authorization has expired.
+        if (!pairing.verify(token)) return reply(res, 401, { error: 'UNAUTHORIZED' });
+        return reply(res, 200, { state });
+      } catch { return reply(res, 503, { error: 'STATE_UNAVAILABLE' }); }
     }
     return reply(res, 404, { error: 'NOT_FOUND' });
   });
