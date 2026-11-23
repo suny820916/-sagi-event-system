@@ -2,9 +2,14 @@ name: Commercial penalty undo
 on:
   push:
     branches: [commercial-v1.0]
+  workflow_dispatch:
+permissions:
+  contents: read
 jobs:
   test:
+    timeout-minutes: 12
     strategy:
+      fail-fast: false
       matrix:
         os: [windows-latest, ubuntu-latest]
     runs-on: ${{ matrix.os }}
@@ -13,5 +18,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node commercial/core/penalty-undo-selftest.mjs
-      - run: node commercial/lan/engine-lan-selftest.mjs
+      - name: Syntax check core and LAN integration
+        run: |
+          node --check commercial/core/match-core.mjs
+          node --check commercial/core/local-server.mjs
+          node --check commercial/lan/lan-gateway.mjs
+          node --check commercial/lan/mobile-console.mjs
+          node --check commercial/lan/engine-lan-selftest.mjs
+          node --check commercial/core/penalty-undo-selftest.mjs
+      - name: Penalty undo reducer regression
+        run: node commercial/core/penalty-undo-selftest.mjs
+      - name: Durable HTTP LAN restart regression
+        run: node commercial/lan/engine-lan-selftest.mjs
