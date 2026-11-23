@@ -8,7 +8,10 @@ const seen = new Map();
 const g = createLanGateway({
   getState: () => ({ revision }),
   submitCommand: async command => {
-    if (seen.has(command.commandId)) return seen.get(command.commandId);
+    if (seen.has(command.commandId)) {
+      if (command.side === 'AWAY') throw new Error('COMMAND_ID_CONFLICT');
+      return seen.get(command.commandId);
+    }
     if (command.expectedRevision !== revision) {
       const err = new Error('stale revision');
       err.code = 'REVISION_CONFLICT';
@@ -253,6 +256,10 @@ try {
   assert.equal((await post(goal, token)).status, 200);
   assert.equal((await post(goal, token)).status, 200);
   assert.equal(accepted.length, 1);
+  const conflict = await post({ ...goal, side: 'AWAY' }, token);
+  assert.equal(conflict.status, 409);
+  assert.deepEqual(await conflict.json(), { error: 'COMMAND_ID_CONFLICT' });
+  assert.equal(accepted.length, 1, 'conflicting retry must not execute');
   assert.equal((await post({ ...goal, commandId: 'goal_00000002' }, token)).status, 409);
   const state = await fetch(base + '/api/v1/lan/state', { headers: { authorization: `Bearer ${token}` } });
   assert.equal((await state.json()).state.revision, 1);
