@@ -23,6 +23,7 @@ jobs:
           node --check training/tests/static-contract.test.cjs
           node --check training/tests/data-contract.test.cjs
           node --check training/tests/sw-runtime.test.cjs
+          node --check training/tests/plan-contract.test.cjs
           node - <<'NODE'
           const fs=require('node:fs');
           const vm=require('node:vm');
@@ -38,3 +39,4 @@ jobs:
           node training/tests/static-contract.test.cjs
           node training/tests/data-contract.test.cjs
           node training/tests/sw-runtime.test.cjs
+          node training/tests/plan-contract.test.cjs
