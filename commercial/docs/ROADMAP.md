@@ -591,3 +591,8 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Commit: `ab72a8b` (`commercial/lan/lan-command-selftest.mjs`).
 - **Verification:** GitHub file update succeeded; Node execution and CI PASS have not been established. The test does not prove protected transport or Windows/Safari compatibility.
 - **Release blockers:** LAN bearer tokens remain plaintext over HTTP; canonical end-to-end mobile/vMix testing, Windows power-loss recovery, complete license audit and offline installer/rollback remain outstanding.
+
+## 2026-11-24 — Reproducible release evidence gate
+- Added `commercial/docs/RELEASE_EVIDENCE_GATE.md` (commit `4060b443`) with exact local Node commands, required Windows/iPhone/vMix offline and restart scenarios, no-duplicate-command criteria, vMix failure handling, license/SBOM review, and a dated evidence ledger template.
+- This is an **acceptance specification**, not a production fix or a passing test. No CI, Node, Windows, iPhone Safari, physical power-loss or real vMix execution was performed as part of this documentation change.
+- Release decision remains **NO-GO**. Prioritize running existing tests and recording reproducible evidence before further declaring feature completion. `main` and V4.40 Stable remain outside this work.
