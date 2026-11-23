@@ -86,8 +86,7 @@ jobs:
         run: |
           python3 cloud-blender-worker/qa/audit_mourinho_70s.py \
             mourinho_v52_out/SAGI_MOURINHO_70S_V52_FRAME_SAFETY.mp4 \
-            mourinho_v52_out/execution_report_v52.json
-            mourinho_v52_out/independent_qa.json \
+            mourinho_v52_out/execution_report_v52.json \
             mourinho_v52_out/critical_frames \
             mourinho_v52_out/independent_qa.json
       - uses: actions/upload-artifact@v4
@@ -97,6 +96,7 @@ jobs:
             mourinho_v52_out/SAGI_MOURINHO_70S_V52_FRAME_SAFETY.mp4
             mourinho_v52_out/critical_frames/*.jpg
             mourinho_v52_out/execution_report_v52.json
+            mourinho_v52_out/independent_qa.json
             mourinho_v52_out/scene.blend
             cloud-blender-worker/presets/mourinho_real_madrid_4231_70s_v51_relation.json
             cloud-blender-worker/overlay/mourinho_70s_v50_teactics_title.ass
