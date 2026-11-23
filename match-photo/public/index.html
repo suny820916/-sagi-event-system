@@ -18,7 +18,7 @@
     <section class="hero">
       <div class="eyebrow">找到你的高光时刻</div>
       <h1>比赛结束，<br/>精彩不会结束。</h1>
-      <p>带水印免费预览 · 付款后下载高清原图</p>
+      <p>带水印免费预览 · 微信单独付款 · 下载码领取高清原图</p>
       <div class="price-row">
         <span>单张 ¥5</span><span>5张 ¥15</span><span>个人包 ¥29</span><span>全队 ¥99</span>
       </div>
@@ -31,9 +31,17 @@
       <button id="searchBtn" class="primary">找照片</button>
     </section>
 
+    <section class="card">
+      <div class="row">
+        <input id="redeemCode" placeholder="已有下载码？输入如 ABCDE-23456" autocapitalize="characters"/>
+        <button id="redeemBtn" type="button" class="primary">兑换高清原图</button>
+      </div>
+      <div id="redeemResult"></div>
+    </section>
+
     <section class="findme card">
-      <div><strong>AI 找我</strong><small>上传一张自拍，自动找比赛中的你</small></div>
-      <label class="upload-lite">选择自拍<input id="selfieInput" type="file" accept="image/*" capture="user"/></label>
+      <div><strong>AI 找我</strong><small>后续版本开放；本次总决赛优先按球队 / 号码找图</small></div>
+      <label class="upload-lite">暂未开放<input id="selfieInput" type="file" accept="image/*" capture="user" disabled/></label>
     </section>
 
     <section class="gallery-head">
@@ -46,17 +54,17 @@
 
   <div id="cart" class="cart hidden">
     <div><b><span id="selectedCount">0</span> 张</b><small id="quoteText">¥0</small></div>
-    <button id="checkoutBtn" class="primary">立即购买</button>
+    <button id="checkoutBtn" class="primary">生成选图单</button>
   </div>
 
   <dialog id="checkoutDialog">
     <form method="dialog" class="sheet">
       <button class="x">×</button>
-      <h2>确认订单</h2>
+      <h2>确认选图</h2>
       <div id="checkoutSummary" class="summary"></div>
       <input id="nickname" placeholder="你的称呼（可选）"/>
-      <input id="contact" placeholder="微信号/手机号（可选）"/>
-      <button id="createOrderBtn" type="button" class="primary full">生成付款订单</button>
+      <input id="contact" placeholder="微信号/手机号（方便核对，可选）"/>
+      <button id="createOrderBtn" type="button" class="primary full">生成订单</button>
       <div id="orderResult"></div>
     </form>
   </dialog>
@@ -84,7 +92,7 @@
           <progress id="uploadProgress" max="100" value="0"></progress>
         </section>
         <section>
-          <h3>3. 待确认付款</h3>
+          <h3>3. 微信收款后生成下载码</h3>
           <button id="refreshOrdersBtn" type="button" class="ghost full">刷新订单</button>
           <div id="orders"></div>
         </section>
