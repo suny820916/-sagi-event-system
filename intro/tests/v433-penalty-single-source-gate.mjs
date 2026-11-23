@@ -107,3 +107,16 @@ const sudden=runInNewContext(winnerCode+'\nmdPenaltyEvaluateWinner()',winnerCtx)
 assert(sudden==='HOME'&&winnerCtx.matchdayState.homePen===6&&winnerCtx.matchdayState.awayPen===5,
  'sudden-death winner or penalty totals incorrect');
 console.log('V4.33 3-round early finish + sudden-death winner PASS');
+
+ // Regression: AWAY may win sudden death only after both teams complete the same round.
+winnerCtx.matchdayState.penaltyShootout={sourceVersion:'V4.33',started:true,visible:true,rounds:3,firstSide:'HOME',
+ history:[
+  {side:'HOME',result:'GOAL'},{side:'AWAY',result:'GOAL'},
+  {side:'HOME',result:'GOAL'},{side:'AWAY',result:'GOAL'},
+  {side:'HOME',result:'GOAL'},{side:'AWAY',result:'GOAL'},
+  {side:'HOME',result:'MISS'},{side:'AWAY',result:'GOAL'}
+ ]};
+const awaySudden=runInNewContext(winnerCode+'\nmdPenaltyEvaluateWinner()',winnerCtx);
+assert(awaySudden==='AWAY'&&winnerCtx.matchdayState.homePen===3&&winnerCtx.matchdayState.awayPen===4,
+ 'away sudden-death winner or canonical totals incorrect');
+console.log('V4.33 away sudden-death winner PASS');
