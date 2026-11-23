@@ -24,6 +24,25 @@ def top_dark_fraction(frame_path, top_fraction=0.20, threshold=25):
         raise ValueError(f"could not decode frame {frame_path}")
     return round(sum(v < threshold for v in raw[:n]) / n, 4)
 
+def frame_band_luminance(frame_path):
+    """Coarse 3-band luminance context. Diagnostic only, never a crop verdict."""
+    w, h = 96, 96
+    raw = subprocess.check_output([
+        "ffmpeg", "-v", "error", "-i", str(frame_path),
+        "-vf", f"scale={w}:{h},format=gray",
+        "-frames:v", "1", "-f", "rawvideo", "-"
+    ])
+    if len(raw) != w * h:
+        raise ValueError(f"invalid grayscale frame size for {frame_path}")
+    bands = {}
+    for name, start, end in (("top", 0, 32), ("middle", 32, 64), ("bottom", 64, 96)):
+        pixels = raw[start*w:end*w]
+        bands[name] = {
+            "mean_luma": round(sum(pixels) / len(pixels), 2),
+            "dark_fraction": round(sum(p < 25 for p in pixels) / len(pixels), 4)
+        }
+    return bands
+
 def audit(video, report, frame_dir, out):
     video, report, frame_dir, out = map(Path,(video,report,frame_dir,out))
     r=json.loads(report.read_text(encoding="utf-8"))
@@ -43,9 +62,11 @@ def audit(video, report, frame_dir, out):
     if r.get("v42_projection_gate",{}).get("outside_safe_frames"): errors.append("projection safe frame violations")
     if not all(s.get("width",0)>0 and s.get("height",0)>0 for s in p["streams"] if s.get("codec_type")=="video"): errors.append("invalid video dimensions")
     dark_top = {}
+    luminance_bands = {}
     for frame in images:
         try:
             dark_top[frame.stem] = top_dark_fraction(frame)
+            luminance_bands[frame.stem] = frame_band_luminance(frame)
         except (subprocess.CalledProcessError, ValueError) as exc:
             errors.append(f"dark-region audit failed for {frame.name}: {exc}")
     dark_alerts = [t for t, fraction in dark_top.items() if fraction >= 0.90]
@@ -53,6 +74,9 @@ def audit(video, report, frame_dir, out):
       "technical_gate":"FAIL" if errors else "PASS",
       "top_20pct_dark_fraction_by_second":dark_top,
       "dark_top_visual_review_seconds":dark_alerts,
+      "luminance_bands_by_second":luminance_bands,
+      "dark_top_is_failure":False,
+      "pitch_coverage_verified":False,
       "dark_region_interpretation":"Black space is not proof of clipping; review pitch and tactical subjects visually.",
       "duration_sec":duration,"critical_frames":len(images),
       "errors":errors,
