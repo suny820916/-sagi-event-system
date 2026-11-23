@@ -1,7 +1,7 @@
 'use strict';
 
 const $ = s => document.querySelector(s);
-let photos = [], selected = new Set(), events = [], lastOrder = null;
+let photos = [], selected = new Set(), events = [];
 const state = { adminKey: localStorage.getItem('sagiPhotoAdminKey') || '' };
 
 function toast(msg){ const el=$('#toast'); el.textContent=msg; el.style.display='block'; setTimeout(()=>el.style.display='none',2200); }
@@ -45,7 +45,7 @@ function renderPhotos(){
   document.querySelectorAll('.photo').forEach(el=>el.onclick=()=>{
     const id=el.dataset.id;
     selected.has(id)?selected.delete(id):selected.add(id);
-    renderPhotos(); updateCart();
+    renderPhotos();
   });
   updateCart();
 }
@@ -62,20 +62,19 @@ async function createOrder(){
     const o=await api('/api/orders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
       photoIds:ids,nickname:$('#nickname').value,contact:$('#contact').value
     })});
-    lastOrder=o; renderOrder(o);
+    $('#orderResult').innerHTML=
+      '<div class="summary"><b>订单 '+o.id+'</b><br/><span>'+o.productName+' · '+yuan(o.amountFen)+'</span></div>'+
+      '<p><b>付款不在本页面完成。</b><br/>请单独微信付款，并把上面的订单号发给 SAGI 工作人员。确认收款后，工作人员会给你一个下载码。</p>'+
+      '<p>拿到下载码后，在首页“兑换高清原图”输入即可下载。</p>';
   }catch(e){toast(e.message)}
 }
-async function renderOrder(o){
-  const cfg=await api('/api/config');
-  let html='<div class="summary"><b>订单 '+o.id+'</b><br/><span>'+o.productName+' · '+yuan(o.amountFen)+'</span><br/><small>状态：'+(o.status==='paid'?'已付款':'等待付款确认')+'</small></div>';
-  if(o.status!=='paid'){
-    if(cfg.paymentQrUrl) html+='<img class="qr" src="'+cfg.paymentQrUrl+'" alt="微信收款码"/>';
-    html+='<p>微信付款后，把订单号出示给 SAGI 工作人员。工作人员确认收款后，本页即可下载无水印原图。</p><button type="button" id="checkPaidBtn" class="ghost full">我已付款，检查状态</button>';
-  }else{
-    html+='<div class="downloads">'+o.photoIds.map((pid,i)=>'<a href="/api/download/'+o.id+'/'+o.downloadToken+'/'+pid+'">下载高清原图 '+(i+1)+'</a>').join('')+'</div>';
-  }
-  $('#orderResult').innerHTML=html;
-  $('#checkPaidBtn')?.addEventListener('click',async()=>{ try{const fresh=await api('/api/orders/'+o.id); lastOrder=fresh; renderOrder(fresh);}catch(e){toast(e.message)} });
+async function redeem(){
+  const code=$('#redeemCode').value.trim();
+  if(!code) return toast('请输入下载码');
+  try{
+    const r=await api('/api/redeem',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code})});
+    $('#redeemResult').innerHTML='<div class="summary"><b>'+r.productName+'</b><br/><small>'+r.count+' 张高清原图</small></div><div class="downloads">'+r.photos.map((p,i)=>'<a href="'+p.downloadUrl+'">下载高清原图 '+(i+1)+'</a>').join('')+'</div>';
+  }catch(e){ $('#redeemResult').innerHTML=''; toast(e.message); }
 }
 function adminHeaders(){ return {'x-sagi-admin-key':state.adminKey}; }
 
@@ -83,13 +82,10 @@ $('#searchBtn').onclick=loadPhotos;
 $('#clearBtn').onclick=()=>{selected.clear();renderPhotos()};
 $('#checkoutBtn').onclick=()=>{ const q=quote(selected.size); $('#checkoutSummary').innerHTML='<b>'+selected.size+' 张照片</b><br/>'+q.name+' · <strong>'+yuan(q.fen)+'</strong>'; $('#orderResult').innerHTML=''; $('#checkoutDialog').showModal(); };
 $('#createOrderBtn').onclick=createOrder;
+$('#redeemBtn').onclick=redeem;
+$('#redeemCode').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();redeem()}});
 $('#adminBtn').onclick=()=>{ $('#adminKey').value=state.adminKey; $('#adminDialog').showModal(); };
 $('#adminKey').onchange=e=>{ state.adminKey=e.target.value.trim(); localStorage.setItem('sagiPhotoAdminKey',state.adminKey); };
-$('#selfieInput').onchange=async e=>{
-  if(!e.target.files[0]) return;
-  const fd=new FormData(); fd.append('selfie',e.target.files[0]);
-  try{await api('/api/find-me',{method:'POST',body:fd})}catch(err){toast(err.message)}
-};
 
 $('#createEventBtn').onclick=async()=>{
   try{
@@ -118,12 +114,32 @@ $('#uploadBtn').onclick=async()=>{
   }catch(e){ $('#uploadProgress').value=0; toast(e.message); }
 };
 $('#refreshOrdersBtn').onclick=loadOrders;
+
+async function copyText(t){
+  try{ await navigator.clipboard.writeText(t); toast('下载码已复制'); }
+  catch{ prompt('复制下载码',t); }
+}
 async function loadOrders(){
   try{
     state.adminKey=$('#adminKey').value.trim(); localStorage.setItem('sagiPhotoAdminKey',state.adminKey);
     const list=await api('/api/admin/orders',{headers:adminHeaders()});
-    $('#orders').innerHTML=list.map(o=>'<div class="order"><b>'+o.id+'</b><br/><small>'+o.productName+' · '+yuan(o.amountFen)+'</small><br/><span class="'+o.status+'">'+(o.status==='paid'?'已付款':'待确认')+'</span>'+(o.status==='pending'?'<button type="button" class="primary full paidBtn" data-id="'+o.id+'">确认已收款</button>':'')+'</div>').join('') || '<small>暂无订单</small>';
-    document.querySelectorAll('.paidBtn').forEach(b=>b.onclick=async()=>{try{await api('/api/admin/orders/'+b.dataset.id+'/paid',{method:'POST',headers:adminHeaders()});toast('订单已解锁');loadOrders()}catch(e){toast(e.message)}});
+    $('#orders').innerHTML=list.map(o=>{
+      const issued=o.status==='code_issued' && o.downloadCode;
+      return '<div class="order"><b>'+o.id+'</b><br/><small>'+o.productName+' · '+yuan(o.amountFen)+(o.contact?' · '+o.contact:'')+'</small><br/>'+
+        (issued
+          ? '<span class="paid">下载码：<b>'+o.downloadCode+'</b></span><button type="button" class="ghost full copyCodeBtn" data-code="'+o.downloadCode+'">复制下载码</button>'
+          : '<span class="pending">等待微信收款</span><button type="button" class="primary full issueCodeBtn" data-id="'+o.id+'">已收款 · 生成下载码</button>')+
+        '</div>';
+    }).join('') || '<small>暂无订单</small>';
+
+    document.querySelectorAll('.issueCodeBtn').forEach(b=>b.onclick=async()=>{
+      try{
+        const r=await api('/api/admin/orders/'+b.dataset.id+'/code',{method:'POST',headers:adminHeaders()});
+        await copyText(r.downloadCode);
+        loadOrders();
+      }catch(e){toast(e.message)}
+    });
+    document.querySelectorAll('.copyCodeBtn').forEach(b=>b.onclick=()=>copyText(b.dataset.code));
   }catch(e){toast(e.message)}
 }
 
