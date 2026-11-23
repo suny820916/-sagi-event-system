@@ -131,7 +131,7 @@ export function createLanGateway({
         if (!pairing.verify(token)) return reply(res, 401, { error: 'UNAUTHORIZED' });
         // Only football state commands may cross this mobile gateway. Never forward
         // arbitrary vMix or administrative operations from a paired phone.
-        const allowed = new Set(['GOAL', 'SCORE_ADJUST', 'YELLOW', 'RED', 'SUB', 'SET_CLOCK_RUNNING', 'SET_CLOCK', 'HALF_TIME', 'FULL_TIME', 'START_PENALTIES', 'PENALTY_ATTEMPT', 'FINISH_PENALTIES', 'SET_PERIOD']);
+        const allowed = new Set(['GOAL', 'SCORE_ADJUST', 'YELLOW', 'RED', 'SUB', 'SET_CLOCK_RUNNING', 'SET_CLOCK', 'HALF_TIME', 'FULL_TIME', 'START_PENALTIES', 'PENALTY_ATTEMPT', 'UNDO_PENALTY_ATTEMPT', 'FINISH_PENALTIES', 'SET_PERIOD']);
         if (!allowed.has(body.type)) return reply(res, 403, { error: 'COMMAND_NOT_ALLOWED' });
         const result = await submitCommand(body);
         return reply(res, 200, { result });
