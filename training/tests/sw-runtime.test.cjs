@@ -8,14 +8,15 @@ const code = fs.readFileSync(path.join(__dirname, '..', 'sw.js'), 'utf8');
 const listeners = {};
 const stores = new Map();
 const origin = 'https://training.example.test/';
-const makeResponse = (body, status = 200) => ({body, status});
+const makeResponse = (body, status = 200) => ({body, status, ok: status >= 200 && status < 300, clone() {return makeResponse(body, status);}});
 const caches = {
   async open(name) {
     if (!stores.has(name)) stores.set(name, new Map());
     const entries = stores.get(name);
     return {
       async addAll(requests) { for (const req of requests) entries.set(req.url, makeResponse('cached:' + req.url)); },
-      async match(req) { return entries.get(req.url); }
+      async match(req) { return entries.get(req.url); },
+      async put(req, response) { entries.set(req.url, response); }
     };
   },
   async keys() { return [...stores.keys()]; },
@@ -52,5 +53,13 @@ const runEvent = async (name, props={}) => {
   await runEvent('fetch', {request: {method:'POST',url:origin+'iq.html'}});
   await runEvent('fetch', {request: {method:'GET',url:origin+'not-cached.json'}});
   assert.equal(fetches, 0, 'unhandled requests must pass through');
-  console.log('PASS: SW precache, cache rotation, cached fetch and request exclusions');
+  // A missing precached entry must be restored from the network for later offline use.
+  stores.get(cacheName).delete(origin+'iq.html');
+  const recovered = await runEvent('fetch', {request: {method:'GET',url:origin+'iq.html'}});
+  assert.equal(recovered.body, 'network');
+  assert.equal(fetches, 1);
+  assert.equal(stores.get(cacheName).get(origin+'iq.html').body, 'network');
+  await runEvent('fetch', {request: {method:'GET',url:origin+'iq.html'}});
+  assert.equal(fetches, 1, 'restored asset should be served from cache');
+  console.log('PASS: SW precache, cache rotation, cached fetch, cache recovery and exclusions');
 })().catch(e=>{console.error(e);process.exitCode=1;});
