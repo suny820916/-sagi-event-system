@@ -511,3 +511,8 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Commit `9707df5` updates `.github/workflows/commercial-penalty-undo.yml`: explicit read-only workflow permission, 12-minute per-job timeout, independent Windows/Linux matrix failures, Node syntax gates for core/LAN/mobile sources, reducer undo regression and durable HTTP restart regression.
 - **Verification:** GitHub accepted the workflow update; this is not evidence that either OS job passed. Inspect Actions job conclusions and logs before closing the CI acceptance gate.
 - **Release blockers:** Windows/vMix/Safari real hardware tests, authoritative vMix overlay readback, LAN bearer-token transport protection, and crash/power-loss endurance remain pending. No changes to main/V4.40 Stable.
+
+## 2026-11-23 — Seven-round penalty LAN persistence regression
+- Extended `commercial/lan/engine-lan-selftest.mjs` with 14 alternating home/away penalty attempts after undo, including scored/missed outcomes, chronological history checks, a real Local Engine + LAN gateway restart, score/revision verification and duplicate command retry after restart.
+- Commit: `a02059d3` (commercial-v1.0 only). The existing `commercial-penalty-undo.yml` workflow includes this self-test on Windows and Ubuntu.
+- **Verification:** source committed through GitHub API; this run did not execute Node or obtain a passing Actions check. Tests are added, not certified passed. Real vMix on-air readback, iPhone Safari, offline Windows endurance and commercial license audit remain open.
