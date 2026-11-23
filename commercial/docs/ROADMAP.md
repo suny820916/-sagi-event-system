@@ -516,3 +516,9 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Extended `commercial/lan/engine-lan-selftest.mjs` with 14 alternating home/away penalty attempts after undo, including scored/missed outcomes, chronological history checks, a real Local Engine + LAN gateway restart, score/revision verification and duplicate command retry after restart.
 - Commit: `a02059d3` (commercial-v1.0 only). The existing `commercial-penalty-undo.yml` workflow includes this self-test on Windows and Ubuntu.
 - **Verification:** source committed through GitHub API; this run did not execute Node or obtain a passing Actions check. Tests are added, not certified passed. Real vMix on-air readback, iPhone Safari, offline Windows endurance and commercial license audit remain open.
+
+## 2026-11-23 — Late mobile penalty retries after full time
+- Extended the real HTTP LAN→Local Engine restart integration test to replay **all 14** seventh-round-and-beyond penalty command IDs after `FINISH_PENALTIES` and restart, asserting every response is flagged duplicate, the canonical revision is unchanged, penalty history IDs/order/outcomes remain identical, and the shootout stays finished.
+- Commit: `efd08d77` (`commercial/lan/engine-lan-selftest.mjs`). This is **test coverage only**, not a new production feature.
+- **Verification:** GitHub contents API accepted the test commit; no Node test run or Windows/Linux CI success was observed in this run. Previous commit combined status query returned an empty status list, which is not a pass. The test must run successfully before closing this acceptance gate.
+- **Still blocked for commercial release:** real vMix on-air readback, phone Safari LAN pairing and token security, Windows power-loss recovery, signed installer/rollback, full license audit and offline endurance certification. Keep `main` isolated.
