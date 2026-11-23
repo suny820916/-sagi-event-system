@@ -69,6 +69,7 @@ export function createInitialMatchState(meta) {
     eventLog: [],
     replayMarkers: [],
     processedCommandIds: [],
+    commandFingerprints: {},
     lastEvent: null,
     updatedAt: new Date(0).toISOString(),
   };
@@ -98,6 +99,9 @@ export function hydrateMatchState(raw) {
     processedCommandIds: Array.isArray(raw.processedCommandIds)
       ? raw.processedCommandIds.map(String).filter(Boolean)
       : [],
+    commandFingerprints: raw.commandFingerprints && typeof raw.commandFingerprints === "object" && !Array.isArray(raw.commandFingerprints)
+      ? Object.fromEntries(Object.entries(raw.commandFingerprints).filter(([k,v]) => k && typeof v === "string"))
+      : {},
   };
 
   if (!PERIODS.has(next.period)) next.period = "PRE";
@@ -197,11 +201,27 @@ function applyEventCommand(state, command, type) {
   return event;
 }
 
+// Stable semantic fingerprint: ignore transport timestamps and revision preconditions.
+// Historical states without fingerprints retain legacy duplicate behavior.
+function commandFingerprint(command, type) {
+  const fields = Object.fromEntries(Object.entries(command)
+    .filter(([key]) => !["commandId", "createdAt", "expectedRevision"].includes(key))
+    .map(([key, value]) => [key, value]));
+  fields.type = type;
+  const stable = value => Array.isArray(value) ? value.map(stable) :
+    value && typeof value === "object" ? Object.fromEntries(Object.keys(value).sort().map(k => [k, stable(value[k])])) : value;
+  return JSON.stringify(stable(fields));
+}
+
 export function applyCommand(currentState, command) {
   const { commandId, type } = assertCommand(command);
   const current = hydrateMatchState(currentState);
 
+  const fingerprint = commandFingerprint(command, type);
   if (current.processedCommandIds.includes(commandId)) {
+    if (Object.hasOwn(current.commandFingerprints, commandId) && current.commandFingerprints[commandId] !== fingerprint) {
+      throw new Error("COMMAND_ID_CONFLICT");
+    }
     return { state: current, event: null, duplicate: true };
   }
 
@@ -312,6 +332,7 @@ export function applyCommand(currentState, command) {
 
   state.revision += 1;
   state.processedCommandIds.push(commandId);
+  state.commandFingerprints[commandId] = fingerprint;
   state.updatedAt = String(command.createdAt ?? new Date().toISOString());
 
   return { state: hydrateMatchState(state), event, duplicate: false };
