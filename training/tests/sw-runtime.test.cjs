@@ -16,18 +16,20 @@ const caches = {
     return {
       async addAll(requests) { for (const req of requests) entries.set(req.url, makeResponse('cached:' + req.url)); },
       async match(req) { return entries.get(req.url); },
-      async put(req, response) { entries.set(req.url, response); }
+      async put(req, response) { if (cacheWriteFails) throw Error('quota exceeded'); entries.set(req.url, response); }
     };
   },
   async keys() { return [...stores.keys()]; },
   async delete(name) { return stores.delete(name); }
 };
 let fetches = 0;
+let networkDown = false;
+let cacheWriteFails = false;
 const context = {
   self: {registration: {scope: origin}, clients: {claim: async () => {}}, addEventListener: (name, cb) => {listeners[name] = cb;}},
   caches, URL, Request: class { constructor(url) {this.url = url;} },
   Response: class { constructor(body, opts) {this.body=body; this.status=opts.status;} },
-  fetch: async () => {fetches++; return makeResponse('network');}
+  fetch: async () => {fetches++; if(networkDown)throw Error('offline'); return makeResponse('network');}
 };
 vm.runInNewContext(code, context, {filename: 'sw.js'});
 const runEvent = async (name, props={}) => {
@@ -61,5 +63,18 @@ const runEvent = async (name, props={}) => {
   assert.equal(stores.get(cacheName).get(origin+'iq.html').body, 'network');
   await runEvent('fetch', {request: {method:'GET',url:origin+'iq.html'}});
   assert.equal(fetches, 1, 'restored asset should be served from cache');
-  console.log('PASS: SW precache, cache rotation, cached fetch, cache recovery and exclusions');
+  // CacheStorage quota errors must not discard a successful network response.
+  stores.get(cacheName).delete(origin+'iq.html');
+  cacheWriteFails = true;
+  const quotaFallback = await runEvent('fetch', {request: {method:'GET',url:origin+'iq.html'}});
+  assert.equal(quotaFallback.body, 'network');
+  assert.ok(!stores.get(cacheName).has(origin+'iq.html'), 'quota failure must not pretend cache succeeded');
+  cacheWriteFails = false;
+  // A genuinely offline cache miss must produce an explicit 503 rather than an uncaught rejection.
+  networkDown = true;
+  const offline = await runEvent('fetch', {request: {method:'GET',url:origin+'iq.html'}});
+  assert.equal(offline.status, 503);
+  assert.match(offline.body, /离线缓存/);
+  networkDown = false;
+  console.log('PASS: SW precache, rotation, recovery, quota fallback, offline 503 and exclusions');
 })().catch(e=>{console.error(e);process.exitCode=1;});
