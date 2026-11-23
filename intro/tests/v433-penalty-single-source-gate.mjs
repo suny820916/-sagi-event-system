@@ -1,3 +1,4 @@
+import './v433-lan-boot-dependency-gate.mjs';
 import fs from 'node:fs';
 function assert(ok,msg){if(!ok)throw new Error(msg)}
 const control=fs.readFileSync(new URL('../v45-lan.html',import.meta.url),'utf8');
