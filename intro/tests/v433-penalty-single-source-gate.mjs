@@ -88,3 +88,22 @@ longSnap.history[0].at='changed-in-snapshot';
 assert(extendedHistory[0].at==='0','snapshot mutation leaked into canonical history');
 console.log('V4.33 40-round sudden-death snapshot isolation PASS');
 
+
+const winnerEnd=control.indexOf('function mdPenaltyDots(',start);
+assert(winnerEnd>end,'cannot extract winner evaluator');
+const winnerCode=control.slice(start,winnerEnd);
+const winnerCtx={matchdayState:{penaltyShootout:{sourceVersion:'V4.33',started:true,visible:true,rounds:3,firstSide:'HOME',history:[
+ {side:'HOME',result:'GOAL'},{side:'AWAY',result:'MISS'},
+ {side:'HOME',result:'GOAL'},{side:'AWAY',result:'MISS'}
+]}},q:()=>({value:''})};
+const early=runInNewContext(winnerCode+'\nmdPenaltyEvaluateWinner()',winnerCtx);
+assert(early==='HOME'&&winnerCtx.matchdayState.penaltyShootout.finished,
+ '3-round mathematically decided winner not finalized early');
+assert(winnerCtx.matchdayState.homePen===2&&winnerCtx.matchdayState.awayPen===0,
+ 'canonical penalty totals not synchronized after early finish');
+winnerCtx.matchdayState.penaltyShootout={sourceVersion:'V4.33',started:true,visible:true,rounds:5,firstSide:'HOME',
+ history:Array.from({length:12},(_,i)=>({side:i%2?'AWAY':'HOME',result:i===11?'MISS':'GOAL'}))};
+const sudden=runInNewContext(winnerCode+'\nmdPenaltyEvaluateWinner()',winnerCtx);
+assert(sudden==='HOME'&&winnerCtx.matchdayState.homePen===6&&winnerCtx.matchdayState.awayPen===5,
+ 'sudden-death winner or penalty totals incorrect');
+console.log('V4.33 3-round early finish + sudden-death winner PASS');
