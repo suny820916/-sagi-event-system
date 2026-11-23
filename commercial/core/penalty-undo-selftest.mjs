@@ -16,5 +16,24 @@ for(const type of ["GOAL","YELLOW","RED","SUB","HALF_TIME","FULL_TIME"]){
   reject(()=>run(type,"late_"+type,{side:"HOME"}));
   ok(state.revision===finishedRevision);
 }
+// Final-state mutation boundary: administrative commands must not reopen or alter a finished match.
+for (const [type, extra] of [
+  ["SCORE_ADJUST", {side:"HOME",delta:1}],
+  ["SET_PERIOD", {period:"2H"}],
+  ["SET_CLOCK", {running:true,elapsedSeconds:60}],
+  ["SET_CLOCK_RUNNING", {running:true}],
+  ["START_PENALTIES", {}],
+  ["PENALTY_ATTEMPT", {side:"HOME",outcome:"SCORED"}],
+  ["FINISH_PENALTIES", {}],
+]) {
+  const before=consistencyView(state);
+  reject(()=>run(type,"final_guard_"+type,extra));
+  ok(consistencyView(state)===before);
+}
+// A delayed retry of an already accepted command stays a duplicate, even at FT.
+ok(run("FINISH_PENALTIES","finish").duplicate);
+// Presentation controls remain possible after FT.
+run("SET_SCOREBOARD","post_match_board",{visible:true});
+ok(state.period==="FT"&&state.scoreboardVisible);
 ok(run("MVP","post_match_mvp",{player:{id:"7",name:"球员",number:"7"}}).state.period==="FT");
 console.log("penalty undo PASS");
