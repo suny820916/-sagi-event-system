@@ -602,3 +602,9 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - The script fails closed when Git metadata or the expected branch is absent and marks missing test files UNKNOWN. Evidence is written to `commercial/evidence/release-evidence-local.json` and is **not** a certification.
 - **Verification:** GitHub accepted the new script; this run did not execute Node or Windows/vMix hardware tests. Validate the script on a real checkout and confirm its output before relying on the report. CI status remains unverified.
 - **Next:** expand the runner to the complete CI test matrix, capture independently verified Windows/iPhone/vMix offline evidence, and ensure generated evidence is excluded from distributable bundles.
+
+## 2026-11-24 — Evidence collector expanded (verification pending)
+- Expanded `commercial/tools/collect-release-evidence.mjs` from five to eight checks: added LAN pairing, core snapshot failure and penalty undo self-tests. All three file paths were confirmed present on `commercial-v1.0` before editing.
+- Collector now rejects changes to tracked files relative to the recorded HEAD, records `cleanTrackedTree`, and explicitly marks `scope: PARTIAL_AUTOMATED_CHECKS_ONLY` and `releaseDecision: NO-GO` even when this subset passes. Untracked files are not checked by this cleanliness gate.
+- **Verification:** GitHub source update committed; no Node execution or CI PASS verified in this run. This collector is not the complete CI suite, and does not replace Windows/iPhone/vMix offline acceptance or license review.
+- **Next:** execute the expanded collector on Windows and Linux with a clean checkout, retain evidence artifact and exit codes, then extend coverage to remaining CI checks and hardware tests.
