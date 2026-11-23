@@ -608,3 +608,9 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Collector now rejects changes to tracked files relative to the recorded HEAD, records `cleanTrackedTree`, and explicitly marks `scope: PARTIAL_AUTOMATED_CHECKS_ONLY` and `releaseDecision: NO-GO` even when this subset passes. Untracked files are not checked by this cleanliness gate.
 - **Verification:** GitHub source update committed; no Node execution or CI PASS verified in this run. This collector is not the complete CI suite, and does not replace Windows/iPhone/vMix offline acceptance or license review.
 - **Next:** execute the expanded collector on Windows and Linux with a clean checkout, retain evidence artifact and exit codes, then extend coverage to remaining CI checks and hardware tests.
+
+## 2026-11-24 — Release evidence untracked-source gate
+- Updated `commercial/tools/collect-release-evidence.mjs` to reject PASS if untracked non-ignored files exist under `commercial/`, since these can shadow imported modules or change test execution without appearing in `git diff HEAD`.
+- Generated files under `commercial/evidence/` are excluded from this check so repeated evidence collection does not self-invalidate. The report records `cleanCommercialSources` and the count of untracked commercial files, but not their names.
+- Commit `d931472a` changes the evidence gate only; it does **not** establish that any of the eight Node checks pass. GitHub write succeeded; Node execution and Windows/vMix/iPhone evidence remain pending.
+- **Remaining limits:** untracked files outside `commercial/`, ignored source files, runtime environment contamination, and hardware/on-air behavior are not certified by this gate. Commercial release remains NO-GO.
