@@ -11,6 +11,19 @@ def probe(path):
         "format=duration:stream=codec_type,width,height,nb_frames",
         "-of","json",str(path)], text=True))
 
+def top_dark_fraction(frame_path, top_fraction=0.20, threshold=25):
+    """Measure black space, not pitch clipping; requires visual confirmation."""
+    width, height = 90, 160
+    raw = subprocess.check_output([
+        "ffmpeg", "-v", "error", "-i", str(frame_path),
+        "-vf", f"scale={width}:{height},format=gray",
+        "-frames:v", "1", "-f", "rawvideo", "-"
+    ])
+    n = width * int(height * top_fraction)
+    if len(raw) < n:
+        raise ValueError(f"could not decode frame {frame_path}")
+    return round(sum(v < threshold for v in raw[:n]) / n, 4)
+
 def audit(video, report, frame_dir, out):
     video, report, frame_dir, out = map(Path,(video,report,frame_dir,out))
     r=json.loads(report.read_text(encoding="utf-8"))
@@ -29,8 +42,8 @@ def audit(video, report, frame_dir, out):
     if r.get("v42_projection_gate",{}).get("sampled_frames")!=2100: errors.append("projection gate frame count not 2100")
     if r.get("v42_projection_gate",{}).get("outside_safe_frames"): errors.append("projection safe frame violations")
     if not all(s.get("width",0)>0 and s.get("height",0)>0 for s in p["streams"] if s.get("codec_type")=="video"): errors.append("invalid video dimensions")
-    result={
-      "technical_gate":"FAIL" if errors else "PASS",
+    dark_top = {}\n    for frame in images:\n        try:\n            dark_top[frame.stem] = top_dark_fraction(frame)\n        except (subprocess.CalledProcessError, ValueError) as exc:\n            errors.append(f"dark-region audit failed for {frame.name}: {exc}")\n    dark_alerts = [t for t, fraction in dark_top.items() if fraction >= 0.90]\n    result={
+      "technical_gate":"FAIL" if errors else "PASS",\n      "top_20pct_dark_fraction_by_second":dark_top,\n      "dark_top_visual_review_seconds":dark_alerts,\n      "dark_region_interpretation":"Black space is not proof of clipping; review pitch and tactical subjects visually.",
       "duration_sec":duration,"critical_frames":len(images),
       "errors":errors,
       "teactics_reference":"SAGI_CLOUD_RENDER.mp4",
