@@ -614,3 +614,9 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Generated files under `commercial/evidence/` are excluded from this check so repeated evidence collection does not self-invalidate. The report records `cleanCommercialSources` and the count of untracked commercial files, but not their names.
 - Commit `d931472a` changes the evidence gate only; it does **not** establish that any of the eight Node checks pass. GitHub write succeeded; Node execution and Windows/vMix/iPhone evidence remain pending.
 - **Remaining limits:** untracked files outside `commercial/`, ignored source files, runtime environment contamination, and hardware/on-air behavior are not certified by this gate. Commercial release remains NO-GO.
+
+## 2026-11-24 — CI failure triage and command conflict repair
+- Inspected actual GitHub Actions job logs for run `45255010106`: both platforms failed `snapshot-failure-selftest.mjs` with `INVALID_PENALTY_LIFECYCLE` because the test omitted `START_PENALTIES`; added the explicit start command (`d78356e`).
+- Inspected run `45255010178`: both platforms failed `engine-lan-selftest.mjs` because a reused command ID with changed payload returned HTTP 503 rather than required 409. Fixed Local Engine mapping of `COMMAND_ID_CONFLICT` to 409 (`430e149`) and preserved that specific conflict through the LAN bridge (`ca246de`).
+- Evidence: earlier core tests passed until the failing step; commercial director workflow for `d78356e` passed. Newer CI runs are pending and must be checked before marking these repairs verified. No Windows vMix or phone hardware certification.
+- Release remains **NO-GO**. Keep commercial changes isolated from `main` and V4.40 Stable.
