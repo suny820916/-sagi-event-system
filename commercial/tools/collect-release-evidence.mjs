@@ -9,6 +9,10 @@ import { createHash } from 'node:crypto';
 const checks = [
   ['syntax:lan-gateway', 'commercial/lan/lan-gateway.mjs', true],
   ['syntax:lan-command-selftest', 'commercial/lan/lan-command-selftest.mjs', true],
+  ['syntax:engine-lan-bridge', 'commercial/lan/engine-lan-bridge.mjs', true],
+  ['syntax:lan-pairing', 'commercial/lan/lan-pairing.mjs', true],
+  ['syntax:engine-lan-selftest', 'commercial/lan/engine-lan-selftest.mjs', true],
+  ['syntax:penalty-undo-selftest', 'commercial/core/penalty-undo-selftest.mjs', true],
   ['test:lan-command', 'commercial/lan/lan-command-selftest.mjs', false],
   ['test:engine-lan', 'commercial/lan/engine-lan-selftest.mjs', false],
   ['test:lan-state-revocation', 'commercial/lan/lan-state-revocation-selftest.mjs', false],
