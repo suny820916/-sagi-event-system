@@ -351,6 +351,35 @@ try {
     releaseFailure();
     await new Promise(resolve => rejecting.server.close(resolve));
   }
+  // A successful state read must also be suppressed if the paired phone is
+  // revoked while the storage operation is pending.
+  let releaseSuccessfulRead, successfulReadStarted;
+  const successfulReadGate = new Promise(resolve => { releaseSuccessfulRead = resolve; });
+  const successfulReadEntered = new Promise(resolve => { successfulReadStarted = resolve; });
+  const slowRead = createLanGateway({
+    getState: async () => {
+      successfulReadStarted();
+      await successfulReadGate;
+      return { revision: 98765, privateMatch: 'must-not-leak' };
+    },
+  });
+  const slowReadAddress = await slowRead.listen();
+  try {
+    const code = slowRead.pairing.issue({ localOperatorApproved: true }).code;
+    const token = slowRead.pairing.redeem(code).token;
+    const pending = fetch(`http://127.0.0.1:${slowReadAddress.port}/api/v1/lan/state`, {
+      headers: { authorization: `Bearer ${token}` },
+    });
+    await successfulReadEntered;
+    slowRead.pairing.revoke(token);
+    releaseSuccessfulRead();
+    const response = await pending;
+    assert.equal(response.status, 401);
+    assert.deepEqual(await response.json(), { error: 'UNAUTHORIZED' });
+  } finally {
+    releaseSuccessfulRead();
+    await new Promise(resolve => slowRead.server.close(resolve));
+  }
   // A rejected asynchronous state read must not leak an error response to a
   // device whose authorization was revoked while the read was in flight.
   let releaseReadFailure, readFailureStarted;
