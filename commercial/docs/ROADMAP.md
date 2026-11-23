@@ -522,3 +522,8 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Commit: `efd08d77` (`commercial/lan/engine-lan-selftest.mjs`). This is **test coverage only**, not a new production feature.
 - **Verification:** GitHub contents API accepted the test commit; no Node test run or Windows/Linux CI success was observed in this run. Previous commit combined status query returned an empty status list, which is not a pass. The test must run successfully before closing this acceptance gate.
 - **Still blocked for commercial release:** real vMix on-air readback, phone Safari LAN pairing and token security, Windows power-loss recovery, signed installer/rollback, full license audit and offline endurance certification. Keep `main` isolated.
+
+## 2026-11-23 14:04 CST — Concurrent finalized penalty retry coverage
+- Added a concurrent batch of all 14 previously accepted penalty command IDs after finalization and server restart in `commercial/lan/engine-lan-selftest.mjs` (commit `9070be0`). Each HTTP response must report a durable duplicate and the authoritative final state must remain unchanged.
+- **Verification:** GitHub contents API accepted the test update. The local runner could not resolve `github.com` for a clone (`Could not resolve host: github.com`); Node execution and Windows/Linux CI result are **not verified**. Test added is not a test passed.
+- **Open:** verify CI run, run Windows/Safari/vMix hardware integration, exercise real WAN loss and power interruption, and confirm display state reconciliation. No changes to main or V4.40 Stable.
