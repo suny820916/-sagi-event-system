@@ -351,6 +351,35 @@ try {
     releaseFailure();
     await new Promise(resolve => rejecting.server.close(resolve));
   }
+  // A rejected asynchronous state read must not leak an error response to a
+  // device whose authorization was revoked while the read was in flight.
+  let releaseReadFailure, readFailureStarted;
+  const readFailureGate = new Promise(resolve => { releaseReadFailure = resolve; });
+  const readFailureEntered = new Promise(resolve => { readFailureStarted = resolve; });
+  const failingRead = createLanGateway({
+    getState: async () => {
+      readFailureStarted();
+      await readFailureGate;
+      throw new Error('internal-state-store-failure');
+    },
+  });
+  const failingReadAddress = await failingRead.listen();
+  try {
+    const code = failingRead.pairing.issue({ localOperatorApproved: true }).code;
+    const token = failingRead.pairing.redeem(code).token;
+    const pending = fetch(`http://127.0.0.1:${failingReadAddress.port}/api/v1/lan/state`, {
+      headers: { authorization: `Bearer ${token}` },
+    });
+    await readFailureEntered;
+    failingRead.pairing.revoke(token);
+    releaseReadFailure();
+    const response = await pending;
+    assert.equal(response.status, 401);
+    assert.deepEqual(await response.json(), { error: 'UNAUTHORIZED' });
+  } finally {
+    releaseReadFailure();
+    await new Promise(resolve => failingRead.server.close(resolve));
+  }
   console.log('lan-command-selftest PASS');
 } finally {
   await new Promise(resolve => g.server.close(resolve));
