@@ -585,3 +585,9 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Commit: `8e5ecc5`. This covers an existing gateway behavior; it does not implement LAN encryption, physical approval, or vMix readback.
 - **Verification pending:** the GitHub file update succeeded, but the runner cannot resolve `github.com` for cloning. Node execution, Windows/Linux CI status, Safari and vMix hardware acceptance remain unverified. Do not count the new regression as PASS.
 - **Priority:** obtain executable CI evidence and complete end-to-end LAN engine/vMix and Windows endurance gates rather than treating isolated security tests as commercial readiness.
+
+## 2026-11-24 — LAN state-read revocation success-path regression
+- Added deterministic test for a successful asynchronous state read completing after paired-phone revocation. Expected HTTP 401 with no match revision or private payload. This complements the existing failing-read/revocation case.
+- Commit: `ab72a8b` (`commercial/lan/lan-command-selftest.mjs`).
+- **Verification:** GitHub file update succeeded; Node execution and CI PASS have not been established. The test does not prove protected transport or Windows/Safari compatibility.
+- **Release blockers:** LAN bearer tokens remain plaintext over HTTP; canonical end-to-end mobile/vMix testing, Windows power-loss recovery, complete license audit and offline installer/rollback remain outstanding.
