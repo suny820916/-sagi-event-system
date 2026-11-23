@@ -564,3 +564,10 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Added deterministic deferred-read regression test `commercial/lan/lan-state-revocation-selftest.mjs` and wired it into Windows/Linux LAN CI.
 - Commits: `5efdaa7`, `2957983`, `a391103` (source, regression, CI).
 - **Verification:** GitHub writes confirmed; Node execution and Actions PASS are not confirmed. This closes only one revocation race. Plaintext LAN bearer transport, real Safari/vMix integration, operator approval UI, Windows endurance, crash recovery and full dependency-license review remain release blockers.
+
+## 2026-11-23 — In-flight LAN command revocation response boundary
+- Revalidate paired session after asynchronous `submitCommand` resolves, before returning its result; a revoked token receives HTTP 401 instead of command result data.
+- Added a deterministic deferred-command HTTP regression case verifying revocation during the in-flight command and distinguishing response suppression from mutation rollback.
+- **Important:** a command admitted before revocation may already have committed; clients must re-pair and resynchronize authoritative state rather than retry with a new ID. This is not cancellation or exactly-once transport delivery.
+- **Verification:** GitHub file updates accepted. Node execution, CI success, Windows/Safari LAN behavior, and vMix live verification have not been confirmed for this change.
+- **Release blockers remain:** plaintext LAN bearer-token exposure, authenticated desktop pairing, physical Windows endurance and power-loss recovery, actual vMix read-back, complete dependency/license audit.
