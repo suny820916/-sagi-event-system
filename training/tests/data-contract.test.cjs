@@ -20,4 +20,7 @@ assert.match(home, /localStorage\.setItem\(key,JSON\.stringify\(next\)\)/, 'trai
 assert.match(iq, /sagi\.iq\.records/, 'IQ storage key changed without migration');
 assert.match(sw, /const CACHE='sagi-training-/, 'offline cache version missing');
 assert.doesNotMatch(home + iq, /<script[^>]+src=["']https?:/i, 'remote JavaScript dependency detected');
+assert.match(iq, /\$\('download'\)\.onclick=\(\)=>\{[\s\S]*?loadIQStrict\(\)/, 'IQ export must re-read latest validated storage');
+assert.match(iq, /sagi-iq-raw-recovery\.txt/, 'corrupt IQ data must be exportable without rewriting');
+assert.match(iq, /payload=raw/, 'recovery export must retain exact original data');
 console.log('PASS: training and IQ data safety contract (static source checks only)');
