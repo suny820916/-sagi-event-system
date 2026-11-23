@@ -23,4 +23,17 @@ assert.doesNotMatch(home + iq, /<script[^>]+src=["']https?:/i, 'remote JavaScrip
 assert.match(iq, /\$\('download'\)\.onclick=\(\)=>\{[\s\S]*?loadIQStrict\(\)/, 'IQ export must re-read latest validated storage');
 assert.match(iq, /sagi-iq-raw-recovery\.txt/, 'corrupt IQ data must be exportable without rewriting');
 assert.match(iq, /payload=raw/, 'recovery export must retain exact original data');
+// Cross-page contract: each scenario must remain restorable and have an animation path.
+const answerMatch = home.match(/const iqAnswers=\[([^\]]+)\]/);
+assert.ok(answerMatch, 'training page answer key missing');
+const answers = answerMatch[1].split(',').map(Number);
+assert.equal(answers.length, 20, 'home must accept all 20 IQ scenarios');
+const categoryMatch = iq.match(/const categories=\[([^\]]+)\]/);
+assert.ok(categoryMatch, 'IQ categories missing');
+assert.equal((categoryMatch[1].match(/'[^']+'/g)||[]).length, answers.length, 'category count mismatch');
+const pathMatch = iq.match(/const preferredPaths=(\[[^;]+\]);/);
+assert.ok(pathMatch, 'IQ animation paths missing');
+const paths = Function('return '+pathMatch[1])();
+assert.equal(paths.length, answers.length, 'every scenario needs an outcome animation path');
+assert.ok(paths.every(p=>Array.isArray(p)&&p.length>=2&&p.every(pt=>Array.isArray(pt)&&pt.length===2&&pt.every(Number.isFinite))), 'invalid animation coordinates');
 console.log('PASS: training and IQ data safety contract (static source checks only)');
