@@ -20,18 +20,32 @@ jobs:
           fetch-depth: 0
       - name: Run V4.33 candidate penalty gate
         run: node intro/tests/v433-penalty-single-source-gate.mjs
-      - name: Report integration conflicts without changing branch
+      - name: Diagnose actual mergeability against V4.32 without changing either branch
+        if: always()
         shell: bash
         run: |
           set -euo pipefail
           git fetch origin sagi-vmix-v432-clean-integration
-          base=$(git merge-base HEAD origin/sagi-vmix-v432-clean-integration)
-          echo "merge base: $base"
-          git merge-tree "$base" HEAD origin/sagi-vmix-v432-clean-integration > merge-tree-report.txt || true
-          echo "Conflicted paths:"
-          grep -E '^changed in both|^added in both|^removed in' merge-tree-report.txt || true
-          if grep -q '^<<<<<<< ' merge-tree-report.txt; then
-            echo "::warning::V4.33 requires manual semantic merge resolution; candidate remains unmerged"
+          base_ref=origin/sagi-vmix-v432-clean-integration
+          echo "candidate=$(git rev-parse HEAD)" | tee merge-tree-report.txt
+          echo "integration=$(git rev-parse "$base_ref")" | tee -a merge-tree-report.txt
+          echo "merge_base=$(git merge-base HEAD "$base_ref")" | tee -a merge-tree-report.txt
+          set +e
+          git merge-tree --write-tree --name-only HEAD "$base_ref" > merge-tree-output.txt 2>&1
+          merge_status=$?
+          set -e
+          cat merge-tree-output.txt >> merge-tree-report.txt
+          cat merge-tree-report.txt
+          if [ "$merge_status" -eq 0 ]; then
+            echo "MERGE_DIAGNOSTIC=clean" | tee -a merge-tree-report.txt
+          elif [ "$merge_status" -eq 1 ]; then
+            echo "MERGE_DIAGNOSTIC=conflicts" | tee -a merge-tree-report.txt
+            echo "::error::V4.33 conflicts with V4.32 integration; resolve before certification"
+            exit 1
+          else
+            echo "MERGE_DIAGNOSTIC=error:$merge_status" | tee -a merge-tree-report.txt
+            echo "::error::Merge diagnostic could not complete"
+            exit "$merge_status"
           fi
       - uses: actions/upload-artifact@v4
         if: always()
