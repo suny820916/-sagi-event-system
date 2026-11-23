@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#090909">
+<title>SAGI KIT · 摄影师上传</title>
+<style>
+:root{--bg:#090909;--panel:#151515;--line:#2a2a2a;--text:#f6f6f6;--muted:#8c8c8c;--red:#ff2b2b;--green:#72d09a}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 75% -10%,#311010 0,#090909 35%);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",Arial,sans-serif}
+.wrap{max-width:720px;margin:auto;padding:14px 14px 70px}.top{display:flex;justify-content:space-between;align-items:center;padding:4px 0 16px}.brand{font-weight:900}.brand i{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--red);margin:0 5px 1px}.back{color:#aaa;text-decoration:none;font-size:13px}.hero{padding:24px 2px 10px}.hero small{color:#ff6868;font-weight:900;letter-spacing:1.5px}.hero h1{font-size:34px;line-height:1.05;margin:10px 0}.hero p{color:var(--muted);line-height:1.6;margin:0}.card{background:linear-gradient(180deg,#181818,#111);border:1px solid var(--line);border-radius:18px;padding:14px;margin:12px 0}.field{width:100%;background:#0b0b0b;color:white;border:1px solid #303030;border-radius:12px;padding:13px;font:inherit;margin-top:8px}.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.primary,.ghost{width:100%;border:0;border-radius:12px;padding:13px;font:inherit;font-weight:900;margin-top:10px}.primary{background:var(--red);color:#fff}.ghost{background:#1b1b1b;color:#ddd;border:1px solid #333}.upload{display:block;border:1px dashed #4a4a4a;border-radius:16px;padding:24px 14px;text-align:center;margin-top:12px;background:#0d0d0d}.upload b{display:block}.upload span{display:block;color:#777;font-size:12px;margin-top:5px}.upload input{display:none}.status{font-size:12px;color:#999;line-height:1.6;margin-top:9px}.status.ok{color:var(--green)}progress{width:100%;height:8px;margin-top:12px}.count{margin-top:10px;font-size:13px;color:#bbb}.success{border:1px solid #245039;background:#0d1d15;border-radius:14px;padding:13px;color:#8be1ad;margin-top:12px}.danger{color:#ff7474}.tip{font-size:12px;color:#858585;line-height:1.7}.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><div class="brand">SAGI <i></i> PHOTO · 摄影师</div><a class="back" href="./photo.html">返回照片页</a></div>
+  <section class="hero">
+    <small>PHOTOGRAPHER UPLOAD</small>
+    <h1>只负责上传，<br>不接触订单。</h1>
+    <p>输入当天摄影师上传码后，选择比赛和球队，从手机相册批量上传比赛照片。</p>
+  </section>
+
+  <section id="loginCard" class="card">
+    <b>摄影师上传码</b>
+    <input id="code" class="field" placeholder="例如 PHOTO-1123" autocomplete="off" autocapitalize="characters">
+    <button id="login" class="primary">进入上传</button>
+    <div id="loginStatus" class="status">上传码由 SAGI 当天提供。</div>
+  </section>
+
+  <section id="uploadCard" class="card hidden">
+    <b>比赛信息</b>
+    <select id="event" class="field"><option value="">选择赛事</option></select>
+    <input id="match" class="field" placeholder="场次，例如 塔城队 vs 乌苏队">
+    <input id="team" class="field" placeholder="这批照片主要球队">
+    <div class="row">
+      <input id="jersey" class="field" placeholder="球衣号码（可空）">
+      <input id="player" class="field" placeholder="球员名（可空）">
+    </div>
+
+    <label class="upload">
+      <b>从手机相册选择比赛照片</b>
+      <span>一次最多40张 · 单张不超过24MB</span>
+      <input id="files" type="file" accept="image/*" multiple>
+    </label>
+    <div id="fileCount" class="count">尚未选择照片</div>
+    <button id="upload" class="primary">上传并生成 SAGI 水印预览</button>
+    <progress id="progress" max="100" value="0"></progress>
+    <div id="uploadStatus" class="status"></div>
+  </section>
+
+  <section class="card tip">
+    <b>摄影师看不到：</b>订单、用户联系方式、收款状态、下载码、价格设置。<br>
+    <b>建议：</b>每场结束后按“场次 + 球队”上传一批；球衣号码和球员名只有在整批都是同一个球员时再填写。
+  </section>
+</div>
+
+<script>
+(()=>{
+'use strict';
+const $=s=>document.querySelector(s);
+const qs=new URLSearchParams(location.search);
+const supplied=qs.get('api');
+if(supplied){localStorage.setItem('sagiMatchPhotoApi',supplied.replace(/\/$/,''));history.replaceState({},'',location.pathname)}
+const API=(localStorage.getItem('sagiMatchPhotoApi')||'').replace(/\/$/,'');
+let photographerCode=sessionStorage.getItem('sagiPhotographerCode')||'';
+
+function status(el,msg,ok=false){el.textContent=msg;el.classList.toggle('ok',ok);el.classList.toggle('danger',!ok&&!!msg)}
+async function request(path,opts={}){
+  if(!API) throw new Error('照片服务尚未接通');
+  const r=await fetch(API+path,{mode:'cors',...opts});
+  const data=await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(data.error||'请求失败');
+  return data;
+}
+async function loadEvents(){
+  const list=await request('/api/events');
+  $('#event').innerHTML='<option value="">选择赛事</option>'+list.map(e=>'<option value="'+e.id+'">'+e.name+(e.date?' · '+e.date:'')+'</option>').join('');
+}
+async function login(){
+  photographerCode=$('#code').value.trim();
+  if(!photographerCode)return status($('#loginStatus'),'请输入摄影师上传码');
+  try{
+    await request('/api/photographer/check',{headers:{'X-SAGI-PHOTOGRAPHER-CODE':photographerCode}});
+    sessionStorage.setItem('sagiPhotographerCode',photographerCode);
+    await loadEvents();
+    $('#loginCard').classList.add('hidden');
+    $('#uploadCard').classList.remove('hidden');
+    status($('#uploadStatus'),'摄影师权限已验证',true);
+  }catch(e){status($('#loginStatus'),e.message)}
+}
+function upload(){
+  const files=$('#files').files;
+  if(!files.length)return status($('#uploadStatus'),'请选择照片');
+  if(files.length>40)return status($('#uploadStatus'),'一次最多选择40张');
+  if(!$('#event').value)return status($('#uploadStatus'),'请选择赛事');
+  const fd=new FormData();
+  fd.append('eventId',$('#event').value);
+  fd.append('match',$('#match').value.trim());
+  fd.append('team',$('#team').value.trim());
+  fd.append('jersey',$('#jersey').value.trim());
+  fd.append('player',$('#player').value.trim());
+  [...files].forEach(f=>fd.append('photos',f));
+
+  const xhr=new XMLHttpRequest();
+  xhr.open('POST',API+'/api/photographer/photos');
+  xhr.setRequestHeader('X-SAGI-PHOTOGRAPHER-CODE',photographerCode);
+  xhr.upload.onprogress=e=>{if(e.lengthComputable)$('#progress').value=Math.round(e.loaded/e.total*90)};
+  xhr.onload=()=>{
+    let data={};try{data=JSON.parse(xhr.responseText||'{}')}catch{}
+    if(xhr.status>=200&&xhr.status<300){
+      $('#progress').value=100;
+      $('#uploadStatus').innerHTML='<div class="success">上传完成：'+data.count+' 张。SAGI 水印预览已生成，用户端可以查看。</div>';
+      $('#files').value='';$('#fileCount').textContent='尚未选择照片';
+    }else status($('#uploadStatus'),data.error||'上传失败，请重试');
+  };
+  xhr.onerror=()=>status($('#uploadStatus'),'网络中断，上传失败，请重新选择并上传');
+  $('#progress').value=5;
+  status($('#uploadStatus'),'正在上传，请保持页面打开…',true);
+  xhr.send(fd);
+}
+
+$('#login').onclick=login;
+$('#code').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();login()}});
+$('#files').onchange=e=>$('#fileCount').textContent=e.target.files.length?('已选择 '+e.target.files.length+' 张照片'):'尚未选择照片';
+$('#upload').onclick=upload;
+
+if(photographerCode&&API){
+  $('#code').value=photographerCode;
+  login();
+}
+})();
+</script>
+</body>
+</html>
