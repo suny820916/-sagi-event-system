@@ -8,6 +8,7 @@ const fs = require('fs');
 const path = require('path');
 const { JsonStore } = require('./lib/store');
 const { quote } = require('./lib/pricing');
+const { normalizeCode, makeDownloadCode } = require('./lib/download-code');
 
 const app = express();
 const PORT = Number(process.env.PORT || 10000);
@@ -50,19 +51,7 @@ function admin(req, res, next) {
 function safe(v, max=80) {
   return String(v || '').trim().slice(0, max);
 }
-function normalizeCode(v){
-  return String(v||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
-}
-function makeDownloadCode(data){
-  const alphabet='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  for(let attempt=0;attempt<50;attempt++){
-    let raw='';
-    for(let i=0;i<10;i++) raw+=alphabet[crypto.randomInt(0,alphabet.length)];
-    const code=raw.slice(0,5)+'-'+raw.slice(5);
-    if(!data.orders.some(o=>normalizeCode(o.downloadCode)===normalizeCode(code))) return code;
-  }
-  throw new Error('无法生成唯一下载码');
-}
+
 function photoById(data, photoId) {
   return data.photos.find(p => p.id === photoId);
 }
@@ -220,7 +209,7 @@ app.post('/api/admin/orders/:id/code', admin, (req,res) => {
   store.update(d => {
     const o = d.orders.find(x => x.id === req.params.id);
     if (!o) return d;
-    if(!o.downloadCode) o.downloadCode=makeDownloadCode(d);
+    if(!o.downloadCode) o.downloadCode=makeDownloadCode(d.orders);
     o.status='code_issued';
     o.codeIssuedAt=o.codeIssuedAt || new Date().toISOString();
     found={...o};
