@@ -19,10 +19,16 @@ def audit(video, report, frame_dir, out):
     images=sorted(frame_dir.glob("*.jpg"))
     errors=[]
     if abs(duration-70)>0.05: errors.append(f"duration {duration:.3f} != 70")
-    if len(images)!=9: errors.append(f"critical frames {len(images)} != 9")
+    expected={f"{t}.jpg" for t in (4,12,20,28,36,44,52,60,68)}
+    actual={f.name for f in images}
+    if actual!=expected: errors.append(f"critical frame timestamps mismatch: missing={sorted(expected-actual)}, extra={sorted(actual-expected)}")
     if any(f.stat().st_size==0 for f in images): errors.append("empty critical frame")
     if not any(s.get("codec_type")=="video" for s in p["streams"]): errors.append("no video stream")
     if not r.get("valid",False) or r.get("errors"): errors.append("engine report invalid")
+    if r.get("full_video_decode")!="PASS": errors.append("full decode gate not confirmed")
+    if r.get("v42_projection_gate",{}).get("sampled_frames")!=2100: errors.append("projection gate frame count not 2100")
+    if r.get("v42_projection_gate",{}).get("outside_safe_frames"): errors.append("projection safe frame violations")
+    if not all(s.get("width",0)>0 and s.get("height",0)>0 for s in p["streams"] if s.get("codec_type")=="video"): errors.append("invalid video dimensions")
     result={
       "technical_gate":"FAIL" if errors else "PASS",
       "duration_sec":duration,"critical_frames":len(images),
