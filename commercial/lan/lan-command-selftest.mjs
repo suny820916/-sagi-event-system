@@ -282,6 +282,42 @@ try {
   } finally {
     g.pairing.verify = originalVerify;
   }
+  // A command can commit while its HTTP response is pending. Revocation must
+  // suppress the result without pretending that the already committed mutation
+  // was rolled back.
+  let releaseCommand;
+  let commandStarted;
+  const started = new Promise(resolve => { commandStarted = resolve; });
+  const waiting = new Promise(resolve => { releaseCommand = resolve; });
+  let committed = 0;
+  const slow = createLanGateway({
+    submitCommand: async () => {
+      commandStarted();
+      await waiting;
+      committed++;
+      return { revision: 1, privateResult: 'must-not-leak' };
+    },
+  });
+  const slowAddress = await slow.listen();
+  try {
+    const slowCode = slow.pairing.issue({ localOperatorApproved: true }).code;
+    const slowToken = slow.pairing.redeem(slowCode).token;
+    const pending = fetch(`http://127.0.0.1:${slowAddress.port}/api/v1/lan/command`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${slowToken}` },
+      body: JSON.stringify({ commandId: 'pending_00000001', expectedRevision: 0, type: 'GOAL', side: 'HOME' }),
+    });
+    await started;
+    slow.pairing.revoke(slowToken);
+    releaseCommand();
+    const response = await pending;
+    assert.equal(response.status, 401);
+    assert.deepEqual(await response.json(), { error: 'UNAUTHORIZED' });
+    assert.equal(committed, 1, 'revocation cannot undo an already admitted command');
+  } finally {
+    releaseCommand();
+    await new Promise(resolve => slow.server.close(resolve));
+  }
   console.log('lan-command-selftest PASS');
 } finally {
   await new Promise(resolve => g.server.close(resolve));
