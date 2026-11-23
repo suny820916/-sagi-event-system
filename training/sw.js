@@ -1,4 +1,4 @@
-const CACHE='sagi-training-10-r20';const FILES=['./','./index.html','./iq.html','./manifest.webmanifest','./icon.svg'];const url=f=>new URL(f,self.registration.scope).href;
+const CACHE='sagi-training-10-r21';const FILES=['./','./index.html','./iq.html','./manifest.webmanifest','./icon.svg'];const url=f=>new URL(f,self.registration.scope).href;
 self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES.map(f=>new Request(url(f),{cache:'reload'}))))));
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('sagi-training-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',e=>{if(e.request.method!=='GET'||!FILES.some(f=>url(f)===e.request.url))return;e.respondWith((async()=>{const c=await caches.open(CACHE);const cached=await c.match(e.request);if(cached)return cached;try{return await fetch(e.request)}catch{return new Response('离线缓存尚不可用，请联网后重试',{status:503,headers:{'Content-Type':'text/plain;charset=utf-8'}})}})())});
