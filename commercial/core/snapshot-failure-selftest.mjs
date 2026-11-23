@@ -34,11 +34,13 @@ for (const period of ['PRE','HT','ET_BREAK','PEN','FT']) {
   clockState = applyCommand(clockState,{commandId:'period-'+period,type:'SET_PERIOD',period}).state;
   assert.deepEqual(clockState.clock,{running:false,elapsedSeconds:123});
 }
+// Validate malformed clock payloads in an active period; FT correctly rejects all mutations first.
+const clockValidationState = applyCommand(createInitialMatchState({fixtureId:'clock-invalid',home:'主队',away:'客队'}),{commandId:'begin-first-half',type:'SET_PERIOD',period:'1H'}).state;
 for (const elapsedSeconds of [-1,1.5,null,'123',true,undefined,Infinity,Number.MAX_SAFE_INTEGER+1]) {
-  assert.throws(()=>applyCommand(clockState,{commandId:'invalid-clock',type:'SET_CLOCK',running:true,elapsedSeconds}),/INVALID_CLOCK/);
+  assert.throws(()=>applyCommand(clockValidationState,{commandId:'invalid-clock',type:'SET_CLOCK',running:true,elapsedSeconds}),/INVALID_CLOCK/);
 }
 for (const running of ['false',0,null,undefined]) {
-  assert.throws(()=>applyCommand(clockState,{commandId:'invalid-running',type:'SET_CLOCK',running,elapsedSeconds:123}),/INVALID_CLOCK/);
+  assert.throws(()=>applyCommand(clockValidationState,{commandId:'invalid-running',type:'SET_CLOCK',running,elapsedSeconds:123}),/INVALID_CLOCK/);
 }
 
 // A delayed retry must remain idempotent after the old 2048-ID window.
