@@ -26,6 +26,13 @@ const branch = run('git', ['branch', '--show-current'], 10000);
 const revision = git.status === 0 ? git.stdout.trim() : null;
 const dirty = run('git', ['diff', '--quiet', 'HEAD', '--'], 10000);
 const cleanTrackedTree = dirty.status === 0 && !dirty.error;
+// Untracked source can shadow imports or alter tests without appearing in git diff.
+// Ignore only generated evidence, not other untracked files under commercial/.
+const untracked = run('git', ['ls-files', '--others', '--exclude-standard', '--', 'commercial', ':!commercial/evidence'], 10000);
+const untrackedFiles = untracked.status === 0 && !untracked.error
+  ? untracked.stdout.split(/\r?\n/).filter(Boolean)
+  : null;
+const cleanCommercialSources = cleanTrackedTree && untrackedFiles !== null && untrackedFiles.length === 0;
 const branchName = branch.status === 0 ? branch.stdout.trim() : null;
 const report = {
   schemaVersion: 1,
@@ -39,6 +46,8 @@ const report = {
   releaseDecision: 'NO-GO',
   scope: 'PARTIAL_AUTOMATED_CHECKS_ONLY',
   cleanTrackedTree,
+  cleanCommercialSources,
+  untrackedCommercialFileCount: untrackedFiles?.length ?? null,
   checks: [],
 };
 if (!revision || branchName !== 'commercial-v1.0') {
@@ -65,8 +74,10 @@ if (!revision || branchName !== 'commercial-v1.0') {
     });
     console.log(name + ': ' + (passed ? 'PASS' : 'FAIL'));
   }
-  report.status = cleanTrackedTree && report.checks.every(c => c.result === 'PASS') ? 'PASS' : 'FAIL';
+  report.status = cleanCommercialSources && report.checks.every(c => c.result === 'PASS') ? 'PASS' : 'FAIL';
   if (!cleanTrackedTree) console.error('Tracked worktree differs from recorded HEAD; evidence cannot pass.');
+  if (untrackedFiles === null) console.error('Unable to inspect untracked commercial files; evidence cannot pass.');
+  else if (untrackedFiles.length) console.error('Untracked commercial source files exist; evidence cannot pass.');
 }
 mkdirSync('commercial/evidence', { recursive: true });
 const outputPath = 'commercial/evidence/release-evidence-local.json';
