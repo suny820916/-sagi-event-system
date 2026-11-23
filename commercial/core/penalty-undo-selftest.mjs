@@ -4,6 +4,13 @@ let state=createInitialMatchState({fixtureId:"T",home:"H",away:"A"});
 const run=(type,commandId,extra={})=>{let r=applyCommand(state,{type,commandId,...extra});state=r.state;return r};
 const ok=(x)=>{if(!x)throw Error("assertion")};
 const reject=(f)=>{let failed=false;try{f()}catch{failed=true}ok(failed)};
+// Reusing a persisted ID with different semantic payload must fail closed.
+let conflictState=createInitialMatchState({fixtureId:"CONFLICT",home:"H",away:"A"});
+let firstGoal=applyCommand(conflictState,{type:"GOAL",commandId:"shared",side:"HOME"});
+conflictState=hydrateMatchState(JSON.parse(JSON.stringify(firstGoal.state)));
+ok(applyCommand(conflictState,{type:"GOAL",commandId:"shared",side:"HOME",createdAt:"later"}).duplicate);
+reject(()=>applyCommand(conflictState,{type:"GOAL",commandId:"shared",side:"AWAY"}));
+ok(conflictState.homeScore===1&&conflictState.awayScore===0);
 run("START_PENALTIES","start");run("PENALTY_ATTEMPT","a",{side:"HOME",outcome:"SCORED"});run("PENALTY_ATTEMPT","b",{side:"AWAY",outcome:"MISSED"});
 const divergent=hydrateMatchState(state); divergent.penalties.history.reverse(); ok(consistencyView(divergent)!==consistencyView(state));
 const wrongOutcome=hydrateMatchState(state); wrongOutcome.penalties.history[0].outcome="MISSED"; ok(consistencyView(wrongOutcome)!==consistencyView(state));
