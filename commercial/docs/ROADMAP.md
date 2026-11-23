@@ -527,3 +527,10 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Added a concurrent batch of all 14 previously accepted penalty command IDs after finalization and server restart in `commercial/lan/engine-lan-selftest.mjs` (commit `9070be0`). Each HTTP response must report a durable duplicate and the authoritative final state must remain unchanged.
 - **Verification:** GitHub contents API accepted the test update. The local runner could not resolve `github.com` for a clone (`Could not resolve host: github.com`); Node execution and Windows/Linux CI result are **not verified**. Test added is not a test passed.
 - **Open:** verify CI run, run Windows/Safari/vMix hardware integration, exercise real WAN loss and power interruption, and confirm display state reconciliation. No changes to main or V4.40 Stable.
+
+## 2026-11-23 — Final-whistle event boundary
+- Audited the reducer and found that a new GOAL, YELLOW, RED, SUB, HALF_TIME or FULL_TIME command could still mutate the match after period FT; delayed mobile messages could therefore alter the final score.
+- Added a reducer-level FT guard for match events, preserving post-match MVP selection. Existing processed command IDs are checked before the guard, so exact historical retries remain idempotent.
+- Extended penalty reducer self-test with rejected late events, unchanged revision and allowed post-match MVP.
+- Commits: eef83f96, 92168885. **Validation pending:** GitHub accepted the commits, but Node test execution, CI and Windows/vMix hardware results have not been confirmed in this run.
+- **Known remaining risk:** SET_PERIOD, SCORE_ADJUST and other administrative commands can still change a finished match; a deliberate authorized correction workflow and privilege model must be specified. Command ID reuse with different payloads is not yet fingerprint-checked. Do not advertise final-score immutability or commercial readiness.
