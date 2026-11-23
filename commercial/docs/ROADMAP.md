@@ -571,3 +571,10 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - **Important:** a command admitted before revocation may already have committed; clients must re-pair and resynchronize authoritative state rather than retry with a new ID. This is not cancellation or exactly-once transport delivery.
 - **Verification:** GitHub file updates accepted. Node execution, CI success, Windows/Safari LAN behavior, and vMix live verification have not been confirmed for this change.
 - **Release blockers remain:** plaintext LAN bearer-token exposure, authenticated desktop pairing, physical Windows endurance and power-loss recovery, actual vMix read-back, complete dependency/license audit.
+
+## 2026-11-23 — LAN revoked-session error confidentiality
+- Fixed a response-boundary gap: an in-flight command that rejects after the phone session is revoked could previously disclose `REVISION_CONFLICT` and the current revision. The command catch path now checks session validity before returning error details. State-read failure also checks revocation before returning an error.
+- Added a deterministic deferred-command regression test that revokes authorization while the canonical callback is pending and then rejects with a revision-bearing error. Expected response: 401 `UNAUTHORIZED`, no revision disclosure.
+- Commits: `9d927e5` (gateway), `f2f0744` (regression test).
+- **Verification:** source and test commits accepted by GitHub; no Node execution, Windows/Linux CI pass or real Safari/vMix session confirmed in this run. This is not a claim of end-to-end authorization or LAN transport security.
+- **Release blockers:** plaintext LAN bearer token transport, trusted desktop pairing approval, Windows endurance/power loss, live vMix readback, license audit and full offline-first acceptance remain open. Keep main/V4.40 Stable untouched.
