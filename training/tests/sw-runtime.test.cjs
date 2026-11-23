@@ -11,6 +11,7 @@ const origin = 'https://training.example.test/';
 const makeResponse = (body, status = 200) => ({body, status, ok: status >= 200 && status < 300, clone() {return makeResponse(body, status);}});
 const caches = {
   async open(name) {
+    if (cacheOpenFails) throw Error('cache unavailable');
     if (!stores.has(name)) stores.set(name, new Map());
     const entries = stores.get(name);
     return {
@@ -25,6 +26,7 @@ const caches = {
 let fetches = 0;
 let networkDown = false;
 let cacheWriteFails = false;
+let cacheOpenFails = false;
 const context = {
   self: {registration: {scope: origin}, clients: {claim: async () => {}}, addEventListener: (name, cb) => {listeners[name] = cb;}},
   caches, URL, Request: class { constructor(url) {this.url = url;} },
@@ -76,5 +78,14 @@ const runEvent = async (name, props={}) => {
   assert.equal(offline.status, 503);
   assert.match(offline.body, /离线缓存/);
   networkDown = false;
-  console.log('PASS: SW precache, rotation, recovery, quota fallback, offline 503 and exclusions');
+  // CacheStorage may reject in restricted/private contexts: network must still work.
+  cacheOpenFails = true;
+  const cacheUnavailable = await runEvent('fetch', {request: {method:'GET',url:origin+'iq.html'}});
+  assert.equal(cacheUnavailable.body, 'network');
+  networkDown = true;
+  const unavailableOffline = await runEvent('fetch', {request: {method:'GET',url:origin+'iq.html'}});
+  assert.equal(unavailableOffline.status, 503);
+  cacheOpenFails = false;
+  networkDown = false;
+  console.log('PASS: SW precache, rotation, recovery, quota fallback, cache unavailable, offline 503 and exclusions');
 })().catch(e=>{console.error(e);process.exitCode=1;});
