@@ -9,13 +9,15 @@ const path = require('path');
 const { JsonStore } = require('./lib/store');
 const { quote } = require('./lib/pricing');
 const { normalizeCode, makeDownloadCode } = require('./lib/download-code');
+const { ensureDir, storageLayout, diskStats, assertCapacity } = require('./lib/storage');
 
 const app = express();
 const PORT = Number(process.env.PORT || 10000);
-const DATA_DIR = path.resolve(process.env.DATA_DIR || path.join(__dirname, 'data'));
-const ORIGINAL_DIR = path.join(DATA_DIR, 'originals');
-const PREVIEW_DIR = path.join(DATA_DIR, 'previews');
-const DB_FILE = path.join(DATA_DIR, 'db.json');
+const STORAGE_ROOT = path.resolve(process.env.STORAGE_ROOT || process.env.DATA_DIR || path.join(__dirname, 'data'));
+const SYSTEM_DIR = ensureDir(path.join(STORAGE_ROOT, 'system'));
+const TMP_DIR = ensureDir(path.join(STORAGE_ROOT, 'tmp'));
+const DB_FILE = path.join(SYSTEM_DIR, 'db.json');
+const MIN_FREE_GB = Number(process.env.MIN_FREE_GB || 20);
 const ADMIN_KEY = process.env.ADMIN_KEY || 'change-this-before-event';
 const PUBLIC_TITLE = process.env.PUBLIC_TITLE || 'SAGI MATCH PHOTO';
 const PHOTOGRAPHER_CODES = String(process.env.PHOTOGRAPHER_CODES || 'PHOTO-1123')
@@ -23,7 +25,7 @@ const PHOTOGRAPHER_CODES = String(process.env.PHOTOGRAPHER_CODES || 'PHOTO-1123'
 const ALLOWED_ORIGINS = String(process.env.ALLOWED_ORIGINS || 'https://sagisports.cn,https://www.sagisports.cn,https://suny820916.github.io')
   .split(',').map(x => x.trim()).filter(Boolean);
 
-for (const dir of [DATA_DIR, ORIGINAL_DIR, PREVIEW_DIR]) fs.mkdirSync(dir, { recursive: true });
+ensureDir(STORAGE_ROOT);
 const store = new JsonStore(DB_FILE);
 
 app.disable('x-powered-by');
@@ -86,12 +88,12 @@ function publicOrder(o){
 }
 
 const upload = multer({
-  storage: multer.memoryStorage(),
+  dest: TMP_DIR,
   limits: { files: 40, fileSize: 24 * 1024 * 1024 }
 });
 
-async function makePreview(buffer, target, label) {
-  const meta = await sharp(buffer).metadata();
+async function makePreview(input, target, label) {
+  const meta = await sharp(input).metadata();
   const width = Math.min(meta.width || 1600, 1600);
   const font = Math.max(28, Math.round(width / 25));
   const wm = Buffer.from(
@@ -102,7 +104,7 @@ async function makePreview(buffer, target, label) {
     '<text x="50%" y="155" text-anchor="middle" class="b">' + label.replace(/[<>&"]/g,'') + '</text>' +
     '</svg>'
   );
-  await sharp(buffer)
+  await sharp(input)
     .rotate()
     .resize({ width, withoutEnlargement: true })
     .composite([{ input: wm, gravity: 'center' }])
@@ -110,7 +112,17 @@ async function makePreview(buffer, target, label) {
     .toFile(target);
 }
 
-app.get('/api/health', (req,res) => res.json({ ok:true, service:'SAGI MATCH PHOTO', version:'1.1.0-code' }));
+app.get('/api/health', (req,res) => {
+  const ds=diskStats(STORAGE_ROOT);
+  res.json({
+    ok:true,
+    service:'SAGI MATCH PHOTO',
+    version:'1.2.0-server-storage',
+    storage:'server-disk',
+    storageReady:fs.existsSync(STORAGE_ROOT),
+    freeGB:ds.supported ? ds.freeGB : null
+  });
+});
 app.get('/api/config', (req,res) => res.json({
   title: PUBLIC_TITLE,
   checkoutMode: 'wechat-offline-download-code',
@@ -145,34 +157,63 @@ app.get('/api/photos', (req,res) => {
 });
 
 async function handlePhotoUpload(req,res){
+  const tempFiles=(req.files||[]).map(f=>f.path).filter(Boolean);
   try {
     const eventId = safe(req.body.eventId,100);
     if (!eventId) return res.status(400).json({ error:'请选择赛事' });
     if (!req.files?.length) return res.status(400).json({ error:'请选择照片' });
+
     const data = store.read();
     if (!data.events.some(e => e.id === eventId)) return res.status(404).json({ error:'赛事不存在' });
 
+    const incomingBytes=req.files.reduce((sum,f)=>sum+Number(f.size||0),0);
+    assertCapacity(STORAGE_ROOT,incomingBytes,MIN_FREE_GB);
+
+    const layout=storageLayout(STORAGE_ROOT,eventId);
     const created = [];
     for (const f of req.files) {
       if (!/^image\//.test(f.mimetype)) continue;
       const pid = id('ph');
-      const originalPath = path.join(ORIGINAL_DIR, pid + '.jpg');
-      const previewPath = path.join(PREVIEW_DIR, pid + '.jpg');
-      await sharp(f.buffer).rotate().jpeg({ quality: 96, chromaSubsampling:'4:4:4' }).toFile(originalPath);
+      const originalPath = path.join(layout.originals, pid + '.jpg');
+      const previewPath = path.join(layout.previews, pid + '.jpg');
+
+      await sharp(f.path)
+        .rotate()
+        .jpeg({ quality: 96, chromaSubsampling:'4:4:4' })
+        .toFile(originalPath);
+
       const label = [safe(req.body.team), safe(req.body.jersey)].filter(Boolean).join(' · ');
-      await makePreview(f.buffer, previewPath, label);
+      await makePreview(f.path, previewPath, label);
+
       created.push({
         id:pid, eventId, team:safe(req.body.team), match:safe(req.body.match,120),
         jersey:safe(req.body.jersey,20), player:safe(req.body.player,80),
         uploadedBy:req.photographerCode ? 'photographer' : 'admin',
-        originalPath, previewPath, createdAt:new Date().toISOString()
+        originalPath, previewPath, originalBytes:fs.statSync(originalPath).size,
+        createdAt:new Date().toISOString()
       });
     }
     store.update(d => { d.photos.push(...created); return d; });
-    res.status(201).json({ count:created.length, photos:created.map(publicPhoto) });
+    const ds=diskStats(STORAGE_ROOT);
+    res.status(201).json({
+      count:created.length,
+      photos:created.map(publicPhoto),
+      storage:{ freeGB:ds.supported ? ds.freeGB : null, minFreeGB:MIN_FREE_GB }
+    });
   } catch (e) {
     console.error(e);
+    if(e.code==='LOW_DISK_SPACE'){
+      return res.status(507).json({
+        error:e.message,
+        freeGB:e.stats?.freeGB ?? null,
+        minFreeGB:MIN_FREE_GB
+      });
+    }
     res.status(500).json({ error:'照片处理失败，请重试' });
+  } finally {
+    for(const p of tempFiles){
+      try{ fs.unlinkSync(p); }catch{}
+    }
   }
 }
 
@@ -213,6 +254,15 @@ app.get('/api/orders/:id', (req,res) => {
   const o = data.orders.find(x => x.id === req.params.id);
   if (!o) return res.sendStatus(404);
   res.json(publicOrder(o));
+});
+
+app.get('/api/admin/storage', admin, (req,res) => {
+  const ds=diskStats(STORAGE_ROOT);
+  res.json({
+    storageRoot:STORAGE_ROOT,
+    minFreeGB:MIN_FREE_GB,
+    ...ds
+  });
 });
 
 app.get('/api/admin/orders', admin, (req,res) => {
