@@ -75,3 +75,16 @@ assert(snap.history.length===30&&snap.homeGoals===15&&snap.awayGoals===15,'long 
 assert(snap.history[29].at==='29'&&snap.nextSide==='HOME','last kick or next side lost');
 assert(snap.history!==history&&snap.history[0]!==history[0],'snapshot must not alias mutable history');
 console.log('V4.33 15-round canonical snapshot retention PASS');
+
+// Regression: long sudden-death sessions must remain complete and isolated across snapshots.
+const extendedHistory=Array.from({length:80},(_,i)=>({side:i%2?'AWAY':'HOME',result:'GOAL',at:String(i)}));
+ctx.matchdayState.penaltyShootout.history=extendedHistory;
+const longSnap=runInNewContext(control.slice(start,end)+'\nmdPenaltySnapshot()',ctx);
+assert(longSnap.history.length===80&&longSnap.homeGoals===40&&longSnap.awayGoals===40,
+  '40-round sudden-death history truncated or incorrectly tallied');
+assert(longSnap.history[79].at==='79'&&longSnap.nextSide==='HOME',
+  '40-round continuation lost its next-side ordering');
+longSnap.history[0].at='changed-in-snapshot';
+assert(extendedHistory[0].at==='0','snapshot mutation leaked into canonical history');
+console.log('V4.33 40-round sudden-death snapshot isolation PASS');
+
