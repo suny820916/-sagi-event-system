@@ -1,0 +1,41 @@
+name: SAGI V4.33 isolated integration diagnostic
+on:
+  push:
+    branches:
+      - sagi-vmix-v433-penalty-single-source-r2
+    paths:
+      - '.github/workflows/v433-integration-conflict-diagnostic.yml'
+      - 'intro/tests/v433-penalty-single-source-gate.mjs'
+      - 'intro/SAGI_VMIX_LAN_V433_PENALTY_RC.bat'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  candidate-and-merge-diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Run V4.33 candidate penalty gate
+        run: node intro/tests/v433-penalty-single-source-gate.mjs
+      - name: Report integration conflicts without changing branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin sagi-vmix-v432-clean-integration
+          base=$(git merge-base HEAD origin/sagi-vmix-v432-clean-integration)
+          echo "merge base: $base"
+          git merge-tree "$base" HEAD origin/sagi-vmix-v432-clean-integration > merge-tree-report.txt || true
+          echo "Conflicted paths:"
+          grep -E '^changed in both|^added in both|^removed in' merge-tree-report.txt || true
+          if grep -q '^<<<<<<< ' merge-tree-report.txt; then
+            echo "::warning::V4.33 requires manual semantic merge resolution; candidate remains unmerged"
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v433-merge-tree-diagnostic
+          path: merge-tree-report.txt
+          if-no-files-found: warn
