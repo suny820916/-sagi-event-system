@@ -2159,10 +2159,24 @@ root.SAGISignatureCore=api;
 'use strict';
 const LAN_DIRECT=true;
 async function lanJson(url,options={}){
-  const r=await fetch(url,Object.assign({cache:'no-store'},options));
-  if(!r.ok)throw new Error('LAN '+r.status);
-  const t=await r.text();
-  return t?JSON.parse(t):{};
+  const opts=Object.assign({cache:'no-store'},options),timeoutMs=Math.max(500,Number(opts.timeoutMs)||2500);delete opts.timeoutMs;
+  let timer=null,controller=null;
+  if(!opts.signal&&typeof AbortController!=='undefined'){controller=new AbortController();opts.signal=controller.signal;timer=setTimeout(()=>controller.abort(),timeoutMs)}
+  try{
+    const r=await fetch(url,opts);
+    const t=await r.text();
+    let body={};
+    if(t){try{body=JSON.parse(t)}catch(e){body={raw:t}}}
+    if(!r.ok){
+      const err=new Error('LAN '+r.status+(body&&body.error?' '+body.error:''));
+      err.status=r.status;err.code=body&&body.error||'';err.payload=body;
+      throw err
+    }
+    return body;
+  }catch(e){
+    if(controller&&controller.signal.aborted){const err=new Error('LAN_TIMEOUT');err.code='LAN_TIMEOUT';throw err}
+    throw e
+  }finally{if(timer)clearTimeout(timer)}
 }
 async function lanPost(url,data){
   let payload=data||{};
@@ -3141,6 +3155,12 @@ function mdAcceptOperatorEvent(signature,windowMs=850){
  mdEventGateSig=sig;mdEventGateAt=now;return true
 }
 async function mdPostMatchdayWithRetry(state){
+ const liveFixture=mdFixtureKey();
+ if(state&&state.fixtureKey&&state.fixtureKey!==liveFixture&&!state.allowFixtureTakeover){
+  mdPublishMetrics.recovered++;mdPublishMetrics.lastAttempts=0;
+  mdRecoveryMetrics.staleRemoteIgnored++;mdRecoveryMetrics.lastReason='STALE_QUEUED_FIXTURE_DROPPED';mdRecoveryMetrics.lastRecoveryAt=Date.now();
+  return{ok:true,attempts:0,skipped:true,reason:'STALE_QUEUED_FIXTURE_DROPPED'}
+ }
  const waits=[0,180,520,1200];let lastError=null;
  for(let i=0;i<waits.length;i++){
   if(waits[i])await mdDelay(waits[i]);
@@ -3153,7 +3173,7 @@ async function mdPostMatchdayWithRetry(state){
    if(String(e&&e.message||e).includes('LAN 409')){
     try{
      const recovered=await recoverMatchdayFromBridge(false,{preferNewest:false,allowIdentityTakeover:true});
-     if(recovered){mdPublishMetrics.recovered++;mdPublishMetrics.lastAttempts=i+1;return{ok:true,attempts:i+1,recovered:true}}
+     if(recovered){mdPublishMetrics.recovered++;mdPublishMetrics.lastAttempts=i+1;return{ok:false,attempts:i+1,recovered:true,conflict:true}}
     }catch(_){}
     break
    }
