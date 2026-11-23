@@ -534,3 +534,10 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Extended penalty reducer self-test with rejected late events, unchanged revision and allowed post-match MVP.
 - Commits: eef83f96, 92168885. **Validation pending:** GitHub accepted the commits, but Node test execution, CI and Windows/vMix hardware results have not been confirmed in this run.
 - **Known remaining risk:** SET_PERIOD, SCORE_ADJUST and other administrative commands can still change a finished match; a deliberate authorized correction workflow and privilege model must be specified. Command ID reuse with different payloads is not yet fingerprint-checked. Do not advertise final-score immutability or commercial readiness.
+
+## 2026-11-23 — Final-state administrative mutation guard
+- Ordinary commands now reject SCORE_ADJUST, SET_PERIOD, clock changes and penalty lifecycle changes after FT. Previously only event commands were blocked, allowing a finalized result to be reopened or altered.
+- Duplicate command ID detection still precedes the final-state guard, preserving delayed mobile retry idempotency. MVP, SET_SCOREBOARD and CLEAR_EVENT remain permitted for post-match presentation.
+- Added regression assertions for rejected mutations, unchanged consistency view, delayed FINISH_PENALTIES retry, and permitted scoreboard presentation.
+- Commits: 23443bf, bbcb796. **Verification:** GitHub accepted source and test updates; Node/CI and real Windows/vMix tests have not been confirmed in this run. This is not a production-certified result lock.
+- **Remaining risks:** command-ID reuse with different payloads, administrator-authorized post-match corrections with audit trail, durable restart/physical power loss, full LAN/vMix state reconciliation, and license/installer validation.
