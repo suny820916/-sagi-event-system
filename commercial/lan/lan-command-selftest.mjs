@@ -77,7 +77,7 @@ try {
       }
       else {
         const command = JSON.parse(opts.body);
-        if (!sent.some(c => c.commandId === command.commandId)) { if (command.type === 'SET_CLOCK_RUNNING') running = command.running; else if (command.type === 'PENALTY_ATTEMPT') { penalties.history.push({side:command.side,outcome:command.outcome}); if (command.outcome === 'SCORED') penalties[command.side === 'HOME' ? 'home' : 'away']++; } else score++; }
+        if (!sent.some(c => c.commandId === command.commandId)) { if (command.type === 'SET_CLOCK_RUNNING') running = command.running; else if (command.type === 'PENALTY_ATTEMPT') { penalties.history.push({attemptId:command.commandId,side:command.side,outcome:command.outcome}); if (command.outcome === 'SCORED') penalties[command.side === 'HOME' ? 'home' : 'away']++; } else if (command.type === 'UNDO_PENALTY_ATTEMPT') { const last=penalties.history.at(-1); assert.equal(command.attemptId,last.attemptId); penalties.history.pop(); if(last.outcome==='SCORED') penalties[last.side==='HOME'?'home':'away']--; } else score++; }
         sent.push(command);
         if (fail) throw new Error('lost response');
         data = { result: {} };
@@ -191,7 +191,7 @@ try {
   assert.equal(score,regularScore); assert.equal(phone('penScore').textContent,'点球 1 : 0');
   assert.equal(phone('penHome').textContent,'主队：1:●');
   assert.equal(phone('penAway').textContent,'客队：1:○');
-  for (let i=0;i<6;i++) penalties.history.push({side:'HOME',outcome:'MISSED'});
+  for (let i=0;i<6;i++) penalties.history.push({attemptId:'extra-'+i,side:'HOME',outcome:'MISSED'});
   await tick();
   assert.match(phone('penHome').textContent,/7:○$/);
   penalties.history.push({side:'AWAY',outcome:'SCORED'});
@@ -202,8 +202,17 @@ try {
   assert.equal(phone('penHome').textContent,'主队：—');
   offline = false; await tick();
   assert.match(phone('penHome').textContent,/7:○$/);
+  assert.equal(phone('penUndo').disabled,false);
+  fail=true; phone('penUndo').onclick(); await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(penalties.history.length,7); assert.equal(saved.size,1);
+  const undo=sent.at(-1); assert.equal(undo.type,'UNDO_PENALTY_ATTEMPT'); assert.equal(undo.attemptId,'extra-5');
+  phone=boot(); await phone('pair').onclick(); fail=false; await phone('retry').onclick();
+  assert.deepEqual(sent.at(-1),undo); assert.equal(penalties.history.length,7); assert.equal(saved.size,0);
+  assert.match(phone('penHome').textContent,/6:○$/);
+  assert.equal(score,regularScore);
   penalties.finished = true; period = 'FT'; await tick();
   assert.equal(phone('homePenScore').disabled,true);
+  assert.equal(phone('penUndo').disabled,true);
   assert.equal((await fetch(base + '/mobile', { headers: { origin: 'http://evil.example' } })).status, 403);
   const code = g.pairing.issue({ localOperatorApproved: true }).code;
   const redeem = await fetch(base + '/api/v1/lan/redeem', {
