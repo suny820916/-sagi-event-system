@@ -8,17 +8,18 @@
 <style>
 :root{--bg:#090909;--panel:#151515;--line:#292929;--text:#f7f7f7;--muted:#969696;--red:#ff2b2b}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 80% -10%,#341010 0,#090909 34%);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",Arial,sans-serif}
-.wrap{max-width:920px;margin:auto;padding:14px 14px 110px}.top{display:flex;align-items:center;justify-content:space-between;padding:4px 0 18px}.brand{font-weight:900;letter-spacing:.5px}.brand i{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--red);margin:0 5px 1px}.back{color:#bbb;text-decoration:none;font-size:13px}.hero{padding:28px 2px 18px}.eyebrow{color:#ff6464;font-size:12px;font-weight:900;letter-spacing:2px}.hero h1{font-size:38px;line-height:1.04;margin:10px 0 12px}.hero p{color:var(--muted);line-height:1.65;margin:0}.chips{display:flex;gap:7px;overflow:auto;padding:15px 0}.chips span{white-space:nowrap;border:1px solid #303030;border-radius:999px;padding:7px 10px;font-size:12px}.card{border:1px solid var(--line);background:linear-gradient(180deg,#181818,#111);border-radius:18px;padding:13px;margin:11px 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}input,select,button{font:inherit}.field{width:100%;background:#0c0c0c;border:1px solid #303030;color:white;padding:12px;border-radius:11px}.primary{grid-column:1/-1;border:0;background:var(--red);color:#fff;font-weight:900;padding:13px;border-radius:12px}.sectionHead{display:flex;justify-content:space-between;align-items:center;margin:22px 2px 10px}.sectionHead small{color:#777}.gallery{columns:2 160px;column-gap:7px}.photo{break-inside:avoid;margin-bottom:7px;border-radius:12px;overflow:hidden;background:#171717;border:1px solid #242424}.photo img{display:block;width:100%}.photo .meta{padding:8px 9px;font-size:12px;color:#cfcfcf}.empty{padding:44px 15px;text-align:center;color:#6e6e6e}.notice{font-size:12px;color:#aaa;line-height:1.65}.notice b{color:#ddd}.status{padding:9px 11px;border-radius:12px;background:#0d0d0d;border:1px solid #242424;color:#8f8f8f;font-size:12px}.status.ok{color:#78d7a2;border-color:#214332}.footer{margin-top:25px;padding-top:16px;border-top:1px solid #1f1f1f;color:#676767;font-size:11px;line-height:1.6}
-@media(min-width:700px){.grid{grid-template-columns:1.4fr 1fr .7fr auto}.primary{grid-column:auto}.gallery{columns:3 220px}.hero h1{font-size:54px}}
+.wrap{max-width:920px;margin:auto;padding:14px 14px 120px}.top{display:flex;align-items:center;justify-content:space-between;padding:4px 0 18px}.brand{font-weight:900;letter-spacing:.5px}.brand i{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--red);margin:0 5px 1px}.back{color:#bbb;text-decoration:none;font-size:13px}.hero{padding:28px 2px 18px}.eyebrow{color:#ff6464;font-size:12px;font-weight:900;letter-spacing:2px}.hero h1{font-size:38px;line-height:1.04;margin:10px 0 12px}.hero p{color:var(--muted);line-height:1.65;margin:0}.chips{display:flex;gap:7px;overflow:auto;padding:15px 0}.chips span{white-space:nowrap;border:1px solid #303030;border-radius:999px;padding:7px 10px;font-size:12px}.card{border:1px solid var(--line);background:linear-gradient(180deg,#181818,#111);border-radius:18px;padding:13px;margin:11px 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}input,select,button{font:inherit}.field{width:100%;background:#0c0c0c;border:1px solid #303030;color:white;padding:12px;border-radius:11px}.primary{border:0;background:var(--red);color:#fff;font-weight:900;padding:13px;border-radius:12px}.ghost{border:1px solid #333;background:#141414;color:#ddd;font-weight:800;padding:11px;border-radius:12px}.grid .primary{grid-column:1/-1}.sectionHead{display:flex;justify-content:space-between;align-items:center;margin:22px 2px 10px}.sectionHead small{color:#777}.gallery{columns:2 160px;column-gap:7px}.photo{break-inside:avoid;margin-bottom:7px;border-radius:12px;overflow:hidden;background:#171717;border:2px solid transparent;position:relative}.photo img{display:block;width:100%}.photo .meta{padding:8px 9px;font-size:12px;color:#cfcfcf}.photo .check{position:absolute;right:8px;top:8px;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:#0009;border:1px solid #ffffff88;font-weight:900}.photo.selected{border-color:var(--red)}.photo.selected .check{background:var(--red);border-color:var(--red)}.empty{padding:44px 15px;text-align:center;color:#6e6e6e}.notice{font-size:12px;color:#aaa;line-height:1.65}.notice b{color:#ddd}.status{padding:9px 11px;border-radius:12px;background:#0d0d0d;border:1px solid #242424;color:#8f8f8f;font-size:12px}.status.ok{color:#78d7a2;border-color:#214332}.footer{margin-top:25px;padding-top:16px;border-top:1px solid #1f1f1f;color:#676767;font-size:11px;line-height:1.6}.cart{position:fixed;z-index:20;bottom:calc(12px + env(safe-area-inset-bottom));left:12px;right:12px;max-width:620px;margin:auto;background:#f3f3f3;color:#111;border-radius:17px;padding:10px 10px 10px 16px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 16px 60px #000}.cart small{display:block;color:#666}.hidden{display:none!important}dialog{border:0;padding:0;border-radius:22px;background:#111;color:white;width:min(94vw,620px);max-height:90vh}dialog::backdrop{background:#000b;backdrop-filter:blur(5px)}.sheet{padding:20px;overflow:auto;max-height:88vh}.sheet .x{float:right;background:none;color:white;border:0;font-size:28px}.sheet h2{margin-top:5px}.summary{background:#0b0b0b;border:1px solid #292929;border-radius:14px;padding:14px;margin:12px 0}.downloads a{display:block;margin:8px 0;padding:12px;border:1px solid #343434;border-radius:11px;color:#fff;text-decoration:none}.full{width:100%}.order-note{font-size:13px;line-height:1.7;color:#bbb}
+@media(min-width:700px){.grid{grid-template-columns:1.4fr 1fr .7fr auto}.grid .primary{grid-column:auto}.gallery{columns:3 220px}.hero h1{font-size:54px}}
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="top"><div class="brand">SAGI <i></i> KIT · MATCH PHOTO</div><a class="back" href="./index.html">返回 SAGI KIT</a></div>
+
   <section class="hero">
     <div class="eyebrow">找到你的高光时刻</div>
     <h1>比赛结束，<br>精彩不会结束。</h1>
-    <p>总决赛照片官方入口。按赛事、球队和球衣号码找照片，带水印免费预览，购买后获取高清原图。</p>
+    <p>总决赛照片官方入口。按赛事、球队和球衣号码找照片，水印预览免费；付款通过微信单独完成，收到下载码后领取高清原图。</p>
     <div class="chips"><span>单张 ¥5</span><span>5张 ¥15</span><span>个人包 ¥29</span><span>全队 ¥99</span></div>
   </section>
 
@@ -33,8 +34,17 @@
     </div>
   </section>
 
+  <section class="card">
+    <b>已有下载码</b>
+    <div style="display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:10px">
+      <input id="redeemCode" class="field" placeholder="输入下载码，如 ABCDE-23456" autocapitalize="characters">
+      <button id="redeemBtn" class="primary">领取原图</button>
+    </div>
+    <div id="redeemResult"></div>
+  </section>
+
   <section class="card notice">
-    <b>国内版隐私策略：</b>本次总决赛首版默认使用“赛事 / 球队 / 号码”找图，不强制使用人脸识别。后续“自拍找我”只有在用户单独授权后才启用；涉及未满14周岁的球员时，需监护人同意。
+    <b>购买方式：</b>在这里选照片并生成订单，但不在本页面付款。微信单独付款后，把订单号发给 SAGI；确认到账后，我们会把下载码发给你。输入下载码即可领取高清无水印原图。
   </section>
 
   <div class="sectionHead"><b>比赛照片</b><small id="count">0 张</small></div>
@@ -43,6 +53,24 @@
 
   <div class="footer">SAGI KIT · MATCH PHOTO｜为身边的足球加油 · 记录平凡人的足球梦</div>
 </div>
+
+<div id="cart" class="cart hidden">
+  <div><b><span id="selectedCount">0</span> 张</b><small id="quoteText">¥0</small></div>
+  <button id="checkout" class="primary">生成选图单</button>
+</div>
+
+<dialog id="orderDialog">
+  <form method="dialog" class="sheet">
+    <button class="x">×</button>
+    <h2>确认选图</h2>
+    <div id="orderSummary" class="summary"></div>
+    <input id="nickname" class="field" placeholder="你的称呼（可选）">
+    <input id="contact" class="field" style="margin-top:8px" placeholder="微信号/手机号（方便核对，可选）">
+    <button id="createOrder" type="button" class="primary full" style="margin-top:10px">生成订单</button>
+    <div id="orderResult"></div>
+  </form>
+</dialog>
+
 <script>
 (()=>{
 'use strict';
@@ -51,32 +79,94 @@ const qs=new URLSearchParams(location.search);
 const supplied=qs.get('api');
 if(supplied){localStorage.setItem('sagiMatchPhotoApi',supplied.replace(/\/$/,''));history.replaceState({},'',location.pathname)}
 const API=(localStorage.getItem('sagiMatchPhotoApi')||'').replace(/\/$/,'');
-const api=async(path)=>{
+let photos=[],selected=new Set();
+
+async function api(path,opts={}){
   if(!API) throw new Error('PHOTO_API_NOT_CONFIGURED');
-  const r=await fetch(API+path,{mode:'cors'});
-  if(!r.ok) throw new Error('HTTP_'+r.status);
-  return r.json();
-};
+  const r=await fetch(API+path,{mode:'cors',...opts});
+  const data=await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(data.error||'请求失败');
+  return data;
+}
+function yuan(fen){return '¥'+(fen/100).toFixed(fen%100?2:0)}
+function quote(n){
+  if(n<1)return {name:'',fen:0};
+  if(n===1)return {name:'单张高清原图',fen:500};
+  if(n===2)return {name:'2张高清原图',fen:1000};
+  if(n<=5)return {name:'5张精选',fen:1500};
+  if(n<=20)return {name:'个人整场精选包',fen:2900};
+  return {name:'全队整场照片包',fen:9900};
+}
 function setStatus(ok,text){const el=$('#serviceStatus');el.textContent=text;el.classList.toggle('ok',ok)}
+function updateCart(){
+  const n=selected.size,q=quote(n);
+  $('#cart').classList.toggle('hidden',!n);
+  $('#selectedCount').textContent=n;
+  $('#quoteText').textContent=q.name+' · '+yuan(q.fen);
+}
 function render(list){
+  photos=list;
   $('#count').textContent=list.length+' 张';
   $('#empty').style.display=list.length?'none':'block';
-  $('#gallery').innerHTML=list.map(p=>'<article class="photo"><img loading="lazy" src="'+API+p.previewUrl+'" alt="比赛照片"><div class="meta">'+[p.team,p.jersey?'#'+p.jersey:'',p.player].filter(Boolean).join(' · ')+'</div></article>').join('');
+  $('#gallery').innerHTML=list.map(p=>{
+    const on=selected.has(p.id)?' selected':'';
+    const meta=[p.team,p.jersey?'#'+p.jersey:'',p.player].filter(Boolean).join(' · ');
+    return '<article class="photo'+on+'" data-id="'+p.id+'"><img loading="lazy" src="'+API+p.previewUrl+'" alt="比赛照片"><span class="check">'+(on?'✓':'')+'</span><div class="meta">'+(meta||p.match||'SAGI MATCH PHOTO')+'</div></article>';
+  }).join('');
+  document.querySelectorAll('.photo').forEach(el=>el.onclick=()=>{
+    const id=el.dataset.id;
+    selected.has(id)?selected.delete(id):selected.add(id);
+    render(photos);
+  });
+  updateCart();
 }
 async function loadEvents(){
   const list=await api('/api/events');
-  $('#event').innerHTML='<option value="">全部赛事</option>'+list.map(e=>'<option value="'+e.id+'">'+e.name+'</option>').join('');
+  $('#event').innerHTML='<option value="">全部赛事</option>'+list.map(e=>'<option value="'+e.id+'">'+e.name+(e.date?' · '+e.date:'')+'</option>').join('');
 }
 async function search(){
   const p=new URLSearchParams();
   if($('#event').value)p.set('eventId',$('#event').value);
   if($('#team').value.trim())p.set('team',$('#team').value.trim());
   if($('#jersey').value.trim())p.set('jersey',$('#jersey').value.trim());
+  selected.clear();
   render(await api('/api/photos?'+p));
 }
+async function createOrder(){
+  if(!selected.size)return;
+  try{
+    const o=await api('/api/orders',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({photoIds:[...selected],nickname:$('#nickname').value,contact:$('#contact').value})
+    });
+    $('#orderResult').innerHTML=
+      '<div class="summary"><b>订单号：'+o.id+'</b><br>'+o.productName+' · <strong>'+yuan(o.amountFen)+'</strong></div>'+
+      '<div class="order-note"><b>下一步：</b>请单独微信付款，并把这个订单号发给 SAGI。到账后我们会给你一个下载码；回到本页输入下载码即可领取高清原图。</div>';
+  }catch(e){$('#orderResult').innerHTML='<p class="order-note">'+e.message+'</p>'}
+}
+async function redeem(){
+  const code=$('#redeemCode').value.trim();
+  if(!code)return;
+  try{
+    const r=await api('/api/redeem',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code})});
+    $('#redeemResult').innerHTML='<div class="summary"><b>'+r.productName+'</b><br>'+r.count+' 张高清原图</div><div class="downloads">'+r.photos.map((p,i)=>'<a href="'+API+p.downloadUrl+'">下载高清原图 '+(i+1)+'</a>').join('')+'</div>';
+  }catch(e){$('#redeemResult').innerHTML='<div class="order-note" style="margin-top:10px">'+e.message+'</div>'}
+}
+
 $('#search').onclick=()=>search().catch(()=>setStatus(false,'照片服务暂未接通，请稍后再试'));
+$('#checkout').onclick=()=>{
+  const q=quote(selected.size);
+  $('#orderSummary').innerHTML='<b>'+selected.size+' 张照片</b><br>'+q.name+' · <strong>'+yuan(q.fen)+'</strong>';
+  $('#orderResult').innerHTML='';
+  $('#orderDialog').showModal();
+};
+$('#createOrder').onclick=createOrder;
+$('#redeemBtn').onclick=redeem;
+$('#redeemCode').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();redeem()}});
+
 (async()=>{
-  if(!API){setStatus(false,'SAGI MATCH PHOTO 国内服务端待接入 · KIT 入口已完成');return}
+  if(!API){setStatus(false,'SAGI MATCH PHOTO 国内服务端待接入 · KIT 购买入口已完成');return}
   try{
     const h=await api('/api/health');
     if(h.ok){setStatus(true,'SAGI MATCH PHOTO 已连接');await loadEvents();await search()}
