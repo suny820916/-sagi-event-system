@@ -6,6 +6,7 @@ on:
     paths:
       - '.github/workflows/v433-integration-conflict-diagnostic.yml'
       - 'intro/tests/v433-penalty-single-source-gate.mjs'
+      - 'intro/tests/v433-lan-boot-dependency-gate.mjs'
       - 'intro/SAGI_VMIX_LAN_V433_PENALTY_RC.bat'
       - 'intro/v45-lan.html'
       - 'intro/vmix-v45-lan.html'
@@ -15,6 +16,7 @@ on:
     paths:
       - '.github/workflows/v433-integration-conflict-diagnostic.yml'
       - 'intro/tests/v433-penalty-single-source-gate.mjs'
+      - 'intro/tests/v433-lan-boot-dependency-gate.mjs'
       - 'intro/SAGI_VMIX_LAN_V433_PENALTY_RC.bat'
       - 'intro/v45-lan.html'
       - 'intro/vmix-v45-lan.html'
@@ -31,8 +33,10 @@ jobs:
           fetch-depth: 0
           # A conflicted PR has no refs/pull/N/merge. Check out its real head instead.
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
-      - name: Run V4.33 candidate penalty gate
-        run: node intro/tests/v433-penalty-single-source-gate.mjs
+      - name: Run V4.33 candidate penalty and LAN boot gates
+        run: |
+          node intro/tests/v433-lan-boot-dependency-gate.mjs
+          node intro/tests/v433-penalty-single-source-gate.mjs
       - name: Diagnose actual mergeability against V4.32 without changing either branch
         if: always()
         shell: bash
