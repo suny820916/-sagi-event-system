@@ -97,3 +97,6 @@ for(const token of [
   'setInterval(poll,250)'
 ]) assert(output.includes(token),'V4.33 low-latency output polling missing: '+token);
 assert(!output.includes('setInterval(poll,650)'),'legacy 650ms vMix polling interval still active');
+
+assert(control.includes("setInterval(()=>{mdConsistencyCheck(false).catch(()=>{})},350)"),'controller Bridge-follow polling is not 350ms');
+assert(!control.includes("setInterval(()=>{mdConsistencyCheck(false).catch(()=>{})},900)"),'legacy 900ms controller Bridge-follow polling still active');
