@@ -3337,7 +3337,7 @@ async function mdLoad(opts={}){
 const MD_LAST_GOOD_KEY='sagi_matchday_last_good_v429';
 let mdPublishRevision=0,mdLastAckRevision=0,mdPublishChain=Promise.resolve(),mdPendingPublishes=0,mdConsistencyBusy=false,mdConsistencyBusySince=0,mdLastConsistencyAt=0,mdLastConsistencyState='INIT',mdLocalRecoveryStamp=0,mdFixtureTakeoverOnce=false;
 function mdAuthorizeFixtureTakeover(){mdFixtureTakeoverOnce=true;return true}
-let mdPublishMetrics={ok:0,failed:0,retried:0,recovered:0,lastOkAt:0,lastErrorAt:0,lastAttempts:0},mdEventGateSig='',mdEventGateAt=0;
+let mdPublishMetrics={ok:0,failed:0,retried:0,recovered:0,lastOkAt:0,lastErrorAt:0,lastAttempts:0,lastLatencyMs:0,maxLatencyMs:0,totalLatencyMs:0,samples:0},mdEventGateSig='',mdEventGateAt=0;
 function mdNextEventIdentity(type='EVENT'){
  const sequence=Math.max(0,Number(matchdayState.eventSequence)||0)+1;
  matchdayState.eventSequence=sequence;
@@ -3358,6 +3358,9 @@ function mdAcceptOperatorEvent(signature,windowMs=850){
  mdEventGateSig=sig;mdEventGateAt=now;return true
 }
 async function mdPostMatchdayWithRetry(state){
+ const sendStarted=(typeof performance!=='undefined'&&performance.now)?performance.now():Date.now();
+ const latencyNow=()=>Math.max(0,Math.round(((typeof performance!=='undefined'&&performance.now)?performance.now():Date.now())-sendStarted));
+ const recordLatency=ms=>{mdPublishMetrics.lastLatencyMs=ms;mdPublishMetrics.maxLatencyMs=Math.max(mdPublishMetrics.maxLatencyMs||0,ms);mdPublishMetrics.totalLatencyMs=(mdPublishMetrics.totalLatencyMs||0)+ms;mdPublishMetrics.samples=(mdPublishMetrics.samples||0)+1};
  const liveFixture=mdFixtureKey();
  if(state&&state.fixtureKey&&state.fixtureKey!==liveFixture&&!state.allowFixtureTakeover){
   mdPublishMetrics.recovered++;mdPublishMetrics.lastAttempts=0;
@@ -3369,8 +3372,9 @@ async function mdPostMatchdayWithRetry(state){
   if(waits[i])await mdDelay(waits[i]);
   try{
    await lanPost('/api/matchday',state);
+   const latencyMs=latencyNow();recordLatency(latencyMs);
    mdPublishMetrics.ok++;mdPublishMetrics.lastOkAt=Date.now();mdPublishMetrics.lastAttempts=i+1;if(i){mdPublishMetrics.retried+=i;mdPublishMetrics.recovered++}
-   mdSaveLastGood();return{ok:true,attempts:i+1}
+   mdSaveLastGood();return{ok:true,attempts:i+1,latencyMs}
   }catch(e){
    lastError=e;mdPublishMetrics.lastErrorAt=Date.now();
    if(String(e&&e.message||e).includes('LAN 409')){
@@ -3417,7 +3421,7 @@ async function publishMatchday(event=null){
     return{ok:false,revision,attempts:r.attempts||0,recovered:!!r.recovered,conflict:!!r.conflict}
    }
    mdLastAckRevision=Math.max(mdLastAckRevision,revision);
-   if(q('mdSync'))q('mdSync').innerHTML='<span class="mdLiveDot on"></span>LAN 状态一致 · R'+mdLastAckRevision+(r.attempts>1?' · 自动重试 '+(r.attempts-1)+' 次':'');
+   if(q('mdSync'))q('mdSync').innerHTML='<span class="mdLiveDot on"></span>LAN 状态一致 · R'+mdLastAckRevision+(Number.isFinite(r.latencyMs)?' · '+r.latencyMs+'ms':'')+(r.attempts>1?' · 自动重试 '+(r.attempts-1)+' 次':'');
    return{ok:true,revision,attempts:r.attempts}
   }catch(e){
    if(state.allowFixtureTakeover)mdFixtureTakeoverOnce=true;
@@ -7337,7 +7341,11 @@ async function checkOutputBuild(){
   const m=t.match(/V\d+\.\d+\.\d+/);if(m&&versionIsNewer(m[0],OUTPUT_BUILD)){location.reload();return}
  }catch(e){}
 }
+let outputPollBusy=false,outputPollQueued=false;
 async function poll(){
+ if(outputPollBusy){outputPollQueued=true;return false}
+ outputPollBusy=true;
+ try{
  try{
    const p=await lanState(),x=p.lineupIntro;
    if(x&&x.commandId&&x.commandId!==last){last=x.commandId;if(introStateAllowed(x))render(x);else hideIntroStage('STALE_STATE')}
@@ -7348,6 +7356,11 @@ async function poll(){
    outputHealth.pollOk++;outputHealth.consecutiveFailures=0;outputHealth.lastOkAt=Date.now();
    if(g&&g.commandId&&(g.commandId!==lastGraphics||Number(g.revision||0)!==lastGraphicsRevision)){lastGraphics=g.commandId;applyGraphics(g)}
  }catch(e){outputHealth.pollFail++;outputHealth.consecutiveFailures++;outputHealth.lastErrorAt=Date.now()}
+ }finally{
+  outputPollBusy=false;
+  if(outputPollQueued){outputPollQueued=false;Promise.resolve().then(()=>poll())}
+ }
+ return true
 }
 async function outputWatchdog(){
  const age=outputHealth.lastOkAt?Date.now()-outputHealth.lastOkAt:999999;
@@ -7366,6 +7379,6 @@ addEventListener('resize',fit);
 addEventListener('online',()=>poll());
 addEventListener('pageshow',()=>poll());
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)poll()});
-fit();poll();setInterval(poll,650);setInterval(outputWatchdog,2500);setInterval(updateScoreBug,250);setInterval(checkOutputBuild,15000);
+fit();poll();setInterval(poll,250);setInterval(outputWatchdog,2500);setInterval(updateScoreBug,250);setInterval(checkOutputBuild,15000);
 })();
 </script></body></html>
