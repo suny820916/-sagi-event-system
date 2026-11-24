@@ -636,3 +636,8 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Records `runningAtRoot` and `ignoredCommercialSourceCount` in the report. This closes an additional local-source shadowing route not covered by ordinary `git diff` and untracked-file checks.
 - Commit: `08f757f1`. GitHub source write succeeded; Node execution and CI verification are still pending. The ignored-file scan intentionally does not inspect files outside `commercial/`, and ignored non-code assets remain outside this gate.
 - Next: execute the 12-check runner on Windows and Linux, test the gate with deliberately ignored source fixtures, then prioritize actual Windows/iPhone/vMix offline acceptance. Commercial release remains NO-GO.
+
+## 2026-11-24 — Windows automated baseline and final-state HTTP fix
+- Exercised the 32 distinct Node commands defined by the four Commercial workflows on local Windows with Node v24.22.3, using files fetched at `ed06f7d`. Baseline: 31 PASS, one FAIL (the LAN–engine integration run, shared by two workflows). After finalization and restart, a fresh penalty command returned 503 instead of 400.
+- `b19ce0a` maps the reducer's `MATCH_ALREADY_FINISHED` to HTTP 400. With the fix applied, all 32 commands passed, including the durable LAN restart, late duplicate retries, and command ID conflict checks. The storage benchmark checks simulated checkpoint correctness.
+- Linux and Windows GitHub Actions (Node 22), the Git-dependent evidence collector, and physical offline acceptance were not verified by this run. No release checklist status changed. Release decision remains NO-GO. See issue #35 for the physical acceptance steps.
