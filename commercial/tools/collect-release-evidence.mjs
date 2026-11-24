@@ -35,15 +35,15 @@ const dirty = run('git', ['diff', '--quiet', 'HEAD', '--'], 10000);
 const cleanTrackedTree = dirty.status === 0 && !dirty.error;
 // Untracked source can shadow imports or alter tests without appearing in git diff.
 // Ignore only generated evidence, not other untracked files under commercial/.
-const untracked = run('git', ['ls-files', '--others', '--exclude-standard', '--', 'commercial', ':!commercial/evidence'], 10000);
+const untracked = run('git', ['ls-files', '-z', '--others', '--exclude-standard', '--', 'commercial', ':!commercial/evidence'], 10000);
 const untrackedFiles = untracked.status === 0 && !untracked.error
-  ? untracked.stdout.split(/\r?\n/).filter(Boolean)
+  ? untracked.stdout.split('\0').filter(Boolean)
   : null;
 // Ignored source files can also shadow imports while evading ordinary untracked checks.
 // Exclude generated evidence and dependency caches; any ignored executable source is a release blocker.
-const ignored = run('git', ['ls-files', '--others', '--ignored', '--exclude-standard', '--', 'commercial', ':!commercial/evidence', ':!commercial/node_modules'], 10000);
+const ignored = run('git', ['ls-files', '-z', '--others', '--ignored', '--exclude-standard', '--', 'commercial', ':!commercial/evidence', ':!commercial/node_modules'], 10000);
 const ignoredSourceFiles = ignored.status === 0 && !ignored.error
-  ? ignored.stdout.split(/\r?\n/).filter(path => /\.(?:mjs|cjs|js|json|ts|tsx|jsx)$/i.test(path))
+  ? ignored.stdout.split('\0').filter(path => /\.(?:mjs|cjs|js|json|ts|tsx|jsx)$/i.test(path))
   : null;
 const cleanCommercialSources = runningAtRoot && cleanTrackedTree && untrackedFiles !== null && untrackedFiles.length === 0 && ignoredSourceFiles !== null && ignoredSourceFiles.length === 0;
 const branchName = branch.status === 0 ? branch.stdout.trim() : null;
