@@ -8,10 +8,10 @@ on:
       - "intro/vmix-v45-lan.html"
       - "intro/SAGI_VMIX_LAN_V433_PENALTY_RC.bat"
       - "intro/SAGI_V433_FIELD_ACCEPTANCE_SELF_CONTAINED.bat"
-      - "intro/tests/v433-field-acceptance-launcher-selftest.mjs"
       - "intro/SAGI_VMIX_LAN_V432_SIGNATURE_RC.bat"
       - "intro/tests/v433-penalty-core-selftest.mjs"
       - "intro/tests/v433-penalty-integration-selftest.mjs"
+      - "intro/tests/v433-field-acceptance-launcher-selftest.mjs"
       - ".github/workflows/vmix-v433-penalty-selftest.yml"
   pull_request:
     paths:
@@ -20,11 +20,11 @@ on:
       - "intro/vmix-v45-lan.html"
       - "intro/SAGI_VMIX_LAN_V433_PENALTY_RC.bat"
       - "intro/SAGI_V433_FIELD_ACCEPTANCE_SELF_CONTAINED.bat"
-      - "intro/tests/v433-field-acceptance-launcher-selftest.mjs"
       - "intro/SAGI_VMIX_LAN_V432_SIGNATURE_RC.bat"
       - "intro/tests/v4270-browser-selftest.mjs"
       - "intro/tests/v433-penalty-core-selftest.mjs"
       - "intro/tests/v433-penalty-integration-selftest.mjs"
+      - "intro/tests/v433-field-acceptance-launcher-selftest.mjs"
       - ".github/workflows/vmix-v433-penalty-selftest.yml"
   workflow_dispatch:
 
@@ -44,7 +44,6 @@ jobs:
       - name: Guard self-contained field acceptance launcher
         run: node intro/tests/v433-field-acceptance-launcher-selftest.mjs
 
-
   windows-package:
     runs-on: windows-latest
     timeout-minutes: 8
@@ -53,6 +52,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
+
       - name: Parse V4.33 RC BAT and embedded Bridge with Windows PowerShell 5.1
         shell: powershell
         run: |
@@ -77,28 +77,14 @@ jobs:
           }
           if (-not $source.Contains('$ProgressPreference = "SilentlyContinue"')) { throw 'V4.32 console progress hotfix missing from V4.33 BAT' }
           Write-Host 'V4.33 Windows BAT extraction + PowerShell 5.1 parser PASS'
+
       - name: Parse self-contained acceptance launcher with Windows PowerShell 5.1
         shell: powershell
         run: |
           $ErrorActionPreference = 'Stop'
           $path = 'intro/SAGI_V433_FIELD_ACCEPTANCE_SELF_CONTAINED.bat'
           $source = [IO.File]::ReadAllText((Resolve-Path $path), [Text.Encoding]::UTF8)
-          $match = [regex]::Match($source, '(?s)###SAGI_ACCEPTANCE_PS###\r?\n(.*)      - name: Run V4.33 penalty portable gates on Windows
-        shell: pwsh
-        run: |
-          node intro/tests/v433-penalty-core-selftest.mjs
-          node intro/tests/v433-penalty-integration-selftest.mjs
-      - name: Upload V4.33 RC test launcher
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: SAGI_VMIX_V433_PENALTY_RC_CI_PASSED_NOT_PRODUCTION_CERTIFIED
-          path: |
-            intro/SAGI_VMIX_LAN_V433_PENALTY_RC.bat
-            intro/SAGI_V433_FIELD_ACCEPTANCE_SELF_CONTAINED.bat
-          if-no-files-found: error
-          retention-days: 7
-)
+          $match = [regex]::Match($source, '(?s)###SAGI_ACCEPTANCE_PS###\r?\n(.*)$')
           if (-not $match.Success) { throw 'V4.33 acceptance embedded PowerShell payload missing' }
           $tokens = $null
           $errors = $null
@@ -109,16 +95,21 @@ jobs:
           if ($source -match '_SAGI_AUTO_TEST\.ps1' -or $source -match '%TEMP%') { throw 'TEMP script dependency regressed into field acceptance launcher' }
           node intro/tests/v433-field-acceptance-launcher-selftest.mjs
           Write-Host 'V4.33 self-contained field acceptance launcher PASS'
+
       - name: Run V4.33 penalty portable gates on Windows
         shell: pwsh
         run: |
           node intro/tests/v433-penalty-core-selftest.mjs
           node intro/tests/v433-penalty-integration-selftest.mjs
-      - name: Upload V4.33 RC test launcher
+          node intro/tests/v433-field-acceptance-launcher-selftest.mjs
+
+      - name: Upload V4.33 RC test launchers
         if: success()
         uses: actions/upload-artifact@v4
         with:
           name: SAGI_VMIX_V433_PENALTY_RC_CI_PASSED_NOT_PRODUCTION_CERTIFIED
-          path: intro/SAGI_VMIX_LAN_V433_PENALTY_RC.bat
+          path: |
+            intro/SAGI_VMIX_LAN_V433_PENALTY_RC.bat
+            intro/SAGI_V433_FIELD_ACCEPTANCE_SELF_CONTAINED.bat
           if-no-files-found: error
           retention-days: 7
