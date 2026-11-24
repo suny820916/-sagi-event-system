@@ -4075,7 +4075,7 @@ function initMatchdayGraphics(){
  ['addBtn','updateBtn','removeBtn','demoBtn','loadBtn','homeSideBtn','awaySideBtn'].forEach(id=>q(id)&&q(id).addEventListener('click',()=>setTimeout(refreshMatchdayPlayers,60)));
  ['matchHome','matchAway'].forEach(id=>q(id)&&q(id).addEventListener('input',()=>{mdEnforceCanonicalTeams();refreshMatchdayUI()}));
  ['matchHome','matchAway','matchCompetition'].forEach(id=>q(id)&&q(id).addEventListener('change',()=>{mdEnforceCanonicalTeams();refreshMatchdayUI();if(matchReady||matchdayState.scoreboardVisible)publishMatchday(null)}));
- setInterval(()=>{if(matchdayState.clockRunning&&!document.hidden)refreshMatchdayClockUI()},500);setInterval(()=>{if(!document.hidden&&!matchdayState.lastEvent&&!gdAutoCameraActive)sdRecommend(null)},5000);setInterval(()=>{mdConsistencyCheck(false).catch(()=>{})},900);
+ setInterval(()=>{if(matchdayState.clockRunning&&!document.hidden)refreshMatchdayClockUI()},500);setInterval(()=>{if(!document.hidden&&!matchdayState.lastEvent&&!gdAutoCameraActive)sdRecommend(null)},5000);setInterval(()=>{mdConsistencyCheck(false).catch(()=>{})},350);
  window.addEventListener('online',()=>mdScheduleRecovery('ONLINE',80));
  window.addEventListener('pageshow',()=>mdScheduleRecovery('PAGESHOW',120));
  window.addEventListener('pagehide',()=>{mdPersist();mdSaveLastGood()});
