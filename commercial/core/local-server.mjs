@@ -79,7 +79,7 @@ export async function createLocalServer({dataDir,meta,host="127.0.0.1",port=0,to
         return{status:200,body:{duplicate:result.duplicate,event:result.event,state:liveState()}}
       });
       queue=work.catch(()=>{});
-      try{const result=await work;return send(res,result.status,result.body)}catch(error){if(error.message==="COMMAND_ID_CONFLICT")return send(res,409,{error:"COMMAND_ID_CONFLICT"});const bad=/^(INVALID_|UNSUPPORTED_COMMAND)/.test(error.message);return send(res,bad?400:503,{error:bad?error.message:"STORE_UNAVAILABLE"})}
+      try{const result=await work;return send(res,result.status,result.body)}catch(error){if(error.message==="COMMAND_ID_CONFLICT")return send(res,409,{error:"COMMAND_ID_CONFLICT"});const bad=error.message==="MATCH_ALREADY_FINISHED"||/^(INVALID_|UNSUPPORTED_COMMAND)/.test(error.message);return send(res,bad?400:503,{error:bad?error.message:"STORE_UNAVAILABLE"})}
     }
     return send(res,404,{error:"NOT_FOUND"})
   });
