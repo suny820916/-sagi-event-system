@@ -307,12 +307,32 @@ function Read-HttpRequest($stream) {
   if ($len -gt 0) {
     $bodyBytes = New-Object byte[] $len
     $offset = 0
-    while ($offset -lt $len) {
-      $n = $stream.Read($bodyBytes,$offset,$len-$offset)
-      if ($n -le 0) { break }
-      $offset += $n
+    $bodyDeadline = [DateTime]::UtcNow.AddMilliseconds(2200)
+    $oldReadTimeout = 0
+    try { if ($stream.CanTimeout) { $oldReadTimeout = $stream.ReadTimeout; $stream.ReadTimeout = 700 } } catch {}
+    try {
+      while ($offset -lt $len) {
+        try {
+          $n = $stream.Read($bodyBytes,$offset,$len-$offset)
+        } catch [IO.IOException] {
+          $readMessage = [string]$_.Exception.Message
+          if ($readMessage -match 'forcibly closed by the remote host|Unable to read data from the transport connection|aborted|远程主机强迫关闭|传输连接') {
+            throw ("CLIENT_ABORTED_REQUEST_BODY " + $offset + "/" + $len)
+          }
+          if ([DateTime]::UtcNow -ge $bodyDeadline) { throw ("REQUEST_BODY_TIMEOUT " + $offset + "/" + $len) }
+          continue
+        }
+        if ($n -le 0) {
+          if ([DateTime]::UtcNow -ge $bodyDeadline) { throw ("CLIENT_ABORTED_REQUEST_BODY " + $offset + "/" + $len) }
+          Start-Sleep -Milliseconds 12
+          continue
+        }
+        $offset += $n
+      }
+    } finally {
+      try { if ($stream.CanTimeout -and $oldReadTimeout -gt 0) { $stream.ReadTimeout = $oldReadTimeout } } catch {}
     }
-    if ($offset -ne $len) { throw "Incomplete request body" }
+    if ($offset -ne $len) { throw ("REQUEST_BODY_INCOMPLETE " + $offset + "/" + $len) }
     $body = [Text.Encoding]::UTF8.GetString($bodyBytes,0,$offset)
   }
 
@@ -338,7 +358,8 @@ function State-Json {
 
 Write-Host ""
 Write-Host "============================================================" -ForegroundColor Cyan
-Write-Host "  SAGI V4.7.2 MATCH SAFE LAN DIRECT - vMix Bridge" -ForegroundColor Cyan
+Write-Host "  SAGI V4.33 PENALTY RC - MATCH SAFE LAN DIRECT" -ForegroundColor Cyan
+Write-Host "  Bridge Core V4.7.2 / Local-first / vMix 127.0.0.1" -ForegroundColor DarkCyan
 Write-Host "============================================================" -ForegroundColor Cyan
 
 if (-not (Test-Path $ControlCache) -or -not (Test-Path $OutputCache)) {
@@ -467,13 +488,23 @@ while ($true) {
           $activeExists = @($projects | Where-Object { [string]$_.id -eq $activeProjectId }).Count -gt 0
           if (-not $activeExists) { $activeProjectId = "" }
         }
-        $safePayload = @{projects=$projects;activeProjectId=$activeProjectId;savedAt=[DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds();schema="SAGI_MATCH_PROJECTS_V2"} | ConvertTo-Json -Depth 80 -Compress
-        $tmpProjects = $MatchProjectsFile + ".new"
-        [IO.File]::WriteAllText($tmpProjects,$safePayload,(New-Object Text.UTF8Encoding($false)))
-        Move-Item $tmpProjects $MatchProjectsFile -Force
-        $MatchProjectsJson = $safePayload
-        Write-Host ("[PROJECTS] Saved " + $projects.Count + " match project(s).") -ForegroundColor Green
-        Write-HttpResponse $stream 200 "application/json" '{"ok":true}'
+        $canonicalPayload = @{projects=$projects;activeProjectId=$activeProjectId;schema="SAGI_MATCH_PROJECTS_V2"} | ConvertTo-Json -Depth 80 -Compress
+        $existingCanonical = ""
+        try {
+          $existing = $MatchProjectsJson | ConvertFrom-Json
+          $existingCanonical = @{projects=@($existing.projects);activeProjectId=[string]$existing.activeProjectId;schema="SAGI_MATCH_PROJECTS_V2"} | ConvertTo-Json -Depth 80 -Compress
+        } catch {}
+        if ($existingCanonical -eq $canonicalPayload) {
+          Write-HttpResponse $stream 200 "application/json" '{"ok":true,"unchanged":true}'
+        } else {
+          $safePayload = @{projects=$projects;activeProjectId=$activeProjectId;savedAt=[DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds();schema="SAGI_MATCH_PROJECTS_V2"} | ConvertTo-Json -Depth 80 -Compress
+          $tmpProjects = $MatchProjectsFile + ".new"
+          [IO.File]::WriteAllText($tmpProjects,$safePayload,(New-Object Text.UTF8Encoding($false)))
+          Move-Item $tmpProjects $MatchProjectsFile -Force
+          $MatchProjectsJson = $safePayload
+          Write-Host ("[PROJECTS] Saved " + $projects.Count + " match project(s).") -ForegroundColor Green
+          Write-HttpResponse $stream 200 "application/json" '{"ok":true,"changed":true}'
+        }
       } catch {
         $err = $_.Exception.Message | ConvertTo-Json -Compress
         Write-HttpResponse $stream 400 "application/json" ('{"ok":false,"error":' + $err + '}')
@@ -593,7 +624,7 @@ while ($true) {
     }
     elseif ($method -eq "GET" -and $path -eq "/health") {
       $vmixInfo = Get-VmixStatusInfo
-      $health = @{ok=$true;vmix=[bool]$vmixInfo.ok;vmixInfo=$vmixInfo;lan=$true;ip=$lanIp;port=$Port;version="4.7.0";mode="MATCH_MODE";bridgeLocked=$true;recovery=(Test-Path $MatchdayStateFile);projectLibrary=(Test-Path $MatchProjectsFile)} | ConvertTo-Json -Depth 8 -Compress
+      $health = @{ok=$true;vmix=[bool]$vmixInfo.ok;vmixInfo=$vmixInfo;lan=$true;ip=$lanIp;port=$Port;version="4.33";appVersion="4.33-penalty-rc";bridgeVersion="4.7.2";mode="MATCH_MODE";bridgeLocked=$true;recovery=(Test-Path $MatchdayStateFile);projectLibrary=(Test-Path $MatchProjectsFile)} | ConvertTo-Json -Depth 8 -Compress
       Write-HttpResponse $stream 200 "application/json" $health
     }
     else {
@@ -602,7 +633,7 @@ while ($true) {
   }
   catch {
     $lanMessage = [string]$_.Exception.Message
-    $benignDisconnect = $lanMessage -match 'forcibly closed by the remote host|Unable to read data from the transport connection|The I/O operation has been aborted|aborted by the software in your host machine|established connection was aborted|connection was aborted|远程主机强迫关闭|传输连接'
+    $benignDisconnect = $lanMessage -match 'CLIENT_ABORTED_REQUEST_BODY|forcibly closed by the remote host|Unable to read data from the transport connection|The I/O operation has been aborted|aborted by the software in your host machine|established connection was aborted|connection was aborted|远程主机强迫关闭|传输连接'
     if (-not $benignDisconnect) {
       Write-Host ("[LAN WARN] " + $lanMessage) -ForegroundColor DarkYellow
     }
