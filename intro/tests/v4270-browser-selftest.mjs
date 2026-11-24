@@ -608,7 +608,9 @@ server.listen(PORT,'127.0.0.1',async()=>{
   console.log('TEST 11B: Browser Input watchdog holds last good frame through a longer state-channel outage, then self-heals');
   const heldBefore=await diagPage.evaluate(()=>window.sagiScoreCenterDiagnostic());
   const recoveryScore=Number(authoritative.homeScore)+1;
-  failNextOutputMatchdayGets=12;
+  // 250ms fast polling now self-heals short outages before watchdog age threshold.
+  // Keep the simulated outage >4s so this test still exercises the watchdog fallback path.
+  failNextOutputMatchdayGets=24;
   graphics={...graphics,commandId:'output_watchdog_recovery',revision:(Number(graphics.revision)||0)+20,homeScore:recoveryScore,updatedAt:new Date().toISOString(),event:{type:'CLEAR_EVENT'}};
   await wait(2600);
   const heldDuring=await diagPage.evaluate(()=>window.sagiScoreCenterDiagnostic());
