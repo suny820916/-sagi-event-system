@@ -108,25 +108,7 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $path = 'intro/SAGI_AUTO_TEST_V03.bat'
           $source = [IO.File]::ReadAllText((Resolve-Path $path), [Text.Encoding]::UTF8)
-          $match = [regex]::Match($source, '(?s)###SAGI_AUTO_TEST_PS###\r?\n(.*)        shell: pwsh
-        run: |
-          node intro/tests/v433-penalty-core-selftest.mjs
-          node intro/tests/v433-penalty-integration-selftest.mjs
-          node intro/tests/v433-field-acceptance-launcher-selftest.mjs
-          node intro/tests/v433-auto-test-v03-selftest.mjs
-
-      - name: Upload V4.33 RC test launchers
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: SAGI_VMIX_V433_PENALTY_RC_CI_PASSED_NOT_PRODUCTION_CERTIFIED
-          path: |
-            intro/SAGI_VMIX_LAN_V433_PENALTY_RC.bat
-            intro/SAGI_V433_FIELD_ACCEPTANCE_SELF_CONTAINED.bat
-            intro/SAGI_AUTO_TEST_V03.bat
-          if-no-files-found: error
-          retention-days: 7
-)
+          $match = [regex]::Match($source, '(?s)###SAGI_AUTO_TEST_PS###\r?\n(.*)$')
           if (-not $match.Success) { throw 'AUTO TEST V0.3 embedded PowerShell payload missing' }
           $tokens = $null
           $errors = $null
@@ -143,6 +125,7 @@ jobs:
           node intro/tests/v433-penalty-core-selftest.mjs
           node intro/tests/v433-penalty-integration-selftest.mjs
           node intro/tests/v433-field-acceptance-launcher-selftest.mjs
+          node intro/tests/v433-auto-test-v03-selftest.mjs
 
       - name: Upload V4.33 RC test launchers
         if: success()
@@ -152,5 +135,6 @@ jobs:
           path: |
             intro/SAGI_VMIX_LAN_V433_PENALTY_RC.bat
             intro/SAGI_V433_FIELD_ACCEPTANCE_SELF_CONTAINED.bat
+            intro/SAGI_AUTO_TEST_V03.bat
           if-no-files-found: error
           retention-days: 7
