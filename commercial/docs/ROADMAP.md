@@ -630,3 +630,9 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Expanded `commercial/tools/collect-release-evidence.mjs` from 8 to 12 checks, adding `node --check` for the canonical LAN bridge, LAN pairing implementation, engine/LAN integration test and penalty-undo regression test.
 - Verified all four referenced files exist on `commercial-v1.0` via GitHub contents API. Commit: `2e2569b`.
 - **Verification boundary:** GitHub accepted the source commit; these 12 checks have **not** been executed in this run. A passing syntax check is not a passing integration or Windows/vMix test. Keep commercial release **NO-GO** until CI evidence and real offline hardware acceptance are available.
+
+## 2026-11-24 — Release evidence ignored-source and working-directory gate
+- Updated `commercial/tools/collect-release-evidence.mjs` to refuse a PASS when executed outside the repository root or when ignored executable source files exist under `commercial/` (excluding generated evidence and dependency cache directories).
+- Records `runningAtRoot` and `ignoredCommercialSourceCount` in the report. This closes an additional local-source shadowing route not covered by ordinary `git diff` and untracked-file checks.
+- Commit: `08f757f1`. GitHub source write succeeded; Node execution and CI verification are still pending. The ignored-file scan intentionally does not inspect files outside `commercial/`, and ignored non-code assets remain outside this gate.
+- Next: execute the 12-check runner on Windows and Linux, test the gate with deliberately ignored source fixtures, then prioritize actual Windows/iPhone/vMix offline acceptance. Commercial release remains NO-GO.
