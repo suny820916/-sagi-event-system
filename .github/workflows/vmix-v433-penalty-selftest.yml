@@ -9,6 +9,7 @@ on:
       - "intro/SAGI_VMIX_LAN_V433_PENALTY_RC.bat"
       - "intro/SAGI_V433_FIELD_ACCEPTANCE_SELF_CONTAINED.bat"
       - "intro/SAGI_AUTO_TEST_V03.bat"
+      - "intro/SAGI_AUTO_TEST_V10.bat"
       - "intro/SAGI_VMIX_LAN_V432_SIGNATURE_RC.bat"
       - "intro/tests/v433-penalty-core-selftest.mjs"
       - "intro/tests/v433-penalty-integration-selftest.mjs"
@@ -23,6 +24,7 @@ on:
       - "intro/SAGI_VMIX_LAN_V433_PENALTY_RC.bat"
       - "intro/SAGI_V433_FIELD_ACCEPTANCE_SELF_CONTAINED.bat"
       - "intro/SAGI_AUTO_TEST_V03.bat"
+      - "intro/SAGI_AUTO_TEST_V10.bat"
       - "intro/SAGI_VMIX_LAN_V432_SIGNATURE_RC.bat"
       - "intro/tests/v4270-browser-selftest.mjs"
       - "intro/tests/v433-penalty-core-selftest.mjs"
@@ -138,3 +140,61 @@ jobs:
             intro/SAGI_AUTO_TEST_V03.bat
           if-no-files-found: error
           retention-days: 7
+
+  windows-auto-test-v10:
+    runs-on: windows-latest
+    timeout-minutes: 16
+    steps:
+      - uses: actions/checkout@v4
+      - name: Parse and execute self-contained AUTO TEST V1.0 on Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $launcher = Resolve-Path 'intro/SAGI_AUTO_TEST_V10.bat'
+          $source = [IO.File]::ReadAllText($launcher)
+          $runner = [regex]::Match($source, '(?s)###RUNNER###\r?\n(.*?)\r?\n###BRIDGE###')
+          if (!$runner.Success) { throw 'V1.0 embedded runner missing' }
+          [void][scriptblock]::Create($runner.Groups[1].Value)
+          $env:SAGI_AUTOTEST_NONINTERACTIVE = '1'
+          $env:SAGI_AUTOTEST_SOAK_SECONDS = '180'
+          $env:SAGI_AUTOTEST_REPORT_DIR = Join-Path $PWD 'autotest-v10-evidence'
+          New-Item -ItemType Directory -Force $env:SAGI_AUTOTEST_REPORT_DIR | Out-Null
+          Get-FileHash -Algorithm SHA256 $launcher | Select-Object Algorithm,Hash |
+            ConvertTo-Json | Set-Content (Join-Path $env:SAGI_AUTOTEST_REPORT_DIR 'launcher-sha256.json')
+          & $launcher 2>&1 | Tee-Object -FilePath (Join-Path $env:SAGI_AUTOTEST_REPORT_DIR 'console.log')
+          $code = $LASTEXITCODE
+          $file = Get-ChildItem $env:SAGI_AUTOTEST_REPORT_DIR -Filter 'SAGI_AUTO_TEST_V10_*.json' |
+            Select-Object -First 1
+          if (!$file) { throw "V1.0 evidence missing (exit $code)" }
+          $report = Get-Content -LiteralPath $file.FullName -Raw | ConvertFrom-Json
+          if ($code -ne 0 -or $report.version -ne '1.0' -or $report.productionCertified -ne $false -or
+              @($report.checks | Where-Object { !$_.pass }).Count) { throw 'V1.0 sandbox did not pass' }
+          foreach ($name in @(
+              'independent-browser-contexts', 'real-score-button-and-two-outputs',
+              'duplicate-goal-and-missing-player-photo-fallback', 'real-yellow-red-sub-clear-buttons',
+              'control-refresh-restores-score', 'browser-disconnect-reconnect',
+              'sandbox-bridge-restart-durable-state', 'same-browser-contexts-recover-after-restart',
+              'fixture-restore-isolated', 'soak-polling-and-resource-budget', 'sandbox-cleanup')) {
+            if (!($report.checks | Where-Object { $_.name -eq $name -and $_.pass })) {
+              throw "Required V1.0 check missing: $name"
+            }
+          }
+          $evidence = $report.evidenceDirectory
+          foreach ($name in '01-goal-animation.png','02-restarted-score.png','03-soak-start.png','soak.json') {
+            if (!(Test-Path -LiteralPath (Join-Path $evidence $name))) { throw "Missing evidence: $name" }
+          }
+          "SAGI AUTO TEST V1.0: $($report.checks.Count) sandbox checks passed. No physical certification." |
+            Tee-Object -FilePath (Join-Path $env:SAGI_AUTOTEST_REPORT_DIR 'summary.txt') |
+            Add-Content $env:GITHUB_STEP_SUMMARY
+          exit 0
+
+      - name: Upload AUTO TEST V1.0 and Windows sandbox evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: SAGI_AUTO_TEST_V10_WINDOWS_SANDBOX
+          path: |
+            intro/SAGI_AUTO_TEST_V10.bat
+            autotest-v10-evidence/
+          if-no-files-found: error
+          retention-days: 14
