@@ -2691,7 +2691,7 @@ async function mdLoad(opts={}){
 const MD_LAST_GOOD_KEY='sagi_matchday_last_good_v429';
 let mdPublishRevision=0,mdLastAckRevision=0,mdPublishChain=Promise.resolve(),mdPendingPublishes=0,mdConsistencyBusy=false,mdConsistencyBusySince=0,mdLastConsistencyAt=0,mdLastConsistencyState='INIT',mdLocalRecoveryStamp=0,mdFixtureTakeoverOnce=false;
 function mdAuthorizeFixtureTakeover(){mdFixtureTakeoverOnce=true;return true}
-let mdPublishMetrics={ok:0,failed:0,retried:0,recovered:0,lastOkAt:0,lastErrorAt:0,lastAttempts:0},mdEventGateSig='',mdEventGateAt=0;
+let mdPublishMetrics={ok:0,failed:0,retried:0,recovered:0,lastOkAt:0,lastErrorAt:0,lastAttempts:0,lastLatencyMs:0,maxLatencyMs:0,totalLatencyMs:0,samples:0},mdEventGateSig='',mdEventGateAt=0;
 function mdNextEventIdentity(type='EVENT'){
  const sequence=Math.max(0,Number(matchdayState.eventSequence)||0)+1;
  matchdayState.eventSequence=sequence;
@@ -2712,6 +2712,9 @@ function mdAcceptOperatorEvent(signature,windowMs=850){
  mdEventGateSig=sig;mdEventGateAt=now;return true
 }
 async function mdPostMatchdayWithRetry(state){
+ const sendStarted=(typeof performance!=='undefined'&&performance.now)?performance.now():Date.now();
+ const latencyNow=()=>Math.max(0,Math.round(((typeof performance!=='undefined'&&performance.now)?performance.now():Date.now())-sendStarted));
+ const recordLatency=ms=>{mdPublishMetrics.lastLatencyMs=ms;mdPublishMetrics.maxLatencyMs=Math.max(mdPublishMetrics.maxLatencyMs||0,ms);mdPublishMetrics.totalLatencyMs=(mdPublishMetrics.totalLatencyMs||0)+ms;mdPublishMetrics.samples=(mdPublishMetrics.samples||0)+1};
  const liveFixture=mdFixtureKey();
  if(state&&state.fixtureKey&&state.fixtureKey!==liveFixture&&!state.allowFixtureTakeover){
   mdPublishMetrics.recovered++;mdPublishMetrics.lastAttempts=0;
@@ -2723,8 +2726,9 @@ async function mdPostMatchdayWithRetry(state){
   if(waits[i])await mdDelay(waits[i]);
   try{
    await lanPost('/api/matchday',state);
+   const latencyMs=latencyNow();recordLatency(latencyMs);
    mdPublishMetrics.ok++;mdPublishMetrics.lastOkAt=Date.now();mdPublishMetrics.lastAttempts=i+1;if(i){mdPublishMetrics.retried+=i;mdPublishMetrics.recovered++}
-   mdSaveLastGood();return{ok:true,attempts:i+1}
+   mdSaveLastGood();return{ok:true,attempts:i+1,latencyMs}
   }catch(e){
    lastError=e;mdPublishMetrics.lastErrorAt=Date.now();
    if(String(e&&e.message||e).includes('LAN 409')){
@@ -2771,7 +2775,7 @@ async function publishMatchday(event=null){
     return{ok:false,revision,attempts:r.attempts||0,recovered:!!r.recovered,conflict:!!r.conflict}
    }
    mdLastAckRevision=Math.max(mdLastAckRevision,revision);
-   if(q('mdSync'))q('mdSync').innerHTML='<span class="mdLiveDot on"></span>LAN 状态一致 · R'+mdLastAckRevision+(r.attempts>1?' · 自动重试 '+(r.attempts-1)+' 次':'');
+   if(q('mdSync'))q('mdSync').innerHTML='<span class="mdLiveDot on"></span>LAN 状态一致 · R'+mdLastAckRevision+(Number.isFinite(r.latencyMs)?' · '+r.latencyMs+'ms':'')+(r.attempts>1?' · 自动重试 '+(r.attempts-1)+' 次':'');
    return{ok:true,revision,attempts:r.attempts}
   }catch(e){
    if(state.allowFixtureTakeover)mdFixtureTakeoverOnce=true;
