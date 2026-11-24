@@ -67,3 +67,18 @@ const loadProjectFn=control.slice(control.indexOf('async function loadMatchProje
 assert(loadProjectFn.includes('await mdPublishChain'),'project switch does not drain previous fixture writes');
 assert(loadProjectFn.indexOf('await publishMatchday(null)')>0&&loadProjectFn.indexOf('await publishMatchday(null)')<loadProjectFn.indexOf('await persistMatchProjectsBridge(getMatchProjects(),id)'),'project selection advertised before live fixture commit');
 assert(control.includes('persistMatchProjectsBridge(merged,remoteActive)'),'legacy project migration drops active selection');
+
+
+for(const token of [
+  'CLIENT_ABORTED_REQUEST_BODY',
+  'REQUEST_BODY_TIMEOUT',
+  '$stream.ReadTimeout = 700',
+  '$bodyDeadline = [DateTime]::UtcNow.AddMilliseconds(2200)',
+  '"unchanged":true',
+  '$existingCanonical -eq $canonicalPayload',
+  'SAGI V4.33 PENALTY RC - MATCH SAFE LAN DIRECT',
+  'appVersion="4.33-penalty-rc"',
+  'bridgeVersion="4.7.2"'
+]) assert(bat.includes(token),'V4.33 LAN transport hardening missing: '+token);
+assert(!bat.includes('SAGI V4.7.2 MATCH SAFE LAN DIRECT - vMix Bridge'),'ambiguous old Bridge banner still visible');
+assert(!bat.includes('version="4.7.0";mode="MATCH_MODE"'),'stale health version still advertised');
