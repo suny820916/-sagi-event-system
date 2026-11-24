@@ -1,0 +1,22 @@
+name: SAGI vMix V4.34 GOAL PIPELINE Prep
+
+on:
+  push:
+    paths:
+      - "intro/tests/fixtures/v434-goal-pipeline-scenarios.json"
+      - "intro/tests/v434-goal-pipeline-prep-audit.mjs"
+      - "intro/V434_GOAL_PIPELINE_CONTRACT.md"
+      - ".github/workflows/vmix-v434-goal-pipeline-prep.yml"
+  workflow_dispatch:
+
+jobs:
+  prep-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Audit V4.34 GOAL PIPELINE prerequisites
+        run: node intro/tests/v434-goal-pipeline-prep-audit.mjs
