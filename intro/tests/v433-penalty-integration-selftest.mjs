@@ -82,3 +82,18 @@ for(const token of [
 ]) assert(bat.includes(token),'V4.33 LAN transport hardening missing: '+token);
 assert(!bat.includes('SAGI V4.7.2 MATCH SAFE LAN DIRECT - vMix Bridge'),'ambiguous old Bridge banner still visible');
 assert(!bat.includes('version="4.7.0";mode="MATCH_MODE"'),'stale health version still advertised');
+
+
+for(const token of [
+  'lastLatencyMs:0',
+  'maxLatencyMs:0',
+  'totalLatencyMs:0',
+  'samples:0',
+  "Number.isFinite(r.latencyMs)?' · '+r.latencyMs+'ms':'')"
+]) assert(control.includes(token),'V4.33 LAN latency instrumentation missing: '+token);
+for(const token of [
+  'let outputPollBusy=false,outputPollQueued=false;',
+  'if(outputPollBusy){outputPollQueued=true;return false}',
+  'setInterval(poll,250)'
+]) assert(output.includes(token),'V4.33 low-latency output polling missing: '+token);
+assert(!output.includes('setInterval(poll,650)'),'legacy 650ms vMix polling interval still active');
