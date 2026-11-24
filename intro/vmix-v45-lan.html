@@ -2010,7 +2010,11 @@ async function checkOutputBuild(){
   const m=t.match(/V\d+\.\d+\.\d+/);if(m&&versionIsNewer(m[0],OUTPUT_BUILD)){location.reload();return}
  }catch(e){}
 }
+let outputPollBusy=false,outputPollQueued=false;
 async function poll(){
+ if(outputPollBusy){outputPollQueued=true;return false}
+ outputPollBusy=true;
+ try{
  try{
    const p=await lanState(),x=p.lineupIntro;
    if(x&&x.commandId&&x.commandId!==last){last=x.commandId;if(introStateAllowed(x))render(x);else hideIntroStage('STALE_STATE')}
@@ -2021,6 +2025,11 @@ async function poll(){
    outputHealth.pollOk++;outputHealth.consecutiveFailures=0;outputHealth.lastOkAt=Date.now();
    if(g&&g.commandId&&(g.commandId!==lastGraphics||Number(g.revision||0)!==lastGraphicsRevision)){lastGraphics=g.commandId;applyGraphics(g)}
  }catch(e){outputHealth.pollFail++;outputHealth.consecutiveFailures++;outputHealth.lastErrorAt=Date.now()}
+ }finally{
+  outputPollBusy=false;
+  if(outputPollQueued){outputPollQueued=false;Promise.resolve().then(()=>poll())}
+ }
+ return true
 }
 async function outputWatchdog(){
  const age=outputHealth.lastOkAt?Date.now()-outputHealth.lastOkAt:999999;
@@ -2039,6 +2048,6 @@ addEventListener('resize',fit);
 addEventListener('online',()=>poll());
 addEventListener('pageshow',()=>poll());
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)poll()});
-fit();poll();setInterval(poll,650);setInterval(outputWatchdog,2500);setInterval(updateScoreBug,250);setInterval(checkOutputBuild,15000);
+fit();poll();setInterval(poll,250);setInterval(outputWatchdog,2500);setInterval(updateScoreBug,250);setInterval(checkOutputBuild,15000);
 })();
 </script></body></html>
