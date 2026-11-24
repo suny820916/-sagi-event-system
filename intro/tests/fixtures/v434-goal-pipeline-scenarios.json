@@ -1,0 +1,107 @@
+{
+  "version": "V4.34-GOAL-PIPELINE-PREP-1",
+  "invariants": [
+    "one-goal-one-eventId",
+    "score-eventLog-replayMarker-highlight-playerStats-share-eventId",
+    "local-core-commit-before-animation-or-replay",
+    "safe-mode-noncritical-failure-never-rolls-back-core-score",
+    "undo-goal-rolls-back-score-marker-highlight-and-derived-stats",
+    "reconnect-refresh-never-replays-or-duplicates-committed-goal"
+  ],
+  "scenarios": [
+    {
+      "id": "single-goal",
+      "action": "HOME_GOAL",
+      "expect": {
+        "scoreDelta": [
+          1,
+          0
+        ],
+        "events": 1,
+        "autoReplayMarkers": 1,
+        "playerGoalDelta": 1
+      }
+    },
+    {
+      "id": "rapid-double-click",
+      "action": "HOME_GOAL_X2_RAPID",
+      "expect": {
+        "scoreDelta": [
+          1,
+          0
+        ],
+        "events": 1,
+        "autoReplayMarkers": 1,
+        "playerGoalDelta": 1
+      }
+    },
+    {
+      "id": "post-retry-same-event",
+      "action": "RETRY_SAME_EVENT_ID",
+      "expect": {
+        "scoreDelta": [
+          1,
+          0
+        ],
+        "events": 1,
+        "autoReplayMarkers": 1
+      }
+    },
+    {
+      "id": "asset-failure",
+      "action": "GOAL_WITH_MISSING_PHOTO_CREST",
+      "expect": {
+        "coreCommitted": true,
+        "scoreDelta": [
+          1,
+          0
+        ],
+        "safeMode": true
+      }
+    },
+    {
+      "id": "replay-unavailable",
+      "action": "GOAL_REPLAY_API_DOWN",
+      "expect": {
+        "coreCommitted": true,
+        "returnMain": true,
+        "safeMode": true
+      }
+    },
+    {
+      "id": "replay-success",
+      "action": "GOAL_REPLAY_OK",
+      "expect": {
+        "replayOnlyLatest": true,
+        "replayStop": true,
+        "returnMain": true
+      }
+    },
+    {
+      "id": "undo-goal",
+      "action": "UNDO_LAST_GOAL",
+      "expect": {
+        "scoreRollback": true,
+        "markerRollback": true,
+        "statsRollback": true
+      }
+    },
+    {
+      "id": "refresh-reconnect",
+      "action": "REFRESH_AND_RECONNECT",
+      "expect": {
+        "duplicateEvents": 0,
+        "duplicateMarkers": 0,
+        "duplicateStats": 0
+      }
+    },
+    {
+      "id": "long-run",
+      "action": "SOAK_GOAL_REPLAY",
+      "expect": {
+        "timerLeak": false,
+        "replayLeak": false
+      }
+    }
+  ]
+}
