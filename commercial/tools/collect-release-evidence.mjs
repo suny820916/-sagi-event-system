@@ -27,6 +27,9 @@ const run = (bin, args, timeout = 120000) => spawnSync(bin, args, {
 const sha256 = value => createHash('sha256').update(value).digest('hex');
 const git = run('git', ['rev-parse', 'HEAD'], 10000);
 const branch = run('git', ['branch', '--show-current'], 10000);
+const root = run('git', ['rev-parse', '--show-toplevel'], 10000);
+const repositoryRoot = root.status === 0 ? root.stdout.trim() : null;
+const runningAtRoot = repositoryRoot !== null && resolve(repositoryRoot) === resolve(process.cwd());
 const revision = git.status === 0 ? git.stdout.trim() : null;
 const dirty = run('git', ['diff', '--quiet', 'HEAD', '--'], 10000);
 const cleanTrackedTree = dirty.status === 0 && !dirty.error;
@@ -36,7 +39,13 @@ const untracked = run('git', ['ls-files', '--others', '--exclude-standard', '--'
 const untrackedFiles = untracked.status === 0 && !untracked.error
   ? untracked.stdout.split(/\r?\n/).filter(Boolean)
   : null;
-const cleanCommercialSources = cleanTrackedTree && untrackedFiles !== null && untrackedFiles.length === 0;
+// Ignored source files can also shadow imports while evading ordinary untracked checks.
+// Exclude generated evidence and dependency caches; any ignored executable source is a release blocker.
+const ignored = run('git', ['ls-files', '--others', '--ignored', '--exclude-standard', '--', 'commercial', ':!commercial/evidence', ':!commercial/node_modules'], 10000);
+const ignoredSourceFiles = ignored.status === 0 && !ignored.error
+  ? ignored.stdout.split(/\r?\n/).filter(path => /\.(?:mjs|cjs|js|json|ts|tsx|jsx)$/i.test(path))
+  : null;
+const cleanCommercialSources = runningAtRoot && cleanTrackedTree && untrackedFiles !== null && untrackedFiles.length === 0 && ignoredSourceFiles !== null && ignoredSourceFiles.length === 0;
 const branchName = branch.status === 0 ? branch.stdout.trim() : null;
 const report = {
   schemaVersion: 1,
@@ -49,9 +58,11 @@ const report = {
   status: 'FAIL',
   releaseDecision: 'NO-GO',
   scope: 'PARTIAL_AUTOMATED_CHECKS_ONLY',
+  runningAtRoot,
   cleanTrackedTree,
   cleanCommercialSources,
   untrackedCommercialFileCount: untrackedFiles?.length ?? null,
+  ignoredCommercialSourceCount: ignoredSourceFiles?.length ?? null,
   checks: [],
 };
 if (!revision || branchName !== 'commercial-v1.0') {
@@ -82,6 +93,9 @@ if (!revision || branchName !== 'commercial-v1.0') {
   if (!cleanTrackedTree) console.error('Tracked worktree differs from recorded HEAD; evidence cannot pass.');
   if (untrackedFiles === null) console.error('Unable to inspect untracked commercial files; evidence cannot pass.');
   else if (untrackedFiles.length) console.error('Untracked commercial source files exist; evidence cannot pass.');
+  if (!runningAtRoot) console.error('Run evidence collection from the repository root.');
+  if (ignoredSourceFiles === null) console.error('Unable to inspect ignored commercial sources.');
+  else if (ignoredSourceFiles.length) console.error('Ignored executable commercial source files exist; evidence cannot pass.');
 }
 mkdirSync('commercial/evidence', { recursive: true });
 const outputPath = 'commercial/evidence/release-evidence-local.json';
