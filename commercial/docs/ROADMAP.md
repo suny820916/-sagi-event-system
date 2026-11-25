@@ -655,3 +655,8 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Added a runtime entry point for the future desktop host. It starts the authoritative engine on loopback, serves the existing mobile page on an explicitly selected interface, exposes operator-approved pairing in process, and closes both services together.
 - The existing HTTP integration now exercises this runtime, including a busy LAN port followed by successful startup on the same match directory, mobile page delivery, pairing, durable restart, and duplicate commands. Windows Node v24.22.3: the existing 32 distinct workflow commands plus runtime syntax check passed across the suite and focused rerun. Windows/Ubuntu Actions and physical acceptance remain unverified.
 - Desktop executable, QR presentation, protected mobile transport, vMix live cues and installer remain open. No release checklist item was closed.
+
+## 2026-11-25 — Windows operator launch preview
+- Added a Chinese Windows launch window that starts the shared runtime, displays the mobile address and approves pairing over an in-process child host pipe. The match directory is under the current Windows user's local app data.
+- On Windows with Node v24.22.3, verified the PowerShell and Node syntax and exercised the child-host protocol, mobile page, pairing, goal, clean shutdown via pipe EOF, restart and duplicate goal without score change. Interactive window, physical phone/vMix tests, GitHub Actions and installer are still unverified.
+- The preview requires a supplied Node runtime and exposes a typed mobile URL. QR rendering, packaged runtime, signing and protected LAN transport remain open. No release checklist item was closed.
