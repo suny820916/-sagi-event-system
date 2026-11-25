@@ -46,7 +46,7 @@ const server=http.createServer(async(req,res)=>{
  const u=new URL(req.url,'http://127.0.0.1:'+PORT);
  try{
   if(u.pathname==='/api/state')return json(res,{lineupIntro:null});
-  if(u.pathname==='/api/matchday'&&req.method==='GET'){const isOutputPoll=u.searchParams.has('ts');if(req.headers['x-sagi-test-hang']==='phone-consistency'){const timer=setTimeout(()=>json(res,graphics),10000);res.once('close',()=>clearTimeout(timer));return}if(isOutputPoll&&failNextOutputMatchdayGets>0){failNextOutputMatchdayGets--;return json(res,{ok:false,error:'SIMULATED_OUTPUT_GET_FAILURE'},503)}if(failNextMatchdayGets>0){failNextMatchdayGets--;return json(res,{ok:false,error:'SIMULATED_TRANSIENT_GET_FAILURE'},503)}return json(res,graphics)}
+  if(u.pathname==='/api/matchday'&&req.method==='GET'){const isOutputPoll=u.searchParams.has('ts');if(isOutputPoll&&failNextOutputMatchdayGets>0){failNextOutputMatchdayGets--;return json(res,{ok:false,error:'SIMULATED_OUTPUT_GET_FAILURE'},503)}if(failNextMatchdayGets>0){failNextMatchdayGets--;return json(res,{ok:false,error:'SIMULATED_TRANSIENT_GET_FAILURE'},503)}return json(res,graphics)}
   if(u.pathname==='/api/matchday'&&req.method==='POST'){const b=await readBody(req);let next=null;try{next=JSON.parse(b)||graphics;matchdayAttempts.push(next)}catch{}if(failNextMatchdayPosts>0){failNextMatchdayPosts--;return json(res,{ok:false,error:'SIMULATED_TRANSIENT_FAILURE'},503)}try{if(next){if(reorderMatchdayWrites&&Number(next.homeScore)===5)await new Promise(r=>setTimeout(r,450));graphics=next;matchdayPosts.push(graphics)}}catch{}return json(res,{ok:true})}
   if(u.pathname==='/api/vmix/status')return json(res,{ok:true,active:'1',preview:'2',inputs:[{number:'1',key:'cam1',type:'Camera',title:'CAM 1',state:'Running'},{number:'2',key:'cam2',type:'Camera',title:'CAM 2',state:'Running'},{number:'4',key:'replay',type:'Video',title:'REPLAY',state:'Running'},{number:'5',key:'gfx',type:'Browser',title:'SAGI Browser',state:'Running'}],overlays:[]});
   if(u.pathname==='/api/vmix'&&req.method==='POST'){const b=await readBody(req);let cmd={};try{cmd=JSON.parse(b)}catch{}vmixCommands.push(cmd);return json(res,{ok:true,command:cmd})}
@@ -677,17 +677,31 @@ server.listen(PORT,'127.0.0.1',async()=>{
   ]);
   await wait(1600);
   const timeoutBaseline=await phoneHang.evaluate(()=>window.sagiMatchdayReliabilityDiagnostic().recovery.lanTimeouts);
-  let hungPhoneRequests=0;
-  await phoneHang.route(url=>url.pathname==='/api/matchday'&&url.searchParams.has('consistency'),async route=>{
-    hungPhoneRequests++;
-    await route.continue({headers:{...route.request().headers(),'x-sagi-test-hang':'phone-consistency'}});
-  },{times:1});
-  await phoneHang.evaluate(()=>window.sagiMatchdayConsistencyCheck(true));
+  await phoneHang.evaluate(async()=>{
+    const originalFetch=window.fetch;
+    window.sagiTestHungPhoneRequests=0;
+    window.fetch=function(input,options){
+      const url=new URL(typeof input==='string'?input:input.url,location.href);
+      if(url.pathname!=='/api/matchday'||!url.searchParams.has('consistency')){
+        return originalFetch.call(window,input,options);
+      }
+      window.fetch=originalFetch;
+      window.sagiTestHungPhoneRequests++;
+      const signal=options?.signal;
+      if(!signal)return Promise.reject(new Error('Expected abortable consistency fetch'));
+      return new Promise((_,reject)=>{
+        const abort=()=>reject(new DOMException('Test request aborted','AbortError'));
+        if(signal.aborted)abort();
+        else signal.addEventListener('abort',abort,{once:true});
+      });
+    };
+    await window.sagiMatchdayConsistencyCheck(true);
+  });
   await phoneHang.waitForFunction(baseline=>{
     const d=window.sagiMatchdayReliabilityDiagnostic();
     return d.recovery.lanTimeouts>baseline&&!d.consistencyBusy;
   },timeoutBaseline,{timeout:7500});
-  assert(hungPhoneRequests===1,'the fault should affect exactly one phone consistency read');
+  assert(await phoneHang.evaluate(()=>window.sagiTestHungPhoneRequests)===1,'the fault should affect exactly one phone consistency read');
   const timeoutDiag=await phoneHang.evaluate(()=>window.sagiMatchdayReliabilityDiagnostic());
   assert(timeoutDiag.recovery.lanTimeouts>timeoutBaseline&&!timeoutDiag.consistencyBusy,'phone consistency poll did not release after hung LAN read: '+JSON.stringify(timeoutDiag));
   await desktopHang.evaluate(()=>document.querySelector('#mdHomePlus')?.click());
