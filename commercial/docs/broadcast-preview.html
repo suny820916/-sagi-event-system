@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SAGI 转播包装预览</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#0a111f;color:#f7fbff;font:600 18px "Microsoft YaHei",sans-serif}
+main{position:relative;overflow:hidden;aspect-ratio:16/9;background:radial-gradient(ellipse at 62% 80%,#1d6556,#0a172c 75%);container-type:inline-size}
+.field{position:absolute;inset:23% 10% 11%;border:.17cqw solid #b0ffdf25;transform:perspective(90cqw) rotateX(24deg)}
+.field:before{content:"";position:absolute;top:50%;width:100%;border-top:.17cqw solid #b0ffdf25}.field:after{content:"";position:absolute;top:50%;left:50%;width:13%;aspect-ratio:1;border:.17cqw solid #b0ffdf25;border-radius:50%;transform:translate(-50%,-50%)}
+.bug{position:absolute;top:6%;left:5%;display:flex;align-items:stretch;height:4.25cqw;font-size:1.65cqw;font-weight:800;line-height:4.25cqw;background:#10182e;border-left:.5cqw solid #51efda}
+.bug span{padding:0 .85cqw}.bug .home{background:#1263c9}.bug .away{background:#aa421c}.clock{color:#51efda;min-width:6.4cqw;font-variant-numeric:tabular-nums}.score{min-width:5.8cqw;text-align:center;font-variant-numeric:tabular-nums}
+.score.bump{animation:bump .72s ease-out}@keyframes bump{40%{transform:scale(1.17);background:#51efda;color:#081426}}
+.event{position:absolute;left:5%;bottom:11%;min-width:35%;padding:1.35cqw 2cqw;background:#10182e;border-left:.55cqw solid var(--accent);animation:enter .46s cubic-bezier(.17,.75,.25,1)}
+.event b{display:block;color:var(--accent);font-size:2.65cqw}.event span{font-size:1.55cqw}
+@keyframes enter{from{opacity:0;transform:translateX(-3.5cqw)}to{opacity:1;transform:none}}
+.pen{position:absolute;left:14%;right:14%;bottom:10%;background:#10182e;border-top:.45cqw solid #51efda;padding:1.15cqw 1.65cqw;animation:enter .46s ease-out}
+.pen h2{font-size:1.65cqw;margin:0 0 .6cqw;color:#51efda}.row{display:grid;grid-template-columns:13cqw 4cqw 1fr;align-items:center;min-height:3.2cqw;font-size:1.45cqw}.row strong{font-variant-numeric:tabular-nums;font-size:2.2cqw}.dots{display:flex;gap:.75cqw}.dot{width:1.65cqw;height:1.65cqw;border-radius:50%;text-align:center;line-height:1.55cqw;border:.11cqw solid #8e9db8;color:#081426;font-size:1.1cqw}.hit{background:#51efac}.miss{background:#ff727d}.next{border:.22cqw solid #51efda}.note{position:absolute;right:5%;top:6%;font-size:1.1cqw;color:#d1dfef}
+nav{display:flex;flex-wrap:wrap;gap:8px;padding:12px}button{background:#172844;color:#fff;border:1px solid #52749a;padding:8px 14px;font:inherit;cursor:pointer}button[aria-pressed=true]{border-color:#51efda;color:#51efda}[hidden]{display:none!important}
+@media(prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+<main aria-label="足球转播包装预览"><div class="field"></div><div class="note">SAGI BROADCAST · 包装预览</div>
+<div class="bug"><span class="clock" id="clock">00:00</span><span class="home">海城</span><span id="score" class="score">0 : 0</span><span class="away">北岸</span></div>
+<section id="event" class="event" hidden><b></b><span></span></section>
+<section id="pen" class="pen" hidden><h2>点球大战 · 第七轮</h2><div id="rows"></div></section></main>
+<nav aria-label="预览场景"><button data-scene="kickoff">开球</button><button data-scene="goal">进球</button><button data-scene="yellow">黄牌</button><button data-scene="red">红牌</button><button data-scene="penalty">点球大战</button></nav>
+<script>
+const scenes={kickoff:['00:00','0 : 0'],goal:['12:40','1 : 0','GOAL 进球','09 顾晨阳 · 海城联队','#51efda'],yellow:['29:32','1 : 0','黄牌','04 谢一航 · 北岸竞技','#ffda57'],red:['69:38','1 : 0','红牌','15 吴文昊 · 北岸竞技','#ff727d'],penalty:['90:00','1 : 1']};
+const score=document.querySelector('#score'),eventCard=document.querySelector('#event'),pen=document.querySelector('#pen'),buttons=[...document.querySelectorAll('button')];
+function drawPenalty(){
+ const teams=[['海城联队',[1,1,0,1,1,1,1]],['北岸竞技',[1,0,1,1,1,1]]];
+ const rows=teams.map(([name,kicks],side)=>{
+  const row=document.createElement('div');row.className='row';
+  const label=document.createElement('span');label.textContent=name;
+  const count=document.createElement('strong');count.textContent=kicks.filter(Boolean).length;
+  const dots=document.createElement('div');dots.className='dots';dots.setAttribute('aria-label',name+' 点球结果');
+  Array.from({length:7},(_,i)=>{const dot=document.createElement('span');const kick=kicks[i];dot.className='dot '+(kick===1?'hit':kick===0?'miss':side===1&&i===6?'next':'');dot.textContent=kick===1?'✓':kick===0?'×':'';dot.setAttribute('aria-label','第'+(i+1)+'球 '+(kick===1?'命中':kick===0?'罚失':'等待主罚'));dots.append(dot);});
+  row.append(label,count,dots);return row;
+ });document.querySelector('#rows').replaceChildren(...rows);
+}
+function show(key){
+ const [clock,result,title,detail,accent]=scenes[key];
+ buttons.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.scene===key)));
+ document.querySelector('#clock').textContent=clock;score.textContent=result;
+ score.classList.remove('bump');void score.offsetWidth;if(key==='goal')score.classList.add('bump');
+ eventCard.hidden=true;pen.hidden=true;
+ if(title){eventCard.querySelector('b').textContent=title;eventCard.querySelector('span').textContent=detail;eventCard.style.setProperty('--accent',accent);void eventCard.offsetWidth;eventCard.hidden=false;}
+ if(key==='penalty'){drawPenalty();pen.hidden=false;}
+}
+buttons.forEach(b=>b.addEventListener('click',()=>show(b.dataset.scene)));show('kickoff');
+</script></html>

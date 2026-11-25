@@ -660,3 +660,7 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Added a Chinese Windows launch window that starts the shared runtime, displays the mobile address and approves pairing over an in-process child host pipe. The match directory is under the current Windows user's local app data.
 - On Windows with Node v24.22.3, verified the PowerShell and Node syntax and exercised the child-host protocol, mobile page, pairing, goal, clean shutdown via pipe EOF, restart and duplicate goal without score change. Interactive window, physical phone/vMix tests, GitHub Actions and installer are still unverified.
 - The preview requires a supplied Node runtime and exposes a typed mobile URL. QR rendering, packaged runtime, signing and protected LAN transport remain open. No release checklist item was closed.
+
+## 2026-11-25 — Broadcast graphics direction preview
+- Added a local browser preview for a compact scoreboard, goal score motion, event cards and extended shootout indicators. The graphics use SAGI-specific colors and Chinese presentation with a simulated match.
+- Windows browser smoke test exercised all five scenes, seven penalty slots per team, current-kicker indication and local-file-only requests. Integration with authoritative state, transparent vMix output and physical verification remain open.
