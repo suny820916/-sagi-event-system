@@ -16,7 +16,8 @@ export function createEngineLanGateway(engine, options = {}) {
     if (!response.ok) {
       const error = new Error('ENGINE_REQUEST_FAILED');
       error.code = response.status === 409 && body.error === 'COMMAND_ID_CONFLICT' ? 'COMMAND_ID_CONFLICT' :
-        response.status === 409 ? 'REVISION_CONFLICT' :
+        response.status === 409 && body.error === 'FIXTURE_MISMATCH' ? 'FIXTURE_MISMATCH' :
+        response.status === 409 && body.error === 'REVISION_CONFLICT' ? 'REVISION_CONFLICT' :
         response.status === 400 ? 'INVALID_COMMAND' : 'ENGINE_UNAVAILABLE';
       error.revision = body.revision;
       throw error;

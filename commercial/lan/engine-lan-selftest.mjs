@@ -32,6 +32,7 @@ try {
   const goal = { commandId: 'goal_00000001', expectedRevision: 0, type: 'GOAL', side: 'HOME' };
   const wrongFixture = await request('command', { ...goal, fixtureId: 'another-match' });
   assert.equal(wrongFixture.status, 409);
+  assert.deepEqual(await wrongFixture.json(), { error: 'FIXTURE_MISMATCH', revision: 0 });
   assert.equal((await (await request('state')).json()).state.homeScore, 0);
   goal.fixtureId = 'lan-test';
   const results = await Promise.all([request('command', goal), request('command', goal)]);
@@ -39,7 +40,7 @@ try {
   assert.deepEqual((await Promise.all(results.map(r => r.json()))).map(r => r.result.duplicate).sort(), [false, true]);
   const conflict = await request('command', { ...goal, commandId: 'goal_00000002' });
   assert.equal(conflict.status, 409);
-  assert.equal((await conflict.json()).revision, 1);
+  assert.deepEqual(await conflict.json(), { error: 'REVISION_CONFLICT', revision: 1 });
   assert.equal((await request('command', { ...goal, commandId: 'goal_00000003', expectedRevision: 1, side: 'LEFT' })).status, 400);
   await stop();
   await start();

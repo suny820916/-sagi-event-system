@@ -145,7 +145,9 @@ export function createLanGateway({
         if (!pairing.verify(token)) return reply(res, 401, { error: 'UNAUTHORIZED' });
         if (err.message === 'BODY_TOO_LARGE') return reply(res, 413, { error: 'BODY_TOO_LARGE' });
         if (err.message === 'INVALID_JSON') return reply(res, 400, { error: 'INVALID_JSON' });
-        if (err.code === 'REVISION_CONFLICT') return reply(res, 409, { error: 'REVISION_CONFLICT', revision: err.revision });
+        if (err.code === 'REVISION_CONFLICT' || err.code === 'FIXTURE_MISMATCH') {
+          return reply(res, 409, { error: err.code, revision: err.revision });
+        }
         if (err.code === 'COMMAND_ID_CONFLICT' || err.message === 'COMMAND_ID_CONFLICT') return reply(res, 409, { error: 'COMMAND_ID_CONFLICT' });
         if (err.code === 'INVALID_COMMAND') return reply(res, 400, { error: 'INVALID_COMMAND' });
         return reply(res, 503, { error: 'COMMAND_FAILED' });

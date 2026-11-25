@@ -646,3 +646,7 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 - Reproduced a false PASS: the collector counted zero ignored scripts when an ignored file had a Chinese filename, because the Git output ended in a quoting character after the extension.
 - `f9f7a89` uses NUL-delimited Git paths for ignored and untracked files. In a disposable local Git fixture on Windows, Node v24.22.3 syntax validation passed. The collector returned exit 1 and counted one file in each of the ignored and untracked Chinese-path scenarios, then returned exit 0 on a clean fixture. All 12 embedded checks passed in each run; release decision remained NO-GO.
 - The fixture used the fetched Commercial sources with local Git metadata. Full remote checkout, GitHub Actions on Windows and Ubuntu, and physical acceptance remain unverified. No release item was closed.
+
+## 2026-11-25 — Preserve fixture mismatch through LAN
+- The authoritative engine already rejected a stale fixture ID, but the LAN bridge reported it as a revision conflict. Preserve HTTP 409 and `FIXTURE_MISMATCH` while keeping revision and command-ID conflicts distinct.
+- The expanded real HTTP integration assertion failed on `e50954d` and passed with the fix. All 32 distinct Node commands from four Commercial workflows passed on Windows with Node v24.22.3 using the Commercial source fixture. GitHub Actions Node 22 and physical Windows/iPhone/vMix acceptance remain unverified. No release checklist item was closed.
