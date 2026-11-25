@@ -7,7 +7,7 @@ try {
   const runtime = await startCommercialRuntime(options);
   const input = createInterface({ input: process.stdin, crlfDelay: Infinity });
   try {
-    reply({ ok: true, mobileUrl: runtime.mobileUrl });
+    reply({ ok: true, mobileUrl: runtime.mobileUrl, broadcastUrl: runtime.broadcastUrl });
     for await (const command of input) {
       if (command === 'close') break;
       if (command !== 'pair') {

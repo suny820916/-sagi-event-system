@@ -1,10 +1,12 @@
+import { randomBytes } from 'node:crypto';
 import { createLocalServer } from './core/local-server.mjs';
 import { createEngineLanGateway } from './lan/engine-lan-bridge.mjs';
 
 export async function startCommercialRuntime({
   lanHost = '127.0.0.1', lanPort = 0, ...engineOptions
 } = {}) {
-  const engine = await createLocalServer({ ...engineOptions, host: '127.0.0.1' });
+  const broadcastRoute = '/broadcast/' + randomBytes(24).toString('hex');
+  const engine = await createLocalServer({ ...engineOptions, host: '127.0.0.1', broadcastRoute });
   let gateway;
   let address;
   try {
@@ -23,6 +25,7 @@ export async function startCommercialRuntime({
   let closing;
   return {
     engine,
+    broadcastUrl: `http://127.0.0.1:${engine.address.port}${broadcastRoute}`,
     mobileUrl: `http://${host}:${address.port}/mobile`,
     // Call only after the local operator approves on the desktop.
     approvePhonePairing() {

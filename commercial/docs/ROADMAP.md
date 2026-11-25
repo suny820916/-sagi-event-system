@@ -664,3 +664,7 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 ## 2026-11-25 — Broadcast graphics direction preview
 - Added a local browser preview for a compact scoreboard, goal score motion, event cards and extended shootout indicators. The graphics use SAGI-specific colors and Chinese presentation with a simulated match.
 - Windows browser smoke test exercised all five scenes, seven penalty slots per team, current-kicker indication and local-file-only requests. Integration with authoritative state, transparent vMix output and physical verification remain open.
+
+## 2026-11-26 — Authoritative transparent score output
+- Added a loopback-only browser output with a per-runtime address, authoritative scoreboard visibility, clock and scores, embedded SAGI mark, and a side-colored GOAL animation for newly observed events. Initial loads and reconnects establish a fresh baseline. The desktop preview displays the browser input address.
+- Windows HTTP integration and local Chrome verification passed with real engine commands, logo decoding, a committed goal, duplicate retry, and page reload. PowerShell launcher syntax passed. Actual vMix browser input, local team crest mapping, event and penalty overlays, and signing/packaging remain open.

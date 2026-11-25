@@ -11,6 +11,11 @@ let now = 0;
 async function start() {
   runtime = await startCommercialRuntime({ dataDir: dir, clockNow: () => now, checkpointIntervalMs: 0, meta: { fixtureId: 'lan-test', home: '主队', away: '客队' } });
   engine = runtime.engine;
+  const output = await fetch(runtime.broadcastUrl);
+  assert.equal(output.status, 200);
+  assert.match(await output.text(), /SAGI 比分包装/);
+  assert.equal((await fetch(runtime.broadcastUrl, { method: 'POST' })).status, 404);
+  assert.equal((await fetch(runtime.broadcastUrl + '/state')).status, 200);
   base = new URL(runtime.mobileUrl).origin;
   assert.equal((await fetch(runtime.mobileUrl)).status, 200);
   const code = runtime.approvePhonePairing().code;
@@ -52,6 +57,11 @@ try {
   const results = await Promise.all([request('command', goal), request('command', goal)]);
   assert.deepEqual(results.map(r => r.status), [200, 200]);
   assert.deepEqual((await Promise.all(results.map(r => r.json()))).map(r => r.result.duplicate).sort(), [false, true]);
+  const onAir = await (await fetch(runtime.broadcastUrl + '/state')).json();
+  assert.deepEqual(onAir.event, { type: 'GOAL', side: 'HOME', sequence: 1 });
+  assert.equal(onAir.homeScore, 1);
+  assert.equal(onAir.visible, false);
+  assert.equal('processedCommandIds' in onAir, false);
   const conflict = await request('command', { ...goal, commandId: 'goal_00000002' });
   assert.equal(conflict.status, 409);
   assert.deepEqual(await conflict.json(), { error: 'REVISION_CONFLICT', revision: 1 });

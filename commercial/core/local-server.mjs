@@ -5,6 +5,7 @@ import { randomBytes, timingSafeEqual } from "node:crypto";
 import { applyCommand, createInitialMatchState, hydrateMatchState } from "./match-core.mjs";
 import { createMatchClock } from "./match-clock.mjs";
 import { FileMatchStore } from "./file-store.mjs";
+import { serveBroadcastOutput } from "../director/broadcast-output.mjs";
 import { readVMixStatus } from "./vmix-status.mjs";
 
 const safeEqual=(a,b)=>{const x=Buffer.from(String(a??"")),y=Buffer.from(String(b??""));return x.length===y.length&&timingSafeEqual(x,y)};
@@ -12,7 +13,7 @@ function send(res,status,data){const body=JSON.stringify(data);res.writeHead(sta
 async function readJson(req){let size=0;const chunks=[];for await(const chunk of req){size+=chunk.length;if(size>65536)throw new Error("PAYLOAD_TOO_LARGE");chunks.push(chunk)}const data=JSON.parse(Buffer.concat(chunks).toString("utf8"));if(!data||typeof data!=="object"||Array.isArray(data))throw new Error("INVALID_BODY");return data}
 
 /** Local-first authoritative match API. Bind loopback unless LAN is explicitly configured. */
-export async function createLocalServer({dataDir,meta,host="127.0.0.1",port=0,token=randomBytes(32).toString("hex"),vmixAdapter=null,clockNow,checkpointIntervalMs=15000,store=dataDir?new FileMatchStore(dataDir):null}={}){
+export async function createLocalServer({dataDir,meta,host="127.0.0.1",port=0,token=randomBytes(32).toString("hex"),vmixAdapter=null,broadcastRoute,clockNow,checkpointIntervalMs=15000,store=dataDir?new FileMatchStore(dataDir):null}={}){
   if(!store)throw new Error("STORE_REQUIRED");
   if(typeof token!=="string"||token.length<32)throw new Error("WEAK_TOKEN");
   if(!Number.isSafeInteger(checkpointIntervalMs)||checkpointIntervalMs<0)throw new Error("INVALID_CHECKPOINT_INTERVAL");
@@ -46,6 +47,7 @@ export async function createLocalServer({dataDir,meta,host="127.0.0.1",port=0,to
     return queue;
   };
   const server=http.createServer(async(req,res)=>{
+    if (serveBroadcastOutput(req,res,broadcastRoute,liveState)) return;
     const pathname=new URL(req.url??"/","http://localhost").pathname;
     if(pathname==="/health"&&req.method==="GET")return send(res,store.journalError?503:200,{ok:!store.journalError,service:"sagi-local-engine",revision:state.revision,recoveryRequired:!!store.journalError});
     if(!safeEqual(req.headers.authorization,`Bearer ${token}`))return send(res,401,{error:"UNAUTHORIZED"});

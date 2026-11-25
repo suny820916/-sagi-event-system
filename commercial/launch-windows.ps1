@@ -4,7 +4,7 @@ Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 $form = New-Object Windows.Forms.Form
 $form.Text = 'SAGI BROADCAST 本地控制'
-$form.ClientSize = New-Object Drawing.Size(540, 325)
+$form.ClientSize = New-Object Drawing.Size(540, 365)
 $form.FormBorderStyle = 'FixedDialog'
 $form.MaximizeBox = $false
 
@@ -26,18 +26,20 @@ $url = Add-Field '手机访问地址' '' 135
 $url.ReadOnly = $true
 $code = Add-Field '一次性配对码' '' 170
 $code.ReadOnly = $true
+$broadcastUrl = Add-Field 'vMix 浏览器输入' '' 204
+$broadcastUrl.ReadOnly = $true
 
 $start = New-Object Windows.Forms.Button
 $start.Text = '启动本地服务'
-$start.SetBounds(160, 211, 160, 32)
+$start.SetBounds(160, 248, 160, 32)
 $form.Controls.Add($start)
 $pair = New-Object Windows.Forms.Button
 $pair.Text = '批准手机配对'
-$pair.SetBounds(330, 211, 190, 32)
+$pair.SetBounds(330, 248, 190, 32)
 $pair.Enabled = $false
 $form.Controls.Add($pair)
 $status = New-Object Windows.Forms.Label
-$status.SetBounds(15, 256, 510, 60)
+$status.SetBounds(15, 292, 510, 60)
 $status.Text = '首次启动填写球队。已有比赛会从本机数据目录恢复。'
 $form.Controls.Add($status)
 
@@ -81,7 +83,9 @@ $start.Add_Click({
             meta = @{ fixtureId = [guid]::NewGuid().ToString(); home = $home.Text; away = $away.Text }
         } | ConvertTo-Json -Compress -Depth 4)
         $script:sagiHost = [Diagnostics.Process]::Start($info)
-        $url.Text = (Read-HostReply).mobileUrl
+        $reply = Read-HostReply
+        $url.Text = $reply.mobileUrl
+        $broadcastUrl.Text = $reply.broadcastUrl
         $pair.Enabled = $true
         $status.Text = '服务已启动。手机需连接同一局域网。'
     } catch {
@@ -100,6 +104,7 @@ $pair.Add_Click({
         $pair.Enabled = $false
         Stop-SagiHost
         $url.Clear()
+        $broadcastUrl.Clear()
         $start.Enabled = $true
         $status.Text = '配对失败：' + $_.Exception.Message
     }
