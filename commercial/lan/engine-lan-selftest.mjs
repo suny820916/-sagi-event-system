@@ -2,25 +2,26 @@ import assert from 'node:assert/strict';
 import { mkdtemp, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { createLocalServer } from '../core/local-server.mjs';
-import { createEngineLanGateway } from './engine-lan-bridge.mjs';
+import { createServer } from 'node:net';
+import { startCommercialRuntime } from '../runtime.mjs';
 
 const dir = await mkdtemp(path.join(os.tmpdir(), 'sagi-lan-engine-'));
-let engine, gateway, base, token;
+let engine, runtime, base, token;
 let now = 0;
 async function start() {
-  engine = await createLocalServer({ dataDir: dir, clockNow: () => now, checkpointIntervalMs: 0, meta: { fixtureId: 'lan-test', home: '主队', away: '客队' } });
-  gateway = createEngineLanGateway(engine);
-  const { port } = await gateway.listen();
-  base = 'http://127.0.0.1:' + port;
-  const code = gateway.pairing.issue({ localOperatorApproved: true }).code;
+  runtime = await startCommercialRuntime({ dataDir: dir, clockNow: () => now, checkpointIntervalMs: 0, meta: { fixtureId: 'lan-test', home: '主队', away: '客队' } });
+  engine = runtime.engine;
+  base = new URL(runtime.mobileUrl).origin;
+  assert.equal((await fetch(runtime.mobileUrl)).status, 200);
+  const code = runtime.approvePhonePairing().code;
   const response = await fetch(base + '/api/v1/lan/redeem', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code }) });
   assert.equal(response.status, 200);
   token = (await response.json()).token;
 }
 async function stop() {
-  if (gateway) { await new Promise((resolve, reject) => gateway.server.close(e => e ? reject(e) : resolve())); gateway = null; }
-  if (engine) { await engine.close(); engine = null; }
+  if (runtime) await runtime.close();
+  runtime = null;
+  engine = null;
 }
 const request = (route, command) => fetch(base + '/api/v1/lan/' + route, {
   method: command ? 'POST' : 'GET',
@@ -28,6 +29,19 @@ const request = (route, command) => fetch(base + '/api/v1/lan/' + route, {
   body: command ? JSON.stringify(command) : undefined,
 });
 try {
+  const occupied = createServer();
+  await new Promise((resolve, reject) => {
+    occupied.once('error', reject);
+    occupied.listen(0, '127.0.0.1', resolve);
+  });
+  try {
+    await assert.rejects(startCommercialRuntime({
+      dataDir: dir, lanPort: occupied.address().port,
+      meta: { fixtureId: 'lan-test', home: '主队', away: '客队' },
+    }), { code: 'EADDRINUSE' });
+  } finally {
+    await new Promise((resolve, reject) => occupied.close(error => error ? reject(error) : resolve()));
+  }
   await start();
   const goal = { commandId: 'goal_00000001', expectedRevision: 0, type: 'GOAL', side: 'HOME' };
   const wrongFixture = await request('command', { ...goal, fixtureId: 'another-match' });

@@ -650,3 +650,8 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 ## 2026-11-25 — Preserve fixture mismatch through LAN
 - The authoritative engine already rejected a stale fixture ID, but the LAN bridge reported it as a revision conflict. Preserve HTTP 409 and `FIXTURE_MISMATCH` while keeping revision and command-ID conflicts distinct.
 - The expanded real HTTP integration assertion failed on `e50954d` and passed with the fix. All 32 distinct Node commands from four Commercial workflows passed on Windows with Node v24.22.3 using the Commercial source fixture. GitHub Actions Node 22 and physical Windows/iPhone/vMix acceptance remain unverified. No release checklist item was closed.
+
+## 2026-11-25 — Shared Local Engine and mobile startup
+- Added a runtime entry point for the future desktop host. It starts the authoritative engine on loopback, serves the existing mobile page on an explicitly selected interface, exposes operator-approved pairing in process, and closes both services together.
+- The existing HTTP integration now exercises this runtime, including a busy LAN port followed by successful startup on the same match directory, mobile page delivery, pairing, durable restart, and duplicate commands. Windows Node v24.22.3: the existing 32 distinct workflow commands plus runtime syntax check passed across the suite and focused rerun. Windows/Ubuntu Actions and physical acceptance remain unverified.
+- Desktop executable, QR presentation, protected mobile transport, vMix live cues and installer remain open. No release checklist item was closed.
