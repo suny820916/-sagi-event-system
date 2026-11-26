@@ -41,7 +41,7 @@
       <h2>SAGI 2026 产品画册</h2>
       <p>PDF · 36 页</p>
       <div class="viewer" data-folder="2026" data-pages="36" data-title="SAGI 2026 产品画册">
-        <img src="./assets/catalogs/preview/2026/page-01.jpg" alt="SAGI 2026 产品画册 · 第 1 页" loading="lazy">
+        <img src="./assets/catalogs/preview/2026/page-01.jpg?v=2" alt="SAGI 2026 产品画册 · 第 1 页" loading="lazy">
         <div class="controls" hidden>
           <button type="button" data-step="-1" disabled>上一页</button>
           <span aria-live="polite">1 / 36</span>
@@ -54,7 +54,7 @@
       <h2>SAGI 足球品牌文化画册</h2>
       <p>PDF · 28 页</p>
       <div class="viewer" data-folder="culture" data-pages="28" data-title="SAGI 足球品牌文化画册">
-        <img src="./assets/catalogs/preview/culture/page-01.jpg" alt="SAGI 足球品牌文化画册 · 第 1 页" loading="lazy">
+        <img src="./assets/catalogs/preview/culture/page-01.jpg?v=2" alt="SAGI 足球品牌文化画册 · 第 1 页" loading="lazy">
         <div class="controls" hidden>
           <button type="button" data-step="-1" disabled>上一页</button>
           <span aria-live="polite">1 / 28</span>
@@ -74,16 +74,54 @@
     const indicator = controls.querySelector('span');
     const total = Number(viewer.dataset.pages);
     let page = 1;
+    let requestedPage = 1;
+    const images = new Map();
 
-    function turnPage(step) {
-      page = Math.max(1, Math.min(page + step, total));
-      image.src = './assets/catalogs/preview/' + viewer.dataset.folder + '/page-' + String(page).padStart(2, '0') + '.jpg';
-      image.alt = viewer.dataset.title + ' · 第 ' + page + ' 页';
-      indicator.textContent = page + ' / ' + total;
-      previous.disabled = page === 1;
-      next.disabled = page === total;
+    function getPage(number, priority) {
+      if (images.has(number)) return images.get(number);
+      const preview = new Image();
+      preview.fetchPriority = priority;
+      const ready = new Promise((resolve, reject) => {
+        preview.onload = () => resolve(preview.src);
+        preview.onerror = () => {
+          images.delete(number);
+          reject(new Error('Preview unavailable'));
+        };
+      });
+      images.set(number, ready);
+      preview.src = './assets/catalogs/preview/' + viewer.dataset.folder + '/page-' + String(number).padStart(2, '0') + '.jpg?v=2';
+      return ready;
     }
 
+    function preloadNeighbors() {
+      for (const number of [page + 1, page - 1]) {
+        if (number >= 1 && number <= total) getPage(number, 'low').catch(() => {});
+      }
+    }
+
+    async function turnPage(step) {
+      const target = Math.max(1, Math.min(requestedPage + step, total));
+      if (target === requestedPage) return;
+      requestedPage = target;
+      try {
+        const url = await getPage(target, 'high');
+        if (requestedPage !== target) return;
+        page = target;
+        image.src = url;
+        image.alt = viewer.dataset.title + ' · 第 ' + page + ' 页';
+        indicator.textContent = page + ' / ' + total;
+        previous.disabled = page === 1;
+        next.disabled = page === total;
+        preloadNeighbors();
+      } catch {
+        if (requestedPage !== target) return;
+        requestedPage = page;
+        indicator.textContent = '加载失败，请重试';
+      }
+    }
+
+    if (image.complete && image.naturalWidth) preloadNeighbors();
+    else image.addEventListener('load', preloadNeighbors, {once: true});
     previous.addEventListener('click', () => turnPage(-1));
     next.addEventListener('click', () => turnPage(1));
     controls.hidden = false;
