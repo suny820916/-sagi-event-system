@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#120d22">
-<title>TARLAN FC · 补单登记</title>
+<title>TARLAN FC · 选款登记</title>
 <style>
 :root{--bg:#0b0814;--panel:#171126;--line:#342744;--text:#fff8f2;--muted:#9f94aa;--pink:#ff4fa3;--gold:#d9b450;--ok:#71d39b}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 85% 0,#24143b 0,#0b0814 42%);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
@@ -27,13 +27,13 @@ h1{font-size:25px;margin:16px 0 5px}.sub{color:var(--muted);font-size:12px;line-
     <a class="back" href="./tarlan.html">← TARLAN FC 商店</a>
   </div>
 
-  <h1>TARLAN FC · 补单登记</h1>
-  <div class="sub">CLUB 001 · 2026 HOME KIT · 队长统一采购 + 球员个人补单</div>
-  <div class="notice">本页目前用于收集和核对定制信息，不进行在线付款。正式付款仍以微信小店商品上线后的订单为准。参考价 ¥79/套，最终以 SAGI 确认价格为准。</div>
+  <h1>TARLAN FC · 选款登记</h1>
+  <div class="sub">CLUB 001 · 2026 HOME KIT · 球员个人选款 + 队长批量选款</div>
+  <div class="notice">本页只用于选款与定制需求登记，不展示价格、不进行在线收费。提交后由 SAGI 线下确认具体方案、报价、生产周期与交付方式。</div>
 
   <div class="tabs">
-    <button id="personalTab" class="on" type="button">球员个人补单</button>
-    <button id="teamTab" type="button">队长批量采购</button>
+    <button id="personalTab" class="on" type="button">球员个人选款</button>
+    <button id="teamTab" type="button">队长批量选款</button>
   </div>
 
   <section id="personalPane">
@@ -49,7 +49,7 @@ h1{font-size:25px;margin:16px 0 5px}.sub{color:var(--muted);font-size:12px;line-
       </div>
       <div class="field" style="margin-top:10px"><label>备注</label><textarea id="pNote" placeholder="例如：只补一套；号码不要改；与原队服保持一致"></textarea></div>
       <div class="actions">
-        <button class="btn primary" id="makePersonal" type="button">生成补单信息</button>
+        <button class="btn primary" id="makePersonal" type="button">生成选款信息</button>
         <button class="btn good" id="copyPersonal" type="button">复制信息</button>
       </div>
     </div>
@@ -68,7 +68,7 @@ h1{font-size:25px;margin:16px 0 5px}.sub{color:var(--muted);font-size:12px;line-
       <div id="rows"></div>
       <div class="actions"><button class="btn outline" id="addRow" type="button">+ 添加球员</button></div>
       <div class="actions">
-        <button class="btn primary" id="makeTeam" type="button">生成批量清单</button>
+        <button class="btn primary" id="makeTeam" type="button">生成选款清单</button>
         <button class="btn good" id="copyTeam" type="button">复制清单</button>
         <button class="btn outline" id="csvTeam" type="button">导出 CSV</button>
       </div>
@@ -76,16 +76,16 @@ h1{font-size:25px;margin:16px 0 5px}.sub{color:var(--muted);font-size:12px;line-
   </section>
 
   <div class="card">
-    <h2>订单预览</h2>
+    <h2>选款清单预览</h2>
     <div class="meta">
       <div><span>球队</span><b>TARLAN FC</b></div>
       <div><span>商品</span><b>2026 HOME KIT</b></div>
-      <div><span>参考单价</span><b>¥79</b></div>
+      <div><span>用途</span><b>选款 / 定制需求</b></div>
     </div>
     <div id="preview" class="preview" style="margin-top:10px">填写信息后点击“生成”。</div>
   </div>
 
-  <div class="foot">SAGI CLUB SHOP V1.0 · 本页保存的信息只保留在当前设备浏览器草稿中；未连接服务器数据库，也不会自动产生微信小店订单。</div>
+  <div class="foot">SAGI CLUB SHOP V1.0 · 本页保存的信息只保留在当前设备浏览器草稿中；未连接收费、支付或自动成交系统。</div>
 </div>
 <script>
 const $=id=>document.getElementById(id);
@@ -109,7 +109,7 @@ function orderId(prefix){
 }
 function safe(v){return (v||"").trim();}
 function copyText(){
- if(!lastText){alert("请先生成订单信息");return}
+ if(!lastText){alert("请先生成选款信息");return}
  navigator.clipboard?.writeText(lastText).then(()=>alert("已复制")).catch(()=>prompt("请复制以下内容",lastText));
 }
 $("copyPersonal").onclick=copyText;$("copyTeam").onclick=copyText;
@@ -119,8 +119,8 @@ $("makePersonal").onclick=()=>{
  if(!name||!no||!size||!phone){alert("请填写姓名、号码、尺码和联系电话");return}
  const qty=Math.max(1,Number($("pQty").value)||1), id=orderId("P");
  lastText=[
-  "【TARLAN FC 球员补单】",
-  "登记号："+id,
+  "【TARLAN FC 球员选款】",
+  "需求编号："+id,
   "商品：TARLAN FC 2026 HOME KIT",
   "球员姓名："+name,
   "号码："+no,
@@ -129,7 +129,6 @@ $("makePersonal").onclick=()=>{
   "联系电话："+phone,
   "联系人/微信："+safe($("pContact").value)||"-",
   "备注："+safe($("pNote").value)||"-",
-  "参考金额：¥"+(79*qty)+"（最终以SAGI确认价为准）"
  ].join("\n");
  $("preview").textContent=lastText;
  localStorage.setItem("sagi_tarlan_personal_draft",JSON.stringify({name,no,size,qty,phone,contact:$("pContact").value,note:$("pNote").value}));
@@ -168,7 +167,7 @@ $("makeTeam").onclick=()=>{
  const lines=rows.map((x,i)=>`${i+1}. ${x.name}｜#${x.no}｜${x.size}｜背名：${x.back||"-"}｜×${x.qty}`);
  lastRows=rows;
  lastText=[
-  "【TARLAN FC 队长批量采购】",
+  "【TARLAN FC 队长批量选款】",
   "登记号："+id,
   "负责人："+cap,
   "联系电话："+phone,
@@ -177,7 +176,6 @@ $("makeTeam").onclick=()=>{
   ...lines,
   "",
   "总数量："+total+"套",
-  "参考金额：¥"+(79*total)+"（最终以SAGI确认价为准）"
  ].join("\n");
  $("preview").textContent=lastText;
  localStorage.setItem("sagi_tarlan_team_draft",JSON.stringify({captain:cap,phone,rows}));
@@ -188,7 +186,7 @@ $("csvTeam").onclick=()=>{
  if(!rows.length){alert("请先填写球员清单");return}
  const data=[["球队","姓名","号码","尺码","背后姓名","数量"],...rows.map(x=>["TARLAN FC",x.name,x.no,x.size,x.back,x.qty])];
  const csv="\ufeff"+data.map(r=>r.map(v=>'"'+String(v??"").replaceAll('"','""')+'"').join(",")).join("\n");
- const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));a.download="TARLAN-FC-补单清单.csv";a.click();URL.revokeObjectURL(a.href);
+ const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));a.download="TARLAN-FC-选款清单.csv";a.click();URL.revokeObjectURL(a.href);
 };
 
 try{
