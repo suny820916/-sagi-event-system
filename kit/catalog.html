@@ -33,6 +33,7 @@
 /* V2 mobile hierarchy: catalog is a secondary page, not a second homepage */
 .compactTop{align-items:center}.homeBack{display:inline-flex;align-items:center;justify-content:center;color:#aaa;text-decoration:none;font-size:11px;font-weight:850;padding:8px 11px;border:1px solid #303030;border-radius:999px;white-space:nowrap}.homeBack:hover{color:#f2dda1;border-color:#65552b}.kitSections{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:15px 0 8px}.kitSections a{display:flex;align-items:center;justify-content:center;min-height:42px;border:1px solid #292929;border-radius:12px;background:#101010;color:#aaa;text-decoration:none;font-size:11px;font-weight:900}.kitSections a.on{border-color:#65552b;background:#17140d;color:#f2dda1}.toolbar{top:0;padding:7px 0 9px}.brand-title{font-size:20px;margin-top:7px}.sub{font-size:11px}.grid{margin-top:8px}
 @media(max-width:760px){.compactTop{display:flex!important;align-items:center!important}.homeBack{margin-top:0!important}.kitSections{grid-template-columns:repeat(3,minmax(0,1fr))!important}.kitSections a{font-size:10px!important;padding:8px 5px!important}.brandlink img{width:138px!important;max-width:55vw!important}.brand-title{font-size:18px}.toolbar{margin-top:2px}}
+.emptyState{grid-column:1/-1;border:1px dashed #383838;border-radius:16px;padding:28px 18px;text-align:center;color:#888;font-size:12px;line-height:1.8;background:#0d0d0d}
 </style>
 </head>
 <body>
@@ -62,10 +63,7 @@ const sw=[
 "linear-gradient(90deg,#f2f2ee,#171717,#d8b55b)",
 "linear-gradient(90deg,#f0d10b,#0a663c)"
 ];
-const products=[
-{code:"01A",name:"狮头系列一",url:"./product-01.html",preview:"demo"},
-{code:"01B",name:"狮头系列二",url:"./product-01b.html",preview:"demo01b"}
-];
+const products=[];
 function card(p){
  return `<div class="card" data-key="${p.code} ${p.name}">
    <div class="preview ${p.preview}"></div>
@@ -80,7 +78,7 @@ function card(p){
 }
 function render(){
  const q=document.getElementById("q").value.trim().toLowerCase();
- document.getElementById("grid").innerHTML=products.filter(p=>(p.code+" "+p.name).toLowerCase().includes(q)).map(card).join("");
+ const list=products.filter(p=>(p.code+" "+p.name).toLowerCase().includes(q)); document.getElementById("grid").innerHTML=list.length?list.map(card).join(""):`<div class="emptyState">产品库整理中。请先通过「原版画册」选款，或进入「球队选款」提交需求。</div>`;
 }
 document.getElementById("q").addEventListener("input",render);render();
 </script>
