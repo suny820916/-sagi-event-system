@@ -51,6 +51,7 @@ h1{font-size:25px;margin:16px 0 5px}.sub{color:var(--muted);font-size:12px;line-
       <div class="actions">
         <button class="btn primary" id="makePersonal" type="button">生成选款信息</button>
         <button class="btn good" id="copyPersonal" type="button">复制信息</button>
+        <button class="btn outline" id="downloadPersonal" type="button">下载订单文件</button>
       </div>
     </div>
   </section>
@@ -70,13 +71,13 @@ h1{font-size:25px;margin:16px 0 5px}.sub{color:var(--muted);font-size:12px;line-
       <div class="actions">
         <button class="btn primary" id="makeTeam" type="button">生成选款清单</button>
         <button class="btn good" id="copyTeam" type="button">复制清单</button>
-        <button class="btn outline" id="csvTeam" type="button">导出 CSV</button>
+        <button class="btn outline" id="csvTeam" type="button">下载订单文件</button>
       </div>
     </div>
   </section>
 
   <div class="card">
-    <h2>选款清单预览</h2>
+    <h2>订单文件预览</h2>
     <div class="meta">
       <div><span>球队</span><b>TARLAN FC</b></div>
       <div><span>商品</span><b>2026 HOME KIT</b></div>
@@ -181,12 +182,56 @@ $("makeTeam").onclick=()=>{
  localStorage.setItem("sagi_tarlan_team_draft",JSON.stringify({captain:cap,phone,rows}));
 };
 
+function downloadCsv(filename, rows){
+ const csv="\ufeff"+rows.map(r=>r.map(v=>'"'+String(v??"").replaceAll('"','""')+'"').join(",")).join("\n");
+ const url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
+ const a=document.createElement("a");a.href=url;a.download=filename;a.click();
+ setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+
+$("downloadPersonal").onclick=()=>{
+ const name=safe($("pName").value), no=safe($("pNo").value), size=$("pSize").value, phone=safe($("pPhone").value);
+ if(!name||!no||!size||!phone){alert("请先填写姓名、号码、尺码和联系电话");return}
+ const qty=Math.max(1,Number($("pQty").value)||1);
+ const id=orderId("P");
+ const rows=[
+  ["SAGI CLUB SHOP 选款订单"],
+  ["需求编号",id],
+  ["球队","TARLAN FC"],
+  ["款式","2026 HOME KIT"],
+  ["球员姓名",name],
+  ["球衣号码",no],
+  ["尺码",size],
+  ["数量",qty],
+  ["联系电话",phone],
+  ["联系人/微信",safe($("pContact").value)||"-"],
+  ["备注",safe($("pNote").value)||"-"],
+  ["说明","本文件仅用于选款和定制需求确认，不代表已付款或已成交"]
+ ];
+ downloadCsv(id+".csv",rows);
+};
+
 $("csvTeam").onclick=()=>{
- const rows=lastRows.length?lastRows:collectRows();
+ const cap=safe($("captain").value), phone=safe($("captainPhone").value), rows=lastRows.length?lastRows:collectRows();
+ if(!cap||!phone){alert("请填写负责人姓名和联系电话");return}
  if(!rows.length){alert("请先填写球员清单");return}
- const data=[["球队","姓名","号码","尺码","背后姓名","数量"],...rows.map(x=>["TARLAN FC",x.name,x.no,x.size,x.back,x.qty])];
- const csv="\ufeff"+data.map(r=>r.map(v=>'"'+String(v??"").replaceAll('"','""')+'"').join(",")).join("\n");
- const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));a.download="TARLAN-FC-选款清单.csv";a.click();URL.revokeObjectURL(a.href);
+ if(rows.some(x=>!x.name||!x.no||!x.size)){alert("每名球员至少需要姓名、号码和尺码");return}
+ const id=orderId("T");
+ const data=[
+  ["SAGI CLUB SHOP 队长批量选款订单"],
+  ["需求编号",id],
+  ["球队","TARLAN FC"],
+  ["款式","2026 HOME KIT"],
+  ["负责人",cap],
+  ["联系电话",phone],
+  [],
+  ["序号","球员姓名","号码","尺码","背后姓名","数量"],
+  ...rows.map((x,i)=>[i+1,x.name,x.no,x.size,x.back||"-",x.qty]),
+  [],
+  ["总数量",rows.reduce((s,x)=>s+x.qty,0)],
+  ["说明","本文件仅用于选款和定制需求确认，不代表已付款或已成交"]
+ ];
+ downloadCsv(id+".csv",data);
 };
 
 try{
