@@ -3,82 +3,105 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#080808">
-<title>SAGI SPORTS</title>
-<meta name="description" content="SAGI SPORTS · 记录平凡人的足球梦。SAGI KIT、赛事系统与赛事导播。">
+<meta name="theme-color" content="#090909">
+<title>SAGI SPORTS · 为身边的足球加油</title>
+<meta name="description" content="SAGI SPORTS · 记录平凡人的足球梦。球队装备、赛事组织与足球直播。">
+<link rel="canonical" href="https://sagisports.cn/home.html">
+<meta property="og:type" content="website">
+<meta property="og:title" content="SAGI SPORTS">
+<meta property="og:description" content="记录平凡人的足球梦。为身边的足球加油。">
+<meta property="og:url" content="https://sagisports.cn/home.html">
+<meta property="og:image" content="https://sagisports.cn/assets/brand/sagi-official-logo.webp?v=20261121b">
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
 <style>
-:root{--bg:#080808;--panel:#111;--line:#292929;--text:#f6f3ea;--muted:#969696;--gold:#d6b55f;--red:#e52231}
+:root{--black:#090909;--panel:#151515;--line:#292929;--white:#f4f4ef;--muted:#949494;--red:#e51f2e}
 *{box-sizing:border-box}
-html,body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
-body{min-height:100vh;background:radial-gradient(circle at 75% 0%,#261f12 0,transparent 30%),#080808}
-.wrap{max-width:1060px;margin:auto;padding:26px 16px 54px}
-.top{display:flex;justify-content:space-between;align-items:center;gap:16px}
-.wordmark{font-size:26px;font-weight:950;letter-spacing:-1px}.dot{color:var(--red)}
-.tag{font-size:10px;color:#c9b77d;border:1px solid #564a29;padding:6px 9px;border-radius:999px}
-.hero{padding:72px 0 54px}
-.kicker{font-size:11px;color:var(--gold);font-weight:900;letter-spacing:2px}
-h1{font-size:clamp(42px,9vw,84px);line-height:.95;letter-spacing:-4px;margin:12px 0 18px;max-width:850px}
-.hero p{font-size:15px;line-height:1.8;color:#aaa;max-width:620px;margin:0}
-.statement{margin-top:22px;font-size:19px;font-weight:850;color:#eee}.statement .r{color:var(--red)}
-.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-.card{display:flex;min-height:280px;flex-direction:column;justify-content:space-between;padding:22px;border:1px solid var(--line);border-radius:24px;background:linear-gradient(180deg,#151515,#0d0d0d);text-decoration:none;color:inherit;transition:.18s transform,.18s border-color}
-.card:hover{transform:translateY(-3px);border-color:#5d5130}.card.primary{border-color:#65552d;background:linear-gradient(180deg,#1c180f,#10100d)}
-.code{font-size:11px;color:var(--gold);font-weight:900;letter-spacing:1px}.name{font-size:30px;font-weight:950;margin-top:8px;letter-spacing:-1px}
-.desc{font-size:12px;color:#929292;line-height:1.75;margin-top:10px}.go{font-size:13px;font-weight:900;color:#eee}.primary .go{color:#f0d98f}
-.foot{display:flex;justify-content:space-between;gap:14px;margin-top:26px;padding-top:18px;border-top:1px solid #202020;color:#666;font-size:10px}
-@media(max-width:760px){.wrap{padding:20px 13px 40px}.hero{padding:54px 0 34px}h1{letter-spacing:-2px}.grid{grid-template-columns:1fr}.card{min-height:205px}.foot{flex-direction:column}}
+html,body{overflow-x:hidden;margin:0;background:var(--black);color:var(--white);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+body{min-height:100vh;background:radial-gradient(circle at 90% 6%,rgba(229,31,46,.12),transparent 24%),#090909}
+.wrap{max-width:1180px;margin:auto;padding:22px 16px 52px}
+header{display:flex;align-items:center;justify-content:space-between;gap:18px}
+.brandmark{display:inline-flex;align-items:center;text-decoration:none}.brandmark img{width:170px;height:auto;display:block}
+.nav{display:flex;align-items:center;gap:4px}.nav a{color:#a9a9a9;text-decoration:none;font-size:10px;font-weight:900;letter-spacing:.6px;padding:9px 11px;border-radius:999px}.nav a:hover{color:#fff;background:#161616}
+.hero{position:relative;min-height:520px;padding:86px 0 62px;display:flex;align-items:flex-end;border-bottom:1px solid var(--line);overflow:hidden}
+.hero:before{content:"";position:absolute;right:-120px;top:52px;width:520px;height:520px;border:1px solid rgba(255,255,255,.055);border-radius:50%}
+.hero:after{content:"";position:absolute;right:138px;top:52px;width:1px;height:520px;background:rgba(255,255,255,.055)}
+.heroCopy{position:relative;z-index:2;max-width:900px}.eyebrow{display:flex;align-items:center;gap:9px;font-size:10px;font-weight:950;letter-spacing:2.4px;color:#c9c9c9}.eyebrow i{width:8px;height:8px;border-radius:50%;background:var(--red);box-shadow:0 0 24px rgba(229,31,46,.7)}
+h1{font-size:clamp(48px,9.7vw,104px);line-height:.88;letter-spacing:-5px;margin:18px 0 22px;font-weight:1000;max-width:980px}.reddot{color:var(--red)}
+.hero p{font-size:15px;line-height:1.8;color:#a5a5a5;max-width:620px;margin:0}.heroStrong{color:#fff;font-weight:850}
+.values{display:flex;gap:18px;flex-wrap:wrap;margin-top:28px;color:#646464;font-size:10px;font-weight:900;letter-spacing:2px}.values b{color:#d7d7d7}
+.sectionHead{display:flex;justify-content:space-between;gap:18px;align-items:end;padding:50px 0 18px}.sectionHead h2{font-size:28px;margin:0;letter-spacing:-1px}.sectionHead p{font-size:11px;color:#777;margin:0;max-width:360px;line-height:1.65;text-align:right}
+.grid{display:grid;grid-template-columns:1.35fr 1fr 1fr;gap:10px}
+.card{position:relative;min-height:310px;border:1px solid var(--line);border-radius:18px;padding:22px;background:#121212;text-decoration:none;color:inherit;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;transition:.18s ease}
+.card:hover{transform:translateY(-2px);border-color:#555}.card.primary{grid-row:span 2;min-height:630px;background:linear-gradient(155deg,#171717 0,#101010 62%,#1d0a0d 100%);border-color:#3d2529}
+.card.primary:after{content:"";position:absolute;width:280px;height:280px;border:1px solid rgba(229,31,46,.16);border-radius:50%;right:-105px;bottom:-75px}
+.num{font-size:11px;font-weight:950;color:#676767;letter-spacing:1.8px}.primary .num{color:#d06a73}
+.card h3{font-size:clamp(28px,4vw,48px);line-height:1;margin:8px 0 12px;letter-spacing:-2px}.card:not(.primary) h3{font-size:30px}
+.card p{font-size:12px;line-height:1.75;color:#858585;max-width:500px;margin:0}.go{display:flex;align-items:center;justify-content:space-between;border-top:1px solid #242424;padding-top:15px;margin-top:24px;font-size:11px;font-weight:950}.go span:last-child{font-size:18px}.primary .go span:last-child{color:var(--red)}
+.brandStory{margin-top:10px;border:1px solid var(--line);border-radius:18px;padding:24px;display:grid;grid-template-columns:1fr auto;gap:18px;align-items:center;background:#101010}.brandStory b{font-size:20px}.brandStory p{font-size:11px;color:#7d7d7d;line-height:1.75;margin:6px 0 0;max-width:680px}.brandStory a{color:#fff;text-decoration:none;border:1px solid #3a3a3a;border-radius:999px;padding:10px 14px;font-size:11px;font-weight:900}
+.ardor{color:var(--red)}
+footer{display:flex;justify-content:space-between;gap:14px;margin-top:38px;padding-top:17px;border-top:1px solid #202020;color:#5f5f5f;font-size:10px}
+@media(max-width:820px){
+ .wrap{padding:18px 13px 36px}.brandmark img{width:146px}
+ header{display:block}.nav{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:14px}.nav a{display:flex;justify-content:center;background:#101010;border:1px solid #222;border-radius:10px;padding:9px 4px;font-size:9px}
+ .hero{min-height:440px;padding:58px 0 40px}.hero:before{width:360px;height:360px;right:-170px;top:100px}.hero:after{right:8px;height:360px;top:100px}
+ h1{letter-spacing:-3px}.sectionHead{padding-top:38px;display:block}.sectionHead p{text-align:left;margin-top:8px}
+ .grid{grid-template-columns:1fr}.card.primary{grid-row:auto;min-height:350px}.card{min-height:215px}.card:not(.primary) h3{font-size:28px}
+ .brandStory{grid-template-columns:1fr}.brandStory a{justify-self:start}footer{flex-direction:column}
+}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header class="top">
-    <div class="wordmark">SAGI<span class="dot">.</span> SPORTS</div>
-    <div class="tag">FOOTBALL · XINJIANG</div>
-  </header>
+<header>
+ <a class="brandmark" href="/home.html" aria-label="SAGI FOOTBALL"><img src="/assets/brand/sagi-official-logo.webp?v=20261121b" alt="SAGI FOOTBALL"></a>
+ <nav class="nav"><a href="/kit/catalog.html">KIT</a><a href="/event/v23.html">EVENT</a><a href="/broadcast/">BROADCAST</a><a href="/about.html">ABOUT</a></nav>
+</header>
 
-  <main>
-    <section class="hero">
-      <div class="kicker">FOR THE FOOTBALL AROUND US</div>
-      <h1>记录平凡人的<br>足球梦<span class="dot">.</span></h1>
-      <p>从一件球衣，到一场比赛，再到一个被定格的瞬间。<br><br>SAGI SPORTS 想做的，是让身边的足球被认真对待。</p>
-      <div class="statement">每一份<span class="r">热爱</span>，都值得被记录。</div>
-    </section>
+<main>
+<section class="hero">
+ <div class="heroCopy">
+  <div class="eyebrow"><i></i>SAGI FOOTBALL · FOR THE FOOTBALL AROUND US</div>
+  <h1>记录平凡人的<br>足球梦<span class="reddot">.</span></h1>
+  <p>从一件球衣，到一场比赛，再到一个被记住的瞬间。<br><span class="heroStrong">SAGI SPORTS 想做的，是让身边的足球被认真对待。</span></p>
+  <div class="values"><span>A / <b>ARDOR</b></span><span>A / <b>AFIRE</b></span><span>A / <b>ALIVE</b></span></div>
+ </div>
+</section>
 
-    <section class="grid" aria-label="SAGI 产品">
-      <a class="card primary" href="/kit/catalog.html">
-        <div>
-          <div class="code">01 · CORE PRODUCT</div>
-          <div class="name">SAGI KIT</div>
-          <div class="desc">足球队服 · 产品画册 · 六配色 · 在线设计 · 定制下单。SAGI SPORTS 核心商业产品。</div>
-        </div>
-        <div class="go">进入 SAGI KIT →</div>
-      </a>
+<div class="sectionHead">
+ <h2>FOOTBALL, MADE CLOSER.</h2>
+ <p>装备、赛事与直播都围绕同一件事：让身边的球队更容易被看见、被记录、被认真对待。</p>
+</div>
 
-      <a class="card" href="/event/">
-        <div>
-          <div class="code">02 · EVENT</div>
-          <div class="name">SAGI EVENT</div>
-          <div class="desc">托朗戈杯 / TFC / 青少年赛事。赛事创建、球队、赛程、比分、积分与赛事管理。</div>
-        </div>
-        <div class="go">进入赛事系统 →</div>
-      </a>
+<section class="grid" aria-label="SAGI 足球服务">
+ <a class="card primary" href="/kit/catalog.html">
+  <div><div class="num">01 · TEAMWEAR</div><h3>SAGI KIT</h3><p>球队装备选款、原版画册、配色与定制需求。客户选款、填信息、生成订单文件，再由 SAGI 完成后续沟通与生产。</p></div>
+  <div class="go"><span>进入球队装备</span><span>→</span></div>
+ </a>
+ <a class="card" href="/event/v23.html">
+  <div><div class="num">02 · EVENT</div><h3>EVENT</h3><p>从球队录入、抽签、赛程到比分和积分，让草根赛事也有清晰、专业的组织方式。</p></div>
+  <div class="go"><span>赛事工具</span><span>→</span></div>
+ </a>
+ <a class="card" href="/broadcast/">
+  <div><div class="num">03 · BROADCAST</div><h3>BROADCAST</h3><p>比分、进球、换人、红黄牌、点球与回放包装，让普通比赛拥有真正的直播表达。</p></div>
+  <div class="go"><span>直播系统</span><span>→</span></div>
+ </a>
+ <a class="card" href="/about.html">
+  <div><div class="num">04 · CULTURE</div><h3>ABOUT SAGI</h3><p>红点代表热爱。我们可以看不到别的，但一定要看到热爱。</p></div>
+  <div class="go"><span>品牌文化</span><span>→</span></div>
+ </a>
+ <div class="card">
+  <div><div class="num">05 · LOCAL FOOTBALL</div><h3>AROUND US</h3><p>真正值得记录的足球，不只发生在大球场。也发生在身边的学校、青训、业余球队和每一次认真踢球的人身上。</p></div>
+  <div class="go"><span>为身边的足球加油</span><span class="reddot">●</span></div>
+ </div>
+</section>
 
-      <a class="card" href="/vmix.html">
-        <div>
-          <div class="code">03 · BROADCAST</div>
-          <div class="name">SAGI BROADCAST</div>
-          <div class="desc">赛事直播导播 · 比分包装 · 球员出场 · 战术板 · 点球大战 · vMix 工作流。</div>
-        </div>
-        <div class="go">进入导播系统 →</div>
-      </a>
-    </section>
-  </main>
+<section class="brandStory">
+ <div><b>红点，就是热爱<span class="ardor">.</span></b><p>SAGI 的视觉不需要用大量颜色证明自己。黑与白留给足球本身，红点只在真正重要的地方出现——就像场上那一点无法忽略的热爱。</p></div>
+ <a href="/about.html">了解 SAGI 文化 →</a>
+</section>
+</main>
 
-  <footer class="foot">
-    <span>SAGI SPORTS · 为身边的足球加油</span>
-    <span>ARDOR · AFIRE · ALIVE</span>
-  </footer>
+<footer><span>SAGI SPORTS · 为身边的足球加油</span><span>ARDOR · AFIRE · ALIVE</span></footer>
 </div>
 </body>
 </html>
