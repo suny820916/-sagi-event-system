@@ -28,6 +28,15 @@
 .card a.download{background:transparent;color:var(--gold);padding-inline:0}
 .catalog-heading{display:flex;align-items:center;justify-content:space-between;gap:8px 16px;flex-wrap:wrap;margin:16px 0 12px}.catalog-heading h1{margin:0}.design-link{display:inline-flex;align-items:center;min-height:44px;padding:8px 13px;border:1px solid #b42c3b;border-radius:9px;background:#a51c2a;color:#fff;text-decoration:none;font-weight:750}.design-link:focus-visible{outline:3px solid #fff;outline-offset:2px}
 </style>
+<style>
+.design-link[hidden]{display:none}.design-link{font:inherit;font-weight:750;cursor:pointer}
+.design-dialog{width:min(1140px,calc(100% - 24px));height:min(900px,calc(100dvh - 24px));max-width:none;max-height:none;padding:0;border:1px solid var(--line);border-radius:14px;background:#0c0d0e;color:var(--text);overflow:hidden}
+.design-dialog[open]{display:grid;grid-template-rows:auto minmax(0,1fr)}.design-dialog::backdrop{background:#000b}.design-open{overflow:hidden}
+.dialog-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 12px;border-bottom:1px solid var(--line)}
+.dialog-bar button{min-height:44px;border:1px solid var(--line);border-radius:8px;padding:7px 10px;background:#232323;color:#fff;font:inherit;cursor:pointer}
+.design-dialog iframe{display:block;width:100%;height:100%;border:0}
+@media(max-width:600px){.design-dialog{width:100%;height:100dvh;margin:0;border:0;border-radius:0}.dialog-bar{padding-top:max(6px,env(safe-area-inset-top))}.design-dialog iframe{padding-bottom:env(safe-area-inset-bottom)}}
+</style>
 </head>
 <body>
 <div class="app">
@@ -36,7 +45,7 @@
   <nav class="topnav" aria-label="主导航"><a class="on" aria-current="page" href="./catalog.html">球队装备</a><a href="/event/v23.html">赛事管理</a><a href="/broadcast/">直播系统</a><a href="/about.html">关于我们</a></nav>
 </header>
 <main aria-labelledby="catalog-title">
-  <div class="catalog-heading"><h1 id="catalog-title">SAGI KIT 产品画册</h1><a class="design-link" href="./design-order.html">制作队服效果图 →</a></div>
+  <div class="catalog-heading"><h1 id="catalog-title">SAGI KIT 产品画册</h1></div>
   <div class="catalogs">
     <article class="card">
       <h2>SAGI 2026 产品画册</h2>
@@ -48,6 +57,7 @@
           <span aria-live="polite">1 / 36</span>
           <button type="button" data-step="1">下一页</button>
         </div>
+        <button class="design-link choose-style" type="button" hidden>选这款并开始设计</button>
       </div>
       <a class="download" href="./assets/catalogs/sagi-2026-teamwear-catalog.pdf" download>下载原版 PDF</a>
     </article>
@@ -61,22 +71,59 @@
           <span aria-live="polite">1 / 28</span>
           <button type="button" data-step="1">下一页</button>
         </div>
+        <button class="design-link choose-style" type="button" hidden>选这款并开始设计</button>
       </div>
       <a class="download" href="./assets/catalogs/sagi-football-brand-catalog.pdf" download>下载原版 PDF</a>
     </article>
   </div>
 </main>
 </div>
+<dialog class="design-dialog" id="design-dialog" aria-labelledby="design-title">
+  <div class="dialog-bar">
+    <strong id="design-title">队服设计与下单</strong>
+    <form method="dialog"><button type="submit">返回选款</button></form>
+  </div>
+  <iframe id="design-frame" title="队服设计与下单"></iframe>
+</dialog>
+<script src="./catalog-selection.js?v=1"></script>
 <script>
+  const dialog = document.getElementById('design-dialog');
+  const frame = document.getElementById('design-frame');
+  const dialogTitle = document.getElementById('design-title');
+  let activeSelection = '';
+  let opener;
+  dialog.addEventListener('close', () => {
+    document.body.classList.remove('design-open');
+    opener?.focus();
+  });
+  function openDesign(selection, button) {
+    const url = new URL('./design-order.html', location.href);
+    url.search = new URLSearchParams({catalog: selection.catalog, page: selection.page, embedded: '1'});
+    if (activeSelection && activeSelection !== url.href &&
+      !confirm('切换到其他款式会清空上一款未下载的设计和订单，继续吗？')) return;
+    if (activeSelection !== url.href) {
+      frame.src = url.href;
+      activeSelection = url.href;
+    }
+    opener = button;
+    dialogTitle.textContent = '款号 ' + selection.code + ' · 设计与下单';
+    dialog.showModal();
+    document.body.classList.add('design-open');
+  }
   for (const viewer of document.querySelectorAll('.viewer')) {
     let image = viewer.querySelector('img');
     const controls = viewer.querySelector('.controls');
     const [previous, next] = controls.querySelectorAll('button');
     const indicator = controls.querySelector('span');
     const total = Number(viewer.dataset.pages);
+    const choose = viewer.querySelector('.choose-style');
     let page = 1;
     let requestedPage = 1;
     const images = new Map([[1, { image, ready: image.decode().then(() => image) }]]);
+    choose.addEventListener('click', () => {
+      const selected = catalogSelection(viewer.dataset.folder, page);
+      if (selected) openDesign(selected, choose);
+    });
 
     images.get(1).ready.catch(() => images.delete(1));
 
@@ -118,6 +165,9 @@
         image = readyImage;
         page = target;
         indicator.textContent = page + ' / ' + total;
+        const selected = catalogSelection(viewer.dataset.folder, page);
+        choose.hidden = !selected;
+        if (selected) choose.textContent = '选款 ' + selected.code + ' · 开始设计';
         previous.disabled = page === 1;
         next.disabled = page === total;
         preloadAround(step);
