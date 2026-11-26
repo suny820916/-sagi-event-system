@@ -668,3 +668,7 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 ## 2026-11-26 — Authoritative transparent score output
 - Added a loopback-only browser output with a per-runtime address, authoritative scoreboard visibility, clock and scores, embedded SAGI mark, and a side-colored GOAL animation for newly observed events. Initial loads and reconnects establish a fresh baseline. The desktop preview displays the browser input address.
 - Windows HTTP integration and local Chrome verification passed with real engine commands, logo decoding, a committed goal, duplicate retry, and page reload. PowerShell launcher syntax passed. Actual vMix browser input, local team crest mapping, event and penalty overlays, and signing/packaging remain open.
+
+## 2026-11-26 — Live booking and shootout graphics
+- Transparent output renders authoritative yellow/red events with player and team text, and rebuilds the shootout display from committed outcomes. The most recent 12 attempts per team are visible, with an earlier-attempt count and full totals.
+- Windows local HTTP integration and Chrome passed for both bookings, seven rounds, mixed outcomes, final score and reload. Actual vMix output and Windows/Linux push CI remain unverified.

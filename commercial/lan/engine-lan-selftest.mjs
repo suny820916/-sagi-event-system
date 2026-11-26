@@ -140,6 +140,9 @@ try {
   assert.equal(afterRestart.penalties.home, extra.filter(a => a.side === 'HOME' && a.outcome === 'SCORED').length);
   assert.equal(afterRestart.penalties.away, extra.filter(a => a.side === 'AWAY' && a.outcome === 'SCORED').length);
   assert.equal(afterRestart.homeScore, 1);
+  const broadcast = await (await fetch(runtime.broadcastUrl + '/state')).json();
+  assert.deepEqual(broadcast.penalties.rows.map(row => row.outcomes.length), [7, 7]);
+  assert.equal(broadcast.penalties.finished, false);
   const retryExtra = await penalty('extra_pen_0000', 10, 'PENALTY_ATTEMPT', extra[0]);
   assert.equal(retryExtra.status, 200);
   assert.equal((await retryExtra.json()).result.duplicate, true);
@@ -162,6 +165,9 @@ try {
   const retriedPenalty = await penalty('pen_goal00001', 6, 'PENALTY_ATTEMPT', scored);
   assert.equal(retriedPenalty.status, 200);
   assert.equal((await retriedPenalty.json()).result.duplicate, true);
+  const finishedOutput = await (await fetch(runtime.broadcastUrl + '/state')).json();
+  assert.equal(finishedOutput.penalties.finished, true);
+  assert.deepEqual(finishedOutput.penalties.rows.map(row => row.outcomes.length), [7, 7]);
   const finalState = (await (await request('state')).json()).state;
   assert.equal(finalState.revision, 25);
   assert.equal(finalState.period, 'FT');
