@@ -59,7 +59,7 @@ body{min-height:100svh;overflow:hidden}
  appearance:none;
  -webkit-appearance:none;
  transition:transform .18s ease,filter .18s ease,opacity .18s ease;
- animation:redDotBreath 2.1s ease-in-out infinite;
+ animation:redDotHeartbeat 2.4s cubic-bezier(.4,0,.2,1) infinite;
 }
 .loveButton:hover,.loveButton:focus-visible{
  transform:translate(-50%,-50%) scale(1.04);
@@ -79,14 +79,41 @@ body{min-height:100svh;overflow:hidden}
 .exit .mark,.exit .copy{opacity:0;transform:scale(.985);transition:.2s ease}
 @keyframes rise{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}
 @keyframes fade{from{opacity:0}to{opacity:1}}
-@keyframes redDotBreath{
+@keyframes redDotHeartbeat{
  0%,100%{
-  opacity:1;
-  filter:brightness(.94);
+  transform:translate(-50%,-50%) scale(1);
+  opacity:.94;
+  filter:brightness(.92);
  }
- 50%{
+ 12%{
+  transform:translate(-50%,-50%) scale(1.055);
+  opacity:1;
+  filter:brightness(1.12);
+ }
+ 22%{
+  transform:translate(-50%,-50%) scale(.985);
+  opacity:.96;
+  filter:brightness(.98);
+ }
+ 31%{
+  transform:translate(-50%,-50%) scale(1.03);
+  opacity:1;
+  filter:brightness(1.08);
+ }
+ 42%{
+  transform:translate(-50%,-50%) scale(1);
+  opacity:.96;
+  filter:brightness(1);
+ }
+ 68%{
+  transform:translate(-50%,-50%) scale(.99);
   opacity:.90;
-  filter:brightness(1.14);
+  filter:brightness(.90);
+ }
+ 84%{
+  transform:translate(-50%,-50%) scale(1.01);
+  opacity:.94;
+  filter:brightness(.98);
  }
 }
 @media(max-width:520px){
