@@ -68,34 +68,41 @@
 </div>
 <script>
   for (const viewer of document.querySelectorAll('.viewer')) {
-    const image = viewer.querySelector('img');
+    let image = viewer.querySelector('img');
     const controls = viewer.querySelector('.controls');
     const [previous, next] = controls.querySelectorAll('button');
     const indicator = controls.querySelector('span');
     const total = Number(viewer.dataset.pages);
     let page = 1;
     let requestedPage = 1;
-    const images = new Map();
+    const images = new Map([[1, { image, ready: image.decode().then(() => image) }]]);
+
+    images.get(1).ready.catch(() => images.delete(1));
 
     function getPage(number, priority) {
-      if (images.has(number)) return images.get(number);
-      const preview = new Image();
-      preview.fetchPriority = priority;
-      const ready = new Promise((resolve, reject) => {
-        preview.onload = () => resolve(preview.src);
-        preview.onerror = () => {
-          images.delete(number);
-          reject(new Error('Preview unavailable'));
-        };
-      });
-      images.set(number, ready);
-      preview.src = './assets/catalogs/preview/' + viewer.dataset.folder + '/page-' + String(number).padStart(2, '0') + '.jpg?v=2';
-      return ready;
+      let entry = images.get(number);
+      if (!entry) {
+        const preview = new Image();
+        preview.fetchPriority = priority;
+        preview.alt = viewer.dataset.title + ' · 第 ' + number + ' 页';
+        preview.src = './assets/catalogs/preview/' + viewer.dataset.folder + '/page-' + String(number).padStart(2, '0') + '.jpg?v=2';
+        entry = { image: preview, ready: preview.decode().then(() => preview) };
+        images.set(number, entry);
+        entry.ready.catch(() => {
+          if (images.get(number) === entry) images.delete(number);
+        });
+      }
+      if (priority === 'high') entry.image.fetchPriority = priority;
+      return entry.ready;
     }
 
-    function preloadNeighbors() {
-      for (const number of [page + 1, page - 1]) {
+    function preloadAround(direction) {
+      for (const step of [1, 2, 3, -1]) {
+        const number = page + direction * step;
         if (number >= 1 && number <= total) getPage(number, 'low').catch(() => {});
+      }
+      for (const number of images.keys()) {
+        if (Math.abs(number - page) > 4 && number !== requestedPage) images.delete(number);
       }
     }
 
@@ -104,15 +111,15 @@
       if (target === requestedPage) return;
       requestedPage = target;
       try {
-        const url = await getPage(target, 'high');
+        const readyImage = await getPage(target, 'high');
         if (requestedPage !== target) return;
+        if (readyImage !== image) image.replaceWith(readyImage);
+        image = readyImage;
         page = target;
-        image.src = url;
-        image.alt = viewer.dataset.title + ' · 第 ' + page + ' 页';
         indicator.textContent = page + ' / ' + total;
         previous.disabled = page === 1;
         next.disabled = page === total;
-        preloadNeighbors();
+        preloadAround(step);
       } catch {
         if (requestedPage !== target) return;
         requestedPage = page;
@@ -120,8 +127,19 @@
       }
     }
 
-    if (image.complete && image.naturalWidth) preloadNeighbors();
-    else image.addEventListener('load', preloadNeighbors, {once: true});
+    function warmFirstPages() {
+      if (requestedPage === 1) preloadAround(1);
+    }
+    if ('IntersectionObserver' in window) {
+      const observer = new IntersectionObserver(([entry]) => {
+        if (!entry.isIntersecting) return;
+        observer.disconnect();
+        warmFirstPages();
+      }, { rootMargin: '160px' });
+      observer.observe(viewer);
+    } else {
+      warmFirstPages();
+    }
     previous.addEventListener('click', () => turnPage(-1));
     next.addEventListener('click', () => turnPage(1));
     controls.hidden = false;
