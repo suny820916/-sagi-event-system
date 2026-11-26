@@ -672,3 +672,8 @@ A new customer can install SAGI Broadcast on Windows, connect vMix, scan a QR co
 ## 2026-11-26 — Live booking and shootout graphics
 - Transparent output renders authoritative yellow/red events with player and team text, and rebuilds the shootout display from committed outcomes. The most recent 12 attempts per team are visible, with an earlier-attempt count and full totals.
 - Windows local HTTP integration and Chrome passed for both bookings, seven rounds, mixed outcomes, final score and reload. Actual vMix output and Windows/Linux push CI remain unverified.
+
+## 2026-11-26 — Windows x64 acceptance package
+- Built an unpack-and-run acceptance ZIP with checksum-verified official Node v22.23.5 and its license. Desktop operator controls can show and hide the authoritative scoreboard. Added a Windows packaging workflow and a packaged-host restart smoke test.
+- Local packaged-host test passed for pairing, goal, scoreboard visibility, clean shutdown, restart and duplicate command retry. A concurrent journal read during a clock checkpoint exposed a timing race in the test observer; it now retries only a changing journal scan within the existing deadline. All 32 existing distinct Node commands passed on local Windows with Node v22.23.5 after the test fix.
+- Signed installer, remote Windows/Linux CI, clean-machine GUI, vMix/iPhone WAN-off acceptance, offline licensing, updates/rollback and complete license audit remain open. The ZIP is an acceptance build.

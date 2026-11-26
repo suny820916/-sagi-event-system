@@ -4,7 +4,7 @@ Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 $form = New-Object Windows.Forms.Form
 $form.Text = 'SAGI BROADCAST 本地控制'
-$form.ClientSize = New-Object Drawing.Size(540, 365)
+$form.ClientSize = New-Object Drawing.Size(540, 405)
 $form.FormBorderStyle = 'FixedDialog'
 $form.MaximizeBox = $false
 
@@ -38,8 +38,18 @@ $pair.Text = '批准手机配对'
 $pair.SetBounds(330, 248, 190, 32)
 $pair.Enabled = $false
 $form.Controls.Add($pair)
+$scoreOn = New-Object Windows.Forms.Button
+$scoreOn.Text = '显示比分牌'
+$scoreOn.SetBounds(160, 290, 160, 30)
+$scoreOn.Enabled = $false
+$form.Controls.Add($scoreOn)
+$scoreOff = New-Object Windows.Forms.Button
+$scoreOff.Text = '隐藏比分牌'
+$scoreOff.SetBounds(330, 290, 190, 30)
+$scoreOff.Enabled = $false
+$form.Controls.Add($scoreOff)
 $status = New-Object Windows.Forms.Label
-$status.SetBounds(15, 292, 510, 60)
+$status.SetBounds(15, 335, 510, 60)
 $status.Text = '首次启动填写球队。已有比赛会从本机数据目录恢复。'
 $form.Controls.Add($status)
 
@@ -87,6 +97,8 @@ $start.Add_Click({
         $url.Text = $reply.mobileUrl
         $broadcastUrl.Text = $reply.broadcastUrl
         $pair.Enabled = $true
+        $scoreOn.Enabled = $true
+        $scoreOff.Enabled = $true
         $status.Text = '服务已启动。手机需连接同一局域网。'
     } catch {
         Stop-SagiHost
@@ -102,6 +114,8 @@ $pair.Add_Click({
         $status.Text = '请在手机页面输入配对码。'
     } catch {
         $pair.Enabled = $false
+        $scoreOn.Enabled = $false
+        $scoreOff.Enabled = $false
         Stop-SagiHost
         $url.Clear()
         $broadcastUrl.Clear()
@@ -109,5 +123,14 @@ $pair.Add_Click({
         $status.Text = '配对失败：' + $_.Exception.Message
     }
 })
+function Set-ScoreboardOutput($command) {
+    try {
+        $script:sagiHost.StandardInput.WriteLine($command)
+        [void](Read-HostReply)
+        $status.Text = if ($command -eq 'scoreboard-on') { '比分牌已显示。' } else { '比分牌已隐藏。' }
+    } catch { $status.Text = '比分牌操作失败：' + $_.Exception.Message }
+}
+$scoreOn.Add_Click({ Set-ScoreboardOutput 'scoreboard-on' })
+$scoreOff.Add_Click({ Set-ScoreboardOutput 'scoreboard-off' })
 $form.Add_FormClosed({ Stop-SagiHost })
 [void]$form.ShowDialog()

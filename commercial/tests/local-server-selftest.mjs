@@ -37,13 +37,21 @@ try{
   assert.equal(state.clock.elapsedSeconds,123);
   const store=new FileMatchStore(dir);
   const deadline=Date.now()+3000;
-  while((await store.load()).clock.elapsedSeconds!==123){
-    assert.ok(Date.now()<deadline,"periodic checkpoint missing");
-    await new Promise(resolve=>setTimeout(resolve,20));
+  let saved;
+  while(!saved){
+    try {
+      const candidate=await store.load();
+      if(candidate.clock.elapsedSeconds===123) saved=candidate;
+    } catch(error){
+      if(error.message!=="JOURNAL_CHANGED_DURING_SCAN") throw error;
+    }
+    if(!saved){
+      assert.ok(Date.now()<deadline,"periodic checkpoint missing");
+      await new Promise(resolve=>setTimeout(resolve,20));
+    }
   }
-  assert.equal((await store.load()).revision,4);
-  assert.equal((await store.load()).homeScore,1);
-  const saved=await store.load();
+  assert.equal(saved.revision,4);
+  assert.equal(saved.homeScore,1);
   await assert.rejects(store.checkpointClock({...saved,homeScore:2}),/INVALID_CLOCK_CHECKPOINT/);
   tick+=2000;
   await app.close();app=null;

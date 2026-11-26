@@ -1,0 +1,38 @@
+name: Commercial Windows package
+on:
+  workflow_dispatch:
+  push:
+    branches: [commercial-v1.0]
+    paths:
+      - 'commercial/**'
+      - '.github/workflows/commercial-windows-package.yml'
+permissions:
+  contents: read
+jobs:
+  package:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Windows x64 preview
+        shell: pwsh
+        run: |
+          $version = 'v22.23.5'
+          $name = "node-$version-win-x64.zip"
+          $base = "https://nodejs.org/dist/$version"
+          $checksum = (Invoke-RestMethod "$base/SHASUMS256.txt") -split "\r?\n" |
+            Where-Object { $_ -match ("^[a-f0-9]{64}\s+" + [regex]::Escape($name) + '$') }
+          if (@($checksum).Count -ne 1) { throw 'Missing Node.js archive checksum.' }
+          Invoke-WebRequest "$base/$name" -OutFile $name
+          ./commercial/tools/package-windows.ps1 -NodeArchive $name -NodeSha256 (($checksum -split '\s+')[0]) -OutputZip 'build/SAGI-Broadcast-Windows-x64-preview.zip'
+      - name: Verify packaged runtime and application
+        shell: pwsh
+        run: |
+          Expand-Archive build/SAGI-Broadcast-Windows-x64-preview.zip -DestinationPath package-test
+          $app = Join-Path (Resolve-Path package-test) 'SAGI Broadcast'
+          ./commercial/tools/smoke-windows-package.ps1 -AppDir $app
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SAGI-Broadcast-Windows-x64-preview
+          path: build/*
+          if-no-files-found: error

@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { createInterface } from 'node:readline';
 import { startCommercialRuntime } from './runtime.mjs';
 
@@ -10,6 +11,20 @@ try {
     reply({ ok: true, mobileUrl: runtime.mobileUrl, broadcastUrl: runtime.broadcastUrl });
     for await (const command of input) {
       if (command === 'close') break;
+      if (command === 'scoreboard-on' || command === 'scoreboard-off') {
+        try {
+          const response = await fetch('http://127.0.0.1:' + runtime.engine.address.port + '/api/v1/commands', {
+            method: 'POST', signal: AbortSignal.timeout(4000),
+            headers: { authorization: 'Bearer ' + runtime.engine.token, 'content-type': 'application/json' },
+            body: JSON.stringify({ commandId: randomUUID(), type: 'SET_SCOREBOARD', visible: command === 'scoreboard-on' }),
+          });
+          if (!response.ok) throw Error('SCOREBOARD_COMMAND_FAILED');
+          reply({ ok: true });
+        } catch {
+          reply({ ok: false, error: 'SCOREBOARD_COMMAND_FAILED' });
+        }
+        continue;
+      }
       if (command !== 'pair') {
         reply({ ok: false, error: 'INVALID_OPERATOR_COMMAND' });
         continue;
