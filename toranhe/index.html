@@ -34,17 +34,33 @@ h3{font-size:18px;line-height:1.35;margin-bottom:5px}
 .chapter p{color:var(--muted);margin-bottom:13px}.chapter p:last-child{margin-bottom:0}
 .chapter strong{color:var(--text)}
 blockquote{border-left:3px solid var(--red);padding:2px 0 2px 15px;margin:20px 0 0;font-size:clamp(18px,2.6vw,25px);line-height:1.55;font-weight:750}
-.culture-list,.archive-groups{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 24px}
-.culture-list article,.archive-groups article{padding-top:13px;border-top:1px solid var(--line)}
+.culture-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 24px}
+.culture-list article{padding-top:13px;border-top:1px solid var(--line)}
 .spirit{padding-top:20px;color:var(--text);font-weight:750;word-spacing:.25em}
-.records{list-style:none;padding:0;margin:12px 0 0}.records li{padding:8px 0;border-top:1px solid var(--line)}
+.season{margin-top:28px;padding-top:20px;border-top:1px solid var(--line)}
+.season .season-year{margin:0 0 6px;color:#ff7b84;font-size:13px;font-weight:800;letter-spacing:.13em}
+.season h3{font-size:clamp(23px,4vw,34px);margin:0 0 10px}
+.season h4{font-size:19px;margin:10px 0 5px}
+.station-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 22px;list-style:none;padding:0;margin:20px 0 30px}
+.station-list li{min-width:0;padding:14px 0;border-top:1px solid var(--line)}
+.station-name{display:block;color:var(--muted);font-size:13px}
+.station-team{display:block;color:var(--text);font-size:clamp(17px,3vw,20px);font-weight:750;overflow-wrap:anywhere}
+.station-team span{color:var(--muted);font-size:13px;font-weight:600;margin-right:6px}
+.station-status{display:block;color:var(--muted);font-size:13px;margin-top:2px}
+.finals{padding:18px 0;border-block:1px solid var(--line)}
+.finals .winner{margin:14px 0 0;padding:12px 14px;border-left:3px solid var(--red);background:#151515}
+.winner span,.wildcard span{display:block;color:var(--muted);font-size:13px}
+.winner strong{display:block;overflow-wrap:anywhere;font-size:clamp(31px,7vw,52px);line-height:1.25;margin-top:4px}
+.wildcard{padding:16px 0;border-bottom:1px solid var(--line)}
+.wildcard h4{font-size:17px;margin:0 0 4px}.wildcard p{margin:0}.season-close{margin-top:18px}
+@media(max-width:520px){.station-list{grid-template-columns:1fr;gap:0}.station-list li{padding-block:11px}}
 footer{padding:13px 0 32px}
 @media(max-width:720px){
  .shell{width:calc(100% - 32px)}.header-inner{gap:0;min-height:0;padding:5px 0}.brand img{width:138px}
  .hero{grid-template-columns:minmax(0,1fr) minmax(76px,26%);gap:12px;padding-block:34px}
  .hero h1{font-size:clamp(38px,11vw,68px)}.hero .kicker{letter-spacing:.09em}.hero p:not(.kicker){font-size:16px}
 }
-@media(max-width:460px){.culture-list,.archive-groups{grid-template-columns:1fr;gap:13px}}
+@media(max-width:460px){.culture-list{grid-template-columns:1fr;gap:13px}}
 </style>
 </head>
 <body>
@@ -105,37 +121,89 @@ footer{padding:13px 0 32px}
     <section class="chapter" id="champions">
       <h2>历届冠军档案</h2>
       <p>托朗戈杯按届保存赛事历史，档案只收录经核实的赛果。</p>
-      <div class="archive-groups">
-        <article id="station-champions"><h3>历届分站冠军</h3><p>按年度和分站记录赢得当地冠军的球队。</p><ul id="station-records" class="records" hidden></ul></article>
-        <article id="annual-champions"><h3>年度总冠军</h3><p>记录各分站冠军会师后，赢得年度总决赛的球队。</p><ul id="annual-records" class="records" hidden></ul></article>
-      </div>
+      <div id="champion-seasons"></div>
     </section>
     <!-- Future season registration belongs after the archive, once officially confirmed. -->
   </div>
 </main>
 <footer class="shell"><a class="footer-link" href="/home.html">返回 SAGI SPORTS 首页</a></footer>
 <script>
-  function showChampions(target, records, station) {
-    const list = document.getElementById(target);
-    if (!Array.isArray(records)) return;
-    for (const record of records) {
-      if (!record || record.confirmed !== true || !Number.isInteger(record.year) ||
-          typeof record.champion !== 'string' || !record.champion.trim() ||
-          (station && (typeof record.station !== 'string' || !record.station.trim()))) continue;
-      const item = document.createElement('li');
-      item.textContent = record.year + ' 年 · ' + (station ? record.station + ' · ' : '') + record.champion;
-      list.append(item);
-    }
-    list.hidden = !list.children.length;
+  const seasonsRoot = document.getElementById('champion-seasons');
+  function node(tag, text, className) {
+    const element = document.createElement(tag);
+    if (text) element.textContent = text;
+    if (className) element.className = className;
+    return element;
   }
-  fetch('./data/champions.json').then(response => {
-    if (!response.ok) return null;
+  function confirmed(records, fields) {
+    return (Array.isArray(records) ? records : []).filter(record =>
+      record && record.confirmed === true && Number.isInteger(record.year) &&
+      fields.every(field => typeof record[field] === 'string' && record[field].trim()));
+  }
+  function renderSeason(year, stations, finals, wildcards) {
+    const season = node('section', null, 'season');
+    season.id = 'season-' + year;
+    season.setAttribute('aria-labelledby', 'season-title-' + year);
+    const yearLabel = node('p', year + ' SEASON', 'season-year');
+    yearLabel.lang = 'en';
+    const heading = node('h3', year + ' 年托朗戈杯');
+    heading.id = 'season-title-' + year;
+    season.append(yearLabel, heading);
+    if (stations.length) {
+      season.append(node('h4', '分站冠军'), node('p', year + ' 赛季，托朗戈杯在不同城市完成了多站比赛。每一站，都有属于当地的冠军。'));
+      const list = node('ul', null, 'station-list');
+      for (const {station, champion, finalsParticipation} of stations) {
+        const row = node('li');
+        const team = node('strong', null, 'station-team');
+        team.append(node('span', '冠军'), document.createTextNode(champion));
+        row.append(node('span', station, 'station-name'), team);
+        if (finalsParticipation === 'did_not_participate') row.append(node('span', '未参加年度总决赛', 'station-status'));
+        list.append(row);
+      }
+      season.append(list);
+    }
+    if (finals.length) {
+      const final = node('div', null, 'finals');
+      final.append(node('h4', '年度总决赛'));
+      for (const {champion} of finals) {
+        const winner = node('div', null, 'winner');
+        winner.append(node('span', year + ' 托朗戈杯年度总冠军'), node('strong', champion));
+        final.append(winner);
+      }
+      season.append(final);
+    }
+    if (wildcards.length) {
+      const wildcard = node('div', null, 'wildcard');
+      wildcard.append(node('h4', '外卡球队'));
+      for (const {team} of wildcards) {
+        const description = node('p');
+        description.append(node('strong', team), document.createTextNode(' 以外卡身份获得年度总决赛参赛资格。'));
+        wildcard.append(description);
+      }
+      season.append(wildcard);
+    }
+    if (stations.length) {
+      const absent = stations.filter(record => record.finalsParticipation === 'did_not_participate').length;
+      const summary = year + ' 赛季共有 ' + stations.length + ' 支分站冠军球队。' +
+        (absent ? '其中 ' + absent + ' 支未参加年度总决赛，但他们赢下的那一站，依然属于托朗戈杯的正式历史。' : '');
+      season.append(node('p', summary, 'season-close'), node('blockquote', '每一站冠军，都应该被记住。'));
+    }
+    return season;
+  }
+  fetch('./data/champions.json?v=2').then(response => {
+    if (!response.ok) throw new Error('Archive unavailable');
     return response.json();
   }).then(archive => {
-    if (!archive || archive.schemaVersion !== 1) return;
-    showChampions('station-records', archive.stationChampions, true);
-    showChampions('annual-records', archive.annualChampions, false);
-  }).catch(() => {});
+    if (!archive || archive.schemaVersion !== 1) throw new Error('Invalid archive');
+    const stations = confirmed(archive.stationChampions, ['station', 'champion']);
+    const finals = confirmed(archive.annualChampions, ['champion']);
+    const wildcards = confirmed(archive.wildcardEntries, ['team']).filter(record => record.entryType === 'wildcard');
+    const years = [...new Set([...stations, ...finals, ...wildcards].map(record => record.year))].sort((a,b) => b-a);
+    for (const year of years) {
+      const forYear = record => record.year === year;
+      seasonsRoot.append(renderSeason(year, stations.filter(forYear), finals.filter(forYear), wildcards.filter(forYear)));
+    }
+  }).catch(() => { seasonsRoot.append(node('p', '暂时无法读取冠军档案，请刷新页面重试。')); });
 </script>
 </body>
 </html>
