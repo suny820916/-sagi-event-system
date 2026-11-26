@@ -121,6 +121,29 @@ body{min-height:100svh;overflow:hidden}
  .copy{margin-top:-5vw}
  .wordmark{font-size:9px;letter-spacing:4px}
 }
+
+.introVideoLayer{
+ position:fixed;inset:0;z-index:50;background:#000;
+ display:none;align-items:center;justify-content:center;
+ opacity:0;transition:opacity .22s ease;
+}
+.introVideoLayer.on{display:flex;opacity:1}
+.introVideo{
+ width:100%;height:100%;object-fit:contain;background:#000;display:block;
+}
+.skipIntro{
+ position:absolute;z-index:2;
+ top:max(18px,env(safe-area-inset-top));right:16px;
+ border:1px solid rgba(255,255,255,.22);
+ background:rgba(0,0,0,.28);color:#fff;border-radius:999px;
+ padding:8px 12px;font-size:10px;font-weight:850;letter-spacing:.08em;
+ backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);opacity:.72;
+}
+.videoFallback{
+ position:absolute;left:50%;bottom:max(26px,env(safe-area-inset-bottom));
+ transform:translateX(-50%);color:#777;font-size:10px;
+ display:none;white-space:nowrap;cursor:pointer;
+}
 @media(prefers-reduced-motion:reduce){.mark,.copy,.loveButton{animation:none}}
 </style>
 </head>
@@ -141,12 +164,53 @@ body{min-height:100svh;overflow:hidden}
     <div class="hint">TAP THE RED DOT</div>
   </section>
 </main>
+
+<div class="introVideoLayer" id="introVideoLayer" aria-hidden="true">
+  <video class="introVideo" id="introVideo" playsinline webkit-playsinline preload="auto" src="/assets/intro/sagi-intro.mp4"></video>
+  <button class="skipIntro" id="skipIntro" type="button">跳过</button>
+  <div class="videoFallback" id="videoFallback">视频无法播放 · 点击进入主页</div>
+</div>
+
 <script>
 const btn=document.getElementById("loveButton");
-btn.addEventListener("click",()=>{
-  document.getElementById("entry").classList.add("exit");
-  setTimeout(()=>location.href="/home.html",180);
+const entry=document.getElementById("entry");
+const layer=document.getElementById("introVideoLayer");
+const video=document.getElementById("introVideo");
+const skip=document.getElementById("skipIntro");
+const fallback=document.getElementById("videoFallback");
+let leaving=false;
+
+function enterHome(){
+  if(leaving)return;
+  leaving=true;
+  location.href="/home.html";
+}
+
+function playIntro(){
+  btn.disabled=true;
+  entry.classList.add("exit");
+  layer.style.display="flex";
+  layer.setAttribute("aria-hidden","false");
+  requestAnimationFrame(()=>layer.classList.add("on"));
+  video.currentTime=0;
+  video.volume=1;
+  const p=video.play();
+  if(p&&typeof p.catch==="function"){
+    p.catch(()=>{
+      fallback.style.display="block";
+      video.controls=true;
+      btn.disabled=false;
+    });
+  }
+}
+
+btn.addEventListener("click",playIntro);
+video.addEventListener("ended",enterHome);
+video.addEventListener("error",()=>{
+  fallback.style.display="block";
+  fallback.onclick=enterHome;
 });
+skip.addEventListener("click",enterHome);
 </script>
 </body>
 </html>
