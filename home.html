@@ -22,31 +22,29 @@ body{min-height:100vh;background:radial-gradient(circle at 90% 6%,rgba(229,31,46
 header{display:flex;align-items:center;justify-content:space-between;gap:18px}
 .brandmark{display:inline-flex;align-items:center;text-decoration:none}.brandmark img{width:170px;height:auto;display:block}
 .nav{display:flex;align-items:center;gap:4px}.nav a{color:#a9a9a9;text-decoration:none;font-size:10px;font-weight:900;letter-spacing:.6px;padding:9px 11px;border-radius:999px}.nav a:hover{color:#fff;background:#161616}
-.hero{position:relative;min-height:520px;padding:86px 0 62px;display:flex;align-items:flex-end;border-bottom:1px solid var(--line);overflow:hidden}
+.hero{position:relative;min-height:500px;padding:82px 0 58px;display:flex;align-items:flex-end;border-bottom:1px solid var(--line);overflow:hidden}
 .hero:before{content:"";position:absolute;right:-120px;top:52px;width:520px;height:520px;border:1px solid rgba(255,255,255,.055);border-radius:50%}
 .hero:after{content:"";position:absolute;right:138px;top:52px;width:1px;height:520px;background:rgba(255,255,255,.055)}
-.heroCopy{position:relative;z-index:2;max-width:900px}.eyebrow{display:flex;align-items:center;gap:9px;font-size:10px;font-weight:950;letter-spacing:2.4px;color:#c9c9c9}.eyebrow i{width:8px;height:8px;border-radius:50%;background:var(--red);box-shadow:0 0 24px rgba(229,31,46,.7)}
+.heroCopy{position:relative;z-index:2;max-width:900px}.heroSignature{display:flex;align-items:center;gap:9px;margin-top:22px;font-size:9px;font-weight:900;letter-spacing:2.2px;color:#6e6e6e}.heroSignature i{width:7px;height:7px;border-radius:50%;background:var(--red)}
 h1{font-size:clamp(48px,9.7vw,104px);line-height:.88;letter-spacing:-5px;margin:18px 0 22px;font-weight:1000;max-width:980px}.reddot{color:var(--red)}
-.hero p{font-size:15px;line-height:1.8;color:#a5a5a5;max-width:620px;margin:0}.heroStrong{color:#fff;font-weight:850}
-.values{display:flex;gap:18px;flex-wrap:wrap;margin-top:28px;color:#646464;font-size:10px;font-weight:900;letter-spacing:2px}.values b{color:#d7d7d7}
-.sectionHead{display:flex;justify-content:space-between;gap:18px;align-items:end;padding:50px 0 18px}.sectionHead h2{font-size:28px;margin:0;letter-spacing:-1px}.sectionHead p{font-size:11px;color:#777;margin:0;max-width:360px;line-height:1.65;text-align:right}
-.grid{display:grid;grid-template-columns:1.35fr 1fr 1fr;gap:10px}
+.heroLine{font-size:16px;line-height:1.7;color:#b5b5b5;max-width:620px;margin:0;font-weight:700}
+.sectionHead{padding:46px 0 18px}.sectionHead h2{font-size:28px;margin:0;letter-spacing:-1px}.sectionHead p{font-size:11px;color:#777;margin:8px 0 0;max-width:560px;line-height:1.65}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .card{position:relative;min-height:310px;border:1px solid var(--line);border-radius:18px;padding:22px;background:#121212;text-decoration:none;color:inherit;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;transition:.18s ease}
-.card:hover{transform:translateY(-2px);border-color:#555}.card.primary{grid-row:span 2;min-height:630px;background:linear-gradient(155deg,#171717 0,#101010 62%,#1d0a0d 100%);border-color:#3d2529}
+.card:hover{transform:translateY(-2px);border-color:#555}.card.primary{min-height:310px;background:linear-gradient(155deg,#171717 0,#101010 62%,#1d0a0d 100%);border-color:#3d2529}
 .card.primary:after{content:"";position:absolute;width:280px;height:280px;border:1px solid rgba(229,31,46,.16);border-radius:50%;right:-105px;bottom:-75px}
 .num{font-size:11px;font-weight:950;color:#676767;letter-spacing:1.8px}.primary .num{color:#d06a73}
 .card h3{font-size:clamp(28px,4vw,48px);line-height:1;margin:8px 0 12px;letter-spacing:-2px}.card:not(.primary) h3{font-size:30px}
 .card p{font-size:12px;line-height:1.75;color:#858585;max-width:500px;margin:0}.go{display:flex;align-items:center;justify-content:space-between;border-top:1px solid #242424;padding-top:15px;margin-top:24px;font-size:11px;font-weight:950}.go span:last-child{font-size:18px}.primary .go span:last-child{color:var(--red)}
-.brandStory{margin-top:10px;border:1px solid var(--line);border-radius:18px;padding:24px;display:grid;grid-template-columns:1fr auto;gap:18px;align-items:center;background:#101010}.brandStory b{font-size:20px}.brandStory p{font-size:11px;color:#7d7d7d;line-height:1.75;margin:6px 0 0;max-width:680px}.brandStory a{color:#fff;text-decoration:none;border:1px solid #3a3a3a;border-radius:999px;padding:10px 14px;font-size:11px;font-weight:900}
-.ardor{color:var(--red)}
+.culture{margin-top:12px;border:1px solid var(--line);border-radius:18px;padding:24px;background:#101010}.cultureTop{display:flex;justify-content:space-between;gap:18px;align-items:end}.cultureTop b{font-size:22px}.cultureTop p{font-size:11px;color:#7d7d7d;line-height:1.75;margin:6px 0 0;max-width:680px}.cultureTop a{color:#fff;text-decoration:none;border:1px solid #3a3a3a;border-radius:999px;padding:10px 14px;font-size:11px;font-weight:900;white-space:nowrap}.cultureValues{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:20px}.cultureValues div{border-top:1px solid #292929;padding-top:13px}.cultureValues small{display:block;color:#666;font-size:9px;letter-spacing:1.5px;font-weight:900}.cultureValues strong{display:block;font-size:18px;margin-top:5px}.ardor{color:var(--red)}
 footer{display:flex;justify-content:space-between;gap:14px;margin-top:38px;padding-top:17px;border-top:1px solid #202020;color:#5f5f5f;font-size:10px}
 @media(max-width:820px){
  .wrap{padding:18px 13px 36px}.brandmark img{width:146px}
  header{display:block}.nav{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:14px}.nav a{display:flex;justify-content:center;background:#101010;border:1px solid #222;border-radius:10px;padding:9px 4px;font-size:9px}
- .hero{min-height:440px;padding:58px 0 40px}.hero:before{width:360px;height:360px;right:-170px;top:100px}.hero:after{right:8px;height:360px;top:100px}
- h1{letter-spacing:-3px}.sectionHead{padding-top:38px;display:block}.sectionHead p{text-align:left;margin-top:8px}
- .grid{grid-template-columns:1fr}.card.primary{grid-row:auto;min-height:350px}.card{min-height:215px}.card:not(.primary) h3{font-size:28px}
- .brandStory{grid-template-columns:1fr}.brandStory a{justify-self:start}footer{flex-direction:column}
+ .hero{min-height:390px;padding:48px 0 34px}.hero:before{width:330px;height:330px;right:-175px;top:88px}.hero:after{right:8px;height:330px;top:88px}
+ h1{letter-spacing:-3px}.heroLine{font-size:14px}.heroSignature{margin-top:18px}.sectionHead{padding-top:34px}
+ .grid{grid-template-columns:1fr}.card.primary{min-height:220px}.card{min-height:205px}.card:not(.primary) h3{font-size:28px}
+ .cultureTop{display:block}.cultureTop a{display:inline-flex;margin-top:16px}.cultureValues{grid-template-columns:1fr 1fr 1fr}.cultureValues strong{font-size:15px}footer{flex-direction:column}
 }
 </style>
 </head>
@@ -60,44 +58,42 @@ footer{display:flex;justify-content:space-between;gap:14px;margin-top:38px;paddi
 <main>
 <section class="hero">
  <div class="heroCopy">
-  <div class="eyebrow"><i></i>SAGI FOOTBALL · FOR THE FOOTBALL AROUND US</div>
   <h1>记录平凡人的<br>足球梦<span class="reddot">.</span></h1>
-  <p>从一件球衣，到一场比赛，再到一个被记住的瞬间。<br><span class="heroStrong">SAGI SPORTS 想做的，是让身边的足球被认真对待。</span></p>
-  <div class="values"><span>A / <b>ARDOR</b></span><span>A / <b>AFIRE</b></span><span>A / <b>ALIVE</b></span></div>
+  <p class="heroLine">让身边的足球被认真对待。</p>
+  <div class="heroSignature"><i></i>FOR THE FOOTBALL AROUND US</div>
  </div>
 </section>
 
 <div class="sectionHead">
  <h2>FOOTBALL, MADE CLOSER.</h2>
- <p>装备、赛事与直播都围绕同一件事：让身边的球队更容易被看见、被记录、被认真对待。</p>
+ <p>从装备到赛事，再到直播。SAGI 把身边的足球做得更完整。</p>
 </div>
 
 <section class="grid" aria-label="SAGI 足球服务">
  <a class="card primary" href="/kit/catalog.html">
-  <div><div class="num">01 · TEAMWEAR</div><h3>SAGI KIT</h3><p>球队装备选款、原版画册、配色与定制需求。客户选款、填信息、生成订单文件，再由 SAGI 完成后续沟通与生产。</p></div>
+  <div><div class="num">01 · TEAMWEAR</div><h3>SAGI KIT</h3><p>球队装备选款、原版画册、配色与定制需求。</p></div>
   <div class="go"><span>进入球队装备</span><span>→</span></div>
  </a>
  <a class="card" href="/event/v23.html">
-  <div><div class="num">02 · EVENT</div><h3>EVENT</h3><p>从球队录入、抽签、赛程到比分和积分，让草根赛事也有清晰、专业的组织方式。</p></div>
+  <div><div class="num">02 · EVENT</div><h3>EVENT</h3><p>赛事创建、球队、赛程、比分与积分。</p></div>
   <div class="go"><span>赛事工具</span><span>→</span></div>
  </a>
  <a class="card" href="/broadcast/">
-  <div><div class="num">03 · BROADCAST</div><h3>BROADCAST</h3><p>比分、进球、换人、红黄牌、点球与回放包装，让普通比赛拥有真正的直播表达。</p></div>
+  <div><div class="num">03 · BROADCAST</div><h3>BROADCAST</h3><p>比分、进球、红黄牌、换人与直播包装。</p></div>
   <div class="go"><span>直播系统</span><span>→</span></div>
  </a>
- <a class="card" href="/about.html">
-  <div><div class="num">04 · CULTURE</div><h3>ABOUT SAGI</h3><p>红点代表热爱。我们可以看不到别的，但一定要看到热爱。</p></div>
-  <div class="go"><span>品牌文化</span><span>→</span></div>
- </a>
- <div class="card">
-  <div><div class="num">05 · LOCAL FOOTBALL</div><h3>AROUND US</h3><p>真正值得记录的足球，不只发生在大球场。也发生在身边的学校、青训、业余球队和每一次认真踢球的人身上。</p></div>
-  <div class="go"><span>为身边的足球加油</span><span class="reddot">●</span></div>
- </div>
 </section>
 
-<section class="brandStory">
- <div><b>红点，就是热爱<span class="ardor">.</span></b><p>SAGI 的视觉不需要用大量颜色证明自己。黑与白留给足球本身，红点只在真正重要的地方出现——就像场上那一点无法忽略的热爱。</p></div>
- <a href="/about.html">了解 SAGI 文化 →</a>
+<section class="culture">
+ <div class="cultureTop">
+  <div><b>红点，就是热爱<span class="ardor">.</span></b><p>我们可以看不到别的，但一定要看到热爱。</p></div>
+  <a href="/about.html">了解 SAGI 文化 →</a>
+ </div>
+ <div class="cultureValues">
+  <div><small>A / 01</small><strong>ARDOR</strong></div>
+  <div><small>A / 02</small><strong>AFIRE</strong></div>
+  <div><small>A / 03</small><strong>ALIVE</strong></div>
+ </div>
 </section>
 </main>
 
