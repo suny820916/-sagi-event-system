@@ -226,7 +226,7 @@ const PlayerUI = (() => {
     const valid=previewRows.filter(row=>!row.error);
     if(!valid.length)return;
     try{
-      transaction(next=>{for(const row of valid)EventPlayers.savePlayer(next,selectedTeam,row)});
+      transaction(next=>{for(const row of valid)EventPlayers.savePlayer(next,selectedTeam,row.data)});
       resetPreview();importer.close();render();message('已导入 '+valid.length+' 名球员');
     }catch(error){resetPreview(error.message+'，请重新预览。')}
   }

@@ -40,7 +40,7 @@ button,input{font:inherit}button{touch-action:manipulation}.w{max-width:920px;ma
 @media(min-width:700px){.group-settings:not([hidden]){grid-template-columns:repeat(3,minmax(0,1fr))}.group-settings label:last-of-type{grid-column:auto}}
 </style>
 <link rel="stylesheet" href="/assets/brand/site-nav.css?v=2">
-<link rel="stylesheet" href="./players.css?v=1">
+<link rel="stylesheet" href="./players.css?v=2">
 </head>
 <body>
 <div class="toast" id="toast"></div>
@@ -121,6 +121,7 @@ button,input{font:inherit}button{touch-action:manipulation}.w{max-width:920px;ma
       <div class="stepTitle"><div class="stepNo">LIVE</div><div><h2>比赛日</h2><small>比分、牌、事件与结束比赛</small></div></div>
       <div class="f"><label>当前比赛</label><select id="liveSel" onchange="renderLive()" style="width:100%;background:#0a0a0a;color:#fff;border:1px solid #333;border-radius:12px;padding:12px"></select></div>
       <div id="liveBox"></div>
+      <div id="matchPlayerTools" class="card" hidden></div>
       <div id="nextMatch" class="nextMatch"></div>
     </div>
     <div class="card"><h2 style="font-size:15px;margin:0 0 10px">事件记录</h2><div id="logs" class="muted">暂无事件</div></div>
@@ -153,7 +154,9 @@ button,input{font:inherit}button{touch-action:manipulation}.w{max-width:920px;ma
 <div id="rosterPrint" hidden></div>
 <script src="./group-stage.js?v=1"></script>
 <script src="./players.js?v=1"></script>
-<script src="./player-ui.js?v=1"></script>
+<script src="./match-players.js?v=1"></script>
+<script src="./match-player-ui.js?v=1"></script>
+<script src="./player-ui.js?v=2"></script>
 <script>
 /* Mobile compatibility: support older Android/embedded browser engines */
 if(!Number.isInteger){Number.isInteger=function(n){return typeof n==='number'&&isFinite(n)&&Math.floor(n)===n}}
@@ -228,7 +231,7 @@ function normalizeState(x){
     if(!groupPlan||['count','direct','wildcards'].some(function(key){return groupPlan.rules[key]!==x.groupRules[key]}))throw new Error('备份中的分组或晋级规则无效');
     n.groupRules=groupPlan.rules
   }
-  return EventPlayers.normalize(n,x)
+  return MatchPlayers.normalize(EventPlayers.normalize(n,x),x)
 }
 function load(){
   try{
@@ -533,7 +536,7 @@ function applyResult(id,change){
     var old=previous.matches[i],next=S.matches[i];
     if(old.home!==next.home||old.away!==next.away||old.active!==next.active){
       changedPair=true;
-      if(old.id!==id&&(old.hs!=null||old.as!=null||old.status==='done'||(previous.events[old.id]||[]).length)){
+      if(old.id!==id&&(old.hs!=null||old.as!=null||old.status==='done'||(previous.events[old.id]||[]).length||previous.lineups[old.id])){
         S=previous;msg('后续比赛已有记录。请先处理后续比赛，再更正此比分。');return false
       }
     }
@@ -551,6 +554,7 @@ function setScore(id,k,v){
   if(m.status==='done'&&!confirm('这场比赛已结束。更正比分可能影响积分和晋级，确定修改？')){refreshScoreCard(id);return}
   if(!applyResult(id,function(match){
     match[k]=value;
+    if(value!=null&&S.lineups[id])S.lineups[id].locked=true;
     match.status=match.hs!=null&&match.as!=null&&(!isElim(match)||match.hs!==match.as)?'done':'pending'
   }))refreshScoreCard(id)
 }
@@ -560,7 +564,7 @@ function clearScore(id){
   if(applyResult(id,function(match){match.hs=null;match.as=null;match.status='pending'}))msg('比分已清除')
 }
 function visible(){return Array.isArray(S.matches)?S.matches.filter(function(m){return m.active!==false}):[]}
-function hasResults(){return S.matches.some(function(m){return m.hs!=null||m.as!=null||m.status==='done'})||Object.keys(S.events||{}).length>0}
+function hasResults(){return S.matches.some(function(m){return m.hs!=null||m.as!=null||m.status==='done'})||Object.keys(S.events||{}).length>0||Object.keys(S.lineups||{}).length>0}
 function createEventTap(btn){
   try{if(btn){btn.disabled=true;btn.textContent='正在生成…'}}catch(e){}
   setTimeout(function(){
@@ -651,29 +655,38 @@ function addEvent(id,text,side){
     m.hs=m.hs||0;m.as=m.as||0;m[side]++;
   }
   S.events[id]=S.events[id]||[];
+  if(S.lineups[id])S.lineups[id].locked=true;
   S.events[id].push({time:new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}),text:text});
   if(!persist()){S=previous;msg('保存失败，原比赛数据已保留');return}
   refreshScoreCard(id);renderLive()
 }
 function goal(id,side){
   var m=by(id);if(!readyMatch(m)||(side!=='h'&&side!=='a'))return;
+  var teamSide=side==='h'?'home':'away';
+  if(m.status!=='done'&&MatchPlayerUI.canLink(m,teamSide)){MatchPlayerUI.openEvent(m,'goal',teamSide);return}
   addEvent(id,teamName(side==='h'?m.home:m.away)+' 进球',side==='h'?'hs':'as')
+}
+function cardOrDecision(id,type,label){
+  var m=by(id);
+  if(!readyMatch(m)||m.status==='done')return;
+  if(!MatchPlayerUI.quickEvent(m,type))addEvent(id,label);
 }
 function finish(id){
   var m=by(id);if(!readyMatch(m)||m.status==='done')return;
   var hs=m.hs==null?0:m.hs,as=m.as==null?0:m.as;
   if(isElim(m)&&hs===as){msg('淘汰赛必须决出胜负');return}
   if(!confirm('以 '+hs+':'+as+' 结束 '+teamName(m.home)+' 对 '+teamName(m.away)+'？'))return;
-  if(applyResult(id,function(match){match.hs=hs;match.as=as;match.status='done'}))msg('比赛已结束并自动推进')
+  if(applyResult(id,function(match){match.hs=hs;match.as=as;match.status='done';if(S.lineups[id])S.lineups[id].locked=true}))msg('比赛已结束并自动推进')
 }
 function renderLive(){
   renderLiveSel();
   var sel=q('liveSel'),m=by(sel?sel.value:''),box=q('liveBox'),logs=q('logs'),nextBox=q('nextMatch');
   if(!box||!logs)return;
+  MatchPlayerUI.render(m);
   if(!m){box.innerHTML='<div class="empty" style="margin-top:10px">暂无可操作比赛</div>';logs.textContent='暂无事件';nextBox.textContent='';return}
   var current=box.firstElementChild;
   if(!current||current.dataset.activeMatch!==m.id){
-    box.innerHTML='<div class="match" data-active-match="'+m.id+'" style="margin-top:10px"><div class="liveTeams"><div></div><div></div></div><div class="liveScore" aria-live="polite"></div><div class="liveActions"><button class="btn goalBtn" onclick="goal(\''+m.id+'\',\'h\')">主队 +1</button><button class="btn goalBtn" onclick="goal(\''+m.id+'\',\'a\')">客队 +1</button><button class="btn" onclick="addEvent(\''+m.id+'\',\'黄牌\')">黄牌</button><button class="btn bad" onclick="addEvent(\''+m.id+'\',\'红牌\')">红牌</button><button class="btn" onclick="addEvent(\''+m.id+'\',\'点球 / 单刀决胜\')">决胜事件</button><button class="btn pri" onclick="finish(\''+m.id+'\')">结束比赛</button></div><small class="liveState muted"></small></div>';
+    box.innerHTML='<div class="match" data-active-match="'+m.id+'" style="margin-top:10px"><div class="liveTeams"><div></div><div></div></div><div class="liveScore" aria-live="polite"></div><div class="liveActions"><button class="btn goalBtn" onclick="goal(\''+m.id+'\',\'h\')">主队 +1</button><button class="btn goalBtn" onclick="goal(\''+m.id+'\',\'a\')">客队 +1</button><button class="btn" onclick="cardOrDecision(\''+m.id+'\',\'yellow\',\'黄牌\')">黄牌</button><button class="btn bad" onclick="cardOrDecision(\''+m.id+'\',\'red\',\'红牌\')">红牌</button><button class="btn" onclick="cardOrDecision(\''+m.id+'\',\'shootout\',\'点球 / 单刀决胜\')">决胜事件</button><button class="btn pri" onclick="finish(\''+m.id+'\')">结束比赛</button></div><small class="liveState muted"></small></div>';
     current=box.firstElementChild
   }
   var names=current.querySelectorAll('.liveTeams div'),score=current.querySelector('.liveScore');
@@ -769,6 +782,7 @@ function boot(){
     if((e.key===KEY||e.key===null)&&e.newValue!==savedRaw)saveStatus('其他页面已更新赛事。再次编辑前，请先备份本页内容并刷新。')
   });
   PlayerUI.mount();
+  MatchPlayerUI.mount();
   renderDiagnostics(false)
 }
 if(typeof document!=='undefined')boot();
