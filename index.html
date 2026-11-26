@@ -17,7 +17,7 @@
 :root{--bg:#000;--white:#fff;--red:#ff101f;--muted:#777}
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100%;background:#000;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
-body{min-height:100svh;overflow:hidden}
+body{min-height:100svh}
 .entry{
  min-height:100svh;
  display:flex;
@@ -145,6 +145,7 @@ body{min-height:100svh;overflow:hidden}
  display:none;white-space:nowrap;cursor:pointer;
 }
 @media(prefers-reduced-motion:reduce){.mark,.copy,.loveButton{animation:none}}
+.enterHome{display:inline-flex;min-height:44px;align-items:center;gap:8px;margin-top:14px;padding:8px 17px;border:1px solid #555;border-radius:8px;color:#fff;text-decoration:none;font-weight:750}.enterHome:hover{background:#232323}.enterHome:focus-visible{outline:3px solid #ff5964;outline-offset:4px}
 </style>
 </head>
 <body>
@@ -155,18 +156,19 @@ body{min-height:100svh;overflow:hidden}
     <svg viewBox="0 0 2048 2048" role="img" aria-hidden="true">
       <path fill="#fff" d="M 844,256 L 788,296 L 739,349 L 715,385 L 586,635 L 382,1063 L 153,1605 L 145,1638 L 145,1684 L 170,1746 L 235,1811 L 265,1828 L 317,1844 L 379,1844 L 420,1832 L 455,1814 L 489,1784 L 523,1729 L 696,1353 L 992,748 L 1012,729 L 1043,729 L 1058,743 L 1159,944 L 1545,1767 L 1600,1818 L 1664,1844 L 1726,1844 L 1754,1836 L 1812,1807 L 1857,1766 L 1894,1700 L 1902,1672 L 1902,1606 L 1894,1577 L 1689,1087 L 1653,1017 L 1593,875 L 1360,397 L 1316,337 L 1255,280 L 1219,256 L 1125,215 L 1041,203 L 974,207 L 902,227 Z"/>
     </svg>
-    <button class="loveButton" id="loveButton" aria-label="点开热爱，进入 SAGI SPORTS 主页"></button>
+    <button class="loveButton" id="loveButton" aria-label="播放 SAGI SPORTS 开场视频"></button>
   </div>
 
   <section class="copy">
     <h1 class="title">点开热爱<span class="dot">.</span></h1>
     <div class="sub">为身边的足球加油<br>记录平凡人的足球梦</div>
-    <div class="hint">TAP THE RED DOT</div>
+    <div class="hint">点击红点播放开场</div>
+    <a class="enterHome" href="/home.html">直接进入主页 <span aria-hidden="true">→</span></a>
   </section>
 </main>
 
 <div class="introVideoLayer" id="introVideoLayer" aria-hidden="true">
-  <video class="introVideo" id="introVideo" playsinline webkit-playsinline preload="auto" src="/assets/intro/sagi-intro.mp4"></video>
+  <video class="introVideo" id="introVideo" playsinline webkit-playsinline preload="none" src="/assets/intro/sagi-intro.mp4"></video>
   <button class="skipIntro" id="skipIntro" type="button">跳过</button>
   <div class="videoFallback" id="videoFallback">视频无法播放 · 点击进入主页</div>
 </div>

@@ -15,12 +15,12 @@
 <style>
 :root{--bg:#080808;--panel:#141414;--line:#2c2c2c;--text:#f5f1e8;--muted:#8e8e8e;--gold:#d8b55b;--red:#e11d2e;--green:#72c79a}
 *{box-sizing:border-box}body{overflow-x:hidden;margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
-.app{max-width:1180px;margin:auto;padding:16px 12px 70px}.top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.brandlink{display:inline-flex;align-items:center;text-decoration:none}.brandlink img{display:block;width:170px;height:auto}.brand-title{font-size:18px;font-weight:950;margin-top:8px}.sub{font-size:12px;color:var(--muted);margin-top:5px}.topnav{display:flex;gap:5px;align-items:center;flex-wrap:wrap;justify-content:flex-end}.topnav a{color:#aaa;text-decoration:none;font-size:10px;font-weight:850;padding:7px 9px;border-radius:999px}.topnav a:hover,.topnav a.on{background:#171717;color:#f2dda1}
+.app{max-width:1180px;margin:auto;padding:16px 12px 70px}.top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.brandlink{display:inline-flex;align-items:center;text-decoration:none}.brandlink img{display:block;width:170px;height:auto}.brand-title{font-size:18px;font-weight:950;margin-top:8px}.sub{font-size:12px;color:var(--muted);margin-top:5px}.topnav{display:flex;gap:5px;align-items:center;flex-wrap:wrap;justify-content:flex-end}.topnav a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;color:#bbb;text-decoration:none;font-size:13px;font-weight:750;padding:8px 10px;border-radius:8px}.topnav a:hover,.topnav a.on{background:#171717;color:#f2dda1}
 .catalogs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:14px}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px}
 .card h2{margin:0;font-size:18px}.card p{color:var(--muted);font-size:14px}
 .card a{display:inline-flex;align-items:center;min-height:44px;padding:8px 12px;border-radius:10px;background:var(--gold);color:#111;text-decoration:none;font-weight:750}
-@media(max-width:560px){.top{flex-wrap:wrap}.topnav{justify-content:flex-start}}
+@media(max-width:560px){.top{flex-wrap:wrap}.topnav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));width:100%}.topnav a{font-size:clamp(11px,3.6vw,13px);padding-inline:2px;background:#171717}}
 .card img{display:block;width:100%;max-height:75vh;object-fit:contain;background:#080808;border-radius:8px;margin:12px 0}
 .controls{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:12px 0}
 .controls[hidden]{display:none}.controls button{background:#292929;color:#fff;border:1px solid var(--line);border-radius:8px;min-height:44px;padding:8px 12px;font:inherit}
@@ -31,8 +31,8 @@
 <body>
 <div class="app">
 <header class="top">
-  <a class="brandlink" href="/" aria-label="返回 SAGI SPORTS 首页"><img src="/assets/brand/sagi-official-logo.webp?v=20261121b" alt="SAGI FOOTBALL"></a>
-  <nav class="topnav" aria-label="主导航"><a class="on" aria-current="page" href="./catalog.html">KIT</a><a href="/event/v23.html">EVENT</a><a href="/broadcast/">BROADCAST</a><a href="/about.html">ABOUT</a></nav>
+  <a class="brandlink" href="/home.html" aria-label="返回 SAGI SPORTS 首页"><img src="/assets/brand/sagi-official-logo.webp?v=20261121b" alt="SAGI FOOTBALL"></a>
+  <nav class="topnav" aria-label="主导航"><a class="on" aria-current="page" href="./catalog.html">球队装备</a><a href="/event/v23.html">赛事管理</a><a href="/broadcast/">直播系统</a><a href="/about.html">关于我们</a></nav>
 </header>
 <main aria-labelledby="catalog-title">
   <h1 id="catalog-title">SAGI KIT 产品画册</h1>
