@@ -54,7 +54,7 @@ footer{border-top:1px solid var(--line);padding:19px 0 25px;color:var(--muted);f
 @media(max-width:650px){
  .shell{width:calc(100% - 28px)}
  .header-inner{display:block;padding:8px 0 11px}
- .nav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+ .nav{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}
  .nav a{padding:6px 2px;font-size:clamp(11px,3.6vw,14px);text-align:center;background:#161616}
  .hero{margin-top:14px;grid-template-columns:1fr;padding:20px;gap:17px}
  .hero h1{font-size:clamp(32px,9vw,54px)}
@@ -66,6 +66,7 @@ footer{border-top:1px solid var(--line);padding:19px 0 25px;color:var(--muted);f
  .card{padding:14px}
  .culture{align-items:flex-start;flex-direction:column;padding:18px 0}
 }
+.teams{padding:0 0 28px;scroll-margin-top:16px}.teams h2{margin:0 0 14px;font-size:clamp(23px,4vw,31px)}.team-card{display:flex;align-items:center;gap:16px;padding:16px;background:var(--surface);border:1px solid var(--line);border-radius:13px}.team-card img{width:80px;height:80px;object-fit:contain;flex-shrink:0}.team-card h3{margin:0 0 4px;font-size:17px}.team-card p{margin:0;color:var(--muted);font-size:14px}
 </style>
 </head>
 <body>
@@ -76,6 +77,7 @@ footer{border-top:1px solid var(--line);padding:19px 0 25px;color:var(--muted);f
       <a href="/kit/catalog.html">球队装备</a>
       <a href="/event/v23.html">赛事管理</a>
       <a href="/broadcast/">直播系统</a>
+      <a href="#teams">球队</a>
       <a href="/about.html">关于我们</a>
     </nav>
   </div>
@@ -99,6 +101,16 @@ footer{border-top:1px solid var(--line);padding:19px 0 25px;color:var(--muted);f
       <a class="card" href="/event/v23.html"><h3>赛事管理</h3><p>组织比赛、安排赛程，记录比分和积分。</p><span>进入赛事工作台 <span aria-hidden="true">→</span></span></a>
       <a class="card" href="/broadcast/"><h3>直播系统</h3><p>查看导播演示，了解记分牌和比赛事件如何上屏。</p><span>查看导播演示 <span aria-hidden="true">→</span></span></a>
     </div>
+  </section>
+  <section class="teams" id="teams" aria-labelledby="teams-title">
+    <h2 id="teams-title">球队</h2>
+    <article class="team-card">
+      <img src="/kit/assets/club/tarlan/tarlan-fc-logo.webp" width="80" height="80" alt="TARLAN FC 队徽" loading="lazy">
+      <div>
+        <h3>TARLAN FC · 塔尔兰足球队</h3>
+        <p>球队合照待更新。</p>
+      </div>
+    </article>
   </section>
   <section class="culture">
     <div><h2>记录平凡人的足球梦</h2><p>让身边的每一场球都被认真对待。</p></div>
