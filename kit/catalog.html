@@ -28,17 +28,28 @@
   .top{display:block!important}
   .brand,.brandmark,.brandlink,.brandlogo{display:inline-flex!important;max-width:100%!important}
   .brand img,.brandmark img,.brandlink img,.brandlogo img{width:150px!important;max-width:62vw!important;height:auto!important}
-  .nav,.topnav{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:6px!important;max-width:none!important;width:100%!important;margin-top:14px!important;justify-content:stretch!important}
-  .nav a,.topnav a{display:flex!important;align-items:center!important;justify-content:center!important;text-align:center!important;white-space:nowrap!important;font-size:9px!important;padding:9px 4px!important;border:1px solid #262626!important;border-radius:10px!important;background:#101010!important}
-  .nav a.on,.topnav a.on{border-color:#5a4d2e!important;background:#17140d!important;color:#f2dda1!important}
 }
+
+/* V2 mobile hierarchy: catalog is a secondary page, not a second homepage */
+.compactTop{align-items:center}.homeBack{display:inline-flex;align-items:center;justify-content:center;color:#aaa;text-decoration:none;font-size:11px;font-weight:850;padding:8px 11px;border:1px solid #303030;border-radius:999px;white-space:nowrap}.homeBack:hover{color:#f2dda1;border-color:#65552b}.kitSections{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:15px 0 8px}.kitSections a{display:flex;align-items:center;justify-content:center;min-height:42px;border:1px solid #292929;border-radius:12px;background:#101010;color:#aaa;text-decoration:none;font-size:11px;font-weight:900}.kitSections a.on{border-color:#65552b;background:#17140d;color:#f2dda1}.toolbar{top:0;padding:7px 0 9px}.brand-title{font-size:20px;margin-top:7px}.sub{font-size:11px}.grid{margin-top:8px}
+@media(max-width:760px){.compactTop{display:flex!important;align-items:center!important}.homeBack{margin-top:0!important}.kitSections{grid-template-columns:repeat(3,minmax(0,1fr))!important}.kitSections a{font-size:10px!important;padding:8px 5px!important}.brandlink img{width:138px!important;max-width:55vw!important}.brand-title{font-size:18px}.toolbar{margin-top:2px}}
 </style>
 </head>
 <body>
 <div class="app">
- <div class="top"><div><a class="brandlink" href="/"><img src="/assets/brand/sagi-official-logo.webp?v=20261121b" alt="SAGI FOOTBALL"></a><div class="brand-title">SAGI KIT · 足球队服定制</div><div class="sub">选款 · 配色 · 姓名号码 · 球队标识 · 定制需求</div></div><nav class="topnav"><a class="on" href="/kit/catalog.html">KIT</a><a href="/event/v23.html">EVENT</a><a href="/broadcast/">BROADCAST</a><a href="/about.html">ABOUT</a></nav></div>
- <div class="nav"><a class="btn primary" href="./customize.html">开始定制</a><a class="btn" href="./catalogs.html">原版画册</a><a class="btn" href="./club/">CLUB SHOP</a><a class="btn" href="/">返回首页</a></div>
- <div class="rule"><b>为球队做一套真正属于自己的比赛服。</b> 先选择喜欢的款式与标准配色，再填写球队、姓名、号码与尺码需求；后续可继续接入 SAGI 订单系统与抖店成交。</div>
+ <div class="top compactTop">
+   <div>
+     <a class="brandlink" href="/"><img src="/assets/brand/sagi-official-logo.webp?v=20261121b" alt="SAGI FOOTBALL"></a>
+     <div class="brand-title">SAGI KIT</div>
+     <div class="sub">选款 · 配色 · 定制需求</div>
+   </div>
+   <a class="homeBack" href="/">返回首页</a>
+ </div>
+ <nav class="kitSections" aria-label="SAGI KIT 功能">
+   <a class="on" href="./catalog.html">产品库</a>
+   <a href="./catalogs.html">原版画册</a>
+   <a href="./club/">球队选款</a>
+ </nav>
  <div class="toolbar"><input id="q" class="search" placeholder="搜索款式：狮头 / 斑马纹 / 城邦…"></div>
  <div id="grid" class="grid"></div>
 </div>
