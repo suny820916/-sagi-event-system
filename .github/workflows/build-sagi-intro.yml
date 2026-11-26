@@ -1,0 +1,24 @@
+name: Build SAGI intro video
+on:
+  push:
+    paths:
+      - 'assets/intro/upload-20261126/.trigger'
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rebuild intro video
+        run: |
+          cat             assets/intro/upload-20261126/000d1.b64             assets/intro/upload-20261126/000d2.b64             assets/intro/upload-20261126/001a.b64             assets/intro/upload-20261126/001b.b64             assets/intro/upload-20261126/002.b64             assets/intro/upload-20261126/003a.b64             assets/intro/upload-20261126/003b.b64             assets/intro/upload-20261126/004.b64             assets/intro/upload-20261126/005.b64             assets/intro/upload-20261126/006c.b64             assets/intro/upload-20261126/007.b64             assets/intro/upload-20261126/008.b64             assets/intro/upload-20261126/009.b64             | tr -d '\n\r' | base64 -d > assets/intro/sagi-intro.mp4
+          test "$(stat -c%s assets/intro/sagi-intro.mp4)" = "76890"
+          echo "7f744671d20b0ce1f4100b4ecdf4acc5223035554c42eb05ff78e54d0221d126  assets/intro/sagi-intro.mp4" | sha256sum -c -
+      - name: Commit intro video
+        run: |
+          git config user.name "sagi-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add assets/intro/sagi-intro.mp4
+          git commit -m "site: add SAGI intro video" || exit 0
+          git push
