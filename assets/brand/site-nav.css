@@ -43,14 +43,24 @@
   }
 
   .sagi-site-nav {
-    display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    display: flex;
     width: 100%;
     gap: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .sagi-site-nav::-webkit-scrollbar {
+    display: none;
   }
 
   .sagi-site-nav a {
-    padding-inline: 1px;
-    font-size: clamp(11px, 3.5vw, 14px);
+    flex: 0 0 auto;
+    min-width: 0;
+    padding-inline: 8px;
+    font-size: 12px;
   }
 }
