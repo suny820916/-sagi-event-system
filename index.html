@@ -25,9 +25,7 @@ body{min-height:100svh;overflow:hidden}
  align-items:center;
  justify-content:center;
  padding:max(24px,env(safe-area-inset-top)) 18px max(22px,env(safe-area-inset-bottom));
- background:
-   radial-gradient(circle at 50% 68%,rgba(255,16,31,.08),transparent 22%),
-   #000;
+ background:#000;
  position:relative;
 }
 .wordmark{
@@ -56,14 +54,17 @@ body{min-height:100svh;overflow:hidden}
  background:var(--red);
  cursor:pointer;
  -webkit-tap-highlight-color:transparent;
- box-shadow:0 0 14px rgba(255,16,31,.14);
- transition:transform .18s ease,filter .18s ease,box-shadow .18s ease;
+ box-shadow:none;
+ outline:none;
+ appearance:none;
+ -webkit-appearance:none;
+ transition:transform .18s ease,filter .18s ease,opacity .18s ease;
  animation:redDotBreath 2.1s ease-in-out infinite;
 }
 .loveButton:hover,.loveButton:focus-visible{
  transform:translate(-50%,-50%) scale(1.04);
  filter:brightness(1.08);
- box-shadow:0 0 20px rgba(255,16,31,.20);
+ box-shadow:none;
  outline:none;
 }
 .loveButton:active{
@@ -81,13 +82,11 @@ body{min-height:100svh;overflow:hidden}
 @keyframes redDotBreath{
  0%,100%{
   opacity:1;
-  filter:brightness(1);
-  box-shadow:0 0 12px rgba(255,16,31,.12);
+  filter:brightness(.94);
  }
  50%{
   opacity:.90;
-  filter:brightness(1.16);
-  box-shadow:0 0 22px rgba(255,16,31,.20);
+  filter:brightness(1.14);
  }
 }
 @media(max-width:520px){
@@ -106,7 +105,7 @@ body{min-height:100svh;overflow:hidden}
     <svg viewBox="0 0 2048 2048" role="img" aria-hidden="true">
       <path fill="#fff" d="M 844,256 L 788,296 L 739,349 L 715,385 L 586,635 L 382,1063 L 153,1605 L 145,1638 L 145,1684 L 170,1746 L 235,1811 L 265,1828 L 317,1844 L 379,1844 L 420,1832 L 455,1814 L 489,1784 L 523,1729 L 696,1353 L 992,748 L 1012,729 L 1043,729 L 1058,743 L 1159,944 L 1545,1767 L 1600,1818 L 1664,1844 L 1726,1844 L 1754,1836 L 1812,1807 L 1857,1766 L 1894,1700 L 1902,1672 L 1902,1606 L 1894,1577 L 1689,1087 L 1653,1017 L 1593,875 L 1360,397 L 1316,337 L 1255,280 L 1219,256 L 1125,215 L 1041,203 L 974,207 L 902,227 Z"/>
     </svg>
-    <button class="loveButton" id="loveButton" aria-label="点开热爱，进入 SAGI KIT"></button>
+    <button class="loveButton" id="loveButton" aria-label="点开热爱，进入 SAGI SPORTS 主页"></button>
   </div>
 
   <section class="copy">
