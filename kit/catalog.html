@@ -21,6 +21,11 @@
 .card h2{margin:0;font-size:18px}.card p{color:var(--muted);font-size:14px}
 .card a{display:inline-flex;align-items:center;min-height:44px;padding:8px 12px;border-radius:10px;background:var(--gold);color:#111;text-decoration:none;font-weight:750}
 @media(max-width:560px){.top{flex-wrap:wrap}.topnav{justify-content:flex-start}}
+.card img{display:block;width:100%;max-height:75vh;object-fit:contain;background:#080808;border-radius:8px;margin:12px 0}
+.controls{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:12px 0}
+.controls[hidden]{display:none}.controls button{background:#292929;color:#fff;border:1px solid var(--line);border-radius:8px;min-height:44px;padding:8px 12px;font:inherit}
+.controls button:disabled{opacity:.45}
+.card a.download{background:transparent;color:var(--gold);padding-inline:0}
 </style>
 </head>
 <body>
@@ -35,15 +40,54 @@
     <article class="card">
       <h2>SAGI 2026 产品画册</h2>
       <p>PDF · 36 页</p>
-      <a href="./assets/catalogs/sagi-2026-teamwear-catalog.pdf" type="application/pdf">查看原版 PDF</a>
+      <div class="viewer" data-folder="2026" data-pages="36" data-title="SAGI 2026 产品画册">
+        <img src="./assets/catalogs/preview/2026/page-01.jpg" alt="SAGI 2026 产品画册 · 第 1 页" loading="lazy">
+        <div class="controls" hidden>
+          <button type="button" data-step="-1" disabled>上一页</button>
+          <span aria-live="polite">1 / 36</span>
+          <button type="button" data-step="1">下一页</button>
+        </div>
+      </div>
+      <a class="download" href="./assets/catalogs/sagi-2026-teamwear-catalog.pdf" download>下载原版 PDF</a>
     </article>
     <article class="card">
       <h2>SAGI 足球品牌文化画册</h2>
       <p>PDF · 28 页</p>
-      <a href="./assets/catalogs/sagi-football-brand-catalog.pdf" type="application/pdf">查看原版 PDF</a>
+      <div class="viewer" data-folder="culture" data-pages="28" data-title="SAGI 足球品牌文化画册">
+        <img src="./assets/catalogs/preview/culture/page-01.jpg" alt="SAGI 足球品牌文化画册 · 第 1 页" loading="lazy">
+        <div class="controls" hidden>
+          <button type="button" data-step="-1" disabled>上一页</button>
+          <span aria-live="polite">1 / 28</span>
+          <button type="button" data-step="1">下一页</button>
+        </div>
+      </div>
+      <a class="download" href="./assets/catalogs/sagi-football-brand-catalog.pdf" download>下载原版 PDF</a>
     </article>
   </div>
 </main>
 </div>
+<script>
+  for (const viewer of document.querySelectorAll('.viewer')) {
+    const image = viewer.querySelector('img');
+    const controls = viewer.querySelector('.controls');
+    const [previous, next] = controls.querySelectorAll('button');
+    const indicator = controls.querySelector('span');
+    const total = Number(viewer.dataset.pages);
+    let page = 1;
+
+    function turnPage(step) {
+      page = Math.max(1, Math.min(page + step, total));
+      image.src = './assets/catalogs/preview/' + viewer.dataset.folder + '/page-' + String(page).padStart(2, '0') + '.jpg';
+      image.alt = viewer.dataset.title + ' · 第 ' + page + ' 页';
+      indicator.textContent = page + ' / ' + total;
+      previous.disabled = page === 1;
+      next.disabled = page === total;
+    }
+
+    previous.addEventListener('click', () => turnPage(-1));
+    next.addEventListener('click', () => turnPage(1));
+    controls.hidden = false;
+  }
+</script>
 </body>
 </html>
