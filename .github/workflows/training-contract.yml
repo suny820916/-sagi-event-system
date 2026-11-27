@@ -20,10 +20,7 @@ jobs:
       - name: Check JavaScript syntax
         run: |
           node --check training/sw.js
-          node --check training/tests/static-contract.test.cjs
-          node --check training/tests/data-contract.test.cjs
-          node --check training/tests/sw-runtime.test.cjs
-          node --check training/tests/plan-contract.test.cjs
+          for test in training/tests/*.test.cjs; do node --check "$test" || exit 1; done
           node - <<'NODE'
           const fs=require('node:fs');
           const vm=require('node:vm');
@@ -35,8 +32,4 @@ jobs:
           }
           NODE
       - name: Run isolated source contract checks
-        run: |
-          node training/tests/static-contract.test.cjs
-          node training/tests/data-contract.test.cjs
-          node training/tests/sw-runtime.test.cjs
-          node training/tests/plan-contract.test.cjs
+        run: node --test training/tests/*.test.cjs
