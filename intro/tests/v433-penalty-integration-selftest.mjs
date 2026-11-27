@@ -226,11 +226,11 @@ console.log('PASS desktop and mobile substitution share roster and duplicate val
 const directorImpl=control.match(/async function gdRunEvent\(ev,holdMs=5200\)\{[\s\S]*?(?=\r?\nfunction ssPersist)/)?.[0];
 assert(directorImpl,'graphics director implementation missing');
 const directorHarness=new Function(`
- let gdSequence=0,mdMacroSeq=0,mdMacroTimer,releaseOverlay,releaseWrite,delay='',clears=0;
+ let gdSequence=0,mdMacroSeq=0,mdMacroTimer,releaseOverlay,releaseWrite,delay='',clears=0,gdAutoCameraActive=false;
  const writes=[],timers=[],cameraTimers=[];
  const graphicsDirectorSettings={enabled:true,autoReplay:true},matchReady=true;
  const sdRecommend=()=>{},gdClearTimers=()=>{},gdClearCameraTimers=()=>{},gdSetStatus=()=>{};
- const gdEnsureOverlay=()=>delay==='overlay'?new Promise(r=>{releaseOverlay=r}):Promise.resolve();
+ const gdEnsureOverlay=()=>delay==='overlay'?new Promise(r=>{releaseOverlay=r}):Promise.resolve(false);
  const publishMatchday=e=>{writes.push(e?.type||'SCORE');return delay==='write'?new Promise(r=>{releaseWrite=r}):Promise.resolve();};
  const gdSchedule=fn=>timers.push(fn),gdScheduleCamera=fn=>cameraTimers.push(fn);
  const cameraSlotForRole=()=> 'replay',vdSlotAvailable=()=>true,REPLAY_STINGER_SWITCH_MS=920;
@@ -258,6 +258,12 @@ directorHarness.releaseWrite();
 await oldCardEvent;
 assert(JSON.stringify(directorHarness.counts())==='[2,0,0,0]','superseded card completion scheduled an event clear');
 console.log('PASS delayed graphics director completions cannot schedule stale actions');
+directorHarness.delay('');
+await directorHarness.run({type:'YELLOW'});
+assert(JSON.stringify(directorHarness.counts())==='[3,1,0,1]','failed optional overlay suppressed the Browser event');
+await directorHarness.run({type:'GOAL'});
+assert(directorHarness.counts()[0]===4,'failed optional overlay suppressed the core score write');
+console.log('PASS optional overlay failure preserves score and Browser event writes');
 
 const repeatImpl=control.match(/function mdAcceptOperatorEvent\(signature,windowMs=850\)\{[\s\S]*?(?=\r?\nasync function mdPostMatchdayWithRetry)/)?.[0];
 assert(repeatImpl,'operator duplicate guard missing');
