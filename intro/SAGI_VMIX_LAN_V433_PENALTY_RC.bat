@@ -3728,13 +3728,24 @@ function gdAbort(showNote=true){
  if(showNote)publishVmixDirector('ReplayStopEvents','','','停止正在播放的回放').catch(()=>{});
  gdSetStatus('AUTO FLOW ABORTED','manual');if(showNote)note('自动导播流程已终止')
 }
+let gdOverlayRequest=null;
 async function gdEnsureOverlay(){
  if(!graphicsDirectorSettings.enabled||!matchReady)return false;
  vdSave();
  if(matchdayState.overlayVisible)return true;
- matchdayState.overlayVisible=true;mdPersist();
- const ok=await publishVmixDirector('OverlayInput'+vmixDirectorSettings.overlay+'In',vmixDirectorSettings.graphics,0,'AUTO 图形开启');
- return !!ok
+ const state=matchdayState,fixture=mdFixtureKey(),overlay=vmixDirectorSettings.overlay,input=vmixDirectorSettings.graphics;
+ if(gdOverlayRequest?.state===state&&gdOverlayRequest.fixture===fixture&&gdOverlayRequest.overlay===overlay&&gdOverlayRequest.input===input)return gdOverlayRequest.promise;
+ const request={state,fixture,overlay,input,promise:null};
+ gdOverlayRequest=request;
+ request.promise=(async()=>{
+  try{
+   const ok=await publishVmixDirector('OverlayInput'+overlay+'In',input,0,'AUTO 图形开启');
+   if(!ok||gdOverlayRequest!==request||matchdayState!==state||mdFixtureKey()!==fixture)return false;
+   state.overlayVisible=true;mdPersist();return true
+  }catch(e){return false}
+  finally{if(gdOverlayRequest===request)gdOverlayRequest=null}
+ })();
+ return request.promise
 }
 async function gdTakeCamera(slot,label,opts={}){
  const source=opts.source||'AUTO',eventType=opts.eventType||'',force=!!opts.force;
@@ -4284,8 +4295,8 @@ async function vdTake(slot){
  return ssTake(slot,'PROGRAM '+slot.toUpperCase(),'MANUAL',true,'MANUAL');
 }
 function vdPreview(slot){vdSave();if(!vdSlotAvailable(slot)){note('该机位未分配，不能预监');refreshCameraRoleUI();return false}return publishVmixDirector('PreviewInput',vdInput(slot),0,'PREVIEW '+slot.toUpperCase())}
-function vdOverlayIn(){if(!requireMatchReady())return;vdSave();matchdayState.overlayVisible=true;mdPersist();publishVmixDirector('OverlayInput'+vmixDirectorSettings.overlay+'In',vmixDirectorSettings.graphics,0,'图形开启')}
-function vdOverlayOut(){vdSave();matchdayState.overlayVisible=false;mdPersist();publishVmixDirector('OverlayInput'+vmixDirectorSettings.overlay+'Out','',0,'图形关闭')}
+function vdOverlayIn(){if(!requireMatchReady())return;gdOverlayRequest=null;vdSave();matchdayState.overlayVisible=true;mdPersist();publishVmixDirector('OverlayInput'+vmixDirectorSettings.overlay+'In',vmixDirectorSettings.graphics,0,'图形开启')}
+function vdOverlayOut(){gdOverlayRequest=null;vdSave();matchdayState.overlayVisible=false;mdPersist();publishVmixDirector('OverlayInput'+vmixDirectorSettings.overlay+'Out','',0,'图形关闭')}
 async function directVmixBrowserReload(input){
  const host=location.hostname||'127.0.0.1',url='http://'+host+':8088/api/?Function=BrowserReload&Input='+encodeURIComponent(input)+'&_='+Date.now();
  try{await fetch(url,{mode:'no-cors',cache:'no-store'});return true}catch(e){}

@@ -383,3 +383,31 @@ assert(identityHarness.matches({home:'Rovers',away:'City',fixtureKey:'opaque-leg
 identityHarness.makeGeneric();
 assert(identityHarness.matches({home:'Rovers',away:'City',competition:'Cup B'}),'generic initial fixture cannot discover authoritative Bridge state');
 console.log('PASS Bridge follow isolates same-team fixtures across competitions');
+
+const overlayImpl=control.match(/let gdOverlayRequest=null;[\s\S]*?(?=\r?\nasync function gdTakeCamera)/)?.[0];
+const closeOverlayImpl=control.match(/function vdOverlayOut\(\)\{[^\r\n]+/ )?.[0];
+assert(overlayImpl&&closeOverlayImpl,'overlay implementation missing');
+const overlayHarness=new Function(`
+ let matchdayState={overlayVisible:false},fixture='one',persisted=0;
+ const requests=[],graphicsDirectorSettings={enabled:true},matchReady=true,vmixDirectorSettings={overlay:1,graphics:5};
+ const vdSave=()=>{},mdFixtureKey=()=>fixture,mdPersist=()=>{persisted++};
+ const publishVmixDirector=command=>new Promise(resolve=>requests.push({command,resolve}));
+ ${overlayImpl}
+ ${closeOverlayImpl}
+ return {ensure:gdEnsureOverlay,close:vdOverlayOut,requests,counts:()=>[matchdayState.overlayVisible,persisted],switchFixture:()=>{fixture='two'}};
+`)();
+const opening=overlayHarness.ensure(), shared=overlayHarness.ensure();
+assert(overlayHarness.requests.length===1,'concurrent overlay opens sent duplicate commands');
+overlayHarness.requests[0].resolve(false);
+assert(!await opening&&!await shared&&JSON.stringify(overlayHarness.counts())==='[false,0]','failed overlay open was persisted as successful');
+const retryOpen=overlayHarness.ensure();
+overlayHarness.requests[1].resolve(true);
+assert(await retryOpen&&JSON.stringify(overlayHarness.counts())==='[true,1]','overlay could not retry after failure');
+overlayHarness.close();overlayHarness.requests[2].resolve(true);
+const lateOpen=overlayHarness.ensure();
+overlayHarness.close();overlayHarness.requests[4].resolve(true);overlayHarness.requests[3].resolve(true);
+assert(!await lateOpen&&!overlayHarness.counts()[0],'late overlay acknowledgement overrode manual closure');
+const switchedOpen=overlayHarness.ensure();
+overlayHarness.switchFixture();overlayHarness.requests[5].resolve(true);
+assert(!await switchedOpen&&!overlayHarness.counts()[0],'late overlay acknowledgement affected a different fixture');
+console.log('PASS overlay activation retries after rejection and ignores obsolete acknowledgements');
