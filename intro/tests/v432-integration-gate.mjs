@@ -4,6 +4,7 @@ const control=fs.readFileSync(new URL('../v45-lan.html',import.meta.url),'utf8')
 const output=fs.readFileSync(new URL('../vmix-v45-lan.html',import.meta.url),'utf8');
 const bat=fs.readFileSync(new URL('../SAGI_VMIX_LAN_V432_SIGNATURE_RC.bat',import.meta.url),'utf8');
 const build='SAGI432_SIGNATURE_RC7';
+const isV433=control.includes('SAGI433_PENALTY_RC1');
 
 for(const [name,html] of [['control',control],['output',output]])assert(html.includes(build),name+' build fingerprint missing');
 
@@ -28,7 +29,6 @@ for(const token of [
  'function introStateAllowed',
  'lastRenderedSignatureEventKey',
  'function setEventPhoto',
- "fetch('/vmix?graphicsBuild='",
  'sagiBrandA',
  '#ff1a1a',
  '#e33440'
@@ -44,7 +44,11 @@ for(const [name,html] of [['control',control],['output',output]]){
     try{new Function(scripts[i])}catch(e){throw new Error(name+' inline script '+i+' syntax error: '+e.message)}
   }
 }
-assert(!output.includes("fetch('/?graphicsBuild='"),'output/control version reload regression');
+if(isV433){
+ assert(!output.includes('graphicsBuild=')&&!output.includes('location.reload('),'V4.33 live output can reload itself during a match');
+}else{
+ assert(output.includes("fetch('/vmix?graphicsBuild='")&&!output.includes("fetch('/?graphicsBuild='"),'V4.32 output version probe must keep using the output endpoint');
+}
 assert(!output.includes('opacity:.82,offset:.28'),'white flash regression');
 assert(output.includes('transform-origin:0 0;opacity:0'),'first-frame transparency regression');
 
@@ -58,7 +62,6 @@ const lines=bat.split(/\r?\n/),c=lines.indexOf('###SAGI_CONTROL###'),o=lines.ind
 assert(c>0&&o>c,'BAT payload markers invalid');
 const embeddedControl=lines.slice(c+1,o).join('\n').trim().replace(/\r/g,'');
 const embeddedOutput=lines.slice(o+1).join('\n').trim().replace(/\r/g,'');
-const isV433=control.includes('SAGI433_PENALTY_RC1');
 if(isV433){
  assert(embeddedControl.includes(build),'frozen V4.32 rollback control fingerprint missing');
  assert(!embeddedControl.includes('SAGI433_PENALTY_RC1'),'V4.32 rollback BAT contaminated by V4.33 control');
