@@ -100,3 +100,27 @@ assert(!output.includes('setInterval(poll,650)'),'legacy 650ms vMix polling inte
 
 assert(control.includes("setInterval(()=>{mdConsistencyCheck(false).catch(()=>{})},350)"),'controller Bridge-follow polling is not 350ms');
 assert(!control.includes("setInterval(()=>{mdConsistencyCheck(false).catch(()=>{})},900)"),'legacy 900ms controller Bridge-follow polling still active');
+
+const syncImpl=control.match(/let mdConsistencyEpoch=0;[\s\S]*?(?=\nasync function mdRecoverySync)/)?.[0];
+assert(syncImpl,'production sync implementation missing');
+const makePollHarness=new Function('requests',`
+ let time=100,mdConsistencyBusy=false,mdConsistencyBusySince=0,projectLoadBusy=false,mdPendingPublishes=0;
+ let mdLastConsistencyState='',mdLastConsistencyAt=0;
+ const Date={now:()=>time},mdRecoveryMetrics={busyResets:0,passivePolls:0,lanTimeouts:0};
+ const lanJson=()=>new Promise((resolve,reject)=>requests.push({resolve,reject}));
+ const mdBridgeMatchesCurrent=()=>false;
+ ${syncImpl}
+ return {poll:mdConsistencyCheck,advance:()=>{time+=4500},state:()=>({busy:mdConsistencyBusy,status:mdLastConsistencyState})};
+`);
+for(const staleFailure of [false,true]){
+ const requests=[],h=makePollHarness(requests);
+ const stale=h.poll(true);h.advance();const current=h.poll(true);
+ assert(requests.length===2,'watchdog did not replace expired poll');
+ if(staleFailure)requests[0].reject(new Error('LAN_TIMEOUT'));else requests[0].resolve({commandId:'old'});
+ await stale;
+ assert(h.state().busy&&h.state().status==='','stale completion changed current lock or status');
+ assert(await h.poll(true)===false&&requests.length===2,'stale completion allowed another concurrent poll');
+ requests[1].resolve(null);await current;
+ assert(!h.state().busy&&h.state().status==='BRIDGE_EMPTY','replacement poll did not release its own lock');
+}
+console.log('PASS stale passive polls cannot release or overwrite a replacement poll');

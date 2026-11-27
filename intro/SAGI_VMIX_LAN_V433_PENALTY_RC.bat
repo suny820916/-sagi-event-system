@@ -3451,6 +3451,7 @@ function mdConsistencyComparable(x){
 function mdPassiveSyncActive(){
  return !!(matchReady||matchModeActive||matchdayState.scoreboardVisible||matchdayState.clockRunning||Number(matchdayState.revision)>0)
 }
+let mdConsistencyEpoch=0;
 async function mdConsistencyCheck(force=false){
  const now=Date.now();
  if(mdConsistencyBusy&&mdConsistencyBusySince&&now-mdConsistencyBusySince>4000){
@@ -3458,10 +3459,11 @@ async function mdConsistencyCheck(force=false){
  }
  if(mdConsistencyBusy||projectLoadBusy||mdPendingPublishes>0||(!force&&!mdPassiveSyncActive()))return false;
  mdConsistencyBusy=true;mdConsistencyBusySince=Date.now();
+ const epoch=++mdConsistencyEpoch;
  try{
   mdRecoveryMetrics.passivePolls++;
   const remote=await lanJson('/api/matchday?consistency='+Date.now()),sameFixture=remote&&mdBridgeMatchesCurrent(remote);
-  if(projectLoadBusy||mdPendingPublishes>0)return false;
+  if(epoch!==mdConsistencyEpoch||projectLoadBusy||mdPendingPublishes>0)return false;
    if(!remote||!remote.commandId){mdLastConsistencyState='BRIDGE_EMPTY';mdLastConsistencyAt=Date.now();return false}
   if(!sameFixture){mdLastConsistencyState='FIXTURE_MISMATCH';mdLastConsistencyAt=Date.now();return false}
   const remoteRevision=Math.max(0,Number(remote.revision)||0);
@@ -3486,9 +3488,10 @@ async function mdConsistencyCheck(force=false){
   if(q('mdSync'))q('mdSync').innerHTML='<span class="mdLiveDot on"></span>手机 / 电脑 / 比分牌一致 · R'+remoteRevision;
   return true
  }catch(e){
+  if(epoch!==mdConsistencyEpoch)return false;
   if(String(e&&e.code||e&&e.message||e).includes('LAN_TIMEOUT')){mdRecoveryMetrics.lanTimeouts++;mdRecoveryMetrics.lastReason='LAN_TIMEOUT_RECOVERY';mdRecoveryMetrics.lastRecoveryAt=Date.now()}
   mdLastConsistencyState='OFFLINE';return false
- }finally{mdConsistencyBusy=false;mdConsistencyBusySince=0}
+ }finally{if(epoch===mdConsistencyEpoch){mdConsistencyBusy=false;mdConsistencyBusySince=0}}
 }
 
 async function mdRecoverySync(reason='MANUAL'){
