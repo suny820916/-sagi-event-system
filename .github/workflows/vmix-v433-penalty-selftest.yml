@@ -15,6 +15,7 @@ on:
       - "intro/tests/v433-penalty-integration-selftest.mjs"
       - "intro/tests/v433-field-acceptance-launcher-selftest.mjs"
       - "intro/tests/v433-auto-test-v03-selftest.mjs"
+      - "intro/tests/v433-auto-test-v10-payload.mjs"
       - ".github/workflows/vmix-v433-penalty-selftest.yml"
   pull_request:
     paths:
@@ -31,6 +32,7 @@ on:
       - "intro/tests/v433-penalty-integration-selftest.mjs"
       - "intro/tests/v433-field-acceptance-launcher-selftest.mjs"
       - "intro/tests/v433-auto-test-v03-selftest.mjs"
+      - "intro/tests/v433-auto-test-v10-payload.mjs"
       - ".github/workflows/vmix-v433-penalty-selftest.yml"
   workflow_dispatch:
 
@@ -49,6 +51,8 @@ jobs:
         run: node intro/tests/v433-penalty-integration-selftest.mjs
       - name: Guard self-contained field acceptance launcher
         run: node intro/tests/v433-field-acceptance-launcher-selftest.mjs
+      - name: Verify AUTO TEST V1.0 embeds the candidate UI
+        run: node intro/tests/v433-auto-test-v10-payload.mjs
       - name: Audit SAGI AUTO TEST V0.3 safety contract
         run: node intro/tests/v433-auto-test-v03-selftest.mjs
 
