@@ -3280,7 +3280,9 @@ function mdIdentityNorm(v){return String(v||'').trim().toLowerCase().replace(/\s
 function mdIdentityGeneric(v){return !v||['home','away','主队','客队','team home','team away'].includes(mdIdentityNorm(v))}
 function mdBridgeMatchesCurrent(x){
  const ch=String(q('matchHome').value||'').trim(),ca=String(q('matchAway').value||'').trim(),bh=String(x&&x.home||'').trim(),ba=String(x&&x.away||'').trim();
- const localCompetition=mdIdentityNorm(q('matchCompetition')?.value),bridgeCompetition=mdIdentityNorm(x?.competition);
+ const localCompetition=mdIdentityNorm(q('matchCompetition')?.value),bridgeKey=mdIdentityNorm(x?.fixtureKey);
+ const teamSuffix='|'+mdIdentityNorm(bh)+'|'+mdIdentityNorm(ba);
+ const bridgeCompetition=mdIdentityNorm(x?.competition)||(bridgeKey.endsWith(teamSuffix)?bridgeKey.slice(0,-teamSuffix.length):'');
  const haveLocalTeams=!mdIdentityGeneric(ch)&&!mdIdentityGeneric(ca);
  if(haveLocalTeams&&localCompetition&&bridgeCompetition&&localCompetition!==bridgeCompetition)return false;
  if(mdIdentityGeneric(ch)||mdIdentityGeneric(ca)||mdIdentityGeneric(bh)||mdIdentityGeneric(ba))return true;

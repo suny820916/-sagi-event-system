@@ -377,6 +377,9 @@ const identityHarness=new Function(`
 assert(identityHarness.matches({home:'Rovers',away:'City',competition:'cup a'}),'equivalent competition name blocked same fixture');
 assert(!identityHarness.matches({home:'Rovers',away:'City',competition:'Cup B'}),'same teams in another competition treated as current fixture');
 assert(identityHarness.matches({home:'Rovers',away:'City'}),'legacy Bridge state without competition no longer matches');
+assert(!identityHarness.matches({home:'Rovers',away:'City',fixtureKey:'cup b|rovers|city'}),'packaged Bridge key did not distinguish the competition');
+assert(identityHarness.matches({home:'Rovers',away:'City',fixtureKey:'cup a|rovers|city'}),'packaged same-fixture key was rejected');
+assert(identityHarness.matches({home:'Rovers',away:'City',fixtureKey:'opaque-legacy-key'}),'opaque legacy fixture key lost compatibility');
 identityHarness.makeGeneric();
 assert(identityHarness.matches({home:'Rovers',away:'City',competition:'Cup B'}),'generic initial fixture cannot discover authoritative Bridge state');
 console.log('PASS Bridge follow isolates same-team fixtures across competitions');

@@ -377,7 +377,7 @@ server.listen(PORT,'127.0.0.1',async()=>{
   console.log('TEST 8A: same teams in another competition cannot replace historical score');
   const originalFixtureState=graphics;
   graphics={...graphics,commandId:'different_competition',revision:(Number(graphics.revision)||0)+1,
-   home:afterStaleRestore.homeName,away:afterStaleRestore.awayName,competition:'UNRELATED TEST CUP',
+   home:afterStaleRestore.homeName,away:afterStaleRestore.awayName,competition:undefined,
    fixtureKey:'unrelated test cup|'+afterStaleRestore.homeName+'|'+afterStaleRestore.awayName,homeScore:9,awayScore:9};
   const competitionRead=page.waitForResponse(response=>response.url().includes('/api/matchday?recover='),{timeout:5000});
   await page.evaluate(()=>document.querySelector('#mmRestoreState').click());
