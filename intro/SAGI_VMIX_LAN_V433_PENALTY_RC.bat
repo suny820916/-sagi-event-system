@@ -7322,7 +7322,10 @@ function showEvent(g){
 }
 function applyGraphics(g){
  const fixture=String(g&&g.fixtureKey||'');
- if(fixture&&fixture!==lastGraphicsFixtureKey){lastGraphicsFixtureKey=fixture;lastGraphicsRevision=0}
+ if(fixture&&fixture!==lastGraphicsFixtureKey){
+  if(currentGraphics){hideEvent(false);lastRenderedSignatureEventKey=''}
+  lastGraphicsFixtureKey=fixture;lastGraphicsRevision=0;
+ }
  const revision=Math.max(0,Number(g&&g.revision)||0);
  if(revision&&lastGraphicsRevision&&revision<lastGraphicsRevision)return false;
  if(revision)lastGraphicsRevision=revision;

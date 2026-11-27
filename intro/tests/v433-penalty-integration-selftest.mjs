@@ -125,21 +125,24 @@ for(const staleFailure of [false,true]){
 }
 console.log('PASS stale passive polls cannot release or overwrite a replacement poll');
 
-const applyImpl=output.match(/function applyGraphics\(g\)\{[\s\S]*?(?=\n\nwindow.sagiScoreCenterDiagnostic)/)?.[0];
+const applyImpl=output.match(/function applyGraphics\(g\)\{[\s\S]*?(?=\r?\n\r?\nwindow.sagiScoreCenterDiagnostic)/)?.[0];
 assert(applyImpl,'output applyGraphics function missing');
 const outputHarness=new Function(`
  let currentGraphics=null,frozenGraphics=null,lastGraphicsFixtureKey='',lastGraphicsRevision=0;
- const outputHealth={},gfxSeconds=g=>g.clock.baseSeconds+3,updateScoreBug=()=>{},showEvent=()=>{};
+ let cleanups=0,lastRenderedSignatureEventKey='';
+ const outputHealth={},gfxSeconds=g=>g.clock.baseSeconds+3,updateScoreBug=()=>{},hideEvent=()=>{cleanups++},showEvent=g=>{if(g.event)lastRenderedSignatureEventKey=g.event.id;};
  ${applyImpl}
- return {apply:applyGraphics, snapshot:()=>frozenGraphics};
+ return {apply:applyGraphics, snapshot:()=>frozenGraphics,visuals:()=>[cleanups,lastRenderedSignatureEventKey]};
 `)();
-const fixtureOne={fixtureKey:'fixture-one',revision:20,homeScore:3,scoreboardFrozen:true,clock:{baseSeconds:120,running:true}};
+const fixtureOne={fixtureKey:'fixture-one',revision:20,homeScore:3,event:{id:'old-goal'},scoreboardFrozen:true,clock:{baseSeconds:120,running:true}};
 const fixtureTwo={fixtureKey:'fixture-two',revision:1,homeScore:0,scoreboardFrozen:true,clock:{baseSeconds:5,running:true}};
 outputHarness.apply(fixtureOne);
 assert(outputHarness.snapshot().clock.baseSeconds===123&&!outputHarness.snapshot().clock.running,'initial freeze did not capture clock');
 outputHarness.apply(fixtureTwo);
+assert(JSON.stringify(outputHarness.visuals())==='[1,""]','old fixture animation or event identity survived switch');
 assert(outputHarness.snapshot().fixtureKey===fixtureTwo.fixtureKey&&outputHarness.snapshot().homeScore===0&&outputHarness.snapshot().clock.baseSeconds===8,'frozen output retained previous fixture');
 outputHarness.apply({...fixtureTwo,revision:2,homeScore:1,clock:{baseSeconds:90,running:true}});
+assert(outputHarness.visuals()[0]===1,'same-fixture update cleared event visuals');
 assert(outputHarness.snapshot().homeScore===0&&outputHarness.snapshot().clock.baseSeconds===8,'same-fixture freeze drifted');
 assert(outputHarness.apply({...fixtureTwo,revision:1,scoreboardFrozen:false})===false&&!!outputHarness.snapshot(),'stale update unfroze output');
 outputHarness.apply({...fixtureTwo,revision:3,scoreboardFrozen:false});
