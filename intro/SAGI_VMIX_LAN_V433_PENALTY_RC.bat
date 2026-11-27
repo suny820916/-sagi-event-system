@@ -6885,15 +6885,23 @@ root.SAGISignatureCore=api;
 (function(){
 'use strict';
 const LAN_DIRECT=true;
-async function lanState(){
- const r=await fetch('/api/state',{cache:'no-store'});
- if(!r.ok)throw new Error('LAN '+r.status);
- return r.json();
+const OUTPUT_REQUEST_TIMEOUT_MS=2000;
+async function readOutputJson(url,label){
+ const controller=new AbortController();
+ const timer=setTimeout(()=>controller.abort(),OUTPUT_REQUEST_TIMEOUT_MS);
+ try{
+  const r=await fetch(url,{cache:'no-store',signal:controller.signal});
+  if(!r.ok)throw new Error(label+' '+r.status);
+  return await r.json();
+ }finally{
+  clearTimeout(timer);
+ }
 }
-async function lanMatchday(){
- const r=await fetch('/api/matchday?ts='+Date.now(),{cache:'no-store'});
- if(!r.ok)throw new Error('MATCHDAY '+r.status);
- return r.json();
+function lanState(){
+ return readOutputJson('/api/state','LAN');
+}
+function lanMatchday(){
+ return readOutputJson('/api/matchday?ts='+Date.now(),'MATCHDAY');
 }
 
 const q=id=>document.getElementById(id),ROLE_NAMES={GK:'门将',DF:'后卫',MF:'中场',FW:'前锋'};

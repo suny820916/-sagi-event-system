@@ -148,3 +148,36 @@ assert(outputHarness.apply({...fixtureTwo,revision:1,scoreboardFrozen:false})===
 outputHarness.apply({...fixtureTwo,revision:3,scoreboardFrozen:false});
 assert(outputHarness.snapshot()===null,'unfreeze failed to clear snapshot');
 console.log('PASS frozen scoreboard switches fixtures without leaking the previous clock or score');
+
+const readerImpl=output.match(/const OUTPUT_REQUEST_TIMEOUT_MS=[\s\S]*?(?=\r?\nconst q=)/)?.[0];
+assert(readerImpl,'output request implementation missing');
+let expire, pendingTimer, requestedUrl;
+let stallBody=true;
+const outputReader=new Function('fetch','setTimeout','clearTimeout',`
+ ${readerImpl}
+ return {lanState,lanMatchday};
+`)(
+ async (url,{signal})=>{
+  requestedUrl=url;
+  const stall=()=>new Promise((resolve,reject)=>{
+   signal.addEventListener('abort',()=>reject(new Error('aborted')),{once:true});
+  });
+  return stallBody?{ok:true,json:stall}:url==='/api/state'?stall():{ok:true,json:async()=>({revision:7})};
+ },
+ (callback,delay)=>{assert(delay===2000,'unexpected output request timeout');expire=callback;return pendingTimer=Symbol();},
+ timer=>{assert(timer===pendingTimer,'wrong output request timer cleared');pendingTimer=null;}
+);
+const stalledBody=outputReader.lanMatchday();
+await Promise.resolve();
+assert(requestedUrl.startsWith('/api/matchday?ts='),'wrong matchday endpoint');
+expire();
+await stalledBody.then(()=>assert(false,'stalled response body did not reject'),error=>assert(error.message==='aborted','wrong body error'));
+assert(pendingTimer===null,'timer survived aborted response body');
+stallBody=false;
+const stalledState=outputReader.lanState();
+assert(requestedUrl==='/api/state','wrong lineup state endpoint');
+expire();
+await stalledState.then(()=>assert(false,'stalled request did not reject'),error=>assert(error.message==='aborted','wrong request error'));
+assert(pendingTimer===null,'timer survived aborted request');
+assert((await outputReader.lanMatchday()).revision===7&&pendingTimer===null,'output failed to read fresh state after timeouts');
+console.log('PASS output request deadlines cover headers and JSON bodies and allow recovery');
