@@ -151,6 +151,15 @@ outputHarness.apply({...fixtureTwo,revision:3,scoreboardFrozen:false});
 assert(outputHarness.snapshot()===null,'unfreeze failed to clear snapshot');
 console.log('PASS frozen scoreboard switches fixtures without leaking the previous clock or score');
 
+
+const oldEpoch='a'.repeat(32), newEpoch='b'.repeat(32);
+assert(outputHarness.apply({...fixtureTwo,revision:12,homeScore:5,bridgeEpoch:oldEpoch}),'first tagged revision rejected');
+assert(!outputHarness.apply({...fixtureTwo,revision:9,homeScore:0}),'versionless response bypassed revision guard');
+assert(outputHarness.apply({...fixtureTwo,revision:8,homeScore:4,bridgeEpoch:newEpoch}),'Bridge restart did not admit lower revision');
+assert(outputHarness.snapshot().homeScore===4,'restart kept the old frozen score');
+assert(!outputHarness.apply({...fixtureTwo,revision:7,homeScore:8,bridgeEpoch:newEpoch}),'same-epoch stale revision passed');
+console.log('PASS output accepts durable recovery without dropping its same-epoch guard');
+
 const readerImpl=output.match(/const OUTPUT_REQUEST_TIMEOUT_MS=[\s\S]*?(?=\r?\nconst q=)/)?.[0];
 assert(readerImpl,'output request implementation missing');
 let expire, pendingTimer, requestedUrl;

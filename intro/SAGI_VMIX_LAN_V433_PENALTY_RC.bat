@@ -69,6 +69,7 @@ $ProgressPreference = "SilentlyContinue"
 
 $PreferredPort = 8100
 $Port = $PreferredPort
+$BridgeEpoch = [Guid]::NewGuid().ToString("N")
 $VmixApi = "http://127.0.0.1:8088/api/"
 $Root = Join-Path $env:LOCALAPPDATA "SAGI\LiveMatchDirector"
 New-Item -ItemType Directory -Force -Path $Root | Out-Null
@@ -459,13 +460,14 @@ function Read-HttpRequest($stream) {
   return @{ method=$method; target=$target; headers=$headers; body=$body }
 }
 
-function Write-HttpResponse($stream,[int]$Status,[string]$ContentType,[string]$Body) {
+function Write-HttpResponse($stream,[int]$Status,[string]$ContentType,[string]$Body,[switch]$MatchdayEpoch) {
   $statusText = switch ($Status) {
     200 {"OK"} 204 {"No Content"} 400 {"Bad Request"} 404 {"Not Found"} 409 {"Conflict"} 500 {"Internal Server Error"} default {"OK"}
   }
   if ($null -eq $Body) { $Body = "" }
   $bytes = [Text.Encoding]::UTF8.GetBytes($Body)
-  $head = "HTTP/1.1 $Status $statusText`r`nContent-Type: $ContentType; charset=utf-8`r`nContent-Length: $($bytes.Length)`r`nCache-Control: no-store`r`nAccess-Control-Allow-Origin: *`r`nAccess-Control-Allow-Headers: Content-Type`r`nAccess-Control-Allow-Methods: GET, POST, OPTIONS`r`nConnection: close`r`n`r`n"
+  $epochHeader = if ($MatchdayEpoch) { "X-SAGI-Bridge-Epoch: $BridgeEpoch`r`n" } else { "" }
+  $head = "HTTP/1.1 $Status $statusText`r`nContent-Type: $ContentType; charset=utf-8`r`nContent-Length: $($bytes.Length)`r`nCache-Control: no-store`r`nAccess-Control-Allow-Origin: *`r`nAccess-Control-Allow-Headers: Content-Type`r`nAccess-Control-Allow-Methods: GET, POST, OPTIONS`r`nConnection: close`r`n$epochHeader`r`n"
   $headBytes = [Text.Encoding]::ASCII.GetBytes($head)
   $stream.Write($headBytes,0,$headBytes.Length)
   if ($bytes.Length -gt 0) { $stream.Write($bytes,0,$bytes.Length) }
@@ -632,7 +634,7 @@ while ($true) {
       }
     }
     elseif ($method -eq "GET" -and $path -eq "/api/matchday") {
-      Write-HttpResponse $stream 200 "application/json" $MatchdayJson
+      Write-HttpResponse $stream 200 "application/json" $MatchdayJson -MatchdayEpoch
     }
     elseif ($method -eq "POST" -and $path -eq "/api/matchday") {
       try {
@@ -7036,13 +7038,16 @@ root.SAGISignatureCore=api;
 'use strict';
 const LAN_DIRECT=true;
 const OUTPUT_REQUEST_TIMEOUT_MS=2000;
-async function readOutputJson(url,label){
+async function readOutputJson(url,label,readBridgeEpoch=false){
  const controller=new AbortController();
  const timer=setTimeout(()=>controller.abort(),OUTPUT_REQUEST_TIMEOUT_MS);
  try{
   const r=await fetch(url,{cache:'no-store',signal:controller.signal});
   if(!r.ok)throw new Error(label+' '+r.status);
-  return await r.json();
+  const json=await r.json();
+  if(!readBridgeEpoch||!json)return json;
+  const epoch=r.headers?.get('X-SAGI-Bridge-Epoch')||'';
+  return {...json,bridgeEpoch:/^[a-f0-9]{32}$/.test(epoch)?epoch:''};
  }finally{
   clearTimeout(timer);
  }
@@ -7051,7 +7056,7 @@ function lanState(){
  return readOutputJson('/api/state','LAN');
 }
 function lanMatchday(){
- return readOutputJson('/api/matchday?ts='+Date.now(),'MATCHDAY');
+ return readOutputJson('/api/matchday?ts='+Date.now(),'MATCHDAY',true);
 }
 
 const q=id=>document.getElementById(id),ROLE_NAMES={GK:'门将',DF:'后卫',MF:'中场',FW:'前锋'};
@@ -7480,7 +7485,9 @@ function showEvent(g){
 }
 function applyGraphics(g){
  const fixture=String(g&&g.fixtureKey||'');
- if(fixture&&fixture!==lastGraphicsFixtureKey){
+ const previousEpoch=currentGraphics?.bridgeEpoch||'',epoch=g.bridgeEpoch||previousEpoch;
+ const restarted=!!(epoch&&previousEpoch&&epoch!==previousEpoch);
+ if(restarted||(fixture&&fixture!==lastGraphicsFixtureKey)){
   if(currentGraphics){
    hideEvent(false);lastRenderedSignatureEventKey='';
    lastHomeScore=null;lastAwayScore=null;
@@ -7493,10 +7500,10 @@ function applyGraphics(g){
  const revision=Math.max(0,Number(g&&g.revision)||0);
  if(revision&&lastGraphicsRevision&&revision<lastGraphicsRevision)return false;
  if(revision)lastGraphicsRevision=revision;
- const enteringFreeze=!!g.scoreboardFrozen&&(!currentGraphics?.scoreboardFrozen||fixture!==String(currentGraphics.fixtureKey||''));
+ const enteringFreeze=!!g.scoreboardFrozen&&(restarted||!currentGraphics?.scoreboardFrozen||fixture!==String(currentGraphics.fixtureKey||''));
  if(enteringFreeze){frozenGraphics={...g,clock:{...(g.clock||{}),baseSeconds:gfxSeconds(g),running:false,startedAt:null}}}
  if(!g.scoreboardFrozen)frozenGraphics=null;
- currentGraphics=g;outputHealth.lastAppliedAt=Date.now();updateScoreBug();showEvent(g);return true
+ currentGraphics=epoch&&!g.bridgeEpoch?{...g,bridgeEpoch:epoch}:g;outputHealth.lastAppliedAt=Date.now();updateScoreBug();showEvent(g);return true
 }
 
 window.sagiScoreCenterDiagnostic=()=>{const g=currentGraphics||{},clock=g.clock||{};return{build:'V4.31.0',fixtureKey:g.fixtureKey||'',revision:lastGraphicsRevision,commandId:g.commandId||'',home:g.scoreHomeName||g.home||'',away:g.scoreAwayName||g.away||'',score:[Number(g.homeScore)||0,Number(g.awayScore)||0],colors:[g.homeColor||'',g.awayColor||'',g.accentColor||''],stoppageTime:g.stoppageTime||'',frozen:!!g.scoreboardFrozen,period:clock.period||'',penalty:g.penaltyShootout||null,health:{...outputHealth,staleMs:outputHealth.lastOkAt?Math.max(0,Date.now()-outputHealth.lastOkAt):null}}};
@@ -7523,7 +7530,7 @@ async function poll(){
    const g=await lanMatchday();
    if(outputHealth.consecutiveFailures>0)outputHealth.recoveries++;
    outputHealth.pollOk++;outputHealth.consecutiveFailures=0;outputHealth.lastOkAt=Date.now();
-   if(g&&g.commandId&&(g.commandId!==lastGraphics||Number(g.revision||0)!==lastGraphicsRevision)){lastGraphics=g.commandId;applyGraphics(g)}
+   if(g&&g.commandId&&(g.commandId!==lastGraphics||Number(g.revision||0)!==lastGraphicsRevision||(g.bridgeEpoch&&g.bridgeEpoch!==currentGraphics?.bridgeEpoch))){if(applyGraphics(g))lastGraphics=g.commandId}
  }catch(e){outputHealth.pollFail++;outputHealth.consecutiveFailures++;outputHealth.lastErrorAt=Date.now()}
  }finally{
   outputPollBusy=false;
