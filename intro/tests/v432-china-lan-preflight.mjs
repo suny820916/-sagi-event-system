@@ -97,7 +97,9 @@ const readyBlock=control.slice(control.indexOf('function setMatchReady(on){'),co
 const projectLoadBlock=control.slice(control.indexOf('async function loadMatchProject(){'),control.indexOf('async function createMatchProject(){'));
 check('Fixture takeover is tied to explicit operator actions',readyBlock.includes('mdAuthorizeFixtureTakeover()')&&projectLoadBlock.includes('mdAuthorizeFixtureTakeover()'));
 check('Fixture takeover authorization is consumed and restored only on publish failure',control.includes('if(state.allowFixtureTakeover)mdFixtureTakeoverOnce=false')&&control.includes('if(state.allowFixtureTakeover)mdFixtureTakeoverOnce=true'));
-check('Controller recovers immediately after stale/conflicting state rejection',control.includes("includes('LAN 409')")&&control.includes("recoverMatchdayFromBridge(false,{preferNewest:false,allowIdentityTakeover:true})"));
+const conflictRecoveryArgs=isV433?'preferNewest:false,allowIdentityTakeover:true,expectedFixture:state.fixtureKey':'preferNewest:false,allowIdentityTakeover:true';
+check('Controller recovers immediately after stale/conflicting state rejection',control.includes("includes('LAN 409')")&&control.includes('recoverMatchdayFromBridge(false,{'+conflictRecoveryArgs+'})'));
+if(isV433)check('Conflict recovery checks the selected fixture after reading the Bridge',control.includes("if(opts.expectedFixture&&opts.expectedFixture!==mdFixtureKey())return false;"));
 check('Local event persistence exists',control.includes('mdPersist()')&&control.includes('mdRecordEvent('));
 if(failures.length){console.error('CHINA_LAN_PREFLIGHT_FAILED '+failures.join('; '));process.exit(1)}
 console.log('CHINA_LAN_PREFLIGHT_STATIC_PASS — physical offline soak still required',{activeBatPath,rollbackFrozen:isV433});
