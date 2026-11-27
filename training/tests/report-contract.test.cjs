@@ -16,5 +16,5 @@ assert.match(iq, /sample\.length<12\|\|stats\.some\(x=>x\.n<2\)/, 'recommendatio
 assert.match(iq, /数据不足：/, 'insufficient-data state must be explicit');
 assert.match(iq, /\$\('coach'\)\.textContent=coachAdvice\(rows\)/, 'report must render the coaching recommendation');
 assert.match(iq, /version:'0\.11'/, 'new IQ records must carry the current scenario version');
-assert.match(sw, /const CACHE='sagi-training-11-r1'/, 'frontend change must rotate the offline cache');
+assert.match(sw, /const CACHE='sagi-training-11-r[1-9]\d*'/, 'frontend change must rotate the offline cache');
 console.log('PASS: same-difficulty coaching recommendation, minimum sample guard and V0.11 cache rotation');

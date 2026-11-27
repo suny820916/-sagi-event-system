@@ -33,3 +33,16 @@ for (const [i, s] of sandbox.q.entries()) {
   assert.ok(typeof s.f === 'string' && s.f.trim().length >= 10, 'missing explanation ' + (i+1));
 }
 console.log('PASS: 28-day training plan and 20 decision scenarios');
+
+const drillSource = iq.slice(iq.indexOf('const dailyDrills='), iq.indexOf('const dailyDrill='));
+const drillForHash = vm.runInNewContext(drillSource + '\ndrillForHash');
+for (let day = 1; day <= days.length; day++) {
+  const drill = drillForHash('#day=' + day);
+  assert.equal(drill.day, day);
+  assert.equal(drill.scenarios.length, 3);
+  assert.equal(new Set(drill.scenarios).size, 3);
+  assert.ok(drill.scenarios.every(id => Number.isInteger(id) && sandbox.q[id - 1]));
+}
+for (const hash of ['', '#day=0', '#day=29', '#day=01', '#day=3&other=1']) {
+  assert.equal(drillForHash(hash), null);
+}
