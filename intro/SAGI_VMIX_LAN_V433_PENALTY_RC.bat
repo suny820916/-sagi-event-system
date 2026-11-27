@@ -7326,7 +7326,7 @@ function applyGraphics(g){
  const revision=Math.max(0,Number(g&&g.revision)||0);
  if(revision&&lastGraphicsRevision&&revision<lastGraphicsRevision)return false;
  if(revision)lastGraphicsRevision=revision;
- const enteringFreeze=!!g.scoreboardFrozen&&!(currentGraphics&&currentGraphics.scoreboardFrozen);
+ const enteringFreeze=!!g.scoreboardFrozen&&(!currentGraphics?.scoreboardFrozen||fixture!==String(currentGraphics.fixtureKey||''));
  if(enteringFreeze){frozenGraphics={...g,clock:{...(g.clock||{}),baseSeconds:gfxSeconds(g),running:false,startedAt:null}}}
  if(!g.scoreboardFrozen)frozenGraphics=null;
  currentGraphics=g;outputHealth.lastAppliedAt=Date.now();updateScoreBug();showEvent(g);return true
