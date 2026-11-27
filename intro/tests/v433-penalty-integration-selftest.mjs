@@ -258,3 +258,19 @@ directorHarness.releaseWrite();
 await oldCardEvent;
 assert(JSON.stringify(directorHarness.counts())==='[2,0,0,0]','superseded card completion scheduled an event clear');
 console.log('PASS delayed graphics director completions cannot schedule stale actions');
+
+const repeatImpl=control.match(/function mdAcceptOperatorEvent\(signature,windowMs=850\)\{[\s\S]*?(?=\r?\nasync function mdPostMatchdayWithRetry)/)?.[0];
+assert(repeatImpl,'operator duplicate guard missing');
+const repeatHarness=new Function(`
+ let now=100,fixtureKey='one';
+ const mdRecentOperatorEvents=new Map(),performance={now:()=>now},q=()=>({}),mdFixtureKey=()=>fixtureKey;
+ ${repeatImpl}
+ return {accept:mdAcceptOperatorEvent,fixture:value=>fixtureKey=value,tick:value=>now+=value,size:()=>mdRecentOperatorEvents.size};
+`)();
+assert(repeatHarness.accept('RED|HOME|p1',1400)&&repeatHarness.accept('YELLOW|AWAY|p2',1400),'distinct match events were blocked');
+assert(!repeatHarness.accept('RED|HOME|p1',1400),'interleaved action bypassed repeat guard');
+repeatHarness.fixture('two');
+assert(repeatHarness.accept('RED|HOME|p1',1400),'prior fixture blocked a valid event');
+repeatHarness.tick(1400);
+assert(repeatHarness.accept('RED|HOME|p1',1400)&&repeatHarness.size()===1,'expired repeat guard entries were not cleared');
+console.log('PASS interleaved operator actions deduplicate per fixture and expire');

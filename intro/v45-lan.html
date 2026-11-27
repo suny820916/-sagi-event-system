@@ -2691,7 +2691,8 @@ async function mdLoad(opts={}){
 const MD_LAST_GOOD_KEY='sagi_matchday_last_good_v429';
 let mdPublishRevision=0,mdLastAckRevision=0,mdPublishChain=Promise.resolve(),mdPendingPublishes=0,mdConsistencyBusy=false,mdConsistencyBusySince=0,mdLastConsistencyAt=0,mdLastConsistencyState='INIT',mdLocalRecoveryStamp=0,mdFixtureTakeoverOnce=false;
 function mdAuthorizeFixtureTakeover(){mdFixtureTakeoverOnce=true;return true}
-let mdPublishMetrics={ok:0,failed:0,retried:0,recovered:0,lastOkAt:0,lastErrorAt:0,lastAttempts:0,lastLatencyMs:0,maxLatencyMs:0,totalLatencyMs:0,samples:0},mdEventGateSig='',mdEventGateAt=0;
+let mdPublishMetrics={ok:0,failed:0,retried:0,recovered:0,lastOkAt:0,lastErrorAt:0,lastAttempts:0,lastLatencyMs:0,maxLatencyMs:0,totalLatencyMs:0,samples:0};
+const mdRecentOperatorEvents=new Map();
 function mdNextEventIdentity(type='EVENT'){
  const sequence=Math.max(0,Number(matchdayState.eventSequence)||0)+1;
  matchdayState.eventSequence=sequence;
@@ -2707,9 +2708,16 @@ function mdSaveLastGood(){
 }
 function mdLoadLastGood(){try{return JSON.parse(localStorage.getItem(MD_LAST_GOOD_KEY)||'null')}catch(e){return null}}
 function mdAcceptOperatorEvent(signature,windowMs=850){
- const now=Date.now(),sig=String(signature||'');
- if(sig&&sig===mdEventGateSig&&(now-mdEventGateAt)<windowMs){if(q('mdEventStatus'))q('mdEventStatus').textContent='已拦截重复操作';return false}
- mdEventGateSig=sig;mdEventGateAt=now;return true
+ if(!signature)return true;
+ const now=performance.now(),key=JSON.stringify([mdFixtureKey(),signature]);
+ for(const [pending,expiresAt] of mdRecentOperatorEvents){
+  if(expiresAt<=now)mdRecentOperatorEvents.delete(pending);
+ }
+ if(mdRecentOperatorEvents.has(key)){
+  if(q('mdEventStatus'))q('mdEventStatus').textContent='已拦截重复操作';
+  return false
+ }
+ mdRecentOperatorEvents.set(key,now+windowMs);return true
 }
 async function mdPostMatchdayWithRetry(state){
  const sendStarted=(typeof performance!=='undefined'&&performance.now)?performance.now():Date.now();
