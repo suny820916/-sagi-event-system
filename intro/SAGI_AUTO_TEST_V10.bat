@@ -217,8 +217,10 @@ function New-BrowserClient([string]$path){
  $target=(Debug-Edge 'Target.createTarget' @{url='about:blank';browserContextId=$context}).targetId
  $session=(Debug-Edge 'Target.attachToTarget' @{targetId=$target;flatten=$true}).sessionId
  [void](Debug-Edge 'Emulation.setDeviceMetricsOverride' @{width=1440;height=900;deviceScaleFactor=1;mobile=$false} $session)
- [void](Debug-Edge 'Page.navigate' @{url=$base+$path} $session)
- Wait-Test "client load $path" { (Evaluate-Edge $session "document.readyState==='complete' && location.href.startsWith('$base/')") -eq $true }
+ $navigation=Debug-Edge 'Page.navigate' @{url=$base+$path} $session
+ if($navigation.errorText){throw "Client navigation failed for ${path}: $($navigation.errorText)"}
+ $required=if($path -eq '/vmix'){'scoreBug'}else{'setupReadyBtn'}
+ Wait-Test "client load $path" { (Evaluate-Edge $session "document.readyState!=='loading' && location.href.startsWith('$base/') && !!document.getElementById('$required')") -eq $true }
  $session
 }
 function Click-Operator([string]$name,[switch]$Pointer){
