@@ -3122,13 +3122,14 @@ async function replayStingerTake(slot,phase='IN',source='MANUAL',label=''){
 async function gdRunEvent(ev,holdMs=5200){
  sdRecommend(ev);const seq=++gdSequence;gdClearTimers();clearTimeout(mdMacroTimer);mdMacroSeq++;
  const enabled=graphicsDirectorSettings.enabled!==false;
- if(enabled)await gdEnsureOverlay();
- if(seq!==gdSequence)return;
  if(!ev){await publishMatchday(null);return}
  const type=ev.type||'EVENT';
  if(type==='GOAL'&&enabled){
   gdSetStatus('1/3 · SCORE UPDATE','busy');
-  await publishMatchday(null);
+  const result=await publishMatchday(null);
+  if(seq!==gdSequence)return;
+  if(!result?.ok){gdSetStatus('比分未确认 · 已跳过进球图形与回放','manual');return false}
+  await gdEnsureOverlay();
   if(seq!==gdSequence)return;
   gdSchedule(async()=>{
    gdSetStatus('2/3 · GOAL CARD','busy');await publishMatchday(ev);
@@ -3153,6 +3154,8 @@ async function gdRunEvent(ev,holdMs=5200){
   gdSchedule(()=>{if(seq===gdSequence)gdSetStatus('安全自动 · 就绪')},Math.max(holdMs+900,5200),seq);
   return
  }
+ if(enabled)await gdEnsureOverlay();
+ if(seq!==gdSequence)return;
  gdSetStatus(type+' · GRAPHIC LIVE','busy');await publishMatchday(ev);
  if(seq!==gdSequence)return;
  mdEventAutoClear(holdMs);
