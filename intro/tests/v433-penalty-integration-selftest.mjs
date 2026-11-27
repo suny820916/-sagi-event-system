@@ -204,6 +204,19 @@ assert(events.replayMarkers.length===2&&events.replayMarkers[0].eventId==='newer
 undo();
 assert(events.replayMarkers.length===1&&events.replayMarkers[0].eventId==='newer','legacy undo removed a linked marker');
 console.log('PASS event undo removes only its own replay marker and supports legacy records');
+const eventTotals={homeScore:4,awayScore:3,homeRedCards:2,awayRedCards:1,eventLog:[
+ {event:{type:'SUB',side:'HOME'},beforeHomeScore:1,beforeAwayScore:0,beforeHomeRed:0,beforeAwayRed:0},
+ {event:{type:'RED',side:'HOME'},beforeHomeScore:1,beforeAwayScore:0,beforeHomeRed:1,beforeAwayRed:0},
+ {event:{type:'GOAL',side:'AWAY'},beforeHomeScore:1,beforeAwayScore:2,beforeHomeRed:0,beforeAwayRed:0}
+]};
+const undoTotals=undoEvent(eventTotals),totalValues=()=>[eventTotals.homeScore,eventTotals.awayScore,eventTotals.homeRedCards,eventTotals.awayRedCards];
+undoTotals();
+assert(JSON.stringify(totalValues())==='[4,3,2,1]','undoing substitution overwrote unrelated totals');
+undoTotals();
+assert(JSON.stringify(totalValues())==='[4,3,1,1]','undoing a red card overwrote an unrelated total');
+undoTotals();
+assert(JSON.stringify(totalValues())==='[4,2,1,1]','undoing an away goal overwrote an unrelated total');
+console.log('PASS event undo restores only the affected team total');
 
 const subImpl=control.match(/function mdSubstitutionByIds\(side,offId,onId\)\{[\s\S]*?(?=\r?\nfunction mdSubstitution)/)?.[0];
 assert(subImpl,'substitution implementation missing');

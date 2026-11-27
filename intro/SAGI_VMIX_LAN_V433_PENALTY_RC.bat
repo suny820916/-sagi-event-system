@@ -3559,8 +3559,12 @@ function mdRenderLog(){
 }
 function mdUndoLast(){
  const list=matchdayState.eventLog||[];if(!list.length){note('没有可撤销的比赛事件');return}
- const x=list.shift(),e=x.event||{};matchdayState.homeScore=Number(x.beforeHomeScore)||0;matchdayState.awayScore=Number(x.beforeAwayScore)||0;
- matchdayState.homeRedCards=Number(x.beforeHomeRed)||0;matchdayState.awayRedCards=Number(x.beforeAwayRed)||0;matchdayState.eventLog=list;
+ const x=list.shift(),e=x.event||{};
+ if(e.type==='GOAL'&&e.side==='HOME'&&x.beforeHomeScore!=null)matchdayState.homeScore=Number(x.beforeHomeScore)||0;
+ if(e.type==='GOAL'&&e.side==='AWAY'&&x.beforeAwayScore!=null)matchdayState.awayScore=Number(x.beforeAwayScore)||0;
+ if(e.type==='RED'&&e.side==='HOME'&&x.beforeHomeRed!=null)matchdayState.homeRedCards=Number(x.beforeHomeRed)||0;
+ if(e.type==='RED'&&e.side==='AWAY'&&x.beforeAwayRed!=null)matchdayState.awayRedCards=Number(x.beforeAwayRed)||0;
+ matchdayState.eventLog=list;
  if(e.type==='GOAL'||e.type==='RED'){
   const markers=matchdayState.replayMarkers||[];
   const idx=markers.findIndex(m=>m.type===e.type&&(e.replayMarkerEventId?m.eventId===e.replayMarkerEventId:!m.eventId));
