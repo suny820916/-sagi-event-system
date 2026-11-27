@@ -6987,7 +6987,7 @@ function effectiveGroupPlayers(x){
 }
 
 let last='',lastGraphics='',lastGraphicsRevision=0,lastGraphicsFixtureKey='',hideTimer=null,current=null,currentGraphics=null,eventTimer=null,eventCleanupTimer=null,frozenGraphics=null,lastHomeScore=null,lastAwayScore=null,lastScoreboardVisible=false;
-let outputHealth={pollOk:0,pollFail:0,recoveries:0,consecutiveFailures:0,watchdogTrips:0,softRepolls:0,lastOkAt:0,lastErrorAt:0,lastAppliedAt:0,lastWatchdogAt:0};let outputWatchdogBusy=false;
+let outputHealth={pollOk:0,pollFail:0,recoveries:0,consecutiveFailures:0,watchdogTrips:0,softRepolls:0,lastOkAt:0,lastErrorAt:0,lastAppliedAt:0,lastWatchdogAt:0,introPollFail:0,lastIntroErrorAt:0};let outputWatchdogBusy=false;
 function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function escAttr(s){return String(s??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')}
 function fit(){const s=Math.min(innerWidth/1920,innerHeight/1080),x=(innerWidth-1920*s)/2,y=(innerHeight-1080*s)/2,t='translate3d('+x+'px,'+y+'px,0) scale('+s+')';q('stage').style.transform=t;q('graphicsStage').style.transform=t}
@@ -7393,15 +7393,23 @@ function applyGraphics(g){
 window.sagiScoreCenterDiagnostic=()=>{const g=currentGraphics||{},clock=g.clock||{};return{build:'V4.31.0',fixtureKey:g.fixtureKey||'',revision:lastGraphicsRevision,commandId:g.commandId||'',home:g.scoreHomeName||g.home||'',away:g.scoreAwayName||g.away||'',score:[Number(g.homeScore)||0,Number(g.awayScore)||0],colors:[g.homeColor||'',g.awayColor||'',g.accentColor||''],stoppageTime:g.stoppageTime||'',frozen:!!g.scoreboardFrozen,period:clock.period||'',penalty:g.penaltyShootout||null,health:{...outputHealth,staleMs:outputHealth.lastOkAt?Math.max(0,Date.now()-outputHealth.lastOkAt):null}}};
 
 
+let outputIntroBusy=false;
 let outputPollBusy=false,outputPollQueued=false;
+async function pollOutputIntro(){
+ if(outputIntroBusy)return;
+ outputIntroBusy=true;
+ try{
+  const p=await lanState(),x=p.lineupIntro;
+  if(x&&x.commandId&&x.commandId!==last){last=x.commandId;if(introStateAllowed(x))render(x);else hideIntroStage('STALE_STATE')}
+ }catch(e){
+  outputHealth.introPollFail++;outputHealth.lastIntroErrorAt=Date.now()
+ }finally{outputIntroBusy=false}
+}
 async function poll(){
+ pollOutputIntro();
  if(outputPollBusy){outputPollQueued=true;return false}
  outputPollBusy=true;
  try{
- try{
-   const p=await lanState(),x=p.lineupIntro;
-   if(x&&x.commandId&&x.commandId!==last){last=x.commandId;if(introStateAllowed(x))render(x);else hideIntroStage('STALE_STATE')}
- }catch(e){}
  try{
    const g=await lanMatchday();
    if(outputHealth.consecutiveFailures>0)outputHealth.recoveries++;

@@ -42,13 +42,19 @@ function json(res,obj,status=200){const body=JSON.stringify(obj);res.writeHead(s
 function text(res,body,type='text/plain; charset=utf-8',status=200){res.writeHead(status,{'Content-Type':type,'Cache-Control':'no-store','Access-Control-Allow-Origin':'*'});res.end(body)}
 function mime(p){if(p.endsWith('.html'))return'text/html; charset=utf-8';if(p.endsWith('.js')||p.endsWith('.mjs'))return'text/javascript; charset=utf-8';if(p.endsWith('.css'))return'text/css; charset=utf-8';if(p.endsWith('.svg'))return'image/svg+xml';if(p.endsWith('.png'))return'image/png';return'application/octet-stream'}
 function readBody(req){return new Promise((resolve,reject)=>{let d='';req.setEncoding('utf8');req.on('data',c=>d+=c);req.on('end',()=>resolve(d));req.on('error',reject)})}
-let stallOutputBody=null;
+let stallOutputBody=null,stallLineupRead=null,observeOutputWhileLineupStalls=null;
 const server=http.createServer(async(req,res)=>{
  const u=new URL(req.url,'http://127.0.0.1:'+PORT);
  try{
-  if(u.pathname==='/api/state')return json(res,{lineupIntro:null});
+  if(u.pathname==='/api/state'){
+   if(stallLineupRead&&req.headers['x-sagi-selftest-stall']==='lineup'){
+    const inject=stallLineupRead;stallLineupRead=null;inject(res);return
+   }
+   return json(res,{lineupIntro:null})
+  }
   if(u.pathname==='/api/matchday'&&req.method==='GET'){
    const isOutputPoll=u.searchParams.has('ts');
+   if(isOutputPoll&&req.headers['x-sagi-selftest-stall']==='lineup')observeOutputWhileLineupStalls?.();
    if(isOutputPoll&&stallOutputBody&&req.headers['x-sagi-selftest-stall']==='1'){
     const inject=stallOutputBody;stallOutputBody=null;inject(res);
     res.writeHead(200,{'Content-Type':'application/json','Cache-Control':'no-store'});res.write('{"incomplete":');
@@ -660,6 +666,18 @@ server.listen(PORT,'127.0.0.1',async()=>{
   const bodyRecovery=await diagPage.evaluate(()=>window.sagiScoreCenterDiagnostic());
   assert(stalledBodyClosed&&bodyRecovery.health.pollFail>outputRecovery.health.pollFail&&bodyRecovery.health.consecutiveFailures===0,'stalled JSON body was not aborted before recovery: '+JSON.stringify(bodyRecovery.health));
   await diagPage.screenshot({path:'selftest-artifacts/12c-output-stalled-body-recovery.png'});
+  console.log('TEST 11B.2: lineup request stall does not block matchday output');
+  let lineupPending=false,servedDuringLineupStall=false;
+  observeOutputWhileLineupStalls=()=>{if(lineupPending)servedDuringLineupStall=true};
+  stallLineupRead=res=>{
+   lineupPending=true;res.once('close',()=>{lineupPending=false});
+   graphics={...graphics,commandId:'output_during_lineup_stall',revision:Number(graphics.revision)+1};
+  };
+  await diagPage.setExtraHTTPHeaders({'x-sagi-selftest-stall':'lineup'});
+  await diagPage.waitForFunction(()=>window.sagiScoreCenterDiagnostic()?.commandId==='output_during_lineup_stall',null,{timeout:8000});
+  assert(servedDuringLineupStall,'matchday did not respond while the lineup request was pending');
+  await diagPage.waitForFunction(()=>window.sagiScoreCenterDiagnostic()?.health.introPollFail>0,null,{timeout:5000});
+  observeOutputWhileLineupStalls=null;
   await diagPage.close();
   const postsBeforeControlCatchup=matchdayPosts.length;
   await page.evaluate(()=>window.sagiMatchdayConsistencyCheck(true));await wait(800);
@@ -801,7 +819,7 @@ server.listen(PORT,'127.0.0.1',async()=>{
   await page.screenshot({path:'selftest-artifacts/13-long-session-soak.png'});
 
   assert(pageErrors.length===0,'browser page errors: '+pageErrors.join(' | '));
-  const report={ok:true,build:'V4.31.0',testedAt:new Date().toISOString(),tests:['compact one-row full-name scorebug + SAGI signature palette/tag + unified score pair + restrained score roll + clock-only regular halves + conditional states','HOME goal enlarged HOME crest + complete GOAL + lower player card + collapse','AWAY goal enlarged AWAY crest','yellow/red referee-card shape + event colors + control icons','penalty >5 rounds/sudden death/miss/scores','two-camera Input 1 -> Input 2','event-logo replay stinger visual','manual replay stinger IN -> Input 4 -> OUT -> Input 1','stored project load wins over stale Bridge + optional time/venue do not block READY','compact project index rehydrates full photos from IndexedDB with empty Bridge list','clock-only refresh avoids repeated heavy match-control repaints','regular scorebug always uses canonical full team names even when backup aliases exist','mobile match control mirrors current fixture identity and legacy fields are read-only','transient LAN failure retries automatically and records last-good state','rapid score writes are serialized under deliberate network reordering','duplicate operator events are gated before double-counting','reopen recovery keeps newer local same-fixture state over stale Bridge','in-match health check is read-only and cannot mutate on-air state','vMix output ignores stale lower revisions within the same fixture','online/resume recovery repairs score/name/color/exceptional-state drift','Browser Input watchdog holds last good frame during longer outage and self-heals','Browser Input aborts stalled JSON and recovers its frame','fresh startup can atomically recover Bridge fixture identity when no local snapshot exists','isolated desktop and phone controllers follow one Bridge revision with zero passive ping-pong writes','desktop and phone share one Bridge-authoritative project list and active project','accelerated 5000-cycle long-session identity soak'],vmixCommands:cuts};
+  const report={ok:true,build:'V4.31.0',testedAt:new Date().toISOString(),tests:['compact one-row full-name scorebug + SAGI signature palette/tag + unified score pair + restrained score roll + clock-only regular halves + conditional states','HOME goal enlarged HOME crest + complete GOAL + lower player card + collapse','AWAY goal enlarged AWAY crest','yellow/red referee-card shape + event colors + control icons','penalty >5 rounds/sudden death/miss/scores','two-camera Input 1 -> Input 2','event-logo replay stinger visual','manual replay stinger IN -> Input 4 -> OUT -> Input 1','stored project load wins over stale Bridge + optional time/venue do not block READY','compact project index rehydrates full photos from IndexedDB with empty Bridge list','clock-only refresh avoids repeated heavy match-control repaints','regular scorebug always uses canonical full team names even when backup aliases exist','mobile match control mirrors current fixture identity and legacy fields are read-only','transient LAN failure retries automatically and records last-good state','rapid score writes are serialized under deliberate network reordering','duplicate operator events are gated before double-counting','reopen recovery keeps newer local same-fixture state over stale Bridge','in-match health check is read-only and cannot mutate on-air state','vMix output ignores stale lower revisions within the same fixture','online/resume recovery repairs score/name/color/exceptional-state drift','Browser Input watchdog holds last good frame during longer outage and self-heals','Browser Input aborts stalled JSON and recovers its frame','lineup stalls do not block Browser matchday output','fresh startup can atomically recover Bridge fixture identity when no local snapshot exists','isolated desktop and phone controllers follow one Bridge revision with zero passive ping-pong writes','desktop and phone share one Bridge-authoritative project list and active project','accelerated 5000-cycle long-session identity soak'],vmixCommands:cuts};
   fs.writeFileSync('selftest-artifacts/report.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
  }catch(e){
   fs.mkdirSync('selftest-artifacts',{recursive:true});try{await page.screenshot({path:'selftest-artifacts/FAIL.png',fullPage:true})}catch{}

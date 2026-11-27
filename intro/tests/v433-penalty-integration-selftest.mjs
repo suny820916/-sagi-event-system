@@ -345,3 +345,23 @@ console.log('PASS late conflict recovery respects the selected fixture');
 assert(!output.includes('location.reload(')&&!output.includes('graphicsBuild='),'live Browser output can reload itself during a match');
 assert(output.includes("addEventListener('online',()=>poll())")&&output.includes("addEventListener('pageshow',()=>poll())"),'manual reload or reconnect no longer refreshes output state');
 console.log('PASS live Browser output keeps its document pinned during version changes');
+
+const outputPollImpl=output.match(/let outputIntroBusy=false;[\s\S]*?(?=\r?\nasync function outputWatchdog)/)?.[0];
+assert(outputPollImpl,'output polling implementation missing');
+const splitPoll=new Function(`
+ let releaseIntro,reads=0,graphicsReads=0,lastGraphics='',lastGraphicsRevision=0;
+ const outputHealth={pollOk:0,consecutiveFailures:0,introPollFail:0},seen=[];
+ const lanState=()=>{reads++;return new Promise((resolve,reject)=>{releaseIntro={resolve,reject}})};
+ const lanMatchday=async()=>({commandId:'g'+(++graphicsReads),revision:graphicsReads});
+ const applyGraphics=g=>seen.push(g.commandId);
+ ${outputPollImpl}
+ return {poll,failIntro:()=>releaseIntro.reject(new Error('lineup unavailable')),counts:()=>[reads,seen.length,outputHealth.introPollFail]};
+`)();
+await splitPoll.poll();
+await splitPoll.poll();
+assert(JSON.stringify(splitPoll.counts())==='[1,2,0]','pending lineup read blocked matchday output or caused parallel lineup requests');
+splitPoll.failIntro();await Promise.resolve();
+assert(JSON.stringify(splitPoll.counts())==='[1,2,1]','lineup read failure did not update health');
+await splitPoll.poll();
+assert(JSON.stringify(splitPoll.counts())==='[2,3,1]','lineup polling did not recover independently');
+console.log('PASS stalled lineup reads no longer delay matchday score output');
