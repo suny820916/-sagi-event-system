@@ -103,18 +103,71 @@ $MatchdayJson = "null"
 $LastScoreLogSignature = ""
 $LastStateGuardLogKey = ""
 $LastStateGuardLogAt = [DateTime]::MinValue
-if (Test-Path $MatchdayStateFile) {
+function Read-SagiMatchdaySnapshot([string]$Path) {
+  $json = [IO.File]::ReadAllText($Path,[Text.Encoding]::UTF8)
+  if ($json.Trim() -ceq "null") { return "null" }
+  if (!$json.TrimStart().StartsWith("{")) { throw "Invalid match state shape" }
+  $snapshot = ConvertFrom-Json -InputObject $json -ErrorAction Stop
+  if ($snapshot -isnot [pscustomobject]) { throw "Invalid match state shape" }
+  foreach ($field in @('event','lastEvent')) {
+    if ($snapshot.PSObject.Properties.Name -contains $field) { $snapshot.$field = $null }
+  }
+  return ConvertTo-Json -InputObject $snapshot -Depth 40 -Compress
+}
+
+function Restore-SagiMatchdaySnapshot([string]$Path) {
+  # Older packages cleared the match by removing the primary file.
+  if (![IO.File]::Exists($Path)) { return "null" }
   try {
-    $savedMatchday = [IO.File]::ReadAllText($MatchdayStateFile,[Text.Encoding]::UTF8)
-    if (-not [string]::IsNullOrWhiteSpace($savedMatchday)) {
-      $null = $savedMatchday | ConvertFrom-Json
-      $MatchdayJson = $savedMatchday
-      Write-Host "[RECOVERY] Saved match state loaded." -ForegroundColor Green
-    }
+    return Read-SagiMatchdaySnapshot $Path
   } catch {
     Write-Host "[RECOVERY WARN] Saved match state could not be loaded." -ForegroundColor DarkYellow
   }
+  if ([IO.File]::Exists($Path + ".bak")) {
+    try {
+      $previous = Read-SagiMatchdaySnapshot ($Path + ".bak")
+      Write-Host "[RECOVERY] Previous match state loaded." -ForegroundColor Yellow
+      return $previous
+    } catch {
+      Write-Host "[RECOVERY WARN] Previous match state could not be loaded." -ForegroundColor DarkYellow
+    }
+  }
+  return "null"
 }
+
+function Write-SagiMatchdaySnapshot([string]$Path, [string]$Json, [switch]$KeepPrevious) {
+  $staged = $Path + ".new"
+  $bytes = [Text.Encoding]::UTF8.GetBytes($Json)
+  try {
+    $file = [IO.File]::Open($staged,[IO.FileMode]::Create,[IO.FileAccess]::Write,[IO.FileShare]::None)
+    try { $file.Write($bytes,0,$bytes.Length); $file.Flush($true) } finally { $file.Dispose() }
+    if ([IO.File]::Exists($Path)) {
+      if ($KeepPrevious) {
+        $validPrimary = $true
+        try { $null = Read-SagiMatchdaySnapshot $Path } catch { $validPrimary = $false }
+        if ($validPrimary) {
+          [IO.File]::Replace($staged,$Path,($Path + ".bak"),$true)
+          return
+        }
+      }
+      [IO.File]::Replace($staged,$Path,[NullString]::Value,$true)
+    } else {
+      if ($KeepPrevious) { [IO.File]::Delete($Path + ".bak") }
+      [IO.File]::Move($staged,$Path)
+    }
+  } finally {
+    Remove-Item -LiteralPath $staged -Force -ErrorAction SilentlyContinue
+  }
+}
+
+function Clear-SagiMatchdaySnapshot([string]$Path) {
+  # Retire prior state before committing the durable reset.
+  Write-SagiMatchdaySnapshot ($Path + ".bak") "null"
+  Write-SagiMatchdaySnapshot $Path "null"
+}
+
+$MatchdayJson = Restore-SagiMatchdaySnapshot $MatchdayStateFile
+if ($MatchdayJson -ne "null") { Write-Host "[RECOVERY] Saved match state loaded." -ForegroundColor Green }
 
 $MatchProjectsJson = '{"projects":[],"activeProjectId":"","savedAt":0,"schema":"SAGI_MATCH_PROJECTS_V2"}'
 if (Test-Path $MatchProjectsFile) {
@@ -623,16 +676,9 @@ while ($true) {
           try { $durableProbe.event = $null } catch {}
           try { if ($durableProbe.PSObject.Properties.Name -contains 'lastEvent') { $durableProbe.lastEvent = $null } } catch {}
           $durableJson = $durableProbe | ConvertTo-Json -Depth 40 -Compress
-          $tmpState = $MatchdayStateFile + ".new"
-          $bytes = (New-Object Text.UTF8Encoding($false)).GetBytes([string]$durableJson)
-          $file = [IO.File]::Open($tmpState,[IO.FileMode]::Create,[IO.FileAccess]::Write,[IO.FileShare]::None)
-          try { $file.Write($bytes,0,$bytes.Length); $file.Flush($true) } finally { $file.Dispose() }
-          if ([IO.File]::Exists($MatchdayStateFile)) {
-            $backupState = $MatchdayStateFile + ".bak"
-            Remove-Item $backupState -Force -ErrorAction SilentlyContinue
-            [IO.File]::Replace($tmpState,$MatchdayStateFile,$backupState,$true)
-            Remove-Item $backupState -Force -ErrorAction SilentlyContinue
-          } else { [IO.File]::Move($tmpState,$MatchdayStateFile) }
+          $switchedFixture = $allowFixtureTakeover -and -not $sameFixture -and -not [string]::IsNullOrWhiteSpace($currentFixture)
+          if ($switchedFixture) { Write-SagiMatchdaySnapshot ($MatchdayStateFile + ".bak") "null" }
+          Write-SagiMatchdaySnapshot $MatchdayStateFile $durableJson -KeepPrevious:(!$switchedFixture)
           $MatchdayJson = $req.body
           $hs = [string]$probe.homeScore
           $as = [string]$probe.awayScore
@@ -651,8 +697,8 @@ while ($true) {
     }
     elseif ($method -eq "POST" -and $path -eq "/api/recovery/reset") {
       try {
+        Clear-SagiMatchdaySnapshot $MatchdayStateFile
         $MatchdayJson = "null"
-        Remove-Item $MatchdayStateFile -Force -ErrorAction SilentlyContinue
         Write-HttpResponse $stream 200 "application/json" '{"ok":true}'
       } catch {
         $err = $_.Exception.Message | ConvertTo-Json -Compress
