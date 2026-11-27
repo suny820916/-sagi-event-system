@@ -16,6 +16,7 @@ on:
       - "intro/tests/v433-field-acceptance-launcher-selftest.mjs"
       - "intro/tests/v433-auto-test-v03-selftest.mjs"
       - "intro/tests/v433-auto-test-v10-payload.mjs"
+      - "intro/tests/v433-ui-pair-selftest.ps1"
       - "intro/tests/v440-fixture-identity-contract-selftest.mjs"
       - ".github/workflows/vmix-v433-penalty-selftest.yml"
   pull_request:
@@ -34,6 +35,7 @@ on:
       - "intro/tests/v433-field-acceptance-launcher-selftest.mjs"
       - "intro/tests/v433-auto-test-v03-selftest.mjs"
       - "intro/tests/v433-auto-test-v10-payload.mjs"
+      - "intro/tests/v433-ui-pair-selftest.ps1"
       - "intro/tests/v440-fixture-identity-contract-selftest.mjs"
       - ".github/workflows/vmix-v433-penalty-selftest.yml"
   workflow_dispatch:
@@ -93,6 +95,10 @@ jobs:
           }
           if (-not $source.Contains('$ProgressPreference = "SilentlyContinue"')) { throw 'V4.32 console progress hotfix missing from V4.33 BAT' }
           Write-Host 'V4.33 Windows BAT extraction + PowerShell 5.1 parser PASS'
+
+      - name: Exercise paired UI update and rollback failures
+        shell: powershell
+        run: ./intro/tests/v433-ui-pair-selftest.ps1
 
       - name: Parse self-contained acceptance launcher with Windows PowerShell 5.1
         shell: powershell

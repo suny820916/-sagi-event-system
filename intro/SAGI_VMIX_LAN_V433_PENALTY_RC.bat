@@ -135,6 +135,60 @@ if (Test-Path $MatchProjectsFile) {
   }
 }
 
+function Write-SagiUiFile([string]$Path, [byte[]]$Content) {
+  $staged = $Path + "." + [Guid]::NewGuid().ToString("N") + ".tmp"
+  try {
+    [IO.File]::WriteAllBytes($staged, $Content)
+    if ([IO.File]::Exists($Path)) {
+      [IO.File]::Replace($staged, $Path, [NullString]::Value)
+    } else {
+      [IO.File]::Move($staged, $Path)
+    }
+  } finally {
+    Remove-Item -LiteralPath $staged -Force -ErrorAction SilentlyContinue
+  }
+}
+
+function Set-SagiUiPair([byte[]]$Control, [byte[]]$Output, [switch]$SaveBackup) {
+  $before = @{}
+  $paths = @($ControlCache, $OutputCache)
+  if ($SaveBackup) { $paths += @($ControlBackup, $OutputBackup) }
+  foreach ($path in $paths) {
+    $before[$path] = if ([IO.File]::Exists($path)) { ,([IO.File]::ReadAllBytes($path)) } else { $null }
+  }
+  $written = New-Object 'System.Collections.Generic.List[string]'
+  try {
+    if ($SaveBackup) {
+      Write-SagiUiFile $ControlBackup $before[$ControlCache]
+      $written.Add($ControlBackup)
+      Write-SagiUiFile $OutputBackup $before[$OutputCache]
+      $written.Add($OutputBackup)
+    }
+    Write-SagiUiFile $ControlCache $Control
+    $written.Add($ControlCache)
+    Write-SagiUiFile $OutputCache $Output
+    $written.Add($OutputCache)
+  } catch {
+    $failure = $_
+    $recoveryErrors = @()
+    for ($index = $written.Count - 1; $index -ge 0; $index--) {
+      $path = $written[$index]
+      try {
+        if ($null -eq $before[$path]) { [IO.File]::Delete($path) }
+        else { Write-SagiUiFile $path $before[$path] }
+      } catch {
+        $recoveryErrors += [IO.Path]::GetFileName($path)
+      }
+    }
+    if ($recoveryErrors.Count) {
+      throw "UI pair write failed: $($failure.Exception.Message). Could not restore: $($recoveryErrors -join ', ')."
+    }
+    throw $failure
+  }
+  $script:ControlHtml = [Text.Encoding]::UTF8.GetString($Control).TrimStart([char]0xFEFF)
+  $script:OutputHtml = [Text.Encoding]::UTF8.GetString($Output).TrimStart([char]0xFEFF)
+}
+
 function Update-SagiLan {
   $ProgressPreference = "SilentlyContinue"
   $stamp = [DateTime]::UtcNow.Ticks
@@ -154,13 +208,7 @@ function Update-SagiLan {
     if ($controlText -notmatch "SAGI LIVE MATCH DIRECTOR" -or $controlText -notmatch "SAGI432_SIGNATURE_RC7" -or $controlText -notmatch "SAGI433_PENALTY_RC1" -or $controlText -notmatch "SAGIPenaltyCore" -or $controlText -notmatch "mdPenaltyCommitKick" -or $controlText -notmatch "mdNextEventIdentity") { throw "Remote control is older than V4.33 PENALTY RC; local RC kept" }
     if ($outputText -notmatch "SAGI432_SIGNATURE_RC7" -or $outputText -notmatch "SAGISignatureCore" -or $outputText -notmatch "lastRenderedSignatureEventKey") { throw "Remote vMix output is older than V4.32 SIGNATURE RC; local RC kept" }
 
-    Copy-Item $ControlCache $ControlBackup -Force
-    Copy-Item $OutputCache $OutputBackup -Force
-
-    [IO.File]::WriteAllText($ControlCache,$controlText,(New-Object Text.UTF8Encoding($false)))
-    [IO.File]::WriteAllText($OutputCache,$outputText,(New-Object Text.UTF8Encoding($false)))
-    $script:ControlHtml = $controlText
-    $script:OutputHtml = $outputText
+    Set-SagiUiPair ([Text.Encoding]::UTF8.GetBytes($controlText)) ([Text.Encoding]::UTF8.GetBytes($outputText)) -SaveBackup
 
     Write-Host "[SAFE UPDATE] Control Room + vMix Graphics updated. Bridge core unchanged." -ForegroundColor Green
     return @{ok=$true;version="4.33.0-rc.1";updated=@("control","output");bridgeLocked=$true;rollbackAvailable=$true}
@@ -177,10 +225,7 @@ function Restore-SagiLan {
   if (-not (Test-Path $ControlBackup) -or -not (Test-Path $OutputBackup)) {
     throw "No backup available"
   }
-  Copy-Item $ControlBackup $ControlCache -Force
-  Copy-Item $OutputBackup $OutputCache -Force
-  $script:ControlHtml = [IO.File]::ReadAllText($ControlCache,[Text.Encoding]::UTF8)
-  $script:OutputHtml = [IO.File]::ReadAllText($OutputCache,[Text.Encoding]::UTF8)
+  Set-SagiUiPair ([IO.File]::ReadAllBytes($ControlBackup)) ([IO.File]::ReadAllBytes($OutputBackup))
   Write-Host "[ROLLBACK] Previous Control Room + vMix Graphics restored." -ForegroundColor Yellow
   return @{ok=$true;version="4.26.6";rolledBack=$true}
 }
