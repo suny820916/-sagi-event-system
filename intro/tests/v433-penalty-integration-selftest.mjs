@@ -204,3 +204,21 @@ assert(events.replayMarkers.length===2&&events.replayMarkers[0].eventId==='newer
 undo();
 assert(events.replayMarkers.length===1&&events.replayMarkers[0].eventId==='newer','legacy undo removed a linked marker');
 console.log('PASS event undo removes only its own replay marker and supports legacy records');
+
+const subImpl=control.match(/function mdSubstitutionByIds\(side,offId,onId\)\{[\s\S]*?(?=\r?\nfunction mdSubstitution)/)?.[0];
+assert(subImpl,'substitution implementation missing');
+const subHarness=new Function(`
+ let calls=0,sent=0;
+ const matchdayState={},q=()=>({}),note=()=>{},mdRecordEvent=()=>{},mdFormat=()=>'',mdNowSeconds=()=>0,mdNextEventIdentity=()=>({});
+ const mdPlayer=(side,id)=>side==='HOME'&&['p1','p2'].includes(id)?{id}:null;
+ const mdAcceptOperatorEvent=()=>++calls===1,gdRunEvent=()=>{sent++};
+ ${subImpl}
+ return {submit:mdSubstitutionByIds,counts:()=>[calls,sent]};
+`)();
+assert(subHarness.submit('AWAY','p1','p2')===false,'foreign players accepted');
+assert(subHarness.submit('HOME','p1','p1')===false,'same-player substitution accepted');
+assert(subHarness.submit('HOME','','p2')===false,'missing outgoing player accepted');
+assert(JSON.stringify(subHarness.counts())==='[0,0]','invalid substitution consumed the duplicate guard');
+subHarness.submit('HOME','p1','p2');
+assert(subHarness.submit('HOME','p1','p2')===false&&JSON.stringify(subHarness.counts())==='[2,1]','valid substitution or duplicate handling failed');
+console.log('PASS desktop and mobile substitution share roster and duplicate validation');

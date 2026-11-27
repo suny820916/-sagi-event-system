@@ -3292,8 +3292,10 @@ async function instantReplayReturnLiveNow(){
 }
 
 function mdSubstitutionByIds(side,offId,onId){
+ if((side!=='HOME'&&side!=='AWAY')||!offId||!onId){note('请选择换下和换上球员');return false}
+ if(offId===onId){note('换下和换上球员不能相同');return false}
+ const off=mdPlayer(side,offId),on=mdPlayer(side,onId);if(!off||!on){note('请选择本队阵容中的球员');return false}
  if(!mdAcceptOperatorEvent(['SUB',side,offId,onId].join('|'),1000))return false;
- const off=mdPlayer(side,offId),on=mdPlayer(side,onId);if(!off||!on){note('请选择换下和换上球员');return}
  const before={homeScore:matchdayState.homeScore,awayScore:matchdayState.awayScore,homeRedCards:matchdayState.homeRedCards,awayRedCards:matchdayState.awayRedCards};
  const ev={type:'SUB',side,team:side==='HOME'?(q('matchHome').value||'HOME'):(q('matchAway').value||'AWAY'),off:{id:off.id,name:off.name,number:off.number,position:off.position||off.role,photo:off.photo||''},on:{id:on.id,name:on.name,number:on.number,position:on.position||on.role,photo:on.photo||''},at:mdFormat(mdNowSeconds()),...mdNextEventIdentity('SUB')};
  mdRecordEvent(ev,before);q('mdEventStatus').textContent='换人 · #'+off.number+' '+off.name+' → #'+on.number+' '+on.name;gdRunEvent(ev,6200)
