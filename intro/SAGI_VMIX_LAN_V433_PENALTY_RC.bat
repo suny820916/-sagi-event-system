@@ -3290,6 +3290,7 @@ function mdRecoveryTimestamp(x){
 async function recoverMatchdayFromBridge(showNote=false,opts={}){
  try{
    const x=await lanJson('/api/matchday?recover='+Date.now());
+   if(opts.expectedFixture&&opts.expectedFixture!==mdFixtureKey())return false;
    const bridgeMatches=!!(x&&x.commandId&&mdBridgeMatchesCurrent(x));
    if(x&&x.commandId&&!bridgeMatches&&!opts.allowIdentityTakeover){if(showNote)note('Bridge 是另一场比赛 · 已忽略旧比分状态');return false}
    if(x&&x.commandId){
@@ -3369,25 +3370,29 @@ async function mdPostMatchdayWithRetry(state){
  const sendStarted=(typeof performance!=='undefined'&&performance.now)?performance.now():Date.now();
  const latencyNow=()=>Math.max(0,Math.round(((typeof performance!=='undefined'&&performance.now)?performance.now():Date.now())-sendStarted));
  const recordLatency=ms=>{mdPublishMetrics.lastLatencyMs=ms;mdPublishMetrics.maxLatencyMs=Math.max(mdPublishMetrics.maxLatencyMs||0,ms);mdPublishMetrics.totalLatencyMs=(mdPublishMetrics.totalLatencyMs||0)+ms;mdPublishMetrics.samples=(mdPublishMetrics.samples||0)+1};
- const liveFixture=mdFixtureKey();
- if(state&&state.fixtureKey&&state.fixtureKey!==liveFixture&&!state.allowFixtureTakeover){
-  mdPublishMetrics.recovered++;mdPublishMetrics.lastAttempts=0;
+ const staleFixture=()=>!!(state?.fixtureKey&&state.fixtureKey!==mdFixtureKey());
+ const skipStaleFixture=attempts=>{
+  mdPublishMetrics.recovered++;mdPublishMetrics.lastAttempts=attempts;
   mdRecoveryMetrics.staleRemoteIgnored++;mdRecoveryMetrics.lastReason='STALE_QUEUED_FIXTURE_DROPPED';mdRecoveryMetrics.lastRecoveryAt=Date.now();
-  return{ok:true,attempts:0,skipped:true,reason:'STALE_QUEUED_FIXTURE_DROPPED'}
- }
+  return{ok:true,attempts,skipped:true,reason:'STALE_QUEUED_FIXTURE_DROPPED'}
+ };
  const waits=[0,180,520,1200];let lastError=null;
  for(let i=0;i<waits.length;i++){
   if(waits[i])await mdDelay(waits[i]);
+  if(staleFixture())return skipStaleFixture(i);
   try{
    await lanPost('/api/matchday',state);
+   if(staleFixture())return skipStaleFixture(i+1);
    const latencyMs=latencyNow();recordLatency(latencyMs);
    mdPublishMetrics.ok++;mdPublishMetrics.lastOkAt=Date.now();mdPublishMetrics.lastAttempts=i+1;if(i){mdPublishMetrics.retried+=i;mdPublishMetrics.recovered++}
    mdSaveLastGood();return{ok:true,attempts:i+1,latencyMs}
   }catch(e){
+   if(staleFixture())return skipStaleFixture(i+1);
    lastError=e;mdPublishMetrics.lastErrorAt=Date.now();
    if(String(e&&e.message||e).includes('LAN 409')){
     try{
-     const recovered=await recoverMatchdayFromBridge(false,{preferNewest:false,allowIdentityTakeover:true});
+     const recovered=await recoverMatchdayFromBridge(false,{preferNewest:false,allowIdentityTakeover:true,expectedFixture:state.fixtureKey});
+     if(staleFixture())return skipStaleFixture(i+1);
      if(recovered){mdPublishMetrics.recovered++;mdPublishMetrics.lastAttempts=i+1;return{ok:false,attempts:i+1,recovered:true,conflict:true}}
     }catch(_){}
     break

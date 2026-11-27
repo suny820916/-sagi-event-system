@@ -285,3 +285,40 @@ assert(clocksDiffer(clockAt(60,true,1000),clockAt(60,true,5000),5000),'running c
 assert(clocksDiffer(clockAt(60,false,1000),clockAt(63,false,5000),5000),'paused clock drift ignored');
 assert(!clocksDiffer({period:'2H'},clockAt(63,false,5000),5000),'legacy clock without running metadata caused a repair');
 console.log('PASS passive Bridge follow detects same-revision clock drift');
+
+const retryImpl=control.match(/async function mdPostMatchdayWithRetry\(state\)\{[\s\S]*?(?=\r?\nwindow.sagiMatchdayReliabilityDiagnostic)/)?.[0];
+assert(retryImpl,'matchday retry implementation missing');
+const makeRetryHarness=new Function(`
+ let fixture='one',sent=0,persisted=0,recovered=0,releasePost,releaseDelay;
+ const mdFixtureKey=()=>fixture,mdPublishMetrics={},mdRecoveryMetrics={};
+ const lanPost=()=>{sent++;return new Promise((resolve,reject)=>{releasePost={resolve,reject}});};
+ const mdDelay=()=>new Promise(resolve=>{releaseDelay=resolve;});
+ const mdSaveLastGood=()=>{persisted++};
+ const recoverMatchdayFromBridge=async()=>{recovered++;return true};
+ ${retryImpl}
+ return {send:mdPostMatchdayWithRetry,switchFixture:()=>{fixture='two'},settle:error=>error?releasePost.reject(error):releasePost.resolve(),resume:()=>releaseDelay(),counts:()=>[sent,persisted,recovered]};
+`);
+const delayedRetry=makeRetryHarness(),queued=delayedRetry.send({fixtureKey:'one',allowFixtureTakeover:true});
+delayedRetry.settle(new Error('temporary'));await Promise.resolve();
+delayedRetry.switchFixture();delayedRetry.resume();
+assert((await queued).skipped&&JSON.stringify(delayedRetry.counts())==='[1,0,0]','retry transmitted a previously selected fixture');
+for(const responseError of [null,new Error('LAN 409')]){
+ const h=makeRetryHarness(),send=h.send({fixtureKey:'one'});
+ h.switchFixture();h.settle(responseError);
+ assert((await send).skipped&&JSON.stringify(h.counts())==='[1,0,0]','obsolete response changed recovery state for the current fixture');
+}
+console.log('PASS stale fixture writes stop retrying and cannot mutate current recovery state');
+
+const recoveryImpl=control.match(/async function recoverMatchdayFromBridge\(showNote=false,opts=\{\}\)\{[\s\S]*?(?=\r?\nfunction mdResetForProject)/)?.[0];
+assert(recoveryImpl,'Bridge conflict recovery implementation missing');
+const recoveryHarness=new Function(`
+ let fixture='one',complete,examined=0;
+ const lanJson=()=>new Promise(resolve=>{complete=resolve});
+ const mdFixtureKey=()=>fixture,mdBridgeMatchesCurrent=()=>{examined++;return false};
+ ${recoveryImpl}
+ return {recover:recoverMatchdayFromBridge,switchFixture:()=>{fixture='two'},deliver:()=>complete({commandId:'from-one'}),examined:()=>examined};
+`)();
+const obsoleteRecovery=recoveryHarness.recover(false,{allowIdentityTakeover:true,expectedFixture:'one'});
+recoveryHarness.switchFixture();recoveryHarness.deliver();
+assert(await obsoleteRecovery===false&&recoveryHarness.examined()===0,'late conflict recovery was applied after changing fixtures');
+console.log('PASS late conflict recovery respects the selected fixture');
