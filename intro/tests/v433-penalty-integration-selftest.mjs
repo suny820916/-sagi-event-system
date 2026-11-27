@@ -416,3 +416,29 @@ const switchedOpen=overlayHarness.ensure();
 overlayHarness.switchFixture();overlayHarness.requests[5].resolve(true);
 assert(!await switchedOpen&&!overlayHarness.counts()[0],'late overlay acknowledgement affected a different fixture');
 console.log('PASS overlay activation retries after rejection and ignores obsolete acknowledgements');
+
+const pwaImpl=control.match(/\(function\(\)\{\r?\n'use strict';\r?\nconst statusEl=document.getElementById\('pwaStatus'\);[\s\S]*?(?=\r?\n<\/script>)/)?.[0];
+assert(pwaImpl,'mobile install and update implementation missing');
+const pwaHarness=new Function(`
+ const observations={reloads:0,writes:0,activations:0},events={},controllerEvents={},updates={};
+ const controls={pwaStatus:{},pwaInstallBtn:{addEventListener:()=>{}},pwaUpdateBtn:{addEventListener:(name,fn)=>updates[name]=fn}};
+ const waiting={postMessage:msg=>{if(msg.type==='SKIP_WAITING')observations.activations++}};
+ const reg={waiting,update:async()=>{},addEventListener:()=>{}};
+ const navigator={userAgent:'iPhone',standalone:true,serviceWorker:{register:async()=>reg,addEventListener:(name,fn)=>controllerEvents[name]=fn}};
+ const window={navigator,isSecureContext:true,matchMedia:()=>({matches:true}),addEventListener:(name,fn)=>events[name]=fn};
+ const document={getElementById:id=>controls[id]},setTimeout=fn=>fn(),setInterval=()=>{};
+ const fetch=async()=>{observations.writes++;return {ok:true,json:async()=>({ok:true})}};
+ const location={protocol:'http:',reload:()=>observations.reloads++,replace:()=>observations.reloads++};
+ ${pwaImpl}
+ return {observations,events,controllerEvents,updates};
+`)();
+await Promise.resolve();
+pwaHarness.events.pageshow?.({persisted:true});
+pwaHarness.controllerEvents.controllerchange();
+assert(JSON.stringify(pwaHarness.observations)==='{"reloads":0,"writes":0,"activations":0}','passive phone lifecycle unexpectedly updated or replaced its page');
+pwaHarness.updates.click();
+pwaHarness.controllerEvents.controllerchange();
+pwaHarness.controllerEvents.controllerchange();
+assert(JSON.stringify(pwaHarness.observations)==='{"reloads":1,"writes":0,"activations":1}','explicit service worker activation did not refresh exactly once');
+assert(control.includes("mdScheduleRecovery('PAGESHOW',120)"),'matchday resume lost passive state recovery');
+console.log('PASS standalone control stays pinned across startup, resume and passive controller changes');

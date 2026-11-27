@@ -4577,18 +4577,19 @@ const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform===
 const standalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
 let deferredPrompt=null;
 let waitingWorker=null;
+let requestedWorkerActivation=false;
 
 function setStatus(text){statusEl.textContent=text}
 function setInstalledState(){
   if(standalone){
     installBtn.textContent='已安装';
     installBtn.disabled=true;
-    setStatus('已从主屏幕 / 桌面打开 · 每次启动都会检查最新版本');
+    setStatus('已从主屏幕 / 桌面打开');
   }else if(isIOS){
     installBtn.textContent='添加到主屏幕';
     setStatus('iPhone / iPad：Safari → 分享 → 添加到主屏幕');
   }else{
-    setStatus('可安装为独立应用 · 桌面图标始终打开最新 Control Room');
+    setStatus('可安装为独立应用');
   }
 }
 
@@ -4633,7 +4634,7 @@ if('serviceWorker' in navigator&&window.isSecureContext){
     function showUpdate(worker){
       waitingWorker=worker||reg.waiting;
       updateBtn.hidden=false;
-      setStatus('发现新版本 · 可立即更新；不操作也会在下次打开时使用最新版');
+      setStatus('发现新版本 · 可手动更新');
     }
 
     if(reg.waiting)showUpdate(reg.waiting);
@@ -4648,11 +4649,12 @@ if('serviceWorker' in navigator&&window.isSecureContext){
 
     setInterval(()=>reg.update().catch(()=>{}),300000);
   }).catch(()=>{
-    setStatus('应用可正常使用 · 当前浏览器未启用自动更新服务');
+    setStatus('应用可正常使用 · 当前浏览器未启用应用更新服务');
   });
 
   updateBtn.addEventListener('click',()=>{
     if(waitingWorker){
+      requestedWorkerActivation=true;
       waitingWorker.postMessage({type:'SKIP_WAITING'});
       updateBtn.disabled=true;
       updateBtn.textContent='更新中…';
@@ -4662,10 +4664,9 @@ if('serviceWorker' in navigator&&window.isSecureContext){
     }
   });
 
-  let reloading=false;
   navigator.serviceWorker.addEventListener('controllerchange',()=>{
-    if(reloading)return;
-    reloading=true;
+    if(!requestedWorkerActivation)return;
+    requestedWorkerActivation=false;
     location.reload();
   });
 }else{
@@ -4674,31 +4675,6 @@ if('serviceWorker' in navigator&&window.isSecureContext){
 
 setInstalledState();
 
-const HOME_SCREEN_BUILD='V4.31.0-HOME-20261116-01';
-async function homeScreenColdStartUpdate(){
-  if(!standalone||location.protocol!=='http:')return;
-  const once='sagi_homescreen_boot_'+HOME_SCREEN_BUILD;
-  try{if(sessionStorage.getItem(once))return;sessionStorage.setItem(once,'1')}catch(e){}
-  setStatus('主屏幕启动 · 正在同步最新 V4.31.0…');
-  try{
-    const r=await fetch('/api/update',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}',cache:'no-store'});
-    const x=await r.json().catch(()=>({}));
-    if(r.ok&&x.ok){
-      try{localStorage.setItem('sagi_homescreen_last_update',String(Date.now()))}catch(e){}
-      location.replace('/?homescreen='+Date.now());
-      return;
-    }
-  }catch(e){}
-  setStatus('主屏幕已打开 · 未连接到更新服务，继续使用本机版本');
-}
-if(standalone){
-  window.addEventListener('pageshow',e=>{
-    if(e.persisted){
-      try{location.replace('/?resume='+Date.now())}catch(_){}
-    }
-  });
-  setTimeout(homeScreenColdStartUpdate,350);
-}
 })();
 </script>
 
