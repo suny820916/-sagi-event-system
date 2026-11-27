@@ -23,6 +23,8 @@ try {
   $ControlBackup = Join-Path $root 'control-backup.html'
   $OutputBackup = Join-Path $root 'output-backup.html'
   $RemoteBase = 'http://unused.invalid'
+  $UiPairStamp = Join-Path $root 'ui-pair-v433.txt'
+  $script:UiPackageDigest = 'test-package'
   $fixtures = @{}
   $fixtures[$ControlCache] = 'current-control'
   $fixtures[$OutputCache] = 'current-output'
@@ -37,7 +39,7 @@ try {
     if ($Path -eq $script:failWrite) { throw 'Injected write failure' }
     & $writeFile $Path $Content
   }
-  foreach ($failure in @($OutputCache, $OutputBackup)) {
+  foreach ($failure in @($OutputCache, $OutputBackup, $UiPairStamp)) {
     $script:failWrite = $failure
     $failed = $false
     try { $null = Update-SagiLan } catch { $failed = $_.Exception.Message -like '*Injected write failure*' }
@@ -59,6 +61,31 @@ try {
   Assert-Ui ((Restore-SagiLan).ok -and $script:ControlHtml -eq 'current-control' -and $script:OutputHtml -eq 'current-output') 'Successful rollback did not restore the preceding pair'
   Assert-Ui (@(Get-ChildItem -LiteralPath $root -Filter '*.tmp').Count -eq 0) 'Staged files were left behind'
   Write-Output 'PASS paired UI update, rollback, and injected write failures'
+
+  $embeddedControl = Join-Path $root 'fallback-control.html'
+  $embeddedOutput = Join-Path $root 'fallback-output.html'
+  [IO.File]::WriteAllText($embeddedControl, 'packaged-control-a')
+  [IO.File]::WriteAllText($embeddedOutput, 'packaged-output-a')
+  $matchState = Join-Path $root 'matchday-state.json'
+  [IO.File]::WriteAllText($matchState, '{"score":3}')
+  Initialize-SagiUiPair $embeddedControl $embeddedOutput
+  Assert-Ui ([IO.File]::ReadAllText($ControlCache) -eq 'packaged-control-a' -and [IO.File]::ReadAllText($OutputCache) -eq 'packaged-output-a') 'First launch kept unverified caches'
+  Assert-Ui ((Update-SagiLan).ok) 'Manual update failed'
+  Initialize-SagiUiPair $embeddedControl $embeddedOutput
+  Assert-Ui ([IO.File]::ReadAllText($ControlCache).Contains('mdPenaltyCommitKick')) 'Same package restart overwrote verified manual update'
+  Assert-Ui ((Restore-SagiLan).ok) 'Manual rollback failed'
+  Initialize-SagiUiPair $embeddedControl $embeddedOutput
+  Assert-Ui ([IO.File]::ReadAllText($ControlCache) -eq 'packaged-control-a') 'Same package restart overwrote verified rollback'
+
+  [IO.File]::WriteAllText($embeddedControl, 'packaged-control-b')
+  [IO.File]::WriteAllText($embeddedOutput, 'packaged-output-b')
+  Initialize-SagiUiPair $embeddedControl $embeddedOutput
+  Assert-Ui ([IO.File]::ReadAllText($ControlCache) -eq 'packaged-control-b' -and [IO.File]::ReadAllText($OutputCache) -eq 'packaged-output-b') 'New package did not replace the prior UI pair'
+  [IO.File]::WriteAllText($ControlCache, 'partial-write')
+  Initialize-SagiUiPair $embeddedControl $embeddedOutput
+  Assert-Ui ([IO.File]::ReadAllText($ControlCache) -eq 'packaged-control-b' -and [IO.File]::ReadAllText($OutputCache) -eq 'packaged-output-b') 'Damaged cache did not restore the packaged pair'
+  Assert-Ui ([IO.File]::ReadAllText($matchState) -eq '{"score":3}') 'UI package initialization touched saved match state'
+  Write-Output 'PASS exact package identity, same-package restart, cache repair and match state preservation'
 } finally {
   foreach ($file in (Get-ChildItem -LiteralPath $root -File)) { [IO.File]::Delete($file.FullName) }
   [IO.Directory]::Delete($root)

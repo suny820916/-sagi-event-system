@@ -31,18 +31,14 @@ powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -Command ^
 echo [TAKEOVER] Port 8100 reserved for this build.
 
 powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -Command ^
- "$s=[IO.File]::ReadAllText($env:SAGI_SELF,[Text.Encoding]::UTF8);" ^
+ "$ErrorActionPreference='Stop';$s=[IO.File]::ReadAllText($env:SAGI_SELF,[Text.Encoding]::UTF8);" ^
  "$m=[regex]::Match($s,'(?s)###SAGI_PS###\r?\n(.*?)\r?\n###SAGI_CONTROL###\r?\n(.*?)\r?\n###SAGI_OUTPUT###\r?\n(.*)$');" ^
  "if(-not $m.Success){Write-Host '[ERROR] Embedded stable payload not found.' -ForegroundColor Red;exit 2};" ^
  "$utf=New-Object Text.UTF8Encoding($false);" ^
  "[IO.File]::WriteAllText($env:SAGI_FB_BRIDGE,$m.Groups[1].Value,$utf);" ^
  "[IO.File]::WriteAllText($env:SAGI_FB_CONTROL,$m.Groups[2].Value,$utf);" ^
  "[IO.File]::WriteAllText($env:SAGI_FB_OUTPUT,$m.Groups[3].Value,$utf);" ^
- "Copy-Item $env:SAGI_FB_BRIDGE $env:SAGI_BRIDGE -Force;" ^
- "$controlOk=$false;if(Test-Path $env:SAGI_CONTROL){try{$t=[IO.File]::ReadAllText($env:SAGI_CONTROL,[Text.Encoding]::UTF8);$controlOk=($t.Length -gt 100000 -and $t -match '<!doctype html>' -and $t -match 'SAGI432_SIGNATURE_RC7' -and $t -match 'SAGI433_PENALTY_RC1' -and $t -match 'SAGISignatureCore' -and $t -match 'SAGIPenaltyCore' -and $t -match 'mdPenaltyCommitKick' -and $t -match 'mdNextEventIdentity' -and $t -match 'LIVE FLOW' -and $t -match 'instantReplayGenerate')}catch{}};" ^
- "if(-not $controlOk){Copy-Item $env:SAGI_FB_CONTROL $env:SAGI_CONTROL -Force;Write-Host '[REPAIR] V4.33 PENALTY RC Control installed over stale cache.' -ForegroundColor Yellow}else{Write-Host '[SAFE] V4.33 PENALTY RC Control cache verified.' -ForegroundColor Green};" ^
- "$outputOk=$false;if(Test-Path $env:SAGI_OUTPUT){try{$t=[IO.File]::ReadAllText($env:SAGI_OUTPUT,[Text.Encoding]::UTF8);$outputOk=($t.Length -gt 50000 -and $t -match '<!doctype html>' -and $t -match 'SAGI432_SIGNATURE_RC7' -and $t -match 'SAGISignatureCore' -and $t -match 'introStateAllowed' -and $t -match 'sagiBrandA' -and $t -match 'lastRenderedSignatureEventKey')}catch{}};" ^
- "if(-not $outputOk){Copy-Item $env:SAGI_FB_OUTPUT $env:SAGI_OUTPUT -Force;Write-Host '[REPAIR] V4.32 SIGNATURE RC vMix output installed over stale cache.' -ForegroundColor Yellow}else{Write-Host '[SAFE] V4.32 SIGNATURE RC vMix output cache verified.' -ForegroundColor Green};"
+ "Copy-Item -LiteralPath $env:SAGI_FB_BRIDGE -Destination $env:SAGI_BRIDGE -Force -ErrorAction Stop;"
 
 if errorlevel 1 (
   echo.
@@ -84,6 +80,7 @@ $MatchdayStateFile = Join-Path $Root "matchday-state.json"
 $MatchProjectsFile = Join-Path $Root "match-projects.json"
 $ControlBackup = Join-Path $Root "control-backup.html"
 $OutputBackup  = Join-Path $Root "output-backup.html"
+$UiPairStamp = Join-Path $Root "ui-pair-v433.txt"
 $RemoteBase   = "https://suny820916.github.io/-sagi-event-system/intro"
 
 $Allowed = @(
@@ -149,6 +146,29 @@ function Write-SagiUiFile([string]$Path, [byte[]]$Content) {
   }
 }
 
+function Get-SagiUiDigest([byte[]]$Content) {
+  $sha = [Security.Cryptography.SHA256]::Create()
+  try { return [Convert]::ToBase64String($sha.ComputeHash($Content)) }
+  finally { $sha.Dispose() }
+}
+
+function Get-SagiUiPairDigest([byte[]]$Control, [byte[]]$Output) {
+  return (Get-SagiUiDigest $Control) + "|" + (Get-SagiUiDigest $Output)
+}
+
+function Initialize-SagiUiPair([string]$EmbeddedControl, [string]$EmbeddedOutput) {
+  $control = [IO.File]::ReadAllBytes($EmbeddedControl)
+  $output = [IO.File]::ReadAllBytes($EmbeddedOutput)
+  $script:UiPackageDigest = Get-SagiUiPairDigest $control $output
+  if ([IO.File]::Exists($UiPairStamp) -and [IO.File]::Exists($ControlCache) -and [IO.File]::Exists($OutputCache)) {
+    $cachedControl = [IO.File]::ReadAllBytes($ControlCache)
+    $cachedOutput = [IO.File]::ReadAllBytes($OutputCache)
+    $expectedStamp = $UiPackageDigest + "|" + (Get-SagiUiPairDigest $cachedControl $cachedOutput)
+    if ([IO.File]::ReadAllText($UiPairStamp) -ceq $expectedStamp) { return }
+  }
+  Set-SagiUiPair $control $output
+}
+
 function Set-SagiUiPair([byte[]]$Control, [byte[]]$Output, [switch]$SaveBackup) {
   $before = @{}
   $paths = @($ControlCache, $OutputCache)
@@ -167,7 +187,9 @@ function Set-SagiUiPair([byte[]]$Control, [byte[]]$Output, [switch]$SaveBackup) 
     Write-SagiUiFile $ControlCache $Control
     $written.Add($ControlCache)
     Write-SagiUiFile $OutputCache $Output
+    $stamp = $UiPackageDigest + "|" + (Get-SagiUiPairDigest $Control $Output)
     $written.Add($OutputCache)
+    Write-SagiUiFile $UiPairStamp ([Text.Encoding]::UTF8.GetBytes($stamp))
   } catch {
     $failure = $_
     $recoveryErrors = @()
@@ -407,14 +429,15 @@ Write-Host "  SAGI V4.33 PENALTY RC - MATCH SAFE LAN DIRECT" -ForegroundColor Cy
 Write-Host "  Bridge Core V4.7.2 / Local-first / vMix 127.0.0.1" -ForegroundColor DarkCyan
 Write-Host "============================================================" -ForegroundColor Cyan
 
-if (-not (Test-Path $ControlCache) -or -not (Test-Path $OutputCache)) {
-  Write-Host "[ERROR] Embedded LAN UI files were not extracted." -ForegroundColor Red
-  Read-Host "Press Enter to close"
+try {
+  Initialize-SagiUiPair (Join-Path $Root "fallback-control.html") (Join-Path $Root "fallback-output.html")
+} catch {
+  Write-Host ("[ERROR] Unable to prepare candidate UI pair: " + $_.Exception.Message) -ForegroundColor Red
   exit 1
 }
 $ControlHtml = [IO.File]::ReadAllText($ControlCache,[Text.Encoding]::UTF8)
 $OutputHtml = [IO.File]::ReadAllText($OutputCache,[Text.Encoding]::UTF8)
-Write-Host "[READY] Embedded LAN UI loaded." -ForegroundColor Green
+Write-Host "[READY] Verified LAN UI pair loaded." -ForegroundColor Green
 
 $vmixReady = Test-Vmix
 if ($vmixReady) {
