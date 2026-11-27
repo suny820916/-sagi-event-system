@@ -322,3 +322,7 @@ const obsoleteRecovery=recoveryHarness.recover(false,{allowIdentityTakeover:true
 recoveryHarness.switchFixture();recoveryHarness.deliver();
 assert(await obsoleteRecovery===false&&recoveryHarness.examined()===0,'late conflict recovery was applied after changing fixtures');
 console.log('PASS late conflict recovery respects the selected fixture');
+
+assert(!output.includes('location.reload(')&&!output.includes('graphicsBuild='),'live Browser output can reload itself during a match');
+assert(output.includes("addEventListener('online',()=>poll())")&&output.includes("addEventListener('pageshow',()=>poll())"),'manual reload or reconnect no longer refreshes output state');
+console.log('PASS live Browser output keeps its document pinned during version changes');
