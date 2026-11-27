@@ -129,10 +129,11 @@ const applyImpl=output.match(/function applyGraphics\(g\)\{[\s\S]*?(?=\r?\n\r?\n
 assert(applyImpl,'output applyGraphics function missing');
 const outputHarness=new Function(`
  let currentGraphics=null,frozenGraphics=null,lastGraphicsFixtureKey='',lastGraphicsRevision=0;
- let cleanups=0,lastRenderedSignatureEventKey='';
+ let cleanups=0,lastRenderedSignatureEventKey='',lastHomeScore=2,lastAwayScore=1;
+ const clearedRolls=[],q=id=>({classList:{remove:cls=>clearedRolls.push([id,cls])}});
  const outputHealth={},gfxSeconds=g=>g.clock.baseSeconds+3,updateScoreBug=()=>{},hideEvent=()=>{cleanups++},showEvent=g=>{if(g.event)lastRenderedSignatureEventKey=g.event.id;};
  ${applyImpl}
- return {apply:applyGraphics, snapshot:()=>frozenGraphics,visuals:()=>[cleanups,lastRenderedSignatureEventKey]};
+ return {apply:applyGraphics, snapshot:()=>frozenGraphics,visuals:()=>[cleanups,lastRenderedSignatureEventKey], scoreMotion:()=>[lastHomeScore,lastAwayScore,clearedRolls.length]};
 `)();
 const fixtureOne={fixtureKey:'fixture-one',revision:20,homeScore:3,event:{id:'old-goal'},scoreboardFrozen:true,clock:{baseSeconds:120,running:true}};
 const fixtureTwo={fixtureKey:'fixture-two',revision:1,homeScore:0,scoreboardFrozen:true,clock:{baseSeconds:5,running:true}};
@@ -143,6 +144,7 @@ assert(JSON.stringify(outputHarness.visuals())==='[1,""]','old fixture animation
 assert(outputHarness.snapshot().fixtureKey===fixtureTwo.fixtureKey&&outputHarness.snapshot().homeScore===0&&outputHarness.snapshot().clock.baseSeconds===8,'frozen output retained previous fixture');
 outputHarness.apply({...fixtureTwo,revision:2,homeScore:1,clock:{baseSeconds:90,running:true}});
 assert(outputHarness.visuals()[0]===1,'same-fixture update cleared event visuals');
+assert(JSON.stringify(outputHarness.scoreMotion())==='[null,null,4]','fixture switch retained old score animation state');
 assert(outputHarness.snapshot().homeScore===0&&outputHarness.snapshot().clock.baseSeconds===8,'same-fixture freeze drifted');
 assert(outputHarness.apply({...fixtureTwo,revision:1,scoreboardFrozen:false})===false&&!!outputHarness.snapshot(),'stale update unfroze output');
 outputHarness.apply({...fixtureTwo,revision:3,scoreboardFrozen:false});
