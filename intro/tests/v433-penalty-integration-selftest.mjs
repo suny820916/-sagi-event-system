@@ -365,3 +365,18 @@ assert(JSON.stringify(splitPoll.counts())==='[1,2,1]','lineup read failure did n
 await splitPoll.poll();
 assert(JSON.stringify(splitPoll.counts())==='[2,3,1]','lineup polling did not recover independently');
 console.log('PASS stalled lineup reads no longer delay matchday score output');
+
+const identityImpl=control.match(/function mdIdentityNorm\(v\)\{[\s\S]*?(?=\r?\nfunction mdRecoveryTimestamp)/)?.[0];
+assert(identityImpl,'fixture identity implementation missing');
+const identityHarness=new Function(`
+ const fields={matchHome:{value:'Rovers'},matchAway:{value:'City'},matchCompetition:{value:'  CUP   A '}};
+ const q=id=>fields[id];
+ ${identityImpl}
+ return {matches:mdBridgeMatchesCurrent,makeGeneric:()=>{fields.matchHome.value='HOME';}};
+`)();
+assert(identityHarness.matches({home:'Rovers',away:'City',competition:'cup a'}),'equivalent competition name blocked same fixture');
+assert(!identityHarness.matches({home:'Rovers',away:'City',competition:'Cup B'}),'same teams in another competition treated as current fixture');
+assert(identityHarness.matches({home:'Rovers',away:'City'}),'legacy Bridge state without competition no longer matches');
+identityHarness.makeGeneric();
+assert(identityHarness.matches({home:'Rovers',away:'City',competition:'Cup B'}),'generic initial fixture cannot discover authoritative Bridge state');
+console.log('PASS Bridge follow isolates same-team fixtures across competitions');
