@@ -46,3 +46,10 @@ for (let day = 1; day <= days.length; day++) {
 for (const hash of ['', '#day=0', '#day=29', '#day=01', '#day=3&other=1']) {
   assert.equal(drillForHash(hash), null);
 }
+
+const selectDailyScenarios = vm.runInNewContext(drillSource + '\nselectDailyScenarios');
+const focusBank = ['扫描','扫描','风险','扫描','扫描'];
+const focused = {day:22,scenarios:[1,2,4]};
+assert.deepEqual(Array.from(selectDailyScenarios(focused,[2,4,1],focusBank)),[5,2,1]);
+assert.deepEqual(Array.from(selectDailyScenarios(focused,[],focusBank)),[1,2,4]);
+assert.deepEqual(Array.from(selectDailyScenarios({...focused,day:21},[4],focusBank)),[1,2,4]);
