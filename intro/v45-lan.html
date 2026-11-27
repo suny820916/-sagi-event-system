@@ -3080,13 +3080,16 @@ async function gdRunEvent(ev,holdMs=5200){
  sdRecommend(ev);const seq=++gdSequence;gdClearTimers();clearTimeout(mdMacroTimer);mdMacroSeq++;
  const enabled=graphicsDirectorSettings.enabled!==false;
  if(enabled)await gdEnsureOverlay();
+ if(seq!==gdSequence)return;
  if(!ev){await publishMatchday(null);return}
  const type=ev.type||'EVENT';
  if(type==='GOAL'&&enabled){
   gdSetStatus('1/3 · SCORE UPDATE','busy');
   await publishMatchday(null);
+  if(seq!==gdSequence)return;
   gdSchedule(async()=>{
-   gdSetStatus('2/3 · GOAL CARD','busy');await publishMatchday(ev);mdEventAutoClear(holdMs)
+   gdSetStatus('2/3 · GOAL CARD','busy');await publishMatchday(ev);
+   if(seq===gdSequence)mdEventAutoClear(holdMs)
   },520,seq);
   const replaySlot=cameraSlotForRole('REPLAY','');
   if(graphicsDirectorSettings.autoReplay&&matchReady&&replaySlot&&vdSlotAvailable(replaySlot)){
@@ -3098,6 +3101,7 @@ async function gdRunEvent(ev,holdMs=5200){
    gdScheduleCamera(async()=>{
     const preferred=graphicsDirectorSettings.returnSlot||'cam1',returnSlot=vdSlotAvailable(preferred)?preferred:ssMainSlot();
     await replayStingerTake(returnSlot,'OUT','AUTO_REPLAY','AUTO RETURN TO MATCH');
+    if(seq!==gdSequence)return;
     gdAutoCameraActive=false;gdSetStatus('3/3 · RETURN SCOREBUG','busy');smartCue={slot:returnSlot,title:'回到比赛',reason:'赛事 Logo 转场结束，恢复主比赛画面',confidence:99,eventType:'RETURN'};sdRender()
    },1450+REPLAY_STINGER_SWITCH_MS+(Number(graphicsDirectorSettings.replayHold)||3500),seq)
   }else if(graphicsDirectorSettings.autoReplay&&type==='GOAL'){
@@ -3106,7 +3110,9 @@ async function gdRunEvent(ev,holdMs=5200){
   gdSchedule(()=>{if(seq===gdSequence)gdSetStatus('安全自动 · 就绪')},Math.max(holdMs+900,5200),seq);
   return
  }
- gdSetStatus(type+' · GRAPHIC LIVE','busy');await publishMatchday(ev);mdEventAutoClear(holdMs);
+ gdSetStatus(type+' · GRAPHIC LIVE','busy');await publishMatchday(ev);
+ if(seq!==gdSequence)return;
+ mdEventAutoClear(holdMs);
  gdSchedule(()=>{if(seq===gdSequence)gdSetStatus('安全自动 · 就绪')},holdMs+500,seq)
 }
 function ssPersist(){try{localStorage.setItem('sagi_shot_safety_v418',JSON.stringify(shotSafetySettings))}catch(e){}}

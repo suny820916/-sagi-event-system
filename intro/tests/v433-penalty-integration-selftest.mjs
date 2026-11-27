@@ -222,3 +222,39 @@ assert(JSON.stringify(subHarness.counts())==='[0,0]','invalid substitution consu
 subHarness.submit('HOME','p1','p2');
 assert(subHarness.submit('HOME','p1','p2')===false&&JSON.stringify(subHarness.counts())==='[2,1]','valid substitution or duplicate handling failed');
 console.log('PASS desktop and mobile substitution share roster and duplicate validation');
+
+const directorImpl=control.match(/async function gdRunEvent\(ev,holdMs=5200\)\{[\s\S]*?(?=\r?\nfunction ssPersist)/)?.[0];
+assert(directorImpl,'graphics director implementation missing');
+const directorHarness=new Function(`
+ let gdSequence=0,mdMacroSeq=0,mdMacroTimer,releaseOverlay,releaseWrite,delay='',clears=0;
+ const writes=[],timers=[],cameraTimers=[];
+ const graphicsDirectorSettings={enabled:true,autoReplay:true},matchReady=true;
+ const sdRecommend=()=>{},gdClearTimers=()=>{},gdClearCameraTimers=()=>{},gdSetStatus=()=>{};
+ const gdEnsureOverlay=()=>delay==='overlay'?new Promise(r=>{releaseOverlay=r}):Promise.resolve();
+ const publishMatchday=e=>{writes.push(e?.type||'SCORE');return delay==='write'?new Promise(r=>{releaseWrite=r}):Promise.resolve();};
+ const gdSchedule=fn=>timers.push(fn),gdScheduleCamera=fn=>cameraTimers.push(fn);
+ const cameraSlotForRole=()=> 'replay',vdSlotAvailable=()=>true,REPLAY_STINGER_SWITCH_MS=920;
+ const mdEventAutoClear=()=>{clears++};
+ ${directorImpl}
+ return {run:gdRunEvent,delay:value=>delay=value,supersede:()=>gdSequence++,releaseOverlay:()=>releaseOverlay(),releaseWrite:()=>releaseWrite(),counts:()=>[writes.length,timers.length,cameraTimers.length,clears]};
+`)();
+directorHarness.delay('overlay');
+const oldOverlayEvent=directorHarness.run({type:'GOAL'});
+directorHarness.supersede();
+directorHarness.releaseOverlay();
+await oldOverlayEvent;
+assert(JSON.stringify(directorHarness.counts())==='[0,0,0,0]','superseded overlay completion published a stale event');
+directorHarness.delay('write');
+const oldScoreEvent=directorHarness.run({type:'GOAL'});
+await Promise.resolve();
+directorHarness.supersede();
+directorHarness.releaseWrite();
+await oldScoreEvent;
+assert(JSON.stringify(directorHarness.counts())==='[1,0,0,0]','superseded score completion scheduled stale goal or replay timers');
+const oldCardEvent=directorHarness.run({type:'YELLOW'});
+await Promise.resolve();
+directorHarness.supersede();
+directorHarness.releaseWrite();
+await oldCardEvent;
+assert(JSON.stringify(directorHarness.counts())==='[2,0,0,0]','superseded card completion scheduled an event clear');
+console.log('PASS delayed graphics director completions cannot schedule stale actions');
