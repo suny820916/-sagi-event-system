@@ -2810,6 +2810,16 @@ function mdConsistencyComparable(x){
   simplePenaltyHistory:Array.isArray(simple.history)?simple.history.length:0
  })
 }
+function mdConsistencyClockDiffers(remote,local,now){
+ if(!remote||!local||typeof remote.running!=='boolean')return false;
+ if(remote.running!==local.running)return true;
+ if(!Number.isFinite(remote.baseSeconds)||!Number.isFinite(local.baseSeconds))return false;
+ const elapsed=clock=>{
+  const started=clock.running&&Date.parse(clock.startedAt);
+  return clock.running&&Number.isFinite(started)?Math.max(0,(now-started)/1000):0
+ };
+ return Math.abs((remote.baseSeconds+elapsed(remote))-(local.baseSeconds+elapsed(local)))>1
+}
 function mdPassiveSyncActive(){
  return !!(matchReady||matchModeActive||matchdayState.scoreboardVisible||matchdayState.clockRunning||Number(matchdayState.revision)>0)
 }
@@ -2833,7 +2843,7 @@ async function mdConsistencyCheck(force=false){
   // Revisions are not comparable across independent browser controllers. Bridge is the live authority.
   // mdPendingPublishes already protects the short interval while THIS controller is committing an operator action.
   const local=mdCloudSnapshot(null,{peek:true});
-  const differs=mdConsistencyComparable(remote)!==mdConsistencyComparable(local);
+  const differs=mdConsistencyComparable(remote)!==mdConsistencyComparable(local)||mdConsistencyClockDiffers(remote.clock,local.clock,Date.now());
   if(remoteRevision!==localRevision||differs){
    if(mdApplyRecovered(remote,false)){
     mdPublishRevision=remoteRevision;mdLastAckRevision=remoteRevision;matchdayState.revision=remoteRevision;

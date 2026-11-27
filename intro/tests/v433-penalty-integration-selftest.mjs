@@ -274,3 +274,14 @@ assert(repeatHarness.accept('RED|HOME|p1',1400),'prior fixture blocked a valid e
 repeatHarness.tick(1400);
 assert(repeatHarness.accept('RED|HOME|p1',1400)&&repeatHarness.size()===1,'expired repeat guard entries were not cleared');
 console.log('PASS interleaved operator actions deduplicate per fixture and expire');
+
+const clockImpl=control.match(/function mdConsistencyClockDiffers\(remote,local,now\)\{[\s\S]*?(?=\r?\nfunction mdPassiveSyncActive)/)?.[0];
+assert(clockImpl&&syncImpl.includes('mdConsistencyClockDiffers(remote.clock,local.clock,Date.now())'),'passive Bridge follow does not compare clocks');
+const clocksDiffer=new Function(clockImpl+';return mdConsistencyClockDiffers')();
+const clockAt=(baseSeconds,running,stamp)=>({baseSeconds,running,startedAt:new Date(stamp).toISOString()});
+assert(!clocksDiffer(clockAt(60,true,1000),clockAt(64.2,true,5000),5000),'equivalent running clock or subsecond delay treated as drift');
+assert(clocksDiffer(clockAt(60,true,1000),clockAt(62,false,5000),5000),'running versus paused clock mismatch ignored');
+assert(clocksDiffer(clockAt(60,true,1000),clockAt(60,true,5000),5000),'running clock drift ignored');
+assert(clocksDiffer(clockAt(60,false,1000),clockAt(63,false,5000),5000),'paused clock drift ignored');
+assert(!clocksDiffer({period:'2H'},clockAt(63,false,5000),5000),'legacy clock without running metadata caused a repair');
+console.log('PASS passive Bridge follow detects same-revision clock drift');
