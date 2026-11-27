@@ -183,3 +183,24 @@ await stalledState.then(()=>assert(false,'stalled request did not reject'),error
 assert(pendingTimer===null,'timer survived aborted request');
 assert((await outputReader.lanMatchday()).revision===7&&pendingTimer===null,'output failed to read fresh state after timeouts');
 console.log('PASS output request deadlines cover headers and JSON bodies and allow recovery');
+
+const undoImpl=control.match(/function mdUndoLast\(\)\{[\s\S]*?(?=\r?\nasync function mdScore)/)?.[0];
+assert(undoImpl,'event undo implementation missing');
+const undoEvent=new Function('matchdayState',`
+ const mdRenderLog=()=>{},mdRenderMarkers=()=>{},q=()=>({}),note=()=>{},mdEventLabel=e=>e.type,publishMatchday=()=>{};
+ ${undoImpl}
+ return mdUndoLast;
+`);
+const events={eventLog:[
+ {event:{type:'GOAL',replayMarkerEventId:'missing'}},
+ {event:{type:'GOAL',replayMarkerEventId:'exact'}},
+ {event:{type:'GOAL',eventId:'legacy'}}
+],replayMarkers:[{type:'GOAL',eventId:'newer'},{type:'GOAL',eventId:'exact'},{type:'GOAL'}]};
+const undo=undoEvent(events);
+undo();
+assert(events.replayMarkers.length===3,'undo with a missing marker removed an unrelated marker');
+undo();
+assert(events.replayMarkers.length===2&&events.replayMarkers[0].eventId==='newer'&&!events.replayMarkers[1].eventId,'undo did not remove the exact linked marker');
+undo();
+assert(events.replayMarkers.length===1&&events.replayMarkers[0].eventId==='newer','legacy undo removed a linked marker');
+console.log('PASS event undo removes only its own replay marker and supports legacy records');

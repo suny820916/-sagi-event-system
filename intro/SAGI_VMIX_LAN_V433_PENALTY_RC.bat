@@ -3538,7 +3538,11 @@ function mdUndoLast(){
  const list=matchdayState.eventLog||[];if(!list.length){note('没有可撤销的比赛事件');return}
  const x=list.shift(),e=x.event||{};matchdayState.homeScore=Number(x.beforeHomeScore)||0;matchdayState.awayScore=Number(x.beforeAwayScore)||0;
  matchdayState.homeRedCards=Number(x.beforeHomeRed)||0;matchdayState.awayRedCards=Number(x.beforeAwayRed)||0;matchdayState.eventLog=list;
- if(e.type==='GOAL'||e.type==='RED'){const idx=(matchdayState.replayMarkers||[]).findIndex(m=>m.type===e.type);if(idx>=0)matchdayState.replayMarkers.splice(idx,1)}
+ if(e.type==='GOAL'||e.type==='RED'){
+  const markers=matchdayState.replayMarkers||[];
+  const idx=markers.findIndex(m=>m.type===e.type&&(e.replayMarkerEventId?m.eventId===e.replayMarkerEventId:!m.eventId));
+  if(idx>=0)markers.splice(idx,1)
+ }
  mdRenderLog();mdRenderMarkers();q('mdEventStatus').textContent='已撤销 · '+mdEventLabel(e);publishMatchday({type:'CLEAR_EVENT'});note('已撤销 '+mdEventLabel(e));
 }
 async function mdScore(side,delta){
@@ -3885,8 +3889,9 @@ function gdInit(){
  if(q('irSeconds'))q('irSeconds').onchange=()=>{if(q('mmReplaySeconds'))q('mmReplaySeconds').value=q('irSeconds').value};
  irSyncButtons()
 }
-function mdAddReplayMarker(type,label=''){
+function mdAddReplayMarker(type,label='',eventId=''){
  const sec=mdNowSeconds(),m={id:'mk_'+Date.now().toString(36),type:String(type||'KEY'),label:String(label||type||'KEY'),at:mdFormat(sec),seconds:Math.floor(sec),score:matchdayState.homeScore+'-'+matchdayState.awayScore,createdAt:new Date().toISOString()};
+ if(eventId)m.eventId=eventId;
  matchdayState.replayMarkers=[m].concat(matchdayState.replayMarkers||[]).slice(0,80);mdPersist();mdRenderMarkers();return m
 }
 function mdRenderMarkers(){
@@ -3905,8 +3910,9 @@ function mdMacroEvent(type,side,playerId=''){
  if(type==='RED'){if(side==='HOME')matchdayState.homeRedCards=Math.min(5,(Number(matchdayState.homeRedCards)||0)+1);else matchdayState.awayRedCards=Math.min(5,(Number(matchdayState.awayRedCards)||0)+1)}
  const team=side==='HOME'?(q('matchHome').value||'HOME'):(q('matchAway').value||'AWAY');
  const ev={type,side,team,player:p?{id:p.id,name:p.name,number:p.number,position:p.position||p.role,photo:p.photo||''}:{id:'',name:team,number:'',position:'',photo:''},at:mdFormat(mdNowSeconds()),...mdNextEventIdentity(type)};
+ if(type==='GOAL'||type==='RED')ev.replayMarkerEventId=ev.eventId;
  mdRecordEvent(ev,before);
- if(type==='GOAL'||type==='RED')mdAddReplayMarker(type,type==='GOAL'?'进球 · '+team:'红牌 · '+team);
+ if(ev.replayMarkerEventId)mdAddReplayMarker(type,type==='GOAL'?'进球 · '+team:'红牌 · '+team,ev.replayMarkerEventId);
  q('mdEventStatus').textContent=(type==='GOAL'?'进球':type==='YELLOW'?'黄牌':'红牌')+(p?' · #'+p.number+' '+p.name:' · '+team);
  gdRunEvent(ev,type==='GOAL'?5800:5000);refreshMatchdayUI();
 }
