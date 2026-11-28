@@ -104,9 +104,18 @@ $MatchdayJson = "null"
 $LastScoreLogSignature = ""
 $LastStateGuardLogKey = ""
 $LastStateGuardLogAt = [DateTime]::MinValue
+function Get-SagiMatchdayResetId([string]$Path) {
+  try {
+    if (![IO.File]::Exists($Path)) { return "" }
+    $record = [IO.File]::ReadAllText($Path,[Text.Encoding]::UTF8)
+    if ($record -cmatch '^\{"sagiMatchdayReset":"([a-f0-9]{32})"\}$') { return $Matches[1] }
+  } catch {}
+  return ""
+}
+
 function Read-SagiMatchdaySnapshot([string]$Path) {
   $json = [IO.File]::ReadAllText($Path,[Text.Encoding]::UTF8)
-  if ($json.Trim() -ceq "null") { return "null" }
+  if ($json.Trim() -ceq "null" -or $json -cmatch '^\{"sagiMatchdayReset":"[a-f0-9]{32}"\}$') { return "null" }
   if (!$json.TrimStart().StartsWith("{")) { throw "Invalid match state shape" }
   $snapshot = ConvertFrom-Json -InputObject $json -ErrorAction Stop
   if ($snapshot -isnot [pscustomobject]) { throw "Invalid match state shape" }
@@ -164,9 +173,12 @@ function Write-SagiMatchdaySnapshot([string]$Path, [string]$Json, [switch]$KeepP
 function Clear-SagiMatchdaySnapshot([string]$Path) {
   # Retire prior state before committing the durable reset.
   Write-SagiMatchdaySnapshot ($Path + ".bak") "null"
-  Write-SagiMatchdaySnapshot $Path "null"
+  $resetId = [Guid]::NewGuid().ToString("N")
+  Write-SagiMatchdaySnapshot $Path ('{"sagiMatchdayReset":"' + $resetId + '"}')
+  return $resetId
 }
 
+$MatchdayResetId = Get-SagiMatchdayResetId $MatchdayStateFile
 $MatchdayJson = Restore-SagiMatchdaySnapshot $MatchdayStateFile
 if ($MatchdayJson -ne "null") { Write-Host "[RECOVERY] Saved match state loaded." -ForegroundColor Green }
 
@@ -467,6 +479,7 @@ function Write-HttpResponse($stream,[int]$Status,[string]$ContentType,[string]$B
   if ($null -eq $Body) { $Body = "" }
   $bytes = [Text.Encoding]::UTF8.GetBytes($Body)
   $epochHeader = if ($MatchdayEpoch) { "X-SAGI-Bridge-Epoch: $BridgeEpoch`r`n" } else { "" }
+  if ($MatchdayEpoch -and $Body -ceq "null" -and $MatchdayResetId) { $epochHeader += "X-SAGI-Matchday-Reset: $MatchdayResetId`r`n" }
   $head = "HTTP/1.1 $Status $statusText`r`nContent-Type: $ContentType; charset=utf-8`r`nContent-Length: $($bytes.Length)`r`nCache-Control: no-store`r`nAccess-Control-Allow-Origin: *`r`nAccess-Control-Allow-Headers: Content-Type`r`nAccess-Control-Allow-Methods: GET, POST, OPTIONS`r`nConnection: close`r`n$epochHeader`r`n"
   $headBytes = [Text.Encoding]::ASCII.GetBytes($head)
   $stream.Write($headBytes,0,$headBytes.Length)
@@ -682,6 +695,7 @@ while ($true) {
           if ($switchedFixture) { Write-SagiMatchdaySnapshot ($MatchdayStateFile + ".bak") "null" }
           Write-SagiMatchdaySnapshot $MatchdayStateFile $durableJson -KeepPrevious:(!$switchedFixture)
           $MatchdayJson = $req.body
+          $MatchdayResetId = ""
           $hs = [string]$probe.homeScore
           $as = [string]$probe.awayScore
           $vis = [string]$probe.scoreboardVisible
@@ -699,7 +713,7 @@ while ($true) {
     }
     elseif ($method -eq "POST" -and $path -eq "/api/recovery/reset") {
       try {
-        Clear-SagiMatchdaySnapshot $MatchdayStateFile
+        $MatchdayResetId = Clear-SagiMatchdaySnapshot $MatchdayStateFile
         $MatchdayJson = "null"
         Write-HttpResponse $stream 200 "application/json" '{"ok":true}'
       } catch {

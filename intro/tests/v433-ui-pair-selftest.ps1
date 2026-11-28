@@ -3,7 +3,7 @@ $bat = [IO.File]::ReadAllText((Join-Path $PSScriptRoot '../SAGI_VMIX_LAN_V433_PE
 $match = [regex]::Match($bat, '(?ms)^function Write-SagiUiFile\(.*?(?=^function Get-LanIPv4)')
 if (!$match.Success) { throw 'Candidate UI file operations missing' }
 . ([scriptblock]::Create($match.Value))
-$stateFunctions = [regex]::Match($bat, '(?ms)^function Read-SagiMatchdaySnapshot\(.*?(?=^\$MatchdayJson = Restore-SagiMatchdaySnapshot)')
+$stateFunctions = [regex]::Match($bat, '(?ms)^function Get-SagiMatchdayResetId\(.*?(?=^\$MatchdayResetId = Get-SagiMatchdayResetId)')
 if (!$stateFunctions.Success) { throw 'Candidate match state persistence functions missing' }
 . ([scriptblock]::Create($stateFunctions.Value))
 
@@ -103,11 +103,14 @@ try {
   Assert-Ui (((Restore-SagiMatchdaySnapshot $matchState | ConvertFrom-Json).event) -eq $null) 'Recovered state replayed live graphics'
   [IO.File]::WriteAllText($matchState, 'broken-again')
   Assert-Ui (((Restore-SagiMatchdaySnapshot $matchState | ConvertFrom-Json).revision) -eq 2) 'Corrupt primary overwrote the valid backup'
-  Clear-SagiMatchdaySnapshot $matchState
+  $resetId = Clear-SagiMatchdaySnapshot $matchState
+  Assert-Ui ($resetId -cmatch '^[a-f0-9]{32}$') 'Reset did not generate a valid ID'
+  Assert-Ui ((Get-SagiMatchdayResetId $matchState) -ceq $resetId) 'Reset ID did not survive a fresh disk read'
   Assert-Ui ((Restore-SagiMatchdaySnapshot $matchState) -eq 'null') 'Reset did not survive restart'
   [IO.File]::WriteAllText($matchState, 'broken-reset')
   Assert-Ui ((Restore-SagiMatchdaySnapshot $matchState) -eq 'null') 'Corrupt reset revived an older match'
   [IO.File]::Delete($matchState)
+  Assert-Ui ((Get-SagiMatchdayResetId $matchState) -ceq '') 'Missing state manufactured a reset ID'
   [IO.File]::WriteAllText(($matchState + '.bak'), $revisionOne)
   Assert-Ui ((Restore-SagiMatchdaySnapshot $matchState) -eq 'null') 'Legacy reset revived a backup without a primary file'
   Write-SagiMatchdaySnapshot $matchState $revisionTwo -KeepPrevious
