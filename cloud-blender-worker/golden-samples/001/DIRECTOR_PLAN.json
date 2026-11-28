@@ -1,0 +1,113 @@
+{
+  "sample_id": "REAL_MATCH_GOLDEN_SAMPLE_001",
+  "status": "director_plan",
+  "source_sha256": "225FAF5796F2EFAC67486D6A5DD7618591F29D34EAE3857BDCB99425334CD177",
+  "worker_entry": "cloud-blender-worker/app/main.py",
+  "engine_entry": "cloud-blender-worker/engine/sagi_tactics_blender.py",
+  "visual_reference": "Teactics",
+  "shots": [
+    {
+      "view": "全局关系",
+      "frames": [
+        0,
+        236
+      ],
+      "focus": [
+        "皇马禁区前后纵深",
+        "PSV近侧进攻"
+      ],
+      "source_start": 0.0,
+      "show": [
+        "皇马已经回收",
+        "PSV01近侧推进",
+        "RM01上前封堵"
+      ],
+      "source_end": 7.878044,
+      "id": "defend"
+    },
+    {
+      "view": "宽幅追随",
+      "frames": [
+        236,
+        437
+      ],
+      "focus": [
+        "胡伊森的拦截区域",
+        "皇马禁区至中圈",
+        "贝林厄姆的接应区"
+      ],
+      "source_start": 7.878044,
+      "show": [
+        "拦截与攻守方向变化",
+        "保持宽镜，呈现中圈接应及左路启动的相对时序"
+      ],
+      "source_end": 14.587733,
+      "id": "transition"
+    },
+    {
+      "view": "保留传球起点和接应纵深",
+      "frames": [
+        437,
+        564
+      ],
+      "focus": [
+        "贝林厄姆",
+        "维尼修斯",
+        "PSV回撤线"
+      ],
+      "source_start": 14.587733,
+      "show": [
+        "RM03已经向前",
+        "球进入其身前空间",
+        "PSV转身回追"
+      ],
+      "source_end": 18.827189,
+      "id": "depth"
+    },
+    {
+      "view": "左侧门前关系镜头",
+      "frames": [
+        564,
+        656
+      ],
+      "focus": [
+        "维尼修斯",
+        "PSV02",
+        "Kovář",
+        "门线"
+      ],
+      "source_start": 18.827189,
+      "show": [
+        "跑者随球继续前进",
+        "门将出击",
+        "球入网"
+      ],
+      "source_end": 21.898278,
+      "id": "finish"
+    }
+  ],
+  "golden_test": {
+    "frames": [
+      425,
+      656
+    ],
+    "source_start": 14.187156,
+    "source_end": 21.898278,
+    "focus": "中圈球区、左路启动、回追和门前反应的连续性"
+  },
+  "render_status": "blocked",
+  "fact_gate": "PASS",
+  "identity_source": "user_verified",
+  "source_timing": "All shot boundaries use archived input PTS; exact event frames are not inferred from the camera plan.",
+  "non_blocking_uncertainties": [
+    "defensive_touch",
+    "scan_detail",
+    "release_frame",
+    "run_and_receive",
+    "keeper_start",
+    "finish_detail",
+    "crossing_frame",
+    "secondary_players"
+  ],
+  "worker_prepare_status": "requires_source_pitch_calibration_and_blender_runtime"
+}
