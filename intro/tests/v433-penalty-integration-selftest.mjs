@@ -158,7 +158,10 @@ assert(!outputHarness.apply({...fixtureTwo,revision:9,homeScore:0}),'versionless
 assert(outputHarness.apply({...fixtureTwo,revision:8,homeScore:4,bridgeEpoch:newEpoch}),'Bridge restart did not admit lower revision');
 assert(outputHarness.snapshot().homeScore===4,'restart kept the old frozen score');
 assert(!outputHarness.apply({...fixtureTwo,revision:7,homeScore:8,bridgeEpoch:newEpoch}),'same-epoch stale revision passed');
-console.log('PASS output accepts durable recovery without dropping its same-epoch guard');
+assert(outputHarness.apply({bridgeEpoch:newEpoch,matchdayCleared:true}),'authoritative clear was rejected');
+assert(outputHarness.snapshot()===null,'clear retained frozen scoreboard');
+assert(outputHarness.apply({...fixtureTwo,revision:1,bridgeEpoch:newEpoch}),'clear did not reset the revision guard');
+console.log('PASS output accepts durable recovery and authoritative clear');
 
 const readerImpl=output.match(/const OUTPUT_REQUEST_TIMEOUT_MS=[\s\S]*?(?=\r?\nconst q=)/)?.[0];
 assert(readerImpl,'output request implementation missing');
@@ -451,3 +454,21 @@ pwaHarness.controllerEvents.controllerchange();
 assert(JSON.stringify(pwaHarness.observations)==='{"reloads":1,"writes":0,"activations":1}','explicit service worker activation did not refresh exactly once');
 assert(control.includes("mdScheduleRecovery('PAGESHOW',120)"),'matchday resume lost passive state recovery');
 console.log('PASS standalone control stays pinned across startup, resume and passive controller changes');
+
+const clearPollImpl=output.match(/let outputIntroBusy=false;[\s\S]*?(?=\r?\nasync function outputWatchdog)/)?.[0];
+assert(clearPollImpl,'output poll source missing');
+const clearHarness=new Function(`
+ let currentGraphics={homeScore:5},lastGraphics='old',lastGraphicsRevision=7,reads=0;
+ const outputHealth={consecutiveFailures:0,pollOk:0,pollFail:0},lanState=async()=>({});
+ const lanMatchday=async()=>{if(++reads===1)throw Error('offline');if(reads===2)return null;return {bridgeEpoch:'a'.repeat(32),matchdayCleared:true}};
+ const applyGraphics=g=>{currentGraphics=g;return true};
+ ${clearPollImpl}
+ return {poll,view:()=>currentGraphics};
+`)();
+await clearHarness.poll();
+assert(clearHarness.view().homeScore===5,'transport failure cleared the last score');
+await clearHarness.poll();
+assert(clearHarness.view().homeScore===5,'ambiguous legacy null cleared the last score');
+await clearHarness.poll();
+assert(clearHarness.view().matchdayCleared,'authoritative clear did not reach output');
+console.log('PASS output distinguishes Bridge clear from outage and legacy null');

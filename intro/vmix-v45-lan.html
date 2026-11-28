@@ -1559,9 +1559,11 @@ async function readOutputJson(url,label,readBridgeEpoch=false){
   const r=await fetch(url,{cache:'no-store',signal:controller.signal});
   if(!r.ok)throw new Error(label+' '+r.status);
   const json=await r.json();
-  if(!readBridgeEpoch||!json)return json;
-  const epoch=r.headers?.get('X-SAGI-Bridge-Epoch')||'';
-  return {...json,bridgeEpoch:/^[a-f0-9]{32}$/.test(epoch)?epoch:''};
+  if(!readBridgeEpoch)return json;
+  const header=r.headers?.get('X-SAGI-Bridge-Epoch')||'';
+  const bridgeEpoch=/^[a-f0-9]{32}$/.test(header)?header:'';
+  if(json===null)return bridgeEpoch?{bridgeEpoch,matchdayCleared:true}:null;
+  return {...json,bridgeEpoch,matchdayCleared:false};
  }finally{
   clearTimeout(timer);
  }
@@ -2001,7 +2003,7 @@ function applyGraphics(g){
  const fixture=String(g&&g.fixtureKey||'');
  const previousEpoch=currentGraphics?.bridgeEpoch||'',epoch=g.bridgeEpoch||previousEpoch;
  const restarted=!!(epoch&&previousEpoch&&epoch!==previousEpoch);
- if(restarted||(fixture&&fixture!==lastGraphicsFixtureKey)){
+ if(g.matchdayCleared||restarted||(fixture&&fixture!==lastGraphicsFixtureKey)){
   if(currentGraphics){
    hideEvent(false);lastRenderedSignatureEventKey='';
    lastHomeScore=null;lastAwayScore=null;
@@ -2044,7 +2046,10 @@ async function poll(){
    const g=await lanMatchday();
    if(outputHealth.consecutiveFailures>0)outputHealth.recoveries++;
    outputHealth.pollOk++;outputHealth.consecutiveFailures=0;outputHealth.lastOkAt=Date.now();
-   if(g&&g.commandId&&(g.commandId!==lastGraphics||Number(g.revision||0)!==lastGraphicsRevision||(g.bridgeEpoch&&g.bridgeEpoch!==currentGraphics?.bridgeEpoch))){if(applyGraphics(g))lastGraphics=g.commandId}
+   if(g?.matchdayCleared){
+    if(!currentGraphics?.matchdayCleared||g.bridgeEpoch!==currentGraphics.bridgeEpoch)applyGraphics(g);
+    lastGraphics='';
+   }else if(g&&g.commandId&&(g.commandId!==lastGraphics||Number(g.revision||0)!==lastGraphicsRevision||(g.bridgeEpoch&&g.bridgeEpoch!==currentGraphics?.bridgeEpoch))){if(applyGraphics(g))lastGraphics=g.commandId}
  }catch(e){outputHealth.pollFail++;outputHealth.consecutiveFailures++;outputHealth.lastErrorAt=Date.now()}
  }finally{
   outputPollBusy=false;
