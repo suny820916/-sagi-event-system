@@ -12,10 +12,15 @@ on:
       - "intro/tests/v432-event-identity-gate.mjs"
       - "intro/tests/v432-brand-gate.mjs"
       - "intro/tests/v432-integration-gate.mjs"
+      - "intro/sagi-penalty-core-v433.js"
+      - "intro/tests/v433-penalty-core-selftest.mjs"
+      - "intro/tests/v433-penalty-integration-selftest.mjs"
       - "intro/tests/v432-china-lan-preflight.mjs"
       - "intro/tests/v432-bridge-ssot-runtime.ps1"
       - "intro/tests/v432-field-preflight.ps1"
       - "intro/SAGI_VMIX_LAN_V432_SIGNATURE_RC.bat"
+      - "intro/SAGI_VMIX_LAN_V433_PENALTY_RC.bat"
+      - "intro/SAGI_AUTO_TEST_V10.bat"
       - "intro/tests/v4311-replay-hotfix-selftest.mjs"
       - "intro/SAGI_VMIX_LAN_V4311_REPLAY_HOTFIX.bat"
       - ".github/workflows/vmix-v4270-selftest.yml"
@@ -31,10 +36,15 @@ on:
       - "intro/tests/v432-event-identity-gate.mjs"
       - "intro/tests/v432-brand-gate.mjs"
       - "intro/tests/v432-integration-gate.mjs"
+      - "intro/sagi-penalty-core-v433.js"
+      - "intro/tests/v433-penalty-core-selftest.mjs"
+      - "intro/tests/v433-penalty-integration-selftest.mjs"
       - "intro/tests/v432-china-lan-preflight.mjs"
       - "intro/tests/v432-bridge-ssot-runtime.ps1"
       - "intro/tests/v432-field-preflight.ps1"
       - "intro/SAGI_VMIX_LAN_V432_SIGNATURE_RC.bat"
+      - "intro/SAGI_VMIX_LAN_V433_PENALTY_RC.bat"
+      - "intro/SAGI_AUTO_TEST_V10.bat"
       - "intro/tests/v4311-replay-hotfix-selftest.mjs"
       - "intro/SAGI_VMIX_LAN_V4311_REPLAY_HOTFIX.bat"
       - ".github/workflows/vmix-v4270-selftest.yml"
@@ -121,6 +131,11 @@ jobs:
         run: node intro/tests/v432-integration-gate.mjs
       - name: Validate China LAN-first packaged core dependency gate
         run: node intro/tests/v432-china-lan-preflight.mjs
+      - name: Validate V4.33 penalty compatibility when present
+        if: hashFiles('intro/tests/v433-penalty-integration-selftest.mjs') != ''
+        run: |
+          node intro/tests/v433-penalty-core-selftest.mjs
+          node intro/tests/v433-penalty-integration-selftest.mjs
       - name: Run V4.31.0 broadcast compatibility self-test
         run: |
           mkdir -p selftest-artifacts
@@ -261,3 +276,7 @@ jobs:
           node intro/tests/v432-brand-gate.mjs
           node intro/tests/v432-integration-gate.mjs
           node intro/tests/v432-china-lan-preflight.mjs
+          if (Test-Path intro/tests/v433-penalty-integration-selftest.mjs) {
+            node intro/tests/v433-penalty-core-selftest.mjs
+            node intro/tests/v433-penalty-integration-selftest.mjs
+          }

@@ -1,0 +1,214 @@
+name: SAGI vMix V4.33 Penalty Core
+
+on:
+  push:
+    paths:
+      - "intro/sagi-penalty-core-v433.js"
+      - "intro/v45-lan.html"
+      - "intro/vmix-v45-lan.html"
+      - "intro/SAGI_VMIX_LAN_V433_PENALTY_RC.bat"
+      - "intro/SAGI_V433_FIELD_ACCEPTANCE_SELF_CONTAINED.bat"
+      - "intro/SAGI_AUTO_TEST_V03.bat"
+      - "intro/SAGI_AUTO_TEST_V10.bat"
+      - "intro/SAGI_VMIX_LAN_V432_SIGNATURE_RC.bat"
+      - "intro/tests/v433-penalty-core-selftest.mjs"
+      - "intro/tests/v433-penalty-integration-selftest.mjs"
+      - "intro/tests/v433-field-acceptance-launcher-selftest.mjs"
+      - "intro/tests/v433-auto-test-v03-selftest.mjs"
+      - "intro/tests/v433-auto-test-v10-payload.mjs"
+      - "intro/tests/v433-ui-pair-selftest.ps1"
+      - "intro/tests/v440-fixture-identity-contract-selftest.mjs"
+      - ".github/workflows/vmix-v433-penalty-selftest.yml"
+  pull_request:
+    paths:
+      - "intro/sagi-penalty-core-v433.js"
+      - "intro/v45-lan.html"
+      - "intro/vmix-v45-lan.html"
+      - "intro/SAGI_VMIX_LAN_V433_PENALTY_RC.bat"
+      - "intro/SAGI_V433_FIELD_ACCEPTANCE_SELF_CONTAINED.bat"
+      - "intro/SAGI_AUTO_TEST_V03.bat"
+      - "intro/SAGI_AUTO_TEST_V10.bat"
+      - "intro/SAGI_VMIX_LAN_V432_SIGNATURE_RC.bat"
+      - "intro/tests/v4270-browser-selftest.mjs"
+      - "intro/tests/v433-penalty-core-selftest.mjs"
+      - "intro/tests/v433-penalty-integration-selftest.mjs"
+      - "intro/tests/v433-field-acceptance-launcher-selftest.mjs"
+      - "intro/tests/v433-auto-test-v03-selftest.mjs"
+      - "intro/tests/v433-auto-test-v10-payload.mjs"
+      - "intro/tests/v433-ui-pair-selftest.ps1"
+      - "intro/tests/v440-fixture-identity-contract-selftest.mjs"
+      - ".github/workflows/vmix-v433-penalty-selftest.yml"
+  workflow_dispatch:
+
+jobs:
+  penalty-core:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Run V4.33 penalty core self-test
+        run: node intro/tests/v433-penalty-core-selftest.mjs
+      - name: Run V4.33 live/package integration gate
+        run: node intro/tests/v433-penalty-integration-selftest.mjs
+      - name: Guard self-contained field acceptance launcher
+        run: node intro/tests/v433-field-acceptance-launcher-selftest.mjs
+      - name: Verify AUTO TEST V1.0 embeds the candidate UI
+        run: node intro/tests/v433-auto-test-v10-payload.mjs
+      - name: Verify V4.40 fixture identity preparation
+        run: node intro/tests/v440-fixture-identity-contract-selftest.mjs
+      - name: Audit SAGI AUTO TEST V0.3 safety contract
+        run: node intro/tests/v433-auto-test-v03-selftest.mjs
+
+  windows-package:
+    runs-on: windows-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Parse V4.33 RC BAT and embedded Bridge with Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $path = 'intro/SAGI_VMIX_LAN_V433_PENALTY_RC.bat'
+          $source = [IO.File]::ReadAllText((Resolve-Path $path), [Text.Encoding]::UTF8)
+          $pattern = '(?s)###SAGI_PS###\r?\n(.*?)\r?\n###SAGI_CONTROL###\r?\n(.*?)\r?\n###SAGI_OUTPUT###\r?\n(.*)$'
+          $match = [regex]::Match($source, $pattern)
+          if (-not $match.Success) { throw 'V4.33 embedded BAT payload extraction failed' }
+          $bridge = $match.Groups[1].Value
+          $control = $match.Groups[2].Value
+          $output = $match.Groups[3].Value
+          if ($bridge.Length -lt 1000 -or $control.Length -lt 100000 -or $output.Length -lt 50000) { throw 'V4.33 extracted payload is truncated' }
+          $tokens = $null
+          $errors = $null
+          [void][System.Management.Automation.Language.Parser]::ParseInput($bridge, [ref]$tokens, [ref]$errors)
+          if ($errors.Count -gt 0) {
+            throw ('V4.33 embedded Bridge PowerShell syntax errors: ' + (($errors | ForEach-Object { $_.Message + ' line ' + $_.Extent.StartLineNumber }) -join '; '))
+          }
+          foreach ($marker in @('SAGI433_PENALTY_RC1','SAGIPenaltyCore','mdPenaltyCommitKick','mdPenaltySubmitBusy')) {
+            if (-not $control.Contains($marker)) { throw "V4.33 control marker missing: $marker" }
+          }
+          if (-not $source.Contains('$ProgressPreference = "SilentlyContinue"')) { throw 'V4.32 console progress hotfix missing from V4.33 BAT' }
+          Write-Host 'V4.33 Windows BAT extraction + PowerShell 5.1 parser PASS'
+
+      - name: Exercise paired UI update and rollback failures
+        shell: powershell
+        run: ./intro/tests/v433-ui-pair-selftest.ps1
+
+      - name: Parse self-contained acceptance launcher with Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $path = 'intro/SAGI_V433_FIELD_ACCEPTANCE_SELF_CONTAINED.bat'
+          $source = [IO.File]::ReadAllText((Resolve-Path $path), [Text.Encoding]::UTF8)
+          $match = [regex]::Match($source, '(?s)###SAGI_ACCEPTANCE_PS###\r?\n(.*)$')
+          if (-not $match.Success) { throw 'V4.33 acceptance embedded PowerShell payload missing' }
+          $tokens = $null
+          $errors = $null
+          [void][System.Management.Automation.Language.Parser]::ParseInput($match.Groups[1].Value, [ref]$tokens, [ref]$errors)
+          if ($errors.Count -gt 0) {
+            throw ('V4.33 acceptance PowerShell syntax errors: ' + (($errors | ForEach-Object { $_.Message + ' line ' + $_.Extent.StartLineNumber }) -join '; '))
+          }
+          if ($source -match '_SAGI_AUTO_TEST\.ps1' -or $source -match '%TEMP%') { throw 'TEMP script dependency regressed into field acceptance launcher' }
+          node intro/tests/v433-field-acceptance-launcher-selftest.mjs
+          Write-Host 'V4.33 self-contained field acceptance launcher PASS'
+
+      - name: Parse SAGI AUTO TEST V0.3 with Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $path = 'intro/SAGI_AUTO_TEST_V03.bat'
+          $source = [IO.File]::ReadAllText((Resolve-Path $path), [Text.Encoding]::UTF8)
+          $match = [regex]::Match($source, '(?s)###SAGI_AUTO_TEST_PS###\r?\n(.*)$')
+          if (-not $match.Success) { throw 'AUTO TEST V0.3 embedded PowerShell payload missing' }
+          $tokens = $null
+          $errors = $null
+          [void][System.Management.Automation.Language.Parser]::ParseInput($match.Groups[1].Value, [ref]$tokens, [ref]$errors)
+          if ($errors.Count -gt 0) {
+            throw ('AUTO TEST V0.3 PowerShell syntax errors: ' + (($errors | ForEach-Object { $_.Message + ' line ' + $_.Extent.StartLineNumber }) -join '; '))
+          }
+          node intro/tests/v433-auto-test-v03-selftest.mjs
+          Write-Host 'SAGI AUTO TEST V0.3 Windows PowerShell 5.1 parser PASS'
+
+      - name: Run V4.33 penalty portable gates on Windows
+        shell: pwsh
+        run: |
+          node intro/tests/v433-penalty-core-selftest.mjs
+          node intro/tests/v433-penalty-integration-selftest.mjs
+          node intro/tests/v433-field-acceptance-launcher-selftest.mjs
+          node intro/tests/v433-auto-test-v03-selftest.mjs
+
+      - name: Upload V4.33 RC test launchers
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: SAGI_VMIX_V433_PENALTY_RC_CI_PASSED_NOT_PRODUCTION_CERTIFIED
+          path: |
+            intro/SAGI_VMIX_LAN_V433_PENALTY_RC.bat
+            intro/SAGI_V433_FIELD_ACCEPTANCE_SELF_CONTAINED.bat
+            intro/SAGI_AUTO_TEST_V03.bat
+          if-no-files-found: error
+          retention-days: 7
+
+  windows-auto-test-v10:
+    runs-on: windows-latest
+    timeout-minutes: 16
+    steps:
+      - uses: actions/checkout@v4
+      - name: Parse and execute self-contained AUTO TEST V1.0 on Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $launcher = Resolve-Path 'intro/SAGI_AUTO_TEST_V10.bat'
+          $source = [IO.File]::ReadAllText($launcher)
+          $runner = [regex]::Match($source, '(?s)###RUNNER###\r?\n(.*?)\r?\n###BRIDGE###')
+          if (!$runner.Success) { throw 'V1.0 embedded runner missing' }
+          [void][scriptblock]::Create($runner.Groups[1].Value)
+          $env:SAGI_AUTOTEST_NONINTERACTIVE = '1'
+          $env:SAGI_AUTOTEST_SOAK_SECONDS = '180'
+          $env:SAGI_AUTOTEST_REPORT_DIR = Join-Path $PWD 'autotest-v10-evidence'
+          New-Item -ItemType Directory -Force $env:SAGI_AUTOTEST_REPORT_DIR | Out-Null
+          Get-FileHash -Algorithm SHA256 $launcher | Select-Object Algorithm,Hash |
+            ConvertTo-Json | Set-Content (Join-Path $env:SAGI_AUTOTEST_REPORT_DIR 'launcher-sha256.json')
+          & $launcher 2>&1 | Tee-Object -FilePath (Join-Path $env:SAGI_AUTOTEST_REPORT_DIR 'console.log')
+          $code = $LASTEXITCODE
+          $file = Get-ChildItem $env:SAGI_AUTOTEST_REPORT_DIR -Filter 'SAGI_AUTO_TEST_V10_*.json' |
+            Select-Object -First 1
+          if (!$file) { throw "V1.0 evidence missing (exit $code)" }
+          $report = Get-Content -LiteralPath $file.FullName -Raw | ConvertFrom-Json
+          if ($code -ne 0 -or $report.version -ne '1.0' -or $report.productionCertified -ne $false -or
+              @($report.checks | Where-Object { !$_.pass }).Count) { throw 'V1.0 sandbox did not pass' }
+          foreach ($name in @(
+              'independent-browser-contexts', 'real-score-button-and-two-outputs',
+              'duplicate-goal-and-missing-player-photo-fallback', 'real-yellow-red-sub-clear-buttons',
+              'control-refresh-restores-score', 'browser-disconnect-reconnect',
+              'sandbox-bridge-restart-durable-state', 'same-browser-contexts-recover-after-restart',
+              'fixture-restore-isolated', 'soak-polling-and-resource-budget', 'sandbox-cleanup')) {
+            if (!($report.checks | Where-Object { $_.name -eq $name -and $_.pass })) {
+              throw "Required V1.0 check missing: $name"
+            }
+          }
+          $evidence = $report.evidenceDirectory
+          foreach ($name in '01-goal-animation.png','02-restarted-score.png','03-soak-start.png','soak.json') {
+            if (!(Test-Path -LiteralPath (Join-Path $evidence $name))) { throw "Missing evidence: $name" }
+          }
+          "SAGI AUTO TEST V1.0: $($report.checks.Count) sandbox checks passed. No physical certification." |
+            Tee-Object -FilePath (Join-Path $env:SAGI_AUTOTEST_REPORT_DIR 'summary.txt') |
+            Add-Content $env:GITHUB_STEP_SUMMARY
+          exit 0
+
+      - name: Upload AUTO TEST V1.0 and Windows sandbox evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: SAGI_AUTO_TEST_V10_WINDOWS_SANDBOX
+          path: |
+            intro/SAGI_AUTO_TEST_V10.bat
+            autotest-v10-evidence/
+          if-no-files-found: error
+          retention-days: 14

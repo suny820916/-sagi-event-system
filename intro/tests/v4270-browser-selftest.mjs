@@ -11,7 +11,7 @@ const AWAY='ALTAI YOUTH FOOTBALL CLUB';
 const crest=(fill,label)=>'data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><path d="M60 4 108 22v38c0 31-20 48-48 56C32 108 12 91 12 60V22Z" fill="'+fill+'"/><text x="60" y="70" text-anchor="middle" font-size="30" font-family="Arial" font-weight="900" fill="white">'+label+'</text></svg>');
 const HOME_CREST=crest('#0c8b55','H');
 const AWAY_CREST=crest('#3157b7','A');
-let seq=1,vmixCommands=[],matchdayPosts=[],matchdayAttempts=[],graphics=makeGraphics(),reorderMatchdayWrites=false,failNextMatchdayPosts=0,failNextMatchdayGets=0,hangNextMatchdayGets=0,failNextOutputMatchdayGets=0,projectStore={projects:[],activeProjectId:'',savedAt:0,schema:'SAGI_MATCH_PROJECTS_V2'},projectPosts=[];
+let seq=1,vmixCommands=[],matchdayPosts=[],matchdayAttempts=[],graphics=makeGraphics(),reorderMatchdayWrites=false,failNextMatchdayPosts=0,failNextMatchdayGets=0,failNextOutputMatchdayGets=0,projectStore={projects:[],activeProjectId:'',savedAt:0,schema:'SAGI_MATCH_PROJECTS_V2'},projectPosts=[];
 
 function makeGraphics(overrides={}){
  return {
@@ -42,11 +42,27 @@ function json(res,obj,status=200){const body=JSON.stringify(obj);res.writeHead(s
 function text(res,body,type='text/plain; charset=utf-8',status=200){res.writeHead(status,{'Content-Type':type,'Cache-Control':'no-store','Access-Control-Allow-Origin':'*'});res.end(body)}
 function mime(p){if(p.endsWith('.html'))return'text/html; charset=utf-8';if(p.endsWith('.js')||p.endsWith('.mjs'))return'text/javascript; charset=utf-8';if(p.endsWith('.css'))return'text/css; charset=utf-8';if(p.endsWith('.svg'))return'image/svg+xml';if(p.endsWith('.png'))return'image/png';return'application/octet-stream'}
 function readBody(req){return new Promise((resolve,reject)=>{let d='';req.setEncoding('utf8');req.on('data',c=>d+=c);req.on('end',()=>resolve(d));req.on('error',reject)})}
+let stallOutputBody=null,stallLineupRead=null,observeOutputWhileLineupStalls=null;
+let matchdayBridgeEpoch='a'.repeat(32);
 const server=http.createServer(async(req,res)=>{
  const u=new URL(req.url,'http://127.0.0.1:'+PORT);
  try{
-  if(u.pathname==='/api/state')return json(res,{lineupIntro:null});
-  if(u.pathname==='/api/matchday'&&req.method==='GET'){const isOutputPoll=u.searchParams.has('ts');if(isOutputPoll&&failNextOutputMatchdayGets>0){failNextOutputMatchdayGets--;return json(res,{ok:false,error:'SIMULATED_OUTPUT_GET_FAILURE'},503)}if(!isOutputPoll&&hangNextMatchdayGets>0){hangNextMatchdayGets--;setTimeout(()=>{try{if(!res.writableEnded)json(res,graphics)}catch{}},5000);return}if(failNextMatchdayGets>0){failNextMatchdayGets--;return json(res,{ok:false,error:'SIMULATED_TRANSIENT_GET_FAILURE'},503)}return json(res,graphics)}
+  if(u.pathname==='/api/state'){
+   if(stallLineupRead&&req.headers['x-sagi-selftest-stall']==='lineup'){
+    const inject=stallLineupRead;stallLineupRead=null;inject(res);return
+   }
+   return json(res,{lineupIntro:null})
+  }
+  if(u.pathname==='/api/matchday'&&req.method==='GET'){
+   const isOutputPoll=u.searchParams.has('ts');
+   res.setHeader('X-SAGI-Bridge-Epoch', matchdayBridgeEpoch);
+   if(isOutputPoll&&req.headers['x-sagi-selftest-stall']==='lineup')observeOutputWhileLineupStalls?.();
+   if(isOutputPoll&&stallOutputBody&&req.headers['x-sagi-selftest-stall']==='1'){
+    const inject=stallOutputBody;stallOutputBody=null;inject(res);
+    res.writeHead(200,{'Content-Type':'application/json','Cache-Control':'no-store'});res.write('{"incomplete":');
+    return
+   }
+   if(isOutputPoll&&failNextOutputMatchdayGets>0){failNextOutputMatchdayGets--;return json(res,{ok:false,error:'SIMULATED_OUTPUT_GET_FAILURE'},503)}if(failNextMatchdayGets>0){failNextMatchdayGets--;return json(res,{ok:false,error:'SIMULATED_TRANSIENT_GET_FAILURE'},503)}return json(res,graphics)}
   if(u.pathname==='/api/matchday'&&req.method==='POST'){const b=await readBody(req);let next=null;try{next=JSON.parse(b)||graphics;matchdayAttempts.push(next)}catch{}if(failNextMatchdayPosts>0){failNextMatchdayPosts--;return json(res,{ok:false,error:'SIMULATED_TRANSIENT_FAILURE'},503)}try{if(next){if(reorderMatchdayWrites&&Number(next.homeScore)===5)await new Promise(r=>setTimeout(r,450));graphics=next;matchdayPosts.push(graphics)}}catch{}return json(res,{ok:true})}
   if(u.pathname==='/api/vmix/status')return json(res,{ok:true,active:'1',preview:'2',inputs:[{number:'1',key:'cam1',type:'Camera',title:'CAM 1',state:'Running'},{number:'2',key:'cam2',type:'Camera',title:'CAM 2',state:'Running'},{number:'4',key:'replay',type:'Video',title:'REPLAY',state:'Running'},{number:'5',key:'gfx',type:'Browser',title:'SAGI Browser',state:'Running'}],overlays:[]});
   if(u.pathname==='/api/vmix'&&req.method==='POST'){const b=await readBody(req);let cmd={};try{cmd=JSON.parse(b)}catch{}vmixCommands.push(cmd);return json(res,{ok:true,command:cmd})}
@@ -217,6 +233,19 @@ server.listen(PORT,'127.0.0.1',async()=>{
   await wait(900);
   const staleGuard=await page.evaluate(()=>({home:document.querySelector('#sbHomeScore').textContent,away:document.querySelector('#sbAwayScore').textContent}));
   assert(staleGuard.home==='2'&&staleGuard.away==='1','stale lower revision rolled vMix output backward: '+JSON.stringify(staleGuard));
+  console.log('TEST 4C.1: open outputs accept a recovered lower revision after a Bridge restart');
+  const secondOutput=await browser.newPage({viewport:{width:1920,height:1080}});
+  await secondOutput.goto('http://127.0.0.1:'+PORT+'/intro/vmix-v45-lan.html',{waitUntil:'domcontentloaded'});
+  await secondOutput.waitForFunction(()=>window.sagiScoreCenterDiagnostic()?.revision===119,null,{timeout:5000});
+  graphics=makeGraphics({commandId:'rev121-before-restart',revision:121,fixtureKey:'SELFTEST-REVISION-GUARD',homeScore:5,awayScore:1,event:null});
+  for(const client of [page,secondOutput])await client.waitForFunction(()=>window.sagiScoreCenterDiagnostic()?.score[0]===5,null,{timeout:5000});
+  matchdayBridgeEpoch='b'.repeat(32);
+  graphics=makeGraphics({commandId:'rev118-restored',revision:118,fixtureKey:'SELFTEST-REVISION-GUARD',homeScore:4,awayScore:1,event:null});
+  for(const client of [page,secondOutput])await client.waitForFunction(()=>window.sagiScoreCenterDiagnostic()?.revision===118&&window.sagiScoreCenterDiagnostic()?.score[0]===4,null,{timeout:5000});
+  graphics=makeGraphics({commandId:'rev117-stale-after-restart',revision:117,fixtureKey:'SELFTEST-REVISION-GUARD',homeScore:8,awayScore:1,event:null});
+  await wait(600);
+  for(const client of [page,secondOutput])assert(await client.evaluate(()=>window.sagiScoreCenterDiagnostic()?.score[0])===4,'same-epoch stale score was shown after recovery');
+  await secondOutput.close();
 
   console.log('TEST 3D: stoppage time is explicit and attached to the clock rail');
   graphics=makeGraphics({commandId:'stoppage-info',revision:140,fixtureKey:'SELFTEST-STOPPAGE',stoppageTime:'3',clock:{period:'2H',baseSeconds:5460,running:false,startedAt:null},event:{type:'CLEAR_EVENT'}});
@@ -238,7 +267,7 @@ server.listen(PORT,'127.0.0.1',async()=>{
   const pk=await page.evaluate(({HOME,AWAY})=>{const board=document.querySelector('#simplePenaltyBoard'),bug=document.querySelector('#scoreBug'),hn=document.querySelector('#spbHomeName'),an=document.querySelector('#spbAwayName');return{home:hn.textContent,away:an.textContent,phase:document.querySelector('#spbPhase').textContent,homeDots:document.querySelectorAll('#spbHomeDots .spbDot').length,awayDots:document.querySelectorAll('#spbAwayDots .spbDot').length,misses:document.querySelectorAll('.spbDot.miss').length,boardOn:board.classList.contains('on'),scorebugOn:bug.classList.contains('on'),homeScore:document.querySelector('#spbHomeScore').textContent,awayScore:document.querySelector('#spbAwayScore').textContent}}, {HOME,AWAY});
   assert(pk.boardOn&&!pk.scorebugOn,'PK board not isolated');
   assert(pk.home===HOME&&pk.away===AWAY,'PK names changed');
-  assert(pk.phase.includes('突然死亡')&&pk.homeDots===5&&pk.awayDots===5&&pk.misses>=1,'PK >5 round/miss display failed');
+  assert(pk.phase.includes('突然死亡')&&pk.homeDots===6&&pk.awayDots===6&&pk.misses===3,'PK >5 round/miss display failed');
   assert(pk.homeScore==='4'&&pk.awayScore==='5','PK scores unsynchronized');
   await page.screenshot({path:'selftest-artifacts/05-penalty-round6.png'});
 
@@ -311,6 +340,8 @@ server.listen(PORT,'127.0.0.1',async()=>{
   await page.selectOption('#projectSelect',storedProject.id);
   await page.click('#projectLoadBtn');
   await page.waitForFunction(()=>document.querySelector('#projectLoadBtn')?.textContent==='读取项目'&&document.querySelector('#projectName')?.value==='SELFTEST STORED MATCH',null,{timeout:8000});
+  assert(graphics.home==='乌苏叶克备'&&graphics.away==='IPF'&&Number(graphics.homeScore)===3&&Number(graphics.awayScore)===1,'loaded fixture was not committed to Bridge before project selection');
+  assert(projectStore.activeProjectId===storedProject.id,'loaded project selection not persisted to Bridge');
   await page.click('#setupValidateBtn');await wait(350);
   const loadedProject=await page.evaluate(()=>({
     competition:document.querySelector('#matchCompetition').value,
@@ -358,6 +389,17 @@ server.listen(PORT,'127.0.0.1',async()=>{
   assert(afterStaleRestore.home==='3'&&afterStaleRestore.away==='1','manual stale Bridge restore overwrote selected project: '+JSON.stringify(afterStaleRestore));
   assert(afterStaleRestore.homeName==='乌苏叶克备'&&afterStaleRestore.awayName==='IPF','stale Bridge restore changed selected fixture identity');
   await page.screenshot({path:'selftest-artifacts/09-project-load-ready.png'});
+  console.log('TEST 8A: same teams in another competition cannot replace historical score');
+  const originalFixtureState=graphics;
+  graphics={...graphics,commandId:'different_competition',revision:(Number(graphics.revision)||0)+1,
+   home:afterStaleRestore.homeName,away:afterStaleRestore.awayName,competition:undefined,
+   fixtureKey:'unrelated test cup|'+afterStaleRestore.homeName+'|'+afterStaleRestore.awayName,homeScore:9,awayScore:9};
+  const competitionRead=page.waitForResponse(response=>response.url().includes('/api/matchday?recover='),{timeout:5000});
+  await page.evaluate(()=>document.querySelector('#mmRestoreState').click());
+  await competitionRead;await wait(250);
+  const competitionRestore=await page.evaluate(()=>({home:document.querySelector('#mdHomeScore').textContent,away:document.querySelector('#mdAwayScore').textContent}));
+  assert(competitionRestore.home==='3'&&competitionRestore.away==='1','historical restore accepted same teams from a different competition: '+JSON.stringify(competitionRestore));
+  graphics=originalFixtureState;
 
   console.log('TEST 8B: compact local project index rehydrates full project/photos from IndexedDB when Bridge project list is empty');
   await wait(500);
@@ -472,6 +514,95 @@ server.listen(PORT,'127.0.0.1',async()=>{
   await idemPage.close();
   graphics={...graphics,commandId:'idem_clear',revision:baseRevision+3,event:{type:'CLEAR_EVENT'},updatedAt:new Date().toISOString()};
 
+  console.log('TEST 10C4: V4.33 penalty controls are idempotent, recoverable, and enter sudden death safely');
+  graphics={...graphics,commandId:'penalty_v433_base',revision:(Number(graphics.revision)||0)+5,homeScore:1,awayScore:1,homePen:0,awayPen:0,
+    clock:{period:'2H',baseSeconds:5400,running:false,startedAt:null},
+    penaltyShootout:{started:false,rounds:5,firstSide:'HOME',history:[],winner:'',finished:false},
+    simplePenalty:{visible:false,home:0,away:0,history:[],slots:5},event:{type:'CLEAR_EVENT'},updatedAt:new Date().toISOString()};
+  await page.evaluate(()=>window.sagiMatchdayConsistencyCheck(true));await wait(700);
+  await page.selectOption('#mdPenRounds','5');await page.selectOption('#mdPenFirst','HOME');
+  matchdayPosts=[];matchdayAttempts=[];
+  await page.click('#mdPenStart');await wait(1000);
+  assert(graphics.penaltyShootout?.started===true&&graphics.clock?.period==='PEN','V4.33 penalty start did not reach Bridge: '+JSON.stringify(graphics.penaltyShootout));
+  const startWrites=matchdayPosts.length;
+  const penaltyOutputContext=await browser.newContext();
+  const penaltyOutput=await penaltyOutputContext.newPage();
+  await penaltyOutput.goto('http://127.0.0.1:'+PORT+'/intro/vmix-v45-lan.html',{waitUntil:'domcontentloaded'});
+  const waitForPenaltyDots=(homeGoals,awayGoals,awayMisses)=>penaltyOutput.waitForFunction(expected=>{
+    const count=selector=>document.querySelectorAll(selector).length;
+    const score=id=>document.getElementById(id)?.textContent;
+    return document.getElementById('simplePenaltyBoard')?.classList.contains('on')
+      && score('spbHomeScore')===String(expected.homeGoals)&&score('spbAwayScore')===String(expected.awayGoals)
+      && count('#spbHomeDots .spbDot.on')===expected.homeGoals
+      && count('#spbAwayDots .spbDot.on')===expected.awayGoals
+      && count('#spbAwayDots .spbDot.miss')===expected.awayMisses;
+  },{homeGoals,awayGoals,awayMisses},{timeout:10000});
+
+  await page.evaluate(()=>{const b=document.querySelector('#spHomePlus');b.click();b.click()});await wait(900);
+  assert(graphics.penaltyShootout.history.length===1,'rapid double HOME kick created duplicate attempts: '+JSON.stringify(graphics.penaltyShootout.history));
+  assert(graphics.penaltyShootout.history[0].kickId&&graphics.penaltyShootout.history[0].side==='HOME'&&graphics.penaltyShootout.history[0].result==='GOAL','HOME kick identity/result missing: '+JSON.stringify(graphics.penaltyShootout.history[0]));
+  assert(Number(graphics.homePen)===1&&Number(graphics.awayPen)===0,'HOME penalty score drift: '+JSON.stringify({homePen:graphics.homePen,awayPen:graphics.awayPen}));
+  assert(matchdayPosts.length===startWrites+1,'rapid double HOME kick produced more than one Bridge write: '+JSON.stringify({startWrites,after:matchdayPosts.length}));
+
+  await waitForPenaltyDots(1,0,0);
+  const afterHomeWrites=matchdayPosts.length;
+  await page.evaluate(()=>document.querySelector('#spHomePlus').click());await wait(350);
+  assert(graphics.penaltyShootout.history.length===1&&matchdayPosts.length===afterHomeWrites,'wrong-side HOME kick was not blocked');
+
+  await page.evaluate(()=>{const b=document.querySelector('#spAwayMiss');b.click();b.click()});await wait(900);
+  assert(graphics.penaltyShootout.history.length===2,'rapid double AWAY miss created duplicate attempts: '+JSON.stringify(graphics.penaltyShootout.history));
+  assert(graphics.penaltyShootout.history[1].kickId&&graphics.penaltyShootout.history[1].side==='AWAY'&&graphics.penaltyShootout.history[1].result==='MISS','AWAY miss identity/result missing: '+JSON.stringify(graphics.penaltyShootout.history[1]));
+  assert(graphics.penaltyShootout.history[0].kickId!==graphics.penaltyShootout.history[1].kickId,'two real penalty kicks reused one kickId');
+  assert(Number(graphics.homePen)===1&&Number(graphics.awayPen)===0,'penalty miss incorrectly changed score');
+
+  await waitForPenaltyDots(1,0,1);
+  await page.reload({waitUntil:'domcontentloaded'});await wait(1500);
+  const recoveredPenalty=await page.evaluate(()=>({
+    home:document.querySelector('#spHomeScore')?.textContent,
+    away:document.querySelector('#spAwayScore')?.textContent,
+    phase:document.querySelector('#spVisibleState')?.textContent,
+    quickUndoDisabled:document.querySelector('#spUndo')?.disabled,
+    directorUndoDisabled:document.querySelector('#mdPenUndo')?.disabled,
+    directorUndoVisible:!!document.querySelector('#mdPenUndo')&&getComputedStyle(document.querySelector('#mdPenUndo')).display!=='none'&&document.querySelector('#mdPenUndo').getBoundingClientRect().height>0,
+    build:typeof SAGIPenaltyCore!=='undefined'?SAGIPenaltyCore.VERSION:''
+  }));
+  assert(recoveredPenalty.home==='1'&&recoveredPenalty.away==='0'&&recoveredPenalty.phase.includes('第2轮')&&recoveredPenalty.build==='4.33.0-rc.1','penalty reload recovery/current round failed: '+JSON.stringify(recoveredPenalty));
+  assert(!recoveredPenalty.directorUndoDisabled&&recoveredPenalty.directorUndoVisible,'desktop penalty undo unavailable after reload recovery: '+JSON.stringify(recoveredPenalty));
+
+  await page.click('#mdPenUndo');await wait(850);
+  assert(graphics.penaltyShootout.history.length===1&&graphics.penaltyShootout.finished===false&&graphics.penaltyShootout.winner==='','penalty undo did not restore previous shootout state: '+JSON.stringify(graphics.penaltyShootout));
+  assert(graphics.penaltyShootout.nextSide==='AWAY'||graphics.penaltyShootout.history.length===1,'penalty undo next-side state invalid: '+JSON.stringify(graphics.penaltyShootout));
+
+  await waitForPenaltyDots(1,0,0);
+  await page.click('#mdPenReset');await wait(850);
+  assert(graphics.penaltyShootout.history.length===0&&Number(graphics.homePen)===0&&Number(graphics.awayPen)===0&&graphics.clock?.period==='2H','penalty reset changed regular score or failed to leave PEN mode: '+JSON.stringify(graphics));
+
+  await page.selectOption('#mdPenRounds','5');await page.selectOption('#mdPenFirst','HOME');await page.click('#mdPenStart');await wait(900);
+  for(let round=1;round<=5;round++){
+    await page.click('#mdPenHomeGoal');await wait(450);
+    await page.click('#mdPenAwayGoal');await wait(450);
+  }
+  assert(graphics.penaltyShootout.history.length===10&&!graphics.penaltyShootout.finished&&graphics.penaltyShootout.suddenDeath===true&&graphics.penaltyShootout.currentRound===6,
+    'tied five-round shootout did not enter round-6 sudden death: '+JSON.stringify(graphics.penaltyShootout));
+  const round6=await page.evaluate(()=>document.querySelector('#spVisibleState')?.textContent||'');
+  assert(round6.includes('突然死亡')&&round6.includes('第6轮'),'round-6 sudden-death label missing: '+round6);
+
+  await page.click('#mdPenHomeGoal');await wait(500);
+  assert(!graphics.penaltyShootout.finished,'shootout ended before AWAY completed sudden-death round');
+  await page.click('#mdPenAwayMiss');await wait(700);
+  assert(graphics.penaltyShootout.finished===true&&graphics.penaltyShootout.winner==='HOME'&&graphics.penaltyShootout.history.length===12,
+    'sudden-death winner/attempt count incorrect: '+JSON.stringify(graphics.penaltyShootout));
+  assert(Number(graphics.homePen)===6&&Number(graphics.awayPen)===5,'sudden-death penalty score incorrect: '+JSON.stringify({homePen:graphics.homePen,awayPen:graphics.awayPen}));
+  await waitForPenaltyDots(6,5,1);
+  await penaltyOutput.screenshot({path:'selftest-artifacts/11d-v433-penalty-output-dots.png'});
+  await page.screenshot({path:'selftest-artifacts/11d-v433-penalty-sudden-death.png'});
+
+  await page.click('#mdPenReset');await wait(800);
+  graphics={...graphics,commandId:'penalty_v433_clear',revision:(Number(graphics.revision)||0)+1,clock:{period:'2H',baseSeconds:5400,running:false,startedAt:null},event:{type:'CLEAR_EVENT'},updatedAt:new Date().toISOString()};
+
+  await penaltyOutput.waitForFunction(()=>document.getElementById('scoreBug')?.classList.contains('on')&&!document.getElementById('simplePenaltyBoard')?.classList.contains('on'),null,{timeout:10000});
+  await penaltyOutputContext.close();
+
   console.log('TEST 10D: stale phone-local revision can never overrule Bridge live score');
   const reopenBefore=await page.evaluate(()=>{
     window.dispatchEvent(new Event('pagehide'));
@@ -537,7 +668,9 @@ server.listen(PORT,'127.0.0.1',async()=>{
   console.log('TEST 11B: Browser Input watchdog holds last good frame through a longer state-channel outage, then self-heals');
   const heldBefore=await diagPage.evaluate(()=>window.sagiScoreCenterDiagnostic());
   const recoveryScore=Number(authoritative.homeScore)+1;
-  failNextOutputMatchdayGets=12;
+  // 250ms fast polling now self-heals short outages before watchdog age threshold.
+  // Keep the simulated outage >4s so this test still exercises the watchdog fallback path.
+  failNextOutputMatchdayGets=24;
   graphics={...graphics,commandId:'output_watchdog_recovery',revision:(Number(graphics.revision)||0)+20,homeScore:recoveryScore,updatedAt:new Date().toISOString(),event:{type:'CLEAR_EVENT'}};
   await wait(2600);
   const heldDuring=await diagPage.evaluate(()=>window.sagiScoreCenterDiagnostic());
@@ -548,6 +681,29 @@ server.listen(PORT,'127.0.0.1',async()=>{
   assert(Number(outputRecovery.score[0])===recoveryScore,'vMix output did not catch up after watchdog recovery: '+JSON.stringify(outputRecovery));
   assert(outputRecovery.health.pollFail>=10&&outputRecovery.health.recoveries>=1&&outputRecovery.health.watchdogTrips>=1&&outputRecovery.health.softRepolls>=1&&outputRecovery.health.consecutiveFailures===0,'output watchdog health metrics wrong: '+JSON.stringify(outputRecovery.health));
   await diagPage.screenshot({path:'selftest-artifacts/12b-output-watchdog-recovery.png'});
+  console.log('TEST 11B.1: Browser Input aborts a stalled JSON body and renders fresh state');
+  await diagPage.setExtraHTTPHeaders({'x-sagi-selftest-stall':'1'});
+  let stalledBodyClosed=false;
+  stallOutputBody=res=>{
+   res.once('close',()=>{stalledBodyClosed=true});
+   graphics={...graphics,commandId:'output_stalled_body_recovery',revision:Number(graphics.revision)+1};
+  };
+  await diagPage.waitForFunction(()=>window.sagiScoreCenterDiagnostic()?.commandId==='output_stalled_body_recovery',null,{timeout:8000});
+  const bodyRecovery=await diagPage.evaluate(()=>window.sagiScoreCenterDiagnostic());
+  assert(stalledBodyClosed&&bodyRecovery.health.pollFail>outputRecovery.health.pollFail&&bodyRecovery.health.consecutiveFailures===0,'stalled JSON body was not aborted before recovery: '+JSON.stringify(bodyRecovery.health));
+  await diagPage.screenshot({path:'selftest-artifacts/12c-output-stalled-body-recovery.png'});
+  console.log('TEST 11B.2: lineup request stall does not block matchday output');
+  let lineupPending=false,servedDuringLineupStall=false;
+  observeOutputWhileLineupStalls=()=>{if(lineupPending)servedDuringLineupStall=true};
+  stallLineupRead=res=>{
+   lineupPending=true;res.once('close',()=>{lineupPending=false});
+   graphics={...graphics,commandId:'output_during_lineup_stall',revision:Number(graphics.revision)+1};
+  };
+  await diagPage.setExtraHTTPHeaders({'x-sagi-selftest-stall':'lineup'});
+  await diagPage.waitForFunction(()=>window.sagiScoreCenterDiagnostic()?.commandId==='output_during_lineup_stall',null,{timeout:8000});
+  assert(servedDuringLineupStall,'matchday did not respond while the lineup request was pending');
+  await diagPage.waitForFunction(()=>window.sagiScoreCenterDiagnostic()?.health.introPollFail>0,null,{timeout:5000});
+  observeOutputWhileLineupStalls=null;
   await diagPage.close();
   const postsBeforeControlCatchup=matchdayPosts.length;
   await page.evaluate(()=>window.sagiMatchdayConsistencyCheck(true));await wait(800);
@@ -591,6 +747,33 @@ server.listen(PORT,'127.0.0.1',async()=>{
   const desktopDiag=await desktopControl.evaluate(()=>window.sagiMatchdayReliabilityDiagnostic());
   const phoneDiag=await phoneControl.evaluate(()=>window.sagiMatchdayReliabilityDiagnostic());
   assert(desktopDiag.recovery.bridgeFollows>=1&&phoneDiag.recovery.bridgeFollows>=1,'both controllers did not record Bridge-follow sync: '+JSON.stringify({desktopDiag,phoneDiag}));
+  console.log('TEST 11D.1: explicit Bridge reset clears both followed controllers and preserves fixture setup');
+  const readController=client=>client.evaluate(()=>({
+   home:document.querySelector('#matchHome')?.value,
+   away:document.querySelector('#matchAway')?.value,
+   competition:document.querySelector('#matchCompetition')?.value,
+   score:[document.querySelector('#mdHomeScore')?.textContent,document.querySelector('#mdAwayScore')?.textContent],
+   status:document.querySelector('#mdSync')?.textContent
+  }));
+  const beforeReset=await Promise.all([desktopControl,phoneControl].map(readController));
+  assert(beforeReset.every(x=>x.score.join('-')==='7-2'),'controllers did not hold the same score before reset');
+  let explicitReset=false;
+  for(const context of [desktopContext,phoneContext]){
+   await context.route(/\/api\/matchday\?consistency=/,route=>route.fulfill({
+    status:200,contentType:'application/json',body:'null',
+    headers:explicitReset?{'X-SAGI-Matchday-Reset':'a'.repeat(32)}:{}
+   }));
+  }
+  for(const controller of [desktopControl,phoneControl])await controller.evaluate(()=>window.sagiMatchdayConsistencyCheck(true));
+  const ambiguous=await Promise.all([desktopControl,phoneControl].map(readController));
+  assert(ambiguous.every(x=>x.score.join('-')==='7-2'),'ambiguous null cleared a followed controller');
+  explicitReset=true;
+  for(const controller of [desktopControl,phoneControl]){
+   await controller.waitForFunction(()=>document.querySelector('#mdHomeScore')?.textContent==='0'&&document.querySelector('#mdAwayScore')?.textContent==='0',null,{timeout:5000});
+  }
+  const resetControllers=await Promise.all([desktopControl,phoneControl].map(readController));
+  assert(resetControllers.every((x,i)=>x.home===beforeReset[i].home&&x.away===beforeReset[i].away&&x.competition===beforeReset[i].competition&&x.status?.includes('Bridge 已清空比赛')),'reset failed to preserve controller setup: '+JSON.stringify(resetControllers));
+  assert(matchdayPosts.length===postsAfterPhone,'passive reset republished a score');
   await Promise.all([desktopContext.close(),phoneContext.close()]);
 
   console.log('TEST 11D2: phone passive Bridge-follow self-recovers after one hung LAN GET');
@@ -603,10 +786,34 @@ server.listen(PORT,'127.0.0.1',async()=>{
     phoneHang.goto('http://127.0.0.1:'+PORT+'/intro/v45-lan.html',{waitUntil:'domcontentloaded'})
   ]);
   await wait(1600);
-  hangNextMatchdayGets=1;
-  await phoneHang.evaluate(()=>window.sagiMatchdayConsistencyCheck(true));
+  const timeoutBaseline=await phoneHang.evaluate(()=>window.sagiMatchdayReliabilityDiagnostic().recovery.lanTimeouts);
+  await phoneHang.evaluate(async()=>{
+    const originalFetch=window.fetch;
+    window.sagiTestHungPhoneRequests=0;
+    window.fetch=function(input,options){
+      const url=new URL(typeof input==='string'?input:input.url,location.href);
+      if(url.pathname!=='/api/matchday'||!url.searchParams.has('consistency')){
+        return originalFetch.call(window,input,options);
+      }
+      window.fetch=originalFetch;
+      window.sagiTestHungPhoneRequests++;
+      const signal=options?.signal;
+      if(!signal)return Promise.reject(new Error('Expected abortable consistency fetch'));
+      return new Promise((_,reject)=>{
+        const abort=()=>reject(new DOMException('Test request aborted','AbortError'));
+        if(signal.aborted)abort();
+        else signal.addEventListener('abort',abort,{once:true});
+      });
+    };
+    await window.sagiMatchdayConsistencyCheck(true);
+  });
+  await phoneHang.waitForFunction(baseline=>{
+    const d=window.sagiMatchdayReliabilityDiagnostic();
+    return d.recovery.lanTimeouts>baseline&&!d.consistencyBusy;
+  },timeoutBaseline,{timeout:7500});
+  assert(await phoneHang.evaluate(()=>window.sagiTestHungPhoneRequests)===1,'the fault should affect exactly one phone consistency read');
   const timeoutDiag=await phoneHang.evaluate(()=>window.sagiMatchdayReliabilityDiagnostic());
-  assert(timeoutDiag.recovery.lanTimeouts>=1&&!timeoutDiag.consistencyBusy,'phone consistency poll did not release after hung LAN read: '+JSON.stringify(timeoutDiag));
+  assert(timeoutDiag.recovery.lanTimeouts>timeoutBaseline&&!timeoutDiag.consistencyBusy,'phone consistency poll did not release after hung LAN read: '+JSON.stringify(timeoutDiag));
   await desktopHang.evaluate(()=>document.querySelector('#mdHomePlus')?.click());
   await phoneHang.waitForFunction(()=>document.querySelector('#mdHomeScore')?.textContent==='8',null,{timeout:7000});
   const recoveredPhone=await phoneHang.evaluate(()=>({score:document.querySelector('#mdHomeScore')?.textContent+'-'+document.querySelector('#mdAwayScore')?.textContent,diag:window.sagiMatchdayReliabilityDiagnostic()}));
@@ -665,7 +872,7 @@ server.listen(PORT,'127.0.0.1',async()=>{
   await page.screenshot({path:'selftest-artifacts/13-long-session-soak.png'});
 
   assert(pageErrors.length===0,'browser page errors: '+pageErrors.join(' | '));
-  const report={ok:true,build:'V4.31.0',testedAt:new Date().toISOString(),tests:['compact one-row full-name scorebug + SAGI signature palette/tag + unified score pair + restrained score roll + clock-only regular halves + conditional states','HOME goal enlarged HOME crest + complete GOAL + lower player card + collapse','AWAY goal enlarged AWAY crest','yellow/red referee-card shape + event colors + control icons','penalty >5 rounds/sudden death/miss/scores','two-camera Input 1 -> Input 2','event-logo replay stinger visual','manual replay stinger IN -> Input 4 -> OUT -> Input 1','stored project load wins over stale Bridge + optional time/venue do not block READY','compact project index rehydrates full photos from IndexedDB with empty Bridge list','clock-only refresh avoids repeated heavy match-control repaints','regular scorebug always uses canonical full team names even when backup aliases exist','mobile match control mirrors current fixture identity and legacy fields are read-only','transient LAN failure retries automatically and records last-good state','rapid score writes are serialized under deliberate network reordering','duplicate operator events are gated before double-counting','reopen recovery keeps newer local same-fixture state over stale Bridge','in-match health check is read-only and cannot mutate on-air state','vMix output ignores stale lower revisions within the same fixture','online/resume recovery repairs score/name/color/exceptional-state drift','Browser Input watchdog holds last good frame during longer outage and self-heals','fresh startup can atomically recover Bridge fixture identity when no local snapshot exists','isolated desktop and phone controllers follow one Bridge revision with zero passive ping-pong writes','desktop and phone share one Bridge-authoritative project list and active project','accelerated 5000-cycle long-session identity soak'],vmixCommands:cuts};
+  const report={ok:true,build:'V4.31.0',testedAt:new Date().toISOString(),tests:['compact one-row full-name scorebug + SAGI signature palette/tag + unified score pair + restrained score roll + clock-only regular halves + conditional states','HOME goal enlarged HOME crest + complete GOAL + lower player card + collapse','AWAY goal enlarged AWAY crest','yellow/red referee-card shape + event colors + control icons','penalty >5 rounds/sudden death/miss/scores','two-camera Input 1 -> Input 2','event-logo replay stinger visual','manual replay stinger IN -> Input 4 -> OUT -> Input 1','stored project load wins over stale Bridge + optional time/venue do not block READY','compact project index rehydrates full photos from IndexedDB with empty Bridge list','clock-only refresh avoids repeated heavy match-control repaints','regular scorebug always uses canonical full team names even when backup aliases exist','mobile match control mirrors current fixture identity and legacy fields are read-only','transient LAN failure retries automatically and records last-good state','rapid score writes are serialized under deliberate network reordering','duplicate operator events are gated before double-counting','reopen recovery keeps newer local same-fixture state over stale Bridge','in-match health check is read-only and cannot mutate on-air state','vMix output ignores stale lower revisions within the same fixture','two open outputs accept a durable rollback after Bridge restart','online/resume recovery repairs score/name/color/exceptional-state drift','Browser Input watchdog holds last good frame during longer outage and self-heals','Browser Input aborts stalled JSON and recovers its frame','lineup stalls do not block Browser matchday output','fresh startup can atomically recover Bridge fixture identity when no local snapshot exists','historical restore distinguishes same teams in different competitions','isolated desktop and phone controllers follow one Bridge revision with zero passive ping-pong writes','desktop and phone share one Bridge-authoritative project list and active project','accelerated 5000-cycle long-session identity soak'],vmixCommands:cuts};
   fs.writeFileSync('selftest-artifacts/report.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
  }catch(e){
   fs.mkdirSync('selftest-artifacts',{recursive:true});try{await page.screenshot({path:'selftest-artifacts/FAIL.png',fullPage:true})}catch{}
