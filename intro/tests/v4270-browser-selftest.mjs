@@ -747,6 +747,33 @@ server.listen(PORT,'127.0.0.1',async()=>{
   const desktopDiag=await desktopControl.evaluate(()=>window.sagiMatchdayReliabilityDiagnostic());
   const phoneDiag=await phoneControl.evaluate(()=>window.sagiMatchdayReliabilityDiagnostic());
   assert(desktopDiag.recovery.bridgeFollows>=1&&phoneDiag.recovery.bridgeFollows>=1,'both controllers did not record Bridge-follow sync: '+JSON.stringify({desktopDiag,phoneDiag}));
+  console.log('TEST 11D.1: explicit Bridge reset clears both followed controllers and preserves fixture setup');
+  const readController=client=>client.evaluate(()=>({
+   home:document.querySelector('#matchHome')?.value,
+   away:document.querySelector('#matchAway')?.value,
+   competition:document.querySelector('#matchCompetition')?.value,
+   score:[document.querySelector('#mdHomeScore')?.textContent,document.querySelector('#mdAwayScore')?.textContent],
+   status:document.querySelector('#mdSync')?.textContent
+  }));
+  const beforeReset=await Promise.all([desktopControl,phoneControl].map(readController));
+  assert(beforeReset.every(x=>x.score.join('-')==='7-2'),'controllers did not hold the same score before reset');
+  let explicitReset=false;
+  for(const context of [desktopContext,phoneContext]){
+   await context.route(/\/api\/matchday\?consistency=/,route=>route.fulfill({
+    status:200,contentType:'application/json',body:'null',
+    headers:explicitReset?{'X-SAGI-Matchday-Reset':'a'.repeat(32)}:{}
+   }));
+  }
+  for(const controller of [desktopControl,phoneControl])await controller.evaluate(()=>window.sagiMatchdayConsistencyCheck(true));
+  const ambiguous=await Promise.all([desktopControl,phoneControl].map(readController));
+  assert(ambiguous.every(x=>x.score.join('-')==='7-2'),'ambiguous null cleared a followed controller');
+  explicitReset=true;
+  for(const controller of [desktopControl,phoneControl]){
+   await controller.waitForFunction(()=>document.querySelector('#mdHomeScore')?.textContent==='0'&&document.querySelector('#mdAwayScore')?.textContent==='0',null,{timeout:5000});
+  }
+  const resetControllers=await Promise.all([desktopControl,phoneControl].map(readController));
+  assert(resetControllers.every((x,i)=>x.home===beforeReset[i].home&&x.away===beforeReset[i].away&&x.competition===beforeReset[i].competition&&x.status?.includes('Bridge 已清空比赛')),'reset failed to preserve controller setup: '+JSON.stringify(resetControllers));
+  assert(matchdayPosts.length===postsAfterPhone,'passive reset republished a score');
   await Promise.all([desktopContext.close(),phoneContext.close()]);
 
   console.log('TEST 11D2: phone passive Bridge-follow self-recovers after one hung LAN GET');
