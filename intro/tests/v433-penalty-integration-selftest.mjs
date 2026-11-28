@@ -109,9 +109,12 @@ const makePollHarness=new Function('requests',`
  const draft={home:'Local draft',homeScore:5};
  const Date={now:()=>time},mdRecoveryMetrics={busyResets:0,passivePolls:0,lanTimeouts:0};
  const lanJson=()=>new Promise((resolve,reject)=>requests.push({resolve,reject}));
- const mdBridgeMatchesCurrent=()=>false;
+ let fixture='live',matchReady=true,setupReadySignature='ready',mdPublishRevision=7,mdLastAckRevision=7,resets=0;
+ const mdBridgeMatchesCurrent=remote=>remote.fixtureKey===fixture,mdFixtureKey=()=>fixture;
+ const matchdayState={revision:7},mdCloudSnapshot=()=>({}),mdConsistencyComparable=()=>'',mdConsistencyClockDiffers=()=>false;
+ const gdAbort=()=>{},mdResetForProject=()=>{draft.homeScore=0;resets++},mdSaveLastGood=()=>{},refreshSetupReadyUI=()=>{},q=()=>null;
  ${syncImpl}
- return {poll:mdConsistencyCheck,draft,pending:value=>mdPendingPublishes=value,advance:()=>{time+=4500},state:()=>({busy:mdConsistencyBusy,status:mdLastConsistencyState})};
+ return {poll:mdConsistencyCheck,draft,resets:()=>resets,fixture:value=>fixture=value,pending:value=>mdPendingPublishes=value,advance:()=>{time+=4500},state:()=>({busy:mdConsistencyBusy,status:mdLastConsistencyState})};
 `);
 for(const staleFailure of [false,true]){
  const requests=[],h=makePollHarness(requests);
@@ -136,6 +139,18 @@ emptyRequests[1].resolve(null);
 assert(await delayedEmpty===false&&emptyController.draft.homeScore===5,'empty response disturbed a pending score publication');
 assert(await emptyController.poll(true)===false&&emptyRequests.length===2,'controller polled over a pending publication');
 console.log('PASS ambiguous Bridge null preserves controller drafts and pending writes');
+const resetRequests=[],resetController=makePollHarness(resetRequests);
+const explicit={matchdayResetId:'a'.repeat(32)};
+async function followResponse(response){const result=resetController.poll(true);resetRequests.at(-1).resolve(response);return result}
+assert(!await followResponse(explicit)&&resetController.resets()===0,'fresh controller cleared its draft');
+assert(await followResponse({commandId:'known',fixtureKey:'live',revision:7}),'live fixture was not observed');
+resetController.fixture('new-draft');
+assert(!await followResponse(explicit)&&resetController.resets()===0,'reset cleared a different fixture');
+resetController.fixture('live');
+assert(await followResponse(explicit)&&resetController.resets()===1&&resetController.draft.homeScore===0&&resetController.draft.home==='Local draft','explicit reset failed to clear score while preserving setup');
+assert(!await followResponse(explicit)&&resetController.resets()===1,'same reset was reapplied');
+console.log('PASS explicit Bridge reset clears the followed fixture and preserves draft setup');
+
 
 const applyImpl=output.match(/function applyGraphics\(g\)\{[\s\S]*?(?=\r?\n\r?\nwindow.sagiScoreCenterDiagnostic)/)?.[0];
 assert(applyImpl,'output applyGraphics function missing');

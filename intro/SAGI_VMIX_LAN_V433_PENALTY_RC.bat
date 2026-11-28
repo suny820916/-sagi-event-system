@@ -2442,6 +2442,7 @@ const LAN_DIRECT=true;
 const SAGI_PENALTY_BUILD='SAGI433_PENALTY_RC1';
 async function lanJson(url,options={}){
   const opts=Object.assign({cache:'no-store'},options),timeoutMs=Math.max(500,Number(opts.timeoutMs)||2500);delete opts.timeoutMs;
+  const readMatchdayReset=opts.readMatchdayReset===true;delete opts.readMatchdayReset;
   let timer=null,controller=null;
   if(!opts.signal&&typeof AbortController!=='undefined'){controller=new AbortController();opts.signal=controller.signal;timer=setTimeout(()=>controller.abort(),timeoutMs)}
   try{
@@ -2453,6 +2454,10 @@ async function lanJson(url,options={}){
       const err=new Error('LAN '+r.status+(body&&body.error?' '+body.error:''));
       err.status=r.status;err.code=body&&body.error||'';err.payload=body;
       throw err
+    }
+    if(readMatchdayReset&&body===null){
+      const resetId=r.headers.get('X-SAGI-Matchday-Reset')||'';
+      if(/^[a-f0-9]{32}$/.test(resetId))return {matchdayResetId:resetId};
     }
     return body;
   }catch(e){
@@ -3610,6 +3615,7 @@ function mdPassiveSyncActive(){
  return !!(matchReady||matchModeActive||matchdayState.scoreboardVisible||matchdayState.clockRunning||Number(matchdayState.revision)>0)
 }
 let mdConsistencyEpoch=0;
+let mdFollowedLiveFixture=null;
 async function mdConsistencyCheck(force=false){
  const now=Date.now();
  if(mdConsistencyBusy&&mdConsistencyBusySince&&now-mdConsistencyBusySince>4000){
@@ -3620,10 +3626,22 @@ async function mdConsistencyCheck(force=false){
  const epoch=++mdConsistencyEpoch;
  try{
   mdRecoveryMetrics.passivePolls++;
-  const remote=await lanJson('/api/matchday?consistency='+Date.now()),sameFixture=remote&&mdBridgeMatchesCurrent(remote);
+  const remote=await lanJson('/api/matchday?consistency='+Date.now(),{readMatchdayReset:true});
   if(epoch!==mdConsistencyEpoch||projectLoadBusy||mdPendingPublishes>0)return false;
-   if(!remote||!remote.commandId){mdLastConsistencyState='BRIDGE_EMPTY';mdLastConsistencyAt=Date.now();return false}
-  if(!sameFixture){mdLastConsistencyState='FIXTURE_MISMATCH';mdLastConsistencyAt=Date.now();return false}
+  if(!remote||!remote.commandId){
+   mdLastConsistencyState='BRIDGE_EMPTY';mdLastConsistencyAt=Date.now();
+   if(!remote?.matchdayResetId||mdFollowedLiveFixture===null||mdFollowedLiveFixture!==mdFixtureKey())return false;
+   mdFollowedLiveFixture=null;
+   gdAbort(false);
+   matchReady=false;setupReadySignature='';
+   mdPublishRevision=0;mdLastAckRevision=0;matchdayState.revision=0;
+   mdResetForProject();mdSaveLastGood();refreshSetupReadyUI();
+   mdLastConsistencyState='BRIDGE_RESET';
+   if(q('mdSync'))q('mdSync').textContent='Bridge 已清空比赛 · 比赛设置已保留';
+   return true
+  }
+  if(!mdBridgeMatchesCurrent(remote)){mdLastConsistencyState='FIXTURE_MISMATCH';mdLastConsistencyAt=Date.now();return false}
+  mdFollowedLiveFixture=mdFixtureKey();
   const remoteRevision=Math.max(0,Number(remote.revision)||0);
   const localRevision=Math.max(0,Number(matchdayState.revision)||0,Number(mdLastAckRevision)||0);
   // Revisions are not comparable across independent browser controllers. Bridge is the live authority.
