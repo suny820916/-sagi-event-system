@@ -106,11 +106,12 @@ assert(syncImpl,'production sync implementation missing');
 const makePollHarness=new Function('requests',`
  let time=100,mdConsistencyBusy=false,mdConsistencyBusySince=0,projectLoadBusy=false,mdPendingPublishes=0;
  let mdLastConsistencyState='',mdLastConsistencyAt=0;
+ const draft={home:'Local draft',homeScore:5};
  const Date={now:()=>time},mdRecoveryMetrics={busyResets:0,passivePolls:0,lanTimeouts:0};
  const lanJson=()=>new Promise((resolve,reject)=>requests.push({resolve,reject}));
  const mdBridgeMatchesCurrent=()=>false;
  ${syncImpl}
- return {poll:mdConsistencyCheck,advance:()=>{time+=4500},state:()=>({busy:mdConsistencyBusy,status:mdLastConsistencyState})};
+ return {poll:mdConsistencyCheck,draft,pending:value=>mdPendingPublishes=value,advance:()=>{time+=4500},state:()=>({busy:mdConsistencyBusy,status:mdLastConsistencyState})};
 `);
 for(const staleFailure of [false,true]){
  const requests=[],h=makePollHarness(requests);
@@ -124,6 +125,17 @@ for(const staleFailure of [false,true]){
  assert(!h.state().busy&&h.state().status==='BRIDGE_EMPTY','replacement poll did not release its own lock');
 }
 console.log('PASS stale passive polls cannot release or overwrite a replacement poll');
+const emptyRequests=[],emptyController=makePollHarness(emptyRequests);
+const emptyPoll=emptyController.poll(true);
+emptyRequests[0].resolve(null);
+assert(await emptyPoll===false&&emptyController.state().status==='BRIDGE_EMPTY','ambiguous empty Bridge response was treated as an acknowledged operation');
+assert(emptyController.draft.home==='Local draft'&&emptyController.draft.homeScore===5,'ambiguous empty response cleared a local draft');
+const delayedEmpty=emptyController.poll(true);
+emptyController.pending(1);
+emptyRequests[1].resolve(null);
+assert(await delayedEmpty===false&&emptyController.draft.homeScore===5,'empty response disturbed a pending score publication');
+assert(await emptyController.poll(true)===false&&emptyRequests.length===2,'controller polled over a pending publication');
+console.log('PASS ambiguous Bridge null preserves controller drafts and pending writes');
 
 const applyImpl=output.match(/function applyGraphics\(g\)\{[\s\S]*?(?=\r?\n\r?\nwindow.sagiScoreCenterDiagnostic)/)?.[0];
 assert(applyImpl,'output applyGraphics function missing');
